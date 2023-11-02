@@ -1,0 +1,203 @@
+#!/bin/bash
+# vim: ft=sh:sw=2:et
+# SPDX-License-Identifier: LGPL-3.0-only
+
+
+### command line processing
+
+usage() { echo "Usage: $0 [-d <path/stdatlasdir>] [-r <MYREQ>] [-p <STDANDARD>]" 1>&2; exit 0; }
+
+while getopts "d:r:p:" arg; do
+  case $arg in
+    d)
+      stdatlasdir="${OPTARG}"
+      ;;
+    r)
+      myreqs="${OPTARG}"
+      ;;
+    p)
+      myparent="${OPTARG}"
+      ;;
+    h | *)
+      usage
+      exit 0
+  esac
+done
+
+
+### some default settings
+
+stdatlasdir="${stdatlasdir:-/tmp/standards-atlas}"
+myreqs="${myreqs=:-SOHP}"
+myparent="${myparent:-EN50657}"
+mydigits=3
+atlastooldir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+atlashomedir="$(dirname "$atlastooldir")"
+atlasdatadir="$atlashomedir/data"
+standards=( IEC61508 ISO26262 EN50126 EN50128 EN50129 EN50657 )
+
+
+### sanity checks and preparation
+
+if [ ! -d "$atlasdatadir" ]; then
+  echo "Cannot find Atlas Home $atlasdatadir! I am lost, giving up."
+  exit 1
+fi
+
+if [ ! -d "$stdatlasdir" ]; then
+  echo "Creating $stdatlasdir"
+  mkdir -p $stdatlasdir || exit 1;
+fi
+
+cd $stdatlasdir
+
+if [ ! -d "$stdatlasdir/.git" ]; then
+  echo "$stdatlasdir is not controlled by git, initiating git"
+  git init $stdatlasdir
+fi
+
+setAttributes()
+{
+  local standard=$1
+  local name=$2
+cat <<EOD >>./requirements/${standard}/.doorstop.yml
+attributes:
+  defaults:
+    type: standard
+    rationale: ''
+    notes: []
+    standard:
+      mandatory: true
+      name: ${name}
+      ref: ''
+      refID: ''
+      volume: ''
+      level: ''
+      text: ''
+EOD
+}
+
+
+addItem()
+{
+	local item=$1
+	local requirement=$2
+	volShift="${volShift:-0}"
+	volDigits="${volDigits:-0}"
+	local volNR=$(cut -s -d'-' -f1 <<<$item)
+	if [ -n "$volNR" ]; then
+		volND="-${volNR} "
+		volNR=$((volNR+volShift))
+		while [ ${#volNR} -lt "$volDigits" ]; do
+			volNR="0${volNR}"
+		done
+		volume="-${volNR} "
+		item=$(cut -s -d'-' -f2 <<<$item)
+	else
+		volume=" "
+	fi
+        local chaptersub=$(cut -s -d':' -f1 <<<$item)
+        if [ -n "$chaptersub" ]; then
+		item=$(cut -s -d':' -f2 <<<$item)
+        fi
+	chapter=$(cut -s -d'.' -f1 <<<$item)
+	section=$(cut -s -d'.' -f2 <<<$item)
+	paragraph=$(cut -s -d'.' -f3 <<<$item)
+	clause=$(cut -s -d'.' -f4 <<<$item)
+	if [ -z "$chapter" ]; then
+		chapter=$item
+	fi
+	typeID=${chapter:0:1}
+	pattern='[a-z]'
+	if [[ $chapter =~ $pattern ]]; then
+		chapter=${chapter:1}
+	fi
+	if [ -n "$chaptersub" ]; then
+		level=${chaptersub}
+	else
+		level="${chapter}"
+	fi
+	if [ -n "$volNR" ]; then
+		name="${volNR}${chapter}"
+		level="${volNR}.${level}"
+	else
+		name="$chapter"
+		level="$level"
+	fi
+	index="$chapter"
+	if [ -n "$section" ]; then
+	    name="${name}${section}"
+	    index="${index}.${section}"
+	    level="${level}.${section}"
+	fi
+	if [ -n "$paragraph" ]; then
+	    name="${name}${paragraph}"
+	    index="${index}.${paragraph}"
+	    level="${level}.${paragraph}"
+	fi
+	if [ -n "$clause" ]; then
+	    name="${name}${clause}"
+	    index="${index}.${clause}"
+	    level="${level}.${clause}"
+	fi
+	locString="${standard}${volume}${index}"
+	locID=$(echo -n $locString | md5sum | cut -c 1-32)
+	title=$(grep "TOC;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+	text=$(grep "TEXT;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+	if [[ $typeID == 't' ]]; then
+		title="${title:-TERM}"
+		text="${text:-TERM}"
+		type='term'
+	elif [[ $typeID == 'c' ]]; then
+		title="${title:-CLAUSE}"
+		text="${text:-CLAUSE}"
+		type='clause'
+	else
+		title="${title:-TOC}"
+		text="${text:-TOC}"
+		type='toc'
+	fi
+	cat <<EOD >./defaults.yml
+type: '$type'
+header: '$index $title'
+text: '$text'
+standard:
+  ref: '$locString'
+  refID: '$locID'
+EOD
+	echo "$locID;$locString;$title" >>headerDump
+	echo "$locID;$locString;$text" >>textDump
+	doorstop add -l $level -d defaults.yml -n $name $requirement
+}
+
+
+### create standard documents
+
+for standard in $standards $myreqs
+do
+  if [ -f "$atlasdatadir/$standard" ]; then
+    . $atlasdatadir/$standard
+  else
+    echo WARNING: no datafile for $standard
+    parent=$myparent
+    digits=$mydigits
+    volShift=0
+    volDigits=0
+  fi
+  if [ -z "$parent" ]; then
+        doorstop create -d $digits -s '-' ${standard} ./requirements/${standard}
+  else
+        doorstop create -d $digits -s '-' ${standard} ./requirements/${standard} --parent ${parent}
+  fi
+
+  setAttributes ${standard} ${name} 
+
+  for volume in ${structure[@]}
+  do
+        for item in $(eval echo ${volume})
+        do
+            addItem ${item} ${standard}
+        done
+  done
+done
+
