@@ -165,8 +165,8 @@ standard:
   ref: '$locString'
   refID: '$locID'
 EOD
-	echo "$locID;$locString;$title" >>headerDump
-	echo "$locID;$locString;$text" >>textDump
+	echo "TOC;$locID;$locString;$title" >>headerDump
+	echo "TEXT;$locID;$locString;$text" >>textDump
 	doorstop add -l $level -d defaults.yml -n $dsname $requirement
 }
 
