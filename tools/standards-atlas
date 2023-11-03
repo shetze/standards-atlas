@@ -56,6 +56,12 @@ if [ ! -d "$stdatlasdir/.git" ]; then
   git init $stdatlasdir
 fi
 
+zeroPad(){
+  # zero_pad <string> <length>
+  [ ${#1} -lt $2 ] && printf "%0$(($2-${#1}))d" ''
+  printf "%s\n" "$1"
+}
+
 setAttributes()
 {
   local standard=$1
@@ -86,12 +92,11 @@ addItem()
 	volDigits="${volDigits:-0}"
 	local volNR=$(cut -s -d'-' -f1 <<<$item)
 	if [ -n "$volNR" ]; then
-		volND="-${volNR} "
+		volume="-${volNR} "
 		volNR=$((volNR+volShift))
 		while [ ${#volNR} -lt "$volDigits" ]; do
 			volNR="0${volNR}"
 		done
-		volume="-${volNR} "
 		item=$(cut -s -d'-' -f2 <<<$item)
 	else
 		volume=" "
@@ -118,31 +123,39 @@ addItem()
 		level="${chapter}"
 	fi
 	if [ -n "$volNR" ]; then
-		dsname="${volNR}${chapter}"
-		level="${volNR}.${level}"
+            dsname="${volNR}$(zeroPad ${chapter} 2)"
+	    level="${volNR}.${level}"
 	else
-		dsname="$chapter"
-		level="$level"
+            dsname="$(zeroPad ${chapter} 2)"
+            level="$level"
 	fi
 	index="$chapter"
 	if [ -n "$section" ]; then
-	    dsname="${dsname}${section}"
+            dsname="${dsname}$(printf '%02d' ${section})"
 	    index="${index}.${section}"
 	    level="${level}.${section}"
 	fi
 	if [ -n "$paragraph" ]; then
-	    dsname="${dsname}${paragraph}"
+            dsname="${dsname}$(printf '%02d' ${paragraph})"
 	    index="${index}.${paragraph}"
 	    level="${level}.${paragraph}"
 	fi
 	if [ -n "$clause" ]; then
-	    dsname="${dsname}${clause}"
+            dsname="${dsname}$(printf '%02d' ${clause})"
 	    index="${index}.${clause}"
 	    level="${level}.${clause}"
 	fi
+        pad=$(printf "%*s" "$digits")
+        pad=${pad// /0}
+        dsname=$(printf "%s%s" $dsname "${pad:${#dsname}}")
 	locString="${name}${volume}${index}"
 	locID=$(echo -n $locString | md5sum | cut -c 1-32)
 	title=$(grep "TOC;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+	if [ -z "$title" ]; then
+	    xString="${name}-${volNR} ${index}"
+	    xID=$(echo -n $xString | md5sum | cut -c 1-32)
+	    title=$(grep "TOC;$xID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+        fi
 	text=$(grep "TEXT;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
 	if [[ $typeID == 't' ]]; then
 		title="${title:-TERM}"
