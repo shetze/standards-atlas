@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 parent="IEC61508"
-digits=5
+digits=10
 volShift=0
 volDigits=2
 name="ISO 26262:2018"
