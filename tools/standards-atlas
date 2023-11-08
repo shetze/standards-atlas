@@ -90,6 +90,9 @@ addItem()
     local requirement=$2
     volShift="${volShift:-0}"
     volDigits="${volDigits:-0}"
+    local title=''
+    local text=''
+    local headline=''
     local volNR=$(cut -s -d'-' -f1 <<<$item)
     if [ -n "$volNR" ]; then
         volume="-${volNR} "
@@ -101,6 +104,7 @@ addItem()
     else
         volume=" "
     fi
+    # substitution for chapters A-ZZ
     local chaptersub=$(cut -s -d':' -f1 <<<$item)
     if [ -n "$chaptersub" ]; then
         item=$(cut -s -d':' -f2 <<<$item)
@@ -109,6 +113,7 @@ addItem()
     section=$(cut -s -d'.' -f2 <<<$item)
     paragraph=$(cut -s -d'.' -f3 <<<$item)
     clause=$(cut -s -d'.' -f4 <<<$item)
+    subclause=$(cut -s -d'.' -f5 <<<$item)
     if [ -z "$chapter" ]; then
         chapter=$item
     fi
@@ -145,26 +150,44 @@ addItem()
         index="${index}.${clause}"
         level="${level}.${clause}"
     fi
+    if [ -n "$subclause" ]; then
+        dsname="${dsname}$(printf '%02d' ${subclause})"
+        index="${index}.${subclause}"
+        level="${level}.${subclause}"
+    fi
     pad=$(printf "%*s" "$digits")
     pad=${pad// /0}
     dsname=$(printf "%s%s" $dsname "${pad:${#dsname}}")
     locString="${name}${volume}${index}"
     locID=$(echo -n $locString | md5sum | cut -c 1-32)
     title=$(grep "TOC;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
-    if [ -z "$title" ]; then
-        xString="${name}-${volNR} ${index}"
-        xID=$(echo -n $xString | md5sum | cut -c 1-32)
-        title=$(grep "TOC;$xID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+#    if [ -z "$title" ]; then
+#        xString="${name}-${volNR} ${index}"
+#        xID=$(echo -n $xString | md5sum | cut -c 1-32)
+#        title=$(grep "TOC;$xID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+#    fi
+    headline=$(grep "TEXT;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+    text=$(grep "TEXT;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f5)
+    if [ -n "$headline" ]; then
+        subindex=$(cut -s -d'.' -f3- <<<$index)
+        title="$subindex $headline"
     fi
-    text=$(grep "TEXT;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
-    if [[ $typeID == 't' ]]; then
+    if [ "$typeID" == 't' ]; then
         title="${title:-TERM}"
         text="${text:-TERM}"
         type='term'
-    elif [[ $typeID == 'c' ]]; then
+    elif [ "$typeID" == 'c' ]; then
         title="${title:-CLAUSE}"
         text="${text:-CLAUSE}"
         type='clause'
+    elif [ "$typeID" == 's' ]; then
+        title="${title:-SCOPE}"
+        text="${text:-SCOPE}"
+        type='scope'
+    elif [ "$typeID" == 'o' ]; then
+        title="${title:-OBJECTIVE}"
+        text="${text:-OBJECTIVE}"
+        type='objective'
     else
         title="${title:-TOC}"
         text="${text:-TOC}"
