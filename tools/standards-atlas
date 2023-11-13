@@ -149,7 +149,12 @@ addItem()
         level="${level}.${section}"
     fi
     if [ -n "$paragraph" ]; then
-        dsname="${dsname}$(printf '%02d' ${paragraph})"
+        if [[ $paragraph =~ § ]]; then
+            paragraph=${paragraph:1}
+            dsname="${dsname}$(printf '%03d' ${paragraph})"
+        else
+            dsname="${dsname}$(printf '%02d' ${paragraph})"
+        fi
         index="${index}.${paragraph}"
         level="${level}.${paragraph}"
     fi
