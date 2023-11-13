@@ -5,12 +5,20 @@
 
 ### command line processing
 
-usage() { echo "Usage: $0 [-d <path/stdatlasdir>] [-r <MYREQ>] [-p <STDANDARD>]" 1>&2; exit 0; }
+readableindex=0
 
-while getopts "d:r:p:" arg; do
+usage() { echo "Usage: $0 [-i] [-d <path/stdatlasdir>] [-g <gitrepo>] [-r <MYREQ>] [-p <STDANDARD>]" 1>&2; exit 0; }
+
+while getopts "id:g:r:p:" arg; do
     case $arg in
+        i)
+            readableindex=1
+            ;;
         d)
             stdatlasdir="${OPTARG}"
+            ;;
+        g)
+            gitrepo="${OPTARG}"
             ;;
         r)
             myreqs="${OPTARG}"
@@ -158,8 +166,8 @@ addItem()
     pad=$(printf "%*s" "$digits")
     pad=${pad// /0}
     dsname=$(printf "%s%s" $dsname "${pad:${#dsname}}")
-    locString="${name}${volume}${index}"
-    locID=$(echo -n $locString | md5sum | cut -c 1-32)
+    indexString="${name}${volume}${index}"
+    locID=$(echo -n $indexString | md5sum | cut -c 1-32)
     title=$(grep "TOC;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
 #    if [ -z "$title" ]; then
 #        xString="${name}-${volNR} ${index}"
@@ -172,14 +180,10 @@ addItem()
         subindex=$(cut -s -d'.' -f3- <<<$index)
         title="$subindex $headline"
     fi
-    if [ "$typeID" == 't' ]; then
-        title="${title:-TERM}"
-        text="${text:-TERM}"
-        type='term'
-    elif [ "$typeID" == 'c' ]; then
-        title="${title:-CLAUSE}"
-        text="${text:-CLAUSE}"
-        type='clause'
+    if [ "$typeID" == 'r' ]; then
+        title="${title:-REQUIREMENT}"
+        text="${text:-REQUIREMENT}"
+        type='requirement'
     elif [ "$typeID" == 's' ]; then
         title="${title:-SCOPE}"
         text="${text:-SCOPE}"
@@ -188,6 +192,14 @@ addItem()
         title="${title:-OBJECTIVE}"
         text="${text:-OBJECTIVE}"
         type='objective'
+    elif [ "$typeID" == 't' ]; then
+        title="${title:-TERM}"
+        text="${text:-TERM}"
+        type='term'
+    elif [ "$typeID" == 'c' ]; then
+        title="${title:-CLAUSE}"
+        text="${text:-CLAUSE}"
+        type='clause'
     else
         title="${title:-TOC}"
         text="${text:-TOC}"
@@ -198,11 +210,16 @@ type: '$type'
 header: '$index $title'
 text: '$text'
 standard:
-  ref: '$locString'
+  ref: '$indexString'
   refID: '$locID'
 EOD
-echo "TOC;$locID;$locString;$title" >>headerDump
-echo "TEXT;$locID;$locString;$text" >>textDump
+if [ "$readableindex" -eq 1 ]; then
+    locString="$indexString"
+else
+    locString="$dsname"
+fi
+echo "TOC;$locID;${locString};$title" >>header${standard}
+echo "TEXT;$locID;${locString};$text" >>text${standard}
 doorstop add -l $level -d defaults.yml -n $dsname $requirement
 }
 
