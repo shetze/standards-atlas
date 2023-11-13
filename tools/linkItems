@@ -1,0 +1,56 @@
+#!/bin/bash
+# vim: ft=sh:sw=4:et
+# SPDX-License-Identifier: LGPL-3.0-only
+
+### command line processing
+
+readableindex=0
+
+usage() { echo "Usage: $0 [-i] [-d <path/stdatlasdir>]" 1>&2; exit 0; }
+
+while getopts "id:g:r:p:" arg; do
+    case $arg in
+        i)
+            readableindex=1
+            ;;
+        d)
+            stdatlasdir="${OPTARG}"
+            ;;
+        h | *)
+            usage
+            exit 0
+    esac
+done
+
+
+### some default settings
+
+stdatlasdir="${stdatlasdir:-/tmp/standards-atlas}"
+atlastooldir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+atlashomedir="$(dirname "$atlastooldir")"
+atlasdatadir="$atlashomedir/data"
+
+
+### sanity checks and preparation
+
+if [ ! -d "$atlasdatadir" ]; then
+    echo "Cannot find Atlas Home $atlasdatadir! I am lost, giving up."
+    exit 1
+fi
+
+cd $stdatlasdir
+
+
+linkItem()
+{
+    local item=$1
+    local fromitem=$(cut -s -d';' -f1 <<<$item)
+    local toitem=$(cut -s -d';' -f4 <<<$item)
+    doorstop link ${from}-${fromitem} ${to}-${toitem}
+}
+
+
+for mapping in ${atlasdatadir}/mapping*
+do
+    . $mapping
+done
