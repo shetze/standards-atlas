@@ -12,9 +12,18 @@ These different structures are configured for uniform treatment in the standards
 
 The actual structure is then created using the character strings in the structures array. There is one such character string for each volume. Each element of a standard document to be identified for the purpose of content referencing is represented here with an index number. The syntax is as follows
 
-'''
+```
 [volume-][type][enum:]index[.{range}]
-'''
+```
+
+Here is an example of such a structure:
+
+```
+structure=(
+ "0-1 0-2 0-3 0-3.{1..4} 0-r3.4.{1..13} 0-4 0-4.{1..9} 0-5:A 0-c5:A.{1..6}"
+ ...
+)
+```
 
 For standards with several volumes, the volume number is specified as the first number and separated from the rest of the item with a minus sign.
 
