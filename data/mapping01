@@ -1,0 +1,52 @@
+### Standards Relationship Mapping
+from=EN50657
+to=EN50128
+type=terms
+note="EN50657 is inheriting most definitions form EN50128 and adds only a few new terms"
+###
+while read item
+do
+    linkItem "$item"
+done <<EOD
+3010100;assessment;assessment;3010100
+3010200;Assessor;Assessor;3010200
+3010300;commercial off-the-shelf (COTS) software;commercial off-the-shelf (COTS) software;3010300
+3010400;component;component;3010400
+3010500;Configuration Manager;Configuration Manager;3010500
+3010700;Designer;Designer;3010700
+3010800;entity;entity;3010800
+3010900;error, fault;error;3010900
+3011000;failure;failure;3011000
+3011200;firmware;firmware;3011200
+3011400;Implementer;Implementer;3011400
+3011500;Integration;Integration;3011500
+3011600;Integrator;Integrator;3011600
+3011700;pre-existing software;pre-existing software;3011700
+3011800;open source software;open source software;3011800
+3011900;programmable logic controller;programmable logic controller;3011900
+3012000;project management;project management;3012000
+3012100;Project Manager;Project Manager;3012100
+3012300;robustness;robustness;3012300
+3012400;Requirements Manager;Requirements Manager;3012400
+3012500;requirements management;requirements management;3012500
+3012600;risk;risk;3012600
+3012700;safety;safety;3012700
+3012800;safety authority;safety authority;3012800
+3013100;safety related software;Safety-related software;3013000
+3013300;software;software;3013100
+3013400;software baseline;software baseline;3013200
+3013500;software deployment;software deployment;3013300
+3013600;software lifecycle;software life cycle;3013400
+3013700;maintainablility of software;software maintainability;3013500
+3013800;software maintenance;software maintenance;3013600
+3013900;software integrity level;software safety integrity level;3013700
+3014000;Tester;Tester;3014000
+3014100;testing;testing;3014100
+3014200;tool class T1;tool class T1;3014200
+3014300;tool class T2;tool class T2;3014300
+3014400;tool class T3;tool class T3;3014400
+3014600;validation;validation;3014600
+3014700;Validator;Validator;3014700
+3014800;verification;verification;3014800
+3014900;Verifier;Verifier;3014900
+EOD

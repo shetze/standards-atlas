@@ -1,0 +1,119 @@
+### Standards Relationship Mapping
+from=EN50657
+to=EN50128
+type=techniques
+note="EN50657 is inheriting most techniques in this bibliography form EN50128"
+###
+while read item
+do
+    linkItem "$item"
+done <<EOD
+3010100;assessment;assessment;3010100
+3010200;Assessor;Assessor;3010200
+3010300;commercial off-the-shelf (COTS) software;commercial off-the-shelf (COTS) software;3010300
+3010400;component;component;3010400
+3010500;Configuration Manager;Configuration Manager;3010500
+3010700;Designer;Designer;3010700
+3010800;entity;entity;3010800
+3010900;error, fault;error;3010900
+3011000;failure;failure;3011000
+3011200;firmware;firmware;3011200
+3011400;Implementer;Implementer;3011400
+3011500;Integration;Integration;3011500
+3011600;Integrator;Integrator;3011600
+3011700;pre-existing software;pre-existing software;3011700
+3011800;open source software;open source software;3011800
+3011900;programmable logic controller;programmable logic controller;3011900
+3012000;project management;project management;3012000
+3012100;Project Manager;Project Manager;3012100
+3012300;robustness;robustness;3012300
+3012400;Requirements Manager;Requirements Manager;3012400
+3012500;requirements management;requirements management;3012500
+3012600;risk;risk;3012600
+3012700;safety;safety;3012700
+3012800;safety authority;safety authority;3012800
+3013100;safety related software;Safety-related software;3013000
+3013300;software;software;3013100
+3013400;software baseline;software baseline;3013200
+3013500;software deployment;software deployment;3013300
+3013600;software lifecycle;software life cycle;3013400
+3013700;maintainablility of software;software maintainability;3013500
+3013800;software maintenance;software maintenance;3013600
+3013900;software integrity level;software safety integrity level;3013700
+3014000;Tester;Tester;3014000
+3014100;testing;testing;3014100
+3014200;tool class T1;tool class T1;3014200
+3014300;tool class T2;tool class T2;3014300
+3014400;tool class T3;tool class T3;3014400
+3014600;validation;validation;3014600
+3014700;Validator;Validator;3014700
+3014800;verification;verification;3014800
+3014900;Verifier;Verifier;3014900
+0D010000;Artificial Intelligence Fault Correction;Artificial Intelligence Fault Correction;0D010000
+0D020000;Analysable Programs;Analysable Programs;0D020000
+0D030000;Avalanche/Stress Testing;Avalanche/Stress Testing;0D030000
+0D040000;Boundary Value Analysis;Boundary Value Analysis;0D040000
+0D050000;Backward Recovery;Backward Recovery;0D050000
+0D060000;Cause Consequence Diagrams;Cause Consequence Diagrams;0D060000
+0D070000;Checklists;Checklists;0D070000
+0D080000;Control Flow Analysis;Control Flow Analysis;0D080000
+0D090000;Common Cause Failure Analysis;Common Cause Failure Analysis;0D090000
+0D100000;Data Flow Analysis;Data Flow Analysis;0D100000
+0D110000;Data Flow Diagrams;Data Flow Diagrams;0D110000
+0D120000;Data Recording and Analysis;Data Recording and Analysis;0D120000
+0D130000;Decision Tables and Truth Tables;Decision Tables (Truth Tables);0D130000
+0D140000;Defensive Programming;Defensive Programming;0D140000
+0D150000;Coding Standards and Style Guide;Coding Standards and Style Guide;0D150000
+0D160000;Diverse Programming;Diverse Programming;0D160000
+0D170000;Dynamic Reconfiguration;Dynamic Reconfiguration;0D170000
+0D180000;Equivalence Classes and Input Partition Testing;Equivalence Classes and Input Partition Testing;0D180000
+0D190000;Error Detecting and Correcting Codes;Error Detecting and Correcting Codes;0D190000
+0D200000;Error Guessing;Error Guessing;0D200000
+0D210000;Error Seeding;Error Seeding;0D210000
+0D220000;Event Tree Analysis;Event Tree Analysis;0D220000
+0D230000;Fagan Inspections;Fagan Inspections;0D230000
+0D240000;Failure Assertion Programming;Failure Assertion Programming;0D240000
+0D250000;SEEA – Software Error Effect Analysis;SEEA – Software Error Effect Analysis;0D250000
+0D260000;Fault Detection and Diagnosis;Fault Detection and Diagnosis;0D260000
+0D270000;Finite State Machines/State Transition Diagrams;Finite State Machines/State Transition Diagrams;0D270000
+0D280000;Formal Methods;Formal Methods;0D280000
+0D290000;Formal Proof;Formal Proof;0D290000
+0D300000;Forward Recovery;Forward Recovery;0D300000
+0D310000;Graceful Degradation;Graceful Degradation;0D310000
+0D320000;Impact Analysis;Impact Analysis;0D320000
+0D330000;Information Hiding / Encapsulation;Information Hiding / Encapsulation;0D330000
+0D340000;Interface Testing;Interface Testing;0D340000
+0D350000;Language Subset;Language Subset;0D350000
+0D360000;Memorizing Executed Cases;Memorizing Executed Cases;0D360000
+0D370000;Metrics;Metrics;0D370000
+0D380000;Modular Approach;Modular Approach;0D380000
+0D390000;Performance Modelling;Performance Modelling;0D390000
+0D400000;Performance Requirements;Performance Requirements;0D400000
+0D410000;Probabilistic Testing;Probabilistic Testing;0D410000
+0D420000;Process Simulation;Process Simulation;0D420000
+0D430000;Prototyping / Animation;Prototyping / Animation;0D430000
+0D440000;Recovery Block;Recovery Block;0D440000
+0D450000;Response Timing and Memory Constraints;Response Timing and Memory Constraints;0D450000
+0D460000;Re-Try Fault Recovery Mechanisms;Re-Try Fault Recovery Mechanisms;0D460000
+0D470000;Safety Bag;Safety Bag;0D470000
+0D480000;Software Configuration Management;Software Configuration Management;0D480000
+0D490000;Strongly Typed Programming Languages;Strongly Typed Programming Languages;0D490000
+0D500000;Structure Based Testing;Structure Based Testing;0D500000
+0D510000;Structure Diagrams;Structure Diagrams;0D510000
+0D520000;Structured Methodology;Structured Methodology;0D520000
+0D530000;Structured Programming;Structured Programming;0D530000
+0D540000;Suitable Programming languages;Suitable Programming languages;0D540000
+0D550000;Time Petri Nets;Time Petri Nets;0D550000
+0D560000;Walkthroughs / Design Reviews;Walkthroughs / Design Reviews;0D560000
+0D570000;Object Oriented Programming;Object Oriented Programming;0D570000
+0D580000;Traceability;Traceability;0D580000
+0D590000;Metaprogramming;Metaprogramming;0D590000
+0D600000;Procedural programming;Procedural programming;0D600000
+0D650000;Data modelling;Data modelling;0D650000
+0D660000;Control Flow Diagram/Control Flow Graph;Control Flow Diagram/Control Flow Graph;0D660000
+0D670000;Sequence diagram;Sequence Diagram;0D670000
+0D680000;Tabular Specification Methods;Tabular Specification Methods;0D680000
+0D690000;Application specific language;Application specific language;0D690000
+0D700000;UML (Unified Modelling Language);UML (Unified Modelling Language);0D700000
+0D710000;Domain specific languages;Domain specific languages;0D710000
+EOD

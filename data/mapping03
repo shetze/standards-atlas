@@ -1,0 +1,24 @@
+### Standards Relationship Mapping
+from=EN50128
+to=IEC61508
+type=terms
+note="very few of the EN50128 terms have direct origins in IEC61508"
+###
+while read item
+do
+    linkItem "$item"
+done <<EOD
+03010200;Assessor;assessor;50308100000
+03010900;error;error;50306110000
+03011000;failure;failure;50306040000
+03011100;fault tolerance;fault tolerance;50306030000
+03012600;risk;risk;50301060000
+03012700;safety;safety;50301110000
+03012900;safety function;safety function;50305010000
+03013000;Safety-related software;safety-related software;50305150000
+03013100;software;software;50302050000
+03013400;software life cycle;software lifecycle;50307020000
+03013700;software safety integrity level;software safety integrity level;50305100000
+03014600;validation;validation;50308020000
+03014800;verification;verification;50308010000
+EOD

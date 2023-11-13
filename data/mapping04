@@ -1,0 +1,34 @@
+### Standards Relationship Mapping
+from=EN50126
+to=IEC61508
+type=terms
+note="few of the EN50126 terms have direct origins in IEC61508"
+###
+while read item
+do
+    linkItem "$item"
+done <<EOD
+103100000;common cause failure;common cause failure;50306100000
+103120000;configuration management;configuration management;50307030000
+103170000;diversity;diversity;50303070000
+103200000;error;error;50306110000
+103210000;failure of an item;failure;50306040000
+103240000;fault in a system;fault;50306010000
+103260000;functional safety;functional safety;50301120000
+103280000;hazard;hazard;50301020000
+103430000;pre-existing software;pre-existing software;50302080000
+103510000;random failure;random hardware failure;50306050000
+103550000;residual risk;residual risk;50301080000
+103630000;safe state;safe state;50301130000
+103640000;safety;safety;50301110000
+103680000;safety function;safety function;50305010000
+103690000;safety integrity;safety integrity;50305040000
+103700000;safety integrity level;safety integrity level, SIL;50305080000
+103740000;safety-related;safety-related system;50304010000
+103760000;software;software;50302050000
+103770000;subsystem;subsystem;50304040000
+103780000;system;electrical/electronic/programmable eletronic system, E/E/PE system;50303020000
+103790000;systematic failure;systematic failure;50306060000
+103820000;validation;validation;50308020000
+103830000;verification;verification;50308010000
+EOD
