@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 parent="IEC61508"
-digits=8
+digits=9
 volShift=0
 volDigits=0
 name="EN 50126:2017"
 
 structure=(
- "1-1 1-2 1-3 1-4 1-5 1-5.1 1-5.2 1-5.2.{1..3} 1-5.3 1-5.3.{1..3} 1-5.4 1-5.5 1-5.6 1-5.6.{1..4} 1-5.7 1-5.7.{1..2} 1-5.{8..9} 1-5.9.{1..3} 1-6 1-6.{1..4} 1-6.4.{1..2} 1-6.5 1-6.5.{1..4} 1-6.6 1-6.7 1-6.7.{1..3} 1-6.8 1-6.8.{1..2} 1-7 1-7.1 1-7.2 1-7.2.{1..3} 1-7.3 1-7.3.{1..3} 1-7.4 1-7.4.{1..3} 1-7.5 1-7.5.{1..3} 1-7.6 1-7.6.{1..3} 1-7.7 1-7.7.{1..4} 1-7.8 1-7.8.{1..3} 1-7.9 1-7.9.{1..4} 1-7.10 1-7.10.{1..3} 1-7.11 1-7.11.{1..3} 1-7.12 1-7.12.{1..4} 1-7.13 1-7.13.{1..3} 1-8 1-8.{1..2} 1-9:A 1-9:A.{1..4} 1-10:B 1-10:B.{1..6} 1-11:C 1-11:C.{1..4} 1-12:D 1-12:D.{1..3} 1-12:D.3.{1..3} 1-12:D.{4..5}"
- "2-{1..5} 2-5.{1..2} 2-5.2.{1..2} 2-5.{3..6} 2-6 2-6.{1..6} 2-7 2-7.{1..7} 2-8 2-8.{1..2} 2-8.2.{1..4} 2-8.3 2-8.3.{1..3} 2-8.4 2-8.4.{1..3} 2-9 2-9.{1..3} 2-9.3.{1..4} 2-10 2-10.{1..2} 2-10.2.{1..12} 2-10.3 2-11 2-11.{1..4} 1-12:A 2-12:A.{1..2} 2-12:A.2.{1..2} 2-12:A.3 2-12:A.3.{1..2} 2-12:A.3.2.{1..4} 2-13:B 2-14:C 2-15:D 2-15:D.{1..2} 2-15:D.2.{1..2} 2-15:D.3 2-15:D.3.{1..5} 2-16:E 2-16:E.{1..3} 2-17:F 2-17:G"
+ "1-1 1-2 1-3 1-t3.{1..83} 1-4 1-5 1-5.1 1-5.2 1-5.2.{1..3} 1-5.3 1-5.3.{1..3} 1-5.4 1-5.5 1-5.6 1-5.6.{1..4} 1-5.7 1-5.7.{1..2} 1-5.{8..9} 1-5.9.{1..3} 1-6 1-6.{1..4} 1-6.4.{1..2} 1-6.5 1-6.5.{1..4} 1-6.6 1-6.7 1-6.7.{1..3} 1-6.8 1-6.8.{1..2} 1-7 1-7.1 1-7.2 1-7.2.{1..3} 1-7.3 1-7.3.{1..3} 1-7.4 1-7.4.{1..3} 1-7.5 1-7.5.{1..3} 1-7.6 1-7.6.{1..3} 1-7.7 1-7.7.{1..4} 1-7.8 1-7.8.{1..3} 1-7.9 1-7.9.{1..4} 1-7.10 1-7.10.{1..3} 1-7.11 1-7.11.{1..3} 1-7.12 1-7.12.{1..4} 1-7.13 1-7.13.{1..3} 1-8 1-8.{1..2} 1-9:A 1-9:A.{1..4} 1-10:B 1-10:B.{1..6} 1-11:C 1-11:C.{1..4} 1-12:D 1-12:D.{1..3} 1-12:D.3.{1..3} 1-12:D.{4..5}"
+ "2-{1..5} 2-5.{1..2} 2-5.2.{1..2} 2-5.{3..6} 2-6 2-6.{1..6} 2-7 2-7.{1..7} 2-8 2-8.{1..2} 2-8.2.{1..4} 2-8.3 2-8.3.{1..3} 2-8.4 2-8.4.1 2-8.4.1.{1..4} 2-8.4.2 2-8.4.2.{1..4} 2-8.4.3 2-9 2-9.{1..3} 2-9.3.{1..4} 2-10 2-10.{1..2} 2-10.2.{1..12} 2-10.3 2-11 2-11.{1..4} 1-12:A 2-12:A.{1..2} 2-12:A.2.{1..2} 2-12:A.3 2-12:A.3.{1..2} 2-12:A.3.2.{1..4} 2-13:B 2-14:C 2-15:D 2-15:D.{1..2} 2-15:D.2.{1..2} 2-15:D.3 2-15:D.3.{1..5} 2-16:E 2-16:E.{1..3} 2-17:F 2-17:G"
 )
 
 return 0;
@@ -17,6 +17,89 @@ return 0;
 TOC;6f666d008ec7ba669b8474b58c2ac37c;EN 50126:2017-1 1;Scope
 TOC;aaa5853abebb53c33b78d5d14d3ce76c;EN 50126:2017-1 2;Normative references
 TOC;40f58ad8351da81c22ec2b524b2e5306;EN 50126:2017-1 3;Terms and definitions
+TOC;1805a351d43f902b503e97441b3194f9;EN 50126:2017-1 3.1;acceptance
+TOC;2563da0d97cc2cbc21ebb652e98df9f3;EN 50126:2017-1 3.2;accident
+TOC;ad6d3cf3cc10bf05be0e1b338f477f0a;EN 50126:2017-1 3.3;approval
+TOC;9612321fda4df0a05a7205c742acb708;EN 50126:2017-1 3.4;assurance
+TOC;fa0ce7363599ac10d04ba94a389a42ac;EN 50126:2017-1 3.5;audit
+TOC;2267b97e12f2745622b410bd17e18e15;EN 50126:2017-1 3.6;availability of a product
+TOC;e548a209f0912eeefeb3a7a6c141a275;EN 50126:2017-1 3.7;basic integrity
+TOC;18751212c438a5b10b2f34752155ec3e;EN 50126:2017-1 3.8;collective risk
+TOC;da4371a3317150bda0f0bb92aed2df4d;EN 50126:2017-1 3.9;commercial of the shelf product
+TOC;1e118754bc2c21feb7819f4862c53145;EN 50126:2017-1 3.10;common cause failure
+TOC;e5fd71b40d7de536d1463ba8a97fd156;EN 50126:2017-1 3.11;compliance
+TOC;a85efd595b3432a946eb1e2cfe0e6629;EN 50126:2017-1 3.12;configuration management
+TOC;198e4cf5f1eb361701441ba23db4e5b6;EN 50126:2017-1 3.13;consequence analysis
+TOC;a44e80cd6772a1b5ea2673ab1bbd1aac;EN 50126:2017-1 3.14;corrective maintenance
+TOC;fbf9c41a6634d6e451acb9e2258e960d;EN 50126:2017-1 3.15;design
+TOC;80145e3acade2b917c95b167267a2762;EN 50126:2017-1 3.16;deterministic
+TOC;899d2ae36b291bd9a224a21043f19eb5;EN 50126:2017-1 3.17;diversity
+TOC;e23d20dab1d4a0d2c288dcdb4aadadbf;EN 50126:2017-1 3.18;entity
+TOC;4630b089460203080241635cb92ce38f;EN 50126:2017-1 3.19;equivalent fatality
+TOC;9b11a30ad75143166357c1797b20a079;EN 50126:2017-1 3.20;error
+TOC;74126114df71c88e5b8ebacb8fd1b653;EN 50126:2017-1 3.21;failure of an item
+TOC;9614d67a37f2cd0f2fb53501ca5dc2d2;EN 50126:2017-1 3.22;failure mode
+TOC;b3c227f86dbdba2e94d2d35af71cae60;EN 50126:2017-1 3.23;failure rate
+TOC;3549c63a105947d73070c17d09f6887a;EN 50126:2017-1 3.24;fault in a system
+TOC;afb8739695f09a1e55f975ce1f7ac1db;EN 50126:2017-1 3.25;function of an item
+TOC;c378bd5174b27aae3bc04e46127c8b6d;EN 50126:2017-1 3.26;functional safety
+TOC;7069851ec9abbf695eb5e2f74cd7782b;EN 50126:2017-1 3.27;generic product
+TOC;e35be42da2090b132c52b8c579467eeb;EN 50126:2017-1 3.28;hazard
+TOC;ccd297e2add8e1dc2c0eb2d7e3d71109;EN 50126:2017-1 3.29;hazard analysis
+TOC;a459385749ccad725fb8986088a69878;EN 50126:2017-1 3.30;hazard log
+TOC;50ed6742bbc9626953d94e5aa31118f2;EN 50126:2017-1 3.31;hazard rate
+TOC;f71411d8b4049080f76f179e37345902;EN 50126:2017-1 3.32;implementation
+TOC;89c70a7d52b617d389f8a34ee2eda263;EN 50126:2017-1 3.33;independent safety assessment
+TOC;efe37cd01e77d8737ca966d1d320d50b;EN 50126:2017-1 3.34;individual risk
+TOC;609e8ea79f4936d96ec4239122199753;EN 50126:2017-1 3.35;integration
+TOC;0b3ce19b288d407db2a9e4f15beb2d5c;EN 50126:2017-1 3.36;life cycle
+TOC;acfb4a8de01b2fd07adedbc431cccee4;EN 50126:2017-1 3.37;maintainability of an item
+TOC;ee6712bc4f8e19d2a67af41fff592f7c;EN 50126:2017-1 3.38;maintenance
+TOC;1a050a252fde2a1f2108a814c455ac35;EN 50126:2017-1 3.39;mission
+TOC;8ccca26ae22f8077015e74284cabe6ea;EN 50126:2017-1 3.40;mission profile
+TOC;4251a9cb517074110a0cc10ddb507b15;EN 50126:2017-1 3.41;negation
+TOC;76e6d85649b2b14f0aa1b25b35744299;EN 50126:2017-1 3.42;negation time
+TOC;8a9a0e712a0f7a93d50cf063fd52a336;EN 50126:2017-1 3.43;pre-existing software
+TOC;b3ac07f2bbbdb03a78046e556d165384;EN 50126:2017-1 3.44;preventive maintenance
+TOC;77f69a19b6983482bbd1c1b34e21ef08;EN 50126:2017-1 3.45;product in railway
+TOC;de21cf07e45a5b51ccc81a44509dd315;EN 50126:2017-1 3.46;project management
+TOC;ca1022872e76937e01460dd97b92efdd;EN 50126:2017-1 3.47;project manager
+TOC;f4de41fc2e3bd7a23f232f22c41eea9b;EN 50126:2017-1 3.48;railway duty holder
+TOC;794876445b445572780c34feabfac7ee;EN 50126:2017-1 3.49;RAM plan
+TOC;ebc7148a15e6d009d50982b691a5a3a4;EN 50126:2017-1 3.50;RAMS management process
+TOC;e3a6e1889b513eeb2a2538092a4b172e;EN 50126:2017-1 3.51;random failure
+TOC;52b62ed075cbbaa00dfaeba9ae6adfe5;EN 50126:2017-1 3.52;reliability of an item
+TOC;1ad733ffaeccabd4b27011869184a340;EN 50126:2017-1 3.53;reliability growth of an item
+TOC;ef79e2c0122e35ae64167d26d4389c10;EN 50126:2017-1 3.54;repair
+TOC;a5c0d1cbb7f869434aa774790b5bd559;EN 50126:2017-1 3.55;residual risk
+TOC;59b99d3469454aca7826237272f888a8;EN 50126:2017-1 3.56;restoration
+TOC;ba319d896cfa0b1a0bcaa700367951cc;EN 50126:2017-1 3.57;risk for railway RAMS
+TOC;285bd61ccacbd46d6017dded08e9ff8b;EN 50126:2017-1 3.58;risk analysis
+TOC;31c32b88157aeb01152f6f844801cb05;EN 50126:2017-1 3.59;risk assessment
+TOC;f3c004ca3a02d68dd4e3b9622a07b389;EN 50126:2017-1 3.60;risk based approach
+TOC;027dfffb1b842472055073b82e754b92;EN 50126:2017-1 3.61;risk evaluation
+TOC;94a91e97839cdf66eec198acd6eaccb5;EN 50126:2017-1 3.62;risk management
+TOC;794337d619c06a6f2e3603cadd1eebaf;EN 50126:2017-1 3.63;safe state
+TOC;b83a6f0261db219105618132a3cbddc7;EN 50126:2017-1 3.64;safety
+TOC;0484f005e6a07eff9df1b0a3b39b0837;EN 50126:2017-1 3.65;safety authority
+TOC;fa839c055966c8b351e55253709de867;EN 50126:2017-1 3.66;safety barrier
+TOC;0006d7d06ccfd5930363f81f8649bc04;EN 50126:2017-1 3.67;safety case
+TOC;21ab426904542ecdeb9267decc817de1;EN 50126:2017-1 3.68;safety function
+TOC;d90a0b0f39c647da739bc7e5bb2be173;EN 50126:2017-1 3.69;safety integrity
+TOC;d3388989db03cf061fbddcccc428d6c5;EN 50126:2017-1 3.70;safety integrity level
+TOC;22d5f9a5304cffb16881529dd3a5ebf2;EN 50126:2017-1 3.71;safety management
+TOC;559e0dea325f93158f73b8ee68868da4;EN 50126:2017-1 3.72;safety management process
+TOC;7ce2c392eb0666bd4ccabd17a2bd8864;EN 50126:2017-1 3.73;safety plan
+TOC;e0ae5f5061f65859702601ac3210b1cf;EN 50126:2017-1 3.74;safety-related
+TOC;7f3a392de3fa591cf9ccbfbd200b8fa8;EN 50126:2017-1 3.75;safety-related application conditions
+TOC;ffc0021a52edb9d0537a0b17a12ecb3b;EN 50126:2017-1 3.76;software
+TOC;e330f03d8a7b0e53a0eb3b4eb6597086;EN 50126:2017-1 3.77;subsystem
+TOC;57a674c534a2d3d47b37d8ad029ba50b;EN 50126:2017-1 3.78;system
+TOC;b9578f1db37bb8cbcb1a4791e3bd1abc;EN 50126:2017-1 3.79;systematic failure
+TOC;079b3c6d9da3ce79cd10a7bde6f3d0fa;EN 50126:2017-1 3.80;technical safety
+TOC;b4e608ac82ea055a635918e3b458b927;EN 50126:2017-1 3.81;testing
+TOC;cc0ae533beceb8e8968df7363757e8b4;EN 50126:2017-1 3.82;validation
+TOC;ba03ebbbafdee417a50735f5a60994de;EN 50126:2017-1 3.83;verification
 TOC;ee54235d808b53149a1e9cec6fa23975;EN 50126:2017-1 4;Abbreviations
 TOC;1e198bfa539d13f62836ef831c647cce;EN 50126:2017-1 5;Railway RAMS
 TOC;539e35e486048e6ccfcccfea21e727ea;EN 50126:2017-1 5.1;Introduction
@@ -31,7 +114,7 @@ TOC;20c0096630136531ff254f894e297ebe;EN 50126:2017-1 5.3.3;Railway system struct
 TOC;cc3307349222d0301b26e0e842315d97;EN 50126:2017-1 5.4;Railway RAMS and quality of service
 TOC;5e3aad9bbdc2b0eab9225f82dfd3ff64;EN 50126:2017-1 5.5;Elements of railway RAMS
 TOC;947d5c5b813f9cab4db1c538824600b3;EN 50126:2017-1 5.6;Factors influencing railway RAMS
-TOC;2f2a133334612d442fd2cd12f989e9d3;EN 50126:2017-1 5.6.General1;
+TOC;2f2a133334612d442fd2cd12f989e9d3;EN 50126:2017-1 5.6.1;General
 TOC;b70d2f4eacb33ab8587d63714a45d659;EN 50126:2017-1 5.6.2;Classes of failures
 TOC;5a34dd30b15cd8a648c84c21053c6202;EN 50126:2017-1 5.6.3;Derivation of detailed railway specific influencing factors
 TOC;8945c4dda8580e833adb2478e05fd156;EN 50126:2017-1 5.6.4;Human factors
@@ -89,6 +172,7 @@ TOC;3e64cff41852987c3fa97bc7238a3dfd;EN 50126:2017-1 7.7;Phase 6: Design and Imp
 TOC;1590a307369f3feacf4e5f09d557e88a;EN 50126:2017-1 7.7.1;Objectives
 TOC;012247ed012df90326c9672c756027f3;EN 50126:2017-1 7.7.2;Activities
 TOC;8dbd0b9d0fcf32a8a32a973d5a17ae2a;EN 50126:2017-1 7.7.3;Deliverables
+TOC;f707aa26fc6a5e24adfb5557b29852e1;EN 50126:2017-1 7.7.4;Specific verification tasks
 TOC;e0a73ae579d828407dad5c79c7664b6f;EN 50126:2017-1 7.8;Phase 7: Manufacture
 TOC;e68cec896fee4fd2437097cf1a421ab4;EN 50126:2017-1 7.8.1;Objectives
 TOC;fbe19a82f0a30e7156b8ad627fd20809;EN 50126:2017-1 7.8.2;Activities
@@ -97,6 +181,7 @@ TOC;7fce84a2f895ff9b91a88102f50f14f4;EN 50126:2017-1 7.9;Phase 8: Integration
 TOC;fa9590569317dadfac4c8b52183296f7;EN 50126:2017-1 7.9.1;Objectives
 TOC;495ec162ee3ea3099ee21ce2bd8ace18;EN 50126:2017-1 7.9.2;Activities
 TOC;f3c15ed22b478a7765cbca121cc55b67;EN 50126:2017-1 7.9.3;Deliverables
+TOC;77049f2256470e44a6462b2bb9aab421;EN 50126:2017-1 7.9.4;Specific verification tasks
 TOC;bcbe3e9bdc649d9a4a047361dbff62c5;EN 50126:2017-1 7.10;Phase 9: System Validation
 TOC;cce0dd7b64af8a1cd4e0df162eea9c44;EN 50126:2017-1 7.10.1;Objectives
 TOC;6459c39d9334c719f06b5f54a78fd684;EN 50126:2017-1 7.10.2;Activities
@@ -109,6 +194,7 @@ TOC;4a936ac3a60e1d34dc6ffcbc694887b7;EN 50126:2017-1 7.12;Phase 11: Operation, m
 TOC;cade49b01af5586e23a135e1324cdee8;EN 50126:2017-1 7.12.1;Objectives
 TOC;3709463212064837360e4b807f43a701;EN 50126:2017-1 7.12.2;Activities
 TOC;50ce7b40e0ed0dc9c71d06cbc0cac445;EN 50126:2017-1 7.12.3;Deliverables
+TOC;34472ccf0e7742ce57c57dd4cb794dfc;EN 50126:2017-1 7.12.4;Specific verification tasks
 TOC;77cbf00e9b867e6d3aec0ffa8c7a5be3;EN 50126:2017-1 7.13;Phase 12: Decommissioning
 TOC;50eee125cb9ed45c52f314c00e791388;EN 50126:2017-1 7.13.1;Objectives
 TOC;b54faf62caf3409fd9753926f978a5c8;EN 50126:2017-1 7.13.2;Activities
@@ -117,6 +203,7 @@ TOC;f4fb2137bec603b60fc180ebfb0a3da7;EN 50126:2017-1 8;Safety Case
 TOC;55877fcc51a9a1623ba7813582fd4ff7;EN 50126:2017-1 8.1;Purpose of a safety case
 TOC;5f5f5e52155032edabe12a42d315882a;EN 50126:2017-1 8.2;Content of a safety case
 TOC;e1efe9620a814c5a809ea4e2e0b3b691;EN 50126:2017-1 A;RAMS plan
+TOC
 TOC;18b89beb0f097200ea31affd08dde453;EN 50126:2017-1 A.1;General
 TOC;bf57bbebc02c4dce2749084c4b165c16;EN 50126:2017-1 A.2;Procedure
 TOC;261d4fb6ec014ce2e5cd6f409fc9766b;EN 50126:2017-1 A.3;Basic RAMS plan example
@@ -214,7 +301,8 @@ TOC;9ee99432124d286dce911339c721cdfa;EN 50126:2017-2 11.1;TOC
 TOC;81b78281cebb15658c03c0bdb2cace0b;EN 50126:2017-2 11.2;TOC
 TOC;4b2dd078251d415d04dc2ea55bcfa3f8;EN 50126:2017-2 11.3;TOC
 TOC;97ed9672154dcc3905be9b9d2b6ff37b;EN 50126:2017-2 11.4;TOC
-TOC;e1efe9620a814c5a809ea4e2e0b3b691;EN 50126:2017-1 A;TOC
+TOC;e1efe9620a814c5a809ea4e2e0b3b691;EN 50126:2017-1 A;RAMS plan
+TOC
 TOC;6e29a2fb5e56c133619e162ca10e41fa;EN 50126:2017-2 A.1;TOC
 TOC;10948f837105e6b31170ae53a8849734;EN 50126:2017-2 A.2;TOC
 TOC;6088c40a1105d56643dfc97d30a95e13;EN 50126:2017-2 A.2.1;TOC
