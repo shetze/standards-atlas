@@ -126,8 +126,7 @@ addItem()
         chapter=$item
     fi
     typeID=${chapter:0:1}
-    pattern='[a-z]'
-    if [[ $chapter =~ $pattern ]]; then
+    if [[ $chapter =~ [a-z] ]]; then
         chapter=${chapter:1}
     fi
     if [ -n "$chaptersub" ]; then
@@ -144,12 +143,17 @@ addItem()
     fi
     index="$chapter"
     if [ -n "$section" ]; then
-        dsname="${dsname}$(printf '%02d' ${section})"
+        if [[ "$section" =~ \+ ]]; then
+            section=${section:1}
+            dsname="${dsname}$(printf '%03d' ${section})"
+        else
+            dsname="${dsname}$(printf '%02d' ${section})"
+        fi
         index="${index}.${section}"
         level="${level}.${section}"
     fi
     if [ -n "$paragraph" ]; then
-        if [[ $paragraph =~ § ]]; then
+        if [[ "$paragraph" =~ \+ ]]; then
             paragraph=${paragraph:1}
             dsname="${dsname}$(printf '%03d' ${paragraph})"
         else
