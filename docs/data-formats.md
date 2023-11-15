@@ -20,7 +20,7 @@ Here is an example of such a structure:
 
 ```
 structure=(
- "0-1 0-2 0-3 0-3.{1..4} 0-r3.4.{1..13} 0-4 0-4.{1..9} 0-5:A 0-c5:A.{1..6}"
+ "0-1 0-2 0-3 0-3.{1..4} 0-r3.4.{1..13} 0-4 0-4.+{1..133} 0-5:A 0-c5:A.{1..6}"
  ...
 )
 ```
@@ -40,6 +40,8 @@ All other index entries are simply the table of content.
 If the TOC entry in the standard begins with a capital letter (typical for the annexes), the index is preceded by a number to assign this index to the numerical system of UIDs and separated from the index by a colon.
 
 Finally, the index can also contain enumerations to simplify areas with continuous numbering.
+
+The magic `+` allows 3 digit numbers for the section and paragraph range.
 
 ## Standards default content
 
