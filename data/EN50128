@@ -3,13 +3,18 @@ parent="IEC61508"
 digits=8
 volShift=0
 volDigits=0
-name="EN 50128:2011"
+name="EN 50128"
+oyr=2011
 
 structure=(
- "1 2 3 3.1 t3.1.{1..49} 3.2 4 5 5.1 5.2 5.3 6 6.{1..7} 7 7.{1..7} 8 8.{1..4} 9 9.{1..2} 10:A 10:A.{1..2} 11:B 12:C 13:D 13:D.{1..71}"
+ "2011 1 2 3 3.1 t3.1.{1..49} 3.2 4 5 5.1 5.2 5.3 6 6.{1..7} 7 7.{1..7} 8 8.{1..4} 9 9.{1..2} 10:A 10:A.{1..2} 11:B 12:C 13:D 13:D.{1..71}"
 )
 
 return 0;
 ####
-#### the remainder of this file consists of data that is processed by standards-atlas
+#      The remainder of this file consists of data that is processed by standards-atlas
+#
+#      The structure and titles provided in this list are taken with permission by Cenelec from the
+#      actual standard documents, which are copyright protected by Cenelec and available at www.cenelec.eu
+#
 ####
