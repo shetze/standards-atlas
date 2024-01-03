@@ -103,11 +103,11 @@ addItem()
     local headline=''
     local volNR=$(cut -s -d'-' -f1 <<<$item)
     if [ -n "$volNR" ]; then
+        StdVolume="-${volNR}"
         volNR=$((volNR+volShift))
         while [ ${#volNR} -lt "$volDigits" ]; do
             volNR="0${volNR}"
         done
-        StdVolume="-${volNR}"
         item=$(cut -s -d'-' -f2 <<<$item)
     else
         StdVolume=""
