@@ -103,14 +103,14 @@ addItem()
     local headline=''
     local volNR=$(cut -s -d'-' -f1 <<<$item)
     if [ -n "$volNR" ]; then
-        volume="-${volNR} "
         volNR=$((volNR+volShift))
         while [ ${#volNR} -lt "$volDigits" ]; do
             volNR="0${volNR}"
         done
+        StdVolume="-${volNR}"
         item=$(cut -s -d'-' -f2 <<<$item)
     else
-        volume=" "
+        StdVolume=""
     fi
     # substitution for chapters A-ZZ
     local chaptersub=$(cut -s -d':' -f1 <<<$item)
@@ -175,14 +175,14 @@ addItem()
     pad=$(printf "%*s" "$digits")
     pad=${pad// /0}
     dsname=$(printf "%s%s" $dsname "${pad:${#dsname}}")
-    indexString="${name}${volume}${index}"
+    indexString="${name}${StdVolume}:${year} ${index}"
     locID=$(echo -n $indexString | md5sum | cut -c 1-32)
     title=$(grep "TOC;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
-#    if [ -z "$title" ]; then
-#        xString="${name}-${volNR} ${index}"
-#        xID=$(echo -n $xString | md5sum | cut -c 1-32)
-#        title=$(grep "TOC;$xID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
-#    fi
+    if [ -z "$title" ]; then
+        xString="${name}:${oyr}${StdVolume} ${index}"
+        xID=$(echo -n $xString | md5sum | cut -c 1-32)
+        title=$(grep "TOC;$xID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+    fi
     headline=$(grep "TEXT;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
     text=$(grep "TEXT;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f5)
     if [ -n "$headline" ]; then
@@ -254,8 +254,11 @@ do
 
     setAttributes ${standard} ${name} 
 
-    for volume in ${structure[@]}
+    for index in ${!structure[@]}
     do
+        volume=${structure[$index]}
+        year=${volume:0:4}
+        volume=${volume:5}
         for item in $(eval echo ${volume})
         do
             addItem ${item} ${standard}
