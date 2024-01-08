@@ -51,7 +51,7 @@ The data is stored as a semicolon separated list.
 
 The lines marked as TOC in the first column are used for the table of contents or the title lines, and those marked as TEXT are used for the text.
 
-The second column contains an md5 hash to uniquely identify each entry.
+The second column contains an md5 hash to uniquely identify each entry. This md5hash is based on the string value of the third column. 
 
 The third column contains either the doorstop UID of the item or the complete index reference in the standard document.
 
