@@ -1549,5 +1549,241 @@ TOC;28529c92173f98f1c22b6afa93bc1c7f;ISO 26262-10:2018 14.4;Monitoring of the sa
 TOC;f0d36abf53b1b4789dbc62f0f05646a3;ISO 26262-10:2018 A;Fault tree construction and applications
 TOC;ec0461833fe92348d94819a1e15e3fd9;ISO 26262-10:2018 A.1;General
 TOC;7bea2fa645e325c217e63bbb303abc51;ISO 26262-10:2018 A.2;Combining FTA and FMEA
-TOC;0a2bdbbb45458873c63c130da4a88fe2;ISO 26262-11:2018 1;TOC
+TOC;9927c7d83a4e3901b1f4e2e55ad03ed5;ISO 26262-11:2018 0;Part 11
+TOC;0a2bdbbb45458873c63c130da4a88fe2;ISO 26262-11:2018 1;Scope
+TOC;5bf387e0c332606c64ac13a51e055f69;ISO 26262-11:2018 2;Normative references
+TOC;060ad5e2bf7799b8a4843b9ad994bd8b;ISO 26262-11:2018 3;Terms and definitions
+TOC;cbbbf12e2adc6989d15bbc3126fb47ec;ISO 26262-11:2018 4;A semiconductor component and its partitioning
+TOC;8117018046f22e84c58cb037a849a136;ISO 26262-11:2018 4.1;How to consider semiconductor components
+TOC;8fd95563e9ac884971b21a9e0d1eceab;ISO 26262-11:2018 4.1.1;Semiconductor component development
+TOC;cf431b1852c29d41d6464f8d444aa910;ISO 26262-11:2018 4.2;Dividing a semiconductor component in parts
+TOC;cc41fc6e1ce232d417b8599431bb774d;ISO 26262-11:2018 4.3;About hardware faults, errors and failure modes
+TOC;785751f0d37f1989e096e9d8b1db7137;ISO 26262-11:2018 4.3.1;Fault modes
+TOC;35557c01d96f48c8a25b3833089dd81b;ISO 26262-11:2018 4.3.2;Failure modes
+TOC;163d2b217592bf014b7b160f8a620659;ISO 26262-11:2018 4.3.3;The distribution of base failure rate across failure modes
+TOC;438eff2cd8c9c04c4c12e8fa2bed0e03;ISO 26262-11:2018 4.4;About adapting a semiconductor component safety analysis to system level
+TOC;39009514e3250a1cce7f2a7e5e450366;ISO 26262-11:2018 4.5;Intellectual property (IP)
+TOC;61a3e09156c5a1929b71826df88b0c53;ISO 26262-11:2018 4.5.1;About IP
+TOC;9c0ed63f16bf029c592ca849e327dd7b;ISO 26262-11:2018 4.5.1.1;Understanding IP
+TOC;86ae93e8ff4fdb3b64c54e25049c6784;ISO 26262-11:2018 4.5.1.2;Types of IP
+TOC;f739191038cf957f5fd506d202175569;ISO 26262-11:2018 4.5.2;Category and safety requirements for IP
+TOC;4fb688213dd64fb7d0d65d9f5091a364;ISO 26262-11:2018 4.5.3;IP lifecycle
+TOC;271aac362f43ba4e1185e04221726d4e;ISO 26262-11:2018 4.5.3.1;Introduction
+TOC;c12e4b6b10d76c6583ebaaede3eaf122;ISO 26262-11:2018 4.5.3.2;IP as SEooC
+TOC;ceb1b672bdc8ee5fc51061095b16161b;ISO 26262-11:2018 4.5.3.3;IP designed in context
+TOC;af79e592dc8c979536b1a95a0f9921b3;ISO 26262-11:2018 4.5.3.4;IP use through evaluation of hardware element
+TOC;142d28f95a91a7253bdd6b276fcd6b9d;ISO 26262-11:2018 4.5.3.5;IP use through the "proven in use" argument
+TOC;244d63b7cc98895a5c4a5dc3ca921ff6;ISO 26262-11:2018 4.5.4;Work products for IP
+TOC;f86db91fbf6c6144f86146019d4906e3;ISO 26262-11:2018 4.5.4.1;List of work products for IP
+TOC;7595b9eda5d3611d55f4933171a1c8e4;ISO 26262-11:2018 4.5.4.2;Safety plan
+TOC;516adef26ed797d137cfdeab6a62d1de;ISO 26262-11:2018 4.5.4.3;Safety requirements allocated to the IP design
+TOC;772ac8b64c5bb585929328613085e1b9;ISO 26262-11:2018 4.5.4.4;Hardware design verification and verification review of the IP design
+TOC;04b69863d8276c57293c6faa899654e7;ISO 26262-11:2018 4.5.4.5;Safety analysis report
+TOC;acebd42b1995c0b08d2249f6db59f72f;ISO 26262-11:2018 4.5.4.6;Analysis of dependent failures
+TOC;127e074c2c7a756021162459dcc11d4c;ISO 26262-11:2018 4.5.4.7;Confimation measures
+TOC;e0d3126e5749012ac7e4ddd53ba44a10;ISO 26262-11:2018 4.5.4.8;Development interface agreement
+TOC;fcd0e61a4925d09f554edd3611819570;ISO 26262-11:2018 4.5.4.9;Integration documentation set
+TOC;4d62d28b0734e61fe7ed4a34a2e8eb13;ISO 26262-11:2018 4.5.4.10;Applicability of work products of IP categories
+TOC;5aae1a175d23dd6cb16a0018c3e69bbb;ISO 26262-11:2018 4.5.5;Integration of black-box IP
+TOC;74b19ca4c2e5405dec2521e79815cef9;ISO 26262-11:2018 4.6;Base failure rate for semiconductors
+TOC;3997fabe99236f2d056ebea606a8bdb7;ISO 26262-11:2018 4.6.1;General notes on base failure rate estimation
+TOC;69c9e38afdb8b2446b549c763798c525;ISO 26262-11:2018 4.6.1.1;Introduction
+TOC;701d72c1353ce057f332dd4927957d1b;ISO 26262-11:2018 4.6.1.2;Quantitative target values and reliability prediction
+TOC;186565e79185950a1612b1d4d27db526;ISO 26262-11:2018 4.6.1.3;Difference between systematic and random failures
+TOC;7e46e712de8c893a4b2f18d4f35c4579;ISO 26262-11:2018 4.6.1.4;Effect of failure recovery mechanisms
+TOC;44a436615927e35c7a40d81322f038ce;ISO 26262-11:2018 4.6.1.5;Considerations about non-constant failure rates
+TOC;1481ea4bd83d6496baaefd5b714fabc8;ISO 26262-11:2018 4.6.1.6;Techniques and sources for base failure rate estimation
+TOC;a7330250b21c35cab97eb521aba2ff85;ISO 26262-11:2018 4.6.1.7;Documentation on the assumptions for base failure rate calculation
+TOC;43efdccad15583b49704f5af73d944e4;ISO 26262-11:2018 4.6.1.8;Transient fault quantification
+TOC;adf039abc726f39084213842d3f51f19;ISO 26262-11:2018 4.6.1.9;Notes on component package failure rate
+TOC;f0c1cc0e4c42ffccfec0093fa3fbce67;ISO 26262-11:2018 4.6.1.10;Consideration of power-up time and power-down time
+TOC;b898679dcccdbaa67ec2c491077e216c;ISO 26262-11:2018 4.6.2;Permanent base failure rate calculation methods
+TOC;d218a5713cf97e2e088e2efd8de63791;ISO 26262-11:2018 4.6.2.1;Permanent base failure rate calculation using or based on industry sources
+TOC;db21ec33b330e77f989dfcb53be6b23f;ISO 26262-11:2018 4.6.2.1.1;Model for reliability prediction of electronics components (former IEC TR 62380)
+TOC;9bed69f4747dcb5a2c3ff9bdc6c266f0;ISO 26262-11:2018 4.6.2.1.1.1;How to combine λ1 and λ2
+TOC;aa5bbddbdec816564bafe2d23f9d2663;ISO 26262-11:2018 4.6.2.1.1.2;Temperature de-rating
+TOC;7877b5338a0171a45d8f9f0483d8f028;ISO 26262-11:2018 4.6.2.1.1.3;Package base failure rate calculation
+TOC;b5b5122183a524bde96a14efb6340c7b;ISO 26262-11:2018 4.6.2.1.1.4;Example of failure rate resulting from electrical overstress
+TOC;2969f23773b555da4861f705dd930f7f;ISO 26262-11:2018 4.6.2.1.2;SN 29500
+TOC;9dfa087148cab7ce5fc25fac00230032;ISO 26262-11:2018 4.6.2.1.2.1;Example of computation for a semiconductor component
+TOC;47e615876d2effdc2eaa8f4bd1bedf51;ISO 26262-11:2018 4.6.2.1.2.2;Failure rate calculation for the semiconductor component example without non-operating phase
+TOC;1dd87f421f885e07ffbe25a76121504b;ISO 26262-11:2018 4.6.2.1.2.3;Failure rate calculation for the semiconductor component example with non-operating phase
+TOC;de295c7b5b0db90e22b8a9ef0536b449;ISO 26262-11:2018 4.6.2.1.2.4;Method to split SN 29500 overall failure rate into die and package failure rates
+TOC;ca8b4a0236a763bf3910ffe7af433d6c;ISO 26262-11:2018 4.6.2.1.3;FIDES Guide
+TOC;53a5ec8b4618256c8f09b023a7e7cfa4;ISO 26262-11:2018 4.6.2.2;Permanent base failure rate calculation using field data statistics
+TOC;c737accf8933721c273338b6ebdf0813;ISO 26262-11:2018 4.6.2.2.1;Exponential model method
+TOC;51eff4ff12f8f633a6907dfffb62da26;ISO 26262-11:2018 4.6.2.2.2;Calculation example of hardware component failure rate
+TOC;f50f007202ca3e1427d10466defd3c68;ISO 26262-11:2018 4.6.2.3;Base failure rate calculation using accelerated life tests
+TOC;d4c6b4ce5058674d2ce3929bbbd261a3;ISO 26262-11:2018 4.6.2.4;Failure rate distribution methods
+TOC;3c79be7a8e51e645f52cba33f3246592;ISO 26262-11:2018 4.6.2.5;Base Failure Rate for MCM
+TOC;f0afc04bc580a1ec45475cb4cb26b71e;ISO 26262-11:2018 4.7;Semiconductor dependent failure analysis
+TOC;4c4414d6459a86e70fc6820ad911a942;ISO 26262-11:2018 4.7.1;Introduction to DFA
+TOC;f99160bf1a59041fcb9748d5e8762ec7;ISO 26262-11:2018 4.7.2;Relationship between DFA and safety analysis
+TOC;cfb1249da57426f5008196f0f3bba810;ISO 26262-11:2018 4.7.3;Dependent failure scenarios
+TOC;eb99369b4f97ee01e889ff1c9660611f;ISO 26262-11:2018 4.7.4;Distinction between cascading failures and common cause failures
+TOC;6dd16514b39eb0f9818c7110f9ec4367;ISO 26262-11:2018 4.7.5;Dependent failure initiators and mitigation measures
+TOC;002ac504a2525faf4316a168a772fae0;ISO 26262-11:2018 4.7.5.1;List of dependent failure initiators and related mitigation measures
+TOC;14ae32dfe8b8e307ff198afe0fea66f5;ISO 26262-11:2018 4.7.5.2;Verification of mitigation measures
+TOC;f5259956b849537b6a9cebf35786bb9e;ISO 26262-11:2018 4.7.6;DFA workflow
+TOC;4354ffc63fd48b49e7c62b492df03230;ISO 26262-11:2018 4.7.6.1;DFA decision and identification of hardware and software elements
+TOC;762812fb3c92eed38b3cc148f88986a9;ISO 26262-11:2018 4.7.6.2;Identification of DFI
+TOC;23c8aafbfa78e3d4aa324f2a5a8fe806;ISO 26262-11:2018 4.7.6.3;Sufficiency of insight provided by the available information on the effect of identified DFI (B3 & B4)
+TOC;1f634cc05be451e0d2b56b5e55feea4b;ISO 26262-11:2018 4.7.6.4;Consolidation of list of relevant DFI (B5)
+TOC;ead910764c54007d27cd244beb112410;ISO 26262-11:2018 4.7.6.5;Identification of necessary safety measures to control or mitigate DFI (B6)
+TOC;b48f632779a57dbc92d179749fd220c2;ISO 26262-11:2018 4.7.6.6;Sufficiency of insight provided by the available information on the defined mitigation measures (B7 & B8)
+TOC;5b297ec3def8aab232a53ba02cd0d9ae;ISO 26262-11:2018 4.7.6.7;Consolidate list of safety measures (B9)
+TOC;d31b12c5595920a7e3c74793b4b348e5;ISO 26262-11:2018 4.7.6.8;Evaluation of the effectiveness to control or to avoid the dependent failures (B10)
+TOC;1bb9495fd8cf7917521ecbeecf92606b;ISO 26262-11:2018 4.7.6.9;Assessment of risk reduction sufficiency and if required improve defined measures (B11 & B12)
+TOC;bbacb6c816d58d68dcac827b066bbd4c;ISO 26262-11:2018 4.7.7;Example of dependent failures analysis
+TOC;312adbd79fcb60fef8ec47194157cb41;ISO 26262-11:2018 4.7.8;Dependent failures between software element and hardware element
+TOC;e7ec8e10b8de63adc24d4b0cf2cf431d;ISO 26262-11:2018 4.8;Fault injection
+TOC;f7bdc97e531bb3f77af5671cbfa30fd7;ISO 26262-11:2018 4.8.1;General
+TOC;47f5dc244766c8ba244a6b600d799b49;ISO 26262-11:2018 4.8.2;Characteristics or variables of fault injection
+TOC;3b310fed3f004a1e81ab176f7ca55c7d;ISO 26262-11:2018 4.8.3;Fault injection results
+TOC;2aef4ee62bc2acc72925ffaa77cacda0;ISO 26262-11:2018 4.9;Production and Operation
+TOC;5803a2606a2101bc726be9e1ce1d1353;ISO 26262-11:2018 4.9.1;About Production
+TOC;a2bfd8005136cd0ece544bac9cf7fc9e;ISO 26262-11:2018 4.9.2;Production Work Products
+TOC;93bc7a81a367ccd8ee503fd3e872996c;ISO 26262-11:2018 4.9.3;About service (maintenance and repair),and decommissioning
+TOC;0b79208971598d248307601a34fd4088;ISO 26262-11:2018 4.10;Interfaces within distributed developments
+TOC;7d38e5a581b61117c17970b0b4c87ef3;ISO 26262-11:2018 4.11;Confirmation measures
+TOC;4eed091804410ac5f3fd9f0f2b5e9cd2;ISO 26262-11:2018 4.12;Clarification on hardware integration and verification
+TOC;8a3c8f152ce31f2a52d75e250da16a2e;ISO 26262-11:2018 5;Specific semiconductor technologies and use cases
+TOC;e128ebdc685fe602e85fb9599b9f59b7;ISO 26262-11:2018 5.1;Digital components and memories
+TOC;6a7479f26f9126c982dcd0db0c2430c0;ISO 26262-11:2018 5.1.1;About digital components
+TOC;28ec3016265012c34088fe7756e53810;ISO 26262-11:2018 5.1.2;Fault models of non-memory digital components
+TOC;dc6d2f799e6170ff2c97356db00cf41f;ISO 26262-11:2018 5.1.3;Detailed fault models of memories
+TOC;f164a2ed923692711e4ee442b6f8a81e;ISO 26262-11:2018 5.1.4;Failure modes of digital components
+TOC;e53930528eb262797d36818b2c691f58;ISO 26262-11:2018 5.1.5;Example of failure mode definitions for common digital blocks
+TOC;7d273d92a47c84c08276cb35878f75f0;ISO 26262-11:2018 5.1.6;Qualitative and quantitative analysis of digital component
+TOC;9d391d4806f04c21c13d29bc44413d0b;ISO 26262-11:2018 5.1.7;Notes on quantitative analysis of digital components
+TOC;c6c3da6711f872c312cd12302123d3e2;ISO 26262-11:2018 5.1.7.1;How to consider permanent faults of digital components
+TOC;5208ed51575ff5c89ca4214565b7d001;ISO 26262-11:2018 5.1.7.2;How to consider transient faults of digital components
+TOC;7b464058d2666669b368d8edfc585407;ISO 26262-11:2018 5.1.7.2.1;Failure rate of transient fault
+TOC;762aa5ab9c55be73e550db3a61753b83;ISO 26262-11:2018 5.1.7.2.2;Classification of transient fault
+TOC;94f2d04f50b61367c28dee8ed08ee24a;ISO 26262-11:2018 5.1.8;Example of quantitative analysis
+TOC;7e97f5fc277d098fc2710e373b149369;ISO 26262-11:2018 5.1.9;Example of techniques or measures to detect or avoid systematic failures during design of a digital component
+TOC;ec625ae6e8563bcf5de2ef6dc67c3c0b;ISO 26262-11:2018 5.1.9.1;Principles, techniques or measures to detect or avoid systematic failures during RTL design
+TOC;78c51a6accfad8e867137d74e3e97f7c;ISO 26262-11:2018 5.1.10;Verification using fault injection simulation
+TOC;14798034345448aec1973a0a0282a878;ISO 26262-11:2018 5.1.10.1;General
+TOC;f528c21c596bc1e7012e54b5e7c18d71;ISO 26262-11:2018 5.1.10.2;About verification of fault models different than stuck-at
+TOC;cb29ef01c824ceb01d64a1a6407d453d;ISO 26262-11:2018 5.1.11;Example of safety documentation for a digital component
+TOC;806890e7c6e04b73dda420053c4e1adc;ISO 26262-11:2018 5.1.12;Examples of safety mechanisms for digital components and memories
+TOC;6ee6fe22e224800602d46a83bdf14a20;ISO 26262-11:2018 5.1.13;Overview of techniques for digital components and memories
+TOC;c4f6dad9097f801ac0376a7704e0212e;ISO 26262-11:2018 5.1.13.1;Memory monitoring using error-detection-correction codes (ECC)
+TOC;33ebd808c84e11a36778eea407455770;ISO 26262-11:2018 5.1.13.2;Modified checksum
+TOC;97b7cd07587f9a3217f07fb868bc9d6e;ISO 26262-11:2018 5.1.13.3;Memory signature
+TOC;e075e702a4ce9cf04c1237553b371de2;ISO 26262-11:2018 5.1.13.4;Block replication (for example double memory with hardware or software comparison)
+TOC;a78ef2d796e9b08d5eab93e436ca067f;ISO 26262-11:2018 5.1.13.5;RAM Pattern test
+TOC;5bc1aaf42d55cc61814855ce9b4482ee;ISO 26262-11:2018 5.1.13.6;Parity bit
+TOC;2583dd2267240261deffb330c04b5aeb;ISO 26262-11:2018 5.1.13.7;RAM March test
+TOC;bb69c398bd476201039a55e697a5ecbd;ISO 26262-11:2018 5.1.13.8;Running checksum/CRC
+TOC;8a2d6ab4c3b7aa0c916c5633f6a0d186;ISO 26262-11:2018 5.2;Analogue/mixed signal components
+TOC;9e813bb21b4540183f59f9054a3d6876;ISO 26262-11:2018 5.2.1;About analogue and mixed signal components
+TOC;65bb578a48a32e8e0fda1cd9ce633e74;ISO 26262-11:2018 5.2.2;Analogue and mixed signal components and failure modes
+TOC;e2c776aa067d64d554b26408712f7051;ISO 26262-11:2018 5.2.2.1;About failure modes
+TOC;7fef32e3bdd33dd1d2091fdd83d245b6;ISO 26262-11:2018 5.2.2.2;About transient faults
+TOC;e601de24bcc470677f4e393ecd7a127b;ISO 26262-11:2018 5.2.3;Notes about safety analysis
+TOC;81c849a3282f43abc207c5d53819497f;ISO 26262-11:2018 5.2.3.1;General
+TOC;5f8ad3b2406edbf03393defe27bc4acb;ISO 26262-11:2018 5.2.3.2;Level of granularity of analysis
+TOC;213d4d87913ce618f518ed3e84f17a93;ISO 26262-11:2018 5.2.3.3;Deriving failure mode distributions for analogue components
+TOC;0da71a01ee520c642d2dcb8ca050435f;ISO 26262-11:2018 5.2.3.4;About safe faults
+TOC;075b34f84ff0d3b335331b33c61c2276;ISO 26262-11:2018 5.2.3.5;Example of quantitative analysis for an analogue component
+TOC;aa35c445615666cdd9072e562a09770e;ISO 26262-11:2018 5.2.3.6;Dependent failures analysis
+TOC;2521c7b4f668e84c30f2aed7b6502aa9;ISO 26262-11:2018 5.2.3.7;Verification of the architectural metrics computation
+TOC;d6b66b16deb02ba5b5a172160f8fa9a0;ISO 26262-11:2018 5.2.4;Examples of safety mechanisms
+TOC;728266424a54f449a33cf61079b1cffe;ISO 26262-11:2018 5.2.4.1;Resistive pull up/down
+TOC;632c2b64611a38cb90f8fd13f2fe902f;ISO 26262-11:2018 5.2.4.2;Over & under voltage monitoring
+TOC;2c25da17bab6590945160c477b2cb236;ISO 26262-11:2018 5.2.4.3;Voltage clamp (limiter)
+TOC;c72f422634b35c803bbe13f4713e294c;ISO 26262-11:2018 5.2.4.4;Over-current monitoring
+TOC;61654f9b6a2a4f1f907212f655dba168;ISO 26262-11:2018 5.2.4.5;Current limiter
+TOC;6ef2ac24151d59417a505e494679d692;ISO 26262-11:2018 5.2.4.6;Power on reset
+TOC;657c5a6df6455bb5a14b6f375339db8b;ISO 26262-11:2018 5.2.4.7;Analogue watchdog
+TOC;409862c9d4b5b32ed5f3309fc5d6ec75;ISO 26262-11:2018 5.2.4.8;Filter
+TOC;39e71c89a3ad7c98aa7d8ed7ec54227f;ISO 26262-11:2018 5.2.4.9;Thermal monitor
+TOC;0422607c73f0419f66e5ce626c099c75;ISO 26262-11:2018 5.2.4.10;Analogue Built-in Self-Test (Analogue BIST)
+TOC;8effdbe06ca848fbf214ababdc1d4d9b;ISO 26262-11:2018 5.2.4.11;ADC monitoring
+TOC;a7af19543c0b2984b41e27e812bebd4a;ISO 26262-11:2018 5.2.4.12;ADC attenuation detection
+TOC;b8c6558e817767f2441914883924d6b0;ISO 26262-11:2018 5.2.4.13;Stuck on ADC channel detection
+TOC;96139f34b9c699076f3c4877cc53972c;ISO 26262-11:2018 5.2.5;Avoidance of systematic faults during the development phase
+TOC;b3a87a777bc677af4ccce6560e130a28;ISO 26262-11:2018 5.2.6;Example of safety documentation for an analogue/mixed-signal component
+TOC;996f5d134b3e1db58dfa80f125ab17ab;ISO 26262-11:2018 5.3;Programmable logic devices
+TOC;8e8ea497daf6b7e2789353a4eb901ee2;ISO 26262-11:2018 5.3.1;About programmable logic devices
+TOC;997c224888c953871ae362ae0a661c34;ISO 26262-11:2018 5.3.1.1;General
+TOC;dacfc3ef294a5561d6944f2c6b29aced;ISO 26262-11:2018 5.3.1.2;About PLD types
+TOC;8cf7d211d80c6218795b95681e55ad5e;ISO 26262-11:2018 5.3.1.3;Functional safety lifecycle tailoring for PLD
+TOC;fd5f8e5100f61223e20cb9ceb7f12a99;ISO 26262-11:2018 5.3.1.3.1;General
+TOC;d5d580cf4a4210996437f4002e6ca104;ISO 26262-11:2018 5.3.1.3.2;ISO 26262-2 (management of functional safety)
+TOC;c219f3fa60d0b29ca713c8fb2b7dee78;ISO 26262-11:2018 5.3.1.3.3;ISO 26262-3 (concept phase)
+TOC;93487cb340e5ca2e5eb9c4cad672b250;ISO 26262-11:2018 5.3.1.3.4;ISO 26262-4 (product development at the system level)
+TOC;cb89ce9bc578d378279bcb09baeb508e;ISO 26262-11:2018 5.3.1.3.5;ISO 26262-5 (product development at the hardware level)
+TOC;90b8194aefd3ac88f5f1d3dbe3427388;ISO 26262-11:2018 5.3.1.3.6;ISO 26262-6 (product development at the software level)
+TOC;3da20356a6382e672b22e40d05830bb4;ISO 26262-11:2018 5.3.1.3.7;ISO 26262-7 (production and operation)
+TOC;89af18102df3aa808fa021dea59a4aae;ISO 26262-11:2018 5.3.2;Failure modes of PLD
+TOC;62844278232ce937dfecb7ed254e8df4;ISO 26262-11:2018 5.3.3;Notes on safety analyses for PLDs
+TOC;75dfbe61f3005154f604e08ab474b2dc;ISO 26262-11:2018 5.3.3.1;Quantitative analysis for a PLD
+TOC;6fa5c5d60c5f1b87fb6cd3b404ed1bb2;ISO 26262-11:2018 5.3.3.1.1;Example of PLD die failure rate calculation using the model in 4.6.2.1.1
+TOC;c4232fb6efeab7905b443e9e356d45b3;ISO 26262-11:2018 5.3.3.1.2;Example of a transient failure rate calculation for PLDs
+TOC;68cf03ab72072dc451c997fd653d94e3;ISO 26262-11:2018 5.3.3.1.3;Example of distribution of PLD failure rate to failure modes
+TOC;25860267abc4c6793f43315c36df31a2;ISO 26262-11:2018 5.3.3.1.4;Verification of completeness and correctness of safety mechanism implementation with respect to hardware
+TOC;f7c46a7ec331541a7e4dc852504ed90a;ISO 26262-11:2018 5.3.3.2;Dependent failure analysis for a PLD
+TOC;447e64de72c0f821de57d9707e75b90e;ISO 26262-11:2018 5.3.4;Example of safety mechanisms for PLD
+TOC;df30d69109e60edbc97954b756308c89;ISO 26262-11:2018 5.3.5;Avoidance of systematic faults for PLD
+TOC;9dac10a5bdaadad1dbf7088114c8e46e;ISO 26262-11:2018 5.3.5.1;Avoiding systematic faults in the implementation of PLD
+TOC;21edf674308754f291f60be7f8a79f82;ISO 26262-11:2018 5.3.5.2;About PLD supporting tools
+TOC;2f47ef2a94046782f5bb43a405ea7fc3;ISO 26262-11:2018 5.3.5.3;Avoiding systemativ faults for PLD users
+TOC;0b25574773039f083ea568297ed3371a;ISO 26262-11:2018 5.3.6;Example of safety documentation for a PLD
+TOC;bfcb91d4e46b7e698ad035e583ce0722;ISO 26262-11:2018 5.3.7;Example of safety analysis for PLD
+TOC;52d2e4a1e6f8566a6bc26a4454f95419;ISO 26262-11:2018 5.4;Multi-core components
+TOC;14686b39a054d02ee5b0d1cd1e6d88dd;ISO 26262-11:2018 5.4.1;Types of multi-core components
+TOC;26a474f50bff1595f7d00ce4fb6bc007;ISO 26262-11:2018 5.4.2;Implications of ISO 26262 series of standards for multi-core components
+TOC;c18f2cd13de2efb587ac4050882241ed;ISO 26262-11:2018 5.4.2.1;Introduction
+TOC;0e70581be01b65e10e08d44bd4fbcc36;ISO 26262-11:2018 5.4.2.2;Clarifications on Freedom from interference (FFI) in multi-core components
+TOC;d5ad6c8e4c44fba573f5866da5384381;ISO 26262-11:2018 5.4.2.3;Timing requirements in multi-core component
+TOC;9d50333abfd7efcb820ce2a5bfbc0c90;ISO 26262-11:2018 5.5;Sensors and transducers
+TOC;2f960108ed86394f29be70080d858ba5;ISO 26262-11:2018 5.5.1;Terminology of sensors and transducers
+TOC;d6f0d7b94c1be0cddf948d9118ebb131;ISO 26262-11:2018 5.5.2;Sensors and transducers failure modes
+TOC;22b56cdf492e3ab77aace9c41819635f;ISO 26262-11:2018 5.5.2.1;Production processes and failure modes
+TOC;127f0c9c68146827b214bdba9a6feea7;ISO 26262-11:2018 5.5.2.2;Microelectromechanical causes of failure
+TOC;09a1dbb7c80b85da6f6d9662b4fee863;ISO 26262-11:2018 5.5.3;Safety analysis for sensors and transducers
+TOC;4db9b61011fc7d3a42f0b5d41de41b97;ISO 26262-11:2018 5.5.3.1;Considerations in the determination and allocation of base failure rate
+TOC;967f287928e02b659bef73e8f23fa97d;ISO 26262-11:2018 5.5.3.2;DFA for sensors and transducers
+TOC;3472b7e969895645ad0f0e7e0e9badc6;ISO 26262-11:2018 5.5.3.3;Quantitative analysis
+TOC;c313bd035cdde67af563b8ae5322f2e7;ISO 26262-11:2018 5.5.4;Examples of safety measures for sensors and transducers
+TOC;d349a3b5370398f3a0d5fde46b817b2f;ISO 26262-11:2018 5.5.4.1;Sealed Proof Mass Filter
+TOC;0740d34d0f2b845c3f1313d0db5ddf52;ISO 26262-11:2018 5.5.4.2;Redundant Diaphragms
+TOC;fc18e3ba98b8d898cc60d92bcb635fd9;ISO 26262-11:2018 5.5.4.3;Offset Cancellation
+TOC;22762ce8b45001e84add2de7160ee286;ISO 26262-11:2018 5.5.4.4;Transducer specific self-test
+TOC;841e458b2a915ba582fa27e07db6b53a;ISO 26262-11:2018 5.5.4.5;Automatic gain control
+TOC;18dc16a96aceb588844932c60e1dc028;ISO 26262-11:2018 5.5.4.6;Sensitivity adjustment
+TOC;95c8d8315ed19c258bf9eca28adedd75;ISO 26262-11:2018 5.5.4.7;MEMS specific non E/E safety mechanisms
+TOC;3c339eff047a33c3ab9d07300c6a4c27;ISO 26262-11:2018 5.5.4.8;Dedicated measures for sensors
+TOC;199c5ea26f646d331533fcc5e38f1338;ISO 26262-11:2018 5.5.5;About avoidance of systematic faults for sensors and transducers
+TOC;5aeea01caf0d101a3547f756221b78e8;ISO 26262-11:2018 5.5.6;Example of safety documentation for sensors and transducers
+TOC;b36e6c4537179319c400b27a09445da5;ISO 26262-11:2018 A;Example on how to use digital failure modes for diagnostic coverage evaluation
+TOC;3ea7ff8e5dc3330bf4312d0c140210e7;ISO 26262-11:2018 A.1;Example of evaluation of a DMA safety mechanism
+TOC;b8804b2b29394f8056b01c749cae9f21;ISO 26262-11:2018 A.1.1;Description of the use case
+TOC;0200de6dff1a14bc43bfc7ed85c09535;ISO 26262-11:2018 A.1.2;Description of the safety mechanisms
+TOC;5d62ab3c2bd50b554699f05696b52435;ISO 26262-11:2018 A.1.3;Definition of the failure modes and estimation of diagnostic coverage
+TOC;26dfcbb325f0ca4425d9f6c58bad0157;ISO 26262-11:2018 A.1.3.1;DMA_FM1: no requested data transfer
+TOC;48ff18cb56254461c2344aa73788ec4b;ISO 26262-11:2018 A.1.3.2;DMA_FM2: data transfer without a request
+TOC;d10c3b9c1d694f72b80726e336a8e2ee;ISO 26262-11:2018 A.1.3.3;DMA_FM3: data transfer too early/too late
+TOC;6ad997e87effedf2efde9d2d661fbedd;ISO 26262-11:2018 A.1.3.4;DMA_FM4: incorrect output
+TOC;72be45de0ba845f87282988e88586369;ISO 26262-11:2018 B;Examples of dependent failure analysis
+TOC;9a126a9198bbba98b79b61707775b411;ISO 26262-11:2018 B.1;Microcontroller example
+TOC;091780147b9f8590509b8fce0ae0a39c;ISO 26262-11:2018 B.1.1;Description
+TOC;f887707be510deb5c827c2ccb98240b0;ISO 26262-11:2018 B.1.2;Dependent failure analysis
+TOC;4752599ced185c8edbb3360fef45f9cb;ISO 26262-11:2018 B.2;Analogue example
+TOC;71ab8e5da4a932098d4285cef7188518;ISO 26262-11:2018 B.2.1;Description
+TOC;44cef2bb750e4d7da1938895a44dbfa4;ISO 26262-11:2018 B.2.2;Dependent failures by shared supply voltage regulator
+TOC;2024a25eb7b278ff9cd14574373f2d61;ISO 26262-11:2018 B.2.3;Dependent failures by coupling mechanism
+TOC;4982b18340459080a0a0bc2cd86aba3a;ISO 26262-11:2018 C;Examples of quantitative analysis for a digital component
+TOC;897bd8df3249aa8755acbfd8c8e7a7e7;ISO 26262-11:2018 C.1;Description
+TOC;9d78923468cf0db0eeb434fbb17f3adb;ISO 26262-11:2018 D;Examples of quantitative analysis for analogue component
+TOC;b2a0d0544d83107e86999c010bcd6c1f;ISO 26262-11:2018 D.1;Description
+TOC;f19ceca9f908a6e83aca0b8a4f7ac2d4;ISO 26262-11:2018 D.1.1;Example of computation of failure rate for analogue component
+TOC;8ee0387da9222eb432c0e7bcd2c77449;ISO 26262-11:2018 E;Examples of quantitative analysis for PLD component
+TOC;ee66cffd95e7b49d206fe5bb2b2893a8;ISO 26262-11:2018 E.1;Architecture of the example
+TOC;9439e62c171a9273b78f656b9ca38cb1;ISO 26262-11:2018 E.2;PLD external measures
+TOC;02f5cae5f538b5400edabc9d2f250926;ISO 26262-11:2018 E.3;PLD internal measures
+TOC;d06b0ef3a4c56ede50c1fd4339106046;ISO 26262-12:2018 0;Part 12
 TOC;d06b0ef3a4c56ede50c1fd4339106046;ISO 26262-12:2018 1;TOC
