@@ -1109,9 +1109,65 @@ TOC;52ac8bf5cefa9136b61b60f9c58aff50;ISO 26262-6:2018 11.5.1;Software verificati
 TOC;63c2a5fac8e8aaedcd8f82ca6ef75d09;ISO 26262-6:2018 11.5.2;Software verification report (refined)
 TOC;07fa6ae734ee4f1c7e97634eab46c6cc;ISO 26262-6:2018 A;Overview of and workflow of management of product development at the software level
 TOC;b0d40631df0435c9bf48f9880d6885c9;ISO 26262-6:2018 B;Model-based development approaches
+TOC;1906ad6f73ee338e7c21063517aa8b50;ISO 26262-6:2018 B.1;Objectives
+TOC;b1ce908f7f1e7bedd0dc352b4da4bd57;ISO 26262-6:2018 B.2;General
+TOC;a2fc5b9aa1204b04970ead09aa763efd;ISO 26262-6:2018 B.2.1;Introduction
+TOC;2c500b6254f84caaf95d7a897132053f;ISO 26262-6:2018 B.2.2;General suitability aspects
+TOC;1137f431f1e8ec454d05ee208524a839;ISO 26262-6:2018 B.2.3;Potential impact of MBD on the software lifecycle
+TOC;d272f73632b4ea5f7914fd851a9b3a9e;ISO 26262-6:2018 B.3;Specific considerations for the example software development use cases
+TOC;c37dc45f55eaa4232c9fa726229ef503;ISO 26262-6:2018 B.3.1;Specification on software safety requirements (Clause 6 and ISO 26262-8:2018,Clause 6)
+TOC;5671c0b7f98201514df1291f4da596d5;ISO 26262-6:2018 B.3.2;Development of the software architectural design (Clause 7)
+TOC;c679a7569bff025aa82ac42338e1f690;ISO 26262-6:2018 B.3.3;Design and implementation of software units (Clauses 8 and 9)
+TOC;ceace15b3d8530ed43b438a19e329cbd;ISO 26262-6:2018 B.3.4;Design, implementation and integration of software components, including automated code generation from software component models (Clauses 8,9 and 10)
+TOC;2a9037c82b7186517e71d854a1980125;ISO 26262-6:2018 B.3.5;Verification (static and/or dynamic) (Clauses 9,10 and 11)
 TOC;fe8a69d2c2ae94c32598be04a9c707c9;ISO 26262-6:2018 C;Software configuration
+TOC;b90401d6c2ad252dd4e66a2e5c011f7f;ISO 26262-6:2018 C.1;Objectives
+TOC;b4032ea8ea375cc5cf0eec788411dfd9;ISO 26262-6:2018 C.2;General
+TOC;cc3feb851610203deaae3a2af4bb1fb1;ISO 26262-6:2018 C.3;Inputs to this clause
+TOC;9d21c8abd4433458a1785912a619fc48;ISO 26262-6:2018 C.3.1;Prerequisites
+TOC;df3f9508bf73adcd3dde61dfac8fb084;ISO 26262-6:2018 C.3.2;Further supporting information
+TOC;9e293216a61f734f3490ed4a4d0ce21e;ISO 26262-6:2018 C.4;Requirements and recommendations
+TOC;4d0eaba6e8cc83c4cf29e3a70c60a54c;ISO 26262-6:2018 C.4.1;REQUIREMENT
+TOC;3e45899c6cc71764e07dd4547203ac7b;ISO 26262-6:2018 C.4.2;REQUIREMENT
+TOC;bf8b826d033e2577104f4fc473bdb360;ISO 26262-6:2018 C.4.3;REQUIREMENT
+TOC;a9d4d144725be576f12ce47877b77bf2;ISO 26262-6:2018 C.4.4;REQUIREMENT
+TOC;78823df00af99429bf4a56b78e358eaa;ISO 26262-6:2018 C.4.5;REQUIREMENT
+TOC;d9e81b37c07b46df11d1b9fe555439c6;ISO 26262-6:2018 C.4.6;REQUIREMENT
+TOC;a0aad9933c1de9b5ef08fc9925f1ae00;ISO 26262-6:2018 C.4.7;REQUIREMENT
+TOC;9f6814c98e7254eed138eac41f0c28c9;ISO 26262-6:2018 C.4.8;REQUIREMENT
+TOC;aa99dce7131c8d66ee7404a275fad7ba;ISO 26262-6:2018 C.4.9;REQUIREMENT
+TOC;5f2f398da9a3aaf5ebb17aa60112c53c;ISO 26262-6:2018 C.4.10;REQUIREMENT
+TOC;4ec6ffbdd435accc0c06394fda6ce13e;ISO 26262-6:2018 C.5;Work products
+TOC;bd39ca56970aa2da534d0754d4d89623;ISO 26262-6:2018 C.5.1;Configuration data specification
+TOC;59aac4018a63c5258abbe32199621f14;ISO 26262-6:2018 C.5.2;Calibration data specification
+TOC;a90a2b6f9aa92726760659f86a47a3de;ISO 26262-6:2018 C.5.3;Configuration data
+TOC;7b8dff32d3c0ecf25a1b57f350d468c4;ISO 26262-6:2018 C.5.4;Calibration data
+TOC;fba4827a8c6a81ef66a6c41e99780ece;ISO 26262-6:2018 C.5.5;Verification specification (refined)
+TOC;ce23dacc7e7ff8616ee5717d45fd14eb;ISO 26262-6:2018 C.5.6;Verification report (refined)
+TOC;7a57902049ce20b7931459fc13f16003;ISO 26262-6:2018 C.5.7;Software architectural design specification (refined)
+TOC;e2b249adf20573e8d2c0b7c46d3d5a6b;ISO 26262-6:2018 C.5.8;Documentation of the software development environment (refined)
 TOC;f44e33ca0da8c62495de04a37b97acbb;ISO 26262-6:2018 D;Freedom from interference between software elements
+TOC;fdb26a9a4d8e8a05ceca93a595d117a2;ISO 26262-6:2018 D.1;Objectives
+TOC;366a7bd77c3bcad9eaec9e3a3524ce11;ISO 26262-6:2018 D.2;General
+TOC;fa8f5c2bf670c9eeb6700b98e85eb8fa;ISO 26262-6:2018 D.2.1;Achievement of freedom from interference
+TOC;412dbe970775cbd9bd6a60d5af1e5879;ISO 26262-6:2018 D.2.2;Timing and execution
+TOC;d379a47bd58bc792aed3b86539e93b65;ISO 26262-6:2018 D.2.3;Memory
+TOC;7a71a0eee51cb65e6de262a8c0aeca09;ISO 26262-6:2018 D.2.4;Exchange of information
 TOC;20ddb4f5c5a0b22c76a4e298a96b5f44;ISO 26262-6:2018 E;Application of safety analyses and analyses of dependent failures at the software architectural level
+TOC;b2f3c75152f67bff9079ab38eac370d8;ISO 26262-6:2018 E.1;Objectives
+TOC;6b18eb656556b5b93ddaaca10da9ac76;ISO 26262-6:2018 E.2;General
+TOC;c95b5f157891cf7fe726679f97527b6b;ISO 26262-6:2018 E.2.1;Scope and purpose of the analyses
+TOC;fc4805f95fecac6fcb85c11748249ad8;ISO 26262-6:2018 E.2.2;Relationship between safety analyses and dependent failure analyses at the system, hardware and software level
+TOC;d7c80305a7b3d3e5a094df6cbb524a27;ISO 26262-6:2018 E.2.3;Safety analyses in a distributed software development (including SEooC development of software elements)
+TOC;f79501fb896be311270bfe20b93db2e7;ISO 26262-6:2018 E.3;Topics for performing analyses
+TOC;c101aad184f7a5e178bd14d6640621b5;ISO 26262-6:2018 E.3.1;Determination of the goals for the analyses
+TOC;b211828f3f2f5f1a5ba78ec1b54e16f1;ISO 26262-6:2018 E.3.2;Determination of the scope and boundaries regarding the specific architectural design to be analysed
+TOC;5a3d01a08efd98ab3ce72e8c350abb7a;ISO 26262-6:2018 E.3.3;Determination of the method applied to conduct the analyses
+TOC;7a5f2fd1f8be46e79fdd46b4c969702a;ISO 26262-6:2018 E.3.4;Aspects to support the meaningfulness, objectivity and rigour of the analyses
+TOC;1b2646c45b5d01b5ce89a813f522e4c1;ISO 26262-6:2018 E.3.4.1;Coupling factor classes for DFA in accordance with ISO 26262-9:2018
+TOC;22368003d51c82d51cfab38a145bb6b5;ISO 26262-6:2018 E.3.4.2;Use content of Annex D
+TOC;33ce41b1998b03faf781696f673b2597;ISO 26262-6:2018 E.3.4.3;Analyses supported by using guide words
+TOC;556695598650f7a057f7ea5d8d0c4542;ISO 26262-6:2018 E.4;Mitigation strategy for weaknesses identified during safety and dependent failure analyses
 TOC;dd8c506f4220b327a438207b646b2de1;ISO 26262-7:2018 0;Part 7
 TOC;d8d1de73dbd3d5e9971d698bdb5b11b5;ISO 26262-7:2018 1;Scope
 TOC;9b1fd90f595b308ffe41eca327457347;ISO 26262-7:2018 2;Normative references
