@@ -8,17 +8,17 @@ oyr=2018
 
 structure=(
  "2018 1-0 1-1 1-2 1-3 1-t3.+{1..185} 1-4"
- "2018 2-0 2-1 2-2 2-3 2-4 2-4.{1..6} 2-5 2-5.1 2-5.2 2-5.2.{1..2} 2-5.3 2-5.3.{1..2} 2-5.4 2-5.4.1 2-5.4.2 2-r5.4.2.{1..7} 2-5.4.3 2-r5.4.3.{1..5} 2-5.4.4 2-r5.4.4.1 2-5.4.6 2-r5.4.6.1 2-5.5 2-5.5.{1..4} 2-6 2-6.1 2-6.2 2-6.3 2-6.3.{1..2} 2-6.4 2-6.4.{1..2} 2-r6.4.2.{1..4} 2-6.4.3 2-r6.4.3.{1..3} 2-6.4.{4..5} 2-r6.4.5.{1..9} 2-6.4.6 2-r6.4.6.{1..10} 2-6.4.7 2-r6.4.7.{1..2} 2-6.4.8 2-r6.4.8.{1..2} 2-6.4.9 2-r6.4.9.{1..3} 2-6.4.10 2-r6.4.10.{1..5} 2-6.4.11 2-r6.4.11.{1..4} 2-6.4.12 2-r6.4.12.{1..13} 2-6.4.13 2-r6.4.13.{1..5} 2-6.5 2-6.5.{1..6} 2-7 2-7.1 2-7.2 2-7.3 2-7.3.{1..2} 2-7.4 2-7.4.{1..2} 2-r7.4.2.{1..4} 2-7.5 2-7.5.1 2-8:A 2-9:B 2-10:C 2-11:D 2-12:E"
- "2018 3-0 3-1 3-2 3-3 3-4 3-4.{1..6} 3-5 3-5.1 3-5.2 3-5.3 3-5.3.{1..2} 3-5.4 3-r5.4.{1..2} 3-5.5 3-r5.5.1 3-6 3-6.1 3-6.2 3-6.3 3-6.3.{1..2} 3-6.4 3-6.4.1 3-r6.4.1.{1..2} 3-6.4.2 3-r6.4.2.{1..7} 3-6.4.3 3-r6.4.3.{1..11} 3-6.4.4 3-r6.4.4.{1..4} 3-6.4.5 3-r6.4.5.{1..7} 3-6.4.6 3-r6.4.6.1 3-6.5 3-6.5.{1..2} 3-7 3-7.1 3-7.2 3-7.3 3-7.3.{1..2} 3-7.4 3-7.4.{1..2} 3-r7.4.2.{1..10} 3-7.4.3 3-r7.4.3.1 3-7.4.4 3-r7.4.4.1 3-7.5 3-7.5.{1..2} 3-8:A 3-9:B"
- "2018 4-0 4-1 4-2 4-3 4-4 4-4.{1..6} 4-5 4-5.{1..2} 4-6 4-6.1 4-6.2 4-6.3 4-6.3.{1..2} 4-6.4 4-6.4.1 4-r6.4.1.{1..4} 4-6.4.2 4-r6.4.2.{1..5} 4-6.4.3 4-r6.4.3.{1..6} 4-6.4.4 4-r6.4.4.{1..7} 4-6.4.5 4-r6.4.5.{1..4} 4-6.4.6 4-r6.4.6.{1..5} 4-6.4.7 4-r6.4.7.{1..4} 4-6.4.8 4-r6.4.8.{1..3} 4-6.4.9 4-r6.4.9.{1..2} 4-6.5 4-o6.5.{1..7} 4-7 4-7.1 4-7.2 4-7.3 4-7.3.{1..2} 4-7.4 4-7.4.1 4-r7.4.1.{1..6} 4-7.4.2 4-r7.4.2.1 4-r7.4.2.1.{1..2} 4-r7.4.2.2 4-r7.4.2.2.{1..6} 4-7.4.3 4-7.4.3.1 4-r7.4.3.1.1 4-7.4.3.2 4-r7.4.3.2.{1..5} 4-7.4.4 4-7.4.4.1 4-r7.4.4.1.{1..2} 4-7.4.4.2 4-r7.4.4.2.{1..5} 4-7.5 4-o7.5.{1..2} 4-8 4-8.1 4-8.2 4-8.3 4-8.3.{1..2} 4-8.4 4-8.4.1 4-r8.4.1.{1..3} 4-8.4.2 4-r8.4.2.1 4-8.4.3 4-r8.4.3.{1..4} 4-8.4.4 4-r8.4.4.1 4-8.5 4-o8.5.{1..2} 4-9:A 4-10:B"
- "2018 5-0 5-1 5-2 5-3 5-4 5-4.{1..6} 5-5 5-5.{1..2} 5-6 5-6.{1..3} 5-6.3.{1..2} 5-6.4 5-r6.4.{1..11} 5-6.5 5-6.5.{1..3} 5-7 5-7.{1..3} 5-7.3.{1..2} 5-7.4 5-7.4.1 5-r7.4.1.{1..7} 5-7.4.2 5-r7.4.2.{1..4} 5-7.4.3 5-r7.4.3.{1..6} 5-7.4.4 5-r7.4.4.{1..3} 5-7.4.5 5-r.7.4.5.{1..5} 5-7.5 5-7.5.{1..4} 5-8 5-8.1 5-8.2 5-8.3 5-8.3.{1..2} 5-8.4 5-r8.4.{1..9} 5-8.5 5-8.5.{1..2} 5-9 5-9.1 5-9.2 5-9.3 5-9.3.{1..2} 5-9.4 5-9.4.1 5-r9.4.1.{1..4} 5-9.4.2 5-r9.4.2.{1..4} 5-9.4.3 5-r9.4.3.{1..13} 5-9.4.4 5-9.5 5-9.5.{1..3} 5-10 5-10.1 5-10.2 5-10.3 5-10.3.{1..2} 5-10.4 5-r10.4.{1..6} 5-10.5 5-10.5.{1..2} 5-11:A 5-12:B 5-13:C 5-14:D 5-15:E 5-16:F 5-17:G 5-18:H"
- "2018 6-0 6-1 6-2 6-3 6-4 6-4.{1..6} 6-5 6-5.{1..3} 6-5.3.{1..2} 6-5.4 6-r5.4.{1..3} 6-5.5 6-5.5.1 6-6 6-6.{1..3} 6-6.3.{1..2} 6-6.4 6-r6.4.{1..7} 6-6.5 6-6.5.{1..3} 6-7 6-7.{1..3} 6-7.3.{1..2} 6-7.4 6-r7.4.{1..14} 6-7.5 6-7.5.{1..3} 6-8 6-8.{1..3} 6-8.3.{1..2} 6-8.4 6-r8.4.{1..5} 6-8.5 6-8.5.{1..2} 6-9 6-9.{1..3} 6-9.3.{1..2} 6-9.4 6-r9.4.{1..5} 6-9.5 6-9.5.{1..2} 6-10 6-10.{1..3} 6-10.3.{1..2} 6-10.4 6-r10.4.{1..7} 6-10.5 6-10.5.{1..3} 6-11 6-11.{1..3} 6-11.3.{1..2} 6-11.4 6-r11.4.{1..4} 6-11.5 6-11.5.{1..2} 6-12:A 6-13:B 6-14:C 6-15:D 6-16:E"
+ "2018 2-0 2-1 2-2 2-3 2-4 2-4.{1..6} 2-5 2-5.1 2-5.2 2-5.2.{1..2} 2-5.3 2-5.3.{1..2} 2-5.4 2-5.4.1 2-5.4.2 2-r5.4.2.{1..7} 2-5.4.3 2-r5.4.3.{1..5} 2-5.4.4 2-r5.4.4.1 2-5.4.6 2-r5.4.6.1 2-5.5 2-5.5.{1..4} 2-6 2-6.1 2-6.2 2-6.3 2-6.3.{1..2} 2-6.4 2-6.4.{1..2} 2-r6.4.2.{1..4} 2-6.4.3 2-r6.4.3.{1..3} 2-6.4.{4..5} 2-r6.4.5.{1..9} 2-6.4.6 2-r6.4.6.{1..10} 2-6.4.7 2-r6.4.7.{1..2} 2-6.4.8 2-r6.4.8.{1..2} 2-6.4.9 2-r6.4.9.{1..3} 2-6.4.10 2-r6.4.10.{1..5} 2-6.4.11 2-r6.4.11.{1..4} 2-6.4.12 2-r6.4.12.{1..13} 2-6.4.13 2-r6.4.13.{1..5} 2-6.5 2-6.5.{1..6} 2-7 2-7.1 2-7.2 2-7.3 2-7.3.{1..2} 2-7.4 2-7.4.{1..2} 2-r7.4.2.{1..4} 2-7.5 2-7.5.1 2-8:A 2-9:B 2-10:C 2-10:C.{1..3} 2-o10:C.3.{1..7} 2-10:C.4 2-o10:C.4.{1..5} 2-10:C.5 2-o10:C.5.{1..9} 2-10:C.6 2-o10:C.6.{1..9} 2-10:C.7 2-o10:C.7.{1..4} 2-10:C.8 2-o10:C.8.{1..4} 2-10:C.{9..10} 2-o10:C.10.{1..4} 2-10:C.{11..12} 2-o10:C.12.{1..8} 2-11:D 2-11:D.1 2-o11:D.1.{1..6} 2-11:D.2 2-o11:D.2.{1..6} 2-o11:D.3.{1..5} 2-11:D.4 2-o11:D.4.{1..5} 2-11:D.5 2-o11:D.5.{1..5} 2-11:D.6 2-o11:D.6.{1..4} 2-11:D.7 2-o11:D.7.{1..2} 2-11:D.8 2-o11:D.8.1 2-11:D.9 2-o11:D.9.{1..2} 2-11:D.10 2-12:E 2-12:E.{1..3} 2-12:E.3.{1..4}"
+ "2018 3-0 3-1 3-2 3-3 3-4 3-4.{1..6} 3-5 3-5.1 3-5.2 3-5.3 3-5.3.{1..2} 3-5.4 3-r5.4.{1..2} 3-5.5 3-r5.5.1 3-6 3-6.1 3-6.2 3-6.3 3-6.3.{1..2} 3-6.4 3-6.4.1 3-r6.4.1.{1..2} 3-6.4.2 3-r6.4.2.{1..7} 3-6.4.3 3-r6.4.3.{1..11} 3-6.4.4 3-r6.4.4.{1..4} 3-6.4.5 3-r6.4.5.{1..7} 3-6.4.6 3-r6.4.6.1 3-6.5 3-6.5.{1..2} 3-7 3-7.1 3-7.2 3-7.3 3-7.3.{1..2} 3-7.4 3-7.4.{1..2} 3-r7.4.2.{1..10} 3-7.4.3 3-r7.4.3.1 3-7.4.4 3-r7.4.4.1 3-7.5 3-7.5.{1..2} 3-8:A 3-9:B 2-9:B.{1..2} 2-9:B.2.{1..2} 2-9:B.{3..4}"
+ "2018 4-0 4-1 4-2 4-3 4-4 4-4.{1..6} 4-5 4-5.{1..2} 4-6 4-6.1 4-6.2 4-6.3 4-6.3.{1..2} 4-6.4 4-6.4.1 4-r6.4.1.{1..4} 4-6.4.2 4-r6.4.2.{1..5} 4-6.4.3 4-r6.4.3.{1..6} 4-6.4.4 4-r6.4.4.{1..7} 4-6.4.5 4-r6.4.5.{1..4} 4-6.4.6 4-r6.4.6.{1..5} 4-6.4.7 4-r6.4.7.{1..4} 4-6.4.8 4-r6.4.8.{1..3} 4-6.4.9 4-r6.4.9.{1..2} 4-6.5 4-o6.5.{1..7} 4-7 4-7.1 4-7.2 4-7.3 4-7.3.{1..2} 4-7.4 4-7.4.1 4-r7.4.1.{1..6} 4-7.4.2 4-r7.4.2.1 4-r7.4.2.1.{1..2} 4-r7.4.2.2 4-r7.4.2.2.{1..6} 4-7.4.3 4-7.4.3.1 4-r7.4.3.1.1 4-7.4.3.2 4-r7.4.3.2.{1..5} 4-7.4.4 4-7.4.4.1 4-r7.4.4.1.{1..2} 4-7.4.4.2 4-r7.4.4.2.{1..5} 4-7.5 4-o7.5.{1..2} 4-8 4-8.1 4-8.2 4-8.3 4-8.3.{1..2} 4-8.4 4-8.4.1 4-r8.4.1.{1..3} 4-8.4.2 4-r8.4.2.1 4-8.4.3 4-r8.4.3.{1..4} 4-8.4.4 4-r8.4.4.1 4-8.5 4-o8.5.{1..2} 4-9:A 4-10:B 4-10:B.{1..3}"
+ "2018 5-0 5-1 5-2 5-3 5-4 5-4.{1..6} 5-5 5-5.{1..2} 5-6 5-6.{1..3} 5-6.3.{1..2} 5-6.4 5-r6.4.{1..11} 5-6.5 5-6.5.{1..3} 5-7 5-7.{1..3} 5-7.3.{1..2} 5-7.4 5-7.4.1 5-r7.4.1.{1..7} 5-7.4.2 5-r7.4.2.{1..4} 5-7.4.3 5-r7.4.3.{1..6} 5-7.4.4 5-r7.4.4.{1..3} 5-7.4.5 5-r.7.4.5.{1..5} 5-7.5 5-7.5.{1..4} 5-8 5-8.1 5-8.2 5-8.3 5-8.3.{1..2} 5-8.4 5-r8.4.{1..9} 5-8.5 5-8.5.{1..2} 5-9 5-9.1 5-9.2 5-9.3 5-9.3.{1..2} 5-9.4 5-9.4.1 5-r9.4.1.{1..4} 5-9.4.2 5-r9.4.2.{1..4} 5-9.4.3 5-r9.4.3.{1..13} 5-9.4.4 5-9.5 5-9.5.{1..3} 5-10 5-10.1 5-10.2 5-10.3 5-10.3.{1..2} 5-10.4 5-r10.4.{1..6} 5-10.5 5-10.5.{1..2} 5-11:A 5-12:B 5-13:C 5-13:C.1 5-r13:C.1.{1..2} 5-13:C.2 5-r13:C.2.{1..2} 5-13:C.3 5-r13:C.3.{1..2} 5-14:D 5-14:D.{1..2} 5-14:D.2.1 5-14:D.2.1.{1..3} 5-14:D.2.2 5-14:D.2.2.{1..2} 5-14:D.2.3 5-14:D.2.3.{1..9} 5-14:D.2.4 5-14:D.2.4.{1..5} 5-14:D.2.5 5-14:D.2.5.{1..9} 5-14:D.2.6 5-14:D.2.6.{1..2} 5-14:D.2.7 5-14:D.2.7.{1..5} 5-14:D.2.8 5-14:D.2.8.{1..3} 5-14:D.2.9 5-14:D.2.9.1 5-15:E 5-16:F 5-16:F.{1..5} 5-17:G 5-17:G.{1..6} 5-18:H 5-18:H.{1..3}"
+ "2018 6-0 6-1 6-2 6-3 6-4 6-4.{1..6} 6-5 6-5.{1..3} 6-5.3.{1..2} 6-5.4 6-r5.4.{1..3} 6-5.5 6-5.5.1 6-6 6-6.{1..3} 6-6.3.{1..2} 6-6.4 6-r6.4.{1..7} 6-6.5 6-6.5.{1..3} 6-7 6-7.{1..3} 6-7.3.{1..2} 6-7.4 6-r7.4.{1..14} 6-7.5 6-7.5.{1..3} 6-8 6-8.{1..3} 6-8.3.{1..2} 6-8.4 6-r8.4.{1..5} 6-8.5 6-8.5.{1..2} 6-9 6-9.{1..3} 6-9.3.{1..2} 6-9.4 6-r9.4.{1..5} 6-9.5 6-9.5.{1..2} 6-10 6-10.{1..3} 6-10.3.{1..2} 6-10.4 6-r10.4.{1..7} 6-10.5 6-10.5.{1..3} 6-11 6-11.{1..3} 6-11.3.{1..2} 6-11.4 6-r11.4.{1..4} 6-11.5 6-11.5.{1..2} 6-12:A 6-13:B 6-13:B.{1..2} 6-o13:B.2.{1..3} 6-13:B.3 6-o13:B.3.{1..5} 6-14:C 6-14:C.{1..3} 6-o14:C.3.{1..2} 6-14:C.4 6-r14:C.4.{1..10} 6-15:D 6-15:D.{1..2} 6-o15:D.2.{1..4} 6-16:E 6-16:E.{1..2} 6-o16:E.2.{1..3} 6-16:E.3 6-o16:E.3.{1..4} 6-o16:E.3.4.{1..3} 6-16:E.4"
  "2018 7-0 7-1 7-2 7-3 7-4 7-4.{1..6} 7-5 7-5.{1..3} 7-5.1.3.{1..2} 7-5.4 7-5.4.1 7-r5.4.1.{1..8} 7-5.4.2 7-r5.4.2.{1..2} 7-5.4.3 7-r5.4.3.{1..7} 7-5.5 7-5.5.{1..9} 7-6 7-6.{1..3} 7-6.3.1 7-6.4 7-6.4.1 7-r6.4.1.{1..7} 7-6.5 7-6.5.{1..2} 7-7 7-7.{1..3} 7-7.3.{1..2} 7-7.4 7-7.4.1 7-r7.4.1.{1..3} 7-7.5 7-7.5.1 7-8:A" 
  "2018 8-0 8-1 8-2 8-3 8-4 8-4.{1..6} 8-5 8-5.{1..3} 8-5.3.{1..2} 8-5.4 8-5.4.1 8-r5.4.1.{1..2} 8-5.4.2 8-r5.4.2.{1..2} 8-5.4.3 8-r5.4.3.{1..3} 8-5.4.4 8-r5.4.4.{1..8} 8-5.4.5 8-r5.4.5.{1..4} 8-5.4.6 8-r5.4.6.{1..4} 8-5.5 8-5.5.{1..5} 8-6 8-6.{1..3} 8-6.3.{1..2} 8-6.4 8-6.4.{1..2} 8-r6.4.2.{1..5} 8-6.4.3 8-r6.4.3.{1..4} 8-6.5 8-7 8-7.{1..3} 8-7.3.{1..2} 8-7.4 8-r7.4.{1..5} 8-7.5 8-7.5.1 8-8 8-8.{1..3} 8-8.3.{1..2} 8-8.4 8-8.4.1 8-r8.4.1.{1..4} 8-8.4.2 8-r8.4.2.{1..2} 8-8.4.3 8-r8.4.3.{1..2} 8-8.4.4 8-r8.4.4.{1..2} 8-8.4.5 8-r8.4.5.{1..3} 8-8.5 8-8.5.{1..4} 8-9 8-9.{1..3} 8-9.3.{1..2} 8-9.4 8-9.4.1 8-r9.4.1.{1..2} 8-9.4.2 8-r9.4.2.{1..4} 8-9.4.3 8-r9.4.3.{1..4} 8-9.5 8-9.5.{1..3} 8-10 8-10.{1..3} 8-10.3.{1..2} 8-10.4 8-r10.4.{1..6} 8-10.5 8-10.5.{1..2} 8-11 8-11.{1..3} 8-11.3.{1..2} 8-11.4 8-11.4.{1..4} 8-r11.4.4.{1..2} 8-11.4.5 8-r11.4.5.{1..4} 8-11.4.6 8-r11.4.6.{1..2} 8-11.4.7 8-r11.4.7.{1..4} 8-11.4.8 8-r11.4.8.{1..3} 8-11.4.9 8-r11.4.9.{1..2} 8-11.5 8-11.5.{1..2} 8-12 8-12.{1..3} 8-12.3.{1..2} 8-12.4 8-12.4.{1..2} 8-r12.4.2.{1..5} 8-12.4.3 8-12.5 8-12.5.{1..3} 8-13 8-13.{1..3} 8-13.3.{1..2} 8-13.4 8-13.4.1 8-r13.4.1.{1..4} 8-13.4.{2..3} 8-13.4.3.{1..3} 8-r13.4.3.3.{1..3} 8-13.4.3.4 8-r13.4.3.4.{1..2} 8-13.4.3.5 8-r13.4.3.5.{1..4} 8-13.4.3.6 8-r13.4.3.6.{1..2} 8-13.4.4 8-r13.4.4.{1..3} 8-13.5 8-13.5.{1..3} 8-14 8-14.{1..3} 8-14.3.{1..2} 8-14.4 8-14.4.{1..2} 8-r14.4.2.{1..7} 8-14.4.{3..4} 8-r14.4.4.{1..4} 8-14.4.5 8-r14.4.5.1 8-14.4.5.2 8-r14.4.5.2.{1..7} 8-14.4.5.3 8-14.5 8-14.5.{1..2} 8-15 8-15.{1..3} 8-15.3.{1..2} 8-15.4 8-r15.4.{1..3} 8-15.5 8-15.5.1 8-16 8-16.{1..3} 8-16.3.1.{1..2} 8-16.4 8-r16.4.{1..4} 8-16.5 8-16.5.1 8-17:A 8-18:B 8-18:B.{1..4}"
  "2018 9-0 9-1 9-2 9-3 9-4 9-4.{1..6} 9-5 9-5.{1..3} 9-5.3.{1..2} 9-5.4 9-r5.4.{1..12} 9-5.5 9-5.5.{1..2} 9-6 9-6.{1..3} 9-6.3.{1..2} 9-6.4 9-r6.4.{1..4} 9-6.5 9-6.5.1 9-7 9-7.{1..3} 9-7.3.{1..2} 9-7.4 9-r7.4.{1..9} 9-7.5 9-7.5.{1..2} 9-8 9-8.{1..3} 9-8.3.{1..2} 9-8.4 9-r8.4.{1..10} 9-8.5 9-8.5.{1..2} 9-9:A 9-10:B 9-10:B.{1..3} 9-11:C"
  "2018 10-0 10-1 10-2 10-3 10-4 10-4.{1..3} 10-4.3.1 10-4.4 10-4.4.{1..2} 10-c4.4.2.{1..3} 10-5 10-5.{1..2} 10-5.2.{1..2} 10-5.3 10-5.3.{1..2} 10-6 10-6.{1..2} 10-6.2.{1..3} 10-6.{3..4} 10-6.4.{1..3} 10-6.5 10-6.5.{1..4} 10-c6.5.4.{1..2} 10-7 10-8 10-8.1 10-8.1.{1..9} 10-8.2 10-8.2.{1..4} 10-c8.2.4.{1..6} 10-8.3 10-8.3.{1..2} 10-c8.3.2.{1..4} 10-8.4 10-9 10-9.{1..2} 10-9.2.{1..3} 10-c9.2.3.{1..7} 10-9.2.4 10-c9.2.4.{1..5} 10-10 10-10.{1..4} 10-11 10-11.{1..3} 10-11.3.{1..6} 10-c11.3.6.{1..2} 10-12 10-12.{1..2} 10-12.2.{1..3} 10-c12.2.3.{1..2} 10-12.2.4 10-c12.2.4.{1..3} 10-12.2.5 10-c12.2.5.{1..5} 10-12.2.6 10-12.3 10-12.3.1 10-c12.3.1.{1..4} 10-12.4 10-12.4.{1..3} 10-13 10-14 10-14.{1..4} 10-15:A 10-15:A.{1..2}"
- "2018 11-0 11-1"
- "2018 12-0 12-1"
+ "2018 11-0 11-1 11-2 11-3 11-4 11-4.1 11-4.1.1 11-4.{2..3} 11-4.3.{1..3} 11-4.{4..5} 11-4.5.1 11-4.5.1.{1..2} 11-4.5.{2..3} 11-4.5.3.{1..5} 11-4.5.4 11-4.5.4.{1..10} 11-4.5.5 11-4.6 11-4.6.1 11-4.6.1.{1..10} 11-4.6.2 11-4.6.2.1 11-4.6.2.1.1 11-4.6.2.1.1.{1..4} 11-4.6.2.1.2 11-4.6.2.1.2.{1..4} 11-4.6.2.1.3 11-4.6.2.2 11-4.6.2.2.{1..2} 11-4.6.2.{3..5} 11-4.7 11-4.7.{1..5} 11-4.7.5.{1..2} 11-4.7.6 11-4.7.6.{1..9} 11-4.7.{7..8} 11-4.8 11-4.8.{1..3} 11-4.9 11-4.9.{1..3} 11-4.{10..12} 11-5 11-5.1 11-5.1.{1..7} 11-5.1.7.{1..2} 11-5.1.7.2.{1..2} 11-5.1.{8..9} 11-5.1.9.1 11-5.1.10 11-5.1.10.{1..2} 11-5.1.{11..13} 11-5.1.13.{1..8} 11-5.2 11-5.2.{1..2} 11-5.2.2.{1..2} 11-5.2.3 11-5.2.3.{1..7} 11-5.2.4 11-5.2.4.{1..13} 11-5.2.{5..6} 11-5.3 11-5.3.1 11-5.3.1.{1..3} 11-5.3.1.3.{1..7} 11-5.3.{2..3} 11-5.3.3.1 11-5.3.3.1.{1..4} 11-5.3.3.2 11-5.3.{4..5} 11-5.3.5.{1..3} 11-5.3.{6..7} 11-5.4 11-5.4.{1..2} 11-5.4.2.{1..3} 11-5.5 11-5.5.{1..2} 11-5.5.2.{1..2} 11-5.5.3 11-5.5.3.{1..3} 11-5.5.4 11-5.5.4.{1..8} 11-5.5.{5..6} 11-A 11-A.1 11-A.1.{1..3} 11-A.1.3.{1..4} 11-B 11-B.1 11-B.1.{1..2} 11-B.2 11-B.2.{1..3} 11-C 11-C.1 11-D 11-D.1 11-D.1.1 11-E 11-E.{1..3}"
+ "2018 12-0 12-1 12-2 12-3 12-4 12-4.{1..4} 12-4.4.{1..6} 12-5 12-5.{1..2} 12-6 12-6.{1..2} 12-6.2.{1..7} 12-7 12-7.{1..2} 12-7.2.{1..3} 12-8 12-8.{1..3} 12-8.3.{1..2} 12-8.4 12-8.4.1 12-r8.4.1.{1..2} 12-8.4.2 12-r8.4.2.{1..7} 12-8.4.3 12-r8.4.3.{1..11} 12-8.4.4 12-r8.4.4.{1..4} 12-8.4.5 12-r8.4.5.1 12-8.5 12-8.5.{1..2} 12-9 12-9.{1..2} 12-9.2.1 12-r9.2.1.{1..2} 12-9.2.2 12-r9.2.2.{1..5} 12-10 12-10.{1..3} 12-10.3.{1..2} 12-10.4 12-10.4.1 12-r10.4.1.{1..3} 12-10.4.2 12-r10.4.2.1 12-10.4.3 12-r10.4.3.{1..4} 12-10.4.4 12-r10.4.4.1 12-10.4.5 12-10.4.5.{1..2} 12-11:A 12-11:A.{1..4} 12-12:B 12-12:B.{1..2} 12-12:B.2.{1..2} 12-12:B.{3..4} 12-13:C 12-13:C.{1..6}"
 )
 
 return 0;
@@ -374,8 +374,123 @@ TOC;1372146eb0c50b88b87baf8265aeed2d;ISO 26262-2:2018 7.5.1;Evidence of safety m
 TOC;fafdff7757bc7a890685081c5d13a865;ISO 26262-2:2018 A;Overview of and workflow of functional safety management
 TOC;ce7862b075babcf2ef525dae312026b0;ISO 26262-2:2018 B;Safety culture
 TOC;e4450f0d76aa0a0811a3ad6e31878d2a;ISO 26262-2:2018 C;Guidance for the confirmation measures
+TOC;1786dbb8b784f2f47ef9f77e7f88e48e;ISO 26262-2:2018 C.1;General
+TOC;285381b22eb2a46991f5ac11cc84835c;ISO 26262-2:2018 C.2;Confirmation review of the impact analysis at the item level (see 6.5.1)
+TOC;17e0f3b4c05d0660ce68d946964638eb;ISO 26262-2:2018 C.3;Confirmation review of the hazard analysis and risk assessment (see ISO 26262-3:2018, Clause 6)
+TOC;25363c018e48e8d2a3caf1151a8338f0;ISO 26262-2:2018 C.3.1;OBJECTIVE
+TOC;a4765c22baac9429084db460ded6f7c2;ISO 26262-2:2018 C.3.2;OBJECTIVE
+TOC;8a9dedb53db1cc9c125e041184545dc2;ISO 26262-2:2018 C.3.3;OBJECTIVE
+TOC;3ceb5df5f96c37cdc4665199d44de8c0;ISO 26262-2:2018 C.3.4;OBJECTIVE
+TOC;57cc42aae20a0554ca4a95c243b2c5d4;ISO 26262-2:2018 C.3.5;OBJECTIVE
+TOC;a82f77a70cf24b0fb568396d8fedf3f4;ISO 26262-2:2018 C.3.6;OBJECTIVE
+TOC;875373cd01238c3b0e28970313bb6d80;ISO 26262-2:2018 C.3.7;OBJECTIVE
+TOC;dcf40c6b8ed6d484d59550c088fcbabb;ISO 26262-2:2018 C.4;Confirmation review of the safety plan (see 6.5.3)
+TOC;1583bc739445b9855a96642b78458f90;ISO 26262-2:2018 C.4.1;OBJECTIVE
+TOC;45051b8a359bd0b9222e036a48aeaaef;ISO 26262-2:2018 C.4.2;OBJECTIVE
+TOC;02eab4c6fd6d59730c50b05706d98aa1;ISO 26262-2:2018 C.4.3;OBJECTIVE
+TOC;0a05997f79cde3938513a6a8cdfcc6da;ISO 26262-2:2018 C.4.4;OBJECTIVE
+TOC;6aa2008d0de454f21760c0f50535aec1;ISO 26262-2:2018 C.4.5;OBJECTIVE
+TOC;7ea0226192f1d0f56f8585d564974280;ISO 26262-2:2018 C.5;Confirmation review of the functional safety concept (see ISO 26262-3:2018, Clause 7)
+TOC;bf157fde81da034d985f42bcd11efa74;ISO 26262-2:2018 C.5.1;OBJECTIVE
+TOC;0ce9108bdd7280117cbfcde94f7ce8ab;ISO 26262-2:2018 C.5.2;OBJECTIVE
+TOC;cf06ccce6ac00686ffe8346369ba26cf;ISO 26262-2:2018 C.5.3;OBJECTIVE
+TOC;6ab3cdab9b958104de0f83dca3abb53e;ISO 26262-2:2018 C.5.4;OBJECTIVE
+TOC;1cdefb466a7e349cff2a4d4bdbc619f1;ISO 26262-2:2018 C.5.5;OBJECTIVE
+TOC;0d6e919543838e39703562c71a9053fd;ISO 26262-2:2018 C.5.6;OBJECTIVE
+TOC;65a7bf2fa49766f2d08724bab3d8804c;ISO 26262-2:2018 C.5.7;OBJECTIVE
+TOC;d8f97f515a480dc015712b4b4736273a;ISO 26262-2:2018 C.5.8;OBJECTIVE
+TOC;8785065b56d64117ad8cf9190c716846;ISO 26262-2:2018 C.5.9;OBJECTIVE
+TOC;10546568fb6f3d2e2d3474402132f70b;ISO 26262-2:2018 C.6;Confirmation review of the technical safety concept (see ISO 26262-4:2018,Clause 6)
+TOC;ca796f070ba68d97d5a3a11b72b98198;ISO 26262-2:2018 C.6.1;OBJECTIVE
+TOC;f3515049806312685dbc21f7807a5d87;ISO 26262-2:2018 C.6.2;OBJECTIVE
+TOC;43190178cb2fce7d2e5d865e10ec5078;ISO 26262-2:2018 C.6.3;OBJECTIVE
+TOC;439e94ec35cd08b1ee2b067d32519d2f;ISO 26262-2:2018 C.6.4;OBJECTIVE
+TOC;cb11ce000b1bcb39963f88440ebff10e;ISO 26262-2:2018 C.6.5;OBJECTIVE
+TOC;fab07eeb04c9274cddcf71e962a59783;ISO 26262-2:2018 C.6.6;OBJECTIVE
+TOC;c59ef7f1ad97bdb6744828823eeffd7b;ISO 26262-2:2018 C.6.7;OBJECTIVE
+TOC;42cb130a130d6fb57a9a1435dd38d261;ISO 26262-2:2018 C.6.8;OBJECTIVE
+TOC;59665b48ecd982a60319ee0038e43d89;ISO 26262-2:2018 C.6.9;OBJECTIVE
+TOC;4376db2ae06fdd501f3718f44b4c625e;ISO 26262-2:2018 C.7;Confirmation review of the integration and test strategy (see ISO 26262-4:2018,Clause 7)
+TOC;d5ec5b8d2771b980ea0856ac6e1273d9;ISO 26262-2:2018 C.7.1;OBJECTIVE
+TOC;54ae6728f646135b614b680fbe993917;ISO 26262-2:2018 C.7.2;OBJECTIVE
+TOC;f16fd2e9c8139c5ca927ab01b59ebf11;ISO 26262-2:2018 C.7.3;OBJECTIVE
+TOC;0c2552971b35f9645e277333b3dfeaf4;ISO 26262-2:2018 C.7.4;OBJECTIVE
+TOC;90094c212656c59248fa2243591ce9ee;ISO 26262-2:2018 C.8;Confirmation review of the safety validation specification including safety validation environment description (see ISO 26262-4:2018,Clause 8)
+TOC;3eb4b99a331571bda45491eb9e0161bf;ISO 26262-2:2018 C.8.1;OBJECTIVE
+TOC;664295a2ad451ad8c07257255d80a1b5;ISO 26262-2:2018 C.8.2;OBJECTIVE
+TOC;cf8bef6a097805d1219e3242ba04dd83;ISO 26262-2:2018 C.8.3;OBJECTIVE
+TOC;a144fa932ecbabbf834b67209a7a463c;ISO 26262-2:2018 C.8.4;OBJECTIVE
+TOC;cfbbdaa53ffb62d349632f836266f51f;ISO 26262-2:2018 C.9;Confirmation review of the safety analyses and dependent failure analyses (see ISO 26262-9:2018,Clauses 7 and 8)
+TOC;a678a2cce34ae4a83278da53a6f95a0a;ISO 26262-2:2018 C.10;Confirmation review of the safety case (see 5.6.4)
+TOC;d5876ba172c0017825a2a859426573d7;ISO 26262-2:2018 C.10.1;OBJECTIVE
+TOC;fc4f3b84780abdb4e73e0043e967b6d4;ISO 26262-2:2018 C.10.2;OBJECTIVE
+TOC;9863038a35201c749219f10f25a70ecd;ISO 26262-2:2018 C.10.3;OBJECTIVE
+TOC;2d3a35a9cb3c27cdfd857ad3b0f3c7d0;ISO 26262-2:2018 C.10.4;OBJECTIVE
+TOC;554ec17f2ca4fef832aa8e2bc928901e;ISO 26262-2:2018 C.11;Functional safety audit (see 6.4.11)
+TOC;bbcbad5d209be35276514c379422dd5e;ISO 26262-2:2018 C.12;Functional safety assessment (see 6.4.12)
+TOC;50387cd1351977a911e0817646fc1aa1;ISO 26262-2:2018 C.12.1;OBJECTIVE
+TOC;2909d24c563abbc91e78ac4192df164d;ISO 26262-2:2018 C.12.2;OBJECTIVE
+TOC;2a077f5632396c47c62fb05e7cd80ba9;ISO 26262-2:2018 C.12.3;OBJECTIVE
+TOC;af8f4a2a3e14ec8924111d5b4c7c2b0b;ISO 26262-2:2018 C.12.4;OBJECTIVE
+TOC;71a47a3b0e66baaa8fdf5b6128647fb8;ISO 26262-2:2018 C.12.5;OBJECTIVE
+TOC;2082cd5650c9d7f7446cae4a86fad66c;ISO 26262-2:2018 C.12.6;OBJECTIVE
+TOC;b20e65f00f49e7c31b92fd3823276dc5;ISO 26262-2:2018 C.12.7;OBJECTIVE
+TOC;b9b520b5953e4bcea2dd9bdd0c59cd8f;ISO 26262-2:2018 C.12.8;OBJECTIVE
 TOC;536bd10cd56a97f2831bc96e3b6d7c39;ISO 26262-2:2018 D;Example of a functional safety assessment agenda (for items that have an ASIL D safety goal)
-TOC;d4015a4d2c60c2c33791fca27c85addc;ISO 26262-2:2018 E;Guidance on potential interaction of functional safety with
+TOC;be8b99515fda7c4250a1bca071f6bf26;ISO 26262-2:2018 D.1;Safety management
+TOC;3713b254c222ba3109c6546c256328fb;ISO 26262-2:2018 D.1.1;OBJECTIVE
+TOC;ed82b997caaa885bb0159547c00b59c6;ISO 26262-2:2018 D.1.2;OBJECTIVE
+TOC;06cac9a8006e2a0accbbd86563ed3e4b;ISO 26262-2:2018 D.1.3;OBJECTIVE
+TOC;a0e4cd3f06687c042f9bc2c12e8841f9;ISO 26262-2:2018 D.1.4;OBJECTIVE
+TOC;73effea5ef0cc0c157a3ed87d03cf833;ISO 26262-2:2018 D.1.5;OBJECTIVE
+TOC;cfc4ef6422501601a47e894bf94107de;ISO 26262-2:2018 D.1.6;OBJECTIVE
+TOC;45e3b8dd7adc0f780d7f78083be6a771;ISO 26262-2:2018 D.2;Safety activities during the concept phase
+TOC;ae3d7e724b040c5668dde0016218e2f9;ISO 26262-2:2018 D.2.1;OBJECTIVE
+TOC;f2575af6447c1761339a92db76db5131;ISO 26262-2:2018 D.2.2;OBJECTIVE
+TOC;cfbf55039f25a8e059cf892ec4ff3e9e;ISO 26262-2:2018 D.2.3;OBJECTIVE
+TOC;a6ed97c4a078e84187ad3cd79b31842e;ISO 26262-2:2018 D.2.4;OBJECTIVE
+TOC;45ad6f19d46b4fec7bab8f594cb5865b;ISO 26262-2:2018 D.2.5;OBJECTIVE
+TOC;10a53c5e595928e18161dbfcc292c7ac;ISO 26262-2:2018 D.2.6;OBJECTIVE
+TOC;a07f02dd8b7333e8ab58d852b90f5405;ISO 26262-2:2018 D.3;Safety activities during the system development
+TOC;793786edd91fab97b632f04c012b2195;ISO 26262-2:2018 D.3.1;OBJECTIVE
+TOC;2bd1e87dfb323f4680cd9e966d5fcdca;ISO 26262-2:2018 D.3.2;OBJECTIVE
+TOC;22fd66896c5e07330518057bc09d849e;ISO 26262-2:2018 D.3.3;OBJECTIVE
+TOC;3de84e4d9bb4e6eb52f6555b84e3602a;ISO 26262-2:2018 D.3.4;OBJECTIVE
+TOC;99ce6b5466368eb7dee93a6717df92f5;ISO 26262-2:2018 D.3.5;OBJECTIVE
+TOC;9eb0d272af263bac31e463bca03bb753;ISO 26262-2:2018 D.4;Hardware development
+TOC;a8b713532d78eef4c2ae81cf29a800ef;ISO 26262-2:2018 D.4.1;OBJECTIVE
+TOC;b2be78cd2ab971281e6e193087af2560;ISO 26262-2:2018 D.4.2;OBJECTIVE
+TOC;e7683620b99c603d0cf1774518356aaa;ISO 26262-2:2018 D.4.3;OBJECTIVE
+TOC;7b6ab7271a6d0c3d780ae98e59ffec04;ISO 26262-2:2018 D.4.4;OBJECTIVE
+TOC;aced0c598c19849387a422ebac8ca5de;ISO 26262-2:2018 D.4.5;OBJECTIVE
+TOC;1057e959c021e8bc500b90eeb23724bc;ISO 26262-2:2018 D.5;Software development
+TOC;7002a8b6067a2590d3fa50fb6fe99d79;ISO 26262-2:2018 D.5.1;OBJECTIVE
+TOC;77681412cb03748fe488764df0e14a10;ISO 26262-2:2018 D.5.2;OBJECTIVE
+TOC;f39cfd67366c32302c4780f7edd91f8f;ISO 26262-2:2018 D.5.3;OBJECTIVE
+TOC;eb4c7d6220d996bed9c7990d4dd72871;ISO 26262-2:2018 D.5.4;OBJECTIVE
+TOC;8833e09a985c85355c7b3a275f2d265a;ISO 26262-2:2018 D.5.5;OBJECTIVE
+TOC;8f1c0300244904942d68aad974be487d;ISO 26262-2:2018 D.6;Item integration
+TOC;7932b02ce6ba7d2e297bd39cd318eab3;ISO 26262-2:2018 D.6.1;OBJECTIVE
+TOC;cab6d75d2a58399db0bb81188457d3e5;ISO 26262-2:2018 D.6.2;OBJECTIVE
+TOC;f034c032189b6eefc2377acfea55e207;ISO 26262-2:2018 D.6.3;OBJECTIVE
+TOC;ae1921ba1342f62b0cd52cd666caaf7c;ISO 26262-2:2018 D.6.4;OBJECTIVE
+TOC;ee4e1849361d0d973133d98b3e029916;ISO 26262-2:2018 D.7;Safety validation
+TOC;0dcc8cd7f76808055e8d67847ec8075b;ISO 26262-2:2018 D.7.1;OBJECTIVE
+TOC;929645388c68530eed101df9478c2778;ISO 26262-2:2018 D.7.2;OBJECTIVE
+TOC;38d5136557d3f0d4406368149c04612a;ISO 26262-2:2018 D.8;Safety validation
+TOC;44b92b055113c6165376fb56c33d4eda;ISO 26262-2:2018 D.8.1;OBJECTIVE
+TOC;3d580f08b783c729f0e4ce09c705e76d;ISO 26262-2:2018 D.9;Safety-related special characteristics
+TOC;dfd6988be5f82ecd49f4d0055b67e761;ISO 26262-2:2018 D.9.1;OBJECTIVE
+TOC;c50414f709c8cf340342f9d95ad8ae41;ISO 26262-2:2018 D.9.2;OBJECTIVE
+TOC;34a630a7259dc781c17a45e0796b7cab;ISO 26262-2:2018 D.10;Summary
+TOC;d4015a4d2c60c2c33791fca27c85addc;ISO 26262-2:2018 E;Guidance on potential interaction of functional safety with cybersecurity
+TOC;f58ec986cc4e7d04d84a4e9458676bfa;ISO 26262-2:2018 E.1;Objectives
+TOC;b6fc80e4b89ef58ef6d2c4b48b747cea;ISO 26262-2:2018 E.2;General
+TOC;c776665112504949201ee6ff1152271d;ISO 26262-2:2018 E.3;Potential interaction between functional safety and cybersecurity
+TOC;fd1150b32d7e2fdd842a64f6b715c2ec;ISO 26262-2:2018 E.3.1;Functional safety management
+TOC;53bf99e045e8a26d620990b613dbc0b8;ISO 26262-2:2018 E.3.2;Concept phase
+TOC;99082bae04b0aa66004b5c4f1fa95a71;ISO 26262-2:2018 E.3.3;Product development
+TOC;66ed0b02e9c4be6f19cd2246d36e9a02;ISO 26262-2:2018 E.3.4;Production and operation
 TOC;5e7327db57223c013f1a5576b13fd215;ISO 26262-3:2018 0;Part 3
 TOC;d619ae58511001d7bc8d6b9bb3e18892;ISO 26262-3:2018 1;Scope
 TOC;fa2af27b3f50af58556d8fe10b9c3863;ISO 26262-3:2018 2;Normative references
@@ -474,6 +589,12 @@ TOC;bc9b72852f0ea24d7d7bfb9054185c77;ISO 26262-3:2018 7.5.1;Functional safety co
 TOC;8b61aabb1f73a3331d991d2706430539;ISO 26262-3:2018 7.5.2;Verification report of the functional safety concept
 TOC;48f0cae1c4ff21f8c2190467e340c1c6;ISO 26262-3:2018 A;Overview of and workflow of concept phase
 TOC;fb41b45dbe252a7c255c8c6b5fadd174;ISO 26262-3:2018 B;Hazard analysis and risk assessment
+TOC;4fc650e44ea40555aabad541742b56df;ISO 26262-3:2018 B.1;General
+TOC;d640274f9a37025e91ef62e8d60c26ee;ISO 26262-3:2018 B.2;Examples of severity
+TOC;6611f4b3058164c47d55977a431a8f67;ISO 26262-3:2018 B.2.1;General
+TOC;9e70c24de5956144c7af6f5b53cd69c8;ISO 26262-3:2018 B.2.2;Description of the AIS stages
+TOC;bbe81c1c707bef87fd32dc238aa15543;ISO 26262-3:2018 B.3;Examples and explanations of the probability of exposure
+TOC;1dd1db499b1929cc8b035112e90187f0;ISO 26262-3:2018 B.4;Examples of controllability
 TOC;5b9961271e3d5c8b981471503c2428e2;ISO 26262-4:2018 0;Part 4
 TOC;70b7c030c05b6199f02186213186b9cb;ISO 26262-4:2018 1;Scope
 TOC;6ed7a37d1bc8e60236d3b060f72b3969;ISO 26262-4:2018 2;Normative references
@@ -624,6 +745,9 @@ TOC;5f0aca12f7209e3bf144576f1a1598bd;ISO 26262-4:2018 8.5.1;Safety validation sp
 TOC;a83f91129bce09afaa93c5194b1023d1;ISO 26262-4:2018 8.5.2;Safety validation report
 TOC;70a52fe809c71bba83471df8f59f1a3e;ISO 26262-4:2018 A;Overview of and workflow of product development at the system level
 TOC;bef4297372ba6b59b0f27e9238e9cb3e;ISO 26262-4:2018 B;Example contents of hardware-software interface (HSI)
+TOC;3f87435b6f5de174d23578faf93d331f;ISO 26262-4:2018 B.1;General
+TOC;89c7fc587ce9a6e8bff78675ab68002f;ISO 26262-4:2018 B.2;HSI elements
+TOC;a372741cbbe02dda24f3d8ba19a7f1dc;ISO 26262-4:2018 B.3;HSI characteristics
 TOC;8b358b0f2149cf0b086ea0802ac932c9;ISO 26262-5:2018 0;Part 5
 TOC;5cb1212c3af28f039bee6059e3bcf13f;ISO 26262-5:2018 1;Scope
 TOC;7d16d8289c96aa7f3d721b9ef6b801a2;ISO 26262-5:2018 2;Normative references
@@ -776,11 +900,84 @@ TOC;04ad42c1e4d2a4ade76401b992f40334;ISO 26262-5:2018 10.5.2;Hardware integratio
 TOC;ccdf8a5463f24ebcafcd5f1547a02288;ISO 26262-5:2018 A;Overview of and workflow of product development at the hardware level
 TOC;3cc957761bb89049c2cc9d04f2d97fc3;ISO 26262-5:2018 B;Failure mode classification of a hardware element
 TOC;f9550315789a7eac251f276918b7c1b8;ISO 26262-5:2018 C;Hardware architectural metrics
+TOC;4d999beddf025c7c4a2ba783c4a6dcf0;ISO 26262-5:2018 C.1;Fault classification and diagnostic coverage
+TOC;12b10bd07113583175f2f24458e5abb4;ISO 26262-5:2018 C.1.1;REQUIREMENT
+TOC;6b1f69b2d9edc007fff9be67240fee61;ISO 26262-5:2018 C.1.2;REQUIREMENT
+TOC;fbc08b7f396296574eafbd863ef79dec;ISO 26262-5:2018 C.2;Single-point fault metric
+TOC;eac907c77a9c9c601d9dc6251546428c;ISO 26262-5:2018 C.2.1;REQUIREMENT
+TOC;d4b86602a24d5ccc2b4f9fc5623752c5;ISO 26262-5:2018 C.2.2;REQUIREMENT
+TOC;3eea66665959528cc908986b11758721;ISO 26262-5:2018 C.3;Latent-fault metric
+TOC;7b581198bc3803025f0e43a3d5ff92e2;ISO 26262-5:2018 C.3.1;REQUIREMENT
+TOC;c6cb223bfe7c7a4991f51b6ab8f4b624;ISO 26262-5:2018 C.3.2;REQUIREMENT
 TOC;12573521038f149a6cf960e8cd114dbd;ISO 26262-5:2018 D;Evaluation of the diagnostic coverage
+TOC;0119afc7aa8be28a74bfd29dd90bd45a;ISO 26262-5:2018 D.1;General
+TOC;00ab110fe3688efda2b57b299469a6cb;ISO 26262-5:2018 D.2;Overview of techniques for embedded diagnostic self-tests
+TOC;87c27132fb4a41f41129512a4d653bca;ISO 26262-5:2018 D.2.1;Electrical
+TOC;69c1ae024f3b89830a6819266e18bec8;ISO 26262-5:2018 D.2.1.1;Failure detection by on-line monitoring
+TOC;227c516b10186df385f1128491a99baa;ISO 26262-5:2018 D.2.1.2;Comparator
+TOC;dcac980a7037dac0537bb0aa732a6e30;ISO 26262-5:2018 D.2.1.3;Majority voter
+TOC;2cde7aafd7f7a3b10183253da0a0dfe1;ISO 26262-5:2018 D.2.2;Electronic
+TOC;3537879dba7ca2460759409c136b9267;ISO 26262-5:2018 D.2.2.1;Dynamic principles
+TOC;a5a31ebf61dbff3db8ea488a2c538393;ISO 26262-5:2018 D.2.2.2;Dynamic principles
+TOC;f0e48aea79fd172efcf3f85e31b73725;ISO 26262-5:2018 D.2.3;Processing units
+TOC;205439384abb0718dd911f479c45d255;ISO 26262-5:2018 D.2.3.1;Self-test by software
+TOC;5cd02013266eb834d314c273459025a8;ISO 26262-5:2018 D.2.3.2;Self-test supported by hardware (one-channel)
+TOC;5864506b4e41b3e3e6f9d85a0827a2ea;ISO 26262-5:2018 D.2.3.3;Self-test by software cross exchanged between two independent units
+TOC;d76e87935db44abfd44b6a2ba4f64455;ISO 26262-5:2018 D.2.3.4;Software diversified redundancy (one hardware channel)
+TOC;68524dee4f6d893f71d3f94cd719924e;ISO 26262-5:2018 D.2.3.5;Reciprocal comparison by software in separate processing units
+TOC;eae118068081239c0b5a032da6344833;ISO 26262-5:2018 D.2.3.6;HW redundancy (e.g. Dual Core Lockstep, asymmetric redundancy, coded processing)
+TOC;32aa025215474fda6f96047a0d2b5f36;ISO 26262-5:2018 D.2.3.7;Configuration register test
+TOC;a71bdc13c1919cbd29c29c8d88f5de7c;ISO 26262-5:2018 D.2.3.8;Stack over/under flow detection
+TOC;788b9d70f4d6bbf080a3387601e6a267;ISO 26262-5:2018 D.2.3.9;Integrated hardware consistency monitoring
+TOC;22f81cd84c44628cb4f6a2a880e4685f;ISO 26262-5:2018 D.2.4;I/O-units and interfaces
+TOC;16530a1541dcd8692efc713fc20d7f6f;ISO 26262-5:2018 D.2.4.1;Test pattern
+TOC;6728173f07ba23ecb58151e924941192;ISO 26262-5:2018 D.2.4.2;Code protection
+TOC;69752605efeb6c737266056025aed158;ISO 26262-5:2018 D.2.4.3;Multi-channel parallel output
+TOC;0cf47f806bb839cb27907b5d4501a163;ISO 26262-5:2018 D.2.4.4;Monitored outputs
+TOC;1efc84dd220a61f2b41cdc3175bf9af1;ISO 26262-5:2018 D.2.4.5;Input comparison/voting
+TOC;8cdbb7a6abd07b2b0c10db22ec13a3bf;ISO 26262-5:2018 D.2.5;Communication bus
+TOC;878c7f4a57b4804434ff5249a082cc72;ISO 26262-5:2018 D.2.5.1;One-bit hardware redundancy
+TOC;0ad1b15a24fa1fc46f09d928b872a8b9;ISO 26262-5:2018 D.2.5.2;Multi-bit hardware redundancy
+TOC;ab87a89004651bb5964b9f314b2488eb;ISO 26262-5:2018 D.2.5.3;Complete hardware redundancy
+TOC;98a956630388b73cbbd1a43d89c437df;ISO 26262-5:2018 D.2.5.4;Inspection using test patterns
+TOC;1080b228b7c7814de2da7eff4267f810;ISO 26262-5:2018 D.2.5.5;Transmission redundancy
+TOC;872f03c63d14548b763ad5a4556ff008;ISO 26262-5:2018 D.2.5.6;Information redundancy
+TOC;b7c3503cd2801767b65da17692ce2400;ISO 26262-5:2018 D.2.5.7;Frame counter
+TOC;680d7b96f2ff11334b68bda9dde8f7dd;ISO 26262-5:2018 D.2.5.8;Timeout monitoring
+TOC;dea86f8916f918ce597e844bc4a85f80;ISO 26262-5:2018 D.2.5.9;Read back of sent message
+TOC;867022f6f492618a2ee3efb2aecef347;ISO 26262-5:2018 D.2.6;Power supply
+TOC;34691eaa7913021f1065a18dfaa37772;ISO 26262-5:2018 D.2.6.1;Voltage or current control (input)
+TOC;536a0f58a9049a5eb5f7145ac6f10e3e;ISO 26262-5:2018 D.2.6.2;Voltage or current control (output)
+TOC;093c993af96a76c8c69196458ab0c974;ISO 26262-5:2018 D.2.7;Temporal and logical programme sequence monitoring
+TOC;7fe23cc832705ee9ab01b148b8d460fb;ISO 26262-5:2018 D.2.7.1;Watchdog with separate time base without time-window
+TOC;bd5438e8f7d98d4b5388c2fd6926c066;ISO 26262-5:2018 D.2.7.2;Watchdog with separate time base and time-window
+TOC;a6655be468f7aa552f4001d8a72384cd;ISO 26262-5:2018 D.2.7.3;Logical monitoring of programme sequence
+TOC;51d5bd4d049af9f123b65d26ce71b11a;ISO 26262-5:2018 D.2.7.4;Combination of temporal and logical monitoring of programme sequences
+TOC;ee17a2c4838fa354ce079b802377f9f0;ISO 26262-5:2018 D.2.7.5;Combination of temporal and logical monitoring of programme sequences with time dependency
+TOC;1e9bd80871edcfb5f7d6979253d0cb55;ISO 26262-5:2018 D.2.8;Sensors
+TOC;72ce1a6fe762c55fda3c203a8955ac8b;ISO 26262-5:2018 D.2.8.1;Sensor valid range
+TOC;843b48742d4c29994fe7d4db6c6d7caf;ISO 26262-5:2018 D.2.8.2;Sensor correlation
+TOC;755d8a60a0367d9ac2efaef553e0393e;ISO 26262-5:2018 D.2.8.3;Sensor rationality check
+TOC;772aff32b39d833daaf2325e877eaf3c;ISO 26262-5:2018 D.2.9;Actuators
+TOC;379c540e67231bd401cfc8afab41bba5;ISO 26262-5:2018 D.2.9.1;Monitoring
 TOC;60f5d48f141dfd6a644aaf2729efdb09;ISO 26262-5:2018 E;Example calculation of hardware architectural metrics:"single-point fault metric" and "latent-fault metric" 
 TOC;b9984a0fbefc27fd1f14fb999861ea3d;ISO 26262-5:2018 F;Example for rationale that objectives of Clause 9 in accordance with 4.2 are met
+TOC;4a5adbb66c2ad607dc079efad13deeaa;ISO 26262-5:2018 F.1;General
+TOC;92976d39eedb78ee5efe40116ea8cae3;ISO 26262-5:2018 F.2;Safety analysis providing the PMHF evaluation
+TOC;34a06dae863ea68c9b7eab8aa9b6cd07;ISO 26262-5:2018 F.3;Definition of selection criteria of faults or failure modes to be evaluated
+TOC;e7aeebd721d99ffa01be2ee910c36baf;ISO 26262-5:2018 F.4;Application of the selection criteria
+TOC;0feecff14b852895f575b305963cb941;ISO 26262-5:2018 F.5;Evaluation regarding the compliance with the objectives of Clause 9
 TOC;43ca363dae830124b5326b380b4072f6;ISO 26262-5:2018 G;Example of a PMHF budget assignment for an item consisting of two systems
+TOC;5eee3d21b7a784700cdeaf4d467701d4;ISO 26262-5:2018 G.1;Objectives
+TOC;7357dfd94a8f5377488d3b485ecae2c2;ISO 26262-5:2018 G.2;Item architecture
+TOC;612ebe96a292004518d28036419a17b7;ISO 26262-5:2018 G.3;Chain of events
+TOC;fb71807479bf0ba0d0874af23745c36a;ISO 26262-5:2018 G.4;Conditions
+TOC;6fe638ffe9ffb9afdd1bde037c3ed830;ISO 26262-5:2018 G.5;Overall PMHF target value
+TOC;b13fa66853b2af1f2c9ea0f9c5a882fd;ISO 26262-5:2018 G.6;PMHF budget specification for system B
 TOC;2ac84a9237647f8ce72d6cda08bd6262;ISO 26262-5:2018 H;Example of latent fault handling
+TOC;c7d509a69eceadd53b74a52018f87561;ISO 26262-5:2018 H.1;General
+TOC;5a08b5b2307affdebb66dfd3c9c27888;ISO 26262-5:2018 H.2;Example with a safety mechanism based on fault detection and control
+TOC;6f69d12f9ede49a440f23781ef3c2f6f;ISO 26262-5:2018 H.3;Example with a safety mechanism based on control of the fault effects
 TOC;01dffbe7c9031774e6d6a9740410df8f;ISO 26262-6:2018 0;Part 6
 TOC;01dffbe7c9031774e6d6a9740410df8f;ISO 26262-6:2018 1;Scope
 TOC;03d6ebf1edb19933045beae8b9bf4021;ISO 26262-6:2018 2;Normative references
@@ -912,9 +1109,65 @@ TOC;52ac8bf5cefa9136b61b60f9c58aff50;ISO 26262-6:2018 11.5.1;Software verificati
 TOC;63c2a5fac8e8aaedcd8f82ca6ef75d09;ISO 26262-6:2018 11.5.2;Software verification report (refined)
 TOC;07fa6ae734ee4f1c7e97634eab46c6cc;ISO 26262-6:2018 A;Overview of and workflow of management of product development at the software level
 TOC;b0d40631df0435c9bf48f9880d6885c9;ISO 26262-6:2018 B;Model-based development approaches
+TOC;1906ad6f73ee338e7c21063517aa8b50;ISO 26262-6:2018 B.1;Objectives
+TOC;b1ce908f7f1e7bedd0dc352b4da4bd57;ISO 26262-6:2018 B.2;General
+TOC;a2fc5b9aa1204b04970ead09aa763efd;ISO 26262-6:2018 B.2.1;Introduction
+TOC;2c500b6254f84caaf95d7a897132053f;ISO 26262-6:2018 B.2.2;General suitability aspects
+TOC;1137f431f1e8ec454d05ee208524a839;ISO 26262-6:2018 B.2.3;Potential impact of MBD on the software lifecycle
+TOC;d272f73632b4ea5f7914fd851a9b3a9e;ISO 26262-6:2018 B.3;Specific considerations for the example software development use cases
+TOC;c37dc45f55eaa4232c9fa726229ef503;ISO 26262-6:2018 B.3.1;Specification on software safety requirements (Clause 6 and ISO 26262-8:2018,Clause 6)
+TOC;5671c0b7f98201514df1291f4da596d5;ISO 26262-6:2018 B.3.2;Development of the software architectural design (Clause 7)
+TOC;c679a7569bff025aa82ac42338e1f690;ISO 26262-6:2018 B.3.3;Design and implementation of software units (Clauses 8 and 9)
+TOC;ceace15b3d8530ed43b438a19e329cbd;ISO 26262-6:2018 B.3.4;Design, implementation and integration of software components, including automated code generation from software component models (Clauses 8,9 and 10)
+TOC;2a9037c82b7186517e71d854a1980125;ISO 26262-6:2018 B.3.5;Verification (static and/or dynamic) (Clauses 9,10 and 11)
 TOC;fe8a69d2c2ae94c32598be04a9c707c9;ISO 26262-6:2018 C;Software configuration
+TOC;b90401d6c2ad252dd4e66a2e5c011f7f;ISO 26262-6:2018 C.1;Objectives
+TOC;b4032ea8ea375cc5cf0eec788411dfd9;ISO 26262-6:2018 C.2;General
+TOC;cc3feb851610203deaae3a2af4bb1fb1;ISO 26262-6:2018 C.3;Inputs to this clause
+TOC;9d21c8abd4433458a1785912a619fc48;ISO 26262-6:2018 C.3.1;Prerequisites
+TOC;df3f9508bf73adcd3dde61dfac8fb084;ISO 26262-6:2018 C.3.2;Further supporting information
+TOC;9e293216a61f734f3490ed4a4d0ce21e;ISO 26262-6:2018 C.4;Requirements and recommendations
+TOC;4d0eaba6e8cc83c4cf29e3a70c60a54c;ISO 26262-6:2018 C.4.1;REQUIREMENT
+TOC;3e45899c6cc71764e07dd4547203ac7b;ISO 26262-6:2018 C.4.2;REQUIREMENT
+TOC;bf8b826d033e2577104f4fc473bdb360;ISO 26262-6:2018 C.4.3;REQUIREMENT
+TOC;a9d4d144725be576f12ce47877b77bf2;ISO 26262-6:2018 C.4.4;REQUIREMENT
+TOC;78823df00af99429bf4a56b78e358eaa;ISO 26262-6:2018 C.4.5;REQUIREMENT
+TOC;d9e81b37c07b46df11d1b9fe555439c6;ISO 26262-6:2018 C.4.6;REQUIREMENT
+TOC;a0aad9933c1de9b5ef08fc9925f1ae00;ISO 26262-6:2018 C.4.7;REQUIREMENT
+TOC;9f6814c98e7254eed138eac41f0c28c9;ISO 26262-6:2018 C.4.8;REQUIREMENT
+TOC;aa99dce7131c8d66ee7404a275fad7ba;ISO 26262-6:2018 C.4.9;REQUIREMENT
+TOC;5f2f398da9a3aaf5ebb17aa60112c53c;ISO 26262-6:2018 C.4.10;REQUIREMENT
+TOC;4ec6ffbdd435accc0c06394fda6ce13e;ISO 26262-6:2018 C.5;Work products
+TOC;bd39ca56970aa2da534d0754d4d89623;ISO 26262-6:2018 C.5.1;Configuration data specification
+TOC;59aac4018a63c5258abbe32199621f14;ISO 26262-6:2018 C.5.2;Calibration data specification
+TOC;a90a2b6f9aa92726760659f86a47a3de;ISO 26262-6:2018 C.5.3;Configuration data
+TOC;7b8dff32d3c0ecf25a1b57f350d468c4;ISO 26262-6:2018 C.5.4;Calibration data
+TOC;fba4827a8c6a81ef66a6c41e99780ece;ISO 26262-6:2018 C.5.5;Verification specification (refined)
+TOC;ce23dacc7e7ff8616ee5717d45fd14eb;ISO 26262-6:2018 C.5.6;Verification report (refined)
+TOC;7a57902049ce20b7931459fc13f16003;ISO 26262-6:2018 C.5.7;Software architectural design specification (refined)
+TOC;e2b249adf20573e8d2c0b7c46d3d5a6b;ISO 26262-6:2018 C.5.8;Documentation of the software development environment (refined)
 TOC;f44e33ca0da8c62495de04a37b97acbb;ISO 26262-6:2018 D;Freedom from interference between software elements
+TOC;fdb26a9a4d8e8a05ceca93a595d117a2;ISO 26262-6:2018 D.1;Objectives
+TOC;366a7bd77c3bcad9eaec9e3a3524ce11;ISO 26262-6:2018 D.2;General
+TOC;fa8f5c2bf670c9eeb6700b98e85eb8fa;ISO 26262-6:2018 D.2.1;Achievement of freedom from interference
+TOC;412dbe970775cbd9bd6a60d5af1e5879;ISO 26262-6:2018 D.2.2;Timing and execution
+TOC;d379a47bd58bc792aed3b86539e93b65;ISO 26262-6:2018 D.2.3;Memory
+TOC;7a71a0eee51cb65e6de262a8c0aeca09;ISO 26262-6:2018 D.2.4;Exchange of information
 TOC;20ddb4f5c5a0b22c76a4e298a96b5f44;ISO 26262-6:2018 E;Application of safety analyses and analyses of dependent failures at the software architectural level
+TOC;b2f3c75152f67bff9079ab38eac370d8;ISO 26262-6:2018 E.1;Objectives
+TOC;6b18eb656556b5b93ddaaca10da9ac76;ISO 26262-6:2018 E.2;General
+TOC;c95b5f157891cf7fe726679f97527b6b;ISO 26262-6:2018 E.2.1;Scope and purpose of the analyses
+TOC;fc4805f95fecac6fcb85c11748249ad8;ISO 26262-6:2018 E.2.2;Relationship between safety analyses and dependent failure analyses at the system, hardware and software level
+TOC;d7c80305a7b3d3e5a094df6cbb524a27;ISO 26262-6:2018 E.2.3;Safety analyses in a distributed software development (including SEooC development of software elements)
+TOC;f79501fb896be311270bfe20b93db2e7;ISO 26262-6:2018 E.3;Topics for performing analyses
+TOC;c101aad184f7a5e178bd14d6640621b5;ISO 26262-6:2018 E.3.1;Determination of the goals for the analyses
+TOC;b211828f3f2f5f1a5ba78ec1b54e16f1;ISO 26262-6:2018 E.3.2;Determination of the scope and boundaries regarding the specific architectural design to be analysed
+TOC;5a3d01a08efd98ab3ce72e8c350abb7a;ISO 26262-6:2018 E.3.3;Determination of the method applied to conduct the analyses
+TOC;7a5f2fd1f8be46e79fdd46b4c969702a;ISO 26262-6:2018 E.3.4;Aspects to support the meaningfulness, objectivity and rigour of the analyses
+TOC;1b2646c45b5d01b5ce89a813f522e4c1;ISO 26262-6:2018 E.3.4.1;Coupling factor classes for DFA in accordance with ISO 26262-9:2018
+TOC;22368003d51c82d51cfab38a145bb6b5;ISO 26262-6:2018 E.3.4.2;Use content of Annex D
+TOC;33ce41b1998b03faf781696f673b2597;ISO 26262-6:2018 E.3.4.3;Analyses supported by using guide words
+TOC;556695598650f7a057f7ea5d8d0c4542;ISO 26262-6:2018 E.4;Mitigation strategy for weaknesses identified during safety and dependent failure analyses
 TOC;dd8c506f4220b327a438207b646b2de1;ISO 26262-7:2018 0;Part 7
 TOC;d8d1de73dbd3d5e9971d698bdb5b11b5;ISO 26262-7:2018 1;Scope
 TOC;9b1fd90f595b308ffe41eca327457347;ISO 26262-7:2018 2;Normative references
@@ -1400,8 +1653,8 @@ TOC;4ac4d3b4520ff8e8e1b9a8dd6ddcc267;ISO 26262-9:2018 8.5.2;Safety analyses veri
 TOC;ff9aed8f51f18cefb62fad3c15d58415;ISO 26262-9:2018 A;Overview of and document flow of Automotive Safety Integrity Level (ASIL)-oriented and safety oriented analyses
 TOC;a7884dd0ddf53be4c4caa9148a54a48d;ISO 26262-9:2018 B;Example architectures for Coexistence of elements and Decomposition of requirements
 TOC;b2a171ee35c0c1411c27f1f6fba4e672;ISO 26262-9:2018 B.1;Example architecture
-TOC;aee0c88606b4e1c311a31663a05ff01d;ISO 26262-9:2018 B.2;Coexistence
-TOC;a1ce88153d87fc31cdb463c9b0eeebac;ISO 26262-9:2018 B.3;Decomposition
+TOC;aee0c88606b4e1c311a31663a05ff01d;ISO 26262-9:2018 B.2;Coexistence (Clause 6)
+TOC;a1ce88153d87fc31cdb463c9b0eeebac;ISO 26262-9:2018 B.3;Decomposition (Clause 5)
 TOC;62ce801c1eb0d7e7c84f7211fc7346f3;ISO 26262-9:2018 C;Framework for Identifying Dependent Failures
 TOC;25e791e7b21895f563695dd88b56a869;ISO 26262-10:2018 0;Part 10
 TOC;d0dab8e3f4122f1c48f5573000c811fe;ISO 26262-10:2018 1;Scope
@@ -1549,5 +1802,363 @@ TOC;28529c92173f98f1c22b6afa93bc1c7f;ISO 26262-10:2018 14.4;Monitoring of the sa
 TOC;f0d36abf53b1b4789dbc62f0f05646a3;ISO 26262-10:2018 A;Fault tree construction and applications
 TOC;ec0461833fe92348d94819a1e15e3fd9;ISO 26262-10:2018 A.1;General
 TOC;7bea2fa645e325c217e63bbb303abc51;ISO 26262-10:2018 A.2;Combining FTA and FMEA
-TOC;0a2bdbbb45458873c63c130da4a88fe2;ISO 26262-11:2018 1;TOC
-TOC;d06b0ef3a4c56ede50c1fd4339106046;ISO 26262-12:2018 1;TOC
+TOC;9927c7d83a4e3901b1f4e2e55ad03ed5;ISO 26262-11:2018 0;Part 11
+TOC;0a2bdbbb45458873c63c130da4a88fe2;ISO 26262-11:2018 1;Scope
+TOC;5bf387e0c332606c64ac13a51e055f69;ISO 26262-11:2018 2;Normative references
+TOC;060ad5e2bf7799b8a4843b9ad994bd8b;ISO 26262-11:2018 3;Terms and definitions
+TOC;cbbbf12e2adc6989d15bbc3126fb47ec;ISO 26262-11:2018 4;A semiconductor component and its partitioning
+TOC;8117018046f22e84c58cb037a849a136;ISO 26262-11:2018 4.1;How to consider semiconductor components
+TOC;8fd95563e9ac884971b21a9e0d1eceab;ISO 26262-11:2018 4.1.1;Semiconductor component development
+TOC;cf431b1852c29d41d6464f8d444aa910;ISO 26262-11:2018 4.2;Dividing a semiconductor component in parts
+TOC;cc41fc6e1ce232d417b8599431bb774d;ISO 26262-11:2018 4.3;About hardware faults, errors and failure modes
+TOC;785751f0d37f1989e096e9d8b1db7137;ISO 26262-11:2018 4.3.1;Fault modes
+TOC;35557c01d96f48c8a25b3833089dd81b;ISO 26262-11:2018 4.3.2;Failure modes
+TOC;163d2b217592bf014b7b160f8a620659;ISO 26262-11:2018 4.3.3;The distribution of base failure rate across failure modes
+TOC;438eff2cd8c9c04c4c12e8fa2bed0e03;ISO 26262-11:2018 4.4;About adapting a semiconductor component safety analysis to system level
+TOC;39009514e3250a1cce7f2a7e5e450366;ISO 26262-11:2018 4.5;Intellectual property (IP)
+TOC;61a3e09156c5a1929b71826df88b0c53;ISO 26262-11:2018 4.5.1;About IP
+TOC;9c0ed63f16bf029c592ca849e327dd7b;ISO 26262-11:2018 4.5.1.1;Understanding IP
+TOC;86ae93e8ff4fdb3b64c54e25049c6784;ISO 26262-11:2018 4.5.1.2;Types of IP
+TOC;f739191038cf957f5fd506d202175569;ISO 26262-11:2018 4.5.2;Category and safety requirements for IP
+TOC;4fb688213dd64fb7d0d65d9f5091a364;ISO 26262-11:2018 4.5.3;IP lifecycle
+TOC;271aac362f43ba4e1185e04221726d4e;ISO 26262-11:2018 4.5.3.1;Introduction
+TOC;c12e4b6b10d76c6583ebaaede3eaf122;ISO 26262-11:2018 4.5.3.2;IP as SEooC
+TOC;ceb1b672bdc8ee5fc51061095b16161b;ISO 26262-11:2018 4.5.3.3;IP designed in context
+TOC;af79e592dc8c979536b1a95a0f9921b3;ISO 26262-11:2018 4.5.3.4;IP use through evaluation of hardware element
+TOC;142d28f95a91a7253bdd6b276fcd6b9d;ISO 26262-11:2018 4.5.3.5;IP use through the "proven in use" argument
+TOC;244d63b7cc98895a5c4a5dc3ca921ff6;ISO 26262-11:2018 4.5.4;Work products for IP
+TOC;f86db91fbf6c6144f86146019d4906e3;ISO 26262-11:2018 4.5.4.1;List of work products for IP
+TOC;7595b9eda5d3611d55f4933171a1c8e4;ISO 26262-11:2018 4.5.4.2;Safety plan
+TOC;516adef26ed797d137cfdeab6a62d1de;ISO 26262-11:2018 4.5.4.3;Safety requirements allocated to the IP design
+TOC;772ac8b64c5bb585929328613085e1b9;ISO 26262-11:2018 4.5.4.4;Hardware design verification and verification review of the IP design
+TOC;04b69863d8276c57293c6faa899654e7;ISO 26262-11:2018 4.5.4.5;Safety analysis report
+TOC;acebd42b1995c0b08d2249f6db59f72f;ISO 26262-11:2018 4.5.4.6;Analysis of dependent failures
+TOC;127e074c2c7a756021162459dcc11d4c;ISO 26262-11:2018 4.5.4.7;Confimation measures
+TOC;e0d3126e5749012ac7e4ddd53ba44a10;ISO 26262-11:2018 4.5.4.8;Development interface agreement
+TOC;fcd0e61a4925d09f554edd3611819570;ISO 26262-11:2018 4.5.4.9;Integration documentation set
+TOC;4d62d28b0734e61fe7ed4a34a2e8eb13;ISO 26262-11:2018 4.5.4.10;Applicability of work products of IP categories
+TOC;5aae1a175d23dd6cb16a0018c3e69bbb;ISO 26262-11:2018 4.5.5;Integration of black-box IP
+TOC;74b19ca4c2e5405dec2521e79815cef9;ISO 26262-11:2018 4.6;Base failure rate for semiconductors
+TOC;3997fabe99236f2d056ebea606a8bdb7;ISO 26262-11:2018 4.6.1;General notes on base failure rate estimation
+TOC;69c9e38afdb8b2446b549c763798c525;ISO 26262-11:2018 4.6.1.1;Introduction
+TOC;701d72c1353ce057f332dd4927957d1b;ISO 26262-11:2018 4.6.1.2;Quantitative target values and reliability prediction
+TOC;186565e79185950a1612b1d4d27db526;ISO 26262-11:2018 4.6.1.3;Difference between systematic and random failures
+TOC;7e46e712de8c893a4b2f18d4f35c4579;ISO 26262-11:2018 4.6.1.4;Effect of failure recovery mechanisms
+TOC;44a436615927e35c7a40d81322f038ce;ISO 26262-11:2018 4.6.1.5;Considerations about non-constant failure rates
+TOC;1481ea4bd83d6496baaefd5b714fabc8;ISO 26262-11:2018 4.6.1.6;Techniques and sources for base failure rate estimation
+TOC;a7330250b21c35cab97eb521aba2ff85;ISO 26262-11:2018 4.6.1.7;Documentation on the assumptions for base failure rate calculation
+TOC;43efdccad15583b49704f5af73d944e4;ISO 26262-11:2018 4.6.1.8;Transient fault quantification
+TOC;adf039abc726f39084213842d3f51f19;ISO 26262-11:2018 4.6.1.9;Notes on component package failure rate
+TOC;f0c1cc0e4c42ffccfec0093fa3fbce67;ISO 26262-11:2018 4.6.1.10;Consideration of power-up time and power-down time
+TOC;b898679dcccdbaa67ec2c491077e216c;ISO 26262-11:2018 4.6.2;Permanent base failure rate calculation methods
+TOC;d218a5713cf97e2e088e2efd8de63791;ISO 26262-11:2018 4.6.2.1;Permanent base failure rate calculation using or based on industry sources
+TOC;db21ec33b330e77f989dfcb53be6b23f;ISO 26262-11:2018 4.6.2.1.1;Model for reliability prediction of electronics components (former IEC TR 62380)
+TOC;9bed69f4747dcb5a2c3ff9bdc6c266f0;ISO 26262-11:2018 4.6.2.1.1.1;How to combine λ1 and λ2
+TOC;aa5bbddbdec816564bafe2d23f9d2663;ISO 26262-11:2018 4.6.2.1.1.2;Temperature de-rating
+TOC;7877b5338a0171a45d8f9f0483d8f028;ISO 26262-11:2018 4.6.2.1.1.3;Package base failure rate calculation
+TOC;b5b5122183a524bde96a14efb6340c7b;ISO 26262-11:2018 4.6.2.1.1.4;Example of failure rate resulting from electrical overstress
+TOC;2969f23773b555da4861f705dd930f7f;ISO 26262-11:2018 4.6.2.1.2;SN 29500
+TOC;9dfa087148cab7ce5fc25fac00230032;ISO 26262-11:2018 4.6.2.1.2.1;Example of computation for a semiconductor component
+TOC;47e615876d2effdc2eaa8f4bd1bedf51;ISO 26262-11:2018 4.6.2.1.2.2;Failure rate calculation for the semiconductor component example without non-operating phase
+TOC;1dd87f421f885e07ffbe25a76121504b;ISO 26262-11:2018 4.6.2.1.2.3;Failure rate calculation for the semiconductor component example with non-operating phase
+TOC;de295c7b5b0db90e22b8a9ef0536b449;ISO 26262-11:2018 4.6.2.1.2.4;Method to split SN 29500 overall failure rate into die and package failure rates
+TOC;ca8b4a0236a763bf3910ffe7af433d6c;ISO 26262-11:2018 4.6.2.1.3;FIDES Guide
+TOC;53a5ec8b4618256c8f09b023a7e7cfa4;ISO 26262-11:2018 4.6.2.2;Permanent base failure rate calculation using field data statistics
+TOC;c737accf8933721c273338b6ebdf0813;ISO 26262-11:2018 4.6.2.2.1;Exponential model method
+TOC;51eff4ff12f8f633a6907dfffb62da26;ISO 26262-11:2018 4.6.2.2.2;Calculation example of hardware component failure rate
+TOC;f50f007202ca3e1427d10466defd3c68;ISO 26262-11:2018 4.6.2.3;Base failure rate calculation using accelerated life tests
+TOC;d4c6b4ce5058674d2ce3929bbbd261a3;ISO 26262-11:2018 4.6.2.4;Failure rate distribution methods
+TOC;3c79be7a8e51e645f52cba33f3246592;ISO 26262-11:2018 4.6.2.5;Base Failure Rate for MCM
+TOC;f0afc04bc580a1ec45475cb4cb26b71e;ISO 26262-11:2018 4.7;Semiconductor dependent failure analysis
+TOC;4c4414d6459a86e70fc6820ad911a942;ISO 26262-11:2018 4.7.1;Introduction to DFA
+TOC;f99160bf1a59041fcb9748d5e8762ec7;ISO 26262-11:2018 4.7.2;Relationship between DFA and safety analysis
+TOC;cfb1249da57426f5008196f0f3bba810;ISO 26262-11:2018 4.7.3;Dependent failure scenarios
+TOC;eb99369b4f97ee01e889ff1c9660611f;ISO 26262-11:2018 4.7.4;Distinction between cascading failures and common cause failures
+TOC;6dd16514b39eb0f9818c7110f9ec4367;ISO 26262-11:2018 4.7.5;Dependent failure initiators and mitigation measures
+TOC;002ac504a2525faf4316a168a772fae0;ISO 26262-11:2018 4.7.5.1;List of dependent failure initiators and related mitigation measures
+TOC;14ae32dfe8b8e307ff198afe0fea66f5;ISO 26262-11:2018 4.7.5.2;Verification of mitigation measures
+TOC;f5259956b849537b6a9cebf35786bb9e;ISO 26262-11:2018 4.7.6;DFA workflow
+TOC;4354ffc63fd48b49e7c62b492df03230;ISO 26262-11:2018 4.7.6.1;DFA decision and identification of hardware and software elements
+TOC;762812fb3c92eed38b3cc148f88986a9;ISO 26262-11:2018 4.7.6.2;Identification of DFI
+TOC;23c8aafbfa78e3d4aa324f2a5a8fe806;ISO 26262-11:2018 4.7.6.3;Sufficiency of insight provided by the available information on the effect of identified DFI (B3 & B4)
+TOC;1f634cc05be451e0d2b56b5e55feea4b;ISO 26262-11:2018 4.7.6.4;Consolidation of list of relevant DFI (B5)
+TOC;ead910764c54007d27cd244beb112410;ISO 26262-11:2018 4.7.6.5;Identification of necessary safety measures to control or mitigate DFI (B6)
+TOC;b48f632779a57dbc92d179749fd220c2;ISO 26262-11:2018 4.7.6.6;Sufficiency of insight provided by the available information on the defined mitigation measures (B7 & B8)
+TOC;5b297ec3def8aab232a53ba02cd0d9ae;ISO 26262-11:2018 4.7.6.7;Consolidate list of safety measures (B9)
+TOC;d31b12c5595920a7e3c74793b4b348e5;ISO 26262-11:2018 4.7.6.8;Evaluation of the effectiveness to control or to avoid the dependent failures (B10)
+TOC;1bb9495fd8cf7917521ecbeecf92606b;ISO 26262-11:2018 4.7.6.9;Assessment of risk reduction sufficiency and if required improve defined measures (B11 & B12)
+TOC;bbacb6c816d58d68dcac827b066bbd4c;ISO 26262-11:2018 4.7.7;Example of dependent failures analysis
+TOC;312adbd79fcb60fef8ec47194157cb41;ISO 26262-11:2018 4.7.8;Dependent failures between software element and hardware element
+TOC;e7ec8e10b8de63adc24d4b0cf2cf431d;ISO 26262-11:2018 4.8;Fault injection
+TOC;f7bdc97e531bb3f77af5671cbfa30fd7;ISO 26262-11:2018 4.8.1;General
+TOC;47f5dc244766c8ba244a6b600d799b49;ISO 26262-11:2018 4.8.2;Characteristics or variables of fault injection
+TOC;3b310fed3f004a1e81ab176f7ca55c7d;ISO 26262-11:2018 4.8.3;Fault injection results
+TOC;2aef4ee62bc2acc72925ffaa77cacda0;ISO 26262-11:2018 4.9;Production and Operation
+TOC;5803a2606a2101bc726be9e1ce1d1353;ISO 26262-11:2018 4.9.1;About Production
+TOC;a2bfd8005136cd0ece544bac9cf7fc9e;ISO 26262-11:2018 4.9.2;Production Work Products
+TOC;93bc7a81a367ccd8ee503fd3e872996c;ISO 26262-11:2018 4.9.3;About service (maintenance and repair),and decommissioning
+TOC;0b79208971598d248307601a34fd4088;ISO 26262-11:2018 4.10;Interfaces within distributed developments
+TOC;7d38e5a581b61117c17970b0b4c87ef3;ISO 26262-11:2018 4.11;Confirmation measures
+TOC;4eed091804410ac5f3fd9f0f2b5e9cd2;ISO 26262-11:2018 4.12;Clarification on hardware integration and verification
+TOC;8a3c8f152ce31f2a52d75e250da16a2e;ISO 26262-11:2018 5;Specific semiconductor technologies and use cases
+TOC;e128ebdc685fe602e85fb9599b9f59b7;ISO 26262-11:2018 5.1;Digital components and memories
+TOC;6a7479f26f9126c982dcd0db0c2430c0;ISO 26262-11:2018 5.1.1;About digital components
+TOC;28ec3016265012c34088fe7756e53810;ISO 26262-11:2018 5.1.2;Fault models of non-memory digital components
+TOC;dc6d2f799e6170ff2c97356db00cf41f;ISO 26262-11:2018 5.1.3;Detailed fault models of memories
+TOC;f164a2ed923692711e4ee442b6f8a81e;ISO 26262-11:2018 5.1.4;Failure modes of digital components
+TOC;e53930528eb262797d36818b2c691f58;ISO 26262-11:2018 5.1.5;Example of failure mode definitions for common digital blocks
+TOC;7d273d92a47c84c08276cb35878f75f0;ISO 26262-11:2018 5.1.6;Qualitative and quantitative analysis of digital component
+TOC;9d391d4806f04c21c13d29bc44413d0b;ISO 26262-11:2018 5.1.7;Notes on quantitative analysis of digital components
+TOC;c6c3da6711f872c312cd12302123d3e2;ISO 26262-11:2018 5.1.7.1;How to consider permanent faults of digital components
+TOC;5208ed51575ff5c89ca4214565b7d001;ISO 26262-11:2018 5.1.7.2;How to consider transient faults of digital components
+TOC;7b464058d2666669b368d8edfc585407;ISO 26262-11:2018 5.1.7.2.1;Failure rate of transient fault
+TOC;762aa5ab9c55be73e550db3a61753b83;ISO 26262-11:2018 5.1.7.2.2;Classification of transient fault
+TOC;94f2d04f50b61367c28dee8ed08ee24a;ISO 26262-11:2018 5.1.8;Example of quantitative analysis
+TOC;7e97f5fc277d098fc2710e373b149369;ISO 26262-11:2018 5.1.9;Example of techniques or measures to detect or avoid systematic failures during design of a digital component
+TOC;ec625ae6e8563bcf5de2ef6dc67c3c0b;ISO 26262-11:2018 5.1.9.1;Principles, techniques or measures to detect or avoid systematic failures during RTL design
+TOC;78c51a6accfad8e867137d74e3e97f7c;ISO 26262-11:2018 5.1.10;Verification using fault injection simulation
+TOC;14798034345448aec1973a0a0282a878;ISO 26262-11:2018 5.1.10.1;General
+TOC;f528c21c596bc1e7012e54b5e7c18d71;ISO 26262-11:2018 5.1.10.2;About verification of fault models different than stuck-at
+TOC;cb29ef01c824ceb01d64a1a6407d453d;ISO 26262-11:2018 5.1.11;Example of safety documentation for a digital component
+TOC;806890e7c6e04b73dda420053c4e1adc;ISO 26262-11:2018 5.1.12;Examples of safety mechanisms for digital components and memories
+TOC;6ee6fe22e224800602d46a83bdf14a20;ISO 26262-11:2018 5.1.13;Overview of techniques for digital components and memories
+TOC;c4f6dad9097f801ac0376a7704e0212e;ISO 26262-11:2018 5.1.13.1;Memory monitoring using error-detection-correction codes (ECC)
+TOC;33ebd808c84e11a36778eea407455770;ISO 26262-11:2018 5.1.13.2;Modified checksum
+TOC;97b7cd07587f9a3217f07fb868bc9d6e;ISO 26262-11:2018 5.1.13.3;Memory signature
+TOC;e075e702a4ce9cf04c1237553b371de2;ISO 26262-11:2018 5.1.13.4;Block replication (for example double memory with hardware or software comparison)
+TOC;a78ef2d796e9b08d5eab93e436ca067f;ISO 26262-11:2018 5.1.13.5;RAM Pattern test
+TOC;5bc1aaf42d55cc61814855ce9b4482ee;ISO 26262-11:2018 5.1.13.6;Parity bit
+TOC;2583dd2267240261deffb330c04b5aeb;ISO 26262-11:2018 5.1.13.7;RAM March test
+TOC;bb69c398bd476201039a55e697a5ecbd;ISO 26262-11:2018 5.1.13.8;Running checksum/CRC
+TOC;8a2d6ab4c3b7aa0c916c5633f6a0d186;ISO 26262-11:2018 5.2;Analogue/mixed signal components
+TOC;9e813bb21b4540183f59f9054a3d6876;ISO 26262-11:2018 5.2.1;About analogue and mixed signal components
+TOC;65bb578a48a32e8e0fda1cd9ce633e74;ISO 26262-11:2018 5.2.2;Analogue and mixed signal components and failure modes
+TOC;e2c776aa067d64d554b26408712f7051;ISO 26262-11:2018 5.2.2.1;About failure modes
+TOC;7fef32e3bdd33dd1d2091fdd83d245b6;ISO 26262-11:2018 5.2.2.2;About transient faults
+TOC;e601de24bcc470677f4e393ecd7a127b;ISO 26262-11:2018 5.2.3;Notes about safety analysis
+TOC;81c849a3282f43abc207c5d53819497f;ISO 26262-11:2018 5.2.3.1;General
+TOC;5f8ad3b2406edbf03393defe27bc4acb;ISO 26262-11:2018 5.2.3.2;Level of granularity of analysis
+TOC;213d4d87913ce618f518ed3e84f17a93;ISO 26262-11:2018 5.2.3.3;Deriving failure mode distributions for analogue components
+TOC;0da71a01ee520c642d2dcb8ca050435f;ISO 26262-11:2018 5.2.3.4;About safe faults
+TOC;075b34f84ff0d3b335331b33c61c2276;ISO 26262-11:2018 5.2.3.5;Example of quantitative analysis for an analogue component
+TOC;aa35c445615666cdd9072e562a09770e;ISO 26262-11:2018 5.2.3.6;Dependent failures analysis
+TOC;2521c7b4f668e84c30f2aed7b6502aa9;ISO 26262-11:2018 5.2.3.7;Verification of the architectural metrics computation
+TOC;d6b66b16deb02ba5b5a172160f8fa9a0;ISO 26262-11:2018 5.2.4;Examples of safety mechanisms
+TOC;728266424a54f449a33cf61079b1cffe;ISO 26262-11:2018 5.2.4.1;Resistive pull up/down
+TOC;632c2b64611a38cb90f8fd13f2fe902f;ISO 26262-11:2018 5.2.4.2;Over & under voltage monitoring
+TOC;2c25da17bab6590945160c477b2cb236;ISO 26262-11:2018 5.2.4.3;Voltage clamp (limiter)
+TOC;c72f422634b35c803bbe13f4713e294c;ISO 26262-11:2018 5.2.4.4;Over-current monitoring
+TOC;61654f9b6a2a4f1f907212f655dba168;ISO 26262-11:2018 5.2.4.5;Current limiter
+TOC;6ef2ac24151d59417a505e494679d692;ISO 26262-11:2018 5.2.4.6;Power on reset
+TOC;657c5a6df6455bb5a14b6f375339db8b;ISO 26262-11:2018 5.2.4.7;Analogue watchdog
+TOC;409862c9d4b5b32ed5f3309fc5d6ec75;ISO 26262-11:2018 5.2.4.8;Filter
+TOC;39e71c89a3ad7c98aa7d8ed7ec54227f;ISO 26262-11:2018 5.2.4.9;Thermal monitor
+TOC;0422607c73f0419f66e5ce626c099c75;ISO 26262-11:2018 5.2.4.10;Analogue Built-in Self-Test (Analogue BIST)
+TOC;8effdbe06ca848fbf214ababdc1d4d9b;ISO 26262-11:2018 5.2.4.11;ADC monitoring
+TOC;a7af19543c0b2984b41e27e812bebd4a;ISO 26262-11:2018 5.2.4.12;ADC attenuation detection
+TOC;b8c6558e817767f2441914883924d6b0;ISO 26262-11:2018 5.2.4.13;Stuck on ADC channel detection
+TOC;96139f34b9c699076f3c4877cc53972c;ISO 26262-11:2018 5.2.5;Avoidance of systematic faults during the development phase
+TOC;b3a87a777bc677af4ccce6560e130a28;ISO 26262-11:2018 5.2.6;Example of safety documentation for an analogue/mixed-signal component
+TOC;996f5d134b3e1db58dfa80f125ab17ab;ISO 26262-11:2018 5.3;Programmable logic devices
+TOC;8e8ea497daf6b7e2789353a4eb901ee2;ISO 26262-11:2018 5.3.1;About programmable logic devices
+TOC;997c224888c953871ae362ae0a661c34;ISO 26262-11:2018 5.3.1.1;General
+TOC;dacfc3ef294a5561d6944f2c6b29aced;ISO 26262-11:2018 5.3.1.2;About PLD types
+TOC;8cf7d211d80c6218795b95681e55ad5e;ISO 26262-11:2018 5.3.1.3;Functional safety lifecycle tailoring for PLD
+TOC;fd5f8e5100f61223e20cb9ceb7f12a99;ISO 26262-11:2018 5.3.1.3.1;General
+TOC;d5d580cf4a4210996437f4002e6ca104;ISO 26262-11:2018 5.3.1.3.2;ISO 26262-2 (management of functional safety)
+TOC;c219f3fa60d0b29ca713c8fb2b7dee78;ISO 26262-11:2018 5.3.1.3.3;ISO 26262-3 (concept phase)
+TOC;93487cb340e5ca2e5eb9c4cad672b250;ISO 26262-11:2018 5.3.1.3.4;ISO 26262-4 (product development at the system level)
+TOC;cb89ce9bc578d378279bcb09baeb508e;ISO 26262-11:2018 5.3.1.3.5;ISO 26262-5 (product development at the hardware level)
+TOC;90b8194aefd3ac88f5f1d3dbe3427388;ISO 26262-11:2018 5.3.1.3.6;ISO 26262-6 (product development at the software level)
+TOC;3da20356a6382e672b22e40d05830bb4;ISO 26262-11:2018 5.3.1.3.7;ISO 26262-7 (production and operation)
+TOC;89af18102df3aa808fa021dea59a4aae;ISO 26262-11:2018 5.3.2;Failure modes of PLD
+TOC;62844278232ce937dfecb7ed254e8df4;ISO 26262-11:2018 5.3.3;Notes on safety analyses for PLDs
+TOC;75dfbe61f3005154f604e08ab474b2dc;ISO 26262-11:2018 5.3.3.1;Quantitative analysis for a PLD
+TOC;6fa5c5d60c5f1b87fb6cd3b404ed1bb2;ISO 26262-11:2018 5.3.3.1.1;Example of PLD die failure rate calculation using the model in 4.6.2.1.1
+TOC;c4232fb6efeab7905b443e9e356d45b3;ISO 26262-11:2018 5.3.3.1.2;Example of a transient failure rate calculation for PLDs
+TOC;68cf03ab72072dc451c997fd653d94e3;ISO 26262-11:2018 5.3.3.1.3;Example of distribution of PLD failure rate to failure modes
+TOC;25860267abc4c6793f43315c36df31a2;ISO 26262-11:2018 5.3.3.1.4;Verification of completeness and correctness of safety mechanism implementation with respect to hardware
+TOC;f7c46a7ec331541a7e4dc852504ed90a;ISO 26262-11:2018 5.3.3.2;Dependent failure analysis for a PLD
+TOC;447e64de72c0f821de57d9707e75b90e;ISO 26262-11:2018 5.3.4;Example of safety mechanisms for PLD
+TOC;df30d69109e60edbc97954b756308c89;ISO 26262-11:2018 5.3.5;Avoidance of systematic faults for PLD
+TOC;9dac10a5bdaadad1dbf7088114c8e46e;ISO 26262-11:2018 5.3.5.1;Avoiding systematic faults in the implementation of PLD
+TOC;21edf674308754f291f60be7f8a79f82;ISO 26262-11:2018 5.3.5.2;About PLD supporting tools
+TOC;2f47ef2a94046782f5bb43a405ea7fc3;ISO 26262-11:2018 5.3.5.3;Avoiding systemativ faults for PLD users
+TOC;0b25574773039f083ea568297ed3371a;ISO 26262-11:2018 5.3.6;Example of safety documentation for a PLD
+TOC;bfcb91d4e46b7e698ad035e583ce0722;ISO 26262-11:2018 5.3.7;Example of safety analysis for PLD
+TOC;52d2e4a1e6f8566a6bc26a4454f95419;ISO 26262-11:2018 5.4;Multi-core components
+TOC;14686b39a054d02ee5b0d1cd1e6d88dd;ISO 26262-11:2018 5.4.1;Types of multi-core components
+TOC;26a474f50bff1595f7d00ce4fb6bc007;ISO 26262-11:2018 5.4.2;Implications of ISO 26262 series of standards for multi-core components
+TOC;c18f2cd13de2efb587ac4050882241ed;ISO 26262-11:2018 5.4.2.1;Introduction
+TOC;0e70581be01b65e10e08d44bd4fbcc36;ISO 26262-11:2018 5.4.2.2;Clarifications on Freedom from interference (FFI) in multi-core components
+TOC;d5ad6c8e4c44fba573f5866da5384381;ISO 26262-11:2018 5.4.2.3;Timing requirements in multi-core component
+TOC;9d50333abfd7efcb820ce2a5bfbc0c90;ISO 26262-11:2018 5.5;Sensors and transducers
+TOC;2f960108ed86394f29be70080d858ba5;ISO 26262-11:2018 5.5.1;Terminology of sensors and transducers
+TOC;d6f0d7b94c1be0cddf948d9118ebb131;ISO 26262-11:2018 5.5.2;Sensors and transducers failure modes
+TOC;22b56cdf492e3ab77aace9c41819635f;ISO 26262-11:2018 5.5.2.1;Production processes and failure modes
+TOC;127f0c9c68146827b214bdba9a6feea7;ISO 26262-11:2018 5.5.2.2;Microelectromechanical causes of failure
+TOC;09a1dbb7c80b85da6f6d9662b4fee863;ISO 26262-11:2018 5.5.3;Safety analysis for sensors and transducers
+TOC;4db9b61011fc7d3a42f0b5d41de41b97;ISO 26262-11:2018 5.5.3.1;Considerations in the determination and allocation of base failure rate
+TOC;967f287928e02b659bef73e8f23fa97d;ISO 26262-11:2018 5.5.3.2;DFA for sensors and transducers
+TOC;3472b7e969895645ad0f0e7e0e9badc6;ISO 26262-11:2018 5.5.3.3;Quantitative analysis
+TOC;c313bd035cdde67af563b8ae5322f2e7;ISO 26262-11:2018 5.5.4;Examples of safety measures for sensors and transducers
+TOC;d349a3b5370398f3a0d5fde46b817b2f;ISO 26262-11:2018 5.5.4.1;Sealed Proof Mass Filter
+TOC;0740d34d0f2b845c3f1313d0db5ddf52;ISO 26262-11:2018 5.5.4.2;Redundant Diaphragms
+TOC;fc18e3ba98b8d898cc60d92bcb635fd9;ISO 26262-11:2018 5.5.4.3;Offset Cancellation
+TOC;22762ce8b45001e84add2de7160ee286;ISO 26262-11:2018 5.5.4.4;Transducer specific self-test
+TOC;841e458b2a915ba582fa27e07db6b53a;ISO 26262-11:2018 5.5.4.5;Automatic gain control
+TOC;18dc16a96aceb588844932c60e1dc028;ISO 26262-11:2018 5.5.4.6;Sensitivity adjustment
+TOC;95c8d8315ed19c258bf9eca28adedd75;ISO 26262-11:2018 5.5.4.7;MEMS specific non E/E safety mechanisms
+TOC;3c339eff047a33c3ab9d07300c6a4c27;ISO 26262-11:2018 5.5.4.8;Dedicated measures for sensors
+TOC;199c5ea26f646d331533fcc5e38f1338;ISO 26262-11:2018 5.5.5;About avoidance of systematic faults for sensors and transducers
+TOC;5aeea01caf0d101a3547f756221b78e8;ISO 26262-11:2018 5.5.6;Example of safety documentation for sensors and transducers
+TOC;b36e6c4537179319c400b27a09445da5;ISO 26262-11:2018 A;Example on how to use digital failure modes for diagnostic coverage evaluation
+TOC;3ea7ff8e5dc3330bf4312d0c140210e7;ISO 26262-11:2018 A.1;Example of evaluation of a DMA safety mechanism
+TOC;b8804b2b29394f8056b01c749cae9f21;ISO 26262-11:2018 A.1.1;Description of the use case
+TOC;0200de6dff1a14bc43bfc7ed85c09535;ISO 26262-11:2018 A.1.2;Description of the safety mechanisms
+TOC;5d62ab3c2bd50b554699f05696b52435;ISO 26262-11:2018 A.1.3;Definition of the failure modes and estimation of diagnostic coverage
+TOC;26dfcbb325f0ca4425d9f6c58bad0157;ISO 26262-11:2018 A.1.3.1;DMA_FM1: no requested data transfer
+TOC;48ff18cb56254461c2344aa73788ec4b;ISO 26262-11:2018 A.1.3.2;DMA_FM2: data transfer without a request
+TOC;d10c3b9c1d694f72b80726e336a8e2ee;ISO 26262-11:2018 A.1.3.3;DMA_FM3: data transfer too early/too late
+TOC;6ad997e87effedf2efde9d2d661fbedd;ISO 26262-11:2018 A.1.3.4;DMA_FM4: incorrect output
+TOC;72be45de0ba845f87282988e88586369;ISO 26262-11:2018 B;Examples of dependent failure analysis
+TOC;9a126a9198bbba98b79b61707775b411;ISO 26262-11:2018 B.1;Microcontroller example
+TOC;091780147b9f8590509b8fce0ae0a39c;ISO 26262-11:2018 B.1.1;Description
+TOC;f887707be510deb5c827c2ccb98240b0;ISO 26262-11:2018 B.1.2;Dependent failure analysis
+TOC;4752599ced185c8edbb3360fef45f9cb;ISO 26262-11:2018 B.2;Analogue example
+TOC;71ab8e5da4a932098d4285cef7188518;ISO 26262-11:2018 B.2.1;Description
+TOC;44cef2bb750e4d7da1938895a44dbfa4;ISO 26262-11:2018 B.2.2;Dependent failures by shared supply voltage regulator
+TOC;2024a25eb7b278ff9cd14574373f2d61;ISO 26262-11:2018 B.2.3;Dependent failures by coupling mechanism
+TOC;4982b18340459080a0a0bc2cd86aba3a;ISO 26262-11:2018 C;Examples of quantitative analysis for a digital component
+TOC;897bd8df3249aa8755acbfd8c8e7a7e7;ISO 26262-11:2018 C.1;Description
+TOC;9d78923468cf0db0eeb434fbb17f3adb;ISO 26262-11:2018 D;Examples of quantitative analysis for analogue component
+TOC;b2a0d0544d83107e86999c010bcd6c1f;ISO 26262-11:2018 D.1;Description
+TOC;f19ceca9f908a6e83aca0b8a4f7ac2d4;ISO 26262-11:2018 D.1.1;Example of computation of failure rate for analogue component
+TOC;8ee0387da9222eb432c0e7bcd2c77449;ISO 26262-11:2018 E;Examples of quantitative analysis for PLD component
+TOC;ee66cffd95e7b49d206fe5bb2b2893a8;ISO 26262-11:2018 E.1;Architecture of the example
+TOC;9439e62c171a9273b78f656b9ca38cb1;ISO 26262-11:2018 E.2;PLD external measures
+TOC;02f5cae5f538b5400edabc9d2f250926;ISO 26262-11:2018 E.3;PLD internal measures
+TOC;af21b7b03a8b406c61a06f693ccfe9f2;ISO 26262-12:2018 0;Part 12
+TOC;d06b0ef3a4c56ede50c1fd4339106046;ISO 26262-12:2018 1;Scope
+TOC;66dd4241d0bbd620635c127ca86b22c7;ISO 26262-12:2018 2;Normative references
+TOC;598f7b4fb2e8e305d69af1ac5048bb45;ISO 26262-12:2018 3;Terms and definitions
+TOC;f4e9c539df5c4e75d6c69197332af7a2;ISO 26262-12:2018 4;Requirements for compliance
+TOC;b69e8afb0ac8d1b543be9e395aa22c2a;ISO 26262-12:2018 4.1;Purpose
+TOC;f1a6ff74413babdb14df36aeecd2c459;ISO 26262-12:2018 4.2;General requirements
+TOC;5e3829a45b14289eebd12668a007aca4;ISO 26262-12:2018 4.3;Interpretations of tables
+TOC;2711f9c1040b29aee95eefce3eb7e1e3;ISO 26262-12:2018 4.4;ASIL-dependent requirements and recommendations
+TOC;0e270deb5e149ec94179fe5fa853819a;ISO 26262-12:2018 4.5;Adaptation for motorcycles
+TOC;13209dbfa1c3cb2501415d9cc7cc7a43;ISO 26262-12:2018 4.6;Adaptation for trucks,buses,trailers and semi-trailers
+TOC;453114c2c537f73da92e756a8da82547;ISO 26262-12:2018 5;General topics for adaptation for motorcycles
+TOC;3d803c3a96b5544e9e3813ac8821ce69;ISO 26262-12:2018 5.1;Objectives
+TOC;3cbcfedef483542f2ff2b93b57801dda;ISO 26262-12:2018 5.2;General
+TOC;ce623619c363d5e2763152423d078146;ISO 26262-12:2018 6;Safety culture
+TOC;7c9796eea4937a859653cc07058fb681;ISO 26262-12:2018 6.1;Objective
+TOC;8969d2550bd627ceabd54a9c735977d5;ISO 26262-12:2018 6.2;Requirements and recommendations
+TOC;38031eba10e2cd95b7f1c0ffd2e2a625;ISO 26262-12:2018 6.2.1;REQUIREMENT
+TOC;168a41536090ee3a4246b559b8fd8b16;ISO 26262-12:2018 6.2.2;REQUIREMENT
+TOC;eb22a8fac0f08e45cbcd4244f350315d;ISO 26262-12:2018 6.2.3;REQUIREMENT
+TOC;9e1a59855e5de50ba0634df63b278436;ISO 26262-12:2018 6.2.4;REQUIREMENT
+TOC;5bdfd21186348807617399b63313323d;ISO 26262-12:2018 6.2.5;REQUIREMENT
+TOC;450f26c3351c113c4966bb0000072cb4;ISO 26262-12:2018 6.2.6;REQUIREMENT
+TOC;9da20829246d5681ae363a0ff425db12;ISO 26262-12:2018 6.2.7;REQUIREMENT
+TOC;40d3cbd596ac2e0fdcd28c0b8c44f547;ISO 26262-12:2018 7;Confirmation measures
+TOC;b146889fc6b6ade5c0088c4a8574256c;ISO 26262-12:2018 7.1;Objective
+TOC;341161934dc557cdd38f27766a8a382f;ISO 26262-12:2018 7.2;Requirements and recommendations
+TOC;addab23641738445ae8678c90534ba68;ISO 26262-12:2018 7.2.1;REQUIREMENT
+TOC;db9aa6c81931081a43b474dd27e98284;ISO 26262-12:2018 7.2.2;REQUIREMENT
+TOC;7ec6af88faf797bb7444cfd9c2c9627b;ISO 26262-12:2018 7.2.3;REQUIREMENT
+TOC;aa8388804901bca19bc36b94bccd1bfa;ISO 26262-12:2018 8;Hazard analysis and risk assessment
+TOC;d0ce10e785a14ae5211fcc09cb2b2944;ISO 26262-12:2018 8.1;Objectives
+TOC;80545a7d22c8d49792087d4497dbefaa;ISO 26262-12:2018 8.2;General
+TOC;44f32672784855fa11f7102cc6205aba;ISO 26262-12:2018 8.3;Input to this clause
+TOC;ee889c6e7b08159f7bdc36e899b9c92c;ISO 26262-12:2018 8.3.1;Prerequisites
+TOC;4680cdf9c9a33094578b5a66a951cfb7;ISO 26262-12:2018 8.3.2;Further supporting information
+TOC;d470f53b3af10d6cc3b77944ca627d1c;ISO 26262-12:2018 8.4;Requirements and recommendations
+TOC;84690052454be0ca670c197bb106ea2d;ISO 26262-12:2018 8.4.1;Initiation of the hazard analysis and risk assessment
+TOC;813fb44f79021e97c620c1cac8f1b5b4;ISO 26262-12:2018 8.4.1.1;REQUIREMENT
+TOC;63b2e12bdd98323a1cc7297f263320d4;ISO 26262-12:2018 8.4.1.2;REQUIREMENT
+TOC;21f51ecd70cb6d6642843d14f64220da;ISO 26262-12:2018 8.4.2;Situation analysis and hazard identification
+TOC;3b3d62b89ac8781ac27b52e60d1ffb9e;ISO 26262-12:2018 8.4.2.1;REQUIREMENT
+TOC;fa07707be0a980b5c6859f773b927264;ISO 26262-12:2018 8.4.2.2;REQUIREMENT
+TOC;da306c63cbf9dd78cc68ea75402a96f0;ISO 26262-12:2018 8.4.2.3;REQUIREMENT
+TOC;afa89f812f5445fc037d70847c68a146;ISO 26262-12:2018 8.4.2.4;REQUIREMENT
+TOC;206661b09deefa592ed3e4536400aea1;ISO 26262-12:2018 8.4.2.5;REQUIREMENT
+TOC;da95d3125cdd060def1e2d20d43ea127;ISO 26262-12:2018 8.4.2.6;REQUIREMENT
+TOC;6d2b29829fd2fcffff849d32a55c23bf;ISO 26262-12:2018 8.4.2.7;REQUIREMENT
+TOC;9d24127516febe9d856d9d801fb610b5;ISO 26262-12:2018 8.4.3;Classification of hazardous events
+TOC;6964bed79dd35c259cf4d860638b7cf3;ISO 26262-12:2018 8.4.3.1;REQUIREMENT
+TOC;cb75c4ca34817b4f8f3cfe109b33bd74;ISO 26262-12:2018 8.4.3.2;REQUIREMENT
+TOC;aa28b9b29cc8b2d6d40ccf1ebe157955;ISO 26262-12:2018 8.4.3.3;REQUIREMENT
+TOC;f97103553d2679627bb303ed72368bf9;ISO 26262-12:2018 8.4.3.4;REQUIREMENT
+TOC;7a5ea2a9ce37fd7d82958587df57b35e;ISO 26262-12:2018 8.4.3.5;REQUIREMENT
+TOC;6079fa86971bfd2f4f82a1800fb490c5;ISO 26262-12:2018 8.4.3.6;REQUIREMENT
+TOC;25a66f193998c7d5454d2e85a5b44186;ISO 26262-12:2018 8.4.3.7;REQUIREMENT
+TOC;5bce6b816bcabccdb1b9fc51bb131c65;ISO 26262-12:2018 8.4.3.8;REQUIREMENT
+TOC;573a6f5602432e2f1e83ef4a76176b69;ISO 26262-12:2018 8.4.3.9;REQUIREMENT
+TOC;663a196c7a943fc40e9144638fb98656;ISO 26262-12:2018 8.4.3.10;REQUIREMENT
+TOC;f28b5ade8e2669ca9e94f72c1f9300bc;ISO 26262-12:2018 8.4.3.11;REQUIREMENT
+TOC;889892b3779fbf26bb5a877d7783ab55;ISO 26262-12:2018 8.4.4;Determination of safety goals
+TOC;12ec7b945250d0f78556fa2329cf1064;ISO 26262-12:2018 8.4.4.1;REQUIREMENT
+TOC;8c3ddf58e480a91400a6382304cb8770;ISO 26262-12:2018 8.4.4.2;REQUIREMENT
+TOC;7bd92ffca02df4070e6272253c9b3485;ISO 26262-12:2018 8.4.4.3;REQUIREMENT
+TOC;06eee9a2c1ba813c749b467f049a2146;ISO 26262-12:2018 8.4.4.4;REQUIREMENT
+TOC;d7e3a1d7fbf1997aaadbde748ff61236;ISO 26262-12:2018 8.4.5;Verification
+TOC;1a0ebe0e8ab257183d9abeaaea216e00;ISO 26262-12:2018 8.4.5.1;REQUIREMENT
+TOC;54066d08f5d72c84e41a1033e1105b1f;ISO 26262-12:2018 8.5;Work products
+TOC;631d3b5b862fa49d8346db5f383039d6;ISO 26262-12:2018 8.5.1;Hazard analysis and risk assessment report
+TOC;ab4722884ab042308f20ca66f78940bf;ISO 26262-12:2018 8.5.2;Verification report of the hazard analysis and risk assessment
+TOC;207d54da0a080fad71775ac3d269ade9;ISO 26262-12:2018 9;Vehicle integration and testing
+TOC;3d867a261cb4b58e0af61dac9c1e8cc0;ISO 26262-12:2018 9.1;Objective
+TOC;e358c9ac599cfaf77074f7bd5e851dfa;ISO 26262-12:2018 9.2;Requirements and recommendations
+TOC;dad105b06c04a485e3720554452d5075;ISO 26262-12:2018 9.2.1;Vehicle integration
+TOC;a01c70593c0ed297688a99456cc8c7b9;ISO 26262-12:2018 9.2.1.1;REQUIREMENT
+TOC;ee03f73c116e65aba6a5a9f5f4b28abf;ISO 26262-12:2018 9.2.1.2;REQUIREMENT
+TOC;2433f37d426d688bb2b5655483b2daa7;ISO 26262-12:2018 9.2.2;Test goals and test methods during vehicle testing
+TOC;43ab2f7f50a13e6aec43d54ee8368591;ISO 26262-12:2018 9.2.2.1;REQUIREMENT
+TOC;bfb2a679a97ef553be3631106870c2b8;ISO 26262-12:2018 9.2.2.2;REQUIREMENT
+TOC;208b556094f31a9ebc4f942f3a8fe040;ISO 26262-12:2018 9.2.2.3;REQUIREMENT
+TOC;05364be9816bec42daa08f12ea122566;ISO 26262-12:2018 9.2.2.4;REQUIREMENT
+TOC;36dd2403f40a691118b4e04e50794a5f;ISO 26262-12:2018 9.2.2.5;REQUIREMENT
+TOC;33cc010d834de4a8350ccddfa788464a;ISO 26262-12:2018 10;Safety validation
+TOC;5b9ea09e8ae3443bddc716a3fa019bbd;ISO 26262-12:2018 10.1;Objective
+TOC;e7bb4d06d8558870132e1b4e8df17b28;ISO 26262-12:2018 10.2;General
+TOC;40b844833c0a3ee85bc1fb94c18ffe35;ISO 26262-12:2018 10.3;Inputs to this clause
+TOC;2fb5c68202349b5b248d8552c443caee;ISO 26262-12:2018 10.3.1;Prerequisites
+TOC;90f9e386424b4ccc46adff431f409677;ISO 26262-12:2018 10.3.2;Further supporting information
+TOC;a2a4a2a94ef0fdec2ed8da77f591f406;ISO 26262-12:2018 10.4;Requirements and recommendations
+TOC;6a13cbadebca2f8a4532ce403f31da8d;ISO 26262-12:2018 10.4.1;Safety validation environment
+TOC;c9085c4780242753fbfe0957813a470f;ISO 26262-12:2018 10.4.1.1;REQUIREMENT
+TOC;7f7c01fe5f0aa457091288f2b85927bc;ISO 26262-12:2018 10.4.1.2;REQUIREMENT
+TOC;00220e06e8763e348b4ee8141a67defa;ISO 26262-12:2018 10.4.1.3;REQUIREMENT
+TOC;227faf6e01436c74a4a07611058d283a;ISO 26262-12:2018 10.4.2;Specification of safety validation
+TOC;049a0b94cb4ed05aeb11d72ccf287b79;ISO 26262-12:2018 10.4.2.1;REQUIREMENT
+TOC;444c3f1f480d852dfca2dcf55444fb6d;ISO 26262-12:2018 10.4.3;Execution of safety validation
+TOC;ef66cee00915557aa40ec96e1fda108d;ISO 26262-12:2018 10.4.3.1;REQUIREMENT
+TOC;483b45768cabd6673c6f84f72d51f50d;ISO 26262-12:2018 10.4.3.2;REQUIREMENT
+TOC;9bfce2822ba10b74ce26c01fcc84bafd;ISO 26262-12:2018 10.4.3.3;REQUIREMENT
+TOC;dd1a2428748377d44ea1a9de42641faa;ISO 26262-12:2018 10.4.3.4;REQUIREMENT
+TOC;195671a3022e010a08983113d045b044;ISO 26262-12:2018 10.4.4;Evaluation
+TOC;7ff57467b8fd2a7464a675a14c22ec2c;ISO 26262-12:2018 10.4.4.1;REQUIREMENT
+TOC;f03554382ab0a05bfd77fe5ef4097195;ISO 26262-12:2018 10.4.5;Work products
+TOC;784e5eb39070657b4749905f7a663470;ISO 26262-12:2018 10.4.5.1;Safety validation specification including safety validation environment description
+TOC;d162a59d065c295f88128d64a2a0f48a;ISO 26262-12:2018 10.4.5.2;Safety validation report
+TOC;b44243e179010fd02c4c8e99474ce7cd;ISO 26262-12:2018 A;Overview of and workflow of adaptation of the ISO 26262 series of standards for motorcycles
+TOC;db48af14777f923abffbbd9386a7fb40;ISO 26262-12:2018 A.1;General
+TOC;0a1ede00621a5112a5be39ae512eeb27;ISO 26262-12:2018 A.2;Overview of and workflow of management of functional safety
+TOC;0a5df71ca49384d01bdb50b708a5d020;ISO 26262-12:2018 A.3;Overview of and workflow of concept phase
+TOC;2966dd6bc862a127e59eafbb611e9402;ISO 26262-12:2018 A.4;Overview of and workflow of product development of system level
+TOC;e0b605dfc412b4d470abf4c2cb67f7ef;ISO 26262-12:2018 B;Hazard analysis and risk assessment for motorcycles
+TOC;9ef2af50373be1216358496246c5af5b;ISO 26262-12:2018 B.1;General
+TOC;b1a01e5d391f3de4dbc5324cd6a596cb;ISO 26262-12:2018 B.2;Examples of severity
+TOC;7e83ba4a72bf86276f248edab2fc9a9b;ISO 26262-12:2018 B.2.1;General
+TOC;9de012b4eef67cbc8dfc300181fb4aa5;ISO 26262-12:2018 B.2.2;Description of the AIS stages
+TOC;337b56e166b286d1793be8c18de77056;ISO 26262-12:2018 B.3;Examples and explanations of the probability of exposure
+TOC;5def6968b11a4d0d39f5001189c8a1fe;ISO 26262-12:2018 B.4;Examples of controllability
+TOC;ac5f4c5541d4e2f98917709d76fe139a;ISO 26262-12:2018 C;Example of controllability classification techniques
+TOC;dae5b8d6bfa97213e47e5f1ee71abf88;ISO 26262-12:2018 C.1;General
+TOC;ec7cffda769332cefe387749532fd3e6;ISO 26262-12:2018 C.2;Concept of controllability classification panel
+TOC;9c9f054c30651d1f1dad7bfe48b3d4ac;ISO 26262-12:2018 C.3;Evaluating controllability of motorcycle hazardous events
+TOC;4d5d4ae21c3f5ddf69e0c177d434f403;ISO 26262-12:2018 C.4;Expert riders
+TOC;2ef77a8aa78f254ab1643f9a8989206b;ISO 26262-12:2018 C.5;Controllability evaluation techniques
+TOC;92547eb58ac4e18d1f909eac267a68f7;ISO 26262-12:2018 C.6;Evaluating Controllability
