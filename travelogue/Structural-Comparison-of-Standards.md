@@ -30,14 +30,14 @@ The standards describe the procedure for planning and managing the entire life c
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
-| Objectives | IEC 61508-1:2010 7.5.1 | ISO 26262-3:2018 7.1 a-c | EN 50126-1:2017 7.5.1 |
+| Objectives | IEC 61508-1:2010 7.5.1 | ISO 26262-3:2018 7.1 | EN 50126-1:2017 7.5.1 |
 | Requirements | IEC 61508-1:2010 7.5.2 | ISO 26262-3:2018 7.4.2 | EN 50126-2:2017 9 |
 
 ### 5. Assignment of the general safety requirements
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
-| Objectives | IEC 61508-1:2010 7.6.1 | ISO 26262-3:2018 7.1 d | EN 50126-1:2017 7.6.1 |
+| Objectives | IEC 61508-1:2010 7.6.1 | ISO 26262-3:2018 7.1 | EN 50126-1:2017 7.6.1 |
 | Requirements | IEC 61508-1:2010 7.6.2 | ISO 26262-3:2018 7.4.2.8 | EN 50126-2:2017 10 |
 
 ### 6. Overall planning of operation and maintenance
@@ -51,7 +51,7 @@ The standards describe the procedure for planning and managing the entire life c
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
-| Objectives | IEC 61508-1:2010 7.8.1 | ISO 26262-3:2018 7.1 e ISO 26262-4:2018 8.1 | EN 50126-1:2017 7.10.1 |
+| Objectives | IEC 61508-1:2010 7.8.1 | ISO 26262-3:2018 7.1 ISO 26262-4:2018 8.1 | EN 50126-1:2017 7.10.1 |
 | Requirements | IEC 61508-1:2010 7.8.2 | ISO 26262-3:2018 7.4.3 ISO 26262-4:2018 8.4 ||
 
 ### 8. Overall planning of installation and commissioning
@@ -106,7 +106,7 @@ The standards describe the procedure for planning and managing the entire life c
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
-| Objectives | IEC 61508-1:2010 7.14.1 | ISO 26262-3:2018 7.1 e ISO 26262-4:2018 8.1 | EN 50126-1:2017 7.10.1EN 50657:2017 6.3.1 |
+| Objectives | IEC 61508-1:2010 7.14.1 | ISO 26262-3:2018 7.1 e ISO 26262-4:2018 8.1 | EN 50126-1:2017 7.10.1 EN 50657:2017 6.3.1 |
 | Requirements | IEC 61508-1:2010 7.14.2 | ISO 26262-3:2018 7.4.3 ISO 26262-4:2018 8.4 | EN 50657:2017 6.3.4 |
 
 ### 14. General operation, maintenance and repair
