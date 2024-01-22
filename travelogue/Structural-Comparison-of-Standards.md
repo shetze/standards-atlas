@@ -4,21 +4,21 @@ The standard documents on functional safety for electrical, electronic and progr
 
 The standards describe the procedure for planning and managing the entire life cycle of a programmable electronic system in the context of functional safety. Based on the basic standard, the structurally related parts of other standards are identified below.
 
-1. Concept
+### 1. Concept
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.2.1 | ISO 26262-2:2018 5.1 | EN 50126-1:2017 7.2.1 |
 | Requirements | IEC 61508-1:2010 7.2.2 | ISO 26262-2:2018 5.4 ||
 
-2. General scope definition
+### 2. General scope definition
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.3.1 | ISO 26262-3:2018 5.1 | EN 50126-1:2017 7.3.1 |
 | Requirements | IEC 61508-1:2010 7.3.2 | ISO 26262-3:2018 5.4 ||
 
-3. Hazard and risk analysis
+### 3. Hazard and risk analysis
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
@@ -26,104 +26,104 @@ The standards describe the procedure for planning and managing the entire life c
 | Requirements | IEC 61508-1:2010 7.4.2 | ISO 26262-3:2018 6.4 | EN 50126-2:2017 5 EN 50126-2:2017 8 |
 
 
-4. General safety requirements
+### 4. General safety requirements
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.5.1 | ISO 26262-3:2018 7.1 a-c | EN 50126-1:2017 7.5.1 |
 | Requirements | IEC 61508-1:2010 7.5.2 | ISO 26262-3:2018 7.4.2 | EN 50126-2:2017 9 |
 
-5. Assignment of the general safety requirements
+### 5. Assignment of the general safety requirements
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.6.1 | ISO 26262-3:2018 7.1 d | EN 50126-1:2017 7.6.1 |
 | Requirements | IEC 61508-1:2010 7.6.2 | ISO 26262-3:2018 7.4.2.8 | EN 50126-2:2017 10 |
 
-6. Overall planning of operation and maintenance
+### 6. Overall planning of operation and maintenance
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.7.1 | ISO 26262-7:2018 7.1 | EN 50126-1:2017 7.12.1 |
 | Requirements | IEC 61508-1:2010 7.7.2 | ISO 26262-7:2018 7.4 ||
 
-7. Overall planning of the safety validation
+### 7. Overall planning of the safety validation
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.8.1 | ISO 26262-3:2018 7.1 e ISO 26262-4:2018 8.1 | EN 50126-1:2017 7.10.1 |
 | Requirements | IEC 61508-1:2010 7.8.2 | ISO 26262-3:2018 7.4.3 ISO 26262-4:2018 8.4 ||
 
-8. Overall planning of installation and commissioning
+### 8. Overall planning of installation and commissioning
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.9.1 | ISO 26262-4:2018 7.1 ||
 | Requirements | IEC 61508-1:2010 7.9.2 | ISO 26262-4:2018 7.4 ||
 
-9. Specification of safety requirements for E/E/PE systems
+### 9. Specification of safety requirements for E/E/PE systems
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.10.1 | ISO 26262-4:2018 6.1 ||
 | Requirements | IEC 61508-1:2010 7.10.2 | ISO 26262-4:2018 6.4 ||
 
-10. Realization of safety-relevant E/E/PE systems
+### 10. Realization of safety-relevant E/E/PE systems
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.11.1 IEC 61508-2:2010 IEC 61508-3:2010 | ISO 26262-4:2018 ISO 26262-5:2018 ISO 26262-6:2018 | EN 50126-1:2017 7.7.1 |
 | Requirements | IEC 61508-1:2010 7.11.2 IEC 61508-2:2010 IEC 61508-3:2010 | ISO 26262-4:2018 ISO 26262-5:2018ISO 26262-6:2018 | EN 50126-2:2017 11EN 50657:2017 7 |
 
-  a. Specification of requirements for E/E/PE systems
-    i. Specification of safety requirements for software
-  b. Planning the safety validation of E/E/PE systems
-    i. Plan to validate the software aspects of system security
-  c. Design and development of E/E/PE systems
-    i. Software design and development
-  d. Integration of E/E/PE systems
-    i. Integration of hardware and software
-  e. Procedures for installation, commissioning, operation and maintenance of E/E/PE systems
-    i. Procedures for software operation and maintenance
-  f. Safety validation of E/E/PE systems
-    i. Validation of the software aspects of system security
+  #### a. Specification of requirements for E/E/PE systems
+          i. Specification of safety requirements for software
+  #### b. Planning the safety validation of E/E/PE systems
+          i. Plan to validate the software aspects of system security
+  #### c. Design and development of E/E/PE systems
+          i. Software design and development
+  #### d. Integration of E/E/PE systems
+          i. Integration of hardware and software
+  #### e. Procedures for installation, commissioning, operation and maintenance of E/E/PE systems
+          i. Procedures for software operation and maintenance
+  #### f. Safety validation of E/E/PE systems
+          i. Validation of the software aspects of system security
 
-11. Other risk mitigation measures
+### 11. Other risk mitigation measures
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.12.1 |||
 | Requirements | IEC 61508-1:2010 7.12.2 |||
 
-12. General installation and commissioning
+### 12. General installation and commissioning
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.13.1 | ISO 26262-4:2018 7.1 | EN 50126-1:2017 7.9.1 EN 50657:2017 9.1.1 |
 | Requirements | IEC 61508-1:2010 7.13.2 | ISO 26262-4:2018 7.4 | EN 50657:2017 9.1.4 |
 
-13. General validation of security
+### 13. General validation of security
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.14.1 | ISO 26262-3:2018 7.1 e ISO 26262-4:2018 8.1 | EN 50126-1:2017 7.10.1EN 50657:2017 6.3.1 |
 | Requirements | IEC 61508-1:2010 7.14.2 | ISO 26262-3:2018 7.4.3 ISO 26262-4:2018 8.4 | EN 50657:2017 6.3.4 |
 
-14. General operation, maintenance and repair
+### 14. General operation, maintenance and repair
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.15.1 || EN 50126-1:2017 7.12.1 |
 | Requirements | IEC 61508-1:2010 7.15.2 |||
 
-15. General modification and retrofitting
+### 15. General modification and retrofitting
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
 | Objectives | IEC 61508-1:2010 7.16.1 || EN 50657:2017 6.6.1 |
 | Requirements | IEC 61508-1:2010 7.16.2 || EN 50657:2017 6.6.4 |
 
-16. Decommissioning or disposal
+### 16. Decommissioning or disposal
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
