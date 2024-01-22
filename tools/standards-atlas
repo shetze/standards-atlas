@@ -83,7 +83,7 @@ attributes:
     standard:
       mandatory: true
       name: ${name}
-      ref: ''
+      numID: ''
       refID: ''
       volume: ''
       level: ''
@@ -218,8 +218,14 @@ addItem()
 type: '$type'
 header: '$index $title'
 text: '$text'
+ref: ''
+references:
+- path: .*\.md
+  type: pattern
+  keyword: $indexString
 standard:
-  ref: '$indexString'
+  name: ${name}
+  numID: '$dsname'
   refID: '$locID'
 EOD
 if [ "$readableindex" -eq 1 ]; then
