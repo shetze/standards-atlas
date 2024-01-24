@@ -72,8 +72,8 @@ The standards describe the procedure for planning and managing the entire life c
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
-| Objectives | IEC 61508-1:2010 7.11.1 IEC 61508-2:2010 IEC 61508-3:2010 | ISO 26262-4:2018 ISO 26262-5:2018 ISO 26262-6:2018 | EN 50126-1:2017 7.7.1 |
-| Requirements | IEC 61508-1:2010 7.11.2 IEC 61508-2:2010 IEC 61508-3:2010 | ISO 26262-4:2018 ISO 26262-5:2018ISO 26262-6:2018 | EN 50126-2:2017 11EN 50657:2017 7 |
+| Objectives | IEC 61508-1:2010 7.11.1 IEC 61508-2:2010 7.4.1 IEC 61508-3:2010 7.4.1 | ISO 26262-6:2018 8.1 | EN 50126-1:2017 7.7.1 |
+| Requirements | IEC 61508-1:2010 7.11.2 IEC 61508-2:2010 7.4.2 IEC 61508-3:2010 7.4.2 | ISO 26262-6:2018 8.4 | EN 50126-2:2017 11 EN 50657:2017 7 |
 
   #### a. Specification of requirements for E/E/PE systems
           i. Specification of safety requirements for software
