@@ -1,3 +1,9 @@
+# Can we use the Proven in Use Argument to travel between Safety Domains?
+
+A Proven in Use argument is described under this name at least in IEC 61508 and ISO 26262. PiU opens up a way in which existing software (COTS) can be used as part of a system or as an element in a safety function for a safety case. The descriptions are specific to the domain and the use of PiU for the transfer of elements between different domains is not covered in the standard documents. Because the safety standards have a family relationship, such a journey may still be possible we would like to explore the topic further here.
+
+Before such a journey can begin, it must be clarified from which starting point it should begin. Or more precisely: Is there a starting point at all? Can there be a proven-in-use argument for the use of Linux in a safety application in any domain?
+
 # Is Linux mature and proven enough for use in safety-critical applications?
 
 Linux has proven itself thousands, probably millions of times over in business-critical applications, so it may seem logical that we could use it for safety-critical applications as well. Linux has many advantages 
