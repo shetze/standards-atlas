@@ -97,90 +97,90 @@ addItem()
 {
     local item=$1
     local requirement=$2
-    volShift="${volShift:-0}"
-    volDigits="${volDigits:-0}"
+    partShift="${partShift:-0}"
+    partDigits="${partDigits:-0}"
     local title=''
     local text=''
     local headline=''
-    local volNR=$(cut -s -d'-' -f1 <<<$item)
-    if [ -n "$volNR" ]; then
-        StdVolume="-${volNR}"
-        volNR=$((volNR+volShift))
-        while [ ${#volNR} -lt "$volDigits" ]; do
-            volNR="0${volNR}"
+    local partNR=$(cut -s -d'-' -f1 <<<$item)
+    if [ -n "$partNR" ]; then
+        StdPart="-${partNR}"
+        partNR=$((partNR+partShift))
+        while [ ${#partNR} -lt "$partDigits" ]; do
+            partNR="0${partNR}"
         done
         item=$(cut -s -d'-' -f2 <<<$item)
     else
-        StdVolume=""
+        StdPart=""
     fi
-    # substitution for chapters A-ZZ
-    local chaptersub=$(cut -s -d':' -f1 <<<$item)
-    if [ -n "$chaptersub" ]; then
+    # substitution for clauses A-ZZ
+    local clausesub=$(cut -s -d':' -f1 <<<$item)
+    if [ -n "$clausesub" ]; then
         item=$(cut -s -d':' -f2 <<<$item)
     fi
-    chapter=$(cut -s -d'.' -f1 <<<$item)
-    section=$(cut -s -d'.' -f2 <<<$item)
-    paragraph=$(cut -s -d'.' -f3 <<<$item)
-    clause=$(cut -s -d'.' -f4 <<<$item)
-    subclause=$(cut -s -d'.' -f5 <<<$item)
-    if [ -z "$chapter" ]; then
-        chapter=$item
+    clause=$(cut -s -d'.' -f1 <<<$item)
+    s1clause=$(cut -s -d'.' -f2 <<<$item)
+    s2clause=$(cut -s -d'.' -f3 <<<$item)
+    s3clause=$(cut -s -d'.' -f4 <<<$item)
+    s4clause=$(cut -s -d'.' -f5 <<<$item)
+    if [ -z "$clause" ]; then
+        clause=$item
     fi
-    typeID=${chapter:0:1}
-    if [[ $chapter =~ [a-z] ]]; then
-        chapter=${chapter:1}
+    typeID=${clause:0:1}
+    if [[ $clause =~ [a-z] ]]; then
+        clause=${clause:1}
     fi
-    if [ -n "$chaptersub" ]; then
-        level=${chaptersub}
+    if [ -n "$clausesub" ]; then
+        level=${clausesub}
     else
-        level="${chapter}"
+        level="${clause}"
     fi
-    if [ -n "$volNR" ]; then
-        dsname="${volNR}$(zeroPad ${chapter} 2)"
-        level="${volNR}.${level}"
+    if [ -n "$partNR" ]; then
+        dsname="${partNR}$(zeroPad ${clause} 2)"
+        level="${partNR}.${level}"
     else
-        dsname="$(zeroPad ${chapter} 2)"
+        dsname="$(zeroPad ${clause} 2)"
         level="$level"
     fi
-    index="$chapter"
-    if [ -n "$section" ]; then
-        if [[ "$section" =~ \+ ]]; then
-            section=${section:1}
-            dsname="${dsname}$(printf '%03d' ${section})"
+    index="$clause"
+    if [ -n "$s1clause" ]; then
+        if [[ "$s1clause" =~ \+ ]]; then
+            s1clause=${s1clause:1}
+            dsname="${dsname}$(printf '%03d' ${s1clause})"
         else
-            dsname="${dsname}$(printf '%02d' ${section})"
+            dsname="${dsname}$(printf '%02d' ${s1clause})"
         fi
-        index="${index}.${section}"
-        level="${level}.${section}"
+        index="${index}.${s1clause}"
+        level="${level}.${s1clause}"
     fi
-    if [ -n "$paragraph" ]; then
-        if [[ "$paragraph" =~ \+ ]]; then
-            paragraph=${paragraph:1}
-            dsname="${dsname}$(printf '%03d' ${paragraph})"
+    if [ -n "$s2clause" ]; then
+        if [[ "$s2clause" =~ \+ ]]; then
+            s2clause=${s2clause:1}
+            dsname="${dsname}$(printf '%03d' ${s2clause})"
         else
-            dsname="${dsname}$(printf '%02d' ${paragraph})"
+            dsname="${dsname}$(printf '%02d' ${s2clause})"
         fi
-        index="${index}.${paragraph}"
-        level="${level}.${paragraph}"
+        index="${index}.${s2clause}"
+        level="${level}.${s2clause}"
     fi
-    if [ -n "$clause" ]; then
-        dsname="${dsname}$(printf '%02d' ${clause})"
-        index="${index}.${clause}"
-        level="${level}.${clause}"
+    if [ -n "$s3clause" ]; then
+        dsname="${dsname}$(printf '%02d' ${s3clause})"
+        index="${index}.${s3clause}"
+        level="${level}.${s3clause}"
     fi
-    if [ -n "$subclause" ]; then
-        dsname="${dsname}$(printf '%02d' ${subclause})"
-        index="${index}.${subclause}"
-        level="${level}.${subclause}"
+    if [ -n "$s4clause" ]; then
+        dsname="${dsname}$(printf '%02d' ${s4clause})"
+        index="${index}.${s4clause}"
+        level="${level}.${s4clause}"
     fi
     pad=$(printf "%*s" "$digits")
     pad=${pad// /0}
     dsname=$(printf "%s%s" $dsname "${pad:${#dsname}}")
-    indexString="${name}${StdVolume}:${year} ${index}"
+    indexString="${name}${StdPart}:${year} ${index}"
     locID=$(echo -n $indexString | md5sum | cut -c 1-32)
     title=$(grep "TOC;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
     if [ -z "$title" ]; then
-        xString="${name}:${oyr}${StdVolume} ${index}"
+        xString="${name}:${oyr}${StdPart} ${index}"
         xID=$(echo -n $xString | md5sum | cut -c 1-32)
         title=$(grep "TOC;$xID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
     fi
@@ -227,6 +227,7 @@ addItem()
 type: '$type'
 header: '$index $title'
 text: '$text'
+idx: $indexString
 ref: ''
 references:
 - path: .*\.md
@@ -258,8 +259,8 @@ do
         echo WARNING: no datafile for $standard
         parent=$myparent
         digits=$mydigits
-        volShift=0
-        volDigits=0
+        partShift=0
+        partDigits=0
         structure=()
     fi
     if [ -f "$atlaslocaldir/$standard" ]; then
