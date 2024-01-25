@@ -218,7 +218,6 @@ TOC;114a787cd32fe0320a9eb1a73ac80fb1;ISO 26262-1:2018 3.182;walk-through
 TOC;f215e46bd873934842374ebcf47c3016;ISO 26262-1:2018 3.183;warning and degradation strategy
 TOC;a19422b7e6e6157d233a256f84c3a89d;ISO 26262-1:2018 3.184;well-trusted
 TOC;01b4f9cc67390fe06a09858467fe4ff2;ISO 26262-1:2018 3.185;work product
-TOC;01b4f9cc67390fe06a09858467fe4ff2;ISO 26262-1:2018 3.185;work product
 TOC;e6195c2b56d7fa71e12fa408a35334bb;ISO 26262-1:2018 4;Abbreviated terms
 TOC;af12fb720771eafc0d05369a66b1cba6;ISO 26262-2:2018 0;Part 2
 TOC;9678db303aab97726ded9d79ffda8212;ISO 26262-2:2018 1;Scope
@@ -265,10 +264,10 @@ TOC;9e4ee01cc387e528827aa3369057f625;ISO 26262-2:2018 5.4.5.1;REQUIREMENT
 TOC;d594aaf2db02cf8268a69503f181d86c;ISO 26262-2:2018 5.4.6;Project-independent tailoring of the safety lifecycle
 TOC;d0c3d5a7172303e5d81aeccd07ea0dd8;ISO 26262-2:2018 5.4.6.1;REQUIREMENT
 TOC;f35551ee6789a38a97e10b4b5d1a228f;ISO 26262-2:2018 5.5;Work products
-TOC;f35551ee6789a38a97e10b4b5d1a228f;ISO 26262-2:2018 5.5.1;Organization-specific rules and processes for functional safety
-TOC;f35551ee6789a38a97e10b4b5d1a228f;ISO 26262-2:2018 5.5.2;Evidence of competence management
-TOC;f35551ee6789a38a97e10b4b5d1a228f;ISO 26262-2:2018 5.5.3;Evidence of a quality management system
-TOC;f35551ee6789a38a97e10b4b5d1a228f;ISO 26262-2:2018 5.5.4;Identified safety anomaly reports
+TOC;06c5b0c12d73548ce931476dd7af536c;ISO 26262-2:2018 5.5.1;Organization-specific rules and processes for functional safety
+TOC;79dee7d0456f1e2e7a450073f53d992b;ISO 26262-2:2018 5.5.2;Evidence of competence management
+TOC;ba6ff6ce3cbfc05dbc3984d6a0741439;ISO 26262-2:2018 5.5.3;Evidence of a quality management system
+TOC;2933dab0836270627f1dd8d20255ff87;ISO 26262-2:2018 5.5.4;Identified safety anomaly reports
 TOC;eec18508c30988ccd045eeb961ba5744;ISO 26262-2:2018 6;Project dependent safety management
 TOC;0defe42fc309e2824f37170e84818ea0;ISO 26262-2:2018 6.1;Objectives
 TOC;da679bae82a580c5434ecfa08d815294;ISO 26262-2:2018 6.2;General
@@ -350,12 +349,12 @@ TOC;4e4e0f5492d4f10a97bf8b437764eb90;ISO 26262-2:2018 6.4.13.3;REQUIREMENT
 TOC;84f07802bbf2556238c075512275604d;ISO 26262-2:2018 6.4.13.4;REQUIREMENT
 TOC;9e56c8a996759716cdc22165a6f6d099;ISO 26262-2:2018 6.4.13.5;REQUIREMENT
 TOC;59a70a47bd7ba771876fe2c5f5f05b41;ISO 26262-2:2018 6.5;Work products
-TOC;59a70a47bd7ba771876fe2c5f5f05b41;ISO 26262-2:2018 6.5.1;Impact analysis at the item level
-TOC;59a70a47bd7ba771876fe2c5f5f05b41;ISO 26262-2:2018 6.5.2;Impact analyses at the element level
-TOC;59a70a47bd7ba771876fe2c5f5f05b41;ISO 26262-2:2018 6.5.3;Safety plan
-TOC;59a70a47bd7ba771876fe2c5f5f05b41;ISO 26262-2:2018 6.5.4;Safety case
-TOC;59a70a47bd7ba771876fe2c5f5f05b41;ISO 26262-2:2018 6.5.5;Confirmation measure reports
-TOC;59a70a47bd7ba771876fe2c5f5f05b41;ISO 26262-2:2018 6.5.6;Release for production report
+TOC;09ff9816bc98ace4f9ad1120b9692800;ISO 26262-2:2018 6.5.1;Impact analysis at the item level
+TOC;3f76e4612fd92fe01edc3850b7834bec;ISO 26262-2:2018 6.5.2;Impact analyses at the element level
+TOC;5d23d8cad57dd0409d0ac9c860ad7b27;ISO 26262-2:2018 6.5.3;Safety plan
+TOC;9607e4a9bb317d44c2a685f7cce848cb;ISO 26262-2:2018 6.5.4;Safety case
+TOC;d0f980745db12a39631a55f141707659;ISO 26262-2:2018 6.5.5;Confirmation measure reports
+TOC;a31b10dc5cf7fa20730736055ae86036;ISO 26262-2:2018 6.5.6;Release for production report
 TOC;9e2f68c3902c40c261dae443fd644c64;ISO 26262-2:2018 7;Safety management regarding production, operation, service and decommissioning
 TOC;855930cf80fe64db55f2276ff2091bb1;ISO 26262-2:2018 7.1;Objective
 TOC;3ef3561d50456edb851bacc34fe45089;ISO 26262-2:2018 7.2;General
@@ -370,7 +369,7 @@ TOC;31d8096b37822ccfb78c14727d3710c7;ISO 26262-2:2018 7.4.2.2;REQUIREMENT
 TOC;c4eef59a3b905771ebfafd52538ef767;ISO 26262-2:2018 7.4.2.3;REQUIREMENT
 TOC;7482e8c11ffb9ca6b3c3a4eaa207eba2;ISO 26262-2:2018 7.4.2.4;REQUIREMENT
 TOC;1372146eb0c50b88b87baf8265aeed2d;ISO 26262-2:2018 7.5;Work products
-TOC;1372146eb0c50b88b87baf8265aeed2d;ISO 26262-2:2018 7.5.1;Evidence of safety management regarding production, operation, service and decommissioning
+TOC;0e2cfaaf9b66153b30126bef90f1472d;ISO 26262-2:2018 7.5.1;Evidence of safety management regarding production, operation, service and decommissioning
 TOC;fafdff7757bc7a890685081c5d13a865;ISO 26262-2:2018 A;Overview of and workflow of functional safety management
 TOC;ce7862b075babcf2ef525dae312026b0;ISO 26262-2:2018 B;Safety culture
 TOC;e4450f0d76aa0a0811a3ad6e31878d2a;ISO 26262-2:2018 C;Guidance for the confirmation measures
@@ -978,7 +977,7 @@ TOC;2ac84a9237647f8ce72d6cda08bd6262;ISO 26262-5:2018 H;Example of latent fault 
 TOC;c7d509a69eceadd53b74a52018f87561;ISO 26262-5:2018 H.1;General
 TOC;5a08b5b2307affdebb66dfd3c9c27888;ISO 26262-5:2018 H.2;Example with a safety mechanism based on fault detection and control
 TOC;6f69d12f9ede49a440f23781ef3c2f6f;ISO 26262-5:2018 H.3;Example with a safety mechanism based on control of the fault effects
-TOC;01dffbe7c9031774e6d6a9740410df8f;ISO 26262-6:2018 0;Part 6
+TOC;f9ae733dde2f0590a9da51f9e23b5413;ISO 26262-6:2018 0;Part 6
 TOC;01dffbe7c9031774e6d6a9740410df8f;ISO 26262-6:2018 1;Scope
 TOC;03d6ebf1edb19933045beae8b9bf4021;ISO 26262-6:2018 2;Normative references
 TOC;98ba0a3b00fd4378c2e27269d6300a42;ISO 26262-6:2018 3;Terms and definitions
@@ -1246,7 +1245,7 @@ TOC;1dba23e038e6faa258139f9b2938a504;ISO 26262-7:2018 7.4.1.2;REQUIREMENT
 TOC;031eeaa8453af858e382ead96b38a2bb;ISO 26262-7:2018 7.4.1.3;REQUIREMENT
 TOC;06258289c70f0693744cd62e77ce4cea;ISO 26262-7:2018 7.5;Work products
 TOC;857213888371e6bfbd20e1ef4379546d;ISO 26262-7:2018 7.5.1;Field observation instructions
-TOC;83600bd326ce73631eb3caab9b115c74;ISO 26262-7:2018 A;Overview on and document flow of production, operation, service and decommissioning
+TOC;11f9140dde1dc23cdca21e3bb5317ed1;ISO 26262-7:2018 A;Overview on and document flow of production, operation, service and decommissioning
 TOC;4c718cbe8fe14d7046cd6e49a013d35d;ISO 26262-8:2018 0;Part 8
 TOC;53a07ec77031706ebe7bdbcb72dceb57;ISO 26262-8:2018 1;Scope
 TOC;9750b5b4257a406de695c12f42c8fe73;ISO 26262-8:2018 2;Normative references
