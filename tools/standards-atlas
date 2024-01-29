@@ -45,11 +45,12 @@ atlasdatadir="$atlashomedir/data"
 atlaslocaldir="$atlashomedir/local"
 standards=( IEC61508 ISO26262 EN50126 EN50128 EN50129 EN50657 )
 
+echoerr() { printf "%s\n" "$*" >&2; }
 
 ### sanity checks and preparation
 
 if [ ! -d "$atlasdatadir" ]; then
-    echo "Cannot find Atlas Home $atlasdatadir! I am lost, giving up."
+    echoerr "Cannot find Atlas Home $atlasdatadir! I am lost, giving up."
     exit 1
 fi
 
@@ -64,6 +65,8 @@ if [ ! -d "$stdatlasdir/.git" ]; then
     echo "$stdatlasdir is not controlled by git, initiating git"
     git init $stdatlasdir
 fi
+
+
 
 zeroPad(){
     # zero_pad <string> <length>
@@ -123,6 +126,11 @@ addItem()
     s2clause=$(cut -s -d'.' -f3 <<<$item)
     s3clause=$(cut -s -d'.' -f4 <<<$item)
     s4clause=$(cut -s -d'.' -f5 <<<$item)
+    s5clause=$(cut -s -d'.' -f6 <<<$item)
+    if [[ "$s5clause" =~ .*\..* ]]; then
+        echoerr "$item has more than 5 subclause levels"
+        echoerr "Only 5 levels are supported, there will be 'item already exists' errors."
+    fi
     if [ -z "$clause" ]; then
         clause=$item
     fi
@@ -169,9 +177,24 @@ addItem()
         level="${level}.${s3clause}"
     fi
     if [ -n "$s4clause" ]; then
-        dsname="${dsname}$(printf '%02d' ${s4clause})"
+        dsname="${dsname}${s4clause}"
+        # dsname="${dsname}$(printf '%02d' ${s4clause})"
         index="${index}.${s4clause}"
         level="${level}.${s4clause}"
+        if [ "${#s4clause}" -gt 1 ]; then
+            echoerr "multi-digit s4clause detected for ${name}${StdPart}:${year} ${index}"
+            echoerr "this may cause problems with item ordering"
+        fi
+    fi
+    if [ -n "$s5clause" ]; then
+        dsname="${dsname}${s5clause}"
+        # dsname="${dsname}$(printf '%02d' ${s5clause})"
+        index="${index}.${s5clause}"
+        level="${level}.${s5clause}"
+        if [ "${#s5clause}" -gt 1 ]; then
+            echoerr "multi-digit s5clause detected for ${name}${StdPart}:${year} ${index}"
+            echoerr "this may cause problems with item ordering"
+        fi
     fi
     pad=$(printf "%*s" "$digits")
     pad=${pad// /0}
@@ -256,7 +279,7 @@ do
     if [ -f "$atlasdatadir/$standard" ]; then
         . $atlasdatadir/$standard
     else
-        echo WARNING: no datafile for $standard
+        echoerr WARNING: no datafile for $standard
         parent=$myparent
         digits=$mydigits
         partShift=0
