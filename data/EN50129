@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 parent="IEC61508"
 digits=8
-volShift=0
-volDigits=0
+partShift=0
+partDigits=0
 name="EN 50129"
 oyr=2018
 
