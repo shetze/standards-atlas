@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: LGPL-3.0-only
 parent=""
 digits=11
-volShift=1
-volDigits=0
+partShift=1
+partDigits=0
 name="IEC 61508"
 oyr=2005
 
