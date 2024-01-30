@@ -2,6 +2,13 @@
 
 The standard documents on functional safety for electrical, electronic and programmable electronic systems in the various technology domains have IEC 61508 as a common basic standard. Therefore, a structural similarity can be recognized in the standards of different domains.
 
+Although functional safety deals with specific technical systems or devices that pose specific risks to the safety of people or more general risks to society, the standards do not formulate any technical requirements. Rather, it is about the qualification of the development process and the organization responsible for this development.
+It is therefore less about what is developed. It is primarily about how it is developed and managed. Starting with conception, planning, design, documentation, implementation, testing, installation and integration, testing through to maintenance and decommissioning, the entire life cycle of a product or system for use in an area relevant to functional safety is covered by requirements.
+
+For design and architecture, a reasonably complex system, such as an automobile or a railroad train, is divided into subsystems or components and planned and documented in this way with an increasing level of detail. The standards support this basic design principle by describing the use of finished, initially non-contextual elements, components or products as part of an admissible process in parallel to the overall development process centered on the specific application and context.
+
+In order to be able to recognize these parallel routes and supporting processes in the various domains, we first show the general structural similarity of the various standards.
+
 The standards describe the procedure for planning and managing the entire life cycle of a programmable electronic system in the context of functional safety. Based on the basic standard, the structurally related parts of other standards are identified below.
 
 ### 1. Concept
@@ -130,11 +137,19 @@ The standards describe the procedure for planning and managing the entire life c
 | Objectives | IEC 61508-1:2010 7.17.1 || EN 50126-1:2017 7.13.1 |
 | Requirements | IEC 61508-1:2010 7.17.2 |||
 
+
+# Reuse of elements and products from other contexts
+
 The process models described by the standards for the development of functionally safe E/E/PE systems have one thing in common: they all consider a system in a specific context. It is about a specific application with a specific hazard potential and risks, for which there are assessments and suitable safety functions are designed, developed, validated and maintained to manage the risks.
 
 The use of a software safety element out of context (ISO 26262-10 9), the Proven in Use argument or the use of existing software (EN 50657 6.2) are special cases that are only dealt with in passing.
 
 However, for the purpose of transferring software from the automotive sector to the rail transport domain, this is exactly what is required.
+
+IEC 61508 identifies a number of different conformity routes as a structural element for demonstrating the systematic safety integrity of software. The first route 1s relates to the entire development process and the avoidance or control of systematic faults. The other two routes, 2s and 3s, deal with existing software elements that become certifiable either due to their operational reliability or through the verification of further requirements.
+
+These conformity routes can also be found in modified form in the other standards.
+
 
 # Reuse of software
 

@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+import re
+import linecache
+import hashlib
+
+
+path = '../data/uid-ref-map'
+mappings = linecache.getlines(path)
+
+def reflink(refobj):
+    ref = refobj.group(0)
+    pattern = r"(\b|\W){}[^A-Za-z0-9.]".format(re.escape(ref))
+    # print('reflink pattern {}'.format(pattern))
+    ds_regex = re.compile(pattern)
+    for mapping in mappings:
+        match = ds_regex.search(mapping)
+        if match:
+            linkdata = mapping.split(';')
+            standard = linkdata[1].split('-')
+            # print('[{}](../dist/{}.html#{})'.format(linkdata[2].rstrip(), standard[0], linkdata[1]))
+            return '[{}](../dist/{}.html#{})'.format(linkdata[2].rstrip(), standard[0], linkdata[1])
+
+
+# lines = linecache.getlines('Structural-Comparison-of-Standards.md')
+
+iso_pattern = r'([A-Z]+\s+\d\d\d\d\d)-?\d*:\d\d\d\d\s+([1-9A-Z][0-9.]*)'
+iso_regex = re.compile(iso_pattern)
+
+for line in sys.stdin:
+    newline = iso_regex.sub(reflink, line.rstrip())
+    print(newline)
+
