@@ -30,6 +30,6 @@ iso_pattern = r'([A-Z]+\s+\d\d\d\d\d)-?\d*:\d\d\d\d\s+([1-9A-Z][0-9.]*)'
 iso_regex = re.compile(iso_pattern)
 
 for line in sys.stdin:
-    newline = iso_regex.sub(reflink, line)
+    newline = iso_regex.sub(reflink, line.rstrip())
     print(newline)
 
