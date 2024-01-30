@@ -7,9 +7,20 @@
 
 readableindex=0
 
-usage() { echo "Usage: $0 [-i] [-d <path/stdatlasdir>] [-g <gitrepo>] [-r <MYREQ>] [-p <STDANDARD>]" 1>&2; exit 0; }
+usage() { 
+    echo -e "Usage:
 
-while getopts "id:g:r:p:" arg; do
+    $0
+
+    Options:
+    [-i] Enable readable Index, default: Off
+    [-d <path/stdatlasdir>] Describes the path where the doorstop files will be created, default: /tmp/standards-atlas 
+    [-g <gitrepo>] Currently not implemented
+    [-r <MYREQ>] Additional requirements
+    [-p <STDANDARD>] Parent standards for additional requirements" 1>&2; exit 0; 
+}
+
+while getopts "ihd:g:r:p:" arg; do
     case $arg in
         i)
             readableindex=1
