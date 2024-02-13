@@ -8,6 +8,7 @@
 autopublish=0
 autoreference=0
 readableindex=0
+norecreate=0
 
 usage() { 
     echo -e "Usage:
@@ -17,6 +18,7 @@ usage() {
     Options:
     [-i] Enable readable Index, default: Off
     [-t] Enable automatic publishing, default: Off
+    [-n] No recreation of doorstop items, default: Off
     [-l] Enable automatic reference/linking to all travelogues, default: Off
     [-d <path/stdatlasdir>] Describes the path where the doorstop files will be created, default: /tmp/standards-atlas 
     [-g <gitrepo>] Currently not implemented
@@ -24,7 +26,7 @@ usage() {
     [-p <STDANDARD>] Parent standards for additional requirements" 1>&2; exit 0; 
 }
 
-while getopts "ihtd:g:r:p:" arg; do
+while getopts "ihlntd:g:r:p:" arg; do
     case $arg in
         i)
             readableindex=1
@@ -40,6 +42,12 @@ while getopts "ihtd:g:r:p:" arg; do
             ;;
         p)
             myparent="${OPTARG}"
+            ;;
+        n)
+            norecreate=1
+            ;;
+        l)
+            autoreference=1
             ;;
         t)
             autopublish=1
@@ -291,43 +299,44 @@ doorstop add -l $level -d defaults.yml -n $dsname $requirement --noreorder
 }
 
 ### create standard documents
-
-for standard in ${standards[@]} $myreqs
-do
-    if [ -f "$atlasdatadir/$standard" ]; then
-        . $atlasdatadir/$standard
-    else
-        echoerr WARNING: no datafile for $standard
-        parent=$myparent
-        digits=$mydigits
-        partShift=0
-        partDigits=0
-        structure=()
-    fi
-    if [ -f "$atlaslocaldir/$standard" ]; then
-        uselocal=1
-    else
-        uselocal=0
-    fi
-    if [ -z "$parent" ]; then
-        doorstop create -d $digits -s '-' ${standard} ./requirements/${standard}
-    else
-        doorstop create -d $digits -s '-' ${standard} ./requirements/${standard} --parent ${parent}
-    fi
-
-    setAttributes ${standard} ${name} 
-
-    for index in ${!structure[@]}
+if [ "$norecreate" -eq 0 ]; then
+    for standard in ${standards[@]} $myreqs
     do
-        volume=${structure[$index]}
-        year=${volume:0:4}
-        volume=${volume:5}
-        for item in $(eval echo ${volume})
+        if [ -f "$atlasdatadir/$standard" ]; then
+            . $atlasdatadir/$standard
+        else
+            echoerr WARNING: no datafile for $standard
+            parent=$myparent
+            digits=$mydigits
+            partShift=0
+            partDigits=0
+            structure=()
+        fi
+        if [ -f "$atlaslocaldir/$standard" ]; then
+            uselocal=1
+        else
+            uselocal=0
+        fi
+        if [ -z "$parent" ]; then
+            doorstop create -d $digits -s '-' ${standard} ./requirements/${standard}
+        else
+            doorstop create -d $digits -s '-' ${standard} ./requirements/${standard} --parent ${parent}
+        fi
+
+        setAttributes ${standard} ${name} 
+
+        for index in ${!structure[@]}
         do
-            addItem ${item} ${standard}
+            volume=${structure[$index]}
+            year=${volume:0:4}
+            volume=${volume:5}
+            for item in $(eval echo ${volume})
+            do
+                addItem ${item} ${standard}
+            done
         done
     done
-done
+fi
 
 if [ "$autoreference" -eq 1 ]; then
     $atlastooldir/referenceItems $stdatlasdir
