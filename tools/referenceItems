@@ -6,9 +6,29 @@ import re
 import linecache
 import hashlib
 
+import argparse
+from pathlib import Path
 
-path = '../data/uid-ref-map'
-mappings = linecache.getlines(path)
+parser = argparse.ArgumentParser()
+parser.add_argument("atlas_path", help="Path to the standards-atlas directory",type=Path)
+
+p = parser.parse_args()
+
+if not p.atlas_path.exists():
+    print("Path {} does not exist -> aborting".format(p.file_path))
+    exit(1)
+
+def find_all_relevant_files(dir,ending):
+    matches = []
+    for file in os.listdir(dir):
+        if file.endswith(ending):
+            matches.append(os.path.join(dir,file))
+    return matches
+
+scriptpath = os.path.dirname(__file__)
+traveloguedir = scriptpath+"/../travelogue"
+mappath = p.atlas_path/'../data/uid-ref-map'
+mappings = linecache.getlines(str(mappath))
 
 def reflink(refobj):
     ref = refobj.group(0)
@@ -24,12 +44,21 @@ def reflink(refobj):
             return '[{}](../dist/{}.html#{})'.format(linkdata[2].rstrip(), standard[0], linkdata[1])
 
 
-# lines = linecache.getlines('Structural-Comparison-of-Standards.md')
+files_to_reference = find_all_relevant_files(traveloguedir,".md")
+
+newtraveloguedir = os.path.join(p.atlas_path,os.path.basename(traveloguedir))
+if not os.path.exists(newtraveloguedir):
+    os.mkdir(newtraveloguedir)
 
 iso_pattern = r'([A-Z]+\s+\d\d\d\d\d)-?\d*:\d\d\d\d\s+([1-9A-Z][0-9.]*)'
 iso_regex = re.compile(iso_pattern)
 
-for line in sys.stdin:
-    newline = iso_regex.sub(reflink, line.rstrip())
-    print(newline)
-
+for file in files_to_reference:
+    with open(file, 'r') as rfile:
+        newfile = os.path.join(newtraveloguedir,os.path.basename(file))
+        if os.path.exists(newfile):
+            os.remove(newfile)
+        with open(newfile, 'w+') as wfile:
+            for line in rfile:
+                newline = iso_regex.sub(reflink, line.rstrip())
+                wfile.write(newline)

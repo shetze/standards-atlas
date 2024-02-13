@@ -5,6 +5,8 @@
 
 ### command line processing
 
+autopublish=0
+autoreference=0
 readableindex=0
 
 usage() { 
@@ -14,13 +16,15 @@ usage() {
 
     Options:
     [-i] Enable readable Index, default: Off
+    [-t] Enable automatic publishing, default: Off
+    [-l] Enable automatic reference/linking to all travelogues, default: Off
     [-d <path/stdatlasdir>] Describes the path where the doorstop files will be created, default: /tmp/standards-atlas 
     [-g <gitrepo>] Currently not implemented
     [-r <MYREQ>] Additional requirements
     [-p <STDANDARD>] Parent standards for additional requirements" 1>&2; exit 0; 
 }
 
-while getopts "ihd:g:r:p:" arg; do
+while getopts "ihtd:g:r:p:" arg; do
     case $arg in
         i)
             readableindex=1
@@ -36,6 +40,9 @@ while getopts "ihd:g:r:p:" arg; do
             ;;
         p)
             myparent="${OPTARG}"
+            ;;
+        t)
+            autopublish=1
             ;;
         h | *)
             usage
@@ -280,7 +287,7 @@ fi
 echo "TOC;$locID;${locString};$title" >>header${standard}
 echo "TEXT;$locID;${locString};$headline;$text" >>text${standard}
 echo "$locID;${standard}-${dsname};$indexString" >>uid-ref-map
-doorstop add -l $level -d defaults.yml -n $dsname $requirement
+doorstop add -l $level -d defaults.yml -n $dsname $requirement --noreorder
 }
 
 ### create standard documents
@@ -322,3 +329,10 @@ do
     done
 done
 
+if [ "$autoreference" -eq 1 ]; then
+    $atlastooldir/referenceItems $stdatlasdir
+fi
+
+if [ "$autopublish" -eq 1 ]; then
+    doorstop publish all ./requirements
+fi
