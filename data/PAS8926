@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: LGPL-3.0-only
+parent="ISO26262"
+digits=12
+partShift=0
+partDigits=2
+name="ISO PAS 8926"
+oyr=2023

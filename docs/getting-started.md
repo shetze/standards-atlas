@@ -15,8 +15,24 @@ You can change this by running the script with the parameter **"-d"**
 Usage:
 ```sh
 $ ./tools/standards-atlas --help
-
-
 ```
+
+## Automatic publishing
+In order to automatically publish the created doorstop files and have them usable as html files, you can activate automatic publishing with the following parameter:
+```sh
+$ ./tools/standards-atlas -t
+```
+## Automatic referencing of travelogues
+In order to automatically reference doorstop items to travelogue files, you can activate automatic referencing with the following parameter:
+```sh
+$ ./tools/standards-atlas -l
+```
+
+## No recreation
+In order to not recreate the files (e.g. if you just want to update your references and publish) you can deactivate recreation with the following parameter
+```sh
+$ ./tools/standards-atlas -n
+```
+
 TBC
 
