@@ -15,7 +15,7 @@ parser.add_argument("atlas_path", help="Path to the standards-atlas directory",t
 p = parser.parse_args()
 
 if not p.atlas_path.exists():
-    print("Path {} does not exist -> aborting".format(p.file_path))
+    print("Path {} does not exist -> aborting".format(p.atlas_path))
     exit(1)
 
 def find_all_relevant_files(dir,ending):
