@@ -106,15 +106,15 @@ The standards describe the procedure for planning and managing the entire life c
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
-| Objectives | IEC 61508-1:2010 7.13.1 | ISO 26262-4:2018 7.1 | EN 50126-1:2017 7.9.1 EN 50657:2017 9.1.1 |
-| Requirements | IEC 61508-1:2010 7.13.2 | ISO 26262-4:2018 7.4 | EN 50657:2017 9.1.4 |
+| Objectives | IEC 61508-1:2010 7.13.1 | ISO 26262-4:2018 7.1 | EN 50126-1:2017 7.9.1 EN 50657:2017 9.1.1 EN 50716:2023 9.1.1|
+| Requirements | IEC 61508-1:2010 7.13.2 | ISO 26262-4:2018 7.4 | EN 50657:2017 9.1.4  EN 50716:2023 9.1.4|
 
 ### 13. General validation of security
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
-| Objectives | IEC 61508-1:2010 7.14.1 | ISO 26262-3:2018 7.1 e ISO 26262-4:2018 8.1 | EN 50126-1:2017 7.10.1 EN 50657:2017 6.3.1 |
-| Requirements | IEC 61508-1:2010 7.14.2 | ISO 26262-3:2018 7.4.3 ISO 26262-4:2018 8.4 | EN 50657:2017 6.3.4 |
+| Objectives | IEC 61508-1:2010 7.14.1 | ISO 26262-3:2018 7.1 e ISO 26262-4:2018 8.1 | EN 50126-1:2017 7.10.1 EN 50657:2017 6.3.1  EN 50716:2023 6.3.1|
+| Requirements | IEC 61508-1:2010 7.14.2 | ISO 26262-3:2018 7.4.3 ISO 26262-4:2018 8.4 | EN 50657:2017 6.3.4 EN 50716:2023 6.3.4|
 
 ### 14. General operation, maintenance and repair
 
@@ -127,8 +127,8 @@ The standards describe the procedure for planning and managing the entire life c
 
 || IEC 61508 | ISO 26262 | EN 50XXX |
 | --- | --- | --- | --- |
-| Objectives | IEC 61508-1:2010 7.16.1 || EN 50657:2017 6.6.1 |
-| Requirements | IEC 61508-1:2010 7.16.2 || EN 50657:2017 6.6.4 |
+| Objectives | IEC 61508-1:2010 7.16.1 || EN 50657:2017 6.6.1 EN 50716:2023 6.6.1|
+| Requirements | IEC 61508-1:2010 7.16.2 || EN 50657:2017 6.6.4 EN 50716:2023 6.6.4 |
 
 ### 16. Decommissioning or disposal
 
@@ -142,7 +142,7 @@ The standards describe the procedure for planning and managing the entire life c
 
 The process models described by the standards for the development of functionally safe E/E/PE systems have one thing in common: they all consider a system in a specific context. It is about a specific application with a specific hazard potential and risks, for which there are assessments and suitable safety functions are designed, developed, validated and maintained to manage the risks.
 
-The use of a software safety element out of context (ISO 26262-10 9), the Proven in Use argument or the use of existing software (EN 50657 6.2) are special cases that are only dealt with in passing.
+The use of a software safety element out of context (ISO 26262-10 9), the Proven in Use argument or the use of pre-existing software (EN 50657:2017 7.3.4.7, EN 50716:2023 7.3.4.7) are special cases that are only dealt with in passing.
 
 However, for the purpose of transferring software from the automotive sector to the rail transport domain, this is exactly what is required.
 
@@ -173,6 +173,7 @@ In contrast to the PiU, in which the proven object is taken as a black box, exis
 
 - IEC 61508-3:2010 7.12 describes this route as "Route 3s"
 - EN 50129:2018 6.2 deals with "Use of pre-existing items"
+- EN 50657:2017 7.3.4.7, EN 50716:2023 7.3.4.7 deal with the use of "pre-existing software"
 - ISO 26262-8:2018 12 deals in detail with the qualification of software
 
 For the automotive industry, ISO 26262 requires the unchanged adoption into the new application context for the qualification of software. Only the PAS 8926 supplement for ISO 26262 makes the continuous patching of software, which is already necessary for cyber security and firmly established for Linux, for example, also possible for the qualification of software.
