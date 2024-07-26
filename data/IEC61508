@@ -10,7 +10,7 @@ structure=(
  "2005 0-0 0-1 0-2 0-3 0-3.{1..4} 0-4 0-4.{1..9} 0-5:A"
  "2010 1-0 1-1 1-s1.{1..5} 1-2 1-3 1-4 1-r4.{1..3} 1-5 1-5.{1..2} 1-o5.1.{1..2} 1-r5.2.{1..11} 1-6 1-6.{1..2} 1-o6.1.{1..2} 1-r6.2.{1..18} 1-7 1-7.1 1-7.1.{1..4} 1-s7.1.1.{1..5} 1-o7.1.2.{1..2} 1-o7.1.3.{1..2} 1-r7.1.4.{1..8} 1-7.2 1-7.2.{1..2} 1-r7.2.2.{1..6} 1-7.3 1-7.3.{1..2} 1-o7.3.1.{1..2} 1-r7.3.2.{1..6} 1-7.4 1-7.4.{1..2} 1-o7.4.1.{1..3} 1-r7.4.2.{1..11} 1-7.5 1-7.5.{1..2} 1-r7.5.2.{1..7} 1-7.6 1-7.6.{1..2} 1-o7.6.1.{1..2} 1-r7.6.2.{1..13} 1-7.7 1-7.7.{1..2} 1-r7.7.2.{1..4} 1-7.8 1-7.8.{1..2} 1-r7.8.2.{1..2} 1-7.9 1-7.9.{1..2} 1-o7.9.1.{1..2} 1-r7.9.2.{1..3} 1-7.10 1-7.10.{1..2} 1-r7.10.2.{1..7} 1-7.11 1-7.11.{1..2} 1-7.12 1-7.12.{1..2} 1-7.13 1-7.13.{1..2} 1-o7.13.1.{1..2} 1-r7.13.2.{1..4} 1-7.14 1-7.14.{1..2} 1-r7.14.2.{1..4} 1-7.15 1-7.15.{1..2} 1-o7.15.1.{1..2} 1-r7.15.2.{1..4} 1-7.16 1-7.16.{1..2} 1-r7.16.2.{1..7} 1-7.17 1-7.17.{1..2} 1-r7.17.2.{1..7} 1-7.18 1-7.18.{1..2} 1-r7.18.2.{1..4} 1-8 1-8.{1..2} 1-r8.2.{1..18} 1-9:A"
  "2010 2-0 2-1 2-s1.{1..4} 2-2 2-3 2-4 2-5 2-6 2-7 2-7.1 2-7.1.{1..3} 2-o7.1.1.{1..2} 2-o7.1.2.{1..2} 2-r7.1.3.{1..5} 2-7.2 2-7.2.{1..3} 2-r7.2.2.{1..2} 2-r7.2.3.{1..6} 2-7.3 2-7.3.{1..2} 2-r7.3.2.{1..2} 2-7.4 2-7.4.{1..3} 2-r7.4.2.{1..14} 2-r7.4.3.{1..4} 2-7.4.4 2-7.4.4.1 2-r7.4.4.1.{1..5} 2-7.4.4.2 2-r7.4.4.2.{1..4} 2-7.4.4.3 2-r7.4.4.3.{1..4} 2-7.4.5 2-r7.4.5.{1..5} 2-7.4.6 2-r7.4.6.{1..7} 2-7.4.7 2-r7.4.7.{1..3} 2-7.4.8 2-r7.4.8.{1..3} 2-7.4.9 2-r7.4.9.{1..7} 2-7.4.10 2-r7.4.10.{1..7} 2-7.4.11 2-r7.4.11.{1..2} 2-7.5 2-7.5.{1..2} 2-r7.5.2.{1..7} 2-7.6 2-7.6.{1..2} 2-r7.6.2.{1..5} 2-7.7 2-7.7.{1..2} 2-r7.7.2.{1..7} 2-7.8 2-7.8.{1..2} 2-r7.8.2.{1..4} 2-7.9 2-7.9.{1..2} 2-r7.9.2.{1..10} 2-8 2-9:A 2-10:B 2-11:C 2-12:D 2-13:E 2-14:F"
- "2010 3-0 3-1 3-2 3-3 3-4 3-5 3-6 3-6.{1..2} 3-7 3-7.1 3-7.1.{1..2} 3-7.2 3-7.2.{1..2} 3-7.3 3-7.3.{1..2} 3-7.4 3-7.4.{1..8} 3-7.5 3-7.5.{1..2} 3-7.6 3-7.6.{1..2} 3-7.7 3-7.7.{1..2} 3-7.8 3-7.8.{1..2} 3-7.9 3-7.9.{1..2} 3-8 3-9:A 3-10:B 3-11:C 3-12:D 3-13:E 3-14:F 3-15:G"
+ "2010 3-0 3-1 3-2 3-3 3-4 3-5 3-6 3-6.{1..2} 3-7 3-7.1 3-7.1.{1..2} 3-7.2 3-7.2.{1..2} 3-7.3 3-7.3.{1..2} 3-7.4 3-7.4.{1..8} 3-7.5 3-7.5.{1..2} 3-7.6 3-7.6.{1..2} 3-7.7 3-7.7.{1..2} 3-7.8 3-7.8.{1..2} 3-7.9 3-7.9.{1..2} 3-8 3-9:A 3-9:A.{1..10} 3-10:B 3-10:B.{1..9} 3-11:C 3-11:C.1 3-11:C.1.{1..3} 3-11:C.{2..19} 3-12:D 3-12:D.{1..3} 3-13:E 3-14:F 3-14:F.{1..7} 3-15:G 3-15:G.{1..7}"
  "2010 4-0 4-1 4-2 4-3 4-3.1 4-t3.1.{1..14} 4-3.2 4-t3.2.{1..15} 4-3.3 4-t3.3.{1..7} 4-3.4 4-t3.4.{1..6} 4-3.5 4-t3.5.{1..18} 4-3.6 4-t3.6.{1..22} 4-3.7 4-t3.7.{1..5} 4-3.8 4-t3.8.{1..18}"
  "2010 5-0 5-1 5-s1.{1..4} 5-2 5-3 5-4:A 5-4:A.{1..2} 5-4:A.2.{1..4} 5-4:A.{3..5} 5-4:A.5.{1..5} 5-4:A.{6..9} 5-5:B 5-5:B.{1..6} 5-6:C 5-6:C.{1..2} 5-6:C.2.{1..2} 5-7:D 5-7:D.{1..3} 5-8:E 5-8:E.{1..6} 5-9:F 5-9:F.1 5-9:F.1.{1..3} 5-9:F.{2..6} 5-9:F.6.{1..3} 5-9:F.{7..11} 5-10:G 5-10:G.{1..2}"
  "2010 6-0 6-1 6-s1.{1..4} 6-2 6-3 6-4:A 6-4:A.{1..3} 6-5:B 6-5:B.{1..2} 6-5:B.2.{1..3} 6-5:B.2.3.{1..4} 6-5:B.3 6-5:B.3.{1..2} 6-5:B.3.2.{1..2} 6-5:B.3.2.2.{1..6} 6-5:B.3.2.{3..5} 6-5:B.3.3 6-5:B.3.3.{1..2} 6-5:B.3.3.2.{1..6} 6-5:B.3.3.{3..4} 6-5:B.4 6-5:B.4.{1..4} 6-5:B.4.4.{1..2} 6-5:B.5 6-5:B.5.{1..2} 6-5:B.5.2.{1..2} 6-5:B.5.3 6-5:B.5.3.{1..4} 6-5:B.5.4 6-5:B.6 6-5:B.7 6-6:C 6-7:D 6-7:D.1 6-7:D.1.{1..4} 6-7:D.{2..8} 6-8:E 6-8:E.{1..3}"
@@ -520,12 +520,70 @@ TOC;f43189c9c36f4ce3e1969bf7efbad878;IEC 61508-3:2010 7.9.1;Objective
 TOC;c49893d74dbef9b582a31eeeae215e37;IEC 61508-3:2010 7.9.2;Requirements
 TOC;77ba2ca33cb70186f3ae3cf44729b536;IEC 61508-3:2010 8;Functional safety assessment
 TOC;f95cfdde040f1ba3e36986b4c518e10a;IEC 61508-3:2010 A;Guide to the selection of techniques and measures
+TOC;dddf48c7abdebb12b23859453b012b84;IEC 61508-3:2010 A.1;Software safety requirements specification
+TOC;032f2e5afd9707c189fea3a498443c28;IEC 61508-3:2010 A.2;Software design and development - software architecture design
+TOC;0ec259575b69ee079a429ed0db2d27fb;IEC 61508-3:2010 A.3;Software design and development - support tools and programming language
+TOC;fab65f777c231188ad9337d6cb0897c0;IEC 61508-3:2010 A.4;Software design and development - detailed design
+TOC;e7ddbf932a21300f6b89971d3d1c94a9;IEC 61508-3:2010 A.5;Software design and development - software module testing and integration
+TOC;2c54473555fbc5b4a546a23452967fff;IEC 61508-3:2010 A.6;Programmable electronics integration (hardware and software)
+TOC;9414004d6c8652618db0d43f69074af0;IEC 61508-3:2010 A.7;Software aspects of system safety validation
+TOC;9c08714d7245683f3ee64c253f344f59;IEC 61508-3:2010 A.8;Modification
+TOC;18bc598df42fe63f7a352a26a1ff857c;IEC 61508-3:2010 A.9;Software verification
+TOC;14d8f7c585f183487bf00e7a4d1c2726;IEC 61508-3:2010 A.10;Functional safety assessment
 TOC;be2a4753562ea7bb0bd9dac5ea2727e6;IEC 61508-3:2010 B;Detailed tables
+TOC;10dc4f0f069e38eb5bcb2b4821dc916c;IEC 61508-3:2010 B.1;Design and coding standards
+TOC;e9b249ba15b3da8681131081d3e7ce7f;IEC 61508-3:2010 B.2;Dynamic analysis and testing
+TOC;c29c1827f99203ab828f6cf9567e3ae3;IEC 61508-3:2010 B.3;Functional and black-box testing
+TOC;bf4b9d639a1ed8990508f218cc40e1cb;IEC 61508-3:2010 B.4;Failure analysis
+TOC;0ad0947a4270e721f2c48b26c0cac0c6;IEC 61508-3:2010 B.5;Modelling
+TOC;a5e295b155fe721579faff510e923e7a;IEC 61508-3:2010 B.6;Performance testing
+TOC;0aeac8ba785d9ff9b99deea69f5f5b91;IEC 61508-3:2010 B.7;Semi-formal methods
+TOC;508839214a69c8e2b0d79621668d874f;IEC 61508-3:2010 B.8;Static analysis
+TOC;5bc31c3d4834aa5c36b2d07c0bead19e;IEC 61508-3:2010 B.9;Modular approach
 TOC;f59ec64ffc80b1a0ce3d61af18954e98;IEC 61508-3:2010 C;Properties for software systematic capability
+TOC;136fe03996758ae1a93807fa18dd8346;IEC 61508-3:2010 C.1;Introduction
+TOC;7de957b645668638d970453ba2ccd9f4;IEC 61508-3:2010 C.1.1;Structure of Annex C, relating to Annexes A and B
+TOC;a9d23fa243a76b226f94c2a3166487ad;IEC 61508-3:2010 C.1.2;Method of use - 1
+TOC;b2c969340a8e51d16b10b4be602710f8;IEC 61508-3:2010 C.1.3;Method of use - 2
+TOC;4155fc0b3c88aff1022541fc977a89b9;IEC 61508-3:2010 C.2;Properties for systematic safety integrity - Software design and development - software Architecture Design
+TOC;e2a75661c71d578ea899f5a63e60a022;IEC 61508-3:2010 C.3;Properties for systematic safety integrity - Software design and development - support tools and programming language
+TOC;1dc3d3330a1a3db43f467259745304ff;IEC 61508-3:2010 C.4;Properties for systematic safety integrity - Software design and development - detailed design (includes software system design, software module design and coding)
+TOC;3e59b2e25cd98d058757139417a0fff6;IEC 61508-3:2010 C.5;Properties for systematic safety integrity - Software design and development - software module testing and integration
+TOC;25baa3d372772801b0b64b20ce9fbd91;IEC 61508-3:2010 C.6;Properties for systematic safety integrity - Programmable electronics integration (hardware and software)
+TOC;fcec7b2a387e5104c90f4dd1ef02c82e;IEC 61508-3:2010 C.7;Properties for systematic safety integrity - Software aspects of system safety validation
+TOC;b6bc22eb35334e9845864eb29da7eba8;IEC 61508-3:2010 C.8;Properties for systematic safety integrity - Software modification
+TOC;458fda1efee8a40f6b7f9d9d76a786c7;IEC 61508-3:2010 C.9;Properties for systematic safety integrity - Software verification
+TOC;7b65df119ba943e7e3cdccfd6bc0e63f;IEC 61508-3:2010 C.10;Properties for systematic safety integrity - Functional safety assessment
+TOC;a0428b3166e367ffedf4432f6ff04d9c;IEC 61508-3:2010 C.11;Detailed properties - Design and coding standards
+TOC;67e05af82beb308ef546d62b295c02bd;IEC 61508-3:2010 C.12;Detailed properties - Dynamic analysis and testing
+TOC;dc01b01afb5effcc5f376f95143f87c5;IEC 61508-3:2010 C.13;Detailed properties - Functional and black-box testing
+TOC;0d782c533f6f1d1ccca18a4ba28f3604;IEC 61508-3:2010 C.14;Detailed properties - Failure analysis
+TOC;3349bfe8a2498a267d6f0d4154854e15;IEC 61508-3:2010 C.15;Detailed properties - Modelling
+TOC;4e1da74458d6a4dc9a254b486b97d6a8;IEC 61508-3:2010 C.16;Detailed properties - Performance testing
+TOC;faf2ba055e00996f6bea2ce4b46aeecc;IEC 61508-3:2010 C.17;Detailed properties - Semi-formal methods
+TOC;c1a3437e020ffa42bc29db1062b55cf8;IEC 61508-3:2010 C.18;Properties for systematic safety integrity - Static analysis
+TOC;62242c9b1721f20ba67522815eb8a350;IEC 61508-3:2010 C.19;Detailed properties - Modular approach
 TOC;a67fe1dd51da368428b3f473e419542b;IEC 61508-3:2010 D;Safety manual for compliant items – additional requirements for software elements
+TOC;99d9be17e213a00d4bb766f93dfc8f57;IEC 61508-3:2010 D.1;Purpose of the safety manual
+TOC;bb018142fa9ced2d1ca90a25ee51e5bb;IEC 61508-3:2010 D.2;Contents of the safety manual for a software element
+TOC;d115aff4833b6fcacc7265f5db28691f;IEC 61508-3:2010 D.3;Justification of claims in the safety manual for compliant items
 TOC;c7f8a6db6476e180f55603274af6209e;IEC 61508-3:2010 E;Relationships between IEC 61508-2 and IEC 61508-3
 TOC;76b95880a098e5e2b7a542eb7689c5c4;IEC 61508-3:2010 F;Techniques for achieving non-interference between software
+TOC;5176c7f13bf94e2c0a9e6e9d6d527b9c;IEC 61508-3:2010 F.1;Introduction
+TOC;d087f5358bda82fc93030af476381463;IEC 61508-3:2010 F.2;Domains of behaviour
+TOC;ee3708a1758eba84afc47f759729560b;IEC 61508-3:2010 F.3;Causal factor analysis
+TOC;36a48f1173348e9b426ae3a3de36fbcc;IEC 61508-3:2010 F.4;Achieving spatial independence
+TOC;716fa2e6bcc94e1b186f91227847430f;IEC 61508-3:2010 F.5;Achieving temporal independence
+TOC;80aa4348138e9b0afba02783957f9d0b;IEC 61508-3:2010 F.6;Requirements for supporting software
+TOC;900fd094d0bdfd3391ca986ca0a59204;IEC 61508-3:2010 F.7;Independence of software modules - programming language aspects
 TOC;645f0cc30f5cfee16de615a89c0669c3;IEC 61508-3:2010 G;Guidance for tailoring lifecycles associated with data driven
+TOC;b582e5ffb07f1d2001e79590dc6e7037;IEC 61508-3:2010 G.1;Data driven - system part and application part
+TOC;fbf2519381db1b3d75380830499bd3d2;IEC 61508-3:2010 G.2;Limited variability configuration, limited application configurability
+TOC;f515c4f7e2fd645d2567c90c0a6496a2;IEC 61508-3:2010 G.3;Limited variability configuration, full application configurability
+TOC;3877d52f3cbb337a054f6bdfa0993437;IEC 61508-3:2010 G.4;Limited variability programming, limited application configurability
+TOC;84e88dc8a15cdaa1de936e06678c57a9;IEC 61508-3:2010 G.5;Limited variability programming, full application configurability
+TOC;3769efa1e5f346ed7d32feec8c6cb0da;IEC 61508-3:2010 G.6;Full functionality programming/configuration, limited application configurability
+TOC;259c33b43508b950c9617884a1eaa7c9;IEC 61508-3:2010 G.7;Full functionality programming/configuration, full application configurability
 TOC;4de86ee80843566c1e9166da94c7558e;IEC 61508-4:2010 0;Part 4
 TEXT;4de86ee80843566c1e9166da94c7558e;IEC 61508-4:2010 0;;Definitions and abbreviations
 TOC;b4344d425de11fc1107c80921fac4dba;IEC 61508-4:2010 1;Scope
