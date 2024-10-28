@@ -3,13 +3,14 @@ parent="IEC61508"
 digits=8
 partShift=0
 partDigits=0
-name="EN50716"
+name="EN 50716"
 oyr=2023
 
 structure=(
- "2023 {1..3} 3.1 t3.1.{1..44} 3.2 {4..5} 5.1 5.1.{1..2} r5.1.2.{1..12} 5.2 5.2.{1..2} r5.2.2.{1..5} 5.3 5.3.1 o5.3.1.{1..2} 5.3.2 r5.3.2.{1..14} 6 6.1 6.1.{1..4} r6.1.4.{1..5} 6.2 6.2.{1..4} r6.2.4.{1..13} 6.3 6.3.1 o6.3.1.{1..2} 6.3.{2..4} r6.3.4.{1..14} 6.4 6.4.1 o6.4.1.{1..2} 6.4.{2..4} r6.4.4.{1..17} 6.5 6.5.1 o6.5.1.{1..2} 6.5.{2..4} r6.5.4.{1..18} 6.6 6.6.1 o6.6.1.{1..2} 6.6.{2..4} r6.6.4.{1..2} 6.7 6.7.{1..4} r6.7.4.{1..12} 7 7.1 7.1.{1..2} r7.1.2.{1..2} 7.2 7.2.1 o7.2.1.{1..2} 7.2.{2..4} r7.2.4.{1..20} 7.3 7.3.1 o7.3.1.{1..5} 7.3.{2..4} r7.3.4.{1..44} 7.4 7.4.1 o7.4.1.{1..2} 7.4.{2..4} r7.4.4.{1..13} 7.5 7.5.{1..4} r7.5.4.{1..10} 7.6 7.6.1 o7.6.1.{1..2} 7.6.{2..4} r7.6.4.{1..13} 7.7 7.7.{1..4} r7.7.4.{1..12} 8 8.1 o8.1.{1..3} 8.{2..4} 8.4.1 r8.4.1.{1..14} 8.4.2 r8.4.2.{1..5} 8.4.{3..4} r8.4.4.{1..8} 8.4.5 r8.4.5.{1..7} 8.4.{6..7} r8.4.7.{1..9} 9 9.1 9.1.{1..4} r9.1.4.{1..20} 9.2 9.2.{1..4} r9.2.4.{1..20} 10:A 10:A.{1..3} 11:B 12:C 12:C.1 12:C.1.{1..3} 12:C.2 12:C.2.{1..4} 12:C.2.4.{1..4} 12:C.2.{5..6} 12:C.2.6.{1..7} 12:C.3 12:C.3.{1..3} 13:D 13:D.{1..71} 14:ZZ"
+ "2023 {1..3} s1.{1..10} 3.1 t3.1.{1..44} 3.2 4 4.{1..11} 5 5.1 5.1.{1..2} r5.1.2.{1..12} 5.2 5.2.{1..2} r5.2.2.{1..5} 5.3 5.3.1 o5.3.1.{1..2} 5.3.2 r5.3.2.{1..14} 6 6.1 6.1.{1..4} r6.1.4.{1..5} 6.2 6.2.{1..4} r6.2.4.{1..13} 6.3 6.3.1 o6.3.1.{1..2} 6.3.{2..4} r6.3.4.{1..14} 6.4 6.4.1 o6.4.1.{1..2} 6.4.{2..4} r6.4.4.{1..17} 6.5 6.5.1 o6.5.1.{1..2} 6.5.{2..4} r6.5.4.{1..18} 6.6 6.6.1 o6.6.1.{1..2} 6.6.{2..4} r6.6.4.{1..2} 6.7 6.7.{1..4} r6.7.4.{1..12} 7 7.1 7.1.{1..2} r7.1.2.{1..2} 7.2 7.2.1 o7.2.1.{1..2} 7.2.{2..4} r7.2.4.{1..22} 7.3 7.3.1 o7.3.1.{1..5} 7.3.{2..4} r7.3.4.{1..44} 7.4 7.4.1 o7.4.1.{1..2} 7.4.{2..4} r7.4.4.{1..13} 7.5 7.5.{1..4} r7.5.4.{1..10} 7.6 7.6.1 o7.6.1.{1..2} 7.6.{2..4} r7.6.4.{1..13} 7.7 7.7.{1..4} r7.7.4.{1..12} 8 8.1 o8.1.{1..3} 8.{2..4} 8.4.1 r8.4.1.{1..14} 8.4.2 r8.4.2.{1..5} 8.4.{3..4} r8.4.4.{1..8} 8.4.5 r8.4.5.{1..7} 8.4.{6..7} r8.4.7.{1..9} 9 9.1 9.1.{1..4} r9.1.4.{1..20} 9.2 9.2.{1..4} r9.2.4.{1..20} 10:A 10:A.{1..3} 11:B 12:C 12:C.1 12:C.1.{1..3} 12:C.2 12:C.2.{1..4} 12:C.2.4.{1..4} 12:C.2.{5..6} 12:C.2.6.{1..7} 12:C.3 12:C.3.{1..3} 13:D 13:D.{1..71} 14:ZZ"
 )
 
+return 0;
 ####
 #      The remainder of this file consists of data that is processed by standards-atlas
 #
@@ -20,6 +21,16 @@ structure=(
 TOC;44d1cf377dc91798141c1fca214c6e39;EN 50716:2023 1;Scope
 TOC;5de72db660a7456ea1a0dc41221cd922;EN 50716:2023 2;Normative references
 TOC;e8db093dbf30cdc7a36df25690cb4d11;EN 50716:2023 3;Terms,definitions and abbreviations
+TOC;ce49d96dd56fc7806350e9e6665e5749;EN 50716:2023 1.1;Signalling Software Development
+TOC;71a8ec09a866593b3a40c4c131b32bab;EN 50716:2023 1.2;Software System Scope
+TOC;b4033bc0d0240507d5d3f5474db5e457;EN 50716:2023 1.3;SCOPE
+TOC;997f8811fb52e14676f23d61a063167a;EN 50716:2023 1.4;Software for Railways
+TOC;0b545f3b151e5d3d8460bf22012386fa;EN 50716:2023 1.5;Pre-Existing Software and Tools
+TOC;d3117a7c0dda03af60267be22799b960;EN 50716:2023 1.6;SCOPE
+TOC;28c0c47d26a0fcacdb46048c87d73183;EN 50716:2023 1.7;Configurable Software
+TOC;b27f2fbf01a04d5a6229752d550bbb82;EN 50716:2023 1.8;SCOPE
+TOC;fbc6b8aaa4f63d7ae3b70c1be1662634;EN 50716:2023 1.9;New Software and Maintenance
+TOC;41d9626b3812a3ac973a00ac3ea05733;EN 50716:2023 1.10;On, Not In ICs
 TOC;f269715ce49a8fed9001dbc5c0483da8;EN 50716:2023 3.1;Terms and definitions
 TOC;e9cc5308b34b1b581ae8e52868b429ed;EN 50716:2023 3.1.1;assessment
 TOC;716e1d35fa1815dd32fc2f8e138598d0;EN 50716:2023 3.1.2;assessor
@@ -67,19 +78,30 @@ TOC;63df86c264ce29886a4b84edb31b8db5;EN 50716:2023 3.1.43;verification
 TOC;4a4350c4cc6dae25ffaddaceb9ac8281;EN 50716:2023 3.1.44;verifier
 TOC;442ed15c395b889919b8d158f8d94bd5;EN 50716:2023 3.2;Abbreviations
 TOC;7df84bc0450f572bc734d6a58f378736;EN 50716:2023 4;Software integrity levels conformance
+TOC;8d52132759eea51b9e60e58b0747821c;EN 50716:2023 4.1;Fully Defined System
+TOC;d5834035fce9554b90fff8f33dde8490;EN 50716:2023 4.2;Five Integrite Levels
+TOC;b90e34603af8dce39a963c0052686486;EN 50716:2023 4.3;System Level Assessment
+TOC;f992c2ca2cc81eb2ca09ce6a71105b79;EN 50716:2023 4.4;Basic Integrity
+TOC;7a26323543cde6ed22cfc4414ff7cf89;EN 50716:2023 4.5;Conformity Assessment Objective
+TOC;7926cf9dd41dc6aff5038dcb19790cb1;EN 50716:2023 4.6;Requirement Satisfaction Criteria
+TOC;34a64e8edec09e8a76d061a124192dff;EN 50716:2023 4.7;Technique Selection Guidance
+TOC;968934e1eaf678558bcd7c9f7744811d;EN 50716:2023 4.8;Alternative Technique Rationale
+TOC;0bc829d115b60867d5260c99630be03b;EN 50716:2023 4.9;Deviation Justification Process
+TOC;494c96db2a66e13b4831a3330b1c0780;EN 50716:2023 4.10;Verification of Compliance
+TOC;fdfa9346f524a8c13967c5f1fa2ffa35;EN 50716:2023 4.11;Compliance Continuity Clause
 TOC;0cf1c8e53a7f8d21727cb91cf268d89c;EN 50716:2023 5;Software management and organization
 TOC;1653c178993acc66795b8175fe0683e9;EN 50716:2023 5.1;Organization and independence of roles
 TOC;b9e1accd0537bca55e15f47c74b64b72;EN 50716:2023 5.1.1;Objective
 TOC;c97bcf83312fa689f23a57e971aa0220;EN 50716:2023 5.1.2;Requirements
-TOC;5d9de56bc1d9d309de6e05efc18ea913;EN 50716:2023 5.1.2.1;REQUIREMENT
+TOC;5d9de56bc1d9d309de6e05efc18ea913;EN 50716:2023 5.1.2.1;Organizational Staff Requirements
 TOC;bf8919f1c12ca6b77ce758ac29efbdfb;EN 50716:2023 5.1.2.2;REQUIREMENT
-TOC;80a5cc24d97d7bdacb781a4461c71f8b;EN 50716:2023 5.1.2.3;REQUIREMENT
-TOC;1f6a4fc83a21ce24560464cfd2e169b1;EN 50716:2023 5.1.2.4;REQUIREMENT
-TOC;744d1e2689447a71724b7a53ad42cbd4;EN 50716:2023 5.1.2.5;REQUIREMENT
-TOC;55451800b796fb87712806ece2ee76a7;EN 50716:2023 5.1.2.6;REQUIREMENT
-TOC;fcb04b5505c2dececf68bb441bbc7867;EN 50716:2023 5.1.2.7;REQUIREMENT
-TOC;32d4bacbc1f526ab12dce5e4c8092628;EN 50716:2023 5.1.2.8;REQUIREMENT
-TOC;ced6f9620dc9c1c2e392f08b51b841d2;EN 50716:2023 5.1.2.9;REQUIREMENT
+TOC;80a5cc24d97d7bdacb781a4461c71f8b;EN 50716:2023 5.1.2.3;Key Personnel Register
+TOC;1f6a4fc83a21ce24560464cfd2e169b1;EN 50716:2023 5.1.2.4;SIL Assessor Appointment
+TOC;744d1e2689447a71724b7a53ad42cbd4;EN 50716:2023 5.1.2.5;Assessor Organizational Affiliations
+TOC;55451800b796fb87712806ece2ee76a7;EN 50716:2023 5.1.2.6;Assessor Independence Requirement
+TOC;fcb04b5505c2dececf68bb441bbc7867;EN 50716:2023 5.1.2.7;Assessment Authority Granted
+TOC;32d4bacbc1f526ab12dce5e4c8092628;EN 50716:2023 5.1.2.8;Release Agreement Statement
+TOC;ced6f9620dc9c1c2e392f08b51b841d2;EN 50716:2023 5.1.2.9;Assignment of Roles
 TOC;c695cb5015230079c6443e59027a9e27;EN 50716:2023 5.1.2.10;REQUIREMENT
 TOC;10f822d7c9bf918da58d754fac999304;EN 50716:2023 5.1.2.11;REQUIREMENT
 TOC;6842db28a0449cdb62e9e3171dd7dab0;EN 50716:2023 5.1.2.12;REQUIREMENT
@@ -268,6 +290,8 @@ TOC;b387195379dd32758123635ee93a87fb;EN 50716:2023 7.2.4.17;REQUIREMENT
 TOC;b574272e6380345484c00141596a06c8;EN 50716:2023 7.2.4.18;REQUIREMENT
 TOC;d9e8f327405ded5493c1c02e6e21b95b;EN 50716:2023 7.2.4.19;REQUIREMENT
 TOC;dd9bb2d26f76d24a7ee7356f92743748;EN 50716:2023 7.2.4.20;REQUIREMENT
+TOC;fa53b309f6cb645c2592139b818a7092;EN 50716:2023 7.2.4.21;REQUIREMENT
+TOC;bba32d58ce0eb21b991a1c9522325247;EN 50716:2023 7.2.4.22;REQUIREMENT
 TOC;5cebd53ac4d9329d61e01b05c00d03d1;EN 50716:2023 7.3;Architecture and design
 TOC;75adc6a46da8fcc95cf2e93216ed3e5c;EN 50716:2023 7.3.1;Objectives
 TOC;6615566301d0027a1c1baa7e5be54253;EN 50716:2023 7.3.1.1;OBJECTIVE
