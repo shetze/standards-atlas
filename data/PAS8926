@@ -7,9 +7,17 @@ name="ISO PAS 8926"
 oyr=2024
 
 structure=(
- "2024 1 2 3 t3.{1..5} 4 4.{1..3} 4.3.{1..2} 4.4 4.4.{1..2} r4.4.2.{1..10} 4.4.3 4.4.3.{1..2} r4.4.3.2.{1..2} 4.4.3.{3..4} r4.4.3.4.{1..2} 4.4.4 4.4.4.1 r4.4.4.1.{1..2} 4.4.4.2 r4.4.4.2.{1..3} 4.4.4.3 r4.4.4.3.{1..3} 4.4.4.4 r4.4.4.4.{1..3} 4.4.{5..6} 4.4.6.1 r4.4.6.1.{1..2} 4.4.6.{2..3 4.5 4.5.1 4.5.1.{1..2} 4.5.2 4.5.2.{1..7} A B B.{1..3}}"
+ "2024 1 2 3 t3.{1..5} 4 4.{1..3} 4.3.{1..2} 4.4 4.4.{1..2} r4.4.2.{1..10} 4.4.3 4.4.3.{1..2} r4.4.3.2.{1..2} 4.4.3.{3..4} r4.4.3.4.{1..2} 4.4.4 4.4.4.1 r4.4.4.1.{1..2} 4.4.4.2 r4.4.4.2.{1..3} 4.4.4.3 r4.4.4.3.{1..3} 4.4.4.4 r4.4.4.4.{1..3} 4.4.{5..6} 4.4.6.1 r4.4.6.1.{1..2} 4.4.6.{2..3} 4.5 4.5.1 4.5.1.{1..2} 4.5.2 4.5.2.{1..7} A B B.{1..3}"
  )
 
+return 0;
+####
+#      The remainder of this file consists of data that is processed by standards-atlas
+#
+#      The structure and titles provided in this list are taken with permission by ISO from the
+#      actual standard documents, which are copyright protected by ISO and available at www.iso.org
+#
+####
 TOC;7f1dcffec90265357b4adcff825c5621;ISO PAS 8926:2024 1;Scope
 TOC;d92e0b2d23f45e02d5d3cd9e195de999;ISO PAS 8926:2024 2;Normative references
 TOC;093618a18315a1e0aafc79f1f0b9f250;ISO PAS 8926:2024 3;Terms and definitions
