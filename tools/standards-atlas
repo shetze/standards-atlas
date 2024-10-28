@@ -9,6 +9,7 @@ autopublish=0
 autoreference=0
 readableindex=0
 norecreate=0
+contentcsv=0
 
 usage() { 
     echo -e "Usage:
@@ -19,6 +20,7 @@ usage() {
     [-i] Enable readable Index, default: Off
     [-t] Enable automatic publishing, default: Off
     [-n] No recreation of doorstop items, default: Off
+    [-c] Write CSV list of all TOC entries as input for document digesting, default: Off
     [-l] Enable automatic reference/linking to all travelogues, default: Off
     [-d <path/stdatlasdir>] Describes the path where the doorstop files will be created, default: /tmp/standards-atlas 
     [-g <gitrepo>] Currently not implemented
@@ -26,7 +28,7 @@ usage() {
     [-p <STDANDARD>] Parent standards for additional requirements" 1>&2; exit 0; 
 }
 
-while getopts "ihlntd:g:r:p:" arg; do
+while getopts "ihlntcd:g:r:p:" arg; do
     case $arg in
         i)
             readableindex=1
@@ -51,6 +53,10 @@ while getopts "ihlntd:g:r:p:" arg; do
             ;;
         t)
             autopublish=1
+            ;;
+        c)
+            contentcsv=1
+            readableindex=1
             ;;
         h | *)
             usage
@@ -270,6 +276,7 @@ addItem()
     else
         title="${title:-TOC}"
         text="${text:-TOC}"
+        typeID='u'
         type='toc'
     fi
     cat <<EOD >./defaults.yml
@@ -295,7 +302,11 @@ fi
 echo "TOC;$locID;${locString};$title" >>header${standard}
 echo "TEXT;$locID;${locString};$headline;$text" >>text${standard}
 echo "$locID;${standard}-${dsname};$indexString" >>uid-ref-map
-doorstop add -l $level -d defaults.yml -n $dsname $requirement --noreorder
+if [ "$contentcsv" -eq 0 ]; then
+    doorstop add -l $level -d defaults.yml -n $dsname $requirement --noreorder
+else
+    echo "TOC;$locID;${locString};$title;$typeID" >>heading-data.csv
+fi
 }
 
 ### create standard documents
