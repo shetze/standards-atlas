@@ -20,336 +20,336 @@ return 0;
 #
 ####
 #---data---#
-TOC;2f9c06c1291df2420cdd2ee4ff8b2143;EN 50126-1:2017 0;Part 1
-TOC;3038e5ff31b4c5dc35876c205afbb0fb;EN 50126-1:2017 1;Scope
-TOC;da680234a4869cd66b4d978452be8d02;EN 50126-1:2017 2;Normative references
-TOC;796d97865a942128da367fb0d894a37e;EN 50126-1:2017 3;Terms and definitions
-TOC;0bcb9b249100c051ad7a14f586107b74;EN 50126-1:2017 3.1;acceptance
-TOC;8935237afc200fcf7492c6822f2bfe0e;EN 50126-1:2017 3.2;accident
-TOC;05b0c03f009787781459a177c2500f33;EN 50126-1:2017 3.3;approval
-TOC;e2ea07eb2032ef5a1946f0a106baf041;EN 50126-1:2017 3.4;assurance
-TOC;ca7ecab027b5a8f36932cedde8e0f662;EN 50126-1:2017 3.5;audit
-TOC;304c8c3dd6f931b09a3bc123a8a1d84b;EN 50126-1:2017 3.6;availability of a product
-TOC;87ef99043feb2500777d38b6da1bd039;EN 50126-1:2017 3.7;basic integrity
-TOC;94dc7a9dbb248a544643625a16fda270;EN 50126-1:2017 3.8;collective risk
-TOC;127976d4ed57f8d2aabf2d6479934425;EN 50126-1:2017 3.9;commercial of the shelf product
-TOC;469a2cca63aa11f649453394eb14f105;EN 50126-1:2017 3.10;common cause failure
-TOC;6b37727fc44e798b2c8ff33cc3af211b;EN 50126-1:2017 3.11;compliance
-TOC;37d24496084a5600167cf79b0717eb09;EN 50126-1:2017 3.12;configuration management
-TOC;611d60e537180f2ae5cb345cf6fbbfa7;EN 50126-1:2017 3.13;consequence analysis
-TOC;aa0cc4b12b4f62d40b5baec4c8b5513b;EN 50126-1:2017 3.14;corrective maintenance
-TOC;5ed9730fd0b332402486a53237ab77a4;EN 50126-1:2017 3.15;design
-TOC;ba0e56614c38d13d98d46fc71c9d02d6;EN 50126-1:2017 3.16;deterministic
-TOC;9901540e2a75e8f1851daf8e94453ced;EN 50126-1:2017 3.17;diversity
-TOC;8e57bf9facdd03795f5b4dbd2597a42e;EN 50126-1:2017 3.18;entity
-TOC;b7fcf9e0308c6b090dff53636fd88598;EN 50126-1:2017 3.19;equivalent fatality
-TOC;59e9223142f9e4131116002ecb524414;EN 50126-1:2017 3.20;error
-TOC;9e93fe3cd3714a97ae798ab984940236;EN 50126-1:2017 3.21;failure of an item
-TOC;799fd8343ba7324f615d25fc5ae8f10b;EN 50126-1:2017 3.22;failure mode
-TOC;0ed389248d6f1b1e1f16735b32a09fb0;EN 50126-1:2017 3.23;failure rate
-TOC;677d1a1adf47b9832e4a54f8c8f23609;EN 50126-1:2017 3.24;fault in a system
-TOC;7d3e7a3c58a3d56a3a8c3e255d3b2160;EN 50126-1:2017 3.25;function of an item
-TOC;2c731f779a89366f1098abcd23e4d7b9;EN 50126-1:2017 3.26;functional safety
-TOC;0919926819658b380499f07c796883d4;EN 50126-1:2017 3.27;generic product
-TOC;5bd3fb1895bb401d51a6587be280ce0b;EN 50126-1:2017 3.28;hazard
-TOC;7ca40d6c9c7f590e8f12677832d287d0;EN 50126-1:2017 3.29;hazard analysis
-TOC;c3bc843952459434e3c7ed6fcad4701e;EN 50126-1:2017 3.30;hazard log
-TOC;122ee1f1bcdeb9c5fd96afb9b0d83939;EN 50126-1:2017 3.31;hazard rate
-TOC;e46ffe944426c6745c64363f981466f3;EN 50126-1:2017 3.32;implementation
-TOC;f44209424269074f3031ab35bcfc7cbc;EN 50126-1:2017 3.33;independent safety assessment
-TOC;0bc230acca54d60c76381d26e01820c1;EN 50126-1:2017 3.34;individual risk
-TOC;ae713cce0c8b9e75971f0b04f6b32a46;EN 50126-1:2017 3.35;integration
-TOC;e3d3b0ac67eed7ab97e033f0ff7aa82e;EN 50126-1:2017 3.36;life cycle
-TOC;70f62627956b7ee4e83afd1a13100228;EN 50126-1:2017 3.37;maintainability of an item
-TOC;700fcf3e6e54d609e330353ba38ff2ac;EN 50126-1:2017 3.38;maintenance
-TOC;52c9179e5d589974b62509571e843f05;EN 50126-1:2017 3.39;mission
-TOC;d267033a4afe0f10e3ad0d7927636714;EN 50126-1:2017 3.40;mission profile
-TOC;48c41d1c8b6f0fef9c26a1f6a0088b61;EN 50126-1:2017 3.41;negation
-TOC;858b3a74c75458fa614a471bfd469501;EN 50126-1:2017 3.42;negation time
-TOC;97aa824ed051dc4aeb40b219aba88843;EN 50126-1:2017 3.43;pre-existing software
-TOC;d3453256bd006e104c23043a893218d2;EN 50126-1:2017 3.44;preventive maintenance
-TOC;f590584e76e3c3259e2573b26cf5e895;EN 50126-1:2017 3.45;product in railway
-TOC;63675424539b16f6e1cad75d2cbffb3b;EN 50126-1:2017 3.46;project management
-TOC;dd873d999f777ec5bdb01c57acdfaf01;EN 50126-1:2017 3.47;project manager
-TOC;ed02535dec31e132968127d5986f8215;EN 50126-1:2017 3.48;railway duty holder
-TOC;f68ebf3498a0d9a922df6e5213e73a16;EN 50126-1:2017 3.49;RAM plan
-TOC;88f96ad5ebe462a528cb71e30d552883;EN 50126-1:2017 3.50;RAMS management process
-TOC;f2e4d382e078479e1336cb632e06c94e;EN 50126-1:2017 3.51;random failure
-TOC;6683310bb3341b7499104f908a3e8303;EN 50126-1:2017 3.52;reliability of an item
-TOC;a866fa5c17fa58c9282a67a98b21adcb;EN 50126-1:2017 3.53;reliability growth of an item
-TOC;ded7b2cdb05be1f52f3cd6601f865e73;EN 50126-1:2017 3.54;repair
-TOC;917b1b0bbeed911c9d733f369180dc9b;EN 50126-1:2017 3.55;residual risk
-TOC;43f752f09e0e329a9234c74c5c19979c;EN 50126-1:2017 3.56;restoration
-TOC;a3cbdd30b18db444795d6959d1d3b574;EN 50126-1:2017 3.57;risk for railway RAMS
-TOC;2b6e5c8892c59f03884c77faf6bac86d;EN 50126-1:2017 3.58;risk analysis
-TOC;1e3f9ce9e6bf31e3562bd85c5a67835c;EN 50126-1:2017 3.59;risk assessment
-TOC;655423fd050d28f4758383d1e4453ff0;EN 50126-1:2017 3.60;risk based approach
-TOC;92358624ae6578afd3bca32e9fc2aac3;EN 50126-1:2017 3.61;risk evaluation
-TOC;ad7a28a8888d1646d5c708b2b9b95686;EN 50126-1:2017 3.62;risk management
-TOC;b14ba38780921c056bc6a776584c9a67;EN 50126-1:2017 3.63;safe state
-TOC;3e290e7eb7e23aad07a8c4ab8707e673;EN 50126-1:2017 3.64;safety
-TOC;0e8cef1b242c2aef70dd05c1901ee908;EN 50126-1:2017 3.65;safety authority
-TOC;73415b44197fe7b168043e309ed0fa61;EN 50126-1:2017 3.66;safety barrier
-TOC;86506c8fc0d6342912708ced8dafca61;EN 50126-1:2017 3.67;safety case
-TOC;d16e7aebd1ace2e99c8c668340606d66;EN 50126-1:2017 3.68;safety function
-TOC;71719ba4fe7eb2042450bd90d80bff6f;EN 50126-1:2017 3.69;safety integrity
-TOC;2bded4ea28267362d5cb3c3f1c9a8bfd;EN 50126-1:2017 3.70;safety integrity level
-TOC;c77ac0ffd6322a3aa0fdff14258c5e5b;EN 50126-1:2017 3.71;safety management
-TOC;aee85c43d8aa02c56f9e4dd87b93b4bf;EN 50126-1:2017 3.72;safety management process
-TOC;a6231414bd87a7a8d54683ec4c07d580;EN 50126-1:2017 3.73;safety plan
-TOC;be520ae5f469adbb5527cc4c4d0e21da;EN 50126-1:2017 3.74;safety-related
-TOC;04b0db98137d338b67e39f8cb94fdb49;EN 50126-1:2017 3.75;safety-related application conditions
-TOC;a4315c4b78d8396e65cdb8f97da9922a;EN 50126-1:2017 3.76;software
-TOC;8993f8c2586d75b91192c0456bc79ba8;EN 50126-1:2017 3.77;subsystem
-TOC;5d973d2b9b9bab6e35cc4360821ed064;EN 50126-1:2017 3.78;system
-TOC;39f4cabbf419144630649ae7d8fe4791;EN 50126-1:2017 3.79;systematic failure
-TOC;9dd8e51466568c38017f7f7f446e9374;EN 50126-1:2017 3.80;technical safety
-TOC;f8dbf66cd762cd9832e5270954fc5fe1;EN 50126-1:2017 3.81;testing
-TOC;304e3a4e3f7a02bf6a393c20e73c594a;EN 50126-1:2017 3.82;validation
-TOC;5a494a07f9bb68a99720e0649ef1b210;EN 50126-1:2017 3.83;verification
-TOC;23b0018e2bf15b43ba027e3e07f73236;EN 50126-1:2017 4;Abbreviations
-TOC;a64c70456c7a6cf63a2964893f5b0956;EN 50126-1:2017 5;Railway RAMS
-TOC;45adc0c30f59306d1f79ec779c21b896;EN 50126-1:2017 5.1;Introduction
-TOC;7f9f79ae284a16b44bad78a591b483f1;EN 50126-1:2017 5.2;Multi-level System approach
-TOC;06e6ebd4272c9abebc78f47d00343e35;EN 50126-1:2017 5.2.1;Concepts of system hierarchy
-TOC;da4afdc945eefe5f2fe3b1a646de8953;EN 50126-1:2017 5.2.2;System requirements and characteristics
-TOC;691169ab4fddc83ce5424690cdda50b1;EN 50126-1:2017 5.2.3;Defining a system
-TOC;d0ee7b14d1eb7d492a236d1950f14a36;EN 50126-1:2017 5.3;Railway system overview
-TOC;4d4e6cf05899235e132115ac26e39a13;EN 50126-1:2017 5.3.1;Introduction
-TOC;dc4fcc84c9bc61905cce6c9c1723597d;EN 50126-1:2017 5.3.2;Stakehoders involved in a railway system
-TOC;950d4d349baf55123039fb33052c2edd;EN 50126-1:2017 5.3.3;Railway system structure and appointment of RAMS requirements
-TOC;7b2e07f9eac2482504f15610a33b87cd;EN 50126-1:2017 5.4;Railway RAMS and quality of service
-TOC;37b1b9d347985dde23042bfa676e5556;EN 50126-1:2017 5.5;Elements of railway RAMS
-TOC;0c838886d3bfd7cb249f9a28cbda54f1;EN 50126-1:2017 5.6;Factors influencing railway RAMS
-TOC;5328d948782c011a003702d17d623a0d;EN 50126-1:2017 5.6.1;General
-TOC;24d377cfe92ba162e836e07d957185f3;EN 50126-1:2017 5.6.2;Classes of failures
-TOC;4ff35b9b1ae74996a1e83e720f7d9443;EN 50126-1:2017 5.6.3;Derivation of detailed railway specific influencing factors
-TOC;30efb676915ca101c84564d31d973696;EN 50126-1:2017 5.6.4;Human factors
-TOC;b397c25b991f18dc5755b3f02444ed16;EN 50126-1:2017 5.7;Specification of railway RAMS requirements
-TOC;409dab9cd469c5d7885e44fb2f14e95a;EN 50126-1:2017 5.7.1;General
-TOC;52cef23135d8c95ef0bbfed08a130902;EN 50126-1:2017 5.7.2;RAMS specification
-TOC;5ee002e658455a8033380c1f12708d19;EN 50126-1:2017 5.8;Risk based approach
-TOC;7d82d50b1e8e47112843cf0e142988b7;EN 50126-1:2017 5.9;Risk reduction strategy
-TOC;562d3d520811c2ac5928c9f91e989564;EN 50126-1:2017 5.9.1;Introduction
-TOC;b4ad427a9dd7410f6b7594fb27bef095;EN 50126-1:2017 5.9.2;Reduction of risks related to safety
-TOC;b354a8b6057f9545ca39028d631a1bbe;EN 50126-1:2017 5.9.3;Reduction of risks related to RAM
-TOC;0ad1cd5d769321157135f259f0bf5d72;EN 50126-1:2017 6;Management of railway RAMS - general requirements
-TOC;b5b5af9629d88ed9cc25750cca736f79;EN 50126-1:2017 6.1;Introduction
-TOC;a0adfef67f0752cf6975f771b92cdc68;EN 50126-1:2017 6.2;Life cycle for the system under consideration
-TOC;fdf11fc1f850adf196ef7922d019e546;EN 50126-1:2017 6.3;Risk assessment
-TOC;695e0265cd3834dc7bdbbf2298a9a662;EN 50126-1:2017 6.4;Organisational requirements
-TOC;30a0cd8ee84c907678076ef42776ff25;EN 50126-1:2017 6.4.1;Introduction
-TOC;26a07f0c90d144f75ffa3b920230163e;EN 50126-1:2017 6.4.2;Requirements
-TOC;0b5a8905b40dc011b7010f16f4ad258e;EN 50126-1:2017 6.5;Application of this standard and adaptablility to project scope and size
-TOC;7c23c1eb7712a206e1a867752438dd1e;EN 50126-1:2017 6.5.1;General requirements
-TOC;a398969a068b2ff449a384684ee1906d;EN 50126-1:2017 6.5.2;Case of complex systems with different hierarchical levels
-TOC;f5f5d03eeb1f4579164fb70b61e45669;EN 50126-1:2017 6.5.3;Renewal within existing systems
-TOC;b57348c5aee50ddfa85d2afe2b018e88;EN 50126-1:2017 6.5.4;Re-use or adaptation of a system with previous acceptance
-TOC;84fdaa4ef13969168d15b945bce08e63;EN 50126-1:2017 6.6;General requirements on RAMS documentation
-TOC;07bcb089854e6f5501bf9886a79af7f8;EN 50126-1:2017 6.7;Verification and Validation
-TOC;1f080858740258a7b3f4f8b5ecf78362;EN 50126-1:2017 6.7.1;Introduction
-TOC;a5ec6a9d4e1b4f1ca5c110cae52c1a26;EN 50126-1:2017 6.7.2;Verification
-TOC;0f32704f8e5971dfa456b85048d83e47;EN 50126-1:2017 6.7.3;Validation
-TOC;026c0f52e43c22197e14d09cb15c2b26;EN 50126-1:2017 6.8;Independent Safety Assessment
-TOC;6820d16b8a2d3fe581dadf6df1f9e445;EN 50126-1:2017 6.8.1;Objectives
-TOC;f570200451a38eae624a0bb12788e9dc;EN 50126-1:2017 6.8.2;Activities
-TOC;14461f359092a9c6a8d58467b5585bb4;EN 50126-1:2017 7;RAMS life cycle
-TOC;590b74f9e0a9533b16b397f05327d6c4;EN 50126-1:2017 7.1;General
-TOC;53a3bc0491fddb7623760b11d831b54e;EN 50126-1:2017 7.2;Phase 1: Concept
-TOC;41f4cc264de92c486eeeecf963435bfa;EN 50126-1:2017 7.2.1;Objectives
-TOC;b46ab00b94fa8722c9667fbd15a79b56;EN 50126-1:2017 7.2.2;Activities
-TOC;dc685d74dbbccdc64ae9a8bd2601780e;EN 50126-1:2017 7.2.3;Deliverables
-TOC;cbeef6042d6e7486a04843d4560b1f21;EN 50126-1:2017 7.3;Phase 2: System definition and operational context
-TOC;840ed2b1965e5b3fb83f7f76c1f39032;EN 50126-1:2017 7.3.1;Objectives
-TOC;38ed619c13ad0a65d804837e032ce3d1;EN 50126-1:2017 7.3.2;Activities
-TOC;391c480db53d94d4349f4f2d1801ab43;EN 50126-1:2017 7.3.2.1;General
-TOC;59487bf3e9fa3daca8769ac63db4bb63;EN 50126-1:2017 7.3.2.2;RAM Plan
-TOC;ab43b98d104435c720b678a28d21ba30;EN 50126-1:2017 7.3.2.3;Safety Plan
-TOC;150d03772f7ba8aaf4af6f6fae430fc6;EN 50126-1:2017 7.3.3;Deliverables
-TOC;d48cdd65955b98c2235421b0dc1c42a6;EN 50126-1:2017 7.4;Phase 3: Risk analysis and evaluation
-TOC;3efbd3b632cb604b6389b08e2f1af83a;EN 50126-1:2017 7.4.1;Objectives
-TOC;fbe44b159815a0097b6e41c79ea96501;EN 50126-1:2017 7.4.2;Activities
-TOC;8094a2706043b1aefb6347dfb5251ee1;EN 50126-1:2017 7.4.2.1;Risk assessment
-TOC;ad5c330403c1324954739c14e9409f9d;EN 50126-1:2017 7.4.2.2;Hazard Log
-TOC;62146b08198e0b9a6069f75ad3f04f19;EN 50126-1:2017 7.4.3;Deliverables
-TOC;bf071516d9da445fa300aba4da0f1084;EN 50126-1:2017 7.5;Phase 4: Specification of system requirements
-TOC;0dcb6a2ef7416bf4aa08878cee64f810;EN 50126-1:2017 7.5.1;Objectives
-TOC;535def6cdd7c97145194282f9cb44091;EN 50126-1:2017 7.5.2;Activities
-TOC;21b601e6f835ead8998858c77e04bae6;EN 50126-1:2017 7.5.3;Deliverables
-TOC;90e20aae7f1d324719f4d7ba0f823dd9;EN 50126-1:2017 7.5.4;TOC
-TOC;f0dd3cbd76ae3344091019488dbd9303;EN 50126-1:2017 7.6;Phase 5: Architecture and apportionment of system requirements
-TOC;933cc02399f7294a29bf0c76b2da418a;EN 50126-1:2017 7.6.1;Objectives
-TOC;05ca7f405bd18d404ce76160c348fc8c;EN 50126-1:2017 7.6.2;Activities
-TOC;62f8d033441d9a705249fc6aceae5aae;EN 50126-1:2017 7.6.3;Deliverables
-TOC;5b760ab3f363f84b2743c5fd34a71279;EN 50126-1:2017 7.7;Phase 6: Design and Implementation
-TOC;4063703a4da3fd0361a9bb47e174c757;EN 50126-1:2017 7.7.1;Objectives
-TOC;cd60c951fd3ab1c25993b257bc1afd98;EN 50126-1:2017 7.7.2;Activities
-TOC;34b3e320c756cf7aaf99645017b856d4;EN 50126-1:2017 7.7.3;Deliverables
-TOC;8b4cc0c90ab7b901cd832f6b3da919d2;EN 50126-1:2017 7.7.4;Specific verification tasks
-TOC;334dc589df736e0a15382a1f6348a1cd;EN 50126-1:2017 7.8;Phase 7: Manufacture
-TOC;46691e11ce19bb2c798f9d270e26db31;EN 50126-1:2017 7.8.1;Objectives
-TOC;a2cbd661aba5bfe36840f702d3ed9b5b;EN 50126-1:2017 7.8.2;Activities
-TOC;087bd56523df9ec596e4b64ac9fbaa96;EN 50126-1:2017 7.8.3;Deliverables
-TOC;f2c5cf2ef71d0582e2a07d5abc3c390e;EN 50126-1:2017 7.9;Phase 8: Integration
-TOC;21ef3c3f88218ef66c76d29268ce7895;EN 50126-1:2017 7.9.1;Objectives
-TOC;3af462324d60ef922381b154f5e878d0;EN 50126-1:2017 7.9.2;Activities
-TOC;418a036304e2f50c8f9683b42ffd97c4;EN 50126-1:2017 7.9.3;Deliverables
-TOC;fc6998cb4b63cbe780588acc2968cb3d;EN 50126-1:2017 7.9.4;Specific verification tasks
-TOC;0b17dea25fe00387456e08f19ab170f7;EN 50126-1:2017 7.10;Phase 9: System Validation
-TOC;d50332263aa485332cb3df1956990a6b;EN 50126-1:2017 7.10.1;Objectives
-TOC;c5e35340cfa10bb5742cd6f739fbf183;EN 50126-1:2017 7.10.2;Activities
-TOC;1f6b6b2db326d73a81a9a51efe83e4c3;EN 50126-1:2017 7.10.3;Deliverables
-TOC;a9b76218bc9a3fa6b1721496bdc617e2;EN 50126-1:2017 7.11;Phase 10: System acceptance
-TOC;d9251817a082e3f2a2b28c2296fd0838;EN 50126-1:2017 7.11.1;Objectives
-TOC;b26b2b611985ef0d76d4b7db021ecf9e;EN 50126-1:2017 7.11.2;Activities
-TOC;92b5f962cc5bdbcf50520a6cd6ac02e7;EN 50126-1:2017 7.11.3;Deliverables
-TOC;2fd7c98a1b09f569d2fc0928cb7c27a8;EN 50126-1:2017 7.12;Phase 11: Operation, maintenance and performance monitoring
-TOC;392c9974ed69553487188f21c6b25b74;EN 50126-1:2017 7.12.1;Objectives
-TOC;e105289d9be2e7b3ec46811b2d928980;EN 50126-1:2017 7.12.2;Activities
-TOC;8a5af7e098e193226c6fb2b8f2a1037f;EN 50126-1:2017 7.12.3;Deliverables
-TOC;4f71088976cf4bae0ba471d7fcfc4ba5;EN 50126-1:2017 7.12.4;Specific verification tasks
-TOC;7ca2373135252d02b98ae89b8860926d;EN 50126-1:2017 7.13;Phase 12: Decommissioning
-TOC;7b0ed532238dc57cea8095d1c1006cc1;EN 50126-1:2017 7.13.1;Objectives
-TOC;fb6328ef5211060d43f50288b273d71f;EN 50126-1:2017 7.13.2;Activities
-TOC;fdeb4692c076c7c7ed22985e6c0a0234;EN 50126-1:2017 7.13.3;Deliverables
-TOC;afc77c50dbf1bdd46661917bf544f42c;EN 50126-1:2017 8;Safety Case
-TOC;8613b8e725270e58cc190c3835cad88b;EN 50126-1:2017 8.1;Purpose of a safety case
-TOC;07473502fd79e102744841cadfca6c02;EN 50126-1:2017 8.2;Content of a safety case
-TOC;820cf326e26eb931cbb8bd83377e0547;EN 50126-1:2017 A;RAMS plan
-TOC;2f5bbb89e98a1aa021bc31d8f2d45593;EN 50126-1:2017 A.1;General
-TOC;da55bcc22d4fd0b2a1c38da3b154de6e;EN 50126-1:2017 A.2;Procedure
-TOC;19d653a9b58cbd4687ceaca34d1bf1af;EN 50126-1:2017 A.3;Basic RAMS plan example
-TOC;ebae68cf8590cebace47285ee8ce6853;EN 50126-1:2017 A.4;List of techniques
-TOC;2d1fbc9ac1884a69950e9ed007d0dba6;EN 50126-1:2017 B;Examples of parameters for railway
-TOC;d13d07af75648b8038abef9428a36d18;EN 50126-1:2017 B.1;General
-TOC;a768560369a3c5665e19d24dca3aa2de;EN 50126-1:2017 B.2;Reliability parameters
-TOC;880a54933bed88f20c2d47e6ef754f5f;EN 50126-1:2017 B.3;Maintainability parameters
-TOC;059513329252fc109f7594a1f998b13f;EN 50126-1:2017 B.4;Availability parameters
-TOC;b18e95e6b28a814e9c9a04f5e87d4e51;EN 50126-1:2017 B.5;Logistic support parameters
-TOC;fca0989d90cfdd75b438578e0adfa014;EN 50126-1:2017 B.6;Safety parameters
-TOC;20723d424a5364889b34daed2ce62f1c;EN 50126-1:2017 C;Risk matrix calibration and risk acceptance categories
-TOC;44b9d216135d5312be934955a23d15a5;EN 50126-1:2017 C.1;General
-TOC;f01815d49686b449d4ce0a08ec667a31;EN 50126-1:2017 C.2;Frequence of occurence categories
-TOC;826170a713689315995c6bd08c7ecbaf;EN 50126-1:2017 C.3;Severity categories
-TOC;b85bd5b6ad678ee4d3237f5fecdf7a3f;EN 50126-1:2017 C.4;Risk acceptence categories
-TOC;d635caad7726e968a30f3e0046c5cfa2;EN 50126-1:2017 D;Guidance on system definition 
-TOC;e6546f46f1e607625b8a5129871b25a9;EN 50126-1:2017 D.1;General
-TOC;8a9ed0a2f14bffcf96fee9bc2f20a224;EN 50126-1:2017 D.2;System Definition in an iterative system approach
-TOC;ba33f1d274dcc04cba26df5894721cbd;EN 50126-1:2017 D.3;Method for defining the structure of a system
-TOC;835441e87e1c6433bb25f058d632cdfa;EN 50126-1:2017 D.3.1;General
-TOC;78131688d44bce4098394209e0bd6f18;EN 50126-1:2017 D.3.2;Function List
-TOC;dbfa62eac257a92d8b8277343ff0005f;EN 50126-1:2017 D.3.3;Functional breakdown
-TOC;777dd9a9aed9af1a4037c4c9cc57963b;EN 50126-1:2017 D.4;Parties/stakeholders/boundaries of systems
-TOC;68369777a35f2826157adf2df959ed06;EN 50126-1:2017 D.5;Guidance on the content of a system definition
-TOC;14b2f04d80f186e65091517cd222ea84;EN 50126-1:2017 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive 2008/57/EC
-TOC;d1cc110c90adf6dbb76b89a0e81aa06a;EN 50126-2:2017 0;Part 2
-TOC;ee96f356cd2a1941fd7498c338ae701b;EN 50126-2:2017 1;Scope
-TOC;e151ce8111ce1afa3eb0285deaf5f8f5;EN 50126-2:2017 2;Normative references
-TOC;9c72d7038f01ef736d14b051a457f511;EN 50126-2:2017 3;Terms and definitions
-TOC;c6d4e69055f8b2100cfe00c26f6170d0;EN 50126-2:2017 4;Abbreviations
-TOC;5ff93d667a4fff308ba6034e07d9eb75;EN 50126-2:2017 5;Safety process
-TOC;4a96d2a35bd6257953231d6618caf414;EN 50126-2:2017 5.1;Risk assessment and hazard control
-TOC;688fed98862c77fd7a055c117849e712;EN 50126-2:2017 5.2;A. Risk assessment
-TOC;fec650dc652f0ff463efd9fbfb7e40c5;EN 50126-2:2017 5.2.1;General
-TOC;0b45030318f09586d9975f1b3362e5f2;EN 50126-2:2017 5.2.2;Conduction risk assessment
-TOC;988b23a297f63d39b86f482db5f753a8;EN 50126-2:2017 5.3;B. Outcome of the risk assessment
-TOC;e27b1b134a4a2b4bb4c451a45ed41b15;EN 50126-2:2017 5.4;C. Hazard control
-TOC;12f0c2ed4b3ff4be28f4743d8ebc3a02;EN 50126-2:2017 5.5;D. Revision of risk assessment
-TOC;eda8ac3b5fd91d29673fe79981cfb90e;EN 50126-2:2017 5.6;Responsibilities
-TOC;90f4734666ddaf66b5738db77261c98a;EN 50126-2:2017 6;Safety demonstration and acceptance
-TOC;17729189e3b12cdb6137b964fdf2544f;EN 50126-2:2017 6.1;Introduction
-TOC;922b45fb86a1c8bbee1d21b1e326aa51;EN 50126-2:2017 6.2;Safety demonstration and safety acceptance process
-TOC;c05a4d0e6d98d6f7b78db57f08f67ef9;EN 50126-2:2017 6.3;Responsibility in managing the Safety Case
-TOC;2f1f65f92b45bfdc8cee6c803a256f69;EN 50126-2:2017 6.4;Modifications after safety acceptance
-TOC;9221e589903ebdd780e3ddbf1398fc1c;EN 50126-2:2017 6.5;Dependencies between Safety Cases
-TOC;1ba51bc5403a7da896c07ef30534fcec;EN 50126-2:2017 6.6;Relationship between safety cases and system architecture
-TOC;3383c51cb80727e797b199f7179a359d;EN 50126-2:2017 7;Organisation and Independence of Roles
-TOC;2c04c5e6ee05a3723925cfd9e0348d69;EN 50126-2:2017 7.1;General
-TOC;99610e74272414c99bb468fc36ba0747;EN 50126-2:2017 7.2;Early phases of the lifecycle (phases 1 to 4)
-TOC;e58463409583c7528f48de81097c0bbd;EN 50126-2:2017 7.3;Later phases of the lifecycle (starting from phase 5)
-TOC;7b3d68066be1c13c3393d5a2b3b978cf;EN 50126-2:2017 7.4;Personnel Competence
-TOC;f7209c8f907db680f62d571c9e53e90d;EN 50126-2:2017 8;Risk assessment
-TOC;99baa64cfec33f32c43360b535373326;EN 50126-2:2017 8.1;Introduction
-TOC;c9ba82d36fe0f82d968c501761865449;EN 50126-2:2017 8.2;Risk Analysis
-TOC;d7cecd2d348d638569491c98f6e985a7;EN 50126-2:2017 8.2.1;General
-TOC;b0e9bc9ab8bd3658c7820470cadce592;EN 50126-2:2017 8.2.2;The risk model
-TOC;2440e04799326f6f7d09a1f62f3db685;EN 50126-2:2017 8.2.3;Techniques for the consequence analysis
-TOC;c92d7af5f27155a3b51bd74f05d9b4e4;EN 50126-2:2017 8.2.4;Expert judgement
-TOC;60169330bf62c76bd12864c4633c1b3a;EN 50126-2:2017 8.3;Risk acceptance principles and risk evaluation
-TOC;ed23eb5dc57d44d2114c5298a9e3ded9;EN 50126-2:2017 8.3.1;Use of Code of Practice
-TOC;e33e3b6c62d92b8691410b4d7bc53a71;EN 50126-2:2017 8.3.2;Use of a reference system
-TOC;e1c84f75f8930aad45efb31db197aecf;EN 50126-2:2017 8.3.3;Use of Explicit Risk Estimation
-TOC;cd4410c0bfad333eedfb1b18eeae3d42;EN 50126-2:2017 8.4;Application of explicit risk estimation
-TOC;2c2672dcc87344b77646f7acf9cdd03c;EN 50126-2:2017 8.4.1;Quantitative approach
-TOC;4b70555650c7021bfc7306cc8f51b7ee;EN 50126-2:2017 8.4.1.1;General
-TOC;2005da6981e819e3fac2ba768d841f6e;EN 50126-2:2017 8.4.1.2;Accident safety targets
-TOC;428a8acae0fdd9ac420675afc5b8d3f2;EN 50126-2:2017 8.4.1.3;Tolerable Hazard Rate (THR)
-TOC;7866b996c30bc5f15f51a334a88944a9;EN 50126-2:2017 8.4.1.4;Responsibilities
-TOC;708df829a43b9dec237c97c940d76883;EN 50126-2:2017 8.4.2;Variability using quantitative risk estimates
-TOC;dce9d94b47f9b93b7b92ed223c1183ea;EN 50126-2:2017 8.4.2.1;General
-TOC;01bfb3aefce55cdcf9aa931550be3729;EN 50126-2:2017 8.4.2.2;"Worst possible scenario"
-TOC;096855d7a07b7273a41961d69230e53b;EN 50126-2:2017 8.4.2.3;"Reasonable estimates"
-TOC;c2e02d2382404a3eefe9ab3cdfb30b99;EN 50126-2:2017 8.4.2.4;"Reasonable worst case"
-TOC;c6c9958edeb83ac7a3ce7e7c4e02cfc7;EN 50126-2:2017 8.4.3;Qualitative and semi-quantitative approaches
-TOC;0e5dd52e669ecd72d11010cd353d053f;EN 50126-2:2017 9;Specification of System Safety Requirements
-TOC;2fc53cdfe620e7fb2acf446eebfc83e3;EN 50126-2:2017 9.1;General
-TOC;956c685e291658a28c4bc0009f48114f;EN 50126-2:2017 9.2;Safety requirements
-TOC;fc59953acd4e64b248e6db5951123424;EN 50126-2:2017 9.3;Categorization of Safety Requirements
-TOC;7d448c9f4de969fc584d6a83ba199efa;EN 50126-2:2017 9.3.1;General
-TOC;ba8c465e387478c21e2430caf799eeed;EN 50126-2:2017 9.3.2;Functional safety requirements
-TOC;b5b36521aa0d5c7de4e4a801af19039d;EN 50126-2:2017 9.3.3;Technical safety requirements
-TOC;179d0879308e9535ab47bde978fae1a5;EN 50126-2:2017 9.3.4;Contextual safety requirements
-TOC;d5276332509830f725056aa52a0a23bc;EN 50126-2:2017 10;Apportionment of functional Safety Integrity requirements
-TOC;1c74abbe221f646729ce5cdbcd9a2260;EN 50126-2:2017 10.1;Deriving and apportioning system safety requirements
-TOC;0d12ebf4158010abbb0230b93f438696;EN 50126-2:2017 10.2;Functional safety integrity for electronic systems
-TOC;99e031e5d194254296f3a44199b804a1;EN 50126-2:2017 10.2.1;Deriving functional safety requirements for electronic systems
-TOC;612f52cf3b8b06b3a8aa02df152bb26c;EN 50126-2:2017 10.2.2;Apportioning safety requirements
-TOC;a992e23ceb74ec61b19eedfeed8cd34b;EN 50126-2:2017 10.2.3;Safety Integrity Factors
-TOC;0f899d2dc26599f276b0b5f18f847124;EN 50126-2:2017 10.2.4;Functional safety integrity and random failures
-TOC;1b04d1d7bab61657a7ba4ba6cee40770;EN 50126-2:2017 10.2.5;Systematic aspect of functional safety integrity
-TOC;13f4c6af9025e2a46aa1bdd7ebdf1cda;EN 50126-2:2017 10.2.6;Balanced requirements controlling random and systematic failures
-TOC;34e23f16c03f75269e0ce62a2f11ce2e;EN 50126-2:2017 10.2.7;The SIL table
-TOC;1244bd22d57aef814556ca41ab52b8ab;EN 50126-2:2017 10.2.8;SIL allocation
-TOC;0014ca50e172365d985bc755dbb4c6c6;EN 50126-2:2017 10.2.9;Apportionment of TFFR after SIL allocation
-TOC;4c0d8a476b12de17ea29b7c25d117971;EN 50126-2:2017 10.2.10;Demonstration of quantified targets
-TOC;9b476a4aa1a21b689336c7fd4c33967e;EN 50126-2:2017 10.2.11;Requirements for Basic Integrity
-TOC;859b8696bfcdae6d5e856086adcdec64;EN 50126-2:2017 10.2.12;Prevention of misuse of SILs
-TOC;143a8af2cb64fb187d8cfd0abec457e8;EN 50126-2:2017 10.3;Safety Integrity for non-electronic systems - Application of CoP
-TOC;eb9de186b340aef5d550bd350b4b5e9c;EN 50126-2:2017 11;Design and implementation
-TOC;42a7dd992a60acf7c70b58fd44fa3627;EN 50126-2:2017 11.1;Introduction
-TOC;827cc479f06b164463e2d8c2994a1c1f;EN 50126-2:2017 11.2;Causal analysis
-TOC;76fdc037791369715f613816b6c938b6;EN 50126-2:2017 11.3;Hazard identification (refinement)
-TOC;3a5dcab3cf3de6f26805a0809cee033e;EN 50126-2:2017 11.4;Common cause analysis
-TOC;1c2ca02f71141bd365179a9a20e30d52;EN 50126-2:2017 A;ALARP, GAME, MEM
-TOC;fa52436b47345133b8edcecdad78a97d;EN 50126-2:2017 A.1;ALARP, GAME, MEM as methods to define risk acceptance criteria
-TOC;04292591489bddf4cfbd2de257801275;EN 50126-2:2017 A.2;ALARP (As Low As Reasonably Practicable)
-TOC;b4524490ef8dffeec3e42d1ef69fd853;EN 50126-2:2017 A.2.1;General
-TOC;64221f31490a98066e9f9d806a247d4f;EN 50126-2:2017 A.2.2;Tolerability and ALARP
-TOC;6902889ef033ed62a0acd0a6d63dcbd1;EN 50126-2:2017 A.3;Globalement Au Moins Equivalent (GAME) priciple
-TOC;886e96434a81671d5169f86417474aa3;EN 50126-2:2017 A.3.1;Principle
-TOC;db38c9bc9a6d640e61496ace49cbb8db;EN 50126-2:2017 A.3.2;Using GAME
-TOC;ea5ae62938e3a1285b97ca4d8b6dc082;EN 50126-2:2017 A.3.2.1;General
-TOC;564b8dc2d0de4edb9ba86a39768ac5b6;EN 50126-2:2017 A.3.2.2;Basic principles
-TOC;b4950ec15b26653877a64c99d38f1f6e;EN 50126-2:2017 A.3.2.3;Using GAME to construct a qualitative safety argument
-TOC;380b9fbbeab32179a064230b0bb04c05;EN 50126-2:2017 A.3.2.4;GAME using quantitative risk targets
-TOC;0b1a3136f335e6acb219c54a75a63183;EN 50126-2:2017 A.4;Minimum Endogenous Mortality MEM
-TOC;713ba14710cef30a15c6871ff2c39f57;EN 50126-2:2017 B;Using failure and accident statistics to derive a THR
-TOC;ad25c1119e020bcb9096867c4a1cf5a9;EN 50126-2:2017 C;Guidance on SIL Allocation
-TOC;fb9d624d7dca8e8536893f1208321d33;EN 50126-2:2017 D;Safety target apportionment methods
-TOC;cb57b88cc9bd5711daf417b64dfc392e;EN 50126-2:2017 D.1;Analysis of the system and methods
-TOC;7ab4e53b91e44f92bb8f33cc64492fd0;EN 50126-2:2017 D.2;Example of qualitative apportionment method
-TOC;a3659735337bfb57b894b6f1964bf7d3;EN 50126-2:2017 D.2.1;General
-TOC;a295b61972a7412ef521ec2926114c39;EN 50126-2:2017 D.2.2;Example of qualitative method for barrier efficiency
-TOC;6b420a2dbb055db9da17e33bc5eada01;EN 50126-2:2017 D.3;Example of quantitative apportionment method
-TOC;10aecf6dfc7832a827d1d0b46613ad58;EN 50126-2:2017 D.3.1;Introduction
-TOC;56111655846732c55e719ec11e468112;EN 50126-2:2017 D.3.2;Functions with independent failure detection and negation mechanisms
-TOC;ff62ec07154d6d14458e899b8b5a9fd4;EN 50126-2:2017 D.3.3;Function and independent barrier acting as failure detection and negation mechanism
-TOC;28ff31566543ea17df6f31b8479b067f;EN 50126-2:2017 D.3.4;Apportionment of a probability safety target
-TOC;ce7576f71d993be9763d203be17845d9;EN 50126-2:2017 D.3.5;Apportionment of a "per hour" safety target
-TOC;ee52050b904be22f8d48d8166b4232b2;EN 50126-2:2017 E;Common mistakes in quantification
-TOC;179f12537407935d8dba1778f31c16c6;EN 50126-2:2017 E.1;Common misuses
-TOC;2c52c950610e22b936046b97a53c5280;EN 50126-2:2017 E.2;Mixing failure rates with probabilities
-TOC;b239ecc0f4690b712edb8ca3ab4cb7b2;EN 50126-2:2017 E.3;Using formulas out of their range of applicability
-TOC;c290306b7a421fb0410abf345763a1d2;EN 50126-2:2017 F;Techniques/methods for safety analysis
-TOC;d3ae71641dec442b1c51ec24541acd0f;EN 50126-2:2017 G;Key system safety roles and responsibilities
-TOC;31d019d2288baad977dbf96e3e1d2b88;EN 50126-2:2017 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive 2008/57/EC
+TOC;2f9c06c1291df2420cdd2ee4ff8b2143;EN 50126-1:2017 0;Part 1;u
+TOC;3038e5ff31b4c5dc35876c205afbb0fb;EN 50126-1:2017 1;Scope;u
+TOC;da680234a4869cd66b4d978452be8d02;EN 50126-1:2017 2;Normative references;u
+TOC;796d97865a942128da367fb0d894a37e;EN 50126-1:2017 3;Terms and definitions;u
+TOC;0bcb9b249100c051ad7a14f586107b74;EN 50126-1:2017 3.1;acceptance;t
+TOC;8935237afc200fcf7492c6822f2bfe0e;EN 50126-1:2017 3.2;accident;t
+TOC;05b0c03f009787781459a177c2500f33;EN 50126-1:2017 3.3;approval;t
+TOC;e2ea07eb2032ef5a1946f0a106baf041;EN 50126-1:2017 3.4;assurance;t
+TOC;ca7ecab027b5a8f36932cedde8e0f662;EN 50126-1:2017 3.5;audit;t
+TOC;304c8c3dd6f931b09a3bc123a8a1d84b;EN 50126-1:2017 3.6;availability of a product;t
+TOC;87ef99043feb2500777d38b6da1bd039;EN 50126-1:2017 3.7;basic integrity;t
+TOC;94dc7a9dbb248a544643625a16fda270;EN 50126-1:2017 3.8;collective risk;t
+TOC;127976d4ed57f8d2aabf2d6479934425;EN 50126-1:2017 3.9;commercial of the shelf product;t
+TOC;469a2cca63aa11f649453394eb14f105;EN 50126-1:2017 3.10;common cause failure;t
+TOC;6b37727fc44e798b2c8ff33cc3af211b;EN 50126-1:2017 3.11;compliance;t
+TOC;37d24496084a5600167cf79b0717eb09;EN 50126-1:2017 3.12;configuration management;t
+TOC;611d60e537180f2ae5cb345cf6fbbfa7;EN 50126-1:2017 3.13;consequence analysis;t
+TOC;aa0cc4b12b4f62d40b5baec4c8b5513b;EN 50126-1:2017 3.14;corrective maintenance;t
+TOC;5ed9730fd0b332402486a53237ab77a4;EN 50126-1:2017 3.15;design;t
+TOC;ba0e56614c38d13d98d46fc71c9d02d6;EN 50126-1:2017 3.16;deterministic;t
+TOC;9901540e2a75e8f1851daf8e94453ced;EN 50126-1:2017 3.17;diversity;t
+TOC;8e57bf9facdd03795f5b4dbd2597a42e;EN 50126-1:2017 3.18;entity;t
+TOC;b7fcf9e0308c6b090dff53636fd88598;EN 50126-1:2017 3.19;equivalent fatality;t
+TOC;59e9223142f9e4131116002ecb524414;EN 50126-1:2017 3.20;error;t
+TOC;9e93fe3cd3714a97ae798ab984940236;EN 50126-1:2017 3.21;failure of an item;t
+TOC;799fd8343ba7324f615d25fc5ae8f10b;EN 50126-1:2017 3.22;failure mode;t
+TOC;0ed389248d6f1b1e1f16735b32a09fb0;EN 50126-1:2017 3.23;failure rate;t
+TOC;677d1a1adf47b9832e4a54f8c8f23609;EN 50126-1:2017 3.24;fault in a system;t
+TOC;7d3e7a3c58a3d56a3a8c3e255d3b2160;EN 50126-1:2017 3.25;function of an item;t
+TOC;2c731f779a89366f1098abcd23e4d7b9;EN 50126-1:2017 3.26;functional safety;t
+TOC;0919926819658b380499f07c796883d4;EN 50126-1:2017 3.27;generic product;t
+TOC;5bd3fb1895bb401d51a6587be280ce0b;EN 50126-1:2017 3.28;hazard;t
+TOC;7ca40d6c9c7f590e8f12677832d287d0;EN 50126-1:2017 3.29;hazard analysis;t
+TOC;c3bc843952459434e3c7ed6fcad4701e;EN 50126-1:2017 3.30;hazard log;t
+TOC;122ee1f1bcdeb9c5fd96afb9b0d83939;EN 50126-1:2017 3.31;hazard rate;t
+TOC;e46ffe944426c6745c64363f981466f3;EN 50126-1:2017 3.32;implementation;t
+TOC;f44209424269074f3031ab35bcfc7cbc;EN 50126-1:2017 3.33;independent safety assessment;t
+TOC;0bc230acca54d60c76381d26e01820c1;EN 50126-1:2017 3.34;individual risk;t
+TOC;ae713cce0c8b9e75971f0b04f6b32a46;EN 50126-1:2017 3.35;integration;t
+TOC;e3d3b0ac67eed7ab97e033f0ff7aa82e;EN 50126-1:2017 3.36;life cycle;t
+TOC;70f62627956b7ee4e83afd1a13100228;EN 50126-1:2017 3.37;maintainability of an item;t
+TOC;700fcf3e6e54d609e330353ba38ff2ac;EN 50126-1:2017 3.38;maintenance;t
+TOC;52c9179e5d589974b62509571e843f05;EN 50126-1:2017 3.39;mission;t
+TOC;d267033a4afe0f10e3ad0d7927636714;EN 50126-1:2017 3.40;mission profile;t
+TOC;48c41d1c8b6f0fef9c26a1f6a0088b61;EN 50126-1:2017 3.41;negation;t
+TOC;858b3a74c75458fa614a471bfd469501;EN 50126-1:2017 3.42;negation time;t
+TOC;97aa824ed051dc4aeb40b219aba88843;EN 50126-1:2017 3.43;pre-existing software;t
+TOC;d3453256bd006e104c23043a893218d2;EN 50126-1:2017 3.44;preventive maintenance;t
+TOC;f590584e76e3c3259e2573b26cf5e895;EN 50126-1:2017 3.45;product in railway;t
+TOC;63675424539b16f6e1cad75d2cbffb3b;EN 50126-1:2017 3.46;project management;t
+TOC;dd873d999f777ec5bdb01c57acdfaf01;EN 50126-1:2017 3.47;project manager;t
+TOC;ed02535dec31e132968127d5986f8215;EN 50126-1:2017 3.48;railway duty holder;t
+TOC;f68ebf3498a0d9a922df6e5213e73a16;EN 50126-1:2017 3.49;RAM plan;t
+TOC;88f96ad5ebe462a528cb71e30d552883;EN 50126-1:2017 3.50;RAMS management process;t
+TOC;f2e4d382e078479e1336cb632e06c94e;EN 50126-1:2017 3.51;random failure;t
+TOC;6683310bb3341b7499104f908a3e8303;EN 50126-1:2017 3.52;reliability of an item;t
+TOC;a866fa5c17fa58c9282a67a98b21adcb;EN 50126-1:2017 3.53;reliability growth of an item;t
+TOC;ded7b2cdb05be1f52f3cd6601f865e73;EN 50126-1:2017 3.54;repair;t
+TOC;917b1b0bbeed911c9d733f369180dc9b;EN 50126-1:2017 3.55;residual risk;t
+TOC;43f752f09e0e329a9234c74c5c19979c;EN 50126-1:2017 3.56;restoration;t
+TOC;a3cbdd30b18db444795d6959d1d3b574;EN 50126-1:2017 3.57;risk for railway RAMS;t
+TOC;2b6e5c8892c59f03884c77faf6bac86d;EN 50126-1:2017 3.58;risk analysis;t
+TOC;1e3f9ce9e6bf31e3562bd85c5a67835c;EN 50126-1:2017 3.59;risk assessment;t
+TOC;655423fd050d28f4758383d1e4453ff0;EN 50126-1:2017 3.60;risk based approach;t
+TOC;92358624ae6578afd3bca32e9fc2aac3;EN 50126-1:2017 3.61;risk evaluation;t
+TOC;ad7a28a8888d1646d5c708b2b9b95686;EN 50126-1:2017 3.62;risk management;t
+TOC;b14ba38780921c056bc6a776584c9a67;EN 50126-1:2017 3.63;safe state;t
+TOC;3e290e7eb7e23aad07a8c4ab8707e673;EN 50126-1:2017 3.64;safety;t
+TOC;0e8cef1b242c2aef70dd05c1901ee908;EN 50126-1:2017 3.65;safety authority;t
+TOC;73415b44197fe7b168043e309ed0fa61;EN 50126-1:2017 3.66;safety barrier;t
+TOC;86506c8fc0d6342912708ced8dafca61;EN 50126-1:2017 3.67;safety case;t
+TOC;d16e7aebd1ace2e99c8c668340606d66;EN 50126-1:2017 3.68;safety function;t
+TOC;71719ba4fe7eb2042450bd90d80bff6f;EN 50126-1:2017 3.69;safety integrity;t
+TOC;2bded4ea28267362d5cb3c3f1c9a8bfd;EN 50126-1:2017 3.70;safety integrity level;t
+TOC;c77ac0ffd6322a3aa0fdff14258c5e5b;EN 50126-1:2017 3.71;safety management;t
+TOC;aee85c43d8aa02c56f9e4dd87b93b4bf;EN 50126-1:2017 3.72;safety management process;t
+TOC;a6231414bd87a7a8d54683ec4c07d580;EN 50126-1:2017 3.73;safety plan;t
+TOC;be520ae5f469adbb5527cc4c4d0e21da;EN 50126-1:2017 3.74;safety-related;t
+TOC;04b0db98137d338b67e39f8cb94fdb49;EN 50126-1:2017 3.75;safety-related application conditions;t
+TOC;a4315c4b78d8396e65cdb8f97da9922a;EN 50126-1:2017 3.76;software;t
+TOC;8993f8c2586d75b91192c0456bc79ba8;EN 50126-1:2017 3.77;subsystem;t
+TOC;5d973d2b9b9bab6e35cc4360821ed064;EN 50126-1:2017 3.78;system;t
+TOC;39f4cabbf419144630649ae7d8fe4791;EN 50126-1:2017 3.79;systematic failure;t
+TOC;9dd8e51466568c38017f7f7f446e9374;EN 50126-1:2017 3.80;technical safety;t
+TOC;f8dbf66cd762cd9832e5270954fc5fe1;EN 50126-1:2017 3.81;testing;t
+TOC;304e3a4e3f7a02bf6a393c20e73c594a;EN 50126-1:2017 3.82;validation;t
+TOC;5a494a07f9bb68a99720e0649ef1b210;EN 50126-1:2017 3.83;verification;t
+TOC;23b0018e2bf15b43ba027e3e07f73236;EN 50126-1:2017 4;Abbreviations;u
+TOC;a64c70456c7a6cf63a2964893f5b0956;EN 50126-1:2017 5;Railway RAMS;u
+TOC;45adc0c30f59306d1f79ec779c21b896;EN 50126-1:2017 5.1;Introduction;u
+TOC;7f9f79ae284a16b44bad78a591b483f1;EN 50126-1:2017 5.2;Multi-level System approach;u
+TOC;06e6ebd4272c9abebc78f47d00343e35;EN 50126-1:2017 5.2.1;Concepts of system hierarchy;u
+TOC;da4afdc945eefe5f2fe3b1a646de8953;EN 50126-1:2017 5.2.2;System requirements and characteristics;u
+TOC;691169ab4fddc83ce5424690cdda50b1;EN 50126-1:2017 5.2.3;Defining a system;u
+TOC;d0ee7b14d1eb7d492a236d1950f14a36;EN 50126-1:2017 5.3;Railway system overview;u
+TOC;4d4e6cf05899235e132115ac26e39a13;EN 50126-1:2017 5.3.1;Introduction;u
+TOC;dc4fcc84c9bc61905cce6c9c1723597d;EN 50126-1:2017 5.3.2;Stakehoders involved in a railway system;u
+TOC;950d4d349baf55123039fb33052c2edd;EN 50126-1:2017 5.3.3;Railway system structure and appointment of RAMS requirements;u
+TOC;7b2e07f9eac2482504f15610a33b87cd;EN 50126-1:2017 5.4;Railway RAMS and quality of service;u
+TOC;37b1b9d347985dde23042bfa676e5556;EN 50126-1:2017 5.5;Elements of railway RAMS;u
+TOC;0c838886d3bfd7cb249f9a28cbda54f1;EN 50126-1:2017 5.6;Factors influencing railway RAMS;u
+TOC;5328d948782c011a003702d17d623a0d;EN 50126-1:2017 5.6.1;General;u
+TOC;24d377cfe92ba162e836e07d957185f3;EN 50126-1:2017 5.6.2;Classes of failures;u
+TOC;4ff35b9b1ae74996a1e83e720f7d9443;EN 50126-1:2017 5.6.3;Derivation of detailed railway specific influencing factors;u
+TOC;30efb676915ca101c84564d31d973696;EN 50126-1:2017 5.6.4;Human factors;u
+TOC;b397c25b991f18dc5755b3f02444ed16;EN 50126-1:2017 5.7;Specification of railway RAMS requirements;u
+TOC;409dab9cd469c5d7885e44fb2f14e95a;EN 50126-1:2017 5.7.1;General;u
+TOC;52cef23135d8c95ef0bbfed08a130902;EN 50126-1:2017 5.7.2;RAMS specification;u
+TOC;5ee002e658455a8033380c1f12708d19;EN 50126-1:2017 5.8;Risk based approach;u
+TOC;7d82d50b1e8e47112843cf0e142988b7;EN 50126-1:2017 5.9;Risk reduction strategy;u
+TOC;562d3d520811c2ac5928c9f91e989564;EN 50126-1:2017 5.9.1;Introduction;u
+TOC;b4ad427a9dd7410f6b7594fb27bef095;EN 50126-1:2017 5.9.2;Reduction of risks related to safety;u
+TOC;b354a8b6057f9545ca39028d631a1bbe;EN 50126-1:2017 5.9.3;Reduction of risks related to RAM;u
+TOC;0ad1cd5d769321157135f259f0bf5d72;EN 50126-1:2017 6;Management of railway RAMS - general requirements;u
+TOC;b5b5af9629d88ed9cc25750cca736f79;EN 50126-1:2017 6.1;Introduction;u
+TOC;a0adfef67f0752cf6975f771b92cdc68;EN 50126-1:2017 6.2;Life cycle for the system under consideration;u
+TOC;fdf11fc1f850adf196ef7922d019e546;EN 50126-1:2017 6.3;Risk assessment;u
+TOC;695e0265cd3834dc7bdbbf2298a9a662;EN 50126-1:2017 6.4;Organisational requirements;u
+TOC;30a0cd8ee84c907678076ef42776ff25;EN 50126-1:2017 6.4.1;Introduction;u
+TOC;26a07f0c90d144f75ffa3b920230163e;EN 50126-1:2017 6.4.2;Requirements;u
+TOC;0b5a8905b40dc011b7010f16f4ad258e;EN 50126-1:2017 6.5;Application of this standard and adaptablility to project scope and size;u
+TOC;7c23c1eb7712a206e1a867752438dd1e;EN 50126-1:2017 6.5.1;General requirements;u
+TOC;a398969a068b2ff449a384684ee1906d;EN 50126-1:2017 6.5.2;Case of complex systems with different hierarchical levels;u
+TOC;f5f5d03eeb1f4579164fb70b61e45669;EN 50126-1:2017 6.5.3;Renewal within existing systems;u
+TOC;b57348c5aee50ddfa85d2afe2b018e88;EN 50126-1:2017 6.5.4;Re-use or adaptation of a system with previous acceptance;u
+TOC;84fdaa4ef13969168d15b945bce08e63;EN 50126-1:2017 6.6;General requirements on RAMS documentation;u
+TOC;07bcb089854e6f5501bf9886a79af7f8;EN 50126-1:2017 6.7;Verification and Validation;u
+TOC;1f080858740258a7b3f4f8b5ecf78362;EN 50126-1:2017 6.7.1;Introduction;u
+TOC;a5ec6a9d4e1b4f1ca5c110cae52c1a26;EN 50126-1:2017 6.7.2;Verification;u
+TOC;0f32704f8e5971dfa456b85048d83e47;EN 50126-1:2017 6.7.3;Validation;u
+TOC;026c0f52e43c22197e14d09cb15c2b26;EN 50126-1:2017 6.8;Independent Safety Assessment;u
+TOC;6820d16b8a2d3fe581dadf6df1f9e445;EN 50126-1:2017 6.8.1;Objectives;u
+TOC;f570200451a38eae624a0bb12788e9dc;EN 50126-1:2017 6.8.2;Activities;u
+TOC;14461f359092a9c6a8d58467b5585bb4;EN 50126-1:2017 7;RAMS life cycle;u
+TOC;590b74f9e0a9533b16b397f05327d6c4;EN 50126-1:2017 7.1;General;u
+TOC;53a3bc0491fddb7623760b11d831b54e;EN 50126-1:2017 7.2;Phase 1: Concept;u
+TOC;41f4cc264de92c486eeeecf963435bfa;EN 50126-1:2017 7.2.1;Objectives;u
+TOC;b46ab00b94fa8722c9667fbd15a79b56;EN 50126-1:2017 7.2.2;Activities;u
+TOC;dc685d74dbbccdc64ae9a8bd2601780e;EN 50126-1:2017 7.2.3;Deliverables;u
+TOC;cbeef6042d6e7486a04843d4560b1f21;EN 50126-1:2017 7.3;Phase 2: System definition and operational context;u
+TOC;840ed2b1965e5b3fb83f7f76c1f39032;EN 50126-1:2017 7.3.1;Objectives;u
+TOC;38ed619c13ad0a65d804837e032ce3d1;EN 50126-1:2017 7.3.2;Activities;u
+TOC;391c480db53d94d4349f4f2d1801ab43;EN 50126-1:2017 7.3.2.1;General;u
+TOC;59487bf3e9fa3daca8769ac63db4bb63;EN 50126-1:2017 7.3.2.2;RAM Plan;u
+TOC;ab43b98d104435c720b678a28d21ba30;EN 50126-1:2017 7.3.2.3;Safety Plan;u
+TOC;150d03772f7ba8aaf4af6f6fae430fc6;EN 50126-1:2017 7.3.3;Deliverables;u
+TOC;d48cdd65955b98c2235421b0dc1c42a6;EN 50126-1:2017 7.4;Phase 3: Risk analysis and evaluation;u
+TOC;3efbd3b632cb604b6389b08e2f1af83a;EN 50126-1:2017 7.4.1;Objectives;u
+TOC;fbe44b159815a0097b6e41c79ea96501;EN 50126-1:2017 7.4.2;Activities;u
+TOC;8094a2706043b1aefb6347dfb5251ee1;EN 50126-1:2017 7.4.2.1;Risk assessment;u
+TOC;ad5c330403c1324954739c14e9409f9d;EN 50126-1:2017 7.4.2.2;Hazard Log;u
+TOC;62146b08198e0b9a6069f75ad3f04f19;EN 50126-1:2017 7.4.3;Deliverables;u
+TOC;bf071516d9da445fa300aba4da0f1084;EN 50126-1:2017 7.5;Phase 4: Specification of system requirements;u
+TOC;0dcb6a2ef7416bf4aa08878cee64f810;EN 50126-1:2017 7.5.1;Objectives;u
+TOC;535def6cdd7c97145194282f9cb44091;EN 50126-1:2017 7.5.2;Activities;u
+TOC;21b601e6f835ead8998858c77e04bae6;EN 50126-1:2017 7.5.3;Deliverables;u
+TOC;90e20aae7f1d324719f4d7ba0f823dd9;EN 50126-1:2017 7.5.4;TOC;u
+TOC;f0dd3cbd76ae3344091019488dbd9303;EN 50126-1:2017 7.6;Phase 5: Architecture and apportionment of system requirements;u
+TOC;933cc02399f7294a29bf0c76b2da418a;EN 50126-1:2017 7.6.1;Objectives;u
+TOC;05ca7f405bd18d404ce76160c348fc8c;EN 50126-1:2017 7.6.2;Activities;u
+TOC;62f8d033441d9a705249fc6aceae5aae;EN 50126-1:2017 7.6.3;Deliverables;u
+TOC;5b760ab3f363f84b2743c5fd34a71279;EN 50126-1:2017 7.7;Phase 6: Design and Implementation;u
+TOC;4063703a4da3fd0361a9bb47e174c757;EN 50126-1:2017 7.7.1;Objectives;u
+TOC;cd60c951fd3ab1c25993b257bc1afd98;EN 50126-1:2017 7.7.2;Activities;u
+TOC;34b3e320c756cf7aaf99645017b856d4;EN 50126-1:2017 7.7.3;Deliverables;u
+TOC;8b4cc0c90ab7b901cd832f6b3da919d2;EN 50126-1:2017 7.7.4;Specific verification tasks;u
+TOC;334dc589df736e0a15382a1f6348a1cd;EN 50126-1:2017 7.8;Phase 7: Manufacture;u
+TOC;46691e11ce19bb2c798f9d270e26db31;EN 50126-1:2017 7.8.1;Objectives;u
+TOC;a2cbd661aba5bfe36840f702d3ed9b5b;EN 50126-1:2017 7.8.2;Activities;u
+TOC;087bd56523df9ec596e4b64ac9fbaa96;EN 50126-1:2017 7.8.3;Deliverables;u
+TOC;f2c5cf2ef71d0582e2a07d5abc3c390e;EN 50126-1:2017 7.9;Phase 8: Integration;u
+TOC;21ef3c3f88218ef66c76d29268ce7895;EN 50126-1:2017 7.9.1;Objectives;u
+TOC;3af462324d60ef922381b154f5e878d0;EN 50126-1:2017 7.9.2;Activities;u
+TOC;418a036304e2f50c8f9683b42ffd97c4;EN 50126-1:2017 7.9.3;Deliverables;u
+TOC;fc6998cb4b63cbe780588acc2968cb3d;EN 50126-1:2017 7.9.4;Specific verification tasks;u
+TOC;0b17dea25fe00387456e08f19ab170f7;EN 50126-1:2017 7.10;Phase 9: System Validation;u
+TOC;d50332263aa485332cb3df1956990a6b;EN 50126-1:2017 7.10.1;Objectives;u
+TOC;c5e35340cfa10bb5742cd6f739fbf183;EN 50126-1:2017 7.10.2;Activities;u
+TOC;1f6b6b2db326d73a81a9a51efe83e4c3;EN 50126-1:2017 7.10.3;Deliverables;u
+TOC;a9b76218bc9a3fa6b1721496bdc617e2;EN 50126-1:2017 7.11;Phase 10: System acceptance;u
+TOC;d9251817a082e3f2a2b28c2296fd0838;EN 50126-1:2017 7.11.1;Objectives;u
+TOC;b26b2b611985ef0d76d4b7db021ecf9e;EN 50126-1:2017 7.11.2;Activities;u
+TOC;92b5f962cc5bdbcf50520a6cd6ac02e7;EN 50126-1:2017 7.11.3;Deliverables;u
+TOC;2fd7c98a1b09f569d2fc0928cb7c27a8;EN 50126-1:2017 7.12;Phase 11: Operation, maintenance and performance monitoring;u
+TOC;392c9974ed69553487188f21c6b25b74;EN 50126-1:2017 7.12.1;Objectives;u
+TOC;e105289d9be2e7b3ec46811b2d928980;EN 50126-1:2017 7.12.2;Activities;u
+TOC;8a5af7e098e193226c6fb2b8f2a1037f;EN 50126-1:2017 7.12.3;Deliverables;u
+TOC;4f71088976cf4bae0ba471d7fcfc4ba5;EN 50126-1:2017 7.12.4;Specific verification tasks;u
+TOC;7ca2373135252d02b98ae89b8860926d;EN 50126-1:2017 7.13;Phase 12: Decommissioning;u
+TOC;7b0ed532238dc57cea8095d1c1006cc1;EN 50126-1:2017 7.13.1;Objectives;u
+TOC;fb6328ef5211060d43f50288b273d71f;EN 50126-1:2017 7.13.2;Activities;u
+TOC;fdeb4692c076c7c7ed22985e6c0a0234;EN 50126-1:2017 7.13.3;Deliverables;u
+TOC;afc77c50dbf1bdd46661917bf544f42c;EN 50126-1:2017 8;Safety Case;u
+TOC;8613b8e725270e58cc190c3835cad88b;EN 50126-1:2017 8.1;Purpose of a safety case;u
+TOC;07473502fd79e102744841cadfca6c02;EN 50126-1:2017 8.2;Content of a safety case;u
+TOC;820cf326e26eb931cbb8bd83377e0547;EN 50126-1:2017 A;RAMS plan;u
+TOC;2f5bbb89e98a1aa021bc31d8f2d45593;EN 50126-1:2017 A.1;General;u
+TOC;da55bcc22d4fd0b2a1c38da3b154de6e;EN 50126-1:2017 A.2;Procedure;u
+TOC;19d653a9b58cbd4687ceaca34d1bf1af;EN 50126-1:2017 A.3;Basic RAMS plan example;u
+TOC;ebae68cf8590cebace47285ee8ce6853;EN 50126-1:2017 A.4;List of techniques;u
+TOC;2d1fbc9ac1884a69950e9ed007d0dba6;EN 50126-1:2017 B;Examples of parameters for railway;u
+TOC;d13d07af75648b8038abef9428a36d18;EN 50126-1:2017 B.1;General;u
+TOC;a768560369a3c5665e19d24dca3aa2de;EN 50126-1:2017 B.2;Reliability parameters;u
+TOC;880a54933bed88f20c2d47e6ef754f5f;EN 50126-1:2017 B.3;Maintainability parameters;u
+TOC;059513329252fc109f7594a1f998b13f;EN 50126-1:2017 B.4;Availability parameters;u
+TOC;b18e95e6b28a814e9c9a04f5e87d4e51;EN 50126-1:2017 B.5;Logistic support parameters;u
+TOC;fca0989d90cfdd75b438578e0adfa014;EN 50126-1:2017 B.6;Safety parameters;u
+TOC;20723d424a5364889b34daed2ce62f1c;EN 50126-1:2017 C;Risk matrix calibration and risk acceptance categories;u
+TOC;44b9d216135d5312be934955a23d15a5;EN 50126-1:2017 C.1;General;u
+TOC;f01815d49686b449d4ce0a08ec667a31;EN 50126-1:2017 C.2;Frequence of occurence categories;u
+TOC;826170a713689315995c6bd08c7ecbaf;EN 50126-1:2017 C.3;Severity categories;u
+TOC;b85bd5b6ad678ee4d3237f5fecdf7a3f;EN 50126-1:2017 C.4;Risk acceptence categories;u
+TOC;d635caad7726e968a30f3e0046c5cfa2;EN 50126-1:2017 D;Guidance on system definition ;u
+TOC;e6546f46f1e607625b8a5129871b25a9;EN 50126-1:2017 D.1;General;u
+TOC;8a9ed0a2f14bffcf96fee9bc2f20a224;EN 50126-1:2017 D.2;System Definition in an iterative system approach;u
+TOC;ba33f1d274dcc04cba26df5894721cbd;EN 50126-1:2017 D.3;Method for defining the structure of a system;u
+TOC;835441e87e1c6433bb25f058d632cdfa;EN 50126-1:2017 D.3.1;General;u
+TOC;78131688d44bce4098394209e0bd6f18;EN 50126-1:2017 D.3.2;Function List;u
+TOC;dbfa62eac257a92d8b8277343ff0005f;EN 50126-1:2017 D.3.3;Functional breakdown;u
+TOC;777dd9a9aed9af1a4037c4c9cc57963b;EN 50126-1:2017 D.4;Parties/stakeholders/boundaries of systems;u
+TOC;68369777a35f2826157adf2df959ed06;EN 50126-1:2017 D.5;Guidance on the content of a system definition;u
+TOC;14b2f04d80f186e65091517cd222ea84;EN 50126-1:2017 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive 2008/57/EC;u
+TOC;d1cc110c90adf6dbb76b89a0e81aa06a;EN 50126-2:2017 0;Part 2;u
+TOC;ee96f356cd2a1941fd7498c338ae701b;EN 50126-2:2017 1;Scope;u
+TOC;e151ce8111ce1afa3eb0285deaf5f8f5;EN 50126-2:2017 2;Normative references;u
+TOC;9c72d7038f01ef736d14b051a457f511;EN 50126-2:2017 3;Terms and definitions;u
+TOC;c6d4e69055f8b2100cfe00c26f6170d0;EN 50126-2:2017 4;Abbreviations;u
+TOC;5ff93d667a4fff308ba6034e07d9eb75;EN 50126-2:2017 5;Safety process;u
+TOC;4a96d2a35bd6257953231d6618caf414;EN 50126-2:2017 5.1;Risk assessment and hazard control;u
+TOC;688fed98862c77fd7a055c117849e712;EN 50126-2:2017 5.2;A. Risk assessment;u
+TOC;fec650dc652f0ff463efd9fbfb7e40c5;EN 50126-2:2017 5.2.1;General;u
+TOC;0b45030318f09586d9975f1b3362e5f2;EN 50126-2:2017 5.2.2;Conduction risk assessment;u
+TOC;988b23a297f63d39b86f482db5f753a8;EN 50126-2:2017 5.3;B. Outcome of the risk assessment;u
+TOC;e27b1b134a4a2b4bb4c451a45ed41b15;EN 50126-2:2017 5.4;C. Hazard control;u
+TOC;12f0c2ed4b3ff4be28f4743d8ebc3a02;EN 50126-2:2017 5.5;D. Revision of risk assessment;u
+TOC;eda8ac3b5fd91d29673fe79981cfb90e;EN 50126-2:2017 5.6;Responsibilities;u
+TOC;90f4734666ddaf66b5738db77261c98a;EN 50126-2:2017 6;Safety demonstration and acceptance;u
+TOC;17729189e3b12cdb6137b964fdf2544f;EN 50126-2:2017 6.1;Introduction;u
+TOC;922b45fb86a1c8bbee1d21b1e326aa51;EN 50126-2:2017 6.2;Safety demonstration and safety acceptance process;u
+TOC;c05a4d0e6d98d6f7b78db57f08f67ef9;EN 50126-2:2017 6.3;Responsibility in managing the Safety Case;u
+TOC;2f1f65f92b45bfdc8cee6c803a256f69;EN 50126-2:2017 6.4;Modifications after safety acceptance;u
+TOC;9221e589903ebdd780e3ddbf1398fc1c;EN 50126-2:2017 6.5;Dependencies between Safety Cases;u
+TOC;1ba51bc5403a7da896c07ef30534fcec;EN 50126-2:2017 6.6;Relationship between safety cases and system architecture;u
+TOC;3383c51cb80727e797b199f7179a359d;EN 50126-2:2017 7;Organisation and Independence of Roles;u
+TOC;2c04c5e6ee05a3723925cfd9e0348d69;EN 50126-2:2017 7.1;General;u
+TOC;99610e74272414c99bb468fc36ba0747;EN 50126-2:2017 7.2;Early phases of the lifecycle (phases 1 to 4);u
+TOC;e58463409583c7528f48de81097c0bbd;EN 50126-2:2017 7.3;Later phases of the lifecycle (starting from phase 5);u
+TOC;7b3d68066be1c13c3393d5a2b3b978cf;EN 50126-2:2017 7.4;Personnel Competence;u
+TOC;f7209c8f907db680f62d571c9e53e90d;EN 50126-2:2017 8;Risk assessment;u
+TOC;99baa64cfec33f32c43360b535373326;EN 50126-2:2017 8.1;Introduction;u
+TOC;c9ba82d36fe0f82d968c501761865449;EN 50126-2:2017 8.2;Risk Analysis;u
+TOC;d7cecd2d348d638569491c98f6e985a7;EN 50126-2:2017 8.2.1;General;u
+TOC;b0e9bc9ab8bd3658c7820470cadce592;EN 50126-2:2017 8.2.2;The risk model;u
+TOC;2440e04799326f6f7d09a1f62f3db685;EN 50126-2:2017 8.2.3;Techniques for the consequence analysis;u
+TOC;c92d7af5f27155a3b51bd74f05d9b4e4;EN 50126-2:2017 8.2.4;Expert judgement;u
+TOC;60169330bf62c76bd12864c4633c1b3a;EN 50126-2:2017 8.3;Risk acceptance principles and risk evaluation;u
+TOC;ed23eb5dc57d44d2114c5298a9e3ded9;EN 50126-2:2017 8.3.1;Use of Code of Practice;u
+TOC;e33e3b6c62d92b8691410b4d7bc53a71;EN 50126-2:2017 8.3.2;Use of a reference system;u
+TOC;e1c84f75f8930aad45efb31db197aecf;EN 50126-2:2017 8.3.3;Use of Explicit Risk Estimation;u
+TOC;cd4410c0bfad333eedfb1b18eeae3d42;EN 50126-2:2017 8.4;Application of explicit risk estimation;u
+TOC;2c2672dcc87344b77646f7acf9cdd03c;EN 50126-2:2017 8.4.1;Quantitative approach;u
+TOC;4b70555650c7021bfc7306cc8f51b7ee;EN 50126-2:2017 8.4.1.1;General;u
+TOC;2005da6981e819e3fac2ba768d841f6e;EN 50126-2:2017 8.4.1.2;Accident safety targets;u
+TOC;428a8acae0fdd9ac420675afc5b8d3f2;EN 50126-2:2017 8.4.1.3;Tolerable Hazard Rate (THR);u
+TOC;7866b996c30bc5f15f51a334a88944a9;EN 50126-2:2017 8.4.1.4;Responsibilities;u
+TOC;708df829a43b9dec237c97c940d76883;EN 50126-2:2017 8.4.2;Variability using quantitative risk estimates;u
+TOC;dce9d94b47f9b93b7b92ed223c1183ea;EN 50126-2:2017 8.4.2.1;General;u
+TOC;01bfb3aefce55cdcf9aa931550be3729;EN 50126-2:2017 8.4.2.2;"Worst possible scenario";u
+TOC;096855d7a07b7273a41961d69230e53b;EN 50126-2:2017 8.4.2.3;"Reasonable estimates";u
+TOC;c2e02d2382404a3eefe9ab3cdfb30b99;EN 50126-2:2017 8.4.2.4;"Reasonable worst case";u
+TOC;c6c9958edeb83ac7a3ce7e7c4e02cfc7;EN 50126-2:2017 8.4.3;Qualitative and semi-quantitative approaches;u
+TOC;0e5dd52e669ecd72d11010cd353d053f;EN 50126-2:2017 9;Specification of System Safety Requirements;u
+TOC;2fc53cdfe620e7fb2acf446eebfc83e3;EN 50126-2:2017 9.1;General;u
+TOC;956c685e291658a28c4bc0009f48114f;EN 50126-2:2017 9.2;Safety requirements;u
+TOC;fc59953acd4e64b248e6db5951123424;EN 50126-2:2017 9.3;Categorization of Safety Requirements;u
+TOC;7d448c9f4de969fc584d6a83ba199efa;EN 50126-2:2017 9.3.1;General;u
+TOC;ba8c465e387478c21e2430caf799eeed;EN 50126-2:2017 9.3.2;Functional safety requirements;u
+TOC;b5b36521aa0d5c7de4e4a801af19039d;EN 50126-2:2017 9.3.3;Technical safety requirements;u
+TOC;179d0879308e9535ab47bde978fae1a5;EN 50126-2:2017 9.3.4;Contextual safety requirements;u
+TOC;d5276332509830f725056aa52a0a23bc;EN 50126-2:2017 10;Apportionment of functional Safety Integrity requirements;u
+TOC;1c74abbe221f646729ce5cdbcd9a2260;EN 50126-2:2017 10.1;Deriving and apportioning system safety requirements;u
+TOC;0d12ebf4158010abbb0230b93f438696;EN 50126-2:2017 10.2;Functional safety integrity for electronic systems;u
+TOC;99e031e5d194254296f3a44199b804a1;EN 50126-2:2017 10.2.1;Deriving functional safety requirements for electronic systems;u
+TOC;612f52cf3b8b06b3a8aa02df152bb26c;EN 50126-2:2017 10.2.2;Apportioning safety requirements;u
+TOC;a992e23ceb74ec61b19eedfeed8cd34b;EN 50126-2:2017 10.2.3;Safety Integrity Factors;u
+TOC;0f899d2dc26599f276b0b5f18f847124;EN 50126-2:2017 10.2.4;Functional safety integrity and random failures;u
+TOC;1b04d1d7bab61657a7ba4ba6cee40770;EN 50126-2:2017 10.2.5;Systematic aspect of functional safety integrity;u
+TOC;13f4c6af9025e2a46aa1bdd7ebdf1cda;EN 50126-2:2017 10.2.6;Balanced requirements controlling random and systematic failures;u
+TOC;34e23f16c03f75269e0ce62a2f11ce2e;EN 50126-2:2017 10.2.7;The SIL table;u
+TOC;1244bd22d57aef814556ca41ab52b8ab;EN 50126-2:2017 10.2.8;SIL allocation;u
+TOC;0014ca50e172365d985bc755dbb4c6c6;EN 50126-2:2017 10.2.9;Apportionment of TFFR after SIL allocation;u
+TOC;4c0d8a476b12de17ea29b7c25d117971;EN 50126-2:2017 10.2.10;Demonstration of quantified targets;u
+TOC;9b476a4aa1a21b689336c7fd4c33967e;EN 50126-2:2017 10.2.11;Requirements for Basic Integrity;u
+TOC;859b8696bfcdae6d5e856086adcdec64;EN 50126-2:2017 10.2.12;Prevention of misuse of SILs;u
+TOC;143a8af2cb64fb187d8cfd0abec457e8;EN 50126-2:2017 10.3;Safety Integrity for non-electronic systems - Application of CoP;u
+TOC;eb9de186b340aef5d550bd350b4b5e9c;EN 50126-2:2017 11;Design and implementation;u
+TOC;42a7dd992a60acf7c70b58fd44fa3627;EN 50126-2:2017 11.1;Introduction;u
+TOC;827cc479f06b164463e2d8c2994a1c1f;EN 50126-2:2017 11.2;Causal analysis;u
+TOC;76fdc037791369715f613816b6c938b6;EN 50126-2:2017 11.3;Hazard identification (refinement);u
+TOC;3a5dcab3cf3de6f26805a0809cee033e;EN 50126-2:2017 11.4;Common cause analysis;u
+TOC;1c2ca02f71141bd365179a9a20e30d52;EN 50126-2:2017 A;ALARP, GAME, MEM;u
+TOC;fa52436b47345133b8edcecdad78a97d;EN 50126-2:2017 A.1;ALARP, GAME, MEM as methods to define risk acceptance criteria;u
+TOC;04292591489bddf4cfbd2de257801275;EN 50126-2:2017 A.2;ALARP (As Low As Reasonably Practicable);u
+TOC;b4524490ef8dffeec3e42d1ef69fd853;EN 50126-2:2017 A.2.1;General;u
+TOC;64221f31490a98066e9f9d806a247d4f;EN 50126-2:2017 A.2.2;Tolerability and ALARP;u
+TOC;6902889ef033ed62a0acd0a6d63dcbd1;EN 50126-2:2017 A.3;Globalement Au Moins Equivalent (GAME) priciple;u
+TOC;886e96434a81671d5169f86417474aa3;EN 50126-2:2017 A.3.1;Principle;u
+TOC;db38c9bc9a6d640e61496ace49cbb8db;EN 50126-2:2017 A.3.2;Using GAME;u
+TOC;ea5ae62938e3a1285b97ca4d8b6dc082;EN 50126-2:2017 A.3.2.1;General;u
+TOC;564b8dc2d0de4edb9ba86a39768ac5b6;EN 50126-2:2017 A.3.2.2;Basic principles;u
+TOC;b4950ec15b26653877a64c99d38f1f6e;EN 50126-2:2017 A.3.2.3;Using GAME to construct a qualitative safety argument;u
+TOC;380b9fbbeab32179a064230b0bb04c05;EN 50126-2:2017 A.3.2.4;GAME using quantitative risk targets;u
+TOC;0b1a3136f335e6acb219c54a75a63183;EN 50126-2:2017 A.4;Minimum Endogenous Mortality MEM;u
+TOC;713ba14710cef30a15c6871ff2c39f57;EN 50126-2:2017 B;Using failure and accident statistics to derive a THR;u
+TOC;ad25c1119e020bcb9096867c4a1cf5a9;EN 50126-2:2017 C;Guidance on SIL Allocation;u
+TOC;fb9d624d7dca8e8536893f1208321d33;EN 50126-2:2017 D;Safety target apportionment methods;u
+TOC;cb57b88cc9bd5711daf417b64dfc392e;EN 50126-2:2017 D.1;Analysis of the system and methods;u
+TOC;7ab4e53b91e44f92bb8f33cc64492fd0;EN 50126-2:2017 D.2;Example of qualitative apportionment method;u
+TOC;a3659735337bfb57b894b6f1964bf7d3;EN 50126-2:2017 D.2.1;General;u
+TOC;a295b61972a7412ef521ec2926114c39;EN 50126-2:2017 D.2.2;Example of qualitative method for barrier efficiency;u
+TOC;6b420a2dbb055db9da17e33bc5eada01;EN 50126-2:2017 D.3;Example of quantitative apportionment method;u
+TOC;10aecf6dfc7832a827d1d0b46613ad58;EN 50126-2:2017 D.3.1;Introduction;u
+TOC;56111655846732c55e719ec11e468112;EN 50126-2:2017 D.3.2;Functions with independent failure detection and negation mechanisms;u
+TOC;ff62ec07154d6d14458e899b8b5a9fd4;EN 50126-2:2017 D.3.3;Function and independent barrier acting as failure detection and negation mechanism;u
+TOC;28ff31566543ea17df6f31b8479b067f;EN 50126-2:2017 D.3.4;Apportionment of a probability safety target;u
+TOC;ce7576f71d993be9763d203be17845d9;EN 50126-2:2017 D.3.5;Apportionment of a "per hour" safety target;u
+TOC;ee52050b904be22f8d48d8166b4232b2;EN 50126-2:2017 E;Common mistakes in quantification;u
+TOC;179f12537407935d8dba1778f31c16c6;EN 50126-2:2017 E.1;Common misuses;u
+TOC;2c52c950610e22b936046b97a53c5280;EN 50126-2:2017 E.2;Mixing failure rates with probabilities;u
+TOC;b239ecc0f4690b712edb8ca3ab4cb7b2;EN 50126-2:2017 E.3;Using formulas out of their range of applicability;u
+TOC;c290306b7a421fb0410abf345763a1d2;EN 50126-2:2017 F;Techniques/methods for safety analysis;u
+TOC;d3ae71641dec442b1c51ec24541acd0f;EN 50126-2:2017 G;Key system safety roles and responsibilities;u
+TOC;31d019d2288baad977dbf96e3e1d2b88;EN 50126-2:2017 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive 2008/57/EC;u
