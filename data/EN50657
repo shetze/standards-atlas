@@ -84,16 +84,16 @@ TOC;a7e67569b158a96f17b3e174871a50b5;EN 50657:2017 3.1.48;verification;t
 TOC;a9157ac27bd2e09895abe9c44686144b;EN 50657:2017 3.1.49;Verifier;t
 TOC;cd5a7c593d430dc1330e8278f982cf6f;EN 50657:2017 3.2;Abbreviations;u
 TOC;fcb73201084f6edfd56cfefe9df5525c;EN 50657:2017 4;Objectives, conformance and software integrity levels;u
-TOC;72fd9d5c1a9d4bbfa69933bc9f9994d8;EN 50657:2017 4.1; Identify Software Roles in System Docs;o
-TOC;1162f77e42b2684505120ed86af6a895;EN 50657:2017 4.2; Define Software Integrity Levels;o
-TOC;9668c2bfff7718c17140d9aa28151e62;EN 50657:2017 4.3; Set Software Integrity at System Level;o
-TOC;329087b42f7c5e6761add646155f43cc;EN 50657:2017 4.4; Meet Basic Integrity for Non-Safety Functions;o
-TOC;029bf1a132136d06856931e679fd4c9a;EN 50657:2017 4.5; Show Compliance with Software Integrity;o
-TOC;336528dfb47dbc4946b59e4615075390;EN 50657:2017 4.6; Apply Techniques Based on Integrity Level;o
-TOC;8b7f997c654b17807c0499b4984ed591;EN 50657:2017 4.7; Use Annex A for Integrity Techniques;o
-TOC;4597a6ae4230ed15f1630e1c824ce33d;EN 50657:2017 4.8; Document Rationale for Alternative Techniques;o
-TOC;b1a6ae2bda839fac8832cb8c0afbbf63;EN 50657:2017 4.9; Justify Unlisted Techniques Effectiveness;o
-TOC;a3c793d215cfd4742158370bd75fd343;EN 50657:2017 4.10; Verify Compliance with Subclause Requirements;o
+TOC;72fd9d5c1a9d4bbfa69933bc9f9994d8;EN 50657:2017 4.1;Identify Software Roles in System Docs;o
+TOC;1162f77e42b2684505120ed86af6a895;EN 50657:2017 4.2;Define Software Integrity Levels;o
+TOC;9668c2bfff7718c17140d9aa28151e62;EN 50657:2017 4.3;Set Software Integrity at System Level;o
+TOC;329087b42f7c5e6761add646155f43cc;EN 50657:2017 4.4;Meet Basic Integrity for Non-Safety Functions;o
+TOC;029bf1a132136d06856931e679fd4c9a;EN 50657:2017 4.5;Show Compliance with Software Integrity;o
+TOC;336528dfb47dbc4946b59e4615075390;EN 50657:2017 4.6;Apply Techniques Based on Integrity Level;o
+TOC;8b7f997c654b17807c0499b4984ed591;EN 50657:2017 4.7;Use Annex A for Integrity Techniques;o
+TOC;4597a6ae4230ed15f1630e1c824ce33d;EN 50657:2017 4.8;Document Rationale for Alternative Techniques;o
+TOC;b1a6ae2bda839fac8832cb8c0afbbf63;EN 50657:2017 4.9;Justify Unlisted Techniques Effectiveness;o
+TOC;a3c793d215cfd4742158370bd75fd343;EN 50657:2017 4.10;Verify Compliance with Subclause Requirements;o
 TOC;fda96fd133242d4653922658d0b68a59;EN 50657:2017 5;Software management and organization;u
 TOC;a1e888a2dfaf1c7c63222611afe14a23;EN 50657:2017 5.1;Organization, roles and responsibilities;u
 TOC;f8e119cef83f42fc9f1ca29c4774d42f;EN 50657:2017 5.1.1;Objective;u
