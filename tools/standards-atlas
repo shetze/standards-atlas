@@ -234,6 +234,7 @@ addItem()
     indexString="${name}${StdPart}:${year} ${index}"
     locID=$(echo -n $indexString | md5sum | cut -c 1-32)
     title=$(grep "TOC;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
+    typeMarker=$(grep "TOC;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f5)
     if [ -z "$title" ]; then
         xString="${name}:${oyr}${StdPart} ${index}"
         xID=$(echo -n $xString | md5sum | cut -c 1-32)
@@ -279,6 +280,12 @@ addItem()
         typeID='u'
         type='toc'
     fi
+    if [ -z "$typeMarker" ]; then
+        typeMarker="$typeID"
+    fi
+    if [ "${typeMarker,,}" != "$typeID"  ]; then
+        echoerr "Type ID mismatch: Marker $typeMarker ID $typeID"
+    fi
     cat <<EOD >./defaults.yml
 type: '$type'
 header: '$index $title'
@@ -299,13 +306,13 @@ if [ "$readableindex" -eq 1 ]; then
 else
     locString="$dsname"
 fi
-echo "TOC;$locID;${locString};$title" >>header${standard}
+echo "TOC;$locID;${locString};$title;$typeMarker" >>header${standard}
 echo "TEXT;$locID;${locString};$headline;$text" >>text${standard}
 echo "$locID;${standard}-${dsname};$indexString" >>uid-ref-map
 if [ "$contentcsv" -eq 0 ]; then
     doorstop add -l $level -d defaults.yml -n $dsname $requirement --noreorder
 else
-    echo "TOC;$locID;${locString};$title;$typeID" >>heading-data.csv
+    echo "TOC;$locID;${locString};$title;$typeMarker" >>heading-data.csv
 fi
 }
 
@@ -335,6 +342,8 @@ if [ "$norecreate" -eq 0 ]; then
         fi
 
         setAttributes ${standard} ${name} 
+
+        echo "#---data---#" >>header${standard}
 
         for index in ${!structure[@]}
         do
