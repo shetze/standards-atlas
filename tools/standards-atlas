@@ -139,6 +139,7 @@ addItem()
     local headline=''
     local partNR=$(cut -s -d'-' -f1 <<<$item)
     if [ -n "$partNR" ]; then
+        partNR=${partNR/§/-}
         StdPart="-${partNR}"
         partNR=$((partNR+partShift))
         while [ ${#partNR} -lt "$partDigits" ]; do
@@ -176,8 +177,8 @@ addItem()
         level="${clause}"
     fi
     if [ -n "$partNR" ]; then
-        dsname="${partNR}$(zeroPad ${clause} 2)"
-        level="${partNR}.${level}"
+        dsname="${partNR/-/}$(zeroPad ${clause} 2)"
+        level="${partNR/-/}.${level}"
     else
         dsname="$(zeroPad ${clause} 2)"
         level="$level"
