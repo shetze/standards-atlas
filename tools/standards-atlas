@@ -75,7 +75,7 @@ atlastooldir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 atlashomedir="$(dirname "$atlastooldir")"
 atlasdatadir="$atlashomedir/data"
 atlaslocaldir="$atlashomedir/local"
-standards=( IEC61508 ISO26262 PAS8926 EN50126 EN50128 EN50129 EN50657 EN50716 )
+standards=( IEC61508 IEC61508-3-1 ISO26262 PAS8926 EN50126 EN50128 EN50129 EN50657 EN50716 )
 
 echoerr() { printf "%s\n" "$*" >&2; }
 
@@ -241,6 +241,8 @@ addItem()
         title=$(grep "TOC;$xID" ${atlasdatadir}/${requirement} | cut -d\; -f4)
     fi
     if [ $uselocal -gt 0 ]; then
+        title=$(grep "TOC;$locID" ${atlaslocaldir}/${requirement} | cut -d\; -f4)
+        typeMarker=$(grep "TOC;$locID" ${atlaslocaldir}/${requirement} | cut -d\; -f5)
         headline=$(grep "TEXT;$locID" ${atlaslocaldir}/${requirement} | cut -d\; -f4)
         text=$(grep "TEXT;$locID" ${atlaslocaldir}/${requirement} | cut -d\; -f5)
     fi
@@ -250,9 +252,8 @@ addItem()
     if [ -z "$text" ]; then
         text=$(grep "TEXT;$locID" ${atlasdatadir}/${requirement} | cut -d\; -f5)
     fi
-    if [ -n "$headline" ]; then
-        subindex=$(cut -s -d'.' -f3- <<<$index)
-        title="$subindex $headline"
+    if [ -z "$title" -a -n "$headline" ]; then
+        title="$headline"
     fi
     if [ "$typeID" == 'r' ]; then
         title="${title:-REQUIREMENT}"
