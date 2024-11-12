@@ -30,7 +30,7 @@ usage() {
     [-p <STDANDARD>] Parent standards for additional requirements" 1>&2; exit 0; 
 }
 
-while getopts "ihlntcd:g:r:p:" arg; do
+while getopts "ihlntbcd:g:r:p:" arg; do
     case $arg in
         i)
             readableindex=1
@@ -81,6 +81,7 @@ atlashomedir="$(dirname "$atlastooldir")"
 atlasdatadir="$atlashomedir/data"
 atlaslocaldir="$atlashomedir/local"
 standards=( IEC61508 IEC61508-3-1 ISO26262 PAS8926 EN50126 EN50128 EN50129 EN50657 EN50716 )
+# standards=( IEC11889 )
 
 echoerr() { printf "%s\n" "$*" >&2; }
 
@@ -141,6 +142,7 @@ addItem()
     partDigits="${partDigits:-0}"
     local title=''
     local text=''
+    local typeMarker=''
     local headline=''
     local partNR=$(cut -s -d'-' -f1 <<<$item)
     if [ -n "$partNR" ]; then
@@ -272,7 +274,7 @@ addItem()
         # marked with type indicators in capital letters. These can then be
         # filtered out again here.
 
-        typeMarker="$typeID"
+        typeMarker=''
         title=''
         text=''
     fi
@@ -306,7 +308,7 @@ addItem()
         typeMarker="$typeID"
     fi
     if [ "${typeMarker,,}" != "$typeID"  ]; then
-        echoerr "Type ID mismatch: Marker $typeMarker ID $typeID"
+        echoerr "Type ID mismatch for $indexString: Marker $typeMarker ID $typeID"
     fi
     markdown=$(echo ${text//\"/} | tr '~' '\n' | sed 's/^/    /')
     cat <<EOD >./defaults.yml
