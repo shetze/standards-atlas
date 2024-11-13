@@ -1,0 +1,881 @@
+#!/usr/bin/env python3
+
+import sys
+import argparse
+import csv
+import re
+import logging
+import hashlib
+import ollama
+import json
+from natsort import natsorted
+
+parser = argparse.ArgumentParser(
+        prog='tokenize_standard',
+        description='Tool to cut MD formatted standard text into subclauses.\nThe tool helps to sanitize and complete the MD formatted text based on the standards-atlas structural data.'
+        )
+parser.add_argument('-H', '--harvest', help='Harvest mode: Headings found in the MD document overwrite the specific ones that may have been specified in the standard atlas.')
+parser.add_argument('-g', '--generate', help='Generate mode: Missing headings will be generated.')
+parser.add_argument('-l', '--llm-model', nargs='?', default='nemotron', help='The LLM model to be used. llama3.1 ist faster, nemotron is more accurate.')
+parser.add_argument('-c', '--content', nargs='?', default='csv/heading-data.csv', help='Filename for CSV formatted input data defining the content structure of the documents to be tokenized.')
+parser.add_argument('-i', '--interactive', help='Interactive generation mode, works good with llama3.1')
+parser.add_argument('-b', '--bulk', help='Bulk mode for heading generation, works good with nemotron')
+
+args = parser.parse_args()
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='Tokenizer.log', level=logging.INFO)
+content = {}
+status = {}
+clauseIndex = {}
+knowledgeDomains = {}
+standardDocs = {}
+part = ''
+partNr = 'x'
+
+typedict = {
+        'u' : 'text',
+        'r' : 'requirement',
+        's' : 'scope definition',
+        'o' : 'objective',
+        't' : 'term definition',
+        'c' : 'clause',
+        }
+
+iso_pattern = r'([A-Z\s]+\s+\d\d\d\d\d?)-?(\d*):\d\d\d\d\s+([1-9A-Z][0-9.]*)'
+iso_regex = re.compile(iso_pattern)
+
+class ClauseHeading():
+    def __init__(self, displayHeading):
+        self.display = displayHeading
+        self.alternatives = {}
+        self.state = 'loaded'
+
+    def addAlternative(self, heading, status, source):
+        if heading in self.alternatives.keys():
+            return
+        self.alternatives[heading]={}
+        self.alternatives[heading]['status'] = status
+        self.alternatives[heading]['source'] = source
+        if status == 'parsed' and self.display in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ):
+            self.display = heading
+            self.state = 'parsed'
+
+    def isSpecific(self):
+        if self.display == '':
+            return False
+        if self.display in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ) and self.alternatives == {}:
+            return False
+        else:
+            return True
+
+    def getBestHeading(self):
+        heading = self.display
+        if heading in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ):
+            for alternative in self.alternatives.keys():
+                if self.alternatives[alternative]['status'] == 'selected':
+                    heading = alternative
+                    self.state = 'best selected'
+                    break
+                if self.alternatives[alternative]['status'] == 'generated':
+                    heading = alternative
+                    self.state = 'best generated'
+        return heading
+
+    def __str__(self):
+        return "{0} {1}".format(self.display, self.alternatives)
+
+class ClauseID():
+    clauseRegex = {}
+    def __init__(self, clauseID, docType):
+        clausePatterns = {
+                'standard' : r'([A-Z\s]+\s+\d\d\d\d\d?)-?(\d*):\d\d\d\d\s+([1-9A-Z]+[0-9.]*)',
+                'generic' : r'(\w+)-?(\d*)-([1-9A-Z]+[0-9.]*)'
+                }
+        self.ID = clauseID
+
+        if not docType in clausePatterns.keys():
+            logger.error(f"clauseID {clauseID} docType not supported: {docType}\n\tfalling back to generic")
+            docType = generic
+        self.docType = docType
+
+        if not docType in ClauseID.clauseRegex.keys():
+            regex = re.compile(clausePatterns[docType])
+            ClauseID.clauseRegex[docType] = regex
+
+        match = ClauseID.clauseRegex[docType].match(self.ID)
+        if match:
+            self.docSeries = match[1].replace(" ", "")
+            self.seriesPart = match[2]
+            self.chapter = match[3]
+            self.level = self.chapter.count('.')+1
+        else:
+            logger.warning(f"no match for clauseID {clauseID} docType {docType}")
+            self.docSeries = self.ID
+            self.seriesPart = ''
+            self.chapter = '0.0'
+            self.level = 0
+
+    def docSeries(self):
+        return self.docSeries.replace(" ", "")
+
+    def multipartSeries(self):
+        if self.seriesPart == '':
+            return False
+        else:
+            return True
+
+    def parentID(self):
+        if self.level > 1:
+            return self.ID.rpartition('.')[0]
+        else:
+            return None
+
+
+    def __str__(self):
+        return "{0} {1} {2}".format(self.ID, self.docSeries, self.chapter)
+
+class Clause():
+    def __init__(self, clauseID, clauseHeading = 'Clause', clauseType = 'c', docType = 'standard', domain = 'generic'):
+        self.structure = ClauseID(clauseID, docType)
+        self.type = clauseType
+        self.heading = ClauseHeading(clauseHeading)
+        self.domain = domain
+        self.keywords = []
+        self.subclauses = []
+        self.text = []
+        self.summary = []
+
+    def __str__(self):
+        headline = '#' * self.structure.level
+        headline += ' '
+        headline += self.structure.ID
+        headline += ' '
+        headline += self.heading.getBestHeading()
+        body = '\n'.join(self.text)
+        return f"{headline}\n\n{body.strip()}"
+
+    def clauseType(self):
+        typedict = {
+                'u' : 'text',
+                'r' : 'requirement',
+                's' : 'scope definition',
+                'o' : 'objective',
+                't' : 'term definition',
+                'c' : 'clause',
+                'x' : 'root',
+                }
+        return typedict[self.type]
+
+    def id(self):
+        return self.structure.ID
+
+    def docType(self):
+        return self.structure.docType
+
+    def seriesPart(self):
+        return self.structure.seriesPart
+
+    def multipartSeries(self):
+        return self.structure.multipartSeries()
+
+    def docSeries(self):
+        return self.structure.docSeries
+
+    def addText(self, line):
+        self.text.append(line)
+
+    def getText(self):
+        return '\n'.join(self.text)
+
+    def parentID(self):
+        return self.structure.parentID()
+
+    def hasSubClauseRef(self, clauseID):
+        if clauseID in self.subclauses:
+            return True
+        else:
+            return False
+
+    def treeSize(self):
+        size = 1
+        for clauseID in self.subclauses:
+            clause = KnowledgeDomain.clauseIndex[clauseID]
+            size += clause.treeSize()
+        return size
+
+    def treeWeight(self):
+        weight = len(" ".join(self.text))
+        for clauseID in self.subclauses:
+            clause = KnowledgeDomain.clauseIndex[clauseID]
+            weight += clause.treeWeight()
+        return weight
+
+    def addSubClauseRef(self, clause):
+        if clause in self.subclauses:
+            logger.info(f'multiple addSubClause for {clause} in {self.structure}')
+        self.subclauses.append(clause)
+
+    def printText(self):
+        print(self)
+        for clauseID in self.subclauses:
+            if clauseID in KnowledgeDomain.clauseIndex.keys():
+                clause = KnowledgeDomain.clauseIndex[clauseID]
+                clause.printText()
+
+    def dumpTextData(self):
+        myID = self.structure.ID
+        md5hash = hashlib.md5(myID.encode('utf-8')).hexdigest()
+        heading = self.heading.getBestHeading()
+        text = '~'.join(self.text)
+        entry = f"TEXT;{md5hash};{myID};{heading};\"{text}\""
+        print(entry)
+        for clauseID in self.subclauses:
+            if clauseID in KnowledgeDomain.clauseIndex.keys():
+                clause = KnowledgeDomain.clauseIndex[clauseID]
+                clause.dumpTextData()
+            else:
+                print(f"clauseIndex key error for {clauseID}")
+
+    def dumpHeadingData(self):
+        myID = self.structure.ID
+        md5hash = hashlib.md5(myID.encode('utf-8')).hexdigest()
+        heading = self.heading.getBestHeading()
+        clauseType = self.type
+        if self.heading.state != 'loaded' and self.heading.state != 'parsed' :
+            clauseType = self.type.upper()
+        entry = f"TOC;{md5hash};{myID};{heading};{clauseType}"
+        print(entry)
+        for clauseID in self.subclauses:
+            if clauseID in KnowledgeDomain.clauseIndex.keys():
+                clause = KnowledgeDomain.clauseIndex[clauseID]
+                clause.dumpHeadingData()
+            else:
+                print(f"clauseIndex key error for {clauseID}")
+
+class DocTree():
+    chapterIndex = None
+    def __init__(self, documents):
+        self.documents = documents
+        self.misses = 0
+        if DocTree.chapterIndex == None:
+            DocTree.chapterIndex = {}
+            for docType in self.documents.keys():
+                for docSeries in self.documents[docType].keys():
+                    DocTree.chapterIndex[docSeries] = {} 
+
+    def addRootClause(self, domain, clause, rootID):
+        docType = clause.docType()
+        if not docType in self.documents.keys():
+            logger.warning(f'unexpected new docType for {clause}')
+            self.documents[docType]={}
+        docSeries = clause.docSeries()
+        rootTitle = f"Root Clause for {rootID}"
+        linkClause = None
+        if not docSeries in self.documents[docType].keys() or self.documents[docType][docSeries] == None:
+            rootClause = Clause(rootID, rootTitle, clauseType='x', domain=domain)
+            rootClause.structure.seriesPart = 'rootClause'
+            self.documents[docType][docSeries] = rootClause
+            KnowledgeDomain.clauseIndex[docSeries] = rootClause
+        if clause.multipartSeries():
+            part = clause.seriesPart()
+            partTitle = f"Part {part} Clause for {rootID}"
+            partClauseID = rootID+"-"+part
+            rootClause = self.documents[docType][docSeries]
+            if not rootClause.hasSubClauseRef(partClauseID):
+                partClause = Clause(partClauseID, partTitle, clauseType='x', domain=domain)
+                partClause.structure.seriesPart = 'partRoot'
+                KnowledgeDomain.clauseIndex[partClauseID] = partClause
+                partClause.addSubClauseRef(clause.id())
+                rootClause.addSubClauseRef(partClauseID)
+            else:
+                partClause = KnowledgeDomain.clauseIndex[partClauseID]
+                partClause.addSubClauseRef(clause.id())
+        else:
+            rootClause = self.documents[docType][docSeries]
+            if not rootClause.hasSubClauseRef(clause.id()):
+                rootClause.addSubClauseRef(clause.id())
+
+    def listDocsInTree(self):
+        docsList = []
+        for docType in self.documents.keys():
+            for docSeries in self.documents[docType].keys():
+                docRoot = self.documents[docType][docSeries]
+                docsList.append(docRoot.id())
+        return docsList
+
+    def docSeriesWeight(self):
+        docsWeight = {}
+        for docType in self.documents.keys():
+            for docSeries in self.documents[docType].keys():
+                docRoot = self.documents[docType][docSeries]
+                docsWeight[docSeries] = docRoot.treeWeight()
+        return docsWeight
+
+    def docSeriesSize(self):
+        docsSize = {}
+        for docType in self.documents.keys():
+            for docSeries in self.documents[docType].keys():
+                docRoot = self.documents[docType][docSeries]
+                docsSize[docSeries] = docRoot.treeSize()
+        return docsSize
+
+    def deleteEmptySeries(self):
+        emptySeries = {}
+        for docType in self.documents.keys():
+            emptySeries[docType] = []
+            for docSeries in self.documents[docType].keys():
+                if self.documents[docType][docSeries] == None:
+                    emptySeries[docType].append(docSeries)
+        for docType in emptySeries.keys():
+            for docSeries in emptySeries[docType]:
+                del self.documents[docType][docSeries]
+
+class KnowledgeDomain():
+    clauseIndex = None
+    def __init__(self, domain, documents, clauseIndex):
+        self.domain = domain
+        self.docTree = DocTree(documents)
+        if KnowledgeDomain.clauseIndex == None:
+            KnowledgeDomain.clauseIndex = clauseIndex
+
+    def __str__(self):
+        return json.dumps(
+                self,
+                default=lambda o: o.__dict__,
+                sort_keys=True,
+                indent=4)
+
+    def addClause(self, clause, rootID):
+        parentID = clause.parentID()
+        clause.domain = self.domain
+        if parentID != None:
+            if parentID in KnowledgeDomain.clauseIndex.keys():
+                parentClause = KnowledgeDomain.clauseIndex[parentID]
+                parentClause.addSubClauseRef(clause.id())
+            else:
+                logger.warning(f'parent clause not present {parentID}')
+        else:
+            self.docTree.addRootClause(self.domain, clause, rootID)
+
+    def seriesWeight(self,docSeries):
+        for doc in self.docTree.listDocsInTree():
+            if doc in KnowledgeDomain.clauseIndex:
+                clause = KnowledgeDomain.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = KnowledgeDomain.clauseIndex[short]
+            if clause.structure.docSeries == docSeries:
+                return clause.treeWeight()
+        return 0
+
+    def seriesSize(self,docSeries):
+        for doc in self.docTree.listDocsInTree():
+            if doc in KnowledgeDomain.clauseIndex:
+                clause = KnowledgeDomain.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = KnowledgeDomain.clauseIndex[short]
+            if clause.structure.docSeries == docSeries:
+                return clause.treeSize()
+        return 0
+
+    def dumpKnowledgeHeadings(self):
+        for doc in self.docTree.listDocsInTree():
+            if doc in KnowledgeDomain.clauseIndex:
+                clause = KnowledgeDomain.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = KnowledgeDomain.clauseIndex[short]
+            clause.dumpHeadingData()
+
+    def dumpKnowledgeTexts(self):
+        for doc in self.docTree.listDocsInTree():
+            if doc in KnowledgeDomain.clauseIndex:
+                clause = KnowledgeDomain.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = KnowledgeDomain.clauseIndex[short]
+            clause.dumpTextData()
+
+    def printKnowledgeTexts(self):
+        for doc in self.docTree.listDocsInTree():
+            if doc in KnowledgeDomain.clauseIndex:
+                clause = KnowledgeDomain.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = KnowledgeDomain.clauseIndex[short]
+            clause.printText()
+
+domainDocuments0 = {
+        'automotive' : { 'standard' : { 'ISO 26262' : None, 'ISO PAS 8926' : None },
+                         'generic' : {} },
+        'industry' : { 'standard' : { 'IEC 61508' : None },
+                       'generic' : {} },
+        'railway' : { 'standard' : {
+                                      'EN 50126' : None,
+                                      'EN 50128' : None,
+                                      'EN 50129' : None,
+                                      'EN 50657' : None,
+                                      'EN 50716' : None },
+                       'generic' : {} },
+        'generic' : { 'standard' : {},
+                      'generic' : {} }
+
+        }
+domainDocuments = {
+        'infotec' : { 'standard' : { 'IEC 11889' : None },
+                       'generic' : {} },
+        }
+
+def load_content_structure(contentfile=args.content):
+  with open(contentfile, newline='') as csvfile:
+    tocreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+    for row in tocreader:
+        entry = {}
+        standard = ''
+        chapter = ''
+        logger.debug(row)
+        clauseID = row[2]
+        title = row[3]
+        typeID = row[4]
+        match = iso_regex.match(clauseID)
+        if match:
+            standard = match[1]
+            if match[2] == '':
+                part = ""
+                partNr = 'x'
+            else:
+                part = " part "+match[2]
+                partNr = match[2]
+            chapter = match[3]
+        else:
+            logger.warning(f'parse error for row {row}')
+            continue
+        clause = Clause(clauseID, title, clauseType=typeID)
+        clauseIndex[clauseID] = clause
+        docSeries = standard.replace(" ", "")
+        for domain in domainDocuments.keys():
+            if standard in domainDocuments[domain]['standard'].keys():
+                if domain in knowledgeDomains.keys():
+                    knowledgeDomains[domain].addClause(clause, standard)
+                else:
+                    knowledgeDomains[domain] = KnowledgeDomain(domain,domainDocuments[domain],clauseIndex)
+                    knowledgeDomains[domain].addClause(clause, standard)
+
+        if not docSeries in DocTree.chapterIndex:
+            DocTree.chapterIndex[docSeries] = {}
+        if not partNr in DocTree.chapterIndex[docSeries]:
+            DocTree.chapterIndex[docSeries][partNr]={}
+        DocTree.chapterIndex[docSeries][partNr][chapter]=clauseID
+
+        depth=chapter.count('.')
+        entry['clauseID'] = clauseID
+        entry['depth'] = depth
+        entry['title'] = title
+        entry['typeID'] = typeID
+        if depth == 0:
+            context = 'is top level content'
+        elif depth == 1:
+            parent_idx = chapter.rpartition('.')[0]
+            context = f"is a subclause of clause \"{content[standard][partNr][parent_idx]['title']}\""
+        else:
+            parent_idx = chapter.rpartition('.')[0]
+            top_idx = chapter.partition('.')[0]
+            context = f"is contained in subclause \"{content[standard][partNr][parent_idx]['title']}\" under \"{content[standard][partNr][top_idx]['title']}\""
+            # context = f"is part of \"{content[standard][partNr][parent_idx]['title']}\", which {content[standard][partNr][parent_idx]['context']}"
+        entry['context'] = context
+        if not standard in content:
+            content[standard]={}
+            status[standard]={}
+        if not partNr in content[standard]:
+            content[standard][partNr]={}
+            status[standard][partNr]={}
+        content[standard][partNr][chapter]=entry
+        status[standard][partNr][chapter]={}
+        
+        # print("{} \"{}\" is a {} of \"{}{}\" and {}.".format(clauseID, title, typedict[typeID], standard, part, context))
+
+docstore = {}
+
+def parse_md_content():
+  for standard in content.keys():
+    std = standard.replace(" ", "")
+    sec_head_pattern = r'^#+\s+([1-9A-Z][0-9.]*)\s?$|^#+\s+([1-9A-Z][0-9.]*)\s(.*)'
+    sec_head_regex = re.compile(sec_head_pattern)
+    for partNr in content[standard].keys():
+        if partNr == 'x':
+            ptex = ''
+        else:
+            ptex = f"-{partNr}"
+
+        inputfile="markdown/"+std+ptex+".md"
+        outputfile="markdown/"+std+ptex+"-gen.md"
+        try:
+            with open(inputfile, 'r') as indata:
+                docstore[std]={}
+                status[standard][partNr]['status'] = 'parsed'
+                clauseID = ''
+                linebuffer = []
+                for line in indata:
+                    line = line.rstrip()
+                    chapter = ''
+                    title = ''
+                    if re.match('^#',line):
+                        line = line.replace("Annex ", "")
+                        match = sec_head_regex.match(line)
+                        if match:
+                            if match[1]:
+                                chapter = match[1].rstrip('.')
+                            elif match[2]:
+                                chapter = match[2].rstrip('.')
+                                title = match[3]
+                        else:
+                            logger.info(f"header without match:\n\t{line}")
+                            continue
+                        if not chapter in DocTree.chapterIndex[std][partNr]:
+                            logger.info(f"chapter without match: {std} {partNr} {chapter}\n\t{line}")
+                            continue
+                        clauseID = DocTree.chapterIndex[std][partNr][chapter]
+                        clause = KnowledgeDomain.clauseIndex[clauseID]
+                        if title != '':
+                            clause.heading.addAlternative(title, 'parsed', std+ptex+".md")
+
+
+                        if chapter in content[standard][partNr].keys():
+                            # clauseID = content[standard][partNr][chapter]['clauseID']
+                            clauseTitle = content[standard][partNr][chapter]['title']
+                            clauseType = content[standard][partNr][chapter]['typeID']
+                            clauseDepth = content[standard][partNr][chapter]['depth']
+                            clauseContext = content[standard][partNr][chapter]['context']
+                            status[standard][partNr][chapter]['status'] = 'matched' 
+                        else:
+                            logger.info(f"chapter without match: {clauseID}\n\t{line}")
+                            continue
+                        docstore[std][clauseID] = {}
+                        docstore[std][clauseID]['text']=[]
+                        content[standard][partNr][chapter]['text']=[]
+                        docstore[std][clauseID]['context']=clauseContext
+                        docstore[std][clauseID]['type']=clauseType
+                        docstore[std][clauseID]['chapter']=chapter
+                        if title != '':
+                            docstore[std][clauseID]['title']=title
+                            if title != clauseTitle and clauseTitle not in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ):
+                                logger.warning(f"clause title mismatch: {clauseID}\n\t{title}\n\t{clauseTitle}")
+                        elif clauseTitle not in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ):
+                            logger.info(f'overriding missing title for {clauseID} with clauseTitle {clauseTitle}')
+                            docstore[std][clauseID]['title']=clauseTitle
+                        else:
+                            logger.warning(f'no title found for {clauseID}')
+                            docstore[std][clauseID]['title']='none'
+                    elif clauseID != '':
+                        clause = KnowledgeDomain.clauseIndex[clauseID]
+                        clause.addText(line)
+                        docstore[std][clauseID]['text'].append(line)
+                        chapter=docstore[std][clauseID]['chapter']
+                        content[standard][partNr][chapter]['text'].append(line)
+                
+        except IOError as e:
+            logger.warning(f"file open error: {e}")
+
+def missed_headers():
+    for standard in content.keys():
+        for partNr in content[standard].keys():
+            if not 'status' in status[standard][partNr]:
+                continue
+            for chapter in content[standard][partNr].keys():
+                if 'status' in status[standard][partNr][chapter]:
+                    idx_status = status[standard][partNr][chapter]['status']
+                    continue
+                # logger.warning(f'missing MD heading {content[standard][partNr][chapter]['clauseID']}')
+                print(f"missing MD heading for {standard} {partNr} clause {chapter}")
+
+bulk_headings="bulk_headings"
+new_headings="new_headings"
+
+def generate_headings():
+  for std in docstore.keys():
+    llama_hl_pattern = r'^[^"]*"(.+)"\W?$'
+    offer_regex = re.compile(llama_hl_pattern)
+    for clauseID in docstore[std].keys():
+        title = docstore[std][clauseID]['title']
+        offer = []
+        if title == 'none':
+            print('.', end='', flush=True)
+            clauseType=typedict[docstore[std][clauseID]['type']]
+            text = ' '.join(docstore[std][clauseID]['text'])
+            while len(offer)==0:
+                # response = ollama.generate(model='nemotron',
+                # response = ollama.generate(model='llama3.1',
+                response = ollama.generate(model='granite3-moe',
+                # response = ollama.generate(model='granite3-dense',
+                # response = ollama.generate(model='hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF',
+                                      prompt=f"create a max 3 word headline for the following {clauseType}: {text}")
+                # print(response['response'])
+                for line in response['response'].splitlines():
+                    match = offer_regex.match(line)
+                    if match:
+                        offer.append(match[1])
+                if len(offer)==0:
+                    print(f"no offer for {clauseID} in response\n>{response['response']}<")
+            title = offer[0]
+            docstore[std][clauseID]['title'] = title
+
+def generate_alternative_headings():
+ with open(new_headings, 'w') as store:
+    nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s.&-/]+)\*+'
+    offer_regex = re.compile(nemotron_hl_pattern)
+    for clauseID in KnowledgeDomain.clauseIndex.keys():
+        clause = KnowledgeDomain.clauseIndex[clauseID]
+        if clause.heading.isSpecific():
+            continue
+        text = clause.text
+        if len(text) == 0:
+            continue
+        title = clause.heading.display
+        print('.', end='', flush=True)
+        offer = []
+        store.write(f"# {clauseID}\n")
+        while len(offer)==0:
+            response = ollama.generate(model='nemotron',
+                                  prompt=f"create a max 3 word heading for the following {clause.type}: {text}")
+            store.write(response['response'])
+            store.write("\n\n")
+            for line in response['response'].splitlines():
+                match = offer_regex.match(line)
+                if match:
+                    offer.append(match[1])
+        for i in range(len(offer)):
+            clause.heading.addAlternative(offer[i], 'generated', 'nemotron')
+
+def generate_interactive_headings():
+ with open(new_headings, 'w') as store:
+  for std in docstore.keys():
+    nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s]+)\*+'
+    llama_hl_pattern = r'^"([\w\s]+)"'
+    # offer_regex = re.compile(nemotron_hl_pattern)
+    offer_regex = re.compile(llama_hl_pattern)
+    for clauseID in docstore[std].keys():
+        title = docstore[std][clauseID]['title']
+        if title == 'none':
+            clauseType=typedict[docstore[std][clauseID]['type']]
+            text = ' '.join(docstore[std][clauseID]['text'])
+            print(f"missing heading for {clauseID}\n")
+            print(text)
+            print("\n")
+            answer=0
+            offer = []
+            while int(answer)<1 or int(answer)>len(offer):
+                # response = ollama.generate(model='nemotron',
+                # response = ollama.generate(model='llama3.1',
+                response = ollama.generate(model='granite3-moe',
+                # response = ollama.generate(model='granite3-dense',
+                # response = ollama.generate(model='hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF',
+                                      prompt=f"create a max 3 word headline for the following {clauseType}: {text}")
+                print(response['response'])
+                offer = []
+                for line in response['response'].splitlines():
+                    match = offer_regex.match(line)
+                    if match:
+                        offer.append(match[1])
+                for i in range(len(offer)):
+                    print(i+1,"   ",offer[i])
+                answer = input("make your choice: ")
+                if answer == 'exit':
+                    store.close()
+                    sys.exit()
+                elif answer == '':
+                    answer = 0
+            title = offer[int(answer)-1]
+        md5hash = hashlib.md5(clauseID.encode('utf-8')).hexdigest()
+        entry = f"TOC;{md5hash};{clauseID};{title};{docstore[std][clauseID]['type']}\n"
+        print(entry)
+        store.write(entry)
+
+def generate_bulk_headings():
+ with open(new_headings, 'w') as store:
+  for std in docstore.keys():
+    nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s]+)\*+'
+    llama_hl_pattern = r'^"([\w\s]+)"'
+    offer_regex = re.compile(nemotron_hl_pattern)
+    # offer_regex = re.compile(llama_hl_pattern)
+    for clauseID in docstore[std].keys():
+        title = docstore[std][clauseID]['title']
+        if title == 'none':
+            print('.', end='', flush=True)
+            clauseType=typedict[docstore[std][clauseID]['type']]
+            text = ' '.join(docstore[std][clauseID]['text'])
+            store.write(f"# {clauseID}\n")
+            response = ollama.generate(model='nemotron',
+            # response = ollama.generate(model='llama3.1',
+                                  prompt=f"create a max 3 word heading for the following {clauseType}: {text}")
+            store.write(response['response'])
+            store.write("\n\n")
+
+def select_from_offer(std, clauseID, offer=[]):
+    nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s]+)\*+'
+    offer_regex = re.compile(nemotron_hl_pattern)
+    for i in range(len(offer)):
+        print(i+1,"   ",offer[i])
+    answer = input("make your choice: ")
+    if answer == 'exit':
+        sys.exit()
+    elif len(answer) > 7:
+        print(f"returning custom answer {answer}")
+        return answer
+    elif answer == '':
+        answer = 0
+    while int(answer)<1 or int(answer)>len(offer):
+        clauseType=typedict[docstore[std][clauseID]['type']]
+        text = ' '.join(docstore[std][clauseID]['text'])
+        response = ollama.generate(model='nemotron',
+                                   prompt=f"create a max 3 word headline for the following {clauseType}: {text}")
+        offer = []
+        for line in response['response'].splitlines():
+            match = offer_regex.match(line)
+            if match:
+                offer.append(match[1])
+            for i in range(len(offer)):
+                print(i+1,"   ",offer[i])
+            answer = input("make your choice: ")
+            if answer == 'exit':
+                sys.exit()
+            elif len(answer) > 7:
+                print(f"returning custom answer {answer}")
+                return answer
+            elif answer == '':
+                answer = 0
+            else:
+                print(f"standard answer {answer}")
+    return offer[int(answer)-1]
+
+
+def alternatives_from_bulk_headings():
+   with open(bulk_headings, 'r') as bulk:
+       nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s.&]+)\*+'
+       offer_regex = re.compile(nemotron_hl_pattern)
+       std = ''
+       clauseID = ''
+       text = ''
+       offer = []
+       for line in bulk:
+           if re.match('^#',line):
+               clauseID = line[2:].rstrip()
+           else:
+               match = offer_regex.match(line)
+               if match:
+                   clause = clauseIndex[clauseID] 
+                   display = clause.heading.display
+                   clause.heading.addAlternative(match[1], 'generated', 'nemotron')
+
+def process_bulk_headings():
+   with open(bulk_headings, 'r') as bulk:
+     with open(new_headings, 'w') as select:
+       nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s]+)\*+'
+       llama_hl_pattern = r'^"([\w\s]+)"'
+       offer_regex = re.compile(nemotron_hl_pattern)
+       # offer_regex = re.compile(llama_hl_pattern)
+       std = ''
+       clauseID = ''
+       text = ''
+       offer = []
+       for line in bulk:
+           if re.match('^#',line):
+               if len(offer) > 0:
+                   print(f"\nSelect heading for {clauseID} text\n")
+                   print(text,"\n")
+                   heading = select_from_offer(std, clauseID, offer)
+                   docstore[std][clauseID]['title'] = heading
+                   md5hash = hashlib.md5(clauseID.encode('utf-8')).hexdigest()
+                   entry = f"TOC;{md5hash};{clauseID};{heading};{docstore[std][clauseID]['type']}\n"
+                   print(entry)
+                   select.write(entry)
+               clauseID = line[2:].rstrip()
+               match = iso_regex.match(clauseID)
+               if match:
+                   standard = match[1]
+                   std = standard.replace(" ", "")
+                   if match[2] == '':
+                       part = ""
+                       partNr = 'x'
+                   else:
+                       part = " part "+match[2]
+                       partNr = match[2]
+                   chapter = match[3]
+                   text = ' '.join(docstore[std][clauseID]['text'])
+                   answer=0
+                   offer = []
+               else:
+                   print(f'bulk parse error for line {line}')
+                   continue
+           else:
+               match = offer_regex.match(line)
+               if match:
+                   offer.append(match[1])
+
+
+def write_md_documents():
+    for standard in content.keys():
+        std = standard.replace(" ", "")
+        if not std in docstore.keys():
+            continue
+        for partNr in  content[standard].keys():
+            if not 'status' in status[standard][partNr]:
+                continue
+            if partNr == 'x':
+                ptex = ''
+            else:
+                ptex = f"-{partNr}"
+            md_document="markdown/"+std+ptex+"-gen.md"
+            with open(md_document, 'w') as output:
+                print(f"writing {md_document}")
+                for chapter in natsorted(content[standard][partNr]):
+                    clauseID = content[standard][partNr][chapter]['clauseID']
+                    print(f"working on {standard}~{partNr}~{std}~{chapter}")
+                    if clauseID in docstore[std].keys():
+                        title = docstore[std][clauseID]['title']
+                    else:
+                        title = content[standard][partNr][chapter]['title']
+                    text = ''
+                    if 'text' in content[standard][partNr][chapter].keys():
+                        text = '\n'.join(content[standard][partNr][chapter]['text'])
+                    depth = int(content[standard][partNr][chapter]['depth'])+1
+                    context = content[standard][partNr][chapter]['context']
+                    heading = '#' * depth
+                    heading += ' '
+                    heading += chapter
+                    heading += ' '
+                    heading += title
+                    # print(f"writing {heading}")
+                    output.write(heading)
+                    output.write(text)
+                    output.write('\n')
+            output.close()
+
+def dumpClauseIndex():
+    return json.dumps(
+            KnowledgeDomain.clauseIndex,
+            default=lambda o: o.__dict__,
+            sort_keys=True,
+            indent=4)
+
+if __name__ == '__main__':
+    load_content_structure()
+    parse_md_content()
+    alternatives_from_bulk_headings()
+    missed_headers()
+    # generate_headings()
+    # generate_interactive_headings()
+    # generate_alternative_headings()
+    # generate_bulk_headings()
+    # process_bulk_headings()
+    # write_md_documents()
+    for domain in knowledgeDomains:
+        knowledgeDomains[domain].docTree.deleteEmptySeries()
+        # print(knowledgeDomains[domain])
+        knowledgeDomains[domain].dumpKnowledgeHeadings()
+        # knowledgeDomains[domain].dumpKnowledgeTexts()
+        # knowledgeDomains[domain].printKnowledgeTexts()
+        # print(knowledgeDomains[domain].docTree.docSeriesWeight())
+        # print(knowledgeDomains[domain].docTree.docSeriesSize())
+    # print(dumpClauseIndex())
