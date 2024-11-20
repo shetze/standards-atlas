@@ -9,6 +9,9 @@ import hashlib
 import ollama
 import json
 from natsort import natsorted
+from IntelliDoc.Clause import Clause, ClauseID, ClauseHeading
+from IntelliDoc.KnowledgeDomain import KnowledgeDomain, DocTree
+from IntelliDoc.HeadingFactory import HeadingFactory
 
 parser = argparse.ArgumentParser(
         prog='tokenize_standard',
@@ -23,7 +26,7 @@ parser.add_argument('-b', '--bulk', help='Bulk mode for heading generation, work
 
 args = parser.parse_args()
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('IntelliDoc')
 logging.basicConfig(filename='Tokenizer.log', level=logging.INFO)
 content = {}
 status = {}
@@ -45,369 +48,7 @@ typedict = {
 iso_pattern = r'([A-Z\s]+\s+\d\d\d\d\d?)-?(\d*):\d\d\d\d\s+([1-9A-Z][0-9.]*)'
 iso_regex = re.compile(iso_pattern)
 
-class ClauseHeading():
-    def __init__(self, displayHeading):
-        self.display = displayHeading
-        self.alternatives = {}
-        self.state = 'loaded'
-
-    def addAlternative(self, heading, status, source):
-        if heading in self.alternatives.keys():
-            return
-        self.alternatives[heading]={}
-        self.alternatives[heading]['status'] = status
-        self.alternatives[heading]['source'] = source
-        if status == 'parsed' and self.display in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ):
-            self.display = heading
-            self.state = 'parsed'
-
-    def isSpecific(self):
-        if self.display == '':
-            return False
-        if self.display in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ) and self.alternatives == {}:
-            return False
-        else:
-            return True
-
-    def getBestHeading(self):
-        heading = self.display
-        if heading in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ):
-            for alternative in self.alternatives.keys():
-                if self.alternatives[alternative]['status'] == 'selected':
-                    heading = alternative
-                    self.state = 'best selected'
-                    break
-                if self.alternatives[alternative]['status'] == 'generated':
-                    heading = alternative
-                    self.state = 'best generated'
-        return heading
-
-    def __str__(self):
-        return "{0} {1}".format(self.display, self.alternatives)
-
-class ClauseID():
-    clauseRegex = {}
-    def __init__(self, clauseID, docType):
-        clausePatterns = {
-                'standard' : r'([A-Z\s]+\s+\d\d\d\d\d?)-?(\d*):\d\d\d\d\s+([1-9A-Z]+[0-9.]*)',
-                'generic' : r'(\w+)-?(\d*)-([1-9A-Z]+[0-9.]*)'
-                }
-        self.ID = clauseID
-
-        if not docType in clausePatterns.keys():
-            logger.error(f"clauseID {clauseID} docType not supported: {docType}\n\tfalling back to generic")
-            docType = generic
-        self.docType = docType
-
-        if not docType in ClauseID.clauseRegex.keys():
-            regex = re.compile(clausePatterns[docType])
-            ClauseID.clauseRegex[docType] = regex
-
-        match = ClauseID.clauseRegex[docType].match(self.ID)
-        if match:
-            self.docSeries = match[1].replace(" ", "")
-            self.seriesPart = match[2]
-            self.chapter = match[3]
-            self.level = self.chapter.count('.')+1
-        else:
-            logger.warning(f"no match for clauseID {clauseID} docType {docType}")
-            self.docSeries = self.ID
-            self.seriesPart = ''
-            self.chapter = '0.0'
-            self.level = 0
-
-    def docSeries(self):
-        return self.docSeries.replace(" ", "")
-
-    def multipartSeries(self):
-        if self.seriesPart == '':
-            return False
-        else:
-            return True
-
-    def parentID(self):
-        if self.level > 1:
-            return self.ID.rpartition('.')[0]
-        else:
-            return None
-
-
-    def __str__(self):
-        return "{0} {1} {2}".format(self.ID, self.docSeries, self.chapter)
-
-class Clause():
-    def __init__(self, clauseID, clauseHeading = 'Clause', clauseType = 'c', docType = 'standard', domain = 'generic'):
-        self.structure = ClauseID(clauseID, docType)
-        self.type = clauseType
-        self.heading = ClauseHeading(clauseHeading)
-        self.domain = domain
-        self.keywords = []
-        self.subclauses = []
-        self.text = []
-        self.summary = []
-
-    def __str__(self):
-        headline = '#' * self.structure.level
-        headline += ' '
-        headline += self.structure.ID
-        headline += ' '
-        headline += self.heading.getBestHeading()
-        body = '\n'.join(self.text)
-        return f"{headline}\n\n{body.strip()}"
-
-    def clauseType(self):
-        typedict = {
-                'u' : 'text',
-                'r' : 'requirement',
-                's' : 'scope definition',
-                'o' : 'objective',
-                't' : 'term definition',
-                'c' : 'clause',
-                'x' : 'root',
-                }
-        return typedict[self.type]
-
-    def id(self):
-        return self.structure.ID
-
-    def docType(self):
-        return self.structure.docType
-
-    def seriesPart(self):
-        return self.structure.seriesPart
-
-    def multipartSeries(self):
-        return self.structure.multipartSeries()
-
-    def docSeries(self):
-        return self.structure.docSeries
-
-    def addText(self, line):
-        self.text.append(line)
-
-    def getText(self):
-        return '\n'.join(self.text)
-
-    def parentID(self):
-        return self.structure.parentID()
-
-    def hasSubClauseRef(self, clauseID):
-        if clauseID in self.subclauses:
-            return True
-        else:
-            return False
-
-    def treeSize(self):
-        size = 1
-        for clauseID in self.subclauses:
-            clause = KnowledgeDomain.clauseIndex[clauseID]
-            size += clause.treeSize()
-        return size
-
-    def treeWeight(self):
-        weight = len(" ".join(self.text))
-        for clauseID in self.subclauses:
-            clause = KnowledgeDomain.clauseIndex[clauseID]
-            weight += clause.treeWeight()
-        return weight
-
-    def addSubClauseRef(self, clause):
-        if clause in self.subclauses:
-            logger.info(f'multiple addSubClause for {clause} in {self.structure}')
-        self.subclauses.append(clause)
-
-    def printText(self):
-        print(self)
-        for clauseID in self.subclauses:
-            if clauseID in KnowledgeDomain.clauseIndex.keys():
-                clause = KnowledgeDomain.clauseIndex[clauseID]
-                clause.printText()
-
-    def dumpTextData(self):
-        myID = self.structure.ID
-        md5hash = hashlib.md5(myID.encode('utf-8')).hexdigest()
-        heading = self.heading.getBestHeading()
-        text = '~'.join(self.text)
-        entry = f"TEXT;{md5hash};{myID};{heading};\"{text}\""
-        print(entry)
-        for clauseID in self.subclauses:
-            if clauseID in KnowledgeDomain.clauseIndex.keys():
-                clause = KnowledgeDomain.clauseIndex[clauseID]
-                clause.dumpTextData()
-            else:
-                print(f"clauseIndex key error for {clauseID}")
-
-    def dumpHeadingData(self):
-        myID = self.structure.ID
-        md5hash = hashlib.md5(myID.encode('utf-8')).hexdigest()
-        heading = self.heading.getBestHeading()
-        clauseType = self.type
-        if self.heading.state != 'loaded' and self.heading.state != 'parsed' :
-            clauseType = self.type.upper()
-        entry = f"TOC;{md5hash};{myID};{heading};{clauseType}"
-        print(entry)
-        for clauseID in self.subclauses:
-            if clauseID in KnowledgeDomain.clauseIndex.keys():
-                clause = KnowledgeDomain.clauseIndex[clauseID]
-                clause.dumpHeadingData()
-            else:
-                print(f"clauseIndex key error for {clauseID}")
-
-class DocTree():
-    chapterIndex = None
-    def __init__(self, documents):
-        self.documents = documents
-        self.misses = 0
-        if DocTree.chapterIndex == None:
-            DocTree.chapterIndex = {}
-            for docType in self.documents.keys():
-                for docSeries in self.documents[docType].keys():
-                    DocTree.chapterIndex[docSeries] = {} 
-
-    def addRootClause(self, domain, clause, rootID):
-        docType = clause.docType()
-        if not docType in self.documents.keys():
-            logger.warning(f'unexpected new docType for {clause}')
-            self.documents[docType]={}
-        docSeries = clause.docSeries()
-        rootTitle = f"Root Clause for {rootID}"
-        linkClause = None
-        if not docSeries in self.documents[docType].keys() or self.documents[docType][docSeries] == None:
-            rootClause = Clause(rootID, rootTitle, clauseType='x', domain=domain)
-            rootClause.structure.seriesPart = 'rootClause'
-            self.documents[docType][docSeries] = rootClause
-            KnowledgeDomain.clauseIndex[docSeries] = rootClause
-        if clause.multipartSeries():
-            part = clause.seriesPart()
-            partTitle = f"Part {part} Clause for {rootID}"
-            partClauseID = rootID+"-"+part
-            rootClause = self.documents[docType][docSeries]
-            if not rootClause.hasSubClauseRef(partClauseID):
-                partClause = Clause(partClauseID, partTitle, clauseType='x', domain=domain)
-                partClause.structure.seriesPart = 'partRoot'
-                KnowledgeDomain.clauseIndex[partClauseID] = partClause
-                partClause.addSubClauseRef(clause.id())
-                rootClause.addSubClauseRef(partClauseID)
-            else:
-                partClause = KnowledgeDomain.clauseIndex[partClauseID]
-                partClause.addSubClauseRef(clause.id())
-        else:
-            rootClause = self.documents[docType][docSeries]
-            if not rootClause.hasSubClauseRef(clause.id()):
-                rootClause.addSubClauseRef(clause.id())
-
-    def listDocsInTree(self):
-        docsList = []
-        for docType in self.documents.keys():
-            for docSeries in self.documents[docType].keys():
-                docRoot = self.documents[docType][docSeries]
-                docsList.append(docRoot.id())
-        return docsList
-
-    def docSeriesWeight(self):
-        docsWeight = {}
-        for docType in self.documents.keys():
-            for docSeries in self.documents[docType].keys():
-                docRoot = self.documents[docType][docSeries]
-                docsWeight[docSeries] = docRoot.treeWeight()
-        return docsWeight
-
-    def docSeriesSize(self):
-        docsSize = {}
-        for docType in self.documents.keys():
-            for docSeries in self.documents[docType].keys():
-                docRoot = self.documents[docType][docSeries]
-                docsSize[docSeries] = docRoot.treeSize()
-        return docsSize
-
-    def deleteEmptySeries(self):
-        emptySeries = {}
-        for docType in self.documents.keys():
-            emptySeries[docType] = []
-            for docSeries in self.documents[docType].keys():
-                if self.documents[docType][docSeries] == None:
-                    emptySeries[docType].append(docSeries)
-        for docType in emptySeries.keys():
-            for docSeries in emptySeries[docType]:
-                del self.documents[docType][docSeries]
-
-class KnowledgeDomain():
-    clauseIndex = None
-    def __init__(self, domain, documents, clauseIndex):
-        self.domain = domain
-        self.docTree = DocTree(documents)
-        if KnowledgeDomain.clauseIndex == None:
-            KnowledgeDomain.clauseIndex = clauseIndex
-
-    def __str__(self):
-        return json.dumps(
-                self,
-                default=lambda o: o.__dict__,
-                sort_keys=True,
-                indent=4)
-
-    def addClause(self, clause, rootID):
-        parentID = clause.parentID()
-        clause.domain = self.domain
-        if parentID != None:
-            if parentID in KnowledgeDomain.clauseIndex.keys():
-                parentClause = KnowledgeDomain.clauseIndex[parentID]
-                parentClause.addSubClauseRef(clause.id())
-            else:
-                logger.warning(f'parent clause not present {parentID}')
-        else:
-            self.docTree.addRootClause(self.domain, clause, rootID)
-
-    def seriesWeight(self,docSeries):
-        for doc in self.docTree.listDocsInTree():
-            if doc in KnowledgeDomain.clauseIndex:
-                clause = KnowledgeDomain.clauseIndex[doc]
-            else:
-                short = doc.replace(" ", "")
-                clause = KnowledgeDomain.clauseIndex[short]
-            if clause.structure.docSeries == docSeries:
-                return clause.treeWeight()
-        return 0
-
-    def seriesSize(self,docSeries):
-        for doc in self.docTree.listDocsInTree():
-            if doc in KnowledgeDomain.clauseIndex:
-                clause = KnowledgeDomain.clauseIndex[doc]
-            else:
-                short = doc.replace(" ", "")
-                clause = KnowledgeDomain.clauseIndex[short]
-            if clause.structure.docSeries == docSeries:
-                return clause.treeSize()
-        return 0
-
-    def dumpKnowledgeHeadings(self):
-        for doc in self.docTree.listDocsInTree():
-            if doc in KnowledgeDomain.clauseIndex:
-                clause = KnowledgeDomain.clauseIndex[doc]
-            else:
-                short = doc.replace(" ", "")
-                clause = KnowledgeDomain.clauseIndex[short]
-            clause.dumpHeadingData()
-
-    def dumpKnowledgeTexts(self):
-        for doc in self.docTree.listDocsInTree():
-            if doc in KnowledgeDomain.clauseIndex:
-                clause = KnowledgeDomain.clauseIndex[doc]
-            else:
-                short = doc.replace(" ", "")
-                clause = KnowledgeDomain.clauseIndex[short]
-            clause.dumpTextData()
-
-    def printKnowledgeTexts(self):
-        for doc in self.docTree.listDocsInTree():
-            if doc in KnowledgeDomain.clauseIndex:
-                clause = KnowledgeDomain.clauseIndex[doc]
-            else:
-                short = doc.replace(" ", "")
-                clause = KnowledgeDomain.clauseIndex[short]
-            clause.printText()
-
-domainDocuments0 = {
+domainDocuments = {
         'automotive' : { 'standard' : { 'ISO 26262' : None, 'ISO PAS 8926' : None },
                          'generic' : {} },
         'industry' : { 'standard' : { 'IEC 61508' : None },
@@ -423,7 +64,7 @@ domainDocuments0 = {
                       'generic' : {} }
 
         }
-domainDocuments = {
+domainDocuments1 = {
         'infotec' : { 'standard' : { 'IEC 11889' : None },
                        'generic' : {} },
         }
@@ -537,7 +178,7 @@ def parse_md_content():
                             logger.info(f"chapter without match: {std} {partNr} {chapter}\n\t{line}")
                             continue
                         clauseID = DocTree.chapterIndex[std][partNr][chapter]
-                        clause = KnowledgeDomain.clauseIndex[clauseID]
+                        clause = Clause.clauseIndex[clauseID]
                         if title != '':
                             clause.heading.addAlternative(title, 'parsed', std+ptex+".md")
 
@@ -569,7 +210,7 @@ def parse_md_content():
                             logger.warning(f'no title found for {clauseID}')
                             docstore[std][clauseID]['title']='none'
                     elif clauseID != '':
-                        clause = KnowledgeDomain.clauseIndex[clauseID]
+                        clause = Clause.clauseIndex[clauseID]
                         clause.addText(line)
                         docstore[std][clauseID]['text'].append(line)
                         chapter=docstore[std][clauseID]['chapter']
@@ -625,8 +266,8 @@ def generate_alternative_headings():
  with open(new_headings, 'w') as store:
     nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s.&-/]+)\*+'
     offer_regex = re.compile(nemotron_hl_pattern)
-    for clauseID in KnowledgeDomain.clauseIndex.keys():
-        clause = KnowledgeDomain.clauseIndex[clauseID]
+    for clauseID in Clause.clauseIndex.keys():
+        clause = Clause.clauseIndex[clauseID]
         if clause.heading.isSpecific():
             continue
         text = clause.text
@@ -854,15 +495,23 @@ def write_md_documents():
 
 def dumpClauseIndex():
     return json.dumps(
-            KnowledgeDomain.clauseIndex,
+            Clause.clauseIndex,
             default=lambda o: o.__dict__,
             sort_keys=True,
             indent=4)
 
 if __name__ == '__main__':
+    # options depend on the locally loaded models for ollama. Examples include:
+    #   'llama3.1'          fast, generates up to three alternatives
+    #   'nemotron'          slow, generates three to five alternatives, best quality
+    #   'granite3-moe'      fast, generates one heading, ignores the word limit
+    #   'granite3-dense'    fast, generates one and occasionally more headings, ignores the word limit
+    #   'hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF'    multiline free dialog response
+    heading_factory=HeadingFactory('nemotron')
     load_content_structure()
     parse_md_content()
-    alternatives_from_bulk_headings()
+    heading_factory.load_alternatives_from_file('bulk_headings')
+    # heading_factory.headings4all(cacheFile='new_headings', verbose=True)
     missed_headers()
     # generate_headings()
     # generate_interactive_headings()
@@ -873,7 +522,8 @@ if __name__ == '__main__':
     for domain in knowledgeDomains:
         knowledgeDomains[domain].docTree.deleteEmptySeries()
         # print(knowledgeDomains[domain])
-        knowledgeDomains[domain].dumpKnowledgeHeadings()
+        # knowledgeDomains[domain].dumpKnowledgeHeadings()
+        knowledgeDomains[domain].ingestDomainClauses()
         # knowledgeDomains[domain].dumpKnowledgeTexts()
         # knowledgeDomains[domain].printKnowledgeTexts()
         # print(knowledgeDomains[domain].docTree.docSeriesWeight())
