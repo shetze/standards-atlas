@@ -5,6 +5,8 @@ from IntelliDoc.VectorStore import VectorStore
 from IntelliDoc.Embedding import EmbeddingEngine
 from IntelliDoc.ClauseStore import ClauseStore
 from IntelliDoc.ClauseIngestor import ClauseIngestor
+from IntelliDoc.ClauseRetriever import ClauseRetriever
+from IntelliDoc.Summarizer import Summarizer
 
 class DocTree():
     chapterIndex = None
@@ -91,10 +93,12 @@ class KnowledgeDomain():
         if Clause.clauseIndex == None:
             Clause.clauseIndex = clauseIndex
         self.llm = LLM(model='llama3.1')
+        self.summarizer = Summarizer('llama3.1')
         self.vectorstore = VectorStore(domain=self.domain)
         self.embedding_engine = EmbeddingEngine(model='mxbai-embed-large')
         self.clausestore = ClauseStore(domain=self.domain)
         self.clauseingestor = ClauseIngestor(llm=self.llm, vectorstore=self.vectorstore, embedding_engine=self.embedding_engine, clausestore=self.clausestore, domain=self.domain)
+        self.clauseretriever = ClauseRetriever(llm=self.llm, vectorstore=self.vectorstore, embedding_engine=self.embedding_engine, clausestore=self.clausestore, domain=self.domain)
 
     def __str__(self):
         return json.dumps(
@@ -102,6 +106,9 @@ class KnowledgeDomain():
                 default=lambda o: o.__dict__,
                 sort_keys=True,
                 indent=4)
+
+    def retrieve(self, text):
+        return self.clauseretriever.retrieve(text, 5, 2)
 
     def ingestClause(self, clause):
         self.clauseingestor.ingest_clause(clause)
@@ -139,6 +146,23 @@ class KnowledgeDomain():
             if clause.structure.docSeries == docSeries:
                 return clause.treeSize()
         return 0
+
+    def dumpSumstore(self, cacheFile='sumstore.json'):
+        self.summarizer.dump_sumstore(cacheFile)
+
+    def relateClauses(self):
+        for clauseID in Clause.clauseIndex:
+            clause = Clause.clauseIndex[clauseID]
+            clause.relate(parent = None, retriever = self.clauseretriever)
+
+    def summarizeClauses(self, force = False, verbose = False):
+        for doc in self.docTree.listDocsInTree():
+            if doc in Clause.clauseIndex:
+                clause = Clause.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = Clause.clauseIndex[short]
+            clause.summarize(self.summarizer, force, verbose)
 
     def ingestDomainClauses(self):
         for doc in self.docTree.listDocsInTree():

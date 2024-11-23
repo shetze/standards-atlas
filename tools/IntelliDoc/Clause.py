@@ -1,8 +1,58 @@
 import re
 import logging
 import hashlib
+from IntelliDoc.Relationship import Relationship
 
 logger = logging.getLogger(__name__)
+
+alphabets= "([A-Za-z])"
+prefixes = "(Mr|St|Mrs|Ms|Dr)[.]"
+suffixes = "(Inc|Ltd|Jr|Sr|Co)"
+starters = "(Mr|Mrs|Ms|Dr|Prof|Capt|Cpt|Lt|He\s|She\s|It\s|They\s|Their\s|Our\s|We\s|But\s|However\s|That\s|This\s|Wherever)"
+acronyms = "([A-Z][.][A-Z][.](?:[A-Z][.])?)"
+websites = "[.](com|net|org|io|gov|edu|me)"
+digits = "([0-9])"
+multiple_dots = r'\.{2,}'
+
+def split_into_sentences(text):
+    """
+    Split the text into sentences.
+
+    If the text contains substrings "<prd>" or "<stop>", they would lead
+    to incorrect splitting because they are used as markers for splitting.
+
+    :param text: text to be split into sentences
+    :type text: str
+
+    :return: list of sentences
+    :rtype: list[str]
+    """
+    text = " " + text + "  "
+    text = text.replace("\n"," ")
+    text = re.sub(prefixes,"\\1<prd>",text)
+    text = re.sub(websites,"<prd>\\1",text)
+    text = re.sub(digits + "[.]" + digits,"\\1<prd>\\2",text)
+    text = re.sub(multiple_dots, lambda match: "<prd>" * len(match.group(0)) + "<stop>", text)
+    if "Ph.D" in text: text = text.replace("Ph.D.","Ph<prd>D<prd>")
+    text = re.sub("\s" + alphabets + "[.] "," \\1<prd> ",text)
+    text = re.sub(acronyms+" "+starters,"\\1<stop> \\2",text)
+    text = re.sub(alphabets + "[.]" + alphabets + "[.]" + alphabets + "[.]","\\1<prd>\\2<prd>\\3<prd>",text)
+    text = re.sub(alphabets + "[.]" + alphabets + "[.]","\\1<prd>\\2<prd>",text)
+    text = re.sub(" "+suffixes+"[.] "+starters," \\1<stop> \\2",text)
+    text = re.sub(" "+suffixes+"[.]"," \\1<prd>",text)
+    text = re.sub(" " + alphabets + "[.]"," \\1<prd>",text)
+    if "”" in text: text = text.replace(".”","”.")
+    if "\"" in text: text = text.replace(".\"","\".")
+    if "!" in text: text = text.replace("!\"","\"!")
+    if "?" in text: text = text.replace("?\"","\"?")
+    text = text.replace(".",".<stop>")
+    text = text.replace("?","?<stop>")
+    text = text.replace("!","!<stop>")
+    text = text.replace("<prd>",".")
+    sentences = text.split("<stop>")
+    sentences = [s.strip() for s in sentences]
+    if sentences and not sentences[-1]: sentences = sentences[:-1]
+    return sentences
 
 class ClauseHeading():
     def __init__(self, displayHeading):
@@ -101,10 +151,12 @@ class Clause():
         self.type = clauseType
         self.heading = ClauseHeading(clauseHeading)
         self.domain = domain
+        self.relSelf = False
         self.keywords = []
         self.subclauses = []
         self.text = []
         self.summary = []
+        self.relationships = {}
 
     def __str__(self):
         heading = '#' * self.structure.level
@@ -145,6 +197,10 @@ class Clause():
     def addText(self, line):
         self.text.append(line)
 
+    def getSentences(self):
+        text = ' '.join(self.text)
+        return split_into_sentences(text)
+
     def getText(self):
         text = ' '.join(self.text)
         return text.strip()
@@ -157,6 +213,11 @@ class Clause():
             return True
         else:
             return False
+
+    def wordCount(self):
+        text = ' '.join(self.text)
+        count = len(re.findall(r'\w+', text.strip()))
+        return count
 
     def treeSize(self):
         size = 1
@@ -177,6 +238,42 @@ class Clause():
             logger.info(f'multiple addSubClause for {clause} in {self.structure}')
         self.subclauses.append(clause)
 
+    def isSummarized(self):
+        if len(self.summary) > 0:
+            return True
+        else:
+            return False
+
+    def summarize(self, summarizer, force = False, verbose = False):
+        if self.isSummarized() and not force:
+            return self.summary
+        subtext = []
+        for clauseID in self.subclauses:
+            if clauseID in Clause.clauseIndex.keys():
+                subtext.append("\n")
+                clause = Clause.clauseIndex[clauseID]
+                subtext += clause.summarize(summarizer, force, verbose)
+        text = []
+        text.append("# "+self.heading.getBestHeading())
+        text += self.text
+        text += subtext
+        text = "\n".join(text)
+        self.summary = summarizer.summarize(self, text.strip(), verbose)
+        return self.summary
+
+    def relate(self, parent, retriever):
+        domain = retriever.domain
+        if domain not in self.relationships:
+            self.relationships[domain] = Relationship(self,parent,retriever)
+        if len(self.subclauses)>0:
+            for clauseID in self.subclauses:
+                if clauseID in Clause.clauseIndex.keys():
+                    clause = Clause.clauseIndex[clauseID]
+                    clause.relate(self,retriever)
+            self.relationships[domain].levelUp()
+        else:
+            self.relationships[domain].relate()
+        
     def ingest(self, clauseingestor):
         clauseingestor.ingest_clause(self)
         for clauseID in self.subclauses:
