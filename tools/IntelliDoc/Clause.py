@@ -271,8 +271,7 @@ class Clause():
                     clause = Clause.clauseIndex[clauseID]
                     clause.relate(self,retriever)
             self.relationships[domain].levelUp()
-        else:
-            self.relationships[domain].relate()
+        self.relationships[domain].relate()
         
     def ingest(self, clauseingestor):
         clauseingestor.ingest_clause(self)

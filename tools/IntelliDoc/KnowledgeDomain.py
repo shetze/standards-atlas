@@ -155,6 +155,15 @@ class KnowledgeDomain():
             clause = Clause.clauseIndex[clauseID]
             clause.relate(parent = None, retriever = self.clauseretriever)
 
+    def introspectClauses(self):
+        for doc in self.docTree.listDocsInTree():
+            if doc in Clause.clauseIndex:
+                clause = Clause.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = Clause.clauseIndex[short]
+            clause.relate(parent = None, retriever = self.clauseretriever)
+
     def summarizeClauses(self, force = False, verbose = False):
         for doc in self.docTree.listDocsInTree():
             if doc in Clause.clauseIndex:

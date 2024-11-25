@@ -525,6 +525,7 @@ if __name__ == '__main__':
         # knowledgeDomains[domain].dumpKnowledgeHeadings()
         # knowledgeDomains[domain].ingestDomainClauses()
         # knowledgeDomains[domain].summarizeClauses(verbose=True)
+        knowledgeDomains[domain].introspectClauses()
         knowledgeDomains[domain].relateClauses()
         # knowledgeDomains[domain].dumpSumstore(cacheFile="sumstore-"+domain+".json")
         # knowledgeDomains[domain].dumpKnowledgeTexts()
