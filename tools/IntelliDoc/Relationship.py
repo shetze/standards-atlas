@@ -1,5 +1,6 @@
 
 import numpy as np
+import math
 from IntelliDoc.ClauseRetriever import ClauseRetriever
 
 
@@ -37,6 +38,9 @@ class Relationship:
                 clauseID = node.document.doc_metadata['clause']
                 if clauseID in results:
                     s_sum -= results[clauseID]
+                    # t1 = math.tan(results[clauseID]*math.pi/2)
+                    # t2 = math.tan(s_score*math.pi/2)
+                    # s_score = math.atan(t1+t2)*2/math.pi
                     if results[clauseID] > s_score:
                         s_score = results[clauseID]
                 results[clauseID]=s_score
@@ -74,13 +78,17 @@ class Relationship:
                     # print(f"{clauseID} score {score} below avg {s_avg}")
                     continue
                 if clauseID in self.relationships[domain]:
-                    self.relationships[domain][clauseID]['score'] += score*self.s_significance[s_nr]
-                    # self.relationships[domain][clauseID]['score'] += score
+                    # self.relationships[domain][clauseID]['score'] += score*self.s_significance[s_nr]
+                    # ps = self.relationships[domain][clauseID]['score']
+                    # t1 = math.tan(ps*math.pi/2)
+                    # t2 = math.tan(score*math.pi/2)
+                    # score = math.atan(t1+t2)*2/math.pi
+                    self.relationships[domain][clauseID]['score'] += score
                     self.relationships[domain][clauseID]['hits'] += 1
                 else:
                     self.relationships[domain][clauseID] = {}
-                    self.relationships[domain][clauseID]['score'] = score*self.s_significance[s_nr]
-                    # self.relationships[domain][clauseID]['score'] = score
+                    # self.relationships[domain][clauseID]['score'] = score*self.s_significance[s_nr]
+                    self.relationships[domain][clauseID]['score'] = score
                     self.relationships[domain][clauseID]['hits'] = 1
             s_nr+=1
         c_max=0
