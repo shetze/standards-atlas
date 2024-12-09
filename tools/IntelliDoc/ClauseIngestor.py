@@ -52,6 +52,7 @@ class ClauseIngestor:
         docSeries=clause.structure.docSeries
         clauseID=clause.structure.ID
         text=clause.getText()
+        clauseType=clause.clauseType()
         heading=clause.heading.getBestHeading()
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             try:
@@ -68,6 +69,7 @@ class ClauseIngestor:
                     documents[i].excluded_llm_metadata_keys = ["file_name", "doc_id", "page_label"]
                     documents[i].metadata["series"] = docSeries
                     documents[i].metadata["clause"] = clauseID
+                    documents[i].metadata["type"] = clauseType
                     documents[i].metadata["heading"] = heading
                 return documents
             finally:
