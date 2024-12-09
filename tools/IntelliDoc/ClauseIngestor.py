@@ -19,21 +19,21 @@ class BaseIngestor:
     def _initialize_index(self):
         try:
             index = load_index_from_storage(
-                    storage_context=self.storage_context,
-                    store_nodes_override=True,
-                    show_progress=self.show_progress,
-                    embed_model=self.embed_model,
-                    transformations=self.transformations,
-                    )
+                storage_context=self.storage_context,
+                store_nodes_override=True,
+                show_progress=self.show_progress,
+                embed_model=self.embed_model,
+                transformations=self.transformations,
+            )
         except ValueError:
             index = VectorStoreIndex.from_documents(
-                    [],
-                    storage_context=self.storage_context,
-                    store_nodes_override=True,
-                    show_progress=self.show_progress,
-                    embed_model=self.embed_model,
-                    transformations=self.transformations,
-                    )
+                [],
+                storage_context=self.storage_context,
+                store_nodes_override=True,
+                show_progress=self.show_progress,
+                embed_model=self.embed_model,
+                transformations=self.transformations,
+            )
             index.storage_context.persist(persist_dir=self.domain)
         return index
 
@@ -46,14 +46,15 @@ class BaseIngestor:
         self._save_index()
         return documents
 
+
 class ClauseIngestor:
     @staticmethod
     def _clause_to_documents(clause):
-        docSeries=clause.structure.docSeries
-        clauseID=clause.structure.ID
-        text=clause.getText()
-        clauseType=clause.clauseType()
-        heading=clause.heading.getBestHeading()
+        docSeries = clause.structure.docSeries
+        clauseID = clause.structure.ID
+        text = clause.getText()
+        clauseType = clause.clauseType()
+        heading = clause.heading.getBestHeading()
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             try:
                 path_to_tmp = Path(tmp.name)
@@ -66,7 +67,11 @@ class ClauseIngestor:
                     documents[i].text = documents[i].text.replace("\u0000", "")
                     documents[i].metadata["doc_id"] = documents[i].doc_id
                     documents[i].excluded_embed_metadata_keys = ["doc_id"]
-                    documents[i].excluded_llm_metadata_keys = ["file_name", "doc_id", "page_label"]
+                    documents[i].excluded_llm_metadata_keys = [
+                        "file_name",
+                        "doc_id",
+                        "page_label",
+                    ]
                     documents[i].metadata["series"] = docSeries
                     documents[i].metadata["clause"] = clauseID
                     documents[i].metadata["type"] = clauseType
@@ -79,21 +84,20 @@ class ClauseIngestor:
     def __init__(self, llm, vectorstore, embedding_engine, clausestore, domain):
         self.llm = llm
         self.storage_context = StorageContext.from_defaults(
-                vector_store=vectorstore.vector_store,
-                docstore=clausestore.doc_store,
-                index_store=clausestore.index_store,
-                persist_dir=domain,
-                )
+            vector_store=vectorstore.vector_store,
+            docstore=clausestore.doc_store,
+            index_store=clausestore.index_store,
+            persist_dir=domain,
+        )
         # node_parser = MarkdownNodeParser.from_defaults(include_metadata = False, include_prev_next_rel = True)
         node_parser = SentenceWindowNodeParser.from_defaults()
         self.ingestor = BaseIngestor(
-                self.storage_context,
-                embed_model=embedding_engine.embedding_service,
-                transformations=[node_parser, embedding_engine.embedding_service],
-                domain = domain
-                )
+            self.storage_context,
+            embed_model=embedding_engine.embedding_service,
+            transformations=[node_parser, embedding_engine.embedding_service],
+            domain=domain,
+        )
 
     def ingest_clause(self, clause):
         documents = self._clause_to_documents(clause)
         return self.ingestor.ingest_documents(documents)
-

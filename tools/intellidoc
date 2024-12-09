@@ -15,279 +15,362 @@ from IntelliDoc.KnowledgeDomain import KnowledgeDomain, DocTree
 from IntelliDoc.HeadingFactory import HeadingFactory
 
 parser = argparse.ArgumentParser(
-        prog='tokenize_standard',
-        description='Tool to cut MD formatted standard text into subclauses.\nThe tool helps to sanitize and complete the MD formatted text based on the standards-atlas structural data.'
-        )
-parser.add_argument('-H', '--harvest', help='Harvest mode: Headings found in the MD document overwrite the specific ones that may have been specified in the standard atlas.')
-parser.add_argument('-g', '--generate', help='Generate mode: Missing headings will be generated.')
-parser.add_argument('-l', '--llm-model', nargs='?', default='nemotron', help='The LLM model to be used. llama3.1 ist faster, nemotron is more accurate.')
-parser.add_argument('-c', '--content', nargs='?', default='csv/heading-data.csv', help='Filename for CSV formatted input data defining the content structure of the documents to be tokenized.')
-parser.add_argument('-w', '--weights', nargs='?', default='csv/weights.csv', help='Filename for CSV formatted input data defining the weights of each sentence in th documents to be tokenized.')
-parser.add_argument('-r', '--relations', nargs='?', default='csv/relations.csv', help='Filename for CSV formatted input data defining the relations between clauses.')
-parser.add_argument('-d', '--refmap', nargs='?', default='csv/uid-ref-map.csv', help='Filename for CSV formatted input data providing the doorstop IDs for the clauses.')
-parser.add_argument('-i', '--interactive', help='Interactive generation mode, works good with llama3.1')
-parser.add_argument('-b', '--bulk', help='Bulk mode for heading generation, works good with nemotron')
+    prog="tokenize_standard",
+    description="Tool to cut MD formatted standard text into subclauses.\nThe tool helps to sanitize and complete the MD formatted text based on the standards-atlas structural data.",
+)
+parser.add_argument(
+    "-H",
+    "--harvest",
+    help="Harvest mode: Headings found in the MD document overwrite the specific ones that may have been specified in the standard atlas.",
+)
+parser.add_argument(
+    "-g", "--generate", help="Generate mode: Missing headings will be generated."
+)
+parser.add_argument(
+    "-l",
+    "--llm-model",
+    nargs="?",
+    default="nemotron",
+    help="The LLM model to be used. llama3.1 ist faster, nemotron is more accurate.",
+)
+parser.add_argument(
+    "-c",
+    "--content",
+    nargs="?",
+    default="csv/heading-data.csv",
+    help="Filename for CSV formatted input data defining the content structure of the documents to be tokenized.",
+)
+parser.add_argument(
+    "-w",
+    "--weights",
+    nargs="?",
+    default="csv/weights.csv",
+    help="Filename for CSV formatted input data defining the weights of each sentence in th documents to be tokenized.",
+)
+parser.add_argument(
+    "-r",
+    "--relations",
+    nargs="?",
+    default="csv/relations.csv",
+    help="Filename for CSV formatted input data defining the relations between clauses.",
+)
+parser.add_argument(
+    "-d",
+    "--refmap",
+    nargs="?",
+    default="csv/uid-ref-map.csv",
+    help="Filename for CSV formatted input data providing the doorstop IDs for the clauses.",
+)
+parser.add_argument(
+    "-i", "--interactive", help="Interactive generation mode, works good with llama3.1"
+)
+parser.add_argument(
+    "-b", "--bulk", help="Bulk mode for heading generation, works good with nemotron"
+)
 
 args = parser.parse_args()
 
-logger = logging.getLogger('IntelliDoc')
-logging.basicConfig(filename='Tokenizer.log', level=logging.INFO)
+logger = logging.getLogger("IntelliDoc")
+logging.basicConfig(filename="Tokenizer.log", level=logging.INFO)
 content = {}
 status = {}
 clauseIndex = {}
 knowledgeDomains = {}
 standardDocs = {}
-part = ''
-partNr = 'x'
+part = ""
+partNr = "x"
 
 typedict = {
-        'u' : 'text',
-        'r' : 'requirement',
-        's' : 'scope definition',
-        'o' : 'objective',
-        't' : 'term definition',
-        'c' : 'clause',
-        }
+    "u": "text",
+    "r": "requirement",
+    "s": "scope definition",
+    "o": "objective",
+    "t": "term definition",
+    "c": "clause",
+}
 
-iso_pattern = r'([A-Z\s]+\s+\d\d\d\d\d?)-?(\d*):\d\d\d\d\s+([1-9A-Z][0-9.]*)'
+iso_pattern = r"([A-Z\s]+\s+\d\d\d\d\d?)-?(\d*):\d\d\d\d\s+([1-9A-Z][0-9.]*)"
 iso_regex = re.compile(iso_pattern)
 
 domainDocuments = {
-        'railway' : { 'standard' : {
-                                      'EN 50126' : None,
-                                      # 'EN 50128' : None,
-                                      'EN 50129' : None,
-                                      # 'EN 50657' : None,
-                                      'EN 50716' : None },
-                       'generic' : {} },
-        'industry' : { 'standard' : { 'IEC 61508' : None },
-                       'generic' : {} },
-        'automotive' : { 'standard' : { 'ISO 26262' : None, 'ISO PAS 8926' : None },
-                         'generic' : {} },
-        'generic' : { 'standard' : {},
-                      'generic' : {} }
-
-        }
+    "railway": {
+        "standard": {
+            "EN 50126": None,
+            # 'EN 50128' : None,
+            "EN 50129": None,
+            # 'EN 50657' : None,
+            "EN 50716": None,
+        },
+        "generic": {},
+    },
+    "industry": {"standard": {"IEC 61508": None}, "generic": {}},
+    "automotive": {
+        "standard": {"ISO 26262": None, "ISO PAS 8926": None},
+        "generic": {},
+    },
+    "generic": {"standard": {}, "generic": {}},
+}
 domainDocuments1 = {
-        'infotec' : { 'standard' : { 'IEC 11889' : None },
-                       'generic' : {} },
-        }
+    "infotec": {"standard": {"IEC 11889": None}, "generic": {}},
+}
+
 
 def load_content_structure(contentfile=args.content):
-  with open(contentfile, newline='') as csvfile:
-    tocreader = csv.reader(csvfile, delimiter=';', quotechar='|')
-    for row in tocreader:
-        entry = {}
-        standard = ''
-        chapter = ''
-        logger.debug(row)
-        clauseID = row[2]
-        title = row[3]
-        typeID = row[4]
-        match = iso_regex.match(clauseID)
-        if match:
-            standard = match[1]
-            if match[2] == '':
-                part = ""
-                partNr = 'x'
-            else:
-                part = " part "+match[2]
-                partNr = match[2]
-            chapter = match[3]
-        else:
-            logger.warning(f'parse error for row {row}')
-            continue
-        clause = Clause(clauseID, title, clauseType=typeID)
-        clauseIndex[clauseID] = clause
-        docSeries = standard.replace(" ", "")
-        for domain in domainDocuments.keys():
-            if standard in domainDocuments[domain]['standard'].keys():
-                if domain in knowledgeDomains.keys():
-                    knowledgeDomains[domain].addClause(clause, standard)
+    with open(contentfile, newline="") as csvfile:
+        tocreader = csv.reader(csvfile, delimiter=";", quotechar="|")
+        for row in tocreader:
+            entry = {}
+            standard = ""
+            chapter = ""
+            logger.debug(row)
+            clauseID = row[2]
+            title = row[3]
+            typeID = row[4]
+            match = iso_regex.match(clauseID)
+            if match:
+                standard = match[1]
+                if match[2] == "":
+                    part = ""
+                    partNr = "x"
                 else:
-                    knowledgeDomains[domain] = KnowledgeDomain(domain,domainDocuments[domain],clauseIndex)
-                    knowledgeDomains[domain].addClause(clause, standard)
+                    part = " part " + match[2]
+                    partNr = match[2]
+                chapter = match[3]
+            else:
+                logger.warning(f"parse error for row {row}")
+                continue
+            clause = Clause(clauseID, title, clauseType=typeID)
+            clauseIndex[clauseID] = clause
+            docSeries = standard.replace(" ", "")
+            for domain in domainDocuments.keys():
+                if standard in domainDocuments[domain]["standard"].keys():
+                    if domain in knowledgeDomains.keys():
+                        knowledgeDomains[domain].addClause(clause, standard)
+                    else:
+                        knowledgeDomains[domain] = KnowledgeDomain(
+                            domain, domainDocuments[domain], clauseIndex
+                        )
+                        knowledgeDomains[domain].addClause(clause, standard)
 
-        if not docSeries in DocTree.chapterIndex:
-            DocTree.chapterIndex[docSeries] = {}
-        if not partNr in DocTree.chapterIndex[docSeries]:
-            DocTree.chapterIndex[docSeries][partNr]={}
-        DocTree.chapterIndex[docSeries][partNr][chapter]=clauseID
+            if not docSeries in DocTree.chapterIndex:
+                DocTree.chapterIndex[docSeries] = {}
+            if not partNr in DocTree.chapterIndex[docSeries]:
+                DocTree.chapterIndex[docSeries][partNr] = {}
+            DocTree.chapterIndex[docSeries][partNr][chapter] = clauseID
 
-        depth=chapter.count('.')
-        entry['clauseID'] = clauseID
-        entry['depth'] = depth
-        entry['title'] = title
-        entry['typeID'] = typeID
-        if depth == 0:
-            context = 'is top level content'
-        elif depth == 1:
-            parent_idx = chapter.rpartition('.')[0]
-            context = f"is a subclause of clause \"{content[standard][partNr][parent_idx]['title']}\""
-        else:
-            parent_idx = chapter.rpartition('.')[0]
-            top_idx = chapter.partition('.')[0]
-            context = f"is contained in subclause \"{content[standard][partNr][parent_idx]['title']}\" under \"{content[standard][partNr][top_idx]['title']}\""
-            # context = f"is part of \"{content[standard][partNr][parent_idx]['title']}\", which {content[standard][partNr][parent_idx]['context']}"
-        entry['context'] = context
-        if not standard in content:
-            content[standard]={}
-            status[standard]={}
-        if not partNr in content[standard]:
-            content[standard][partNr]={}
-            status[standard][partNr]={}
-        content[standard][partNr][chapter]=entry
-        status[standard][partNr][chapter]={}
-        
-        # print("{} \"{}\" is a {} of \"{}{}\" and {}.".format(clauseID, title, typedict[typeID], standard, part, context))
+            depth = chapter.count(".")
+            entry["clauseID"] = clauseID
+            entry["depth"] = depth
+            entry["title"] = title
+            entry["typeID"] = typeID
+            if depth == 0:
+                context = "is top level content"
+            elif depth == 1:
+                parent_idx = chapter.rpartition(".")[0]
+                context = f"is a subclause of clause \"{content[standard][partNr][parent_idx]['title']}\""
+            else:
+                parent_idx = chapter.rpartition(".")[0]
+                top_idx = chapter.partition(".")[0]
+                context = f"is contained in subclause \"{content[standard][partNr][parent_idx]['title']}\" under \"{content[standard][partNr][top_idx]['title']}\""
+                # context = f"is part of \"{content[standard][partNr][parent_idx]['title']}\", which {content[standard][partNr][parent_idx]['context']}"
+            entry["context"] = context
+            if not standard in content:
+                content[standard] = {}
+                status[standard] = {}
+            if not partNr in content[standard]:
+                content[standard][partNr] = {}
+                status[standard][partNr] = {}
+            content[standard][partNr][chapter] = entry
+            status[standard][partNr][chapter] = {}
+
+            # print("{} \"{}\" is a {} of \"{}{}\" and {}.".format(clauseID, title, typedict[typeID], standard, part, context))
+
 
 def load_doorstop_mapping(refmapfile=args.refmap):
-    with open(refmapfile, newline='') as csvfile:
-        refmapreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+    with open(refmapfile, newline="") as csvfile:
+        refmapreader = csv.reader(csvfile, delimiter=";", quotechar="|")
         for row in refmapreader:
             doorstopID = row[1]
             clauseID = row[2]
             if clauseID not in Clause.clauseIndex:
                 continue
             clause = Clause.clauseIndex[clauseID]
-            clause.structure.doorstopID=doorstopID
+            clause.structure.doorstopID = doorstopID
+
 
 def load_relations(relationsfile=args.relations):
     if Clause.relations == None:
         Clause.relations = {}
-    with open(relationsfile, newline='') as csvfile:
-        relationsreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+    with open(relationsfile, newline="") as csvfile:
+        relationsreader = csv.reader(csvfile, delimiter=";", quotechar="|")
         for row in relationsreader:
             fromClause = row[0]
             toClause = row[1]
             score = row[2]
             relation = (fromClause, toClause)
             clause = Clause.clauseIndex[fromClause]
-            Clause.relations[relation]=score
+            Clause.relations[relation] = score
             clause.sentences = clause.getSentences()
 
+
 def load_weights(weightfile=args.weights):
-  with open(weightfile, newline='') as csvfile:
-    weightreader = csv.reader(csvfile, delimiter=';', quotechar='|')
-    for row in weightreader:
-        clauseID = row[0]
-        scatter = row[1][1:-1]
-        scatter = scatter.replace(' ','')
-        significance = row[2][1:-1]
-        significance = significance.replace(' ','')
-        if clauseID in Clause.clauseIndex:
-            clause = Clause.clauseIndex[clauseID]
-        else:
-            print(f"load_weights error {clauseID} missing")
-            return
-        scat = np.array(scatter.split(','),dtype=float)
-        sign = np.array(significance.split(','),dtype=float)
-        clause.scat = scat.tolist()
-        clause.sign = sign.tolist()
-        sentences = clause.getTokens()
-        slen = len(sentences)
-        if len(clause.scat) != slen:
-            print(f"{clause.structure.ID} scatter len mismatch {slen} {len(clause.scat)}")
-        if len(clause.sign) != slen:
-            print(f"{clause.structure.ID} significance len mismatch {slen} {len(clause.sign)}")
+    with open(weightfile, newline="") as csvfile:
+        weightreader = csv.reader(csvfile, delimiter=";", quotechar="|")
+        for row in weightreader:
+            clauseID = row[0]
+            scatter = row[1][1:-1]
+            scatter = scatter.replace(" ", "")
+            significance = row[2][1:-1]
+            significance = significance.replace(" ", "")
+            if clauseID in Clause.clauseIndex:
+                clause = Clause.clauseIndex[clauseID]
+            else:
+                print(f"load_weights error {clauseID} missing")
+                return
+            scat = np.array(scatter.split(","), dtype=float)
+            sign = np.array(significance.split(","), dtype=float)
+            clause.scat = scat.tolist()
+            clause.sign = sign.tolist()
+            sentences = clause.getTokens()
+            slen = len(sentences)
+            if len(clause.scat) != slen:
+                print(
+                    f"{clause.structure.ID} scatter len mismatch {slen} {len(clause.scat)}"
+                )
+            if len(clause.sign) != slen:
+                print(
+                    f"{clause.structure.ID} significance len mismatch {slen} {len(clause.sign)}"
+                )
 
 
 docstore = {}
 
+
 def parse_md_content():
-  for standard in content.keys():
-    std = standard.replace(" ", "")
-    sec_head_pattern = r'^#+\s+([1-9A-Z][0-9.]*)\s?$|^#+\s+([1-9A-Z][0-9.]*)\s(.*)'
-    sec_head_regex = re.compile(sec_head_pattern)
-    for partNr in content[standard].keys():
-        if partNr == 'x':
-            ptex = ''
-        else:
-            ptex = f"-{partNr}"
+    for standard in content.keys():
+        std = standard.replace(" ", "")
+        sec_head_pattern = r"^#+\s+([1-9A-Z][0-9.]*)\s?$|^#+\s+([1-9A-Z][0-9.]*)\s(.*)"
+        sec_head_regex = re.compile(sec_head_pattern)
+        for partNr in content[standard].keys():
+            if partNr == "x":
+                ptex = ""
+            else:
+                ptex = f"-{partNr}"
 
-        inputfile="markdown/"+std+ptex+".md"
-        outputfile="markdown/"+std+ptex+"-gen.md"
-        try:
-            with open(inputfile, 'r') as indata:
-                docstore[std]={}
-                status[standard][partNr]['status'] = 'parsed'
-                clauseID = ''
-                linebuffer = []
-                for line in indata:
-                    line = line.rstrip()
-                    chapter = ''
-                    title = ''
-                    if re.match('^#',line):
-                        line = line.replace("Annex ", "")
-                        match = sec_head_regex.match(line)
-                        if match:
-                            if match[1]:
-                                chapter = match[1].rstrip('.')
-                            elif match[2]:
-                                chapter = match[2].rstrip('.')
-                                title = match[3]
-                        else:
-                            logger.info(f"header without match:\n\t{line}")
-                            continue
-                        if not chapter in DocTree.chapterIndex[std][partNr]:
-                            logger.info(f"chapter without match: {std} {partNr} {chapter}\n\t{line}")
-                            continue
-                        clauseID = DocTree.chapterIndex[std][partNr][chapter]
-                        clause = Clause.clauseIndex[clauseID]
-                        if title != '':
-                            clause.heading.addAlternative(title, 'parsed', std+ptex+".md")
+            inputfile = "markdown/" + std + ptex + ".md"
+            outputfile = "markdown/" + std + ptex + "-gen.md"
+            try:
+                with open(inputfile, "r") as indata:
+                    docstore[std] = {}
+                    status[standard][partNr]["status"] = "parsed"
+                    clauseID = ""
+                    linebuffer = []
+                    for line in indata:
+                        line = line.rstrip()
+                        chapter = ""
+                        title = ""
+                        if re.match("^#", line):
+                            line = line.replace("Annex ", "")
+                            match = sec_head_regex.match(line)
+                            if match:
+                                if match[1]:
+                                    chapter = match[1].rstrip(".")
+                                elif match[2]:
+                                    chapter = match[2].rstrip(".")
+                                    title = match[3]
+                            else:
+                                logger.info(f"header without match:\n\t{line}")
+                                continue
+                            if not chapter in DocTree.chapterIndex[std][partNr]:
+                                logger.info(
+                                    f"chapter without match: {std} {partNr} {chapter}\n\t{line}"
+                                )
+                                continue
+                            clauseID = DocTree.chapterIndex[std][partNr][chapter]
+                            clause = Clause.clauseIndex[clauseID]
+                            if title != "":
+                                clause.heading.addAlternative(
+                                    title, "parsed", std + ptex + ".md"
+                                )
 
+                            if chapter in content[standard][partNr].keys():
+                                # clauseID = content[standard][partNr][chapter]['clauseID']
+                                clauseTitle = content[standard][partNr][chapter][
+                                    "title"
+                                ]
+                                clauseType = content[standard][partNr][chapter][
+                                    "typeID"
+                                ]
+                                clauseDepth = content[standard][partNr][chapter][
+                                    "depth"
+                                ]
+                                clauseContext = content[standard][partNr][chapter][
+                                    "context"
+                                ]
+                                status[standard][partNr][chapter]["status"] = "matched"
+                            else:
+                                logger.info(
+                                    f"chapter without match: {clauseID}\n\t{line}"
+                                )
+                                continue
+                            docstore[std][clauseID] = {}
+                            docstore[std][clauseID]["text"] = []
+                            content[standard][partNr][chapter]["text"] = []
+                            docstore[std][clauseID]["context"] = clauseContext
+                            docstore[std][clauseID]["type"] = clauseType
+                            docstore[std][clauseID]["chapter"] = chapter
+                            if title != "":
+                                docstore[std][clauseID]["title"] = title
+                                if title != clauseTitle and clauseTitle not in (
+                                    "TOC",
+                                    "REQUIREMENT",
+                                    "OBJECTIVE",
+                                    "SCOPE",
+                                    "TERM",
+                                ):
+                                    logger.warning(
+                                        f"clause title mismatch: {clauseID}\n\t{title}\n\t{clauseTitle}"
+                                    )
+                            elif clauseTitle not in (
+                                "TOC",
+                                "REQUIREMENT",
+                                "OBJECTIVE",
+                                "SCOPE",
+                                "TERM",
+                            ):
+                                logger.info(
+                                    f"overriding missing title for {clauseID} with clauseTitle {clauseTitle}"
+                                )
+                                docstore[std][clauseID]["title"] = clauseTitle
+                            else:
+                                logger.warning(f"no title found for {clauseID}")
+                                docstore[std][clauseID]["title"] = "none"
+                        elif clauseID != "":
+                            clause = Clause.clauseIndex[clauseID]
+                            clause.addText(line)
+                            docstore[std][clauseID]["text"].append(line)
+                            chapter = docstore[std][clauseID]["chapter"]
+                            content[standard][partNr][chapter]["text"].append(line)
 
-                        if chapter in content[standard][partNr].keys():
-                            # clauseID = content[standard][partNr][chapter]['clauseID']
-                            clauseTitle = content[standard][partNr][chapter]['title']
-                            clauseType = content[standard][partNr][chapter]['typeID']
-                            clauseDepth = content[standard][partNr][chapter]['depth']
-                            clauseContext = content[standard][partNr][chapter]['context']
-                            status[standard][partNr][chapter]['status'] = 'matched' 
-                        else:
-                            logger.info(f"chapter without match: {clauseID}\n\t{line}")
-                            continue
-                        docstore[std][clauseID] = {}
-                        docstore[std][clauseID]['text']=[]
-                        content[standard][partNr][chapter]['text']=[]
-                        docstore[std][clauseID]['context']=clauseContext
-                        docstore[std][clauseID]['type']=clauseType
-                        docstore[std][clauseID]['chapter']=chapter
-                        if title != '':
-                            docstore[std][clauseID]['title']=title
-                            if title != clauseTitle and clauseTitle not in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ):
-                                logger.warning(f"clause title mismatch: {clauseID}\n\t{title}\n\t{clauseTitle}")
-                        elif clauseTitle not in ( 'TOC', 'REQUIREMENT', 'OBJECTIVE', 'SCOPE', 'TERM' ):
-                            logger.info(f'overriding missing title for {clauseID} with clauseTitle {clauseTitle}')
-                            docstore[std][clauseID]['title']=clauseTitle
-                        else:
-                            logger.warning(f'no title found for {clauseID}')
-                            docstore[std][clauseID]['title']='none'
-                    elif clauseID != '':
-                        clause = Clause.clauseIndex[clauseID]
-                        clause.addText(line)
-                        docstore[std][clauseID]['text'].append(line)
-                        chapter=docstore[std][clauseID]['chapter']
-                        content[standard][partNr][chapter]['text'].append(line)
-                
-        except IOError as e:
-            logger.warning(f"file open error: {e}")
+            except IOError as e:
+                logger.warning(f"file open error: {e}")
+
 
 def missed_headers():
     for standard in content.keys():
         for partNr in content[standard].keys():
-            if not 'status' in status[standard][partNr]:
+            if not "status" in status[standard][partNr]:
                 continue
             for chapter in content[standard][partNr].keys():
-                if 'status' in status[standard][partNr][chapter]:
-                    idx_status = status[standard][partNr][chapter]['status']
+                if "status" in status[standard][partNr][chapter]:
+                    idx_status = status[standard][partNr][chapter]["status"]
                     continue
                 # logger.warning(f'missing MD heading {content[standard][partNr][chapter]['clauseID']}')
                 print(f"missing MD heading for {standard} {partNr} clause {chapter}")
 
-bulk_headings="bulk_headings"
-new_headings="new_headings"
+
+bulk_headings = "bulk_headings"
+new_headings = "new_headings"
 
 
 def check_clause_type():
@@ -295,236 +378,253 @@ def check_clause_type():
         clause = Clause.clauseIndex[clauseID]
         text = clause.getText()
         clauseType = clause.type
-        if re.match('.*shall.*',text,re.IGNORECASE):
-            if clauseType != 'r':
+        if re.match(".*shall.*", text, re.IGNORECASE):
+            if clauseType != "r":
                 print(f"{clauseID} type {clauseType} may be a requirement")
-        if re.match('.*objective.*',text,re.IGNORECASE):
-            if clauseType != 'o':
+        if re.match(".*objective.*", text, re.IGNORECASE):
+            if clauseType != "o":
                 print(f"{clauseID} type {clauseType} may be a objective")
-        if re.match('.*scope.*',text,re.IGNORECASE):
-            if clauseType != 's':
+        if re.match(".*scope.*", text, re.IGNORECASE):
+            if clauseType != "s":
                 print(f"{clauseID} type {clauseType} may be a scope definition")
 
 
 def generate_headings():
-  for std in docstore.keys():
-    llama_hl_pattern = r'^[^"]*"(.+)"\W?$'
-    offer_regex = re.compile(llama_hl_pattern)
-    for clauseID in docstore[std].keys():
-        title = docstore[std][clauseID]['title']
-        offer = []
-        if title == 'none':
-            print('.', end='', flush=True)
-            clauseType=typedict[docstore[std][clauseID]['type']]
-            text = ' '.join(docstore[std][clauseID]['text'])
-            while len(offer)==0:
-                # response = ollama.generate(model='nemotron',
-                # response = ollama.generate(model='llama3.1',
-                response = ollama.generate(model='granite3-moe',
-                # response = ollama.generate(model='granite3-dense',
-                # response = ollama.generate(model='hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF',
-                                      prompt=f"create a max 3 word headline for the following {clauseType}: {text}")
-                # print(response['response'])
-                for line in response['response'].splitlines():
-                    match = offer_regex.match(line)
-                    if match:
-                        offer.append(match[1])
-                if len(offer)==0:
-                    print(f"no offer for {clauseID} in response\n>{response['response']}<")
-            title = offer[0]
-            docstore[std][clauseID]['title'] = title
+    for std in docstore.keys():
+        llama_hl_pattern = r'^[^"]*"(.+)"\W?$'
+        offer_regex = re.compile(llama_hl_pattern)
+        for clauseID in docstore[std].keys():
+            title = docstore[std][clauseID]["title"]
+            offer = []
+            if title == "none":
+                print(".", end="", flush=True)
+                clauseType = typedict[docstore[std][clauseID]["type"]]
+                text = " ".join(docstore[std][clauseID]["text"])
+                while len(offer) == 0:
+                    # response = ollama.generate(model='nemotron',
+                    # response = ollama.generate(model='llama3.1',
+                    response = ollama.generate(
+                        model="granite3-moe",
+                        # response = ollama.generate(model='granite3-dense',
+                        # response = ollama.generate(model='hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF',
+                        prompt=f"create a max 3 word headline for the following {clauseType}: {text}",
+                    )
+                    # print(response['response'])
+                    for line in response["response"].splitlines():
+                        match = offer_regex.match(line)
+                        if match:
+                            offer.append(match[1])
+                    if len(offer) == 0:
+                        print(
+                            f"no offer for {clauseID} in response\n>{response['response']}<"
+                        )
+                title = offer[0]
+                docstore[std][clauseID]["title"] = title
+
 
 def generate_alternative_headings():
- with open(new_headings, 'w') as store:
-    nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s.&-/]+)\*+'
-    offer_regex = re.compile(nemotron_hl_pattern)
-    for clauseID in Clause.clauseIndex.keys():
-        clause = Clause.clauseIndex[clauseID]
-        if clause.heading.isSpecific():
-            continue
-        text = clause.text
-        if len(text) == 0:
-            continue
-        title = clause.heading.display
-        print('.', end='', flush=True)
-        offer = []
-        store.write(f"# {clauseID}\n")
-        while len(offer)==0:
-            response = ollama.generate(model='nemotron',
-                                  prompt=f"create a max 3 word heading for the following {clause.type}: {text}")
-            store.write(response['response'])
-            store.write("\n\n")
-            for line in response['response'].splitlines():
-                match = offer_regex.match(line)
-                if match:
-                    offer.append(match[1])
-        for i in range(len(offer)):
-            clause.heading.addAlternative(offer[i], 'generated', 'nemotron')
-
-def generate_interactive_headings():
- with open(new_headings, 'w') as store:
-  for std in docstore.keys():
-    nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s]+)\*+'
-    llama_hl_pattern = r'^"([\w\s]+)"'
-    # offer_regex = re.compile(nemotron_hl_pattern)
-    offer_regex = re.compile(llama_hl_pattern)
-    for clauseID in docstore[std].keys():
-        title = docstore[std][clauseID]['title']
-        if title == 'none':
-            clauseType=typedict[docstore[std][clauseID]['type']]
-            text = ' '.join(docstore[std][clauseID]['text'])
-            print(f"missing heading for {clauseID}\n")
-            print(text)
-            print("\n")
-            answer=0
+    with open(new_headings, "w") as store:
+        nemotron_hl_pattern = r"^[1-9]\.\s+\*+([\w\s.&-/]+)\*+"
+        offer_regex = re.compile(nemotron_hl_pattern)
+        for clauseID in Clause.clauseIndex.keys():
+            clause = Clause.clauseIndex[clauseID]
+            if clause.heading.isSpecific():
+                continue
+            text = clause.text
+            if len(text) == 0:
+                continue
+            title = clause.heading.display
+            print(".", end="", flush=True)
             offer = []
-            while int(answer)<1 or int(answer)>len(offer):
-                # response = ollama.generate(model='nemotron',
-                # response = ollama.generate(model='llama3.1',
-                response = ollama.generate(model='granite3-moe',
-                # response = ollama.generate(model='granite3-dense',
-                # response = ollama.generate(model='hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF',
-                                      prompt=f"create a max 3 word headline for the following {clauseType}: {text}")
-                print(response['response'])
-                offer = []
-                for line in response['response'].splitlines():
+            store.write(f"# {clauseID}\n")
+            while len(offer) == 0:
+                response = ollama.generate(
+                    model="nemotron",
+                    prompt=f"create a max 3 word heading for the following {clause.type}: {text}",
+                )
+                store.write(response["response"])
+                store.write("\n\n")
+                for line in response["response"].splitlines():
                     match = offer_regex.match(line)
                     if match:
                         offer.append(match[1])
-                for i in range(len(offer)):
-                    print(i+1,"   ",offer[i])
-                answer = input("make your choice: ")
-                if answer == 'exit':
-                    store.close()
-                    sys.exit()
-                elif answer == '':
+            for i in range(len(offer)):
+                clause.heading.addAlternative(offer[i], "generated", "nemotron")
+
+
+def generate_interactive_headings():
+    with open(new_headings, "w") as store:
+        for std in docstore.keys():
+            nemotron_hl_pattern = r"^[1-9]\.\s+\*+([\w\s]+)\*+"
+            llama_hl_pattern = r'^"([\w\s]+)"'
+            # offer_regex = re.compile(nemotron_hl_pattern)
+            offer_regex = re.compile(llama_hl_pattern)
+            for clauseID in docstore[std].keys():
+                title = docstore[std][clauseID]["title"]
+                if title == "none":
+                    clauseType = typedict[docstore[std][clauseID]["type"]]
+                    text = " ".join(docstore[std][clauseID]["text"])
+                    print(f"missing heading for {clauseID}\n")
+                    print(text)
+                    print("\n")
                     answer = 0
-            title = offer[int(answer)-1]
-        md5hash = hashlib.md5(clauseID.encode('utf-8')).hexdigest()
-        entry = f"TOC;{md5hash};{clauseID};{title};{docstore[std][clauseID]['type']}\n"
-        print(entry)
-        store.write(entry)
+                    offer = []
+                    while int(answer) < 1 or int(answer) > len(offer):
+                        # response = ollama.generate(model='nemotron',
+                        # response = ollama.generate(model='llama3.1',
+                        response = ollama.generate(
+                            model="granite3-moe",
+                            # response = ollama.generate(model='granite3-dense',
+                            # response = ollama.generate(model='hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF',
+                            prompt=f"create a max 3 word headline for the following {clauseType}: {text}",
+                        )
+                        print(response["response"])
+                        offer = []
+                        for line in response["response"].splitlines():
+                            match = offer_regex.match(line)
+                            if match:
+                                offer.append(match[1])
+                        for i in range(len(offer)):
+                            print(i + 1, "   ", offer[i])
+                        answer = input("make your choice: ")
+                        if answer == "exit":
+                            store.close()
+                            sys.exit()
+                        elif answer == "":
+                            answer = 0
+                    title = offer[int(answer) - 1]
+                md5hash = hashlib.md5(clauseID.encode("utf-8")).hexdigest()
+                entry = f"TOC;{md5hash};{clauseID};{title};{docstore[std][clauseID]['type']}\n"
+                print(entry)
+                store.write(entry)
+
 
 def generate_bulk_headings():
- with open(new_headings, 'w') as store:
-  for std in docstore.keys():
-    nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s]+)\*+'
-    llama_hl_pattern = r'^"([\w\s]+)"'
-    offer_regex = re.compile(nemotron_hl_pattern)
-    # offer_regex = re.compile(llama_hl_pattern)
-    for clauseID in docstore[std].keys():
-        title = docstore[std][clauseID]['title']
-        if title == 'none':
-            print('.', end='', flush=True)
-            clauseType=typedict[docstore[std][clauseID]['type']]
-            text = ' '.join(docstore[std][clauseID]['text'])
-            store.write(f"# {clauseID}\n")
-            response = ollama.generate(model='nemotron',
-            # response = ollama.generate(model='llama3.1',
-                                  prompt=f"create a max 3 word heading for the following {clauseType}: {text}")
-            store.write(response['response'])
-            store.write("\n\n")
+    with open(new_headings, "w") as store:
+        for std in docstore.keys():
+            nemotron_hl_pattern = r"^[1-9]\.\s+\*+([\w\s]+)\*+"
+            llama_hl_pattern = r'^"([\w\s]+)"'
+            offer_regex = re.compile(nemotron_hl_pattern)
+            # offer_regex = re.compile(llama_hl_pattern)
+            for clauseID in docstore[std].keys():
+                title = docstore[std][clauseID]["title"]
+                if title == "none":
+                    print(".", end="", flush=True)
+                    clauseType = typedict[docstore[std][clauseID]["type"]]
+                    text = " ".join(docstore[std][clauseID]["text"])
+                    store.write(f"# {clauseID}\n")
+                    response = ollama.generate(
+                        model="nemotron",
+                        # response = ollama.generate(model='llama3.1',
+                        prompt=f"create a max 3 word heading for the following {clauseType}: {text}",
+                    )
+                    store.write(response["response"])
+                    store.write("\n\n")
+
 
 def select_from_offer(std, clauseID, offer=[]):
-    nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s]+)\*+'
+    nemotron_hl_pattern = r"^[1-9]\.\s+\*+([\w\s]+)\*+"
     offer_regex = re.compile(nemotron_hl_pattern)
     for i in range(len(offer)):
-        print(i+1,"   ",offer[i])
+        print(i + 1, "   ", offer[i])
     answer = input("make your choice: ")
-    if answer == 'exit':
+    if answer == "exit":
         sys.exit()
     elif len(answer) > 7:
         print(f"returning custom answer {answer}")
         return answer
-    elif answer == '':
+    elif answer == "":
         answer = 0
-    while int(answer)<1 or int(answer)>len(offer):
-        clauseType=typedict[docstore[std][clauseID]['type']]
-        text = ' '.join(docstore[std][clauseID]['text'])
-        response = ollama.generate(model='nemotron',
-                                   prompt=f"create a max 3 word headline for the following {clauseType}: {text}")
+    while int(answer) < 1 or int(answer) > len(offer):
+        clauseType = typedict[docstore[std][clauseID]["type"]]
+        text = " ".join(docstore[std][clauseID]["text"])
+        response = ollama.generate(
+            model="nemotron",
+            prompt=f"create a max 3 word headline for the following {clauseType}: {text}",
+        )
         offer = []
-        for line in response['response'].splitlines():
+        for line in response["response"].splitlines():
             match = offer_regex.match(line)
             if match:
                 offer.append(match[1])
             for i in range(len(offer)):
-                print(i+1,"   ",offer[i])
+                print(i + 1, "   ", offer[i])
             answer = input("make your choice: ")
-            if answer == 'exit':
+            if answer == "exit":
                 sys.exit()
             elif len(answer) > 7:
                 print(f"returning custom answer {answer}")
                 return answer
-            elif answer == '':
+            elif answer == "":
                 answer = 0
             else:
                 print(f"standard answer {answer}")
-    return offer[int(answer)-1]
+    return offer[int(answer) - 1]
 
 
 def alternatives_from_bulk_headings():
-   with open(bulk_headings, 'r') as bulk:
-       nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s.&]+)\*+'
-       offer_regex = re.compile(nemotron_hl_pattern)
-       std = ''
-       clauseID = ''
-       text = ''
-       offer = []
-       for line in bulk:
-           if re.match('^#',line):
-               clauseID = line[2:].rstrip()
-           else:
-               match = offer_regex.match(line)
-               if match:
-                   clause = clauseIndex[clauseID] 
-                   display = clause.heading.display
-                   clause.heading.addAlternative(match[1], 'generated', 'nemotron')
+    with open(bulk_headings, "r") as bulk:
+        nemotron_hl_pattern = r"^[1-9]\.\s+\*+([\w\s.&]+)\*+"
+        offer_regex = re.compile(nemotron_hl_pattern)
+        std = ""
+        clauseID = ""
+        text = ""
+        offer = []
+        for line in bulk:
+            if re.match("^#", line):
+                clauseID = line[2:].rstrip()
+            else:
+                match = offer_regex.match(line)
+                if match:
+                    clause = clauseIndex[clauseID]
+                    display = clause.heading.display
+                    clause.heading.addAlternative(match[1], "generated", "nemotron")
+
 
 def process_bulk_headings():
-   with open(bulk_headings, 'r') as bulk:
-     with open(new_headings, 'w') as select:
-       nemotron_hl_pattern = r'^[1-9]\.\s+\*+([\w\s]+)\*+'
-       llama_hl_pattern = r'^"([\w\s]+)"'
-       offer_regex = re.compile(nemotron_hl_pattern)
-       # offer_regex = re.compile(llama_hl_pattern)
-       std = ''
-       clauseID = ''
-       text = ''
-       offer = []
-       for line in bulk:
-           if re.match('^#',line):
-               if len(offer) > 0:
-                   print(f"\nSelect heading for {clauseID} text\n")
-                   print(text,"\n")
-                   heading = select_from_offer(std, clauseID, offer)
-                   docstore[std][clauseID]['title'] = heading
-                   md5hash = hashlib.md5(clauseID.encode('utf-8')).hexdigest()
-                   entry = f"TOC;{md5hash};{clauseID};{heading};{docstore[std][clauseID]['type']}\n"
-                   print(entry)
-                   select.write(entry)
-               clauseID = line[2:].rstrip()
-               match = iso_regex.match(clauseID)
-               if match:
-                   standard = match[1]
-                   std = standard.replace(" ", "")
-                   if match[2] == '':
-                       part = ""
-                       partNr = 'x'
-                   else:
-                       part = " part "+match[2]
-                       partNr = match[2]
-                   chapter = match[3]
-                   text = ' '.join(docstore[std][clauseID]['text'])
-                   answer=0
-                   offer = []
-               else:
-                   print(f'bulk parse error for line {line}')
-                   continue
-           else:
-               match = offer_regex.match(line)
-               if match:
-                   offer.append(match[1])
+    with open(bulk_headings, "r") as bulk:
+        with open(new_headings, "w") as select:
+            nemotron_hl_pattern = r"^[1-9]\.\s+\*+([\w\s]+)\*+"
+            llama_hl_pattern = r'^"([\w\s]+)"'
+            offer_regex = re.compile(nemotron_hl_pattern)
+            # offer_regex = re.compile(llama_hl_pattern)
+            std = ""
+            clauseID = ""
+            text = ""
+            offer = []
+            for line in bulk:
+                if re.match("^#", line):
+                    if len(offer) > 0:
+                        print(f"\nSelect heading for {clauseID} text\n")
+                        print(text, "\n")
+                        heading = select_from_offer(std, clauseID, offer)
+                        docstore[std][clauseID]["title"] = heading
+                        md5hash = hashlib.md5(clauseID.encode("utf-8")).hexdigest()
+                        entry = f"TOC;{md5hash};{clauseID};{heading};{docstore[std][clauseID]['type']}\n"
+                        print(entry)
+                        select.write(entry)
+                    clauseID = line[2:].rstrip()
+                    match = iso_regex.match(clauseID)
+                    if match:
+                        standard = match[1]
+                        std = standard.replace(" ", "")
+                        if match[2] == "":
+                            part = ""
+                            partNr = "x"
+                        else:
+                            part = " part " + match[2]
+                            partNr = match[2]
+                        chapter = match[3]
+                        text = " ".join(docstore[std][clauseID]["text"])
+                        answer = 0
+                        offer = []
+                    else:
+                        print(f"bulk parse error for line {line}")
+                        continue
+                else:
+                    match = offer_regex.match(line)
+                    if match:
+                        offer.append(match[1])
 
 
 def write_md_documents():
@@ -532,60 +632,60 @@ def write_md_documents():
         std = standard.replace(" ", "")
         if not std in docstore.keys():
             continue
-        for partNr in  content[standard].keys():
-            if not 'status' in status[standard][partNr]:
+        for partNr in content[standard].keys():
+            if not "status" in status[standard][partNr]:
                 continue
-            if partNr == 'x':
-                ptex = ''
+            if partNr == "x":
+                ptex = ""
             else:
                 ptex = f"-{partNr}"
-            md_document="markdown/"+std+ptex+"-gen.md"
-            with open(md_document, 'w') as output:
+            md_document = "markdown/" + std + ptex + "-gen.md"
+            with open(md_document, "w") as output:
                 print(f"writing {md_document}")
                 for chapter in natsorted(content[standard][partNr]):
-                    clauseID = content[standard][partNr][chapter]['clauseID']
+                    clauseID = content[standard][partNr][chapter]["clauseID"]
                     print(f"working on {standard}~{partNr}~{std}~{chapter}")
                     if clauseID in docstore[std].keys():
-                        title = docstore[std][clauseID]['title']
+                        title = docstore[std][clauseID]["title"]
                     else:
-                        title = content[standard][partNr][chapter]['title']
-                    text = ''
-                    if 'text' in content[standard][partNr][chapter].keys():
-                        text = '\n'.join(content[standard][partNr][chapter]['text'])
-                    depth = int(content[standard][partNr][chapter]['depth'])+1
-                    context = content[standard][partNr][chapter]['context']
-                    heading = '#' * depth
-                    heading += ' '
+                        title = content[standard][partNr][chapter]["title"]
+                    text = ""
+                    if "text" in content[standard][partNr][chapter].keys():
+                        text = "\n".join(content[standard][partNr][chapter]["text"])
+                    depth = int(content[standard][partNr][chapter]["depth"]) + 1
+                    context = content[standard][partNr][chapter]["context"]
+                    heading = "#" * depth
+                    heading += " "
                     heading += chapter
-                    heading += ' '
+                    heading += " "
                     heading += title
                     # print(f"writing {heading}")
                     output.write(heading)
                     output.write(text)
-                    output.write('\n')
+                    output.write("\n")
             output.close()
+
 
 def dumpClauseIndex():
     return json.dumps(
-            Clause.clauseIndex,
-            default=lambda o: o.__dict__,
-            sort_keys=True,
-            indent=4)
+        Clause.clauseIndex, default=lambda o: o.__dict__, sort_keys=True, indent=4
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # options depend on the locally loaded models for ollama. Examples include:
     #   'llama3.1'          fast, generates up to three alternatives
     #   'nemotron'          slow, generates three to five alternatives, best quality
     #   'granite3-moe'      fast, generates one heading, ignores the word limit
     #   'granite3-dense'    fast, generates one and occasionally more headings, ignores the word limit
     #   'hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF'    multiline free dialog response
-    heading_factory=HeadingFactory('nemotron')
+    heading_factory = HeadingFactory("nemotron")
     load_content_structure()
     parse_md_content()
     load_weights()
     load_relations()
     load_doorstop_mapping()
-    heading_factory.load_alternatives_from_file('bulk_headings')
+    heading_factory.load_alternatives_from_file("bulk_headings")
     # heading_factory.headings4all(cacheFile='new_headings', verbose=True)
     missed_headers()
     # check_clause_type()

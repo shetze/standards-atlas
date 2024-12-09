@@ -8,8 +8,10 @@ from IntelliDoc.ClauseIngestor import ClauseIngestor
 from IntelliDoc.ClauseRetriever import ClauseRetriever
 from IntelliDoc.Summarizer import Summarizer
 
-class DocTree():
+
+class DocTree:
     chapterIndex = None
+
     def __init__(self, documents):
         self.documents = documents
         self.misses = 0
@@ -17,29 +19,34 @@ class DocTree():
             DocTree.chapterIndex = {}
             for docType in self.documents.keys():
                 for docSeries in self.documents[docType].keys():
-                    DocTree.chapterIndex[docSeries] = {} 
+                    DocTree.chapterIndex[docSeries] = {}
 
     def addRootClause(self, domain, clause, rootID):
         docType = clause.docType()
         if not docType in self.documents.keys():
-            logger.warning(f'unexpected new docType for {clause}')
-            self.documents[docType]={}
+            logger.warning(f"unexpected new docType for {clause}")
+            self.documents[docType] = {}
         docSeries = clause.docSeries()
         rootTitle = f"Root Clause for {rootID}"
         linkClause = None
-        if not docSeries in self.documents[docType].keys() or self.documents[docType][docSeries] == None:
-            rootClause = Clause(rootID, rootTitle, clauseType='x', domain=domain)
-            rootClause.structure.seriesPart = 'rootClause'
+        if (
+            not docSeries in self.documents[docType].keys()
+            or self.documents[docType][docSeries] == None
+        ):
+            rootClause = Clause(rootID, rootTitle, clauseType="x", domain=domain)
+            rootClause.structure.seriesPart = "rootClause"
             self.documents[docType][docSeries] = rootClause
             Clause.clauseIndex[docSeries] = rootClause
         if clause.multipartSeries():
             part = clause.seriesPart()
             partTitle = f"Part {part} Clause for {rootID}"
-            partClauseID = rootID+"-"+part
+            partClauseID = rootID + "-" + part
             rootClause = self.documents[docType][docSeries]
             if not rootClause.hasSubClauseRef(partClauseID):
-                partClause = Clause(partClauseID, partTitle, clauseType='x', domain=domain)
-                partClause.structure.seriesPart = 'partRoot'
+                partClause = Clause(
+                    partClauseID, partTitle, clauseType="x", domain=domain
+                )
+                partClause.structure.seriesPart = "partRoot"
                 Clause.clauseIndex[partClauseID] = partClause
                 partClause.addSubClauseRef(clause.id())
                 rootClause.addSubClauseRef(partClauseID)
@@ -86,26 +93,35 @@ class DocTree():
             for docSeries in emptySeries[docType]:
                 del self.documents[docType][docSeries]
 
-class KnowledgeDomain():
+
+class KnowledgeDomain:
     def __init__(self, domain, documents, clauseIndex):
         self.domain = domain
         self.docTree = DocTree(documents)
         if Clause.clauseIndex == None:
             Clause.clauseIndex = clauseIndex
-        self.llm = LLM(model='llama3.1')
-        self.summarizer = Summarizer('llama3.1')
+        self.llm = LLM(model="llama3.1")
+        self.summarizer = Summarizer("llama3.1")
         self.vectorstore = VectorStore(domain=self.domain)
-        self.embedding_engine = EmbeddingEngine(model='mxbai-embed-large')
+        self.embedding_engine = EmbeddingEngine(model="mxbai-embed-large")
         self.clausestore = ClauseStore(domain=self.domain)
-        self.clauseingestor = ClauseIngestor(llm=self.llm, vectorstore=self.vectorstore, embedding_engine=self.embedding_engine, clausestore=self.clausestore, domain=self.domain)
-        self.clauseretriever = ClauseRetriever(llm=self.llm, vectorstore=self.vectorstore, embedding_engine=self.embedding_engine, clausestore=self.clausestore, domain=self.domain)
+        self.clauseingestor = ClauseIngestor(
+            llm=self.llm,
+            vectorstore=self.vectorstore,
+            embedding_engine=self.embedding_engine,
+            clausestore=self.clausestore,
+            domain=self.domain,
+        )
+        self.clauseretriever = ClauseRetriever(
+            llm=self.llm,
+            vectorstore=self.vectorstore,
+            embedding_engine=self.embedding_engine,
+            clausestore=self.clausestore,
+            domain=self.domain,
+        )
 
     def __str__(self):
-        return json.dumps(
-                self,
-                default=lambda o: o.__dict__,
-                sort_keys=True,
-                indent=4)
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def retrieve(self, text):
         return self.clauseretriever.retrieve(text, 5, 2)
@@ -121,11 +137,11 @@ class KnowledgeDomain():
                 parentClause = Clause.clauseIndex[parentID]
                 parentClause.addSubClauseRef(clause.id())
             else:
-                logger.warning(f'parent clause not present {parentID}')
+                logger.warning(f"parent clause not present {parentID}")
         else:
             self.docTree.addRootClause(self.domain, clause, rootID)
 
-    def seriesWeight(self,docSeries):
+    def seriesWeight(self, docSeries):
         for doc in self.docTree.listDocsInTree():
             if doc in Clause.clauseIndex:
                 clause = Clause.clauseIndex[doc]
@@ -136,7 +152,7 @@ class KnowledgeDomain():
                 return clause.treeWeight()
         return 0
 
-    def seriesSize(self,docSeries):
+    def seriesSize(self, docSeries):
         for doc in self.docTree.listDocsInTree():
             if doc in Clause.clauseIndex:
                 clause = Clause.clauseIndex[doc]
@@ -147,13 +163,13 @@ class KnowledgeDomain():
                 return clause.treeSize()
         return 0
 
-    def dumpSumstore(self, cacheFile='sumstore.json'):
+    def dumpSumstore(self, cacheFile="sumstore.json"):
         self.summarizer.dump_sumstore(cacheFile)
 
     def relateClauses(self):
         for clauseID in Clause.clauseIndex:
             clause = Clause.clauseIndex[clauseID]
-            clause.relate(parent = None, retriever = self.clauseretriever)
+            clause.relate(parent=None, retriever=self.clauseretriever)
 
     def introspectClauses(self):
         for doc in self.docTree.listDocsInTree():
@@ -162,9 +178,9 @@ class KnowledgeDomain():
             else:
                 short = doc.replace(" ", "")
                 clause = Clause.clauseIndex[short]
-            clause.relate(parent = None, retriever = self.clauseretriever)
+            clause.relate(parent=None, retriever=self.clauseretriever)
 
-    def summarizeClauses(self, force = False, verbose = False):
+    def summarizeClauses(self, force=False, verbose=False):
         for doc in self.docTree.listDocsInTree():
             if doc in Clause.clauseIndex:
                 clause = Clause.clauseIndex[doc]

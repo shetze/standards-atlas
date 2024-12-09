@@ -12,8 +12,10 @@ import argparse
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
-parser.add_argument("atlas_path", help="Path to the standards-atlas directory",type=Path)
-parser.add_argument("map_path", help="Path to the uid-ref-map",type=Path)
+parser.add_argument(
+    "atlas_path", help="Path to the standards-atlas directory", type=Path
+)
+parser.add_argument("map_path", help="Path to the uid-ref-map", type=Path)
 
 p = parser.parse_args()
 
@@ -22,20 +24,20 @@ if not p.atlas_path.exists():
     exit(1)
 
 scriptpath = os.path.dirname(__file__)
-traveloguedir = scriptpath+"/../travelogue"
-mappath = scriptpath+'/../data/uid-ref-map'
-relpath = scriptpath+'/../data/relations.csv'
+traveloguedir = scriptpath + "/../travelogue"
+mappath = scriptpath + "/../data/uid-ref-map"
+relpath = scriptpath + "/../data/relations.csv"
 mappings = linecache.getlines(str(mappath))
 
 
-refMapFile = 'csv/uid-ref-map.csv'
+refMapFile = "csv/uid-ref-map.csv"
 
 relationsScore = {}
 bijectives = {}
 refMap = {}
 
-with open(relpath, newline='') as csvfile:
-    relReader = csv.reader(csvfile, delimiter=';', quotechar='|')
+with open(relpath, newline="") as csvfile:
+    relReader = csv.reader(csvfile, delimiter=";", quotechar="|")
     for row in relReader:
         fromClause = row[0]
         toClause = row[1]
@@ -43,8 +45,8 @@ with open(relpath, newline='') as csvfile:
         relation = (fromClause, toClause)
         relationsScore[relation] = score
 
-with open(mappath, newline='') as csvfile:
-    mapReader = csv.reader(csvfile, delimiter=';', quotechar='|')
+with open(mappath, newline="") as csvfile:
+    mapReader = csv.reader(csvfile, delimiter=";", quotechar="|")
     for row in mapReader:
         doorstopID = row[1]
         clauseID = row[2]
@@ -62,7 +64,7 @@ for fromClause, toClause in relationsScore.keys():
         else:
             # print(f"refMap key missing {toClause}<->{fromClause}")
             continue
-        cmdline = ['doorstop', 'link', fromID, toID]
+        cmdline = ["doorstop", "link", fromID, toID]
         result = subprocess.run(cmdline, check=False, text=True)
         if fromClause in bijectives:
             bijectives[fromClause].append(toClause)
@@ -75,6 +77,3 @@ for fromClause, toClause in relationsScore.keys():
         else:
             bijectives[toClause] = []
             bijectives[toClause].append(fromClause)
-
-
-
