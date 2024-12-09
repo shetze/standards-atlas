@@ -32,8 +32,8 @@ class Chunk:
 class ClauseRetriever:
     hits={}
     misses={}
-    avg_hits={}
-    avg_misses={}
+    lup_hits={}
+    lup_misses={}
     def __init__(self, llm, vectorstore, embedding_engine, clausestore, domain):
         self.llm = llm
         self.embedding_engine = embedding_engine
