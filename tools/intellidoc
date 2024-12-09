@@ -8,6 +8,7 @@ import logging
 import hashlib
 import ollama
 import json
+import numpy as np
 from natsort import natsorted
 from IntelliDoc.Clause import Clause, ClauseID, ClauseHeading
 from IntelliDoc.KnowledgeDomain import KnowledgeDomain, DocTree
@@ -21,6 +22,9 @@ parser.add_argument('-H', '--harvest', help='Harvest mode: Headings found in the
 parser.add_argument('-g', '--generate', help='Generate mode: Missing headings will be generated.')
 parser.add_argument('-l', '--llm-model', nargs='?', default='nemotron', help='The LLM model to be used. llama3.1 ist faster, nemotron is more accurate.')
 parser.add_argument('-c', '--content', nargs='?', default='csv/heading-data.csv', help='Filename for CSV formatted input data defining the content structure of the documents to be tokenized.')
+parser.add_argument('-w', '--weights', nargs='?', default='csv/weights.csv', help='Filename for CSV formatted input data defining the weights of each sentence in th documents to be tokenized.')
+parser.add_argument('-r', '--relations', nargs='?', default='csv/relations.csv', help='Filename for CSV formatted input data defining the relations between clauses.')
+parser.add_argument('-d', '--refmap', nargs='?', default='csv/uid-ref-map.csv', help='Filename for CSV formatted input data providing the doorstop IDs for the clauses.')
 parser.add_argument('-i', '--interactive', help='Interactive generation mode, works good with llama3.1')
 parser.add_argument('-b', '--bulk', help='Bulk mode for heading generation, works good with nemotron')
 
@@ -49,17 +53,17 @@ iso_pattern = r'([A-Z\s]+\s+\d\d\d\d\d?)-?(\d*):\d\d\d\d\s+([1-9A-Z][0-9.]*)'
 iso_regex = re.compile(iso_pattern)
 
 domainDocuments = {
-        'automotive' : { 'standard' : { 'ISO 26262' : None, 'ISO PAS 8926' : None },
-                         'generic' : {} },
-        'industry' : { 'standard' : { 'IEC 61508' : None },
-                       'generic' : {} },
         'railway' : { 'standard' : {
                                       'EN 50126' : None,
-                                      'EN 50128' : None,
+                                      # 'EN 50128' : None,
                                       'EN 50129' : None,
-                                      'EN 50657' : None,
+                                      # 'EN 50657' : None,
                                       'EN 50716' : None },
                        'generic' : {} },
+        'industry' : { 'standard' : { 'IEC 61508' : None },
+                       'generic' : {} },
+        'automotive' : { 'standard' : { 'ISO 26262' : None, 'ISO PAS 8926' : None },
+                         'generic' : {} },
         'generic' : { 'standard' : {},
                       'generic' : {} }
 
@@ -136,6 +140,57 @@ def load_content_structure(contentfile=args.content):
         status[standard][partNr][chapter]={}
         
         # print("{} \"{}\" is a {} of \"{}{}\" and {}.".format(clauseID, title, typedict[typeID], standard, part, context))
+
+def load_doorstop_mapping(refmapfile=args.refmap):
+    with open(refmapfile, newline='') as csvfile:
+        refmapreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+        for row in refmapreader:
+            doorstopID = row[1]
+            clauseID = row[2]
+            if clauseID not in Clause.clauseIndex:
+                continue
+            clause = Clause.clauseIndex[clauseID]
+            clause.structure.doorstopID=doorstopID
+
+def load_relations(relationsfile=args.relations):
+    if Clause.relations == None:
+        Clause.relations = {}
+    with open(relationsfile, newline='') as csvfile:
+        relationsreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+        for row in relationsreader:
+            fromClause = row[0]
+            toClause = row[1]
+            score = row[2]
+            relation = (fromClause, toClause)
+            clause = Clause.clauseIndex[fromClause]
+            Clause.relations[relation]=score
+            clause.sentences = clause.getSentences()
+
+def load_weights(weightfile=args.weights):
+  with open(weightfile, newline='') as csvfile:
+    weightreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+    for row in weightreader:
+        clauseID = row[0]
+        scatter = row[1][1:-1]
+        scatter = scatter.replace(' ','')
+        significance = row[2][1:-1]
+        significance = significance.replace(' ','')
+        if clauseID in Clause.clauseIndex:
+            clause = Clause.clauseIndex[clauseID]
+        else:
+            print(f"load_weights error {clauseID} missing")
+            return
+        scat = np.array(scatter.split(','),dtype=float)
+        sign = np.array(significance.split(','),dtype=float)
+        clause.scat = scat.tolist()
+        clause.sign = sign.tolist()
+        sentences = clause.getTokens()
+        slen = len(sentences)
+        if len(clause.scat) != slen:
+            print(f"{clause.structure.ID} scatter len mismatch {slen} {len(clause.scat)}")
+        if len(clause.sign) != slen:
+            print(f"{clause.structure.ID} significance len mismatch {slen} {len(clause.sign)}")
+
 
 docstore = {}
 
@@ -233,6 +288,23 @@ def missed_headers():
 
 bulk_headings="bulk_headings"
 new_headings="new_headings"
+
+
+def check_clause_type():
+    for clauseID in Clause.clauseIndex.keys():
+        clause = Clause.clauseIndex[clauseID]
+        text = clause.getText()
+        clauseType = clause.type
+        if re.match('.*shall.*',text,re.IGNORECASE):
+            if clauseType != 'r':
+                print(f"{clauseID} type {clauseType} may be a requirement")
+        if re.match('.*objective.*',text,re.IGNORECASE):
+            if clauseType != 'o':
+                print(f"{clauseID} type {clauseType} may be a objective")
+        if re.match('.*scope.*',text,re.IGNORECASE):
+            if clauseType != 's':
+                print(f"{clauseID} type {clauseType} may be a scope definition")
+
 
 def generate_headings():
   for std in docstore.keys():
@@ -510,9 +582,13 @@ if __name__ == '__main__':
     heading_factory=HeadingFactory('nemotron')
     load_content_structure()
     parse_md_content()
+    load_weights()
+    load_relations()
+    load_doorstop_mapping()
     heading_factory.load_alternatives_from_file('bulk_headings')
     # heading_factory.headings4all(cacheFile='new_headings', verbose=True)
     missed_headers()
+    # check_clause_type()
     # generate_headings()
     # generate_interactive_headings()
     # generate_alternative_headings()
@@ -525,8 +601,8 @@ if __name__ == '__main__':
         # knowledgeDomains[domain].dumpKnowledgeHeadings()
         # knowledgeDomains[domain].ingestDomainClauses()
         # knowledgeDomains[domain].summarizeClauses(verbose=True)
-        knowledgeDomains[domain].introspectClauses()
-        knowledgeDomains[domain].relateClauses()
+        # knowledgeDomains[domain].introspectClauses()
+        # knowledgeDomains[domain].relateClauses()
         # knowledgeDomains[domain].dumpSumstore(cacheFile="sumstore-"+domain+".json")
         # knowledgeDomains[domain].dumpKnowledgeTexts()
         # knowledgeDomains[domain].printKnowledgeTexts()
@@ -538,4 +614,4 @@ if __name__ == '__main__':
     # nodes = knowledgeDomains['railway'].retrieve("The objective of the qualification of software components is to provide evidence for their suitability for re-use in items developed in compliance with the ISO 26262 series of standards. The use of qualified software components avoids re-development of existing software components with identical functionalities or properties or enables the use of general purpose commercial off-the-shelf (COTS) software. Software components addressed by this clause include: - software libraries from third-party suppliers [commercial off-the-shelf (COTS) software]; - already existing SW components not developed according to ISO 26262; - in-house components already in use in electronic control units.")
     # for node in nodes:
     #     print(node)
-    # print(dumpClauseIndex())
+    print(dumpClauseIndex())
