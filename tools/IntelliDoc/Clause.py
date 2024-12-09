@@ -1,7 +1,9 @@
 import re
 import logging
 import hashlib
+import nltk
 from IntelliDoc.Relationship import Relationship
+from llama_index.core.node_parser.text.utils import split_by_sentence_tokenizer_internal
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +104,7 @@ class ClauseID():
                 'generic' : r'(\w+)-?(\d*)-([1-9A-Z]+[0-9.]*)'
                 }
         self.ID = clauseID
+        self.doorstopID = None
 
         if not docType in clausePatterns.keys():
             logger.error(f"clauseID {clauseID} docType not supported: {docType}\n\tfalling back to generic")
@@ -146,6 +149,7 @@ class ClauseID():
 
 class Clause():
     clauseIndex = None
+    relations = None
     def __init__(self, clauseID, clauseHeading = 'Clause', clauseType = 'c', docType = 'standard', domain = 'generic'):
         self.structure = ClauseID(clauseID, docType)
         self.type = clauseType
@@ -155,8 +159,14 @@ class Clause():
         self.keywords = []
         self.subclauses = []
         self.text = []
+        self.sentences = []
         self.summary = []
-        self.relationships = {}
+        self.relationship = None
+        self.distinctness = 1
+        self.sentdist = []
+        self.relStat = { 'industry':'new', 'railway':'new', 'automotive':'new' }
+        self.scat = []
+        self.sign = []
 
     def __str__(self):
         heading = '#' * self.structure.level
@@ -169,18 +179,29 @@ class Clause():
 
     def clauseType(self):
         typedict = {
-                'u' : 'text',
-                'r' : 'requirement',
-                's' : 'scope definition',
-                'o' : 'objective',
-                't' : 'term definition',
+                'a' : 'abbreviation',
                 'c' : 'clause',
+                'm' : 'technique / measure',
+                'o' : 'objective',
+                'r' : 'requirement',
+                's' : 'scope',
+                't' : 'term',
+                'u' : 'text',
                 'x' : 'root',
                 }
         return typedict[self.type]
 
     def id(self):
         return self.structure.ID
+
+    def getClauseByID(self, clauseID, force=False):
+        if clauseID not in Clause.clauseIndex:
+            if force:
+                clause = Clause(clauseID)
+                Clause.clauseIndex[clauseID] = clause
+            else:
+                return None
+        return Clause.clauseIndex[clauseID]
 
     def docType(self):
         return self.structure.docType
@@ -204,6 +225,11 @@ class Clause():
     def getText(self):
         text = ' '.join(self.text)
         return text.strip()
+
+    def getTokens(self):
+        text = ' '.join(self.text)
+        tokenizer = nltk.tokenize.PunktSentenceTokenizer()
+        return split_by_sentence_tokenizer_internal(text.strip(), tokenizer)
 
     def parentID(self):
         return self.structure.parentID()
@@ -263,15 +289,17 @@ class Clause():
 
     def relate(self, parent, retriever):
         domain = retriever.domain
-        if domain not in self.relationships:
-            self.relationships[domain] = Relationship(self,parent,retriever)
+        if self.relationship == None:
+            self.relationship = Relationship(self,parent,retriever)
+        else:
+            self.relationship.addRetriever(retriever)
         if len(self.subclauses)>0:
             for clauseID in self.subclauses:
                 if clauseID in Clause.clauseIndex.keys():
                     clause = Clause.clauseIndex[clauseID]
                     clause.relate(self,retriever)
-            self.relationships[domain].levelUp()
-        self.relationships[domain].relate()
+            self.relationship.levelUp(domain)
+        self.relationship.relate(domain)
         
     def ingest(self, clauseingestor):
         clauseingestor.ingest_clause(self)
