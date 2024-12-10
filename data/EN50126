@@ -20,7 +20,7 @@ return 0;
 #
 ####
 #---data---#
-TOC;2f9c06c1291df2420cdd2ee4ff8b2143;EN 50126-1:2017 0;Part 1;u
+TOC;2f9c06c1291df2420cdd2ee4ff8b2143;EN 50126-1:2017 0;TOC;u
 TOC;3038e5ff31b4c5dc35876c205afbb0fb;EN 50126-1:2017 1;Scope;u
 TOC;da680234a4869cd66b4d978452be8d02;EN 50126-1:2017 2;Normative references;u
 TOC;796d97865a942128da367fb0d894a37e;EN 50126-1:2017 3;Terms and definitions;u
@@ -176,7 +176,7 @@ TOC;bf071516d9da445fa300aba4da0f1084;EN 50126-1:2017 7.5;Phase 4: Specification 
 TOC;0dcb6a2ef7416bf4aa08878cee64f810;EN 50126-1:2017 7.5.1;Objectives;u
 TOC;535def6cdd7c97145194282f9cb44091;EN 50126-1:2017 7.5.2;Activities;u
 TOC;21b601e6f835ead8998858c77e04bae6;EN 50126-1:2017 7.5.3;Deliverables;u
-TOC;90e20aae7f1d324719f4d7ba0f823dd9;EN 50126-1:2017 7.5.4;TOC;u
+TOC;90e20aae7f1d324719f4d7ba0f823dd9;EN 50126-1:2017 7.5.4;Specific validation tasks;u
 TOC;f0dd3cbd76ae3344091019488dbd9303;EN 50126-1:2017 7.6;Phase 5: Architecture and apportionment of system requirements;u
 TOC;933cc02399f7294a29bf0c76b2da418a;EN 50126-1:2017 7.6.1;Objectives;u
 TOC;05ca7f405bd18d404ce76160c348fc8c;EN 50126-1:2017 7.6.2;Activities;u
@@ -242,7 +242,7 @@ TOC;dbfa62eac257a92d8b8277343ff0005f;EN 50126-1:2017 D.3.3;Functional breakdown;
 TOC;777dd9a9aed9af1a4037c4c9cc57963b;EN 50126-1:2017 D.4;Parties/stakeholders/boundaries of systems;u
 TOC;68369777a35f2826157adf2df959ed06;EN 50126-1:2017 D.5;Guidance on the content of a system definition;u
 TOC;14b2f04d80f186e65091517cd222ea84;EN 50126-1:2017 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive 2008/57/EC;u
-TOC;d1cc110c90adf6dbb76b89a0e81aa06a;EN 50126-2:2017 0;Part 2;u
+TOC;d1cc110c90adf6dbb76b89a0e81aa06a;EN 50126-2:2017 0;TOC;u
 TOC;ee96f356cd2a1941fd7498c338ae701b;EN 50126-2:2017 1;Scope;u
 TOC;e151ce8111ce1afa3eb0285deaf5f8f5;EN 50126-2:2017 2;Normative references;u
 TOC;9c72d7038f01ef736d14b051a457f511;EN 50126-2:2017 3;Terms and definitions;u
