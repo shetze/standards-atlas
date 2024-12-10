@@ -74,13 +74,13 @@ done
 
 stdatlasdir="${stdatlasdir:-/tmp/standards-atlas}"
 myreqs="${myreqs:-SOHP}"
-myparent="${myparent:-EN50657}"
+myparent="${myparent:-EN50716}"
 mydigits=3
 atlastooldir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 atlashomedir="$(dirname "$atlastooldir")"
 atlasdatadir="$atlashomedir/data"
 atlaslocaldir="$atlashomedir/local"
-standards=( IEC61508 IEC61508-3-1 ISO26262 PAS8926 EN50126 EN50128 EN50129 EN50657 EN50716 )
+standards=( IEC61508 IEC61508-3-1 ISO26262 PAS8926 EN50126 EN50129 EN50716 )
 # standards=( IEC11889 )
 
 echoerr() { printf "%s\n" "$*" >&2; }
@@ -310,10 +310,11 @@ addItem()
     if [ "${typeMarker,,}" != "$typeID"  ]; then
         echoerr "Type ID mismatch for $indexString: Marker $typeMarker ID $typeID"
     fi
-    markdown=$(echo ${text//\"/} | tr '~' '\n' | sed 's/^/    /')
+    markdown=$(echo "# $index $title~"${text//\"/} | tr '~' '\n' | sed 's/^/    /')
+    short=${title:0:40}
     cat <<EOD >./defaults.yml
 type: '$type'
-header: '$index $title'
+header: '$short'
 text: |
 $markdown
 idx: $indexString
