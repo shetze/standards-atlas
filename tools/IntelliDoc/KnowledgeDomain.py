@@ -198,6 +198,25 @@ class KnowledgeDomain:
                 clause = Clause.clauseIndex[short]
             clause.ingest(self.clauseingestor)
 
+    def dumpKnowledgeEdges(self):
+        for doc in self.docTree.listDocsInTree():
+            if doc in Clause.clauseIndex:
+                clause = Clause.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = Clause.clauseIndex[short]
+            clause.dumpEdgeData()
+
+    def dumpKnowledgeNodes(self):
+        print("node_id;viewLabel;node_type;viewColor;viewSize")
+        for doc in self.docTree.listDocsInTree():
+            if doc in Clause.clauseIndex:
+                clause = Clause.clauseIndex[doc]
+            else:
+                short = doc.replace(" ", "")
+                clause = Clause.clauseIndex[short]
+            clause.dumpNodeData()
+
     def dumpKnowledgeHeadings(self):
         for doc in self.docTree.listDocsInTree():
             if doc in Clause.clauseIndex:
