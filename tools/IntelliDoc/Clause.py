@@ -1,4 +1,6 @@
 import re
+
+# Importing modules for string processing, logging, tokenization, and custom utilities
 import logging
 import hashlib
 import nltk
@@ -6,6 +8,7 @@ from IntelliDoc.Relationship import Relationship
 from llama_index.core.node_parser.text.utils import split_by_sentence_tokenizer_internal
 
 logger = logging.getLogger(__name__)
+# Initializing a logger for debugging and error tracking
 
 alphabets = "([A-Za-z])"
 prefixes = "(Mr|St|Mrs|Ms|Dr)[.]"
@@ -71,12 +74,26 @@ def split_into_sentences(text):
 
 
 class ClauseHeading:
+    """
+    Represents a clause heading with display text and alternative headings.
+
+    Attributes:
+        display: The primary heading display name.
+        alternatives: A dictionary of alternative headings with metadata.
+        state: The processing state of the heading.
+    """
+
     def __init__(self, displayHeading):
         self.display = displayHeading
         self.alternatives = {}
         self.state = "loaded"
 
     def addAlternative(self, heading, status, source):
+        """
+        Add an alternative heading if it does not already exist.
+
+        Updates the display heading and state based on certain conditions.
+        """
         if heading in self.alternatives.keys():
             return
         self.alternatives[heading] = {}
@@ -121,9 +138,20 @@ class ClauseHeading:
 
 
 class ClauseID:
+    """
+    Represents the unique identifier for a clause.
+
+    Attributes:
+        ID: The raw clause ID string.
+        docType: The type of document associated with the clause.
+    """
+
     clauseRegex = {}
 
     def __init__(self, clauseID, docType):
+        """
+        Initialize and parse a clause ID based on the document type.
+        """
         clausePatterns = {
             "standard": r"([A-Z\s]+\s+\d\d\d\d\d?)-?(\d*):\d\d\d\d\s+([1-9A-Z]+[0-9.]*)",
             "generic": r"(\w+)-?(\d*)-([1-9A-Z]+[0-9.]*)",
@@ -175,6 +203,16 @@ class ClauseID:
 
 
 class Clause:
+    """
+    Represents a clause, encapsulating its structure, text, and relationships.
+
+    Attributes:
+        structure: An instance of ClauseID representing the clause's identifier.
+        heading: An instance of ClauseHeading representing the clause heading.
+        subclauses: A list of sub-clauses referenced by this clause.
+        text: The actual content of the clause.
+    """
+
     clauseIndex = None
     relations = None
 
@@ -202,6 +240,7 @@ class Clause:
         self.relStat = {"industry": "new", "railway": "new", "automotive": "new"}
         self.scat = []
         self.sign = []
+        self.resonance = 0
 
     def __str__(self):
         heading = "#" * self.structure.level
@@ -251,9 +290,11 @@ class Clause:
         return self.structure.docSeries
 
     def addText(self, line):
+        # Adds a line of text to the clause.
         self.text.append(line)
 
     def getSentences(self):
+        # Retrieves tokenized sentences from the clause text.
         text = " ".join(self.text)
         return split_into_sentences(text)
 
@@ -306,6 +347,7 @@ class Clause:
             return False
 
     def summarize(self, summarizer, force=False, verbose=False):
+        # Generates a summary for the clause using the provided summarizer.
         if self.isSummarized() and not force:
             return self.summary
         subtext = []
@@ -323,6 +365,7 @@ class Clause:
         return self.summary
 
     def relate(self, parent, retriever):
+        # Establishes hierarchical relationships with parent clauses.
         domain = retriever.domain
         if self.relationship == None:
             self.relationship = Relationship(self, parent, retriever)
@@ -363,6 +406,46 @@ class Clause:
                 clause.dumpTextData()
             else:
                 print(f"clauseIndex key error for {clauseID}")
+
+    def dumpNodeData(self):
+        typeColors = {
+            "u": "(215,95,0,255)",
+            "c": "(215,95,0,255)",
+            "x": "(215,0,0,255)",
+            "r": "(215,135,255,255)",
+            "o": "(215,215,0,255)",
+            "t": "(135,135,255,255)",
+            "s": "(95,135,0,255)",
+            "m": "(255,255,0,255)",
+        }
+        myID = self.structure.ID
+        heading = self.heading.getBestHeading()
+        clauseType = self.type
+        if self.heading.state != "loaded" and self.heading.state != "parsed":
+            clauseType = self.type.upper()
+        color = typeColors[clauseType.lower()]
+        viewSize = 1
+        if self.resonance > 1:
+            viewSize = self.resonance
+        entry = (
+            f"{myID};{heading};{clauseType};{color};({viewSize},{viewSize},{viewSize})"
+        )
+        print(entry)
+        for clauseID in self.subclauses:
+            if clauseID in Clause.clauseIndex.keys():
+                clause = Clause.clauseIndex[clauseID]
+                clause.dumpNodeData()
+            else:
+                print(f"clauseIndex key error for {clauseID}")
+
+    def dumpEdgeData(self):
+        myID = self.structure.ID
+        for clauseID in self.subclauses:
+            entry = f"{myID};{clauseID}"
+            print(entry)
+            if clauseID in Clause.clauseIndex.keys():
+                clause = Clause.clauseIndex[clauseID]
+                clause.dumpEdgeData()
 
     def dumpHeadingData(self):
         myID = self.structure.ID
