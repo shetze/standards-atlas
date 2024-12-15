@@ -87,6 +87,8 @@ class HeadingFactory:
                     else:
                         match = self.hl_regex.match(line)
                         if match:
+                            if clauseID not in Clause.clauseIndex:
+                                continue
                             clause = Clause.clauseIndex[clauseID]
                             display = clause.heading.display
                             clause.heading.addAlternative(
