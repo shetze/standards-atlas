@@ -199,8 +199,17 @@ def load_doorstop_mapping(refmapfile=args.refmap):
 
 
 def load_relations(relationsfile=args.relations):
+    """
+    Reads the relationsfile CSV list of precalculated relationships.
+
+    We store all relations in one big class level dictionary Clause.relations.
+    Alongside, we also calculate the "resonance" level of each clause which
+    is basically the normalized cumulative score of all relations pointing to
+    a particual clause.
+    """
     if Clause.relations == None:
         Clause.relations = {}
+    impulse = {}
     with open(relationsfile, newline="") as csvfile:
         relationsreader = csv.reader(csvfile, delimiter=";", quotechar="|")
         for row in relationsreader:
@@ -208,12 +217,28 @@ def load_relations(relationsfile=args.relations):
             toClause = row[1]
             score = row[2]
             relation = (fromClause, toClause)
-            clause = Clause.clauseIndex[fromClause]
+            if fromClause not in Clause.clauseIndex:
+                continue
             Clause.relations[relation] = score
-            clause.sentences = clause.getSentences()
+            if toClause in impulse:
+                impulse[toClause] += float(score)
+            else:
+                impulse[toClause]=0
+                impulse[toClause] += float(score)
+    amplitude=0
+    for toClause in impulse:
+        amplitude += impulse[toClause]
+    avg = amplitude / len(impulse)
+    for toClause in impulse:
+        target = Clause.clauseIndex[toClause]
+        target.resonance = impulse[toClause] / avg
 
 
 def load_weights(weightfile=args.weights):
+    """
+    Reads the weightfile CSV list of precalculated weight values for each
+    sentence in the clause.
+    """
     with open(weightfile, newline="") as csvfile:
         weightreader = csv.reader(csvfile, delimiter=";", quotechar="|")
         for row in weightreader:
@@ -232,6 +257,7 @@ def load_weights(weightfile=args.weights):
             clause.scat = scat.tolist()
             clause.sign = sign.tolist()
             sentences = clause.getTokens()
+            clause.sentences = sentences
             slen = len(sentences)
             if len(clause.scat) != slen:
                 print(
@@ -699,6 +725,8 @@ if __name__ == "__main__":
         knowledgeDomains[domain].docTree.deleteEmptySeries()
         # print(knowledgeDomains[domain])
         # knowledgeDomains[domain].dumpKnowledgeHeadings()
+        # knowledgeDomains[domain].dumpKnowledgeNodes()
+        # knowledgeDomains[domain].dumpKnowledgeEdges()
         # knowledgeDomains[domain].ingestDomainClauses()
         # knowledgeDomains[domain].summarizeClauses(verbose=True)
         # knowledgeDomains[domain].introspectClauses()
