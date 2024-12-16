@@ -263,7 +263,7 @@ class Clause:
             "u": "text",
             "x": "root",
         }
-        return typedict[self.type]
+        return typedict[self.type.lower()]
 
     def id(self):
         return self.structure.ID
