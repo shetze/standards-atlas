@@ -103,7 +103,9 @@ class KnowledgeDomain:
         self.llm = LLM(model="llama3.1")
         self.summarizer = Summarizer("llama3.1")
         self.vectorstore = VectorStore(domain=self.domain)
-        self.embedding_engine = EmbeddingEngine(model="mxbai-embed-large")
+        # self.embedding_engine = EmbeddingEngine(model="mxbai-embed-large")
+        self.embedding_engine = EmbeddingEngine(model="nomic-embed-text")
+        # self.embedding_engine = EmbeddingEngine(model="paraphrase-multilingual")
         self.clausestore = ClauseStore(domain=self.domain)
         self.clauseingestor = ClauseIngestor(
             llm=self.llm,
@@ -166,19 +168,23 @@ class KnowledgeDomain:
     def dumpSumstore(self, cacheFile="sumstore.json"):
         self.summarizer.dump_sumstore(cacheFile)
 
+    def memorizePeer(self,clause,peer,score):
+        clause.memorizePeer(peer,score,retriever=self.clauseretriever)
+
     def relateClauses(self):
         for clauseID in Clause.clauseIndex:
             clause = Clause.clauseIndex[clauseID]
             clause.relate(parent=None, retriever=self.clauseretriever)
 
-    def introspectClauses(self):
+    def findClusters(self):
         for doc in self.docTree.listDocsInTree():
             if doc in Clause.clauseIndex:
                 clause = Clause.clauseIndex[doc]
             else:
                 short = doc.replace(" ", "")
                 clause = Clause.clauseIndex[short]
-            clause.relate(parent=None, retriever=self.clauseretriever)
+            # clause.relate(parent=None, retriever=self.clauseretriever)
+            clause.findClusters()
 
     def summarizeClauses(self, force=False, verbose=False):
         for doc in self.docTree.listDocsInTree():
