@@ -241,6 +241,7 @@ class Clause:
         self.scat = []
         self.sign = []
         self.resonance = 0
+        self.clustered = False
 
     def __str__(self):
         heading = "#" * self.structure.level
@@ -307,6 +308,15 @@ class Clause:
         tokenizer = nltk.tokenize.PunktSentenceTokenizer()
         return split_by_sentence_tokenizer_internal(text.strip(), tokenizer)
 
+    def getContext(self):
+        context = []
+        parentID = self.parentID()
+        if parentID != None:
+            parent = Clause.clauseIndex[parentID]
+            context.extend(parent.getContext())
+        context.append(self.heading.getBestHeading())
+        return context
+
     def parentID(self):
         return self.structure.parentID()
 
@@ -363,6 +373,61 @@ class Clause:
         text = "\n".join(text)
         self.summary = summarizer.summarize(self, text.strip(), verbose)
         return self.summary
+
+    def memorizePeer(self, peer, score, retriever):
+        domain = retriever.domain
+        parent = None
+        if self.relationship == None:
+            self.relationship = Relationship(self, parent, retriever)
+        else:
+            self.relationship.addRetriever(retriever)
+        self.relationship.memorizePeer(peer,score)
+
+    def findClusters(self):
+        """
+        With findClusters we identify sets of siblings relating to siblings in another domain
+        """
+        if self.clustered:
+            return
+        self.clustered = True
+        parSet = {}
+        # siblings are the subclauses of the parent clause
+        for clauseID in self.subclauses:
+            clause = Clause.clauseIndex[clauseID]
+            clause.findClusters()
+            if not clause.relationship:
+                # print(f"no relationship for {clause.structure.ID}")
+                continue
+            for domain in clause.relationship.peers:
+                if not domain in parSet:
+                    parSet[domain] = {}
+                for peer in clause.relationship.peers[domain]:
+                    peerPar = peer.rsplit(".", 1)[0]
+                    if peerPar not in parSet[domain]:
+                        parSet[domain][peerPar] = []
+                        parSet[domain][peerPar].append(clauseID)
+                    else:
+                        parSet[domain][peerPar].append(clauseID)
+        if Relationship.clusters == None:
+            Relationship.clusters = {}
+        for domain in parSet:
+            for peerPar in parSet[domain]:
+                parSet[domain][peerPar] = list(set(parSet[domain][peerPar]))
+                if len(parSet[domain][peerPar]) > 4:
+                    relation = (self.structure.ID, peerPar)
+                    Relationship.clusters[relation] = parSet[domain][peerPar]
+                    # print(f"{self.structure.ID}>{peerPar}:{len(parSet[domain][peerPar])}")
+                    for clauseID in self.subclauses:
+                        clause = Clause.clauseIndex[clauseID]
+                        if clause.relationship == None:
+                            continue
+                        if domain not in clause.relationship.peers:
+                            continue
+                        for peer in clause.relationship.peers[domain]:
+                            pP = peer.rsplit(".", 1)[0]
+                            if peerPar == pP:
+                                clause.relationship.clusterScore[peerPar] = clause.relationship.peers[domain][peer]
+
 
     def relate(self, parent, retriever):
         # Establishes hierarchical relationships with parent clauses.
