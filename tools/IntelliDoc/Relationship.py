@@ -1,18 +1,118 @@
 import numpy as np
 import math
 from IntelliDoc.ClauseRetriever import ClauseRetriever
+from IntelliDoc.Summarizer import Summarizer
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class Relationship:
+    clusters = None
+    clusterStatus = {}
+
+    @classmethod
+    def clusterDump(cls, clauseIndex):
+        for fromParID, toParID in cls.clusters.keys():
+            relation = (fromParID, toParID)
+            reverse = (toParID, fromParID)
+            if reverse in cls.clusters:
+                bijective = "Bijective "
+            else:
+                bijective = ""
+                continue
+            summarizationItems = {}
+            fromPar = clauseIndex[fromParID]
+            summarizationItems[fromPar.domain] = []
+            summarizationItems[fromPar.domain].append(fromParID)
+            fromHeading = fromPar.heading.getBestHeading()
+            toPar = clauseIndex[toParID]
+            toHeading = toPar.heading.getBestHeading()
+            summarizationItems[toPar.domain] = []
+            summarizationItems[toPar.domain].append(toParID)
+            print(f"\n## {bijective}Relationship Cluster between {fromParID} {fromHeading} and {toParID} {toHeading}\n")
+            print("|Clause|Score|RevScore|Peer|")
+            print("|---|---|---|---|")
+            for memberID in cls.clusters[relation]:
+                member = clauseIndex[memberID]
+                mHeading = member.heading.getBestHeading()
+                for peerID in member.relationship.peers[toPar.domain]:
+                    pP = peerID.rsplit(".", 1)[0]
+                    if toParID == pP:
+                        score = member.relationship.peers[toPar.domain][peerID]['score']
+                        revscore = 0
+                        peer = clauseIndex[peerID]
+                        pHeading = peer.heading.getBestHeading()
+                        if reverse in cls.clusters:
+                            if peer.relationship != None and memberID in peer.relationship.peers[member.domain]:
+                                revscore = peer.relationship.peers[member.domain][memberID]['score']
+                        print(f"|{memberID} {mHeading}|{score}|{revscore}|{peerID} {pHeading}|")
+                        summarizationItems[fromPar.domain].append(memberID)
+                        summarizationItems[toPar.domain].append(peerID)
+            print("\n")
+            cls.qualifyCluster(clauseIndex,summarizationItems)
+
+    @classmethod
+    def qualifyCluster(cls, clauseIndex, summarizationItems):
+        # model = "hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF:latest"
+        model = "granite3-moe:latest"
+        # model = "nemotron"
+        # model = "llama3.1"
+        verbose = False
+        qualifyer = Summarizer(model)
+        D = []
+        d = []
+        if 'automotive' in summarizationItems:
+            D.append('automotive')
+            d.append('automotive')
+            if 'industry' in summarizationItems:
+                D.append('industry')
+                d.append('mining industry')
+            else:
+                D.append('railway')
+                d.append('railway')
+        else:
+            D.append('industry')
+            d.append('mining industry')
+            D.append('railway')
+            d.append('railway')
+
+        clusterPair = (summarizationItems[D[0]][0], summarizationItems[D[1]][0])
+        if clusterPair in Relationship.clusterStatus:
+            return
+        else:
+            Relationship.clusterStatus[clusterPair] = 'qualified'
+
+        prompt = f"You are an expert in functional safety. I want to transfer an electronic control unit with a safety application developed for an autonomous vehicle for the {d[0]} safety domain  in compliance with {summarizationItems[D[0]][0]} to the {d[1]} safety domain where we need to to comply with {summarizationItems[D[1]][0]}. The context is providing clauses from the two domains."
+        question = "What do the two functional safety domains have in common?\nHow do the two funktional safety domains differ?"
+        context = []
+        for idx in (0,1):
+            parentID = summarizationItems[D[idx]][0]
+            parentClause = clauseIndex[parentID]
+            pContext = "->".join(parentClause.getContext())
+            pType = parentClause.clauseType()
+            print(f"## Cluster {D[idx]} {pType} {parentID} {pContext}\n")
+            context.append(f"// Start of Context with clauses from the {d[idx]} safety domain {parentID} with headings {pContext}")
+            itemList = list(set(summarizationItems[D[idx]]))
+            for clauseID in itemList:
+                clause = clauseIndex[clauseID]
+                context.append("## " + clause.heading.getBestHeading())
+                context.append("\n".join(clause.text))
+            context.append(f"// End of Context with clauses from the {d[idx]} safety domain")
+
+        text = "\n".join(context)
+        # print(text)
+        result = qualifyer.request(prompt, question, text.strip(), verbose)
+        print("\n".join(result))
+
+
     def __init__(self, clause, parent, retriever):
         domain = retriever.domain
         self.clause = clause
         self.parent = parent
         self.retrievers = {}
-        self.relationships = {}
+        self.peers = {}
+        self.clusterScore = {}
         self.s_significance = []
         self.significance = 1
         self.lup_support = {}
@@ -21,7 +121,18 @@ class Relationship:
 
     def addRetriever(self, retriever):
         domain = retriever.domain
-        self.retrievers[domain] = retriever
+        if domain not in self.retrievers:
+            self.retrievers[domain] = retriever
+
+    def memorizePeer(self, peer, score):
+        domain = peer.domain
+        if domain not in self.peers:
+            self.peers[domain] = {}
+        peerID = peer.structure.ID
+        if not peerID in self.peers[domain]:
+            self.peers[domain][peerID] = {}
+        self.peers[domain][peerID]["score"] = score
+        self.peers[domain][peerID]["status"] = "memorized"
 
     def relate(self, domain):
         # relate goes through the clause text sentence by sentence and retrieves the
@@ -35,19 +146,19 @@ class Relationship:
         if self.clause.distinctness < 1:
             return
 
-        if domain not in self.relationships:
-            self.relationships[domain] = {}
+        if domain not in self.peers:
+            self.peers[domain] = {}
         sentences = self.clause.getTokens()
         if len(sentences) == 0:
             return
         self._process_sentences(domain, sentences)
-        related = self.best_match_for_domain(domain)
+        related = self.best_matches_for_domain(domain, 3)
         if domain == self.clause.domain:
             return
         try:
             with open(self.relation_file, "a") as store:
                 for relClause in related:
-                    score = self.relationships[domain][relClause]["score"]
+                    score = self.peers[domain][relClause]["score"]
                     store.write(f"{self.clause.structure.ID};{relClause};{score}\n")
                 store.close
         except IOError as e:
@@ -56,7 +167,7 @@ class Relationship:
     def _process_sentences(self, domain, sentences):
         scatter = []
         signife = []
-        for i, sentence in enumerate(sentences):
+        for enum_i, sentence in enumerate(sentences):
             if domain in self.retrievers:
                 nodes = self.retrievers[domain].retrieve(sentence, 10, 0)
             else:
@@ -142,36 +253,36 @@ class Relationship:
 
             for clauseID in sorted_r:
                 score = sorted_r[clauseID]
-                if len(self.clause.sign) < i:
-                    print(f"{self.clause.structure.ID}: weight sign mismatch {i}")
+                if len(self.clause.sign) < enum_i:
+                    print(f"{self.clause.structure.ID}: weight sign mismatch {enum_i}")
                     break
                 if score < s_avg:
                     break
                 try:
-                    if clauseID in self.relationships[domain]:
-                        # ps = self.relationships[domain][clauseID]['score']
+                    if clauseID in self.peers[domain]:
+                        # ps = self.peers[domain][clauseID]['score']
                         # t1 = math.tan(ps*math.pi/2)
                         # t2 = math.tan(score*math.pi/2)
                         # score = math.atan(t1+t2)*2/math.pi
-                        if self.relationships[domain][clauseID]["status"] == "loading":
-                            self.relationships[domain][clauseID]["score"] += (
+                        if self.peers[domain][clauseID]["status"] == "loading":
+                            self.peers[domain][clauseID]["score"] += (
                                 score * self.clause.sign[i]
                             )
-                            self.relationships[domain][clauseID]["hits"] += 1
+                            self.peers[domain][clauseID]["hits"] += 1
                     else:
-                        self.relationships[domain][clauseID] = {}
-                        self.relationships[domain][clauseID]["score"] = (
+                        self.peers[domain][clauseID] = {}
+                        self.peers[domain][clauseID]["score"] = (
                             score * self.clause.sign[i]
                         )
-                        self.relationships[domain][clauseID]["hits"] = 1
-                        self.relationships[domain][clauseID]["status"] = "loading"
+                        self.peers[domain][clauseID]["hits"] = 1
+                        self.peers[domain][clauseID]["status"] = "loading"
                 except IndexError as e:
                     len_s = len(self.clause.sign)
-                    print(f"{self.clause.structure.ID}: index error {len_s} {i} {e}")
-                    self.relationships[domain][clauseID] = {}
-                    self.relationships[domain][clauseID]["score"] = score
-                    self.relationships[domain][clauseID]["hits"] = 1
-                    self.relationships[domain][clauseID]["status"] = "loading"
+                    print(f"{self.clause.structure.ID}: index error {len_s} {enum_i} {e}")
+                    self.peers[domain][clauseID] = {}
+                    self.peers[domain][clauseID]["score"] = score
+                    self.peers[domain][clauseID]["hits"] = 1
+                    self.peers[domain][clauseID]["status"] = "loading"
         # all sentences processed
         if domain == self.clause.domain:
             len_se = len(sentences)
@@ -195,18 +306,18 @@ class Relationship:
             except IOError as e:
                 logger.warning(f"file open error: {e}")
 
-    def best_match_for_domain(self, domain, count=3):
+    def best_matches_for_domain(self, domain, count=3):
         c_max = 0
         c_min = 1
         c_sum = 0
         scores = {}
         averages = []
-        for clauseID in self.relationships[domain]:
-            if self.relationships[domain][clauseID]["status"] != "loading":
+        for clauseID in self.peers[domain]:
+            if self.peers[domain][clauseID]["status"] != "loading":
                 continue
-            score = self.relationships[domain][clauseID]["score"]
-            avgScore = score / self.relationships[domain][clauseID]["hits"]
-            self.relationships[domain][clauseID]["status"] = "matched"
+            score = self.peers[domain][clauseID]["score"]
+            avgScore = score / self.peers[domain][clauseID]["hits"]
+            self.peers[domain][clauseID]["status"] = "matched"
             averages.append(avgScore)
             scores[clauseID] = score
             c_sum += score
@@ -256,14 +367,14 @@ class Relationship:
         lup_rel = {}
         for clauseID in self.clause.subclauses:
             subClause = self.clause.getClauseByID(clauseID)
-            if domain not in subClause.relationship.relationships:
+            if domain not in subClause.relationship.peers:
                 print(
-                    f"{self.clause.structure.ID}: levelUp domain {domain} not in relationships"
+                    f"{self.clause.structure.ID}: levelUp domain {domain} not in peers"
                 )
                 continue
-            for refClause in subClause.relationship.relationships[domain]:
+            for refClause in subClause.relationship.peers[domain]:
                 lupClause = refClause.rsplit(".", 1)[0]
-                score = subClause.relationship.relationships[domain][refClause]["score"]
+                score = subClause.relationship.peers[domain][refClause]["score"]
                 if lupClause in lup_rel:
                     lup_rel[lupClause] += score
                 else:
@@ -272,7 +383,7 @@ class Relationship:
         sorted_lr = dict(sorted(lup_rel.items(), key=lambda x: x[1], reverse=True))
         if len(sorted_lr) == 0:
             print(
-                f"{self.clause.structure.ID}: levelUp has found no relationships for domain {domain}"
+                f"{self.clause.structure.ID}: levelUp has found no peers for domain {domain}"
             )
             return
         key_list = list(sorted_lr.keys())
