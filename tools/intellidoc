@@ -13,6 +13,7 @@ from natsort import natsorted
 from IntelliDoc.Clause import Clause, ClauseID, ClauseHeading
 from IntelliDoc.KnowledgeDomain import KnowledgeDomain, DocTree
 from IntelliDoc.HeadingFactory import HeadingFactory
+from IntelliDoc.Relationship import Relationship as rel
 
 parser = argparse.ArgumentParser(
     prog="tokenize_standard",
@@ -219,6 +220,10 @@ def load_relations(relationsfile=args.relations):
             relation = (fromClause, toClause)
             if fromClause not in Clause.clauseIndex:
                 continue
+            source = Clause.clauseIndex[fromClause]
+            peer = Clause.clauseIndex[toClause]
+            homeDomain = knowledgeDomains[source.domain]
+            homeDomain.memorizePeer(source,peer,score)
             Clause.relations[relation] = score
             if toClause in impulse:
                 impulse[toClause] += float(score)
@@ -729,8 +734,9 @@ if __name__ == "__main__":
         # knowledgeDomains[domain].dumpKnowledgeEdges()
         # knowledgeDomains[domain].ingestDomainClauses()
         # knowledgeDomains[domain].summarizeClauses(verbose=True)
-        # knowledgeDomains[domain].introspectClauses()
         # knowledgeDomains[domain].relateClauses()
+        knowledgeDomains[domain].findClusters()
+        rel.clusterDump(Clause.clauseIndex)
         # knowledgeDomains[domain].dumpSumstore(cacheFile="sumstore-"+domain+".json")
         # knowledgeDomains[domain].dumpKnowledgeTexts()
         # knowledgeDomains[domain].printKnowledgeTexts()
@@ -742,4 +748,4 @@ if __name__ == "__main__":
     # nodes = knowledgeDomains['railway'].retrieve("The objective of the qualification of software components is to provide evidence for their suitability for re-use in items developed in compliance with the ISO 26262 series of standards. The use of qualified software components avoids re-development of existing software components with identical functionalities or properties or enables the use of general purpose commercial off-the-shelf (COTS) software. Software components addressed by this clause include: - software libraries from third-party suppliers [commercial off-the-shelf (COTS) software]; - already existing SW components not developed according to ISO 26262; - in-house components already in use in electronic control units.")
     # for node in nodes:
     #     print(node)
-    print(dumpClauseIndex())
+    # print(dumpClauseIndex())
