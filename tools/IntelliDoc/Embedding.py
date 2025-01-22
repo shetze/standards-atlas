@@ -8,7 +8,9 @@ class Embedding:
 
 
 class EmbeddingEngine:
-    def __init__(self, model="mxbai-embed-large", url="http://localhost:11434"):
+    # def __init__(self, model="mxbai-embed-large", url="http://localhost:11434"):
+    def __init__(self, model="nomic-embed-text", url="http://localhost:11434"):
+    # def __init__(self, model="paraphrase-multilingual", url="http://localhost:11434"):
         self.embedding_service = OllamaEmbedding(model_name=model, base_url=url)
         self.model = model
 
