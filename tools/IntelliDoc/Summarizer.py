@@ -3,7 +3,6 @@ import logging
 import ollama
 import json
 from natsort import natsorted
-from IntelliDoc.Clause import Clause, ClauseID, ClauseHeading
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +24,44 @@ class Summarizer:
         self.skip_regex = re.compile(Summarizer.skip_pattern[self.model], re.IGNORECASE)
         self.sumstore = {}
 
+    def request(self, prompt, question, text, verbose=False):
+        reply = []
+        if len(text) == 0:
+            return reply
+        attempt = 0
+        request = f"System: {prompt}:\n\nContext: {text}\n\nQuestion: {question}"
+        while len(reply) == 0:
+            response = ollama.generate(model=self.model, prompt=request)
+            for line in response["response"].splitlines():
+                match = self.skip_regex.match(line, re.IGNORECASE)
+                if match:
+                    continue
+                reply.append(line)
+            while len(reply) > 0 and reply[0] == "":
+                reply.pop(0)
+            while len(reply) > 0 and reply[-1] == "":
+                reply.pop(-1)
+
+            attempt += 1
+            if verbose:
+                print(
+                    f"\n\n---------------------------------------------\ngenerate reply for request attempt {attempt}\n{prompt}\n\n--------------------------------------------"
+                )
+                print("\n".join(reply))
+            if attempt > 5:
+                logger.warning(
+                    f"no reply offer from {self.model} for {text} in {response['response']}"
+                )
+                return reply
+        return reply
+
     def summarize(self, clause, text, verbose=False):
         summary = []
         clauseType = clause.clauseType()
         clauseID = clause.structure.ID
         if len(text) == 0:
             return summary
-        prompt = f"create a summary for the following {clauseType}: {text}"
+        prompt = f"create a plain summary for the following {clauseType}. Do not add any introduction, question or comments: {text}"
         attempt = 0
         while len(summary) == 0:
             response = ollama.generate(model=self.model, prompt=prompt)
@@ -76,9 +106,9 @@ class Summarizer:
             except IOError as e:
                 logger.warning(f"file open error: {e}")
 
-    def summaries4all(self, cacheFile=None, force=False, verbose=False):
-        for clauseID in Clause.clauseIndex:
-            clause = Clause.clauseIndex[clauseID]
+    def summaries4all(self, clauseIndex, cacheFile=None, force=False, verbose=False):
+        for clauseID in clauseIndex:
+            clause = clauseIndex[clauseID]
             if clause.isSummarized() and not force:
                 continue
             self.generate_summaries(clause, cacheFile, force, verbose)
@@ -98,13 +128,13 @@ class Summarizer:
         except IOError as e:
             logger.warning(f"file open error: {e}")
 
-    def load_summaries_from_file(self, cacheFile):
+    def load_summaries_from_file(self, clauseIndex, cacheFile):
         try:
             with open(cacheFile, "r") as store:
                 for line in store:
                     if re.match("^#", line):
                         clauseID = line[2:].rstrip()
-                        clause = Clause.clauseIndex[clauseID]
+                        clause = clauseIndex[clauseID]
                     else:
                         clause.summary.append(line)
         except IOError as e:
