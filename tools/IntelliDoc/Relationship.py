@@ -11,6 +11,11 @@ class Relationship:
     clusters = None
     clusterStatus = {}
 
+    # This classmethod is iterating over the list of relationship clusters and
+    # prints a markdown formatted table with all the related clauses in that
+    # cluster.
+    # It then calls the qualifyCluster method to generate a textual comparison
+    # of the relationships.
     @classmethod
     def clusterDump(cls, clauseIndex):
         for fromParID, toParID in cls.clusters.keys():
@@ -124,6 +129,8 @@ class Relationship:
         if domain not in self.retrievers:
             self.retrievers[domain] = retriever
 
+    # memorizePeer initializes the relationship dictionary with data loaded
+    # from the relation_file
     def memorizePeer(self, peer, score):
         domain = peer.domain
         if domain not in self.peers:
@@ -135,15 +142,15 @@ class Relationship:
         self.peers[domain][peerID]["status"] = "memorized"
 
     def relate(self, domain):
-        # relate goes through the clause text sentence by sentence and retrieves the
-        # 10 best matches for each sentence from the embedded content in a specific
-        # domain.
-        # The number of sentences in each clause text does vary.
+        # relate goes through the clause text sentence by sentence, relates
+        # them to the given domain and saves the best matching relationships in
+        # the relation_file for further use.
 
-        # no duplicates, no junk
+        # no duplicates
         if self.clause.relStat[domain] == "matched":
             return
-        if self.clause.distinctness < 1:
+        # we skip all clauses that have failed the Level 1 KPI of self-identiy matching
+        if self.clause.selfaware < 1:
             return
 
         if domain not in self.peers:
@@ -164,6 +171,8 @@ class Relationship:
         except IOError as e:
             logger.warning(f"file open error: {e}")
 
+    # _process_sentences does the actual work of finding relating clauses in
+    # the given domain based on the list of sentences.
     def _process_sentences(self, domain, sentences):
         scatter = []
         signife = []
@@ -178,14 +187,19 @@ class Relationship:
             s_max = 0
             s_min = 1
             s_sum = 0
+            # for each sentence in one clause, we iterate over the set of nodes identified by the retriever
+            # as semantically close matches in the vector store.
+
             for node in nodes:
                 s_score = node.score
                 clauseID = node.document.doc_metadata["clause"]
                 clauseType = node.document.doc_metadata["type"]
-                # if clauseType == 'requirement' and clauseType == self.clause.clauseType():
+                # upvoting of clauses from the same type
                 if clauseType == self.clause.clauseType():
                     print(f"{clauseID} type matches {clauseType} score {s_score}")
                     s_score = s_score * 2
+                # the result set from the retriever may contain more than one node referring to the same clause.
+                # only the higest score is used
                 if clauseID in results:
                     s_sum -= results[clauseID]
                     # t1 = math.tan(results[clauseID]*math.pi/2)
@@ -194,6 +208,11 @@ class Relationship:
                     if results[clauseID] > s_score:
                         s_score = results[clauseID]
                 results[clauseID] = s_score
+
+                # One result of the following block is to evaluate each sentence
+                # in the clause regarding its significance s_sig. The null hypothesis
+                # for the significance is that all sentences of a clause recognize
+                # self-identity with the same score in the semantic comparison.
                 s_sum += s_score
                 if s_max < s_score:
                     s_max = s_score
@@ -208,19 +227,22 @@ class Relationship:
             s_sig = s_max - s_avg
             sorted_r = dict(sorted(results.items(), key=lambda x: x[1], reverse=True))
 
-            # the purpose of the following block is to evaluate each sentence in the clause
-            # regarding its distinctness. We are in the context of one sentence
-            # of the clause and have the dictionary with related clauses matching that sentence.
-            # We have started with 10 nodes returned from the retriever. If all the 10 nodes refer
-            # to one single clause, we say the distinctness is at its maximum (1).
-            # We typically expect more than one matching clause to be found by the retriever,
-            # so the result is somewhat scattered.
-            # Each matching node comes with a score between 0 and 1 and we want to take into
-            # account only those nodes, that come with at least average score.
-            # We define the distinctness as the reciprocal of the number of matching clauses
-            # with at least average score.
-            # We finally store this distinctness value for each sentence as entry in the
-            # clause.sentdist array for further use.
+            # We are in the context of one sentence of the clause and have the
+            # dictionary with related clauses from the same domain matching
+            # that sentence.  We have started with 10 nodes returned from the
+            # retriever. If all the 10 nodes refer to one single clause, 
+            # the scattering is at its minimum (1).
+
+            # We typically expect more than one matching clause to be found by
+            # the retriever, so the result is somewhat scattered.  Each
+            # matching node comes with a score between 0 and 1 and we want to
+            # take into account only those nodes, that come with at least
+            # average score.
+
+            # We store both the significance and the scattering values per
+            # sentence as they are found for the self-identity matching. These
+            # values are then later on used to weight the results for the cross
+            # domain retrieval.
             if domain == self.clause.domain:
                 signife.append(s_sig)
                 s_scatter = 0
@@ -232,25 +254,20 @@ class Relationship:
                 if s_scatter == 0:
                     # this should never happen, so we may remove this if branch entirely
                     print(
-                        f"{self.clause.structure.ID}: no significance for\n{sentence}\n   with {nr_res} results, avg {s_avg}, sig {s_sig}"
+                        f"{self.clause.structure.ID}: no scatter for\n{sentence}\n   with {nr_res} results, avg {s_avg}, sig {s_sig}"
                     )
                     for clauseID in sorted_r:
                         score = sorted_r[clauseID]
                         print(f"        {clauseID} {score}<{s_avg} {s_sig}")
-                    self.clause.sentdist.append(0)
                     scatter.append(0)
                 else:
-                    self.clause.sentdist.append(1 / s_scatter)
                     scatter.append(s_scatter)
 
-            # the following block is unconditonal for each sentence in a clause.
-            # we have a sorted dictionary with all clauses that the retriever has referred the
-            # sentence to.
-            # Now we add all the clauses with at least average scores to the object instance relationship
-            # dictionary
-            # trigonometric calculation seemingly does not improve the result.
-            #
-
+            # The following block is unconditonal for each sentence in a
+            # clause. We have a sorted dictionary with all clauses that the
+            # retriever has referred the sentence to.
+            # Now we add all the clauses with at least average scores to the
+            # object instance relationship dictionary.
             for clauseID in sorted_r:
                 score = sorted_r[clauseID]
                 if len(self.clause.sign) < enum_i:
@@ -260,11 +277,18 @@ class Relationship:
                     break
                 try:
                     if clauseID in self.peers[domain]:
+                        # Trigonometric calculation seemingly does not improve the result.
                         # ps = self.peers[domain][clauseID]['score']
                         # t1 = math.tan(ps*math.pi/2)
                         # t2 = math.tan(score*math.pi/2)
                         # score = math.atan(t1+t2)*2/math.pi
                         if self.peers[domain][clauseID]["status"] == "loading":
+
+                            # here we use the significance of each sentence
+                            # calculated with regards to the self-identity
+                            # matching to weight the scores. 
+                            # TODO: what happens if we are in the self-identiy case?
+                            #       should we initialize the clause.sign list with 1?
                             self.peers[domain][clauseID]["score"] += (
                                 score * self.clause.sign[i]
                             )
@@ -283,7 +307,11 @@ class Relationship:
                     self.peers[domain][clauseID]["score"] = score
                     self.peers[domain][clauseID]["hits"] = 1
                     self.peers[domain][clauseID]["status"] = "loading"
-        # all sentences processed
+
+        # All sentences processed.
+        # We finally go over the arrays of significance and scattering for all
+        # sentences in one clause, normalize them and write them as csv for
+        # future use.
         if domain == self.clause.domain:
             len_se = len(sentences)
             len_sc = len(scatter)
@@ -306,61 +334,66 @@ class Relationship:
             except IOError as e:
                 logger.warning(f"file open error: {e}")
 
-    def best_matches_for_domain(self, domain, count=3):
+    # The sentence by sentence retrieval process generates a list of matching clauses each with a summed up score value.
+    # The best_matches_for_domain method returns a list of IDs for clauses with the highest score.
+    def best_matches_for_domain(self, domain, count=3, verbose=True):
         c_max = 0
-        c_min = 1
         c_sum = 0
         scores = {}
-        averages = []
         for clauseID in self.peers[domain]:
             if self.peers[domain][clauseID]["status"] != "loading":
                 continue
             score = self.peers[domain][clauseID]["score"]
-            avgScore = score / self.peers[domain][clauseID]["hits"]
             self.peers[domain][clauseID]["status"] = "matched"
-            averages.append(avgScore)
             scores[clauseID] = score
             c_sum += score
             if c_max < score:
                 c_max = score
-            if c_min > score:
-                c_min = score
 
         sorted_c = dict(sorted(scores.items(), key=lambda x: x[1], reverse=True))
         key_list = list(sorted_c.keys())
         if len(key_list) == 0:
             self.clause.relStat[domain] = "matched"
             return key_list
-        lcum = len(scores)
-        c_avg = c_sum / lcum
-        c_sig = c_max - c_avg
-        print(f"{self.clause.structure.ID}: {lcum} hits, c_avg {c_avg} c_sig {c_sig}")
-        bestClause = key_list[0]
-        print(f"    {bestClause} {scores[bestClause]}")
-        clauseID = self.clause.structure.ID
-        series = self.clause.structure.docSeries
-        if domain == self.clause.domain:
-            if bestClause == clauseID:
-                if series in ClauseRetriever.hits:
-                    ClauseRetriever.hits[series] += 1
+
+        # The following block provides some debugging output regarding the
+        # quality of the matching process.  In particular, we keep track of the
+        # self-identiy matching and calculate the accuracy as the percentage of
+        # clauses that have self-identiy as the best match (Level 1 KPI).
+        if verbose:
+            lcum = len(scores)
+            c_avg = c_sum / lcum
+            c_sig = c_max - c_avg
+            print(f"{self.clause.structure.ID}: {lcum} hits, c_avg {c_avg} c_sig {c_sig}")
+            bestClause = key_list[0]
+            print(f"    {bestClause} {scores[bestClause]}")
+            clauseID = self.clause.structure.ID
+            series = self.clause.structure.docSeries
+            if domain == self.clause.domain:
+                if bestClause == clauseID:
+                    if series in ClauseRetriever.hits:
+                        ClauseRetriever.hits[series] += 1
+                    else:
+                        ClauseRetriever.hits[series] = 1
                 else:
-                    ClauseRetriever.hits[series] = 1
-            else:
-                self.clause.distinctness /= 2
-                if series in ClauseRetriever.misses:
-                    ClauseRetriever.misses[series] += 1
-                else:
-                    ClauseRetriever.misses[series] = 1
-            c_accuracy = 1
-            if series in ClauseRetriever.hits and series in ClauseRetriever.misses:
-                c_accuracy = ClauseRetriever.hits[series] / (
-                    ClauseRetriever.hits[series] + ClauseRetriever.misses[series]
+                    self.clause.selfaware /= 2
+                    if series in ClauseRetriever.misses:
+                        ClauseRetriever.misses[series] += 1
+                    else:
+                        ClauseRetriever.misses[series] = 1
+                c_accuracy = 1
+                if series in ClauseRetriever.hits and series in ClauseRetriever.misses:
+                    c_accuracy = ClauseRetriever.hits[series] / (
+                        ClauseRetriever.hits[series] + ClauseRetriever.misses[series]
+                    )
+                print(
+                    f"{self.clause.structure.ID}: self identification accuracy {c_accuracy}"
                 )
-            print(
-                f"{self.clause.structure.ID}: self identification accuracy {c_accuracy}"
-            )
+
         return key_list[:count]
 
+    # Here we try to take into account the sibling/parent relationships of
+    # clauses and calculate the Level 2 KPI.  This needs to be reworked.
     def levelUp(self, domain):
         if len(self.clause.subclauses) == 0:
             return
