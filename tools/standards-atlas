@@ -298,6 +298,10 @@ addItem()
         title="${title:-CLAUSE}"
         text="${text:-CLAUSE}"
         type='clause'
+    elif [ "$typeID" == 'm' ]; then
+        title="${title:-TECHNIQUE}"
+        text="${text:-TECHNIQUE}"
+        type='technique'
     else
         title="${title:-TOC}"
         text="${text:-TOC}"
@@ -309,6 +313,11 @@ addItem()
     fi
     if [ "${typeMarker,,}" != "$typeID"  ]; then
         echoerr "Type ID mismatch for $indexString: Marker $typeMarker ID $typeID"
+        if [[ "$typeMarker" =~ [A-Z] ]]; then 
+            typeMarker="${typeID^^}"
+        else
+            typeMarker="$typeID"
+        fi
     fi
     markdown=$(echo "# $index $title~"${text//\"/} | tr '~' '\n' | sed 's/^/    /')
     short=${title:0:40}
