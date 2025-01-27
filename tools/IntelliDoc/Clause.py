@@ -235,8 +235,7 @@ class Clause:
         self.sentences = []
         self.summary = []
         self.relationship = None
-        self.distinctness = 1
-        self.sentdist = []
+        self.selfaware = 1
         self.relStat = {"industry": "new", "railway": "new", "automotive": "new"}
         self.scat = []
         self.sign = []
