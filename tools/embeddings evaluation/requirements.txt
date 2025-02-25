@@ -1,0 +1,7 @@
+pandas==2.2.3
+evaluate==0.4.3
+scikit-learn==1.6.0
+sentence-transformers==3.3.1
+transformers==4.47.1
+numpy==2.2.1
+matplotlib==3.10.0
