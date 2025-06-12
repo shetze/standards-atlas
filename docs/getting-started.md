@@ -1,4 +1,8 @@
-In order to get started, you will need a working installation of [doorstop](https://github.com/doorstop-dev/doorstop) on your computer. Follow the [instructions and documentation](https://doorstop.readthedocs.io/en/latest/) and you will be ready to go in no time.
+In order to get started, you need python3 as prerequisite.
+Afterwards you can run the following command in order to install all required python packages:
+```sh
+$ pip3 install -r ./tools/requirements.txt
+```
 
 
 ## Patch doorstop
