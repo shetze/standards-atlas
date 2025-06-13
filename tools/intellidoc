@@ -6,7 +6,7 @@ import csv
 import re
 import logging
 import hashlib
-import ollama
+#import ollama
 import json
 import numpy as np
 from natsort import natsorted
@@ -14,6 +14,7 @@ from IntelliDoc.Clause import Clause, ClauseID, ClauseHeading
 from IntelliDoc.KnowledgeDomain import KnowledgeDomain, DocTree
 from IntelliDoc.HeadingFactory import HeadingFactory
 from IntelliDoc.Relationship import Relationship as rel
+from IntelliDoc.RamalamaClient import RamaLama
 
 parser = argparse.ArgumentParser(
     prog="tokenize_standard",
@@ -80,6 +81,7 @@ knowledgeDomains = {}
 standardDocs = {}
 part = ""
 partNr = "x"
+llm = RamaLama("llama3.2:1b")
 
 typedict = {
     "u": "text",
@@ -431,15 +433,19 @@ def generate_headings():
                 print(".", end="", flush=True)
                 clauseType = typedict[docstore[std][clauseID]["type"]]
                 text = " ".join(docstore[std][clauseID]["text"])
+
                 while len(offer) == 0:
                     # response = ollama.generate(model='nemotron',
                     # response = ollama.generate(model='llama3.1',
-                    response = ollama.generate(
-                        model="granite3-moe",
+                    #response = ollama.generate(
+                    #    model="granite3-moe",
                         # response = ollama.generate(model='granite3-dense',
                         # response = ollama.generate(model='hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF',
-                        prompt=f"create a max 3 word headline for the following {clauseType}: {text}",
-                    )
+                    #    prompt=f"create a max 3 word headline for the following {clauseType}: {text}",
+                    #)
+                    prompt=f"create a max 3 word headline for the following {clauseType}: {text}"
+
+                    response = llm.query(prompt)
                     # print(response['response'])
                     for line in response["response"].splitlines():
                         match = offer_regex.match(line)
@@ -503,12 +509,14 @@ def generate_interactive_headings():
                     while int(answer) < 1 or int(answer) > len(offer):
                         # response = ollama.generate(model='nemotron',
                         # response = ollama.generate(model='llama3.1',
-                        response = ollama.generate(
-                            model="granite3-moe",
+                        #response = ollama.generate(
+                          #  model="granite3-moe",
                             # response = ollama.generate(model='granite3-dense',
                             # response = ollama.generate(model='hf.co/ibm-granite/granite-8b-code-instruct-4k-GGUF',
-                            prompt=f"create a max 3 word headline for the following {clauseType}: {text}",
-                        )
+                         #   prompt=f"create a max 3 word headline for the following {clauseType}: {text}",
+                        #)
+                        prompt=f"create a max 3 word headline for the following {clauseType}: {text}"
+                        response = llm.query(prompt)
                         print(response["response"])
                         offer = []
                         for line in response["response"].splitlines():
@@ -544,11 +552,13 @@ def generate_bulk_headings():
                     clauseType = typedict[docstore[std][clauseID]["type"]]
                     text = " ".join(docstore[std][clauseID]["text"])
                     store.write(f"# {clauseID}\n")
-                    response = ollama.generate(
-                        model="nemotron",
+                    #response = ollama.generate(
+                    #    model="nemotron",
                         # response = ollama.generate(model='llama3.1',
-                        prompt=f"create a max 3 word heading for the following {clauseType}: {text}",
-                    )
+                    #    prompt=f"create a max 3 word heading for the following {clauseType}: {text}",
+                    #)
+                    prompt=f"create a max 3 word heading for the following {clauseType}: {text}"
+                    response = llm.query(prompt)
                     store.write(response["response"])
                     store.write("\n\n")
 
@@ -573,6 +583,7 @@ def select_from_offer(std, clauseID, offer=[]):
             model="nemotron",
             prompt=f"create a max 3 word headline for the following {clauseType}: {text}",
         )
+        
         offer = []
         for line in response["response"].splitlines():
             match = offer_regex.match(line)
