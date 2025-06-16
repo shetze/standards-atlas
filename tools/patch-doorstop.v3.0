@@ -1,0 +1,151 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+	echo -e "$0 Error:\n\tpathname to the doorstop installation to patch required"
+	exit 1
+fi
+doorstopHome=$1
+
+cat >/tmp/doorstop.v3.0.patch <<EOD
+diff -Nur doorstop-pip12/core/item.py /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/item.py
+--- doorstop-pip12/core/item.py	2025-05-20 12:08:18.557204785 +0200
++++ /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/item.py	2025-05-20 12:51:11.522948296 +0200
+@@ -391,7 +391,7 @@
+                     continue
+                 stripped_value = []
+                 for el in value:
+-                    ref_dict = {"path": el["path"].strip(), "type": "file"}  # type: ignore
++                    ref_dict = {"path": el["path"].strip(), "type": el["type"].strip()}  # type: ignore
+ 
+                     if "keyword" in el:
+                         ref_dict["keyword"] = el["keyword"]  # type: ignore
+@@ -771,10 +771,16 @@
+             path = ref_item["path"]
+             keyword = ref_item["keyword"] if "keyword" in ref_item else None
+ 
+-            reference = self.reference_finder.find_file_reference(
+-                path, self.root, self.tree, self.path, keyword
+-            )
+-            references.append(reference)
++            if ref_item["type"] == "pattern":
++                reference = self.reference_finder.find_pattern_reference(
++                    path, self.root, self.tree, self.path, keyword
++                )
++                references.extend(reference)
++            else:
++                reference = self.reference_finder.find_file_reference(
++                    path, self.root, self.tree, self.path, keyword
++                )
++                references.append(reference)
+         return references
+ 
+     def find_child_links(self, find_all=True):
+diff -Nur doorstop-pip12/core/publishers/markdown.py /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/publishers/markdown.py
+--- doorstop-pip12/core/publishers/markdown.py	2025-05-20 12:08:18.558204800 +0200
++++ /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/publishers/markdown.py	2025-05-20 14:45:55.286375654 +0200
+@@ -93,9 +93,11 @@
+         """Format an external reference in Markdown."""
+         if settings.CHECK_REF:
+             path, line = item.find_ref()
++            if path == '':
++                return ''
+             path = path.replace("\\", "/")  # always use unix-style paths
+             if line:
+-                return "> `{p}` (line {line})".format(p=path, line=line)
++                return "> [{p}](`../{p}`) (line {line})".format(p=path, line=line)
+             else:
+                 return "> `{p}`".format(p=path)
+         else:
+@@ -107,11 +109,15 @@
+             references = item.find_references()
+             text_refs = []
+             for ref_item in references:
++                if not ref_item:
++                    continue
+                 path, line = ref_item
++                if path == '':
++                    return ''
+                 path = path.replace("\\", "/")  # always use unix-style paths
+ 
+                 if line:
+-                    text_refs.append("> `{p}` (line {line})".format(p=path, line=line))
++                    text_refs.append("> [{p}](../`{p}`) (line {line})\n".format(p=path, line=line))
+                 else:
+                     text_refs.append("> `{p}`".format(p=path))
+ 
+diff -Nur doorstop-pip12/core/reference_finder.py /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/reference_finder.py
+--- doorstop-pip12/core/reference_finder.py	2025-05-20 12:08:18.558204800 +0200
++++ /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/reference_finder.py	2025-05-20 14:51:13.079692468 +0200
+@@ -98,3 +98,53 @@
+ 
+         msg = "external reference not found: {}".format(ref_path)
+         raise DoorstopError(msg)
++
++
++    @staticmethod
++    def find_pattern_reference(pattern, root, tree, item_path, keyword):
++        """Find an external reference based on a search regex pattern.
++        :raises: :class:`~doorstop.common.DoorstopWarning` when no
++            reference is found
++        :return: List of tuples [(ref_path1, line), (ref_path2, line), ... ]
++            when references are found
++        """
++
++        log.debug("searching for pattern '{}'...".format(pattern))
++
++        if keyword == None :
++            msg = "find_pattern_reference without keyword: {}".format(pattern)
++            raise DoorstopError(msg)
++
++        reflist = []
++
++        rex = re.compile(pattern)
++        for path, _filename, relpath in tree.vcs.paths:
++            # Skip the item's file while searching
++            if path == item_path:
++                continue
++            # if re.match(".*\.md", path):
++            log.debug("check ref in '{}'...".format(path))
++            if rex.match(path):
++                log.debug("got ref in '{}'...".format(path))
++
++                # Search for the reference in the file
++                try:
++                    lines = linecache.getlines(path)
++                except SyntaxError:
++                    log.trace("unable to read lines from: {}".format(path))  # type: ignore
++                    continue
++
++                log.debug("searching pattern for keyword '{}'...".format(re.escape(keyword)))
++                pattern = r"(\b|\W){}(\b|\W)".format(re.escape(keyword))
++                log.trace("regex: {}".format(pattern))  # type: ignore
++                regex = re.compile(pattern)
++                for lineno, line in enumerate(lines, start=1):
++                    if regex.search(line):
++                        log.debug("found ref: {}".format(relpath))
++                        reflist.append( (relpath, lineno) )
++
++        if reflist :
++            return reflist
++
++        log.debug("external pattern reference not found: {}".format(keyword))
++        return '', ''
+diff -Nur doorstop-pip12/core/yaml_validator.py /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/yaml_validator.py
+--- doorstop-pip12/core/yaml_validator.py	2025-05-20 12:08:18.560204831 +0200
++++ /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/yaml_validator.py	2025-05-20 14:52:20.229815914 +0200
+@@ -34,9 +34,9 @@
+                         )
+ 
+                     ref_type = ref_dict["type"]
+-                    if ref_type != "file":
++                    if ref_type != "file" and ref_type != "pattern":
+                         raise AttributeError(
+-                            "'references' member's 'type' value must be a 'file'"
++                            "'references' member's 'type' value must be a 'file' or 'pattern'"
+                         )
+ 
+                     ref_path = ref_dict["path"]
+EOD
+
+cd $doorstopHome
+patch -p1 </tmp/doorstop.v3.0.patch
