@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+PACKAGE_NAME="doorstop"
+PACKAGE_PATH=$(python -c "import os; import $PACKAGE_NAME; print(os.path.dirname($PACKAGE_NAME.__file__))" 2>/dev/null)
+
+if [ -z "$PACKAGE_PATH" ]; then
+	echo -e "$0 Error:\n\tdoorstop installation could not be found"
+	exit 1
+fi
+
+git apply --directory=$PACKAGE_PATH $SCRIPT_DIR/0001-Add-modifications-to-doorstop.patch

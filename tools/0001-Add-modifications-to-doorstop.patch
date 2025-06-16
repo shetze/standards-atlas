@@ -1,16 +1,20 @@
-#!/bin/bash
+From 64b20085898857827e51b780343920ce339a44b9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Florian=20W=C3=BChr?= <fwuehr@redhat.com>
+Date: Mon, 16 Jun 2025 13:36:36 +0200
+Subject: [PATCH] Add modifications to doorstop
 
-if [ -z "$1" ]; then
-	echo -e "$0 Error:\n\tpathname to the doorstop installation to patch required"
-	exit 1
-fi
-doorstopHome=$1
+---
+ core/item.py                | 16 ++++++++----
+ core/publishers/markdown.py | 12 +++++++--
+ core/reference_finder.py    | 50 +++++++++++++++++++++++++++++++++++++
+ core/yaml_validator.py      |  4 +--
+ 4 files changed, 73 insertions(+), 9 deletions(-)
 
-cat >/tmp/doorstop.v3.0.patch <<EOD
-diff -Nur doorstop-pip12/core/item.py /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/item.py
---- doorstop-pip12/core/item.py	2025-05-20 12:08:18.557204785 +0200
-+++ /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/item.py	2025-05-20 12:51:11.522948296 +0200
-@@ -391,7 +391,7 @@
+diff --git a/core/item.py b/core/item.py
+index 4b978f5..9d0a86e 100644
+--- a/core/item.py
++++ b/core/item.py
+@@ -391,7 +391,7 @@ class Item(BaseFileObject):  # pylint: disable=R0902
                      continue
                  stripped_value = []
                  for el in value:
@@ -19,7 +23,7 @@ diff -Nur doorstop-pip12/core/item.py /home/shetze/.local/lib/python3.12/site-pa
  
                      if "keyword" in el:
                          ref_dict["keyword"] = el["keyword"]  # type: ignore
-@@ -771,10 +771,16 @@
+@@ -771,10 +771,16 @@ class Item(BaseFileObject):  # pylint: disable=R0902
              path = ref_item["path"]
              keyword = ref_item["keyword"] if "keyword" in ref_item else None
  
@@ -40,10 +44,11 @@ diff -Nur doorstop-pip12/core/item.py /home/shetze/.local/lib/python3.12/site-pa
          return references
  
      def find_child_links(self, find_all=True):
-diff -Nur doorstop-pip12/core/publishers/markdown.py /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/publishers/markdown.py
---- doorstop-pip12/core/publishers/markdown.py	2025-05-20 12:08:18.558204800 +0200
-+++ /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/publishers/markdown.py	2025-05-20 14:45:55.286375654 +0200
-@@ -93,9 +93,11 @@
+diff --git a/core/publishers/markdown.py b/core/publishers/markdown.py
+index 3642158..c34c11c 100644
+--- a/core/publishers/markdown.py
++++ b/core/publishers/markdown.py
+@@ -92,9 +92,12 @@ class MarkdownPublisher(BasePublisher):
          """Format an external reference in Markdown."""
          if settings.CHECK_REF:
              path, line = item.find_ref()
@@ -52,11 +57,12 @@ diff -Nur doorstop-pip12/core/publishers/markdown.py /home/shetze/.local/lib/pyt
              path = path.replace("\\", "/")  # always use unix-style paths
              if line:
 -                return "> `{p}` (line {line})".format(p=path, line=line)
++                #return "> `{p}` (line {line})".format(p=path, line=line)
 +                return "> [{p}](`../{p}`) (line {line})".format(p=path, line=line)
              else:
                  return "> `{p}`".format(p=path)
          else:
-@@ -107,11 +109,15 @@
+@@ -106,11 +109,16 @@ class MarkdownPublisher(BasePublisher):
              references = item.find_references()
              text_refs = []
              for ref_item in references:
@@ -69,14 +75,16 @@ diff -Nur doorstop-pip12/core/publishers/markdown.py /home/shetze/.local/lib/pyt
  
                  if line:
 -                    text_refs.append("> `{p}` (line {line})".format(p=path, line=line))
++                    #text_refs.append("> `{p}` (line {line})".format(p=path, line=line))
 +                    text_refs.append("> [{p}](../`{p}`) (line {line})\n".format(p=path, line=line))
                  else:
                      text_refs.append("> `{p}`".format(p=path))
  
-diff -Nur doorstop-pip12/core/reference_finder.py /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/reference_finder.py
---- doorstop-pip12/core/reference_finder.py	2025-05-20 12:08:18.558204800 +0200
-+++ /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/reference_finder.py	2025-05-20 14:51:13.079692468 +0200
-@@ -98,3 +98,53 @@
+diff --git a/core/reference_finder.py b/core/reference_finder.py
+index 21b3f84..9ce8e4f 100644
+--- a/core/reference_finder.py
++++ b/core/reference_finder.py
+@@ -98,3 +98,53 @@ class ReferenceFinder:
  
          msg = "external reference not found: {}".format(ref_path)
          raise DoorstopError(msg)
@@ -85,7 +93,7 @@ diff -Nur doorstop-pip12/core/reference_finder.py /home/shetze/.local/lib/python
 +    @staticmethod
 +    def find_pattern_reference(pattern, root, tree, item_path, keyword):
 +        """Find an external reference based on a search regex pattern.
-+        :raises: :class:`~doorstop.common.DoorstopWarning` when no
++        :raises: :class: when no
 +            reference is found
 +        :return: List of tuples [(ref_path1, line), (ref_path2, line), ... ]
 +            when references are found
@@ -130,10 +138,11 @@ diff -Nur doorstop-pip12/core/reference_finder.py /home/shetze/.local/lib/python
 +
 +        log.debug("external pattern reference not found: {}".format(keyword))
 +        return '', ''
-diff -Nur doorstop-pip12/core/yaml_validator.py /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/yaml_validator.py
---- doorstop-pip12/core/yaml_validator.py	2025-05-20 12:08:18.560204831 +0200
-+++ /home/shetze/.local/lib/python3.12/site-packages/doorstop/core/yaml_validator.py	2025-05-20 14:52:20.229815914 +0200
-@@ -34,9 +34,9 @@
+diff --git a/core/yaml_validator.py b/core/yaml_validator.py
+index 916f2ca..277a789 100644
+--- a/core/yaml_validator.py
++++ b/core/yaml_validator.py
+@@ -34,9 +34,9 @@ class YamlValidator:
                          )
  
                      ref_type = ref_dict["type"]
@@ -145,7 +154,6 @@ diff -Nur doorstop-pip12/core/yaml_validator.py /home/shetze/.local/lib/python3.
                          )
  
                      ref_path = ref_dict["path"]
-EOD
+-- 
+2.49.0
 
-cd $doorstopHome
-patch -p1 </tmp/doorstop.v3.0.patch
