@@ -1,2 +1,0 @@
-doorstop==2.2.1
-numpy>=1.24.3

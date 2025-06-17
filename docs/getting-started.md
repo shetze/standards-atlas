@@ -1,7 +1,7 @@
-In order to get started, you need python3 as prerequisite.
-Afterwards you can run the following command in order to install all required python packages:
+In order to get started, you need python3 and python3-venv as prerequisite.
+Afterwards you can run the following command in order to install all necessary prerequisites and sets up the python venv:
 ```sh
-$ pip3 install -r ./tools/requirements.txt
+$ source setup.sh
 ```
 
 
