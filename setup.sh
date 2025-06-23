@@ -1,8 +1,9 @@
 #!/bin/bash
 # setup.sh
-set -e
+#set -e
 
 echo "▶️  Install Python dependencies with poetry..."
+poetry config virtualenvs.in-project true
 poetry install
 
 echo "▶️  Run virtual environment..."
