@@ -1,16 +1,43 @@
 #!/usr/bin/env python3
+"""
+Reference Items - Automatic Document Reference Processor
+
+This script automatically links travelogue documents to relevant standard clauses.
+It scans Markdown documents for standard references and creates automatic links
+to corresponding doorstop items.
+
+Usage:
+    ./referenceItems <atlas_path>
+
+Features:
+- Automatic detection of standard references (ISO, IEC, EN)
+- Creates clickable links to doorstop HTML output
+- Updates references when standards change
+- Maintains reference consistency across documentation
+
+Author: Standards Atlas Project
+License: LGPL-3.0-only
+"""
 
 import sys
 import os
 import re
 import linecache
 import hashlib
-
+from typing import List, Optional
 import argparse
 from pathlib import Path
 
-parser = argparse.ArgumentParser()
-parser.add_argument("atlas_path", help="Path to the standards-atlas directory",type=Path)
+# Configure argument parser
+parser = argparse.ArgumentParser(
+    description="Automatically link travelogue documents to standard clauses",
+    epilog="Example: ./referenceItems ~/my-safety-project"
+)
+parser.add_argument(
+    "atlas_path", 
+    help="Path to the standards-atlas directory containing requirements/",
+    type=Path
+)
 
 p = parser.parse_args()
 
@@ -18,11 +45,20 @@ if not p.atlas_path.exists():
     print("Path {} does not exist -> aborting".format(p.atlas_path))
     exit(1)
 
-def find_all_relevant_files(dir,ending):
+def find_all_relevant_files(directory: str, ending: str) -> List[str]:
+    """Find all files in directory with specified ending.
+    
+    Args:
+        directory: Directory path to search
+        ending: File extension to match (e.g., '.md')
+        
+    Returns:
+        List of full file paths matching the criteria
+    """
     matches = []
-    for file in os.listdir(dir):
+    for file in os.listdir(directory):
         if file.endswith(ending):
-            matches.append(os.path.join(dir,file))
+            matches.append(os.path.join(directory, file))
     return matches
 
 scriptpath = os.path.dirname(__file__)
@@ -30,17 +66,30 @@ traveloguedir = scriptpath+"/../travelogue"
 mappath = scriptpath+'/../data/uid-ref-map'
 mappings = linecache.getlines(str(mappath))
 
-def reflink(refobj):
+def reflink(refobj: re.Match) -> str:
+    """Convert a standard reference to a markdown link.
+    
+    Args:
+        refobj: Regex match object containing the standard reference
+        
+    Returns:
+        Markdown link to the corresponding doorstop item, or marked reference if not found
+    """
     ref = refobj.group(0)
     pattern = r"(\b|\W){}[^A-Za-z0-9.]".format(re.escape(ref))
     ds_regex = re.compile(pattern)
+    
     for mapping in mappings:
         match = ds_regex.search(mapping)
         if match:
             linkdata = mapping.split(';')
             standard = linkdata[1].split('-')
-            # print('[{}](../dist/{}.html#{})'.format(linkdata[2].rstrip(), standard[0], linkdata[1]))
-            return '[{}](../requirements/{}.html#{})'.format(linkdata[2].rstrip(), standard[0], linkdata[1])
+            # Create link to requirements HTML with anchor
+            return '[{}](../requirements/{}.html#{})'.format(
+                linkdata[2].rstrip(), standard[0], linkdata[1]
+            )
+    
+    # Return marked reference if no mapping found
     return f">>{ref}<<"
 
 files_to_reference = find_all_relevant_files(traveloguedir,".md")
