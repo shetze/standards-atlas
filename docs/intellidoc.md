@@ -49,19 +49,45 @@ However, creating a three-word heading for each numbered section is a daunting t
 
 So that's what Intellidoc tries to do: it takes the text of the properly split sections, and if a section doesn't have a text heading, it has an LLM create a three-word heading based on the actual text.
 
-For this purpose, we use Ollama as a means to run LLMs locally.
+For this purpose, we use RamaLama as a means to run LLMs locally.
 
 TODO: We should perhaps try different LLMs and experiment with different prompts to optimize the generation of such headings
 
-For the time being, we use Nomotron as the LLM with a very simple prompt. The result is sufficiently accurate to serve as an associative pointer to the actual meaning of a paragraph.
+For the time being, we use Nemotron as the LLM with a very simple prompt. The result is sufficiently accurate to serve as an associative pointer to the actual meaning of a paragraph.
 
-Nomotron is a 42 GB model and generating each heading takes some time. This is not suitable for real-time interactive use.
+RamaLama supports various models, and generating each heading takes some time depending on the model size. This is not suitable for real-time interactive use with larger models.
 
 Therefore, intellidoc creates these headings as a bulk record that can then be loaded and edited later.
 
 Generating text for headings is not unique. Nemotron therefore generates a list of headings and lets the user select the one that best fits. We support this by saving all suggested headings as alternatives with the clause heading object.
 
 To feed these generated headings back into the standards-atlas, we currently select the last heading offered by Nemotron and use it to create an updated data set as input for the standards-atlas. To distinguish these generated headings from the ones manually extracted from the table of contents, we change the clause type classifier from lower case, as used in the Standard Atlas data structure, to upper case. This allows the Standard Atlas to undo the added generated content and revert to the original set of headings as found in the actual standard documents.
+
+## RamaLama Configuration
+
+Intellidoc now uses RamaLama instead of Ollama for local LLM operations. RamaLama provides several advantages:
+
+### Model Management
+- **Automatic Model Download**: RamaLama can automatically download and manage models
+- **Flexible Backends**: Supports multiple inference backends
+- **Resource Management**: Better memory and resource handling
+
+### Supported Models
+- **Nemotron**: Best quality for heading generation (larger model)
+- **Llama 3.2:1b**: Faster inference for interactive use
+- **Granite Models**: Alternative options for specific use cases
+
+### Configuration Options
+```python
+# Example configuration in your scripts
+llm = RamaLama("nemotron", debug=True)  # Enable debug output
+llm = RamaLama("llama3.2:1b")          # Use smaller, faster model
+```
+
+### Performance Considerations
+- Larger models (like Nemotron) provide better quality but slower inference
+- Smaller models (like llama3.2:1b) are suitable for interactive workflows
+- The system automatically manages server startup and shutdown
 
 ## Second use case: creating summaries for branches
 
