@@ -23,8 +23,8 @@ Standards Atlas bridges the gap between expensive, closed international safety s
 | **Industrial** | IEC 61508 | Complete structure (8 volumes) |
 | **Automotive** | ISO 26262, PAS 8926 | Complete structure (12 volumes) |
 | **Railway** | EN 50126/128/129, EN 50716, EN 50657 | Complete structure |
-| **Information Security** | IEC 11889 | Basic structure |
-| **Marine** | ISO 5083 | Basic structure |
+| **Cybersecurity** | IEC 11889 | Basic structure (TPM specification) |
+| **Automotive Safety** | ISO/TS 5083 | Basic structure (extends ISO 26262) |
 
 ## 🚀 Quick Start
 
