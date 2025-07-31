@@ -1,4 +1,23 @@
 #!/usr/bin/env python3
+"""
+Relator - Semantic Relationship Discovery and Linking
+
+This script processes AI-generated semantic relationships to create automatic
+links between related clauses across different safety standards. It analyzes
+bidirectional relationships and applies them to doorstop structures.
+
+Usage:
+    ./relator <atlas_path> <uid-ref-map-path>
+
+Features:
+- Processes semantic similarity scores from AI analysis
+- Creates bidirectional links between related clauses
+- Integrates with doorstop for relationship management
+- Validates mapping consistency before linking
+
+Author: Standards Atlas Project
+License: LGPL-3.0-only
+"""
 
 import csv
 import sys
@@ -7,73 +26,217 @@ import re
 import linecache
 import hashlib
 import subprocess
-
+from typing import Dict, List, Tuple, Set
 import argparse
 from pathlib import Path
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "atlas_path", help="Path to the standards-atlas directory", type=Path
+# Configure argument parser
+parser = argparse.ArgumentParser(
+    description="Process semantic relationships and create doorstop links",
+    epilog="Example: ./relator ~/my-safety-project ~/my-safety-project/csv/uid-ref-map.csv"
 )
-parser.add_argument("map_path", help="Path to the uid-ref-map", type=Path)
+parser.add_argument(
+    "atlas_path", 
+    help="Path to the standards-atlas directory containing requirements/",
+    type=Path
+)
+parser.add_argument(
+    "map_path", 
+    help="Path to the uid-ref-map CSV file",
+    type=Path
+)
 
 p = parser.parse_args()
 
 if not p.atlas_path.exists():
-    print("Path {} does not exist -> aborting".format(p.atlas_path))
-    exit(1)
+    print(f"Atlas path {p.atlas_path} does not exist -> aborting")
+    sys.exit(1)
 
-scriptpath = os.path.dirname(__file__)
-traveloguedir = scriptpath + "/../travelogue"
-mappath = scriptpath + "/../data/uid-ref-map"
-relpath = scriptpath + "/../data/relations.csv"
+if not p.map_path.exists():
+    print(f"Map path {p.map_path} does not exist -> aborting")
+    sys.exit(1)
+
+def get_script_paths() -> Tuple[str, str, str, str]:
+    """Get standard file paths relative to script location.
+    
+    Returns:
+        Tuple containing (travelogue_dir, map_path, relations_path, script_path)
+    """
+    script_path = os.path.dirname(__file__)
+    travelogue_dir = script_path + "/../travelogue"
+    map_path = script_path + "/../data/uid-ref-map"
+    relations_path = script_path + "/../data/relations.csv"
+    return travelogue_dir, map_path, relations_path, script_path
+
+traveloguedir, mappath, relpath, scriptpath = get_script_paths()
 mappings = linecache.getlines(str(mappath))
 
 
-refMapFile = "csv/uid-ref-map.csv"
+def load_relations_data(relations_file: str) -> Dict[Tuple[str, str], str]:
+    """Load semantic relationship scores from CSV file.
+    
+    Args:
+        relations_file: Path to relations CSV file
+        
+    Returns:
+        Dictionary mapping (from_clause, to_clause) tuples to similarity scores
+    """
+    relations_score = {}
+    
+    if not os.path.exists(relations_file):
+        print(f"Warning: Relations file {relations_file} not found")
+        return relations_score
+    
+    with open(relations_file, newline="") as csvfile:
+        rel_reader = csv.reader(csvfile, delimiter=";", quotechar="|")
+        for row in rel_reader:
+            if len(row) >= 3:
+                from_clause = row[0]
+                to_clause = row[1]
+                score = row[2]
+                relation = (from_clause, to_clause)
+                relations_score[relation] = score
+    
+    return relations_score
 
-relationsScore = {}
-bijectives = {}
-refMap = {}
+def load_reference_mapping(map_file: str) -> Dict[str, str]:
+    """Load clause ID to doorstop ID mapping.
+    
+    Args:
+        map_file: Path to UID reference map file
+        
+    Returns:
+        Dictionary mapping clause IDs to doorstop IDs
+    """
+    ref_map = {}
+    
+    if not os.path.exists(map_file):
+        print(f"Warning: Reference map file {map_file} not found")
+        return ref_map
+    
+    with open(map_file, newline="") as csvfile:
+        map_reader = csv.reader(csvfile, delimiter=";", quotechar="|")
+        for row in map_reader:
+            if len(row) >= 3:
+                doorstop_id = row[1]
+                clause_id = row[2]
+                ref_map[clause_id] = doorstop_id
+    
+    return ref_map
 
-with open(relpath, newline="") as csvfile:
-    relReader = csv.reader(csvfile, delimiter=";", quotechar="|")
-    for row in relReader:
-        fromClause = row[0]
-        toClause = row[1]
-        score = row[2]
-        relation = (fromClause, toClause)
-        relationsScore[relation] = score
+# Initialize data structures
+ref_map_file = "csv/uid-ref-map.csv"
+relations_score: Dict[Tuple[str, str], str] = load_relations_data(relpath)
+bijectives: Dict[str, List[str]] = {}
+ref_map: Dict[str, str] = load_reference_mapping(mappath)
 
-with open(mappath, newline="") as csvfile:
-    mapReader = csv.reader(csvfile, delimiter=";", quotechar="|")
-    for row in mapReader:
-        doorstopID = row[1]
-        clauseID = row[2]
-        refMap[clauseID] = doorstopID
+def create_doorstop_link(from_id: str, to_id: str) -> bool:
+    """Create a bidirectional link between two doorstop items.
+    
+    Args:
+        from_id: Source doorstop item ID
+        to_id: Target doorstop item ID
+        
+    Returns:
+        True if link creation succeeded, False otherwise
+    """
+    try:
+        cmdline = ["doorstop", "link", from_id, to_id]
+        result = subprocess.run(
+            cmdline, 
+            check=False, 
+            text=True, 
+            capture_output=True
+        )
+        if result.returncode != 0:
+            print(f"Warning: Failed to link {from_id} -> {to_id}: {result.stderr}")
+            return False
+        return True
+    except Exception as e:
+        print(f"Error creating link {from_id} -> {to_id}: {e}")
+        return False
 
-for fromClause, toClause in relationsScore.keys():
-    # print(f"From {fromClause} to {toClause}")
-    reverseRelation = (toClause, fromClause)
-    if reverseRelation in relationsScore:
-        # print(f"bijective {toClause}<->{fromClause}")
-        if fromClause in refMap and toClause in refMap:
-            fromID = refMap[fromClause]
-            toID = refMap[toClause]
-            # print(f"mapping {toID}<->{fromID}")
-        else:
-            # print(f"refMap key missing {toClause}<->{fromClause}")
-            continue
-        cmdline = ["doorstop", "link", fromID, toID]
-        result = subprocess.run(cmdline, check=False, text=True)
-        if fromClause in bijectives:
-            bijectives[fromClause].append(toClause)
-        else:
-            bijectives[fromClause] = []
-            bijectives[fromClause].append(toClause)
+def update_bijectives(bijectives: Dict[str, List[str]], from_clause: str, to_clause: str) -> None:
+    """Update bidirectional relationship tracking.
+    
+    Args:
+        bijectives: Dictionary tracking bidirectional relationships
+        from_clause: Source clause identifier
+        to_clause: Target clause identifier
+    """
+    # Add to_clause to from_clause's list
+    if from_clause in bijectives:
+        bijectives[from_clause].append(to_clause)
+    else:
+        bijectives[from_clause] = [to_clause]
+    
+    # Add from_clause to to_clause's list
+    if to_clause in bijectives:
+        bijectives[to_clause].append(from_clause)
+    else:
+        bijectives[to_clause] = [from_clause]
 
-        if toClause in bijectives:
-            bijectives[toClause].append(fromClause)
-        else:
-            bijectives[toClause] = []
-            bijectives[toClause].append(fromClause)
+def process_semantic_relationships() -> None:
+    """Process all semantic relationships and create doorstop links.
+    
+    This function identifies bidirectional relationships from the semantic
+    analysis and creates corresponding doorstop links between clauses.
+    """
+    if not relations_score:
+        print("No semantic relationships found - skipping relationship processing")
+        return
+    
+    print(f"Processing {len(relations_score)} semantic relationships...")
+    successful_links = 0
+    failed_links = 0
+    
+    for from_clause, to_clause in relations_score.keys():
+        # Check if reverse relationship exists (bidirectional)
+        reverse_relation = (to_clause, from_clause)
+        if reverse_relation in relations_score:
+            # Verify both clauses have doorstop mappings
+            if from_clause in ref_map and to_clause in ref_map:
+                from_id = ref_map[from_clause]
+                to_id = ref_map[to_clause]
+                
+                # Create doorstop link
+                if create_doorstop_link(from_id, to_id):
+                    # Track bidirectional relationship
+                    update_bijectives(bijectives, from_clause, to_clause)
+                    successful_links += 1
+                    print(f"✓ Linked {from_clause} ↔ {to_clause}")
+                else:
+                    failed_links += 1
+            else:
+                missing_refs = []
+                if from_clause not in ref_map:
+                    missing_refs.append(from_clause)
+                if to_clause not in ref_map:
+                    missing_refs.append(to_clause)
+                print(f"Warning: Missing reference mapping for {', '.join(missing_refs)}")
+                failed_links += 1
+    
+    print(f"\nRelationship processing complete:")
+    print(f"  Successful links: {successful_links}")
+    print(f"  Failed links: {failed_links}")
+    print(f"  Bidirectional relationships: {len(bijectives)}")
+
+def main() -> None:
+    """Main processing function."""
+    print("Standards Atlas Relator - Semantic Relationship Processor")
+    print(f"Atlas path: {p.atlas_path}")
+    print(f"Map path: {p.map_path}")
+    print(f"Relations file: {relpath}")
+    
+    # Change to atlas directory for doorstop operations
+    original_cwd = os.getcwd()
+    try:
+        os.chdir(p.atlas_path)
+        process_semantic_relationships()
+    finally:
+        os.chdir(original_cwd)
+    
+    print("\nRelator processing complete.")
+
+if __name__ == "__main__":
+    main()

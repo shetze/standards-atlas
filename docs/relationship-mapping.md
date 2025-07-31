@@ -42,7 +42,7 @@ The following list enumerates some of these decisions, which may or may not be t
 5. For these sentences, the retrieval starts with the 10 best matches.
 6. If identifiable, we use the a clause type to evaluate the relationship with clauses of the same function more highly in the set of matches found.
 7. We ignore clauses that do not recognize themselves as the best match.
-8. We are using ollama as the local model service.
+8. We are using RamaLama as the local model service.
 9. We are using LlamaIndex as framework for implementation
 
 The actual implementation is very raw and we do not claim truth or usability or anything like that. It is just a proof of concept and a starting point for discussion, new experimentation and future development.
