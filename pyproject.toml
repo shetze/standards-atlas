@@ -1,20 +1,87 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
 name = "standards-atlas"
 version = "0.1.0"
-description = ""
-authors = ["Sebastian Hetze shetze@redhat.com", "Florian Wuehr <fwuehr@redhat.com>"]
+description = "A semantic traceability platform for technical standards."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
 
-package-mode = false
+authors = [
+    { name = "Sebastian Hetze" }
+]
 
-[tool.poetry.dependencies]
-#  Define python version
-python = ">=3.10, <3.14"
+keywords = [
+    "requirements",
+    "traceability",
+    "standards",
+    "functional-safety",
+    "knowledge-graph",
+    "compliance"
+]
 
-# Dependencies
-doorstop = "3.0.2"
-numpy = ">=1.24.3"
-ramalama = "0.9.2"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development",
+]
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+dependencies = [
+    "typer>=0.16",
+    "pydantic>=2.11",
+    "networkx>=3.5",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+
+llm = [
+    "sentence-transformers",
+    "chromadb",
+]
+
+dev = [
+    "pytest>=8.4",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+]
+
+[project.scripts]
+standards-atlas = "standards_atlas.cli:app"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "B",
+]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_unused_configs = true
