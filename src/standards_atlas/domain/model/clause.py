@@ -1,7 +1,41 @@
-class ClauseDefinition:
-    uid: str
-    standard_ref: str
-    index: str
-    item_type: str
+"""Clause model for Standards Atlas."""
+
+from __future__ import annotations
+
+from enum import StrEnum
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from standards_atlas.domain.model.identifiers import ClauseId, StandardReference
+
+
+class ClauseType(StrEnum):
+    """Semantic type of a clause-like standard item."""
+
+    TOC = "toc"
+    CLAUSE = "clause"
+    REQUIREMENT = "requirement"
+    SCOPE = "scope"
+    TERM = "term"
+    OBJECTIVE = "objective"
+    MISC = "misc"
+
+
+class Clause(BaseModel):
+    """A semantic clause-like item extracted from a standard."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: ClauseId
+    reference: StandardReference
+    clause_type: ClauseType
+
     title: str | None = None
     text: str | None = None
+
+    parent_id: ClauseId | None = None
+    source_token: str | None = None
+
+    volume: str | None = None
+    enum_prefix: str | None = None
+    identifier_width: int | None = None

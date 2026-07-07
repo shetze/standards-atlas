@@ -1,25 +1,105 @@
 # Standards Atlas
 
-Standards Atlas is a semantic traceability platform for engineering standards.
+Standards Atlas is an open platform for modelling, analysing, and navigating engineering knowledge.
 
-The project aims to provide a technology-independent representation of standards, requirements, concepts, and their relationships. Rather than focusing on a particular requirements management tool, Standards Atlas builds a common semantic model that can be consumed by tools such as Doorstop, BASIL, AI assistants, and future integrations.
+Its primary goal is to provide a **technology-independent semantic representation** of engineering standards, requirements, concepts, and traceability relationships.
 
-The long-term goal is to provide a reusable Traceability API that enables analysis, comparison, and navigation across engineering standards.
+Rather than being tied to a particular requirements management tool, Standards Atlas establishes a canonical domain model that can be consumed by adapters for tools such as Doorstop, BASIL, AI assistants, graph databases, and future engineering applications.
 
 ---
 
-## Project Status
+## Vision
 
-The project is currently undergoing a major architectural refactoring.
+Engineering knowledge exists in many different forms:
 
-The initial milestones focus on:
+* international standards
+* requirements specifications
+* compliance evidence
+* safety cases
+* architecture descriptions
+* engineering documentation
 
-* establishing a modern Python project structure,
-* introducing a canonical domain model,
-* implementing an Atlas Data adapter,
-* preparing the Traceability API.
+Although these artifacts often describe the same concepts, they are usually disconnected.
 
-The existing tooling remains available during the migration.
+Standards Atlas aims to establish a common semantic representation that allows these sources to be connected through explicit traceability relationships.
+
+The long-term vision is to provide an **Engineering Knowledge Platform** built around a reusable **Traceability API**.
+
+---
+
+## Architecture
+
+Standards Atlas follows a Hexagonal Architecture.
+
+```text
+                CLI
+                 │
+                 ▼
+       Application Services
+                 │
+                 ▼
+           Domain Model
+                 ▲
+                 │
+      ┌──────────┴──────────┐
+      │                     │
+ Atlas Data Adapter   Future Adapters
+```
+
+The domain model contains the engineering concepts.
+
+Adapters translate external representations into the canonical model.
+
+Application services implement the behaviour of the platform.
+
+---
+
+## Current Status
+
+The project is currently undergoing a staged architectural migration.
+
+### PR1 – Project Foundation
+
+Completed
+
+* Modern Python project structure
+* uv-based development environment
+* Initial CLI
+* Architecture Decision Records
+
+### PR2 – Atlas Data Adapter
+
+Completed
+
+* Atlas data format specification
+* Metadata parser
+* Structure parser
+* Structure compiler
+* Atlas parser
+* Integration tests
+* Data inspection CLI
+
+### PR3 – Canonical Domain Model
+
+Completed
+
+* Pydantic-based domain model
+* Standard, Clause and Relation entities
+* Atlas Data → Domain mapper
+* Compiler-style parser architecture
+* CLI migrated to the domain model
+* Hexagonal architecture
+
+### Next Steps
+
+Planned work includes:
+
+* Application Services
+* Traceability API
+* Knowledge Domains
+* Doorstop Adapter
+* BASIL Adapter
+* Semantic Analysis Services
 
 ---
 
@@ -30,7 +110,7 @@ The existing tooling remains available during the migration.
 * Python 3.12 or newer
 * uv
 
-Install all project dependencies:
+Install all dependencies:
 
 ```bash
 uv sync
@@ -52,7 +132,7 @@ Inspect an Atlas data file:
 uv run standards-atlas inspect data data/EN50716
 ```
 
-Display additional information:
+Display detailed information:
 
 ```bash
 uv run standards-atlas inspect data data/EN50716 --verbose
@@ -81,9 +161,10 @@ uv run pytest tests/unit/adapters/atlasdata/test_parser.py
 ```text
 src/
     standards_atlas/
-        adapters/
         domain/
         application/
+        adapters/
+        cli/
 
 tests/
 
@@ -96,50 +177,44 @@ data/
 
 ### Responsibilities
 
-* **domain** — Technology-independent engineering model.
-* **application** — Application services and workflows.
-* **adapters** — Import/export adapters for external formats and tools.
-* **data** — Legacy Atlas data files and mapping definitions.
-* **tests** — Unit and integration tests.
+* **domain** – Technology-independent engineering concepts.
+* **application** – Use cases and orchestration.
+* **adapters** – Import/export adapters for external technologies.
+* **cli** – Command-line interface.
+* **data** – Legacy Atlas data files.
+* **tests** – Unit and integration tests.
 
 ---
 
 ## Documentation
 
-Architecture decisions are documented as ADRs:
+Architecture principles:
 
-* `docs/architecture/adr/0001-python-project-structure-with-uv.md`
-* `docs/architecture/adr/0002-traceability-centric-architecture.md`
+* `docs/architecture/principles.md`
 
-The legacy Atlas data format is documented in:
+Architecture Decision Records:
+
+* `docs/architecture/adr/`
+
+Technical specifications:
 
 * `docs/architecture/atlas-data-format.md`
 
 ---
 
-## Current Development Roadmap
+## Contributing
 
-### PR 1
+Please read:
 
-* Modern Python project structure
-* uv-based development environment
-* Initial CLI
-* Architecture Decision Records
+* `CONTRIBUTING.md`
 
-### PR 2
+before contributing to the project.
 
-* Atlas Data adapter
-* Metadata parser
-* Structure expander
-* Atlas parser
-* Parser tests
-* Data inspection CLI
+Architecture consistency is considered more important than rapid feature growth.
 
-### Next
+---
 
-* Compiler-style Atlas parser
-* Canonical domain model
-* Traceability API
-* Doorstop adapter
-* BASIL adapter
+## License
+
+See the project's license file for licensing information.
 

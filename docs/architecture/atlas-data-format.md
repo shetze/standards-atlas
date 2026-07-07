@@ -117,6 +117,7 @@ structure=(
 Each structure line describes one standard part, volume, or document segment.
 
 A structure line consists of whitespace-separated structure tokens.
+The first token defines the release context for the rest of the structure tokens, it is the year of the publication of that part or volume.
 
 Example:
 
