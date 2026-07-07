@@ -2,15 +2,27 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Annotated
 
 import typer
+
+from standards_atlas import __version__
+from standards_atlas.adapters.atlasdata.parser import parse_standard_file
 
 app = typer.Typer(
     name="standards-atlas",
     help="Semantic traceability platform for technical standards.",
     no_args_is_help=True,
 )
+
+
+inspect_app = typer.Typer(
+    help="Inspect Standards Atlas artifacts for debugging and development.",
+    no_args_is_help=True,
+)
+
+app.add_typer(inspect_app, name="inspect")
 
 
 @app.callback()
@@ -58,6 +70,55 @@ def trace() -> None:
     """
     typer.echo("Traceability inspection is not implemented yet.")
     raise typer.Exit(code=0)
+
+
+@inspect_app.command("data")
+def inspect_data(
+    file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            readable=True,
+            resolve_path=True,
+            help="Atlas data file to inspect.",
+        ),
+    ],
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v"),
+    ] = False,
+) -> None:
+    """Inspect an Atlas data file."""
+
+    standard = parse_standard_file(file)
+
+    typer.echo(f"File                  : {file.name}")
+    typer.echo(f"Standard              : {standard.metadata.name}")
+
+    if standard.metadata.parent:
+        typer.echo(f"Parent                : {standard.metadata.parent}")
+
+    if standard.metadata.official_year:
+        typer.echo(f"Official year         : {standard.metadata.official_year}")
+
+    typer.echo(f"Digits                : {standard.metadata.digits}")
+    typer.echo(f"Part digits           : {standard.metadata.part_digits}")
+    typer.echo(f"Part shift            : {standard.metadata.part_shift}")
+
+    typer.echo()
+    typer.echo(f"Structure items       : {len(standard.structure_items)}")
+    typer.echo(f"Initialization records: {len(standard.initialization_records)}")
+
+    if verbose:
+        typer.echo()
+        typer.echo("First structure items:")
+        typer.echo("----------------------")
+
+        for item in standard.structure_items[:20]:
+            typer.echo(
+                f"{item.item_type.value:12} "
+                f"{item.visible_reference}"
+            )
 
 
 if __name__ == "__main__":

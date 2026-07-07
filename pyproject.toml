@@ -80,8 +80,14 @@ select = [
 testpaths = [
     "tests",
 ]
+pythonpath = [
+    "src",
+]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.14.6"
 strict = false
 warn_unused_configs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/standards_atlas"]
