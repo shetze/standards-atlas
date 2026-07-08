@@ -5,7 +5,7 @@ from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 from standards_atlas.adapters.atlasdata.structure_expander import (
     StructureItem,
 )
-from standards_atlas.domain.model import ClauseType
+from standards_atlas.domain.model import ClauseType, SemanticRole
 
 
 def test_map_atlas_data_to_standard() -> None:
@@ -86,3 +86,33 @@ def test_clause_ids_are_stable() -> None:
     second = map_atlas_data_to_standard(atlas_data, key="EXAMPLE")
 
     assert first.clauses[0].id == second.clauses[0].id
+
+
+def test_domain_mapper_infers_semantic_roles_from_title() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(
+            name="ISO 26262-8",
+            digits=8,
+            official_year=2018,
+        ),
+        structure_items=[
+            StructureItem(
+                visible_reference="5.5",
+                item_type=AtlasItemType.TOC,
+                source_token="5.5",
+            ),
+        ],
+        initialization_records=[
+            InitializationRecord(
+                kind="TOC",
+                hash_value="abc",
+                reference="ISO 26262-8:2018 5.5",
+                content="Work products",
+                type_marker="u",
+            ),
+        ],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-8")
+
+    assert standard.clauses[0].semantic_roles == (SemanticRole.WORK_PRODUCTS,)

@@ -5,6 +5,14 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class DocumentKey(BaseModel):
+    """Stable key identifying an engineering document inside Standards Atlas."""
+
+    model_config = ConfigDict(frozen=True)
+
+    value: str = Field(min_length=1)
+
+
 class StandardKey(BaseModel):
     """Stable key identifying a standard inside Standards Atlas."""
 
@@ -34,3 +42,4 @@ class StandardReference(BaseModel):
         if self.year is None:
             return f"{self.standard} {self.clause}"
         return f"{self.standard}:{self.year} {self.clause}"
+

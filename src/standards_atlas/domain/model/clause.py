@@ -7,6 +7,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.domain.model.identifiers import ClauseId, StandardReference
+from standards_atlas.domain.model.semantic_role import SemanticRole
 
 
 class ClauseType(StrEnum):
@@ -29,6 +30,8 @@ class Clause(BaseModel):
     id: ClauseId
     reference: StandardReference
     clause_type: ClauseType
+
+    semantic_roles: tuple[SemanticRole, ...] = ()
 
     title: str | None = None
     text: str | None = None

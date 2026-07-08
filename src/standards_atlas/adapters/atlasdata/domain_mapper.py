@@ -12,6 +12,7 @@ from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
+    SemanticRole,
     Standard,
     StandardKey,
     StandardReference,
@@ -54,6 +55,7 @@ def map_atlas_data_to_standard(atlas_data: AtlasStandardData, *, key: str) -> St
 
     return Standard(
         key=StandardKey(value=key),
+        title=atlas_data.metadata.name,
         name=atlas_data.metadata.name,
         year=atlas_data.metadata.official_year,
         parent_key=(
@@ -86,6 +88,11 @@ def _map_structure_item_to_clause(
             clause=item.visible_reference,
         ),
         clause_type=_ITEM_TYPE_MAPPING[item.item_type],
+        semantic_roles=_infer_semantic_roles(
+            clause_type=_ITEM_TYPE_MAPPING[item.item_type],
+            visible_reference=item.visible_reference,
+            title=title,
+        ),
         title=title,
         text=text,
         source_token=item.source_token,
@@ -94,6 +101,73 @@ def _map_structure_item_to_clause(
         identifier_width=item.identifier_width,
     )
 
+def _infer_semantic_roles(
+    *,
+    clause_type: ClauseType,
+    visible_reference: str,
+    title: str | None,
+) -> tuple[SemanticRole, ...]:
+    """Infer semantic roles from clause type, reference and title.
+
+    This is intentionally conservative. More advanced classification
+    should later move into a dedicated semantic classification service.
+    """
+    roles: list[SemanticRole] = []
+
+    normalized_title = (title or "").strip().lower()
+
+    if clause_type == ClauseType.SCOPE:
+        roles.append(SemanticRole.SCOPE)
+
+    if clause_type == ClauseType.TERM:
+        roles.append(SemanticRole.TERMS_AND_DEFINITIONS)
+
+    if clause_type == ClauseType.OBJECTIVE:
+        roles.append(SemanticRole.OBJECTIVES)
+
+    if clause_type == ClauseType.REQUIREMENT:
+        roles.append(SemanticRole.REQUIREMENTS)
+
+    if "normative reference" in normalized_title:
+        roles.append(SemanticRole.NORMATIVE_REFERENCES)
+
+    if "terms and definition" in normalized_title:
+        roles.append(SemanticRole.TERMS_AND_DEFINITIONS)
+
+    if "abbreviation" in normalized_title:
+        roles.append(SemanticRole.ABBREVIATIONS)
+
+    if "objective" in normalized_title:
+        roles.append(SemanticRole.OBJECTIVES)
+
+    if "requirement" in normalized_title:
+        roles.append(SemanticRole.REQUIREMENTS)
+
+    if "recommendation" in normalized_title:
+        roles.append(SemanticRole.RECOMMENDATIONS)
+
+    if "input" in normalized_title:
+        roles.append(SemanticRole.INPUTS)
+
+    if "output" in normalized_title:
+        roles.append(SemanticRole.OUTPUTS)
+
+    if "work product" in normalized_title:
+        roles.append(SemanticRole.WORK_PRODUCTS)
+
+    if "annex" in normalized_title or visible_reference.startswith(("A", "B", "C", "D", "E", "F", "G", "ZZ")):
+        roles.append(SemanticRole.ANNEX)
+
+    if "bibliography" in normalized_title:
+        roles.append(SemanticRole.BIBLIOGRAPHY)
+
+    if "compliance" in normalized_title:
+        roles.append(SemanticRole.COMPLIANCE)
+
+    if "conformance" in normalized_title:
+        roles.append(SemanticRole.CONFORMANCE)
+
+    return tuple(dict.fromkeys(roles))
 
 def _build_clause_id(
     *,
