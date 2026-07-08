@@ -7,10 +7,11 @@ from pathlib import Path
 import typer
 
 from standards_atlas.domain.model import Clause, Standard
+from standards_atlas.domain.model import EngineeringDocument
 
 
-def print_standard_summary(
-    standard: Standard,
+def print_document_summary(
+    document: EngineeringDocument,
     *,
     source_file: Path | None = None,
     verbose: bool = False,
@@ -19,24 +20,24 @@ def print_standard_summary(
     if source_file is not None:
         typer.echo(f"File                  : {source_file.name}")
 
-    typer.echo(f"Standard              : {standard.name}")
-    typer.echo(f"Key                   : {standard.key.value}")
+    typer.echo(f"Standard              : {document.name}")
+    typer.echo(f"Key                   : {document.key.value}")
 
-    if standard.parent_key:
-        typer.echo(f"Parent                : {standard.parent_key.value}")
+    if document.parent_key:
+        typer.echo(f"Parent                : {document.parent_key.value}")
 
-    if standard.year:
-        typer.echo(f"Official year         : {standard.year}")
+    if document.year:
+        typer.echo(f"Official year         : {document.year}")
 
     typer.echo()
-    typer.echo(f"Clauses               : {len(standard.clauses)}")
+    typer.echo(f"Clauses               : {len(document.clauses)}")
 
     if verbose:
         typer.echo()
         typer.echo("First clauses:")
         typer.echo("-------------")
 
-        for clause in standard.clauses[:20]:
+        for clause in document.clauses[:20]:
             print_clause(clause)
 
 

@@ -90,6 +90,16 @@ Completed
 * CLI migrated to the domain model
 * Hexagonal architecture
 
+### PR4 – Adapter Ports
+
+Completed
+
+- EngineeringDocumentReader port
+- EngineeringDocumentWriter port
+- AtlasDataReader adapter
+- AtlasDataImporter pipeline
+- CLI decoupled from concrete parser implementation
+
 ### Next Steps
 
 Planned work includes:

@@ -31,7 +31,10 @@ _ITEM_TYPE_MAPPING: dict[AtlasItemType, ClauseType] = {
 
 
 def parse_standard_domain_file(path: Path, *, key: str | None = None) -> Standard:
-    """Parse an Atlas data file and map it into the canonical domain model."""
+    """Parse an Atlas data file and map it into the canonical domain model.
+
+    Prefer AtlasDataReader for application code.
+    """
     atlas_data = parse_standard_file(path)
     standard_key = key or path.name
 

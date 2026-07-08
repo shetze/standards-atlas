@@ -8,8 +8,8 @@ from typing import Annotated
 import typer
 
 from standards_atlas import __version__
-from standards_atlas.adapters.atlasdata.domain_mapper import parse_standard_domain_file
-from standards_atlas.cli.printers import print_standard_summary
+from standards_atlas.cli.printers import print_document_summary
+from standards_atlas.adapters.atlasdata import AtlasDataReader
 
 app = typer.Typer(
     name="standards-atlas",
@@ -62,8 +62,9 @@ def inspect_data(
     ] = False,
 ) -> None:
     """Inspect a legacy Atlas data file through the canonical domain model."""
-    standard = parse_standard_domain_file(file)
-    print_standard_summary(standard, source_file=file, verbose=verbose)
+    reader = AtlasDataReader()
+    document = reader.read_document(file)
+    print_document_summary(document, source_file=file, verbose=verbose)
 
 
 @app.command()
