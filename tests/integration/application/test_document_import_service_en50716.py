@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from standards_atlas.adapters.atlasdata import AtlasDataReader
+from standards_atlas.adapters.atlasdata import AtlasDataImporter
 from standards_atlas.application.services import (
     DocumentImportService,
 )
@@ -9,7 +9,7 @@ from standards_atlas.application.services import (
 def test_import_en50716() -> None:
 
     service = DocumentImportService(
-        AtlasDataReader(),
+        AtlasDataImporter(),
     )
 
     document = service.import_document(

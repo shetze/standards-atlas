@@ -9,7 +9,7 @@ from standards_atlas.adapters.atlasdata.parser import AtlasStandardData, parse_s
 from standards_atlas.domain.model import EngineeringDocument
 
 
-class AtlasDataImporter:
+class AtlasDataImportPipeline:
     """Import legacy Atlas data files into the canonical domain model."""
 
     def import_file(self, source: Path, *, key: str | None = None) -> EngineeringDocument:

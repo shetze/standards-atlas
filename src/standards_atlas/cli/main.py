@@ -9,7 +9,8 @@ import typer
 
 from standards_atlas import __version__
 from standards_atlas.cli.printers import print_document_summary
-from standards_atlas.adapters.atlasdata import AtlasDataReader
+from standards_atlas.adapters.atlasdata import AtlasDataImporter
+from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.application.services import DocumentImportService
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 
@@ -32,6 +33,13 @@ atlasdata_app = typer.Typer(
 )
 
 app.add_typer(atlasdata_app, name="atlasdata")
+
+document_app = typer.Typer(
+    help="Import, transform, and persist engineering documents.",
+    no_args_is_help=True,
+)
+
+app.add_typer(document_app, name="document")
 
 
 @app.callback()
@@ -71,7 +79,7 @@ def inspect_data(
     ] = False,
 ) -> None:
     """Inspect a legacy Atlas data file through the canonical domain model."""
-    reader = AtlasDataReader()
+    reader = AtlasDataImporter()
     service = DocumentImportService(reader)
     document = service.import_document(file)
     print_document_summary(document, source_file=file, verbose=verbose)
@@ -112,6 +120,43 @@ def generate_toc(
     else:
         typer.echo()
         typer.echo("Dry run only. Use --write to update the file.")
+
+
+@document_app.command("import")
+def import_document(
+    file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            readable=True,
+            resolve_path=True,
+            help="Document source file to import.",
+        ),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option(
+            "--workspace",
+            "-w",
+            help="Standards Atlas workspace directory.",
+        ),
+    ] = Path(".atlas"),
+) -> None:
+    """Import an engineering document into the local Standards Atlas workspace."""
+    importer = AtlasDataImporter()
+    repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
+
+    service = DocumentImportService(
+        importer=importer,
+        repository=repository,
+    )
+
+    document = service.import_document(file)
+
+    typer.echo(f"Imported document     : {document.title}")
+    typer.echo(f"Key                   : {document.key.value}")
+    typer.echo(f"Clauses               : {len(document.clauses)}")
+    typer.echo(f"Workspace             : {workspace}")
 
 
 @app.command()

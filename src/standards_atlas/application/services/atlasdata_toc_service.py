@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from standards_atlas.adapters.atlasdata import AtlasDataReader
+from standards_atlas.adapters.atlasdata import AtlasDataImporter
 from standards_atlas.adapters.atlasdata.roundtrip_writer import (
     AtlasDataRoundTripResult,
     AtlasDataRoundTripWriter,
@@ -16,10 +16,10 @@ class AtlasDataTocService:
 
     def __init__(
         self,
-        reader: AtlasDataReader | None = None,
+        reader: AtlasDataImporter | None = None,
         writer: AtlasDataRoundTripWriter | None = None,
     ) -> None:
-        self._reader = reader or AtlasDataReader()
+        self._reader = reader or AtlasDataImporter()
         self._writer = writer or AtlasDataRoundTripWriter()
 
     def update_toc(

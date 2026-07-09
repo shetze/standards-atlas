@@ -1,4 +1,4 @@
-"""Writer port for engineering documents."""
+"""Exporter port for engineering documents."""
 
 from __future__ import annotations
 
@@ -7,14 +7,11 @@ from typing import Protocol
 
 from standards_atlas.domain.model import EngineeringDocument
 
+class EngineeringDocumentExporter(Protocol):
 
-class EngineeringDocumentWriter(Protocol):
-    """Port for adapters that can write engineering documents."""
-
-    def write_document(
+    def export_document(
         self,
         document: EngineeringDocument,
         target: Path,
     ) -> None:
-        """Write an engineering document to an external target."""
         ...

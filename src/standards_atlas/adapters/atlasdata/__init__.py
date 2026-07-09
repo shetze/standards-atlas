@@ -1,10 +1,9 @@
-"""Public Atlas Data adapter API."""
+# adapters/atlasdata/__init__.py
 
-from standards_atlas.adapters.atlasdata.domain_mapper import parse_standard_domain_file
-from standards_atlas.adapters.atlasdata.reader import AtlasDataReader
+from standards_atlas.adapters.atlasdata.importer import AtlasDataImporter
 from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 
 __all__ = [
-    "AtlasDataReader",
+    "AtlasDataImporter",
     "AtlasItemType",
 ]

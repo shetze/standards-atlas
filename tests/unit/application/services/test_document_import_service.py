@@ -8,13 +8,8 @@ from standards_atlas.domain.model import (
 )
 
 
-class FakeReader:
-
-    def import_document(
-        self,
-        source: Path,
-    ) -> EngineeringDocument:
-
+class FakeImporter:
+    def import_document(self, source: Path) -> EngineeringDocument:
         return EngineeringDocument(
             key=DocumentKey(value=source.name),
             title="Example",
@@ -22,10 +17,28 @@ class FakeReader:
         )
 
 
-def test_document_import_service_returns_document() -> None:
+class FakeRepository:
+    def __init__(self) -> None:
+        self.saved_document: EngineeringDocument | None = None
 
-    service = DocumentImportService(FakeReader())
+    def save(self, document: EngineeringDocument) -> None:
+        self.saved_document = document
+
+    def load(self, key: DocumentKey) -> EngineeringDocument:
+        raise NotImplementedError
+
+    def exists(self, key: DocumentKey) -> bool:
+        return False
+
+
+def test_document_import_service_saves_imported_document() -> None:
+    repository = FakeRepository()
+
+    service = DocumentImportService(
+        importer=FakeImporter(),
+        repository=repository,
+    )
 
     document = service.import_document(Path("example"))
 
-    assert document.title == "Example"
+    assert repository.saved_document == document

@@ -4,27 +4,27 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from standards_atlas.application.ports import EngineeringDocumentReader
+from standards_atlas.application.ports import EngineeringDocumentImporter
+from standards_atlas.application.repositories import EngineeringDocumentRepository
 from standards_atlas.domain.model import EngineeringDocument
 
 
 class DocumentImportService:
-    """Application service for importing engineering documents.
-
-    The service coordinates the document import use case while remaining
-    independent of concrete adapter implementations.
-    """
+    """Application service for importing engineering documents."""
 
     def __init__(
         self,
-        reader: EngineeringDocumentReader,
+        importer: EngineeringDocumentImporter,
+        repository: EngineeringDocumentRepository | None = None,
     ) -> None:
-        self._reader = reader
+        self._importer = importer
+        self._repository = repository
 
-    def import_document(
-        self,
-        source: Path,
-    ) -> EngineeringDocument:
+    def import_document(self, source: Path) -> EngineeringDocument:
         """Import a document from an external source."""
+        document = self._importer.import_document(source)
 
-        return self._reader.import_document(source)
+        if self._repository is not None:
+            self._repository.save(document)
+
+        return document
