@@ -14,6 +14,6 @@ class AtlasDataReader:
     def __init__(self, importer: AtlasDataImporter | None = None) -> None:
         self._importer = importer or AtlasDataImporter()
 
-    def read_document(self, source: Path) -> EngineeringDocument:
+    def import_document(self, source: Path) -> EngineeringDocument:
         """Read an Atlas data file."""
         return self._importer.import_file(source)

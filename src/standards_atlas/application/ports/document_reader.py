@@ -11,6 +11,6 @@ from standards_atlas.domain.model import EngineeringDocument
 class EngineeringDocumentReader(Protocol):
     """Port for adapters that can read engineering documents."""
 
-    def read_document(self, source: Path) -> EngineeringDocument:
+    def import_document(self, source: Path) -> EngineeringDocument:
         """Read an engineering document from an external source."""
         ...

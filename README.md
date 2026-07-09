@@ -1,10 +1,10 @@
 # Standards Atlas
 
-Standards Atlas is an open platform for modelling, analysing, and navigating engineering knowledge.
+Standards Atlas is an open platform for modelling, analysing, transforming, and navigating engineering knowledge.
 
-Its primary goal is to provide a **technology-independent semantic representation** of engineering standards, requirements, concepts, and traceability relationships.
+Its primary goal is to provide a **technology-independent semantic representation** of engineering documents, enabling traceability across standards, requirements, safety cases, architecture specifications, and engineering repositories.
 
-Rather than being tied to a particular requirements management tool, Standards Atlas establishes a canonical domain model that can be consumed by adapters for tools such as Doorstop, BASIL, AI assistants, graph databases, and future engineering applications.
+The project is built around a canonical **EngineeringDocument** model that acts as an intermediate representation (IR) between different engineering tools and document formats.
 
 ---
 
@@ -12,115 +12,170 @@ Rather than being tied to a particular requirements management tool, Standards A
 
 Engineering knowledge exists in many different forms:
 
-* international standards
-* requirements specifications
-* compliance evidence
-* safety cases
-* architecture descriptions
-* engineering documentation
+- international standards
+- requirements specifications
+- safety cases
+- architecture descriptions
+- compliance evidence
+- engineering reports
 
 Although these artifacts often describe the same concepts, they are usually disconnected.
 
-Standards Atlas aims to establish a common semantic representation that allows these sources to be connected through explicit traceability relationships.
+Standards Atlas establishes a common semantic representation that allows these sources to be connected through explicit traceability relationships and semantic analysis.
 
-The long-term vision is to provide an **Engineering Knowledge Platform** built around a reusable **Traceability API**.
+The long-term vision is an **Engineering Knowledge Platform** with a reusable **Traceability API**.
 
 ---
 
 ## Architecture
 
-Standards Atlas follows a Hexagonal Architecture.
+Standards Atlas follows a Hexagonal (Clean) Architecture.
 
-```text
-                CLI
-                 │
-                 ▼
-       Application Services
-                 │
-                 ▼
-           Domain Model
-                 ▲
-                 │
-      ┌──────────┴──────────┐
-      │                     │
- Atlas Data Adapter   Future Adapters
+```
+                 CLI
+                  │
+                  ▼
+         Application Services
+                  │
+          Application Ports
+                  │
+                  ▼
+        EngineeringDocument
+                  ▲
+                  │
+      ┌───────────┴────────────┐
+      │                        │
+ AtlasData Adapter      Future Adapters
+                        (Doorstop, BASIL,
+                         Markdown, ...)
 ```
 
-The domain model contains the engineering concepts.
+The **EngineeringDocument** model is the canonical representation of engineering knowledge.
 
-Adapters translate external representations into the canonical model.
+Adapters translate external formats into this model.
 
-Application services implement the behaviour of the platform.
-
----
-
-## Current Status
-
-The project is currently undergoing a staged architectural migration.
-
-### PR1 – Project Foundation
-
-Completed
-
-* Modern Python project structure
-* uv-based development environment
-* Initial CLI
-* Architecture Decision Records
-
-### PR2 – Atlas Data Adapter
-
-Completed
-
-* Atlas data format specification
-* Metadata parser
-* Structure parser
-* Structure compiler
-* Atlas parser
-* Integration tests
-* Data inspection CLI
-
-### PR3 – Canonical Domain Model
-
-Completed
-
-* Pydantic-based domain model
-* Standard, Clause and Relation entities
-* Atlas Data → Domain mapper
-* Compiler-style parser architecture
-* CLI migrated to the domain model
-* Hexagonal architecture
-
-### PR4 – Adapter Ports
-
-Completed
-
-- EngineeringDocumentReader port
-- EngineeringDocumentWriter port
-- AtlasDataReader adapter
-- AtlasDataImporter pipeline
-- CLI decoupled from concrete parser implementation
-
-### Next Steps
-
-Planned work includes:
-
-* Application Services
-* Traceability API
-* Knowledge Domains
-* Doorstop Adapter
-* BASIL Adapter
-* Semantic Analysis Services
+Application services implement reusable workflows and document transformations.
 
 ---
 
-## Development Setup
+# Current Capabilities
 
-### Requirements
+The project already provides a complete round-trip workflow for AtlasData files.
 
-* Python 3.12 or newer
-* uv
+Current workflow:
 
-Install all dependencies:
+```
+AtlasData File
+      │
+      ▼
+AtlasData Importer
+      │
+      ▼
+EngineeringDocument
+      │
+      ▼
+Application Services
+      │
+      ▼
+AtlasData Round-Trip Writer
+      │
+      ▼
+Updated AtlasData File
+```
+
+Currently implemented:
+
+- import AtlasData files
+- expand clause structure
+- build canonical EngineeringDocument objects
+- infer semantic roles
+- generate TOC initialization records
+- preserve manually maintained heading information
+- safely update AtlasData files
+- automatically create numbered backups before modifications
+
+---
+
+# Development Status
+
+## Foundation
+
+Completed
+
+- Modern Python packaging
+- uv-based development environment
+- Typer CLI
+- Test infrastructure
+- Architecture Decision Records
+
+## Canonical Domain Model
+
+Completed
+
+- EngineeringDocument
+- Standard
+- Clause
+- Relation
+- SemanticRole
+- Pydantic-based immutable domain model
+
+## AtlasData Adapter
+
+Completed
+
+- Metadata parser
+- Structure compiler
+- Compiler-style parsing pipeline
+- Domain mapper
+- Round-trip capable AtlasData writer
+
+## Application Layer
+
+Completed
+
+- Adapter ports
+- Import services
+- AtlasData TOC generation service
+- Round-trip update workflow
+
+---
+
+# Current Project Structure
+
+```
+src/
+    standards_atlas/
+
+        domain/
+            EngineeringDocument
+            Clause
+            Relation
+            SemanticRole
+
+        application/
+            ports/
+            services/
+
+        adapters/
+            atlasdata/
+
+        cli/
+
+tests/
+
+docs/
+```
+
+---
+
+# Development Setup
+
+Requirements:
+
+- Python 3.12+
+- uv
+
+Install dependencies:
 
 ```bash
 uv sync
@@ -128,103 +183,93 @@ uv sync
 
 ---
 
-## Running the CLI
+# Running the CLI
 
-Display the available commands:
+Show all commands:
 
 ```bash
 uv run standards-atlas --help
 ```
 
-Inspect an Atlas data file:
+Inspect an AtlasData document:
 
 ```bash
 uv run standards-atlas inspect data data/EN50716
 ```
 
-Display detailed information:
+Generate TOC records (dry run):
 
 ```bash
-uv run standards-atlas inspect data data/EN50716 --verbose
+uv run standards-atlas atlasdata generate-toc data/ISO5083
 ```
+
+Update the file:
+
+```bash
+uv run standards-atlas atlasdata generate-toc data/ISO5083 --write
+```
+
+A numbered backup of the original file is automatically created before any modifications are written.
 
 ---
 
-## Running the Tests
+# Running the Tests
 
-Run all tests:
+Run the complete test suite:
 
 ```bash
 uv run pytest
 ```
 
-Run a specific test module:
+---
 
-```bash
-uv run pytest tests/unit/adapters/atlasdata/test_parser.py
-```
+# Documentation
+
+Architecture Principles
+
+- docs/architecture/principles.md
+
+Architecture Decision Records
+
+- docs/architecture/adr/
+
+Technical Specifications
+
+- docs/architecture/atlas-data-format.md
 
 ---
 
-## Project Structure
+# Roadmap
 
-```text
-src/
-    standards_atlas/
-        domain/
-        application/
-        adapters/
-        cli/
+The current architecture is intentionally designed around a canonical intermediate representation (`EngineeringDocument`).
 
-tests/
+Upcoming work focuses on extending the platform rather than replacing existing functionality.
 
-docs/
-    architecture/
-        adr/
+Planned next steps include:
 
-data/
-```
-
-### Responsibilities
-
-* **domain** – Technology-independent engineering concepts.
-* **application** – Use cases and orchestration.
-* **adapters** – Import/export adapters for external technologies.
-* **cli** – Command-line interface.
-* **data** – Legacy Atlas data files.
-* **tests** – Unit and integration tests.
+- document transformation pipeline
+- semantic classification
+- traceability graph generation
+- Doorstop adapter
+- BASIL adapter
+- Markdown adapter
+- cross-standard relationship analysis
+- Traceability API
 
 ---
 
-## Documentation
+# Contributing
 
-Architecture principles:
+Please read
 
-* `docs/architecture/principles.md`
+- CONTRIBUTING.md
 
-Architecture Decision Records:
-
-* `docs/architecture/adr/`
-
-Technical specifications:
-
-* `docs/architecture/atlas-data-format.md`
-
----
-
-## Contributing
-
-Please read:
-
-* `CONTRIBUTING.md`
-
-before contributing to the project.
+before contributing.
 
 Architecture consistency is considered more important than rapid feature growth.
 
 ---
 
-## License
+# License
 
-See the project's license file for licensing information.
-
+See the project's license file.

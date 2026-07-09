@@ -10,6 +10,8 @@ import typer
 from standards_atlas import __version__
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.adapters.atlasdata import AtlasDataReader
+from standards_atlas.application.services import DocumentImportService
+from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 
 app = typer.Typer(
     name="standards-atlas",
@@ -23,6 +25,13 @@ inspect_app = typer.Typer(
 )
 
 app.add_typer(inspect_app, name="inspect")
+
+atlasdata_app = typer.Typer(
+    help="Work with legacy AtlasData files.",
+    no_args_is_help=True,
+)
+
+app.add_typer(atlasdata_app, name="atlasdata")
 
 
 @app.callback()
@@ -63,8 +72,46 @@ def inspect_data(
 ) -> None:
     """Inspect a legacy Atlas data file through the canonical domain model."""
     reader = AtlasDataReader()
-    document = reader.read_document(file)
+    service = DocumentImportService(reader)
+    document = service.import_document(file)
     print_document_summary(document, source_file=file, verbose=verbose)
+
+
+@atlasdata_app.command("generate-toc")
+def generate_toc(
+    file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            readable=True,
+            resolve_path=True,
+            help="AtlasData file to update.",
+        ),
+    ],
+    write: Annotated[
+        bool,
+        typer.Option("--write", help="Write changes to the file."),
+    ] = False,
+) -> None:
+    """Generate the TOC data section for an AtlasData file."""
+    service = AtlasDataTocService()
+    result = service.update_toc(file, write=write)
+
+    typer.echo(f"File                  : {result.source.name}")
+    typer.echo(f"Generated TOC records : {result.generated_toc_records}")
+    typer.echo(f"Preserved headings    : {result.preserved_toc_headings}")
+    typer.echo(f"Preserved TEXT records: {result.preserved_text_records}")
+    typer.echo(f"Removed records       : {result.removed_records}")
+    typer.echo(f"Changed               : {result.changed}")
+
+    if write:
+        if result.backup:
+            typer.echo(f"Backup                : {result.backup.name}")
+        else:
+            typer.echo("Backup                : not created; file unchanged")
+    else:
+        typer.echo()
+        typer.echo("Dry run only. Use --write to update the file.")
 
 
 @app.command()
