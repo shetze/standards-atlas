@@ -1,29 +1,98 @@
 # Standards Atlas
 
-Standards Atlas is an open platform for importing, transforming, analysing, and exporting engineering knowledge.
+Standards Atlas is an open platform for importing, transforming, analysing, and publishing engineering knowledge.
 
-The project provides a canonical, technology-independent representation of engineering documents that enables traceability across standards, requirements, architecture specifications, safety cases, and engineering repositories.
+The project provides a canonical semantic representation of engineering documents that enables traceability across standards, safety cases, requirements, engineering repositories, and future AI-assisted workflows.
 
-Rather than being tied to a specific engineering tool, Standards Atlas acts as a transformation platform built around a common intermediate representation.
+Rather than being tied to a specific document format or engineering tool, Standards Atlas is designed as a transformation platform built around a common intermediate representation.
 
 ---
 
 # Vision
 
-Engineering knowledge exists in many heterogeneous forms:
+Engineering knowledge exists in many different forms:
 
 - international standards
 - requirements specifications
-- architecture descriptions
 - safety cases
-- compliance evidence
+- architecture descriptions
 - engineering reports
+- compliance evidence
 
-Although these artefacts often describe the same concepts, they are typically disconnected and stored in incompatible formats.
+Although these artefacts often describe the same engineering concepts, they are usually isolated from one another.
 
-Standards Atlas provides a canonical **EngineeringDocument** model that serves as the semantic foundation for traceability, validation, document transformation, and future AI-assisted engineering workflows.
+Standards Atlas establishes a canonical representation that allows these sources to be connected through semantic transformations, traceability relationships, and knowledge generation.
 
-The long-term vision is an **Engineering Knowledge Platform** with a reusable **Traceability API**.
+The long-term vision is an **Engineering Knowledge Platform** providing a reusable **Traceability API**.
+
+---
+
+# Core Concepts
+
+## EngineeringDocument
+
+The canonical domain model.
+
+Every external representation is imported into an immutable
+`EngineeringDocument`.
+
+This model serves as the project's **Intermediate Representation (IR)**.
+
+---
+
+## Clause
+
+Represents the original document structure.
+
+A clause contains information originating from the source document:
+
+- identifier
+- reference
+- clause type
+- semantic roles
+- original heading
+- original text (if available)
+
+The clause itself represents the original engineering artefact.
+
+---
+
+## ClauseAnnotation
+
+Represents additional knowledge associated with a clause.
+
+Unlike the original clause, annotations are generated or maintained by
+users or transformation pipelines.
+
+Examples include:
+
+- generated titles
+- summaries
+- comments
+- explanations
+- rationale
+- examples
+- notes
+- discussions
+
+Multiple annotations may exist for the same clause.
+
+---
+
+## Annotation Visibility
+
+Every annotation has an explicit visibility.
+
+```
+PUBLIC
+LOCAL
+PRIVATE
+```
+
+Only `PUBLIC` annotations may be exported into the public AtlasData
+repository.
+
+This prevents accidental publication of copyrighted engineering content.
 
 ---
 
@@ -37,117 +106,118 @@ Standards Atlas follows a Hexagonal / Clean Architecture.
                  ▼
         Application Services
                  │
-         Transformation Pipeline
+                 ▼
+      Transformation Pipeline
                  │
                  ▼
         EngineeringDocument
       (Intermediate Representation)
                  ▲
                  │
-       Import / Export Adapters
+        Import / Export Ports
                  ▲
                  │
-        External Engineering Tools
+      Source / Target Adapters
 ```
 
-The **EngineeringDocument** model is the project's canonical intermediate representation.
-
-All engineering knowledge is imported into this model, transformed there, and exported again when required.
-
----
-
-# Current Capabilities
-
-The current implementation already supports a complete AtlasData round-trip workflow.
-
-```
-AtlasData File
-      │
-      ▼
-AtlasData Importer
-      │
-      ▼
-EngineeringDocument
-      │
-      ▼
-Transformation Pipeline
-      │
-      ▼
-AtlasData Round-Trip Writer
-      │
-      ▼
-Updated AtlasData File
-```
-
-Implemented features include:
-
-- AtlasData import
-- compiler-style structure parsing
-- canonical EngineeringDocument generation
-- semantic role assignment
-- TOC generation
-- safe AtlasData round-trip updates
-- preservation of manually maintained heading records
-- automatic numbered backups before writing
-- file-based persistence of EngineeringDocument objects
-
----
-
-# Intermediate Representation
-
-The internal processing model is the immutable `EngineeringDocument`.
-
-Unlike external document formats, this model is independent of storage technology and document syntax.
-
-The model currently supports:
-
-- EngineeringDocument
-- Standard
-- Clause
-- Relation
-- SemanticRole
-
-Additional document types can be introduced without affecting the existing architecture.
+The domain model is completely independent of external file formats.
 
 ---
 
 # Transformation Pipeline
 
-Engineering knowledge is processed through independent transformations.
+The transformation pipeline contains all semantic processing.
 
 Typical transformations include:
 
 - structure validation
-- heading synchronization
+- heading synchronisation
 - placeholder resolution
 - semantic role inference
+- annotation generation
 - relation generation
-- cross-reference validation
+- traceability validation
 
-Transformations operate exclusively on the canonical domain model.
+Transformations always operate on the canonical
+`EngineeringDocument`.
 
 ---
 
 # Persistence
 
-Standards Atlas stores derived intermediate state in a lightweight workspace.
+The canonical intermediate representation can be stored locally.
 
 ```
 .atlas/
 
     documents/
-        *.json
+
+        EN50716.json
 
     transformations/
 
     warnings/
 ```
 
-The repository is **not** the authoritative source of engineering data.
+This workspace contains derived engineering knowledge.
 
-Source documents remain the single source of truth.
+Source documents remain the authoritative source.
 
-The workspace exists to support repeatable transformations, caching, debugging, and future semantic analysis.
+---
+
+# AtlasData
+
+AtlasData currently serves as the primary public source format.
+
+Current capabilities:
+
+- import AtlasData
+- compiler-style structure expansion
+- metadata parsing
+- domain mapping
+- semantic role inference
+- round-trip TOC generation
+- preservation of manually maintained headings
+- numbered backup generation
+
+AtlasData currently exports only information explicitly intended for
+publication.
+
+```
+TOC
+PublicTXT
+```
+
+Internal clause text is never exported.
+
+---
+
+# Security Model
+
+The project distinguishes between internal engineering knowledge and
+publicly distributable information.
+
+```
+PDF / Markdown
+        │
+        ▼
+Clause.text
+        │
+        ▼
+Transformation Pipeline
+        │
+        ▼
+ClauseAnnotation
+        │
+        ▼
+AtlasData Export
+
+    TOC
+    PublicTXT
+```
+
+This architecture ensures that copyrighted standard text cannot
+accidentally be committed into the public AtlasData repository.
 
 ---
 
@@ -158,24 +228,24 @@ src/
     standards_atlas/
 
         domain/
-            EngineeringDocument
-            Clause
-            Relation
+
+            model/
+
+                EngineeringDocument
+                Clause
+                ClauseAnnotation
+                Relation
 
         application/
 
             ports/
-
             repositories/
-
             services/
-
             transformations/
 
         adapters/
 
             atlasdata/
-
             filesystem/
 
         cli/
@@ -187,12 +257,60 @@ docs/
 
 ---
 
-# Development Setup
+# Development Status
 
-Requirements
+## Completed
 
-- Python 3.12+
-- uv
+- modern Python packaging
+- uv-based development environment
+- Typer CLI
+- immutable Pydantic domain model
+- Hexagonal Architecture
+- AtlasData adapter
+- compiler-style structure expansion
+- canonical EngineeringDocument model
+- semantic roles
+- ClauseAnnotation model
+- public/private annotation model
+- application services
+- transformation layer
+- file-based repository
+- AtlasData round-trip workflow
+
+---
+
+# Command Line Interface
+
+Import an AtlasData document
+
+```bash
+uv run standards-atlas document import data/EN50716
+```
+
+Inspect a document
+
+```bash
+uv run standards-atlas inspect data data/EN50716
+```
+
+Generate public TOC information
+
+```bash
+uv run standards-atlas atlasdata generate-toc data/ISO5083
+```
+
+Update an AtlasData file
+
+```bash
+uv run standards-atlas atlasdata generate-toc data/ISO5083 --write
+```
+
+The round-trip writer automatically creates numbered backups before
+modifying the original file.
+
+---
+
+# Development
 
 Install dependencies
 
@@ -200,41 +318,7 @@ Install dependencies
 uv sync
 ```
 
----
-
-# Command Line Interface
-
-Display all commands
-
-```bash
-uv run standards-atlas --help
-```
-
-Inspect an AtlasData document
-
-```bash
-uv run standards-atlas inspect data data/EN50716
-```
-
-Generate TOC records
-
-```bash
-uv run standards-atlas atlasdata generate-toc data/ISO5083
-```
-
-Update the AtlasData file
-
-```bash
-uv run standards-atlas atlasdata generate-toc data/ISO5083 --write
-```
-
-A numbered backup is automatically created before the original file is modified.
-
----
-
-# Running the Tests
-
-Run the complete test suite
+Run all tests
 
 ```bash
 uv run pytest
@@ -252,28 +336,34 @@ Architecture Decision Records
 
 - docs/architecture/adr/
 
-Technical Specifications
+Current ADRs
 
-- docs/architecture/atlas-data-format.md
+- ADR 0001 — Python Packaging
+- ADR 0002 — Canonical Domain Model
+- ADR 0003 — Hexagonal Architecture
+- ADR 0004 — Transformation Pipeline
+- ADR 0005 — Separation of Public and Local Knowledge
 
 ---
 
 # Roadmap
 
-The architectural foundation is now in place.
+The architectural foundation is now complete.
 
-Future work focuses on expanding the transformation pipeline and connecting additional engineering ecosystems.
+Future work focuses on expanding the transformation pipeline and adding
+new engineering ecosystems.
 
-Planned next steps include:
+Planned work includes:
 
-- IntelliDoc migration into the transformation pipeline
+- IntelliDoc migration
 - Markdown importer
-- Heading synchronization transformation
-- Structure validation transformation
-- Semantic relation generation
-- Cross-standard traceability
+- Heading Synchronisation transformation
+- Structure Validation transformation
+- Annotation generation
+- Relation generation
 - Doorstop adapter
 - BASIL adapter
+- Travelogue adapter
 - Graph export
 - Traceability API
 
@@ -287,7 +377,8 @@ Please read
 
 before contributing.
 
-The project prioritises architectural consistency, small incremental changes, and comprehensive tests over rapid feature growth.
+The project values architectural consistency, explicit semantics,
+small incremental changes, and comprehensive automated testing.
 
 ---
 

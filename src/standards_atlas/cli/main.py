@@ -108,7 +108,7 @@ def generate_toc(
     typer.echo(f"File                  : {result.source.name}")
     typer.echo(f"Generated TOC records : {result.generated_toc_records}")
     typer.echo(f"Preserved headings    : {result.preserved_toc_headings}")
-    typer.echo(f"Preserved TEXT records: {result.preserved_text_records}")
+    typer.echo(f"Preserved TEXT records: {result.preserved_public_text_records}")
     typer.echo(f"Removed records       : {result.removed_records}")
     typer.echo(f"Changed               : {result.changed}")
 

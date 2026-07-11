@@ -5,7 +5,12 @@ from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 from standards_atlas.adapters.atlasdata.structure_expander import (
     StructureItem,
 )
-from standards_atlas.domain.model import ClauseType, SemanticRole
+from standards_atlas.domain.model import (
+    AnnotationType,
+    AnnotationVisibility,
+    ClauseType,
+    SemanticRole,
+)
 
 
 def test_map_atlas_data_to_standard() -> None:
@@ -37,16 +42,19 @@ def test_map_atlas_data_to_standard() -> None:
                 type_marker="u",
             ),
             InitializationRecord(
-                kind="TEXT",
+                kind="PublicTXT",
                 hash_value="def",
                 reference="EN 50716:2023 5.1.1",
                 content="Requirement text",
-                type_marker="s",
+                type_marker="r",
             ),
         ],
     )
 
-    standard = map_atlas_data_to_standard(atlas_data, key="EN50716")
+    standard = map_atlas_data_to_standard(
+        atlas_data,
+        key="EN50716",
+    )
 
     assert standard.key.value == "EN50716"
     assert standard.name == "EN 50716"
@@ -56,13 +64,29 @@ def test_map_atlas_data_to_standard() -> None:
 
     assert len(standard.clauses) == 2
 
-    assert standard.clauses[0].reference.clause == "1"
-    assert standard.clauses[0].title == "Scope"
-    assert standard.clauses[0].clause_type == ClauseType.TOC
+    scope_clause = standard.clauses[0]
 
-    assert standard.clauses[1].reference.clause == "5.1.1"
-    assert standard.clauses[1].text == "Requirement text"
-    assert standard.clauses[1].clause_type == ClauseType.REQUIREMENT
+    assert scope_clause.reference.clause == "1"
+    assert scope_clause.title == "Scope"
+    assert scope_clause.clause_type == ClauseType.TOC
+
+    requirement_clause = standard.clauses[1]
+
+    assert requirement_clause.reference.clause == "5.1.1"
+    assert requirement_clause.text is None
+    assert requirement_clause.clause_type == ClauseType.REQUIREMENT
+
+    requirement_annotations = standard.annotations_for_clause(
+        requirement_clause.id,
+    )
+
+    assert len(requirement_annotations) == 1
+
+    annotation = requirement_annotations[0]
+
+    assert annotation.content == "Requirement text"
+    assert annotation.annotation_type == AnnotationType.COMMENT
+    assert annotation.visibility == AnnotationVisibility.PUBLIC
 
 
 def test_clause_ids_are_stable() -> None:

@@ -37,6 +37,13 @@ _STRUCTURE_BLOCK_PATTERN = re.compile(
 
 _DATA_MARKER = "#---data---#"
 
+_INITIALIZATION_RECORD_KINDS = {
+    "TOC",
+    "PublicTXT",
+    "LocalTXT",
+    "TEXT",
+}
+
 
 def parse_standard_file(path: Path) -> AtlasStandardData:
     """Parse an Atlas standard data file."""
@@ -109,7 +116,7 @@ def parse_initialization_records(text: str) -> list[InitializationRecord]:
 
         kind, hash_value, reference, content, type_marker = [part.strip() for part in parts]
 
-        if kind not in {"TOC", "TEXT"}:
+        if kind not in _INITIALIZATION_RECORD_KINDS:
             raise ValueError(
                 f"Invalid initialization record kind at data section line "
                 f"{line_number}: {kind!r}"

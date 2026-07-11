@@ -7,7 +7,8 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.domain.model.clause import Clause
-from standards_atlas.domain.model.identifiers import DocumentKey
+from standards_atlas.domain.model.annotation import ClauseAnnotation
+from standards_atlas.domain.model.identifiers import ClauseId, DocumentKey
 
 
 class DocumentType(StrEnum):
@@ -43,3 +44,15 @@ class EngineeringDocument(BaseModel):
     source: str | None = None
 
     clauses: tuple[Clause, ...] = ()
+    annotations: tuple[ClauseAnnotation, ...] = ()
+
+    def annotations_for_clause(
+        self,
+        clause_id: ClauseId,
+    ) -> tuple[ClauseAnnotation, ...]:
+        """Return all annotations associated with a clause."""
+        return tuple(
+            annotation
+            for annotation in self.annotations
+            if annotation.clause_id == clause_id
+        )

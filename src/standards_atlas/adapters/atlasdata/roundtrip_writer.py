@@ -10,7 +10,9 @@ from standards_atlas.adapters.atlasdata.parser import (
     InitializationRecord,
     parse_initialization_records,
 )
-from standards_atlas.adapters.atlasdata.toc_generator import generate_toc_records
+from standards_atlas.adapters.atlasdata.toc_generator import (
+    generate_public_initialization_records,
+)
 from standards_atlas.domain.model import EngineeringDocument
 
 
@@ -25,10 +27,9 @@ class AtlasDataRoundTripResult:
     backup: Path | None
     generated_toc_records: int
     preserved_toc_headings: int
-    preserved_text_records: int
+    preserved_public_text_records: int
     removed_records: int
     changed: bool
-
 
 class AtlasDataRoundTripWriter:
     """Update the generated TOC section of an AtlasData file safely."""
@@ -40,17 +41,18 @@ class AtlasDataRoundTripWriter:
         *,
         write: bool = False,
     ) -> AtlasDataRoundTripResult:
-        """Generate and optionally write an updated TOC section.
-
-        When write=True, a numbered backup of the original file is created
-        before modifying the source file.
-        """
         original_text = source.read_text(encoding="utf-8")
         existing_records = parse_initialization_records(original_text)
 
-        generated_toc = generate_toc_records(document)
-        updated_records, preserved_toc_headings = self._merge_records(
-            generated_toc=generated_toc,
+        generated_records = generate_public_initialization_records(document)
+        _validate_public_records(generated_records)
+
+        (
+            updated_records,
+            preserved_toc_headings,
+            preserved_public_text_records,
+        ) = self._merge_records(
+            generated_records=generated_records,
             existing_records=existing_records,
         )
 
@@ -66,25 +68,27 @@ class AtlasDataRoundTripWriter:
             backup = self._create_numbered_backup(source)
             source.write_text(updated_text, encoding="utf-8")
 
-        existing_references = {record.reference for record in updated_records}
-        removed_records = len(
-            [
-                record
-                for record in existing_records
-                if record.reference not in existing_references
-            ]
+        existing_keys = {
+            (record.kind, record.reference)
+            for record in updated_records
+        }
+
+        removed_records = sum(
+            (record.kind, record.reference) not in existing_keys
+            for record in existing_records
         )
 
-        preserved_text_records = len(
-            [record for record in updated_records if record.kind == "TEXT"]
+        generated_toc_records = sum(
+            record.kind == "TOC"
+            for record in generated_records
         )
 
         return AtlasDataRoundTripResult(
             source=source,
             backup=backup,
-            generated_toc_records=len(generated_toc),
+            generated_toc_records=generated_toc_records,
             preserved_toc_headings=preserved_toc_headings,
-            preserved_text_records=preserved_text_records,
+            preserved_public_text_records=preserved_public_text_records,
             removed_records=removed_records,
             changed=changed,
         )
@@ -92,42 +96,45 @@ class AtlasDataRoundTripWriter:
     def _merge_records(
         self,
         *,
-        generated_toc: list[InitializationRecord],
+        generated_records: list[InitializationRecord],
         existing_records: list[InitializationRecord],
-    ) -> tuple[list[InitializationRecord], int]:
-        existing_by_reference = {
+    ) -> tuple[list[InitializationRecord], int, int]:
+        existing_toc = {
             record.reference: record
             for record in existing_records
             if record.kind == "TOC"
         }
 
-        valid_references = {record.reference for record in generated_toc}
+        preserved_headings = 0
+        merged: list[InitializationRecord] = []
 
-        preserved_toc_headings = 0
-        merged_records: list[InitializationRecord] = []
+        for generated in generated_records:
+            if generated.kind != "TOC":
+                merged.append(generated)
+                continue
 
-        for generated in generated_toc:
-            existing = existing_by_reference.get(generated.reference)
+            existing = existing_toc.get(generated.reference)
 
-            if existing and existing.content:
-                preserved_toc_headings += 1
-                merged_records.append(
+            if existing and existing.content.strip():
+                preserved_headings += 1
+                merged.append(
                     InitializationRecord(
-                        kind=generated.kind,
+                        kind="TOC",
                         hash_value=generated.hash_value,
                         reference=generated.reference,
                         content=existing.content,
-                        type_marker=existing.type_marker,
+                        type_marker=generated.type_marker,
                     )
                 )
             else:
-                merged_records.append(generated)
+                merged.append(generated)
 
-        for existing in existing_records:
-            if existing.kind == "TEXT" and existing.reference in valid_references:
-                merged_records.append(existing)
+        public_text_count = sum(
+            record.kind == "PublicTXT"
+            for record in merged
+        )
 
-        return merged_records, preserved_toc_headings
+        return merged, preserved_headings, public_text_count
 
     def _replace_data_section(
         self,
@@ -135,13 +142,20 @@ class AtlasDataRoundTripWriter:
         original_text: str,
         records: list[InitializationRecord],
     ) -> str:
-        rendered_records = "\n".join(_render_record(record) for record in records)
+        rendered_records = "\n".join(
+            _render_record(record)
+            for record in records
+        )
 
         if DATA_MARKER in original_text:
             head, _ = original_text.split(DATA_MARKER, 1)
             return f"{head.rstrip()}\n\n{DATA_MARKER}\n{rendered_records}\n"
 
-        return f"{original_text.rstrip()}\n\n{DATA_MARKER}\n{rendered_records}\n"
+        return (
+            f"{original_text.rstrip()}\n\n"
+            f"{DATA_MARKER}\n"
+            f"{rendered_records}\n"
+        )
 
     def _create_numbered_backup(self, source: Path) -> Path:
         counter = 1
@@ -154,6 +168,22 @@ class AtlasDataRoundTripWriter:
                 return backup
 
             counter += 1
+
+
+def _validate_public_records(
+    records: list[InitializationRecord],
+) -> None:
+    forbidden = [
+        record.kind
+        for record in records
+        if record.kind not in {"TOC", "PublicTXT"}
+    ]
+
+    if forbidden:
+        raise ValueError(
+            "Round-trip writer received non-public record kinds: "
+            f"{forbidden}"
+        )
 
 
 def _render_record(record: InitializationRecord) -> str:

@@ -9,7 +9,11 @@ from standards_atlas.adapters.atlasdata.parser import AtlasStandardData, parse_s
 from standards_atlas.adapters.atlasdata.structure_expander import StructureItem
 from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType, TYPE_PREFIXES
 from standards_atlas.domain.model import (
+    AnnotationId,
+    AnnotationType,
+    AnnotationVisibility,
     Clause,
+    ClauseAnnotation,
     ClauseId,
     ClauseType,
     SemanticRole,
@@ -41,9 +45,12 @@ def parse_standard_domain_file(path: Path, *, key: str | None = None) -> Standar
     return map_atlas_data_to_standard(atlas_data, key=standard_key)
 
 
-def map_atlas_data_to_standard(atlas_data: AtlasStandardData, *, key: str) -> Standard:
-    """Map parsed Atlas data into a Standard domain object."""
-    title_lookup, text_lookup = _build_initialization_lookup(atlas_data)
+def map_atlas_data_to_standard(
+    atlas_data: AtlasStandardData,
+    *,
+    key: str,
+) -> Standard:
+    title_lookup = _build_title_lookup(atlas_data)
 
     clauses = tuple(
         _map_structure_item_to_clause(
@@ -51,9 +58,19 @@ def map_atlas_data_to_standard(atlas_data: AtlasStandardData, *, key: str) -> St
             standard_name=atlas_data.metadata.name,
             year=atlas_data.metadata.official_year,
             title=title_lookup.get(item.visible_reference),
-            text=text_lookup.get(item.visible_reference),
+            text=None,
         )
         for item in atlas_data.structure_items
+    )
+
+    clauses_by_reference = {
+        clause.reference.clause: clause
+        for clause in clauses
+    }
+
+    annotations = _map_initialization_records_to_annotations(
+        atlas_data=atlas_data,
+        clauses_by_reference=clauses_by_reference,
     )
 
     return Standard(
@@ -67,7 +84,92 @@ def map_atlas_data_to_standard(atlas_data: AtlasStandardData, *, key: str) -> St
             else None
         ),
         clauses=clauses,
+        annotations=annotations,
     )
+
+def _map_initialization_records_to_annotations(
+    *,
+    atlas_data: AtlasStandardData,
+    clauses_by_reference: dict[str, Clause],
+) -> tuple[ClauseAnnotation, ...]:
+    annotations: list[ClauseAnnotation] = []
+
+    for index, record in enumerate(atlas_data.initialization_records):
+        clause_reference = _extract_clause_reference(
+            record.reference,
+            atlas_data.metadata.name,
+        )
+
+        if clause_reference is None:
+            continue
+
+        clause = clauses_by_reference.get(clause_reference)
+
+        if clause is None or not record.content.strip():
+            continue
+
+        if record.kind == "TOC":
+            annotation_type = AnnotationType.TITLE
+            visibility = AnnotationVisibility.PUBLIC
+        elif record.kind == "PublicTXT":
+            annotation_type = AnnotationType.COMMENT
+            visibility = AnnotationVisibility.PUBLIC
+        elif record.kind == "LocalTXT":
+            annotation_type = AnnotationType.COMMENT
+            visibility = AnnotationVisibility.LOCAL
+        else:
+            continue
+
+        annotations.append(
+            ClauseAnnotation(
+                id=_build_annotation_id(
+                    kind=record.kind,
+                    reference=record.reference,
+                    content=record.content,
+                    index=index,
+                ),
+                clause_id=clause.id,
+                annotation_type=annotation_type,
+                visibility=visibility,
+                content=record.content,
+                source="atlasdata",
+            )
+        )
+
+    return tuple(annotations)
+
+
+def _build_title_lookup(
+    atlas_data: AtlasStandardData,
+) -> dict[str, str]:
+    titles: dict[str, str] = {}
+
+    for record in atlas_data.initialization_records:
+        if record.kind != "TOC":
+            continue
+
+        clause_reference = _extract_clause_reference(
+            record.reference,
+            atlas_data.metadata.name,
+        )
+
+        if clause_reference is not None:
+            titles[clause_reference] = record.content
+
+    return titles
+
+
+def _build_annotation_id(
+    *,
+    kind: str,
+    reference: str,
+    content: str,
+    index: int,
+) -> AnnotationId:
+    raw = f"{kind}|{reference}|{content}|{index}"
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+
+    return AnnotationId(value=f"annotation-{digest}")
 
 
 def _map_structure_item_to_clause(
