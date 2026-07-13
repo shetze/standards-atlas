@@ -17,6 +17,10 @@ from standards_atlas.domain.model.document import DocumentType, EngineeringDocum
 from standards_atlas.domain.model.relation import Relation, RelationType
 from standards_atlas.domain.model.standard import Standard
 from standards_atlas.domain.model.semantic_role import SemanticRole
+from standards_atlas.domain.model.doorstop_attributes import (
+    DoorstopItemAttributes,
+    DoorstopReference,
+)
 
 __all__ = [
     "AnnotationId",
@@ -28,6 +32,8 @@ __all__ = [
     "ClauseType",
     "DocumentKey",
     "DocumentType",
+    "DoorstopItemAttributes",
+    "DoorstopReference",
     "EngineeringDocument",
     "Relation",
     "RelationType",

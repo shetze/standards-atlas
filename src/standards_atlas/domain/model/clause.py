@@ -8,6 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.domain.model.identifiers import ClauseId, StandardReference
 from standards_atlas.domain.model.semantic_role import SemanticRole
+from standards_atlas.domain.model.doorstop_attributes import (
+    DoorstopItemAttributes,
+)
 
 
 class ClauseType(StrEnum):
@@ -42,3 +45,5 @@ class Clause(BaseModel):
     volume: str | None = None
     enum_prefix: str | None = None
     identifier_width: int | None = None
+
+    doorstop: DoorstopItemAttributes | None = None

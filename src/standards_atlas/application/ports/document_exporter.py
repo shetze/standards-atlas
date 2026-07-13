@@ -7,11 +7,14 @@ from typing import Protocol
 
 from standards_atlas.domain.model import EngineeringDocument
 
+
 class EngineeringDocumentExporter(Protocol):
+    """Port for adapters that export engineering documents."""
 
     def export_document(
         self,
         document: EngineeringDocument,
         target: Path,
-    ) -> None:
+    ) -> Path:
+        """Export a document and return the generated target path."""
         ...

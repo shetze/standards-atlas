@@ -5,8 +5,23 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from standards_atlas.domain.model import DocumentKey, EngineeringDocument
+from standards_atlas.domain.model import (
+    DocumentKey,
+    DocumentType,
+    EngineeringDocument,
+    Standard,
+)
 
+_DOCUMENT_MODELS: dict[
+    DocumentType,
+    type[EngineeringDocument],
+] = {
+    DocumentType.STANDARD: Standard,
+    DocumentType.SPECIFICATION: EngineeringDocument,
+    DocumentType.REPORT: EngineeringDocument,
+    DocumentType.SAFETY_CASE_ARTIFACT: EngineeringDocument,
+    DocumentType.OTHER: EngineeringDocument,
+}
 
 class FileSystemEngineeringDocumentRepository:
     """Persist EngineeringDocument objects as JSON files."""
@@ -30,15 +45,19 @@ class FileSystemEngineeringDocumentRepository:
         )
 
     def load(self, key: DocumentKey) -> EngineeringDocument:
-        """Load a document from JSON."""
         path = self._path_for_key(key)
 
         if not path.exists():
-            raise FileNotFoundError(f"No persisted document found for key: {key.value}")
+            raise FileNotFoundError(
+                f"No persisted document found for key: {key.value}"
+            )
 
         data = json.loads(path.read_text(encoding="utf-8"))
+        document_type = DocumentType(data["document_type"])
 
-        return EngineeringDocument.model_validate(data)
+        model = _DOCUMENT_MODELS[document_type]
+
+        return model.model_validate(data)
 
     def exists(self, key: DocumentKey) -> bool:
         """Return whether a document exists."""

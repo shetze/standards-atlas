@@ -1,10 +1,10 @@
 # Standards Atlas
 
-Standards Atlas is an open platform for importing, transforming, analysing, and publishing engineering knowledge.
+Standards Atlas is an **Engineering Knowledge Transformation Platform**.
 
-The project provides a canonical semantic representation of engineering documents that enables traceability across standards, safety cases, requirements, engineering repositories, and future AI-assisted workflows.
+It provides a canonical semantic representation of engineering documents together with deterministic transformation pipelines connecting multiple engineering ecosystems.
 
-Rather than being tied to a specific document format or engineering tool, Standards Atlas is designed as a transformation platform built around a common intermediate representation.
+Rather than being centred around a particular document format or engineering tool, Standards Atlas is built around a common intermediate representation that enables standards, requirements, safety cases and engineering artefacts to be connected through semantic transformations.
 
 ---
 
@@ -18,12 +18,13 @@ Engineering knowledge exists in many different forms:
 - architecture descriptions
 - engineering reports
 - compliance evidence
+- project documentation
 
-Although these artefacts often describe the same engineering concepts, they are usually isolated from one another.
+Although these artefacts often describe the same engineering concepts, they usually exist in isolated engineering tools.
 
-Standards Atlas establishes a canonical representation that allows these sources to be connected through semantic transformations, traceability relationships, and knowledge generation.
+Standards Atlas establishes a canonical semantic representation that allows engineering knowledge to move between multiple engineering ecosystems through deterministic transformation pipelines.
 
-The long-term vision is an **Engineering Knowledge Platform** providing a reusable **Traceability API**.
+The long-term vision is an **Engineering Knowledge Platform** providing reusable traceability, semantic analysis and AI-assisted engineering workflows.
 
 ---
 
@@ -36,46 +37,44 @@ The canonical domain model.
 Every external representation is imported into an immutable
 `EngineeringDocument`.
 
-This model serves as the project's **Intermediate Representation (IR)**.
+The EngineeringDocument is the project's canonical Intermediate Representation (IR).
 
 ---
 
 ## Clause
 
-Represents the original document structure.
+Represents one logical clause of the original engineering document.
 
-A clause contains information originating from the source document:
+A Clause contains:
 
 - identifier
-- reference
+- document reference
 - clause type
 - semantic roles
 - original heading
-- original text (if available)
+- original text
 
-The clause itself represents the original engineering artefact.
+The Clause always represents the original engineering artefact.
 
 ---
 
 ## ClauseAnnotation
 
-Represents additional knowledge associated with a clause.
+Represents knowledge associated with a clause.
 
-Unlike the original clause, annotations are generated or maintained by
-users or transformation pipelines.
+Unlike the Clause itself, annotations are generated or maintained during engineering work.
 
-Examples include:
+Examples include
 
 - generated titles
 - summaries
-- comments
 - explanations
 - rationale
+- comments
 - examples
-- notes
 - discussions
 
-Multiple annotations may exist for the same clause.
+Multiple annotations may exist for every clause.
 
 ---
 
@@ -89,8 +88,7 @@ LOCAL
 PRIVATE
 ```
 
-Only `PUBLIC` annotations may be exported into the public AtlasData
-repository.
+Only PUBLIC annotations may be exported into public repositories.
 
 This prevents accidental publication of copyrighted engineering content.
 
@@ -101,101 +99,202 @@ This prevents accidental publication of copyrighted engineering content.
 Standards Atlas follows a Hexagonal / Clean Architecture.
 
 ```
-                CLI
-                 │
-                 ▼
-        Application Services
-                 │
-                 ▼
-      Transformation Pipeline
-                 │
-                 ▼
-        EngineeringDocument
-      (Intermediate Representation)
-                 ▲
-                 │
-        Import / Export Ports
-                 ▲
-                 │
-      Source / Target Adapters
+                  Command Line Interface
+                            │
+                            ▼
+                 Application Services
+                            │
+                            ▼
+               Transformation Pipeline
+                            │
+                            ▼
+                 EngineeringDocument
+      (Canonical Intermediate Representation)
+                            ▲
+                            │
+                 Repository (.atlas)
+                            ▲
+                            │
+                 Import / Export Ports
+                            ▲
+                            │
+                        Adapters
 ```
 
-The domain model is completely independent of external file formats.
+The domain model is completely independent of external file formats and engineering tools.
 
 ---
 
 # Transformation Pipeline
 
-The transformation pipeline contains all semantic processing.
+The Transformation Pipeline contains all semantic processing.
 
-Typical transformations include:
+Typical transformations include
 
 - structure validation
-- heading synchronisation
-- placeholder resolution
+- heading synchronization
 - semantic role inference
 - annotation generation
 - relation generation
 - traceability validation
+- AI-assisted enrichment
 
-Transformations always operate on the canonical
-`EngineeringDocument`.
+Transformations always operate on the canonical EngineeringDocument.
 
 ---
 
-# Persistence
+# Workspace
 
-The canonical intermediate representation can be stored locally.
+Standards Atlas maintains a local engineering workspace.
 
 ```
 .atlas/
 
     documents/
+        Canonical EngineeringDocument objects
 
-        EN50716.json
+    doorstop/
+        Generated Doorstop workspaces
 
     transformations/
+        Intermediate transformation results
 
     warnings/
+        Validation reports
 ```
 
-This workspace contains derived engineering knowledge.
+The workspace contains derived engineering knowledge.
 
-Source documents remain the authoritative source.
+Source documents always remain the authoritative source.
 
 ---
 
-# AtlasData
+# Adapters
 
-AtlasData currently serves as the primary public source format.
+Standards Atlas connects engineering ecosystems through dedicated adapters.
 
-Current capabilities:
+Each adapter implements one or more application ports while the domain model remains completely independent of external formats.
 
-- import AtlasData
-- compiler-style structure expansion
-- metadata parsing
-- domain mapping
+## AtlasData Adapter
+
+AtlasData is the primary public exchange format for engineering standards.
+
+### Import
+
+Current capabilities
+
+- metadata import
+- structure parsing
+- compiler-based structure expansion
 - semantic role inference
-- round-trip TOC generation
-- preservation of manually maintained headings
-- numbered backup generation
+- EngineeringDocument generation
+- import of public annotations
 
-AtlasData currently exports only information explicitly intended for
-publication.
+### Round-trip
+
+Current capabilities
+
+- regenerate TOC entries
+- preserve manually maintained headings
+- preserve public annotations
+- numbered safety backups
+
+Only explicitly publishable information is written back.
 
 ```
 TOC
 PublicTXT
 ```
 
-Internal clause text is never exported.
+Copyright protected clause text is never exported.
+
+---
+
+## Doorstop Adapter
+
+Doorstop is the primary engineering export adapter.
+
+### Export
+
+Current capabilities
+
+- deterministic Doorstop identifier generation
+- complete clause hierarchy
+- complete clause text
+- public annotations
+- local annotations
+- private annotations
+- Doorstop reference generation
+- Standards Atlas metadata
+- Git workspace generation
+- validation using Doorstop
+
+Generated Doorstop items contain additional engineering metadata including
+
+- original clause reference
+- semantic roles
+- deterministic numeric identifiers
+- project-specific reference patterns
+
+Doorstop workspaces are generated inside
+
+```
+.atlas/doorstop/
+```
+
+and therefore may contain private engineering information.
+
+---
+
+## File System Adapter
+
+Provides persistence for the canonical EngineeringDocument.
+
+### Import
+
+- load EngineeringDocument
+
+### Export
+
+- persist EngineeringDocument
+
+Documents are stored inside
+
+```
+.atlas/documents/
+```
+
+---
+
+## Planned Adapters
+
+### Import
+
+- Markdown
+- IntelliDoc
+- Polarion
+- BASIL
+- Travelogue
+
+### Export
+
+- Markdown
+- HTML
+- PDF
+- Graph
+- Traceability API
+
+### Round-trip
+
+- Markdown
+- AtlasData
+- Travelogue
 
 ---
 
 # Security Model
 
-The project distinguishes between internal engineering knowledge and
-publicly distributable information.
+Standards Atlas explicitly separates original engineering content from publicly distributable knowledge.
 
 ```
 PDF / Markdown
@@ -209,73 +308,106 @@ Transformation Pipeline
         ▼
 ClauseAnnotation
         │
+        ├────────────► AtlasData
+        │                 │
+        │                 ├── TOC
+        │                 └── PublicTXT
+        │
+        └────────────► Doorstop
+                          │
+                          ├── complete text
+                          ├── public annotations
+                          ├── local annotations
+                          └── private annotations
+```
+
+This architecture prevents accidental publication of copyrighted engineering text.
+
+---
+
+# Typical Workflow
+
+```
+Engineering Standard
+
+        │
+
         ▼
-AtlasData Export
 
-    TOC
-    PublicTXT
-```
+AtlasData
 
-This architecture ensures that copyrighted standard text cannot
-accidentally be committed into the public AtlasData repository.
+        │
 
----
+        ▼
 
-# Current Project Structure
+EngineeringDocument
 
-```
-src/
-    standards_atlas/
+        │
 
-        domain/
+        ▼
 
-            model/
+Transformation Pipeline
 
-                EngineeringDocument
-                Clause
-                ClauseAnnotation
-                Relation
+        │
 
-        application/
+        ▼
 
-            ports/
-            repositories/
-            services/
-            transformations/
+Doorstop
 
-        adapters/
+        │
 
-            atlasdata/
-            filesystem/
+        ▼
 
-        cli/
-
-tests/
-
-docs/
+Requirements Engineering
+Traceability
+Safety Case
+Reviews
 ```
 
 ---
 
-# Development Status
+# Current Features
 
-## Completed
+## Domain
 
-- modern Python packaging
-- uv-based development environment
-- Typer CLI
 - immutable Pydantic domain model
-- Hexagonal Architecture
-- AtlasData adapter
-- compiler-style structure expansion
-- canonical EngineeringDocument model
+- EngineeringDocument
+- Standard
+- Clause
+- ClauseAnnotation
 - semantic roles
-- ClauseAnnotation model
-- public/private annotation model
+- engineering document abstraction
+
+## Application
+
 - application services
-- transformation layer
-- file-based repository
-- AtlasData round-trip workflow
+- import/export ports
+- repository abstraction
+- transformation pipeline
+
+## AtlasData
+
+- metadata parser
+- compiler
+- domain mapper
+- round-trip support
+- heading preservation
+- public export
+
+## Doorstop
+
+- deterministic identifier generation
+- complete engineering document export
+- Git workspace generation
+- validation
+- standards metadata export
+
+## Infrastructure
+
+- Hexagonal Architecture
+- local repository
+- uv-based development
+- Typer CLI
 
 ---
 
@@ -287,26 +419,30 @@ Import an AtlasData document
 uv run standards-atlas document import data/EN50716
 ```
 
-Inspect a document
+Generate AtlasData TOC
 
 ```bash
-uv run standards-atlas inspect data data/EN50716
+uv run standards-atlas atlasdata generate-toc data/EN50716
 ```
 
-Generate public TOC information
+Update AtlasData
 
 ```bash
-uv run standards-atlas atlasdata generate-toc data/ISO5083
+uv run standards-atlas atlasdata generate-toc data/EN50716 --write
 ```
 
-Update an AtlasData file
+Export to Doorstop
 
 ```bash
-uv run standards-atlas atlasdata generate-toc data/ISO5083 --write
+uv run standards-atlas document export doorstop EN50716
 ```
 
-The round-trip writer automatically creates numbered backups before
-modifying the original file.
+Export to another directory
+
+```bash
+uv run standards-atlas document export doorstop EN50716 \
+    --target /tmp/EN50716
+```
 
 ---
 
@@ -324,25 +460,28 @@ Run all tests
 uv run pytest
 ```
 
+Run formatting and linting
+
+```bash
+uv run ruff check
+uv run ruff format
+```
+
 ---
 
 # Documentation
 
-Architecture Principles
+## Architecture
 
-- docs/architecture/principles.md
+- `docs/architecture/principles.md`
 
-Architecture Decision Records
+## Architecture Decision Records
 
-- docs/architecture/adr/
-
-Current ADRs
-
-- ADR 0001 — Python Packaging
-- ADR 0002 — Canonical Domain Model
-- ADR 0003 — Hexagonal Architecture
-- ADR 0004 — Transformation Pipeline
-- ADR 0005 — Separation of Public and Local Knowledge
+- ADR 0001 – Python Packaging
+- ADR 0002 – Canonical Domain Model
+- ADR 0003 – Hexagonal Architecture
+- ADR 0004 – Transformation Pipeline
+- ADR 0005 – Public and Local Knowledge Separation
 
 ---
 
@@ -350,22 +489,26 @@ Current ADRs
 
 The architectural foundation is now complete.
 
-Future work focuses on expanding the transformation pipeline and adding
-new engineering ecosystems.
+The next development phase focuses on semantic transformations and engineering knowledge generation.
 
-Planned work includes:
+## Near Term
 
-- IntelliDoc migration
 - Markdown importer
-- Heading Synchronisation transformation
-- Structure Validation transformation
-- Annotation generation
-- Relation generation
-- Doorstop adapter
+- IntelliDoc migration
+- heading synchronization
+- structure validation
+- summary generation
+- relation generation
+
+## Future
+
+- Polarion adapter
 - BASIL adapter
 - Travelogue adapter
 - Graph export
 - Traceability API
+- Knowledge Graph
+- AI-assisted engineering workflows
 
 ---
 
@@ -373,12 +516,17 @@ Planned work includes:
 
 Please read
 
-- CONTRIBUTING.md
+- `CONTRIBUTING.md`
 
 before contributing.
 
-The project values architectural consistency, explicit semantics,
-small incremental changes, and comprehensive automated testing.
+The project values
+
+- explicit semantics
+- clean architecture
+- deterministic transformations
+- comprehensive automated testing
+- small incremental changes
 
 ---
 

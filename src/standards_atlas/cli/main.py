@@ -13,6 +13,15 @@ from standards_atlas.adapters.atlasdata import AtlasDataImporter
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.application.services import DocumentImportService
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
+from standards_atlas.adapters.doorstop import (
+    DoorstopExportConfig,
+    DoorstopExporter,
+)
+from standards_atlas.adapters.filesystem import (
+    FileSystemEngineeringDocumentRepository,
+)
+from standards_atlas.application.services import DocumentExportService
+from standards_atlas.domain.model import DocumentKey
 
 app = typer.Typer(
     name="standards-atlas",
@@ -41,6 +50,15 @@ document_app = typer.Typer(
 
 app.add_typer(document_app, name="document")
 
+document_export_app = typer.Typer(
+    help="Export persisted engineering documents.",
+    no_args_is_help=True,
+)
+
+document_app.add_typer(
+    document_export_app,
+    name="export",
+)
 
 @app.callback()
 def main(
@@ -157,6 +175,147 @@ def import_document(
     typer.echo(f"Key                   : {document.key.value}")
     typer.echo(f"Clauses               : {len(document.clauses)}")
     typer.echo(f"Workspace             : {workspace}")
+
+
+@document_export_app.command("doorstop")
+def export_document_to_doorstop(
+    document_key: Annotated[
+        str,
+        typer.Argument(
+            help="Key of the persisted EngineeringDocument to export.",
+        ),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option(
+            "--workspace",
+            "-w",
+            help="Standards Atlas workspace directory.",
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+        ),
+    ] = Path(".atlas"),
+    target: Annotated[
+        Path | None,
+        typer.Option(
+            "--target",
+            "-t",
+            help=(
+                "Target directory for the Doorstop document. "
+                "Defaults to <workspace>/doorstop/<document-key>."
+            ),
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+        ),
+    ] = None,
+    prefix: Annotated[
+        str | None,
+        typer.Option(
+            "--prefix",
+            help="Doorstop document prefix.",
+        ),
+    ] = None,
+    digits: Annotated[
+        int,
+        typer.Option(
+            "--digits",
+            min=1,
+            help="Number of digits used for Doorstop item identifiers.",
+        ),
+    ] = 8,
+    separator: Annotated[
+        str,
+        typer.Option(
+            "--separator",
+            help="Separator between Doorstop prefix and numeric identifier.",
+        ),
+    ] = "-",
+    validate: Annotated[
+        bool,
+        typer.Option(
+            "--validate/--no-validate",
+            help="Validate the generated Doorstop document after export.",
+        ),
+    ] = True,
+    replace_existing: Annotated[
+        bool,
+        typer.Option(
+            "--replace/--no-replace",
+            help="Replace an existing Doorstop export directory.",
+        ),
+    ] = True,
+    initialize_git: Annotated[
+        bool,
+        typer.Option(
+            "--init-git/--no-init-git",
+            help="Initialize the Doorstop target as a Git repository.",
+        ),
+    ] = True,
+) -> None:
+    """Export a persisted EngineeringDocument as a Doorstop document."""
+    repository = FileSystemEngineeringDocumentRepository(
+        workspace=workspace,
+    )
+
+    key = DocumentKey(value=document_key)
+
+    if not repository.exists(key):
+        typer.echo(
+            f"No persisted document found for key: {document_key}",
+            err=True,
+        )
+        typer.echo(
+            "Import the document first with:",
+            err=True,
+        )
+        typer.echo(
+            f"  standards-atlas document import <source> "
+            f"--workspace {workspace}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    document = repository.load(key)
+
+    export_target = (
+        target
+        if target is not None
+        else workspace / "doorstop" / document.key.value
+    )
+
+    config = DoorstopExportConfig(
+        workspace=workspace / "doorstop",
+        prefix=prefix,
+        digits=digits,
+        separator=separator,
+        replace_existing=replace_existing,
+        validate_after_export=validate,
+        initialize_git_repository=initialize_git,
+    )
+
+    exporter = DoorstopExporter(config=config)
+    service = DocumentExportService(exporter=exporter)
+
+    try:
+        generated_path = service.export_document(
+            document=document,
+            target=export_target,
+        )
+    except FileExistsError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    except RuntimeError as exc:
+        typer.echo("Doorstop export failed.", err=True)
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=3) from exc
+
+    typer.echo(f"Exported document     : {document.title}")
+    typer.echo(f"Document key          : {document.key.value}")
+    typer.echo(f"Clauses exported      : {len(document.clauses)}")
+    typer.echo(f"Doorstop target       : {generated_path}")
+    typer.echo(f"Validation enabled    : {validate}")
 
 
 @app.command()
