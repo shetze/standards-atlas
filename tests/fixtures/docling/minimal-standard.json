@@ -1,0 +1,67 @@
+{
+  "name": "MIN-STD",
+  "origin": {"filename": "minimal-standard.pdf"},
+  "body": {
+    "self_ref": "#/body",
+    "children": [
+      {"$ref": "#/texts/0"},
+      {"$ref": "#/texts/1"},
+      {"$ref": "#/texts/2"},
+      {"$ref": "#/texts/3"},
+      {"$ref": "#/tables/0"},
+      {"$ref": "#/pictures/0"}
+    ]
+  },
+  "texts": [
+    {
+      "self_ref": "#/texts/0",
+      "label": "section_header",
+      "text": "1 Scope",
+      "level": 1,
+      "prov": [{"page_no": 1, "bbox": {"l": 10, "t": 20, "r": 100, "b": 30, "coord_origin": "TOPLEFT"}}]
+    },
+    {
+      "self_ref": "#/texts/1",
+      "label": "text",
+      "text": "This document defines a minimal test standard.",
+      "prov": [{"page_no": 1, "bbox": {"l": 10, "t": 40, "r": 180, "b": 55, "coord_origin": "TOPLEFT"}}]
+    },
+    {
+      "self_ref": "#/texts/2",
+      "label": "list_item",
+      "text": "first item",
+      "marker": "-",
+      "prov": [{"page_no": 1}]
+    },
+    {
+      "self_ref": "#/texts/3",
+      "label": "list_item",
+      "text": "second item",
+      "marker": "-",
+      "prov": [{"page_no": 1}]
+    }
+  ],
+  "tables": [
+    {
+      "self_ref": "#/tables/0",
+      "label": "table",
+      "prov": [{"page_no": 2}],
+      "data": {
+        "table_cells": [
+          {"text": "Name", "start_row_offset_idx": 0, "start_col_offset_idx": 0, "column_header": true},
+          {"text": "Value", "start_row_offset_idx": 0, "start_col_offset_idx": 1, "column_header": true},
+          {"text": "A", "start_row_offset_idx": 1, "start_col_offset_idx": 0},
+          {"text": "1", "start_row_offset_idx": 1, "start_col_offset_idx": 1}
+        ]
+      }
+    }
+  ],
+  "pictures": [
+    {
+      "self_ref": "#/pictures/0",
+      "label": "picture",
+      "text": "System overview",
+      "prov": [{"page_no": 2}]
+    }
+  ]
+}

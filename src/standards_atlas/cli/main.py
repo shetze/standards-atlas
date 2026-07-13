@@ -8,19 +8,28 @@ from typing import Annotated
 import typer
 
 from standards_atlas import __version__
-from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services import DocumentImportService
-from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
+from standards_atlas.adapters.docling import (
+    DoclingArtifactRepository,
+    DoclingJsonReader,
+    DoclingNotInstalledError,
+    DoclingPdfConverter,
+    DocumentConversionError,
+    ExtractionState,
+)
 from standards_atlas.adapters.doorstop import (
     DoorstopExportConfig,
     DoorstopExporter,
 )
-from standards_atlas.adapters.filesystem import (
-    FileSystemEngineeringDocumentRepository,
+from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.application.services import (
+    DocumentExportService,
+    DocumentExtractionService,
+    DocumentImportService,
+    ExtractionInspectionService,
 )
-from standards_atlas.application.services import DocumentExportService
+from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
+from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
 
 app = typer.Typer(
@@ -50,6 +59,13 @@ document_app = typer.Typer(
 
 app.add_typer(document_app, name="document")
 
+docling_app = typer.Typer(
+    help="Convert and inspect private PDF extraction artefacts with Docling.",
+    no_args_is_help=True,
+)
+
+app.add_typer(docling_app, name="docling")
+
 document_export_app = typer.Typer(
     help="Export persisted engineering documents.",
     no_args_is_help=True,
@@ -59,6 +75,7 @@ document_app.add_typer(
     document_export_app,
     name="export",
 )
+
 
 @app.callback()
 def main(
@@ -271,19 +288,14 @@ def export_document_to_doorstop(
             err=True,
         )
         typer.echo(
-            f"  standards-atlas document import <source> "
-            f"--workspace {workspace}",
+            f"  standards-atlas document import <source> --workspace {workspace}",
             err=True,
         )
         raise typer.Exit(code=1)
 
     document = repository.load(key)
 
-    export_target = (
-        target
-        if target is not None
-        else workspace / "doorstop" / document.key.value
-    )
+    export_target = target if target is not None else workspace / "doorstop" / document.key.value
 
     config = DoorstopExportConfig(
         workspace=workspace / "doorstop",
@@ -316,6 +328,104 @@ def export_document_to_doorstop(
     typer.echo(f"Clauses exported      : {len(document.clauses)}")
     typer.echo(f"Doorstop target       : {generated_path}")
     typer.echo(f"Validation enabled    : {validate}")
+
+
+@docling_app.command("convert")
+def convert_pdf_with_docling(
+    file: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            readable=True,
+            resolve_path=True,
+            help="PDF file to convert.",
+        ),
+    ],
+    document_key: Annotated[
+        str,
+        typer.Option("--document", "-d", help="Key used below .atlas/docling/."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+    overwrite: Annotated[
+        bool,
+        typer.Option("--overwrite", help="Replace an existing native Docling document."),
+    ] = False,
+) -> None:
+    """Convert a PDF and persist native Docling JSON below the private workspace."""
+    repository = DoclingArtifactRepository(workspace)
+    converter = DoclingPdfConverter()
+    service = DocumentExtractionService(converter, DoclingJsonReader())
+
+    try:
+        state = repository.extraction_state(document_key, file)
+        if state is ExtractionState.CURRENT and not overwrite:
+            typer.echo("Existing extraction matches the source PDF.")
+            typer.echo(f"Docling document      : {repository.document_path(document_key)}")
+            return
+        if state is ExtractionState.STALE and not overwrite:
+            typer.echo(
+                "The source PDF has changed since the last conversion. "
+                "Use --overwrite to update the extraction.",
+                err=True,
+            )
+            raise typer.Exit(code=3)
+        if state is ExtractionState.INCOMPLETE and not overwrite:
+            typer.echo(
+                "The persisted extraction is incomplete. Use --overwrite to repair it.",
+                err=True,
+            )
+            raise typer.Exit(code=3)
+
+        target = repository.document_path(document_key)
+        generated = service.convert(file, target, overwrite=overwrite)
+        repository.save_metadata(document_key, converter.conversion_metadata(file))
+    except (DoclingNotInstalledError, DocumentConversionError, FileExistsError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Converted PDF         : {file}")
+    typer.echo(f"Document key          : {document_key}")
+    typer.echo(f"Docling document      : {generated}")
+    typer.echo(f"Conversion metadata   : {repository.metadata_path(document_key)}")
+
+
+@docling_app.command("inspect")
+def inspect_docling_document(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of a persisted Docling document."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+) -> None:
+    """Inspect extraction coverage without loading the Docling runtime."""
+    repository = DoclingArtifactRepository(workspace)
+    try:
+        source = repository.document_path(document_key)
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    if not source.exists():
+        typer.echo(f"No Docling document found for key: {document_key}", err=True)
+        raise typer.Exit(code=1)
+
+    extracted = DoclingJsonReader().read(source)
+    statistics = ExtractionInspectionService().inspect(extracted)
+    typer.echo(f"Document source       : {extracted.source_id}")
+    typer.echo(f"Pages                 : {statistics.page_count}")
+    typer.echo(f"Extracted items       : {statistics.item_count}")
+    typer.echo(f"Items with page data  : {statistics.items_with_page_evidence}")
+    typer.echo(f"Items without page data: {statistics.items_without_page_evidence}")
+    typer.echo(f"Unknown items         : {statistics.unknown_item_count}")
+    for item_type, count in statistics.counts_by_type.items():
+        typer.echo(f"{item_type.capitalize():22}: {count}")
+    if statistics.unknown_labels:
+        typer.echo(f"Unknown labels        : {', '.join(statistics.unknown_labels)}")
 
 
 @app.command()
