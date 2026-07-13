@@ -175,8 +175,8 @@ class DoorstopItemMapper:
     ) -> str:
         sections: list[str] = []
 
-        if clause.text:
-            sections.append(clause.text.strip())
+        if clause.plain_text:
+            sections.append(clause.plain_text.strip())
 
         grouped: dict[AnnotationType, list[str]] = defaultdict(list)
 

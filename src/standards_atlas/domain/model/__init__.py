@@ -1,6 +1,24 @@
 """Domain model exports."""
 
 from standards_atlas.domain.model.clause import Clause, ClauseType
+from standards_atlas.domain.model.content import (
+    ContentBlock,
+    FormulaBlock,
+    ListBlock,
+    ListItem,
+    NoteBlock,
+    PictureBlock,
+    TableBlock,
+    TableCell,
+    TableRow,
+    TextBlock,
+    render_content_as_plain_text,
+)
+from standards_atlas.domain.model.source_evidence import (
+    BoundingBox,
+    CoordinateOrigin,
+    SourceEvidence,
+)
 from standards_atlas.domain.model.annotation import (
     AnnotationType,
     AnnotationVisibility,
@@ -30,15 +48,29 @@ __all__ = [
     "ClauseAnnotation",
     "ClauseId",
     "ClauseType",
+    "ContentBlock",
+    "CoordinateOrigin",
     "DocumentKey",
+    "BoundingBox",
     "DocumentType",
     "DoorstopItemAttributes",
     "DoorstopReference",
     "EngineeringDocument",
+    "FormulaBlock",
+    "ListBlock",
+    "ListItem",
+    "NoteBlock",
+    "PictureBlock",
     "Relation",
     "RelationType",
     "SemanticRole",
     "Standard",
     "StandardKey",
     "StandardReference",
+    "SourceEvidence",
+    "TableBlock",
+    "TableCell",
+    "TableRow",
+    "TextBlock",
+    "render_content_as_plain_text",
 ]

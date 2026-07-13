@@ -1,535 +1,385 @@
 # Standards Atlas
 
-Standards Atlas is an **Engineering Knowledge Transformation Platform**.
+Standards Atlas is an open-source toolkit for building a semantically structured representation of engineering standards.
 
-It provides a canonical semantic representation of engineering documents together with deterministic transformation pipelines connecting multiple engineering ecosystems.
+The project separates **document extraction**, **semantic alignment**, **canonical engineering data**, **analysis**, and **export** into independent architectural layers. This enables the same engineering knowledge to be reused for different purposes such as requirements management, documentation, traceability, semantic search, AI-assisted analysis, and future tooling.
 
-Rather than being centred around a particular document format or engineering tool, Standards Atlas is built around a common intermediate representation that enables standards, requirements, safety cases and engineering artefacts to be connected through semantic transformations.
-
----
-
-# Vision
-
-Engineering knowledge exists in many different forms:
-
-- international standards
-- requirements specifications
-- safety cases
-- architecture descriptions
-- engineering reports
-- compliance evidence
-- project documentation
-
-Although these artefacts often describe the same engineering concepts, they usually exist in isolated engineering tools.
-
-Standards Atlas establishes a canonical semantic representation that allows engineering knowledge to move between multiple engineering ecosystems through deterministic transformation pipelines.
-
-The long-term vision is an **Engineering Knowledge Platform** providing reusable traceability, semantic analysis and AI-assisted engineering workflows.
+The canonical representation of a standard is **not Markdown**. Instead, Standards Atlas maintains a structured internal model that serves as the single source of truth throughout the entire processing pipeline.
 
 ---
 
-# Core Concepts
+## Motivation
 
-## EngineeringDocument
+Engineering standards are typically distributed as PDF documents that are optimized for human readers but difficult to process automatically.
 
-The canonical domain model.
+A PDF primarily describes the visual appearance of a document rather than its semantic structure. Although modern extraction tools such as Docling can reconstruct much of this structure, the result is still an approximation.
 
-Every external representation is imported into an immutable
-`EngineeringDocument`.
+Standards Atlas combines two complementary information sources:
 
-The EngineeringDocument is the project's canonical Intermediate Representation (IR).
+- **AtlasData** provides the expected semantic document structure.
+- **Docling** extracts the actual content from the original PDF.
 
----
-
-## Clause
-
-Represents one logical clause of the original engineering document.
-
-A Clause contains:
-
-- identifier
-- document reference
-- clause type
-- semantic roles
-- original heading
-- original text
-
-The Clause always represents the original engineering artefact.
-
----
-
-## ClauseAnnotation
-
-Represents knowledge associated with a clause.
-
-Unlike the Clause itself, annotations are generated or maintained during engineering work.
-
-Examples include
-
-- generated titles
-- summaries
-- explanations
-- rationale
-- comments
-- examples
-- discussions
-
-Multiple annotations may exist for every clause.
-
----
-
-## Annotation Visibility
-
-Every annotation has an explicit visibility.
-
-```
-PUBLIC
-LOCAL
-PRIVATE
-```
-
-Only PUBLIC annotations may be exported into public repositories.
-
-This prevents accidental publication of copyrighted engineering content.
+Both sources are combined into a canonical engineering model that preserves the semantic structure while maintaining traceability back to the original document.
 
 ---
 
 # Architecture
 
-Standards Atlas follows a Hexagonal / Clean Architecture.
+The overall processing pipeline is shown below.
 
-```
-                  Command Line Interface
-                            │
-                            ▼
-                 Application Services
-                            │
-                            ▼
-               Transformation Pipeline
-                            │
-                            ▼
-                 EngineeringDocument
-      (Canonical Intermediate Representation)
-                            ▲
-                            │
-                 Repository (.atlas)
-                            ▲
-                            │
-                 Import / Export Ports
-                            ▲
-                            │
-                        Adapters
-```
-
-The domain model is completely independent of external file formats and engineering tools.
-
----
-
-# Transformation Pipeline
-
-The Transformation Pipeline contains all semantic processing.
-
-Typical transformations include
-
-- structure validation
-- heading synchronization
-- semantic role inference
-- annotation generation
-- relation generation
-- traceability validation
-- AI-assisted enrichment
-
-Transformations always operate on the canonical EngineeringDocument.
-
----
-
-# Workspace
-
-Standards Atlas maintains a local engineering workspace.
-
-```
-.atlas/
-
-    documents/
-        Canonical EngineeringDocument objects
-
-    doorstop/
-        Generated Doorstop workspaces
-
-    transformations/
-        Intermediate transformation results
-
-    warnings/
-        Validation reports
+```text
+                    +----------------+
+                    |  AtlasData     |
+                    +----------------+
+                             |
+                             |
+                             v
+                   EngineeringDocument
+                 (canonical document model)
+                             ^
+                             |
+                 Document Alignment Engine
+                             ^
+                             |
+                   Raw DoclingDocument
+                             ^
+                             |
+                         Docling
+                             ^
+                             |
+                            PDF
 ```
 
-The workspace contains derived engineering knowledge.
+Once the canonical document has been created, it becomes the basis for all further processing.
 
-Source documents always remain the authoritative source.
-
----
-
-# Adapters
-
-Standards Atlas connects engineering ecosystems through dedicated adapters.
-
-Each adapter implements one or more application ports while the domain model remains completely independent of external formats.
-
-## AtlasData Adapter
-
-AtlasData is the primary public exchange format for engineering standards.
-
-### Import
-
-Current capabilities
-
-- metadata import
-- structure parsing
-- compiler-based structure expansion
-- semantic role inference
-- EngineeringDocument generation
-- import of public annotations
-
-### Round-trip
-
-Current capabilities
-
-- regenerate TOC entries
-- preserve manually maintained headings
-- preserve public annotations
-- numbered safety backups
-
-Only explicitly publishable information is written back.
-
-```
-TOC
-PublicTXT
-```
-
-Copyright protected clause text is never exported.
-
----
-
-## Doorstop Adapter
-
-Doorstop is the primary engineering export adapter.
-
-### Export
-
-Current capabilities
-
-- deterministic Doorstop identifier generation
-- complete clause hierarchy
-- complete clause text
-- public annotations
-- local annotations
-- private annotations
-- Doorstop reference generation
-- Standards Atlas metadata
-- Git workspace generation
-- validation using Doorstop
-
-Generated Doorstop items contain additional engineering metadata including
-
-- original clause reference
-- semantic roles
-- deterministic numeric identifiers
-- project-specific reference patterns
-
-Doorstop workspaces are generated inside
-
-```
-.atlas/doorstop/
-```
-
-and therefore may contain private engineering information.
-
----
-
-## File System Adapter
-
-Provides persistence for the canonical EngineeringDocument.
-
-### Import
-
-- load EngineeringDocument
-
-### Export
-
-- persist EngineeringDocument
-
-Documents are stored inside
-
-```
-.atlas/documents/
-```
-
----
-
-## Planned Adapters
-
-### Import
-
-- Markdown
-- IntelliDoc
-- Polarion
-- BASIL
-- Travelogue
-
-### Export
-
-- Markdown
-- HTML
-- PDF
-- Graph
-- Traceability API
-
-### Round-trip
-
-- Markdown
-- AtlasData
-- Travelogue
-
----
-
-# Security Model
-
-Standards Atlas explicitly separates original engineering content from publicly distributable knowledge.
-
-```
-PDF / Markdown
-        │
-        ▼
-Clause.text
-        │
-        ▼
-Transformation Pipeline
-        │
-        ▼
-ClauseAnnotation
-        │
-        ├────────────► AtlasData
-        │                 │
-        │                 ├── TOC
-        │                 └── PublicTXT
-        │
-        └────────────► Doorstop
-                          │
-                          ├── complete text
-                          ├── public annotations
-                          ├── local annotations
-                          └── private annotations
-```
-
-This architecture prevents accidental publication of copyrighted engineering text.
-
----
-
-# Typical Workflow
-
-```
-Engineering Standard
-
-        │
-
-        ▼
-
-AtlasData
-
-        │
-
-        ▼
-
+```text
 EngineeringDocument
-
         │
+        ├── Markdown Export
+        ├── Doorstop Export
+        ├── AI-assisted IntelliDoc workflows
+        ├── Embeddings
+        ├── Semantic Search
+        └── Future analysis tools
+```
 
-        ▼
+**Markdown is therefore an export format, not the internal representation of a standard.**
 
-Transformation Pipeline
+---
 
+# Design Principles
+
+Standards Atlas follows a number of architectural principles.
+
+## Canonical Engineering Model
+
+The canonical representation of a standard is the `EngineeringDocument`.
+
+Every adapter imports or exports this model.
+
+No adapter communicates directly with another adapter.
+
+---
+
+## Separation of Responsibilities
+
+Each architectural layer has a clearly defined responsibility.
+
+| Layer | Responsibility |
+|--------|----------------|
+| Domain | Canonical engineering model |
+| Application | Processing workflows and business logic |
+| Adapters | Import and export of external formats |
+| Infrastructure | Persistence and external services |
+
+---
+
+## AtlasData Defines the Structure
+
+AtlasData is considered the authoritative source for
+
+- document hierarchy
+- clause identifiers
+- clause numbering
+- parent-child relationships
+- document metadata
+
+The semantic structure of a document is therefore independent of any individual PDF.
+
+---
+
+## Docling Performs Extraction
+
+Docling is responsible only for extracting information from PDF documents.
+
+This includes
+
+- paragraphs
+- headings
+- tables
+- figures
+- formulas
+- page information
+- layout information
+- reading order
+
+Docling does **not** define the semantic structure of the engineering document.
+
+---
+
+## Alignment Creates Engineering Knowledge
+
+The alignment process combines
+
+- the semantic structure provided by AtlasData, and
+- the extracted content provided by Docling.
+
+The result is a complete `EngineeringDocument`.
+
+---
+
+## Adapter Independence
+
+The domain model never depends on Docling, Markdown, Doorstop, or any other external format.
+
+All external technologies are isolated behind adapters.
+
+This makes it possible to replace individual technologies without affecting the rest of the system.
+
+---
+
+# Canonical Data Model
+
+The canonical model consists of three major concepts.
+
+```text
+EngineeringDocument
+│
+├── metadata
+├── document structure
+└── Clause[]
         │
-
-        ▼
-
-Doorstop
-
-        │
-
-        ▼
-
-Requirements Engineering
-Traceability
-Safety Case
-Reviews
+        ├── reference
+        ├── title
+        ├── metadata
+        ├── content[]
+        └── source evidence
 ```
 
 ---
 
-# Current Features
+## Structured Clause Content
 
-## Domain
+Each clause contains a sequence of structured content blocks.
 
-- immutable Pydantic domain model
-- EngineeringDocument
-- Standard
-- Clause
-- ClauseAnnotation
-- semantic roles
-- engineering document abstraction
+Currently supported block types are
 
-## Application
+| Block | Description |
+|--------|-------------|
+| TextBlock | Plain text paragraph |
+| ListBlock | Ordered or unordered list |
+| TableBlock | Table structure |
+| PictureBlock | Figures and images |
+| FormulaBlock | Mathematical expressions |
+| NoteBlock | Notes and remarks |
 
-- application services
-- import/export ports
-- repository abstraction
-- transformation pipeline
-
-## AtlasData
-
-- metadata parser
-- compiler
-- domain mapper
-- round-trip support
-- heading preservation
-- public export
-
-## Doorstop
-
-- deterministic identifier generation
-- complete engineering document export
-- Git workspace generation
-- validation
-- standards metadata export
-
-## Infrastructure
-
-- Hexagonal Architecture
-- local repository
-- uv-based development
-- Typer CLI
+The ordering of content blocks is preserved exactly as it appears in the source document.
 
 ---
 
-# Command Line Interface
+## Source Evidence
 
-Import an AtlasData document
+Every content block may contain provenance information describing where it originated.
 
-```bash
-uv run standards-atlas document import data/EN50716
-```
+Typical information includes
 
-Generate AtlasData TOC
+- source document
+- page number
+- bounding box
+- extraction method
+- original document reference
 
-```bash
-uv run standards-atlas atlasdata generate-toc data/EN50716
-```
+The domain model intentionally uses adapter-neutral provenance objects.
 
-Update AtlasData
+No Docling-specific data structures appear in the canonical model.
 
-```bash
-uv run standards-atlas atlasdata generate-toc data/EN50716 --write
-```
+---
 
-Export to Doorstop
+# Repository Structure
 
-```bash
-uv run standards-atlas document export doorstop EN50716
-```
-
-Export to another directory
-
-```bash
-uv run standards-atlas document export doorstop EN50716 \
-    --target /tmp/EN50716
+```text
+src/
+├── standards_atlas/
+│   ├── domain/
+│   ├── application/
+│   └── adapters/
+│
+docs/
+│   └── architecture/
+│       └── adr/
+│
+tests/
+│
+.atlas/
 ```
 
 ---
 
-# Development
+# Persistent Storage
 
-Install dependencies
+All generated artefacts containing potentially copyrighted standard content are stored below
 
-```bash
-uv sync
+```text
+.atlas/
 ```
 
-Run all tests
+Typical directory layout:
 
-```bash
-uv run pytest
+```text
+.atlas/
+├── documents/
+├── docling/
+├── alignments/
+└── exports/
 ```
 
-Run formatting and linting
+The `.atlas` directory is intentionally excluded from Git.
 
-```bash
-uv run ruff check
-uv run ruff format
-```
+This ensures that the public repository contains
+
+- source code
+- documentation
+- tests
+- metadata
+
+but never copyrighted standard documents.
 
 ---
 
-# Documentation
+# Processing Pipeline
 
-## Architecture
+The current architecture processes engineering standards in several stages.
 
-- `docs/architecture/principles.md`
+## 1. AtlasData Import
 
-## Architecture Decision Records
+AtlasData imports the semantic document structure.
 
-- ADR 0001 – Python Packaging
-- ADR 0002 – Canonical Domain Model
-- ADR 0003 – Hexagonal Architecture
-- ADR 0004 – Transformation Pipeline
-- ADR 0005 – Public and Local Knowledge Separation
+Result:
+
+```
+EngineeringDocument
+```
+
+without document content.
+
+---
+
+## 2. PDF Extraction
+
+Docling converts the original PDF into a structured document representation.
+
+Result:
+
+```
+DoclingDocument
+```
+
+This representation is stored unchanged.
+
+---
+
+## 3. Document Alignment
+
+The alignment engine matches
+
+- Docling elements
+- AtlasData clauses
+
+and enriches the canonical engineering model.
+
+---
+
+## 4. EngineeringDocument
+
+The resulting document contains
+
+- semantic structure
+- structured content
+- provenance information
+- engineering metadata
+
+---
+
+## 5. Export
+
+The canonical engineering model can then be exported into different formats.
+
+Currently planned exports include
+
+- Markdown
+- Doorstop
+- additional engineering formats
+
+---
+
+# Current Status
+
+| Feature | Status |
+|----------|:------:|
+| AtlasData Import | ✅ |
+| Canonical EngineeringDocument | ✅ |
+| Structured Clause Model | ✅ |
+| Structured Content Blocks | ✅ |
+| Schema Versioning | ✅ |
+| Doorstop Export | ✅ |
+| Docling Integration | 🚧 |
+| Document Alignment | 🚧 |
+| Markdown Renderer | 🚧 |
+| IntelliDoc Workflow | 🚧 |
+| Semantic Retrieval | ⏳ |
+| Embeddings | ⏳ |
+| AI-assisted Analysis | ⏳ |
 
 ---
 
 # Roadmap
 
-The architectural foundation is now complete.
+The planned implementation order is
 
-The next development phase focuses on semantic transformations and engineering knowledge generation.
-
-## Near Term
-
-- Markdown importer
-- IntelliDoc migration
-- heading synchronization
-- structure validation
-- summary generation
-- relation generation
-
-## Future
-
-- Polarion adapter
-- BASIL adapter
-- Travelogue adapter
-- Graph export
-- Traceability API
-- Knowledge Graph
-- AI-assisted engineering workflows
+1. Structured clause model
+2. Docling adapter
+3. Document alignment engine
+4. Markdown renderer
+5. IntelliDoc workflow
+6. Requirement classification
+7. Semantic retrieval
+8. Embedding generation
+9. AI-assisted document analysis
 
 ---
 
-# Contributing
+# Documentation
 
-Please read
+Architectural decisions are documented as Architecture Decision Records (ADRs).
 
-- `CONTRIBUTING.md`
+```
+docs/
+└── architecture/
+    └── adr/
+```
 
-before contributing.
+The ADRs describe the evolution of the architecture and explain the rationale behind major design decisions.
 
-The project values
+---
 
-- explicit semantics
-- clean architecture
-- deterministic transformations
-- comprehensive automated testing
-- small incremental changes
+# Development Status
+
+Standards Atlas is currently under active development.
+
+The focus of the current development cycle is the integration of PDF-based engineering standards through Docling and the creation of a robust, semantically structured engineering document model.
 
 ---
 
 # License
 
-See the project license for licensing information.
+See the project license for details.
