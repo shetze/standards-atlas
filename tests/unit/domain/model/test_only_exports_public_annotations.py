@@ -1,26 +1,22 @@
-from standards_atlas.domain.model.identifiers import (
-    AnnotationId,
-    ClauseId,
-    DocumentKey,
-    StandardKey,
-    StandardReference,
+from standards_atlas.adapters.atlasdata.toc_generator import (
+    generate_public_text_records,
+)
+from standards_atlas.domain.model import (
+    Clause,
+    ClauseType,
+    DocumentType,
+    EngineeringDocument,
 )
 from standards_atlas.domain.model.annotation import (
     AnnotationType,
     AnnotationVisibility,
     ClauseAnnotation,
 )
-from standards_atlas.domain.model import (
-    Clause,
+from standards_atlas.domain.model.identifiers import (
+    AnnotationId,
     ClauseId,
-    ClauseType,
     DocumentKey,
-    DocumentType,
-    EngineeringDocument,
     StandardReference,
-)
-from standards_atlas.adapters.atlasdata.toc_generator import (
-    generate_public_text_records,
 )
 
 

@@ -7,6 +7,7 @@ from standards_atlas.adapters.atlasdata.parser import (
     parse_structure_block,
 )
 from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
+
 # from standards_atlas.adapters.atlasdata.structure_expander import AtlasItemType
 
 

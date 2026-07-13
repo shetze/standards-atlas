@@ -1,3 +1,6 @@
+from standards_atlas.adapters.atlasdata.toc_generator import (
+    generate_public_initialization_records,
+)
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -6,9 +9,6 @@ from standards_atlas.domain.model import (
     DocumentType,
     EngineeringDocument,
     StandardReference,
-)
-from standards_atlas.adapters.atlasdata.toc_generator import (
-    generate_public_initialization_records,
 )
 
 
@@ -33,7 +33,4 @@ def test_clause_text_is_never_exported_to_public_atlasdata() -> None:
 
     records = generate_public_initialization_records(document)
 
-    assert all(
-        "Protected source text" not in record.content
-        for record in records
-    )
+    assert all("Protected source text" not in record.content for record in records)

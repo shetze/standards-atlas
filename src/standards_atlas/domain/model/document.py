@@ -6,8 +6,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.domain.model.clause import Clause
 from standards_atlas.domain.model.annotation import ClauseAnnotation
+from standards_atlas.domain.model.clause import Clause
 from standards_atlas.domain.model.identifiers import ClauseId, DocumentKey
 
 
@@ -52,7 +52,5 @@ class EngineeringDocument(BaseModel):
     ) -> tuple[ClauseAnnotation, ...]:
         """Return all annotations associated with a clause."""
         return tuple(
-            annotation
-            for annotation in self.annotations
-            if annotation.clause_id == clause_id
+            annotation for annotation in self.annotations if annotation.clause_id == clause_id
         )

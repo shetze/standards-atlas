@@ -97,14 +97,11 @@ def _normalize_value(value: str) -> str:
 
 
 def _is_quoted(value: str) -> bool:
-    return (
-        len(value) >= 2
-        and (
-            value.startswith('"')
-            and value.endswith('"')
-            or value.startswith("'")
-            and value.endswith("'")
-        )
+    return len(value) >= 2 and (
+        value.startswith('"')
+        and value.endswith('"')
+        or value.startswith("'")
+        and value.endswith("'")
     )
 
 

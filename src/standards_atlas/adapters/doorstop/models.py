@@ -6,6 +6,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from standards_atlas.domain.model.doorstop_attributes import (
+    DoorstopReference,
+)
+
 
 @dataclass(frozen=True)
 class DoorstopDocumentModel:
@@ -28,7 +32,6 @@ class DoorstopItemModel:
     active: bool = True
     derived: bool = False
     normative: bool = False
-
 
     links: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 from standards_atlas.adapters.doorstop.config import DoorstopExportConfig
 from standards_atlas.adapters.doorstop.document_renderer import (
@@ -33,14 +33,10 @@ class DoorstopExporter:
         document: EngineeringDocument,
         target: Path | None = None,
     ) -> Path:
-        prefix = self._config.prefix or _normalize_prefix(
-            document.key.value
-        )
+        prefix = self._config.prefix or _normalize_prefix(document.key.value)
 
         target_directory = (
-            target
-            if target is not None
-            else self._config.workspace / document.key.value
+            target if target is not None else self._config.workspace / document.key.value
         )
 
         self._prepare_target(target_directory)
@@ -81,10 +77,8 @@ class DoorstopExporter:
     def _prepare_target(self, target: Path) -> None:
         if target.exists():
             if not self._config.replace_existing:
-                raise FileExistsError(
-                    f"Doorstop target already exists: {target}"
-                )
-    
+                raise FileExistsError(f"Doorstop target already exists: {target}")
+
             shutil.rmtree(target)
 
         target.mkdir(parents=True, exist_ok=True)
@@ -100,10 +94,7 @@ class DoorstopExporter:
         )
 
         if result.returncode != 0:
-            raise RuntimeError(
-                "Doorstop validation failed:\n"
-                f"{result.stdout}\n{result.stderr}"
-            )
+            raise RuntimeError(f"Doorstop validation failed:\n{result.stdout}\n{result.stderr}")
 
     @staticmethod
     def _ensure_git_repository(target: Path) -> None:
@@ -127,9 +118,6 @@ class DoorstopExporter:
                 f"{result.stdout}\n{result.stderr}"
             )
 
+
 def _normalize_prefix(value: str) -> str:
-    return "".join(
-        character
-        for character in value.upper()
-        if character.isalnum()
-    )
+    return "".join(character for character in value.upper() if character.isalnum())

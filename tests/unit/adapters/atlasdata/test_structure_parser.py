@@ -1,10 +1,11 @@
 import pytest
 
 from standards_atlas.adapters.atlasdata.structure_ast import StructureRange, StructureToken
-# from standards_atlas.adapters.atlasdata.structure_expander import AtlasItemType
-from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType, TYPE_PREFIXES
 from standards_atlas.adapters.atlasdata.structure_lexer import LexedStructureToken
 from standards_atlas.adapters.atlasdata.structure_parser import parse_lexed_structure_token
+
+# from standards_atlas.adapters.atlasdata.structure_expander import AtlasItemType
+from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 
 
 def test_parse_requirement_token() -> None:

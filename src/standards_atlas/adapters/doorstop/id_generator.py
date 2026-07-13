@@ -108,11 +108,7 @@ def generate_doorstop_id(
     for index, segment in enumerate(segments):
         is_last_segment = index == len(segments) - 1
 
-        width = (
-            identifier_width
-            if is_last_segment and identifier_width is not None
-            else 2
-        )
+        width = identifier_width if is_last_segment and identifier_width is not None else 2
 
         numeric_parts.append(
             _format_numeric_segment(
@@ -148,18 +144,13 @@ def _reference_segments(
     segments = visible_reference.split(".")
 
     if any(not segment for segment in segments):
-        raise ValueError(
-            "Invalid clause reference with empty segment: "
-            f"{visible_reference!r}"
-        )
+        raise ValueError(f"Invalid clause reference with empty segment: {visible_reference!r}")
 
     first_segment = segments[0]
 
     if enum_prefix is not None:
         if not enum_prefix.isdigit():
-            raise ValueError(
-                f"enum_prefix must be numeric, got {enum_prefix!r}."
-            )
+            raise ValueError(f"enum_prefix must be numeric, got {enum_prefix!r}.")
 
         return [enum_prefix, *segments[1:]]
 
@@ -169,6 +160,7 @@ def _reference_segments(
         return [annex_prefix, *segments[1:]]
 
     return segments
+
 
 def _annex_segment_to_numeric(segment: str) -> str:
     """Map an alphabetic annex identifier to its numeric representation.
@@ -188,21 +180,15 @@ def _annex_segment_to_numeric(segment: str) -> str:
     normalized = segment.upper()
 
     if not normalized.isalpha():
-        raise ValueError(
-            f"Annex segment must be alphabetic, got {segment!r}."
-        )
+        raise ValueError(f"Annex segment must be alphabetic, got {segment!r}.")
 
     alphabetical_index = 0
 
     for character in normalized:
-        alphabetical_index = (
-            alphabetical_index * 26
-            + ord(character)
-            - ord("A")
-            + 1
-        )
+        alphabetical_index = alphabetical_index * 26 + ord(character) - ord("A") + 1
 
     return str(alphabetical_index + 9)
+
 
 def generate_doorstop_level(
     *,
@@ -227,18 +213,13 @@ def generate_doorstop_level(
     segments = visible_reference.strip().split(".")
 
     if any(not segment for segment in segments):
-        raise ValueError(
-            "Invalid clause reference with empty segment: "
-            f"{visible_reference!r}"
-        )
+        raise ValueError(f"Invalid clause reference with empty segment: {visible_reference!r}")
 
     first_segment = segments[0]
 
     if enum_prefix is not None:
         if not enum_prefix.isdigit():
-            raise ValueError(
-                f"enum_prefix must be numeric, got {enum_prefix!r}."
-            )
+            raise ValueError(f"enum_prefix must be numeric, got {enum_prefix!r}.")
 
         level_segments = [enum_prefix, *segments[1:]]
     elif first_segment.isalpha():
@@ -256,10 +237,8 @@ def generate_doorstop_level(
                 f"mapping, got {segment!r} in {visible_reference!r}."
             )
 
-    return ".".join(
-        str(int(segment))
-        for segment in level_segments
-    )
+    return ".".join(str(int(segment)) for segment in level_segments)
+
 
 def _format_volume(
     *,
@@ -270,22 +249,15 @@ def _format_volume(
     try:
         numeric_volume = int(volume) + context.part_shift
     except ValueError as exc:
-        raise ValueError(
-            f"Volume must be numeric, got {volume!r}."
-        ) from exc
+        raise ValueError(f"Volume must be numeric, got {volume!r}.") from exc
 
     if numeric_volume < 0:
-        raise ValueError(
-            f"Shifted volume must not be negative, got {numeric_volume}."
-        )
+        raise ValueError(f"Shifted volume must not be negative, got {numeric_volume}.")
 
     width = context.part_digits or 2
 
     if len(str(numeric_volume)) > width:
-        raise ValueError(
-            f"Volume {numeric_volume!r} exceeds configured width "
-            f"of {width} digits."
-        )
+        raise ValueError(f"Volume {numeric_volume!r} exceeds configured width of {width} digits.")
 
     return f"{numeric_volume:0{width}d}"
 
@@ -299,19 +271,14 @@ def _format_numeric_segment(
     try:
         value = int(segment)
     except ValueError as exc:
-        raise ValueError(
-            f"Reference segment must be numeric, got {segment!r}."
-        ) from exc
+        raise ValueError(f"Reference segment must be numeric, got {segment!r}.") from exc
 
     if value < 0:
-        raise ValueError(
-            f"Reference segment must not be negative, got {segment!r}."
-        )
+        raise ValueError(f"Reference segment must not be negative, got {segment!r}.")
 
     if len(str(value)) > width:
         raise ValueError(
-            f"Reference segment {segment!r} exceeds configured width "
-            f"of {width} digits."
+            f"Reference segment {segment!r} exceeds configured width of {width} digits."
         )
 
     return f"{value:0{width}d}"

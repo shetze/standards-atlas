@@ -43,6 +43,7 @@ class StandardReference(BaseModel):
             return f"{self.standard} {self.clause}"
         return f"{self.standard}:{self.year} {self.clause}"
 
+
 class AnnotationId(BaseModel):
     """Stable identifier for a clause annotation."""
 

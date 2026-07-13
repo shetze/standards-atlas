@@ -18,7 +18,6 @@ from standards_atlas.application.services import (
 )
 from standards_atlas.domain.model import DocumentKey
 
-
 DATA_DIR = Path("data")
 
 
@@ -51,9 +50,7 @@ def test_atlasdata_to_repository_to_doorstop_round_trip(
     persisted_document = repository.load(document_key)
 
     assert persisted_document == imported_document
-    assert len(persisted_document.clauses) == len(
-        imported_document.clauses
-    )
+    assert len(persisted_document.clauses) == len(imported_document.clauses)
 
     export_service = DocumentExportService(
         exporter=DoorstopExporter(
@@ -77,24 +74,18 @@ def test_atlasdata_to_repository_to_doorstop_round_trip(
 
     assert config_file.exists()
 
-    config_data = yaml.safe_load(
-        config_file.read_text(encoding="utf-8")
-    )
+    config_data = yaml.safe_load(config_file.read_text(encoding="utf-8"))
 
     assert config_data["settings"]["prefix"] == "EN50716"
     assert config_data["settings"]["itemformat"] == "yaml"
 
     item_files = sorted(
-        path
-        for path in doorstop_target.glob("*.yml")
-        if path.name != ".doorstop.yml"
+        path for path in doorstop_target.glob("*.yml") if path.name != ".doorstop.yml"
     )
 
     assert len(item_files) == len(persisted_document.clauses)
 
-    first_item = yaml.safe_load(
-        item_files[0].read_text(encoding="utf-8")
-    )
+    first_item = yaml.safe_load(item_files[0].read_text(encoding="utf-8"))
 
     assert "level" in first_item
     assert "header" in first_item

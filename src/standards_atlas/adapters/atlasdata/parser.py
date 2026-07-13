@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
-import re
 
 from standards_atlas.adapters.atlasdata.metadata import AtlasMetadata, parse_metadata
-from standards_atlas.adapters.atlasdata.structure_expander import StructureItem, expand_structure_line
+from standards_atlas.adapters.atlasdata.structure_expander import (
+    StructureItem,
+    expand_structure_line,
+)
 
 
 @dataclass(frozen=True)
@@ -118,8 +121,7 @@ def parse_initialization_records(text: str) -> list[InitializationRecord]:
 
         if kind not in _INITIALIZATION_RECORD_KINDS:
             raise ValueError(
-                f"Invalid initialization record kind at data section line "
-                f"{line_number}: {kind!r}"
+                f"Invalid initialization record kind at data section line {line_number}: {kind!r}"
             )
 
         records.append(
@@ -136,12 +138,9 @@ def parse_initialization_records(text: str) -> list[InitializationRecord]:
 
 
 def _is_quoted(value: str) -> bool:
-    return (
-        len(value) >= 2
-        and (
-            value.startswith('"')
-            and value.endswith('"')
-            or value.startswith("'")
-            and value.endswith("'")
-        )
+    return len(value) >= 2 and (
+        value.startswith('"')
+        and value.endswith('"')
+        or value.startswith("'")
+        and value.endswith("'")
     )

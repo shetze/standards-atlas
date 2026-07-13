@@ -1,6 +1,7 @@
+from standards_atlas.adapters.atlasdata.domain_mapper import map_atlas_data_to_standard
 from standards_atlas.adapters.atlasdata.parser import (
-    AtlasStandardData,
     AtlasMetadata,
+    AtlasStandardData,
     InitializationRecord,
     StructureItem,
 )
@@ -8,18 +9,7 @@ from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 from standards_atlas.domain.model.annotation import (
     AnnotationType,
     AnnotationVisibility,
-    ClauseAnnotation,
 )
-from standards_atlas.domain.model import (
-    Clause,
-    ClauseId,
-    ClauseType,
-    DocumentKey,
-    DocumentType,
-    EngineeringDocument,
-    StandardReference,
-)
-from standards_atlas.adapters.atlasdata.domain_mapper import map_atlas_data_to_standard
 
 
 def test_atlasdata_records_are_imported_as_public_annotations() -> None:
@@ -60,17 +50,11 @@ def test_atlasdata_records_are_imported_as_public_annotations() -> None:
         key="EXAMPLE",
     )
 
-    assert {
-        annotation.visibility
-        for annotation in document.annotations
-    } == {
+    assert {annotation.visibility for annotation in document.annotations} == {
         AnnotationVisibility.PUBLIC,
     }
 
-    assert {
-        annotation.annotation_type
-        for annotation in document.annotations
-    } == {
+    assert {annotation.annotation_type for annotation in document.annotations} == {
         AnnotationType.TITLE,
         AnnotationType.COMMENT,
     }

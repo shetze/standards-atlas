@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import StrEnum
 import re
+from dataclasses import dataclass
 
 from standards_atlas.adapters.atlasdata.structure_ast import StructureToken
 from standards_atlas.adapters.atlasdata.structure_lexer import lex_structure_token
 from standards_atlas.adapters.atlasdata.structure_parser import parse_lexed_structure_token
-from standards_atlas.adapters.atlasdata.structure_types import ( AtlasItemType, TYPE_PREFIXES, )
+from standards_atlas.adapters.atlasdata.structure_types import (
+    AtlasItemType,
+)
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,7 @@ def expand_structure_line(line: str) -> list[StructureItem]:
 
     return items
 
+
 def expand_structure_token(
     token: str,
     *,
@@ -70,6 +72,7 @@ def expand_structure_token(
         parsed,
         publication_year=publication_year,
     )
+
 
 def expand_parsed_structure_token(
     token: StructureToken,
@@ -92,8 +95,10 @@ def expand_parsed_structure_token(
         for reference in expanded_references
     ]
 
+
 def _is_publication_year_token(token: str) -> bool:
     return len(token) == 4 and token.isdigit()
+
 
 def _expand_reference_template(template: str) -> list[str]:
     match = _RANGE_PATTERN.search(template)
@@ -110,10 +115,11 @@ def _expand_reference_template(template: str) -> list[str]:
     expanded: list[str] = []
 
     for value in range(start, end + 1):
-        expanded_template = template[: match.start()] + str(value) + template[match.end():]
+        expanded_template = template[: match.start()] + str(value) + template[match.end() :]
         expanded.extend(_expand_reference_template(expanded_template))
 
     return expanded
+
 
 __all__ = [
     "AtlasItemType",

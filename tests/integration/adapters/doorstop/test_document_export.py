@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from typer.testing import CliRunner
+
 from standards_atlas.adapters.filesystem import (
     FileSystemEngineeringDocumentRepository,
 )
@@ -10,7 +11,6 @@ from standards_atlas.domain.model import (
     DocumentType,
     EngineeringDocument,
 )
-
 
 runner = CliRunner()
 

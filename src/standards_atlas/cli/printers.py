@@ -6,8 +6,7 @@ from pathlib import Path
 
 import typer
 
-from standards_atlas.domain.model import Clause, Standard
-from standards_atlas.domain.model import EngineeringDocument
+from standards_atlas.domain.model import Clause, EngineeringDocument
 
 
 def print_document_summary(
@@ -49,7 +48,5 @@ def print_clause(clause: Clause) -> None:
     roles_text = f" [{roles}]" if roles else ""
 
     typer.echo(
-        f"{clause.clause_type.value:12} "
-        f"{clause.reference.clause:18} "
-        f"{title}{volume}{roles_text}"
+        f"{clause.clause_type.value:12} {clause.reference.clause:18} {title}{volume}{roles_text}"
     )

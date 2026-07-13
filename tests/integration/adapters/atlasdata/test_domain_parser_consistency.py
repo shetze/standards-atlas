@@ -5,7 +5,6 @@ import pytest
 from standards_atlas.adapters.atlasdata.domain_mapper import parse_standard_domain_file
 from standards_atlas.adapters.atlasdata.parser import parse_standard_file
 
-
 DATA_DIR = Path("data")
 
 
@@ -24,10 +23,7 @@ def test_expanded_structure_matches_existing_atlas_items(data_file: Path) -> Non
     atlas_data = parse_standard_file(data_file)
     standard = parse_standard_domain_file(data_file)
 
-    expanded_clause_references = {
-        clause.reference.clause
-        for clause in standard.clauses
-    }
+    expanded_clause_references = {clause.reference.clause for clause in standard.clauses}
 
     atlas_item_references = {
         ref
@@ -46,7 +42,7 @@ def _extract_clause_reference(reference: str, standard_name: str) -> str | None:
     if not reference.startswith(standard_name):
         return None
 
-    remainder = reference[len(standard_name):].strip()
+    remainder = reference[len(standard_name) :].strip()
     parts = remainder.split(maxsplit=1)
 
     if len(parts) != 2:

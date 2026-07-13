@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType, TYPE_PREFIXES
+from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 
 
 @dataclass(frozen=True)

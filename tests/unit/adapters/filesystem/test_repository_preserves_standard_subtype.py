@@ -4,10 +4,8 @@ from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRep
 from standards_atlas.domain.model import (
     DocumentKey,
     DocumentType,
-    EngineeringDocument,
     Standard,
     StandardKey,
-    StandardReference,
 )
 
 

@@ -43,11 +43,7 @@ class DoorstopItemRenderer:
             "text": item.text,
             **item.attributes,
         }
-        data = {
-            key: value
-            for key, value in data.items()
-            if value is not None
-        }
+        data = {key: value for key, value in data.items() if value is not None}
 
         path = target_directory / f"{item.uid}.yml"
 

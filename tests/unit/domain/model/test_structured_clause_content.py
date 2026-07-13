@@ -57,9 +57,7 @@ def test_clause_preserves_ordered_heterogeneous_content() -> None:
                             TableCell(text="Result", is_header=True),
                         )
                     ),
-                    TableRow(
-                        cells=(TableCell(text="Test"), TableCell(text="Pass"))
-                    ),
+                    TableRow(cells=(TableCell(text="Test"), TableCell(text="Pass"))),
                 ),
             ),
             FormulaBlock(id="formula-1", expression="S = R / T", representation="latex"),

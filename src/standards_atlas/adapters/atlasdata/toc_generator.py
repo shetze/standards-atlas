@@ -14,7 +14,6 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
 )
 
-
 _TYPE_MARKERS: dict[ClauseType, str] = {
     ClauseType.TOC: "u",
     ClauseType.CLAUSE: "u",
@@ -59,10 +58,7 @@ def generate_public_text_records(
 
     Clause.text is intentionally never exported.
     """
-    clauses_by_id = {
-        clause.id: clause
-        for clause in document.clauses
-    }
+    clauses_by_id = {clause.id: clause for clause in document.clauses}
 
     records: list[InitializationRecord] = []
 
@@ -158,10 +154,7 @@ def _annotations_by_clause(
     for annotation in document.annotations:
         result.setdefault(annotation.clause_id.value, []).append(annotation)
 
-    return {
-        clause_id: tuple(annotations)
-        for clause_id, annotations in result.items()
-    }
+    return {clause_id: tuple(annotations) for clause_id, annotations in result.items()}
 
 
 def _type_marker(clause: Clause) -> str:

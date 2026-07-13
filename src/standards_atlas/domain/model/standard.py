@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import ConfigDict, Field
 
 from standards_atlas.domain.model.document import DocumentType, EngineeringDocument
-from standards_atlas.domain.model.identifiers import DocumentKey, StandardKey
+from standards_atlas.domain.model.identifiers import StandardKey
 
 
 class Standard(EngineeringDocument):
@@ -28,7 +28,7 @@ class Standard(EngineeringDocument):
         name: str,
         year: int | None = None,
         parent_key: StandardKey | None = None,
-    ) -> "Standard":
+    ) -> Standard:
         return cls(
             key=key,
             title=name,

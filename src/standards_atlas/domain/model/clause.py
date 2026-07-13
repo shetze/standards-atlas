@@ -10,7 +10,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.domain.model.content import (
     ContentBlock,
-    TextBlock,
     render_content_as_plain_text,
 )
 from standards_atlas.domain.model.doorstop_attributes import DoorstopItemAttributes

@@ -15,11 +15,7 @@ from standards_atlas.domain.model import (
 def test_roundtrip_writer_adds_data_section(tmp_path: Path) -> None:
     source = tmp_path / "EXAMPLE"
     source.write_text(
-        'name="Example"\n'
-        "digits=4\n\n"
-        "structure=(\n"
-        ' "2025 1 2"\n'
-        ")\n",
+        'name="Example"\ndigits=4\n\nstructure=(\n "2025 1 2"\n)\n',
         encoding="utf-8",
     )
 
@@ -62,13 +58,7 @@ def test_roundtrip_writer_preserves_existing_heading(tmp_path: Path) -> None:
 
 def test_roundtrip_writer_dry_run_does_not_modify_file(tmp_path: Path) -> None:
     source = tmp_path / "EXAMPLE"
-    original = (
-        'name="Example"\n'
-        "digits=4\n\n"
-        "structure=(\n"
-        ' "2025 1"\n'
-        ")\n"
-    )
+    original = 'name="Example"\ndigits=4\n\nstructure=(\n "2025 1"\n)\n'
     source.write_text(original, encoding="utf-8")
 
     writer = AtlasDataRoundTripWriter()
@@ -82,11 +72,7 @@ def test_roundtrip_writer_dry_run_does_not_modify_file(tmp_path: Path) -> None:
 def test_roundtrip_writer_creates_numbered_backups(tmp_path: Path) -> None:
     source = tmp_path / "EXAMPLE"
     source.write_text(
-        'name="Example"\n'
-        "digits=4\n\n"
-        "structure=(\n"
-        ' "2025 1"\n'
-        ")\n",
+        'name="Example"\ndigits=4\n\nstructure=(\n "2025 1"\n)\n',
         encoding="utf-8",
     )
 

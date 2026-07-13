@@ -5,8 +5,8 @@ from __future__ import annotations
 import re
 
 from standards_atlas.adapters.atlasdata.structure_ast import StructureRange, StructureToken
-from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType, TYPE_PREFIXES
 from standards_atlas.adapters.atlasdata.structure_lexer import LexedStructureToken
+from standards_atlas.adapters.atlasdata.structure_types import TYPE_PREFIXES, AtlasItemType
 
 _RANGE_PATTERN = re.compile(r"\{(?P<start>\d+)\.\.(?P<end>\d+)\}")
 

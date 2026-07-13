@@ -1,3 +1,5 @@
+from standards_atlas.adapters.doorstop.id_generator import DoorstopIdContext
+from standards_atlas.adapters.doorstop.item_mapper import DoorstopItemMapper
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -7,12 +9,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     StandardReference,
 )
-from standards_atlas.adapters.doorstop.item_mapper import DoorstopItemMapper
-from standards_atlas.adapters.doorstop.id_generator import DoorstopIdContext
-from standards_atlas.domain.model.doorstop_attributes import (
-    DoorstopItemAttributes,
-    DoorstopReference,
-)
+
 
 def test_mapper_converts_annex_reference_to_numeric_level() -> None:
     clause = Clause(

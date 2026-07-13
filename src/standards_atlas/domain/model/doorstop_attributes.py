@@ -25,13 +25,12 @@ class DoorstopReference(BaseModel):
     type: Literal["file", "pattern"] = "file"
 
     @model_validator(mode="after")
-    def validate_reference(self) -> "DoorstopReference":
+    def validate_reference(self) -> DoorstopReference:
         if self.type == "pattern" and not self.keyword:
-            raise ValueError(
-                "keyword is required for Doorstop pattern references."
-            )
+            raise ValueError("keyword is required for Doorstop pattern references.")
 
         return self
+
 
 class DoorstopItemAttributes(BaseModel):
     """Optional Doorstop standard attributes associated with a clause."""
@@ -47,6 +46,5 @@ class DoorstopItemAttributes(BaseModel):
     notes: tuple[str, ...] = ()
     rationale: str | None = None
     references: tuple[DoorstopReference, ...] = ()
-
 
     extended: dict[str, Any] = Field(default_factory=dict)

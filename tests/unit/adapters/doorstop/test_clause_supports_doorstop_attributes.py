@@ -1,10 +1,9 @@
+import pytest
+
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
-    DocumentKey,
-    DocumentType,
-    EngineeringDocument,
     StandardReference,
 )
 from standards_atlas.domain.model.doorstop_attributes import (
@@ -12,7 +11,6 @@ from standards_atlas.domain.model.doorstop_attributes import (
     DoorstopReference,
 )
 
-import pytest
 
 def test_clause_supports_doorstop_attributes() -> None:
     clause = Clause(
@@ -46,6 +44,7 @@ def test_clause_supports_doorstop_attributes() -> None:
     assert clause.doorstop is not None
     assert clause.doorstop.links == ("REQ-0001",)
     assert clause.doorstop.extended["safety-level"] == "SIL 2"
+
 
 def test_file_reference_does_not_require_keyword() -> None:
     reference = DoorstopReference(

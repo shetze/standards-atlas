@@ -103,9 +103,7 @@ ContentBlock = Annotated[
 def render_content_as_plain_text(content: tuple[ContentBlock, ...]) -> str:
     """Render structured content to a stable plain-text representation."""
     return "\n\n".join(
-        rendered
-        for block in content
-        if (rendered := render_block_as_plain_text(block).strip())
+        rendered for block in content if (rendered := render_block_as_plain_text(block).strip())
     )
 
 
@@ -121,10 +119,7 @@ def render_block_as_plain_text(block: ContentBlock) -> str:
         )
 
     if isinstance(block, TableBlock):
-        table = "\n".join(
-            " | ".join(cell.text for cell in row.cells)
-            for row in block.rows
-        )
+        table = "\n".join(" | ".join(cell.text for cell in row.cells) for row in block.rows)
         return "\n".join(part for part in (block.caption, table) if part)
 
     if isinstance(block, PictureBlock):

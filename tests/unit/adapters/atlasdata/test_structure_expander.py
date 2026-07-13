@@ -1,11 +1,11 @@
 import pytest
 
-from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 from standards_atlas.adapters.atlasdata.structure_expander import (
     StructureItem,
     expand_structure_line,
     expand_structure_token,
 )
+from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 
 
 def test_expand_plain_toc_token() -> None:
@@ -115,6 +115,7 @@ def test_reject_descending_range() -> None:
 def test_reject_missing_reference_after_type_prefix() -> None:
     with pytest.raises(ValueError, match="missing a reference"):
         expand_structure_token("r")
+
 
 def test_structure_line_uses_leading_year_as_publication_year() -> None:
     items = expand_structure_line("2010 1 r5.1.{1..2}")

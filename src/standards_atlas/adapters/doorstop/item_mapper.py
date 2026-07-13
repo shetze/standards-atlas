@@ -18,10 +18,8 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
 )
 from standards_atlas.domain.model.doorstop_attributes import (
-    DoorstopItemAttributes,
     DoorstopReference,
 )
-
 
 
 class DoorstopItemMapper:
@@ -89,31 +87,13 @@ class DoorstopItemMapper:
                 clause,
                 annotations,
             ),
-            active=(
-                doorstop.active
-                if doorstop and doorstop.active is not None
-                else True
-            ),
-            derived=(
-                doorstop.derived
-                if doorstop and doorstop.derived is not None
-                else False
-            ),
+            active=(doorstop.active if doorstop and doorstop.active is not None else True),
+            derived=(doorstop.derived if doorstop and doorstop.derived is not None else False),
             normative=(
-                doorstop.normative
-                if doorstop and doorstop.normative is not None
-                else False
+                doorstop.normative if doorstop and doorstop.normative is not None else False
             ),
-            reviewed=(
-                doorstop.reviewed
-                if doorstop
-                else None
-            ),
-            links=(
-                doorstop.links
-                if doorstop
-                else ()
-            ),
+            reviewed=(doorstop.reviewed if doorstop else None),
+            links=(doorstop.links if doorstop else ()),
             references=(
                 doorstop.references
                 if doorstop and doorstop.references
@@ -126,11 +106,7 @@ class DoorstopItemMapper:
                 )
             ),
             attributes={
-                **(
-                    doorstop.extended
-                    if doorstop
-                    else {}
-                ),
+                **(doorstop.extended if doorstop else {}),
                 "idx": clause.reference.as_text(),
                 "standard": {
                     "name": clause.reference.standard,
@@ -140,13 +116,9 @@ class DoorstopItemMapper:
                 "atlas-clause-id": clause.id.value,
                 "atlas-reference": clause.reference.as_text(),
                 "atlas-clause-type": clause.clause_type.value,
-                "semantic-roles": [
-                    role.value
-                    for role in clause.semantic_roles
-                ],
+                "semantic-roles": [role.value for role in clause.semantic_roles],
             },
         )
-
 
     @staticmethod
     def _select_header(
@@ -156,8 +128,7 @@ class DoorstopItemMapper:
         title_annotations = [
             annotation.content.strip()
             for annotation in annotations
-            if annotation.annotation_type == AnnotationType.TITLE
-            and annotation.content.strip()
+            if annotation.annotation_type == AnnotationType.TITLE and annotation.content.strip()
         ]
 
         if title_annotations:
@@ -184,9 +155,7 @@ class DoorstopItemMapper:
             if annotation.annotation_type == AnnotationType.TITLE:
                 continue
 
-            grouped[annotation.annotation_type].append(
-                annotation.content.strip()
-            )
+            grouped[annotation.annotation_type].append(annotation.content.strip())
 
         for annotation_type in AnnotationType:
             contents = grouped.get(annotation_type)
@@ -199,10 +168,7 @@ class DoorstopItemMapper:
                 " ",
             ).title()
 
-            sections.append(
-                f"## {heading}\n\n"
-                + "\n\n".join(contents)
-            )
+            sections.append(f"## {heading}\n\n" + "\n\n".join(contents))
 
         return "\n\n".join(sections)
 
@@ -213,16 +179,11 @@ class DoorstopItemMapper:
         grouped: dict[str, list[ClauseAnnotation]] = defaultdict(list)
 
         for annotation in document.annotations:
-            grouped[
-                annotation.clause_id.value
-            ].append(annotation)
+            grouped[annotation.clause_id.value].append(annotation)
 
-        return {
-            clause_id: tuple(values)
-            for clause_id, values in grouped.items()
-        }
+        return {clause_id: tuple(values) for clause_id, values in grouped.items()}
+
 
 @staticmethod
 def _generate_reference_hash(reference: str) -> str:
     return hashlib.md5(reference.encode("utf-8")).hexdigest()
-

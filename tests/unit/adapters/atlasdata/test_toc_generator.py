@@ -60,6 +60,7 @@ def test_generate_toc_records_uses_clause_type_marker() -> None:
     assert records[0].type_marker == "r"
     assert records[0].content == "Requirement"
 
+
 def test_generate_toc_records_preserves_existing_clause_title() -> None:
     document = EngineeringDocument(
         key=DocumentKey(value="EXAMPLE"),

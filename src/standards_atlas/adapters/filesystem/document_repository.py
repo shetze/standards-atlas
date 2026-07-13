@@ -52,9 +52,7 @@ class FileSystemEngineeringDocumentRepository:
         path = self._path_for_key(key)
 
         if not path.exists():
-            raise FileNotFoundError(
-                f"No persisted document found for key: {key.value}"
-            )
+            raise FileNotFoundError(f"No persisted document found for key: {key.value}")
 
         payload = json.loads(path.read_text(encoding="utf-8"))
         data = _extract_document_data(payload)
@@ -94,10 +92,4 @@ def _extract_document_data(payload: Any) -> dict[str, Any]:
 
 
 def _safe_filename(value: str) -> str:
-    return (
-        value.strip()
-        .replace("/", "_")
-        .replace("\\", "_")
-        .replace(":", "_")
-        .replace(" ", "_")
-    )
+    return value.strip().replace("/", "_").replace("\\", "_").replace(":", "_").replace(" ", "_")

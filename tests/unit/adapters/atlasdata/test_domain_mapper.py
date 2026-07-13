@@ -1,10 +1,10 @@
 from standards_atlas.adapters.atlasdata.domain_mapper import map_atlas_data_to_standard
 from standards_atlas.adapters.atlasdata.metadata import AtlasMetadata
 from standards_atlas.adapters.atlasdata.parser import AtlasStandardData, InitializationRecord
-from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 from standards_atlas.adapters.atlasdata.structure_expander import (
     StructureItem,
 )
+from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 from standards_atlas.domain.model import (
     AnnotationType,
     AnnotationVisibility,

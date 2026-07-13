@@ -41,7 +41,4 @@ def test_mapper_renders_structured_clause_content_as_text() -> None:
 
     item = mapper.map_document(document)[0]
 
-    assert item.text == (
-        "The supplier shall provide evidence.\n\n"
-        "- analysis\n- test report"
-    )
+    assert item.text == ("The supplier shall provide evidence.\n\n- analysis\n- test report")
