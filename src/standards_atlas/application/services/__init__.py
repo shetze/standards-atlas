@@ -1,5 +1,6 @@
 """Application services."""
 
+from standards_atlas.application.services.alignment_service import AlignmentService
 from standards_atlas.application.services.document_export_service import (
     DocumentExportService,
 )
@@ -24,6 +25,7 @@ from standards_atlas.application.services.reference_candidate_service import (
 )
 
 __all__ = [
+    "AlignmentService",
     "DocumentExportService",
     "DocumentExtractionService",
     "DocumentImportService",

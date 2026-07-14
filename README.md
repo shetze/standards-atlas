@@ -702,3 +702,50 @@ Candidate artefacts are stored privately below:
 The detector recognizes numeric references such as `6.4.2`, alphabetic annex references such as `A.1` and `ZA.2`, and explicit headings such as `Annex A`. It checks candidates against the clauses already present in the canonical `EngineeringDocument`. Unexpected and ambiguous references remain visible as diagnostics rather than being discarded.
 
 This stage does not assign content ranges and does not modify either the normalized document or the engineering document. Sequence alignment and clause-content enrichment are separate later stages.
+
+## Clause alignment
+
+After normalization and reference-candidate detection, Standards Atlas aligns
+the observed clause starts with the canonical structure imported from
+AtlasData.
+
+```text
+EngineeringDocument
+        +
+NormalizedExtractedDocument
+        +
+ReferenceCandidateDocument
+        |
+        v
+AlignmentResult
+```
+
+Run the alignment with:
+
+```bash
+uv run standards-atlas align run EN50716
+```
+
+Inspect the persisted result with:
+
+```bash
+uv run standards-atlas align inspect EN50716
+uv run standards-atlas align inspect EN50716 --show-missing
+uv run standards-atlas align inspect EN50716 --show-conflicts
+```
+
+Alignment results are stored privately under:
+
+```text
+.atlas/alignments/EN50716/alignment.json
+```
+
+The alignment engine preserves AtlasData order, selects among duplicate
+candidates, reports missing and out-of-order references, forms clause ranges,
+and retains unassigned front or back matter. A single missing clause may be
+conservatively inferred from aligned neighbours, but ambiguous cases remain
+explicitly unresolved.
+
+The alignment result does not modify the canonical `EngineeringDocument`.
+Mapping normalized items to structured `Clause.content` is a later enrichment
+stage.

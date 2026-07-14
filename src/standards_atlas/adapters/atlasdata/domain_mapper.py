@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import hashlib
 import re
+
+import hashlib
 from pathlib import Path
 
 from standards_atlas.adapters.atlasdata.parser import AtlasStandardData, parse_standard_file
 from standards_atlas.adapters.atlasdata.structure_expander import StructureItem
-from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
+from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType, TYPE_PREFIXES
 from standards_atlas.domain.model import (
     AnnotationId,
     AnnotationType,
@@ -23,6 +24,7 @@ from standards_atlas.domain.model import (
     StandardReference,
 )
 
+
 _ITEM_TYPE_MAPPING: dict[AtlasItemType, ClauseType] = {
     AtlasItemType.TOC: ClauseType.TOC,
     AtlasItemType.CLAUSE: ClauseType.CLAUSE,
@@ -32,12 +34,6 @@ _ITEM_TYPE_MAPPING: dict[AtlasItemType, ClauseType] = {
     AtlasItemType.OBJECTIVE: ClauseType.OBJECTIVE,
     AtlasItemType.MISC: ClauseType.MISC,
 }
-
-_ANNEX_REFERENCE_PATTERN = re.compile(r"^[A-Z]+(?:\.|$)")
-
-
-def is_annex_reference(reference: str) -> bool:
-    return bool(_ANNEX_REFERENCE_PATTERN.match(reference))
 
 
 def parse_standard_domain_file(path: Path, *, key: str | None = None) -> Standard:
@@ -69,7 +65,10 @@ def map_atlas_data_to_standard(
         for item in atlas_data.structure_items
     )
 
-    clauses_by_reference = {clause.reference.clause: clause for clause in clauses}
+    clauses_by_reference = {
+        clause.reference.clause: clause
+        for clause in clauses
+    }
 
     annotations = _map_initialization_records_to_annotations(
         atlas_data=atlas_data,
@@ -82,12 +81,13 @@ def map_atlas_data_to_standard(
         name=atlas_data.metadata.name,
         year=atlas_data.metadata.official_year,
         parent_key=(
-            StandardKey(value=atlas_data.metadata.parent) if atlas_data.metadata.parent else None
+            StandardKey(value=atlas_data.metadata.parent)
+            if atlas_data.metadata.parent
+            else None
         ),
         clauses=clauses,
         annotations=annotations,
     )
-
 
 def _map_initialization_records_to_annotations(
     *,
@@ -208,7 +208,6 @@ def _map_structure_item_to_clause(
         identifier_width=item.identifier_width,
     )
 
-
 def _infer_semantic_roles(
     *,
     clause_type: ClauseType,
@@ -263,7 +262,7 @@ def _infer_semantic_roles(
     if "work product" in normalized_title:
         roles.append(SemanticRole.WORK_PRODUCTS)
 
-    if "annex" in normalized_title or is_annex_reference(visible_reference):
+    if "annex" in normalized_title or re.match(r"^[A-Z]+(?:\.|$)", visible_reference):
         roles.append(SemanticRole.ANNEX)
 
     if "bibliography" in normalized_title:
@@ -276,7 +275,6 @@ def _infer_semantic_roles(
         roles.append(SemanticRole.CONFORMANCE)
 
     return tuple(dict.fromkeys(roles))
-
 
 def _build_clause_id(
     *,
@@ -332,7 +330,7 @@ def _extract_clause_reference(reference: str, standard_name: str) -> str | None:
     if not reference.startswith(standard_name):
         return None
 
-    remainder = reference[len(standard_name) :].strip()
+    remainder = reference[len(standard_name):].strip()
 
     if not remainder:
         return None

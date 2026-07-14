@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 
 from standards_atlas import __version__
+from standards_atlas.adapters.alignment import AlignmentArtifactRepository
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
 from standards_atlas.adapters.docling import (
     DoclingArtifactRepository,
@@ -17,14 +18,15 @@ from standards_atlas.adapters.docling import (
     DocumentConversionError,
     ExtractionState,
 )
+from standards_atlas.adapters.normalization import NormalizationArtifactRepository
+from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.adapters.doorstop import (
     DoorstopExportConfig,
     DoorstopExporter,
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.adapters.normalization import NormalizationArtifactRepository
-from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.services import (
+    AlignmentService,
     DocumentExportService,
     DocumentExtractionService,
     DocumentImportService,
@@ -32,6 +34,7 @@ from standards_atlas.application.services import (
     ExtractionInspectionService,
     ReferenceCandidateService,
 )
+from standards_atlas.application.model import AlignmentOptions, NormalizationOptions
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
@@ -81,6 +84,12 @@ reference_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(reference_app, name="references")
+
+align_app = typer.Typer(
+    help="Align reference candidates with the AtlasData document structure.",
+    no_args_is_help=True,
+)
+app.add_typer(align_app, name="align")
 
 document_export_app = typer.Typer(
     help="Export persisted engineering documents.",
@@ -507,15 +516,10 @@ def detect_reference_candidates(
         str,
         typer.Argument(
             help="Key of the normalized and engineering document.",
-            ),
-        ],
+        ),
+    ],
     workspace: Annotated[
-        Path,
-        typer.Option(
-            "--workspace",
-            "-w",
-            help="Standards Atlas workspace directory.",
-            ),
+        Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
     ] = Path(".atlas"),
 ) -> None:
     """Detect clause-reference candidates and validate them against AtlasData structure."""
@@ -534,7 +538,6 @@ def detect_reference_candidates(
     typer.echo(f"Exact matches         : {stats.exact_matches}")
     typer.echo(f"Normalized matches    : {stats.normalized_matches}")
     typer.echo(f"Annex matches         : {stats.annex_matches}")
-
     repository = ReferenceCandidateRepository(workspace)
     document_path = repository.document_path(document_key)
     typer.echo(f"Candidate document    : {document_path}")
@@ -570,6 +573,112 @@ def inspect_reference_candidates(
                     f"{candidate.sequence_number:5} {candidate.status.value:10} "
                     f"{candidate.normalized_reference:12} {candidate.title_remainder or ''}"
                 )
+
+
+@align_app.command("run")
+def run_alignment(
+    document_key: Annotated[
+        str,
+        typer.Argument(
+            help="Key shared by the engineering, normalized and candidate documents.",
+        ),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option(
+            "--workspace",
+            "-w",
+            help="Standards Atlas workspace directory.",
+        ),
+    ] = Path(".atlas"),
+    overwrite: Annotated[
+        bool,
+        typer.Option(
+            "--overwrite",
+            help="Replace an existing alignment result.",
+        ),
+    ] = False,
+) -> None:
+    """Align reference candidates monotonically with AtlasData clauses."""
+    repository = AlignmentArtifactRepository(workspace)
+    target = repository.document_path(document_key)
+    if target.exists() and not overwrite:
+        typer.echo(
+            "An alignment result already exists. Use --overwrite to replace it.",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+    try:
+        result = AlignmentService(workspace).run(
+            document_key,
+            AlignmentOptions(),
+        )
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    stats = result.metadata.statistics
+    typer.echo(f"Document source       : {result.source_id}")
+    typer.echo(f"Expected clauses      : {stats.expected_clauses}")
+    typer.echo(f"Exact matches         : {stats.exact_matches}")
+    typer.echo(f"Normalized matches    : {stats.normalized_matches}")
+    typer.echo(f"Annex matches         : {stats.annex_matches}")
+    typer.echo(f"Inferred matches      : {stats.inferred_matches}")
+    typer.echo(f"Missing               : {stats.missing}")
+    typer.echo(f"Conflicting           : {stats.conflicting}")
+    typer.echo(f"Unassigned ranges     : {stats.unassigned_ranges}")
+    typer.echo(f"Alignment document    : {target}")
+
+
+@align_app.command("inspect")
+def inspect_alignment(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of a persisted alignment result."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option(
+            "--workspace",
+            "-w",
+            help="Standards Atlas workspace directory.",
+        ),
+    ] = Path(".atlas"),
+    show_missing: Annotated[
+        bool,
+        typer.Option("--show-missing", help="Print missing and inferred clauses."),
+    ] = False,
+    show_conflicts: Annotated[
+        bool,
+        typer.Option("--show-conflicts", help="Print alignment issues."),
+    ] = False,
+) -> None:
+    """Inspect a persisted alignment result."""
+    try:
+        result = AlignmentService(workspace).load(document_key)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    stats = result.metadata.statistics
+    typer.echo(f"Document source       : {result.source_id}")
+    typer.echo(f"Expected clauses      : {stats.expected_clauses}")
+    typer.echo(f"Exact matches         : {stats.exact_matches}")
+    typer.echo(f"Normalized matches    : {stats.normalized_matches}")
+    typer.echo(f"Annex matches         : {stats.annex_matches}")
+    typer.echo(f"Inferred matches      : {stats.inferred_matches}")
+    typer.echo(f"Missing               : {stats.missing}")
+    typer.echo(f"Unassigned ranges     : {stats.unassigned_ranges}")
+    typer.echo(f"Issues                : {len(result.issues)}")
+    if show_missing:
+        for clause in result.clauses:
+            if clause.status.value in {"missing", "sequence_inferred"}:
+                typer.echo(
+                    f"{clause.status.value:18} "
+                    f"{clause.expected_reference:12} {clause.clause_id}"
+                )
+    if show_conflicts:
+        for issue in result.issues:
+            if issue.severity in {"warning", "error"}:
+                typer.echo(f"{issue.severity:7} {issue.code:28} {issue.message}")
 
 
 @app.command()

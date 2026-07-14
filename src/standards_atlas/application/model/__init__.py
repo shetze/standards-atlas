@@ -1,5 +1,15 @@
 """Application-level data transfer models."""
 
+from standards_atlas.application.model.alignment import (
+    AlignmentIssue,
+    AlignmentMetadata,
+    AlignmentOptions,
+    AlignmentResult,
+    AlignmentStatistics,
+    AlignmentStatus,
+    ClauseAlignment,
+    UnassignedRange,
+)
 from standards_atlas.application.model.extracted_document import (
     ExtractedCode,
     ExtractedDocument,
@@ -43,6 +53,13 @@ from standards_atlas.application.model.reference_candidates import (
 )
 
 __all__ = [
+    "AlignmentIssue",
+    "AlignmentMetadata",
+    "AlignmentOptions",
+    "AlignmentResult",
+    "AlignmentStatistics",
+    "AlignmentStatus",
+    "ClauseAlignment",
     "ExtractedCode",
     "ExtractedDocument",
     "ExtractedFormula",
@@ -70,7 +87,6 @@ __all__ = [
     "NormalizedTable",
     "NormalizedText",
     "NormalizedUnknown",
-    "SuppressedItem",
     "ReferenceCandidate",
     "ReferenceCandidateDocument",
     "ReferenceCandidateStatus",
@@ -78,4 +94,6 @@ __all__ = [
     "ReferenceDetectionMetadata",
     "ReferenceDetectionStatistics",
     "ReferenceMatchKind",
+    "SuppressedItem",
+    "UnassignedRange",
 ]
