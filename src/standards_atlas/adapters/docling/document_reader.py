@@ -9,6 +9,7 @@ from typing import Any
 
 from standards_atlas.adapters.docling.errors import DoclingDocumentValidationError
 from standards_atlas.application.model import (
+    ExtractedCode,
     ExtractedDocument,
     ExtractedFormula,
     ExtractedHeading,
@@ -158,7 +159,9 @@ def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[Extracted
             "source_evidence": (evidence,),
             "original_label": label,
         }
-        if label in _HEADING_LABELS:
+        if label == "code":
+            result.append(ExtractedCode(**common, code=_text(raw)))
+        elif label in _HEADING_LABELS:
             level = raw.get("level")
             result.append(
                 ExtractedHeading(

@@ -33,6 +33,12 @@ _ITEM_TYPE_MAPPING: dict[AtlasItemType, ClauseType] = {
     AtlasItemType.MISC: ClauseType.MISC,
 }
 
+_ANNEX_REFERENCE_PATTERN = re.compile(r"^[A-Z]+(?:\.|$)")
+
+
+def is_annex_reference(reference: str) -> bool:
+    return bool(_ANNEX_REFERENCE_PATTERN.match(reference))
+
 
 def parse_standard_domain_file(path: Path, *, key: str | None = None) -> Standard:
     """Parse an Atlas data file and map it into the canonical domain model.
@@ -257,7 +263,7 @@ def _infer_semantic_roles(
     if "work product" in normalized_title:
         roles.append(SemanticRole.WORK_PRODUCTS)
 
-    if "annex" in normalized_title or re.match(r"^[A-Z]+(?:\.|$)", visible_reference):
+    if "annex" in normalized_title or is_annex_reference(visible_reference):
         roles.append(SemanticRole.ANNEX)
 
     if "bibliography" in normalized_title:

@@ -617,3 +617,53 @@ The project values
 # License
 
 See the project license for licensing information.
+
+## Extracted Document Normalization
+
+Before semantic alignment, native Docling observations are transformed into a deterministic,
+provenance-preserving `NormalizedExtractedDocument`:
+
+```text
+DoclingDocument
+    -> ExtractedDocument
+    -> NormalizedExtractedDocument
+    -> semantic alignment
+```
+
+Normalization currently includes:
+
+- Unicode NFC and prose whitespace normalization
+- repeated header, footer, and page-number suppression
+- conservative repair of line and page hyphenation
+- merging of compatible text fragments
+- consolidation and reconstruction of lists
+- dedicated preservation of preformatted code
+
+The source extraction remains unchanged. Every normalized item records its contributing source
+item IDs and PDF provenance. Suppressed page elements remain available as explicit diagnostics.
+
+Run normalization with:
+
+```bash
+uv run standards-atlas normalize run EN50716
+```
+
+Inspect the persisted result with:
+
+```bash
+uv run standards-atlas normalize inspect EN50716
+```
+
+Normalized artefacts are stored only below:
+
+```text
+.atlas/normalized/<document-key>/document.json
+```
+
+Code follows the typed path:
+
+```text
+Docling label "code" -> ExtractedCode -> NormalizedCode -> CodeBlock
+```
+
+Unlike prose, code preserves indentation, repeated spaces, and line breaks.

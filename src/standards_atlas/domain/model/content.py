@@ -86,6 +86,14 @@ class FormulaBlock(ContentBlockBase):
     representation: Literal["latex", "mathml", "text"] = "text"
 
 
+class CodeBlock(ContentBlockBase):
+    """A preformatted source-code or configuration fragment."""
+
+    type: Literal["code"] = "code"
+    code: str
+    language: str | None = None
+
+
 class NoteBlock(ContentBlockBase):
     """A semantically marked note containing nested content blocks."""
 
@@ -95,7 +103,7 @@ class NoteBlock(ContentBlockBase):
 
 
 ContentBlock = Annotated[
-    TextBlock | ListBlock | TableBlock | PictureBlock | FormulaBlock | NoteBlock,
+    TextBlock | ListBlock | TableBlock | PictureBlock | FormulaBlock | CodeBlock | NoteBlock,
     Field(discriminator="type"),
 ]
 
@@ -127,6 +135,9 @@ def render_block_as_plain_text(block: ContentBlock) -> str:
 
     if isinstance(block, FormulaBlock):
         return block.expression
+
+    if isinstance(block, CodeBlock):
+        return block.code
 
     if isinstance(block, NoteBlock):
         body = render_content_as_plain_text(block.content)

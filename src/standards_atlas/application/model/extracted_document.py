@@ -77,6 +77,14 @@ class ExtractedFormula(ExtractedItemBase):
     representation: Literal["latex", "mathml", "text"] = "text"
 
 
+class ExtractedCode(ExtractedItemBase):
+    """Observed code or preformatted text."""
+
+    type: Literal["code"] = "code"
+    code: str
+    language: str | None = None
+
+
 class ExtractedUnknown(ExtractedItemBase):
     """Observed Docling item without a supported semantic mapping."""
 
@@ -92,6 +100,7 @@ ExtractedItem = Annotated[
     | ExtractedTable
     | ExtractedPicture
     | ExtractedFormula
+    | ExtractedCode
     | ExtractedUnknown,
     Field(discriminator="type"),
 ]

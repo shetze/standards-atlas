@@ -22,10 +22,12 @@ from standards_atlas.adapters.doorstop import (
     DoorstopExporter,
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.application.services import (
     DocumentExportService,
     DocumentExtractionService,
     DocumentImportService,
+    DocumentNormalizationService,
     ExtractionInspectionService,
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
@@ -65,6 +67,12 @@ docling_app = typer.Typer(
 )
 
 app.add_typer(docling_app, name="docling")
+
+normalize_app = typer.Typer(
+    help="Normalize extracted documents before semantic alignment.",
+    no_args_is_help=True,
+)
+app.add_typer(normalize_app, name="normalize")
 
 document_export_app = typer.Typer(
     help="Export persisted engineering documents.",
@@ -426,6 +434,63 @@ def inspect_docling_document(
         typer.echo(f"{item_type.capitalize():22}: {count}")
     if statistics.unknown_labels:
         typer.echo(f"Unknown labels        : {', '.join(statistics.unknown_labels)}")
+
+
+@normalize_app.command("run")
+def normalize_extracted_document(
+    document_key: Annotated[str, typer.Argument(help="Key of a persisted Docling document.")],
+    workspace: Annotated[
+        Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
+    ] = Path(".atlas"),
+    overwrite: Annotated[
+        bool, typer.Option("--overwrite", help="Replace an existing normalized document.")
+    ] = False,
+) -> None:
+    """Normalize an extracted document and persist the result below .atlas."""
+    repository = NormalizationArtifactRepository(workspace)
+    target = repository.document_path(document_key)
+    if target.exists() and not overwrite:
+        typer.echo("A normalized document already exists. Use --overwrite to replace it.", err=True)
+        raise typer.Exit(code=3)
+    try:
+        result = DocumentNormalizationService(workspace=workspace).normalize(document_key)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    stats = result.metadata.statistics
+    typer.echo(f"Document source             : {result.source_id}")
+    typer.echo(f"Input items                 : {stats.input_items}")
+    typer.echo(f"Output items                : {stats.output_items}")
+    typer.echo(f"Headers suppressed          : {stats.headers_suppressed}")
+    typer.echo(f"Footers suppressed          : {stats.footers_suppressed}")
+    typer.echo(f"Page numbers suppressed     : {stats.page_numbers_suppressed}")
+    typer.echo(f"Hyphenations repaired       : {stats.hyphenations_repaired}")
+    typer.echo(f"Text fragments merged       : {stats.text_fragments_merged}")
+    typer.echo(f"Lists normalized            : {stats.lists_normalized}")
+    typer.echo(f"Code blocks                 : {stats.code_blocks}")
+    typer.echo(f"Normalized document         : {target}")
+
+
+@normalize_app.command("inspect")
+def inspect_normalized_document(
+    document_key: Annotated[str, typer.Argument(help="Key of a normalized document.")],
+    workspace: Annotated[
+        Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
+    ] = Path(".atlas"),
+) -> None:
+    """Inspect normalization statistics and diagnostics."""
+    try:
+        result = NormalizationArtifactRepository(workspace).load(document_key)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    stats = result.metadata.statistics
+    typer.echo(f"Document source             : {result.source_id}")
+    typer.echo(f"Input items                 : {stats.input_items}")
+    typer.echo(f"Output items                : {stats.output_items}")
+    typer.echo(f"Suppressed items            : {len(result.suppressed_items)}")
+    typer.echo(f"Normalization issues        : {len(result.issues)}")
+    typer.echo(f"Code blocks                 : {stats.code_blocks}")
 
 
 @app.command()

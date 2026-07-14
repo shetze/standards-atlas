@@ -7,6 +7,7 @@ from standards_atlas.domain.model.annotation import (
 )
 from standards_atlas.domain.model.clause import Clause, ClauseType
 from standards_atlas.domain.model.content import (
+    CodeBlock,
     ContentBlock,
     FormulaBlock,
     ListBlock,
@@ -48,6 +49,7 @@ __all__ = [
     "ClauseAnnotation",
     "ClauseId",
     "ClauseType",
+    "CodeBlock",
     "ContentBlock",
     "CoordinateOrigin",
     "DocumentKey",
