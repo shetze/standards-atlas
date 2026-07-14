@@ -14,22 +14,6 @@ from standards_atlas.application.model.extracted_document import (
     ExtractedUnknown,
     ExtractionMetadata,
 )
-
-__all__ = [
-    "ExtractedCode",
-    "ExtractedDocument",
-    "ExtractedFormula",
-    "ExtractedHeading",
-    "ExtractedItem",
-    "ExtractedList",
-    "ExtractedListItem",
-    "ExtractedPicture",
-    "ExtractedTable",
-    "ExtractedText",
-    "ExtractedUnknown",
-    "ExtractionMetadata",
-]
-
 from standards_atlas.application.model.normalized_document import (
     NormalizationIssue,
     NormalizationMetadata,
@@ -48,8 +32,29 @@ from standards_atlas.application.model.normalized_document import (
     NormalizedUnknown,
     SuppressedItem,
 )
+from standards_atlas.application.model.reference_candidates import (
+    ReferenceCandidate,
+    ReferenceCandidateDocument,
+    ReferenceCandidateStatus,
+    ReferenceDetectionIssue,
+    ReferenceDetectionMetadata,
+    ReferenceDetectionStatistics,
+    ReferenceMatchKind,
+)
 
-__all__ += [
+__all__ = [
+    "ExtractedCode",
+    "ExtractedDocument",
+    "ExtractedFormula",
+    "ExtractedHeading",
+    "ExtractedItem",
+    "ExtractedList",
+    "ExtractedListItem",
+    "ExtractedPicture",
+    "ExtractedTable",
+    "ExtractedText",
+    "ExtractedUnknown",
+    "ExtractionMetadata",
     "NormalizationIssue",
     "NormalizationMetadata",
     "NormalizationOptions",
@@ -66,4 +71,11 @@ __all__ += [
     "NormalizedText",
     "NormalizedUnknown",
     "SuppressedItem",
+    "ReferenceCandidate",
+    "ReferenceCandidateDocument",
+    "ReferenceCandidateStatus",
+    "ReferenceDetectionIssue",
+    "ReferenceDetectionMetadata",
+    "ReferenceDetectionStatistics",
+    "ReferenceMatchKind",
 ]

@@ -667,3 +667,38 @@ Docling label "code" -> ExtractedCode -> NormalizedCode -> CodeBlock
 ```
 
 Unlike prose, code preserves indentation, repeated spaces, and line breaks.
+
+## Clause Reference Candidate Detection
+
+After normalization, Standards Atlas can detect likely clause starts and validate them against the structure imported from AtlasData.
+
+```text
+NormalizedExtractedDocument
+        +
+EngineeringDocument
+        ↓
+ReferenceCandidateDocument
+```
+
+Run the detector with:
+
+```bash
+uv run standards-atlas references detect EN50716
+```
+
+Inspect the persisted result with:
+
+```bash
+uv run standards-atlas references inspect EN50716
+uv run standards-atlas references inspect EN50716 --show-unexpected
+```
+
+Candidate artefacts are stored privately below:
+
+```text
+.atlas/reference-candidates/<document-key>/document.json
+```
+
+The detector recognizes numeric references such as `6.4.2`, alphabetic annex references such as `A.1` and `ZA.2`, and explicit headings such as `Annex A`. It checks candidates against the clauses already present in the canonical `EngineeringDocument`. Unexpected and ambiguous references remain visible as diagnostics rather than being discarded.
+
+This stage does not assign content ranges and does not modify either the normalized document or the engineering document. Sequence alignment and clause-content enrichment are separate later stages.

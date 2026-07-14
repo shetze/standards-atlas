@@ -19,6 +19,9 @@ from standards_atlas.application.services.extraction_inspection_service import (
     ExtractionInspectionService,
     ExtractionStatistics,
 )
+from standards_atlas.application.services.reference_candidate_service import (
+    ReferenceCandidateService,
+)
 
 __all__ = [
     "DocumentExportService",
@@ -28,4 +31,5 @@ __all__ = [
     "DocumentTransformationService",
     "ExtractionInspectionService",
     "ExtractionStatistics",
+    "ReferenceCandidateService",
 ]

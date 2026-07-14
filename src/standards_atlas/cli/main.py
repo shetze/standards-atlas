@@ -23,12 +23,14 @@ from standards_atlas.adapters.doorstop import (
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
+from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.services import (
     DocumentExportService,
     DocumentExtractionService,
     DocumentImportService,
     DocumentNormalizationService,
     ExtractionInspectionService,
+    ReferenceCandidateService,
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 from standards_atlas.cli.printers import print_document_summary
@@ -73,6 +75,12 @@ normalize_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(normalize_app, name="normalize")
+
+reference_app = typer.Typer(
+    help="Detect and inspect clause-reference candidates.",
+    no_args_is_help=True,
+)
+app.add_typer(reference_app, name="references")
 
 document_export_app = typer.Typer(
     help="Export persisted engineering documents.",
@@ -491,6 +499,77 @@ def inspect_normalized_document(
     typer.echo(f"Suppressed items            : {len(result.suppressed_items)}")
     typer.echo(f"Normalization issues        : {len(result.issues)}")
     typer.echo(f"Code blocks                 : {stats.code_blocks}")
+
+
+@reference_app.command("detect")
+def detect_reference_candidates(
+    document_key: Annotated[
+        str,
+        typer.Argument(
+            help="Key of the normalized and engineering document.",
+            ),
+        ],
+    workspace: Annotated[
+        Path,
+        typer.Option(
+            "--workspace",
+            "-w",
+            help="Standards Atlas workspace directory.",
+            ),
+    ] = Path(".atlas"),
+) -> None:
+    """Detect clause-reference candidates and validate them against AtlasData structure."""
+    try:
+        result = ReferenceCandidateService(workspace).detect(document_key)
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    stats = result.metadata.statistics
+    typer.echo(f"Document source       : {result.source_id}")
+    typer.echo(f"Input items           : {stats.input_items}")
+    typer.echo(f"Candidates            : {stats.candidates}")
+    typer.echo(f"Expected              : {stats.expected_candidates}")
+    typer.echo(f"Unexpected            : {stats.unexpected_candidates}")
+    typer.echo(f"Ambiguous             : {stats.ambiguous_candidates}")
+    typer.echo(f"Exact matches         : {stats.exact_matches}")
+    typer.echo(f"Normalized matches    : {stats.normalized_matches}")
+    typer.echo(f"Annex matches         : {stats.annex_matches}")
+
+    repository = ReferenceCandidateRepository(workspace)
+    document_path = repository.document_path(document_key)
+    typer.echo(f"Candidate document    : {document_path}")
+
+
+@reference_app.command("inspect")
+def inspect_reference_candidates(
+    document_key: Annotated[str, typer.Argument(help="Key of a persisted candidate document.")],
+    workspace: Annotated[
+        Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
+    ] = Path(".atlas"),
+    show_unexpected: Annotated[
+        bool, typer.Option("--show-unexpected", help="Print unexpected and ambiguous candidates.")
+    ] = False,
+) -> None:
+    """Inspect persisted clause-reference candidates."""
+    try:
+        result = ReferenceCandidateService(workspace).load(document_key)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    stats = result.metadata.statistics
+    typer.echo(f"Document source       : {result.source_id}")
+    typer.echo(f"Candidates            : {stats.candidates}")
+    typer.echo(f"Expected              : {stats.expected_candidates}")
+    typer.echo(f"Unexpected            : {stats.unexpected_candidates}")
+    typer.echo(f"Ambiguous             : {stats.ambiguous_candidates}")
+    typer.echo(f"Issues                : {len(result.issues)}")
+    if show_unexpected:
+        for candidate in result.candidates:
+            if candidate.status.value != "expected":
+                typer.echo(
+                    f"{candidate.sequence_number:5} {candidate.status.value:10} "
+                    f"{candidate.normalized_reference:12} {candidate.title_remainder or ''}"
+                )
 
 
 @app.command()
