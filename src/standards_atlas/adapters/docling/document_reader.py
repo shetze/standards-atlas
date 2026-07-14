@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,7 @@ _HEADING_LABELS = {"section_header", "title", "subtitle"}
 _TEXT_LABELS = {"text", "paragraph", "caption", "footnote", "page_header", "page_footer"}
 _FORMULA_LABELS = {"formula", "equation"}
 _LIST_LABELS = {"list_item"}
+_CLAUSE_MARKER = re.compile(r"(?:\d+(?:\.\d+)+|[A-Z]+(?:\.\d+)+)\.?$")
 
 
 class DoclingJsonReader:
@@ -79,7 +81,14 @@ def _source_id(payload: dict[str, Any], source: Path) -> str:
 
 def _index_items(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
-    for collection_name in ("texts", "tables", "pictures", "key_value_items", "form_items"):
+    for collection_name in (
+        "texts",
+        "tables",
+        "pictures",
+        "key_value_items",
+        "form_items",
+        "groups",
+    ):
         collection = payload.get(collection_name, [])
         if not isinstance(collection, list):
             continue
@@ -97,16 +106,28 @@ def _ordered_items(
     indexed: dict[str, dict[str, Any]],
 ) -> Iterable[dict[str, Any]]:
     body = payload.get("body")
-    yielded: set[str] = set()
+    yielded_items: set[str] = set()
+    visited_groups: set[str] = set()
 
     def visit(node: Any) -> Iterable[dict[str, Any]]:
         if not isinstance(node, dict):
             return
+
         reference = node.get("$ref")
-        if isinstance(reference, str) and reference in indexed and reference not in yielded:
-            yielded.add(reference)
-            yield indexed[reference]
+        if isinstance(reference, str) and reference in indexed:
+            resolved = indexed[reference]
+            if _is_group(reference, resolved):
+                if reference in visited_groups:
+                    return
+                visited_groups.add(reference)
+                yield from visit(resolved)
+                return
+            if reference in yielded_items:
+                return
+            yielded_items.add(reference)
+            yield resolved
             return
+
         children = node.get("children", []) if isinstance(node.get("children"), list) else []
         for child in children:
             yield from visit(child)
@@ -114,29 +135,46 @@ def _ordered_items(
     if isinstance(body, dict):
         yield from visit(body)
 
+    # Some Docling documents contain content items which are not reachable from
+    # the body tree. Keep them, but append only real content items; group nodes
+    # are traversal helpers and must never become extracted document items.
     for reference, item in indexed.items():
-        if reference not in yielded:
-            yielded.add(reference)
-            yield item
+        if _is_group(reference, item) or reference in yielded_items:
+            continue
+        yielded_items.add(reference)
+        yield item
+
+
+def _is_group(reference: str, item: dict[str, Any]) -> bool:
+    if reference.startswith("#/groups/"):
+        return True
+    label = str(item.get("label", "")).lower()
+    return label in {"group", "list", "ordered_list", "unordered_list", "chapter"}
 
 
 def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[ExtractedItem]:
     result: list[ExtractedItem] = []
-    pending_list: list[tuple[dict[str, Any], SourceEvidence]] = []
+    pending_list: list[tuple[dict[str, Any], SourceEvidence, int]] = []
 
     def flush_list() -> None:
         if not pending_list:
             return
-        first_item, _ = pending_list[0]
-        all_evidence = tuple(evidence for _, evidence in pending_list)
+        first_item, _, first_sequence = pending_list[0]
+        all_evidence = tuple(evidence for _, evidence, _ in pending_list)
         mapped_items = tuple(
-            ExtractedListItem(text=_text(item), marker=_string_or_none(item.get("marker")))
-            for item, _ in pending_list
+            ExtractedListItem(
+                id=_item_id(item, source_sequence),
+                sequence_number=source_sequence,
+                text=_text(item),
+                marker=_string_or_none(item.get("marker")),
+                source_evidence=(evidence,),
+            )
+            for item, evidence, source_sequence in pending_list
         )
         result.append(
             ExtractedList(
-                id=_item_id(first_item, len(result)),
-                sequence_number=len(result),
+                id=_item_id(first_item, first_sequence),
+                sequence_number=first_sequence,
                 ordered=bool(first_item.get("enumerated")),
                 items=mapped_items,
                 source_evidence=all_evidence,
@@ -145,17 +183,32 @@ def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[Extracted
         )
         pending_list.clear()
 
-    for raw in items:
+    for source_sequence, raw in enumerate(items):
         evidence = _source_evidence(raw, source_id)
         label = str(raw.get("label", "unknown")).lower()
         if label in _LIST_LABELS:
-            pending_list.append((raw, evidence))
+            marker = _string_or_none(raw.get("marker"))
+            if _is_clause_marker(marker):
+                flush_list()
+                text = _text(raw)
+                clause_text = marker if not text else f"{marker} {text}"
+                result.append(
+                    ExtractedText(
+                        id=_item_id(raw, source_sequence),
+                        sequence_number=source_sequence,
+                        source_evidence=(evidence,),
+                        original_label=label,
+                        text=clause_text,
+                    )
+                )
+            else:
+                pending_list.append((raw, evidence, source_sequence))
             continue
         flush_list()
 
         common = {
-            "id": _item_id(raw, len(result)),
-            "sequence_number": len(result),
+            "id": _item_id(raw, source_sequence),
+            "sequence_number": source_sequence,
             "source_evidence": (evidence,),
             "original_label": label,
         }
@@ -194,7 +247,21 @@ def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[Extracted
                 )
             )
     flush_list()
-    return result
+    return _resequence_items(result)
+
+
+def _is_clause_marker(marker: str | None) -> bool:
+    if marker is None:
+        return False
+    normalized = "".join(marker.split()).rstrip(".)")
+    return bool(_CLAUSE_MARKER.fullmatch(normalized))
+
+
+def _resequence_items(items: list[ExtractedItem]) -> list[ExtractedItem]:
+    return [
+        item.model_copy(update={"sequence_number": sequence_number})
+        for sequence_number, item in enumerate(items)
+    ]
 
 
 def _diagnostic_attributes(raw: dict[str, Any]) -> dict[str, Any]:

@@ -36,12 +36,15 @@ class ExtractedHeading(ExtractedItemBase):
 
 
 class ExtractedListItem(BaseModel):
-    """One item in an observed list."""
+    """One item in an observed list with its own source identity."""
 
     model_config = ConfigDict(frozen=True)
 
+    id: str | None = None
+    sequence_number: int | None = Field(default=None, ge=0)
     text: str
     marker: str | None = None
+    source_evidence: tuple[SourceEvidence, ...] = ()
 
 
 class ExtractedList(ExtractedItemBase):

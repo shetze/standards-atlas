@@ -18,14 +18,17 @@ from standards_atlas.adapters.docling import (
     DocumentConversionError,
     ExtractionState,
 )
-from standards_atlas.adapters.normalization import NormalizationArtifactRepository
-from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.adapters.doorstop import (
     DoorstopExportConfig,
     DoorstopExporter,
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.adapters.normalization import NormalizationArtifactRepository
+from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
+from standards_atlas.application.model import AlignmentOptions
+from standards_atlas.application.normalization import NormalizationDataLossError
 from standards_atlas.application.services import (
+    AlignmentReviewService,
     AlignmentService,
     DocumentExportService,
     DocumentExtractionService,
@@ -34,7 +37,6 @@ from standards_atlas.application.services import (
     ExtractionInspectionService,
     ReferenceCandidateService,
 )
-from standards_atlas.application.model import AlignmentOptions, NormalizationOptions
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
@@ -471,7 +473,7 @@ def normalize_extracted_document(
         raise typer.Exit(code=3)
     try:
         result = DocumentNormalizationService(workspace=workspace).normalize(document_key)
-    except (OSError, ValueError) as exc:
+    except (NormalizationDataLossError, OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
     stats = result.metadata.statistics
@@ -485,6 +487,10 @@ def normalize_extracted_document(
     typer.echo(f"Text fragments merged       : {stats.text_fragments_merged}")
     typer.echo(f"Lists normalized            : {stats.lists_normalized}")
     typer.echo(f"Code blocks                 : {stats.code_blocks}")
+    typer.echo(f"Active source items         : {stats.active_source_items}")
+    typer.echo(f"Suppressed source items     : {stats.suppressed_source_items}")
+    typer.echo(f"Unaccounted source items    : {stats.unaccounted_source_items}")
+    typer.echo(f"Duplicate source items      : {stats.duplicate_source_items}")
     typer.echo(f"Normalized document         : {target}")
 
 
@@ -508,6 +514,10 @@ def inspect_normalized_document(
     typer.echo(f"Suppressed items            : {len(result.suppressed_items)}")
     typer.echo(f"Normalization issues        : {len(result.issues)}")
     typer.echo(f"Code blocks                 : {stats.code_blocks}")
+    typer.echo(f"Active source items         : {stats.active_source_items}")
+    typer.echo(f"Suppressed source items     : {stats.suppressed_source_items}")
+    typer.echo(f"Unaccounted source items    : {stats.unaccounted_source_items}")
+    typer.echo(f"Duplicate source items      : {stats.duplicate_source_items}")
 
 
 @reference_app.command("detect")
@@ -571,7 +581,8 @@ def inspect_reference_candidates(
             if candidate.status.value != "expected":
                 typer.echo(
                     f"{candidate.sequence_number:5} {candidate.status.value:10} "
-                    f"{candidate.normalized_reference:12} {candidate.title_remainder or ''}"
+                    f"{candidate.normalized_reference:12} "
+                    f"{candidate.title_remainder or candidate.following_label or ''}"
                 )
 
 
@@ -647,6 +658,10 @@ def inspect_alignment(
         bool,
         typer.Option("--show-missing", help="Print missing and inferred clauses."),
     ] = False,
+    reviewed: Annotated[
+        bool,
+        typer.Option("--reviewed", help="Inspect reviewed.json instead of alignment.json."),
+    ] = False,
     show_conflicts: Annotated[
         bool,
         typer.Option("--show-conflicts", help="Print alignment issues."),
@@ -654,7 +669,11 @@ def inspect_alignment(
 ) -> None:
     """Inspect a persisted alignment result."""
     try:
-        result = AlignmentService(workspace).load(document_key)
+        result = (
+            AlignmentReviewService(workspace).load_reviewed(document_key)
+            if reviewed
+            else AlignmentService(workspace).load(document_key)
+        )
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -672,13 +691,193 @@ def inspect_alignment(
         for clause in result.clauses:
             if clause.status.value in {"missing", "sequence_inferred"}:
                 typer.echo(
-                    f"{clause.status.value:18} "
-                    f"{clause.expected_reference:12} {clause.clause_id}"
+                    f"{clause.status.value:18} {clause.expected_reference:12} {clause.clause_id}"
                 )
     if show_conflicts:
         for issue in result.issues:
             if issue.severity in {"warning", "error"}:
                 typer.echo(f"{issue.severity:7} {issue.code:28} {issue.message}")
+
+
+@align_app.command("review")
+def generate_alignment_review(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the automatic alignment to review."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+    context_before: Annotated[
+        int,
+        typer.Option("--context-before", min=0, help="Items shown before a problem."),
+    ] = 2,
+    context_after: Annotated[
+        int,
+        typer.Option("--context-after", min=0, help="Items shown after a problem."),
+    ] = 4,
+) -> None:
+    """Generate Markdown review context and an override YAML template."""
+    try:
+        review_path, overrides_path = AlignmentReviewService(workspace).generate_review(
+            document_key,
+            context_before=context_before,
+            context_after=context_after,
+        )
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Review document       : {review_path}")
+    typer.echo(f"Override document     : {overrides_path}")
+
+
+@align_app.command("review-export")
+def export_full_alignment_review(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the automatic alignment to export for review."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+    reset_edited: Annotated[
+        bool,
+        typer.Option(
+            "--reset-edited",
+            help="Replace the editable review with the newly generated version.",
+        ),
+    ] = False,
+) -> None:
+    """Export the complete normalized document as editable review Markdown."""
+    try:
+        generated, edited = AlignmentReviewService(workspace).export_full_document_review(
+            document_key,
+            reset_edited=reset_edited,
+        )
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Generated review      : {generated}")
+    typer.echo(f"Editable review       : {edited}")
+
+
+@align_app.command("review-validate")
+def validate_full_alignment_review(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the edited full-document review."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+) -> None:
+    """Validate that the edited review changes alignment markers only."""
+    try:
+        diff = AlignmentReviewService(workspace).validate_full_document_review(document_key)
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Alignment changes     : {len(diff.changes)}")
+    typer.echo("Reviewed Markdown is valid.")
+
+
+@align_app.command("review-diff")
+def diff_full_alignment_review(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the edited full-document review."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+) -> None:
+    """Show structural changes made in the editable review Markdown."""
+    try:
+        diff = AlignmentReviewService(workspace).diff_full_document_review(document_key)
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    counts: dict[str, int] = {}
+    for change in diff.changes:
+        counts[change.kind.value] = counts.get(change.kind.value, 0) + 1
+    for kind, count in sorted(counts.items()):
+        typer.echo(f"{kind:22}: {count}")
+    if not counts:
+        typer.echo("No review changes detected.")
+
+
+@align_app.command("review-import")
+def import_full_alignment_review(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the edited full-document review."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+) -> None:
+    """Translate edited Markdown alignment markers into overrides.yaml."""
+    try:
+        path = AlignmentReviewService(workspace).import_full_document_review(document_key)
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Override document     : {path}")
+
+
+@align_app.command("validate-overrides")
+def validate_alignment_overrides(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the alignment override document."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+) -> None:
+    """Validate manual alignment decisions without applying them."""
+    try:
+        result = AlignmentReviewService(workspace).validate_overrides(document_key)
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    if result.valid:
+        typer.echo("Alignment overrides are valid.")
+        return
+    for issue in result.issues:
+        typer.echo(f"{issue.severity:7} {issue.code:30} {issue.message}")
+    raise typer.Exit(code=2)
+
+
+@align_app.command("review-apply")
+def apply_alignment_overrides(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the alignment override document."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+) -> None:
+    """Apply validated overrides and persist reviewed.json."""
+    service = AlignmentReviewService(workspace)
+    try:
+        result = service.apply_overrides(document_key)
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    stats = result.metadata.statistics
+    typer.echo(f"Document source       : {result.source_id}")
+    typer.echo(f"Missing               : {stats.missing}")
+    typer.echo(f"Inferred matches      : {stats.inferred_matches}")
+    typer.echo(f"Reviewed alignment    : {service.reviewed_path(document_key)}")
 
 
 @app.command()

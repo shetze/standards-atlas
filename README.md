@@ -749,3 +749,137 @@ explicitly unresolved.
 The alignment result does not modify the canonical `EngineeringDocument`.
 Mapping normalized items to structured `Clause.content` is a later enrichment
 stage.
+
+### Page-start and term-definition clause anchors
+
+Normalization protects multi-level clause references such as `3.1.15`, `A.1`,
+and `ZA.2` from repeated header/footer suppression and fragment merging.
+Reference detection also supports source layouts where:
+
+- the reference and clause content share one text item; or
+- a reference-only line is followed by a separate term or label line.
+
+Inline text remainders are treated as source content, while heading remainders
+are treated as observed titles. AtlasData headings are not used to make this
+decision because they may be generated for copyright-safe metadata.
+
+## Alignment review and manual overrides
+
+Automatic alignment is intentionally conservative. Before clause content is
+created, unresolved or uncertain assignments can be reviewed using a generated
+Markdown document and a separate machine-readable override file.
+
+```bash
+uv run standards-atlas align review EN50716
+```
+
+This creates:
+
+```text
+.atlas/alignments/EN50716/review.md
+.atlas/alignments/EN50716/overrides.yaml
+```
+
+`review.md` contains missing, inferred, ambiguous and conflicting clauses,
+nearby normalized items, candidate alternatives and suggested YAML snippets.
+Manual decisions are entered only in `overrides.yaml`.
+
+Validate the decisions before applying them:
+
+```bash
+uv run standards-atlas align validate-overrides EN50716
+```
+
+Create the reviewed alignment:
+
+```bash
+uv run standards-atlas align review-apply EN50716
+```
+
+The reviewed result is stored separately:
+
+```text
+.atlas/alignments/EN50716/reviewed.json
+```
+
+It can be inspected with:
+
+```bash
+uv run standards-atlas align inspect EN50716 --reviewed --show-missing
+```
+
+The automatic `alignment.json` is never edited or overwritten by the review
+workflow. Override files include the source alignment hash and are rejected as
+stale when the automatic alignment changes.
+
+## Full-document alignment review
+
+When automatic alignment still contains missing or incorrect clause anchors, export the complete normalized document as editable Markdown:
+
+```bash
+uv run standards-atlas align review-export EN50716
+```
+
+This creates:
+
+```text
+.atlas/alignments/EN50716/review.generated.md
+.atlas/alignments/EN50716/review.edited.md
+```
+
+Edit only `review.edited.md`. Every normalized item is preceded by an HTML comment containing its stable item ID. Leave these comments unchanged.
+
+A clause alignment point uses one hash and one terminating dash:
+
+```markdown
+# 1 Scope -
+# 1.1 - This document specifies ...
+# 3.1.15 availability -
+```
+
+The hash marks a clause start. The dash separates the reference and optional observed heading from clause content. The structural depth normally comes from AtlasData, so one hash is sufficient. Multiple hashes are treated as an explicit manual level correction.
+
+To remove a false automatic alignment, remove all leading hashes. To add a missing alignment, add one hash and place the dash after the clause number or observed heading.
+
+Inspect and validate the changes:
+
+```bash
+uv run standards-atlas align review-diff EN50716
+uv run standards-atlas align review-validate EN50716
+```
+
+Translate the reviewed Markdown into the existing override format and apply it:
+
+```bash
+uv run standards-atlas align review-import EN50716
+uv run standards-atlas align validate-overrides EN50716
+uv run standards-atlas align review-apply EN50716
+```
+
+The importer rejects changes to protected document content outside alignment markers. The generated review is reproducible; the editable copy is preserved unless `review-export --reset-edited` is used explicitly.
+
+## Lossless normalization
+
+Normalization maintains a strict source-item accounting invariant. Every item
+from the extracted document must remain either in the `source_item_ids` of an
+active normalized item or as an explicitly recorded suppressed item. A run fails
+with `NormalizationDataLossError` if a source item disappears or occurs more than
+once.
+
+Page-header and page-footer handling is intentionally conservative. Unique items
+misclassified by Docling as page furniture remain active. Explicit page furniture
+is suppressed only when the same normalized signature repeats across the
+configured minimum number of pages. Unlabelled repeated-page heuristics are
+disabled by default.
+
+The normalization inspection reports:
+
+```text
+Active source items
+Suppressed source items
+Unaccounted source items
+Duplicate source items
+```
+
+For a valid normalization, both unaccounted and duplicate source-item counts must
+be zero.
