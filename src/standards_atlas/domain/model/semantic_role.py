@@ -22,6 +22,10 @@ class SemanticRole(StrEnum):
     OUTPUTS = "outputs"
     WORK_PRODUCTS = "work_products"
 
+    VERIFICATION = "verification"
+    VALIDATION = "validation"
+    ASSESSMENT = "assessment"
+
     TABLE = "table"
     FIGURE = "figure"
     NOTE = "note"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -29,7 +30,12 @@ from standards_atlas.application.model import AlignmentOptions
 from standards_atlas.application.normalization import NormalizationDataLossError
 from standards_atlas.application.services import (
     AlignmentReviewService,
+    AtlasDataOnboardingError,
+    AtlasDataOnboardingService,
+    DoclingPartSource,
     AlignmentService,
+    ContentEnrichmentError,
+    ContentEnrichmentService,
     DocumentExportService,
     DocumentExtractionService,
     DocumentImportService,
@@ -147,6 +153,122 @@ def inspect_data(
     service = DocumentImportService(reader)
     document = service.import_document(file)
     print_document_summary(document, source_file=file, verbose=verbose)
+
+
+@atlasdata_app.command("onboard-docling")
+def onboard_docling(
+    source: Annotated[
+        Path,
+        typer.Argument(
+            exists=True,
+            readable=True,
+            resolve_path=True,
+            help="Docling document.json used to discover public clause structure.",
+        ),
+    ],
+    output: Annotated[
+        Path,
+        typer.Argument(help="AtlasData file to create."),
+    ],
+    standard_name: Annotated[
+        str,
+        typer.Option("--name", help="Official standard name used in references."),
+    ],
+    year: Annotated[
+        int,
+        typer.Option("--year", help="Publication year."),
+    ],
+    digits: Annotated[
+        int,
+        typer.Option("--digits", help="AtlasData numeric identifier width."),
+    ] = 8,
+    parent: Annotated[
+        str | None,
+        typer.Option("--parent", help="Optional AtlasData parent key."),
+    ] = None,
+    overwrite: Annotated[
+        bool,
+        typer.Option("--overwrite", help="Replace an existing output file."),
+    ] = False,
+) -> None:
+    """Create an AtlasData skeleton from numbered Docling headings."""
+    try:
+        result = AtlasDataOnboardingService().generate(
+            source,
+            output,
+            standard_name=standard_name,
+            year=year,
+            digits=digits,
+            parent=parent,
+            overwrite=overwrite,
+        )
+    except (AtlasDataOnboardingError, OSError, ValueError, json.JSONDecodeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    term_count = sum(clause.type_marker == "t" for clause in result.clauses)
+    typer.echo(f"Document source       : {source}")
+    typer.echo(f"Standard              : {result.standard_name}")
+    typer.echo(f"Publication year      : {result.year}")
+    typer.echo(f"Clauses discovered    : {len(result.clauses)}")
+    typer.echo(f"Terms discovered      : {term_count}")
+    typer.echo(f"AtlasData file        : {result.output}")
+
+
+@atlasdata_app.command("onboard-docling-parts")
+def onboard_docling_parts(
+    output: Annotated[Path, typer.Argument(help="AtlasData file to create.")],
+    parts: Annotated[
+        list[str],
+        typer.Option(
+            "--part",
+            help="Explicit PART=PATH association. Repeat once per standard part.",
+        ),
+    ],
+    standard_name: Annotated[
+        str, typer.Option("--name", help="Official standard family name used in references.")
+    ],
+    year: Annotated[int, typer.Option("--year", help="Publication year.")],
+    digits: Annotated[
+        int, typer.Option("--digits", help="AtlasData numeric identifier width.")
+    ] = 8,
+    parent: Annotated[
+        str | None, typer.Option("--parent", help="Optional AtlasData parent key.")
+    ] = None,
+    overwrite: Annotated[
+        bool, typer.Option("--overwrite", help="Replace an existing output file.")
+    ] = False,
+) -> None:
+    """Create one AtlasData file from explicitly assigned Docling part documents."""
+    try:
+        sources = tuple(DoclingPartSource.parse(value) for value in parts)
+        result = AtlasDataOnboardingService().generate_parts(
+            sources,
+            output,
+            standard_name=standard_name,
+            year=year,
+            digits=digits,
+            parent=parent,
+            overwrite=overwrite,
+        )
+    except (AtlasDataOnboardingError, OSError, ValueError, json.JSONDecodeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    term_count = sum(clause.type_marker == "t" for clause in result.clauses)
+    annex_count = sum(
+        len({clause.reference.split(".")[0] for clause in part.clauses if clause.reference[0].isalpha()})
+        for part in result.parts
+    )
+    typer.echo(f"Standard              : {result.standard_name}")
+    typer.echo(f"Publication year      : {result.year}")
+    typer.echo(f"Parts discovered      : {len(result.parts)}")
+    for part in result.parts:
+        typer.echo(f"Part {part.part:<17}: {part.source} ({len(part.clauses)} clauses)")
+    typer.echo(f"Clauses discovered    : {len(result.clauses)}")
+    typer.echo(f"Terms discovered      : {term_count}")
+    typer.echo(f"Annexes discovered    : {annex_count}")
+    typer.echo(f"AtlasData file        : {result.output}")
 
 
 @atlasdata_app.command("generate-toc")
@@ -273,6 +395,58 @@ def derive_document_part(
     typer.echo(f"Derived key           : {document.key.value}")
     typer.echo(f"Clauses               : {len(document.clauses)}")
     typer.echo(f"Persisted document    : {workspace / 'documents' / (target_key + '.json')}")
+
+
+@document_app.command("enrich-content")
+def enrich_document_content(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the aligned EngineeringDocument to enrich."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+    automatic_alignment: Annotated[
+        bool,
+        typer.Option(
+            "--automatic-alignment",
+            help="Use alignment.json even when reviewed.json exists.",
+        ),
+    ] = False,
+    allow_unresolved: Annotated[
+        bool,
+        typer.Option(
+            "--allow-unresolved",
+            help="Keep unresolved clauses unchanged instead of aborting.",
+        ),
+    ] = False,
+) -> None:
+    """Populate clause ContentBlocks from aligned normalized document ranges."""
+    try:
+        result = ContentEnrichmentService(workspace).enrich(
+            document_key,
+            prefer_reviewed=not automatic_alignment,
+            allow_unresolved=allow_unresolved,
+        )
+    except (ContentEnrichmentError, OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    stats = result.statistics
+    typer.echo(f"Document              : {result.document.key.value}")
+    typer.echo(f"Clauses               : {stats.clauses_total}")
+    typer.echo(f"Clauses enriched      : {stats.clauses_enriched}")
+    typer.echo(f"Clauses empty         : {stats.clauses_empty}")
+    typer.echo(f"Content blocks        : {stats.content_blocks}")
+    typer.echo(f"Normalized items      : {stats.normalized_items_consumed}")
+    typer.echo(
+        "Alignment source      : "
+        + ("reviewed.json" if stats.used_reviewed_alignment else "alignment.json")
+    )
+    typer.echo(
+        f"Persisted document    : {workspace / 'documents' / (document_key + '.json')}"
+    )
 
 
 @document_export_app.command("doorstop")

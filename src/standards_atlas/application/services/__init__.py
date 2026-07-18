@@ -1,7 +1,27 @@
 """Application services."""
 
+from standards_atlas.application.services.atlasdata_onboarding_service import (
+    AtlasDataOnboardingError,
+    AtlasDataOnboardingResult,
+    AtlasDataOnboardingService,
+    DiscoveredClause,
+    DiscoveredPart,
+    DoclingPartSource,
+)
+from standards_atlas.application.services.semantic_role_classifier import (
+    SemanticRoleClassification,
+    SemanticRoleClassifier,
+    SemanticRoleContext,
+    SemanticRoleEvidence,
+)
 from standards_atlas.application.services.alignment_review_service import AlignmentReviewService
 from standards_atlas.application.services.alignment_service import AlignmentService
+from standards_atlas.application.services.content_enrichment_service import (
+    ContentEnrichmentError,
+    ContentEnrichmentResult,
+    ContentEnrichmentService,
+    ContentEnrichmentStatistics,
+)
 from standards_atlas.application.services.document_export_service import (
     DocumentExportService,
 )
@@ -31,7 +51,17 @@ from standards_atlas.application.services.reference_candidate_service import (
 
 __all__ = [
     "AlignmentReviewService",
+    "AtlasDataOnboardingError",
+    "AtlasDataOnboardingResult",
+    "AtlasDataOnboardingService",
+    "DiscoveredClause",
+    "DiscoveredPart",
+    "DoclingPartSource",
     "AlignmentService",
+    "ContentEnrichmentError",
+    "ContentEnrichmentResult",
+    "ContentEnrichmentService",
+    "ContentEnrichmentStatistics",
     "DocumentExportService",
     "DocumentExtractionService",
     "DocumentImportService",
@@ -42,4 +72,8 @@ __all__ = [
     "ExtractionInspectionService",
     "ExtractionStatistics",
     "ReferenceCandidateService",
+    "SemanticRoleClassification",
+    "SemanticRoleClassifier",
+    "SemanticRoleContext",
+    "SemanticRoleEvidence",
 ]
