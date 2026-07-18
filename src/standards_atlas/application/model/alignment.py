@@ -18,6 +18,7 @@ class AlignmentStatus(StrEnum):
     EXACT = "exact"
     NORMALIZED = "normalized"
     ANNEX = "annex"
+    LOW_CONFIDENCE = "low_confidence"
     SEQUENCE_INFERRED = "sequence_inferred"
     AMBIGUOUS = "ambiguous"
     MISSING = "missing"
@@ -72,6 +73,7 @@ class AlignmentStatistics(BaseModel):
     exact_matches: int = 0
     normalized_matches: int = 0
     annex_matches: int = 0
+    low_confidence_matches: int = 0
     inferred_matches: int = 0
     ambiguous: int = 0
     missing: int = 0
@@ -82,6 +84,7 @@ class AlignmentStatistics(BaseModel):
 class AlignmentOptions(BaseModel):
     model_config = ConfigDict(frozen=True)
 
+    recover_low_confidence_candidates: bool = True
     infer_single_missing_clause: bool = True
     title_similarity_threshold: float = Field(default=0.55, ge=0.0, le=1.0)
 

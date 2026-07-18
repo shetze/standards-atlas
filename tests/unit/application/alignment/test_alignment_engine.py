@@ -231,3 +231,110 @@ def test_inline_content_candidate_does_not_trigger_title_mismatch() -> None:
     assert alignment.observed_remainder == "This document specifies the process."
     assert alignment.remainder_kind is CandidateRemainderKind.CONTENT
     assert all(issue.code != "TITLE_MISMATCH" for issue in result.issues)
+
+
+def test_missing_clause_recovers_bounded_lower_confidence_candidate() -> None:
+    result = AlignmentEngine().align(
+        normalized(
+            heading(0, "1 One"),
+            text(1, "2 Normative clause content without heading"),
+            heading(2, "3 Three"),
+        ),
+        candidates(
+            candidate("1", 0),
+            candidate("2", 1, confidence=0.78),
+            candidate("3", 2),
+        ),
+        engineering("1", "2", "3"),
+    )
+
+    # Simulate a primary-pass miss caused by an earlier selection decision by
+    # exercising recovery directly with the middle candidate omitted initially.
+    engine = AlignmentEngine()
+    expected = tuple(
+        __import__(
+            "standards_atlas.application.alignment.alignment_engine",
+            fromlist=["_ExpectedClause"],
+        )._ExpectedClause(clause=clause, index=index)
+        for index, clause in enumerate(engineering("1", "2", "3").clauses)
+    )
+    initial = [
+        result.clauses[0],
+        result.clauses[1].model_copy(
+            update={
+                "candidate_item_id": None,
+                "status": AlignmentStatus.MISSING,
+                "match_kind": None,
+                "confidence": None,
+                "start_sequence_number": None,
+                "end_sequence_number": None,
+                "source_item_ids": (),
+            }
+        ),
+        result.clauses[2],
+    ]
+    candidate_document = candidates(candidate("2", 1, confidence=0.78))
+    issues = []
+    recovered = engine._recover_low_confidence_candidates(
+        initial,
+        expected,
+        engine._candidate_index(candidate_document),
+        {},
+        normalized(
+            heading(0, "1 One"),
+            text(1, "2 Normative clause content without heading"),
+            heading(2, "3 Three"),
+        ),
+        __import__(
+            "standards_atlas.application.model.alignment",
+            fromlist=["AlignmentOptions"],
+        ).AlignmentOptions(),
+        issues,
+    )
+
+    assert recovered[1].status is AlignmentStatus.LOW_CONFIDENCE
+    assert recovered[1].start_sequence_number == 1
+    assert any(issue.code == "LOW_CONFIDENCE_REFERENCE" for issue in issues)
+
+
+
+def test_recovers_unique_reference_from_normalized_text_when_candidate_is_missing():
+    result = AlignmentEngine().align(
+        normalized(
+            heading(0, "D.58 Heading"),
+            text(1, "D.59 Clause text"),
+            heading(2, "D.60 Heading"),
+        ),
+        candidates(
+            candidate("D.58", 0),
+            candidate("D.60", 2),
+        ),
+        engineering("D.58", "D.59", "D.60"),
+    )
+
+    recovered = next(item for item in result.clauses if item.expected_reference == "D.59")
+    assert recovered.status is AlignmentStatus.LOW_CONFIDENCE
+    assert recovered.candidate_item_id == "t-1"
+    assert result.metadata.statistics.missing == 0
+
+
+def test_derived_standard_ignores_legacy_clause_zero_anchor():
+    from standards_atlas.domain.model import Standard, StandardKey
+
+    document = Standard(
+        key=StandardKey(value="SAMPLE-8"),
+        title="Sample Part 8",
+        name="Sample Part 8",
+        parent_key=StandardKey(value="SAMPLE"),
+        clauses=engineering("0", "1", "2").clauses,
+    )
+
+    result = AlignmentEngine().align(
+        normalized(heading(0, "1 Scope"), heading(1, "2 Requirements")),
+        candidates(candidate("1", 0), candidate("2", 1)),
+        document,
+    )
+
+    assert [clause.expected_reference for clause in result.clauses] == ["1", "2"]
+    assert result.metadata.statistics.expected_clauses == 2
+    assert result.metadata.statistics.missing == 0

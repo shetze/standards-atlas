@@ -267,6 +267,9 @@ class AlignmentOverrideEngine:
             exact_matches=sum(c.status is AlignmentStatus.EXACT for c in clauses),
             normalized_matches=sum(c.status is AlignmentStatus.NORMALIZED for c in clauses),
             annex_matches=sum(c.status is AlignmentStatus.ANNEX for c in clauses),
+            low_confidence_matches=sum(
+                c.status is AlignmentStatus.LOW_CONFIDENCE for c in clauses
+            ),
             inferred_matches=sum(c.status is AlignmentStatus.SEQUENCE_INFERRED for c in clauses),
             ambiguous=sum(c.status is AlignmentStatus.AMBIGUOUS for c in clauses),
             missing=sum(c.status is AlignmentStatus.MISSING for c in clauses),

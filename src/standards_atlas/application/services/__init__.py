@@ -11,6 +11,10 @@ from standards_atlas.application.services.document_extraction_service import (
 from standards_atlas.application.services.document_import_service import (
     DocumentImportService,
 )
+from standards_atlas.application.services.document_selection_service import (
+    DocumentSelectionError,
+    DocumentSelectionService,
+)
 from standards_atlas.application.services.document_normalization_service import (
     DocumentNormalizationService,
 )
@@ -32,6 +36,8 @@ __all__ = [
     "DocumentExtractionService",
     "DocumentImportService",
     "DocumentNormalizationService",
+    "DocumentSelectionError",
+    "DocumentSelectionService",
     "DocumentTransformationService",
     "ExtractionInspectionService",
     "ExtractionStatistics",

@@ -27,7 +27,10 @@ from standards_atlas.application.model.normalized_document import (
 )
 
 _ANCHOR = re.compile(r"^<!-- atlas:item=(?P<item_id>.+?) -->$")
-_ACTIVE_HEADING = re.compile(r"^(?P<hashes>#+)\s+(?P<label>.+?)\s+-\s*(?P<trailing>.*)$")
+_ACTIVE_HEADING_WITH_DASH = re.compile(
+    r"^(?P<hashes>#+)\s+(?P<label>.+?)\s+-\s*(?P<trailing>.*)$"
+)
+_ACTIVE_HEADING = re.compile(r"^(?P<hashes>#+)\s+(?P<label>.+?)\s*$")
 _INACTIVE_MARKER = re.compile(r"^(?P<label>.+?)\s+-\s*(?P<trailing>.*)$")
 _REFERENCE = re.compile(
     r"^(?P<reference>(?:\d+(?:\.\d+)*|[A-Z]+(?:\.\d+)*))"
@@ -58,8 +61,18 @@ class FullDocumentReviewRenderer:
         for item in normalized.items:
             if item.id in skipped_items:
                 continue
-            lines.append(f"<!-- atlas:item={item.id} -->")
             clause = alignment_by_sequence.get(item.sequence_number)
+            if clause is not None and clause.status is AlignmentStatus.LOW_CONFIDENCE:
+                confidence = (
+                    "unknown"
+                    if clause.confidence is None
+                    else f"{clause.confidence:.2f}"
+                )
+                lines.append(
+                    "<!-- atlas:alignment-confidence=low "
+                    f"reference={clause.expected_reference} confidence={confidence} -->"
+                )
+            lines.append(f"<!-- atlas:item={item.id} -->")
             if clause is None:
                 lines.extend(self._render_item(item))
             else:
@@ -67,11 +80,15 @@ class FullDocumentReviewRenderer:
                 marker = f"# {clause.expected_reference}"
                 if heading:
                     marker += f" {heading}"
-                marker += " -"
+                if clause.status in {
+                    AlignmentStatus.LOW_CONFIDENCE,
+                    AlignmentStatus.SEQUENCE_INFERRED,
+                }:
+                    marker += " -"
+                lines.append(marker)
                 trailing = self._trailing_content(item, clause)
                 if trailing:
-                    marker += f" {trailing}"
-                lines.append(marker)
+                    lines.extend(("", trailing))
                 if clause.following_label_item_id:
                     skipped_items.add(clause.following_label_item_id)
             lines.append("")
@@ -154,13 +171,18 @@ class FullDocumentReviewParser:
         if not content:
             return MarkdownReviewBlock(item_id=item_id)
         first = content[0]
-        active = _ACTIVE_HEADING.match(first)
+        active_with_dash = _ACTIVE_HEADING_WITH_DASH.match(first)
+        active = active_with_dash or _ACTIVE_HEADING.match(first)
         if active:
             label = active.group("label").strip()
             parsed = _REFERENCE.match(label)
             if parsed is None:
                 return MarkdownReviewBlock(item_id=item_id, body="\n".join(content))
-            trailing = active.group("trailing").strip() or None
+            trailing = (
+                active_with_dash.group("trailing").strip() or None
+                if active_with_dash is not None
+                else None
+            )
             body_lines = ([trailing] if trailing else []) + content[1:]
             return MarkdownReviewBlock(
                 item_id=item_id,

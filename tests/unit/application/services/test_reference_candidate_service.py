@@ -63,3 +63,57 @@ def test_service_loads_inputs_detects_and_persists_candidates(tmp_path):
 
     assert result.candidates[0].normalized_reference == "1"
     assert service.load("SAMPLE") == result
+
+
+def test_service_derives_missing_part_view_from_master_document(tmp_path):
+    workspace = tmp_path / ".atlas"
+    repository = FileSystemEngineeringDocumentRepository(workspace)
+    repository.save(
+        Standard(
+            key=StandardKey(value="ISO26262"),
+            title="ISO 26262",
+            name="ISO 26262",
+            clauses=(
+                Clause(
+                    id=ClauseId(value="part-7"),
+                    reference=StandardReference(standard="ISO 26262", clause="1"),
+                    clause_type=ClauseType.CLAUSE,
+                    volume="7",
+                ),
+                Clause(
+                    id=ClauseId(value="part-8"),
+                    reference=StandardReference(standard="ISO 26262", clause="1"),
+                    clause_type=ClauseType.CLAUSE,
+                    volume="8",
+                ),
+            ),
+        )
+    )
+    NormalizationArtifactRepository(workspace).save(
+        "ISO26262-8",
+        NormalizedExtractedDocument(
+            source_id="ISO26262-8",
+            items=(
+                NormalizedHeading(
+                    id="h1",
+                    sequence_number=0,
+                    source_item_ids=("h1",),
+                    text="1 Scope",
+                ),
+            ),
+            metadata=NormalizationMetadata(
+                normalizer_version="test",
+                source_extraction_hash="hash",
+                created_at=datetime.now(UTC),
+                options=NormalizationOptions(),
+                statistics=NormalizationStatistics(input_items=1, output_items=1),
+            ),
+        ),
+    )
+
+    result = ReferenceCandidateService(workspace).detect("ISO26262-8")
+
+    derived = repository.load(StandardKey(value="ISO26262-8"))
+    assert derived.parent_key.value == "ISO26262"
+    assert [clause.id.value for clause in derived.clauses] == ["part-8"]
+    assert result.candidates[0].expected_clause_ids == ("part-8",)

@@ -34,6 +34,8 @@ from standards_atlas.application.services import (
     DocumentExtractionService,
     DocumentImportService,
     DocumentNormalizationService,
+    DocumentSelectionError,
+    DocumentSelectionService,
     ExtractionInspectionService,
     ReferenceCandidateService,
 )
@@ -219,6 +221,58 @@ def import_document(
     typer.echo(f"Key                   : {document.key.value}")
     typer.echo(f"Clauses               : {len(document.clauses)}")
     typer.echo(f"Workspace             : {workspace}")
+
+
+@document_app.command("derive")
+def derive_document_view(
+    source_key: Annotated[str, typer.Argument(help="Key of the persisted master document.")],
+    target_key: Annotated[str, typer.Option("--key", help="Key for the derived document view.")],
+    standard_name: Annotated[
+        str,
+        typer.Option("--standard", help="Exact StandardReference.standard value to select."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+) -> None:
+    """Create a persisted document view matching one physical source document."""
+    service = DocumentSelectionService(workspace)
+    try:
+        document = service.derive_by_standard_name(source_key, target_key, standard_name)
+    except DocumentSelectionError as error:
+        raise typer.BadParameter(str(error)) from error
+
+    typer.echo(f"Source document       : {source_key}")
+    typer.echo(f"Selected standard     : {standard_name}")
+    typer.echo(f"Derived key           : {document.key.value}")
+    typer.echo(f"Clauses               : {len(document.clauses)}")
+    typer.echo(f"Persisted document    : {workspace / 'documents' / (target_key + '.json')}")
+
+
+@document_app.command("derive-part")
+def derive_document_part(
+    source_key: Annotated[str, typer.Argument(help="Key of the persisted master document.")],
+    part: Annotated[str, typer.Argument(help="AtlasData volume/part identifier.")],
+    target_key: Annotated[str, typer.Option("--key", help="Key for the derived document view.")],
+    title: Annotated[str | None, typer.Option("--title", help="Title of the derived part.")] = None,
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+) -> None:
+    """Create a persisted document view for one AtlasData volume or standard part."""
+    service = DocumentSelectionService(workspace)
+    try:
+        document = service.derive_by_volume(source_key, target_key, part, title)
+    except DocumentSelectionError as error:
+        raise typer.BadParameter(str(error)) from error
+
+    typer.echo(f"Source document       : {source_key}")
+    typer.echo(f"Selected part         : {part}")
+    typer.echo(f"Derived key           : {document.key.value}")
+    typer.echo(f"Clauses               : {len(document.clauses)}")
+    typer.echo(f"Persisted document    : {workspace / 'documents' / (target_key + '.json')}")
 
 
 @document_export_app.command("doorstop")
@@ -633,6 +687,7 @@ def run_alignment(
     typer.echo(f"Exact matches         : {stats.exact_matches}")
     typer.echo(f"Normalized matches    : {stats.normalized_matches}")
     typer.echo(f"Annex matches         : {stats.annex_matches}")
+    typer.echo(f"Low-confidence       : {stats.low_confidence_matches}")
     typer.echo(f"Inferred matches      : {stats.inferred_matches}")
     typer.echo(f"Missing               : {stats.missing}")
     typer.echo(f"Conflicting           : {stats.conflicting}")
@@ -683,13 +738,14 @@ def inspect_alignment(
     typer.echo(f"Exact matches         : {stats.exact_matches}")
     typer.echo(f"Normalized matches    : {stats.normalized_matches}")
     typer.echo(f"Annex matches         : {stats.annex_matches}")
+    typer.echo(f"Low-confidence       : {stats.low_confidence_matches}")
     typer.echo(f"Inferred matches      : {stats.inferred_matches}")
     typer.echo(f"Missing               : {stats.missing}")
     typer.echo(f"Unassigned ranges     : {stats.unassigned_ranges}")
     typer.echo(f"Issues                : {len(result.issues)}")
     if show_missing:
         for clause in result.clauses:
-            if clause.status.value in {"missing", "sequence_inferred"}:
+            if clause.status.value in {"missing", "low_confidence", "sequence_inferred"}:
                 typer.echo(
                     f"{clause.status.value:18} {clause.expected_reference:12} {clause.clause_id}"
                 )
@@ -876,6 +932,7 @@ def apply_alignment_overrides(
     stats = result.metadata.statistics
     typer.echo(f"Document source       : {result.source_id}")
     typer.echo(f"Missing               : {stats.missing}")
+    typer.echo(f"Low-confidence       : {stats.low_confidence_matches}")
     typer.echo(f"Inferred matches      : {stats.inferred_matches}")
     typer.echo(f"Reviewed alignment    : {service.reviewed_path(document_key)}")
 

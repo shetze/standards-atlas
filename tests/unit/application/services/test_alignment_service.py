@@ -96,3 +96,80 @@ def test_service_loads_aligns_persists_and_reloads(tmp_path):
 
     assert alignment.clauses[0].clause_id == "SAMPLE-1"
     assert service.load("SAMPLE") == alignment
+
+
+def test_service_orders_expanded_subclauses_by_physical_reference(tmp_path):
+    workspace = tmp_path / ".atlas"
+    clauses = tuple(
+        Clause(
+            id=ClauseId(value=f"SAMPLE-{reference}"),
+            reference=StandardReference(standard="SAMPLE", clause=reference),
+            clause_type=ClauseType.CLAUSE,
+        )
+        for reference in ("1", "2", "3", "1.1", "1.2")
+    )
+    FileSystemEngineeringDocumentRepository(workspace).save(
+        Standard(
+            key=StandardKey(value="SAMPLE"),
+            title="Sample",
+            name="Sample",
+            clauses=clauses,
+        )
+    )
+    items = tuple(
+        NormalizedHeading(
+            id=f"h-{reference}",
+            sequence_number=index,
+            source_item_ids=(f"h-{reference}",),
+            text=reference,
+        )
+        for index, reference in enumerate(("1", "1.1", "1.2", "2", "3"))
+    )
+    NormalizationArtifactRepository(workspace).save(
+        "SAMPLE",
+        NormalizedExtractedDocument(
+            source_id="SAMPLE",
+            items=items,
+            metadata=NormalizationMetadata(
+                normalizer_version="test",
+                source_extraction_hash="hash",
+                created_at=datetime.now(UTC),
+                options=NormalizationOptions(),
+                statistics=NormalizationStatistics(input_items=5, output_items=5),
+            ),
+        ),
+    )
+    candidates = tuple(
+        ReferenceCandidate(
+            item_id=f"h-{reference}",
+            sequence_number=index,
+            raw_reference=reference,
+            normalized_reference=reference,
+            match_kind=ReferenceMatchKind.EXACT,
+            status=ReferenceCandidateStatus.EXPECTED,
+            confidence=0.99,
+            expected_clause_ids=(f"SAMPLE-{reference}",),
+        )
+        for index, reference in enumerate(("1", "1.1", "1.2", "2", "3"))
+    )
+    ReferenceCandidateRepository(workspace).save(
+        "SAMPLE",
+        ReferenceCandidateDocument(
+            source_id="SAMPLE",
+            candidates=candidates,
+            metadata=ReferenceDetectionMetadata(
+                detector_version="test",
+                source_normalization_hash="n",
+                expected_structure_hash="e",
+                created_at=datetime.now(UTC),
+                statistics=ReferenceDetectionStatistics(candidates=5),
+            ),
+        ),
+    )
+
+    alignment = AlignmentService(workspace).run("SAMPLE")
+
+    assert [item.expected_reference for item in alignment.clauses] == [
+        "1", "1.1", "1.2", "2", "3"
+    ]
+    assert alignment.metadata.statistics.missing == 0
