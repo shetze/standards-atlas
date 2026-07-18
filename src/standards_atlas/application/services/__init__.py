@@ -48,6 +48,10 @@ from standards_atlas.application.services.extraction_inspection_service import (
 from standards_atlas.application.services.reference_candidate_service import (
     ReferenceCandidateService,
 )
+from standards_atlas.application.services.markdown_export_service import (
+    MarkdownExportResult,
+    MarkdownExportService,
+)
 
 __all__ = [
     "AlignmentReviewService",
@@ -72,6 +76,8 @@ __all__ = [
     "ExtractionInspectionService",
     "ExtractionStatistics",
     "ReferenceCandidateService",
+    "MarkdownExportResult",
+    "MarkdownExportService",
     "SemanticRoleClassification",
     "SemanticRoleClassifier",
     "SemanticRoleContext",

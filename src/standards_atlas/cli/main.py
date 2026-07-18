@@ -24,6 +24,7 @@ from standards_atlas.adapters.doorstop import (
     DoorstopExporter,
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.model import AlignmentOptions
@@ -44,6 +45,7 @@ from standards_atlas.application.services import (
     DocumentSelectionService,
     ExtractionInspectionService,
     ReferenceCandidateService,
+    MarkdownExportService,
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 from standards_atlas.cli.printers import print_document_summary
@@ -447,6 +449,52 @@ def enrich_document_content(
     typer.echo(
         f"Persisted document    : {workspace / 'documents' / (document_key + '.json')}"
     )
+
+
+@document_export_app.command("markdown")
+def export_document_to_markdown(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the persisted EngineeringDocument or standard family."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = Path(".atlas"),
+    target: Annotated[
+        Path | None,
+        typer.Option(
+            "--target",
+            "-t",
+            help="Common target directory. Defaults to <workspace>/markdown.",
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+        ),
+    ] = None,
+    replace_existing: Annotated[
+        bool,
+        typer.Option("--replace/--no-replace", help="Replace existing Markdown files."),
+    ] = True,
+) -> None:
+    """Export one standard family to one Markdown file per physical part."""
+    export_target = target if target is not None else workspace / "markdown"
+    service = MarkdownExportService(MarkdownExporter(), workspace=workspace)
+    try:
+        result = service.export(
+            document_key=document_key,
+            target_directory=export_target,
+            replace_existing=replace_existing,
+        )
+    except (FileNotFoundError, FileExistsError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Document key          : {result.document_key}")
+    typer.echo(f"Clauses exported      : {result.clauses_exported}")
+    typer.echo(f"Markdown files        : {len(result.generated_files)}")
+    for generated in result.generated_files:
+        typer.echo(f"  {generated}")
 
 
 @document_export_app.command("doorstop")
