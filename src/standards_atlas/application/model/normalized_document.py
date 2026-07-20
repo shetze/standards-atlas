@@ -25,6 +25,9 @@ class NormalizationOptions(BaseModel):
     suppress_repeated_page_elements: bool = False
     fail_on_data_loss: bool = True
     repeated_page_element_min_occurrences: int = Field(default=3, ge=2)
+    page_ranges: tuple[tuple[int, int | None], ...] = ()
+    exclude_page_ranges: tuple[tuple[int, int | None], ...] = ()
+    page_list: tuple[int, ...] = ()
 
 
 class NormalizationIssue(BaseModel):
@@ -44,7 +47,7 @@ class SuppressedItem(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     source_item_id: str
-    reason: Literal["header", "footer", "page_number"]
+    reason: Literal["header", "footer", "page_number", "content_selection"]
     confidence: float = Field(ge=0.0, le=1.0)
     text: str | None = None
     page_number: int | None = Field(default=None, ge=1)
@@ -148,6 +151,9 @@ class NormalizationStatistics(BaseModel):
     suppressed_source_items: int = 0
     unaccounted_source_items: int = 0
     duplicate_source_items: int = 0
+    source_pages: int = 0
+    selected_pages: int = 0
+    excluded_pages: int = 0
 
 
 class NormalizationMetadata(BaseModel):

@@ -67,6 +67,15 @@ class DocumentNormalizer:
         resequenced = tuple(
             item.model_copy(update={"sequence_number": index}) for index, item in enumerate(listed)
         )
+        source_pages = {
+            evidence.page_number
+            for item in document.items
+            for evidence in item.source_evidence
+            if evidence.page_number is not None
+        }
+        selected_pages = {
+            page for page in source_pages if _page_is_selected(page, options.page_ranges, options.exclude_page_ranges, options.page_list)
+        }
         statistics = NormalizationStatistics(
             input_items=len(document.items),
             output_items=len(resequenced),
@@ -77,6 +86,9 @@ class DocumentNormalizer:
             text_fragments_merged=merged_count,
             lists_normalized=list_count,
             code_blocks=sum(isinstance(item, NormalizedCode) for item in resequenced),
+            source_pages=len(source_pages),
+            selected_pages=len(selected_pages),
+            excluded_pages=len(source_pages - selected_pages),
         )
         return NormalizedExtractedDocument(
             source_id=document.source_id,
@@ -99,7 +111,10 @@ class DocumentNormalizer:
     ) -> tuple[list[SuppressedItem], list]:
         signatures = Counter()
         for item in document.items:
-            if isinstance(item, (ExtractedText, ExtractedHeading)):
+            if (
+                isinstance(item, (ExtractedText, ExtractedHeading))
+                and _item_is_selected(item, options.page_ranges, options.exclude_page_ranges, options.page_list)
+            ):
                 signatures[_page_signature(item.text)] += 1
         suppressed: list[SuppressedItem] = []
         active = []
@@ -109,7 +124,9 @@ class DocumentNormalizer:
             reason = None
             confidence = 1.0
             protected_reference = text is not None and _looks_like_clause_anchor(text)
-            if text is not None and _PAGE_NUMBER.fullmatch(text) and not protected_reference:
+            if not _item_is_selected(item, options.page_ranges, options.exclude_page_ranges, options.page_list):
+                reason = "content_selection"
+            elif text is not None and _PAGE_NUMBER.fullmatch(text) and not protected_reference:
                 reason = "page_number"
             elif options.suppress_headers and label == "page_header" and not protected_reference:
                 reason = "header"
@@ -514,4 +531,39 @@ def _merge_lists(lists: list[NormalizedList]) -> NormalizedList:
         original_labels=tuple(label for item in lists for label in item.original_labels),
         ordered=all(item.ordered for item in lists),
         items=tuple(list_item for item in lists for list_item in item.items),
+    )
+
+
+def _page_is_selected(
+    page_number: int,
+    page_ranges: tuple[tuple[int, int | None], ...],
+    exclude_page_ranges: tuple[tuple[int, int | None], ...] = (),
+    page_list: tuple[int, ...] = (),
+) -> bool:
+    has_positive_selection = bool(page_ranges or page_list)
+    included = not has_positive_selection or page_number in page_list or any(
+        page_number >= start and (end is None or page_number <= end)
+        for start, end in page_ranges
+    )
+    excluded = any(
+        page_number >= start and (end is None or page_number <= end)
+        for start, end in exclude_page_ranges
+    )
+    return included and not excluded
+
+
+def _item_is_selected(
+    item: object,
+    page_ranges: tuple[tuple[int, int | None], ...],
+    exclude_page_ranges: tuple[tuple[int, int | None], ...] = (),
+    page_list: tuple[int, ...] = (),
+) -> bool:
+    if not page_ranges and not exclude_page_ranges and not page_list:
+        return True
+    evidence = getattr(item, "source_evidence", ())
+    pages = [entry.page_number for entry in evidence if entry.page_number is not None]
+    # Keep items without page provenance: dropping them would violate lossless normalization.
+    return not pages or any(
+        _page_is_selected(page, page_ranges, exclude_page_ranges, page_list)
+        for page in pages
     )

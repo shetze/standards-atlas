@@ -539,3 +539,69 @@ def test_bottom_left_page_zone_distinguishes_header_and_footer() -> None:
 
     assert _page_zone(items[0]) == "header"
     assert _page_zone(items[1]) == "footer"
+
+
+def test_positive_page_selection_suppresses_items_outside_range() -> None:
+    result = DocumentNormalizer().normalize(
+        document(
+            ExtractedText(id="p1", sequence_number=0, text="English one.", source_evidence=(evidence(1),)),
+            ExtractedText(id="p2", sequence_number=1, text="English two.", source_evidence=(evidence(2),)),
+            ExtractedText(id="p3", sequence_number=2, text="Français.", source_evidence=(evidence(3),)),
+        ),
+        NormalizationOptions(page_ranges=((1, 2),)),
+    )
+    assert [item.text for item in result.items] == ["English one.", "English two."]
+    assert [item.reason for item in result.suppressed_items] == ["content_selection"]
+    assert result.metadata.statistics.source_pages == 3
+    assert result.metadata.statistics.selected_pages == 2
+    assert result.metadata.statistics.excluded_pages == 1
+
+
+def test_open_ended_page_selection_keeps_pages_from_start() -> None:
+    result = DocumentNormalizer().normalize(
+        document(
+            ExtractedText(id="p1", sequence_number=0, text="Before.", source_evidence=(evidence(1),)),
+            ExtractedText(id="p2", sequence_number=1, text="Selected.", source_evidence=(evidence(2),)),
+            ExtractedText(id="p3", sequence_number=2, text="Also selected.", source_evidence=(evidence(3),)),
+        ),
+        NormalizationOptions(page_ranges=((2, None),)),
+    )
+    assert [item.text for item in result.items] == ["Selected.", "Also selected."]
+
+
+def test_positive_page_list_selects_individual_pages_and_ranges() -> None:
+    result = DocumentNormalizer().normalize(
+        document(*(
+            ExtractedText(
+                id=f"p{page}",
+                sequence_number=page - 1,
+                text=f"Page {page}",
+                source_evidence=(evidence(page),),
+            )
+            for page in range(1, 7)
+        )),
+        NormalizationOptions(page_list=(1, 3, 5, 6)),
+    )
+    assert [item.text for item in result.items] == ["Page 1", "Page 3", "Page 5", "Page 6"]
+    assert result.metadata.statistics.selected_pages == 4
+    assert result.metadata.statistics.excluded_pages == 2
+
+
+def test_exclude_page_ranges_are_subtracted_from_positive_selection() -> None:
+    result = DocumentNormalizer().normalize(
+        document(*(
+            ExtractedText(
+                id=f"p{page}",
+                sequence_number=page - 1,
+                text=f"Page {page}",
+                source_evidence=(evidence(page),),
+            )
+            for page in range(1, 6)
+        )),
+        NormalizationOptions(
+            page_ranges=((1, 5),),
+            exclude_page_ranges=((2, 4),),
+            page_list=(3,),
+        ),
+    )
+    assert [item.text for item in result.items] == ["Page 1", "Page 5"]

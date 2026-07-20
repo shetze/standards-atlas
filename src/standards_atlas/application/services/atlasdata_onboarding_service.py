@@ -32,7 +32,7 @@ _ANNEX_CLAUSE_HEADING = re.compile(
 _REFERENCE_ONLY = re.compile(
     r"^(?:0\.\d+(?:\.\d+)*|[1-9]\d*(?:\.\d+)*|[A-Z](?:\.\d+)*)$"
 )
-_PART_SPEC = re.compile(r"^(?P<part>[1-9]\d*)=(?P<path>.+)$")
+_PART_SPEC = re.compile(r"^(?P<part>[1-9]\d*(?:-[1-9]\d*)?)=(?P<path>.+)$")
 
 
 class AtlasDataOnboardingError(RuntimeError):
@@ -43,8 +43,12 @@ class AtlasDataOnboardingError(RuntimeError):
 class DoclingPartSource:
     """Explicit association between a standard part and Docling JSON."""
 
-    part: int
+    part: str
     path: Path
+
+    def __post_init__(self) -> None:
+        # Keep compatibility with callers that still construct the source with an int.
+        object.__setattr__(self, "part", str(self.part))
 
     @classmethod
     def parse(cls, value: str) -> "DoclingPartSource":
@@ -53,7 +57,7 @@ class DoclingPartSource:
             raise AtlasDataOnboardingError(
                 f"Invalid part source '{value}'. Expected PART=PATH, for example 1=document.json."
             )
-        return cls(part=int(match.group("part")), path=Path(match.group("path")))
+        return cls(part=match.group("part"), path=Path(match.group("path")))
 
 
 @dataclass(frozen=True)
@@ -71,7 +75,7 @@ class DiscoveredClause:
 class DiscoveredPart:
     """All clauses discovered for one explicitly identified standard part."""
 
-    part: int
+    part: str
     source: Path
     clauses: tuple[DiscoveredClause, ...]
 
@@ -88,6 +92,45 @@ class AtlasDataOnboardingResult:
     @property
     def clauses(self) -> tuple[DiscoveredClause, ...]:
         return tuple(clause for part in self.parts for clause in part.clauses)
+
+
+def _detect_part_from_metadata(value: str, publication_year: int) -> str | None:
+    """Return a declared part or part-supplement identifier from metadata.
+
+    Edition markers and publication years are deliberately ignored. A designation
+    such as ``IEC 61508-3-1`` is interpreted as part ``3`` with supplement ``1``.
+    """
+    explicit = re.search(
+        r"\bpart\s*[-_:]?\s*(?P<part>[1-9]\d*(?:-[1-9]\d*)?)\b",
+        value,
+        re.IGNORECASE,
+    )
+    if explicit:
+        return explicit.group("part")
+
+    normalized = value.replace("+", "-")
+    # A trailing publication year belongs to the edition, not to the part
+    # identifier. Strip it before recognizing optional supplement suffixes.
+    normalized = re.sub(
+        rf"[-_]{publication_year}(?=(?:\.[A-Za-z0-9]+)?$)",
+        "",
+        normalized,
+    )
+    designation = re.search(
+        r"(?<!\d)\d{4,6}-(?P<part>[1-9]\d*)"
+        r"(?:-(?P<supplement>[1-9]\d*))?",
+        normalized,
+    )
+    if designation:
+        part = designation.group("part")
+        supplement = designation.group("supplement")
+        return f"{part}-{supplement}" if supplement else part
+
+    numbers = [int(token) for token in re.findall(r"(?<!\d)\d+(?!\d)", normalized)]
+    candidates = [number for number in numbers if number != publication_year]
+    if len(candidates) >= 2:
+        return str(candidates[-1])
+    return None
 
 
 class AtlasDataOnboardingService:
@@ -109,7 +152,7 @@ class AtlasDataOnboardingService:
     ) -> AtlasDataOnboardingResult:
         """Backward-compatible onboarding for a single-part standard."""
         return self.generate_parts(
-            (DoclingPartSource(part=1, path=source),),
+            (DoclingPartSource(part="1", path=source),),
             output,
             standard_name=standard_name,
             year=year,
@@ -150,7 +193,10 @@ class AtlasDataOnboardingService:
             if not source.path.is_file():
                 raise AtlasDataOnboardingError(f"Docling source does not exist: {source.path}")
             document = json.loads(source.path.read_text(encoding="utf-8"))
-            self._validate_part_metadata(document, source)
+            if include_part_context:
+                self._validate_part_metadata(
+                    document, source, publication_year=year
+                )
             clauses = self.discover_clauses(document)
             if not clauses:
                 raise AtlasDataOnboardingError(
@@ -174,22 +220,26 @@ class AtlasDataOnboardingService:
         return AtlasDataOnboardingResult(output, standard_name, year, result_parts)
 
     def _validate_part_metadata(
-        self, document: dict[str, Any], source: DoclingPartSource
+        self,
+        document: dict[str, Any],
+        source: DoclingPartSource,
+        *,
+        publication_year: int,
     ) -> None:
         values = [
             str(document.get("name", "")),
             str(document.get("origin", {}).get("filename", "")),
         ]
-        detected: set[int] = set()
-        for value in values:
-            for match in re.finditer(r"(?:^|[-_ ])(?P<part>\d+)(?:[_ .-]|$)", value):
-                detected.add(int(match.group("part")))
-        # Metadata is advisory. Reject only when it contains exactly one clear,
-        # contradictory part number; ambiguous names remain accepted.
+        detected = {
+            part
+            for value in values
+            if (part := _detect_part_from_metadata(value, publication_year)) is not None
+        }
         if len(detected) == 1 and source.part not in detected:
             actual = next(iter(detected))
             raise AtlasDataOnboardingError(
-                f"Part assignment {source.part} conflicts with Docling metadata indicating part {actual}: {source.path}"
+                f"Part assignment {source.part} conflicts with Docling metadata "
+                f"indicating part {actual}: {source.path}"
             )
 
     def discover_clauses(self, document: dict[str, Any]) -> tuple[DiscoveredClause, ...]:
@@ -417,7 +467,7 @@ def _reference_sort_key(reference: str) -> tuple[int, tuple[int, ...], str]:
 
 
 def _render_structure_tokens(
-    clauses: tuple[DiscoveredClause, ...], part: int | None
+    clauses: tuple[DiscoveredClause, ...], part: str | None
 ) -> list[str]:
     numeric = tuple(clause for clause in clauses if clause.reference[0].isdigit())
     annexes = tuple(clause for clause in clauses if clause.reference[0].isalpha())

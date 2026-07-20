@@ -1,0 +1,749 @@
+version: 1
+knowledge_domains:
+- key: safety
+  name: Safety
+- key: functional-safety
+  name: Functional Safety
+  parent: safety
+- key: software-engineering
+  name: Software Engineering
+- key: risk-management
+  name: Risk Management
+- key: cybersecurity
+  name: Cybersecurity
+- key: information-security
+  name: Information Security
+  parent: cybersecurity
+- key: trusted-computing
+  name: Trusted Computing
+  parent: cybersecurity
+- key: software-testing
+  name: Software Testing
+  parent: software-engineering
+- key: privacy
+  name: Privacy
+- key: software-quality
+  name: Software Quality
+  parent: software-engineering
+- key: software-platforms
+  name: Software Platforms
+  parent: software-engineering
+- key: artificial-intelligence
+  name: Artificial Intelligence
+- key: terminology
+  name: Terminology
+- key: ontology
+  name: Ontology
+- key: knowledge-representation
+  name: Knowledge Representation
+- key: standardization
+  name: Standardization
+- key: technical-writing
+  name: Technical Writing
+industry_sectors:
+- key: generic
+  name: Generic
+- key: transportation
+  name: Transportation
+- key: railway
+  name: Railway
+  parent: transportation
+- key: automotive
+  name: Automotive
+  parent: transportation
+- key: industrial-automation
+  name: Industrial Automation
+families:
+- key: IEC61508
+  name: IEC 61508
+  organization: IEC
+  publication_year: 2005
+  title: Functional safety of E/E/PE safety-related systems
+  classification:
+    knowledge_domains:
+    - functional-safety
+    - software-engineering
+    - risk-management
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 12
+  parts:
+  - part: '0'
+    key: IEC61508-0
+    title: Functional safety and IEC 61508
+    source:
+      pdf: .atlas/standards/Industry/iec61508-0{ed1.0}b.pdf
+    content_selection:
+      language: en
+      page_list: 7,9,11,13,15,17,19,21,23,25,27,29,31,33,35
+  - part: '1'
+    key: IEC61508-1
+    title: General requirements
+    source:
+      pdf: .atlas/standards/Industry/iec61508-1{ed2.0}b.pdf
+    content_selection:
+      language: en
+      page_ranges:
+      - start: 1
+        end: 63
+  - part: '2'
+    key: IEC61508-2
+    title: Requirements for E/E/PE safety-related systems
+    source:
+      pdf: .atlas/standards/Industry/iec61508-2{ed2.0}b.pdf
+    content_selection:
+      language: en
+      page_ranges:
+      - start: 1
+        end: 91
+  - part: '3'
+    key: IEC61508-3
+    title: Software requirements
+    source:
+      pdf: .atlas/standards/Industry/iec61508-3{ed2.0}b.pdf
+    content_selection:
+      language: en
+      page_ranges:
+      - start: 1
+        end: 113
+    supplements:
+    - supplement: '1'
+      key: IEC61508-3-1
+      document_type: technical-specification
+      title: Software requirements — Reuse of pre-existing software elements
+      source:
+        pdf: .atlas/standards/Industry/iec61508-3-1{ed1.0}en.pdf
+      atlasdata:
+        path: data/IEC61508-3-1
+        mode: existing
+      relations:
+      - type: supplements
+        target: IEC61508-3
+      content_selection:
+        language: en
+        page_ranges:
+        - start: 8
+          end: 12
+  - part: '4'
+    key: IEC61508-4
+    title: Definitions and abbreviations
+    source:
+      pdf: .atlas/standards/Industry/iec61508-4{ed2.0}b.pdf
+    content_selection:
+      language: en
+      page_ranges:
+      - start: 1
+        end: 34
+  - part: '5'
+    key: IEC61508-5
+    title: Examples of methods for determining safety integrity levels
+    source:
+      pdf: .atlas/standards/Industry/iec61508-5{ed2.0}b.pdf
+    content_selection:
+      language: en
+      page_ranges:
+      - start: 1
+        end: 48
+  - part: '6'
+    key: IEC61508-6
+    title: Guidelines on the application of IEC 61508-2 and IEC 61508-3
+    source:
+      pdf: .atlas/standards/Industry/iec61508-6{ed2.0}b.pdf
+    content_selection:
+      language: en
+      page_ranges:
+      - start: 1
+        end: 113
+  - part: '7'
+    key: IEC61508-7
+    title: Overview of techniques and measures
+    source:
+      pdf: .atlas/standards/Industry/iec61508-7{ed2.0}b.pdf
+    content_selection:
+      language: en
+      page_ranges:
+      - start: 1
+        end: 138
+  atlasdata:
+    path: data/IEC61508
+    mode: existing
+- key: EN50126
+  name: EN 50126
+  organization: CENELEC
+  publication_year: 2017
+  title: Railway applications — Specification and demonstration of reliability, availability, maintainability and
+    safety
+  classification:
+    knowledge_domains:
+    - functional-safety
+    - software-engineering
+    - risk-management
+    industry_sectors:
+    - railway
+  relations:
+  - type: sector-specialization-of
+    target: IEC61508
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 10
+  parts:
+  - part: '1'
+    key: EN50126-1
+    title: Specification and demonstration of reliability, availability, maintainability and safety — Part 1
+    source:
+      pdf: .atlas/standards/Railway/EN-50126-1.pdf
+  - part: '2'
+    key: EN50126-2
+    title: Specification and demonstration of reliability, availability, maintainability and safety — Part 2
+    source:
+      pdf: .atlas/standards/Railway/EN-50126-2.pdf
+  atlasdata:
+    path: data/EN50126
+    mode: existing
+- key: EN50128
+  name: EN 50128
+  organization: CENELEC
+  publication_year: 2011
+  title: Communication, signalling and processing systems — Software for railway control and protection systems
+  classification:
+    knowledge_domains:
+    - functional-safety
+    - software-engineering
+    - risk-management
+    industry_sectors:
+    - railway
+  relations:
+  - type: sector-specialization-of
+    target: IEC61508
+  - type: superseded-by
+    target: EN50716
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Railway/EN-50128.pdf
+  atlasdata:
+    path: data/EN50128
+    mode: existing
+  status:
+    normative_state: superseded
+    effective_from: 2011
+    effective_until: 2023
+    retained_for:
+    - historical-analysis
+    - migration-analysis
+    - requirement-traceability
+    - scope-comparison
+  scope:
+    sectors:
+    - railway
+    railway_domains:
+    - railway-control-and-protection-systems
+    lifecycle_areas:
+    - software-development
+    - software-assurance
+    note: Broader predecessor scope retained for historical, migration and traceability analysis.
+- key: EN50129
+  name: EN 50129
+  organization: CENELEC
+  publication_year: 2018
+  title: Safety related electronic systems for signalling
+  classification:
+    knowledge_domains:
+    - functional-safety
+    - software-engineering
+    - risk-management
+    industry_sectors:
+    - railway
+  relations:
+  - type: sector-specialization-of
+    target: IEC61508
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Railway/EN-50129.pdf
+  atlasdata:
+    path: data/EN50129
+    mode: existing
+- key: EN50657
+  name: EN 50657
+  organization: CENELEC
+  publication_year: 2017
+  title: Rolling stock applications — Software on board rolling stock
+  classification:
+    knowledge_domains:
+    - functional-safety
+    - software-engineering
+    - risk-management
+    industry_sectors:
+    - railway
+  relations:
+  - type: sector-specialization-of
+    target: IEC61508
+  - type: adapts
+    target: EN50128
+    note: Adapts EN 50128:2011 for application in the rolling-stock domain.
+  - type: specializes
+    target: EN50128
+    note: Narrows the application context to software on board rolling stock.
+  - type: superseded-by
+    target: EN50716
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Railway/EN-50657.pdf
+  atlasdata:
+    path: data/EN50657
+    mode: existing
+  status:
+    normative_state: superseded
+    effective_from: 2017
+    effective_until: 2023
+    retained_for:
+    - historical-analysis
+    - rolling-stock-migration-analysis
+    - requirement-traceability
+    - scope-comparison
+  scope:
+    sectors:
+    - railway
+    railway_domains:
+    - rolling-stock
+    lifecycle_areas:
+    - software-development
+    - software-assurance
+    note: Rolling-stock adaptation of EN 50128:2011 using the same structure and clause numbering.
+- key: EN50716
+  name: EN 50716
+  organization: CENELEC
+  publication_year: 2023
+  title: Requirements for software development
+  classification:
+    knowledge_domains:
+    - functional-safety
+    - software-engineering
+    - risk-management
+    industry_sectors:
+    - railway
+  relations:
+  - type: sector-specialization-of
+    target: IEC61508
+  - type: supersedes
+    target: EN50128
+  - type: supersedes
+    target: EN50657
+  - type: consolidates
+    target: EN50128
+  - type: consolidates
+    target: EN50657
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Railway/EN-50716.pdf
+  atlasdata:
+    path: data/EN50716
+    mode: existing
+  status:
+    normative_state: current
+    effective_from: 2023
+    retained_for: []
+  scope:
+    sectors:
+    - railway
+    railway_domains:
+    - railway-software-development
+    lifecycle_areas:
+    - software-development
+    - software-assurance
+    note: Current consolidated railway software-development standard; predecessor standards remain retained for
+      scope and migration analysis.
+- key: ISO26262
+  name: ISO 26262
+  organization: ISO
+  publication_year: 2018
+  title: Road vehicles — Functional safety
+  classification:
+    knowledge_domains:
+    - functional-safety
+    - software-engineering
+    - risk-management
+    industry_sectors:
+    - automotive
+  relations:
+  - type: sector-specialization-of
+    target: IEC61508
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 14
+  parts:
+  - part: '1'
+    key: ISO26262-1
+    title: Vocabulary
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-1-2018.pdf
+  - part: '2'
+    key: ISO26262-2
+    title: Management of functional safety
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-2-2018.pdf
+  - part: '3'
+    key: ISO26262-3
+    title: Concept phase
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-3-2018.pdf
+  - part: '4'
+    key: ISO26262-4
+    title: Product development at the system level
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-4-2018.pdf
+  - part: '5'
+    key: ISO26262-5
+    title: Product development at the hardware level
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-5-2018.pdf
+  - part: '6'
+    key: ISO26262-6
+    title: Product development at the software level
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-6-2018.pdf
+  - part: '8'
+    key: ISO26262-8
+    title: Supporting processes
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-8-2018.pdf
+  - part: '9'
+    key: ISO26262-9
+    title: ASIL-oriented and safety-oriented analyses
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-9-2018.pdf
+  - part: '10'
+    key: ISO26262-10
+    title: Guidelines on ISO 26262
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-10-2018.pdf
+  - part: '11'
+    key: ISO26262-11
+    title: Guidelines on application to semiconductors
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-11-2018.pdf
+  - part: '12'
+    key: ISO26262-12
+    title: Adaptation for motorcycles
+    source:
+      pdf: .atlas/standards/Automotive/ISO+26262-12-2018.pdf
+  atlasdata:
+    path: data/ISO26262
+    mode: existing
+- key: ISO21434
+  name: ISO/SAE 21434
+  organization: ISO/SAE
+  publication_year: 2021
+  title: Road vehicles — Cybersecurity engineering
+  classification:
+    knowledge_domains:
+    - cybersecurity
+    - risk-management
+    - software-engineering
+    industry_sectors:
+    - automotive
+  relations:
+  - type: complements
+    target: ISO26262
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Automotive/ISO+SAE+21434-2021.pdf
+- key: IEC11889
+  name: IEC 11889
+  organization: ISO/IEC
+  publication_year: 2015
+  title: Trusted Platform Module Library
+  classification:
+    knowledge_domains:
+    - cybersecurity
+    - trusted-computing
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 9
+  parts:
+  - part: '1'
+    key: IEC11889-1
+    title: Architecture
+    source:
+      pdf: .atlas/standards/Generic/IEC-11889-1_2015.pdf
+  - part: '2'
+    key: IEC11889-2
+    title: Structures
+    source:
+      pdf: .atlas/standards/Generic/IEC-11889-2_2015.pdf
+  atlasdata:
+    path: data/IEC11889
+    mode: existing
+- key: IEC29119-1
+  name: ISO/IEC/IEEE 29119-1
+  organization: ISO/IEC/IEEE
+  publication_year: 2022
+  title: Software and systems engineering — Software testing — General concepts
+  classification:
+    knowledge_domains:
+    - software-testing
+    - software-engineering
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Generic/IEC-29119-1_2022.pdf
+- key: IEC29100
+  name: ISO/IEC 29100
+  organization: ISO/IEC
+  publication_year: 2024
+  title: Privacy framework
+  classification:
+    knowledge_domains:
+    - privacy
+    - risk-management
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Generic/IEC-29100_2024.pdf
+- key: IEC27000
+  name: ISO/IEC 27000
+  organization: ISO/IEC
+  publication_year: 2018
+  title: Information security management systems — Overview and vocabulary
+  classification:
+    knowledge_domains:
+    - cybersecurity
+    - information-security
+    - risk-management
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Generic/IEC-27000_2018.pdf
+- key: IEC25000
+  name: ISO/IEC 25000
+  organization: ISO/IEC
+  publication_year: 2014
+  title: Systems and software Quality Requirements and Evaluation — Guide to SQuaRE
+  classification:
+    knowledge_domains:
+    - software-quality
+    - software-engineering
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Generic/IEC-25000_2014.pdf
+- key: IEC23360-4
+  name: ISO/IEC 23360-4
+  organization: ISO/IEC
+  publication_year: 2021
+  title: Linux Standard Base — Part 4
+  classification:
+    knowledge_domains:
+    - software-platforms
+    - software-engineering
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Generic/IEC-23360-4_2021.pdf
+- key: IEC22989
+  name: ISO/IEC 22989
+  organization: ISO/IEC
+  publication_year: 2022
+  title: Artificial intelligence — Concepts and terminology
+  classification:
+    knowledge_domains:
+    - artificial-intelligence
+    - terminology
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Generic/ISO_IEC 22989_2022 ed.1 - id.74296 Publication PDF (en).pdf
+- key: ISOIEC-DIRECTIVES-2
+  name: ISO/IEC Directives Part 2
+  organization: ISO/IEC
+  publication_year: null
+  title: Principles and rules for the structure and drafting of ISO and IEC documents
+  classification:
+    knowledge_domains:
+    - standardization
+    - technical-writing
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  source:
+    pdf: .atlas/standards/Generic/iso_iec_directives_part2.pdf
+- key: IEC21838
+  name: ISO/IEC 21838
+  organization: ISO/IEC
+  publication_year: 2021
+  title: Information technology — Top-level ontologies (TLO)
+  classification:
+    knowledge_domains:
+    - ontology
+    - knowledge-representation
+    industry_sectors:
+    - generic
+  relations: []
+  exports:
+    markdown: true
+    doorstop:
+      enabled: true
+      identifier:
+        width: 8
+  parts:
+  - part: '1'
+    key: IEC21838-1
+    title: Top-level ontologies — Requirements
+    source:
+      pdf: .atlas/standards/Generic/ISO_IEC_21838-1_2021-Character_PDF_document(en).pdf
+  - part: '2'
+    key: IEC21838-2
+    title: Top-level ontologies — Basic Formal Ontology
+    source:
+      pdf: .atlas/standards/Generic/ISO_IEC_21838-2_2021-Character_PDF_document(en).pdf
+profiles:
+- key: railway-functional-safety
+  name: Railway Functional Safety
+  families:
+  - EN50126
+  - EN50128
+  - EN50129
+  - EN50657
+  - EN50716
+  - IEC61508
+  knowledge_domains:
+  - functional-safety
+  industry_sectors:
+  - railway
+- key: automotive-functional-safety
+  name: Automotive Functional Safety
+  families:
+  - ISO26262
+  - ISO21434
+  - IEC61508
+  knowledge_domains:
+  - functional-safety
+  - cybersecurity
+  industry_sectors:
+  - automotive
+- key: generic-software-engineering
+  name: Generic Software Engineering
+  families:
+  - IEC29119-1
+  - IEC25000
+  - IEC23360-4
+  - ISOIEC-DIRECTIVES-2
+  knowledge_domains:
+  - software-engineering
+  industry_sectors:
+  - generic
+- key: security-and-privacy
+  name: Security and Privacy
+  families:
+  - ISO21434
+  - IEC11889
+  - IEC27000
+  - IEC29100
+  knowledge_domains:
+  - cybersecurity
+  - privacy
+  industry_sectors:
+  - generic
+lineages:
+- key: cenelec-railway-software-safety
+  name: CENELEC Railway Software Safety
+  members:
+  - EN50128
+  - EN50657
+  - EN50716
+  knowledge_domains:
+  - functional-safety
+  - software-engineering
+  - risk-management
+  industry_sectors:
+  - railway

@@ -11,6 +11,7 @@ import typer
 from standards_atlas import __version__
 from standards_atlas.adapters.alignment import AlignmentArtifactRepository
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
+from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.docling import (
     DoclingArtifactRepository,
     DoclingJsonReader,
@@ -27,7 +28,9 @@ from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRep
 from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
-from standards_atlas.application.model import AlignmentOptions
+from standards_atlas.application.catalog import parse_page_list
+from standards_atlas.application.model import AlignmentOptions, NormalizationOptions
+from standards_atlas.application.workflow import EndToEndWorkflowService
 from standards_atlas.application.normalization import NormalizationDataLossError
 from standards_atlas.application.services import (
     AlignmentReviewService,
@@ -112,6 +115,90 @@ document_app.add_typer(
     document_export_app,
     name="export",
 )
+
+catalog_app = typer.Typer(
+    help="Validate and inspect standard catalogs.",
+    no_args_is_help=True,
+)
+app.add_typer(catalog_app, name="catalog")
+
+workflow_app = typer.Typer(
+    help="Plan and run catalog-driven end-to-end workflows.",
+    no_args_is_help=True,
+)
+app.add_typer(workflow_app, name="workflow")
+
+
+@catalog_app.command("validate")
+def validate_catalog(
+    catalog: Annotated[Path, typer.Argument(help="YAML standard catalog.")],
+) -> None:
+    model = YamlStandardCatalogReader().read(catalog)
+    typer.echo(f"Catalog version        : {model.version}")
+    typer.echo(f"Knowledge domains      : {len(model.knowledge_domains)}")
+    typer.echo(f"Industry sectors       : {len(model.industry_sectors)}")
+    typer.echo(f"Standard families      : {len(model.families)}")
+    typer.echo(f"Profiles               : {len(model.profiles)}")
+
+
+@workflow_app.command("plan")
+def plan_workflow(
+    catalog: Annotated[Path, typer.Option("--catalog", help="YAML standard catalog.")],
+    family: Annotated[list[str], typer.Option("--family", help="Family key; repeat as needed.")] = [],
+    profile: Annotated[str | None, typer.Option("--profile", help="Catalog profile key.")] = None,
+    all_families: Annotated[bool, typer.Option("--all", help="Plan all catalog families.")] = False,
+    force: Annotated[bool, typer.Option("--force", help="Plan regeneration using only supported replacement options.")] = False,
+) -> None:
+    model = YamlStandardCatalogReader().read(catalog)
+    keys = _select_catalog_families(model, tuple(family), profile, all_families)
+    plan = EndToEndWorkflowService().plan(
+        model, family_keys=keys, catalog_root=Path.cwd(), force=force
+    )
+    for step in plan.steps:
+        gate = " [manual review gate]" if step.manual_gate else ""
+        typer.echo(f"{step.family:20} {step.stage.value:12} {' '.join(step.command)}{gate}")
+
+
+@workflow_app.command("run")
+def run_workflow(
+    catalog: Annotated[Path, typer.Option("--catalog", help="YAML standard catalog.")],
+    family: Annotated[list[str], typer.Option("--family", help="Family key; repeat as needed.")] = [],
+    profile: Annotated[str | None, typer.Option("--profile", help="Catalog profile key.")] = None,
+    all_families: Annotated[bool, typer.Option("--all", help="Run all catalog families.")] = False,
+    continue_after_review: Annotated[bool, typer.Option("--continue-after-review", help="Continue only when reviewed alignments already exist.")] = False,
+    force: Annotated[bool, typer.Option("--force", help="Regenerate reproducible artifacts using supported replacement options.")] = False,
+) -> None:
+    model = YamlStandardCatalogReader().read(catalog)
+    keys = _select_catalog_families(model, tuple(family), profile, all_families)
+    plan = EndToEndWorkflowService().plan(
+        model, family_keys=keys, catalog_root=Path.cwd(), force=force
+    )
+    result = EndToEndWorkflowService().execute(
+        plan, project_root=Path.cwd(), continue_after_review=continue_after_review
+    )
+    if result.completed:
+        typer.echo(f"Workflow completed      : {len(result.executed_steps)} steps")
+        return
+
+    typer.echo(f"Workflow paused         : {len(result.executed_steps)} steps executed")
+    if result.blocked_documents:
+        typer.echo("Review required for     : " + ", ".join(result.blocked_documents))
+    if result.blocked_families:
+        typer.echo("AtlasData review for    : " + ", ".join(result.blocked_families))
+    typer.echo("Continue after completing the reviews with --continue-after-review.")
+
+
+def _select_catalog_families(model, families: tuple[str, ...], profile: str | None, all_families: bool) -> tuple[str, ...]:
+    selected = sum((bool(families), profile is not None, all_families))
+    if selected != 1:
+        raise typer.BadParameter("select exactly one of --family, --profile, or --all")
+    if families:
+        for key in families:
+            model.family(key)
+        return families
+    if profile is not None:
+        return model.profile(profile).families
+    return tuple(family.key for family in model.families)
 
 
 @app.callback()
@@ -731,6 +818,20 @@ def inspect_docling_document(
         typer.echo(f"Unknown labels        : {', '.join(statistics.unknown_labels)}")
 
 
+def _parse_page_range(value: str) -> tuple[int, int | None]:
+    try:
+        start_text, end_text = value.split(":", maxsplit=1)
+        start = int(start_text)
+        end = int(end_text) if end_text else None
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid page range {value!r}; expected START:END or START:"
+        ) from exc
+    if start < 1 or (end is not None and end < start):
+        raise ValueError(f"Invalid page range {value!r}")
+    return start, end
+
+
 @normalize_app.command("run")
 def normalize_extracted_document(
     document_key: Annotated[str, typer.Argument(help="Key of a persisted Docling document.")],
@@ -740,6 +841,27 @@ def normalize_extracted_document(
     overwrite: Annotated[
         bool, typer.Option("--overwrite", help="Replace an existing normalized document.")
     ] = False,
+    page_range: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--page-range",
+            help="Inclusive positive one-based page range START:END; repeat for multiple ranges.",
+        ),
+    ] = None,
+    exclude_page_range: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--exclude-page-range",
+            help="Inclusive one-based page range to exclude; repeat for multiple ranges.",
+        ),
+    ] = None,
+    page_list: Annotated[
+        str | None,
+        typer.Option(
+            "--page-list",
+            help="Positive comma-separated pages and ranges, for example 1,3,5,11-13,15.",
+        ),
+    ] = None,
 ) -> None:
     """Normalize an extracted document and persist the result below .atlas."""
     repository = NormalizationArtifactRepository(workspace)
@@ -748,7 +870,19 @@ def normalize_extracted_document(
         typer.echo("A normalized document already exists. Use --overwrite to replace it.", err=True)
         raise typer.Exit(code=3)
     try:
-        result = DocumentNormalizationService(workspace=workspace).normalize(document_key)
+        page_ranges = tuple(_parse_page_range(value) for value in (page_range or ()))
+        excluded_ranges = tuple(
+            _parse_page_range(value) for value in (exclude_page_range or ())
+        )
+        selected_pages = parse_page_list(page_list) if page_list else ()
+        result = DocumentNormalizationService(workspace=workspace).normalize(
+            document_key,
+            options=NormalizationOptions(
+                page_ranges=page_ranges,
+                exclude_page_ranges=excluded_ranges,
+                page_list=selected_pages,
+            ),
+        )
     except (NormalizationDataLossError, OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -767,6 +901,28 @@ def normalize_extracted_document(
     typer.echo(f"Suppressed source items     : {stats.suppressed_source_items}")
     typer.echo(f"Unaccounted source items    : {stats.unaccounted_source_items}")
     typer.echo(f"Duplicate source items      : {stats.duplicate_source_items}")
+    typer.echo(f"Source pages                : {stats.source_pages}")
+    options = result.metadata.options
+    if options.page_ranges:
+        rendered_ranges = ", ".join(
+            f"{start}-{end if end is not None else 'end'}"
+            for start, end in options.page_ranges
+        )
+        typer.echo(f"Selected page ranges        : {rendered_ranges}")
+    if options.page_list:
+        typer.echo(
+            "Selected page list          : "
+            + ",".join(str(page) for page in options.page_list)
+        )
+    if options.exclude_page_ranges:
+        rendered_exclusions = ", ".join(
+            f"{start}-{end if end is not None else 'end'}"
+            for start, end in options.exclude_page_ranges
+        )
+        typer.echo(f"Excluded page ranges        : {rendered_exclusions}")
+    if options.page_ranges or options.page_list or options.exclude_page_ranges:
+        typer.echo(f"Pages included              : {stats.selected_pages}")
+        typer.echo(f"Pages excluded              : {stats.excluded_pages}")
     typer.echo(f"Normalized document         : {target}")
 
 

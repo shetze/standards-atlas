@@ -191,7 +191,7 @@ def test_generates_multi_part_atlasdata_with_explicit_part_context(tmp_path: Pat
         year=2015,
     )
 
-    assert [part.part for part in result.parts] == [1, 2]
+    assert [part.part for part in result.parts] == ['1', '2']
     text = output.read_text(encoding="utf-8")
     assert '"2015 1-s1 1-2:A 1-2:A.1"' in text
     assert '"2015 2-s1 2-2 2-3:A 2-3:A.1"' in text
