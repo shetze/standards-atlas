@@ -220,17 +220,38 @@ def test_iec61508_normalization_uses_catalog_page_selection() -> None:
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("IEC61508",), catalog_root=Path.cwd()
     )
-    normalize_steps = [step for step in plan.steps if step.stage == WorkflowStage.NORMALIZE]
-    assert normalize_steps
-    assert all("--page-range" in step.command or "--page-list" in step.command for step in normalize_steps)
-    assert all("1:" in step.command or "1" in step.command for step in normalize_steps)
+    normalize_steps = {
+        step.document: step.command
+        for step in plan.steps
+        if step.stage == WorkflowStage.NORMALIZE
+    }
+
+    assert normalize_steps["IEC61508-0"][-2:] == (
+        "--page-list",
+        "7,9,11,13,15,17,19,21,23,25,27,29,31,33,35",
+    )
+    assert normalize_steps["IEC61508-1"][-2:] == ("--page-range", "1:63")
+    assert normalize_steps["IEC61508-2"][-2:] == ("--page-range", "1:91")
+    assert normalize_steps["IEC61508-3"][-2:] == ("--page-range", "1:113")
+    assert normalize_steps["IEC61508-3-1"][-2:] == ("--page-range", "8:12")
+    assert normalize_steps["IEC61508-4"][-2:] == ("--page-range", "1:34")
+    assert normalize_steps["IEC61508-5"][-2:] == ("--page-range", "1:48")
+    assert normalize_steps["IEC61508-6"][-2:] == ("--page-range", "1:113")
+    assert normalize_steps["IEC61508-7"][-2:] == ("--page-range", "1:138")
 
 
 def test_catalog_source_paths_are_below_workspace_standards() -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
     for family in catalog.families:
-        sources = [family.source] if family.source is not None else [part.source for part in family.parts]
-        assert all(str(source.pdf).startswith(".atlas/standards/") for source in sources)
+        sources = (
+            [family.source]
+            if family.source is not None
+            else [part.source for part in family.parts]
+        )
+        assert all(
+            str(source.pdf).startswith(".atlas/standards/")
+            for source in sources
+        )
 
 
 def test_content_selection_emits_page_list_and_exclusions() -> None:

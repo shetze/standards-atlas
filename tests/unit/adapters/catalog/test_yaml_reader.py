@@ -6,10 +6,15 @@ from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 def test_reads_project_catalog() -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
     assert len(catalog.families) == 17
-    assert sum(
-        1 if family.source else len(family.parts) + sum(len(part.supplements) for part in family.parts)
-        for family in catalog.families
-    ) == 38
+    assert (
+        sum(
+            1
+            if family.source
+            else len(family.parts) + sum(len(part.supplements) for part in family.parts)
+            for family in catalog.families
+        )
+        == 38
+    )
     assert catalog.family("ISO26262").classification.industry_sectors == ("automotive",)
     assert catalog.profile("railway-functional-safety").families[-1] == "IEC61508"
 

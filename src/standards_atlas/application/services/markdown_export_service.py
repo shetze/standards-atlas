@@ -93,8 +93,7 @@ def _split_document(
 
 def _natural_key(value: str) -> tuple[object, ...]:
     return tuple(
-        int(part) if part.isdigit() else part.lower()
-        for part in re.split(r"(\d+)", value)
+        int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", value)
     )
 
 

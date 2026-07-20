@@ -27,9 +27,7 @@ from standards_atlas.application.model.normalized_document import (
 )
 
 _ANCHOR = re.compile(r"^<!-- atlas:item=(?P<item_id>.+?) -->$")
-_ACTIVE_HEADING_WITH_DASH = re.compile(
-    r"^(?P<hashes>#+)\s+(?P<label>.+?)\s+-\s*(?P<trailing>.*)$"
-)
+_ACTIVE_HEADING_WITH_DASH = re.compile(r"^(?P<hashes>#+)\s+(?P<label>.+?)\s+-\s*(?P<trailing>.*)$")
 _ACTIVE_HEADING = re.compile(r"^(?P<hashes>#+)\s+(?P<label>.+?)\s*$")
 _INACTIVE_MARKER = re.compile(r"^(?P<label>.+?)\s+-\s*(?P<trailing>.*)$")
 _REFERENCE = re.compile(
@@ -63,11 +61,7 @@ class FullDocumentReviewRenderer:
                 continue
             clause = alignment_by_sequence.get(item.sequence_number)
             if clause is not None and clause.status is AlignmentStatus.LOW_CONFIDENCE:
-                confidence = (
-                    "unknown"
-                    if clause.confidence is None
-                    else f"{clause.confidence:.2f}"
-                )
+                confidence = "unknown" if clause.confidence is None else f"{clause.confidence:.2f}"
                 lines.append(
                     "<!-- atlas:alignment-confidence=low "
                     f"reference={clause.expected_reference} confidence={confidence} -->"

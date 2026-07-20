@@ -7,7 +7,6 @@ from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.application.workflow import EndToEndWorkflowService
 from standards_atlas.cli.main import app
 
-
 _COMMAND_DEPTHS = {
     ("docling", "convert"): 2,
     ("atlasdata", "onboard-docling"): 2,
@@ -62,7 +61,7 @@ def test_workflow_options_exist_on_the_real_cli() -> None:
                 assert result.exit_code == 0, result.output
                 help_by_path[path] = result.output
             generated_options = {
-                token for token in step.command[3 + len(path):] if token.startswith("-")
+                token for token in step.command[3 + len(path) :] if token.startswith("-")
             }
             for option in generated_options:
                 assert option in help_by_path[path], (

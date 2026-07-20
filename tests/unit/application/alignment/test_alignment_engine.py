@@ -297,7 +297,6 @@ def test_missing_clause_recovers_bounded_lower_confidence_candidate() -> None:
     assert any(issue.code == "LOW_CONFIDENCE_REFERENCE" for issue in issues)
 
 
-
 def test_recovers_unique_reference_from_normalized_text_when_candidate_is_missing():
     result = AlignmentEngine().align(
         normalized(

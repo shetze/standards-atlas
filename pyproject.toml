@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "standards-atlas"
-version = "0.5.0"
+version = "0.6.0"
 description = "A semantic traceability platform for technical standards."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13,<3.14"
 license = { text = "Apache-2.0" }
 
 authors = [
@@ -73,7 +73,7 @@ standards-atlas = "standards_atlas.cli:app"
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = [
@@ -97,7 +97,7 @@ markers = [
 ]
 
 [tool.mypy]
-python_version = "3.14.6"
+python_version = "3.13"
 strict = false
 warn_unused_configs = true
 

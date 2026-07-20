@@ -30,16 +30,15 @@ from standards_atlas.adapters.normalization import NormalizationArtifactReposito
 from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.catalog import parse_page_list
 from standards_atlas.application.model import AlignmentOptions, NormalizationOptions
-from standards_atlas.application.workflow import EndToEndWorkflowService
 from standards_atlas.application.normalization import NormalizationDataLossError
 from standards_atlas.application.services import (
     AlignmentReviewService,
+    AlignmentService,
     AtlasDataOnboardingError,
     AtlasDataOnboardingService,
-    DoclingPartSource,
-    AlignmentService,
     ContentEnrichmentError,
     ContentEnrichmentService,
+    DoclingPartSource,
     DocumentExportService,
     DocumentExtractionService,
     DocumentImportService,
@@ -47,10 +46,11 @@ from standards_atlas.application.services import (
     DocumentSelectionError,
     DocumentSelectionService,
     ExtractionInspectionService,
-    ReferenceCandidateService,
     MarkdownExportService,
+    ReferenceCandidateService,
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
+from standards_atlas.application.workflow import EndToEndWorkflowService
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
 
@@ -144,13 +144,20 @@ def validate_catalog(
 @workflow_app.command("plan")
 def plan_workflow(
     catalog: Annotated[Path, typer.Option("--catalog", help="YAML standard catalog.")],
-    family: Annotated[list[str], typer.Option("--family", help="Family key; repeat as needed.")] = [],
+    family: Annotated[
+        list[str] | None, typer.Option("--family", help="Family key; repeat as needed.")
+    ] = None,
     profile: Annotated[str | None, typer.Option("--profile", help="Catalog profile key.")] = None,
     all_families: Annotated[bool, typer.Option("--all", help="Plan all catalog families.")] = False,
-    force: Annotated[bool, typer.Option("--force", help="Plan regeneration using only supported replacement options.")] = False,
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force", help="Plan regeneration using only supported replacement options."
+        ),
+    ] = False,
 ) -> None:
     model = YamlStandardCatalogReader().read(catalog)
-    keys = _select_catalog_families(model, tuple(family), profile, all_families)
+    keys = _select_catalog_families(model, tuple(family or ()), profile, all_families)
     plan = EndToEndWorkflowService().plan(
         model, family_keys=keys, catalog_root=Path.cwd(), force=force
     )
@@ -162,14 +169,28 @@ def plan_workflow(
 @workflow_app.command("run")
 def run_workflow(
     catalog: Annotated[Path, typer.Option("--catalog", help="YAML standard catalog.")],
-    family: Annotated[list[str], typer.Option("--family", help="Family key; repeat as needed.")] = [],
+    family: Annotated[
+        list[str] | None, typer.Option("--family", help="Family key; repeat as needed.")
+    ] = None,
     profile: Annotated[str | None, typer.Option("--profile", help="Catalog profile key.")] = None,
     all_families: Annotated[bool, typer.Option("--all", help="Run all catalog families.")] = False,
-    continue_after_review: Annotated[bool, typer.Option("--continue-after-review", help="Continue only when reviewed alignments already exist.")] = False,
-    force: Annotated[bool, typer.Option("--force", help="Regenerate reproducible artifacts using supported replacement options.")] = False,
+    continue_after_review: Annotated[
+        bool,
+        typer.Option(
+            "--continue-after-review",
+            help="Continue only when reviewed alignments already exist.",
+        ),
+    ] = False,
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            help="Regenerate reproducible artifacts using supported replacement options.",
+        ),
+    ] = False,
 ) -> None:
     model = YamlStandardCatalogReader().read(catalog)
-    keys = _select_catalog_families(model, tuple(family), profile, all_families)
+    keys = _select_catalog_families(model, tuple(family or ()), profile, all_families)
     plan = EndToEndWorkflowService().plan(
         model, family_keys=keys, catalog_root=Path.cwd(), force=force
     )
@@ -188,7 +209,12 @@ def run_workflow(
     typer.echo("Continue after completing the reviews with --continue-after-review.")
 
 
-def _select_catalog_families(model, families: tuple[str, ...], profile: str | None, all_families: bool) -> tuple[str, ...]:
+def _select_catalog_families(
+    model,
+    families: tuple[str, ...],
+    profile: str | None,
+    all_families: bool,
+) -> tuple[str, ...]:
     selected = sum((bool(families), profile is not None, all_families))
     if selected != 1:
         raise typer.BadParameter("select exactly one of --family, --profile, or --all")
@@ -346,7 +372,13 @@ def onboard_docling_parts(
 
     term_count = sum(clause.type_marker == "t" for clause in result.clauses)
     annex_count = sum(
-        len({clause.reference.split(".")[0] for clause in part.clauses if clause.reference[0].isalpha()})
+        len(
+            {
+                clause.reference.split(".")[0]
+                for clause in part.clauses
+                if clause.reference[0].isalpha()
+            }
+        )
         for part in result.parts
     )
     typer.echo(f"Standard              : {result.standard_name}")

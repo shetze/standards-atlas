@@ -17,7 +17,9 @@ def test_part_source_accepts_supplement_identifier() -> None:
     assert source.part == "3-1"
 
 
-def test_single_part_onboarding_does_not_validate_synthetic_part_against_year(tmp_path: Path) -> None:
+def test_single_part_onboarding_does_not_validate_synthetic_part_against_year(
+    tmp_path: Path,
+) -> None:
     source = tmp_path / "document.json"
     source.write_text(
         json.dumps(
@@ -25,7 +27,12 @@ def test_single_part_onboarding_does_not_validate_synthetic_part_against_year(tm
                 "name": "ISO+SAE+21434-2021.pdf",
                 "origin": {"filename": "ISO+SAE+21434-2021.pdf"},
                 "texts": [
-                    {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope", "prov": [{"page_no": 1}]}
+                    {
+                        "self_ref": "#/texts/0",
+                        "label": "section_header",
+                        "text": "1 Scope",
+                        "prov": [{"page_no": 1}],
+                    }
                 ],
             }
         ),
@@ -48,7 +55,12 @@ def test_multi_part_metadata_keeps_compound_part_identity(tmp_path: Path) -> Non
                 "name": "IEC61508-3-1",
                 "origin": {"filename": "iec61508-3-1{ed1.0}en.pdf"},
                 "texts": [
-                    {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope", "prov": [{"page_no": 1}]}
+                    {
+                        "self_ref": "#/texts/0",
+                        "label": "section_header",
+                        "text": "1 Scope",
+                        "prov": [{"page_no": 1}],
+                    }
                 ],
             }
         ),

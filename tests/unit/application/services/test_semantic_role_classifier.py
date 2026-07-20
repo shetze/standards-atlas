@@ -78,17 +78,13 @@ class _Extension:
 
 def test_optional_extension_is_used_only_for_low_confidence_results() -> None:
     classifier = SemanticRoleClassifier(_Extension(), fallback_threshold=0.8)
-    result = classifier.classify(
-        SemanticRoleContext(reference="5.1", heading="General")
-    )
+    result = classifier.classify(SemanticRoleContext(reference="5.1", heading="General"))
     assert result.classifier == "llm"
     assert result.roles == (SemanticRole.REQUIREMENTS,)
 
 
 def test_optional_extension_does_not_replace_exact_result() -> None:
     classifier = SemanticRoleClassifier(_Extension(), fallback_threshold=0.8)
-    result = classifier.classify(
-        SemanticRoleContext(reference="5.1.2", heading="Requirements")
-    )
+    result = classifier.classify(SemanticRoleContext(reference="5.1.2", heading="Requirements"))
     assert result.classifier == "deterministic"
     assert result.confidence == 1.0

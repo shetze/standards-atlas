@@ -169,7 +169,5 @@ def test_service_orders_expanded_subclauses_by_physical_reference(tmp_path):
 
     alignment = AlignmentService(workspace).run("SAMPLE")
 
-    assert [item.expected_reference for item in alignment.clauses] == [
-        "1", "1.1", "1.2", "2", "3"
-    ]
+    assert [item.expected_reference for item in alignment.clauses] == ["1", "1.1", "1.2", "2", "3"]
     assert alignment.metadata.statistics.missing == 0

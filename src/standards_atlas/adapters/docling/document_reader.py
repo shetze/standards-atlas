@@ -151,7 +151,6 @@ def _ordered_items(
     yield from _merge_orphaned_items(body_items, orphaned_items)
 
 
-
 def _repair_misordered_annex_headings(
     body_items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -232,8 +231,7 @@ def _repair_misordered_clause_headings(
             preceding_index
             for preceding_index in range(index)
             if _clause_reference_key(result[preceding_index]) is not None
-            and (_layout_key(result[preceding_index]) or (-1, 0.0, 0.0))[0]
-            == candidate_layout[0]
+            and (_layout_key(result[preceding_index]) or (-1, 0.0, 0.0))[0] == candidate_layout[0]
         ]
         if not preceding_heading_indexes:
             index += 1

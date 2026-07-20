@@ -1,7 +1,7 @@
 """Orchestrate clause-reference candidate detection."""
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository

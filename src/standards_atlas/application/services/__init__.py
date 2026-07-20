@@ -1,5 +1,7 @@
 """Application services."""
 
+from standards_atlas.application.services.alignment_review_service import AlignmentReviewService
+from standards_atlas.application.services.alignment_service import AlignmentService
 from standards_atlas.application.services.atlasdata_onboarding_service import (
     AtlasDataOnboardingError,
     AtlasDataOnboardingResult,
@@ -8,14 +10,6 @@ from standards_atlas.application.services.atlasdata_onboarding_service import (
     DiscoveredPart,
     DoclingPartSource,
 )
-from standards_atlas.application.services.semantic_role_classifier import (
-    SemanticRoleClassification,
-    SemanticRoleClassifier,
-    SemanticRoleContext,
-    SemanticRoleEvidence,
-)
-from standards_atlas.application.services.alignment_review_service import AlignmentReviewService
-from standards_atlas.application.services.alignment_service import AlignmentService
 from standards_atlas.application.services.content_enrichment_service import (
     ContentEnrichmentError,
     ContentEnrichmentResult,
@@ -31,12 +25,12 @@ from standards_atlas.application.services.document_extraction_service import (
 from standards_atlas.application.services.document_import_service import (
     DocumentImportService,
 )
+from standards_atlas.application.services.document_normalization_service import (
+    DocumentNormalizationService,
+)
 from standards_atlas.application.services.document_selection_service import (
     DocumentSelectionError,
     DocumentSelectionService,
-)
-from standards_atlas.application.services.document_normalization_service import (
-    DocumentNormalizationService,
 )
 from standards_atlas.application.services.document_transformation_service import (
     DocumentTransformationService,
@@ -45,12 +39,18 @@ from standards_atlas.application.services.extraction_inspection_service import (
     ExtractionInspectionService,
     ExtractionStatistics,
 )
-from standards_atlas.application.services.reference_candidate_service import (
-    ReferenceCandidateService,
-)
 from standards_atlas.application.services.markdown_export_service import (
     MarkdownExportResult,
     MarkdownExportService,
+)
+from standards_atlas.application.services.reference_candidate_service import (
+    ReferenceCandidateService,
+)
+from standards_atlas.application.services.semantic_role_classifier import (
+    SemanticRoleClassification,
+    SemanticRoleClassifier,
+    SemanticRoleContext,
+    SemanticRoleEvidence,
 )
 
 __all__ = [

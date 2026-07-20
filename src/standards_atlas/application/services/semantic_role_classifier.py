@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 from standards_atlas.domain.model.semantic_role import SemanticRole
 
@@ -126,10 +127,7 @@ class SemanticRoleClassifier:
 
     def classify(self, context: SemanticRoleContext) -> SemanticRoleClassification:
         deterministic = self.classify_deterministically(context)
-        if (
-            self._extension is None
-            or deterministic.confidence >= self._fallback_threshold
-        ):
+        if self._extension is None or deterministic.confidence >= self._fallback_threshold:
             return deterministic
 
         extended = self._extension.classify(context)
@@ -161,9 +159,7 @@ class SemanticRoleClassifier:
         if _is_annex_heading(heading) or _is_annex_reference(context.reference):
             evidence = [SemanticRoleEvidence("annex_reference", context.reference, 1.0)]
             if context.annex_status:
-                evidence.append(
-                    SemanticRoleEvidence("annex_status", context.annex_status, 1.0)
-                )
+                evidence.append(SemanticRoleEvidence("annex_status", context.annex_status, 1.0))
             return SemanticRoleClassification(
                 roles=(SemanticRole.ANNEX,),
                 confidence=1.0,
@@ -175,21 +171,16 @@ class SemanticRoleClassifier:
                 return SemanticRoleClassification(
                     roles=(rule.role,),
                     confidence=rule.confidence,
-                    evidence=(
-                        SemanticRoleEvidence("heading_exact", heading, rule.confidence),
-                    ),
+                    evidence=(SemanticRoleEvidence("heading_exact", heading, rule.confidence),),
                 )
 
-        roles = _ordered_unique(
-            role for role, pattern in _TOKEN_ROLES if pattern.search(heading)
-        )
+        roles = _ordered_unique(role for role, pattern in _TOKEN_ROLES if pattern.search(heading))
         if roles:
             return SemanticRoleClassification(
                 roles=roles,
                 confidence=0.86,
                 evidence=tuple(
-                    SemanticRoleEvidence("heading_token", role.value, 0.86)
-                    for role in roles
+                    SemanticRoleEvidence("heading_token", role.value, 0.86) for role in roles
                 ),
             )
 

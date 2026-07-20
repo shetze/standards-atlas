@@ -30,8 +30,8 @@ from standards_atlas.application.model.normalized_document import (
 )
 from standards_atlas.domain.model import (
     Clause,
-    ContentBlock,
     CodeBlock,
+    ContentBlock,
     DocumentKey,
     EngineeringDocument,
     FormulaBlock,
@@ -164,9 +164,7 @@ class ContentEnrichmentService:
             )
         clause_ids = {clause.id.value for clause in document.clauses}
         unknown = [
-            entry.clause_id
-            for entry in alignment.clauses
-            if entry.clause_id not in clause_ids
+            entry.clause_id for entry in alignment.clauses if entry.clause_id not in clause_ids
         ]
         if unknown:
             raise ContentEnrichmentError(

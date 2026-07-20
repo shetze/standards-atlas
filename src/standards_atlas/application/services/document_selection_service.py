@@ -87,4 +87,3 @@ class DocumentSelectionService:
             )
         self._documents.save(derived)
         return derived
-

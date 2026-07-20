@@ -170,17 +170,13 @@ class DoorstopIdentifierDefinition(BaseModel):
 class DoorstopExportDefinition(BaseModel):
     model_config = ConfigDict(frozen=True)
     enabled: bool = True
-    identifier: DoorstopIdentifierDefinition = Field(
-        default_factory=DoorstopIdentifierDefinition
-    )
+    identifier: DoorstopIdentifierDefinition = Field(default_factory=DoorstopIdentifierDefinition)
 
 
 class ExportDefinition(BaseModel):
     model_config = ConfigDict(frozen=True)
     markdown: bool = True
-    doorstop: DoorstopExportDefinition = Field(
-        default_factory=DoorstopExportDefinition
-    )
+    doorstop: DoorstopExportDefinition = Field(default_factory=DoorstopExportDefinition)
 
 
 class DocumentType(StrEnum):
@@ -268,9 +264,7 @@ class StandardCatalog(BaseModel):
         for family in self.families:
             document_keys.update(part.key for part in family.parts)
             document_keys.update(
-                supplement.key
-                for part in family.parts
-                for supplement in part.supplements
+                supplement.key for part in family.parts for supplement in part.supplements
             )
         expected_count = len(self.families) + sum(
             len(family.parts) + sum(len(part.supplements) for part in family.parts)
@@ -282,7 +276,9 @@ class StandardCatalog(BaseModel):
             unknown_domains = set(family.classification.knowledge_domains) - domains
             unknown_sectors = set(family.classification.industry_sectors) - sectors
             if unknown_domains or unknown_sectors:
-                raise ValueError(f"unknown classification on {family.key}: {unknown_domains | unknown_sectors}")
+                raise ValueError(
+                    f"unknown classification on {family.key}: {unknown_domains | unknown_sectors}"
+                )
             relations = list(family.relations)
             for part in family.parts:
                 for supplement in part.supplements:
@@ -309,9 +305,7 @@ class StandardCatalog(BaseModel):
             unknown_domains = set(lineage.knowledge_domains) - domains
             unknown_sectors = set(lineage.industry_sectors) - sectors
             if unknown_members:
-                raise ValueError(
-                    f"unknown lineage members on {lineage.key}: {unknown_members}"
-                )
+                raise ValueError(f"unknown lineage members on {lineage.key}: {unknown_members}")
             if unknown_domains or unknown_sectors:
                 raise ValueError(
                     f"unknown lineage classification on {lineage.key}: "

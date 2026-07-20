@@ -475,43 +475,114 @@ def test_reader_repairs_complete_but_misordered_annex_heading_block(
                 "self_ref": "#/texts/1253",
                 "label": "section_header",
                 "text": "D.1 General",
-                "prov": [{"page_no": 76, "bbox": {"l": 70, "t": 665, "r": 150, "b": 655, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 76,
+                        "bbox": {
+                            "l": 70,
+                            "t": 665,
+                            "r": 150,
+                            "b": 655,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/1254",
                 "label": "text",
                 "text": "D.1 body",
-                "prov": [{"page_no": 76, "bbox": {"l": 70, "t": 638, "r": 520, "b": 595, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 76,
+                        "bbox": {
+                            "l": 70,
+                            "t": 638,
+                            "r": 520,
+                            "b": 595,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/1255",
                 "label": "section_header",
                 "text": "D.2 Contents",
-                "prov": [{"page_no": 76, "bbox": {"l": 70, "t": 572, "r": 160, "b": 562, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 76,
+                        "bbox": {
+                            "l": 70,
+                            "t": 572,
+                            "r": 160,
+                            "b": 562,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/1272",
                 "label": "section_header",
                 "text": "Annex D",
-                "prov": [{"page_no": 76, "bbox": {"l": 270, "t": 754, "r": 329, "b": 744, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 76,
+                        "bbox": {
+                            "l": 270,
+                            "t": 754,
+                            "r": 329,
+                            "b": 744,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/1273",
                 "label": "text",
                 "text": "(normative)",
-                "prov": [{"page_no": 76, "bbox": {"l": 265, "t": 741, "r": 330, "b": 730, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 76,
+                        "bbox": {
+                            "l": 265,
+                            "t": 741,
+                            "r": 330,
+                            "b": 730,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/1274",
                 "label": "section_header",
                 "text": "Safety manual for compliant items",
-                "prov": [{"page_no": 76, "bbox": {"l": 193, "t": 713, "r": 405, "b": 702, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 76,
+                        "bbox": {
+                            "l": 193,
+                            "t": 713,
+                            "r": 405,
+                            "b": 702,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/1275",
                 "label": "page_footer",
                 "text": "footer",
-                "prov": [{"page_no": 76, "bbox": {"l": 18, "t": 17, "r": 577, "b": 10, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 76,
+                        "bbox": {"l": 18, "t": 17, "r": 577, "b": 10, "coord_origin": "BOTTOMLEFT"},
+                    }
+                ],
             },
         ],
         "body": {
@@ -555,13 +626,35 @@ def test_reader_does_not_move_annex_heading_without_preceding_child_clause(
                 "self_ref": "#/texts/0",
                 "label": "section_header",
                 "text": "Annex D",
-                "prov": [{"page_no": 1, "bbox": {"l": 270, "t": 754, "r": 329, "b": 744, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 1,
+                        "bbox": {
+                            "l": 270,
+                            "t": 754,
+                            "r": 329,
+                            "b": 744,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/1",
                 "label": "section_header",
                 "text": "D.1 General",
-                "prov": [{"page_no": 1, "bbox": {"l": 70, "t": 665, "r": 150, "b": 655, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 1,
+                        "bbox": {
+                            "l": 70,
+                            "t": 665,
+                            "r": 150,
+                            "b": 655,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
         ],
         "body": {"children": [{"$ref": "#/texts/0"}, {"$ref": "#/texts/1"}]},
@@ -584,37 +677,103 @@ def test_reader_repairs_misordered_numbered_clause_heading(tmp_path: Path) -> No
                 "self_ref": "#/texts/2377",
                 "label": "section_header",
                 "text": "D.2.1.2 Results",
-                "prov": [{"page_no": 110, "bbox": {"l": 70, "t": 590, "r": 170, "b": 581, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 110,
+                        "bbox": {
+                            "l": 70,
+                            "t": 590,
+                            "r": 170,
+                            "b": 581,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/2379",
                 "label": "formula",
                 "text": "formula",
-                "prov": [{"page_no": 110, "bbox": {"l": 221, "t": 548, "r": 410, "b": 521, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 110,
+                        "bbox": {
+                            "l": 221,
+                            "t": 548,
+                            "r": 410,
+                            "b": 521,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/2381",
                 "label": "text",
                 "text": "Example result text",
-                "prov": [{"page_no": 110, "bbox": {"l": 70, "t": 360, "r": 527, "b": 328, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 110,
+                        "bbox": {
+                            "l": 70,
+                            "t": 360,
+                            "r": 527,
+                            "b": 328,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/2382",
                 "label": "section_header",
                 "text": "D.2.2 Testing of an input space",
-                "prov": [{"page_no": 110, "bbox": {"l": 70, "t": 311, "r": 487, "b": 302, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 110,
+                        "bbox": {
+                            "l": 70,
+                            "t": 311,
+                            "r": 487,
+                            "b": 302,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/2385",
                 "label": "section_header",
                 "text": "D.2.2.2 Results",
-                "prov": [{"page_no": 110, "bbox": {"l": 70, "t": 230, "r": 169, "b": 221, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 110,
+                        "bbox": {
+                            "l": 70,
+                            "t": 230,
+                            "r": 169,
+                            "b": 221,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/2387",
                 "label": "section_header",
                 "text": "D.2.1.3 Example",
-                "prov": [{"page_no": 110, "bbox": {"l": 70, "t": 480, "r": 174, "b": 472, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 110,
+                        "bbox": {
+                            "l": 70,
+                            "t": 480,
+                            "r": 174,
+                            "b": 472,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
         ],
         "tables": [
@@ -622,7 +781,18 @@ def test_reader_repairs_misordered_numbered_clause_heading(tmp_path: Path) -> No
                 "self_ref": "#/tables/9",
                 "label": "table",
                 "data": {"table_cells": [], "num_rows": 0, "num_cols": 0},
-                "prov": [{"page_no": 110, "bbox": {"l": 240, "t": 429, "r": 355, "b": 379, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 110,
+                        "bbox": {
+                            "l": 240,
+                            "t": 429,
+                            "r": 355,
+                            "b": 379,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             }
         ],
         "body": {
@@ -665,13 +835,35 @@ def test_reader_does_not_reorder_reference_without_geometric_confirmation(
                 "self_ref": "#/texts/0",
                 "label": "section_header",
                 "text": "D.2.2 Results",
-                "prov": [{"page_no": 1, "bbox": {"l": 70, "t": 500, "r": 170, "b": 490, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 1,
+                        "bbox": {
+                            "l": 70,
+                            "t": 500,
+                            "r": 170,
+                            "b": 490,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
             {
                 "self_ref": "#/texts/1",
                 "label": "section_header",
                 "text": "D.2.1.3 Example",
-                "prov": [{"page_no": 1, "bbox": {"l": 70, "t": 400, "r": 170, "b": 390, "coord_origin": "BOTTOMLEFT"}}],
+                "prov": [
+                    {
+                        "page_no": 1,
+                        "bbox": {
+                            "l": 70,
+                            "t": 400,
+                            "r": 170,
+                            "b": 390,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
             },
         ],
         "body": {"children": [{"$ref": "#/texts/0"}, {"$ref": "#/texts/1"}]},

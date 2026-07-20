@@ -6,7 +6,11 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
 
-from standards_atlas.application.catalog import ContentSelection, StandardCatalog, StandardFamilyDefinition
+from standards_atlas.application.catalog import (
+    ContentSelection,
+    StandardCatalog,
+    StandardFamilyDefinition,
+)
 
 
 class ArtifactPolicy(StrEnum):
@@ -165,8 +169,14 @@ class EndToEndWorkflowService:
                     key,
                     WorkflowStage.DOCLING,
                     (
-                        "uv", "run", "standards-atlas", "docling", "convert",
-                        "-d", key, pdf,
+                        "uv",
+                        "run",
+                        "standards-atlas",
+                        "docling",
+                        "convert",
+                        "-d",
+                        key,
+                        pdf,
                     ),
                     ArtifactPolicy.SOURCE,
                 )
@@ -177,9 +187,17 @@ class EndToEndWorkflowService:
             year = str(family.publication_year or 0)
             if family.source is not None:
                 command = (
-                    "uv", "run", "standards-atlas", "atlasdata", "onboard-docling",
-                    f".atlas/docling/{family.key}/document.json", output,
-                    "--name", family.name, "--year", year,
+                    "uv",
+                    "run",
+                    "standards-atlas",
+                    "atlasdata",
+                    "onboard-docling",
+                    f".atlas/docling/{family.key}/document.json",
+                    output,
+                    "--name",
+                    family.name,
+                    "--year",
+                    year,
                 )
             else:
                 part_args = tuple(
@@ -187,8 +205,10 @@ class EndToEndWorkflowService:
                     for part in family.parts
                     for identifier, document_key in (
                         (part.part, part.key),
-                        *((f"{part.part}-{supplement.supplement}", supplement.key)
-                          for supplement in part.supplements),
+                        *(
+                            (f"{part.part}-{supplement.supplement}", supplement.key)
+                            for supplement in part.supplements
+                        ),
                     )
                     for value in (
                         "--part",
@@ -196,8 +216,17 @@ class EndToEndWorkflowService:
                     )
                 )
                 command = (
-                    "uv", "run", "standards-atlas", "atlasdata", "onboard-docling-parts",
-                    output, *part_args, "--name", family.name, "--year", year,
+                    "uv",
+                    "run",
+                    "standards-atlas",
+                    "atlasdata",
+                    "onboard-docling-parts",
+                    output,
+                    *part_args,
+                    "--name",
+                    family.name,
+                    "--year",
+                    year,
                 )
             steps.append(
                 WorkflowStep(
@@ -235,26 +264,35 @@ class EndToEndWorkflowService:
                         part.key,
                         WorkflowStage.DERIVE,
                         (
-                            "uv", "run", "standards-atlas", "document", "derive-part",
-                            family.key, part.part, "--key", part.key,
-                            *( ("--title", part.title) if part.title else () ),
+                            "uv",
+                            "run",
+                            "standards-atlas",
+                            "document",
+                            "derive-part",
+                            family.key,
+                            part.part,
+                            "--key",
+                            part.key,
+                            *(("--title", part.title) if part.title else ()),
                         ),
                         ArtifactPolicy.DERIVED,
                     )
                 )
                 for supplement in part.supplements:
                     if supplement.atlasdata is not None:
-                        supplement_atlas_path = str(
-                            (root / supplement.atlasdata.path).resolve()
-                        )
+                        supplement_atlas_path = str((root / supplement.atlasdata.path).resolve())
                         steps.append(
                             WorkflowStep(
                                 family.key,
                                 supplement.key,
                                 WorkflowStage.IMPORT,
                                 (
-                                    "uv", "run", "standards-atlas", "document",
-                                    "import", supplement_atlas_path,
+                                    "uv",
+                                    "run",
+                                    "standards-atlas",
+                                    "document",
+                                    "import",
+                                    supplement_atlas_path,
                                 ),
                                 ArtifactPolicy.DERIVED,
                             )
@@ -266,14 +304,16 @@ class EndToEndWorkflowService:
                                 supplement.key,
                                 WorkflowStage.DERIVE,
                                 (
-                                    "uv", "run", "standards-atlas", "document",
-                                    "derive-part", family.key,
+                                    "uv",
+                                    "run",
+                                    "standards-atlas",
+                                    "document",
+                                    "derive-part",
+                                    family.key,
                                     f"{part.part}-{supplement.supplement}",
-                                    "--key", supplement.key,
-                                    *(
-                                        ("--title", supplement.title)
-                                        if supplement.title else ()
-                                    ),
+                                    "--key",
+                                    supplement.key,
+                                    *(("--title", supplement.title) if supplement.title else ()),
                                 ),
                                 ArtifactPolicy.DERIVED,
                             )
@@ -288,7 +328,12 @@ class EndToEndWorkflowService:
                         WorkflowStage.NORMALIZE,
                         self._apply_force_policy(
                             (
-                                "uv", "run", "standards-atlas", "normalize", "run", key,
+                                "uv",
+                                "run",
+                                "standards-atlas",
+                                "normalize",
+                                "run",
+                                key,
                                 *self._content_selection_args(content_selection),
                             ),
                             policy=ArtifactPolicy.DERIVED,
@@ -340,7 +385,12 @@ class EndToEndWorkflowService:
                     family.key,
                     WorkflowStage.MARKDOWN,
                     (
-                        "uv", "run", "standards-atlas", "document", "export", "markdown",
+                        "uv",
+                        "run",
+                        "standards-atlas",
+                        "document",
+                        "export",
+                        "markdown",
                         family.key,
                     ),
                     ArtifactPolicy.DERIVED,
@@ -353,7 +403,12 @@ class EndToEndWorkflowService:
                     family.key,
                     WorkflowStage.DOORSTOP,
                     (
-                        "uv", "run", "standards-atlas", "document", "export", "doorstop",
+                        "uv",
+                        "run",
+                        "standards-atlas",
+                        "document",
+                        "export",
+                        "doorstop",
                         family.key,
                         "--digits",
                         str(family.exports.doorstop.identifier.width),
@@ -371,15 +426,19 @@ class EndToEndWorkflowService:
             return ()
         arguments: list[str] = []
         for page_range in selection.page_ranges:
-            arguments.extend((
-                "--page-range",
-                f"{page_range.start}:{page_range.end or ''}",
-            ))
+            arguments.extend(
+                (
+                    "--page-range",
+                    f"{page_range.start}:{page_range.end or ''}",
+                )
+            )
         for page_range in selection.exclude_page_ranges:
-            arguments.extend((
-                "--exclude-page-range",
-                f"{page_range.start}:{page_range.end or ''}",
-            ))
+            arguments.extend(
+                (
+                    "--exclude-page-range",
+                    f"{page_range.start}:{page_range.end or ''}",
+                )
+            )
         if selection.page_list:
             arguments.extend(("--page-list", selection.page_list))
         return tuple(arguments)

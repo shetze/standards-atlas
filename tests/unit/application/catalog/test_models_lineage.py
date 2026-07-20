@@ -13,10 +13,7 @@ def test_catalog_models_railway_software_lineage() -> None:
     catalog_path = Path(__file__).parents[4] / "catalogs" / "standards.yaml"
     payload = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
     model = StandardCatalog.model_validate(payload)
-    lineage = next(
-        item for item in model.lineages
-        if item.key == "cenelec-railway-software-safety"
-    )
+    lineage = next(item for item in model.lineages if item.key == "cenelec-railway-software-safety")
     assert lineage.members == ("EN50128", "EN50657", "EN50716")
 
     en50128 = model.family("EN50128")

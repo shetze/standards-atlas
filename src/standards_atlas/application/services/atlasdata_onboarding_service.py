@@ -5,9 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from standards_atlas.application.services.semantic_role_classifier import (
     SemanticRoleClassifier,
@@ -51,7 +52,7 @@ class DoclingPartSource:
         object.__setattr__(self, "part", str(self.part))
 
     @classmethod
-    def parse(cls, value: str) -> "DoclingPartSource":
+    def parse(cls, value: str) -> DoclingPartSource:
         match = _PART_SPEC.fullmatch(value.strip())
         if match is None:
             raise AtlasDataOnboardingError(
@@ -263,7 +264,11 @@ class AtlasDataOnboardingService:
             if not title and index + 1 < len(headings):
                 next_item = headings[index + 1]
                 next_text = _normalize_heading(next_item.get("text", ""))
-                if next_text and not _REFERENCE_ONLY.fullmatch(next_text) and not _parse_heading(next_text):
+                if (
+                    next_text
+                    and not _REFERENCE_ONLY.fullmatch(next_text)
+                    and not _parse_heading(next_text)
+                ):
                     title = next_text
                     source_ids.append(str(next_item.get("self_ref", "")))
                     index += 1
@@ -281,7 +286,9 @@ class AtlasDataOnboardingService:
                 discovered[reference] = candidate
             index += 1
 
-        ordered = sorted(discovered.values(), key=lambda clause: _reference_sort_key(clause.reference))
+        ordered = sorted(
+            discovered.values(), key=lambda clause: _reference_sort_key(clause.reference)
+        )
         classified: list[DiscoveredClause] = []
         for clause in ordered:
             classified.append(
@@ -322,11 +329,14 @@ class AtlasDataOnboardingService:
         metadata = ["# SPDX-License-Identifier: LGPL-3.0-only"]
         if parent:
             metadata.append(f'parent="{parent}"')
+        part_digits = (
+            len(str(max(part.part for part in parts))) if include_part_context else 0
+        )
         metadata.extend(
             [
                 f"digits={digits}",
                 "partShift=0",
-                f"partDigits={len(str(max(part.part for part in parts))) if include_part_context else 0}",
+                f"partDigits={part_digits}",
                 f'name="{standard_name}"',
                 f"oyr={year}",
                 "",
@@ -334,7 +344,9 @@ class AtlasDataOnboardingService:
             ]
         )
         for part in parts:
-            tokens = _render_structure_tokens(part.clauses, part.part if include_part_context else None)
+            tokens = _render_structure_tokens(
+                part.clauses, part.part if include_part_context else None
+            )
             metadata.append(' "' + " ".join([str(year), *tokens]) + '"')
         metadata.extend(
             [
@@ -357,10 +369,16 @@ class AtlasDataOnboardingService:
                     else f"{standard_name}:{year}"
                 )
                 full_reference = f"{standard_ref} {clause.reference}"
-                digest = hashlib.md5(f"toc|{full_reference}".encode("utf-8")).hexdigest()
+                digest = hashlib.md5(f"toc|{full_reference}".encode()).hexdigest()
                 metadata.append(
                     ";".join(
-                        ["TOC", digest, full_reference, _sanitize_field(clause.title), clause.type_marker]
+                        [
+                            "TOC",
+                            digest,
+                            full_reference,
+                            _sanitize_field(clause.title),
+                            clause.type_marker,
+                        ]
                     )
                 )
         return "\n".join(metadata) + "\n"

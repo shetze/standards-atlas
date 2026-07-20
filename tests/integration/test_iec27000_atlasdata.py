@@ -14,9 +14,7 @@ def test_iec27000_atlasdata_contains_complete_public_structure() -> None:
     assert document.clauses[-1].reference.clause == "5.5.6"
 
     terms = [clause for clause in document.clauses if clause.clause_type == ClauseType.TERM]
-    term_entries = [
-        clause for clause in terms if clause.reference.clause.startswith("3.")
-    ]
+    term_entries = [clause for clause in terms if clause.reference.clause.startswith("3.")]
     assert len(terms) == 78
     assert len(term_entries) == 77
     assert term_entries[0].title == "access control"

@@ -357,10 +357,7 @@ class AlignmentEngine:
             issues[:] = [
                 issue
                 for issue in issues
-                if not (
-                    issue.code == "MISSING_REFERENCE"
-                    and clause.id.value in issue.clause_ids
-                )
+                if not (issue.code == "MISSING_REFERENCE" and clause.id.value in issue.clause_ids)
             ]
             issues.append(
                 AlignmentIssue(
@@ -375,7 +372,6 @@ class AlignmentEngine:
                 )
             )
         return result
-
 
     @staticmethod
     def _recover_candidate_from_normalized_items(
@@ -580,16 +576,14 @@ class AlignmentEngine:
         )
 
 
-
-def _is_legacy_part_anchor(
-    clause: Clause, document: EngineeringDocument
-) -> bool:
+def _is_legacy_part_anchor(clause: Clause, document: EngineeringDocument) -> bool:
     """Ignore AtlasData's synthetic clause 0 in derived standard-part views."""
     return (
         isinstance(document, Standard)
         and document.parent_key is not None
         and clause.reference.clause.strip() == "0"
     )
+
 
 def _status_for_kind(kind: ReferenceMatchKind) -> AlignmentStatus:
     if kind is ReferenceMatchKind.EXACT:

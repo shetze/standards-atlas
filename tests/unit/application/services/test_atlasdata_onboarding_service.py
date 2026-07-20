@@ -72,16 +72,12 @@ def test_discovers_inline_and_split_clause_headings(tmp_path: Path) -> None:
 
     clauses = AtlasDataOnboardingService().discover_clauses(document)
 
-    assert [clause.reference for clause in clauses] == [
-        "1", "3", "3.1", "3.2", "4", "5"
-    ]
+    assert [clause.reference for clause in clauses] == ["1", "3", "3.1", "3.2", "4", "5"]
     assert clauses[2].title == "access control"
     assert clauses[2].source_item_ids == ("#/texts/2", "#/texts/3")
     assert clauses[2].type_marker == "t"
     assert clauses[3].title == "attack"
-    assert [clause.type_marker for clause in clauses] == [
-        "s", "t", "t", "t", "o", "r"
-    ]
+    assert [clause.type_marker for clause in clauses] == ["s", "t", "t", "t", "o", "r"]
 
 
 def test_generates_importable_public_atlasdata_file(tmp_path: Path) -> None:
@@ -137,7 +133,11 @@ def test_compresses_only_contiguous_sibling_sequences(tmp_path: Path) -> None:
                 "texts": [
                     {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"},
                     {"self_ref": "#/texts/1", "label": "section_header", "text": "2 References"},
-                    {"self_ref": "#/texts/2", "label": "section_header", "text": "3 Terms and definitions"},
+                    {
+                        "self_ref": "#/texts/2",
+                        "label": "section_header",
+                        "text": "3 Terms and definitions",
+                    },
                     {"self_ref": "#/texts/3", "label": "section_header", "text": "3.1 first"},
                     {"self_ref": "#/texts/4", "label": "section_header", "text": "3.2 second"},
                     {"self_ref": "#/texts/5", "label": "section_header", "text": "4 Overview"},
@@ -152,16 +152,24 @@ def test_compresses_only_contiguous_sibling_sequences(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    AtlasDataOnboardingService().generate(
-        source, output, standard_name="Example", year=2026
-    )
+    AtlasDataOnboardingService().generate(source, output, standard_name="Example", year=2026)
 
     text = output.read_text(encoding="utf-8")
     assert '"2026 s1 2 t3 t3.{1..2} 4 4.{1..2} 4.2.1 4.{3..4}"' in text
 
     imported = AtlasDataImporter().import_document(output)
     assert [clause.reference.clause for clause in imported.clauses] == [
-        "1", "2", "3", "3.1", "3.2", "4", "4.1", "4.2", "4.2.1", "4.3", "4.4"
+        "1",
+        "2",
+        "3",
+        "3.1",
+        "3.2",
+        "4",
+        "4.1",
+        "4.2",
+        "4.2.1",
+        "4.3",
+        "4.4",
     ]
 
 
@@ -169,17 +177,45 @@ def test_generates_multi_part_atlasdata_with_explicit_part_context(tmp_path: Pat
     part_1 = tmp_path / "part1.json"
     part_2 = tmp_path / "part2.json"
     output = tmp_path / "IEC11889"
-    part_1.write_text(json.dumps({"name": "IEC-11889-1_2015", "texts": [
-        {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"},
-        {"self_ref": "#/texts/1", "label": "section_header", "text": "Annex A (normative)"},
-        {"self_ref": "#/texts/2", "label": "section_header", "text": "A.1 Algorithms"},
-    ]}), encoding="utf-8")
-    part_2.write_text(json.dumps({"name": "IEC-11889-2_2015", "texts": [
-        {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"},
-        {"self_ref": "#/texts/1", "label": "section_header", "text": "2 Normative references"},
-        {"self_ref": "#/texts/2", "label": "section_header", "text": "Annex A (informative) Implementation definitions"},
-        {"self_ref": "#/texts/3", "label": "section_header", "text": "A.1 Limits"},
-    ]}), encoding="utf-8")
+    part_1.write_text(
+        json.dumps(
+            {
+                "name": "IEC-11889-1_2015",
+                "texts": [
+                    {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"},
+                    {
+                        "self_ref": "#/texts/1",
+                        "label": "section_header",
+                        "text": "Annex A (normative)",
+                    },
+                    {"self_ref": "#/texts/2", "label": "section_header", "text": "A.1 Algorithms"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    part_2.write_text(
+        json.dumps(
+            {
+                "name": "IEC-11889-2_2015",
+                "texts": [
+                    {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"},
+                    {
+                        "self_ref": "#/texts/1",
+                        "label": "section_header",
+                        "text": "2 Normative references",
+                    },
+                    {
+                        "self_ref": "#/texts/2",
+                        "label": "section_header",
+                        "text": "Annex A (informative) Implementation definitions",
+                    },
+                    {"self_ref": "#/texts/3", "label": "section_header", "text": "A.1 Limits"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     result = AtlasDataOnboardingService().generate_parts(
         (
@@ -191,7 +227,7 @@ def test_generates_multi_part_atlasdata_with_explicit_part_context(tmp_path: Pat
         year=2015,
     )
 
-    assert [part.part for part in result.parts] == ['1', '2']
+    assert [part.part for part in result.parts] == ["1", "2"]
     text = output.read_text(encoding="utf-8")
     assert '"2015 1-s1 1-2:A 1-2:A.1"' in text
     assert '"2015 2-s1 2-2 2-3:A 2-3:A.1"' in text
@@ -217,12 +253,14 @@ def test_rejects_duplicate_part_assignments(tmp_path: Path) -> None:
 
 
 def test_annex_heading_can_follow_annex_subclause_in_docling_order() -> None:
-    document = {"texts": [
-        {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"},
-        {"self_ref": "#/texts/1", "label": "section_header", "text": "A.1 Introduction"},
-        {"self_ref": "#/texts/2", "label": "section_header", "text": "Annex A (informative)"},
-        {"self_ref": "#/texts/3", "label": "section_header", "text": "A.2 Details"},
-    ]}
+    document = {
+        "texts": [
+            {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"},
+            {"self_ref": "#/texts/1", "label": "section_header", "text": "A.1 Introduction"},
+            {"self_ref": "#/texts/2", "label": "section_header", "text": "Annex A (informative)"},
+            {"self_ref": "#/texts/3", "label": "section_header", "text": "A.2 Details"},
+        ]
+    }
 
     clauses = AtlasDataOnboardingService().discover_clauses(document)
 

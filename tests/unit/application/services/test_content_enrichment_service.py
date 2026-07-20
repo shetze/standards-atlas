@@ -55,28 +55,35 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
         "SAMPLE",
         _normalized(
             NormalizedHeading(
-                id="h1", sequence_number=0, source_item_ids=("h1",),
-                source_evidence=evidence, text="1 Scope"
+                id="h1",
+                sequence_number=0,
+                source_item_ids=("h1",),
+                source_evidence=evidence,
+                text="1 Scope",
             ),
             NormalizedText(
-                id="p1", sequence_number=1, source_item_ids=("p1",),
-                source_evidence=evidence, text="First paragraph."
+                id="p1",
+                sequence_number=1,
+                source_item_ids=("p1",),
+                source_evidence=evidence,
+                text="First paragraph.",
             ),
             NormalizedList(
-                id="l1", sequence_number=2, source_item_ids=("l1",),
-                items=(NormalizedListItem(text="Item"),)
+                id="l1",
+                sequence_number=2,
+                source_item_ids=("l1",),
+                items=(NormalizedListItem(text="Item"),),
             ),
             NormalizedText(
-                id="h2", sequence_number=3, source_item_ids=("h2",),
-                text="2 Inline clause text."
+                id="h2", sequence_number=3, source_item_ids=("h2",), text="2 Inline clause text."
             ),
             NormalizedTable(
-                id="t1", sequence_number=4, source_item_ids=("t1",),
-                rows=(TableRow(cells=(TableCell(text="A"),)),)
+                id="t1",
+                sequence_number=4,
+                source_item_ids=("t1",),
+                rows=(TableRow(cells=(TableCell(text="A"),)),),
             ),
-            NormalizedCode(
-                id="c1", sequence_number=5, source_item_ids=("c1",), code="x = 1"
-            ),
+            NormalizedCode(id="c1", sequence_number=5, source_item_ids=("c1",), code="x = 1"),
         ),
     )
     AlignmentArtifactRepository(workspace).save("SAMPLE", _alignment())
@@ -107,12 +114,8 @@ def test_prefers_reviewed_alignment_when_present(tmp_path):
         ),
     )
     automatic = _alignment(second_start=2, second_end=2)
-    reviewed_second = automatic.clauses[1].model_copy(
-        update={"status": AlignmentStatus.MANUAL}
-    )
-    reviewed = automatic.model_copy(
-        update={"clauses": automatic.clauses[:1] + (reviewed_second,)}
-    )
+    reviewed_second = automatic.clauses[1].model_copy(update={"status": AlignmentStatus.MANUAL})
+    reviewed = automatic.model_copy(update={"clauses": automatic.clauses[:1] + (reviewed_second,)})
     AlignmentArtifactRepository(workspace).save("SAMPLE", automatic)
     AlignmentReviewRepository(workspace).save_reviewed("SAMPLE", reviewed)
 
@@ -133,9 +136,7 @@ def test_rejects_unresolved_alignment_by_default(tmp_path):
             "end_sequence_number": None,
         }
     )
-    alignment = complete.model_copy(
-        update={"clauses": (missing, complete.clauses[1])}
-    )
+    alignment = complete.model_copy(update={"clauses": (missing, complete.clauses[1])})
     AlignmentArtifactRepository(workspace).save("SAMPLE", alignment)
 
     with pytest.raises(ContentEnrichmentError, match="unresolved clauses"):
@@ -144,7 +145,9 @@ def test_rejects_unresolved_alignment_by_default(tmp_path):
 
 def _document():
     return Standard(
-        key=StandardKey(value="SAMPLE"), title="Sample", name="Sample",
+        key=StandardKey(value="SAMPLE"),
+        title="Sample",
+        name="Sample",
         clauses=tuple(
             Clause(
                 id=ClauseId(value=f"SAMPLE-{number}"),
@@ -158,10 +161,13 @@ def _document():
 
 def _normalized(*items):
     return NormalizedExtractedDocument(
-        source_id="SAMPLE", items=items,
+        source_id="SAMPLE",
+        items=items,
         metadata=NormalizationMetadata(
-            normalizer_version="test", source_extraction_hash="hash",
-            created_at=datetime.now(UTC), options=NormalizationOptions(),
+            normalizer_version="test",
+            source_extraction_hash="hash",
+            created_at=datetime.now(UTC),
+            options=NormalizationOptions(),
             statistics=NormalizationStatistics(input_items=len(items), output_items=len(items)),
         ),
     )
@@ -170,23 +176,36 @@ def _normalized(*items):
 def _alignment(second_start=3, second_end=5):
     clauses = (
         ClauseAlignment(
-            clause_id="SAMPLE-1", expected_reference="1", candidate_item_id="h1",
-            status=AlignmentStatus.EXACT, start_sequence_number=0, end_sequence_number=2,
-            remainder_kind=CandidateRemainderKind.TITLE, observed_remainder="Scope",
+            clause_id="SAMPLE-1",
+            expected_reference="1",
+            candidate_item_id="h1",
+            status=AlignmentStatus.EXACT,
+            start_sequence_number=0,
+            end_sequence_number=2,
+            remainder_kind=CandidateRemainderKind.TITLE,
+            observed_remainder="Scope",
         ),
         ClauseAlignment(
-            clause_id="SAMPLE-2", expected_reference="2", candidate_item_id="h2",
-            status=AlignmentStatus.EXACT, start_sequence_number=second_start,
-            end_sequence_number=second_end, remainder_kind=CandidateRemainderKind.CONTENT,
+            clause_id="SAMPLE-2",
+            expected_reference="2",
+            candidate_item_id="h2",
+            status=AlignmentStatus.EXACT,
+            start_sequence_number=second_start,
+            end_sequence_number=second_end,
+            remainder_kind=CandidateRemainderKind.CONTENT,
             observed_remainder="Inline clause text.",
         ),
     )
     return AlignmentResult(
-        source_id="SAMPLE", clauses=clauses,
+        source_id="SAMPLE",
+        clauses=clauses,
         metadata=AlignmentMetadata(
-            alignment_version="test", normalized_document_hash="n",
-            candidate_document_hash="c", expected_structure_hash="s",
-            created_at=datetime.now(UTC), options=AlignmentOptions(),
+            alignment_version="test",
+            normalized_document_hash="n",
+            candidate_document_hash="c",
+            expected_structure_hash="s",
+            created_at=datetime.now(UTC),
+            options=AlignmentOptions(),
             statistics=AlignmentStatistics(expected_clauses=2, exact_matches=2),
         ),
     )

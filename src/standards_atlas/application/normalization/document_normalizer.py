@@ -74,7 +74,11 @@ class DocumentNormalizer:
             if evidence.page_number is not None
         }
         selected_pages = {
-            page for page in source_pages if _page_is_selected(page, options.page_ranges, options.exclude_page_ranges, options.page_list)
+            page
+            for page in source_pages
+            if _page_is_selected(
+                page, options.page_ranges, options.exclude_page_ranges, options.page_list
+            )
         }
         statistics = NormalizationStatistics(
             input_items=len(document.items),
@@ -111,9 +115,8 @@ class DocumentNormalizer:
     ) -> tuple[list[SuppressedItem], list]:
         signatures = Counter()
         for item in document.items:
-            if (
-                isinstance(item, (ExtractedText, ExtractedHeading))
-                and _item_is_selected(item, options.page_ranges, options.exclude_page_ranges, options.page_list)
+            if isinstance(item, (ExtractedText, ExtractedHeading)) and _item_is_selected(
+                item, options.page_ranges, options.exclude_page_ranges, options.page_list
             ):
                 signatures[_page_signature(item.text)] += 1
         suppressed: list[SuppressedItem] = []
@@ -124,7 +127,9 @@ class DocumentNormalizer:
             reason = None
             confidence = 1.0
             protected_reference = text is not None and _looks_like_clause_anchor(text)
-            if not _item_is_selected(item, options.page_ranges, options.exclude_page_ranges, options.page_list):
+            if not _item_is_selected(
+                item, options.page_ranges, options.exclude_page_ranges, options.page_list
+            ):
                 reason = "content_selection"
             elif text is not None and _PAGE_NUMBER.fullmatch(text) and not protected_reference:
                 reason = "page_number"
@@ -541,9 +546,13 @@ def _page_is_selected(
     page_list: tuple[int, ...] = (),
 ) -> bool:
     has_positive_selection = bool(page_ranges or page_list)
-    included = not has_positive_selection or page_number in page_list or any(
-        page_number >= start and (end is None or page_number <= end)
-        for start, end in page_ranges
+    included = (
+        not has_positive_selection
+        or page_number in page_list
+        or any(
+            page_number >= start and (end is None or page_number <= end)
+            for start, end in page_ranges
+        )
     )
     excluded = any(
         page_number >= start and (end is None or page_number <= end)
@@ -564,6 +573,5 @@ def _item_is_selected(
     pages = [entry.page_number for entry in evidence if entry.page_number is not None]
     # Keep items without page provenance: dropping them would violate lossless normalization.
     return not pages or any(
-        _page_is_selected(page, page_ranges, exclude_page_ranges, page_list)
-        for page in pages
+        _page_is_selected(page, page_ranges, exclude_page_ranges, page_list) for page in pages
     )

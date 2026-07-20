@@ -16,10 +16,14 @@ def test_exports_multi_part_standard_to_separate_files(tmp_path):
     workspace = tmp_path / ".atlas"
     repository = FileSystemEngineeringDocumentRepository(workspace)
     document = Standard.from_name(key=StandardKey(value="IEC11889"), name="IEC 11889", year=2015)
-    document = document.model_copy(update={"clauses": (
-        _clause("p1", "1", "1", "Part one"),
-        _clause("p2", "2", "1", "Part two"),
-    )})
+    document = document.model_copy(
+        update={
+            "clauses": (
+                _clause("p1", "1", "1", "Part one"),
+                _clause("p2", "2", "1", "Part two"),
+            )
+        }
+    )
     repository.save(document)
 
     result = MarkdownExportService(MarkdownExporter(), workspace).export(
