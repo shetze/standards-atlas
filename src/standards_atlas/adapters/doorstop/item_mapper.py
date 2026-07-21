@@ -65,19 +65,17 @@ class DoorstopItemMapper:
             context=self._id_context,
         )
 
-        uid = uid = f"{self._prefix}{self._separator}{numeric_id}"
+        uid = f"{self._prefix}{self._separator}{numeric_id}"
 
         doorstop = clause.doorstop
+        qualified_reference = _qualified_reference(clause)
 
         return DoorstopItemModel(
             uid=uid,
             level=(
                 doorstop.level
                 if doorstop and doorstop.level is not None
-                else generate_doorstop_level(
-                    visible_reference=clause.reference.clause,
-                    enum_prefix=clause.enum_prefix,
-                )
+                else _doorstop_level(clause, self._id_context)
             ),
             header=self._select_header(
                 clause,
@@ -99,7 +97,7 @@ class DoorstopItemMapper:
                 if doorstop and doorstop.references
                 else (
                     DoorstopReference(
-                        keyword=clause.reference.as_text(),
+                        keyword=qualified_reference,
                         path=r".*\.md",
                         type="pattern",
                     ),
@@ -107,14 +105,14 @@ class DoorstopItemMapper:
             ),
             attributes={
                 **(doorstop.extended if doorstop else {}),
-                "idx": clause.reference.as_text(),
+                "idx": qualified_reference,
                 "standard": {
                     "name": clause.reference.standard,
                     "numID": numeric_id,
-                    "refID": _generate_reference_hash(clause.reference.as_text()),
+                    "refID": _generate_reference_hash(qualified_reference),
                 },
                 "atlas-clause-id": clause.id.value,
-                "atlas-reference": clause.reference.as_text(),
+                "atlas-reference": qualified_reference,
                 "atlas-clause-type": clause.clause_type.value,
                 "semantic-roles": [role.value for role in clause.semantic_roles],
             },
@@ -184,6 +182,44 @@ class DoorstopItemMapper:
         return {clause_id: tuple(values) for clause_id, values in grouped.items()}
 
 
+def _qualified_reference(clause: Clause) -> str:
+    """Return a clause reference qualified by its physical part."""
+    standard = clause.reference.standard
+    if clause.volume is not None:
+        part = clause.volume.replace("§", "-")
+        standard = f"{standard}-{part}"
+    if clause.reference.year is None:
+        return f"{standard} {clause.reference.clause}"
+    return f"{standard}:{clause.reference.year} {clause.reference.clause}"
+
+
 @staticmethod
 def _generate_reference_hash(reference: str) -> str:
     return hashlib.md5(reference.encode("utf-8")).hexdigest()
+
+
+def _doorstop_level(clause: Clause, context: DoorstopIdContext) -> str:
+    """Nest clauses below a distinct root for every physical part."""
+    level = generate_doorstop_level(
+        visible_reference=clause.reference.clause,
+        enum_prefix=clause.enum_prefix,
+    )
+    if clause.volume is None:
+        return level
+    root_level = _volume_root_level(clause.volume, context)
+    if clause.reference.clause == "0":
+        return root_level
+    return f"{root_level}.{level}"
+
+
+def _volume_root_level(volume: str, context: DoorstopIdContext) -> str:
+    components = volume.split("§")
+    if any(not component.isdigit() for component in components):
+        raise ValueError(f"Volume hierarchy must be numeric, got {volume!r}.")
+    primary = int(components[0]) + context.part_shift
+    if primary < 0:
+        raise ValueError(f"Shifted volume must not be negative, got {primary}.")
+    if len(components) == 1:
+        return str(primary)
+    encoded = str(primary) + "".join(f"{int(component):02d}" for component in components[1:])
+    return str(int(encoded))

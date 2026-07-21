@@ -41,18 +41,20 @@ class DocumentSelectionService:
         title: str | None = None,
     ) -> EngineeringDocument:
         source = self._documents.load(DocumentKey(value=source_key))
-        clauses = tuple(
-            clause
-            for clause in source.clauses
-            if clause.volume == volume and clause.reference.clause.strip() != "0"
-        )
+        clauses = tuple(clause for clause in source.clauses if clause.volume == volume)
         if not clauses:
             raise DocumentSelectionError(
                 f"Document {source_key!r} contains no clauses for volume {volume!r}."
             )
-        return self._persist_selection(
-            source, target_key, clauses, title or f"{source.title}-{volume}"
+        part_title = title or f"Part {volume.replace('§', '-')}"
+        root_title = f"Part {volume.replace('§', '-')}"
+        clauses = tuple(
+            clause.model_copy(update={"title": root_title})
+            if clause.reference.clause.strip() == "0"
+            else clause
+            for clause in clauses
         )
+        return self._persist_selection(source, target_key, clauses, part_title)
 
     def _persist_selection(
         self,

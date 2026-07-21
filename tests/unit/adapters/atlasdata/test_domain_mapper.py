@@ -140,3 +140,46 @@ def test_domain_mapper_infers_semantic_roles_from_title() -> None:
     standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-8")
 
     assert standard.clauses[0].semantic_roles == (SemanticRole.WORK_PRODUCTS,)
+
+
+def test_part_zero_titles_are_resolved_per_volume() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(name="IEC 61508", digits=11, official_year=2010),
+        structure_items=[
+            StructureItem(
+                visible_reference="0",
+                item_type=AtlasItemType.TOC,
+                volume="1",
+                publication_year=2010,
+            ),
+            StructureItem(
+                visible_reference="0",
+                item_type=AtlasItemType.TOC,
+                volume="2",
+                publication_year=2010,
+            ),
+        ],
+        initialization_records=[
+            InitializationRecord(
+                kind="TOC",
+                hash_value="one",
+                reference="IEC 61508-1:2010 0",
+                content="Part 1",
+                type_marker="u",
+            ),
+            InitializationRecord(
+                kind="TOC",
+                hash_value="two",
+                reference="IEC 61508-2:2010 0",
+                content="Part 2",
+                type_marker="u",
+            ),
+        ],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="IEC61508")
+
+    assert [(clause.volume, clause.title) for clause in standard.clauses] == [
+        ("1", "Part 1"),
+        ("2", "Part 2"),
+    ]

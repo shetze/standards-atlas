@@ -19,6 +19,35 @@ def test_plans_multipart_family_with_one_family_export() -> None:
     assert any(step.manual_gate for step in plan.steps)
 
 
+def test_multipart_family_without_atlasdata_uses_docling_onboarding() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    plan = EndToEndWorkflowService().plan(
+        catalog, family_keys=("IEC11889",), catalog_root=Path.cwd()
+    )
+
+    docling_steps = [step for step in plan.steps if step.stage == WorkflowStage.DOCLING]
+    assert [step.document for step in docling_steps] == [
+        "IEC11889-1",
+        "IEC11889-2",
+    ]
+
+    onboarding_steps = [step for step in plan.steps if step.stage == WorkflowStage.ATLASDATA]
+    assert len(onboarding_steps) == 1
+    onboarding = onboarding_steps[0]
+    assert onboarding.command[:5] == (
+        "uv",
+        "run",
+        "standards-atlas",
+        "atlasdata",
+        "onboard-docling-parts",
+    )
+    assert "1=.atlas/docling/IEC11889-1/document.json" in onboarding.command
+    assert "2=.atlas/docling/IEC11889-2/document.json" in onboarding.command
+    assert onboarding.command[5] == "data/IEC11889"
+    assert onboarding.manual_gate is True
+    assert plan.steps[-1] == onboarding
+
+
 def test_missing_atlasdata_stops_at_onboarding_gate() -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
@@ -34,16 +63,13 @@ def test_references_detect_uses_no_override_option() -> None:
         catalog, family_keys=("EN50716",), catalog_root=Path.cwd()
     )
 
-    reference_steps = [
-        step for step in plan.steps if step.stage == WorkflowStage.REFERENCES
-    ]
+    reference_steps = [step for step in plan.steps if step.stage == WorkflowStage.REFERENCES]
 
     assert reference_steps
     assert all("--override" not in step.command for step in reference_steps)
     assert all("--overwrite" not in step.command for step in reference_steps)
     assert all(
-        step.command[-3:] == ("references", "detect", step.document)
-        for step in reference_steps
+        step.command[-3:] == ("references", "detect", step.document) for step in reference_steps
     )
 
 
@@ -53,16 +79,13 @@ def test_align_review_export_uses_no_overwrite_option() -> None:
         catalog, family_keys=("EN50716",), catalog_root=Path.cwd()
     )
 
-    review_steps = [
-        step for step in plan.steps if step.stage == WorkflowStage.REVIEW
-    ]
+    review_steps = [step for step in plan.steps if step.stage == WorkflowStage.REVIEW]
 
     assert review_steps
     assert all("--overwrite" not in step.command for step in review_steps)
     assert all("--override" not in step.command for step in review_steps)
     assert all(
-        step.command[-3:] == ("align", "review-export", step.document)
-        for step in review_steps
+        step.command[-3:] == ("align", "review-export", step.document) for step in review_steps
     )
 
 
@@ -133,8 +156,7 @@ def test_enrich_content_uses_no_overwrite_option() -> None:
     assert all("--overwrite" not in step.command for step in enrich_steps)
     assert all("--override" not in step.command for step in enrich_steps)
     assert all(
-        step.command[-3:] == ("document", "enrich-content", step.document)
-        for step in enrich_steps
+        step.command[-3:] == ("document", "enrich-content", step.document) for step in enrich_steps
     )
 
 
@@ -221,9 +243,7 @@ def test_iec61508_normalization_uses_catalog_page_selection() -> None:
         catalog, family_keys=("IEC61508",), catalog_root=Path.cwd()
     )
     normalize_steps = {
-        step.document: step.command
-        for step in plan.steps
-        if step.stage == WorkflowStage.NORMALIZE
+        step.document: step.command for step in plan.steps if step.stage == WorkflowStage.NORMALIZE
     }
 
     assert normalize_steps["IEC61508-0"][-2:] == (
@@ -244,14 +264,9 @@ def test_catalog_source_paths_are_below_workspace_standards() -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
     for family in catalog.families:
         sources = (
-            [family.source]
-            if family.source is not None
-            else [part.source for part in family.parts]
+            [family.source] if family.source is not None else [part.source for part in family.parts]
         )
-        assert all(
-            str(source.pdf).startswith(".atlas/standards/")
-            for source in sources
-        )
+        assert all(str(source.pdf).startswith(".atlas/standards/") for source in sources)
 
 
 def test_content_selection_emits_page_list_and_exclusions() -> None:
@@ -265,9 +280,12 @@ def test_content_selection_emits_page_list_and_exclusions() -> None:
         )
     )
     assert args == (
-        "--page-range", "1:20",
-        "--exclude-page-range", "2:4",
-        "--page-list", "1,3,5,11-13,15",
+        "--page-range",
+        "1:20",
+        "--exclude-page-range",
+        "2:4",
+        "--page-list",
+        "1,3,5,11-13,15",
     )
 
 
@@ -305,18 +323,24 @@ def test_parts_are_derived_but_supplement_with_own_atlasdata_is_imported() -> No
     derive_commands = {step.document: step.command for step in derive_steps}
 
     assert derive_commands["IEC61508-3"][:7] == (
-        "uv", "run", "standards-atlas", "document", "derive-part", "IEC61508", "3"
+        "uv",
+        "run",
+        "standards-atlas",
+        "document",
+        "derive-part",
+        "IEC61508",
+        "3",
     )
     assert "IEC61508-3-1" not in derive_commands
 
     supplement_import = next(
-        step for step in plan.steps
+        step
+        for step in plan.steps
         if step.document == "IEC61508-3-1" and step.stage == WorkflowStage.IMPORT
     )
-    assert supplement_import.command[:5] == (
-        "uv", "run", "standards-atlas", "document", "import"
-    )
+    assert supplement_import.command[:5] == ("uv", "run", "standards-atlas", "document", "import")
     assert supplement_import.command[-1].endswith("data/IEC61508-3-1")
+
 
 def test_supplement_is_imported_before_reference_detection() -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
@@ -327,12 +351,63 @@ def test_supplement_is_imported_before_reference_detection() -> None:
     )
 
     import_index = next(
-        index for index, step in enumerate(plan.steps)
+        index
+        for index, step in enumerate(plan.steps)
         if step.document == "IEC61508-3-1" and step.stage == WorkflowStage.IMPORT
     )
     references_index = next(
-        index for index, step in enumerate(plan.steps)
+        index
+        for index, step in enumerate(plan.steps)
         if step.document == "IEC61508-3-1" and step.stage == WorkflowStage.REFERENCES
     )
 
     assert import_index < references_index
+
+
+def test_multi_part_family_is_composed_before_exports() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    plan = EndToEndWorkflowService().plan(
+        catalog, family_keys=("IEC61508",), catalog_root=Path.cwd()
+    )
+
+    compose = [step for step in plan.steps if step.stage == WorkflowStage.COMPOSE]
+    assert len(compose) == 1
+    assert compose[0].document == "IEC61508"
+    assert compose[0].command[:6] == (
+        "uv",
+        "run",
+        "standards-atlas",
+        "document",
+        "compose-family",
+        "IEC61508",
+    )
+    export_indices = [
+        index
+        for index, step in enumerate(plan.steps)
+        if step.stage in {WorkflowStage.MARKDOWN, WorkflowStage.DOORSTOP}
+    ]
+    assert export_indices
+    assert plan.steps.index(compose[0]) < min(export_indices)
+
+
+def test_doorstop_parent_prefers_specific_catalog_relationships() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    plan = EndToEndWorkflowService().plan(
+        catalog,
+        family_keys=("IEC61508", "EN50128", "EN50657", "EN50716"),
+        catalog_root=Path.cwd(),
+    )
+
+    expected_parents = {
+        "EN50128": "IEC61508",
+        "EN50657": "EN50128",
+        "EN50716": "EN50657",
+    }
+    for family, expected_parent in expected_parents.items():
+        export = next(
+            step
+            for step in plan.steps
+            if step.stage == WorkflowStage.DOORSTOP and step.family == family
+        )
+        parent_index = export.command.index("--parent")
+        assert export.command[parent_index + 1] == expected_parent

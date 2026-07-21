@@ -57,13 +57,13 @@ def map_atlas_data_to_standard(
             item=item,
             standard_name=atlas_data.metadata.name,
             year=atlas_data.metadata.official_year,
-            title=title_lookup.get(item.visible_reference),
+            title=title_lookup.get((item.volume, item.visible_reference)),
             text=None,
         )
         for item in atlas_data.structure_items
     )
 
-    clauses_by_reference = {clause.reference.clause: clause for clause in clauses}
+    clauses_by_reference = {(clause.volume, clause.reference.clause): clause for clause in clauses}
 
     annotations = _map_initialization_records_to_annotations(
         atlas_data=atlas_data,
@@ -86,20 +86,20 @@ def map_atlas_data_to_standard(
 def _map_initialization_records_to_annotations(
     *,
     atlas_data: AtlasStandardData,
-    clauses_by_reference: dict[str, Clause],
+    clauses_by_reference: dict[tuple[str | None, str], Clause],
 ) -> tuple[ClauseAnnotation, ...]:
     annotations: list[ClauseAnnotation] = []
 
     for index, record in enumerate(atlas_data.initialization_records):
-        clause_reference = _extract_clause_reference(
+        clause_identity = _extract_clause_identity(
             record.reference,
             atlas_data.metadata.name,
         )
 
-        if clause_reference is None:
+        if clause_identity is None:
             continue
 
-        clause = clauses_by_reference.get(clause_reference)
+        clause = clauses_by_reference.get(clause_identity)
 
         if clause is None or not record.content.strip():
             continue
@@ -137,20 +137,20 @@ def _map_initialization_records_to_annotations(
 
 def _build_title_lookup(
     atlas_data: AtlasStandardData,
-) -> dict[str, str]:
-    titles: dict[str, str] = {}
+) -> dict[tuple[str | None, str], str]:
+    titles: dict[tuple[str | None, str], str] = {}
 
     for record in atlas_data.initialization_records:
         if record.kind != "TOC":
             continue
 
-        clause_reference = _extract_clause_reference(
+        clause_identity = _extract_clause_identity(
             record.reference,
             atlas_data.metadata.name,
         )
 
-        if clause_reference is not None:
-            titles[clause_reference] = record.content
+        if clause_identity is not None:
+            titles[clause_identity] = record.content
 
     return titles
 
@@ -297,43 +297,22 @@ def _build_clause_id(
     return ClauseId(value=f"clause-{digest}")
 
 
-def _build_initialization_lookup(
-    atlas_data: AtlasStandardData,
-) -> tuple[dict[str, str], dict[str, str]]:
-    title_lookup: dict[str, str] = {}
-    text_lookup: dict[str, str] = {}
-
-    for record in atlas_data.initialization_records:
-        clause_ref = _extract_clause_reference(record.reference, atlas_data.metadata.name)
-
-        if clause_ref is None:
-            continue
-
-        if record.kind == "TOC":
-            title_lookup[clause_ref] = record.content
-        elif record.kind == "TEXT":
-            text_lookup[clause_ref] = record.content
-
-    return title_lookup, text_lookup
-
-
-def _extract_clause_reference(reference: str, standard_name: str) -> str | None:
-    """Extract the visible clause part from a full standard reference.
-
-    Example:
-        EN 50716:2023 5.1.2 -> 5.1.2
-    """
+def _extract_clause_identity(reference: str, standard_name: str) -> tuple[str | None, str] | None:
+    """Extract ``(volume, clause)`` from an AtlasData initialization reference."""
     if not reference.startswith(standard_name):
         return None
 
     remainder = reference[len(standard_name) :].strip()
-
     if not remainder:
         return None
 
-    parts = remainder.split(maxsplit=1)
-
-    if len(parts) == 1:
+    document_reference, separator, clause_reference = remainder.partition(" ")
+    if not separator or not clause_reference.strip():
         return None
 
-    return parts[1].strip()
+    volume: str | None = None
+    before_year = document_reference.split(":", maxsplit=1)[0]
+    if before_year.startswith("-") and len(before_year) > 1:
+        volume = before_year[1:].replace("-", "§", 1) if "-" in before_year[1:] else before_year[1:]
+
+    return volume, clause_reference.strip()

@@ -12,10 +12,12 @@ _RANGE_PATTERN = re.compile(r"\{(?P<start>\d+)\.\.(?P<end>\d+)\}")
 
 
 def parse_lexed_structure_token(token: LexedStructureToken) -> StructureToken:
-    """Parse a lexed structure token."""
-    body = token.body
+    """Parse a lexed structure token.
 
-    item_type, body = _parse_type_prefix(body)
+    The canonical legacy spelling is ``[type][enum]:reference``. For
+    compatibility, ``enum:[type]reference`` is accepted as well.
+    """
+    item_type, enum_prefix, body = _parse_type_and_enum_prefix(token.body)
     identifier_width, body = _parse_identifier_width_marker(body)
     ranges = _parse_ranges(body)
 
@@ -24,16 +26,48 @@ def parse_lexed_structure_token(token: LexedStructureToken) -> StructureToken:
         reference_template=body,
         item_type=item_type,
         volume=token.volume,
-        enum_prefix=token.enum_prefix,
+        enum_prefix=enum_prefix,
         identifier_width=identifier_width,
         ranges=tuple(ranges),
     )
 
 
-def _parse_type_prefix(body: str) -> tuple[AtlasItemType, str]:
+def _parse_type_and_enum_prefix(body: str) -> tuple[AtlasItemType, str | None, str]:
     if not body:
         raise ValueError("Structure token is missing a clause reference.")
 
+    if ":" not in body:
+        item_type, reference = _parse_type_prefix(body)
+        return item_type, None, reference
+
+    prefix, reference = body.split(":", 1)
+    if not prefix or not reference:
+        raise ValueError(f"Invalid enum prefix in structure token: {body!r}")
+
+    # Canonical legacy form: r11:C.1, c5:A.2, m13:D.
+    if prefix[0] in TYPE_PREFIXES:
+        item_type = TYPE_PREFIXES[prefix[0]]
+        enum_prefix = prefix[1:]
+        if not enum_prefix.isdigit():
+            raise ValueError(f"Invalid enum prefix in structure token: {body!r}")
+        return item_type, enum_prefix, reference
+
+    if not prefix.isdigit():
+        raise ValueError(f"Invalid enum prefix in structure token: {body!r}")
+
+    # Compatibility form emitted by an intermediate implementation:
+    # 11:rC.1, 5:cA.2, 13:mD.
+    if reference[0] in TYPE_PREFIXES:
+        item_type = TYPE_PREFIXES[reference[0]]
+        reference = reference[1:]
+        if not reference:
+            raise ValueError("Structure token is missing a clause reference.")
+        return item_type, prefix, reference
+
+    return AtlasItemType.TOC, prefix, reference
+
+
+def _parse_type_prefix(body: str) -> tuple[AtlasItemType, str]:
     prefix = body[0]
 
     if prefix in TYPE_PREFIXES:

@@ -39,6 +39,8 @@ All other index entries are simply the table of content.
 
 If the TOC entry in the standard begins with a capital letter (typical for the annexes), the index is preceded by a number to assign this index to the numerical system of UIDs and separated from the index by a colon.
 
+When a type and an enumeration prefix are both present, the canonical historical order is `[type][enum]:index`, for example `r11:C.1`. Readers also accept the transitional spelling `11:rC.1`, but generated AtlasData always uses the historical order.
+
 Finally, the index can also contain enumerations to simplify areas with continuous numbering.
 
 The magic `+` allows 3 digit numbers for the section and paragraph range.

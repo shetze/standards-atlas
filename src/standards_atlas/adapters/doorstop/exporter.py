@@ -39,10 +39,11 @@ class DoorstopExporter:
             target if target is not None else self._config.workspace / document.key.value
         )
 
+        self._config.workspace.mkdir(parents=True, exist_ok=True)
         self._prepare_target(target_directory)
 
         if self._config.initialize_git_repository:
-            self._ensure_git_repository(target_directory)
+            self._ensure_git_repository(self._config.workspace)
 
         document_model = DoorstopDocumentModel(
             prefix=prefix,
@@ -70,7 +71,7 @@ class DoorstopExporter:
             )
 
         if self._config.validate_after_export:
-            self._validate(target_directory)
+            self._validate(self._config.workspace)
 
         return target_directory
 

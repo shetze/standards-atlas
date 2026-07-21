@@ -21,23 +21,26 @@ def test_lex_volume_token() -> None:
     )
 
 
-def test_lex_enum_token() -> None:
-    assert lex_structure_token("12:C.2.4.{1..4}") == LexedStructureToken(
-        source="12:C.2.4.{1..4}",
-        enum_prefix="12",
-        body="C.2.4.{1..4}",
+def test_lex_canonical_enum_token_preserves_prefix_order() -> None:
+    assert lex_structure_token("r12:C.2.4.{1..4}") == LexedStructureToken(
+        source="r12:C.2.4.{1..4}",
+        body="r12:C.2.4.{1..4}",
     )
 
 
-def test_lex_volume_and_enum_token() -> None:
-    assert lex_structure_token("8-12:C.2") == LexedStructureToken(
-        source="8-12:C.2",
+def test_lex_volume_and_compatibility_enum_token() -> None:
+    assert lex_structure_token("8-12:rC.2") == LexedStructureToken(
+        source="8-12:rC.2",
         volume="8",
-        enum_prefix="12",
-        body="C.2",
+        body="12:rC.2",
     )
 
 
 def test_reject_empty_token() -> None:
     with pytest.raises(ValueError, match="must not be empty"):
         lex_structure_token("")
+
+
+def test_reject_empty_volume_body() -> None:
+    with pytest.raises(ValueError, match="Invalid volume prefix"):
+        lex_structure_token("8-")

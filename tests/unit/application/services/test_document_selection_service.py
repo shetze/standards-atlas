@@ -63,7 +63,7 @@ def test_derives_part_scoped_standard_and_related_annotations(tmp_path):
     assert repository.load(StandardKey(value="ISO26262-8")) == derived
 
 
-def test_derive_by_volume_omits_legacy_clause_zero_anchor(tmp_path):
+def test_derive_by_volume_preserves_clause_zero_part_root(tmp_path):
     workspace = tmp_path / ".atlas"
     anchor = Clause(
         id=ClauseId(value="part-8-anchor"),
@@ -91,4 +91,5 @@ def test_derive_by_volume_omits_legacy_clause_zero_anchor(tmp_path):
         "ISO26262", "ISO26262-8", "8", "ISO 26262-8"
     )
 
-    assert [item.reference.clause for item in derived.clauses] == ["1"]
+    assert [item.reference.clause for item in derived.clauses] == ["0", "1"]
+    assert derived.clauses[0].title == "Part 8"

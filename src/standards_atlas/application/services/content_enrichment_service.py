@@ -125,7 +125,15 @@ class ContentEnrichmentService:
                 enriched_count += 1
             else:
                 empty_count += 1
-            enriched_clauses.append(clause.model_copy(update={"content": blocks, "text": None}))
+            enriched_clauses.append(
+                clause.model_copy(
+                    update={
+                        "title": _enriched_title(clause, clause_alignment),
+                        "content": blocks,
+                        "text": None,
+                    }
+                )
+            )
 
         enriched = document.model_copy(update={"clauses": tuple(enriched_clauses)})
         self._documents.save(enriched)
@@ -313,3 +321,15 @@ def _list_item(item: NormalizedListItem) -> ListItem:
         text=item.text,
         children=tuple(_list_item(child) for child in item.children),
     )
+
+
+def _enriched_title(clause: Clause, alignment: ClauseAlignment) -> str | None:
+    """Prefer a detected heading and retain the AtlasData fallback otherwise."""
+    if (
+        alignment.remainder_kind
+        and alignment.remainder_kind.value == "title"
+        and alignment.observed_remainder
+        and alignment.observed_remainder.strip()
+    ):
+        return alignment.observed_remainder.strip()
+    return clause.title

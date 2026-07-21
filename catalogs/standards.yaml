@@ -349,13 +349,13 @@ families:
   - type: sector-specialization-of
     target: IEC61508
   - type: supersedes
-    target: EN50128
+    target: EN50657
   - type: supersedes
-    target: EN50657
-  - type: consolidates
     target: EN50128
   - type: consolidates
     target: EN50657
+  - type: consolidates
+    target: EN50128
   exports:
     markdown: true
     doorstop:
@@ -513,9 +513,6 @@ families:
     title: Structures
     source:
       pdf: .atlas/standards/Generic/IEC-11889-2_2015.pdf
-  atlasdata:
-    path: data/IEC11889
-    mode: existing
 - key: IEC29119-1
   name: ISO/IEC/IEEE 29119-1
   organization: ISO/IEC/IEEE

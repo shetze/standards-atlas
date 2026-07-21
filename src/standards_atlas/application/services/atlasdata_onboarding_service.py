@@ -27,12 +27,8 @@ _ANNEX_HEADING = re.compile(
     r"(?:[\t ]+(?P<title>.+))?$",
     re.IGNORECASE,
 )
-_ANNEX_CLAUSE_HEADING = re.compile(
-    r"^(?P<reference>[A-Z](?:\.\d+)+)(?:[\t ]+(?P<title>.+))?$"
-)
-_REFERENCE_ONLY = re.compile(
-    r"^(?:0\.\d+(?:\.\d+)*|[1-9]\d*(?:\.\d+)*|[A-Z](?:\.\d+)*)$"
-)
+_ANNEX_CLAUSE_HEADING = re.compile(r"^(?P<reference>[A-Z](?:\.\d+)+)(?:[\t ]+(?P<title>.+))?$")
+_REFERENCE_ONLY = re.compile(r"^(?:0\.\d+(?:\.\d+)*|[1-9]\d*(?:\.\d+)*|[A-Z](?:\.\d+)*)$")
 _PART_SPEC = re.compile(r"^(?P<part>[1-9]\d*(?:-[1-9]\d*)?)=(?P<path>.+)$")
 
 
@@ -195,9 +191,7 @@ class AtlasDataOnboardingService:
                 raise AtlasDataOnboardingError(f"Docling source does not exist: {source.path}")
             document = json.loads(source.path.read_text(encoding="utf-8"))
             if include_part_context:
-                self._validate_part_metadata(
-                    document, source, publication_year=year
-                )
+                self._validate_part_metadata(document, source, publication_year=year)
             clauses = self.discover_clauses(document)
             if not clauses:
                 raise AtlasDataOnboardingError(
@@ -303,9 +297,7 @@ class AtlasDataOnboardingService:
                                 ancestor_roles=_ancestor_roles(
                                     clause.reference, classified, self._role_classifier
                                 ),
-                                ancestor_headings=_ancestor_headings(
-                                    clause.reference, classified
-                                ),
+                                ancestor_headings=_ancestor_headings(clause.reference, classified),
                                 annex_status=clause.annex_status,
                             )
                         ).roles
@@ -329,9 +321,7 @@ class AtlasDataOnboardingService:
         metadata = ["# SPDX-License-Identifier: LGPL-3.0-only"]
         if parent:
             metadata.append(f'parent="{parent}"')
-        part_digits = (
-            len(str(max(part.part for part in parts))) if include_part_context else 0
-        )
+        part_digits = len(str(max(part.part for part in parts))) if include_part_context else 0
         metadata.extend(
             [
                 f"digits={digits}",
@@ -347,6 +337,8 @@ class AtlasDataOnboardingService:
             tokens = _render_structure_tokens(
                 part.clauses, part.part if include_part_context else None
             )
+            if include_part_context:
+                tokens = [f"{part.part}-0", *tokens]
             metadata.append(' "' + " ".join([str(year), *tokens]) + '"')
         metadata.extend(
             [
@@ -362,6 +354,17 @@ class AtlasDataOnboardingService:
         )
 
         for part in parts:
+            standard_ref = (
+                f"{standard_name}-{part.part}:{year}"
+                if include_part_context
+                else f"{standard_name}:{year}"
+            )
+            if include_part_context:
+                root_reference = f"{standard_ref} 0"
+                root_digest = hashlib.md5(f"toc|{root_reference}".encode()).hexdigest()
+                metadata.append(
+                    ";".join(["TOC", root_digest, root_reference, f"Part {part.part}", "u"])
+                )
             for clause in part.clauses:
                 standard_ref = (
                     f"{standard_name}-{part.part}:{year}"
@@ -446,13 +449,9 @@ def _legacy_marker_for_roles(roles: tuple[SemanticRole, ...]) -> str:
     return "u"
 
 
-def _ancestor_headings(
-    reference: str, discovered: list[DiscoveredClause]
-) -> tuple[str, ...]:
+def _ancestor_headings(reference: str, discovered: list[DiscoveredClause]) -> tuple[str, ...]:
     return tuple(
-        clause.title
-        for clause in discovered
-        if _is_descendant(reference, clause.reference)
+        clause.title for clause in discovered if _is_descendant(reference, clause.reference)
     )
 
 
@@ -484,16 +483,12 @@ def _reference_sort_key(reference: str) -> tuple[int, tuple[int, ...], str]:
     return (1, (ord(parts[0]), *(int(part) for part in parts[1:])), "")
 
 
-def _render_structure_tokens(
-    clauses: tuple[DiscoveredClause, ...], part: str | None
-) -> list[str]:
+def _render_structure_tokens(clauses: tuple[DiscoveredClause, ...], part: str | None) -> list[str]:
     numeric = tuple(clause for clause in clauses if clause.reference[0].isdigit())
     annexes = tuple(clause for clause in clauses if clause.reference[0].isalpha())
     rendered = _compress_structure_tokens(numeric)
 
-    top_level_numbers = [
-        int(clause.reference) for clause in numeric if clause.reference.isdigit()
-    ]
+    top_level_numbers = [int(clause.reference) for clause in numeric if clause.reference.isdigit()]
     annex_anchor_base = max(top_level_numbers, default=0)
     annex_letters = sorted({clause.reference.split(".")[0] for clause in annexes})
     anchor_by_letter = {
@@ -503,7 +498,7 @@ def _render_structure_tokens(
         letter, *suffix = clause.reference.split(".")
         visible = letter + ("." + ".".join(suffix) if suffix else "")
         prefix = clause.type_marker if clause.type_marker in {"r", "s", "t", "o", "c", "m"} else ""
-        rendered.append(f"{anchor_by_letter[letter]}:{prefix}{visible}")
+        rendered.append(f"{prefix}{anchor_by_letter[letter]}:{visible}")
 
     if part is not None:
         return [f"{part}-{token}" for token in rendered]

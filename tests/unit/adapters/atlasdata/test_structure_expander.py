@@ -60,6 +60,28 @@ def test_expand_enum_prefix_with_nested_range() -> None:
     assert all(item.enum_prefix == "12" for item in items)
 
 
+def test_expand_canonical_typed_enum_prefix() -> None:
+    assert expand_structure_token("r11:C.1") == [
+        StructureItem(
+            visible_reference="C.1",
+            item_type=AtlasItemType.REQUIREMENT,
+            enum_prefix="11",
+            source_token="r11:C.1",
+        )
+    ]
+
+
+def test_expand_compatibility_typed_enum_prefix() -> None:
+    assert expand_structure_token("11:rC.1") == [
+        StructureItem(
+            visible_reference="C.1",
+            item_type=AtlasItemType.REQUIREMENT,
+            enum_prefix="11",
+            source_token="11:rC.1",
+        )
+    ]
+
+
 def test_expand_volume_requirement_range() -> None:
     items = expand_structure_token("8-r11.4.7.{1..2}")
 

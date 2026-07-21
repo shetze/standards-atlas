@@ -229,13 +229,15 @@ def test_generates_multi_part_atlasdata_with_explicit_part_context(tmp_path: Pat
 
     assert [part.part for part in result.parts] == ["1", "2"]
     text = output.read_text(encoding="utf-8")
-    assert '"2015 1-s1 1-2:A 1-2:A.1"' in text
-    assert '"2015 2-s1 2-2 2-3:A 2-3:A.1"' in text
+    assert '"2015 1-0 1-s1 1-2:A 1-2:A.1"' in text
+    assert '"2015 2-0 2-s1 2-2 2-3:A 2-3:A.1"' in text
+    assert "IEC 11889-1:2015 0;Part 1;u" in text
     assert "IEC 11889-1:2015 A;Annex A (normative);u" in text
+    assert "IEC 11889-2:2015 0;Part 2;u" in text
     assert "IEC 11889-2:2015 A;Annex A (informative) Implementation definitions;u" in text
 
     imported = AtlasDataImporter().import_document(output)
-    assert len(imported.clauses) == 7
+    assert len(imported.clauses) == 9
     assert text.count("IEC 11889-1:2015 A;") == 1
     assert text.count("IEC 11889-2:2015 A;") == 1
 
@@ -267,3 +269,37 @@ def test_annex_heading_can_follow_annex_subclause_in_docling_order() -> None:
     assert [clause.reference for clause in clauses] == ["1", "A", "A.1", "A.2"]
     assert clauses[1].title == "Annex A (informative)"
     assert clauses[1].annex_status == "informative"
+
+
+def test_generates_canonical_typed_annex_tokens() -> None:
+    from standards_atlas.application.services.atlasdata_onboarding_service import (
+        DiscoveredClause,
+        _render_structure_tokens,
+    )
+
+    tokens = _render_structure_tokens(
+        (
+            DiscoveredClause(
+                reference="1",
+                title="Scope",
+                type_marker="s",
+                source_item_ids=("#/texts/0",),
+            ),
+            DiscoveredClause(
+                reference="C",
+                title="Annex C",
+                type_marker="u",
+                source_item_ids=("#/texts/1",),
+            ),
+            DiscoveredClause(
+                reference="C.1",
+                title="Requirement",
+                type_marker="r",
+                source_item_ids=("#/texts/2",),
+            ),
+        ),
+        None,
+    )
+
+    assert "r2:C.1" in tokens
+    assert "2:rC.1" not in tokens

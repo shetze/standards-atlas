@@ -142,7 +142,7 @@ s1.1
 t3.1.{1..44}
 r5.1.2.{1..12}
 10:A
-12:C.2.4.{1..4}
+r12:C.2.4.{1..4}
 0-4.+{1..133}
 8-r11.4.7.{1..4}
 ```
@@ -189,18 +189,34 @@ If no type prefix is present, the item is treated as a generic table-of-contents
 Annexes and other non-numeric sections may be mapped into the numeric identifier space using an enumeration prefix:
 
 ```text
-<enum>:<index>
+[type]<enum>:<index>
 ```
 
 Examples:
 
 ```text
 10:A
-12:C
+r12:C
+m13:D
+```
+
+The enumeration prefix assigns the non-numeric section to a numeric position for stable identifier generation. When an item type is present, the historical and canonical order is type prefix first, followed by the numeric enumeration prefix:
+
+```text
+r11:C.1
+c5:A.2
+m13:D
+```
+
+For compatibility with AtlasData files produced by an intermediate implementation, readers also accept the reversed spelling:
+
+```text
+11:rC.1
+5:cA.2
 13:mD
 ```
 
-The enumeration prefix assigns the non-numeric section to a numeric position for stable identifier generation.
+Writers and generators must always emit the canonical historical spelling.
 
 ### Clause Index
 

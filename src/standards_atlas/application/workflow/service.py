@@ -29,6 +29,7 @@ class WorkflowStage(StrEnum):
     ALIGN = "align"
     REVIEW = "review"
     ENRICH = "enrich"
+    COMPOSE = "compose"
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"
 
@@ -79,9 +80,17 @@ class EndToEndWorkflowService:
         force: bool = False,
     ) -> WorkflowPlan:
         steps: list[WorkflowStep] = []
+        selected_families = set(family_keys)
         for key in family_keys:
             family = catalog.family(key)
-            steps.extend(self._family_steps(family, catalog_root, force=force))
+            steps.extend(
+                self._family_steps(
+                    family,
+                    catalog_root,
+                    force=force,
+                    selected_families=selected_families,
+                )
+            )
         return WorkflowPlan(families=family_keys, steps=tuple(steps))
 
     def execute(
@@ -103,7 +112,11 @@ class EndToEndWorkflowService:
                     continue
                 if step.document in blocked_documents:
                     continue
-                if step.stage in {WorkflowStage.MARKDOWN, WorkflowStage.DOORSTOP}:
+                if step.stage in {
+                    WorkflowStage.COMPOSE,
+                    WorkflowStage.MARKDOWN,
+                    WorkflowStage.DOORSTOP,
+                }:
                     family_documents = {
                         candidate.document
                         for candidate in plan.steps
@@ -134,6 +147,7 @@ class EndToEndWorkflowService:
         root: Path,
         *,
         force: bool,
+        selected_families: set[str],
     ) -> list[WorkflowStep]:
         documents = (
             [(family.key, family.source.pdf, family.content_selection)]
@@ -378,6 +392,25 @@ class EndToEndWorkflowService:
                     ),
                 ]
             )
+        if family.source is None:
+            part_keys = tuple(key for key, _, _ in documents)
+            steps.append(
+                WorkflowStep(
+                    family.key,
+                    family.key,
+                    WorkflowStage.COMPOSE,
+                    (
+                        "uv",
+                        "run",
+                        "standards-atlas",
+                        "document",
+                        "compose-family",
+                        family.key,
+                        *(value for key in part_keys for value in ("--part", key)),
+                    ),
+                    ArtifactPolicy.DERIVED,
+                )
+            )
         if family.exports.markdown:
             steps.append(
                 WorkflowStep(
@@ -397,6 +430,7 @@ class EndToEndWorkflowService:
                 )
             )
         if family.exports.doorstop.enabled:
+            doorstop_parent = self._doorstop_parent(family, selected_families)
             steps.append(
                 WorkflowStep(
                     family.key,
@@ -412,11 +446,34 @@ class EndToEndWorkflowService:
                         family.key,
                         "--digits",
                         str(family.exports.doorstop.identifier.width),
+                        *(("--parent", doorstop_parent) if doorstop_parent else ()),
                     ),
                     ArtifactPolicy.DERIVED,
                 )
             )
         return steps
+
+    @staticmethod
+    def _doorstop_parent(
+        family: StandardFamilyDefinition,
+        selected_families: set[str],
+    ) -> str | None:
+        structural_relations = (
+            "supersedes",
+            "consolidates",
+            "depends-on",
+            "derived-from",
+            "specializes",
+            "adapts",
+            "sector-specialization-of",
+        )
+        for relation_type in structural_relations:
+            for relation in family.relations:
+                if relation.type.value == relation_type and relation.target in selected_families:
+                    return "".join(
+                        character for character in relation.target.upper() if character.isalnum()
+                    )
+        return None
 
     @staticmethod
     def _content_selection_args(

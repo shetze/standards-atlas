@@ -95,7 +95,9 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
     assert [type(block) for block in first.content] == [TextBlock, ListBlock]
     assert first.content[0].text == "First paragraph."
     assert first.content[0].source_evidence == evidence
+    assert first.title == "Scope"
     assert [type(block) for block in second.content] == [TextBlock, TableBlock, CodeBlock]
+    assert second.title == "AtlasData fallback"
     assert second.content[0].text == "Inline clause text."
     assert result.statistics.clauses_enriched == 2
     assert result.statistics.content_blocks == 5
@@ -153,6 +155,7 @@ def _document():
                 id=ClauseId(value=f"SAMPLE-{number}"),
                 reference=StandardReference(standard="SAMPLE", clause=number),
                 clause_type=ClauseType.CLAUSE,
+                title="AtlasData fallback" if number == "2" else None,
             )
             for number in ("1", "2")
         ),

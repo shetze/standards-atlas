@@ -56,6 +56,46 @@ def test_generate_volume_with_part_shift() -> None:
     )
 
 
+def test_generate_supplement_volume_id() -> None:
+    assert (
+        generate_doorstop_id(
+            visible_reference="4.1",
+            volume="3§1",
+            context=DoorstopIdContext(
+                digits=12,
+                part_shift=1,
+            ),
+        )
+        == "040104010000"
+    )
+
+
+def test_supplement_volume_does_not_collide_with_numeric_part() -> None:
+    context = DoorstopIdContext(digits=12, part_shift=1)
+
+    supplement_id = generate_doorstop_id(
+        visible_reference="4.1",
+        volume="3§1",
+        context=context,
+    )
+    numeric_part_id = generate_doorstop_id(
+        visible_reference="4.1",
+        volume="31",
+        context=context,
+    )
+
+    assert supplement_id != numeric_part_id
+
+
+def test_reject_non_numeric_supplement_volume() -> None:
+    with raises(ValueError, match="Supplement must be numeric"):
+        generate_doorstop_id(
+            visible_reference="4.1",
+            volume="3§draft",
+            context=DoorstopIdContext(digits=12),
+        )
+
+
 def test_generate_annex_id_from_enum_prefix() -> None:
     assert (
         generate_doorstop_id(

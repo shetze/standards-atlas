@@ -65,7 +65,8 @@ def generate_doorstop_id(
             Document-wide identifier generation configuration.
 
         volume:
-            Optional volume or standard part identifier.
+            Optional volume or standard part identifier. Supplement parts may
+            use the AtlasData separator ``§``, for example ``3§1``.
 
         enum_prefix:
             Numeric replacement for a non-numeric first reference segment,
@@ -245,21 +246,55 @@ def _format_volume(
     volume: str,
     context: DoorstopIdContext,
 ) -> str:
-    """Format the optional document volume or standard part."""
+    """Format a standard part and optional supplement hierarchy.
+
+    AtlasData represents supplements with the ``§`` separator. ``3§1`` means
+    supplement 1 of part 3. The primary part uses the configured part shift;
+    every supplement component is appended as an unshifted two-digit segment.
+    This keeps supplement identifiers distinct from ordinary parts such as 31.
+    """
+    components = volume.split("§")
+    if any(not component for component in components):
+        raise ValueError(f"Invalid volume hierarchy, got {volume!r}.")
+
+    primary = _format_volume_component(
+        component=components[0],
+        width=context.part_digits or 2,
+        shift=context.part_shift,
+        label="Volume",
+    )
+    supplements = tuple(
+        _format_volume_component(
+            component=component,
+            width=2,
+            shift=0,
+            label="Supplement",
+        )
+        for component in components[1:]
+    )
+    return "".join((primary, *supplements))
+
+
+def _format_volume_component(
+    *,
+    component: str,
+    width: int,
+    shift: int,
+    label: str,
+) -> str:
+    """Format one numeric component of a volume hierarchy."""
     try:
-        numeric_volume = int(volume) + context.part_shift
+        numeric_value = int(component) + shift
     except ValueError as exc:
-        raise ValueError(f"Volume must be numeric, got {volume!r}.") from exc
+        raise ValueError(f"{label} must be numeric, got {component!r}.") from exc
 
-    if numeric_volume < 0:
-        raise ValueError(f"Shifted volume must not be negative, got {numeric_volume}.")
+    if numeric_value < 0:
+        raise ValueError(f"Shifted {label.lower()} must not be negative, got {numeric_value}.")
 
-    width = context.part_digits or 2
+    if len(str(numeric_value)) > width:
+        raise ValueError(f"{label} {numeric_value!r} exceeds configured width of {width} digits.")
 
-    if len(str(numeric_volume)) > width:
-        raise ValueError(f"Volume {numeric_volume!r} exceeds configured width of {width} digits.")
-
-    return f"{numeric_volume:0{width}d}"
+    return f"{numeric_value:0{width}d}"
 
 
 def _format_numeric_segment(

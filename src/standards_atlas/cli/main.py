@@ -39,6 +39,8 @@ from standards_atlas.application.services import (
     ContentEnrichmentError,
     ContentEnrichmentService,
     DoclingPartSource,
+    DocumentCompositionError,
+    DocumentCompositionService,
     DocumentExportService,
     DocumentExtractionService,
     DocumentImportService,
@@ -151,9 +153,7 @@ def plan_workflow(
     all_families: Annotated[bool, typer.Option("--all", help="Plan all catalog families.")] = False,
     force: Annotated[
         bool,
-        typer.Option(
-            "--force", help="Plan regeneration using only supported replacement options."
-        ),
+        typer.Option("--force", help="Plan regeneration using only supported replacement options."),
     ] = False,
 ) -> None:
     model = YamlStandardCatalogReader().read(catalog)
@@ -518,6 +518,33 @@ def derive_document_part(
     typer.echo(f"Persisted document    : {workspace / 'documents' / (target_key + '.json')}")
 
 
+@document_app.command("compose-family")
+def compose_family_document(
+    family_key: Annotated[str, typer.Argument(help="Key of the persisted family document.")],
+    part: Annotated[
+        list[str] | None,
+        typer.Option("--part", help="Enriched part key; repeat for every part."),
+    ] = None,
+    workspace: Annotated[
+        Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
+    ] = Path(".atlas"),
+) -> None:
+    """Merge enriched part documents back into their logical family document."""
+    part_keys = tuple(part or ())
+    if not part_keys:
+        raise typer.BadParameter("At least one --part document key is required.")
+    try:
+        document = DocumentCompositionService(workspace).compose(family_key, part_keys)
+    except (DocumentCompositionError, FileNotFoundError) as error:
+        raise typer.BadParameter(str(error)) from error
+
+    enriched = sum(bool(clause.content) for clause in document.clauses)
+    typer.echo(f"Family document       : {document.key.value}")
+    typer.echo(f"Part documents        : {', '.join(part_keys)}")
+    typer.echo(f"Clauses               : {len(document.clauses)}")
+    typer.echo(f"Clauses with content  : {enriched}")
+
+
 @document_app.command("enrich-content")
 def enrich_document_content(
     document_key: Annotated[
@@ -565,9 +592,7 @@ def enrich_document_content(
         "Alignment source      : "
         + ("reviewed.json" if stats.used_reviewed_alignment else "alignment.json")
     )
-    typer.echo(
-        f"Persisted document    : {workspace / 'documents' / (document_key + '.json')}"
-    )
+    typer.echo(f"Persisted document    : {workspace / 'documents' / (document_key + '.json')}")
 
 
 @document_export_app.command("markdown")
@@ -671,6 +696,13 @@ def export_document_to_doorstop(
             help="Separator between Doorstop prefix and numeric identifier.",
         ),
     ] = "-",
+    parent: Annotated[
+        str | None,
+        typer.Option(
+            "--parent",
+            help="Doorstop parent document prefix derived from the catalog hierarchy.",
+        ),
+    ] = None,
     validate: Annotated[
         bool,
         typer.Option(
@@ -724,6 +756,7 @@ def export_document_to_doorstop(
         prefix=prefix,
         digits=digits,
         separator=separator,
+        parent=parent,
         replace_existing=replace_existing,
         validate_after_export=validate,
         initialize_git_repository=initialize_git,
@@ -856,9 +889,7 @@ def _parse_page_range(value: str) -> tuple[int, int | None]:
         start = int(start_text)
         end = int(end_text) if end_text else None
     except ValueError as exc:
-        raise ValueError(
-            f"Invalid page range {value!r}; expected START:END or START:"
-        ) from exc
+        raise ValueError(f"Invalid page range {value!r}; expected START:END or START:") from exc
     if start < 1 or (end is not None and end < start):
         raise ValueError(f"Invalid page range {value!r}")
     return start, end
@@ -903,9 +934,7 @@ def normalize_extracted_document(
         raise typer.Exit(code=3)
     try:
         page_ranges = tuple(_parse_page_range(value) for value in (page_range or ()))
-        excluded_ranges = tuple(
-            _parse_page_range(value) for value in (exclude_page_range or ())
-        )
+        excluded_ranges = tuple(_parse_page_range(value) for value in (exclude_page_range or ()))
         selected_pages = parse_page_list(page_list) if page_list else ()
         result = DocumentNormalizationService(workspace=workspace).normalize(
             document_key,
@@ -937,14 +966,12 @@ def normalize_extracted_document(
     options = result.metadata.options
     if options.page_ranges:
         rendered_ranges = ", ".join(
-            f"{start}-{end if end is not None else 'end'}"
-            for start, end in options.page_ranges
+            f"{start}-{end if end is not None else 'end'}" for start, end in options.page_ranges
         )
         typer.echo(f"Selected page ranges        : {rendered_ranges}")
     if options.page_list:
         typer.echo(
-            "Selected page list          : "
-            + ",".join(str(page) for page in options.page_list)
+            "Selected page list          : " + ",".join(str(page) for page in options.page_list)
         )
     if options.exclude_page_ranges:
         rendered_exclusions = ", ".join(

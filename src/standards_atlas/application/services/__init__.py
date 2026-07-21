@@ -16,6 +16,10 @@ from standards_atlas.application.services.content_enrichment_service import (
     ContentEnrichmentService,
     ContentEnrichmentStatistics,
 )
+from standards_atlas.application.services.document_composition_service import (
+    DocumentCompositionError,
+    DocumentCompositionService,
+)
 from standards_atlas.application.services.document_export_service import (
     DocumentExportService,
 )
@@ -69,6 +73,8 @@ __all__ = [
     "DocumentExportService",
     "DocumentExtractionService",
     "DocumentImportService",
+    "DocumentCompositionError",
+    "DocumentCompositionService",
     "DocumentNormalizationService",
     "DocumentSelectionError",
     "DocumentSelectionService",
