@@ -13,7 +13,7 @@ from standards_atlas.domain.model import (
     Standard,
 )
 
-CURRENT_DOCUMENT_SCHEMA_VERSION = 2
+CURRENT_DOCUMENT_SCHEMA_VERSION = 3
 
 _DOCUMENT_MODELS: dict[
     DocumentType,
@@ -78,10 +78,10 @@ def _extract_document_data(payload: Any) -> dict[str, Any]:
         return payload
 
     version = payload["schema_version"]
-    if version != CURRENT_DOCUMENT_SCHEMA_VERSION:
+    if version not in {2, CURRENT_DOCUMENT_SCHEMA_VERSION}:
         raise ValueError(
             "Unsupported engineering document schema version: "
-            f"{version}; expected {CURRENT_DOCUMENT_SCHEMA_VERSION}"
+            f"{version}; expected 2 or {CURRENT_DOCUMENT_SCHEMA_VERSION}"
         )
 
     document = payload.get("document")

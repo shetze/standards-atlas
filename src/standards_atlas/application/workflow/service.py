@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import shutil
 import subprocess
 from dataclasses import dataclass
 from enum import StrEnum
@@ -42,12 +44,15 @@ class WorkflowStep:
     command: tuple[str, ...]
     artifact_policy: ArtifactPolicy
     manual_gate: bool = False
+    output_paths: tuple[str, ...] = ()
+    output_globs: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
 class WorkflowPlan:
     families: tuple[str, ...]
     steps: tuple[WorkflowStep, ...]
+    force: bool = False
 
 
 @dataclass(frozen=True)
@@ -91,7 +96,7 @@ class EndToEndWorkflowService:
                     selected_families=selected_families,
                 )
             )
-        return WorkflowPlan(families=family_keys, steps=tuple(steps))
+        return WorkflowPlan(families=family_keys, steps=tuple(steps), force=force)
 
     def execute(
         self,
@@ -126,13 +131,20 @@ class EndToEndWorkflowService:
                     if family_documents & blocked_documents:
                         continue
 
-            command_runner.run(step.command, project_root)
-            executed.append(step)
+            outputs_exist = self._outputs_exist(step, project_root)
+            if plan.force and outputs_exist:
+                self._remove_outputs(step, project_root)
+                outputs_exist = False
+
+            if not outputs_exist:
+                command_runner.run(step.command, project_root)
+                self._record_completion(step, project_root)
+                executed.append(step)
 
             if step.manual_gate and not continue_after_review:
                 if step.stage == WorkflowStage.ATLASDATA:
                     blocked_families.add(step.family)
-                else:
+                elif self._alignment_requires_review(project_root, step.document):
                     blocked_documents.add(step.document)
 
         return WorkflowExecutionResult(
@@ -193,6 +205,7 @@ class EndToEndWorkflowService:
                         pdf,
                     ),
                     ArtifactPolicy.SOURCE,
+                    output_paths=(f".atlas/docling/{key}/document.json",),
                 )
             )
 
@@ -255,6 +268,7 @@ class EndToEndWorkflowService:
                     ),
                     ArtifactPolicy.DERIVED,
                     True,
+                    output_paths=(f"data/{family.key}",),
                 )
             )
             return steps
@@ -267,6 +281,7 @@ class EndToEndWorkflowService:
                 WorkflowStage.IMPORT,
                 ("uv", "run", "standards-atlas", "document", "import", atlas_path),
                 ArtifactPolicy.DERIVED,
+                output_paths=(f".atlas/documents/{family.key}.json",),
             )
         )
 
@@ -290,6 +305,7 @@ class EndToEndWorkflowService:
                             *(("--title", part.title) if part.title else ()),
                         ),
                         ArtifactPolicy.DERIVED,
+                        output_paths=(f".atlas/documents/{part.key}.json",),
                     )
                 )
                 for supplement in part.supplements:
@@ -309,6 +325,7 @@ class EndToEndWorkflowService:
                                     supplement_atlas_path,
                                 ),
                                 ArtifactPolicy.DERIVED,
+                                output_paths=(f".atlas/documents/{supplement.key}.json",),
                             )
                         )
                     else:
@@ -330,6 +347,7 @@ class EndToEndWorkflowService:
                                     *(("--title", supplement.title) if supplement.title else ()),
                                 ),
                                 ArtifactPolicy.DERIVED,
+                                output_paths=(f".atlas/documents/{supplement.key}.json",),
                             )
                         )
 
@@ -355,6 +373,10 @@ class EndToEndWorkflowService:
                             option="--overwrite",
                         ),
                         ArtifactPolicy.DERIVED,
+                        output_paths=(
+                            f".atlas/normalized/{key}/document.json",
+                            f".atlas/normalized/{key}/run.json",
+                        ),
                     ),
                     WorkflowStep(
                         family.key,
@@ -362,6 +384,7 @@ class EndToEndWorkflowService:
                         WorkflowStage.REFERENCES,
                         ("uv", "run", "standards-atlas", "references", "detect", key),
                         ArtifactPolicy.DERIVED,
+                        output_paths=(f".atlas/reference-candidates/{key}/document.json",),
                     ),
                     WorkflowStep(
                         family.key,
@@ -374,14 +397,27 @@ class EndToEndWorkflowService:
                             option="--overwrite",
                         ),
                         ArtifactPolicy.DERIVED,
+                        output_paths=(f".atlas/alignments/{key}/alignment.json",),
                     ),
                     WorkflowStep(
                         family.key,
                         key,
                         WorkflowStage.REVIEW,
-                        ("uv", "run", "standards-atlas", "align", "review-export", key),
+                        (
+                            "uv",
+                            "run",
+                            "standards-atlas",
+                            "align",
+                            "review-export",
+                            key,
+                            *(("--reset-edited",) if force else ()),
+                        ),
                         ArtifactPolicy.REVIEW,
                         True,
+                        output_paths=(
+                            f".atlas/alignments/{key}/review.generated.md",
+                            f".atlas/alignments/{key}/review.edited.md",
+                        ),
                     ),
                     WorkflowStep(
                         family.key,
@@ -389,6 +425,7 @@ class EndToEndWorkflowService:
                         WorkflowStage.ENRICH,
                         ("uv", "run", "standards-atlas", "document", "enrich-content", key),
                         ArtifactPolicy.DERIVED,
+                        output_paths=(f".atlas/workflow/enrich/{key}.complete",),
                     ),
                 ]
             )
@@ -409,6 +446,7 @@ class EndToEndWorkflowService:
                         *(value for key in part_keys for value in ("--part", key)),
                     ),
                     ArtifactPolicy.DERIVED,
+                    output_paths=(f".atlas/workflow/compose/{family.key}.complete",),
                 )
             )
         if family.exports.markdown:
@@ -427,6 +465,7 @@ class EndToEndWorkflowService:
                         family.key,
                     ),
                     ArtifactPolicy.DERIVED,
+                    output_globs=(f".atlas/markdown/{family.key}*.md",),
                 )
             )
         if family.exports.doorstop.enabled:
@@ -449,9 +488,48 @@ class EndToEndWorkflowService:
                         *(("--parent", doorstop_parent) if doorstop_parent else ()),
                     ),
                     ArtifactPolicy.DERIVED,
+                    output_paths=(f".atlas/doorstop/{family.key}",),
                 )
             )
         return steps
+
+    @staticmethod
+    def _outputs_exist(step: WorkflowStep, project_root: Path) -> bool:
+        if not step.output_paths and not step.output_globs:
+            return False
+        paths_exist = all((project_root / path).exists() for path in step.output_paths)
+        globs_exist = all(any(project_root.glob(pattern)) for pattern in step.output_globs)
+        return paths_exist and globs_exist
+
+    @staticmethod
+    def _record_completion(step: WorkflowStep, project_root: Path) -> None:
+        for relative_path in step.output_paths:
+            if not relative_path.startswith(".atlas/workflow/"):
+                continue
+            marker = project_root / relative_path
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text("completed\n", encoding="utf-8")
+
+    @staticmethod
+    def _remove_outputs(step: WorkflowStep, project_root: Path) -> None:
+        targets = [project_root / path for path in step.output_paths]
+        for pattern in step.output_globs:
+            targets.extend(project_root.glob(pattern))
+        for target in targets:
+            if target.is_dir():
+                shutil.rmtree(target)
+            else:
+                target.unlink(missing_ok=True)
+
+    @staticmethod
+    def _alignment_requires_review(project_root: Path, document_key: str) -> bool:
+        path = project_root / ".atlas" / "alignments" / document_key / "alignment.json"
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            statistics = payload["metadata"]["statistics"]
+            return bool(statistics.get("missing", 0) or statistics.get("conflicting", 0))
+        except (OSError, ValueError, KeyError, TypeError):
+            return True
 
     @staticmethod
     def _doorstop_parent(

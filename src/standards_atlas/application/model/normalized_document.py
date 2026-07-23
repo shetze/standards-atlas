@@ -7,7 +7,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.domain.model import SourceEvidence, TableRow
+from standards_atlas.application.model.extracted_document import LayoutEvidence, VisualAsset
+from standards_atlas.domain.model import ArtifactLineage, SourceEvidence, TableRow
 
 
 class NormalizationOptions(BaseModel):
@@ -41,6 +42,54 @@ class NormalizationIssue(BaseModel):
     message: str
 
 
+class PageFurnitureDecision(BaseModel):
+    """Auditable deterministic interpretation of an observed page element."""
+
+    model_config = ConfigDict(frozen=True)
+
+    source_item_id: str
+    role: Literal["page_header", "page_footer", "page_number"]
+    rule_id: str
+    confidence: float = Field(ge=0.0, le=1.0)
+    text: str
+    original_label: str | None = None
+    page_number: int | None = Field(default=None, ge=1)
+    signature: str
+    occurrences: int = Field(ge=1)
+    distinct_pages: int = Field(ge=0)
+    margin_position_ratio: float | None = Field(default=None, ge=0.0)
+
+
+class TransformationEvent(BaseModel):
+    """Deterministic record of one normalization decision or transformation."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(pattern=r"^tx:[0-9a-f]{16}$")
+    stage: Literal[
+        "selection",
+        "mapping",
+        "hyphenation",
+        "text_merge",
+        "list_normalization",
+    ]
+    rule_id: str = Field(min_length=1)
+    action: str = Field(min_length=1)
+    source_item_ids: tuple[str, ...] = ()
+    output_item_ids: tuple[str, ...] = ()
+    rationale: str = Field(min_length=1)
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class TransformationLedger(BaseModel):
+    """Ordered deterministic audit trail for the normalization result."""
+
+    model_config = ConfigDict(frozen=True)
+
+    schema_version: int = 1
+    events: tuple[TransformationEvent, ...] = ()
+
+
 class SuppressedItem(BaseModel):
     """An extracted item excluded from the active normalized sequence."""
 
@@ -63,6 +112,7 @@ class NormalizedItemBase(BaseModel):
     source_item_ids: tuple[str, ...]
     source_evidence: tuple[SourceEvidence, ...] = ()
     original_labels: tuple[str, ...] = ()
+    layout_evidence: tuple[LayoutEvidence, ...] = ()
 
 
 class NormalizedText(NormalizedItemBase):
@@ -81,8 +131,12 @@ class NormalizedListItem(BaseModel):
 
     text: str
     marker: str | None = None
+    ordered: bool = False
+    depth: int = Field(default=0, ge=0)
     children: tuple[NormalizedListItem, ...] = ()
     source_item_ids: tuple[str, ...] = ()
+    source_evidence: tuple[SourceEvidence, ...] = ()
+    layout_evidence: tuple[LayoutEvidence, ...] = ()
 
 
 class NormalizedList(NormalizedItemBase):
@@ -102,12 +156,17 @@ class NormalizedPicture(NormalizedItemBase):
     caption: str | None = None
     description: str | None = None
     image_reference: str | None = None
+    visual_asset: VisualAsset | None = None
 
 
 class NormalizedFormula(NormalizedItemBase):
     type: Literal["formula"] = "formula"
     expression: str
+    original_expression: str | None = None
     representation: Literal["latex", "mathml", "text"] = "text"
+    extraction_status: Literal["visual_only", "machine_extracted", "human_verified"] = (
+        "machine_extracted"
+    )
 
 
 class NormalizedCode(NormalizedItemBase):
@@ -159,12 +218,21 @@ class NormalizationStatistics(BaseModel):
 class NormalizationMetadata(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: int = 2
+    schema_version: int = 9
     normalizer_version: str
     source_extraction_hash: str
-    created_at: datetime
     options: NormalizationOptions
     statistics: NormalizationStatistics
+
+
+class NormalizationRunMetadata(BaseModel):
+    """Non-deterministic audit metadata stored outside the document payload."""
+
+    model_config = ConfigDict(frozen=True)
+
+    schema_version: int = 1
+    created_at: datetime
+    document_content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class NormalizedExtractedDocument(BaseModel):
@@ -175,5 +243,8 @@ class NormalizedExtractedDocument(BaseModel):
     source_id: str = Field(min_length=1)
     items: tuple[NormalizedItem, ...] = ()
     suppressed_items: tuple[SuppressedItem, ...] = ()
+    page_furniture_decisions: tuple[PageFurnitureDecision, ...] = ()
+    transformation_ledger: TransformationLedger = Field(default_factory=TransformationLedger)
     issues: tuple[NormalizationIssue, ...] = ()
     metadata: NormalizationMetadata
+    lineage: ArtifactLineage | None = None

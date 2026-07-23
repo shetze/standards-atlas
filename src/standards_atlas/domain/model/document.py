@@ -7,6 +7,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.domain.model.annotation import ClauseAnnotation
+from standards_atlas.domain.model.artifact_lineage import ArtifactLineage
 from standards_atlas.domain.model.clause import Clause
 from standards_atlas.domain.model.identifiers import ClauseId, DocumentKey
 
@@ -45,6 +46,7 @@ class EngineeringDocument(BaseModel):
 
     clauses: tuple[Clause, ...] = ()
     annotations: tuple[ClauseAnnotation, ...] = ()
+    lineage: ArtifactLineage | None = None
 
     def annotations_for_clause(
         self,

@@ -2,6 +2,7 @@ from pathlib import Path
 
 from standards_atlas.adapters.docling import DoclingJsonReader
 from standards_atlas.application.model import (
+    ExtractedFormula,
     ExtractedHeading,
     ExtractedList,
     ExtractedPicture,
@@ -874,3 +875,223 @@ def test_reader_does_not_reorder_reference_without_geometric_confirmation(
     document = DoclingJsonReader().read(source)
 
     assert [item.id for item in document.items] == ["#/texts/0", "#/texts/1"]
+
+
+def test_reader_preserves_layout_and_structural_evidence(tmp_path: Path) -> None:
+    import json
+
+    payload = {
+        "name": "LAYOUT",
+        "pages": {"3": {"page_no": 3, "size": {"width": 600, "height": 840}}},
+        "texts": [
+            {
+                "self_ref": "#/texts/0",
+                "parent": {"$ref": "#/groups/0"},
+                "content_layer": "body",
+                "label": "list_item",
+                "text": "nested item",
+                "orig": "- nested item",
+                "marker": "-",
+                "prov": [
+                    {
+                        "page_no": 3,
+                        "bbox": {
+                            "l": 86.5,
+                            "t": 700,
+                            "r": 400,
+                            "b": 680,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
+                "captions": [{"$ref": "#/texts/1"}],
+                "references": [{"$ref": "#/pictures/0"}],
+                "footnotes": [{"$ref": "#/texts/2"}],
+            },
+            {
+                "self_ref": "#/texts/1",
+                "parent": {"$ref": "#/body"},
+                "content_layer": "body",
+                "label": "caption",
+                "text": "List caption",
+            },
+            {
+                "self_ref": "#/texts/2",
+                "parent": {"$ref": "#/body"},
+                "content_layer": "body",
+                "label": "footnote",
+                "text": "Footnote",
+            },
+        ],
+        "pictures": [
+            {
+                "self_ref": "#/pictures/0",
+                "parent": {"$ref": "#/body"},
+                "content_layer": "body",
+                "label": "picture",
+                "prov": [{"page_no": 3}],
+            }
+        ],
+        "groups": [
+            {
+                "self_ref": "#/groups/0",
+                "parent": {"$ref": "#/groups/1"},
+                "content_layer": "body",
+                "label": "list",
+                "children": [{"$ref": "#/texts/0"}],
+            },
+            {
+                "self_ref": "#/groups/1",
+                "parent": {"$ref": "#/body"},
+                "content_layer": "body",
+                "label": "key_value_area",
+                "children": [{"$ref": "#/groups/0"}],
+            },
+        ],
+        "body": {"children": [{"$ref": "#/groups/1"}]},
+    }
+    source = tmp_path / "layout.json"
+    source.write_text(json.dumps(payload), encoding="utf-8")
+
+    document = DoclingJsonReader().read(source)
+    extracted_list = document.items[0]
+
+    assert isinstance(extracted_list, ExtractedList)
+    item = extracted_list.items[0]
+    layout = item.layout_evidence[0]
+    assert layout.source_reference == "#/texts/0"
+    assert layout.content_layer == "body"
+    assert layout.parent_reference == "#/groups/0"
+    assert layout.group_path == ("#/groups/1", "#/groups/0")
+    assert layout.page_width == 600
+    assert layout.page_height == 840
+    assert layout.original_marker == "-"
+    assert layout.original_text == "- nested item"
+    assert layout.caption_references == ("#/texts/1",)
+    assert layout.reference_references == ("#/pictures/0",)
+    assert layout.footnote_references == ("#/texts/2",)
+
+
+def test_reader_resolves_referenced_picture_caption(tmp_path: Path) -> None:
+    import json
+
+    payload = {
+        "name": "PICTURE",
+        "texts": [
+            {
+                "self_ref": "#/texts/0",
+                "parent": {"$ref": "#/pictures/0"},
+                "content_layer": "body",
+                "label": "caption",
+                "text": "Figure 1 — Architecture",
+            }
+        ],
+        "pictures": [
+            {
+                "self_ref": "#/pictures/0",
+                "parent": {"$ref": "#/body"},
+                "content_layer": "body",
+                "label": "picture",
+                "captions": [{"$ref": "#/texts/0"}],
+                "prov": [{"page_no": 4}],
+            }
+        ],
+        "body": {"children": [{"$ref": "#/pictures/0"}]},
+    }
+    source = tmp_path / "picture.json"
+    source.write_text(json.dumps(payload), encoding="utf-8")
+
+    document = DoclingJsonReader().read(source)
+    picture = document.items[0]
+
+    assert isinstance(picture, ExtractedPicture)
+    assert picture.caption == "Figure 1 — Architecture"
+    assert picture.layout_evidence[0].caption_references == ("#/texts/0",)
+
+
+def test_reader_owns_table_caption_without_emitting_duplicate_body_text(tmp_path: Path) -> None:
+    import json
+
+    payload = {
+        "name": "TABLE",
+        "texts": [
+            {
+                "self_ref": "#/texts/0",
+                "parent": {"$ref": "#/tables/0"},
+                "content_layer": "body",
+                "label": "caption",
+                "text": "Table 1 — Parameters",
+            }
+        ],
+        "tables": [
+            {
+                "self_ref": "#/tables/0",
+                "parent": {"$ref": "#/body"},
+                "content_layer": "body",
+                "label": "table",
+                "captions": [{"$ref": "#/texts/0"}],
+                "data": {"table_cells": []},
+            }
+        ],
+        "body": {"children": [{"$ref": "#/tables/0"}, {"$ref": "#/texts/0"}]},
+    }
+    source = tmp_path / "table.json"
+    source.write_text(json.dumps(payload), encoding="utf-8")
+
+    document = DoclingJsonReader().read(source)
+
+    assert len(document.items) == 1
+    assert isinstance(document.items[0], ExtractedTable)
+    assert document.items[0].caption == "Table 1 — Parameters"
+
+
+def test_reader_preserves_embedded_picture_asset_and_visual_only_formula(tmp_path: Path) -> None:
+    import base64
+    import json
+
+    payload_bytes = b"visual-payload"
+    data_uri = "data:image/png;base64," + base64.b64encode(payload_bytes).decode("ascii")
+    payload = {
+        "name": "VISUALS",
+        "texts": [
+            {
+                "self_ref": "#/texts/0",
+                "parent": {"$ref": "#/body"},
+                "content_layer": "body",
+                "label": "formula",
+                "text": "",
+                "orig": "1 MUT A MUT MDT = <= +",
+                "prov": [{"page_no": 7}],
+            }
+        ],
+        "pictures": [
+            {
+                "self_ref": "#/pictures/0",
+                "parent": {"$ref": "#/body"},
+                "content_layer": "body",
+                "label": "picture",
+                "image": {
+                    "mimetype": "image/png",
+                    "size": {"width": 20, "height": 10},
+                    "uri": data_uri,
+                },
+            }
+        ],
+        "body": {"children": [{"$ref": "#/pictures/0"}, {"$ref": "#/texts/0"}]},
+    }
+    source = tmp_path / "visuals.json"
+    source.write_text(json.dumps(payload), encoding="utf-8")
+
+    document = DoclingJsonReader().read(source)
+    picture, formula = document.items
+
+    assert isinstance(picture, ExtractedPicture)
+    assert picture.visual_asset is not None
+    assert picture.visual_asset.media_type == "image/png"
+    assert picture.visual_asset.data_uri == data_uri
+    assert picture.visual_asset.width == 20
+    assert picture.visual_asset.height == 10
+    assert isinstance(formula, ExtractedFormula)
+    assert formula.expression == "1 MUT A MUT MDT = <= +"
+    assert formula.original_expression == "1 MUT A MUT MDT = <= +"
+    assert formula.extraction_status == "visual_only"

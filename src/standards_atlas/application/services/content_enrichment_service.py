@@ -29,6 +29,7 @@ from standards_atlas.application.model.normalized_document import (
     NormalizedUnknown,
 )
 from standards_atlas.domain.model import (
+    ArtifactLineage,
     Clause,
     CodeBlock,
     ContentBlock,
@@ -40,6 +41,7 @@ from standards_atlas.domain.model import (
     PictureBlock,
     TableBlock,
     TextBlock,
+    artifact_reference,
 )
 
 
@@ -135,7 +137,20 @@ class ContentEnrichmentService:
                 )
             )
 
-        enriched = document.model_copy(update={"clauses": tuple(enriched_clauses)})
+        draft = document.model_copy(update={"clauses": tuple(enriched_clauses)})
+        parent_artifacts = []
+        if document.lineage is not None:
+            parent_artifacts.append(document.lineage.artifact)
+        if normalized.lineage is not None:
+            parent_artifacts.append(normalized.lineage.artifact)
+        enriched = draft.model_copy(
+            update={
+                "lineage": ArtifactLineage(
+                    artifact=artifact_reference("engineering_document", draft),
+                    derived_from=tuple(parent_artifacts),
+                )
+            }
+        )
         self._documents.save(enriched)
         return ContentEnrichmentResult(
             document=enriched,
@@ -276,6 +291,9 @@ def _item_to_block(
             caption=item.caption,
             image_path=item.image_reference,
             description=item.description,
+            media_type=item.visual_asset.media_type if item.visual_asset else None,
+            content_hash=item.visual_asset.content_hash if item.visual_asset else None,
+            embedded_data_uri=item.visual_asset.data_uri if item.visual_asset else None,
             source_evidence=item.source_evidence,
         )
 
@@ -283,7 +301,9 @@ def _item_to_block(
         return FormulaBlock(
             id=f"content:{item.id}",
             expression=item.expression,
+            original_expression=item.original_expression,
             representation=item.representation,
+            extraction_status=item.extraction_status,
             source_evidence=item.source_evidence,
         )
 
@@ -319,6 +339,7 @@ def _first_item_content(alignment: ClauseAlignment, item: NormalizedItem) -> str
 def _list_item(item: NormalizedListItem) -> ListItem:
     return ListItem(
         text=item.text,
+        ordered=item.ordered,
         children=tuple(_list_item(child) for child in item.children),
     )
 

@@ -5,6 +5,13 @@ from standards_atlas.domain.model.annotation import (
     AnnotationVisibility,
     ClauseAnnotation,
 )
+from standards_atlas.domain.model.artifact_lineage import (
+    ArtifactKind,
+    ArtifactLineage,
+    ArtifactReference,
+    artifact_reference,
+    canonical_content_hash,
+)
 from standards_atlas.domain.model.clause import Clause, ClauseType
 from standards_atlas.domain.model.content import (
     CodeBlock,
@@ -42,6 +49,9 @@ from standards_atlas.domain.model.source_evidence import (
 from standards_atlas.domain.model.standard import Standard
 
 __all__ = [
+    "ArtifactKind",
+    "ArtifactLineage",
+    "ArtifactReference",
     "AnnotationId",
     "AnnotationType",
     "AnnotationVisibility",
@@ -74,5 +84,7 @@ __all__ = [
     "TableCell",
     "TableRow",
     "TextBlock",
+    "artifact_reference",
+    "canonical_content_hash",
     "render_content_as_plain_text",
 ]

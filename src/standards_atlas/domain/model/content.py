@@ -31,6 +31,7 @@ class ListItem(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     text: str
+    ordered: bool = False
     children: tuple[ListItem, ...] = ()
 
 
@@ -76,6 +77,9 @@ class PictureBlock(ContentBlockBase):
     caption: str | None = None
     image_path: str | None = None
     description: str | None = None
+    media_type: str | None = None
+    content_hash: str | None = None
+    embedded_data_uri: str | None = None
 
 
 class FormulaBlock(ContentBlockBase):
@@ -83,7 +87,11 @@ class FormulaBlock(ContentBlockBase):
 
     type: Literal["formula"] = "formula"
     expression: str
+    original_expression: str | None = None
     representation: Literal["latex", "mathml", "text"] = "text"
+    extraction_status: Literal["visual_only", "machine_extracted", "human_verified"] = (
+        "machine_extracted"
+    )
 
 
 class CodeBlock(ContentBlockBase):

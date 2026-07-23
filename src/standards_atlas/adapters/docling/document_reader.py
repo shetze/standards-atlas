@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import re
 from collections.abc import Iterable
@@ -22,13 +24,17 @@ from standards_atlas.application.model import (
     ExtractedText,
     ExtractedUnknown,
     ExtractionMetadata,
+    LayoutEvidence,
+    VisualAsset,
 )
 from standards_atlas.domain.model import (
+    ArtifactLineage,
     BoundingBox,
     CoordinateOrigin,
     SourceEvidence,
     TableCell,
     TableRow,
+    artifact_reference,
 )
 
 _HEADING_LABELS = {"section_header", "title", "subtitle"}
@@ -55,18 +61,87 @@ class DoclingJsonReader:
 
         source_id = _source_id(payload, source)
         indexed = _index_items(payload)
-        ordered = list(_ordered_items(payload, indexed))
-        items = _map_items(ordered, source_id=source_id)
+        caption_references = _referenced_caption_ids(indexed)
+        ordered = [
+            item
+            for item in _ordered_items(payload, indexed)
+            if item.get("self_ref") not in caption_references
+        ]
+        items = _map_items(
+            ordered,
+            source_id=source_id,
+            indexed=indexed,
+            pages=payload.get("pages"),
+        )
         origin = payload.get("origin") if isinstance(payload.get("origin"), dict) else {}
 
-        return ExtractedDocument(
+        metadata = ExtractionMetadata(
+            converter="docling",
+            source_path=_string_or_none(origin.get("filename")),
+        )
+        draft = ExtractedDocument(
             source_id=source_id,
             items=tuple(items),
-            metadata=ExtractionMetadata(
-                converter="docling",
-                source_path=_string_or_none(origin.get("filename")),
-            ),
+            metadata=metadata,
         )
+        source_artifact = artifact_reference(
+            "source_document",
+            {"source_id": source_id, "source_path": metadata.source_path},
+            location=metadata.source_path,
+        )
+        extraction_artifact = artifact_reference(
+            "docling_extraction",
+            draft,
+            location=str(source),
+            media_type="application/json",
+        )
+        return draft.model_copy(
+            update={
+                "lineage": ArtifactLineage(
+                    artifact=extraction_artifact,
+                    derived_from=(source_artifact,),
+                )
+            }
+        )
+
+
+def _referenced_caption_ids(indexed: dict[str, dict[str, Any]]) -> set[str]:
+    """Return caption items owned by tables or pictures.
+
+    Owned captions are represented on their parent visual item and must not also
+    enter the body sequence as independent prose.
+    """
+    result: set[str] = set()
+    for raw in indexed.values():
+        if raw.get("label") not in {"table", "picture"}:
+            continue
+        result.update(_reference_values(raw.get("captions")))
+    return result
+
+
+def _visual_asset(raw: dict[str, Any]) -> VisualAsset | None:
+    image = raw.get("image")
+    if not isinstance(image, dict):
+        return None
+    uri = _string_or_none(image.get("uri"))
+    media_type = _string_or_none(image.get("mimetype"))
+    if uri is None or media_type is None:
+        return None
+    payload = uri.encode("utf-8")
+    if uri.startswith("data:") and ";base64," in uri:
+        try:
+            payload = base64.b64decode(uri.split(",", 1)[1], validate=True)
+        except ValueError:
+            payload = uri.encode("utf-8")
+    digest = hashlib.sha256(payload).hexdigest()
+    size = image.get("size") if isinstance(image.get("size"), dict) else {}
+    return VisualAsset(
+        media_type=media_type,
+        content_hash=digest,
+        data_uri=uri,
+        width=_number(size.get("width")),
+        height=_number(size.get("height")),
+    )
 
 
 def _source_id(payload: dict[str, Any], source: Path) -> str:
@@ -111,7 +186,7 @@ def _ordered_items(
     yielded_items: set[str] = set()
     visited_groups: set[str] = set()
 
-    def visit(node: Any) -> Iterable[dict[str, Any]]:
+    def visit(node: Any, group_path: tuple[str, ...] = ()) -> Iterable[dict[str, Any]]:
         if not isinstance(node, dict):
             return
 
@@ -122,17 +197,19 @@ def _ordered_items(
                 if reference in visited_groups:
                     return
                 visited_groups.add(reference)
-                yield from visit(resolved)
+                yield from visit(resolved, (*group_path, reference))
                 return
             if reference in yielded_items:
                 return
             yielded_items.add(reference)
-            yield resolved
+            enriched = dict(resolved)
+            enriched["_atlas_group_path"] = group_path
+            yield enriched
             return
 
         children = node.get("children", []) if isinstance(node.get("children"), list) else []
         for child in children:
-            yield from visit(child)
+            yield from visit(child, group_path)
 
     body_items = list(visit(body)) if isinstance(body, dict) else []
     body_items = _repair_misordered_annex_headings(body_items)
@@ -144,7 +221,7 @@ def _ordered_items(
     # tree. Reinsert only these orphaned items from their page geometry while
     # preserving the declared order of all body-reachable items.
     orphaned_items = [
-        item
+        _with_group_path(item, indexed)
         for reference, item in indexed.items()
         if not _is_group(reference, item) and reference not in yielded_items
     ]
@@ -363,7 +440,13 @@ def _is_group(reference: str, item: dict[str, Any]) -> bool:
     return label in {"group", "list", "ordered_list", "unordered_list", "chapter"}
 
 
-def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[ExtractedItem]:
+def _map_items(
+    items: list[dict[str, Any]],
+    *,
+    source_id: str,
+    indexed: dict[str, dict[str, Any]],
+    pages: Any,
+) -> list[ExtractedItem]:
     result: list[ExtractedItem] = []
     pending_list: list[tuple[dict[str, Any], SourceEvidence, int]] = []
 
@@ -379,6 +462,7 @@ def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[Extracted
                 text=_text(item),
                 marker=_string_or_none(item.get("marker")),
                 source_evidence=(evidence,),
+                layout_evidence=(_layout_evidence(item, pages),),
             )
             for item, evidence, source_sequence in pending_list
         )
@@ -390,6 +474,7 @@ def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[Extracted
                 items=mapped_items,
                 source_evidence=all_evidence,
                 original_label="list_item",
+                layout_evidence=tuple(_layout_evidence(item, pages) for item, _, _ in pending_list),
             )
         )
         pending_list.clear()
@@ -422,6 +507,7 @@ def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[Extracted
             "sequence_number": source_sequence,
             "source_evidence": (evidence,),
             "original_label": label,
+            "layout_evidence": (_layout_evidence(raw, pages),),
         }
         if label == "code":
             result.append(ExtractedCode(**common, code=_text(raw)))
@@ -435,16 +521,34 @@ def _map_items(items: list[dict[str, Any]], *, source_id: str) -> list[Extracted
                 )
             )
         elif label in _FORMULA_LABELS:
-            result.append(ExtractedFormula(**common, expression=_text(raw)))
+            semantic_text = _string_or_none(raw.get("text"))
+            original_expression = _string_or_none(raw.get("orig"))
+            result.append(
+                ExtractedFormula(
+                    **common,
+                    expression=semantic_text or original_expression or "",
+                    original_expression=original_expression,
+                    extraction_status=(
+                        "machine_extracted" if semantic_text is not None else "visual_only"
+                    ),
+                )
+            )
         elif label == "table" or "data" in raw and isinstance(raw.get("data"), dict):
-            result.append(ExtractedTable(**common, rows=_table_rows(raw), caption=_caption(raw)))
+            result.append(
+                ExtractedTable(
+                    **common,
+                    rows=_table_rows(raw),
+                    caption=_caption(raw, indexed),
+                )
+            )
         elif label == "picture":
             result.append(
                 ExtractedPicture(
                     **common,
-                    caption=_caption(raw),
+                    caption=_caption(raw, indexed),
                     description=_string_or_none(raw.get("text")),
                     image_reference=_string_or_none(raw.get("self_ref")),
+                    visual_asset=_visual_asset(raw),
                 )
             )
         elif label in _TEXT_LABELS:
@@ -482,6 +586,73 @@ def _diagnostic_attributes(raw: dict[str, Any]) -> dict[str, Any]:
         if isinstance(value, (str, int, float, bool)) or value is None:
             retained[key] = value
     return retained
+
+
+def _with_group_path(raw: dict[str, Any], indexed: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    enriched = dict(raw)
+    path: list[str] = []
+    seen: set[str] = set()
+    parent_reference = _single_reference(raw.get("parent"))
+    while parent_reference and parent_reference not in seen:
+        seen.add(parent_reference)
+        parent = indexed.get(parent_reference)
+        if parent is None or not _is_group(parent_reference, parent):
+            break
+        path.append(parent_reference)
+        parent_reference = _single_reference(parent.get("parent"))
+    enriched["_atlas_group_path"] = tuple(reversed(path))
+    return enriched
+
+
+def _layout_evidence(raw: dict[str, Any], pages: Any) -> LayoutEvidence:
+    page_number = None
+    provenance = raw.get("prov")
+    if isinstance(provenance, list) and provenance and isinstance(provenance[0], dict):
+        candidate = provenance[0].get("page_no")
+        if isinstance(candidate, int) and candidate >= 1:
+            page_number = candidate
+    page_width, page_height = _page_dimensions(pages, page_number)
+    return LayoutEvidence(
+        source_reference=_string_or_none(raw.get("self_ref")),
+        content_layer=_string_or_none(raw.get("content_layer")),
+        parent_reference=_single_reference(raw.get("parent")),
+        group_path=tuple(raw.get("_atlas_group_path", ())),
+        page_width=page_width,
+        page_height=page_height,
+        original_marker=_string_or_none(raw.get("marker")),
+        original_text=_string_or_none(raw.get("orig")) or _string_or_none(raw.get("text")),
+        caption_references=_reference_values(raw.get("captions")),
+        reference_references=_reference_values(raw.get("references")),
+        footnote_references=_reference_values(raw.get("footnotes")),
+    )
+
+
+def _page_dimensions(pages: Any, page_number: int | None) -> tuple[float | None, float | None]:
+    if page_number is None or not isinstance(pages, dict):
+        return None, None
+    page = pages.get(str(page_number), pages.get(page_number))
+    size = page.get("size") if isinstance(page, dict) else None
+    if not isinstance(size, dict):
+        return None, None
+    return _number(size.get("width")), _number(size.get("height"))
+
+
+def _single_reference(value: Any) -> str | None:
+    values = _reference_values(value)
+    return values[0] if values else None
+
+
+def _reference_values(value: Any) -> tuple[str, ...]:
+    if isinstance(value, dict):
+        reference = value.get("$ref")
+        return (reference,) if isinstance(reference, str) else ()
+    if not isinstance(value, list):
+        return ()
+    result = []
+    for entry in value:
+        if isinstance(entry, dict) and isinstance(entry.get("$ref"), str):
+            result.append(entry["$ref"])
+    return tuple(result)
 
 
 def _source_evidence(raw: dict[str, Any], source_id: str) -> SourceEvidence:
@@ -552,7 +723,13 @@ def _table_rows(raw: dict[str, Any]) -> tuple[TableRow, ...]:
     )
 
 
-def _caption(raw: dict[str, Any]) -> str | None:
+def _caption(raw: dict[str, Any], indexed: dict[str, dict[str, Any]]) -> str | None:
+    for reference in _reference_values(raw.get("captions")):
+        caption = indexed.get(reference)
+        if caption is not None:
+            text = _string_or_none(caption.get("text"))
+            if text is not None:
+                return text
     captions = raw.get("captions")
     if isinstance(captions, list):
         for caption in captions:

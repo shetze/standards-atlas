@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from standards_atlas.adapters.artifact_lineage import write_directory_lineage_manifest
 from standards_atlas.adapters.doorstop.config import DoorstopExportConfig
 from standards_atlas.adapters.doorstop.document_renderer import (
     DoorstopDocumentRenderer,
@@ -73,6 +74,11 @@ class DoorstopExporter:
         if self._config.validate_after_export:
             self._validate(self._config.workspace)
 
+        write_directory_lineage_manifest(
+            target_directory,
+            document,
+            kind="doorstop_export",
+        )
         return target_directory
 
     def _prepare_target(self, target: Path) -> None:

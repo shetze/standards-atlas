@@ -7,7 +7,7 @@ import json
 import re
 import unicodedata
 from collections import Counter
-from datetime import UTC, datetime
+from dataclasses import dataclass
 
 from standards_atlas import __version__
 from standards_atlas.application.model import (
@@ -36,8 +36,15 @@ from standards_atlas.application.model.normalized_document import (
     NormalizedTable,
     NormalizedText,
     NormalizedUnknown,
+    PageFurnitureDecision,
     SuppressedItem,
+    TransformationEvent,
+    TransformationLedger,
 )
+from standards_atlas.application.normalization.page_furniture_classifier import (
+    PageFurnitureClassifier,
+)
+from standards_atlas.domain.model import ArtifactLineage, artifact_reference
 
 _LIST_MARKER = re.compile(r"^\s*((?:\d+|[A-Za-z]|[ivxlcdmIVXLCDM]+)[.)]|[-–—•])\s+(.+)$")
 _PAGE_NUMBER = re.compile(r"^\s*(?:[-–—]\s*)?\d+(?:\s*[-–—])?\s*$")
@@ -57,15 +64,29 @@ class DocumentNormalizer:
         options: NormalizationOptions | None = None,
     ) -> NormalizedExtractedDocument:
         options = options or NormalizationOptions()
-        suppressed, active = self._suppress_page_elements(document, options)
+        page_furniture_decisions = PageFurnitureClassifier().classify(document, options)
+        suppressed, active = self._suppress_page_elements(
+            document, options, page_furniture_decisions
+        )
+        events = _selection_events(suppressed, page_furniture_decisions)
         mapped = [
             normalized_item for item in active for normalized_item in self._map_items(item, options)
         ]
-        repaired, repaired_count = self._repair_hyphenation(mapped, options)
-        merged, merged_count = self._merge_text_fragments(repaired, options)
-        listed, list_count = self._normalize_lists(merged, options)
+        events.extend(_mapping_events(mapped))
+        repaired, repaired_count, repair_events = self._repair_hyphenation(mapped, options)
+        events.extend(repair_events)
+        merged, merged_count, merge_events = self._merge_text_fragments(repaired, options)
+        events.extend(merge_events)
+        listed, list_count, list_events = self._normalize_lists(merged, options)
+        events.extend(list_events)
         resequenced = tuple(
-            item.model_copy(update={"sequence_number": index}) for index, item in enumerate(listed)
+            item.model_copy(
+                update={
+                    "id": _stable_normalized_item_id(document.source_id, item),
+                    "sequence_number": index,
+                }
+            )
+            for index, item in enumerate(listed)
         )
         source_pages = {
             evidence.page_number
@@ -80,6 +101,7 @@ class DocumentNormalizer:
                 page, options.page_ranges, options.exclude_page_ranges, options.page_list
             )
         }
+        accounting = _account_source_items(document, resequenced, suppressed)
         statistics = NormalizationStatistics(
             input_items=len(document.items),
             output_items=len(resequenced),
@@ -90,39 +112,69 @@ class DocumentNormalizer:
             text_fragments_merged=merged_count,
             lists_normalized=list_count,
             code_blocks=sum(isinstance(item, NormalizedCode) for item in resequenced),
+            active_source_items=len(accounting.active_item_ids),
+            suppressed_source_items=len(accounting.suppressed_item_ids),
+            unaccounted_source_items=len(accounting.unaccounted_item_ids),
+            duplicate_source_items=len(accounting.duplicate_item_ids),
             source_pages=len(source_pages),
             selected_pages=len(selected_pages),
             excluded_pages=len(source_pages - selected_pages),
         )
-        return NormalizedExtractedDocument(
+        if options.fail_on_data_loss and (
+            accounting.unaccounted_item_ids or accounting.duplicate_item_ids
+        ):
+            from standards_atlas.application.normalization.errors import (
+                NormalizationDataLossError,
+            )
+
+            raise NormalizationDataLossError(
+                missing_item_ids=accounting.unaccounted_item_ids,
+                duplicate_item_ids=accounting.duplicate_item_ids,
+            )
+        draft = NormalizedExtractedDocument(
             source_id=document.source_id,
             items=resequenced,
             suppressed_items=tuple(suppressed),
+            page_furniture_decisions=page_furniture_decisions,
+            transformation_ledger=TransformationLedger(events=tuple(events)),
             issues=(),
             metadata=NormalizationMetadata(
                 normalizer_version=__version__,
                 source_extraction_hash=extracted_document_hash(document),
-                created_at=datetime.now(UTC),
                 options=options,
                 statistics=statistics,
             ),
+        )
+        normalized_artifact = artifact_reference("normalized_document", draft)
+        parents = (document.lineage.artifact,) if document.lineage else ()
+        return draft.model_copy(
+            update={
+                "lineage": ArtifactLineage(
+                    artifact=normalized_artifact,
+                    derived_from=parents,
+                    transformation_ids=tuple(event.id for event in events),
+                )
+            }
         )
 
     def _suppress_page_elements(
         self,
         document: ExtractedDocument,
         options: NormalizationOptions,
+        page_furniture_decisions: tuple[PageFurnitureDecision, ...],
     ) -> tuple[list[SuppressedItem], list]:
-        signatures = Counter()
-        for item in document.items:
-            if isinstance(item, (ExtractedText, ExtractedHeading)) and _item_is_selected(
+        decisions = {decision.source_item_id: decision for decision in page_furniture_decisions}
+        signatures = Counter(
+            _page_signature(item.text)
+            for item in document.items
+            if isinstance(item, (ExtractedText, ExtractedHeading))
+            and _item_is_selected(
                 item, options.page_ranges, options.exclude_page_ranges, options.page_list
-            ):
-                signatures[_page_signature(item.text)] += 1
+            )
+        )
         suppressed: list[SuppressedItem] = []
         active = []
         for item in document.items:
-            label = item.original_label or ""
             text = item.text if isinstance(item, (ExtractedText, ExtractedHeading)) else None
             reason = None
             confidence = 1.0
@@ -133,12 +185,18 @@ class DocumentNormalizer:
                 reason = "content_selection"
             elif text is not None and _PAGE_NUMBER.fullmatch(text) and not protected_reference:
                 reason = "page_number"
-            elif options.suppress_headers and label == "page_header" and not protected_reference:
-                reason = "header"
-            elif options.suppress_footers and label == "page_footer" and not protected_reference:
-                reason = "footer"
+            elif not protected_reference and item.id in decisions:
+                decision = decisions[item.id]
+                if decision.role == "page_header":
+                    reason = "header"
+                elif decision.role == "page_footer":
+                    reason = "footer"
+                elif decision.role == "page_number":
+                    reason = "page_number"
+                confidence = decision.confidence
             elif (
-                text is not None
+                options.suppress_repeated_page_elements
+                and text is not None
                 and not protected_reference
                 and signatures[_page_signature(text)]
                 >= options.repeated_page_element_min_occurrences
@@ -149,14 +207,15 @@ class DocumentNormalizer:
                 elif options.suppress_footers and zone == "footer":
                     reason, confidence = "footer", 0.85
             if reason:
-                suppressed.append(
+                suppressed.extend(
                     SuppressedItem(
-                        source_item_id=item.id,
+                        source_item_id=source_item_id,
                         reason=reason,
                         confidence=confidence,
                         text=text,
                         page_number=_page_number(item),
                     )
+                    for source_item_id in _source_unit_ids(item)
                 )
             else:
                 active.append(item)
@@ -174,6 +233,7 @@ class DocumentNormalizer:
             source_item_ids=(item.id,),
             source_evidence=item.source_evidence,
             original_labels=(item.original_label,) if item.original_label else (),
+            layout_evidence=item.layout_evidence,
         )
         if isinstance(item, ExtractedCode):
             return NormalizedCode(
@@ -201,12 +261,15 @@ class DocumentNormalizer:
                 caption=_optional_text(item.caption, options),
                 description=_optional_text(item.description, options),
                 image_reference=item.image_reference,
+                visual_asset=item.visual_asset,
             )
         if isinstance(item, ExtractedFormula):
             return NormalizedFormula(
                 **common,
                 expression=unicodedata.normalize(options.unicode_form, item.expression),
+                original_expression=_optional_text(item.original_expression, options),
                 representation=item.representation,
+                extraction_status=item.extraction_status,
             )
         if isinstance(item, ExtractedUnknown):
             return NormalizedUnknown(
@@ -245,14 +308,23 @@ class DocumentNormalizer:
                     source_item_ids=source_ids,
                     source_evidence=evidence,
                     original_labels=item.original_label and (item.original_label,) or (),
+                    layout_evidence=tuple(
+                        layout for _, entry in ordinary_run for layout in entry.layout_evidence
+                    )
+                    or item.layout_evidence,
                     ordered=item.ordered,
-                    items=tuple(
-                        NormalizedListItem(
-                            text=_normalize_text(entry.text, options),
-                            marker=entry.marker,
-                            source_item_ids=(entry.id or f"{item.id}:item:{index}",),
+                    items=_reconstruct_list_hierarchy(
+                        tuple(
+                            NormalizedListItem(
+                                text=_normalize_text(entry.text, options),
+                                marker=_normalize_list_marker(entry.marker),
+                                ordered=_marker_is_ordered(entry.marker),
+                                source_item_ids=(entry.id or f"{item.id}:item:{index}",),
+                                source_evidence=entry.source_evidence,
+                                layout_evidence=entry.layout_evidence,
+                            )
+                            for index, entry in ordinary_run
                         )
-                        for index, entry in ordinary_run
                     ),
                 )
             )
@@ -278,6 +350,7 @@ class DocumentNormalizer:
                         source_item_ids=(source_id,),
                         source_evidence=entry.source_evidence or item.source_evidence,
                         original_labels=(item.original_label,) if item.original_label else (),
+                        layout_evidence=entry.layout_evidence or item.layout_evidence,
                         text=clause_text,
                     )
                 )
@@ -288,11 +361,12 @@ class DocumentNormalizer:
 
     def _repair_hyphenation(
         self, items: list[NormalizedItem], options: NormalizationOptions
-    ) -> tuple[list[NormalizedItem], int]:
+    ) -> tuple[list[NormalizedItem], int, list[TransformationEvent]]:
         if not options.repair_hyphenation:
-            return items, 0
+            return items, 0, []
         output: list[NormalizedItem] = []
         repaired = 0
+        events: list[TransformationEvent] = []
         index = 0
         while index < len(items):
             current = items[index]
@@ -304,11 +378,20 @@ class DocumentNormalizer:
                 and _LOWERCASE_START.match(items[index + 1].text)
             ):
                 following = items[index + 1]
-                output.append(
-                    _merge_text_items(
-                        current,
-                        following,
-                        current.text[:-1] + following.text,
+                repaired_item = _merge_text_items(
+                    current,
+                    following,
+                    current.text[:-1] + following.text,
+                )
+                output.append(repaired_item)
+                events.append(
+                    _transformation_event(
+                        stage="hyphenation",
+                        rule_id="normalize.hyphenation.cross-item-lowercase",
+                        action="repair",
+                        source_item_ids=repaired_item.source_item_ids,
+                        output_item_ids=(repaired_item.id,),
+                        rationale="A trailing hyphen joins a lowercase continuation.",
                     )
                 )
                 repaired += 1
@@ -318,18 +401,30 @@ class DocumentNormalizer:
                 text, count = re.subn(r"(?<=\w)-\s*\n\s*(?=[a-zà-öø-ÿ])", "", current.text)
                 if count:
                     current = current.model_copy(update={"text": text})
+                    events.append(
+                        _transformation_event(
+                            stage="hyphenation",
+                            rule_id="normalize.hyphenation.intra-item-lowercase",
+                            action="repair",
+                            source_item_ids=current.source_item_ids,
+                            output_item_ids=(current.id,),
+                            rationale="Line-break hyphenation precedes a lowercase continuation.",
+                            details={"repairs": count},
+                        )
+                    )
                     repaired += count
             output.append(current)
             index += 1
-        return output, repaired
+        return output, repaired, events
 
     def _merge_text_fragments(
         self, items: list[NormalizedItem], options: NormalizationOptions
-    ) -> tuple[list[NormalizedItem], int]:
+    ) -> tuple[list[NormalizedItem], int, list[TransformationEvent]]:
         if not options.merge_text_fragments:
-            return items, 0
+            return items, 0, []
         output: list[NormalizedItem] = []
         merged = 0
+        events: list[TransformationEvent] = []
         for item in items:
             if (
                 output
@@ -338,20 +433,32 @@ class DocumentNormalizer:
             ):
                 previous = output[-1]
                 if _should_merge(previous.text, item.text):
-                    output[-1] = _merge_text_items(previous, item, f"{previous.text} {item.text}")
+                    merged_item = _merge_text_items(previous, item, f"{previous.text} {item.text}")
+                    output[-1] = merged_item
+                    events.append(
+                        _transformation_event(
+                            stage="text_merge",
+                            rule_id="normalize.text.merge-continuation",
+                            action="merge",
+                            source_item_ids=merged_item.source_item_ids,
+                            output_item_ids=(merged_item.id,),
+                            rationale="Adjacent text fragments form one prose continuation.",
+                        )
+                    )
                     merged += 1
                     continue
             output.append(item)
-        return output, merged
+        return output, merged, events
 
     def _normalize_lists(
         self, items: list[NormalizedItem], options: NormalizationOptions
-    ) -> tuple[list[NormalizedItem], int]:
+    ) -> tuple[list[NormalizedItem], int, list[TransformationEvent]]:
         if not options.normalize_lists:
-            return items, 0
+            return items, 0, []
         output: list[NormalizedItem] = []
         index = 0
         normalized = 0
+        events: list[TransformationEvent] = []
         while index < len(items):
             if isinstance(items[index], NormalizedList):
                 lists = [items[index]]
@@ -360,7 +467,19 @@ class DocumentNormalizer:
                     lists.append(items[index])
                     index += 1
                 if len(lists) > 1:
-                    output.append(_merge_lists(lists))
+                    merged_list = _merge_lists(lists)
+                    output.append(merged_list)
+                    events.append(
+                        _transformation_event(
+                            stage="list_normalization",
+                            rule_id="normalize.list.merge-adjacent",
+                            action="merge",
+                            source_item_ids=merged_list.source_item_ids,
+                            output_item_ids=(merged_list.id,),
+                            rationale="Adjacent list fragments belong to one logical list.",
+                            details={"input_lists": len(lists)},
+                        )
+                    )
                     normalized += 1
                 else:
                     output.append(lists[0])
@@ -381,22 +500,44 @@ class DocumentNormalizer:
                     NormalizedList(
                         id=f"normalized-list:{first.id}",
                         sequence_number=first.sequence_number,
-                        source_item_ids=tuple(item.id for item, _ in run),
+                        source_item_ids=tuple(
+                            source_id for item, _ in run for source_id in item.source_item_ids
+                        ),
                         source_evidence=tuple(
                             evidence for item, _ in run for evidence in item.source_evidence
                         ),
                         original_labels=tuple(
                             label for item, _ in run for label in item.original_labels
                         ),
-                        ordered=ordered,
-                        items=tuple(
-                            NormalizedListItem(
-                                text=match.group(2),
-                                marker=match.group(1),
-                                source_item_ids=item.source_item_ids,
-                            )
-                            for item, match in run
+                        layout_evidence=tuple(
+                            layout for item, _ in run for layout in item.layout_evidence
                         ),
+                        ordered=ordered,
+                        items=_reconstruct_list_hierarchy(
+                            tuple(
+                                NormalizedListItem(
+                                    text=match.group(2),
+                                    marker=match.group(1),
+                                    ordered=_marker_is_ordered(match.group(1)),
+                                    source_item_ids=item.source_item_ids,
+                                    source_evidence=item.source_evidence,
+                                    layout_evidence=item.layout_evidence,
+                                )
+                                for item, match in run
+                            )
+                        ),
+                    )
+                )
+                normalized_list = output[-1]
+                events.append(
+                    _transformation_event(
+                        stage="list_normalization",
+                        rule_id="normalize.list.detect-marked-run",
+                        action="create",
+                        source_item_ids=normalized_list.source_item_ids,
+                        output_item_ids=(normalized_list.id,),
+                        rationale="Consecutive marked text items form one logical list.",
+                        details={"items": len(run)},
                     )
                 )
                 normalized += 1
@@ -404,7 +545,220 @@ class DocumentNormalizer:
                 continue
             output.append(items[index])
             index += 1
-        return output, normalized
+        return output, normalized, events
+
+
+@dataclass
+class _MutableListItem:
+    item: NormalizedListItem
+    children: list[_MutableListItem]
+
+
+def _reconstruct_list_hierarchy(
+    items: tuple[NormalizedListItem, ...],
+) -> tuple[NormalizedListItem, ...]:
+    """Reconstruct nesting from stable indentation while preserving source order."""
+    if len(items) < 2:
+        return items
+    left_positions = [_list_item_left(item) for item in items]
+    known_positions = sorted({position for position in left_positions if position is not None})
+    levels: list[float] = []
+    for position in known_positions:
+        if not levels or position - levels[-1] >= 6.0:
+            levels.append(position)
+    if len(levels) < 2:
+        return tuple(item.model_copy(update={"depth": 0}) for item in items)
+
+    roots: list[_MutableListItem] = []
+    stack: list[_MutableListItem] = []
+    for item, position in zip(items, left_positions, strict=True):
+        inferred_depth = _indentation_depth(position, levels)
+        depth = min(inferred_depth, len(stack))
+        while len(stack) > depth:
+            stack.pop()
+        node = _MutableListItem(item=item.model_copy(update={"depth": depth}), children=[])
+        if depth > 0 and stack:
+            stack[-1].children.append(node)
+        else:
+            roots.append(node)
+            depth = 0
+            node.item = node.item.model_copy(update={"depth": 0})
+        if len(stack) == depth:
+            stack.append(node)
+        else:
+            stack[depth] = node
+    return tuple(_freeze_list_item(node) for node in roots)
+
+
+def _list_item_left(item: NormalizedListItem) -> float | None:
+    for evidence in item.source_evidence:
+        if evidence.bounding_box is not None:
+            return evidence.bounding_box.left
+    for layout in item.layout_evidence:
+        # LayoutEvidence deliberately contains no duplicate bbox; source evidence is canonical.
+        if layout.group_path:
+            continue
+    return None
+
+
+def _indentation_depth(position: float | None, levels: list[float]) -> int:
+    if position is None:
+        return 0
+    return min(range(len(levels)), key=lambda index: abs(levels[index] - position))
+
+
+def _freeze_list_item(node: _MutableListItem) -> NormalizedListItem:
+    return node.item.model_copy(
+        update={"children": tuple(_freeze_list_item(child) for child in node.children)}
+    )
+
+
+def _marker_is_ordered(marker: str | None) -> bool:
+    normalized = _normalize_list_marker(marker)
+    return bool(normalized and normalized[0].isalnum())
+
+
+def _selection_events(
+    suppressed_items: list[SuppressedItem],
+    decisions: tuple[PageFurnitureDecision, ...],
+) -> list[TransformationEvent]:
+    decision_by_id = {decision.source_item_id: decision for decision in decisions}
+    events: list[TransformationEvent] = []
+    for item in suppressed_items:
+        decision = decision_by_id.get(item.source_item_id)
+        rule_id = (
+            decision.rule_id
+            if decision is not None
+            else f"normalize.selection.{item.reason.replace('_', '-')}"
+        )
+        rationale = {
+            "header": "The source item is classified as repeated page-header furniture.",
+            "footer": "The source item is classified as repeated page-footer furniture.",
+            "page_number": "The source item is classified as a page number.",
+            "content_selection": "The source item lies outside the selected page content.",
+        }[item.reason]
+        events.append(
+            _transformation_event(
+                stage="selection",
+                rule_id=rule_id,
+                action="suppress",
+                source_item_ids=(item.source_item_id,),
+                rationale=rationale,
+                details={"reason": item.reason, "confidence": item.confidence},
+            )
+        )
+    return events
+
+
+def _mapping_events(items: list[NormalizedItem]) -> list[TransformationEvent]:
+    return [
+        _transformation_event(
+            stage="mapping",
+            rule_id=f"normalize.map.{item.type}",
+            action="map",
+            source_item_ids=item.source_item_ids,
+            output_item_ids=(item.id,),
+            rationale="The extracted observation is mapped without semantic reinterpretation.",
+        )
+        for item in items
+    ]
+
+
+def _transformation_event(
+    *,
+    stage: str,
+    rule_id: str,
+    action: str,
+    source_item_ids: tuple[str, ...],
+    rationale: str,
+    output_item_ids: tuple[str, ...] = (),
+    details: dict[str, object] | None = None,
+) -> TransformationEvent:
+    payload = {
+        "stage": stage,
+        "rule_id": rule_id,
+        "action": action,
+        "source_item_ids": source_item_ids,
+        "output_item_ids": output_item_ids,
+        "rationale": rationale,
+        "details": details or {},
+    }
+    digest = hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()[:16]
+    return TransformationEvent(id=f"tx:{digest}", **payload)
+
+
+@dataclass(frozen=True)
+class _SourceAccounting:
+    active_item_ids: tuple[str, ...]
+    suppressed_item_ids: tuple[str, ...]
+    unaccounted_item_ids: tuple[str, ...]
+    duplicate_item_ids: tuple[str, ...]
+
+
+def _source_unit_ids(item: object) -> tuple[str, ...]:
+    """Return the independently traceable source identities of an extracted item."""
+    if isinstance(item, ExtractedList) and item.items:
+        return tuple(
+            entry.id or f"{item.id}:item:{index}" for index, entry in enumerate(item.items)
+        )
+    return (item.id,)
+
+
+def _account_source_items(
+    document: ExtractedDocument,
+    normalized_items: tuple[NormalizedItem, ...],
+    suppressed_items: list[SuppressedItem],
+) -> _SourceAccounting:
+    expected = tuple(source_id for item in document.items for source_id in _source_unit_ids(item))
+    active_occurrences = tuple(
+        source_id for item in normalized_items for source_id in item.source_item_ids
+    )
+    suppressed_occurrences = tuple(item.source_item_id for item in suppressed_items)
+    occurrence_counts = Counter(active_occurrences + suppressed_occurrences)
+    expected_counts = Counter(expected)
+
+    unaccounted = tuple(
+        source_id for source_id in dict.fromkeys(expected) if occurrence_counts[source_id] == 0
+    )
+    duplicate = tuple(
+        source_id
+        for source_id in dict.fromkeys(expected)
+        if occurrence_counts[source_id] > 1 or expected_counts[source_id] > 1
+    )
+    return _SourceAccounting(
+        active_item_ids=tuple(
+            source_id for source_id in dict.fromkeys(expected) if source_id in active_occurrences
+        ),
+        suppressed_item_ids=tuple(
+            source_id
+            for source_id in dict.fromkeys(expected)
+            if source_id in suppressed_occurrences
+        ),
+        unaccounted_item_ids=unaccounted,
+        duplicate_item_ids=duplicate,
+    )
+
+
+def _stable_normalized_item_id(source_id: str, item: NormalizedItem) -> str:
+    """Derive identity from source lineage and normalized item kind, not run order."""
+    payload = json.dumps(
+        {
+            "source_id": source_id,
+            "type": item.type,
+            "source_item_ids": list(item.source_item_ids),
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return f"normalized:{hashlib.sha256(payload).hexdigest()}"
 
 
 def extracted_document_hash(document: ExtractedDocument) -> str:
@@ -522,6 +876,7 @@ def _merge_text_items(first: NormalizedText, second: NormalizedText, text: str) 
         source_item_ids=first.source_item_ids + second.source_item_ids,
         source_evidence=first.source_evidence + second.source_evidence,
         original_labels=first.original_labels + second.original_labels,
+        layout_evidence=first.layout_evidence + second.layout_evidence,
         text=text,
     )
 
@@ -534,6 +889,7 @@ def _merge_lists(lists: list[NormalizedList]) -> NormalizedList:
         source_item_ids=tuple(source_id for item in lists for source_id in item.source_item_ids),
         source_evidence=tuple(evidence for item in lists for evidence in item.source_evidence),
         original_labels=tuple(label for item in lists for label in item.original_labels),
+        layout_evidence=tuple(layout for item in lists for layout in item.layout_evidence),
         ordered=all(item.ordered for item in lists),
         items=tuple(list_item for item in lists for list_item in item.items),
     )

@@ -6,7 +6,25 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.domain.model import SourceEvidence, TableRow
+from standards_atlas.domain.model import ArtifactLineage, SourceEvidence, TableRow
+
+
+class LayoutEvidence(BaseModel):
+    """Adapter-neutral layout and structural observations from the extractor."""
+
+    model_config = ConfigDict(frozen=True)
+
+    source_reference: str | None = None
+    content_layer: str | None = None
+    parent_reference: str | None = None
+    group_path: tuple[str, ...] = ()
+    page_width: float | None = Field(default=None, gt=0)
+    page_height: float | None = Field(default=None, gt=0)
+    original_marker: str | None = None
+    original_text: str | None = None
+    caption_references: tuple[str, ...] = ()
+    reference_references: tuple[str, ...] = ()
+    footnote_references: tuple[str, ...] = ()
 
 
 class ExtractedItemBase(BaseModel):
@@ -18,6 +36,7 @@ class ExtractedItemBase(BaseModel):
     sequence_number: int = Field(ge=0)
     source_evidence: tuple[SourceEvidence, ...] = ()
     original_label: str | None = None
+    layout_evidence: tuple[LayoutEvidence, ...] = ()
 
 
 class ExtractedText(ExtractedItemBase):
@@ -45,6 +64,7 @@ class ExtractedListItem(BaseModel):
     text: str
     marker: str | None = None
     source_evidence: tuple[SourceEvidence, ...] = ()
+    layout_evidence: tuple[LayoutEvidence, ...] = ()
 
 
 class ExtractedList(ExtractedItemBase):
@@ -63,6 +83,18 @@ class ExtractedTable(ExtractedItemBase):
     caption: str | None = None
 
 
+class VisualAsset(BaseModel):
+    """Extractor-provided visual payload with stable identity."""
+
+    model_config = ConfigDict(frozen=True)
+
+    media_type: str
+    content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    data_uri: str | None = None
+    width: float | None = Field(default=None, gt=0)
+    height: float | None = Field(default=None, gt=0)
+
+
 class ExtractedPicture(ExtractedItemBase):
     """Observed figure or diagram."""
 
@@ -70,6 +102,7 @@ class ExtractedPicture(ExtractedItemBase):
     caption: str | None = None
     description: str | None = None
     image_reference: str | None = None
+    visual_asset: VisualAsset | None = None
 
 
 class ExtractedFormula(ExtractedItemBase):
@@ -77,7 +110,11 @@ class ExtractedFormula(ExtractedItemBase):
 
     type: Literal["formula"] = "formula"
     expression: str
+    original_expression: str | None = None
     representation: Literal["latex", "mathml", "text"] = "text"
+    extraction_status: Literal["visual_only", "machine_extracted", "human_verified"] = (
+        "machine_extracted"
+    )
 
 
 class ExtractedCode(ExtractedItemBase):
@@ -128,3 +165,4 @@ class ExtractedDocument(BaseModel):
     source_id: str = Field(min_length=1)
     items: tuple[ExtractedItem, ...] = ()
     metadata: ExtractionMetadata
+    lineage: ArtifactLineage | None = None

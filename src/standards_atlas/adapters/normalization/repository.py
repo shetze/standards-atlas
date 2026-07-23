@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import json
 import os
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
+from standards_atlas.adapters.normalization.serialization import canonical_json, canonical_sha256
 from standards_atlas.application.model.normalized_document import (
     NormalizationOptions,
+    NormalizationRunMetadata,
     NormalizedExtractedDocument,
 )
 
@@ -21,7 +24,7 @@ class NormalizationState(StrEnum):
 
 
 class NormalizationArtifactRepository:
-    """Store normalized documents exclusively below the private workspace."""
+    """Store deterministic payloads and separate run metadata below the workspace."""
 
     def __init__(self, workspace: Path = Path(".atlas")) -> None:
         self._workspace = workspace.resolve()
@@ -30,15 +33,28 @@ class NormalizationArtifactRepository:
     def document_path(self, document_key: str) -> Path:
         return self._private_path(document_key, "document.json")
 
+    def run_path(self, document_key: str) -> Path:
+        return self._private_path(document_key, "run.json")
+
     def save(self, document_key: str, document: NormalizedExtractedDocument) -> Path:
         path = self.document_path(document_key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        _atomic_write(path, document.model_dump_json(indent=2) + "\n")
+        _atomic_write(path, canonical_json(document))
+        run = NormalizationRunMetadata(
+            created_at=datetime.now(UTC),
+            document_content_hash=canonical_sha256(document),
+        )
+        _atomic_write(self.run_path(document_key), canonical_json(run))
         return path
 
     def load(self, document_key: str) -> NormalizedExtractedDocument:
         return NormalizedExtractedDocument.model_validate_json(
             self.document_path(document_key).read_text(encoding="utf-8")
+        )
+
+    def load_run(self, document_key: str) -> NormalizationRunMetadata:
+        return NormalizationRunMetadata.model_validate_json(
+            self.run_path(document_key).read_text(encoding="utf-8")
         )
 
     def state(
@@ -50,13 +66,17 @@ class NormalizationArtifactRepository:
         normalizer_version: str,
     ) -> NormalizationState:
         path = self.document_path(document_key)
+        run_path = self.run_path(document_key)
         if not path.exists():
             return NormalizationState.MISSING
-        if not path.is_file():
+        if not path.is_file() or not run_path.is_file():
             return NormalizationState.INCOMPLETE
         try:
             document = self.load(document_key)
+            run = self.load_run(document_key)
         except (OSError, ValueError, json.JSONDecodeError):
+            return NormalizationState.INCOMPLETE
+        if run.document_content_hash != canonical_sha256(document):
             return NormalizationState.INCOMPLETE
         metadata = document.metadata
         if (

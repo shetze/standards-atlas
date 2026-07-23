@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import base64
 import re
 from pathlib import Path
 
+from standards_atlas.adapters.artifact_lineage import write_file_lineage_manifest
 from standards_atlas.domain.model import (
     CodeBlock,
     EngineeringDocument,
@@ -26,7 +28,14 @@ class MarkdownExporter:
 
     def export_document(self, document: EngineeringDocument, target: Path) -> Path:
         target.parent.mkdir(parents=True, exist_ok=True)
+        document = _materialize_visual_assets(document, target.parent)
         target.write_text(self.render(document), encoding="utf-8")
+        write_file_lineage_manifest(
+            target,
+            document,
+            kind="markdown_export",
+            media_type="text/markdown",
+        )
         return target
 
     def render(self, document: EngineeringDocument) -> str:
@@ -134,8 +143,15 @@ def _render_block(block: object) -> str:
         return "\n\n".join(part for part in (block.caption, "\n".join(table)) if part)
     if isinstance(block, PictureBlock):
         caption = block.caption or block.description or "Figure"
-        return f"![{caption}]({block.image_path})" if block.image_path else f"*{caption}*"
+        reference = block.image_path or block.embedded_data_uri
+        return f"![{caption}]({reference})" if reference else f"*{caption}*"
     if isinstance(block, FormulaBlock):
+        if block.extraction_status == "visual_only":
+            page = block.source_evidence[0].page_number if block.source_evidence else None
+            suffix = f" on page {page}" if page is not None else ""
+            original = block.original_expression or block.expression
+            detail = f" `{original}`" if original else ""
+            return f"*[Formula{suffix} — semantic transcription unavailable]*{detail}"
         if block.representation == "latex":
             return f"$$\n{block.expression}\n$$"
         return block.expression
@@ -153,5 +169,63 @@ def _render_list_item(item: object, ordered: bool, index: int, depth: int = 0) -
     marker = f"{index}." if ordered else "-"
     lines = [f"{'  ' * depth}{marker} {item.text}"]
     for child_index, child in enumerate(item.children, 1):
-        lines.append(_render_list_item(child, ordered, child_index, depth + 1))
+        lines.append(_render_list_item(child, child.ordered, child_index, depth + 1))
     return "\n".join(lines)
+
+
+def _materialize_visual_assets(
+    document: EngineeringDocument,
+    target_directory: Path,
+) -> EngineeringDocument:
+    """Write embedded visual payloads beside Markdown and rewrite their references."""
+    assets_directory = target_directory / "assets"
+    changed = False
+    clauses = []
+    for clause in document.clauses:
+        content = []
+        clause_changed = False
+        for block in clause.content:
+            if (
+                not isinstance(block, PictureBlock)
+                or not block.embedded_data_uri
+                or not block.content_hash
+            ):
+                content.append(block)
+                continue
+            decoded = _decode_data_uri(block.embedded_data_uri)
+            if decoded is None:
+                content.append(block)
+                continue
+            media_type, payload = decoded
+            extension = _media_extension(media_type)
+            assets_directory.mkdir(parents=True, exist_ok=True)
+            asset_path = assets_directory / f"{block.content_hash}{extension}"
+            if not asset_path.exists() or asset_path.read_bytes() != payload:
+                asset_path.write_bytes(payload)
+            content.append(block.model_copy(update={"image_path": f"assets/{asset_path.name}"}))
+            clause_changed = True
+        clauses.append(
+            clause.model_copy(update={"content": tuple(content)}) if clause_changed else clause
+        )
+        changed = changed or clause_changed
+    return document.model_copy(update={"clauses": tuple(clauses)}) if changed else document
+
+
+def _decode_data_uri(uri: str) -> tuple[str, bytes] | None:
+    if not uri.startswith("data:") or ";base64," not in uri:
+        return None
+    header, encoded = uri.split(",", 1)
+    media_type = header[5:].split(";", 1)[0]
+    try:
+        return media_type, base64.b64decode(encoded, validate=True)
+    except ValueError:
+        return None
+
+
+def _media_extension(media_type: str) -> str:
+    return {
+        "image/png": ".png",
+        "image/jpeg": ".jpg",
+        "image/svg+xml": ".svg",
+        "image/webp": ".webp",
+    }.get(media_type, ".bin")

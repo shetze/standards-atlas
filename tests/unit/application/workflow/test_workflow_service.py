@@ -97,7 +97,7 @@ class RecordingRunner:
         self.commands.append(command)
 
 
-def test_execute_collects_all_review_gates_instead_of_stopping_at_first() -> None:
+def test_execute_collects_all_review_gates_instead_of_stopping_at_first(tmp_path: Path) -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
@@ -108,7 +108,7 @@ def test_execute_collects_all_review_gates_instead_of_stopping_at_first() -> Non
 
     result = EndToEndWorkflowService().execute(
         plan,
-        project_root=Path.cwd(),
+        project_root=tmp_path,
         runner=runner,
     )
 
@@ -122,7 +122,7 @@ def test_execute_collects_all_review_gates_instead_of_stopping_at_first() -> Non
     )
 
 
-def test_continue_after_review_executes_remaining_pipeline() -> None:
+def test_continue_after_review_executes_remaining_pipeline(tmp_path: Path) -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
@@ -133,7 +133,7 @@ def test_continue_after_review_executes_remaining_pipeline() -> None:
 
     result = EndToEndWorkflowService().execute(
         plan,
-        project_root=Path.cwd(),
+        project_root=tmp_path,
         runner=runner,
         continue_after_review=True,
     )
@@ -411,3 +411,182 @@ def test_doorstop_parent_prefers_specific_catalog_relationships() -> None:
         )
         parent_index = export.command.index("--parent")
         assert export.command[parent_index + 1] == expected_parent
+
+
+def _write_alignment_statistics(
+    root: Path,
+    document: str,
+    *,
+    missing: int = 0,
+    conflicting: int = 0,
+) -> None:
+    path = root / ".atlas" / "alignments" / document / "alignment.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        '{"metadata":{"statistics":{"missing":'
+        + str(missing)
+        + ',"conflicting":'
+        + str(conflicting)
+        + "}}}\n",
+        encoding="utf-8",
+    )
+
+
+def test_clean_alignment_exports_review_and_continues_automatically(tmp_path: Path) -> None:
+    from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
+
+    _write_alignment_statistics(tmp_path, "CLEAN")
+    plan = WorkflowPlan(
+        families=("FAMILY",),
+        steps=(
+            WorkflowStep(
+                "FAMILY",
+                "CLEAN",
+                WorkflowStage.REVIEW,
+                ("review-export", "CLEAN"),
+                ArtifactPolicy.REVIEW,
+                True,
+                output_paths=(
+                    ".atlas/alignments/CLEAN/review.generated.md",
+                    ".atlas/alignments/CLEAN/review.edited.md",
+                ),
+            ),
+            WorkflowStep(
+                "FAMILY",
+                "CLEAN",
+                WorkflowStage.ENRICH,
+                ("enrich", "CLEAN"),
+                ArtifactPolicy.DERIVED,
+            ),
+        ),
+    )
+    runner = RecordingRunner()
+
+    result = EndToEndWorkflowService().execute(plan, project_root=tmp_path, runner=runner)
+
+    assert result.completed is True
+    assert result.blocked_documents == ()
+    assert runner.commands == [("review-export", "CLEAN"), ("enrich", "CLEAN")]
+
+
+def test_only_missing_or_conflicting_documents_block_their_pipeline(tmp_path: Path) -> None:
+    from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
+
+    _write_alignment_statistics(tmp_path, "CLEAN")
+    _write_alignment_statistics(tmp_path, "MISSING", missing=2)
+    _write_alignment_statistics(tmp_path, "CONFLICT", conflicting=1)
+    steps = []
+    for document in ("CLEAN", "MISSING", "CONFLICT"):
+        steps.extend(
+            (
+                WorkflowStep(
+                    "FAMILY",
+                    document,
+                    WorkflowStage.REVIEW,
+                    ("review-export", document),
+                    ArtifactPolicy.REVIEW,
+                    True,
+                ),
+                WorkflowStep(
+                    "FAMILY",
+                    document,
+                    WorkflowStage.ENRICH,
+                    ("enrich", document),
+                    ArtifactPolicy.DERIVED,
+                ),
+            )
+        )
+    plan = WorkflowPlan(families=("FAMILY",), steps=tuple(steps))
+    runner = RecordingRunner()
+
+    result = EndToEndWorkflowService().execute(plan, project_root=tmp_path, runner=runner)
+
+    assert result.blocked_documents == ("CONFLICT", "MISSING")
+    assert ("enrich", "CLEAN") in runner.commands
+    assert ("enrich", "MISSING") not in runner.commands
+    assert ("enrich", "CONFLICT") not in runner.commands
+    assert sum(command[0] == "review-export" for command in runner.commands) == 3
+
+
+def test_existing_step_outputs_are_not_generated_again(tmp_path: Path) -> None:
+    from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
+
+    output = tmp_path / ".atlas" / "normalized" / "DOC" / "document.json"
+    output.parent.mkdir(parents=True)
+    output.write_text("existing\n", encoding="utf-8")
+    step = WorkflowStep(
+        "FAMILY",
+        "DOC",
+        WorkflowStage.NORMALIZE,
+        ("normalize", "DOC"),
+        ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/normalized/DOC/document.json",),
+    )
+    runner = RecordingRunner()
+
+    result = EndToEndWorkflowService().execute(
+        WorkflowPlan(families=("FAMILY",), steps=(step,)),
+        project_root=tmp_path,
+        runner=runner,
+    )
+
+    assert result.completed is True
+    assert result.executed_steps == ()
+    assert runner.commands == []
+    assert output.read_text(encoding="utf-8") == "existing\n"
+
+
+def test_force_removes_existing_outputs_before_regeneration(tmp_path: Path) -> None:
+    from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
+
+    output = tmp_path / ".atlas" / "normalized" / "DOC" / "document.json"
+    output.parent.mkdir(parents=True)
+    output.write_text("old\n", encoding="utf-8")
+
+    class ReplacingRunner:
+        def __init__(self) -> None:
+            self.called = False
+
+        def run(self, command: tuple[str, ...], cwd: Path) -> None:
+            self.called = True
+            assert not output.exists()
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text("new\n", encoding="utf-8")
+
+    step = WorkflowStep(
+        "FAMILY",
+        "DOC",
+        WorkflowStage.NORMALIZE,
+        ("normalize", "DOC"),
+        ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/normalized/DOC/document.json",),
+    )
+    runner = ReplacingRunner()
+
+    result = EndToEndWorkflowService().execute(
+        WorkflowPlan(families=("FAMILY",), steps=(step,), force=True),
+        project_root=tmp_path,
+        runner=runner,
+    )
+
+    assert result.completed is True
+    assert runner.called is True
+    assert output.read_text(encoding="utf-8") == "new\n"
+
+
+def test_force_resets_editable_review_exports() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    plan = EndToEndWorkflowService().plan(
+        catalog,
+        family_keys=("EN50716",),
+        catalog_root=Path.cwd(),
+        force=True,
+    )
+
+    review = next(step for step in plan.steps if step.stage == WorkflowStage.REVIEW)
+
+    assert review.command[-1] == "--reset-edited"
+    assert review.output_paths == (
+        ".atlas/alignments/EN50716/review.generated.md",
+        ".atlas/alignments/EN50716/review.edited.md",
+    )

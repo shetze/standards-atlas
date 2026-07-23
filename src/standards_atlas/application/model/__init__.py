@@ -39,6 +39,8 @@ from standards_atlas.application.model.extracted_document import (
     ExtractedText,
     ExtractedUnknown,
     ExtractionMetadata,
+    LayoutEvidence,
+    VisualAsset,
 )
 from standards_atlas.application.model.markdown_review import (
     MarkdownReviewBlock,
@@ -52,6 +54,7 @@ from standards_atlas.application.model.normalized_document import (
     NormalizationIssue,
     NormalizationMetadata,
     NormalizationOptions,
+    NormalizationRunMetadata,
     NormalizationStatistics,
     NormalizedCode,
     NormalizedExtractedDocument,
@@ -64,7 +67,10 @@ from standards_atlas.application.model.normalized_document import (
     NormalizedTable,
     NormalizedText,
     NormalizedUnknown,
+    PageFurnitureDecision,
     SuppressedItem,
+    TransformationEvent,
+    TransformationLedger,
 )
 from standards_atlas.application.model.reference_candidates import (
     CandidateRemainderKind,
@@ -118,9 +124,13 @@ __all__ = [
     "ExtractedText",
     "ExtractedUnknown",
     "ExtractionMetadata",
+    "LayoutEvidence",
+    "VisualAsset",
     "NormalizationIssue",
     "NormalizationMetadata",
     "NormalizationOptions",
+    "PageFurnitureDecision",
+    "NormalizationRunMetadata",
     "NormalizationStatistics",
     "NormalizedCode",
     "NormalizedExtractedDocument",
@@ -141,5 +151,7 @@ __all__ = [
     "ReferenceDetectionStatistics",
     "ReferenceMatchKind",
     "SuppressedItem",
+    "TransformationEvent",
+    "TransformationLedger",
     "UnassignedRange",
 ]

@@ -3,8 +3,10 @@ from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
+    FormulaBlock,
     ListBlock,
     ListItem,
+    PictureBlock,
     SemanticRole,
     Standard,
     StandardKey,
@@ -143,3 +145,129 @@ def test_omits_foreword_and_introduction_roles():
     assert "Foreword" not in rendered
     assert "Introduction" not in rendered
     assert "1 Scope" in rendered
+
+
+def test_export_materializes_embedded_picture_asset(tmp_path):
+    import base64
+    import hashlib
+
+    payload = b"png-payload"
+    data_uri = "data:image/png;base64," + base64.b64encode(payload).decode("ascii")
+    digest = hashlib.sha256(data_uri.encode("utf-8")).hexdigest()
+    document = Standard.from_name(key=StandardKey(value="SAMPLE"), name="Sample", year=2026)
+    document = document.model_copy(
+        update={
+            "clauses": (
+                Clause(
+                    id=ClauseId(value="figure"),
+                    reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
+                    clause_type=ClauseType.CLAUSE,
+                    title="Figure",
+                    content=(
+                        PictureBlock(
+                            id="p1",
+                            caption="Figure 1 — Architecture",
+                            media_type="image/png",
+                            content_hash=digest,
+                            embedded_data_uri=data_uri,
+                        ),
+                    ),
+                ),
+            )
+        }
+    )
+    target = tmp_path / "sample.md"
+
+    MarkdownExporter().export_document(document, target)
+
+    asset = tmp_path / "assets" / f"{digest}.png"
+    assert asset.read_bytes() == payload
+    assert f"![Figure 1 — Architecture](assets/{digest}.png)" in target.read_text()
+
+
+def test_visual_only_formula_is_not_presented_as_verified_semantics():
+    document = Standard.from_name(key=StandardKey(value="SAMPLE"), name="Sample", year=2026)
+    document = document.model_copy(
+        update={
+            "clauses": (
+                Clause(
+                    id=ClauseId(value="formula"),
+                    reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
+                    clause_type=ClauseType.CLAUSE,
+                    title="Formula",
+                    content=(
+                        FormulaBlock(
+                            id="f1",
+                            expression="1 MUT A MUT MDT = <= +",
+                            original_expression="1 MUT A MUT MDT = <= +",
+                            extraction_status="visual_only",
+                        ),
+                    ),
+                ),
+            )
+        }
+    )
+
+    rendered = MarkdownExporter().render(document)
+
+    assert "semantic transcription unavailable" in rendered
+    assert "$$" not in rendered
+
+
+def test_nested_lists_use_each_child_marker_kind() -> None:
+    document = Standard.from_name(
+        key=StandardKey(value="SAMPLE"),
+        name="Sample",
+        year=2026,
+    )
+    document = document.model_copy(
+        update={
+            "clauses": (
+                Clause(
+                    id=ClauseId(value="list-clause"),
+                    reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
+                    clause_type=ClauseType.CLAUSE,
+                    title="List",
+                    content=(
+                        ListBlock(
+                            id="list",
+                            ordered=True,
+                            items=(
+                                ListItem(
+                                    text="Parent",
+                                    ordered=True,
+                                    children=(ListItem(text="Child", ordered=False),),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        }
+    )
+
+    rendered = MarkdownExporter().render(document)
+
+    assert "1. Parent\n  - Child" in rendered
+
+
+def test_export_writes_lineage_manifest(tmp_path):
+    from standards_atlas.domain.model import ArtifactLineage, artifact_reference
+
+    document = Standard.from_name(
+        key=StandardKey(value="SAMPLE"),
+        name="Sample",
+        year=2026,
+    )
+    document = document.model_copy(
+        update={
+            "lineage": ArtifactLineage(
+                artifact=artifact_reference("engineering_document", document)
+            )
+        }
+    )
+    target = tmp_path / "sample.md"
+
+    MarkdownExporter().export_document(document, target)
+
+    assert target.with_suffix(".md.lineage.json").exists()
