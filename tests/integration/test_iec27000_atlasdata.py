@@ -9,8 +9,8 @@ def test_iec27000_atlasdata_contains_complete_public_structure() -> None:
 
     assert document.key.value == "IEC27000"
     assert document.title == "ISO/IEC 27000"
-    assert len(document.clauses) == 128
-    assert document.clauses[0].reference.clause == "0.1"
+    assert len(document.clauses) == 126
+    assert document.clauses[0].reference.clause == "0"
     assert document.clauses[-1].reference.clause == "5.5.6"
 
     terms = [clause for clause in document.clauses if clause.clause_type == ClauseType.TERM]

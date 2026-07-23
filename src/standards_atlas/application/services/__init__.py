@@ -1,7 +1,11 @@
 """Application services."""
 
 from standards_atlas.application.services.alignment_review_service import AlignmentReviewService
+from standards_atlas.application.services.engineering_construction_contract import (
+    EngineeringConstructionContractValidator,
+)
 from standards_atlas.application.services.alignment_service import AlignmentService
+from standards_atlas.application.workflow.service import EndToEndWorkflowService
 from standards_atlas.application.services.atlasdata_lifecycle_service import (
     AtlasDataLifecycleError,
     AtlasDataLifecycleResult,
@@ -96,4 +100,6 @@ __all__ = [
     "SemanticRoleClassifier",
     "SemanticRoleContext",
     "SemanticRoleEvidence",
+    "EndToEndWorkflowService",
+    "EngineeringConstructionContractValidator",
 ]

@@ -15,7 +15,9 @@ return 0;
 # Public structural metadata generated from private Docling extractions.
 # Clause text is intentionally not included.
 ####
+
 #---data---#
+TOC;3fe442316fc3a01681277b4dae6f0d4d;ISO/IEC 27000:2018 0;Heading;u
 TOC;f9c2412bce60a4704b1bda79159594c9;ISO/IEC 27000:2018 1;Scope;s
 TOC;af261a996790fef85aeec68cd0a3448c;ISO/IEC 27000:2018 2;Normative references;u
 TOC;b3a2ac575631310c7ff39f15166f4600;ISO/IEC 27000:2018 3;Terms and definitions;t

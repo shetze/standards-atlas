@@ -1,0 +1,291 @@
+# SPDX-License-Identifier: LGPL-3.0-only
+digits=8
+partShift=0
+partDigits=0
+name="ISO/IEC Directives Part 2"
+oyr=0
+lifecycle_status="reviewed"
+
+structure=(
+ "0 s1 2 t3 t3.1 t3.1.{1..7} t3.2 t3.2.{1..2} t3.2.2.{1..2} t3.2.{3..4} t3.3 t3.3.{1..3} t3.4 t3.6 4 o4.1 4.{2..7} 5 5.1 5.1.{1..3} 5.2 5.2.1 5.2.1.{1..3} 5.2.{2..8} 6 6.1 6.1.{1..4} 6.2 s6.2.1 6.2.2 6.3 t6.3.1 6.3.2 r6.3.3 6.3.{4..5} 6.3.5.{1..5} 6.3.5.5.{1..2} 6.3.5.6 6.3.{6..7} 6.3.7.1 r6.3.7.{2..3} 6.3.8 6.4 6.4.1 6.4.1.{1..2} 6.4.{2..3} 6.5 6.5.{1..2} 6.6 6.6.1 6.6.1.{1..3} 6.6.{2..5} 6.6.5.{1..11} 6.6.5.11.{1..2} 6.6.6 6.6.6.{1..7} 6.6.7 6.6.7.{1..3} 6.6.7.3.{1..2} 6.6.7.{4..5} 6.6.7.5.{1..3} 6.6.8 6.6.8.{1..5} 6.6.{9..10} 6.6.10.1 6.6.10.1.{1..2} 6.6.10.{2..3} 6.6.11 6.7 r6.7.1 6.7.{2..3} 6.8 6.8.{1..2} 7 8:A 8:A.1 8:A.2 8:A.2.{1..5} 8:A.3 8:A.4 8:A.5 8:A.5.1 8:A.5.2 8:A.5.3 8:A.6 8:A.7 8:A.7.{1..3} 9:B 9:B.1 9:B.2 9:B.3 9:B.4 9:B.5 9:B.6 9:B.7 9:B.8 9:B.9 9:B.10 9:B.11 9:B.12 9:B.13 9:B.14 9:B.15 9:B.16 9:B.17 9:B.18 9:B.19 9:B.20 9:B.21 9:B.22 9:B.23 10:C 11:D 11:D.1 11:D.1.1 11:D.1.2 11:D.1.3 11:D.1.4 11:D.1.5 11:D.1.6 11:D.1.6.{1..6} 11:D.2 11:D.3 11:D.4 11:D.4.1 11:D.4.2 11:D.4.3 11:D.4.4 11:D.4.5 11:D.4.6 11:D.4.7 11:D.4.8 12:E 12:E.1 12:E.1.1 12:E.1.2 12:E.1.3 12:E.2 12:E.3 13:F 13:F.{1..3} 14:G 14:G.1 14:G.2 14:G.2.{1..3} 14:G.3 14:G.3.{1..2} 14:G.4 14:G.4.{1..5} 14:G.5 14:G.6 14:G.6.1 14:G.6.2 14:G.6.2.{1..4} 14:G.6.3 14:G.6.3.{1..6} 14:G.7 14:G.7.{1..4} 14:G.8 14:G.8.{1..3} 15:H 16:I"
+)
+
+return 0;
+####
+# Public structural metadata generated from private Docling extractions.
+# Clause text is intentionally not included.
+####
+
+#---data---#
+TOC;e2d4e17117c850e7f0fcb988c4dd3994;ISO/IEC Directives Part 2:0 0;TOC;u
+TOC;6d6586f2359eb372e82904c5aa2ba98e;ISO/IEC Directives Part 2:0 1;Scope;s
+TOC;de0e8833807704de0096e121db585383;ISO/IEC Directives Part 2:0 2;Normative references;u
+TOC;93458c9da82d4906dc79bffd5b0618ce;ISO/IEC Directives Part 2:0 3;Terms and definitions;t
+TOC;152ede374d4ff835bc4bf5fd691eb3d6;ISO/IEC Directives Part 2:0 3.1;Document type;t
+TOC;14db652316a44d2bf4c4b1ac18ad9a1c;ISO/IEC Directives Part 2:0 3.1.1;standard;t
+TOC;991b330cbfd284ff8921589377770a66;ISO/IEC Directives Part 2:0 3.1.2;international standard;t
+TOC;ac0f9cc16a42cdfbc8e58de71201f123;ISO/IEC Directives Part 2:0 3.1.3;International Standard;t
+TOC;12ecb8d1b859f35d6a2e0ad86cde3010;ISO/IEC Directives Part 2:0 3.1.4;Technical Specification;t
+TOC;bba37a81c134996ba32b86a1daa6b268;ISO/IEC Directives Part 2:0 3.1.5;Technical Report TR;t
+TOC;640921dcfbd0238965a847912d7df824;ISO/IEC Directives Part 2:0 3.1.6;Guide;t
+TOC;2b8b462fd68ffe728f7cbfa8dee4a57d;ISO/IEC Directives Part 2:0 3.1.7;Publicly Available Specification;t
+TOC;40f3504be4ea89bf1f2ee2b80e7a4ac5;ISO/IEC Directives Part 2:0 3.2;Element;t
+TOC;ebef3ec9f3bf7c669d5ed896674f57ce;ISO/IEC Directives Part 2:0 3.2.1;normative element;t
+TOC;efd382396df06ee1689b7fb2a078467b;ISO/IEC Directives Part 2:0 3.2.2;Informative element;t
+TOC;cfe2ba5c9507375dbafebbb6cf9b2145;ISO/IEC Directives Part 2:0 3.2.2.1;preliminary informative element;t
+TOC;f80269f88f5cc61ab099f4ad9a37614e;ISO/IEC Directives Part 2:0 3.2.2.2;supplementary informative element;t
+TOC;dfe55d424bfd79ea5529515f61d2314a;ISO/IEC Directives Part 2:0 3.2.3;mandatory element;t
+TOC;08345366a3e3fddaa107c660de0226a4;ISO/IEC Directives Part 2:0 3.2.4;conditional element;t
+TOC;c6cb56f42510e5afb068eb5804643d59;ISO/IEC Directives Part 2:0 3.3;Provision;t
+TOC;9752f809c9a0e43a69b939c0bada4b82;ISO/IEC Directives Part 2:0 3.3.1;requirement;t
+TOC;077e8c50040e8e4e012fd8844ed792db;ISO/IEC Directives Part 2:0 3.3.2;recommendation;t
+TOC;a69379ab122f1cb7fba348ee53b2fa6e;ISO/IEC Directives Part 2:0 3.3.3;statement;t
+TOC;5aec1d6f9c45b4b5793044d0734a7a60;ISO/IEC Directives Part 2:0 3.4;state of the art;t
+TOC;0b54757e748b1d5d80ffc00e906f3a81;ISO/IEC Directives Part 2:0 3.6;Term;t
+TOC;c275436e2474124165de330916195806;ISO/IEC Directives Part 2:0 4;General principles;u
+TOC;4675362141d52ace825771974a5216e0;ISO/IEC Directives Part 2:0 4.1;Objective;o
+TOC;8e81fc2e91a5b0dc2c400774ccf49550;ISO/IEC Directives Part 2:0 4.2;Performance approach;u
+TOC;1422d1baf9fe1b9ba1b47dd327324921;ISO/IEC Directives Part 2:0 4.3;Homogeneity;u
+TOC;e4ba8ecdbab4093cd8d4bdc6a0f0557a;ISO/IEC Directives Part 2:0 4.4;Consistency of documents;u
+TOC;c49db8312fa5762fa8aa976cc27485dc;ISO/IEC Directives Part 2:0 4.5;Equivalence of official language versions;u
+TOC;20cd0ee277f9741787005fdd9359e6d6;ISO/IEC Directives Part 2:0 4.6;Fitness for implementation as a regional or national standard;u
+TOC;0e8557da813cec10e676e385c711d97a;ISO/IEC Directives Part 2:0 4.7;Planning;u
+TOC;1448c14e5e23273fabedaaa99e106608;ISO/IEC Directives Part 2:0 5;Structure;u
+TOC;8189dde22be63d526a51c741aa2f767d;ISO/IEC Directives Part 2:0 5.1;Subdivision of the subject matter;u
+TOC;ec4b83bbbc570b6c1552de555eab7745;ISO/IEC Directives Part 2:0 5.1.1;General;u
+TOC;05d52bfdc257ad0659dc14eb587712de;ISO/IEC Directives Part 2:0 5.1.2;Subdivision of the subject matter within a series of parts;u
+TOC;6ba3fcb60917c0e39494ef618e7ed242;ISO/IEC Directives Part 2:0 5.1.3;Subdivision of the subject matter within an individual document;u
+TOC;edd3b63d946f7c36206629b9695678a7;ISO/IEC Directives Part 2:0 5.2;Description and numbering of divisions and subdivisions;u
+TOC;32cfc70a2ca873b9be7a1439e9c0c489;ISO/IEC Directives Part 2:0 5.2.1;Part;u
+TOC;a5df407928b3a4a1019879e37a55757f;ISO/IEC Directives Part 2:0 5.2.1.1;Heading;u
+TOC;9ab0171ece1fdb2eac1ef1468fd4044d;ISO/IEC Directives Part 2:0 5.2.1.2;Heading;u
+TOC;eddf42eb2c4571ae809b90da8f723fc6;ISO/IEC Directives Part 2:0 5.2.1.3;Heading;u
+TOC;4eb892213b62aef07603ebb4e0d708d3;ISO/IEC Directives Part 2:0 5.2.2;Clause;u
+TOC;b2dd5e5beda91bcdf087397adb7bf0ba;ISO/IEC Directives Part 2:0 5.2.3;Subclause;u
+TOC;9970a09764753cf6ef800a977cbe593d;ISO/IEC Directives Part 2:0 5.2.4;Paragraph;u
+TOC;d63908bffbaefb8ac4f19e9ad798e815;ISO/IEC Directives Part 2:0 5.2.5;Lists;u
+TOC;9f958fa097b16ef30c6cc2796bbf9c4d;ISO/IEC Directives Part 2:0 5.2.6;Annex;u
+TOC;32ac2fe1c352c6b68cc06e1179f9d162;ISO/IEC Directives Part 2:0 5.2.7;Bibliography;u
+TOC;82e2346dbe0f0bceb665e776fdb5cf72;ISO/IEC Directives Part 2:0 5.2.8;Indexes;u
+TOC;3e13d3d65e520c8abc85b4c59e561596;ISO/IEC Directives Part 2:0 6;Drafting;u
+TOC;0a69c4632940418e3da8db31c56b7e5d;ISO/IEC Directives Part 2:0 6.1;Preliminary informative elements;u
+TOC;0b32a53cd3497d0c128d5330797a8cd3;ISO/IEC Directives Part 2:0 6.1.1;Title page;u
+TOC;9168fa6e9bd56e3f772f13cc987d780d;ISO/IEC Directives Part 2:0 6.1.2;Table of contents;u
+TOC;5a3c8b8ebc2c80dd0130002509260423;ISO/IEC Directives Part 2:0 6.1.3;Foreword;u
+TOC;34f3adef8111531cf5399f71b6ccf5a6;ISO/IEC Directives Part 2:0 6.1.4;Introduction;u
+TOC;f7cbe2cbbe10aa22c5df00d211461abe;ISO/IEC Directives Part 2:0 6.2;General normative elements;u
+TOC;50bae6cbcbb6ba4317f8b16d5f4c4f63;ISO/IEC Directives Part 2:0 6.2.1;Scope;s
+TOC;e19124bd2340f0a1693157edd37ca84f;ISO/IEC Directives Part 2:0 6.2.2;Normative references;u
+TOC;0809623220bda244599a31a1a6cd5c73;ISO/IEC Directives Part 2:0 6.3;Technical normative elements;u
+TOC;a3e362b0ca95447870d81b03311ae369;ISO/IEC Directives Part 2:0 6.3.1;Terms and definitions;t
+TOC;2c68224d4d3df22dd99ebe102a6ae850;ISO/IEC Directives Part 2:0 6.3.2;Symbols and abbreviated terms;u
+TOC;bf3d80b40b44bc380ac471e886ae7411;ISO/IEC Directives Part 2:0 6.3.3;Requirements;r
+TOC;9d596df4b905bc9522e88e911fe3fa62;ISO/IEC Directives Part 2:0 6.3.4;Sampling;u
+TOC;0d4c30c2cf71734b37c0b5b51fca08a5;ISO/IEC Directives Part 2:0 6.3.5;Test methods;u
+TOC;26cd0f07fc53fe55d64fd417717913c2;ISO/IEC Directives Part 2:0 6.3.5.1;General;u
+TOC;d90c1b35413951d95a567e9ab54b614a;ISO/IEC Directives Part 2:0 6.3.5.2;Reagents and/or materials;u
+TOC;0e05afdec1306c6d5e75aa9b38cf3f04;ISO/IEC Directives Part 2:0 6.3.5.3;Apparatus;u
+TOC;8545d3acce42e3465221abd1212f2356;ISO/IEC Directives Part 2:0 6.3.5.4;Alternative test methods;u
+TOC;7670a6df012c7922e8c0b1a482657baa;ISO/IEC Directives Part 2:0 6.3.5.5;Choice of test methods according to accuracy;u
+TOC;d416a1afe0a739902eb3ea5b3655449f;ISO/IEC Directives Part 2:0 6.3.5.5.1;Heading;u
+TOC;3ac2201b4421ebf6ceb4d19e7865a54d;ISO/IEC Directives Part 2:0 6.3.5.5.2;Heading;u
+TOC;f89264dad836a67720df4f5002d4a6be;ISO/IEC Directives Part 2:0 6.3.5.6;Avoidance of duplication and unnecessary deviations;u
+TOC;7903bc6f2c61f4f493b1e831003b1e64;ISO/IEC Directives Part 2:0 6.3.6;Classification, designation and coding;u
+TOC;cbdce3a274d8099ccd25d5c61a5a2927;ISO/IEC Directives Part 2:0 6.3.7;Marking, labelling and packaging;u
+TOC;c6e7170e8afd39f79797e89a359f2682;ISO/IEC Directives Part 2:0 6.3.7.1;General;u
+TOC;632e5758b318036c3bc4b776c0aea691;ISO/IEC Directives Part 2:0 6.3.7.2;Requirements concerning marking, labelling and packaging of products;r
+TOC;366b3dfeb7846a84d9b53a920fcc1cd8;ISO/IEC Directives Part 2:0 6.3.7.3;Requirements concerning documentation accompanying the product;r
+TOC;b48f304e75cd1fb585d47568479fce1f;ISO/IEC Directives Part 2:0 6.3.8;Normative annexes;u
+TOC;996e0db6137b7799425f1ad3d906b16f;ISO/IEC Directives Part 2:0 6.4;Informative supplementary elements;u
+TOC;31cc08d0656874a780050ec3e4eab27a;ISO/IEC Directives Part 2:0 6.4.1;Informative annexes;u
+TOC;92bf627829f29d0c9515022a6af21d74;ISO/IEC Directives Part 2:0 6.4.1.1;Heading;u
+TOC;21ae365e229f1047efb1a59ab56dfd0a;ISO/IEC Directives Part 2:0 6.4.1.2;Heading;u
+TOC;c1afe372dfe8a76710ac226f3a73d71e;ISO/IEC Directives Part 2:0 6.4.2;Bibliography;u
+TOC;0701bb55b57501878d56459732926f1c;ISO/IEC Directives Part 2:0 6.4.3;Indexes;u
+TOC;883585236ba22c6f7c74f16a9fd05207;ISO/IEC Directives Part 2:0 6.5;Other informative elements;u
+TOC;ac09306910c147332121ef6e06ce0245;ISO/IEC Directives Part 2:0 6.5.1;Notes and examples integrated in the text;u
+TOC;92a7fd5d6c5afdd72924f1a81b1fb268;ISO/IEC Directives Part 2:0 6.5.2;Footnotes to the text;u
+TOC;a557d8a51814bf0168ed5e58df9cf55b;ISO/IEC Directives Part 2:0 6.6;Common rules and elements;u
+TOC;c3c8d1506c0d057f2cfe04848abb9e68;ISO/IEC Directives Part 2:0 6.6.1;Verbal forms for the expression of provisions;u
+TOC;4b7d50d1f591e077f46d13dc9957b6a4;ISO/IEC Directives Part 2:0 6.6.1.1;Heading;u
+TOC;a8c1617aeac40ba32d2de79b29140e59;ISO/IEC Directives Part 2:0 6.6.1.2;Heading;u
+TOC;cb12758fcb7424f97aad4b415013c8e6;ISO/IEC Directives Part 2:0 6.6.1.3;Heading;u
+TOC;381985f445c49916527df8de1937c73b;ISO/IEC Directives Part 2:0 6.6.2;Spelling and abbreviation of names of organizations, style, reference works and abbreviated terms;u
+TOC;9c340262d78d0d70504d6142c3fa0ba7;ISO/IEC Directives Part 2:0 6.6.3;Use of trade names and trademarks;u
+TOC;ba4a1ff07929a6a22c42e1e04144162c;ISO/IEC Directives Part 2:0 6.6.4;Patent rights;u
+TOC;1175b11d03db7ca436897206dae46034;ISO/IEC Directives Part 2:0 6.6.5;Figures;u
+TOC;89b38941ce6157052abbd21083bd5a02;ISO/IEC Directives Part 2:0 6.6.5.1;Usage;u
+TOC;84643636e8881a980c376552a4164dd9;ISO/IEC Directives Part 2:0 6.6.5.2;Form;u
+TOC;e9d0fb30bf8b54723ec7e5ee092ee529;ISO/IEC Directives Part 2:0 6.6.5.3;Designation;u
+TOC;56253bc7d956714d77cf003fc862c634;ISO/IEC Directives Part 2:0 6.6.5.4;Layout of figure designation and title;u
+TOC;182404686579bb2d240487448e35ff3f;ISO/IEC Directives Part 2:0 6.6.5.5;Choice of letter symbols, style of lettering, and labelling;u
+TOC;a8116a0578442676cdf3847b9ff7a328;ISO/IEC Directives Part 2:0 6.6.5.6;Mechanical engineering drawings and graphical symbols;u
+TOC;3bb6db08051e7856211621217ac0ca8b;ISO/IEC Directives Part 2:0 6.6.5.7;Diagrams;u
+TOC;6b769bd22cb3957793a2db7d84eb9bc1;ISO/IEC Directives Part 2:0 6.6.5.8;Continuation of figures;u
+TOC;1891f549bdd5ed4e6428588ba957eaba;ISO/IEC Directives Part 2:0 6.6.5.9;Notes to figures;u
+TOC;04e15e1736e32d3893138403067a300a;ISO/IEC Directives Part 2:0 6.6.5.10;Footnotes to figures;u
+TOC;af3005c4642a302235189687e1f739a2;ISO/IEC Directives Part 2:0 6.6.5.11;Subfigures;u
+TOC;9039511cdd27435243e89cc908215421;ISO/IEC Directives Part 2:0 6.6.5.11.1;Usage;u
+TOC;94c568a2befcd5031972f7db6cbd354d;ISO/IEC Directives Part 2:0 6.6.5.11.2;Designation and layout;u
+TOC;edddc14d7cb73df25c40949a37d2780a;ISO/IEC Directives Part 2:0 6.6.6;Tables;u
+TOC;f5b7566285a8404191020f888644af77;ISO/IEC Directives Part 2:0 6.6.6.1;Usage;u
+TOC;3fa0208ceac4d28689067eb8dfa530da;ISO/IEC Directives Part 2:0 6.6.6.2;Designation;u
+TOC;7fd1448666ce3606a7f9ecf173bc79d0;ISO/IEC Directives Part 2:0 6.6.6.3;Layout of table designation and title;u
+TOC;2a518d6a2acac430e29fa9ca0168b59c;ISO/IEC Directives Part 2:0 6.6.6.4;Headings;u
+TOC;25ce744fa17aa027822f5183a66704cf;ISO/IEC Directives Part 2:0 6.6.6.5;Continuation of tables;u
+TOC;d503dcf737494da066a6b2765b2aa9d0;ISO/IEC Directives Part 2:0 6.6.6.6;Notes to tables;u
+TOC;059f44c1a41ce32e023f0e02d112cca3;ISO/IEC Directives Part 2:0 6.6.6.7;Footnotes to tables;u
+TOC;22360205ec47b7cfda4195639b48895d;ISO/IEC Directives Part 2:0 6.6.7;References;u
+TOC;ae5b24f066e904940e7b34c78d1d2a50;ISO/IEC Directives Part 2:0 6.6.7.1;General;u
+TOC;090c7160d510ae6e2d4d8ed4c8a8e3d7;ISO/IEC Directives Part 2:0 6.6.7.2;References to the document as a whole in its own text;u
+TOC;fecda8d47d33ff61a998a2b334bf350c;ISO/IEC Directives Part 2:0 6.6.7.3;References to elements of text;u
+TOC;922ac1ae19d5b3e18c784e309dc0d38a;ISO/IEC Directives Part 2:0 6.6.7.3.1;Heading;u
+TOC;40af301c7bf1425ec470e4cd160174df;ISO/IEC Directives Part 2:0 6.6.7.3.2;Heading;u
+TOC;854f52f78057dddf160fe3da12810f4c;ISO/IEC Directives Part 2:0 6.6.7.4;References to figures and tables;u
+TOC;d49db8219a22f23466878c684d5b07dc;ISO/IEC Directives Part 2:0 6.6.7.5;References to other documents;u
+TOC;c932f738937dec88b165fcf4d31e1d58;ISO/IEC Directives Part 2:0 6.6.7.5.1;General;u
+TOC;cccbaf01a354613652cfc711d19f3ccb;ISO/IEC Directives Part 2:0 6.6.7.5.2;Undated references;u
+TOC;f36c1c2f3084b0c4a64b197aaf6eeaa3;ISO/IEC Directives Part 2:0 6.6.7.5.3;Dated references;u
+TOC;b0535347cb807f86919e5bab1c000acb;ISO/IEC Directives Part 2:0 6.6.8;Representation of numbers and numerical values;u
+TOC;54f3463de5205e68638228614148cb0f;ISO/IEC Directives Part 2:0 6.6.8.1;Heading;u
+TOC;48f509477098ec97d0b8b7592df82a0a;ISO/IEC Directives Part 2:0 6.6.8.2;Heading;u
+TOC;e4a765a7d728600b360b70f11516075a;ISO/IEC Directives Part 2:0 6.6.8.3;Heading;u
+TOC;8b2dc46050e28a978ffa7cfc3c51f8a0;ISO/IEC Directives Part 2:0 6.6.8.4;Heading;u
+TOC;e0ae8cedffadd6fa9a8d59fdd3d029f6;ISO/IEC Directives Part 2:0 6.6.8.5;Heading;u
+TOC;690afcabf863cb1fb4818cd57407a762;ISO/IEC Directives Part 2:0 6.6.9;Quantities, units, symbols and signs;u
+TOC;0e0b1680ac07d4e732b9a22da17954ca;ISO/IEC Directives Part 2:0 6.6.10;Mathematical formulae;u
+TOC;82dea93ae6f7ef294db7e35b2573f3d2;ISO/IEC Directives Part 2:0 6.6.10.1;Types of mathematical formula;u
+TOC;92d0d327122abe7ad52cf53566879896;ISO/IEC Directives Part 2:0 6.6.10.1.1;Heading;u
+TOC;b37c011c20d637ec4920cf6222870860;ISO/IEC Directives Part 2:0 6.6.10.1.2;Notations such as;u
+TOC;018a320a60db588cbf31f4964593868c;ISO/IEC Directives Part 2:0 6.6.10.2;Presentation;u
+TOC;45ab3e12002d81e82241324b0de6bac6;ISO/IEC Directives Part 2:0 6.6.10.3;Numbering;u
+TOC;c25db6c75cb6655f2d13dd1a95013768;ISO/IEC Directives Part 2:0 6.6.11;Values, dimensions and tolerances;u
+TOC;a25cfe972d7eeec6a6e93ac29301b251;ISO/IEC Directives Part 2:0 6.7;Aspects of conformity assessment;u
+TOC;477aa662aca58c9179771edb45a668d0;ISO/IEC Directives Part 2:0 6.7.1;Documents containing requirements for products, processes, services, persons, systems and bodies;r
+TOC;ae0a26bb0167e24a9dd5c4214236e6b7;ISO/IEC Directives Part 2:0 6.7.2;Conformity assessment schemes and systems;u
+TOC;0bb1de22dc39493a8a70bc52a6860917;ISO/IEC Directives Part 2:0 6.7.3;References to ISO/IEC conformity assessment documents;u
+TOC;cce1bb87615fb91bc119cc1310cd6ba7;ISO/IEC Directives Part 2:0 6.8;Aspects of quality management systems, reliability and sampling;u
+TOC;b40947b8dfc387f7983570dd254462b9;ISO/IEC Directives Part 2:0 6.8.1;General;u
+TOC;6f2bb11744a99399ae68bd260a09f35e;ISO/IEC Directives Part 2:0 6.8.2;Sector policy;u
+TOC;6eb14116e77b782aa9d7741b2a488fb1;ISO/IEC Directives Part 2:0 7;Preparation and presentation of documents;u
+TOC;5eae48ecf36b51adb52ad1890aadd855;ISO/IEC Directives Part 2:0 A;Annex A (informative);u
+TOC;9282bc39908337d47cbb9cb56f5d3565;ISO/IEC Directives Part 2:0 A.1;General;u
+TOC;77b6ba48fc41af22815df5740bad1cd6;ISO/IEC Directives Part 2:0 A.2;The aim-oriented approach;u
+TOC;03cb322da3a96e1546d4437ca409a6d2;ISO/IEC Directives Part 2:0 A.2.1;Heading;u
+TOC;0c29ce42ec133cc3d4b6931cb9e2835d;ISO/IEC Directives Part 2:0 A.2.2;Heading;u
+TOC;c40d95371c847e16aedc291a4121ca2f;ISO/IEC Directives Part 2:0 A.2.3;Heading;u
+TOC;38e02186b05249bac6c88bac33345185;ISO/IEC Directives Part 2:0 A.2.4;Heading;u
+TOC;d4cf7622ce7c3c5d0ccbb53dc9df4002;ISO/IEC Directives Part 2:0 A.2.5;Heading;u
+TOC;91a77b4c2808878ec85a5ed5319c5e53;ISO/IEC Directives Part 2:0 A.3;The performance approach;u
+TOC;9060ddaddec5a1e723decd60b3ce5b08;ISO/IEC Directives Part 2:0 A.4;The principle of verifiability;u
+TOC;5de2e5a6feb4e1a080338504d4bfea0c;ISO/IEC Directives Part 2:0 A.5;Choice of values;u
+TOC;ee384693fa0c001ed144850a2d4d6760;ISO/IEC Directives Part 2:0 A.5.1;Limiting values;u
+TOC;d2cce7f890d76a2d789a58cfa5902808;ISO/IEC Directives Part 2:0 A.5.2;Selected values;u
+TOC;767727a2fe96fb06247aebafa3bc02e0;ISO/IEC Directives Part 2:0 A.5.3;Values to be stated by the manufacturer;u
+TOC;6b539837bddfa29204ab2fefd35258f0;ISO/IEC Directives Part 2:0 A.6;Accommodation of more than one product size;u
+TOC;7e0e57cad66b67cd89a54e81cde45896;ISO/IEC Directives Part 2:0 A.7;Avoidance of repetition;u
+TOC;0871ae6ee9399f0a2cf84f4a3502fa3b;ISO/IEC Directives Part 2:0 A.7.1;Heading;u
+TOC;607bf8a1b7004407800732abefb9b02b;ISO/IEC Directives Part 2:0 A.7.2;Heading;u
+TOC;2cd5e047d369a771efae02ef03bfcaec;ISO/IEC Directives Part 2:0 A.7.3;Heading;u
+TOC;eae76989a5f186a548003248fb0dc218;ISO/IEC Directives Part 2:0 B;Annex B;u
+TOC;8b0ab2fbc59aaae348516d383b5c6037;ISO/IEC Directives Part 2:0 B.1;Introduction;u
+TOC;61a15ab039a6833cbe13e1bbd89eb492;ISO/IEC Directives Part 2:0 B.2;Reference works for language;u
+TOC;65c7d44fcb0463f0f171d793299d2797;ISO/IEC Directives Part 2:0 B.3;Standardized terminology;u
+TOC;9a4b564386c3c6264c595242366d07f9;ISO/IEC Directives Part 2:0 B.4;Principles and methods of terminology;u
+TOC;22850d32cac602627cae980a4973ee20;ISO/IEC Directives Part 2:0 B.5;Quantities, units and their symbols;u
+TOC;346f29b473868da2c414aeb444d767a9;ISO/IEC Directives Part 2:0 B.6;Abbreviated terms;u
+TOC;b7cc2abbd1dc578fad6bfe7630c42295;ISO/IEC Directives Part 2:0 B.7;Bibliographic references;u
+TOC;84ef544c3374b2c753ce60a16f469f84;ISO/IEC Directives Part 2:0 B.8;Technical drawings and diagrams;u
+TOC;04b0372a60de43b840b0c6871f905bcb;ISO/IEC Directives Part 2:0 B.9;Technical documentation;u
+TOC;2f409e00f8f38012e4e816311399120a;ISO/IEC Directives Part 2:0 B.10;Graphical symbols, public information symbols and safety signs;u
+TOC;037809d10c59f465248cbe8d6077bfac;ISO/IEC Directives Part 2:0 B.11;Limits, fits and surface properties;u
+TOC;0f0696af6766eaf65e50cac415266024;ISO/IEC Directives Part 2:0 B.12;Preferred numbers;u
+TOC;6e956668f9ff0aca47203b7505dad6fc;ISO/IEC Directives Part 2:0 B.13;Statistical methods;u
+TOC;8635dc41ee9627a2bd3e879b8f7199e9;ISO/IEC Directives Part 2:0 B.14;Environmental conditions and associated tests;u
+TOC;3e8bb50cd29972393ba041d77677080c;ISO/IEC Directives Part 2:0 B.15;Safety;u
+TOC;f7c17dc9ffa69aac0071905f60761f27;ISO/IEC Directives Part 2:0 B.16;Chemistry;u
+TOC;3b344bac68ba4c00586f1d43ff0f7727;ISO/IEC Directives Part 2:0 B.17;EMC (electromagnetic compatibility);u
+TOC;f8eacb752412113378273d3b6461fdc9;ISO/IEC Directives Part 2:0 B.18;Conformity and quality;u
+TOC;d4fbf37735cf241ed7c3b324ced69925;ISO/IEC Directives Part 2:0 B.19;Adoption of International Standards and other International deliverables;u
+TOC;8fbce3f68013bb95057d305be37c24dd;ISO/IEC Directives Part 2:0 B.20;Environmental management;u
+TOC;9ab560c14e89a3c0f25fa55e1695ea38;ISO/IEC Directives Part 2:0 B.21;Packaging;u
+TOC;3a8ae00c8d1cdcd6cf7c542acf8b7671;ISO/IEC Directives Part 2:0 B.22;Consumer issues;u
+TOC;330bd599c0708fcdced05e53071da98f;ISO/IEC Directives Part 2:0 B.23;Guides;u
+TOC;05bdb6a72c09b7378e62dfb6ac4f7727;ISO/IEC Directives Part 2:0 C;Annex C Example of nubering of divisions and subdivisions;u
+TOC;dc3ca8f9727c6a19e3bb6745fb891173;ISO/IEC Directives Part 2:0 D;Annex D (normative) Drafting and presentation of terms and definitions;u
+TOC;26d33076fb98af875bc37afec4268a2d;ISO/IEC Directives Part 2:0 D.1;General principles;u
+TOC;c4b0aada8f0087a3afc21e5e9cfa32ff;ISO/IEC Directives Part 2:0 D.1.1;Scope of rules and examples provided in Annex D;u
+TOC;4beff7a0444340e7dcb7a7052d441164;ISO/IEC Directives Part 2:0 D.1.2;Rules for development;u
+TOC;d1874b97e4a2d6e1bc4e6b3e055fe13d;ISO/IEC Directives Part 2:0 D.1.3;Forms of publication;u
+TOC;0d5e8e1287ee2ca0d822885e3e9c3455;ISO/IEC Directives Part 2:0 D.1.4;Choice of concepts to be defined;u
+TOC;22694c93d6529ff0321e3e3da4000090;ISO/IEC Directives Part 2:0 D.1.5;Avoidance of duplications and contradictions;u
+TOC;f2d5786444dd41d79d3801e4ef0929f6;ISO/IEC Directives Part 2:0 D.1.6;Definitions and non-verbal representations;u
+TOC;345c799a15c4488f4365e6441a870634;ISO/IEC Directives Part 2:0 D.1.6.1;Heading;u
+TOC;acc0ad04b992833ef2f5afc29b946732;ISO/IEC Directives Part 2:0 D.1.6.2;Heading;u
+TOC;59cc0c7adad5a10e145f4a51102311aa;ISO/IEC Directives Part 2:0 D.1.6.3;Heading;u
+TOC;31718735bcea2b314cb06cf495b5c0cc;ISO/IEC Directives Part 2:0 D.1.6.4;Heading;u
+TOC;22277c4f5d8fca664d11f4cc4f3df8fb;ISO/IEC Directives Part 2:0 D.1.6.5;Heading;u
+TOC;717f56194c722c586c52cbddcd88b108;ISO/IEC Directives Part 2:0 D.1.6.6;Heading;u
+TOC;7396f1f63b3fc9901db32876e4842155;ISO/IEC Directives Part 2:0 D.2;Arrangement;u
+TOC;99d290322411ccbb7ea008d362760234;ISO/IEC Directives Part 2:0 D.3;Terminological entries in different language sections of a document;u
+TOC;42e762fde45459ac9a268d0d1ef8e300;ISO/IEC Directives Part 2:0 D.4;Presentation;u
+TOC;d45d7806642cf69f26873e3dcb9f896b;ISO/IEC Directives Part 2:0 D.4.1;Rules;u
+TOC;dd2369ca6a91a18340c6253b54466e8c;ISO/IEC Directives Part 2:0 D.4.2;Layout;u
+TOC;b925d1177a05d34e9cbf32c99828fb3a;ISO/IEC Directives Part 2:0 D.4.3;Grammatical information;u
+TOC;facc3c579b11799361ec070f1b837955;ISO/IEC Directives Part 2:0 D.4.4;Symbol for missing terms;u
+TOC;1b872e3451f90c6a41f68f81d2157e88;ISO/IEC Directives Part 2:0 D.4.5;Multiple meanings;u
+TOC;f7ce07066a7b39f837b40510ec170ab8;ISO/IEC Directives Part 2:0 D.4.6;Codes for countries and for languages;u
+TOC;c5bbcbe875bcc0426728ff180ed11ea9;ISO/IEC Directives Part 2:0 D.4.7;Parentheses and brackets;u
+TOC;b2d7693b08a9ff4871868b9fdb63ab92;ISO/IEC Directives Part 2:0 D.4.8;Examples, notes to entry and footnotes;u
+TOC;769e49f8dc5d8f4722e5e1b45c06e239;ISO/IEC Directives Part 2:0 E;Annex E (normative) Drafting of the title of a document;u
+TOC;0e3dbf6697086e3b3c01f523e3922caa;ISO/IEC Directives Part 2:0 E.1;Elements of the title 1);u
+TOC;2606b8bac5b345dbff4b461916ecddbd;ISO/IEC Directives Part 2:0 E.1.1;The introductory element;u
+TOC;239b53155b76a81b84b9da678cc8c799;ISO/IEC Directives Part 2:0 E.1.2;The main element;u
+TOC;d5b930d98e18558382a3b8ccc3e4703b;ISO/IEC Directives Part 2:0 E.1.3;The complementary element;u
+TOC;4715e1eff2c53d4e6d30976bb954c22a;ISO/IEC Directives Part 2:0 E.2;Avoidance of unintentional limitation of the scope;u
+TOC;102e4f225e0d2e7416700aa8915dba58;ISO/IEC Directives Part 2:0 E.3;Wording;u
+TOC;9c4601513ddbc5e5868b12780778899e;ISO/IEC Directives Part 2:0 F;Annex F (normative) Patent rights;u
+TOC;a3cd6ab0a900db6a202c209a74d48396;ISO/IEC Directives Part 2:0 F.1;Heading;u
+TOC;9ca060312c48b5472ae297832a067db2;ISO/IEC Directives Part 2:0 F.2;Heading;u
+TOC;3b5ba41776a498f6a5b53ff210cd5c03;ISO/IEC Directives Part 2:0 F.3;Heading;u
+TOC;1a9f5de0e22c80da67531ada76426aa9;ISO/IEC Directives Part 2:0 G;Annex G (normative) Designation of internationally standardized items;u
+TOC;2d7ae5a1780b2fc7ac67c6b1d74d5107;ISO/IEC Directives Part 2:0 G.1;General;u
+TOC;bbeca7bb30b06e73c42690a18e3be15c;ISO/IEC Directives Part 2:0 G.2;Applicability;u
+TOC;6bc0af9e5554bbdb408e5e320a73b6e3;ISO/IEC Directives Part 2:0 G.2.1;Heading;u
+TOC;5970a82aa1a9b8e5d33db4a7fa0e1d17;ISO/IEC Directives Part 2:0 G.2.2;Heading;u
+TOC;8afef8ffa3adde0215f961c4d3216780;ISO/IEC Directives Part 2:0 G.2.3;Heading;u
+TOC;cf398d1d018adbc82e6bba9b298995a6;ISO/IEC Directives Part 2:0 G.3;Designation system;u
+TOC;9cf83fceed124cfb78e1ea7e15489b50;ISO/IEC Directives Part 2:0 G.3.1;Heading;u
+TOC;fec59f41aef57962f8189833c9565b3a;ISO/IEC Directives Part 2:0 G.3.2;Heading;u
+TOC;958175f2254d7626e02f9a5da674e33c;ISO/IEC Directives Part 2:0 G.4;Use of characters;u
+TOC;b7e12e67d3c091a1c833db6b7fc7cdca;ISO/IEC Directives Part 2:0 G.4.1;Heading;u
+TOC;57efa7253e0c2f44bdfbe9cad8b4b5b9;ISO/IEC Directives Part 2:0 G.4.2;Heading;u
+TOC;53eb436e3afe08c12b56484631a0407b;ISO/IEC Directives Part 2:0 G.4.3;Heading;u
+TOC;a7296c323ad21e5424c2c40c38040b78;ISO/IEC Directives Part 2:0 G.4.4;Heading;u
+TOC;52a37404ee28290d04ef11bc388b1b02;ISO/IEC Directives Part 2:0 G.4.5;Heading;u
+TOC;9eeceb53cc10f49918a091782e62b762;ISO/IEC Directives Part 2:0 G.5;Description block;u
+TOC;28b97332d979a91ad1a30644f0858d25;ISO/IEC Directives Part 2:0 G.6;Identity block;u
+TOC;169226338b9052eeb2aaf033984b066f;ISO/IEC Directives Part 2:0 G.6.1;General;u
+TOC;b32e2bf5ed48abebe8eb3e779de3baa2;ISO/IEC Directives Part 2:0 G.6.2;International Standard number block;u
+TOC;586d1adb7c998fd350609d3d8b4f3695;ISO/IEC Directives Part 2:0 G.6.2.1;Heading;u
+TOC;bd7c09c29cc03efa9696c4d7dbcc0216;ISO/IEC Directives Part 2:0 G.6.2.2;Heading;u
+TOC;7ff3c121a1aec94e02c21b6fad8f11c9;ISO/IEC Directives Part 2:0 G.6.2.3;Heading;u
+TOC;db1dd3967bc62c35ac3fe101ee14659a;ISO/IEC Directives Part 2:0 G.6.2.4;Heading;u
+TOC;b2bd7339926047097e322184fb88f4f1;ISO/IEC Directives Part 2:0 G.6.3;Individual item block;u
+TOC;61ffe62af17ed1f5168353db15eaf06d;ISO/IEC Directives Part 2:0 G.6.3.1;Heading;u
+TOC;0e7e605ccc4e19f2cde3826178075ec9;ISO/IEC Directives Part 2:0 G.6.3.2;Heading;u
+TOC;d88f15330d9c4554606a1ef6d2115c0f;ISO/IEC Directives Part 2:0 G.6.3.3;Heading;u
+TOC;b44978002d74212f8e709a992dffe193;ISO/IEC Directives Part 2:0 G.6.3.4;Heading;u
+TOC;b6fc49a2ba98cc72d353642553ccb0ee;ISO/IEC Directives Part 2:0 G.6.3.5;Heading;u
+TOC;e5212999ccb84acdf37f50b6da110ba7;ISO/IEC Directives Part 2:0 G.6.3.6;Heading;u
+TOC;f8083fd060137c9f6d0657676797e43f;ISO/IEC Directives Part 2:0 G.7;Examples;u
+TOC;46d0b00bdb6a5bb2df6e2b41fcc1e15d;ISO/IEC Directives Part 2:0 G.7.1;Heading;u
+TOC;2924951a7b7036ba1d3c0c9dab8594fe;ISO/IEC Directives Part 2:0 G.7.2;Heading;u
+TOC;1ae52d8d78932f364e46933f48485a30;ISO/IEC Directives Part 2:0 G.7.3;Heading;u
+TOC;ec67d90b4206e567c9d5120bada7cadd;ISO/IEC Directives Part 2:0 G.7.4;Heading;u
+TOC;434a2c061e695ff4988b44492fe8505e;ISO/IEC Directives Part 2:0 G.8;National implementation;u
+TOC;47eaf4fb45cc8f8a5028045e9838313f;ISO/IEC Directives Part 2:0 G.8.1;Heading;u
+TOC;683451c362cdfd225505b7edc6ffd940;ISO/IEC Directives Part 2:0 G.8.2;Heading;u
+TOC;47c0486ad7eeeaad103d62ebb5017faa;ISO/IEC Directives Part 2:0 G.8.3;Heading;u
+TOC;27596619b6fe0f6107e1e4fb57ad1aad;ISO/IEC Directives Part 2:0 H;Annex H (normative);u
+TOC;5a8ab4ae711d9e747df09f649150374d;ISO/IEC Directives Part 2:0 I;Annex I (informative);u
