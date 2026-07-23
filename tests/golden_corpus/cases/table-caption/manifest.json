@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "table-caption",
+  "description": "table caption",
+  "source_kind": "synthetic",
+  "features": [
+    "table"
+  ],
+  "invariants": [
+    {
+      "kind": "equals",
+      "path": "normalized.items.0.type",
+      "expected": "table"
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.items.0.caption",
+      "expected": "Table 1 — Values"
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.items.count",
+      "expected": 1
+    }
+  ],
+  "expected_artifact": "expected.normalized.json"
+}

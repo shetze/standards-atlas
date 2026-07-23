@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "nested-list",
+  "description": "nested list",
+  "source_kind": "synthetic",
+  "features": [
+    "list"
+  ],
+  "invariants": [
+    {
+      "kind": "equals",
+      "path": "normalized.items.0.type",
+      "expected": "list"
+    },
+    {
+      "kind": "count",
+      "path": "normalized.items.0.items.0.children",
+      "expected": 1
+    }
+  ]
+}

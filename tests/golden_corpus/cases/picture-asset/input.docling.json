@@ -1,0 +1,68 @@
+{
+  "schema_name": "DoclingDocument",
+  "version": "1.0.0",
+  "name": "PICTURE",
+  "origin": {
+    "filename": "PICTURE.pdf"
+  },
+  "body": {
+    "self_ref": "#/body",
+    "children": [
+      {
+        "$ref": "#/pictures/0"
+      }
+    ]
+  },
+  "groups": [],
+  "texts": [],
+  "tables": [],
+  "pictures": [
+    {
+      "self_ref": "#/pictures/0",
+      "label": "picture",
+      "text": "System overview",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ],
+      "image": {
+        "mimetype": "image/png",
+        "uri": "data:image/png;base64,Z29sZGVuLWltYWdl",
+        "size": {
+          "width": 10,
+          "height": 8
+        }
+      }
+    }
+  ],
+  "key_value_items": [],
+  "form_items": [],
+  "pages": {
+    "1": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "2": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "3": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    }
+  }
+}

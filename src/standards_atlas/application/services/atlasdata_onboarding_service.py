@@ -14,6 +14,10 @@ from standards_atlas.application.services.semantic_role_classifier import (
     SemanticRoleClassifier,
     SemanticRoleContext,
 )
+from standards_atlas.adapters.atlasdata.metadata import (
+    AtlasDataLifecycleStatus,
+    parse_metadata,
+)
 from standards_atlas.domain.model.semantic_role import SemanticRole
 
 _NUMERIC_HEADING = re.compile(
@@ -171,10 +175,22 @@ class AtlasDataOnboardingService:
         overwrite: bool = False,
         include_part_context: bool = True,
     ) -> AtlasDataOnboardingResult:
-        if output.exists() and not overwrite:
-            raise AtlasDataOnboardingError(
-                f"AtlasData output already exists: {output}. Use --overwrite to replace it."
-            )
+        if output.exists():
+            if not overwrite:
+                raise AtlasDataOnboardingError(
+                    f"AtlasData output already exists: {output}. Use --overwrite to replace it."
+                )
+            try:
+                status = parse_metadata(output.read_text(encoding="utf-8")).lifecycle_status
+            except ValueError as exc:
+                raise AtlasDataOnboardingError(
+                    f"Cannot determine lifecycle status of existing AtlasData file: {output}"
+                ) from exc
+            if status is not AtlasDataLifecycleStatus.PROPOSED:
+                raise AtlasDataOnboardingError(
+                    f"AtlasData file {output} is {status.value} and cannot be overwritten. "
+                    "Only proposed files may be regenerated."
+                )
         if not sources:
             raise AtlasDataOnboardingError("At least one Docling part source is required.")
 
@@ -329,6 +345,7 @@ class AtlasDataOnboardingService:
                 f"partDigits={part_digits}",
                 f'name="{standard_name}"',
                 f"oyr={year}",
+                'lifecycle_status="proposed"',
                 "",
                 "structure=(",
             ]

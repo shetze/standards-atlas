@@ -1,0 +1,104 @@
+{
+  "schema_name": "DoclingDocument",
+  "version": "1.0.0",
+  "name": "MULTIPAGE",
+  "origin": {
+    "filename": "MULTIPAGE.pdf"
+  },
+  "body": {
+    "self_ref": "#/body",
+    "children": [
+      {
+        "$ref": "#/texts/0"
+      },
+      {
+        "$ref": "#/texts/1"
+      },
+      {
+        "$ref": "#/texts/2"
+      }
+    ]
+  },
+  "groups": [],
+  "texts": [
+    {
+      "self_ref": "#/texts/0",
+      "label": "section_header",
+      "text": "1 Scope",
+      "orig": "1 Scope",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ],
+      "level": 1
+    },
+    {
+      "self_ref": "#/texts/1",
+      "label": "text",
+      "text": "First page.",
+      "orig": "First page.",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/2",
+      "label": "text",
+      "text": "Second page.",
+      "orig": "Second page.",
+      "prov": [
+        {
+          "page_no": 2,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    }
+  ],
+  "tables": [],
+  "pictures": [],
+  "key_value_items": [],
+  "form_items": [],
+  "pages": {
+    "1": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "2": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "3": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    }
+  }
+}

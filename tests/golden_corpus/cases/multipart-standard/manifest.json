@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "multipart-standard",
+  "description": "multipart standard",
+  "source_kind": "synthetic",
+  "features": [
+    "multipart_standard"
+  ],
+  "invariants": [
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.source_pages",
+      "expected": 2
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.unaccounted_source_items",
+      "expected": 0
+    }
+  ]
+}

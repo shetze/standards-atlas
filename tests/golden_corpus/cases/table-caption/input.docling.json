@@ -1,0 +1,112 @@
+{
+  "schema_name": "DoclingDocument",
+  "version": "1.0.0",
+  "name": "TABLE",
+  "origin": {
+    "filename": "TABLE.pdf"
+  },
+  "body": {
+    "self_ref": "#/body",
+    "children": [
+      {
+        "$ref": "#/texts/0"
+      },
+      {
+        "$ref": "#/tables/0"
+      }
+    ]
+  },
+  "groups": [],
+  "texts": [
+    {
+      "self_ref": "#/texts/0",
+      "label": "caption",
+      "text": "Table 1 — Values",
+      "orig": "Table 1 — Values",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "self_ref": "#/tables/0",
+      "label": "table",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ],
+      "captions": [
+        {
+          "$ref": "#/texts/0"
+        }
+      ],
+      "data": {
+        "table_cells": [
+          {
+            "text": "Name",
+            "start_row_offset_idx": 0,
+            "start_col_offset_idx": 0,
+            "column_header": true
+          },
+          {
+            "text": "Value",
+            "start_row_offset_idx": 0,
+            "start_col_offset_idx": 1,
+            "column_header": true
+          },
+          {
+            "text": "A",
+            "start_row_offset_idx": 1,
+            "start_col_offset_idx": 0
+          },
+          {
+            "text": "1",
+            "start_row_offset_idx": 1,
+            "start_col_offset_idx": 1
+          }
+        ]
+      }
+    }
+  ],
+  "pictures": [],
+  "key_value_items": [],
+  "form_items": [],
+  "pages": {
+    "1": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "2": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "3": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    }
+  }
+}

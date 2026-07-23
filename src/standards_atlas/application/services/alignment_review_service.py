@@ -132,7 +132,11 @@ class AlignmentReviewService:
             self._candidates.load(document_key),
             self._documents.load(DocumentKey(value=document_key)),
         )
-        self._review.save_reviewed(document_key, result)
+        self._review.save_reviewed(
+            document_key,
+            result,
+            automatic_alignment_hash=expected_hash,
+        )
         return result
 
     def load_reviewed(self, document_key: str) -> AlignmentResult:

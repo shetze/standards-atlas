@@ -1,3 +1,5 @@
+import hashlib
+import json
 from datetime import UTC, datetime
 
 import pytest
@@ -51,42 +53,54 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
     repository = FileSystemEngineeringDocumentRepository(workspace)
     repository.save(_document())
     evidence = (SourceEvidence(source_id="PDF", source_type="pdf", page_number=3),)
-    NormalizationArtifactRepository(workspace).save(
-        "SAMPLE",
-        _normalized(
-            NormalizedHeading(
-                id="h1",
-                sequence_number=0,
-                source_item_ids=("h1",),
-                source_evidence=evidence,
-                text="1 Scope",
-            ),
-            NormalizedText(
-                id="p1",
-                sequence_number=1,
-                source_item_ids=("p1",),
-                source_evidence=evidence,
-                text="First paragraph.",
-            ),
-            NormalizedList(
-                id="l1",
-                sequence_number=2,
-                source_item_ids=("l1",),
-                items=(NormalizedListItem(text="Item"),),
-            ),
-            NormalizedText(
-                id="h2", sequence_number=3, source_item_ids=("h2",), text="2 Inline clause text."
-            ),
-            NormalizedTable(
-                id="t1",
-                sequence_number=4,
-                source_item_ids=("t1",),
-                rows=(TableRow(cells=(TableCell(text="A"),)),),
-            ),
-            NormalizedCode(id="c1", sequence_number=5, source_item_ids=("c1",), code="x = 1"),
+    normalized = _normalized(
+        NormalizedHeading(
+            id="h1",
+            sequence_number=0,
+            source_item_ids=("h1",),
+            source_evidence=evidence,
+            text="1 Scope",
+        ),
+        NormalizedText(
+            id="p1",
+            sequence_number=1,
+            source_item_ids=("p1",),
+            source_evidence=evidence,
+            text="First paragraph.",
+        ),
+        NormalizedList(
+            id="l1",
+            sequence_number=2,
+            source_item_ids=("l1",),
+            items=(NormalizedListItem(text="Item"),),
+            source_evidence=evidence,
+        ),
+        NormalizedText(
+            id="h2",
+            sequence_number=3,
+            source_item_ids=("h2",),
+            source_evidence=evidence,
+            text="2 Inline clause text.",
+        ),
+        NormalizedTable(
+            id="t1",
+            sequence_number=4,
+            source_item_ids=("t1",),
+            rows=(TableRow(cells=(TableCell(text="A"),)),),
+            source_evidence=evidence,
+        ),
+        NormalizedCode(
+            id="c1",
+            sequence_number=5,
+            source_item_ids=("c1",),
+            source_evidence=evidence,
+            code="x = 1",
         ),
     )
-    AlignmentArtifactRepository(workspace).save("SAMPLE", _alignment())
+    NormalizationArtifactRepository(workspace).save("SAMPLE", normalized)
+    AlignmentArtifactRepository(workspace).save(
+        "SAMPLE", _alignment(normalized_hash=_model_hash(normalized))
+    )
 
     result = ContentEnrichmentService(workspace).enrich("SAMPLE")
     persisted = repository.load(StandardKey(value="SAMPLE"))
@@ -107,30 +121,51 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
 def test_prefers_reviewed_alignment_when_present(tmp_path):
     workspace = tmp_path / ".atlas"
     FileSystemEngineeringDocumentRepository(workspace).save(_document())
-    NormalizationArtifactRepository(workspace).save(
-        "SAMPLE",
-        _normalized(
-            NormalizedHeading(id="h1", sequence_number=0, source_item_ids=("h1",), text="1"),
-            NormalizedText(id="p1", sequence_number=1, source_item_ids=("p1",), text="Body"),
-            NormalizedHeading(id="h2", sequence_number=2, source_item_ids=("h2",), text="2"),
+    evidence = (SourceEvidence(source_id="PDF", source_type="pdf", page_number=1),)
+    normalized = _normalized(
+        NormalizedHeading(
+            id="h1", sequence_number=0, source_item_ids=("h1",), source_evidence=evidence, text="1"
+        ),
+        NormalizedText(
+            id="p1",
+            sequence_number=1,
+            source_item_ids=("p1",),
+            source_evidence=evidence,
+            text="Body",
+        ),
+        NormalizedHeading(
+            id="h2", sequence_number=2, source_item_ids=("h2",), source_evidence=evidence, text="2"
         ),
     )
-    automatic = _alignment(second_start=2, second_end=2)
+    NormalizationArtifactRepository(workspace).save("SAMPLE", normalized)
+    automatic = _alignment(
+        first_end=1,
+        second_start=2,
+        second_end=2,
+        normalized_hash=_model_hash(normalized),
+    )
     reviewed_second = automatic.clauses[1].model_copy(update={"status": AlignmentStatus.MANUAL})
     reviewed = automatic.model_copy(update={"clauses": automatic.clauses[:1] + (reviewed_second,)})
     AlignmentArtifactRepository(workspace).save("SAMPLE", automatic)
-    AlignmentReviewRepository(workspace).save_reviewed("SAMPLE", reviewed)
+    review_repository = AlignmentReviewRepository(workspace)
+    review_repository.save_reviewed(
+        "SAMPLE",
+        reviewed,
+        automatic_alignment_hash=review_repository.hash_alignment(automatic),
+    )
 
     result = ContentEnrichmentService(workspace).enrich("SAMPLE")
 
     assert result.statistics.used_reviewed_alignment is True
+    assert result.statistics.construction_contract.valid is True
 
 
 def test_rejects_unresolved_alignment_by_default(tmp_path):
     workspace = tmp_path / ".atlas"
     FileSystemEngineeringDocumentRepository(workspace).save(_document())
-    NormalizationArtifactRepository(workspace).save("SAMPLE", _normalized())
-    complete = _alignment()
+    normalized = _normalized()
+    NormalizationArtifactRepository(workspace).save("SAMPLE", normalized)
+    complete = _alignment(normalized_hash=_model_hash(normalized))
     missing = complete.clauses[0].model_copy(
         update={
             "status": AlignmentStatus.MISSING,
@@ -176,7 +211,13 @@ def _normalized(*items):
     )
 
 
-def _alignment(second_start=3, second_end=5):
+def _alignment(
+    second_start=3,
+    second_end=5,
+    *,
+    first_end=2,
+    normalized_hash="n",
+):
     clauses = (
         ClauseAlignment(
             clause_id="SAMPLE-1",
@@ -184,7 +225,7 @@ def _alignment(second_start=3, second_end=5):
             candidate_item_id="h1",
             status=AlignmentStatus.EXACT,
             start_sequence_number=0,
-            end_sequence_number=2,
+            end_sequence_number=first_end,
             remainder_kind=CandidateRemainderKind.TITLE,
             observed_remainder="Scope",
         ),
@@ -204,7 +245,7 @@ def _alignment(second_start=3, second_end=5):
         clauses=clauses,
         metadata=AlignmentMetadata(
             alignment_version="test",
-            normalized_document_hash="n",
+            normalized_document_hash=normalized_hash,
             candidate_document_hash="c",
             expected_structure_hash="s",
             created_at=datetime.now(UTC),
@@ -212,3 +253,9 @@ def _alignment(second_start=3, second_end=5):
             statistics=AlignmentStatistics(expected_clauses=2, exact_matches=2),
         ),
     )
+
+
+def _model_hash(model) -> str:
+    payload = model.model_dump(mode="json")
+    payload.get("metadata", {}).pop("created_at", None)
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()

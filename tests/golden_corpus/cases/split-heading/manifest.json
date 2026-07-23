@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "split-heading",
+  "description": "split heading",
+  "source_kind": "synthetic",
+  "features": [
+    "split_heading"
+  ],
+  "invariants": [
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.unaccounted_source_items",
+      "expected": 0
+    }
+  ]
+}

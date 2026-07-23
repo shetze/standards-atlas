@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "malformed-docling",
+  "description": "malformed docling",
+  "source_kind": "malformed",
+  "features": [
+    "malformed_docling"
+  ],
+  "invariants": [
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.unaccounted_source_items",
+      "expected": 0
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.items.count",
+      "expected": 2
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "annex",
+  "description": "annex",
+  "source_kind": "synthetic",
+  "features": [
+    "annex"
+  ],
+  "invariants": [
+    {
+      "kind": "contains",
+      "path": "normalized.items.0.text",
+      "expected": "Annex A"
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.unaccounted_source_items",
+      "expected": 0
+    }
+  ]
+}

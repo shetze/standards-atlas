@@ -15,6 +15,7 @@ class ContentBlockBase(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     id: str = Field(min_length=1)
+    normalized_item_ids: tuple[str, ...] = ()
     source_evidence: tuple[SourceEvidence, ...] = ()
 
 

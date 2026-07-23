@@ -2,6 +2,11 @@
 
 from standards_atlas.application.services.alignment_review_service import AlignmentReviewService
 from standards_atlas.application.services.alignment_service import AlignmentService
+from standards_atlas.application.services.atlasdata_lifecycle_service import (
+    AtlasDataLifecycleError,
+    AtlasDataLifecycleResult,
+    AtlasDataLifecycleService,
+)
 from standards_atlas.application.services.atlasdata_onboarding_service import (
     AtlasDataOnboardingError,
     AtlasDataOnboardingResult,
@@ -59,6 +64,9 @@ from standards_atlas.application.services.semantic_role_classifier import (
 
 __all__ = [
     "AlignmentReviewService",
+    "AtlasDataLifecycleError",
+    "AtlasDataLifecycleResult",
+    "AtlasDataLifecycleService",
     "AtlasDataOnboardingError",
     "AtlasDataOnboardingResult",
     "AtlasDataOnboardingService",

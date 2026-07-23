@@ -11,6 +11,7 @@ import typer
 from standards_atlas import __version__
 from standards_atlas.adapters.alignment import AlignmentArtifactRepository
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
+from standards_atlas.adapters.atlasdata.metadata import AtlasDataLifecycleStatus
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.docling import (
     DoclingArtifactRepository,
@@ -34,6 +35,8 @@ from standards_atlas.application.normalization import NormalizationDataLossError
 from standards_atlas.application.services import (
     AlignmentReviewService,
     AlignmentService,
+    AtlasDataLifecycleError,
+    AtlasDataLifecycleService,
     AtlasDataOnboardingError,
     AtlasDataOnboardingService,
     ContentEnrichmentError,
@@ -390,6 +393,28 @@ def onboard_docling_parts(
     typer.echo(f"Terms discovered      : {term_count}")
     typer.echo(f"Annexes discovered    : {annex_count}")
     typer.echo(f"AtlasData file        : {result.output}")
+
+
+@atlasdata_app.command("set-status")
+def set_atlasdata_status(
+    file: Annotated[
+        Path,
+        typer.Argument(exists=True, readable=True, writable=True, resolve_path=True),
+    ],
+    status: Annotated[
+        AtlasDataLifecycleStatus,
+        typer.Argument(help="Target lifecycle status: reviewed or published."),
+    ],
+) -> None:
+    """Advance an AtlasData baseline through its review lifecycle."""
+    try:
+        result = AtlasDataLifecycleService().transition(file, status)
+    except (AtlasDataLifecycleError, OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"AtlasData file        : {result.path}")
+    typer.echo(f"Previous status      : {result.previous.value}")
+    typer.echo(f"Lifecycle status     : {result.current.value}")
 
 
 @atlasdata_app.command("generate-toc")

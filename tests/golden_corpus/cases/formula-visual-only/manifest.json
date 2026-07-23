@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "formula-visual-only",
+  "description": "formula visual only",
+  "source_kind": "synthetic",
+  "features": [
+    "formula"
+  ],
+  "invariants": [
+    {
+      "kind": "equals",
+      "path": "normalized.items.0.type",
+      "expected": "formula"
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.items.0.extraction_status",
+      "expected": "visual_only"
+    }
+  ]
+}

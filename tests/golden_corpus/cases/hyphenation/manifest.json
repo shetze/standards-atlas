@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "hyphenation",
+  "description": "hyphenation",
+  "source_kind": "synthetic",
+  "features": [
+    "hyphenation"
+  ],
+  "invariants": [
+    {
+      "kind": "nonzero",
+      "path": "normalized.metadata.statistics.hyphenations_repaired"
+    },
+    {
+      "kind": "contains",
+      "path": "normalized.items.0.text",
+      "expected": "interoperability"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "schema_name": "DoclingDocument",
+  "version": "1.0.0",
+  "name": "FORMULA",
+  "origin": {
+    "filename": "FORMULA.pdf"
+  },
+  "body": {
+    "self_ref": "#/body",
+    "children": [
+      {
+        "$ref": "#/texts/0"
+      }
+    ]
+  },
+  "groups": [],
+  "texts": [
+    {
+      "self_ref": "#/texts/0",
+      "label": "formula",
+      "text": "",
+      "orig": "E = m c 2",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    }
+  ],
+  "tables": [],
+  "pictures": [],
+  "key_value_items": [],
+  "form_items": [],
+  "pages": {
+    "1": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "2": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "3": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "en50126-real-excerpt",
+  "description": "en50126 real excerpt",
+  "source_kind": "real_excerpt",
+  "features": [
+    "real_excerpt",
+    "header",
+    "multi_page_clause"
+  ],
+  "invariants": [
+    {
+      "kind": "nonzero",
+      "path": "normalized.metadata.statistics.headers_suppressed"
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.source_pages",
+      "expected": 3
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.unaccounted_source_items",
+      "expected": 0
+    }
+  ],
+  "expected_artifact": "expected.normalized.json"
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "simple-clause",
+  "description": "simple clause",
+  "source_kind": "synthetic",
+  "features": [
+    "simple_clause"
+  ],
+  "invariants": [
+    {
+      "kind": "contains",
+      "path": "normalized.items.0.text",
+      "expected": "1 Scope"
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.unaccounted_source_items",
+      "expected": 0
+    }
+  ],
+  "expected_artifact": "expected.normalized.json"
+}

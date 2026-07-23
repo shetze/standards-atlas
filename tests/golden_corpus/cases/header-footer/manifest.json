@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "header-footer",
+  "description": "header footer",
+  "source_kind": "synthetic",
+  "features": [
+    "header",
+    "footer"
+  ],
+  "invariants": [
+    {
+      "kind": "nonzero",
+      "path": "normalized.metadata.statistics.headers_suppressed"
+    },
+    {
+      "kind": "nonzero",
+      "path": "normalized.metadata.statistics.page_numbers_suppressed"
+    }
+  ]
+}

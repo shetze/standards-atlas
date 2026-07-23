@@ -8,12 +8,18 @@ from pydantic import BaseModel, ConfigDict
 
 from standards_atlas.adapters.alignment import AlignmentArtifactRepository
 from standards_atlas.adapters.alignment_review import AlignmentReviewRepository
+from standards_atlas.adapters.engineering_construction import (
+    EngineeringConstructionContractRepository,
+)
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.application.model.alignment import (
     AlignmentResult,
     AlignmentStatus,
     ClauseAlignment,
+)
+from standards_atlas.application.model.engineering_construction import (
+    EngineeringConstructionContract,
 )
 from standards_atlas.application.model.normalized_document import (
     NormalizedCode,
@@ -27,6 +33,9 @@ from standards_atlas.application.model.normalized_document import (
     NormalizedTable,
     NormalizedText,
     NormalizedUnknown,
+)
+from standards_atlas.application.services.engineering_construction_contract import (
+    EngineeringConstructionContractValidator,
 )
 from standards_atlas.domain.model import (
     ArtifactLineage,
@@ -60,6 +69,7 @@ class ContentEnrichmentStatistics(BaseModel):
     content_blocks: int
     normalized_items_consumed: int
     used_reviewed_alignment: bool
+    construction_contract: EngineeringConstructionContract
 
 
 class ContentEnrichmentResult(BaseModel):
@@ -79,6 +89,8 @@ class ContentEnrichmentService:
         self._normalized = NormalizationArtifactRepository(workspace)
         self._alignments = AlignmentArtifactRepository(workspace)
         self._reviews = AlignmentReviewRepository(workspace)
+        self._contracts = EngineeringConstructionContractRepository(workspace)
+        self._contract_validator = EngineeringConstructionContractValidator()
 
     def enrich(
         self,
@@ -96,12 +108,35 @@ class ContentEnrichmentService:
         key = DocumentKey(value=document_key)
         document = self._documents.load(key)
         normalized = self._normalized.load(document_key)
+        automatic_alignment = self._alignments.load(document_key)
         alignment, used_reviewed = self._load_alignment(
             document_key,
             prefer_reviewed=prefer_reviewed,
         )
         self._validate_sources(document, normalized, alignment)
         self._validate_alignment(alignment, allow_unresolved=allow_unresolved)
+        reviewed_integrity_valid = True
+        reviewed_integrity_message = None
+        if used_reviewed:
+            reviewed_integrity_valid, reviewed_integrity_message = self._reviews.verify_reviewed(
+                document_key,
+                automatic_alignment_hash=self._reviews.hash_alignment(automatic_alignment),
+            )
+        contract = self._contract_validator.validate(
+            normalized,
+            alignment,
+            automatic_alignment,
+            reviewed_alignment_used=used_reviewed,
+            reviewed_integrity_valid=reviewed_integrity_valid,
+            reviewed_integrity_message=reviewed_integrity_message,
+        )
+        if not contract.valid:
+            codes = ", ".join(
+                item.code for item in contract.diagnostics if item.severity == "error"
+            )
+            raise ContentEnrichmentError(
+                f"EngineeringDocument construction contract failed: {codes}"
+            )
 
         alignments_by_clause = {entry.clause_id: entry for entry in alignment.clauses}
         items_by_sequence = {item.sequence_number: item for item in normalized.items}
@@ -137,12 +172,22 @@ class ContentEnrichmentService:
                 )
             )
 
+        traceability_errors = _content_traceability_errors(tuple(enriched_clauses), normalized)
+        if traceability_errors:
+            raise ContentEnrichmentError(
+                "EngineeringDocument content traceability failed: "
+                + "; ".join(traceability_errors[:10])
+            )
+
         draft = document.model_copy(update={"clauses": tuple(enriched_clauses)})
         parent_artifacts = []
         if document.lineage is not None:
             parent_artifacts.append(document.lineage.artifact)
         if normalized.lineage is not None:
             parent_artifacts.append(normalized.lineage.artifact)
+        alignment_kind = "reviewed_alignment" if used_reviewed else "alignment"
+        parent_artifacts.append(artifact_reference(alignment_kind, alignment))
+        parent_artifacts.append(artifact_reference("engineering_construction_contract", contract))
         enriched = draft.model_copy(
             update={
                 "lineage": ArtifactLineage(
@@ -151,6 +196,7 @@ class ContentEnrichmentService:
                 )
             }
         )
+        self._contracts.save(document_key, contract)
         self._documents.save(enriched)
         return ContentEnrichmentResult(
             document=enriched,
@@ -161,6 +207,7 @@ class ContentEnrichmentService:
                 content_blocks=block_count,
                 normalized_items_consumed=len(consumed_item_ids),
                 used_reviewed_alignment=used_reviewed,
+                construction_contract=contract,
             ),
         )
 
@@ -266,6 +313,7 @@ def _item_to_block(
         return TextBlock(
             id=f"content:{item.id}",
             text=text.strip(),
+            normalized_item_ids=(item.id,),
             source_evidence=item.source_evidence,
         )
 
@@ -274,6 +322,7 @@ def _item_to_block(
             id=f"content:{item.id}",
             ordered=item.ordered,
             items=tuple(_list_item(value) for value in item.items),
+            normalized_item_ids=(item.id,),
             source_evidence=item.source_evidence,
         )
 
@@ -282,6 +331,7 @@ def _item_to_block(
             id=f"content:{item.id}",
             rows=item.rows,
             caption=item.caption,
+            normalized_item_ids=(item.id,),
             source_evidence=item.source_evidence,
         )
 
@@ -294,6 +344,7 @@ def _item_to_block(
             media_type=item.visual_asset.media_type if item.visual_asset else None,
             content_hash=item.visual_asset.content_hash if item.visual_asset else None,
             embedded_data_uri=item.visual_asset.data_uri if item.visual_asset else None,
+            normalized_item_ids=(item.id,),
             source_evidence=item.source_evidence,
         )
 
@@ -304,6 +355,7 @@ def _item_to_block(
             original_expression=item.original_expression,
             representation=item.representation,
             extraction_status=item.extraction_status,
+            normalized_item_ids=(item.id,),
             source_evidence=item.source_evidence,
         )
 
@@ -312,6 +364,7 @@ def _item_to_block(
             id=f"content:{item.id}",
             code=item.code,
             language=item.language,
+            normalized_item_ids=(item.id,),
             source_evidence=item.source_evidence,
         )
 
@@ -319,6 +372,7 @@ def _item_to_block(
         return TextBlock(
             id=f"content:{item.id}",
             text=item.text.strip(),
+            normalized_item_ids=(item.id,),
             source_evidence=item.source_evidence,
         )
 
@@ -354,3 +408,21 @@ def _enriched_title(clause: Clause, alignment: ClauseAlignment) -> str | None:
     ):
         return alignment.observed_remainder.strip()
     return clause.title
+
+
+def _content_traceability_errors(
+    clauses: tuple[Clause, ...],
+    normalized: NormalizedExtractedDocument,
+) -> tuple[str, ...]:
+    active_ids = {item.id for item in normalized.items}
+    errors: list[str] = []
+    for clause in clauses:
+        for block in clause.content:
+            if not block.normalized_item_ids:
+                errors.append(f"{block.id} has no NormalizedItem reference")
+            unknown = set(block.normalized_item_ids) - active_ids
+            if unknown:
+                errors.append(f"{block.id} references unknown NormalizedItems")
+            if not block.source_evidence:
+                errors.append(f"{block.id} has no SourceEvidence")
+    return tuple(errors)

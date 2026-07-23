@@ -1,0 +1,106 @@
+{
+  "schema_name": "DoclingDocument",
+  "version": "1.0.0",
+  "name": "LIST",
+  "origin": {
+    "filename": "LIST.pdf"
+  },
+  "body": {
+    "self_ref": "#/body",
+    "children": [
+      {
+        "$ref": "#/texts/0"
+      },
+      {
+        "$ref": "#/texts/1"
+      },
+      {
+        "$ref": "#/texts/2"
+      }
+    ]
+  },
+  "groups": [],
+  "texts": [
+    {
+      "self_ref": "#/texts/0",
+      "label": "list_item",
+      "text": "parent",
+      "orig": "parent",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ],
+      "marker": "-"
+    },
+    {
+      "self_ref": "#/texts/1",
+      "label": "list_item",
+      "text": "child",
+      "orig": "child",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 50,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ],
+      "marker": "-"
+    },
+    {
+      "self_ref": "#/texts/2",
+      "label": "list_item",
+      "text": "next",
+      "orig": "next",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ],
+      "marker": "-"
+    }
+  ],
+  "tables": [],
+  "pictures": [],
+  "key_value_items": [],
+  "form_items": [],
+  "pages": {
+    "1": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "2": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "3": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    }
+  }
+}

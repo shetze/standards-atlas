@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from pathlib import Path
 
@@ -31,6 +32,9 @@ class AlignmentReviewRepository:
 
     def reviewed_path(self, document_key: str) -> Path:
         return self._private_path(document_key, "reviewed.json")
+
+    def reviewed_integrity_path(self, document_key: str) -> Path:
+        return self._private_path(document_key, "reviewed.integrity.json")
 
     def save_review(self, document_key: str, markdown: str) -> Path:
         return self._atomic_write(self.review_path(document_key), markdown)
@@ -79,11 +83,44 @@ class AlignmentReviewRepository:
         payload = yaml.safe_load(self.overrides_path(document_key).read_text(encoding="utf-8"))
         return AlignmentOverrideDocument.model_validate(payload)
 
-    def save_reviewed(self, document_key: str, result: AlignmentResult) -> Path:
-        return self._atomic_write(
+    def save_reviewed(
+        self,
+        document_key: str,
+        result: AlignmentResult,
+        *,
+        automatic_alignment_hash: str | None = None,
+    ) -> Path:
+        path = self._atomic_write(
             self.reviewed_path(document_key),
             result.model_dump_json(indent=2) + "\n",
         )
+        integrity = {
+            "schema_version": 1,
+            "reviewed_alignment_hash": self.hash_alignment(result),
+            "automatic_alignment_hash": automatic_alignment_hash,
+        }
+        self._atomic_write(
+            self.reviewed_integrity_path(document_key),
+            json.dumps(integrity, indent=2, sort_keys=True) + "\n",
+        )
+        return path
+
+    def verify_reviewed(
+        self, document_key: str, *, automatic_alignment_hash: str
+    ) -> tuple[bool, str | None]:
+        path = self.reviewed_integrity_path(document_key)
+        if not path.exists():
+            return False, "Reviewed alignment has no integrity manifest."
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            reviewed = self.load_reviewed(document_key)
+        except (OSError, ValueError, json.JSONDecodeError):
+            return False, "Reviewed alignment integrity manifest is invalid."
+        if payload.get("reviewed_alignment_hash") != self.hash_alignment(reviewed):
+            return False, "Reviewed alignment changed after review was applied."
+        if payload.get("automatic_alignment_hash") != automatic_alignment_hash:
+            return False, "Reviewed alignment was based on an older automatic alignment."
+        return True, None
 
     def load_reviewed(self, document_key: str) -> AlignmentResult:
         return AlignmentResult.model_validate_json(

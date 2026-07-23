@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "multipage-clause",
+  "description": "multipage clause",
+  "source_kind": "synthetic",
+  "features": [
+    "multi_page_clause"
+  ],
+  "invariants": [
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.source_pages",
+      "expected": 2
+    },
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.unaccounted_source_items",
+      "expected": 0
+    }
+  ]
+}

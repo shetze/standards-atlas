@@ -303,3 +303,35 @@ def test_generates_canonical_typed_annex_tokens() -> None:
 
     assert "r2:C.1" in tokens
     assert "2:rC.1" not in tokens
+
+
+def test_generated_atlasdata_is_proposed(tmp_path: Path) -> None:
+    source = tmp_path / "document.json"
+    output = tmp_path / "IEC27000"
+    _write_docling(source)
+
+    AtlasDataOnboardingService().generate(
+        source, output, standard_name="ISO/IEC 27000", year=2018
+    )
+
+    assert 'lifecycle_status="proposed"' in output.read_text(encoding="utf-8")
+
+
+def test_refuses_to_overwrite_reviewed_atlasdata(tmp_path: Path) -> None:
+    source = tmp_path / "document.json"
+    output = tmp_path / "IEC27000"
+    _write_docling(source)
+    output.write_text(
+        'name="ISO/IEC 27000"\ndigits=8\nlifecycle_status="reviewed"\n'
+        'structure=(\n "2018 1"\n)\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(AtlasDataOnboardingError, match="cannot be overwritten"):
+        AtlasDataOnboardingService().generate(
+            source,
+            output,
+            standard_name="ISO/IEC 27000",
+            year=2018,
+            overwrite=True,
+        )

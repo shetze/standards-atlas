@@ -1,0 +1,229 @@
+{
+  "schema_name": "DoclingDocument",
+  "version": "1.0.0",
+  "name": "FURNITURE",
+  "origin": {
+    "filename": "FURNITURE.pdf"
+  },
+  "body": {
+    "self_ref": "#/body",
+    "children": [
+      {
+        "$ref": "#/texts/0"
+      },
+      {
+        "$ref": "#/texts/1"
+      },
+      {
+        "$ref": "#/texts/2"
+      },
+      {
+        "$ref": "#/texts/3"
+      },
+      {
+        "$ref": "#/texts/4"
+      },
+      {
+        "$ref": "#/texts/5"
+      },
+      {
+        "$ref": "#/texts/6"
+      },
+      {
+        "$ref": "#/texts/7"
+      },
+      {
+        "$ref": "#/texts/8"
+      }
+    ]
+  },
+  "groups": [],
+  "texts": [
+    {
+      "self_ref": "#/texts/0",
+      "label": "page_header",
+      "text": "TEST STD",
+      "orig": "TEST STD",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 5,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/1",
+      "label": "text",
+      "text": "Body one.",
+      "orig": "Body one.",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/2",
+      "label": "page_footer",
+      "text": "1",
+      "orig": "1",
+      "prov": [
+        {
+          "page_no": 1,
+          "bbox": {
+            "l": 20,
+            "t": 780,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/3",
+      "label": "page_header",
+      "text": "TEST STD",
+      "orig": "TEST STD",
+      "prov": [
+        {
+          "page_no": 2,
+          "bbox": {
+            "l": 20,
+            "t": 5,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/4",
+      "label": "text",
+      "text": "Body two.",
+      "orig": "Body two.",
+      "prov": [
+        {
+          "page_no": 2,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/5",
+      "label": "page_footer",
+      "text": "2",
+      "orig": "2",
+      "prov": [
+        {
+          "page_no": 2,
+          "bbox": {
+            "l": 20,
+            "t": 780,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/6",
+      "label": "page_header",
+      "text": "TEST STD",
+      "orig": "TEST STD",
+      "prov": [
+        {
+          "page_no": 3,
+          "bbox": {
+            "l": 20,
+            "t": 5,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/7",
+      "label": "text",
+      "text": "Body three.",
+      "orig": "Body three.",
+      "prov": [
+        {
+          "page_no": 3,
+          "bbox": {
+            "l": 20,
+            "t": 100,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    },
+    {
+      "self_ref": "#/texts/8",
+      "label": "page_footer",
+      "text": "3",
+      "orig": "3",
+      "prov": [
+        {
+          "page_no": 3,
+          "bbox": {
+            "l": 20,
+            "t": 780,
+            "r": 200,
+            "b": 120,
+            "coord_origin": "TOPLEFT"
+          }
+        }
+      ]
+    }
+  ],
+  "tables": [],
+  "pictures": [],
+  "key_value_items": [],
+  "form_items": [],
+  "pages": {
+    "1": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "2": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    },
+    "3": {
+      "size": {
+        "width": 600,
+        "height": 800
+      }
+    }
+  }
+}

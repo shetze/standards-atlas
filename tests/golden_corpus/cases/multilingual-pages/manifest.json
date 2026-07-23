@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "multilingual-pages",
+  "description": "multilingual pages",
+  "source_kind": "synthetic",
+  "features": [
+    "multilingual_pages"
+  ],
+  "invariants": [
+    {
+      "kind": "equals",
+      "path": "normalized.metadata.statistics.source_pages",
+      "expected": 2
+    }
+  ]
+}

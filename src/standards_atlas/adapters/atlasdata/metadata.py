@@ -3,7 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
+
+
+class AtlasDataLifecycleStatus(StrEnum):
+    """Review maturity of an AtlasData clause baseline."""
+
+    PROPOSED = "proposed"
+    REVIEWED = "reviewed"
+    PUBLISHED = "published"
 
 
 @dataclass(frozen=True)
@@ -16,6 +25,7 @@ class AtlasMetadata:
     part_shift: int = 0
     part_digits: int = 0
     official_year: int | None = None
+    lifecycle_status: AtlasDataLifecycleStatus = AtlasDataLifecycleStatus.PUBLISHED
     extra_fields: dict[str, str] = field(default_factory=dict)
 
 
@@ -25,6 +35,7 @@ _FIELD_ALIASES = {
     "partShift": "part_shift",
     "partDigits": "part_digits",
     "oyr": "official_year",
+    "lifecycleStatus": "lifecycle_status",
 }
 
 
@@ -84,6 +95,9 @@ def parse_metadata(text: str) -> AtlasMetadata:
         part_shift=known_values.get("part_shift", 0),
         part_digits=known_values.get("part_digits", 0),
         official_year=known_values.get("official_year"),
+        lifecycle_status=known_values.get(
+            "lifecycle_status", AtlasDataLifecycleStatus.PUBLISHED
+        ),
         extra_fields=extra_fields,
     )
 
@@ -105,7 +119,16 @@ def _is_quoted(value: str) -> bool:
     )
 
 
-def _convert_value(key: str, value: str) -> int | str:
+def _convert_value(key: str, value: str) -> int | str | AtlasDataLifecycleStatus:
+    if key == "lifecycle_status":
+        try:
+            return AtlasDataLifecycleStatus(value)
+        except ValueError as exc:
+            allowed = ", ".join(status.value for status in AtlasDataLifecycleStatus)
+            raise ValueError(
+                f"Metadata field lifecycle_status must be one of {allowed}, got {value!r}."
+            ) from exc
+
     if key in _INT_FIELDS:
         try:
             return int(value)
