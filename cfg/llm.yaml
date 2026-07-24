@@ -1,0 +1,5 @@
+llm:
+  base_url: http://127.0.0.1:8080/v1
+  model: granite
+  timeout_seconds: 120
+  cache_directory: .atlas/llm/cache

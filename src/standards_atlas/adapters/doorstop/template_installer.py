@@ -50,9 +50,7 @@ class DoorstopTemplateInstaller:
                 roots.append(config.parent)
         if len(roots) != 1:
             raise ValueError(
-                
-                    "expected exactly one root Doorstop document below "
-                    f"{hierarchy_root}, got {len(roots)}"
-                
+                "expected exactly one root Doorstop document below "
+                f"{hierarchy_root}, got {len(roots)}"
             )
         return roots[0], tuple(config.parent for config in configs)
