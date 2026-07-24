@@ -2,6 +2,7 @@ from standards_atlas.application.catalog.models import (
     Classification,
     ContentSelection,
     DocumentType,
+    DoorstopHierarchyDefinition,
     IndustrySector,
     KnowledgeDomain,
     PageRange,
@@ -18,6 +19,7 @@ from standards_atlas.application.catalog.models import (
 __all__ = [
     "Classification",
     "DocumentType",
+    "DoorstopHierarchyDefinition",
     "ContentSelection",
     "IndustrySector",
     "KnowledgeDomain",

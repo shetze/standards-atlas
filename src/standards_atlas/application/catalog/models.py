@@ -244,6 +244,25 @@ class StandardProfile(BaseModel):
     industry_sectors: tuple[str, ...] = ()
 
 
+class DoorstopHierarchyDefinition(BaseModel):
+    """A deterministic Doorstop tree projected from the Knowledge Domain graph."""
+
+    model_config = ConfigDict(frozen=True)
+    key: str
+    name: str
+    root: str
+    families: tuple[str, ...]
+    template: str = "atlas-clean"
+
+    @model_validator(mode="after")
+    def validate_root_member(self) -> DoorstopHierarchyDefinition:
+        if self.root not in self.families:
+            raise ValueError("doorstop hierarchy root must be one of its families")
+        if len(set(self.families)) != len(self.families):
+            raise ValueError("doorstop hierarchy families must be unique")
+        return self
+
+
 class StandardCatalog(BaseModel):
     model_config = ConfigDict(frozen=True)
     version: int = 1
@@ -252,6 +271,7 @@ class StandardCatalog(BaseModel):
     families: tuple[StandardFamilyDefinition, ...]
     profiles: tuple[StandardProfile, ...] = ()
     lineages: tuple[StandardLineage, ...] = ()
+    doorstop_hierarchies: tuple[DoorstopHierarchyDefinition, ...] = ()
 
     @model_validator(mode="after")
     def validate_references(self) -> StandardCatalog:
@@ -311,6 +331,15 @@ class StandardCatalog(BaseModel):
                     f"unknown lineage classification on {lineage.key}: "
                     f"{unknown_domains | unknown_sectors}"
                 )
+        hierarchy_keys = {item.key for item in self.doorstop_hierarchies}
+        if len(hierarchy_keys) != len(self.doorstop_hierarchies):
+            raise ValueError("doorstop hierarchy keys must be unique")
+        for hierarchy in self.doorstop_hierarchies:
+            unknown = set(hierarchy.families) - families
+            if unknown:
+                raise ValueError(
+                    f"unknown families on doorstop hierarchy {hierarchy.key}: {unknown}"
+                )
         return self
 
     def family(self, key: str) -> StandardFamilyDefinition:
@@ -323,4 +352,10 @@ class StandardCatalog(BaseModel):
         for profile in self.profiles:
             if profile.key == key:
                 return profile
+        raise KeyError(key)
+
+    def doorstop_hierarchy(self, key: str) -> DoorstopHierarchyDefinition:
+        for hierarchy in self.doorstop_hierarchies:
+            if hierarchy.key == key:
+                return hierarchy
         raise KeyError(key)

@@ -71,4 +71,4 @@ uv run pytest
 uv run ruff check .
 ```
 
-Standards Atlas is licensed under the Apache License 2.0.
+Standards Atlas is licensed under the LGPL Version 3

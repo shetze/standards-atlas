@@ -260,13 +260,13 @@ def test_iec61508_normalization_uses_catalog_page_selection() -> None:
     assert normalize_steps["IEC61508-7"][-2:] == ("--page-range", "1:138")
 
 
-def test_catalog_source_paths_are_below_workspace_standards() -> None:
+def test_catalog_source_paths_are_below_local_sources() -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
     for family in catalog.families:
         sources = (
             [family.source] if family.source is not None else [part.source for part in family.parts]
         )
-        assert all(str(source.pdf).startswith(".atlas/standards/") for source in sources)
+        assert all(str(source.pdf).startswith("local/sources/standards/") for source in sources)
 
 
 def test_content_selection_emits_page_list_and_exclusions() -> None:
@@ -589,4 +589,37 @@ def test_force_resets_editable_review_exports() -> None:
     assert review.output_paths == (
         ".atlas/alignments/EN50716/review.generated.md",
         ".atlas/alignments/EN50716/review.edited.md",
+    )
+
+
+def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    hierarchy = catalog.doorstop_hierarchy("functional-safety")
+
+    assert hierarchy.root == "IEC61508"
+    assert "ISO26262" in hierarchy.families
+
+    plan = EndToEndWorkflowService().plan(
+        catalog,
+        family_keys=hierarchy.families,
+        catalog_root=Path.cwd(),
+        hierarchy_key=hierarchy.key,
+    )
+
+    assert plan.steps[-1].stage == WorkflowStage.DOORSTOP_PUBLISH
+    assert plan.steps[-1].command[-2:] == ("--template", "atlas-clean")
+    assert plan.steps[-1].output_paths == (
+        "local/exports/doorstop/functional-safety",
+    )
+    doorstop_steps = [step for step in plan.steps if step.stage == WorkflowStage.DOORSTOP]
+    assert doorstop_steps
+    assert all(
+        step.output_paths[0].startswith(".atlas/doorstop/functional-safety/")
+        for step in doorstop_steps
+    )
+    markdown_steps = [step for step in plan.steps if step.stage == WorkflowStage.MARKDOWN]
+    assert markdown_steps
+    assert all(
+        step.output_globs[0].startswith("local/exports/markdown/functional-safety/")
+        for step in markdown_steps
     )

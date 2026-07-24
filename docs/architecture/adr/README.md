@@ -80,3 +80,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 - [Domain model](../domain-model.md)
 - [Diagram catalog](../diagrams/README.md)
 - [Documentation home](../../README.md)
+
+## Publication templates
+
+- [ADR-0038: Package and install Doorstop publication templates](ADR-0038-package-and-install-doorstop-publication-templates.md)

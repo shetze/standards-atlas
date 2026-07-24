@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Annotated
 
@@ -22,8 +24,10 @@ from standards_atlas.adapters.docling import (
     ExtractionState,
 )
 from standards_atlas.adapters.doorstop import (
+    AVAILABLE_DOORSTOP_TEMPLATES,
     DoorstopExportConfig,
     DoorstopExporter,
+    DoorstopTemplateInstaller,
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.markdown import MarkdownExporter
@@ -55,7 +59,10 @@ from standards_atlas.application.services import (
     ReferenceCandidateService,
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
-from standards_atlas.application.workflow import EndToEndWorkflowService
+from standards_atlas.application.workflow import (
+    EndToEndWorkflowService,
+    WorkflowRunReporter,
+)
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
 
@@ -133,6 +140,12 @@ workflow_app = typer.Typer(
 )
 app.add_typer(workflow_app, name="workflow")
 
+doorstop_app = typer.Typer(
+    help="Publish internal hierarchy-based Doorstop projects.",
+    no_args_is_help=True,
+)
+app.add_typer(doorstop_app, name="doorstop")
+
 
 @catalog_app.command("validate")
 def validate_catalog(
@@ -144,6 +157,7 @@ def validate_catalog(
     typer.echo(f"Industry sectors       : {len(model.industry_sectors)}")
     typer.echo(f"Standard families      : {len(model.families)}")
     typer.echo(f"Profiles               : {len(model.profiles)}")
+    typer.echo(f"Doorstop hierarchies   : {len(model.doorstop_hierarchies)}")
 
 
 @workflow_app.command("plan")
@@ -154,15 +168,26 @@ def plan_workflow(
     ] = None,
     profile: Annotated[str | None, typer.Option("--profile", help="Catalog profile key.")] = None,
     all_families: Annotated[bool, typer.Option("--all", help="Plan all catalog families.")] = False,
+    hierarchy: Annotated[
+        str | None, typer.Option("--hierarchy", help="Doorstop hierarchy key.")
+    ] = None,
     force: Annotated[
         bool,
         typer.Option("--force", help="Plan regeneration using only supported replacement options."),
     ] = False,
 ) -> None:
     model = YamlStandardCatalogReader().read(catalog)
-    keys = _select_catalog_families(model, tuple(family or ()), profile, all_families)
+    keys = (
+        model.doorstop_hierarchy(hierarchy).families
+        if hierarchy is not None
+        else _select_catalog_families(model, tuple(family or ()), profile, all_families)
+    )
     plan = EndToEndWorkflowService().plan(
-        model, family_keys=keys, catalog_root=Path.cwd(), force=force
+        model,
+        family_keys=keys,
+        catalog_root=Path.cwd(),
+        force=force,
+        hierarchy_key=hierarchy,
     )
     for step in plan.steps:
         gate = " [manual review gate]" if step.manual_gate else ""
@@ -177,6 +202,9 @@ def run_workflow(
     ] = None,
     profile: Annotated[str | None, typer.Option("--profile", help="Catalog profile key.")] = None,
     all_families: Annotated[bool, typer.Option("--all", help="Run all catalog families.")] = False,
+    hierarchy: Annotated[
+        str | None, typer.Option("--hierarchy", help="Doorstop hierarchy key.")
+    ] = None,
     continue_after_review: Annotated[
         bool,
         typer.Option(
@@ -193,15 +221,32 @@ def run_workflow(
     ] = False,
 ) -> None:
     model = YamlStandardCatalogReader().read(catalog)
-    keys = _select_catalog_families(model, tuple(family or ()), profile, all_families)
+    keys = (
+        model.doorstop_hierarchy(hierarchy).families
+        if hierarchy is not None
+        else _select_catalog_families(model, tuple(family or ()), profile, all_families)
+    )
     plan = EndToEndWorkflowService().plan(
-        model, family_keys=keys, catalog_root=Path.cwd(), force=force
+        model,
+        family_keys=keys,
+        catalog_root=Path.cwd(),
+        force=force,
+        hierarchy_key=hierarchy,
     )
     result = EndToEndWorkflowService().execute(
         plan, project_root=Path.cwd(), continue_after_review=continue_after_review
     )
     if result.completed:
+        report_json, report_md = WorkflowRunReporter().write(
+            plan,
+            result,
+            project_root=Path.cwd(),
+            catalog_path=catalog,
+            hierarchy_key=hierarchy,
+        )
         typer.echo(f"Workflow completed      : {len(result.executed_steps)} steps")
+        typer.echo(f"Run report JSON         : {report_json}")
+        typer.echo(f"Run report Markdown     : {report_md}")
         return
 
     typer.echo(f"Workflow paused         : {len(result.executed_steps)} steps executed")
@@ -635,7 +680,7 @@ def export_document_to_markdown(
         typer.Option(
             "--target",
             "-t",
-            help="Common target directory. Defaults to <workspace>/markdown.",
+            help="Common target directory. Defaults to local/exports/markdown/<document-key>.",
             file_okay=False,
             dir_okay=True,
             resolve_path=True,
@@ -647,7 +692,7 @@ def export_document_to_markdown(
     ] = True,
 ) -> None:
     """Export one standard family to one Markdown file per physical part."""
-    export_target = target if target is not None else workspace / "markdown"
+    export_target = target if target is not None else Path("local/exports/markdown") / document_key
     service = MarkdownExportService(MarkdownExporter(), workspace=workspace)
     try:
         result = service.export(
@@ -808,6 +853,58 @@ def export_document_to_doorstop(
     typer.echo(f"Clauses exported      : {len(document.clauses)}")
     typer.echo(f"Doorstop target       : {generated_path}")
     typer.echo(f"Validation enabled    : {validate}")
+
+
+@doorstop_app.command("publish")
+def publish_doorstop_hierarchy(
+    hierarchy_key: Annotated[str, typer.Argument(help="Doorstop hierarchy key.")],
+    workspace: Annotated[
+        Path, typer.Option("--workspace", "-w", help="Internal Standards Atlas workspace.")
+    ] = Path(".atlas"),
+    local_root: Annotated[
+        Path, typer.Option("--local-root", help="Root for local consumable outputs.")
+    ] = Path("local"),
+    replace_existing: Annotated[
+        bool, typer.Option("--replace/--no-replace", help="Replace published output.")
+    ] = True,
+    template: Annotated[
+        str,
+        typer.Option(
+            "--template",
+            help="Packaged Standards Atlas Doorstop template.",
+        ),
+    ] = "atlas-clean",
+) -> None:
+    """Publish one internal Doorstop hierarchy for local consumption."""
+    source = workspace / "doorstop" / hierarchy_key
+    target = local_root / "exports" / "doorstop" / hierarchy_key
+    if not source.is_dir():
+        typer.echo(f"Doorstop hierarchy not found: {source}", err=True)
+        raise typer.Exit(code=2)
+    if template not in AVAILABLE_DOORSTOP_TEMPLATES:
+        choices = ", ".join(AVAILABLE_DOORSTOP_TEMPLATES)
+        typer.echo(f"Unknown Doorstop template {template!r}; choose one of: {choices}", err=True)
+        raise typer.Exit(code=2)
+    if target.exists():
+        if not replace_existing:
+            typer.echo(f"Published output already exists: {target}", err=True)
+            raise typer.Exit(code=2)
+        shutil.rmtree(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        installed_template = DoorstopTemplateInstaller().install(source, template)
+        subprocess.run(
+            ("doorstop", "publish", "--template", "doorstop", "all", str(target.resolve())),
+            cwd=source,
+            check=True,
+        )
+    except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+        typer.echo(f"Doorstop publish failed: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(f"Doorstop hierarchy     : {hierarchy_key}")
+    typer.echo(f"Published output      : {target}")
+    typer.echo(f"Template              : {template}")
+    typer.echo(f"Installed template    : {installed_template}")
 
 
 @docling_app.command("convert")

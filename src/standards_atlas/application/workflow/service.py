@@ -34,6 +34,7 @@ class WorkflowStage(StrEnum):
     COMPOSE = "compose"
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"
+    DOORSTOP_PUBLISH = "doorstop-publish"
 
 
 @dataclass(frozen=True)
@@ -83,8 +84,14 @@ class EndToEndWorkflowService:
         family_keys: tuple[str, ...],
         catalog_root: Path,
         force: bool = False,
+        hierarchy_key: str | None = None,
     ) -> WorkflowPlan:
         steps: list[WorkflowStep] = []
+        hierarchy = catalog.doorstop_hierarchy(hierarchy_key) if hierarchy_key else None
+        if hierarchy is not None and tuple(family_keys) != hierarchy.families:
+            raise ValueError(
+                "family_keys must match the selected Doorstop hierarchy in declared order"
+            )
         selected_families = set(family_keys)
         for key in family_keys:
             family = catalog.family(key)
@@ -94,6 +101,27 @@ class EndToEndWorkflowService:
                     catalog_root,
                     force=force,
                     selected_families=selected_families,
+                    hierarchy_key=hierarchy_key,
+                )
+            )
+        if hierarchy is not None:
+            steps.append(
+                WorkflowStep(
+                    hierarchy.key,
+                    hierarchy.key,
+                    WorkflowStage.DOORSTOP_PUBLISH,
+                    (
+                        "uv",
+                        "run",
+                        "standards-atlas",
+                        "doorstop",
+                        "publish",
+                        hierarchy.key,
+                        "--template",
+                        hierarchy.template,
+                    ),
+                    ArtifactPolicy.DERIVED,
+                    output_paths=(f"local/exports/doorstop/{hierarchy.key}",),
                 )
             )
         return WorkflowPlan(families=family_keys, steps=tuple(steps), force=force)
@@ -121,6 +149,7 @@ class EndToEndWorkflowService:
                     WorkflowStage.COMPOSE,
                     WorkflowStage.MARKDOWN,
                     WorkflowStage.DOORSTOP,
+                    WorkflowStage.DOORSTOP_PUBLISH,
                 }:
                     family_documents = {
                         candidate.document
@@ -160,6 +189,7 @@ class EndToEndWorkflowService:
         *,
         force: bool,
         selected_families: set[str],
+        hierarchy_key: str | None,
     ) -> list[WorkflowStep]:
         documents = (
             [(family.key, family.source.pdf, family.content_selection)]
@@ -463,9 +493,13 @@ class EndToEndWorkflowService:
                         "export",
                         "markdown",
                         family.key,
+                        "--target",
+                        f"local/exports/markdown/{hierarchy_key or family.key}",
                     ),
                     ArtifactPolicy.DERIVED,
-                    output_globs=(f".atlas/markdown/{family.key}*.md",),
+                    output_globs=(
+                        f"local/exports/markdown/{hierarchy_key or family.key}/{family.key}*.md",
+                    ),
                 )
             )
         if family.exports.doorstop.enabled:
@@ -486,9 +520,14 @@ class EndToEndWorkflowService:
                         "--digits",
                         str(family.exports.doorstop.identifier.width),
                         *(("--parent", doorstop_parent) if doorstop_parent else ()),
+                        "--target",
+                        f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",
+                        "--no-init-git",
                     ),
                     ArtifactPolicy.DERIVED,
-                    output_paths=(f".atlas/doorstop/{family.key}",),
+                    output_paths=(
+                        f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",
+                    ),
                 )
             )
         return steps

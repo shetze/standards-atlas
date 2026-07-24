@@ -1,3 +1,4 @@
+from standards_atlas.application.workflow.report import WorkflowRunReporter
 from standards_atlas.application.workflow.service import (
     ArtifactPolicy,
     CommandRunner,
@@ -18,4 +19,5 @@ __all__ = [
     "WorkflowPlan",
     "WorkflowStage",
     "WorkflowStep",
+    "WorkflowRunReporter",
 ]

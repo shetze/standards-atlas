@@ -1,4 +1,4 @@
-version: 1
+version: 2
 knowledge_domains:
 - key: safety
   name: Safety
@@ -78,7 +78,7 @@ families:
     key: IEC61508-0
     title: Functional safety and IEC 61508
     source:
-      pdf: .atlas/standards/Industry/iec61508-0{ed1.0}b.pdf
+      pdf: local/sources/standards/Industry/iec61508-0{ed1.0}b.pdf
     content_selection:
       language: en
       page_list: 7,9,11,13,15,17,19,21,23,25,27,29,31,33,35
@@ -86,7 +86,7 @@ families:
     key: IEC61508-1
     title: General requirements
     source:
-      pdf: .atlas/standards/Industry/iec61508-1{ed2.0}b.pdf
+      pdf: local/sources/standards/Industry/iec61508-1{ed2.0}b.pdf
     content_selection:
       language: en
       page_ranges:
@@ -96,7 +96,7 @@ families:
     key: IEC61508-2
     title: Requirements for E/E/PE safety-related systems
     source:
-      pdf: .atlas/standards/Industry/iec61508-2{ed2.0}b.pdf
+      pdf: local/sources/standards/Industry/iec61508-2{ed2.0}b.pdf
     content_selection:
       language: en
       page_ranges:
@@ -106,7 +106,7 @@ families:
     key: IEC61508-3
     title: Software requirements
     source:
-      pdf: .atlas/standards/Industry/iec61508-3{ed2.0}b.pdf
+      pdf: local/sources/standards/Industry/iec61508-3{ed2.0}b.pdf
     content_selection:
       language: en
       page_ranges:
@@ -118,7 +118,7 @@ families:
       document_type: technical-specification
       title: Software requirements — Reuse of pre-existing software elements
       source:
-        pdf: .atlas/standards/Industry/iec61508-3-1{ed1.0}en.pdf
+        pdf: local/sources/standards/Industry/iec61508-3-1{ed1.0}en.pdf
       atlasdata:
         path: data/IEC61508-3-1
         mode: existing
@@ -134,7 +134,7 @@ families:
     key: IEC61508-4
     title: Definitions and abbreviations
     source:
-      pdf: .atlas/standards/Industry/iec61508-4{ed2.0}b.pdf
+      pdf: local/sources/standards/Industry/iec61508-4{ed2.0}b.pdf
     content_selection:
       language: en
       page_ranges:
@@ -144,7 +144,7 @@ families:
     key: IEC61508-5
     title: Examples of methods for determining safety integrity levels
     source:
-      pdf: .atlas/standards/Industry/iec61508-5{ed2.0}b.pdf
+      pdf: local/sources/standards/Industry/iec61508-5{ed2.0}b.pdf
     content_selection:
       language: en
       page_ranges:
@@ -154,7 +154,7 @@ families:
     key: IEC61508-6
     title: Guidelines on the application of IEC 61508-2 and IEC 61508-3
     source:
-      pdf: .atlas/standards/Industry/iec61508-6{ed2.0}b.pdf
+      pdf: local/sources/standards/Industry/iec61508-6{ed2.0}b.pdf
     content_selection:
       language: en
       page_ranges:
@@ -164,7 +164,7 @@ families:
     key: IEC61508-7
     title: Overview of techniques and measures
     source:
-      pdf: .atlas/standards/Industry/iec61508-7{ed2.0}b.pdf
+      pdf: local/sources/standards/Industry/iec61508-7{ed2.0}b.pdf
     content_selection:
       language: en
       page_ranges:
@@ -200,12 +200,12 @@ families:
     key: EN50126-1
     title: Specification and demonstration of reliability, availability, maintainability and safety — Part 1
     source:
-      pdf: .atlas/standards/Railway/EN-50126-1.pdf
+      pdf: local/sources/standards/Railway/EN-50126-1.pdf
   - part: '2'
     key: EN50126-2
     title: Specification and demonstration of reliability, availability, maintainability and safety — Part 2
     source:
-      pdf: .atlas/standards/Railway/EN-50126-2.pdf
+      pdf: local/sources/standards/Railway/EN-50126-2.pdf
   atlasdata:
     path: data/EN50126
     mode: existing
@@ -233,7 +233,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Railway/EN-50128.pdf
+    pdf: local/sources/standards/Railway/EN-50128.pdf
   atlasdata:
     path: data/EN50128
     mode: existing
@@ -277,7 +277,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Railway/EN-50129.pdf
+    pdf: local/sources/standards/Railway/EN-50129.pdf
   atlasdata:
     path: data/EN50129
     mode: existing
@@ -311,7 +311,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Railway/EN-50657.pdf
+    pdf: local/sources/standards/Railway/EN-50657.pdf
   atlasdata:
     path: data/EN50657
     mode: existing
@@ -363,7 +363,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Railway/EN-50716.pdf
+    pdf: local/sources/standards/Railway/EN-50716.pdf
   atlasdata:
     path: data/EN50716
     mode: existing
@@ -407,57 +407,57 @@ families:
     key: ISO26262-1
     title: Vocabulary
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-1-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-1-2018.pdf
   - part: '2'
     key: ISO26262-2
     title: Management of functional safety
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-2-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-2-2018.pdf
   - part: '3'
     key: ISO26262-3
     title: Concept phase
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-3-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-3-2018.pdf
   - part: '4'
     key: ISO26262-4
     title: Product development at the system level
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-4-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-4-2018.pdf
   - part: '5'
     key: ISO26262-5
     title: Product development at the hardware level
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-5-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-5-2018.pdf
   - part: '6'
     key: ISO26262-6
     title: Product development at the software level
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-6-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-6-2018.pdf
   - part: '8'
     key: ISO26262-8
     title: Supporting processes
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-8-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-8-2018.pdf
   - part: '9'
     key: ISO26262-9
     title: ASIL-oriented and safety-oriented analyses
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-9-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-9-2018.pdf
   - part: '10'
     key: ISO26262-10
     title: Guidelines on ISO 26262
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-10-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-10-2018.pdf
   - part: '11'
     key: ISO26262-11
     title: Guidelines on application to semiconductors
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-11-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-11-2018.pdf
   - part: '12'
     key: ISO26262-12
     title: Adaptation for motorcycles
     source:
-      pdf: .atlas/standards/Automotive/ISO+26262-12-2018.pdf
+      pdf: local/sources/standards/Automotive/ISO+26262-12-2018.pdf
   atlasdata:
     path: data/ISO26262
     mode: existing
@@ -483,7 +483,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Automotive/ISO+SAE+21434-2021.pdf
+    pdf: local/sources/standards/Automotive/ISO+SAE+21434-2021.pdf
 - key: IEC11889
   name: IEC 11889
   organization: ISO/IEC
@@ -507,12 +507,12 @@ families:
     key: IEC11889-1
     title: Architecture
     source:
-      pdf: .atlas/standards/Generic/IEC-11889-1_2015.pdf
+      pdf: local/sources/standards/Generic/IEC-11889-1_2015.pdf
   - part: '2'
     key: IEC11889-2
     title: Structures
     source:
-      pdf: .atlas/standards/Generic/IEC-11889-2_2015.pdf
+      pdf: local/sources/standards/Generic/IEC-11889-2_2015.pdf
 - key: IEC29119-1
   name: ISO/IEC/IEEE 29119-1
   organization: ISO/IEC/IEEE
@@ -532,7 +532,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Generic/IEC-29119-1_2022.pdf
+    pdf: local/sources/standards/Generic/IEC-29119-1_2022.pdf
 - key: IEC29100
   name: ISO/IEC 29100
   organization: ISO/IEC
@@ -552,7 +552,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Generic/IEC-29100_2024.pdf
+    pdf: local/sources/standards/Generic/IEC-29100_2024.pdf
 - key: IEC27000
   name: ISO/IEC 27000
   organization: ISO/IEC
@@ -573,7 +573,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Generic/IEC-27000_2018.pdf
+    pdf: local/sources/standards/Generic/IEC-27000_2018.pdf
 - key: IEC25000
   name: ISO/IEC 25000
   organization: ISO/IEC
@@ -593,7 +593,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Generic/IEC-25000_2014.pdf
+    pdf: local/sources/standards/Generic/IEC-25000_2014.pdf
 - key: IEC23360-4
   name: ISO/IEC 23360-4
   organization: ISO/IEC
@@ -613,7 +613,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Generic/IEC-23360-4_2021.pdf
+    pdf: local/sources/standards/Generic/IEC-23360-4_2021.pdf
 - key: IEC22989
   name: ISO/IEC 22989
   organization: ISO/IEC
@@ -633,7 +633,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Generic/ISO_IEC 22989_2022 ed.1 - id.74296 Publication PDF (en).pdf
+    pdf: local/sources/standards/Generic/ISO_IEC 22989_2022 ed.1 - id.74296 Publication PDF (en).pdf
 - key: ISOIEC-DIRECTIVES-2
   name: ISO/IEC Directives Part 2
   organization: ISO/IEC
@@ -653,7 +653,7 @@ families:
       identifier:
         width: 8
   source:
-    pdf: .atlas/standards/Generic/iso_iec_directives_part2.pdf
+    pdf: local/sources/standards/Generic/iso_iec_directives_part2.pdf
 - key: IEC21838
   name: ISO/IEC 21838
   organization: ISO/IEC
@@ -677,12 +677,25 @@ families:
     key: IEC21838-1
     title: Top-level ontologies — Requirements
     source:
-      pdf: .atlas/standards/Generic/ISO_IEC_21838-1_2021-Character_PDF_document(en).pdf
+      pdf: local/sources/standards/Generic/ISO_IEC_21838-1_2021-Character_PDF_document(en).pdf
   - part: '2'
     key: IEC21838-2
     title: Top-level ontologies — Basic Formal Ontology
     source:
-      pdf: .atlas/standards/Generic/ISO_IEC_21838-2_2021-Character_PDF_document(en).pdf
+      pdf: local/sources/standards/Generic/ISO_IEC_21838-2_2021-Character_PDF_document(en).pdf
+doorstop_hierarchies:
+- key: functional-safety
+  name: Functional Safety Standards
+  root: IEC61508
+  template: atlas-clean
+  families:
+  - IEC61508
+  - ISO26262
+  - EN50126
+  - EN50128
+  - EN50129
+  - EN50657
+  - EN50716
 profiles:
 - key: railway-functional-safety
   name: Railway Functional Safety
