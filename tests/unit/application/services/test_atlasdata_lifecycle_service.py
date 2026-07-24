@@ -11,8 +11,7 @@ from standards_atlas.application.services import (
 
 def _write(path: Path, status: str) -> None:
     path.write_text(
-        f'name="Example"\ndigits=8\nlifecycle_status="{status}"\n\n'
-        'structure=(\n "2026 1"\n)\n',
+        f'name="Example"\ndigits=8\nlifecycle_status="{status}"\n\nstructure=(\n "2026 1"\n)\n',
         encoding="utf-8",
     )
 

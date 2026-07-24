@@ -95,9 +95,7 @@ def parse_metadata(text: str) -> AtlasMetadata:
         part_shift=known_values.get("part_shift", 0),
         part_digits=known_values.get("part_digits", 0),
         official_year=known_values.get("official_year"),
-        lifecycle_status=known_values.get(
-            "lifecycle_status", AtlasDataLifecycleStatus.PUBLISHED
-        ),
+        lifecycle_status=known_values.get("lifecycle_status", AtlasDataLifecycleStatus.PUBLISHED),
         extra_fields=extra_fields,
     )
 

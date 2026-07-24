@@ -8,27 +8,7 @@
 The IntelliDoc processing pipeline transforms engineering standards through a
 series of increasingly structured representations.
 
-```
-PDF
-    │
-    ▼
-Docling Document
-    │
-    ▼
-NormalizedDocument
-    │
-    ▼
-Reference Detection
-    │
-    ▼
-Clause Alignment
-    │
-    ▼
-EngineeringDocument
-    │
-    ▼
-Exports
-```
+![Adr 0026 Normalized Contract](../diagrams/svg/adr-0026-normalized-contract.svg)
 
 The previous normalization implementation was primarily an implementation
 detail of the reference detection stage.

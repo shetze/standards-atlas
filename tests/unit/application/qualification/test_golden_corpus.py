@@ -2,7 +2,6 @@ from pathlib import Path
 
 from standards_atlas.application.qualification import GoldenCorpusQualifier
 
-
 CORPUS = Path("tests/golden_corpus")
 REQUIRED_FEATURES = {
     "simple_clause",
@@ -25,9 +24,7 @@ REQUIRED_FEATURES = {
 
 def test_versioned_golden_corpus_passes() -> None:
     report = GoldenCorpusQualifier().run(CORPUS)
-    assert report.passed, {
-        case.case_id: case.failures for case in report.cases if not case.passed
-    }
+    assert report.passed, {case.case_id: case.failures for case in report.cases if not case.passed}
 
 
 def test_corpus_covers_required_edge_case_features() -> None:
@@ -48,9 +45,7 @@ def test_corpus_contains_snapshots_and_invariant_only_cases() -> None:
 
     index = json.loads((CORPUS / "corpus.json").read_text(encoding="utf-8"))
     manifests = [
-        json.loads(
-            (CORPUS / "cases" / case_id / "manifest.json").read_text(encoding="utf-8")
-        )
+        json.loads((CORPUS / "cases" / case_id / "manifest.json").read_text(encoding="utf-8"))
         for case_id in index["cases"]
     ]
     assert any(manifest.get("expected_artifact") for manifest in manifests)

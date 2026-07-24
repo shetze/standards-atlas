@@ -43,26 +43,7 @@ The domain model must remain independent of:
 
 ## Architecture
 
-```text
-                   CLI
-                    │
-                    ▼
-          Application Services
-                    │
-                    ▼
-              Domain Model
-                    ▲
-                    │
-        ┌───────────┴───────────┐
-        │                       │
- Atlas Data Adapter      Doorstop Adapter
-        │                       │
- Legacy Data            Doorstop Documents
-
-        ┌───────────┴───────────┐
-        │                       │
- BASIL Adapter          Future Adapters
-```
+![Adr 0003 Hexagonal](../diagrams/svg/adr-0003-hexagonal.svg)
 
 The Domain Model represents engineering knowledge.
 
@@ -123,13 +104,7 @@ They should not contain domain logic.
 
 Dependencies always point inward.
 
-```text
-CLI
-   │
-Application
-   │
-Domain
-```
+![Adr 0003 Hexagonal](../diagrams/svg/adr-0003-hexagonal.svg)
 
 Adapters depend on the domain.
 

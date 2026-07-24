@@ -20,24 +20,7 @@ Imported artifacts are converted into the canonical `EngineeringDocument` domain
 
 Transformations operate on `EngineeringDocument` objects and produce improved `EngineeringDocument` objects or validation reports.
 
-```text
-External Sources
-      │
-      ▼
-Import Adapters
-      │
-      ▼
-EngineeringDocument
-      │
-      ▼
-Transformation Pipeline
-      │
-      ▼
-EngineeringDocument
-      │
-      ▼
-Export Adapters
-```
+![Adr 0004 Pipeline](../diagrams/svg/adr-0004-pipeline.svg)
 
 
 ## Responsibilities

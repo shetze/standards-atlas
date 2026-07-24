@@ -24,14 +24,7 @@ metadata, traceability information and semantic structure.
 A straightforward implementation would create dedicated transformations
 between every pair of supported formats.
 
-```
-AtlasData  ─────────► Doorstop
-      │                  ▲
-      ▼                  │
- Markdown ─────────► Polarion
-      │                  ▲
-      └────────► BASIL ──┘
-```
+![Adr 0006 Canonical](../diagrams/svg/adr-0006-canonical.svg)
 
 As the number of supported formats grows, this approach results in an
 O(n²) integration problem and duplicates transformation logic across
@@ -52,22 +45,7 @@ Every export adapter consumes an EngineeringDocument.
 
 Adapters never communicate directly with each other.
 
-```
-                 AtlasData
-
-                     │
-
-                     ▼
-
-            EngineeringDocument
-
-        (Canonical Intermediate
-             Representation)
-
-     ▲          ▲          ▲
-
- Markdown   Doorstop   Polarion
-```
+![Adr 0006 Canonical](../diagrams/svg/adr-0006-canonical.svg)
 
 The EngineeringDocument becomes the only shared language inside the
 application.
@@ -136,40 +114,12 @@ their native representation and the canonical model.
 
 This architecture closely resembles modern compiler architectures.
 
-```
-Source Files
-      │
-      ▼
-    Parser
-      │
-      ▼
- AST / Intermediate Representation
-      │
-      ▼
- Optimization Passes
-      │
-      ▼
- Code Generators
-```
+![Adr 0006 Canonical](../diagrams/svg/adr-0006-canonical.svg)
 
 Standards Atlas applies the same architectural principles to engineering
 knowledge.
 
-```
-Engineering Documents
-          │
-          ▼
-       Importers
-          │
-          ▼
- EngineeringDocument
-          │
-          ▼
- Transformation Pipeline
-          │
-          ▼
-       Exporters
-```
+![Adr 0006 Canonical](../diagrams/svg/adr-0006-canonical.svg)
 
 The EngineeringDocument therefore acts as the project's semantic
 Intermediate Representation rather than merely a persistence model.

@@ -1,12 +1,15 @@
 from pathlib import Path
+
 from standards_atlas.adapters.atlasdata.metadata import AtlasDataLifecycleStatus, parse_metadata
+
 
 def test_all_versioned_atlasdata_baselines_are_reviewed_or_published() -> None:
     files = [
         path
         for path in Path("data").iterdir()
         if path.is_file()
-        and "structure=(" in path.read_text(
+        and "structure=("
+        in path.read_text(
             encoding="utf-8",
             errors="ignore",
         )
@@ -27,6 +30,5 @@ def test_all_versioned_atlasdata_baselines_are_reviewed_or_published() -> None:
             invalid[str(path)] = metadata.lifecycle_status.value
 
     assert not invalid, (
-        "Versioned AtlasData baselines must be reviewed or published. "
-        f"Invalid files: {invalid}"
+        f"Versioned AtlasData baselines must be reviewed or published. Invalid files: {invalid}"
     )

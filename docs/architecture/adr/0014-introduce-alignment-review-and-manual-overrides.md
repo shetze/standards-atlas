@@ -20,13 +20,7 @@ edited Markdown file would also be fragile.
 
 Standards Atlas introduces a separate review layer with three private artefacts:
 
-```text
-.atlas/alignments/<document-key>/
-├── alignment.json
-├── review.md
-├── overrides.yaml
-└── reviewed.json
-```
+![Adr 0014 Review Files](../diagrams/svg/adr-0014-review-files.svg)
 
 `alignment.json` remains the immutable automatic result. `review.md` is a
 human-readable view containing problematic clauses, candidate alternatives and

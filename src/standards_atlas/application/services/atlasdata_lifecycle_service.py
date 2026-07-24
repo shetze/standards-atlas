@@ -9,6 +9,7 @@ from standards_atlas.adapters.atlasdata.metadata import (
     AtlasDataLifecycleStatus,
     parse_metadata,
 )
+
 _ALLOWED = {
     AtlasDataLifecycleStatus.PROPOSED: AtlasDataLifecycleStatus.REVIEWED,
     AtlasDataLifecycleStatus.REVIEWED: AtlasDataLifecycleStatus.PUBLISHED,
@@ -29,9 +30,7 @@ class AtlasDataLifecycleResult:
 class AtlasDataLifecycleService:
     """Advance an AtlasData baseline through its review lifecycle."""
 
-    def transition(
-        self, path: Path, target: AtlasDataLifecycleStatus
-    ) -> AtlasDataLifecycleResult:
+    def transition(self, path: Path, target: AtlasDataLifecycleStatus) -> AtlasDataLifecycleResult:
         text = path.read_text(encoding="utf-8")
         previous = parse_metadata(text).lifecycle_status
         if previous == target:

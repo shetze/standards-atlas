@@ -121,26 +121,26 @@ structure=(
 
 
 def test_parse_lifecycle_status() -> None:
-    text = '''
+    text = """
 name="Example"
 digits=4
 lifecycle_status="reviewed"
 structure=(
  "1"
 )
-'''
+"""
     metadata = parse_metadata(text)
     assert metadata.lifecycle_status.value == "reviewed"
 
 
 def test_reject_unknown_lifecycle_status() -> None:
-    text = '''
+    text = """
 name="Example"
 digits=4
 lifecycle_status="draft"
 structure=(
  "1"
 )
-'''
+"""
     with pytest.raises(ValueError, match="must be one of"):
         parse_metadata(text)

@@ -1,4 +1,5 @@
 """Versioned golden-corpus qualification for extraction and normalization."""
+
 from __future__ import annotations
 
 import hashlib
@@ -6,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from standards_atlas.adapters.docling import DoclingJsonReader
 from standards_atlas.application.normalization.document_normalizer import DocumentNormalizer

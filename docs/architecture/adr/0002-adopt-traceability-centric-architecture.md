@@ -26,19 +26,7 @@ The architectural center of the project is therefore the **Traceability API**, w
 
 The overall architecture is organized as follows:
 
-```text
-                +---------------------------+
-                |     Traceability API      |
-                +---------------------------+
-                           |
-               +-----------+-----------+
-               |                       |
-        Domain Services         Domain Model
-               |                       |
-        +------+------+-------+--------+
-        |      |      |       |        |
-   Doorstop  BASIL  Markdown  REST   AI Services
-```
+![Adr 0002 Traceability](../diagrams/svg/adr-0002-traceability.svg)
 
 ## Rationale
 

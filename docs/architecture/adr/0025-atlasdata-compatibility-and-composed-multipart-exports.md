@@ -14,18 +14,7 @@ around Docling.
 The resulting architecture now contains two different views of the same
 standard:
 
-```
-PDF
-    │
-    ▼
-Docling JSON
-    │
-    ▼
-Normalized EngineeringDocument
-    │
-    ▼
-Exports
-```
+![Adr 0025 Compatibility](../diagrams/svg/adr-0025-compatibility.svg)
 
 At the same time AtlasData remains the authoritative editable representation of
 the standard structure.
@@ -52,21 +41,7 @@ EngineeringDocument is the canonical in-memory model.
 
 The resulting flow is
 
-```
-PDF
-    │
-    ▼
-Docling
-    │
-    ▼
-AtlasData
-    │
-    ▼
-EngineeringDocument
-    │
-    ▼
-Exports
-```
+![Adr 0025 Compatibility](../diagrams/svg/adr-0025-compatibility.svg)
 
 The export pipeline never reconstructs document structure directly from
 Docling.
@@ -193,12 +168,7 @@ relationships.
 
 Example
 
-```
-IEC61508
-    └── EN50128
-            └── EN50657
-                    └── EN50716
-```
+![Doorstop Hierarchy](../diagrams/svg/doorstop-hierarchy.svg)
 
 The hierarchy therefore reflects the engineering dependency graph rather than
 only the sector origin.

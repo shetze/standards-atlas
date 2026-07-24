@@ -10,13 +10,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from standards_atlas.application.services.semantic_role_classifier import (
-    SemanticRoleClassifier,
-    SemanticRoleContext,
-)
 from standards_atlas.adapters.atlasdata.metadata import (
     AtlasDataLifecycleStatus,
     parse_metadata,
+)
+from standards_atlas.application.services.semantic_role_classifier import (
+    SemanticRoleClassifier,
+    SemanticRoleContext,
 )
 from standards_atlas.domain.model.semantic_role import SemanticRole
 

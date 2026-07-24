@@ -47,16 +47,7 @@ objects. Source evidence may contain a source identifier, source type, locator,
 page number, bounding box and extraction method. The domain model deliberately
 does not import or expose Docling classes.
 
-```
-PDF
-  │
-  ▼
-DoclingDocument                    AtlasData
-(extraction representation)           │
-  │                                    ▼
-  └──────────── alignment ─────► EngineeringDocument
-                                  └── Clause.content
-```
+![Adr 0007 Provenance](../diagrams/svg/adr-0007-provenance.svg)
 
 `Clause.content` is the canonical representation of protected clause content.
 A stable `plain_text` projection is derived from the structured blocks for

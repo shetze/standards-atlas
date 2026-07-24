@@ -310,9 +310,7 @@ def test_generated_atlasdata_is_proposed(tmp_path: Path) -> None:
     output = tmp_path / "IEC27000"
     _write_docling(source)
 
-    AtlasDataOnboardingService().generate(
-        source, output, standard_name="ISO/IEC 27000", year=2018
-    )
+    AtlasDataOnboardingService().generate(source, output, standard_name="ISO/IEC 27000", year=2018)
 
     assert 'lifecycle_status="proposed"' in output.read_text(encoding="utf-8")
 
@@ -322,8 +320,7 @@ def test_refuses_to_overwrite_reviewed_atlasdata(tmp_path: Path) -> None:
     output = tmp_path / "IEC27000"
     _write_docling(source)
     output.write_text(
-        'name="ISO/IEC 27000"\ndigits=8\nlifecycle_status="reviewed"\n'
-        'structure=(\n "2018 1"\n)\n',
+        'name="ISO/IEC 27000"\ndigits=8\nlifecycle_status="reviewed"\nstructure=(\n "2018 1"\n)\n',
         encoding="utf-8",
     )
 

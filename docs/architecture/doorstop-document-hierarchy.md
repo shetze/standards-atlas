@@ -95,9 +95,4 @@ when a part view is derived.
 
 The intended railway hierarchy is:
 
-```text
-IEC61508
-└── EN50128
-    └── EN50657
-        └── EN50716
-```
+![Doorstop Hierarchy](diagrams/svg/doorstop-hierarchy.svg)
