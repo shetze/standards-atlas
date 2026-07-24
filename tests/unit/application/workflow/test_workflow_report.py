@@ -46,9 +46,7 @@ def test_completed_run_report_records_plan_and_artifact_hashes(tmp_path: Path) -
     assert payload["status"] == "completed"
     assert payload["run_id"].startswith("20260724T120000Z-")
     assert payload["steps"][0]["disposition"] == "executed"
-    assert payload["steps"][0]["artifacts"][0]["path"] == (
-        ".atlas/normalized/DOC/document.json"
-    )
+    assert payload["steps"][0]["artifacts"][0]["path"] == (".atlas/normalized/DOC/document.json")
     assert len(payload["steps"][0]["artifacts"][0]["sha256"]) == 64
     assert "Deterministic derivation" in report_md.read_text(encoding="utf-8")
 

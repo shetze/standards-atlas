@@ -34,9 +34,7 @@ def test_installs_packaged_template_beside_root_document(
     assert (installed / "views" / "doorstop.tpl").is_file()
     assert (installed / "doorstop.css").is_file()
     assert (installed / "doorstop.js").is_file()
-    assert "atlas-sidebar" in (installed / "views" / "doorstop.tpl").read_text(
-        encoding="utf-8"
-    )
+    assert "atlas-sidebar" in (installed / "views" / "doorstop.tpl").read_text(encoding="utf-8")
     assert "atlasToc" in (installed / "doorstop.js").read_text(encoding="utf-8")
 
 

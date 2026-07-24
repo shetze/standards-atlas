@@ -8,7 +8,6 @@ from pathlib import Path
 
 import yaml
 
-
 AVAILABLE_DOORSTOP_TEMPLATES = (
     "atlas-clean",
     "technical-blueprint",
@@ -22,7 +21,9 @@ class DoorstopTemplateInstaller:
     def install(self, hierarchy_root: Path, template_name: str) -> Path:
         if template_name not in AVAILABLE_DOORSTOP_TEMPLATES:
             available = ", ".join(AVAILABLE_DOORSTOP_TEMPLATES)
-            raise ValueError(f"unknown Doorstop template {template_name!r}; choose one of: {available}")
+            raise ValueError(
+                f"unknown Doorstop template {template_name!r}; choose one of: {available}"
+            )
         root_document, document_directories = self._find_documents(hierarchy_root)
         for document_directory in document_directories:
             existing = document_directory / "template"
@@ -49,6 +50,9 @@ class DoorstopTemplateInstaller:
                 roots.append(config.parent)
         if len(roots) != 1:
             raise ValueError(
-                f"expected exactly one root Doorstop document below {hierarchy_root}, got {len(roots)}"
+                
+                    "expected exactly one root Doorstop document below "
+                    f"{hierarchy_root}, got {len(roots)}"
+                
             )
         return roots[0], tuple(config.parent for config in configs)

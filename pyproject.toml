@@ -47,6 +47,7 @@ dev = [
     "pytest-cov>=6",
     "ruff",
     "mypy",
+    "hypothesis>=6.135",
 ]
 
 [project.optional-dependencies]
@@ -61,6 +62,7 @@ dev = [
     "pytest-cov",
     "ruff",
     "mypy",
+    "hypothesis>=6.135",
 ]
 
 docs = [
@@ -94,6 +96,9 @@ pythonpath = [
 markers = [
     "doorstop: tests requiring the installed Doorstop CLI",
     "docling: tests requiring the optional Docling runtime",
+    "contract: reusable behavioral contracts for adapter implementations",
+    "property: property-based invariant tests",
+    "qualification: reproducible regression and qualification evidence",
 ]
 
 [tool.mypy]

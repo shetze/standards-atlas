@@ -1,6 +1,11 @@
+import json
 from pathlib import Path
 
+import pytest
+
 from standards_atlas.application.qualification import GoldenCorpusQualifier
+
+pytestmark = pytest.mark.qualification
 
 CORPUS = Path("tests/golden_corpus")
 REQUIRED_FEATURES = {
@@ -28,8 +33,6 @@ def test_versioned_golden_corpus_passes() -> None:
 
 
 def test_corpus_covers_required_edge_case_features() -> None:
-    import json
-
     index = json.loads((CORPUS / "corpus.json").read_text(encoding="utf-8"))
     covered: set[str] = set()
     for case_id in index["cases"]:
@@ -41,8 +44,6 @@ def test_corpus_covers_required_edge_case_features() -> None:
 
 
 def test_corpus_contains_snapshots_and_invariant_only_cases() -> None:
-    import json
-
     index = json.loads((CORPUS / "corpus.json").read_text(encoding="utf-8"))
     manifests = [
         json.loads((CORPUS / "cases" / case_id / "manifest.json").read_text(encoding="utf-8"))

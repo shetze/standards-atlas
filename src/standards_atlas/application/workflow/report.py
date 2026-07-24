@@ -4,10 +4,10 @@ import hashlib
 import json
 import platform
 import subprocess
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable
 
 from standards_atlas import __version__
 from standards_atlas.application.workflow.service import (
@@ -61,12 +61,14 @@ class WorkflowRunReporter:
         steps = []
         for index, step in enumerate(plan.steps, start=1):
             artifacts = self._collect_step_artifacts(step, root)
-            steps.append({
-                "index": index,
-                **self._step_payload(step),
-                "disposition": "executed" if step in executed else "reused",
-                "artifacts": [asdict(item) for item in artifacts],
-            })
+            steps.append(
+                {
+                    "index": index,
+                    **self._step_payload(step),
+                    "disposition": "executed" if step in executed else "reused",
+                    "artifacts": [asdict(item) for item in artifacts],
+                }
+            )
 
         inputs = [self._digest(catalog, root)]
         payload = {
@@ -117,9 +119,7 @@ class WorkflowRunReporter:
         for path in sorted(paths):
             if path.is_dir():
                 files.extend(
-                    candidate
-                    for candidate in sorted(path.rglob("*"))
-                    if candidate.is_file()
+                    candidate for candidate in sorted(path.rglob("*")) if candidate.is_file()
                 )
             elif path.is_file():
                 files.append(path)
@@ -200,8 +200,7 @@ class WorkflowRunReporter:
             lines.extend([f"### {step['index']}. {step['stage']} — {step['document']}", ""])
             for artifact in step["artifacts"]:
                 lines.append(
-                    f"- `{artifact['path']}` — `{artifact['sha256']}` "
-                    f"({artifact['size']} bytes)"
+                    f"- `{artifact['path']}` — `{artifact['sha256']}` ({artifact['size']} bytes)"
                 )
             lines.append("")
         return "\n".join(lines).rstrip() + "\n"

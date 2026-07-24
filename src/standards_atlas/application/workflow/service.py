@@ -525,9 +525,7 @@ class EndToEndWorkflowService:
                         "--no-init-git",
                     ),
                     ArtifactPolicy.DERIVED,
-                    output_paths=(
-                        f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",
-                    ),
+                    output_paths=(f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",),
                 )
             )
         return steps

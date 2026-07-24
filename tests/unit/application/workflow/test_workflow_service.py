@@ -608,9 +608,7 @@ def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> N
 
     assert plan.steps[-1].stage == WorkflowStage.DOORSTOP_PUBLISH
     assert plan.steps[-1].command[-2:] == ("--template", "atlas-clean")
-    assert plan.steps[-1].output_paths == (
-        "local/exports/doorstop/functional-safety",
-    )
+    assert plan.steps[-1].output_paths == ("local/exports/doorstop/functional-safety",)
     doorstop_steps = [step for step in plan.steps if step.stage == WorkflowStage.DOORSTOP]
     assert doorstop_steps
     assert all(

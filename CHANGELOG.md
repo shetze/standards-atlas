@@ -11,6 +11,13 @@ The project follows Semantic Versioning.
 
 ### Added
 
+#### Verification and qualification framework
+
+- Added ADR-0039 and a layered testing strategy for unit, contract, property, integration, workflow, and qualification tests.
+- Added reusable filesystem repository contract tests and Hypothesis-based persistence properties.
+- Added `standards-atlas qualification golden-corpus` with auditable JSON and Markdown reports.
+- Added explicit pytest markers for contract, property, and qualification test classes.
+
 #### New workspace architecture
 
 - Introduced the separation between internal workflow artefacts (`.atlas`) and local user data (`local`).

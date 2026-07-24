@@ -36,6 +36,10 @@ from standards_atlas.adapters.reference_detection import ReferenceCandidateRepos
 from standards_atlas.application.catalog import parse_page_list
 from standards_atlas.application.model import AlignmentOptions, NormalizationOptions
 from standards_atlas.application.normalization import NormalizationDataLossError
+from standards_atlas.application.qualification import (
+    GoldenCorpusQualifier,
+    QualificationRunReporter,
+)
 from standards_atlas.application.services import (
     AlignmentReviewService,
     AlignmentService,
@@ -145,6 +149,49 @@ doorstop_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(doorstop_app, name="doorstop")
+
+qualification_app = typer.Typer(
+    help="Execute reproducible qualification checks and persist evidence.",
+    no_args_is_help=True,
+)
+app.add_typer(qualification_app, name="qualification")
+
+
+@qualification_app.command("golden-corpus")
+def qualify_golden_corpus(
+    corpus: Annotated[
+        Path,
+        typer.Option(
+            "--corpus",
+            exists=True,
+            file_okay=False,
+            readable=True,
+            resolve_path=True,
+            help="Versioned golden corpus root.",
+        ),
+    ] = Path("tests/golden_corpus"),
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            file_okay=False,
+            help="Report root; defaults to .atlas/qualification/runs.",
+        ),
+    ] = None,
+) -> None:
+    report = GoldenCorpusQualifier().run(corpus)
+    report_json, report_md = QualificationRunReporter().write(
+        report,
+        corpus_root=corpus,
+        project_root=Path.cwd(),
+        output_root=output,
+    )
+    typer.echo(f"Qualification status    : {'passed' if report.passed else 'failed'}")
+    typer.echo(f"Cases                   : {len(report.cases)}")
+    typer.echo(f"Report JSON             : {report_json}")
+    typer.echo(f"Report Markdown         : {report_md}")
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @catalog_app.command("validate")

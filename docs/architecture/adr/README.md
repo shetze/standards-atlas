@@ -66,12 +66,13 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0031](0031-deterministic-transformation-ledger.md) | Record a deterministic transformation ledger |
 | [0032](0032-end-to-end-artifact-lineage.md) | Preserve end-to-end artifact lineage |
 | [0034](0034-golden-corpus-and-regression-qualification.md) | Use a golden corpus for regression qualification |
+| [0039](0039-verification-and-qualification-framework.md) | Establish the verification and qualification framework |
 
 ## Reading guidance
 
 - For the architecture's overall shape, begin with [ADR 0002](0002-adopt-traceability-centric-architecture.md), [ADR 0003](0003-adopt-hexagonal-architecture.md), and [ADR 0004](0004-adopt-transformation-pipeline.md).
 - For the canonical contracts, continue with [ADR 0006](0006-engineeringdocument-as-canonical-repesenation.md), [ADR 0026](0026-normalized-document-contract.md), and [ADR 0033](0033-engineering-document-construction-contract.md).
-- For operational governance, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0034](0034-golden-corpus-and-regression-qualification.md), and [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md).
+- For operational governance, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0034](0034-golden-corpus-and-regression-qualification.md), [ADR 0039](0039-verification-and-qualification-framework.md), and [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md).
 
 ## Related documentation
 
