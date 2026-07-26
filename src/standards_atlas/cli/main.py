@@ -31,6 +31,11 @@ from standards_atlas.adapters.doorstop import (
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.markdown import MarkdownExporter
+from standards_atlas.adapters.llm import (
+    LlmConfig,
+    RamaLamaServerError,
+    RamaLamaServerManager,
+)
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.catalog import parse_page_list
@@ -150,12 +155,70 @@ doorstop_app = typer.Typer(
 )
 app.add_typer(doorstop_app, name="doorstop")
 
+llm_app = typer.Typer(
+    help="Manage the project-owned local LLM server.",
+    no_args_is_help=True,
+)
+app.add_typer(llm_app, name="llm")
+
 qualification_app = typer.Typer(
     help="Execute reproducible qualification checks and persist evidence.",
     no_args_is_help=True,
 )
 app.add_typer(qualification_app, name="qualification")
 
+
+
+
+def _managed_llm_server(config: Path) -> RamaLamaServerManager:
+    return RamaLamaServerManager(LlmConfig.load(config))
+
+
+@llm_app.command("start")
+def start_llm_server(
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, readable=True, help="LLM YAML configuration."),
+    ] = Path("cfg/llm.yaml"),
+) -> None:
+    try:
+        _managed_llm_server(config).start()
+    except (OSError, ValueError, RamaLamaServerError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo("RamaLama server started.")
+
+
+@llm_app.command("stop")
+def stop_llm_server(
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, readable=True, help="LLM YAML configuration."),
+    ] = Path("cfg/llm.yaml"),
+) -> None:
+    try:
+        _managed_llm_server(config).stop()
+    except (OSError, ValueError, RamaLamaServerError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo("RamaLama server stopped.")
+
+
+@llm_app.command("status")
+def show_llm_server_status(
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, readable=True, help="LLM YAML configuration."),
+    ] = Path("cfg/llm.yaml"),
+) -> None:
+    try:
+        status = _managed_llm_server(config).status()
+    except (OSError, ValueError, RamaLamaServerError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo("running" if status.running else "stopped")
+    if status.detail:
+        typer.echo(status.detail)
 
 @qualification_app.command("golden-corpus")
 def qualify_golden_corpus(
@@ -977,6 +1040,15 @@ def convert_pdf_with_docling(
         bool,
         typer.Option("--overwrite", help="Replace an existing native Docling document."),
     ] = False,
+    llm_config: Annotated[
+        Path,
+        typer.Option(
+            "--llm-config",
+            exists=True,
+            readable=True,
+            help="Managed LLM configuration used to release the GPU during conversion.",
+        ),
+    ] = Path("cfg/llm.yaml"),
 ) -> None:
     """Convert a PDF and persist native Docling JSON below the private workspace."""
     repository = DoclingArtifactRepository(workspace)
@@ -1004,9 +1076,17 @@ def convert_pdf_with_docling(
             raise typer.Exit(code=3)
 
         target = repository.document_path(document_key)
-        generated = service.convert(file, target, overwrite=overwrite)
+        server = _managed_llm_server(llm_config)
+        with server.paused_for_exclusive_accelerator():
+            generated = service.convert(file, target, overwrite=overwrite)
         repository.save_metadata(document_key, converter.conversion_metadata(file))
-    except (DoclingNotInstalledError, DocumentConversionError, FileExistsError, ValueError) as exc:
+    except (
+        DoclingNotInstalledError,
+        DocumentConversionError,
+        FileExistsError,
+        RamaLamaServerError,
+        ValueError,
+    ) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
 

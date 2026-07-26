@@ -68,3 +68,20 @@ def test_converter_wraps_runtime_failure_and_removes_temporary_file(tmp_path: Pa
 
     assert not target.exists()
     assert not target.with_suffix(".json.tmp").exists()
+
+
+def test_conversion_options_record_cpu_accelerator() -> None:
+    from standards_atlas.adapters.docling import DoclingAcceleratorDevice
+
+    options = DoclingConversionOptions(
+        accelerator_device=DoclingAcceleratorDevice.CPU,
+        accelerator_threads=2,
+    )
+
+    assert options.as_metadata()["accelerator_device"] == "cpu"
+    assert options.as_metadata()["accelerator_threads"] == 2
+
+
+def test_conversion_options_reject_non_positive_thread_count() -> None:
+    with pytest.raises(ValueError):
+        DoclingConversionOptions(accelerator_threads=0)

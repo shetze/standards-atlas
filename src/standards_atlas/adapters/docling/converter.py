@@ -12,7 +12,10 @@ from standards_atlas.adapters.docling.errors import (
     DoclingNotInstalledError,
     DocumentConversionError,
 )
-from standards_atlas.adapters.docling.options import DoclingConversionOptions
+from standards_atlas.adapters.docling.options import (
+    DoclingAcceleratorDevice,
+    DoclingConversionOptions,
+)
 from standards_atlas.adapters.docling.repository import sha256_file
 
 
@@ -78,6 +81,10 @@ class DoclingPdfConverter:
 
 def _create_document_converter(options: DoclingConversionOptions) -> Any:
     try:
+        from docling.datamodel.accelerator_options import (
+            AcceleratorDevice,
+            AcceleratorOptions,
+        )
         from docling.datamodel.base_models import InputFormat
         from docling.datamodel.pipeline_options import PdfPipelineOptions
         from docling.document_converter import DocumentConverter, PdfFormatOption
@@ -87,11 +94,23 @@ def _create_document_converter(options: DoclingConversionOptions) -> Any:
             'pip install "standards-atlas[docling]"'
         ) from exc
 
+    device_mapping = {
+        DoclingAcceleratorDevice.AUTO: AcceleratorDevice.AUTO,
+        DoclingAcceleratorDevice.CPU: AcceleratorDevice.CPU,
+        DoclingAcceleratorDevice.CUDA: AcceleratorDevice.CUDA,
+        DoclingAcceleratorDevice.MPS: AcceleratorDevice.MPS,
+        DoclingAcceleratorDevice.XPU: AcceleratorDevice.XPU,
+    }
+
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_ocr = options.enable_ocr
     pipeline_options.do_table_structure = options.extract_tables
     pipeline_options.generate_picture_images = options.extract_pictures
     pipeline_options.generate_page_images = options.generate_page_images
+    pipeline_options.accelerator_options = AcceleratorOptions(
+        device=device_mapping[options.accelerator_device],
+        num_threads=options.accelerator_threads,
+    )
     return DocumentConverter(
         format_options={
             InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options),

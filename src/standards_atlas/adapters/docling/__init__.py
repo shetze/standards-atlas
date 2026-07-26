@@ -8,7 +8,10 @@ from standards_atlas.adapters.docling.errors import (
     DoclingNotInstalledError,
     DocumentConversionError,
 )
-from standards_atlas.adapters.docling.options import DoclingConversionOptions
+from standards_atlas.adapters.docling.options import (
+    DoclingAcceleratorDevice,
+    DoclingConversionOptions,
+)
 from standards_atlas.adapters.docling.repository import (
     DoclingArtifactRepository,
     ExtractionState,
@@ -17,6 +20,7 @@ from standards_atlas.adapters.docling.repository import (
 
 __all__ = [
     "DoclingAdapterError",
+    "DoclingAcceleratorDevice",
     "DoclingArtifactRepository",
     "DoclingConversionOptions",
     "DoclingDocumentValidationError",
