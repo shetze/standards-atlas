@@ -1,0 +1,4 @@
+identifier: clause-summary
+version: 1.0.0
+task: clause-summary
+description: Produce a concise engineering summary without adding information.

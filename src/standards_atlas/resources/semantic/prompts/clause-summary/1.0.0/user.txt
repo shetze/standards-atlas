@@ -1,0 +1,6 @@
+Summarize this clause in one sentence.
+
+Reference: {reference}
+Heading: {heading}
+Clause text:
+{text}

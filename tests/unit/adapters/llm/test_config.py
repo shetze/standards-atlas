@@ -36,3 +36,31 @@ def test_environment_overrides_yaml(monkeypatch, tmp_path: Path) -> None:
 
     assert config.model == "environment-model"
     assert config.cache_directory is None
+
+
+def test_loads_managed_server_configuration(tmp_path: Path) -> None:
+    from standards_atlas.adapters.llm import LlmRuntime
+
+    path = tmp_path / "llm.yaml"
+    path.write_text(
+        """
+llm:
+  model: endpoint-model
+  server:
+    enabled: true
+    name: project-llm
+    model: server-model
+    runtime: vllm
+    startup_timeout_seconds: 45
+    shutdown_timeout_seconds: 15
+""".strip(),
+        encoding="utf-8",
+    )
+
+    config = LlmConfig.load(path)
+
+    assert config.server.name == "project-llm"
+    assert config.server.model == "server-model"
+    assert config.server.runtime is LlmRuntime.VLLM
+    assert config.server.startup_timeout_seconds == 45
+    assert config.server.shutdown_timeout_seconds == 15

@@ -2,7 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from standards_atlas.adapters.docling import DoclingJsonReader, DoclingPdfConverter
+from standards_atlas.adapters.docling import (
+    DoclingAcceleratorDevice,
+    DoclingConversionOptions,
+    DoclingJsonReader,
+    DoclingPdfConverter,
+)
 
 pytestmark = pytest.mark.docling
 
@@ -15,7 +20,12 @@ def test_real_pdf_conversion_roundtrip(tmp_path: Path) -> None:
     source = Path("tests/fixtures/pdf/minimal-standard.pdf")
     target = tmp_path / ".atlas" / "docling" / "MIN-STD" / "document.json"
 
-    generated = DoclingPdfConverter().convert(source, target)
+    generated = DoclingPdfConverter(
+        DoclingConversionOptions(
+            accelerator_device=DoclingAcceleratorDevice.CPU,
+            accelerator_threads=2,
+        )
+    ).convert(source, target)
     extracted = DoclingJsonReader().read(generated)
 
     assert generated.is_file()

@@ -3,3 +3,10 @@ llm:
   model: granite
   timeout_seconds: 120
   cache_directory: .atlas/llm/cache
+  server:
+    enabled: true
+    name: standards-atlas-llm
+    model: granite
+    runtime: llama.cpp
+    startup_timeout_seconds: 120
+    shutdown_timeout_seconds: 30

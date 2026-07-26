@@ -144,3 +144,11 @@ Doorstop export now operates on publication hierarchies instead of individual st
 Development snapshots leading to the new architecture.
 
 No stable release.
+
+## Unreleased
+
+- Manage the project-owned RamaLama server directly from Standards Atlas.
+- Suspend and restore local LLM inference around GPU-backed Docling conversion.
+- Keep llama.cpp as the default runtime while allowing vLLM through configuration.
+- Run the real Docling integration test explicitly on CPU for reproducible CI execution.
+- Write generated `proposed` AtlasData files to `local/proposed/` instead of `data/`.

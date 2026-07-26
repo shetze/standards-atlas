@@ -1,0 +1,43 @@
+{
+  "identifier": "clause-summary",
+  "version": "1.0.0",
+  "task": "clause-summary",
+  "cases": [
+    {
+      "id": "requirement-001",
+      "tags": ["requirement", "shall"],
+      "input": {
+        "reference": "5.4.2",
+        "heading": "Safety culture",
+        "text": "The organization shall establish, foster and sustain a safety culture that supports the achievement of functional safety."
+      },
+      "expected": {
+        "summary": "The organization shall establish and sustain a safety culture supporting functional safety."
+      }
+    },
+    {
+      "id": "recommendation-001",
+      "tags": ["recommendation", "should"],
+      "input": {
+        "reference": "6.2",
+        "heading": "Independent review",
+        "text": "The review should be performed by a person who was not responsible for producing the reviewed work product."
+      },
+      "expected": {
+        "summary": "An independent person should review the work product."
+      }
+    },
+    {
+      "id": "definition-001",
+      "tags": ["definition"],
+      "input": {
+        "reference": "3.1",
+        "heading": "hazard",
+        "text": "Potential source of harm caused by malfunctioning behaviour of the item."
+      },
+      "expected": {
+        "summary": "A hazard is a potential source of harm caused by malfunctioning item behaviour."
+      }
+    }
+  ]
+}
