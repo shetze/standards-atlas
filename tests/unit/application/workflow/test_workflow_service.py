@@ -4,7 +4,9 @@ from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.application.workflow import (
     ArtifactPolicy,
     EndToEndWorkflowService,
+    WorkflowPlan,
     WorkflowStage,
+    WorkflowStep,
 )
 
 
@@ -608,7 +610,9 @@ def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> N
 
     assert plan.steps[-1].stage == WorkflowStage.DOORSTOP_PUBLISH
     assert plan.steps[-1].command[-2:] == ("--template", "atlas-clean")
-    assert plan.steps[-1].output_paths == ("local/exports/doorstop/functional-safety",)
+    assert plan.steps[-1].output_paths == (
+        "local/exports/doorstop/functional-safety",
+    )
     doorstop_steps = [step for step in plan.steps if step.stage == WorkflowStage.DOORSTOP]
     assert doorstop_steps
     assert all(
@@ -621,3 +625,88 @@ def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> N
         step.output_globs[0].startswith("local/exports/markdown/functional-safety/")
         for step in markdown_steps
     )
+
+
+def test_incomplete_docling_extraction_is_repaired_with_overwrite(tmp_path: Path) -> None:
+    source = tmp_path / "source.pdf"
+    source.write_bytes(b"%PDF-1.4\n")
+    metadata = tmp_path / ".atlas" / "docling" / "TEST" / "conversion.json"
+    metadata.parent.mkdir(parents=True)
+    metadata.write_text("{}\n", encoding="utf-8")
+    step = WorkflowStep(
+        family="TEST",
+        document="TEST",
+        stage=WorkflowStage.DOCLING,
+        command=(
+            "uv",
+            "run",
+            "standards-atlas",
+            "docling",
+            "convert",
+            "-d",
+            "TEST",
+            str(source),
+        ),
+        artifact_policy=ArtifactPolicy.SOURCE,
+        output_paths=(
+            ".atlas/docling/TEST/document.json",
+            ".atlas/docling/TEST/conversion.json",
+        ),
+    )
+    runner = RecordingRunner()
+
+    result = EndToEndWorkflowService().execute(
+        WorkflowPlan(families=("TEST",), steps=(step,)),
+        project_root=tmp_path,
+        runner=runner,
+        continue_after_review=True,
+    )
+
+    assert result.completed is True
+    assert runner.commands == [(*step.command, "--overwrite")]
+
+
+def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
+    from standards_atlas.adapters.docling.repository import sha256_file
+
+    source = tmp_path / "source.pdf"
+    source.write_bytes(b"%PDF-1.4\n")
+    root = tmp_path / ".atlas" / "docling" / "TEST"
+    root.mkdir(parents=True)
+    (root / "document.json").write_text("{}\n", encoding="utf-8")
+    (root / "conversion.json").write_text(
+        '{"source_sha256": "' + sha256_file(source) + '"}\n',
+        encoding="utf-8",
+    )
+    step = WorkflowStep(
+        family="TEST",
+        document="TEST",
+        stage=WorkflowStage.DOCLING,
+        command=(
+            "uv",
+            "run",
+            "standards-atlas",
+            "docling",
+            "convert",
+            "-d",
+            "TEST",
+            str(source),
+        ),
+        artifact_policy=ArtifactPolicy.SOURCE,
+        output_paths=(
+            ".atlas/docling/TEST/document.json",
+            ".atlas/docling/TEST/conversion.json",
+        ),
+    )
+    runner = RecordingRunner()
+
+    result = EndToEndWorkflowService().execute(
+        WorkflowPlan(families=("TEST",), steps=(step,)),
+        project_root=tmp_path,
+        runner=runner,
+        continue_after_review=True,
+    )
+
+    assert result.completed is True
+    assert runner.commands == []
+    assert result.executed_steps == ()

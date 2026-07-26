@@ -8,6 +8,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
 
+from standards_atlas.adapters.docling import DoclingArtifactRepository, ExtractionState
 from standards_atlas.application.catalog import (
     ContentSelection,
     StandardCatalog,
@@ -160,13 +161,19 @@ class EndToEndWorkflowService:
                     if family_documents & blocked_documents:
                         continue
 
-            outputs_exist = self._outputs_exist(step, project_root)
+            docling_state = self._docling_extraction_state(step, project_root)
+            outputs_exist = (
+                docling_state is ExtractionState.CURRENT
+                if docling_state is not None
+                else self._outputs_exist(step, project_root)
+            )
             if plan.force and outputs_exist:
                 self._remove_outputs(step, project_root)
                 outputs_exist = False
 
             if not outputs_exist:
-                command_runner.run(step.command, project_root)
+                command = self._execution_command(step, docling_state)
+                command_runner.run(command, project_root)
                 self._record_completion(step, project_root)
                 executed.append(step)
 
@@ -235,7 +242,10 @@ class EndToEndWorkflowService:
                         pdf,
                     ),
                     ArtifactPolicy.SOURCE,
-                    output_paths=(f".atlas/docling/{key}/document.json",),
+                    output_paths=(
+                        f".atlas/docling/{key}/document.json",
+                        f".atlas/docling/{key}/conversion.json",
+                    ),
                 )
             )
 
@@ -525,10 +535,43 @@ class EndToEndWorkflowService:
                         "--no-init-git",
                     ),
                     ArtifactPolicy.DERIVED,
-                    output_paths=(f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",),
+                    output_paths=(
+                        f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",
+                    ),
                 )
             )
         return steps
+
+    @staticmethod
+    def _docling_extraction_state(
+        step: WorkflowStep, project_root: Path
+    ) -> ExtractionState | None:
+        """Return the persisted Docling state for a Docling conversion step."""
+        if step.stage is not WorkflowStage.DOCLING:
+            return None
+        try:
+            document_option = step.command.index("-d")
+            document_key = step.command[document_option + 1]
+            source = Path(step.command[document_option + 2])
+        except (ValueError, IndexError):
+            return None
+        if not source.is_absolute():
+            source = project_root / source
+        repository = DoclingArtifactRepository(project_root / ".atlas")
+        return repository.extraction_state(document_key, source)
+
+    @staticmethod
+    def _execution_command(
+        step: WorkflowStep, docling_state: ExtractionState | None
+    ) -> tuple[str, ...]:
+        """Add repair semantics only for an incomplete Docling extraction."""
+        if (
+            step.stage is WorkflowStage.DOCLING
+            and docling_state is ExtractionState.INCOMPLETE
+            and "--overwrite" not in step.command
+        ):
+            return (*step.command, "--overwrite")
+        return step.command
 
     @staticmethod
     def _outputs_exist(step: WorkflowStep, project_root: Path) -> bool:
