@@ -250,7 +250,7 @@ class EndToEndWorkflowService:
             )
 
         if family.atlasdata is None:
-            output = f"data/{family.key}"
+            output = f"local/proposed/{family.key}"
             year = str(family.publication_year or 0)
             if family.source is not None:
                 command = (
@@ -308,7 +308,7 @@ class EndToEndWorkflowService:
                     ),
                     ArtifactPolicy.DERIVED,
                     True,
-                    output_paths=(f"data/{family.key}",),
+                    output_paths=(f"local/proposed/{family.key}",),
                 )
             )
             return steps

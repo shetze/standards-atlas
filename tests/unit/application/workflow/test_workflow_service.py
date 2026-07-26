@@ -45,7 +45,7 @@ def test_multipart_family_without_atlasdata_uses_docling_onboarding() -> None:
     )
     assert "1=.atlas/docling/IEC11889-1/document.json" in onboarding.command
     assert "2=.atlas/docling/IEC11889-2/document.json" in onboarding.command
-    assert onboarding.command[5] == "data/IEC11889"
+    assert onboarding.command[5] == "local/proposed/IEC11889"
     assert onboarding.manual_gate is True
     assert plan.steps[-1] == onboarding
 
