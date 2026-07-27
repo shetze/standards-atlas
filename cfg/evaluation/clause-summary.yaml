@@ -1,0 +1,12 @@
+schema_version: 1
+task: clause-summary
+dataset_version: 1.0.0
+prompt_versions:
+  - 1.0.0
+models:
+  - ibm-granite/granite-3.3-8b-instruct-GGUF
+resources: src/standards_atlas/resources/semantic
+output: .atlas/evaluation/runs/clause-summary
+include_case_details: false
+metadata:
+  purpose: local prompt and model baseline

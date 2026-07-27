@@ -1,5 +1,12 @@
 """Reusable prompt, model, dataset, regression, and reporting evaluation services."""
 
+from standards_atlas.application.services.evaluation.clause_access import (
+    ClauseDescriptor,
+    ClauseFilter,
+    ClauseProvider,
+    DocumentDescriptor,
+    SamplingStrategy,
+)
 from standards_atlas.application.services.evaluation.models import (
     AggregateMetrics,
     EvaluationCaseResult,
@@ -26,6 +33,14 @@ from standards_atlas.application.services.evaluation.runner import (
     SemanticEvaluationRunner,
     compare_runs,
 )
+from standards_atlas.application.services.evaluation.workflow import (
+    BenchmarkManifest,
+    BenchmarkMatrixResult,
+    CorpusBuildConfig,
+    CorpusBuildResult,
+    EvaluationCorpusBuilder,
+    EvaluationMatrixRunner,
+)
 
 __all__ = [
     "AggregateMetrics",
@@ -46,20 +61,15 @@ __all__ = [
     "SemanticEvaluationReporter",
     "SemanticEvaluationRunner",
     "compare_runs",
-]
-
-from standards_atlas.application.services.evaluation.clause_access import (
-    ClauseDescriptor,
-    ClauseFilter,
-    ClauseProvider,
-    DocumentDescriptor,
-    SamplingStrategy,
-)
-
-__all__ += [
     "ClauseDescriptor",
     "ClauseFilter",
     "ClauseProvider",
     "DocumentDescriptor",
     "SamplingStrategy",
+    "BenchmarkManifest",
+    "BenchmarkMatrixResult",
+    "CorpusBuildConfig",
+    "CorpusBuildResult",
+    "EvaluationCorpusBuilder",
+    "EvaluationMatrixRunner",
 ]

@@ -29,6 +29,7 @@ from standards_atlas.adapters.doorstop import (
     DoorstopExporter,
     DoorstopTemplateInstaller,
 )
+from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvider
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.llm import (
     LlmConfig,
@@ -71,10 +72,15 @@ from standards_atlas.application.services import (
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 from standards_atlas.application.services.evaluation import (
+    BenchmarkManifest,
+    CorpusBuildConfig,
+    EvaluationCorpusBuilder,
     EvaluationDatasetRepository,
+    EvaluationMatrixRunner,
     EvaluationReporter,
     EvaluationRunner,
     PromptRepository,
+    SamplingStrategy,
 )
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
@@ -181,6 +187,12 @@ semantic_evaluation_app = typer.Typer(
 )
 app.add_typer(semantic_evaluation_app, name="semantic-evaluation")
 
+evaluation_app = typer.Typer(
+    help="Build local corpora and run reproducible evaluation matrices.",
+    no_args_is_help=True,
+)
+app.add_typer(evaluation_app, name="evaluation")
+
 qualification_app = typer.Typer(
     help="Execute reproducible qualification checks and persist evidence.",
     no_args_is_help=True,
@@ -252,6 +264,81 @@ def serve_mcp(
     except (OSError, RuntimeError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
+
+
+@evaluation_app.command("corpus-build")
+def build_evaluation_corpus(
+    task: Annotated[str, typer.Option("--task")],
+    version: Annotated[str, typer.Option("--version")],
+    count: Annotated[int, typer.Option("--count", min=1)],
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = Path(".atlas"),
+    output: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
+        "local/evaluation/corpora"
+    ),
+    strategy: Annotated[
+        SamplingStrategy, typer.Option("--strategy")
+    ] = SamplingStrategy.BALANCED_BY_DOCUMENT,
+    seed: Annotated[int, typer.Option("--seed")] = 0,
+    include_text: Annotated[bool, typer.Option("--include-text/--hashes-only")] = True,
+) -> None:
+    """Create an annotation-ready corpus from persisted clauses."""
+    try:
+        result = EvaluationCorpusBuilder(EngineeringDocumentClauseProvider(workspace)).build(
+            CorpusBuildConfig(
+                task=task,
+                version=version,
+                count=count,
+                strategy=strategy,
+                seed=seed,
+                include_text=include_text,
+            ),
+            output,
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Corpus clauses          : {result.clause_count}")
+    typer.echo(f"Dataset                 : {result.dataset_path}")
+    typer.echo(f"Manifest                : {result.manifest_path}")
+
+
+@evaluation_app.command("benchmark")
+def run_evaluation_matrix(
+    manifest_path: Annotated[
+        Path,
+        typer.Option("--manifest", exists=True, readable=True),
+    ],
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, readable=True),
+    ] = Path("cfg/llm.yaml"),
+) -> None:
+    """Execute the prompt/model matrix declared by a benchmark manifest."""
+    llm_config = LlmConfig.load(config)
+    server = RamaLamaServerManager(llm_config)
+    try:
+        manifest = BenchmarkManifest.load(manifest_path)
+        if llm_config.server.enabled and not server.status().running:
+            server.start()
+        result = EvaluationMatrixRunner(
+            EvaluationRunner(OpenAICompatibleLlmGateway(llm_config))
+        ).run(manifest)
+        report_path = EvaluationReporter().write_matrix_summary(
+            result.runs,
+            manifest.output / "matrix-summary.json",
+            manifest_hash=result.manifest_hash,
+            include_case_details=manifest.include_case_details,
+        )
+    except (OSError, ValueError, RamaLamaServerError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    for run in result.runs:
+        typer.echo(
+            f"{run.prompt_version} / {run.model}: "
+            f"F1={run.metrics.f1:.4f}, schema={run.metrics.schema_valid_rate:.4f}"
+        )
+    typer.echo(f"Matrix report           : {report_path}")
+    typer.echo(f"Manifest hash           : {result.manifest_hash}")
 
 
 @semantic_evaluation_app.command("run")

@@ -1,3 +1,11 @@
+## Unreleased
+
+### Added
+
+- Add Slice 5.3.4 local evaluation workflow with reproducible corpus drafts.
+- Add manifest-driven prompt and model matrix execution.
+- Add content-redacted matrix reports for protected standards corpora.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

@@ -83,8 +83,10 @@ class GoldenCorpusQualifier:
                         f"{invariant.expected!r}, got {actual!r}"
                     )
             if manifest.expected_artifact:
-                expected = (case_dir / manifest.expected_artifact).read_bytes()
-                if normalized_bytes != expected:
+                expected = json.loads(
+                    (case_dir / manifest.expected_artifact).read_text(encoding="utf-8")
+                )
+                if payload != expected:
                     failures.append("normalized artifact differs from checked-in golden file")
         except Exception as exc:  # qualification reports failures instead of aborting corpus
             normalized_hash = None

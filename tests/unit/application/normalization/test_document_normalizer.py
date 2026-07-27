@@ -41,6 +41,11 @@ def document(*items):
     )
 
 
+def test_normalizer_version_is_decoupled_from_package_release() -> None:
+    result = DocumentNormalizer().normalize(document())
+    assert result.metadata.normalizer_version == "0.7.0"
+
+
 def test_unicode_and_whitespace_are_normalized() -> None:
     result = DocumentNormalizer().normalize(
         document(

@@ -1,6 +1,6 @@
 # MCP Clause Server
 
-Slice 5.3.2 adds a read-only Model Context Protocol inbound adapter to Standards Atlas.
+Slices 5.3.2 and 5.3.3 add a read-only Model Context Protocol inbound adapter to Standards Atlas.
 The server is a separately started process, but remains part of the same package and uses the
 transport-neutral `ClauseProvider` application port introduced in Slice 5.3.1.
 
@@ -34,8 +34,9 @@ uv sync --extra mcp
 uv run standards-atlas mcp serve --config cfg/mcp.yaml
 ```
 
-Slice 5.3.2 deliberately supports STDIO only. Streamable HTTP, authentication, TLS termination,
-and remote deployment belong to Slice 5.3.3.
+The adapter supports local STDIO and remote Streamable HTTP operation. Remote bindings require
+authentication; TLS termination remains the responsibility of a reverse proxy, VPN, or controlled
+tunnel in front of the server.
 
 The optional dependency is constrained to the stable MCP Python SDK v1 line:
 
@@ -83,7 +84,7 @@ as MCP tool errors. They do not terminate the server process.
 
 ## Remote operation
 
-Slice 5.3.3 adds a Streamable HTTP ASGI adapter around the same FastMCP server.
+A Streamable HTTP ASGI adapter runs around the same FastMCP server.
 Transport security remains outside the application services. The adapter
 validates Origin headers, optionally enforces a bearer token, limits request
 body size and emits privacy-conscious JSON-lines audit records.

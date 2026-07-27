@@ -9,7 +9,6 @@ import unicodedata
 from collections import Counter
 from dataclasses import dataclass
 
-from standards_atlas import __version__
 from standards_atlas.application.model import (
     ExtractedCode,
     ExtractedDocument,
@@ -45,6 +44,8 @@ from standards_atlas.application.normalization.page_furniture_classifier import 
     PageFurnitureClassifier,
 )
 from standards_atlas.domain.model import ArtifactLineage, artifact_reference
+
+NORMALIZER_VERSION = "0.7.0"
 
 _LIST_MARKER = re.compile(r"^\s*((?:\d+|[A-Za-z]|[ivxlcdmIVXLCDM]+)[.)]|[-–—•])\s+(.+)$")
 _PAGE_NUMBER = re.compile(r"^\s*(?:[-–—]\s*)?\d+(?:\s*[-–—])?\s*$")
@@ -139,7 +140,7 @@ class DocumentNormalizer:
             transformation_ledger=TransformationLedger(events=tuple(events)),
             issues=(),
             metadata=NormalizationMetadata(
-                normalizer_version=__version__,
+                normalizer_version=NORMALIZER_VERSION,
                 source_extraction_hash=extracted_document_hash(document),
                 options=options,
                 statistics=statistics,

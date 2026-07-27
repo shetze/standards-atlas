@@ -194,3 +194,10 @@ Future research includes
 - knowledge graph visualisation
 - engineering assistants
 - configurable publication pipelines
+
+## Completed: Slice 5.3.4 – Local Evaluation Workflow
+
+- Reproducible corpus construction from persisted clauses
+- Annotation-ready local datasets and source-hash manifests
+- Manifest-driven prompt/model benchmark matrices
+- Protected-content-safe matrix reports
