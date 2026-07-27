@@ -47,12 +47,6 @@ from standards_atlas.application.qualification import (
     GoldenCorpusQualifier,
     QualificationRunReporter,
 )
-from standards_atlas.application.services.evaluation import (
-    EvaluationDatasetRepository,
-    EvaluationReporter,
-    EvaluationRunner,
-    PromptRepository,
-)
 from standards_atlas.application.services import (
     AlignmentReviewService,
     AlignmentService,
@@ -76,6 +70,12 @@ from standards_atlas.application.services import (
     ReferenceCandidateService,
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
+from standards_atlas.application.services.evaluation import (
+    EvaluationDatasetRepository,
+    EvaluationReporter,
+    EvaluationRunner,
+    PromptRepository,
+)
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
     WorkflowRunReporter,

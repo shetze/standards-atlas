@@ -80,3 +80,15 @@ for future descriptors containing such data.
 
 Invalid limits, unsupported sampling strategies, hidden documents, and unknown clauses are returned
 as MCP tool errors. They do not terminate the server process.
+
+## Remote operation
+
+Slice 5.3.3 adds a Streamable HTTP ASGI adapter around the same FastMCP server.
+Transport security remains outside the application services. The adapter
+validates Origin headers, optionally enforces a bearer token, limits request
+body size and emits privacy-conscious JSON-lines audit records.
+
+The built-in token mode is intended for a controlled single-client deployment
+or a protected tunnel. Enterprise multi-user deployments should replace it
+with an OAuth 2.1 authorization server and the MCP SDK's `TokenVerifier`
+integration without changing the clause-access services.

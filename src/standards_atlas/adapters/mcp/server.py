@@ -17,15 +17,18 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
         from mcp.server.fastmcp import FastMCP
         from mcp.server.fastmcp.exceptions import ToolError
     except ImportError as exc:
-        raise RuntimeError(
-            "MCP support is not installed. Run 'uv sync --extra mcp'."
-        ) from exc
+        raise RuntimeError("MCP support is not installed. Run 'uv sync --extra mcp'.") from exc
 
     clause_service = McpClauseService(
         provider or EngineeringDocumentClauseProvider(config.workspace),
         config,
     )
-    mcp = FastMCP(config.name, json_response=True)
+    mcp = FastMCP(
+        config.name,
+        json_response=True,
+        stateless_http=config.http.stateless,
+        streamable_http_path="/",
+    )
 
     def tool_call(operation: Any, *args: Any, **kwargs: Any) -> Any:
         try:
@@ -124,4 +127,10 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
 
 def run_mcp_server(config: McpServerConfig) -> None:
     """Run the configured MCP server in the foreground."""
-    create_mcp_server(config).run(transport=config.transport)
+    server = create_mcp_server(config)
+    if config.transport == "streamable-http":
+        from standards_atlas.adapters.mcp.http import run_http_server
+
+        run_http_server(server, config)
+        return
+    server.run(transport="stdio")

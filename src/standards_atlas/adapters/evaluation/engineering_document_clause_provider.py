@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.application.services.evaluation.clause_access import (
@@ -90,9 +90,7 @@ class EngineeringDocumentClauseProvider:
 
         population = list(self._matching_clauses(filters or ClauseFilter()))
         if count > len(population):
-            raise ValueError(
-                f"sample count {count} exceeds matching population {len(population)}"
-            )
+            raise ValueError(f"sample count {count} exceeds matching population {len(population)}")
 
         rng = random.Random(seed)
         if strategy is SamplingStrategy.RANDOM:

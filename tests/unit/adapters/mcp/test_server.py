@@ -2,8 +2,6 @@ import asyncio
 
 import pytest
 
-mcp = pytest.importorskip("mcp")
-
 from standards_atlas.adapters.mcp import McpServerConfig, create_mcp_server
 from standards_atlas.application.services.evaluation import (
     ClauseDescriptor,
@@ -12,6 +10,11 @@ from standards_atlas.application.services.evaluation import (
     SamplingStrategy,
 )
 from standards_atlas.domain.model import ClauseType, DocumentType
+
+
+@pytest.fixture(scope="module", autouse=True)
+def require_mcp() -> None:
+    pytest.importorskip("mcp")
 
 
 class FakeProvider:

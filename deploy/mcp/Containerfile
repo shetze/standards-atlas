@@ -1,0 +1,13 @@
+FROM python:3.13-slim
+
+RUN useradd --create-home --uid 10001 atlas
+WORKDIR /app
+
+COPY . /app
+RUN pip install --no-cache-dir ".[mcp]"
+
+USER atlas
+EXPOSE 8765
+
+ENTRYPOINT ["standards-atlas", "mcp", "serve"]
+CMD ["--config", "cfg/mcp.yaml"]

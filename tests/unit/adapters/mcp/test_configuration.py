@@ -24,3 +24,29 @@ mcp:
     assert config.allowed_document_keys == ("EN50716",)
     assert config.limits.max_results == 7
     assert not config.expose.clause_text
+
+
+def test_requires_authentication_for_public_http_binding() -> None:
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="authentication is required"):
+        McpServerConfig.model_validate(
+            {
+                "transport": "streamable-http",
+                "http": {"host": "0.0.0.0"},
+            }
+        )
+
+
+def test_accepts_authenticated_public_http_binding() -> None:
+    config = McpServerConfig.model_validate(
+        {
+            "transport": "streamable-http",
+            "http": {"host": "0.0.0.0", "port": 9000, "path": "/atlas"},
+            "auth": {"enabled": True},
+        }
+    )
+
+    assert config.http.port == 9000
+    assert config.http.path == "/atlas"

@@ -1,0 +1,19 @@
+services:
+  standards-atlas-mcp:
+    build:
+      context: ../..
+      dockerfile: deploy/mcp/Containerfile
+    environment:
+      STANDARDS_ATLAS_MCP_TOKEN: ${STANDARDS_ATLAS_MCP_TOKEN:?set MCP bearer token}
+    volumes:
+      - ../../.atlas:/app/.atlas:ro,Z
+      - ../../local/logs:/app/local/logs:Z
+      - ./mcp.remote.yaml:/app/cfg/mcp.remote.yaml:ro,Z
+    ports:
+      - "127.0.0.1:8765:8765"
+    command: ["--config", "cfg/mcp.remote.yaml"]
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true

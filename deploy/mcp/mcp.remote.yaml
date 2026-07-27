@@ -1,6 +1,6 @@
 mcp:
   name: standards-atlas
-  transport: stdio
+  transport: streamable-http
   workspace: .atlas
   allowed_document_keys: []
   limits:
@@ -10,16 +10,14 @@ mcp:
     max_request_body_bytes: 4194304
   expose:
     clause_text: true
-    source_paths: false
-    internal_metadata: false
   http:
-    host: 127.0.0.1
+    host: 0.0.0.0
     port: 8765
     path: /mcp
     allowed_origins: []
     stateless: true
   auth:
-    enabled: false
+    enabled: true
     token_environment_variable: STANDARDS_ATLAS_MCP_TOKEN
   audit:
     enabled: true

@@ -100,9 +100,7 @@ def test_applies_document_allowlist_and_text_exposure_policy() -> None:
 def test_rejects_requests_above_configured_limits() -> None:
     service = McpClauseService(
         FakeClauseProvider(),
-        McpServerConfig.model_validate(
-            {"limits": {"max_results": 2, "max_sample_size": 1}}
-        ),
+        McpServerConfig.model_validate({"limits": {"max_results": 2, "max_sample_size": 1}}),
     )
 
     try:
