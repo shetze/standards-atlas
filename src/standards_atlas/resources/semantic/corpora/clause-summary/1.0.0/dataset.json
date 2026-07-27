@@ -1,0 +1,42 @@
+{
+  "task": "clause-summary",
+  "version": "1.0.0",
+  "examples": [
+    {
+      "id": "requirement-001",
+      "tags": ["requirement", "shall"],
+      "input": {
+        "reference": "5.1",
+        "text": "The supplier shall review and confirm the validity of the safety plan."
+      },
+      "expected": {
+        "summary": "The supplier is responsible for reviewing and confirming the validity of the safety plan.",
+        "confidence": 1.0
+      }
+    },
+    {
+      "id": "recommendation-001",
+      "tags": ["recommendation", "should"],
+      "input": {
+        "reference": "5.2",
+        "text": "The review should include representatives of all affected engineering disciplines."
+      },
+      "expected": {
+        "summary": "The review should involve representatives from all affected engineering disciplines.",
+        "confidence": 1.0
+      }
+    },
+    {
+      "id": "definition-001",
+      "tags": ["definition"],
+      "input": {
+        "reference": "3.1",
+        "text": "Safety plan: documented set of activities and responsibilities for achieving functional safety."
+      },
+      "expected": {
+        "summary": "A safety plan documents the activities and responsibilities used to achieve functional safety.",
+        "confidence": 1.0
+      }
+    }
+  ]
+}

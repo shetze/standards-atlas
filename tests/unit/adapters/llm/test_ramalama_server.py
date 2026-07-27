@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from unittest.mock import Mock, patch
+from pathlib import Path
+from unittest.mock import ANY, Mock, patch
 
 import pytest
 
@@ -13,50 +14,50 @@ from standards_atlas.adapters.llm import (
 )
 
 
-def _config() -> LlmConfig:
+def _config(tmp_path: Path = Path(".atlas/llm/runtime")) -> LlmConfig:
     return LlmConfig(
         base_url="http://127.0.0.1:8080/v1",
         server=RamaLamaServerConfig(
             startup_timeout_seconds=1,
             shutdown_timeout_seconds=1,
+            state_directory=tmp_path,
         ),
     )
 
 
-def test_start_invokes_ramalama_with_configured_runtime() -> None:
-    manager = RamaLamaServerManager(_config())
+def test_start_invokes_same_foreground_command_as_start_script(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
     statuses = iter(
         [
             RamaLamaServerStatus(False),
             RamaLamaServerStatus(True),
         ]
     )
+    process = Mock(pid=1234)
 
     with (
         patch.object(manager, "status", side_effect=lambda: next(statuses)),
-        patch("subprocess.run") as run,
+        patch("subprocess.Popen", return_value=process) as popen,
     ):
         manager.start()
 
-    run.assert_called_once_with(
+    popen.assert_called_once_with(
         (
             "ramalama",
             "serve",
-            "--detach",
-            "--name",
-            "standards-atlas-llm",
+            "--backend",
+            "auto",
+            "--selinux=false",
             "--port",
             "8080",
-            "--runtime",
-            "llama.cpp",
-            "--webui",
-            "off",
             "granite",
         ),
-        check=True,
-        capture_output=True,
-        text=True,
+        stdin=-3,
+        stdout=ANY,
+        stderr=-2,
+        start_new_session=True,
     )
+    assert (tmp_path / "ramalama.pid").read_text(encoding="utf-8") == "1234\n"
 
 
 def test_pause_restores_only_previously_running_server() -> None:
@@ -87,9 +88,7 @@ def test_pause_restores_server_after_workload_failure() -> None:
 
 
 def test_rejects_remote_endpoint_for_managed_server() -> None:
-    manager = RamaLamaServerManager(
-        LlmConfig(base_url="https://example.com/v1")
-    )
+    manager = RamaLamaServerManager(LlmConfig(base_url="https://example.com/v1"))
     manager.status = Mock(return_value=RamaLamaServerStatus(False))  # type: ignore[method-assign]
 
     with pytest.raises(RamaLamaServerError, match="loopback"):

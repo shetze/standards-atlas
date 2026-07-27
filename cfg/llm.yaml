@@ -8,5 +8,8 @@ llm:
     name: standards-atlas-llm
     model: granite
     runtime: llama.cpp
+    backend: auto
+    selinux: false
+    state_directory: .atlas/llm/runtime
     startup_timeout_seconds: 120
     shutdown_timeout_seconds: 30

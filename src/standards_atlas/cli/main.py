@@ -30,12 +30,13 @@ from standards_atlas.adapters.doorstop import (
     DoorstopTemplateInstaller,
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.adapters.llm import (
     LlmConfig,
+    OpenAICompatibleLlmGateway,
     RamaLamaServerError,
     RamaLamaServerManager,
 )
+from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.catalog import parse_page_list
@@ -44,6 +45,12 @@ from standards_atlas.application.normalization import NormalizationDataLossError
 from standards_atlas.application.qualification import (
     GoldenCorpusQualifier,
     QualificationRunReporter,
+)
+from standards_atlas.application.semantic_evaluation import (
+    GoldenDatasetRepository,
+    PromptRepository,
+    SemanticEvaluationReporter,
+    SemanticEvaluationRunner,
 )
 from standards_atlas.application.services import (
     AlignmentReviewService,
@@ -161,13 +168,17 @@ llm_app = typer.Typer(
 )
 app.add_typer(llm_app, name="llm")
 
+semantic_evaluation_app = typer.Typer(
+    help="Benchmark prompts and models against versioned semantic gold datasets.",
+    no_args_is_help=True,
+)
+app.add_typer(semantic_evaluation_app, name="semantic-evaluation")
+
 qualification_app = typer.Typer(
     help="Execute reproducible qualification checks and persist evidence.",
     no_args_is_help=True,
 )
 app.add_typer(qualification_app, name="qualification")
-
-
 
 
 def _managed_llm_server(config: Path) -> RamaLamaServerManager:
@@ -219,6 +230,54 @@ def show_llm_server_status(
     typer.echo("running" if status.running else "stopped")
     if status.detail:
         typer.echo(status.detail)
+
+
+@semantic_evaluation_app.command("run")
+def run_semantic_evaluation(
+    task: Annotated[str, typer.Option("--task", help="Semantic task identifier.")],
+    prompt_version: Annotated[str, typer.Option("--prompt-version")],
+    dataset_version: Annotated[str, typer.Option("--dataset-version")],
+    model: Annotated[
+        list[str] | None,
+        typer.Option("--model", help="Model identifier; repeat to compare models."),
+    ] = None,
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, readable=True),
+    ] = Path("cfg/llm.yaml"),
+    resources: Annotated[
+        Path,
+        typer.Option("--resources", exists=True, file_okay=False),
+    ] = Path("src/standards_atlas/resources/semantic"),
+    output: Annotated[
+        Path,
+        typer.Option("--output", file_okay=False),
+    ] = Path(".atlas/semantic/evaluations"),
+) -> None:
+    llm_config = LlmConfig.load(config)
+    server = RamaLamaServerManager(llm_config)
+    try:
+        if llm_config.server.enabled and not server.status().running:
+            server.start()
+        prompt = PromptRepository(resources / "prompts").load(task, prompt_version)
+        dataset = GoldenDatasetRepository(resources / "corpora").load(task, dataset_version)
+        runner = SemanticEvaluationRunner(OpenAICompatibleLlmGateway(llm_config))
+        models = tuple(model or (llm_config.model,))
+        runs = runner.benchmark(prompt, dataset, models)
+        reporter = SemanticEvaluationReporter()
+        paths = tuple(reporter.write(run, output) for run in runs)
+        if len(runs) > 1:
+            reporter.write_comparison(runs, output / "model-comparison.json")
+    except (OSError, ValueError, RamaLamaServerError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    for run, path in zip(runs, paths, strict=True):
+        typer.echo(
+            f"{run.model}: F1={run.metrics.f1:.4f}, "
+            f"precision={run.metrics.precision:.4f}, "
+            f"recall={run.metrics.recall:.4f} -> {path}"
+        )
+
 
 @qualification_app.command("golden-corpus")
 def qualify_golden_corpus(

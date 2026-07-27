@@ -11,7 +11,6 @@ from standards_atlas.adapters.llm.openai_compatible import (
     LlmUnavailableError,
     OpenAICompatibleLlmGateway,
 )
-
 from standards_atlas.adapters.llm.ramalama_server import (
     RamaLamaServerError,
     RamaLamaServerManager,

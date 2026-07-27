@@ -30,6 +30,9 @@ class RamaLamaServerConfig:
     startup_timeout_seconds: float = 120.0
     shutdown_timeout_seconds: float = 30.0
     executable: str = "ramalama"
+    backend: str = "auto"
+    selinux: bool = False
+    state_directory: Path = Path(".atlas/llm/runtime")
 
     def __post_init__(self) -> None:
         if not self.name.strip():
@@ -42,6 +45,18 @@ class RamaLamaServerConfig:
             raise ValueError("llm.server.shutdown_timeout_seconds must be positive")
         if not self.executable.strip():
             raise ValueError("llm.server.executable must not be empty")
+        if not self.backend.strip():
+            raise ValueError("llm.server.backend must not be empty")
+
+    @property
+    def pid_file(self) -> Path:
+        """PID file used by the managed foreground RamaLama process."""
+        return self.state_directory / "ramalama.pid"
+
+    @property
+    def log_file(self) -> Path:
+        """Combined stdout/stderr log of the managed RamaLama process."""
+        return self.state_directory / "ramalama.log"
 
 
 @dataclass(frozen=True)
@@ -99,12 +114,15 @@ class LlmConfig:
             startup_timeout_seconds=float(server_payload.get("startup_timeout_seconds", 120)),
             shutdown_timeout_seconds=float(server_payload.get("shutdown_timeout_seconds", 30)),
             executable=str(server_payload.get("executable", "ramalama")),
+            backend=str(server_payload.get("backend", "auto")),
+            selinux=bool(server_payload.get("selinux", False)),
+            state_directory=Path(str(server_payload.get("state_directory", ".atlas/llm/runtime"))),
         )
         return cls(
             base_url=str(payload.get("base_url", cls.base_url)),
             model=model,
             timeout_seconds=float(payload.get("timeout_seconds", cls.timeout_seconds)),
-            api_key=(str(payload["api_key"]) if payload.get("api_key") else None),
+            api_key=(str(payload["api_key"]) if payload.get("api_key") else None),  # notsecret
             cache_directory=Path(str(cache_value)) if cache_value else None,
             server=server,
         )

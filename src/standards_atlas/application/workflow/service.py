@@ -535,17 +535,13 @@ class EndToEndWorkflowService:
                         "--no-init-git",
                     ),
                     ArtifactPolicy.DERIVED,
-                    output_paths=(
-                        f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",
-                    ),
+                    output_paths=(f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",),
                 )
             )
         return steps
 
     @staticmethod
-    def _docling_extraction_state(
-        step: WorkflowStep, project_root: Path
-    ) -> ExtractionState | None:
+    def _docling_extraction_state(step: WorkflowStep, project_root: Path) -> ExtractionState | None:
         """Return the persisted Docling state for a Docling conversion step."""
         if step.stage is not WorkflowStage.DOCLING:
             return None

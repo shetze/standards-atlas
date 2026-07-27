@@ -1,0 +1,2 @@
+Clause reference: {reference}
+Clause text: {text}

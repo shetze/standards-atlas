@@ -1,0 +1,5 @@
+{
+  "description": "Summarize one standards clause without adding unsupported claims.",
+  "task": "clause-summary",
+  "version": "1.0.0"
+}

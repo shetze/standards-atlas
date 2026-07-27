@@ -130,7 +130,7 @@ class OpenAICompatibleLlmGateway:
         except HTTPError as error:
             detail = error.read().decode("utf-8", errors="replace")
             raise LlmResponseError(f"LLM endpoint returned HTTP {error.code}: {detail}") from error
-        except (URLError, TimeoutError) as error:
+        except (URLError, TimeoutError, ConnectionError, OSError) as error:
             raise LlmUnavailableError(f"LLM endpoint is unavailable: {error}") from error
         except json.JSONDecodeError as error:
             raise LlmResponseError("LLM endpoint returned invalid JSON") from error

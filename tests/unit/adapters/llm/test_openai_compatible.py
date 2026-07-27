@@ -53,6 +53,20 @@ def test_health_returns_advertised_models(tmp_path: Path) -> None:
     assert health.models == ("granite", "qwen")
 
 
+def test_health_treats_connection_reset_as_temporarily_unavailable(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(LlmConfig(cache_directory=tmp_path / "cache"))
+
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        side_effect=ConnectionResetError(104, "Connection reset by peer"),
+    ):
+        health = gateway.health()
+
+    assert not health.available
+    assert health.detail is not None
+    assert "Connection reset by peer" in health.detail
+
+
 def test_generates_structured_result_with_provenance_and_usage(tmp_path: Path) -> None:
     gateway = OpenAICompatibleLlmGateway(
         LlmConfig(model="granite", cache_directory=tmp_path / "cache")
