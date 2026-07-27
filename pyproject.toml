@@ -52,6 +52,10 @@ dev = [
 
 [project.optional-dependencies]
 
+mcp = [
+    "mcp>=1.27,<2",
+]
+
 llm = [
     "sentence-transformers",
     "chromadb",

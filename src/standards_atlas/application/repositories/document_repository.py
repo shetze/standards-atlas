@@ -21,3 +21,7 @@ class EngineeringDocumentRepository(Protocol):
     def exists(self, key: DocumentKey) -> bool:
         """Return whether a document exists."""
         ...
+
+    def list(self) -> tuple[EngineeringDocument, ...]:
+        """Return all persisted documents in stable key order."""
+        ...

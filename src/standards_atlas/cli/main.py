@@ -37,6 +37,7 @@ from standards_atlas.adapters.llm import (
     RamaLamaServerManager,
 )
 from standards_atlas.adapters.markdown import MarkdownExporter
+from standards_atlas.adapters.mcp import McpServerConfig, run_mcp_server
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.catalog import parse_page_list
@@ -46,11 +47,11 @@ from standards_atlas.application.qualification import (
     GoldenCorpusQualifier,
     QualificationRunReporter,
 )
-from standards_atlas.application.semantic_evaluation import (
-    GoldenDatasetRepository,
+from standards_atlas.application.services.evaluation import (
+    EvaluationDatasetRepository,
+    EvaluationReporter,
+    EvaluationRunner,
     PromptRepository,
-    SemanticEvaluationReporter,
-    SemanticEvaluationRunner,
 )
 from standards_atlas.application.services import (
     AlignmentReviewService,
@@ -168,6 +169,12 @@ llm_app = typer.Typer(
 )
 app.add_typer(llm_app, name="llm")
 
+mcp_app = typer.Typer(
+    help="Expose read-only Standards Atlas data through Model Context Protocol.",
+    no_args_is_help=True,
+)
+app.add_typer(mcp_app, name="mcp")
+
 semantic_evaluation_app = typer.Typer(
     help="Benchmark prompts and models against versioned semantic gold datasets.",
     no_args_is_help=True,
@@ -232,6 +239,21 @@ def show_llm_server_status(
         typer.echo(status.detail)
 
 
+@mcp_app.command("serve")
+def serve_mcp(
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, readable=True, help="MCP YAML configuration."),
+    ] = Path("cfg/mcp.yaml"),
+) -> None:
+    """Run the read-only MCP server in the foreground."""
+    try:
+        run_mcp_server(McpServerConfig.load(config))
+    except (OSError, RuntimeError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+
 @semantic_evaluation_app.command("run")
 def run_semantic_evaluation(
     task: Annotated[str, typer.Option("--task", help="Semantic task identifier.")],
@@ -260,11 +282,11 @@ def run_semantic_evaluation(
         if llm_config.server.enabled and not server.status().running:
             server.start()
         prompt = PromptRepository(resources / "prompts").load(task, prompt_version)
-        dataset = GoldenDatasetRepository(resources / "corpora").load(task, dataset_version)
-        runner = SemanticEvaluationRunner(OpenAICompatibleLlmGateway(llm_config))
+        dataset = EvaluationDatasetRepository(resources / "corpora").load(task, dataset_version)
+        runner = EvaluationRunner(OpenAICompatibleLlmGateway(llm_config))
         models = tuple(model or (llm_config.model,))
         runs = runner.benchmark(prompt, dataset, models)
-        reporter = SemanticEvaluationReporter()
+        reporter = EvaluationReporter()
         paths = tuple(reporter.write(run, output) for run in runs)
         if len(runs) > 1:
             reporter.write_comparison(runs, output / "model-comparison.json")

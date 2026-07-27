@@ -39,3 +39,5 @@ Standards Atlas uses a hexagonal architecture around canonical document models a
 - [Artifact format reference](../reference/artifact-formats.md)
 - [Developer guide](../development/README.md)
 - [Documentation home](../README.md)
+
+- [MCP Clause Server](mcp-clause-server.md)

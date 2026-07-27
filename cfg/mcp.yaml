@@ -1,0 +1,17 @@
+mcp:
+  name: standards-atlas
+  transport: stdio
+  workspace: .atlas
+
+  # Empty means every persisted EngineeringDocument is exposed.
+  allowed_document_keys: []
+
+  limits:
+    max_results: 20
+    max_sample_size: 50
+    max_clause_characters: 20000
+
+  expose:
+    clause_text: true
+    source_paths: false
+    internal_metadata: false

@@ -65,6 +65,17 @@ class FileSystemEngineeringDocumentRepository:
         """Return whether a document exists."""
         return self._path_for_key(key).exists()
 
+    def list(self) -> tuple[EngineeringDocument, ...]:
+        """Return all persisted documents in stable key order."""
+        documents = []
+        for path in sorted(self._documents_dir.glob("*.json")):
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            data = _extract_document_data(payload)
+            document_type = DocumentType(data["document_type"])
+            model = _DOCUMENT_MODELS[document_type]
+            documents.append(model.model_validate(data))
+        return tuple(sorted(documents, key=lambda document: document.key.value))
+
     def _path_for_key(self, key: DocumentKey) -> Path:
         safe_key = _safe_filename(key.value)
         return self._documents_dir / f"{safe_key}.json"
