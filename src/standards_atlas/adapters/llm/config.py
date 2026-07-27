@@ -104,7 +104,7 @@ class LlmConfig:
             base_url=str(payload.get("base_url", cls.base_url)),
             model=model,
             timeout_seconds=float(payload.get("timeout_seconds", cls.timeout_seconds)),
-            api_key=(str(payload["api_key"]) if payload.get("api_key") else None),
+            api_key=(str(payload["api_key"]) if payload.get("api_key") else None), # notsecret
             cache_directory=Path(str(cache_value)) if cache_value else None,
             server=server,
         )
