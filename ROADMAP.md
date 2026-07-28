@@ -167,3 +167,9 @@ Completed: local Markdown review export with embedded review data, validated imp
 
 Implemented: deterministic same-document clause and range detection, target resolution,
 unresolved diagnostics, local persistence, CLI automation, and HITL context integration.
+
+### Slice 5.4.5 – Annotation Resolution and Metrics — completed
+
+Implemented evidence priority `data > local > structure`, Gold and Silver qualification,
+Structure Agreement, multi-label and primary-role metrics, confusion matrices, confidence
+calibration, corpus coverage diagnostics, and domain/stratum slice reports.

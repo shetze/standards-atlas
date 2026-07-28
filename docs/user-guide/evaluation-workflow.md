@@ -51,3 +51,20 @@ resolved against the actual EngineeringDocument structure. Unresolved or ambiguo
 references remain as diagnostics. `annotations-review-export` reads this location by
 default and adds resolved targets to the HITL document. Use `--reference-root` to select
 a different local analysis root.
+
+## Resolve annotations and calculate qualification metrics
+
+After a proposal run and optional human review, calculate the Slice 5.4.5 report:
+
+```bash
+uv run standards-atlas evaluation annotations-metrics \
+  --corpus-id semantic-roles-v1 \
+  --run local/evaluation/runs/semantic-roles-v1/prompt/provider/model
+```
+
+The resolver applies `data > local > structure`. Gold Agreement includes only reviewed or
+published annotations. Silver Agreement uses the best available annotation or structural
+fallback, while Structure Agreement remains a separate baseline. Reports are written as
+`qualification.json` and `qualification.md` below `local/evaluation/metrics/` and include
+coverage, exact match, primary-role accuracy, micro/macro F1, confusion data, calibration,
+and breakdowns by knowledge domain and corpus strata.

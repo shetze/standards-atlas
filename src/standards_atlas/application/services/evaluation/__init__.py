@@ -46,6 +46,15 @@ from standards_atlas.application.services.evaluation.proposals import (
     SemanticTaskDefinition,
     SemanticTaskRepository,
 )
+from standards_atlas.application.services.evaluation.qualification import (
+    AgreementMetrics,
+    AnnotationQualificationReport,
+    AnnotationQualificationService,
+    CalibrationMetrics,
+    ConfusionEntry,
+    CorpusCoverage,
+    EvaluationSliceReport,
+)
 from standards_atlas.application.services.evaluation.references import (
     ClauseReferenceAnalysis,
     ClauseReferenceExtractionService,
@@ -152,4 +161,11 @@ __all__ = [
     "ReviewImportResult",
     "ReviewPublishResult",
     "SemanticAnnotationReviewService",
+    "AgreementMetrics",
+    "AnnotationQualificationReport",
+    "AnnotationQualificationService",
+    "CalibrationMetrics",
+    "ConfusionEntry",
+    "CorpusCoverage",
+    "EvaluationSliceReport",
 ]

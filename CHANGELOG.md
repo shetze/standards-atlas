@@ -163,3 +163,13 @@ Development snapshots leading to the new architecture. No stable release.
 - Bound semantic proposal output to 256 tokens by default to prevent local models from hanging in schema-constrained generation.
 - Classify request timeouts separately from temporary endpoint unavailability and avoid repeating deterministic 120-second timeouts unless `--retry-timeouts` is requested.
 - Persist per-clause `failure.json` diagnostics with clause identity, error category, elapsed time, request fingerprint, prompt size and output-token limit.
+
+### Slice 5.4.5 - Annotation resolution and metrics
+
+- resolve semantic annotation evidence with `data > local > structure` priority;
+- separate Gold, Silver, and Structure Agreement metrics;
+- report exact match, primary-role accuracy, micro/macro precision, recall, and F1;
+- add primary-role confusion matrices and confidence calibration metrics;
+- report corpus coverage, stale diagnostics, knowledge-domain, and stratum slices;
+- add machine-readable JSON and reviewer-friendly Markdown qualification reports;
+- add the `evaluation annotations-metrics` CLI command and ADR 0049.

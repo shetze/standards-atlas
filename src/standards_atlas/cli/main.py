@@ -80,6 +80,7 @@ from standards_atlas.application.services import (
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 from standards_atlas.application.services.evaluation import (
+    AnnotationQualificationService,
     BaselineProposalGenerator,
     BenchmarkManifest,
     ClauseReferenceExtractionService,
@@ -778,6 +779,42 @@ def publish_annotation_reviews(
     typer.echo(f"Published                : {result.published}")
     if result.manifest_path is not None:
         typer.echo(f"Corpus manifest          : {result.manifest_path}")
+
+
+@evaluation_app.command("annotations-metrics")
+def evaluate_annotation_metrics(
+    corpus_id: Annotated[str, typer.Option("--corpus-id")],
+    run_directory: Annotated[
+        Path, typer.Option("--run", exists=True, file_okay=False, readable=True)
+    ],
+    local_corpus_root: Annotated[Path, typer.Option("--local-corpus-root", file_okay=False)] = Path(
+        "local/evaluation/corpora"
+    ),
+    published_corpus_root: Annotated[
+        Path, typer.Option("--published-corpus-root", file_okay=False)
+    ] = Path("data/evaluation/corpora"),
+    output_directory: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
+        "local/evaluation/metrics"
+    ),
+) -> None:
+    """Resolve corpus evidence and calculate Gold, Silver, and structure metrics."""
+    try:
+        report, json_path, markdown_path = AnnotationQualificationService().evaluate(
+            corpus_id=corpus_id,
+            run_directory=run_directory,
+            local_corpus_root=local_corpus_root,
+            published_corpus_root=published_corpus_root,
+            output_directory=output_directory / corpus_id / run_directory.name,
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Predictions              : {report.coverage.predictions}")
+    typer.echo(f"Gold agreement F1        : {report.gold_agreement.micro_f1:.4f}")
+    typer.echo(f"Silver agreement F1      : {report.silver_agreement.micro_f1:.4f}")
+    typer.echo(f"Structure agreement F1   : {report.structure_agreement.micro_f1:.4f}")
+    typer.echo(f"JSON report              : {json_path}")
+    typer.echo(f"Markdown report          : {markdown_path}")
 
 
 @evaluation_app.command("benchmark")
