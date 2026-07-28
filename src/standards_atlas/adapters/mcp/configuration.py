@@ -31,11 +31,15 @@ class McpLimitConfig(BaseModel):
 class McpHttpConfig(BaseModel):
     """Streamable HTTP listener and browser-origin policy."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
     host: str = "127.0.0.1"
     port: int = Field(default=8765, ge=1, le=65_535)
     path: str = "/mcp"
-    allowed_origins: tuple[str, ...] = ()
+    allowed_hosts: tuple[str, ...] = ("localhost:*", "127.0.0.1:*")
+    allowed_origins: tuple[str, ...] = (
+        "http://localhost:*",
+        "http://127.0.0.1:*",
+    )
     stateless: bool = True
 
     @model_validator(mode="after")

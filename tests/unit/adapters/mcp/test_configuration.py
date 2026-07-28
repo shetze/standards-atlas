@@ -13,6 +13,8 @@ mcp:
     max_results: 7
   expose:
     clause_text: false
+  http:
+    allowed_hosts: [localhost:*, 192.168.0.77:*]
 """,
         encoding="utf-8",
     )
@@ -24,6 +26,7 @@ mcp:
     assert config.allowed_document_keys == ("EN50716",)
     assert config.limits.max_results == 7
     assert not config.expose.clause_text
+    assert config.http.allowed_hosts == ("localhost:*", "192.168.0.77:*")
 
 
 def test_requires_authentication_for_public_http_binding() -> None:
@@ -50,3 +53,11 @@ def test_accepts_authenticated_public_http_binding() -> None:
 
     assert config.http.port == 9000
     assert config.http.path == "/atlas"
+
+
+def test_rejects_unknown_http_configuration_fields() -> None:
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="unknown_option"):
+        McpServerConfig.model_validate({"http": {"unknown_option": True}})

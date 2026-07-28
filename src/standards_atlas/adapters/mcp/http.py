@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import fnmatch
 import hmac
 import os
 from typing import Any
@@ -32,6 +33,9 @@ def create_http_app(server: Any, config: McpServerConfig) -> Any:
             )
 
     auditor = McpAuditLogger(config.audit.path, enabled=config.audit.enabled)
+
+    def matches_any(value: str, patterns: tuple[str, ...]) -> bool:
+        return any(fnmatch.fnmatchcase(value, pattern) for pattern in patterns)
 
     class RequestBodyLimitMiddleware:
         def __init__(self, app: Any) -> None:
@@ -85,7 +89,7 @@ def create_http_app(server: Any, config: McpServerConfig) -> Any:
     class SecurityMiddleware(BaseHTTPMiddleware):
         async def dispatch(self, request: Request, call_next: Any) -> Any:
             origin = request.headers.get("origin")
-            if origin and origin not in config.http.allowed_origins:
+            if origin and not matches_any(origin, config.http.allowed_origins):
                 auditor.record(
                     "http_request",
                     method=request.method,

@@ -38,7 +38,13 @@ from standards_atlas.adapters.llm import (
     RamaLamaServerManager,
 )
 from standards_atlas.adapters.markdown import MarkdownExporter
-from standards_atlas.adapters.mcp import McpServerConfig, run_mcp_server
+from standards_atlas.adapters.mcp import (
+    CodexMcpConfig,
+    McpCompatibilityProbe,
+    McpServerConfig,
+    StreamableHttpJsonRpcTransport,
+    run_mcp_server,
+)
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.catalog import parse_page_list
@@ -266,6 +272,91 @@ def serve_mcp(
         raise typer.Exit(code=2) from exc
 
 
+@mcp_app.command("probe")
+def probe_mcp(
+    url: Annotated[str, typer.Option("--url", help="Streamable HTTP MCP endpoint.")],
+    token_environment_variable: Annotated[
+        str,
+        typer.Option(
+            "--token-env",
+            help="Environment variable containing the bearer token.",
+        ),
+    ] = "STANDARDS_ATLAS_MCP_TOKEN",
+    timeout_seconds: Annotated[
+        float,
+        typer.Option("--timeout", min=0.1, help="HTTP timeout in seconds."),
+    ] = 10.0,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Optional JSON report path."),
+    ] = None,
+) -> None:
+    """Run an interoperable MCP handshake and read-only contract probe."""
+    import os
+
+    token = os.environ.get(token_environment_variable)
+    transport = StreamableHttpJsonRpcTransport(
+        url,
+        bearer_token=token,
+        timeout_seconds=timeout_seconds,
+    )
+    try:
+        report = McpCompatibilityProbe(transport).run()
+    except (OSError, RuntimeError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    payload = report.as_dict()
+    rendered = json.dumps(payload, ensure_ascii=False, indent=2)
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(f"{rendered}\n", encoding="utf-8")
+    typer.echo(rendered)
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@mcp_app.command("codex-config")
+def render_codex_mcp_config(
+    url: Annotated[str, typer.Option("--url", help="Streamable HTTP MCP endpoint.")],
+    server_name: Annotated[
+        str,
+        typer.Option("--name", help="Codex MCP server name."),
+    ] = "standards-atlas",
+    token_environment_variable: Annotated[
+        str,
+        typer.Option(
+            "--token-env",
+            help="Environment variable containing the bearer token.",
+        ),
+    ] = "STANDARDS_ATLAS_MCP_TOKEN",
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Optional config fragment path."),
+    ] = None,
+    overwrite: Annotated[
+        bool,
+        typer.Option("--overwrite", help="Replace an existing output file."),
+    ] = False,
+) -> None:
+    """Render a secure Codex Streamable HTTP MCP configuration fragment."""
+    try:
+        config = CodexMcpConfig(
+            url=url,
+            server_name=server_name,
+            bearer_token_env_var=token_environment_variable,
+        )
+        if output is not None:
+            config.write(output, overwrite=overwrite)
+    except (FileExistsError, OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(config.render_toml())
+    typer.echo("Equivalent registration command:", err=True)
+    typer.echo(" ".join(config.codex_add_command()), err=True)
+
+
 @evaluation_app.command("corpus-build")
 def build_evaluation_corpus(
     task: Annotated[str, typer.Option("--task")],
@@ -279,11 +370,15 @@ def build_evaluation_corpus(
         SamplingStrategy, typer.Option("--strategy")
     ] = SamplingStrategy.BALANCED_BY_DOCUMENT,
     seed: Annotated[int, typer.Option("--seed")] = 0,
-    include_text: Annotated[bool, typer.Option("--include-text/--hashes-only")] = True,
+    include_text: Annotated[
+        bool, typer.Option("--include-text/--hashes-only")
+    ] = True,
 ) -> None:
     """Create an annotation-ready corpus from persisted clauses."""
     try:
-        result = EvaluationCorpusBuilder(EngineeringDocumentClauseProvider(workspace)).build(
+        result = EvaluationCorpusBuilder(
+            EngineeringDocumentClauseProvider(workspace)
+        ).build(
             CorpusBuildConfig(
                 task=task,
                 version=version,

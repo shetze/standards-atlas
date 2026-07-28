@@ -78,3 +78,25 @@ def test_registers_read_only_tools_and_resources() -> None:
     assert {template.uriTemplate for template in templates} == {
         "standards-atlas://clauses/{clause_id}"
     }
+
+
+def test_configures_transport_security_from_http_policy() -> None:
+    config = McpServerConfig.model_validate(
+        {
+            "http": {
+                "allowed_hosts": ["localhost:*", "192.168.0.77:*"],
+                "allowed_origins": ["http://localhost:*", "http://192.168.0.77:*"],
+            }
+        }
+    )
+
+    server = create_mcp_server(config, FakeProvider())
+    security = server.settings.transport_security
+
+    assert security is not None
+    assert security.enable_dns_rebinding_protection
+    assert security.allowed_hosts == ["localhost:*", "192.168.0.77:*"]
+    assert security.allowed_origins == [
+        "http://localhost:*",
+        "http://192.168.0.77:*",
+    ]

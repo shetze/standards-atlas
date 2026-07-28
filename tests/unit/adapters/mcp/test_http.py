@@ -117,3 +117,21 @@ def test_rejects_request_body_above_configured_limit(tmp_path) -> None:
 
     assert response.status_code == 413
     assert response.json() == {"detail": "request body is too large"}
+
+
+def test_accepts_origin_matching_configured_port_wildcard(tmp_path) -> None:
+    config = McpServerConfig.model_validate(
+        {
+            "transport": "streamable-http",
+            "http": {"allowed_origins": ["http://192.168.0.77:*"]},
+            "audit": {"path": tmp_path / "audit.jsonl"},
+        }
+    )
+
+    with TestClient(create_http_app(FakeServer(), config)) as client:
+        response = client.post(
+            "/mcp/",
+            headers={"Origin": "http://192.168.0.77:8765"},
+        )
+
+    assert response.status_code == 200

@@ -1,203 +1,155 @@
 # Roadmap
 
-Standards Atlas is being developed as a deterministic engineering platform for analysing, maintaining and publishing relationships between international technical standards, specifications and other engineering documents.
+Standards Atlas is a deterministic engineering platform for analysing, maintaining, evaluating, and publishing relationships between international technical standards, specifications, and other engineering documents.
 
-The project is currently replacing the former IntelliDoc implementation with a modern, deterministic architecture while preserving and extending its engineering capabilities.
+The current programme replaces the former IntelliDoc implementation with a maintainable architecture while restoring and extending its cross-standard engineering capabilities.
 
----
+## Long-term vision
 
-# Long-term Vision
+Standards Atlas shall become the reference platform for analysing relationships between standards from different standardisation domains. Functional Safety is the first knowledge domain, followed by Cybersecurity, Railway Interoperability, and further engineering domains.
 
-Standards Atlas shall become the reference platform for analysing relationships between standards originating from different standardisation domains.
+## Version 0.7 — Deterministic document and evaluation foundation
 
-Initially the focus lies on Functional Safety standards.
+Status: **completed through 0.7.1**
 
-Examples include
+### Document pipeline
 
-- IEC 61508
-- ISO 26262
-- EN 50126
-- EN 50128
-- EN 50129
-- EN 50657
-- EN 50716
+- Docling extraction and private source persistence.
+- Deterministic normalized-document contract.
+- Reference detection, alignment, review, and manual overrides.
+- Canonical `EngineeringDocument` construction.
+- Transformation ledger and end-to-end lineage.
+- Golden corpus and layered qualification framework.
 
-Later the same approach shall be extended to Cybersecurity, Railway Interoperability and further domains.
+### Workspace and publication
 
----
+- Separation of `.atlas` internal artefacts and `local` protected/user-facing data.
+- Catalog-driven single-part and multipart workflows.
+- Functional Safety publication hierarchy.
+- Markdown and Doorstop publication with packaged templates.
+- Reproducible workflow derivation reports.
 
-# Current Refactoring Programme
+### Semantic evaluation framework
 
-The current development is not primarily about adding new features.
+- Generic clause-access services independent of transport protocols.
+- Deterministic filtering, search, and balanced sampling.
+- Local annotation-ready corpus construction.
+- Versioned prompt/model benchmark manifests.
+- Content-safe benchmark summaries and manifest fingerprints.
 
-Its objective is to replace the legacy IntelliDoc implementation by a deterministic and maintainable architecture while preserving all engineering capabilities.
+### MCP evaluation server
 
-Every completed slice restores one part of the former functionality on top of the new architecture.
+- Read-only MCP adapter over the evaluation services.
+- stdio and Streamable HTTP transports.
+- Bearer authentication, host/origin policy, DNS-rebinding protection, request limits, and audit logging.
+- Container deployment examples.
+- Independent compatibility probe and CI-ready smoke test.
 
----
+## Version 0.8 — Restore and improve IntelliDoc relationship analysis
 
-# Version 0.7
+### 5.4 Gold-dataset management
 
-Completed
+- Define task-specific gold-dataset schemas.
+- Add annotation, review, acceptance, and supersession states.
+- Validate references to corpus clauses and source hashes.
+- Support reviewer disagreement and adjudication.
+- Preserve dataset lineage across revisions.
 
-## Deterministic document pipeline
+### 5.5 Benchmark and confidence framework
 
-- Docling integration
-- NormalizedDocument
-- EngineeringDocument
-- deterministic workflows
-- reproducible publications
+- Calculate precision, recall, F1, and task-specific metrics.
+- Compare prompt and model versions against accepted gold datasets.
+- Add confidence calibration and threshold analysis.
+- Classify false positives, false negatives, and malformed outputs.
+- Generate protected local detail reports and shareable aggregate reports.
+- Establish regression gates for selected production configurations.
 
-## Workspace redesign
+### 5.6 Relationship discovery
 
-- internal workspace
-- local source repository
-- hierarchy-based publications
+Restore the central IntelliDoc capability on top of the new architecture.
 
-## Functional Safety publication hierarchy
+Detect and review:
 
-- IEC 61508
-- ISO 26262
-- EN 50126
-- EN 50128
-- EN 50129
-- EN 50657
-- EN 50716
+- normative and informative references;
+- adapted or inherited clauses;
+- equivalent and overlapping concepts;
+- terminology mappings;
+- specialisation and constraint relationships;
+- potential conflicts and gaps.
 
----
+Support:
 
-# Version 0.8
+- one-to-one, one-to-many, and many-to-one relationships;
+- partial clause mappings;
+- model confidence and evidence;
+- deterministic candidate persistence;
+- human review and override workflows;
+- relationship regression datasets.
 
-## Restore IntelliDoc relationship analysis
+### Knowledge Domain graph
 
-Reintroduce the engineering functionality that previously existed in IntelliDoc.
+Represent standards and relationships as an explicit graph rather than only as a publication tree. Initial relationship types include:
 
-### Cross-standard references
+- `references`;
+- `derives_from`;
+- `adapts`;
+- `specialises`;
+- `constrains`;
+- `equivalent_to`;
+- `conflicts_with`;
+- `supersedes`.
 
-Detect
+## Version 0.9 — Engineering analysis
 
-- normative references
-- adapted clauses
-- inherited requirements
-- equivalent concepts
-- terminology mappings
+Generate engineering artefacts directly from the Knowledge Domain:
 
-### Alignment improvements
+- impact and dependency analysis;
+- missing-mapping and coverage reports;
+- consistency and terminology comparison;
+- change propagation;
+- graph exports and exploration;
+- AI-assisted review based on traceable relationship evidence.
 
-Support
+## Version 1.0 — Functional Safety Atlas
 
-- one-to-many mappings
-- many-to-one mappings
-- partial clause mappings
-- confidence assessment
-- review workflow
+The first production-ready platform for analysing relationships between Functional Safety standards, with:
 
-### Knowledge Domain
+- deterministic document processing;
+- qualified semantic evaluation;
+- reviewed cross-standard relationships;
+- complete navigation and engineering reports;
+- durable qualification evidence;
+- stable APIs and CLI;
+- secured MCP access for engineering assistants.
 
-Represent standards as an explicit graph rather than a publication tree.
+## Beyond Functional Safety
 
-Relationship types include
+### Cybersecurity
 
-- derives from
-- adapts
-- supersedes
-- references
-- constrains
-- specialises
-- equivalent to
+Examples include IEC 62443, ISO/SAE 21434, and the ISO/IEC 27000 family.
 
----
+### Railway interoperability and operations
 
-# Version 0.9
+Examples include TSI, CCS, ERA guidance, and operational rules.
 
-## Engineering analysis
+### Systems engineering
 
-Generate engineering artefacts directly from the Knowledge Domain.
+Examples include IEC 81346, ISO 15288, and SysML-based artefacts.
 
-Examples
+## Research topics
 
-- impact analysis
-- dependency reports
-- missing mappings
-- consistency checks
-- terminology comparison
+- semantic document comparison;
+- model-assisted relationship discovery;
+- confidence calibration for engineering decisions;
+- automated impact prediction;
+- knowledge-graph visualisation;
+- engineering assistants with protected local context;
+- configurable and qualifiable publication pipelines.
 
-## Semantic enrichment
 
-Automatically classify
+### Slice 5.3.7 - Codex integration — completed
 
-- requirements
-- recommendations
-- definitions
-- objectives
-- assumptions
-- rationale
-
----
-
-# Version 1.0
-
-## Functional Safety Atlas
-
-The first production-ready engineering platform for analysing relationships between Functional Safety standards.
-
-Capabilities include
-
-- deterministic document processing
-- reproducible publications
-- complete cross-standard navigation
-- engineering reports
-- qualification evidence
-- stable APIs
-- stable CLI
-
----
-
-# Beyond Functional Safety
-
-After completion of the Functional Safety Atlas the same methodology will be applied to further domains.
-
-## Cybersecurity
-
-Examples
-
-- IEC 62443
-- ISO/SAE 21434
-- IEC 27000 family
-
-## Railway
-
-Examples
-
-- TSI
-- CCS
-- ERA guidance
-- operational rules
-
-## Systems Engineering
-
-Examples
-
-- IEC 81346
-- ISO 15288
-- SysML-based artefacts
-
----
-
-# Research Topics
-
-Future research includes
-
-- semantic document comparison
-- AI-assisted relationship discovery
-- automated impact prediction
-- knowledge graph visualisation
-- engineering assistants
-- configurable publication pipelines
-
-## Completed: Slice 5.3.4 – Local Evaluation Workflow
-
-- Reproducible corpus construction from persisted clauses
-- Annotation-ready local datasets and source-hash manifests
-- Manifest-driven prompt/model benchmark matrices
-- Protected-content-safe matrix reports
+- secure Streamable HTTP registration for Codex;
+- environment-backed bearer authentication;
+- explicit read-only tool allow list;
+- reproducible configuration and verification workflow.

@@ -16,6 +16,7 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
     try:
         from mcp.server.fastmcp import FastMCP
         from mcp.server.fastmcp.exceptions import ToolError
+        from mcp.server.transport_security import TransportSecuritySettings
     except ImportError as exc:
         raise RuntimeError("MCP support is not installed. Run 'uv sync --extra mcp'.") from exc
 
@@ -28,6 +29,11 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
         json_response=True,
         stateless_http=config.http.stateless,
         streamable_http_path="/",
+        transport_security=TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=list(config.http.allowed_hosts),
+            allowed_origins=list(config.http.allowed_origins),
+        ),
     )
 
     def tool_call(operation: Any, *args: Any, **kwargs: Any) -> Any:

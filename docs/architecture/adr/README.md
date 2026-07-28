@@ -68,11 +68,21 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0034](0034-golden-corpus-and-regression-qualification.md) | Use a golden corpus for regression qualification |
 | [0039](0039-verification-and-qualification-framework.md) | Establish the verification and qualification framework |
 
+## Semantic evaluation and MCP access
+
+| ADR | Decision |
+|---|---|
+| [0040](0040-expose-evaluation-services-through-an-mcp-adapter.md) | Expose evaluation services through a read-only MCP inbound adapter |
+| [0041](0041-keep-semantic-evaluation-data-local-and-reports-content-safe.md) | Keep protected evaluation data local and reports content-safe |
+| [0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md) | Secure and qualify Streamable HTTP MCP deployments |
+| [0043](0043-integrate-codex-as-a-restricted-mcp-client.md) | Integrate Codex as a restricted MCP client |
+
 ## Reading guidance
 
 - For the architecture's overall shape, begin with [ADR 0002](0002-adopt-traceability-centric-architecture.md), [ADR 0003](0003-adopt-hexagonal-architecture.md), and [ADR 0004](0004-adopt-transformation-pipeline.md).
 - For the canonical contracts, continue with [ADR 0006](0006-engineeringdocument-as-canonical-repesenation.md), [ADR 0026](0026-normalized-document-contract.md), and [ADR 0033](0033-engineering-document-construction-contract.md).
 - For operational governance, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0034](0034-golden-corpus-and-regression-qualification.md), [ADR 0039](0039-verification-and-qualification-framework.md), and [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md).
+- For semantic evaluation and external model access, read [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0041](0041-keep-semantic-evaluation-data-local-and-reports-content-safe.md), and [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md).
 
 ## Related documentation
 

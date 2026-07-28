@@ -16,6 +16,7 @@ Standards Atlas uses a hexagonal architecture around canonical document models a
 | Planning, execution, and review gates | [Workflow orchestration](workflow-orchestration.md) |
 | Doorstop family structure | [Doorstop document hierarchy](doorstop-document-hierarchy.md) |
 | Publication and licensed-content boundaries | [Security and copyright](security-and-copyright.md) |
+| Evaluation and external model access | [MCP clause server](mcp-clause-server.md) |
 
 ## Design records and visual material
 
@@ -30,7 +31,9 @@ Standards Atlas uses a hexagonal architecture around canonical document models a
 - make uncertain decisions reviewable instead of hiding them;
 - enforce public, local, and private content boundaries;
 - support single-part and composed multi-part standards;
-- keep transformations deterministic unless an explicit extension says otherwise.
+- keep transformations deterministic unless an explicit extension says otherwise;
+- expose semantic evaluation through application ports before adding protocol adapters;
+- keep protected corpus content local and qualify remote access explicitly.
 
 ## Related documentation
 
@@ -40,4 +43,8 @@ Standards Atlas uses a hexagonal architecture around canonical document models a
 - [Developer guide](../development/README.md)
 - [Documentation home](../README.md)
 
-- [MCP Clause Server](mcp-clause-server.md)
+
+## Codex client integration
+
+Codex consumes the client-neutral MCP adapter through a restricted, token-free
+configuration profile. See [ADR 0043](adr/0043-integrate-codex-as-a-restricted-mcp-client.md).

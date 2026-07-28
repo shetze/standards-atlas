@@ -1,0 +1,10 @@
+# Copy this table into ~/.codex/config.toml or a trusted project's
+# .codex/config.toml. The bearer token remains in the process environment.
+[mcp_servers.standards-atlas]
+url = "http://192.168.0.77:8765/mcp/"
+bearer_token_env_var = "STANDARDS_ATLAS_MCP_TOKEN"
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+required = true
+default_tools_approval_mode = "auto"
+enabled_tools = ["list_standards", "get_clause", "list_clauses", "search_clauses", "sample_clauses"]

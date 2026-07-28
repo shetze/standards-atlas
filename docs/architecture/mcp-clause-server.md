@@ -93,3 +93,27 @@ The built-in token mode is intended for a controlled single-client deployment
 or a protected tunnel. Enterprise multi-user deployments should replace it
 with an OAuth 2.1 authorization server and the MCP SDK's `TokenVerifier`
 integration without changing the clause-access services.
+
+
+## Transport host validation
+
+The HTTP configuration owns the allow-lists used by the MCP SDK DNS-rebinding
+protection. `allowed_hosts` validates the HTTP `Host` header, while
+`allowed_origins` validates browser origins. The adapter passes both lists into
+`TransportSecuritySettings`; unknown HTTP configuration fields are rejected to
+prevent security settings from being silently ignored.
+
+## Compatibility boundary
+
+The adapter includes a small protocol-level compatibility probe. It acts as an
+independent client and verifies the externally visible contract instead of
+calling server internals. This covers:
+
+- Streamable HTTP JSON-RPC initialization
+- protocol-version negotiation
+- discovery of the required read-only tools
+- execution of `list_standards`
+- discovery of `standards-atlas://documents`
+
+Keeping the probe independent from FastMCP's internal server API makes it a
+regression guard for SDK upgrades and client interoperability.
