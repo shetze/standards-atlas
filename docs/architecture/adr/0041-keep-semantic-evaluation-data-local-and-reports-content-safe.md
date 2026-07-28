@@ -20,7 +20,7 @@ and metrics without automatically copying protected text into shareable artefact
 Standards Atlas separates local evaluation corpora from content-safe benchmark evidence.
 
 Corpus construction produces versioned, annotation-ready datasets below the local workspace. Each
-corpus records stable clause identifiers, document references, source hashes, sampling strategy,
+corpus records stable clause identifiers, document references, normalized clause hashes, sampling strategy,
 seed, filters, and annotation state. A hashes-only mode is available when even local corpus exports
 must omit clause text.
 
@@ -39,7 +39,7 @@ fingerprint. Case-level content may be included only through an explicit local c
 - Prompt and model comparisons remain reproducible and auditable.
 - Reports can be retained as qualification evidence with reduced disclosure risk.
 - Corpus annotation and benchmark execution remain separate lifecycle steps.
-- Hashes allow source changes to be detected without exposing source content.
+- Hashes allow normalized clause changes to be detected without exposing source content.
 
 ### Negative
 

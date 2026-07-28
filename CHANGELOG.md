@@ -1,5 +1,16 @@
 # Changelog
 
+### Slice 5.4.1 - Corpus and annotation contract
+
+- define content-safe corpus manifests and clause annotation YAML contracts;
+- identify annotations by knowledge domain, document key, and clause id;
+- add normalized clause hashes for integrity and staleness detection;
+- preserve generated proposals separately from reviewed semantic-role annotations;
+- implement proposed, reviewed, and published lifecycle states;
+- resolve published `data` annotations before local reviewed or proposed variants;
+- publish reviewed local annotations as Git-trackable reference data;
+- document the decision in ADR 0044.
+
 ### Slice 5.3.7 - Codex integration
 
 - add a token-free Codex Streamable HTTP MCP configuration generator;
@@ -29,7 +40,7 @@ The format is inspired by Keep a Changelog, and the project follows Semantic Ver
 - Generic, transport-independent clause-access services.
 - Read-only filesystem-backed `ClauseProvider` implementation.
 - Deterministic clause filtering, search, and balanced sampling.
-- Reproducible local corpus construction with source-hash manifests.
+- Reproducible local corpus construction with clause-hash manifests.
 - Versioned prompt/model benchmark matrices.
 - Content-safe matrix reports that omit clauses and model responses by default.
 

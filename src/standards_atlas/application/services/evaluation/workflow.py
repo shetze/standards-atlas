@@ -103,12 +103,11 @@ class EvaluationCorpusBuilder:
         examples = []
         sources = []
         for clause in clauses:
-            source_hash = hashlib.sha256(clause.text.encode("utf-8")).hexdigest()
             item_input: dict[str, Any] = {
                 "reference": clause.clause_reference,
                 "document_key": clause.document_key,
                 "clause_id": clause.id,
-                "source_hash": source_hash,
+                "clause_hash": clause.clause_hash,
             }
             if config.include_text:
                 item_input["text"] = clause.text
@@ -124,7 +123,7 @@ class EvaluationCorpusBuilder:
                     "annotation_status": "proposed",
                 }
             )
-            sources.append({"clause_id": clause.id, "source_hash": source_hash})
+            sources.append({"clause_id": clause.id, "clause_hash": clause.clause_hash})
         dataset = {
             "task": config.task,
             "version": config.version,

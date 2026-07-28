@@ -24,6 +24,7 @@ class FakeProvider:
                 document_key="DOC",
                 reference="DOC:1",
                 clause_reference="1",
+                clause_hash="sha256:" + "a" * 64,
                 clause_type=ClauseType.REQUIREMENT,
                 text="The supplier shall review the plan.",
             ),
@@ -87,7 +88,7 @@ def test_builds_annotation_ready_corpus(tmp_path: Path) -> None:
     manifest = json.loads(result.manifest_path.read_text())
     assert payload["examples"][0]["annotation_status"] == "proposed"
     assert payload["examples"][0]["expected"] == {}
-    assert manifest["sources"][0]["source_hash"]
+    assert manifest["sources"][0]["clause_hash"]
 
 
 def test_runs_complete_prompt_model_matrix_and_writes_redacted_report(tmp_path: Path) -> None:

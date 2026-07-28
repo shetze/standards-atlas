@@ -38,9 +38,7 @@ def test_probe_verifies_protocol_tools_resource_and_read_only_call() -> None:
                 }
             },
             "tools/call": {"result": {"content": [], "isError": False}},
-            "resources/list": {
-                "result": {"resources": [{"uri": "standards-atlas://documents"}]}
-            },
+            "resources/list": {"result": {"resources": [{"uri": "standards-atlas://documents"}]}},
         }
     )
 
@@ -67,9 +65,7 @@ def test_probe_reports_missing_required_tool() -> None:
             },
             "tools/list": {"result": {"tools": [{"name": "list_standards"}]}},
             "tools/call": {"result": {"content": [], "isError": False}},
-            "resources/list": {
-                "result": {"resources": [{"uri": "standards-atlas://documents"}]}
-            },
+            "resources/list": {"result": {"resources": [{"uri": "standards-atlas://documents"}]}},
         }
     )
 
@@ -82,6 +78,9 @@ def test_probe_reports_missing_required_tool() -> None:
 
 def test_decodes_json_and_sse_responses() -> None:
     assert _decode_response_body('{"jsonrpc":"2.0","id":1,"result":{}}')["id"] == 1
-    assert _decode_response_body(
-        'event: message\ndata: {"jsonrpc":"2.0","id":2,"result":{}}\n\n'
-    )["id"] == 2
+    assert (
+        _decode_response_body('event: message\ndata: {"jsonrpc":"2.0","id":2,"result":{}}\n\n')[
+            "id"
+        ]
+        == 2
+    )

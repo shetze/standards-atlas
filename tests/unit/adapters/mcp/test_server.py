@@ -23,6 +23,7 @@ class FakeProvider:
         document_key="standard-1",
         reference="1",
         clause_reference="1",
+        clause_hash="sha256:" + "a" * 64,
         clause_type=ClauseType.CLAUSE,
         title="Scope",
         text="The system shall be safe.",

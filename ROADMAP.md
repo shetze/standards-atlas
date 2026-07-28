@@ -51,7 +51,7 @@ Status: **completed through 0.7.1**
 
 - Define task-specific gold-dataset schemas.
 - Add annotation, review, acceptance, and supersession states.
-- Validate references to corpus clauses and source hashes.
+- Validate references to corpus clauses and normalized clause hashes.
 - Support reviewer disagreement and adjudication.
 - Preserve dataset lineage across revisions.
 

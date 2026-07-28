@@ -1,5 +1,24 @@
 """Reusable prompt, model, dataset, regression, and reporting evaluation services."""
 
+from standards_atlas.application.services.evaluation.annotations import (
+    AnnotationContractError,
+    AnnotationGenerator,
+    AnnotationLifecycleStatus,
+    AnnotationResolutionSource,
+    AnnotationReview,
+    ClauseAnnotationPublisher,
+    ClauseAnnotationRepository,
+    ClauseAnnotationResolver,
+    ClauseEvaluationAnnotation,
+    ClauseReference,
+    CorpusClause,
+    CorpusManifestRepository,
+    EvaluationCorpusManifest,
+    ResolvedClauseAnnotation,
+    ReviewDecision,
+    SemanticRoleSelection,
+    normalized_clause_hash,
+)
 from standards_atlas.application.services.evaluation.clause_access import (
     ClauseDescriptor,
     ClauseFilter,
@@ -43,6 +62,23 @@ from standards_atlas.application.services.evaluation.workflow import (
 )
 
 __all__ = [
+    "AnnotationContractError",
+    "AnnotationGenerator",
+    "AnnotationLifecycleStatus",
+    "AnnotationResolutionSource",
+    "AnnotationReview",
+    "ClauseAnnotationPublisher",
+    "ClauseAnnotationRepository",
+    "ClauseAnnotationResolver",
+    "ClauseEvaluationAnnotation",
+    "ClauseReference",
+    "CorpusClause",
+    "CorpusManifestRepository",
+    "EvaluationCorpusManifest",
+    "ResolvedClauseAnnotation",
+    "ReviewDecision",
+    "SemanticRoleSelection",
+    "normalized_clause_hash",
     "AggregateMetrics",
     "EvaluationCaseResult",
     "EvaluationDataset",

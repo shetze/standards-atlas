@@ -370,15 +370,11 @@ def build_evaluation_corpus(
         SamplingStrategy, typer.Option("--strategy")
     ] = SamplingStrategy.BALANCED_BY_DOCUMENT,
     seed: Annotated[int, typer.Option("--seed")] = 0,
-    include_text: Annotated[
-        bool, typer.Option("--include-text/--hashes-only")
-    ] = True,
+    include_text: Annotated[bool, typer.Option("--include-text/--hashes-only")] = True,
 ) -> None:
     """Create an annotation-ready corpus from persisted clauses."""
     try:
-        result = EvaluationCorpusBuilder(
-            EngineeringDocumentClauseProvider(workspace)
-        ).build(
+        result = EvaluationCorpusBuilder(EngineeringDocumentClauseProvider(workspace)).build(
             CorpusBuildConfig(
                 task=task,
                 version=version,
