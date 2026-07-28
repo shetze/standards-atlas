@@ -84,6 +84,11 @@ class AnnotationGenerator(BaseModel):
     model: str = Field(min_length=1)
     prompt_id: str = Field(min_length=1)
     generated_at: datetime
+    task_version: str = "1.0.0"
+    temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+    seed: int | None = None
+    input_hash: str | None = None
+    raw_response_hash: str | None = None
 
 
 class AnnotationReview(BaseModel):

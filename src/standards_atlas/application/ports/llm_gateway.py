@@ -9,6 +9,35 @@ from typing import Any, Protocol
 JsonObject = Mapping[str, Any]
 
 
+class LlmGatewayError(RuntimeError):
+    """Base exception for inference transport and response failures."""
+
+
+class LlmUnavailableError(LlmGatewayError):
+    """Raised when an inference endpoint is temporarily unavailable."""
+
+
+class LlmTimeoutError(LlmUnavailableError):
+    """Raised when one inference request exceeds the configured timeout."""
+
+
+class LlmResponseError(LlmGatewayError):
+    """Raised when an inference endpoint returns an invalid response."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        raw_content: str | None = None,
+        raw_response: JsonObject | str | None = None,
+        finish_reason: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.raw_content = raw_content
+        self.raw_response = raw_response
+        self.finish_reason = finish_reason
+
+
 @dataclass(frozen=True)
 class StructuredGenerationRequest:
     """Provider-independent request for schema-constrained text generation."""
@@ -57,6 +86,7 @@ class StructuredGenerationResult:
     duration_ms: int
     usage: TokenUsage | None = None
     cached: bool = False
+    raw_response: JsonObject | str | None = None
 
 
 @dataclass(frozen=True)

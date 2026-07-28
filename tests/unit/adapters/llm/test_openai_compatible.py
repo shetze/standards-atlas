@@ -6,7 +6,10 @@ from typing import Any
 from unittest.mock import patch
 
 from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
-from standards_atlas.application.ports.llm_gateway import StructuredGenerationRequest
+from standards_atlas.application.ports.llm_gateway import (
+    LlmResponseError,
+    StructuredGenerationRequest,
+)
 
 
 class _Response:
@@ -116,3 +119,51 @@ def test_reuses_cached_result_without_second_request(tmp_path: Path) -> None:
     assert not first.cached
     assert second.cached
     assert second.value == first.value
+
+
+def test_accepts_json_wrapped_in_markdown_fence(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(model="granite", cache_directory=tmp_path / "cache")
+    )
+    response = {
+        "model": "granite",
+        "choices": [
+            {
+                "finish_reason": "stop",
+                "message": {"content": '```json\n{"summary":"Valid."}\n```'},
+            }
+        ],
+    }
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(response),
+    ):
+        result = gateway.generate_structured(_request())
+    assert result.value == {"summary": "Valid."}
+
+
+def test_invalid_json_exposes_raw_response_and_finish_reason(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(model="granite", cache_directory=tmp_path / "cache")
+    )
+    response = {
+        "model": "granite",
+        "choices": [
+            {
+                "finish_reason": "length",
+                "message": {"content": '{"summary":"truncated'},
+            }
+        ],
+    }
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(response),
+    ):
+        try:
+            gateway.generate_structured(_request())
+        except LlmResponseError as error:
+            assert error.raw_content == '{"summary":"truncated'
+            assert error.raw_response == response
+            assert error.finish_reason == "length"
+        else:
+            raise AssertionError("expected LlmResponseError")

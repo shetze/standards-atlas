@@ -32,6 +32,8 @@ from standards_atlas.adapters.doorstop import (
 from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvider
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.llm import (
+    CodexCliConfig,
+    CodexCliLlmGateway,
     LlmConfig,
     OpenAICompatibleLlmGateway,
     RamaLamaServerError,
@@ -78,6 +80,7 @@ from standards_atlas.application.services import (
 )
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 from standards_atlas.application.services.evaluation import (
+    BaselineProposalGenerator,
     BenchmarkManifest,
     CorpusBuildConfig,
     EvaluationCorpusBuilder,
@@ -86,12 +89,17 @@ from standards_atlas.application.services.evaluation import (
     EvaluationReporter,
     EvaluationRunner,
     PromptRepository,
+    ProposalRunConfig,
     SamplingStrategy,
+)
+from standards_atlas.application.services.evaluation.defaults import (
+    SEMANTIC_ROLE_PROMPT_VERSIONS,
 )
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
     WorkflowRunReporter,
 )
+from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
 
@@ -215,7 +223,7 @@ def start_llm_server(
     config: Annotated[
         Path,
         typer.Option("--config", exists=True, readable=True, help="LLM YAML configuration."),
-    ] = Path("cfg/llm.yaml"),
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
 ) -> None:
     try:
         _managed_llm_server(config).start()
@@ -230,7 +238,7 @@ def stop_llm_server(
     config: Annotated[
         Path,
         typer.Option("--config", exists=True, readable=True, help="LLM YAML configuration."),
-    ] = Path("cfg/llm.yaml"),
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
 ) -> None:
     try:
         _managed_llm_server(config).stop()
@@ -245,7 +253,7 @@ def show_llm_server_status(
     config: Annotated[
         Path,
         typer.Option("--config", exists=True, readable=True, help="LLM YAML configuration."),
-    ] = Path("cfg/llm.yaml"),
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
 ) -> None:
     try:
         status = _managed_llm_server(config).status()
@@ -262,7 +270,7 @@ def serve_mcp(
     config: Annotated[
         Path,
         typer.Option("--config", exists=True, readable=True, help="MCP YAML configuration."),
-    ] = Path("cfg/mcp.yaml"),
+    ] = cli_defaults.DEFAULT_MCP_CONFIG,
 ) -> None:
     """Run the read-only MCP server in the foreground."""
     try:
@@ -281,15 +289,15 @@ def probe_mcp(
             "--token-env",
             help="Environment variable containing the bearer token.",
         ),
-    ] = "STANDARDS_ATLAS_MCP_TOKEN",
+    ] = cli_defaults.DEFAULT_MCP_TOKEN_ENVIRONMENT_VARIABLE,
     timeout_seconds: Annotated[
         float,
         typer.Option("--timeout", min=0.1, help="HTTP timeout in seconds."),
-    ] = 10.0,
+    ] = cli_defaults.DEFAULT_MCP_TIMEOUT_SECONDS,
     output: Annotated[
         Path | None,
         typer.Option("--output", help="Optional JSON report path."),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
     """Run an interoperable MCP handshake and read-only contract probe."""
     import os
@@ -322,22 +330,22 @@ def render_codex_mcp_config(
     server_name: Annotated[
         str,
         typer.Option("--name", help="Codex MCP server name."),
-    ] = "standards-atlas",
+    ] = cli_defaults.DEFAULT_MCP_SERVER_NAME,
     token_environment_variable: Annotated[
         str,
         typer.Option(
             "--token-env",
             help="Environment variable containing the bearer token.",
         ),
-    ] = "STANDARDS_ATLAS_MCP_TOKEN",
+    ] = cli_defaults.DEFAULT_MCP_TOKEN_ENVIRONMENT_VARIABLE,
     output: Annotated[
         Path | None,
         typer.Option("--output", help="Optional config fragment path."),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     overwrite: Annotated[
         bool,
         typer.Option("--overwrite", help="Replace an existing output file."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Render a secure Codex Streamable HTTP MCP configuration fragment."""
     try:
@@ -362,17 +370,23 @@ def build_evaluation_corpus(
     task: Annotated[str, typer.Option("--task")],
     version: Annotated[str, typer.Option("--version")],
     count: Annotated[int, typer.Option("--count", min=1)],
-    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = Path(".atlas"),
-    output: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
-        "local/evaluation/corpora"
-    ),
+    workspace: Annotated[
+        Path, typer.Option("--workspace", file_okay=False)
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+    output: Annotated[
+        Path, typer.Option("--output", file_okay=False)
+    ] = cli_defaults.DEFAULT_EVALUATION_CORPUS_ROOT,
     strategy: Annotated[
         SamplingStrategy, typer.Option("--strategy")
-    ] = SamplingStrategy.BALANCED_BY_DOCUMENT,
-    seed: Annotated[int, typer.Option("--seed")] = 0,
-    include_text: Annotated[bool, typer.Option("--include-text/--hashes-only")] = True,
-    knowledge_domain: Annotated[str, typer.Option("--knowledge-domain")] = "default",
-    corpus_id: Annotated[str | None, typer.Option("--corpus-id")] = None,
+    ] = cli_defaults.DEFAULT_CORPUS_STRATEGY,
+    seed: Annotated[int, typer.Option("--seed")] = cli_defaults.DEFAULT_EVALUATION_SEED,
+    include_text: Annotated[
+        bool, typer.Option("--include-text/--hashes-only")
+    ] = cli_defaults.DEFAULT_CORPUS_INCLUDE_TEXT,
+    knowledge_domain: Annotated[
+        str, typer.Option("--knowledge-domain")
+    ] = cli_defaults.DEFAULT_KNOWLEDGE_DOMAIN,
+    corpus_id: Annotated[str | None, typer.Option("--corpus-id")] = cli_defaults.DEFAULT_NONE,
 ) -> None:
     """Create an annotation-ready corpus from persisted clauses."""
     try:
@@ -397,6 +411,217 @@ def build_evaluation_corpus(
     typer.echo(f"Manifest                : {result.manifest_path}")
 
 
+@evaluation_app.command("annotations-propose")
+def propose_evaluation_annotations(
+    corpus_id: Annotated[
+        str,
+        typer.Option(
+            "--corpus-id",
+            help="Corpus identifier below --corpus-root.",
+        ),
+    ],
+    task: Annotated[
+        str,
+        typer.Option(
+            "--task",
+            help="Semantic task identifier.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_TASK,
+    task_version: Annotated[
+        str,
+        typer.Option(
+            "--task-version",
+            help="Version of the semantic task contract and taxonomy.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_TASK_VERSION,
+    dataset_version: Annotated[
+        str,
+        typer.Option(
+            "--dataset-version",
+            help="Version of the corpus dataset to load.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_DATASET_VERSION,
+    prompt_version: Annotated[
+        str,
+        typer.Option(
+            "--prompt-version",
+            help=(
+                "Prompt variant. Available for semantic-role-classification: "
+                + ", ".join(SEMANTIC_ROLE_PROMPT_VERSIONS)
+                + "."
+            ),
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_PROMPT_VERSION,
+    model: Annotated[
+        str,
+        typer.Option(
+            "--model",
+            help="Provider-specific model identifier.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_MODEL,
+    provider: Annotated[
+        str,
+        typer.Option(
+            "--provider",
+            help="LLM provider: ramalama or codex.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_PROVIDER,
+    corpus_root: Annotated[
+        Path,
+        typer.Option(
+            "--corpus-root",
+            file_okay=False,
+            help="Root directory containing evaluation corpora.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_CORPUS_ROOT,
+    output: Annotated[
+        Path,
+        typer.Option(
+            "--output",
+            file_okay=False,
+            help="Root directory for evaluation runs and reports.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_OUTPUT,
+    resources: Annotated[
+        Path,
+        typer.Option(
+            "--resources",
+            file_okay=False,
+            help="Root directory containing semantic tasks and prompts.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_RESOURCES,
+    config: Annotated[
+        Path,
+        typer.Option(
+            "--config",
+            help="LLM YAML configuration used by the ramalama provider.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+    overwrite: Annotated[
+        bool,
+        typer.Option("--overwrite", help="Regenerate evaluation artifacts that already exist."),
+    ] = cli_defaults.DEFAULT_FALSE,
+    limit: Annotated[
+        int | None,
+        typer.Option("--limit", min=1, help="Maximum number of pending clauses to process."),
+    ] = cli_defaults.DEFAULT_NONE,
+    max_tokens: Annotated[
+        int,
+        typer.Option(
+            "--max-tokens", min=1, help="Maximum completion tokens per clause.", show_default=True
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_MAX_TOKENS,
+    retry_attempts: Annotated[
+        int,
+        typer.Option(
+            "--retry-attempts",
+            min=1,
+            help="Attempts for retryable provider failures.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_RETRY_ATTEMPTS,
+    retry_backoff_seconds: Annotated[
+        float,
+        typer.Option(
+            "--retry-backoff-seconds",
+            min=0.0,
+            help="Delay between retry attempts in seconds.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS,
+    retry_timeouts: Annotated[
+        bool,
+        typer.Option(
+            "--retry-timeouts/--no-retry-timeouts",
+            help="Retry deterministic request timeouts as transient failures.",
+            show_default=True,
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
+) -> None:
+    """Generate resumable baseline proposals for a local evaluation corpus.
+
+    Prompt variants for ``semantic-role-classification``:
+
+    - ``content-only-v1``
+    - ``structure-aware-v1``
+    - ``evidence-first-v1``
+    - ``conservative-v1``
+    """
+    try:
+        if provider == "codex":
+            gateway = CodexCliLlmGateway(CodexCliConfig())
+        elif provider == cli_defaults.DEFAULT_EVALUATION_PROVIDER:
+            llm_config = LlmConfig.load(config)
+            server = RamaLamaServerManager(llm_config)
+            if llm_config.server.enabled and not server.status().running:
+                server.start()
+            gateway = OpenAICompatibleLlmGateway(llm_config)
+        else:
+            raise ValueError("provider must be 'ramalama' or 'codex'")
+
+        def show_progress(item) -> None:
+            location = item.document_key
+            if item.reference:
+                location += f":{item.reference}"
+            if item.title:
+                location += f" — {item.title}"
+            elapsed = f" ({item.elapsed_seconds:.1f}s)" if item.elapsed_seconds is not None else ""
+            retry = (
+                f" attempt {item.attempt}/{item.max_attempts}"
+                if item.attempt is not None and item.max_attempts is not None
+                else ""
+            )
+            line = (
+                f"[{item.current:>3}/{item.total:<3}] "
+                f"{item.status:<10} {location} [{item.example_id}]"
+                f"{retry}{elapsed}"
+            )
+            if item.detail:
+                line += f" — {item.detail}"
+            typer.echo(line, err=item.status in {"failed", "retrying"})
+
+        result = BaselineProposalGenerator(gateway).run(
+            ProposalRunConfig(
+                corpus_id=corpus_id,
+                task=task,
+                task_version=task_version,
+                dataset_version=dataset_version,
+                prompt_version=prompt_version,
+                provider=provider,
+                model=model,
+                overwrite=overwrite,
+                limit=limit,
+                max_tokens=max_tokens,
+                retry_attempts=retry_attempts,
+                retry_backoff_seconds=retry_backoff_seconds,
+                retry_timeouts=retry_timeouts,
+            ),
+            resources=resources,
+            corpus_root=corpus_root,
+            output_root=output,
+            progress=show_progress,
+        )
+    except (OSError, ValueError, RamaLamaServerError, RuntimeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Generated                : {result.generated}")
+    typer.echo(f"Skipped                  : {result.skipped}")
+    typer.echo(f"Failed                   : {result.failed}")
+    typer.echo(f"Run directory            : {result.run_directory}")
+    for error in result.errors:
+        typer.echo(error, err=True)
+
+
 @evaluation_app.command("benchmark")
 def run_evaluation_matrix(
     manifest_path: Annotated[
@@ -406,7 +631,7 @@ def run_evaluation_matrix(
     config: Annotated[
         Path,
         typer.Option("--config", exists=True, readable=True),
-    ] = Path("cfg/llm.yaml"),
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
 ) -> None:
     """Execute the prompt/model matrix declared by a benchmark manifest."""
     llm_config = LlmConfig.load(config)
@@ -444,19 +669,19 @@ def run_semantic_evaluation(
     model: Annotated[
         list[str] | None,
         typer.Option("--model", help="Model identifier; repeat to compare models."),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     config: Annotated[
         Path,
         typer.Option("--config", exists=True, readable=True),
-    ] = Path("cfg/llm.yaml"),
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
     resources: Annotated[
         Path,
         typer.Option("--resources", exists=True, file_okay=False),
-    ] = Path("src/standards_atlas/resources/semantic"),
+    ] = cli_defaults.DEFAULT_EVALUATION_RESOURCES,
     output: Annotated[
         Path,
         typer.Option("--output", file_okay=False),
-    ] = Path(".atlas/semantic/evaluations"),
+    ] = cli_defaults.DEFAULT_SEMANTIC_EVALUATION_OUTPUT,
 ) -> None:
     llm_config = LlmConfig.load(config)
     server = RamaLamaServerManager(llm_config)
@@ -495,7 +720,7 @@ def qualify_golden_corpus(
             resolve_path=True,
             help="Versioned golden corpus root.",
         ),
-    ] = Path("tests/golden_corpus"),
+    ] = cli_defaults.DEFAULT_GOLDEN_CORPUS,
     output: Annotated[
         Path | None,
         typer.Option(
@@ -503,7 +728,7 @@ def qualify_golden_corpus(
             file_okay=False,
             help="Report root; defaults to .atlas/qualification/runs.",
         ),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
     report = GoldenCorpusQualifier().run(corpus)
     report_json, report_md = QualificationRunReporter().write(
@@ -538,16 +763,20 @@ def plan_workflow(
     catalog: Annotated[Path, typer.Option("--catalog", help="YAML standard catalog.")],
     family: Annotated[
         list[str] | None, typer.Option("--family", help="Family key; repeat as needed.")
-    ] = None,
-    profile: Annotated[str | None, typer.Option("--profile", help="Catalog profile key.")] = None,
-    all_families: Annotated[bool, typer.Option("--all", help="Plan all catalog families.")] = False,
+    ] = cli_defaults.DEFAULT_NONE,
+    profile: Annotated[
+        str | None, typer.Option("--profile", help="Catalog profile key.")
+    ] = cli_defaults.DEFAULT_NONE,
+    all_families: Annotated[
+        bool, typer.Option("--all", help="Plan all catalog families.")
+    ] = cli_defaults.DEFAULT_FALSE,
     hierarchy: Annotated[
         str | None, typer.Option("--hierarchy", help="Doorstop hierarchy key.")
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     force: Annotated[
         bool,
         typer.Option("--force", help="Plan regeneration using only supported replacement options."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     model = YamlStandardCatalogReader().read(catalog)
     keys = (
@@ -572,26 +801,30 @@ def run_workflow(
     catalog: Annotated[Path, typer.Option("--catalog", help="YAML standard catalog.")],
     family: Annotated[
         list[str] | None, typer.Option("--family", help="Family key; repeat as needed.")
-    ] = None,
-    profile: Annotated[str | None, typer.Option("--profile", help="Catalog profile key.")] = None,
-    all_families: Annotated[bool, typer.Option("--all", help="Run all catalog families.")] = False,
+    ] = cli_defaults.DEFAULT_NONE,
+    profile: Annotated[
+        str | None, typer.Option("--profile", help="Catalog profile key.")
+    ] = cli_defaults.DEFAULT_NONE,
+    all_families: Annotated[
+        bool, typer.Option("--all", help="Run all catalog families.")
+    ] = cli_defaults.DEFAULT_FALSE,
     hierarchy: Annotated[
         str | None, typer.Option("--hierarchy", help="Doorstop hierarchy key.")
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     continue_after_review: Annotated[
         bool,
         typer.Option(
             "--continue-after-review",
             help="Continue only when reviewed alignments already exist.",
         ),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
     force: Annotated[
         bool,
         typer.Option(
             "--force",
             help="Regenerate reproducible artifacts using supported replacement options.",
         ),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     model = YamlStandardCatalogReader().read(catalog)
     keys = (
@@ -653,7 +886,7 @@ def main(
     version: Annotated[
         bool,
         typer.Option("--version", "-v", help="Show the Standards Atlas version and exit."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Standards Atlas command-line entry point."""
     if version:
@@ -682,7 +915,7 @@ def inspect_data(
     verbose: Annotated[
         bool,
         typer.Option("--verbose", "-V", help="Show parsed clause details."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Inspect a legacy Atlas data file through the canonical domain model."""
     reader = AtlasDataImporter()
@@ -717,15 +950,15 @@ def onboard_docling(
     digits: Annotated[
         int,
         typer.Option("--digits", help="AtlasData numeric identifier width."),
-    ] = 8,
+    ] = cli_defaults.DEFAULT_ATLASDATA_DIGITS,
     parent: Annotated[
         str | None,
         typer.Option("--parent", help="Optional AtlasData parent key."),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     overwrite: Annotated[
         bool,
         typer.Option("--overwrite", help="Replace an existing output file."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Create an AtlasData skeleton from numbered Docling headings."""
     try:
@@ -767,13 +1000,13 @@ def onboard_docling_parts(
     year: Annotated[int, typer.Option("--year", help="Publication year.")],
     digits: Annotated[
         int, typer.Option("--digits", help="AtlasData numeric identifier width.")
-    ] = 8,
+    ] = cli_defaults.DEFAULT_ATLASDATA_DIGITS,
     parent: Annotated[
         str | None, typer.Option("--parent", help="Optional AtlasData parent key.")
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     overwrite: Annotated[
         bool, typer.Option("--overwrite", help="Replace an existing output file.")
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Create one AtlasData file from explicitly assigned Docling part documents."""
     try:
@@ -849,7 +1082,7 @@ def generate_toc(
     write: Annotated[
         bool,
         typer.Option("--write", help="Write changes to the file."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Generate the TOC data section for an AtlasData file."""
     service = AtlasDataTocService()
@@ -890,7 +1123,7 @@ def import_document(
             "-w",
             help="Standards Atlas workspace directory.",
         ),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Import an engineering document into the local Standards Atlas workspace."""
     importer = AtlasDataImporter()
@@ -920,7 +1153,7 @@ def derive_document_view(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Create a persisted document view matching one physical source document."""
     service = DocumentSelectionService(workspace)
@@ -941,11 +1174,13 @@ def derive_document_part(
     source_key: Annotated[str, typer.Argument(help="Key of the persisted master document.")],
     part: Annotated[str, typer.Argument(help="AtlasData volume/part identifier.")],
     target_key: Annotated[str, typer.Option("--key", help="Key for the derived document view.")],
-    title: Annotated[str | None, typer.Option("--title", help="Title of the derived part.")] = None,
+    title: Annotated[
+        str | None, typer.Option("--title", help="Title of the derived part.")
+    ] = cli_defaults.DEFAULT_NONE,
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Create a persisted document view for one AtlasData volume or standard part."""
     service = DocumentSelectionService(workspace)
@@ -967,10 +1202,10 @@ def compose_family_document(
     part: Annotated[
         list[str] | None,
         typer.Option("--part", help="Enriched part key; repeat for every part."),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     workspace: Annotated[
         Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Merge enriched part documents back into their logical family document."""
     part_keys = tuple(part or ())
@@ -997,21 +1232,21 @@ def enrich_document_content(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     automatic_alignment: Annotated[
         bool,
         typer.Option(
             "--automatic-alignment",
             help="Use alignment.json even when reviewed.json exists.",
         ),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
     allow_unresolved: Annotated[
         bool,
         typer.Option(
             "--allow-unresolved",
             help="Keep unresolved clauses unchanged instead of aborting.",
         ),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Populate clause ContentBlocks from aligned normalized document ranges."""
     try:
@@ -1047,7 +1282,7 @@ def export_document_to_markdown(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     target: Annotated[
         Path | None,
         typer.Option(
@@ -1058,11 +1293,11 @@ def export_document_to_markdown(
             dir_okay=True,
             resolve_path=True,
         ),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     replace_existing: Annotated[
         bool,
         typer.Option("--replace/--no-replace", help="Replace existing Markdown files."),
-    ] = True,
+    ] = cli_defaults.DEFAULT_TRUE,
 ) -> None:
     """Export one standard family to one Markdown file per physical part."""
     export_target = target if target is not None else Path("local/exports/markdown") / document_key
@@ -1102,7 +1337,7 @@ def export_document_to_doorstop(
             dir_okay=True,
             resolve_path=True,
         ),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     target: Annotated[
         Path | None,
         typer.Option(
@@ -1116,14 +1351,14 @@ def export_document_to_doorstop(
             dir_okay=True,
             resolve_path=True,
         ),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     prefix: Annotated[
         str | None,
         typer.Option(
             "--prefix",
             help="Doorstop document prefix.",
         ),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     digits: Annotated[
         int,
         typer.Option(
@@ -1131,42 +1366,42 @@ def export_document_to_doorstop(
             min=1,
             help="Number of digits used for Doorstop item identifiers.",
         ),
-    ] = 8,
+    ] = cli_defaults.DEFAULT_ATLASDATA_DIGITS,
     separator: Annotated[
         str,
         typer.Option(
             "--separator",
             help="Separator between Doorstop prefix and numeric identifier.",
         ),
-    ] = "-",
+    ] = cli_defaults.DEFAULT_DOORSTOP_SEPARATOR,
     parent: Annotated[
         str | None,
         typer.Option(
             "--parent",
             help="Doorstop parent document prefix derived from the catalog hierarchy.",
         ),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     validate: Annotated[
         bool,
         typer.Option(
             "--validate/--no-validate",
             help="Validate the generated Doorstop document after export.",
         ),
-    ] = True,
+    ] = cli_defaults.DEFAULT_TRUE,
     replace_existing: Annotated[
         bool,
         typer.Option(
             "--replace/--no-replace",
             help="Replace an existing Doorstop export directory.",
         ),
-    ] = True,
+    ] = cli_defaults.DEFAULT_TRUE,
     initialize_git: Annotated[
         bool,
         typer.Option(
             "--init-git/--no-init-git",
             help="Initialize the Doorstop target as a Git repository.",
         ),
-    ] = True,
+    ] = cli_defaults.DEFAULT_TRUE,
 ) -> None:
     """Export a persisted EngineeringDocument as a Doorstop document."""
     repository = FileSystemEngineeringDocumentRepository(
@@ -1233,20 +1468,20 @@ def publish_doorstop_hierarchy(
     hierarchy_key: Annotated[str, typer.Argument(help="Doorstop hierarchy key.")],
     workspace: Annotated[
         Path, typer.Option("--workspace", "-w", help="Internal Standards Atlas workspace.")
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     local_root: Annotated[
         Path, typer.Option("--local-root", help="Root for local consumable outputs.")
-    ] = Path("local"),
+    ] = cli_defaults.DEFAULT_LOCAL_ROOT,
     replace_existing: Annotated[
         bool, typer.Option("--replace/--no-replace", help="Replace published output.")
-    ] = True,
+    ] = cli_defaults.DEFAULT_TRUE,
     template: Annotated[
         str,
         typer.Option(
             "--template",
             help="Packaged Standards Atlas Doorstop template.",
         ),
-    ] = "atlas-clean",
+    ] = cli_defaults.DEFAULT_DOORSTOP_TEMPLATE,
 ) -> None:
     """Publish one internal Doorstop hierarchy for local consumption."""
     source = workspace / "doorstop" / hierarchy_key
@@ -1298,11 +1533,11 @@ def convert_pdf_with_docling(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     overwrite: Annotated[
         bool,
         typer.Option("--overwrite", help="Replace an existing native Docling document."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
     llm_config: Annotated[
         Path,
         typer.Option(
@@ -1311,7 +1546,7 @@ def convert_pdf_with_docling(
             readable=True,
             help="Managed LLM configuration used to release the GPU during conversion.",
         ),
-    ] = Path("cfg/llm.yaml"),
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
 ) -> None:
     """Convert a PDF and persist native Docling JSON below the private workspace."""
     repository = DoclingArtifactRepository(workspace)
@@ -1368,7 +1603,7 @@ def inspect_docling_document(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Inspect extraction coverage without loading the Docling runtime."""
     repository = DoclingArtifactRepository(workspace)
@@ -1412,31 +1647,31 @@ def normalize_extracted_document(
     document_key: Annotated[str, typer.Argument(help="Key of a persisted Docling document.")],
     workspace: Annotated[
         Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     overwrite: Annotated[
         bool, typer.Option("--overwrite", help="Replace an existing normalized document.")
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
     page_range: Annotated[
         list[str] | None,
         typer.Option(
             "--page-range",
             help="Inclusive positive one-based page range START:END; repeat for multiple ranges.",
         ),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     exclude_page_range: Annotated[
         list[str] | None,
         typer.Option(
             "--exclude-page-range",
             help="Inclusive one-based page range to exclude; repeat for multiple ranges.",
         ),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
     page_list: Annotated[
         str | None,
         typer.Option(
             "--page-list",
             help="Positive comma-separated pages and ranges, for example 1,3,5,11-13,15.",
         ),
-    ] = None,
+    ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
     """Normalize an extracted document and persist the result below .atlas."""
     repository = NormalizationArtifactRepository(workspace)
@@ -1502,7 +1737,7 @@ def inspect_normalized_document(
     document_key: Annotated[str, typer.Argument(help="Key of a normalized document.")],
     workspace: Annotated[
         Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Inspect normalization statistics and diagnostics."""
     try:
@@ -1533,7 +1768,7 @@ def detect_reference_candidates(
     ],
     workspace: Annotated[
         Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Detect clause-reference candidates and validate them against AtlasData structure."""
     try:
@@ -1561,10 +1796,10 @@ def inspect_reference_candidates(
     document_key: Annotated[str, typer.Argument(help="Key of a persisted candidate document.")],
     workspace: Annotated[
         Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     show_unexpected: Annotated[
         bool, typer.Option("--show-unexpected", help="Print unexpected and ambiguous candidates.")
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Inspect persisted clause-reference candidates."""
     try:
@@ -1604,14 +1839,14 @@ def run_alignment(
             "-w",
             help="Standards Atlas workspace directory.",
         ),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     overwrite: Annotated[
         bool,
         typer.Option(
             "--overwrite",
             help="Replace an existing alignment result.",
         ),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Align reference candidates monotonically with AtlasData clauses."""
     repository = AlignmentArtifactRepository(workspace)
@@ -1657,19 +1892,19 @@ def inspect_alignment(
             "-w",
             help="Standards Atlas workspace directory.",
         ),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     show_missing: Annotated[
         bool,
         typer.Option("--show-missing", help="Print missing and inferred clauses."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
     reviewed: Annotated[
         bool,
         typer.Option("--reviewed", help="Inspect reviewed.json instead of alignment.json."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
     show_conflicts: Annotated[
         bool,
         typer.Option("--show-conflicts", help="Print alignment issues."),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Inspect a persisted alignment result."""
     try:
@@ -1713,15 +1948,15 @@ def generate_alignment_review(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     context_before: Annotated[
         int,
         typer.Option("--context-before", min=0, help="Items shown before a problem."),
-    ] = 2,
+    ] = cli_defaults.DEFAULT_ALIGNMENT_CONTEXT_BEFORE,
     context_after: Annotated[
         int,
         typer.Option("--context-after", min=0, help="Items shown after a problem."),
-    ] = 4,
+    ] = cli_defaults.DEFAULT_ALIGNMENT_CONTEXT_AFTER,
 ) -> None:
     """Generate Markdown review context and an override YAML template."""
     try:
@@ -1746,14 +1981,14 @@ def export_full_alignment_review(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     reset_edited: Annotated[
         bool,
         typer.Option(
             "--reset-edited",
             help="Replace the editable review with the newly generated version.",
         ),
-    ] = False,
+    ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Export the complete normalized document as editable review Markdown."""
     try:
@@ -1777,7 +2012,7 @@ def validate_full_alignment_review(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Validate that the edited review changes alignment markers only."""
     try:
@@ -1798,7 +2033,7 @@ def diff_full_alignment_review(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Show structural changes made in the editable review Markdown."""
     try:
@@ -1824,7 +2059,7 @@ def import_full_alignment_review(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Translate edited Markdown alignment markers into overrides.yaml."""
     try:
@@ -1844,7 +2079,7 @@ def validate_alignment_overrides(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Validate manual alignment decisions without applying them."""
     try:
@@ -1869,7 +2104,7 @@ def apply_alignment_overrides(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Apply validated overrides and persist reviewed.json."""
     service = AlignmentReviewService(workspace)

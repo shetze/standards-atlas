@@ -15,23 +15,15 @@ from urllib.request import Request, urlopen
 
 from standards_atlas.adapters.llm.config import LlmConfig
 from standards_atlas.application.ports.llm_gateway import (
+    LlmGatewayError,
     LlmHealth,
+    LlmResponseError,
+    LlmTimeoutError,
+    LlmUnavailableError,
     StructuredGenerationRequest,
     StructuredGenerationResult,
     TokenUsage,
 )
-
-
-class LlmGatewayError(RuntimeError):
-    """Base exception for inference transport and response failures."""
-
-
-class LlmUnavailableError(LlmGatewayError):
-    """Raised when the configured inference endpoint cannot be reached."""
-
-
-class LlmResponseError(LlmGatewayError):
-    """Raised when the inference endpoint returns an invalid response."""
 
 
 class OpenAICompatibleLlmGateway:
@@ -90,10 +82,17 @@ class OpenAICompatibleLlmGateway:
         response = self._request_json("POST", "chat/completions", payload)
         duration_ms = round((time.monotonic() - started) * 1000)
         raw_content = _extract_content(response)
+        finish_reason = _extract_finish_reason(response)
         try:
-            value = json.loads(raw_content)
+            value = _parse_json_object(raw_content)
         except json.JSONDecodeError as error:
-            raise LlmResponseError("LLM response content is not valid JSON") from error
+            suffix = f" (finish_reason={finish_reason})" if finish_reason else ""
+            raise LlmResponseError(
+                f"LLM response content is not valid JSON{suffix}",
+                raw_content=raw_content,
+                raw_response=dict(response),
+                finish_reason=finish_reason,
+            ) from error
         if not isinstance(value, Mapping):
             raise LlmResponseError("LLM structured response must be a JSON object")
 
@@ -106,6 +105,7 @@ class OpenAICompatibleLlmGateway:
             raw_response_hash=_sha256(raw_content.encode("utf-8")),
             duration_ms=duration_ms,
             usage=_parse_usage(response.get("usage")),
+            raw_response=dict(response),
         )
         self._store_cache(result)
         return result
@@ -130,7 +130,11 @@ class OpenAICompatibleLlmGateway:
         except HTTPError as error:
             detail = error.read().decode("utf-8", errors="replace")
             raise LlmResponseError(f"LLM endpoint returned HTTP {error.code}: {detail}") from error
-        except (URLError, TimeoutError, ConnectionError, OSError) as error:
+        except TimeoutError as error:
+            raise LlmTimeoutError(
+                f"LLM request timed out after {self._config.timeout_seconds:g}s"
+            ) from error
+        except (URLError, ConnectionError, OSError) as error:
             raise LlmUnavailableError(f"LLM endpoint is unavailable: {error}") from error
         except json.JSONDecodeError as error:
             raise LlmResponseError("LLM endpoint returned invalid JSON") from error
@@ -159,6 +163,7 @@ class OpenAICompatibleLlmGateway:
                 raw_response_hash=payload["raw_response_hash"],
                 duration_ms=payload["duration_ms"],
                 usage=usage,
+                raw_response=payload.get("raw_response"),
             )
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
             raise LlmResponseError(f"Invalid LLM cache entry: {path}") from error
@@ -184,6 +189,7 @@ class OpenAICompatibleLlmGateway:
             "raw_response_hash": result.raw_response_hash,
             "duration_ms": result.duration_ms,
             "usage": usage,
+            "raw_response": result.raw_response,
         }
         temporary = path.with_suffix(".tmp")
         temporary.write_text(
@@ -201,6 +207,23 @@ def _extract_content(response: Mapping[str, Any]) -> str:
     if not isinstance(content, str):
         raise LlmResponseError("LLM message content must be text")
     return content
+
+
+def _extract_finish_reason(response: Mapping[str, Any]) -> str | None:
+    try:
+        value = response["choices"][0].get("finish_reason")
+    except (KeyError, IndexError, TypeError, AttributeError):
+        return None
+    return str(value) if value is not None else None
+
+
+def _parse_json_object(raw_content: str) -> Any:
+    stripped = raw_content.strip()
+    if stripped.startswith("```") and stripped.endswith("```"):
+        lines = stripped.splitlines()
+        if len(lines) >= 3:
+            stripped = "\n".join(lines[1:-1]).strip()
+    return json.loads(stripped)
 
 
 def _parse_usage(value: object) -> TokenUsage | None:

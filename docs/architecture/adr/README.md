@@ -97,3 +97,6 @@ Architecture Decision Records (ADRs) document important design choices, their co
 ## Publication templates
 
 - [ADR-0038: Package and install Doorstop publication templates](ADR-0038-package-and-install-doorstop-publication-templates.md)
+
+- [ADR 0046: Persist resumable semantic proposal runs](0046-persist-resumable-semantic-proposal-runs.md)
+| [0047](0047-separate-semantic-evaluation-runs-from-annotations.md) | Separate semantic evaluation runs from reviewed annotations |

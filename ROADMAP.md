@@ -154,3 +154,7 @@ Examples include IEC 81346, ISO 15288, and SysML-based artefacts.
 - environment-backed bearer authentication;
 - explicit read-only tool allow list;
 - reproducible configuration and verification workflow.
+
+## Slice 5.4.3 — Baseline annotation proposals
+
+Completed: versioned semantic-role task and prompt resources, provider-independent proposal orchestration, Codex and RamaLama adapters, durable request/response evidence, schema validation, proposal provenance, and resumable generation.

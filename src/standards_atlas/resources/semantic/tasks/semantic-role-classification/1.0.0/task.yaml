@@ -1,0 +1,5 @@
+task: semantic-role-classification
+version: 1.0.0
+description: Classify the semantic role of normalized standards clause content.
+multi_label: true
+allow_unclassified: true

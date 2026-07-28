@@ -39,6 +39,13 @@ from standards_atlas.application.services.evaluation.models import (
     PromptDefinition,
     RegressionResult,
 )
+from standards_atlas.application.services.evaluation.proposals import (
+    BaselineProposalGenerator,
+    ProposalRunConfig,
+    ProposalRunResult,
+    SemanticTaskDefinition,
+    SemanticTaskRepository,
+)
 from standards_atlas.application.services.evaluation.report import (
     EvaluationReporter,
     SemanticEvaluationReporter,
@@ -104,6 +111,11 @@ __all__ = [
     "ClauseProvider",
     "DocumentDescriptor",
     "SamplingStrategy",
+    "BaselineProposalGenerator",
+    "ProposalRunConfig",
+    "ProposalRunResult",
+    "SemanticTaskDefinition",
+    "SemanticTaskRepository",
     "BenchmarkManifest",
     "BenchmarkMatrixResult",
     "CorpusBuildConfig",
