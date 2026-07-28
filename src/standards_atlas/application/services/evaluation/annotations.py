@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import shutil
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -48,7 +48,7 @@ class ClauseReference(BaseModel):
     knowledge_domain: str = Field(min_length=1)
     document_key: str = Field(min_length=1)
     clause_id: str = Field(min_length=1)
-    clause_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
     @property
     def key(self) -> str:
@@ -131,6 +131,22 @@ class CorpusClause(BaseModel):
     strata: dict[str, str] = Field(default_factory=dict)
 
 
+class CorpusPopulationStatistics(BaseModel):
+    """Eligibility, uniqueness, and stratum counts for a corpus population."""
+
+    model_config = ConfigDict(frozen=True)
+
+    total_occurrences: int = Field(ge=0)
+    ineligible_empty_content: int = Field(ge=0)
+    duplicate_document_occurrences: int = Field(default=0, ge=0)
+    eligible_occurrences: int = Field(ge=0)
+    unique_contents: int = Field(ge=0)
+    selected_occurrences: int = Field(ge=0)
+    selected_unique_contents: int = Field(ge=0)
+    dimensions: dict[str, dict[str, int]] = Field(default_factory=dict)
+    selected_dimensions: dict[str, dict[str, int]] = Field(default_factory=dict)
+
+
 class EvaluationCorpusManifest(BaseModel):
     """Versioned declaration of a content-safe evaluation corpus."""
 
@@ -142,6 +158,9 @@ class EvaluationCorpusManifest(BaseModel):
     corpus_version: str = Field(min_length=1)
     selection_strategy: str = Field(min_length=1)
     seed: int
+    filters: dict[str, Any] = Field(default_factory=dict)
+    statistics: CorpusPopulationStatistics | None = None
+    duplicate_content_groups: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     clauses: tuple[CorpusClause, ...]
 
     @model_validator(mode="after")
@@ -168,18 +187,9 @@ class AnnotationContractError(RuntimeError):
     """Raised when annotation persistence or publication violates the contract."""
 
 
-def normalized_clause_hash(*, title: str | None, text: str) -> str:
-    """Hash the canonical normalized clause projection used for evaluation.
-
-    The JSON envelope makes the title/text boundary explicit and avoids
-    platform-dependent whitespace or serialization differences.
-    """
-    payload = json.dumps(
-        {"title": title or "", "text": text},
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
+def normalized_content_hash(text: str) -> str:
+    """Hash only the normalized clause content, never structural context."""
+    payload = text.encode("utf-8")
     return f"sha256:{hashlib.sha256(payload).hexdigest()}"
 
 
@@ -283,8 +293,8 @@ class ClauseAnnotationResolver:
     ) -> None:
         if annotation.clause.key != expected.key:
             raise AnnotationContractError(f"annotation clause identity mismatch: {path}")
-        if annotation.clause.clause_hash != expected.clause_hash:
-            raise AnnotationContractError(f"stale annotation clause hash: {path}")
+        if annotation.clause.content_hash != expected.content_hash:
+            raise AnnotationContractError(f"stale annotation content hash: {path}")
 
 
 class ClauseAnnotationPublisher:

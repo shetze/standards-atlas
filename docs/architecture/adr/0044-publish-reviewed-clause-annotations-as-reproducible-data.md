@@ -21,7 +21,7 @@ experiments must not silently override reviewed annotations committed to the rep
 ## Decision
 
 A clause annotation is identified by knowledge domain, document key, and clause identifier. It also
-contains a SHA-256 `clause_hash` over the normalized title and plain-text projection. The hash is an
+contains a SHA-256 `content_hash` over the normalized clause content only. The hash is an
 integrity and staleness check, not the clause identity and not a hash of the source PDF.
 
 Corpus manifests and annotations are content-safe YAML documents. They contain references,

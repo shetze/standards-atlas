@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services.evaluation.annotations import normalized_clause_hash
+from standards_atlas.application.services.evaluation.annotations import normalized_content_hash
 from standards_atlas.application.services.evaluation.clause_access import (
     ClauseDescriptor,
     ClauseFilter,
@@ -146,7 +146,7 @@ class EngineeringDocumentClauseProvider:
             document_key=document.key.value,
             reference=clause.reference.as_text(),
             clause_reference=clause.reference.clause,
-            clause_hash=normalized_clause_hash(title=clause.title, text=clause.plain_text),
+            content_hash=normalized_content_hash(clause.plain_text),
             clause_type=clause.clause_type,
             title=clause.title,
             text=clause.plain_text,

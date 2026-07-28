@@ -19,7 +19,7 @@ from standards_atlas.application.services.evaluation import (
     EvaluationCorpusManifest,
     ReviewDecision,
     SemanticRoleSelection,
-    normalized_clause_hash,
+    normalized_content_hash,
 )
 from standards_atlas.domain.model import SemanticRole
 
@@ -29,7 +29,7 @@ def clause_reference(text: str = "The system shall be verified.") -> ClauseRefer
         knowledge_domain="functional-safety",
         document_key="example-standard-2026",
         clause_id="example-standard-7.4.5",
-        clause_hash=normalized_clause_hash(title="Verification", text=text),
+        content_hash=normalized_content_hash(text),
     )
 
 
@@ -67,10 +67,10 @@ def reviewed(reference: ClauseReference) -> ClauseEvaluationAnnotation:
     )
 
 
-def test_normalized_clause_hash_is_deterministic_and_title_sensitive() -> None:
-    first = normalized_clause_hash(title="Scope", text="Applies to all systems.")
-    second = normalized_clause_hash(title="Scope", text="Applies to all systems.")
-    changed = normalized_clause_hash(title="Requirements", text="Applies to all systems.")
+def test_normalized_content_hash_is_deterministic_and_context_independent() -> None:
+    first = normalized_content_hash("Applies to all systems.")
+    second = normalized_content_hash("Applies to all systems.")
+    changed = normalized_content_hash("Applies to selected systems.")
 
     assert first == second
     assert first.startswith("sha256:")
@@ -143,7 +143,7 @@ def test_published_annotation_has_priority_and_reports_shadow(tmp_path: Path) ->
     assert resolved.local_differs
 
 
-def test_resolver_rejects_stale_clause_hash(tmp_path: Path) -> None:
+def test_resolver_rejects_stale_content_hash(tmp_path: Path) -> None:
     original = clause_reference()
     changed = clause_reference("The system should be verified.")
     repository = ClauseAnnotationRepository(tmp_path / "local")
@@ -154,7 +154,7 @@ def test_resolver_rejects_stale_clause_hash(tmp_path: Path) -> None:
         published_root=tmp_path / "data",
     )
 
-    with pytest.raises(AnnotationContractError, match="stale annotation clause hash"):
+    with pytest.raises(AnnotationContractError, match="stale annotation content hash"):
         resolver.resolve("semantic-roles-v1", changed)
 
 

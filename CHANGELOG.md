@@ -1,4 +1,5 @@
 # Changelog
+- Correct representative corpus eligibility by excluding clauses without normalized content, separating content from structural context, hashing content only, and recording duplicate-content and eligible-population statistics.
 
 ### Slice 5.4.1 - Corpus and annotation contract
 
@@ -76,6 +77,7 @@ The format is inspired by Keep a Changelog, and the project follows Semantic Ver
 - Golden-corpus comparison uses the normalized JSON data model rather than serialization details.
 
 ### Fixed
+- Exclude duplicate clause occurrences contributed by composed multipart family documents from semantic corpora and render content-duplicate groups with readable clause references and titles.
 
 - MCP SDK compatibility for request-size enforcement.
 - Ruff-compliant optional MCP test setup.

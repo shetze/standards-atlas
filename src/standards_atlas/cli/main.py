@@ -371,6 +371,8 @@ def build_evaluation_corpus(
     ] = SamplingStrategy.BALANCED_BY_DOCUMENT,
     seed: Annotated[int, typer.Option("--seed")] = 0,
     include_text: Annotated[bool, typer.Option("--include-text/--hashes-only")] = True,
+    knowledge_domain: Annotated[str, typer.Option("--knowledge-domain")] = "default",
+    corpus_id: Annotated[str | None, typer.Option("--corpus-id")] = None,
 ) -> None:
     """Create an annotation-ready corpus from persisted clauses."""
     try:
@@ -382,6 +384,8 @@ def build_evaluation_corpus(
                 strategy=strategy,
                 seed=seed,
                 include_text=include_text,
+                knowledge_domain=knowledge_domain,
+                corpus_id=corpus_id,
             ),
             output,
         )

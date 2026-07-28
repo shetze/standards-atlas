@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import random
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -11,7 +13,15 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.services.evaluation.annotations import (
+    ClauseReference,
+    CorpusClause,
+    CorpusManifestRepository,
+    CorpusPopulationStatistics,
+    EvaluationCorpusManifest,
+)
 from standards_atlas.application.services.evaluation.clause_access import (
+    ClauseDescriptor,
     ClauseFilter,
     ClauseProvider,
     SamplingStrategy,
@@ -36,6 +46,8 @@ class CorpusBuildConfig(BaseModel):
     seed: int = 0
     filters: ClauseFilter = ClauseFilter()
     include_text: bool = True
+    knowledge_domain: str = "default"
+    corpus_id: str | None = None
 
 
 class BenchmarkManifest(BaseModel):
@@ -92,63 +104,83 @@ class EvaluationCorpusBuilder:
         self._provider = provider
 
     def build(self, config: CorpusBuildConfig, output_root: Path) -> CorpusBuildResult:
-        clauses = self._provider.sample_clauses(
-            count=config.count,
-            strategy=config.strategy,
-            filters=config.filters,
-            seed=config.seed,
+        total_population = self._provider.list_clauses(filters=config.filters)
+        non_empty_population = tuple(clause for clause in total_population if clause.text.strip())
+        population = _canonical_clause_occurrences(non_empty_population)
+        if config.count > len(population):
+            raise ValueError(
+                f"sample count {config.count} exceeds eligible population {len(population)} "
+                "after excluding empty clauses and duplicate occurrences from "
+                "composed family documents"
+            )
+        clauses = _sample_eligible_population(
+            population, config.count, config.strategy, config.seed
         )
+
         target = output_root / config.task / config.version
         target.mkdir(parents=True, exist_ok=True)
         examples = []
-        sources = []
+        corpus_clauses = []
         for clause in clauses:
+            strata = _strata_for(clause)
             item_input: dict[str, Any] = {
-                "reference": clause.clause_reference,
-                "document_key": clause.document_key,
-                "clause_id": clause.id,
-                "clause_hash": clause.clause_hash,
+                "content": {"hash": clause.content_hash},
+                "context": {
+                    "knowledge_domain": config.knowledge_domain,
+                    "document_key": clause.document_key,
+                    "clause_id": clause.id,
+                    "reference": clause.clause_reference,
+                    "title": clause.title,
+                    "parent_id": clause.parent_id,
+                    "structural_roles": [role.value for role in clause.semantic_roles],
+                },
             }
             if config.include_text:
-                item_input["text"] = clause.text
+                item_input["content"]["text"] = clause.text
             examples.append(
                 {
                     "id": clause.id,
-                    "tags": [
-                        clause.clause_type.value,
-                        *[role.value for role in clause.semantic_roles],
-                    ],
+                    "tags": sorted(set(strata.values())),
                     "input": item_input,
                     "expected": {},
                     "annotation_status": "proposed",
                 }
             )
-            sources.append({"clause_id": clause.id, "clause_hash": clause.clause_hash})
-        dataset = {
-            "task": config.task,
-            "version": config.version,
-            "examples": examples,
-        }
-        manifest = {
-            "schema_version": 1,
-            "task": config.task,
-            "version": config.version,
-            "count": len(clauses),
-            "strategy": config.strategy.value,
-            "seed": config.seed,
-            "filters": config.filters.model_dump(mode="json"),
-            "contains_clause_text": config.include_text,
-            "sources": sources,
-        }
+            corpus_clauses.append(
+                CorpusClause(
+                    clause=ClauseReference(
+                        knowledge_domain=config.knowledge_domain,
+                        document_key=clause.document_key,
+                        clause_id=clause.id,
+                        content_hash=clause.content_hash,
+                    ),
+                    strata=strata,
+                )
+            )
+
+        corpus_id = config.corpus_id or f"{config.task}-{config.version}"
+        manifest = EvaluationCorpusManifest(
+            corpus_id=corpus_id,
+            task=config.task,
+            corpus_version=config.version,
+            selection_strategy=config.strategy.value,
+            seed=config.seed,
+            filters=config.filters.model_dump(mode="json"),
+            statistics=_statistics(total_population, non_empty_population, population, clauses),
+            duplicate_content_groups=_duplicate_content_groups(clauses),
+            clauses=tuple(corpus_clauses),
+        )
         dataset_path = target / "dataset.json"
-        manifest_path = target / "corpus-manifest.json"
         dataset_path.write_text(
-            json.dumps(dataset, indent=2, ensure_ascii=False) + "\n",
+            json.dumps(
+                {"task": config.task, "version": config.version, "examples": examples},
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n",
             encoding="utf-8",
         )
-        manifest_path.write_text(
-            json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        manifest_path = CorpusManifestRepository(output_root).write(manifest)
         return CorpusBuildResult(dataset_path, manifest_path, len(clauses))
 
 
@@ -191,3 +223,171 @@ class EvaluationMatrixRunner:
             for run in runs
         )
         return BenchmarkMatrixResult(manifest_hash, enriched)
+
+
+def _strata_for(clause: ClauseDescriptor) -> dict[str, str]:
+    roles = "+".join(sorted(role.value for role in clause.semantic_roles)) or "unknown"
+    return {
+        "document": clause.document_key,
+        "clause_type": clause.clause_type.value,
+        "structural_role": roles,
+        "hierarchy_depth": str(_reference_depth(clause.clause_reference)),
+        "length_class": _length_class(len(clause.text)),
+        "title_presence": "titled" if clause.title else "untitled",
+    }
+
+
+def _reference_depth(reference: str) -> int:
+    normalized = reference.strip().strip(".")
+    if not normalized:
+        return 0
+    return max(1, len([part for part in normalized.replace("-", ".").split(".") if part]))
+
+
+def _length_class(length: int) -> str:
+    if length < 200:
+        return "short"
+    if length < 800:
+        return "medium"
+    return "long"
+
+
+def _sample_eligible_population(
+    population: tuple[ClauseDescriptor, ...],
+    count: int,
+    strategy: SamplingStrategy,
+    seed: int,
+) -> tuple[ClauseDescriptor, ...]:
+    if strategy is SamplingStrategy.REPRESENTATIVE_STRATIFIED:
+        return _representative_sample(population, count, seed)
+
+    rng = random.Random(seed)
+    if strategy is SamplingStrategy.RANDOM:
+        return tuple(rng.sample(population, count))
+    if strategy is SamplingStrategy.BALANCED_BY_DOCUMENT:
+        buckets: dict[str, list[ClauseDescriptor]] = {}
+        for clause in population:
+            buckets.setdefault(clause.document_key, []).append(clause)
+        for bucket in buckets.values():
+            rng.shuffle(bucket)
+        selected: list[ClauseDescriptor] = []
+        while len(selected) < count:
+            progressed = False
+            for document_key in sorted(buckets):
+                if buckets[document_key] and len(selected) < count:
+                    selected.append(buckets[document_key].pop())
+                    progressed = True
+            if not progressed:
+                break
+        return tuple(selected)
+    raise ValueError(f"Unsupported sampling strategy: {strategy}")
+
+
+def _representative_sample(
+    population: tuple[ClauseDescriptor, ...], count: int, seed: int
+) -> tuple[ClauseDescriptor, ...]:
+    """Greedily cover rare strata while keeping deterministic seeded tie-breaking."""
+    rng = random.Random(seed)
+    candidates = list(population)
+    rng.shuffle(candidates)
+    frequencies: Counter[tuple[str, str]] = Counter()
+    for clause in candidates:
+        frequencies.update(_strata_for(clause).items())
+
+    covered: Counter[tuple[str, str]] = Counter()
+    selected: list[ClauseDescriptor] = []
+    while len(selected) < count:
+
+        def score(clause: ClauseDescriptor) -> tuple[float, float]:
+            pairs = tuple(_strata_for(clause).items())
+            novelty = sum(1.0 / (1 + covered[pair]) for pair in pairs)
+            rarity = sum(1.0 / frequencies[pair] for pair in pairs)
+            return novelty, rarity
+
+        best = max(candidates, key=score)
+        candidates.remove(best)
+        selected.append(best)
+        covered.update(_strata_for(best).items())
+    return tuple(selected)
+
+
+def _statistics(
+    total_population: tuple[ClauseDescriptor, ...],
+    non_empty_population: tuple[ClauseDescriptor, ...],
+    eligible_population: tuple[ClauseDescriptor, ...],
+    selected: tuple[ClauseDescriptor, ...],
+) -> CorpusPopulationStatistics:
+    def counts(items: tuple[ClauseDescriptor, ...]) -> dict[str, dict[str, int]]:
+        dimensions: dict[str, Counter[str]] = {}
+        for clause in items:
+            for dimension, value in _strata_for(clause).items():
+                dimensions.setdefault(dimension, Counter())[value] += 1
+        return {
+            dimension: dict(sorted(values.items()))
+            for dimension, values in sorted(dimensions.items())
+        }
+
+    return CorpusPopulationStatistics(
+        total_occurrences=len(total_population),
+        ineligible_empty_content=len(total_population) - len(non_empty_population),
+        duplicate_document_occurrences=(len(non_empty_population) - len(eligible_population)),
+        eligible_occurrences=len(eligible_population),
+        unique_contents=len({clause.content_hash for clause in eligible_population}),
+        selected_occurrences=len(selected),
+        selected_unique_contents=len({clause.content_hash for clause in selected}),
+        dimensions=counts(eligible_population),
+        selected_dimensions=counts(selected),
+    )
+
+
+def _canonical_clause_occurrences(
+    clauses: tuple[ClauseDescriptor, ...],
+) -> tuple[ClauseDescriptor, ...]:
+    """Remove copies contributed by composed family documents.
+
+    A composed family document reuses the clause identifiers and normalized
+    contents of its physical part documents. For every exact occurrence key we
+    retain the clause from the smallest containing document. This consistently
+    prefers the physical part over its larger composed family view while
+    preserving genuinely repeated content with different clause identifiers.
+    """
+    document_sizes = Counter(clause.document_key for clause in clauses)
+    canonical: dict[tuple[str, str], ClauseDescriptor] = {}
+    for clause in clauses:
+        occurrence_key = (clause.id, clause.content_hash)
+        current = canonical.get(occurrence_key)
+        if current is None:
+            canonical[occurrence_key] = clause
+            continue
+        candidate_rank = (document_sizes[clause.document_key], clause.document_key)
+        current_rank = (document_sizes[current.document_key], current.document_key)
+        if candidate_rank < current_rank:
+            canonical[occurrence_key] = clause
+    return tuple(
+        sorted(
+            canonical.values(),
+            key=lambda clause: (clause.document_key, clause.clause_reference, clause.id),
+        )
+    )
+
+
+def _readable_clause_occurrence(clause: ClauseDescriptor) -> str:
+    reference = clause.clause_reference.strip() or clause.reference.strip()
+    title = clause.title.strip() if clause.title else ""
+    label = f"{clause.document_key}:{reference}"
+    if title:
+        label += f" — {title}"
+    return f"{label} [{clause.id}]"
+
+
+def _duplicate_content_groups(
+    clauses: tuple[ClauseDescriptor, ...],
+) -> dict[str, tuple[str, ...]]:
+    groups: dict[str, list[str]] = {}
+    for clause in clauses:
+        groups.setdefault(clause.content_hash, []).append(_readable_clause_occurrence(clause))
+    return {
+        content_hash: tuple(sorted(references))
+        for content_hash, references in sorted(groups.items())
+        if len(references) > 1
+    }

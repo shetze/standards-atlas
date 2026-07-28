@@ -15,6 +15,7 @@ class SamplingStrategy(StrEnum):
 
     RANDOM = "random"
     BALANCED_BY_DOCUMENT = "balanced_by_document"
+    REPRESENTATIVE_STRATIFIED = "representative_stratified"
 
 
 class DocumentDescriptor(BaseModel):
@@ -39,7 +40,7 @@ class ClauseDescriptor(BaseModel):
     document_key: str = Field(min_length=1)
     reference: str = Field(min_length=1)
     clause_reference: str = Field(min_length=1)
-    clause_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     clause_type: ClauseType
     title: str | None = None
     text: str = ""

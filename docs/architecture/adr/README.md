@@ -77,6 +77,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md) | Secure and qualify Streamable HTTP MCP deployments |
 | [0043](0043-integrate-codex-as-a-restricted-mcp-client.md) | Integrate Codex as a restricted MCP client |
 | [0044](0044-publish-reviewed-clause-annotations-as-reproducible-data.md) | Publish reviewed clause annotations as reproducible data |
+| [0045](0045-build-representative-semantic-evaluation-corpora.md) | Build representative semantic-evaluation corpora by stratified coverage |
 
 ## Reading guidance
 

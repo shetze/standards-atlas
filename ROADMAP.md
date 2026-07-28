@@ -1,4 +1,5 @@
 # Roadmap
+- Correct representative corpus eligibility by excluding clauses without normalized content, separating content from structural context, hashing content only, and recording duplicate-content and eligible-population statistics.
 
 Standards Atlas is a deterministic engineering platform for analysing, maintaining, evaluating, and publishing relationships between international technical standards, specifications, and other engineering documents.
 
