@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-7cf254db489e
+  content_hash: sha256:5cba71ec2c86295a694870462ce91bf5512e440c39a51440404115daa0628c22
+proposal:
+  semantic_roles:
+  - recommendations
+  - example
+  - annex
+  primary_role: recommendations
+  confidence: 0.97
+  rationale: Provides recommended guidance and an illustrative calculation for deriving
+    and assessing THRs from railway failure and accident statistics; structural context
+    identifies it as an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:23:45.995086Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 1283efa12497571af9c028a4037ffea9117aeb357262a9b692d5349497ef8c97
+  raw_response_hash: fea91ef473e3a9c55a4bc01dc4b965785ac58436032438f9a5b2b874ae022c9c
+annotation:
+  semantic_roles:
+  - recommendations
+  - example
+  - annex
+  primary_role: recommendations
+  confidence: 0.97
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.778799Z'

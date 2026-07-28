@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3-1
+  clause_id: clause-964c87cbf2f6
+  content_hash: sha256:29e099fecb2b30c431ef49c7c06c04ca0debd4f5c73fe1e62921ff43d69f4b39
+proposal:
+  semantic_roles:
+  - requirements
+  - note
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause states mandatory conditions using “shall” for recognizing
+    an element as proven-in-use, with supporting explanatory notes.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:24:48.660183Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4986208e20516f33ab40994644cdb9cd83124b06eb7a6fe19bd2e1c22cd41aea
+  raw_response_hash: a56ff8d8584a91d849f345246934dc5584975757ce80d69cd3348147b0e2d025
+annotation:
+  semantic_roles:
+  - requirements
+  - note
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.813954Z'

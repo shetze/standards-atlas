@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-c45863fa4c1c
+  content_hash: sha256:a9ca053c44ddc1a50ba1dbd2f2ae5ccea3954422b068df47051e972d44993490
+proposal:
+  semantic_roles:
+  - normative_references
+  primary_role: normative_references
+  confidence: 1.0
+  rationale: The clause explicitly identifies documents that are normatively referenced
+    and indispensable for applying the standard, including rules for dated and undated
+    references.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:05:50.805988Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 52b9fa288d8cb768c80efdc238512cfb247ec7bd92d3a8ec3ac70d9fa3d79dc3
+  raw_response_hash: 3010188ee1d9d02f5daa53e70f239937b9ca6c62910e794d18385389f10076e0
+annotation:
+  semantic_roles:
+  - normative_references
+  primary_role: normative_references
+  confidence: 1.0
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.897371Z'

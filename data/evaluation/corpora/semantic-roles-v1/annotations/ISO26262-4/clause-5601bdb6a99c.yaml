@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-5601bdb6a99c
+  content_hash: sha256:b13c0e4d5ecc0c60b7ec4de967a05f04c8519af24e723528d72904f09eef0067
+proposal:
+  semantic_roles:
+  - requirements
+  - table
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause states a mandatory system-level verification requirement using
+    “shall,” and includes Table 10 specifying applicable test methods by ASIL.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:19:44.863035Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 9cd6eb1f88041adb3609585f5b2eb9340ce06642d0844e3a669b3e0ad6be86b6
+  raw_response_hash: 00afaa95b315507d769f223e444fc7cec58eff250a8645c6998683542c8320c4
+annotation:
+  semantic_roles:
+  - requirements
+  - table
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.709235Z'

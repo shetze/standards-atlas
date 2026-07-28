@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-7654afbc68e6
+  content_hash: sha256:bb7e00916bc6ad403756be05636d4e9eb0ce5ab92f23c9ec1b08f3a7d4b93ef6
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  - example
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “fault detection time interval” and includes
+    supporting notes plus an illustrative example.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:41:03.360254Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 391584cbd10eeeb119cebc5c6ae51593760444d84a016a853bc2e004a532a293
+  raw_response_hash: 7dbc966fa7a6ad54cca3b853966a4388f223371694fd129a5f41256a77783d01
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  - example
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.765837Z'

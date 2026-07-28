@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-6
+  clause_id: clause-efc1bc510279
+  content_hash: sha256:2978719fac77dafa166aafa6833baccb94dc12f156f38fce4526beca8fa4a75d
+proposal:
+  semantic_roles:
+  - figure
+  - scope
+  primary_role: figure
+  confidence: 0.99
+  rationale: The content is explicitly a labeled figure presenting the overall IEC
+    61508 framework and the role of IEC 61508-6; the structural scope context is supporting
+    evidence.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:14:09.610641Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d902b0f27af840baae905f71dc3056f4c35ad237c7d1341bff725900cb0e4e6e
+  raw_response_hash: dac08424ea69ab9a83ff4d7dc034cb42efd423ecdf2e7e8dfbc70928d09e0ac3
+annotation:
+  semantic_roles:
+  - figure
+  - scope
+  primary_role: figure
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.966234Z'

@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-5
+  clause_id: clause-3f655e60e176
+  content_hash: sha256:fe1c949e1877cea45aed4c1bccaac4124b779f0aa67af246140e36ebb1ff092c
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - annex
+  primary_role: terms_and_definitions
+  confidence: 0.93
+  rationale: The clause explains the meaning and interpretation of a latent-fault
+    metric rather than prescribing a normative action; its annex placement is supporting
+    structural context.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:40:17.534467Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e9fb21d0c6d54539339d92536059efbe21c20300625caeca572f5824847e6516
+  raw_response_hash: 99c0805be5db700aed4118e12488f659bf75b435a2451018d3b3ed44ab069fc5
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - annex
+  primary_role: terms_and_definitions
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.665756Z'

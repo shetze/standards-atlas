@@ -100,3 +100,5 @@ Architecture Decision Records (ADRs) document important design choices, their co
 
 - [ADR 0046: Persist resumable semantic proposal runs](0046-persist-resumable-semantic-proposal-runs.md)
 | [0047](0047-separate-semantic-evaluation-runs-from-annotations.md) | Separate semantic evaluation runs from reviewed annotations |
+| [0048](0048-review-semantic-annotations-in-local-markdown.md) | Review semantic annotations in local Markdown |
+- [ADR 0049: Extract and resolve clause references before semantic evaluation](0049-extract-and-resolve-clause-references-before-semantic-evaluation.md)

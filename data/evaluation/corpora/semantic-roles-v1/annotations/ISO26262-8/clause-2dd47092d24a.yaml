@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-2dd47092d24a
+  content_hash: sha256:7032009475b2c5f228e46d89fc79c30221aac7b899a0f81148d2e5249dd6e30c
+proposal:
+  semantic_roles:
+  - requirements
+  - table
+  - note
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause uses normative “shall” language to specify compliance and
+    confidence requirements for proven-in-use status, with supporting tables and explanatory
+    notes.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:04:47.322420Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 8cdb3582c344b6b5c0994085857095ca4cba0099d5c37957432995376b6846fd
+  raw_response_hash: de63f442d5ee65046b15a184bb75595b93a3051bad3af7b5addbddd55dac3849
+annotation:
+  semantic_roles:
+  - requirements
+  - table
+  - note
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.638434Z'

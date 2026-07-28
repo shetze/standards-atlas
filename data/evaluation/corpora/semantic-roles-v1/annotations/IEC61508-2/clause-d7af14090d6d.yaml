@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-d7af14090d6d
+  content_hash: sha256:532e8ac50896d0b8a0dfa809c5536c7a3237f3c59eb42ae7639d4eb5a8c72342
+proposal:
+  semantic_roles:
+  - scope
+  - requirements
+  - note
+  primary_role: scope
+  confidence: 0.98
+  rationale: The clause defines how this basic safety publication applies to technical
+    committees and clarifies applicability of its requirements; the second paragraph
+    is explicitly a NOTE.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:27:34.245254Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 5a01645f3019b43d69a5903c52c241d9e382b57c2f7a851aaa4a9ccfc8e1e722
+  raw_response_hash: 07acc222fddaa5eeb6741d401518ab4e472b2ef4049fdca20239e1ec576b0f9a
+annotation:
+  semantic_roles:
+  - scope
+  - requirements
+  - note
+  primary_role: scope
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.926755Z'

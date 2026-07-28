@@ -1,0 +1,43 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-5
+  clause_id: clause-5b33e0e59935
+  content_hash: sha256:e411369cd6f7c604eb8841e760b58c5567896844cda16fc7e08546afe3dbfe50
+proposal:
+  semantic_roles:
+  - note
+  - objectives
+  - requirements
+  - outputs
+  - annex
+  primary_role: objectives
+  confidence: 0.97
+  rationale: The clause contains a note, an explicit diagnostic aim, and a descriptive
+    measure involving outputs; the primary semantic role is the stated objective,
+    with outputs and annex context supporting it.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:07:24.803700Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e94cdb66cdcbc5cdd6fce67a1ee29d4c99645ec13b6fded9c8a8c968ca1aa28d
+  raw_response_hash: ceeeb67df60cc78c54d6f34492c568ba3311fae74f2952070ae3ebf90f08ce22
+annotation:
+  semantic_roles:
+  - note
+  - objectives
+  - requirements
+  - outputs
+  - annex
+  primary_role: objectives
+  confidence: 0.97
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.719682Z'

@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-3
+  clause_id: clause-1d629dd943b2
+  content_hash: sha256:96f5b4605a9313e6a02a94fb3e5d68c6b08cf289fc37ad0159252cead3aee5e3
+proposal:
+  semantic_roles:
+  - requirements
+  - example
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause states a normative allowance for arguing QM under specified
+    combined unlikely situations, supported by two illustrative examples.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:38:50.855512Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e260ee8e5c314a7aa84dfc944d3b16e682557bbfaf5e50e6ffb3faff08237cde
+  raw_response_hash: ab806814bfc7130f12825d6f0224be951ec559720cfbcdce7a4121e39e88c562
+annotation:
+  semantic_roles:
+  - requirements
+  - example
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.611971Z'

@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-0
+  clause_id: clause-2f8ae6cf4028
+  content_hash: sha256:6b98da0a34a6df65829ffc44a0d1ff000bbb582e748ec86c4ddf9b8808edfe6a
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - requirements
+  - objectives
+  primary_role: terms_and_definitions
+  confidence: 0.96
+  rationale: The clause defines safety functions and safety-related systems, while
+    also stating hazard-analysis, risk-assessment, and design requirements for achieving
+    functional safety.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:38:59.767176Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 2a3ac927f38225fb8df9ed99a900fe14f4827a56c675026e95da939c45076a64
+  raw_response_hash: cd83767619961b517628f12415bbbc2f6e6bc0a31188dd9082ba85a9e0321478
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - requirements
+  - objectives
+  primary_role: terms_and_definitions
+  confidence: 0.96
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.641807Z'

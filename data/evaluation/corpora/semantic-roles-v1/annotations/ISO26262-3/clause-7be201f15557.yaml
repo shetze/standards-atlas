@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-3
+  clause_id: clause-7be201f15557
+  content_hash: sha256:a181c0c4c829ff2690c58c4bfda9626c318892c95bd95d7cf97ade186ba81ae3
+proposal:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+  rationale: The clause explicitly states its objectives and lists purposes to be
+    achieved.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:11:47.008198Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d334559ad2c56258cc49bf513b6ec6458c808101eb31220bc4dffd354517b3b4
+  raw_response_hash: 8161f4633652d3ca8f98a202097498ace58599f2168100ed4082947aa5d1d831
+annotation:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.776176Z'

@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-3
+  clause_id: clause-fe07c75923da
+  content_hash: sha256:98e1f50d2df045ec6bd11b25a6f98456c02a7467d3ce9ffde7847a46e3d83007
+proposal:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause specifies an action that shall be performed, making it a normative
+    requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:25:43.076764Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 5ed0d2cce7481f958434de7ea77e8599f126c5abcf6cb2ff6f673a66fde97d73
+  raw_response_hash: d615098765dc9868111c73d5cdd477574692c3e26aa976d134b0ca77d212c71c
+annotation:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.991920Z'

@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-4
+  clause_id: clause-9b3515f68bb5
+  content_hash: sha256:e023f80bcde5c0dba6603c0c1903fe40c6b042e7d95d654aa6b0c662bc85132d
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause formally defines the failure-rate parameter and includes explanatory
+    mathematical relationships, statistical interpretation, and system-specific observations
+    as notes.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:41:16.321345Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: fe229dff61f091e4bc4184cbffbdc9834058bce6978731b88f93c8f5a78b7a86
+  raw_response_hash: 163f4fdef4d688b6a2a6a2b38a3900f49b4f45d3f5166092d25a56be73368323
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.821590Z'

@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-b48d6836ac43
+  content_hash: sha256:8bb654698bf8c973dbfcdbb46e9413af03094c8d3c91c5b563235ae7eed105e4
+proposal:
+  semantic_roles:
+  - recommendations
+  - requirements
+  - note
+  primary_role: recommendations
+  confidence: 0.93
+  rationale: The clause describes parity as a technique and includes a design recommendation
+    for selecting even or odd parity, alongside requirement-like behavior and a contextual
+    note.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:32:50.974656Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 10ca3b6780585057b20f84d78ee365e735669dd5cc727d62bf21feb44a1c9fed
+  raw_response_hash: 6c489e0a74040aa7c7dcab59721eb05485752d32019fb9286a8e5a97c039424d
+annotation:
+  semantic_roles:
+  - recommendations
+  - requirements
+  - note
+  primary_role: recommendations
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.864602Z'

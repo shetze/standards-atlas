@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-a0e12f16c022
+  content_hash: sha256:2d1f38632784495914c6ec66982696824723fbe983acc0988659b7637845066b
+proposal:
+  semantic_roles:
+  - objectives
+  - recommendations
+  - annex
+  primary_role: recommendations
+  confidence: 0.96
+  rationale: The clause states an aim and describes the CORE approach, including guidelines
+    and tactics, but does not prescribe normative obligations. Its annex context supports
+    an informative recommendation role.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:04:16.243298Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c8ceb2f9d9ff55c05ab02857e941a2b3158b6ce77f79656e51a86fa7acd0f039
+  raw_response_hash: ab127c4b3bc61cefd6284e8453497c3954576dd6a12db1735d3d2b22d3abac32
+annotation:
+  semantic_roles:
+  - objectives
+  - recommendations
+  - annex
+  primary_role: recommendations
+  confidence: 0.96
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.831219Z'

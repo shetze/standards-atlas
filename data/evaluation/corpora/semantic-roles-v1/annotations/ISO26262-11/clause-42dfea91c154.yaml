@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-42dfea91c154
+  content_hash: sha256:8cd4cb48fd31d587488d7bcfb8aed6b98df1559ddf9076078e400a99add6ffa2
+proposal:
+  semantic_roles:
+  - example
+  - table
+  primary_role: example
+  confidence: 0.99
+  rationale: The clause presents a worked digital-component failure-rate calculation
+    example and includes parameter and result tables.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:15:41.347517Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d267bfe3af589640c7d1738a4972c90a3a2a5fc47678be552b6c3134d401c640
+  raw_response_hash: 90e50ab46a4bd35c2b26a988a01509cac2e55530a3deaa3af7d8438b49feff29
+annotation:
+  semantic_roles:
+  - example
+  - table
+  primary_role: example
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.673552Z'

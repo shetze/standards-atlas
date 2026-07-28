@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-6
+  clause_id: clause-00ebde27974f
+  content_hash: sha256:738aec60d4d2ac6ce0835c961df33545817d40822dbe46521ac64ee7c38bd11e
+proposal:
+  semantic_roles:
+  - objectives
+  - assessment
+  primary_role: assessment
+  confidence: 0.98
+  rationale: The clause identifies aspects for evaluating the suitability of a selected
+    model-based development approach, making assessment the primary role; its placement
+    in an annex section titled 'General suitability aspects' supports an objectives-related
+    structural role.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:39:19.748858Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 16a0ef69789314a2153e2cd9faa8a095e423c5aed0c0b13c1a1b5addafd49ceb
+  raw_response_hash: c1af80e08a2e9c5723b02482f6853412f52193158169bee4d4ed65eeeb91ba7d
+annotation:
+  semantic_roles:
+  - objectives
+  - assessment
+  primary_role: assessment
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.567811Z'

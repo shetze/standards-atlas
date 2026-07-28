@@ -1,0 +1,30 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-2e34ad9c6e9c
+  content_hash: sha256:c35ab3d139ff5f17d41967a7a59eaea8dafadcf0821184adecf88b211feeb3ab
+proposal:
+  semantic_roles: []
+  confidence: 0.99
+  rationale: The clause contains no substantive normalized content; its structural
+    scope role does not establish a semantic role for an intentionally blank placeholder.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:36:51.719594Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 0fca226a7e4ed0581880fafcd498acbb638f90dfce52598787ec4291ce25b790
+  raw_response_hash: 11cee32bc52fa3c770ebb4d6ee2ea511ac4541021716b252b330b07364a6d33a
+annotation:
+  semantic_roles: []
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.640111Z'

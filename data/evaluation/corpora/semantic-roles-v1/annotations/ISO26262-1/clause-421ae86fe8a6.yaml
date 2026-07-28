@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-421ae86fe8a6
+  content_hash: sha256:2539146385ec80264ac8a4b7c1d5eeec3e0c9317781b6f23addf96bdfab03ccb
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause provides the definition of “software component,” and the structural
+    context identifies it as a terms-and-definitions clause.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:45:47.410016Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 155ab73db60d62596acaf22be7dc358489525e9891fcc95bfdd00a2137accf2f
+  raw_response_hash: f233cf2347f0add77e70fe9000eb4e7a6da2761811963188f7c803bfb278393f
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.670836Z'

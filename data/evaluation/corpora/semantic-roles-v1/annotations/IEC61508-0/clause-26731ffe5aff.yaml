@@ -1,0 +1,43 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-0
+  clause_id: clause-26731ffe5aff
+  content_hash: sha256:de575eaa8efc9ac5996ac4c0cd0e22f84d8f47f3aacc1ba0c1519bba59bfeb24
+proposal:
+  semantic_roles:
+  - scope
+  - objectives
+  - recommendations
+  - assessment
+  - compliance
+  primary_role: scope
+  confidence: 0.98
+  rationale: The clause defines the standard’s permitted stand-alone uses across industries
+    and identifies application contexts, including conformity assessment and safety-lifecycle
+    assessments.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:30:02.122614Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b1f7adb994158cacaaec83cebb9786432c4612fbbb253d91481d00e48a21d1e3
+  raw_response_hash: 331aa993bc21f334af76562d903f3ecfd730f7bf06ce36b599a4eac63a6f10b9
+annotation:
+  semantic_roles:
+  - scope
+  - objectives
+  - recommendations
+  - assessment
+  - compliance
+  primary_role: scope
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.627278Z'

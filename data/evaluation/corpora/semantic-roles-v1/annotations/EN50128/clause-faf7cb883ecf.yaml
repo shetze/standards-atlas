@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50128
+  clause_id: clause-faf7cb883ecf
+  content_hash: sha256:482c1087c44ca7892fbbda3f334c759a13ceda004eabb0e45e042d7c3f68a362
+proposal:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+  rationale: The clause explicitly defines the standard's applicability, limiting
+    it to software and software-system interaction; the structural context also identifies
+    it as the SCOPE clause.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:33:56.954318Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 21708414d4cdd0d7a6810bde4262aafa7df3a095b1ce36b6e2fa37172aa5affa
+  raw_response_hash: ec93f3ee5606aba645e3c904f2388f65e7b33b0f3bc6fcd58f6092c64a6a59f0
+annotation:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.987640Z'

@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-12
+  clause_id: clause-94c325f07bed
+  content_hash: sha256:f162b61592e5009f270e804cccfca9b49d90d3e94dd27aacf4cd296bc95a71fc
+proposal:
+  semantic_roles:
+  - verification
+  - requirements
+  primary_role: verification
+  confidence: 0.99
+  rationale: The clause mandates that verification be performed; the structural role
+    confirms it is a requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:31:07.861495Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 6b9740a821d50408557ae459b7541d7ef83e6061e4f6e88e6bb415c97429e3e3
+  raw_response_hash: 3aaddbe1d019edb50f7e6dc57b79591b176e6ed1caeab9b52d43e21a1bc46c37
+annotation:
+  semantic_roles:
+  - verification
+  - requirements
+  primary_role: verification
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.813115Z'

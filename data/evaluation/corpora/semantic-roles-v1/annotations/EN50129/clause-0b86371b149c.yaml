@@ -1,0 +1,33 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-0b86371b149c
+  content_hash: sha256:b85ffc623419704d00987c7465175df49bdc9880e09dfe72021da5d05418cc94
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “stress profile” by stating its meaning.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:29:09.050108Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 9779c62e00b633cdd4311812036143660feb21db0cdb0233bdf001f59f66a531
+  raw_response_hash: 5fca319f93817a507b93351d7a3ec211a972fe6741db526baa1573aff8c7bf6b
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.584216Z'

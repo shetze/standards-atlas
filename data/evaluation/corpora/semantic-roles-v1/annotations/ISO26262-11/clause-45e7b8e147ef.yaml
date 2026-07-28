@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-45e7b8e147ef
+  content_hash: sha256:91fe10bd8688220bc0d64e2d9765b2958af7608fae9707e1ef667a83378f1ccb
+proposal:
+  semantic_roles:
+  - requirements
+  - recommendations
+  - outputs
+  - example
+  primary_role: requirements
+  confidence: 0.93
+  rationale: Defines the parameters and calculation method for the temperature de-rating
+    factor, permits a conservative setting, and illustrates the resulting failure-rate
+    output with an example.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:01:31.640074Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 62f52792b933235f3355d3651edb8bbf36743bbc7a6eb4763513bd08a3041575
+  raw_response_hash: 05a37e7f95e3baacec01c838b6894fafb0b532ba1678ff8fde7ea3f28d92acc8
+annotation:
+  semantic_roles:
+  - requirements
+  - recommendations
+  - outputs
+  - example
+  primary_role: requirements
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.677877Z'

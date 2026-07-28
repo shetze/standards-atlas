@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3-1
+  clause_id: clause-1c82b6f3b07b
+  content_hash: sha256:b6f66cfd0b398f497986ecf8401965ddd779951a4624a3ca93b9ef781b1400af
+proposal:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause states a mandatory safety-related condition using “shall”
+    and requires evidence that reused software functions do not adversely affect system
+    safety integrity.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:30:19.307639Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 314f6c0018eebcedd8743a2ad994e9115b21e6c4dca6fe076e732488070cace9
+  raw_response_hash: 54e025b170008766442ef3c55d017ceb8ade7e4635c332837f92c95235bcfd24
+annotation:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.609490Z'

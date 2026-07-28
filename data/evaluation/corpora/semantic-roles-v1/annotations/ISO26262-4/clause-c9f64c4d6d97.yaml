@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-c9f64c4d6d97
+  content_hash: sha256:f162b61592e5009f270e804cccfca9b49d90d3e94dd27aacf4cd296bc95a71fc
+proposal:
+  semantic_roles:
+  - verification
+  - requirements
+  primary_role: verification
+  confidence: 0.99
+  rationale: The clause explicitly mandates that verification of the interface specification
+    be performed; the structural role also identifies it as a requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:16:57.760344Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: cf76a7847d4472ce9567f58bc789fc0d0560d3c65f5a832cfab8f10ceb3fb070
+  raw_response_hash: 41dce9b8b9e72aa899ebe750a365eb9980f09d7b831011f2b78b73c8be7f4cd1
+annotation:
+  semantic_roles:
+  - verification
+  - requirements
+  primary_role: verification
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.907830Z'

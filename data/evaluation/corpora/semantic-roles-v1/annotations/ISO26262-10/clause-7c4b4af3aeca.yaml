@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-7c4b4af3aeca
+  content_hash: sha256:3102e390552ee9f651804a50ff9c9d8d04ace24ef38b16d5aa2c615285255b33
+proposal:
+  semantic_roles:
+  - figure
+  - note
+  primary_role: figure
+  confidence: 0.99
+  rationale: The normalized content consists primarily of Figure 23 describing the
+    SEooC hardware component development process, with three accompanying notes providing
+    applicability and tailoring guidance.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:46.471528Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: f13567541e868adc2859ce1388acc919dc285ebf7aa7cb31c3eaa5ddea45c163
+  raw_response_hash: dca84c9afa7d462e26a6ca117bf4bb56d89e51c15600e1fcae2fa999c64baffe
+annotation:
+  semantic_roles:
+  - figure
+  - note
+  primary_role: figure
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.777927Z'

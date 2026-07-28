@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-5
+  clause_id: clause-8045dd0f1374
+  content_hash: sha256:d689276ccf91cc83155db8a602f6ef403fe5a14670530c440171774a0a2d0883
+proposal:
+  semantic_roles:
+  - requirements
+  - annex
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The title describes methods for determining safety integrity level requirements,
+    indicating normative requirement-selection content. The structural context identifies
+    the clause as an annex and a requirements section.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:19:14.487500Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 365d08168de99a600c0cb6d869aea98a4be5c2da0f96c895a2cf40494235ac88
+  raw_response_hash: 0fdff83f8d9336a1f30d391fa175791a6d1b8d1e56fe8d0fb8bc5583b5b29b2d
+annotation:
+  semantic_roles:
+  - requirements
+  - annex
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.783897Z'

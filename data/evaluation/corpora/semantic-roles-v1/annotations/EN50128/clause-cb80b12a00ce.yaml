@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50128
+  clause_id: clause-cb80b12a00ce
+  content_hash: sha256:f43d68b2f5af1a3c62e6bc0588bc02f029d09e48a5c553c0b39375c005569b6d
+proposal:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+  rationale: The clause lists documents produced by the software testing and validation
+    process; structural context also identifies the section as outputs.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:30:33.572649Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e7ba454ef24b957a9eb410bc6e5e096048ded4e8265a4324b2dfe18293bcaf50
+  raw_response_hash: 802a7914b06d6eb5c6d73a3a3fc24fb8524b08b0c1fdc1f469b02e6c0dc2b0e2
+annotation:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.909538Z'

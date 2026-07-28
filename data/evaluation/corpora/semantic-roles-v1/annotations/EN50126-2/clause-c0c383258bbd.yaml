@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-c0c383258bbd
+  content_hash: sha256:418e544834ff9b693a80ca8df736aee4a963cb7e736d3d62f4fd9081d03e47d4
+proposal:
+  semantic_roles:
+  - annex
+  - table
+  - recommendations
+  - requirements
+  primary_role: recommendations
+  confidence: 0.96
+  rationale: The clause is an annex containing tables that recommend techniques and
+    methods by life-cycle phase and SIL, alongside defined recommendation ratings;
+    the role responsibilities and competencies state required duties and capabilities.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:18:34.117821Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: ed13e04fc538f7a196ebff66bb66b0f10c38aeddd8a710c8a7d4435b67054a90
+  raw_response_hash: 4c1ff03e762aa36dcfc01741fa6181fa76d2eae8e4dcff5e554e1d45cd82bd4d
+annotation:
+  semantic_roles:
+  - annex
+  - table
+  - recommendations
+  - requirements
+  primary_role: recommendations
+  confidence: 0.96
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.888867Z'

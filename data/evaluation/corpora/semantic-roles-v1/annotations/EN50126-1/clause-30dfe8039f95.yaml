@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-30dfe8039f95
+  content_hash: sha256:fe0384d9dcf3c41f96fbdef4cd283d62c6e11959380dc61a8e2051417e7baf60
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “fault” and includes a note about its classification
+    and source reference.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:41:59.686253Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d4c57151ea79bab031ba30a8980362d09dd57e5656ea51e3ad018ac17150f4d6
+  raw_response_hash: d0f7e635dc163644264625bc00455ab4ab549aced7da1c959796d55e2def179a
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.644373Z'

@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3-1
+  clause_id: clause-fe4d91b4af27
+  content_hash: sha256:e3c91b66c0efd2886a33ecf579e5b971c1dc6c6db470a0b3851d9543a2386c2f
+proposal:
+  semantic_roles:
+  - requirements
+  - note
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause states a normative limitation using “shall,” with an explanatory
+    NOTE providing supporting rationale.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:14:52.814330Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: ba395f02496e1915f1685337fb6647887d028f5d4c09e352b70ddda1fb0cb088
+  raw_response_hash: ec19dddbfe09ead164b45ac47c17925bc6b9cf3c2ddfffef0ba0a7a14d15075e
+annotation:
+  semantic_roles:
+  - requirements
+  - note
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.994376Z'

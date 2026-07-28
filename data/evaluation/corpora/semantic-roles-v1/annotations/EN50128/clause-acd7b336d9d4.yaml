@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50128
+  clause_id: clause-acd7b336d9d4
+  content_hash: sha256:638a12a550e2df088bcb8c0c253733b4350b81ed6f9e1c1c2d453b59549e24a9
+proposal:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+  rationale: The clause enumerates required output documents and identifies concrete
+    work products such as architecture, design, interface, integration test specifications,
+    and a verification report.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:24:23.738791Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: fddc07dff3f488f3776dd52c9ad7aa4c9e82b1f7e9b0391782117f0c12df7a13
+  raw_response_hash: 143b2dd0f010d6f87a149795fe1d2d9f965509a99505da5d2b61002538d96187
+annotation:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.855317Z'

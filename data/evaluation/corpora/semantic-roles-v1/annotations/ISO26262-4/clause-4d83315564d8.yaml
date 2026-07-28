@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-4d83315564d8
+  content_hash: sha256:174e8460ecec86bbb6c66a9c0537341941a28d192ecf5836c226dd5233745358
+proposal:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause prescribes that compliant hardware and software shall be integrated
+    and used as the subject of specified test activities.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:22:31.836733Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 69f4d44f41f4e21ca1443e2c1dd900250142ca6912c11b8453b9e3fd37562364
+  raw_response_hash: ac86d08d9ec81e6a3dc89944b5227714fda49bfb49e2ef86605f7fff3a3914f9
+annotation:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.689933Z'

@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-5092deb035a7
+  content_hash: sha256:c35ab3d139ff5f17d41967a7a59eaea8dafadcf0821184adecf88b211feeb3ab
+proposal:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.62
+  rationale: The clause contains no substantive normalized content; classification
+    relies on the structural context identifying it as part of the scope.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:43:45.122673Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 5f04d842e5ff4b4af5c317e8f3fbbe1cf260107a2607bacf71a2dc63b45c03e5
+  raw_response_hash: ee1e48680df3b1630b345263f109a86bf0f1e38f4008b829f8deb1034aa3effe
+annotation:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.62
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.694958Z'

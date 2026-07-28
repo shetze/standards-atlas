@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-da7aa9c00b46
+  content_hash: sha256:1a212eaf38f20c83cf4ce8e0a924bbaa5ebc44dfcb84c4bfb30e151e375b874e
+proposal:
+  semantic_roles:
+  - recommendations
+  - compliance
+  - verification
+  - annex
+  primary_role: recommendations
+  confidence: 0.95
+  rationale: The clause provides guidance for using GAME to demonstrate compliance
+    and recommends establishing identical application conditions and scrutinizing
+    differences for safety impacts.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:33:38.058204Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 7361f811a2b716e8075350a92ca0327b5d728f85709e442e6415ad4b5e4ffa35
+  raw_response_hash: b8d5bc2814aa573d8b65ad39a13190c689c206b04bd82f759a4287ccb803bf69
+annotation:
+  semantic_roles:
+  - recommendations
+  - compliance
+  - verification
+  - annex
+  primary_role: recommendations
+  confidence: 0.95
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.931030Z'

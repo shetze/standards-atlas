@@ -1,0 +1,44 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-6
+  clause_id: clause-4670f7c31dda
+  content_hash: sha256:8b39722625e3a92041ae66e7b67bd61d868741826736f5a29562b560faede689
+proposal:
+  semantic_roles:
+  - annex
+  - objectives
+  - recommendations
+  - inputs
+  - example
+  primary_role: recommendations
+  confidence: 0.94
+  rationale: The clause provides guidance on selecting and applying safety-analysis
+    methods, identifies software architectural design as an analysis input, and includes
+    an explicit example; its annex context supports an objectives-oriented informative
+    role.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:34:55.836645Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 77ae05b08c03f2708c73656c566eaae74b48380e0e4e844e45a6146708eadba0
+  raw_response_hash: 39b0832e3621baf44545c92719b7dc5e5a856fa7a532ccf06398bc54e3928d6e
+annotation:
+  semantic_roles:
+  - annex
+  - objectives
+  - recommendations
+  - inputs
+  - example
+  primary_role: recommendations
+  confidence: 0.94
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.678798Z'

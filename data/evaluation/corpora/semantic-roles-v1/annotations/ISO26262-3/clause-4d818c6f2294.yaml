@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-3
+  clause_id: clause-4d818c6f2294
+  content_hash: sha256:135be37b9d213561b31a5882dd6ca22abe1dbdf38132edd577604b54d3a0dd07
+proposal:
+  semantic_roles:
+  - requirements
+  - example
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause states a normative classification rule for severity in operational
+    situations and includes two explicitly labeled examples illustrating its application.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:03:00.747772Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: dd03bbb8f8575d91ae421236e23b754d18cf62076b12484ebd0f33138361f7b7
+  raw_response_hash: 7c8fda6f9ff1cd080bab45a7b414ad4e4c516555876441e6f1f11d0b97e7384e
+annotation:
+  semantic_roles:
+  - requirements
+  - example
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.689108Z'

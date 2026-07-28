@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50657
+  clause_id: clause-56d333478588
+  content_hash: sha256:432a4cc73efa3d462aa0f9ccba50cfd167af0fd2ea894ce89eb24f94f52a9980
+proposal:
+  semantic_roles:
+  - verification
+  - requirements
+  - objectives
+  primary_role: verification
+  confidence: 0.93
+  rationale: The clause defines an analysis and measurement process to determine whether
+    software performance requirements and success criteria have been satisfied.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:33:52.367202Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b2956011dc65c02e180718c02e2e1feca4605ba4d932dcdf3e2238a08714cf07
+  raw_response_hash: 74af8cbd6c5759be541c3655245c19822eaddca529b37d26520ac879bd9061ed
+annotation:
+  semantic_roles:
+  - verification
+  - requirements
+  - objectives
+  primary_role: verification
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.711831Z'

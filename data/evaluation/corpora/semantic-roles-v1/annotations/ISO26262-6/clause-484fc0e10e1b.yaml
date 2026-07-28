@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-6
+  clause_id: clause-484fc0e10e1b
+  content_hash: sha256:fed7383f39a96658a27b6bf76f468790c59e5ef3536cf7084158eee12d5a2169
+proposal:
+  semantic_roles:
+  - annex
+  - note
+  primary_role: annex
+  confidence: 0.91
+  rationale: The clause points readers to supporting information in other applicable
+    phases rather than stating a requirement or objective. The structural context
+    explicitly identifies it as annex material; semantically it functions as a cross-reference
+    note.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:22:59.053952Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 8a6d3a2eed79e2b6678bd1c840b9a266b1bb725989f7e59c38f39a8c4f6f2ff8
+  raw_response_hash: 2d9bde4571cc8b95bb615de0d233b2139e8662d518095c58ef8aadd6d030f247
+annotation:
+  semantic_roles:
+  - annex
+  - note
+  primary_role: annex
+  confidence: 0.91
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.681413Z'

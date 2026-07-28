@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-939b4dcb97bb
+  content_hash: sha256:7baccc02e05d28ab69e7011f4e85a4b98babbb60129c0c9bab2dbcebbc4b58a9
+proposal:
+  semantic_roles:
+  - annex
+  - scope
+  - note
+  primary_role: annex
+  confidence: 0.99
+  rationale: The clause is structurally identified as an annex and provides an overview
+    defining the annex’s informational scope, with an accompanying note clarifying
+    its non-exhaustive status.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:40:59.559577Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: f29494f67e38399b2417419513c29861b8641457bf33e2fbc48c3b57a47f41a9
+  raw_response_hash: 724e45816ef99cc776b68ebdff894d859a13396cb987e0e538c3af6b5383b8d0
+annotation:
+  semantic_roles:
+  - annex
+  - scope
+  - note
+  primary_role: annex
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.811414Z'

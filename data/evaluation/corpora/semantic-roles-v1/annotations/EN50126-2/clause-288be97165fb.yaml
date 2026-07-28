@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-288be97165fb
+  content_hash: sha256:bee0653bf0129a4b952a30cc194d0ca957618403df0c0f37e86a62fa2e3ccc97
+proposal:
+  semantic_roles:
+  - annex
+  - requirements
+  - work_products
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The annex specifies mandatory responsibilities and competencies for safety
+    roles, making requirements the primary semantic role; it also describes role-related
+    records, reports, and plans as work products.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:21:03.645941Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c33457ecb10f982b1b8599e4366e8796d696059216b089b1a505f3f7a67755b9
+  raw_response_hash: 4528dccd898dce5b082695171e4d472bd3e41fe5b4c75976e5cf350e7af8baba
+annotation:
+  semantic_roles:
+  - annex
+  - requirements
+  - work_products
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.629850Z'

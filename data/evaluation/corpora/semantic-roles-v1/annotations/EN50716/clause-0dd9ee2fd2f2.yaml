@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-0dd9ee2fd2f2
+  content_hash: sha256:e7d03bc57195afc30261de50e792b23dbf3638d90491635d2d832deb1c0d4e4b
+proposal:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+  rationale: The clause lists software verification plans and reports as produced
+    documents, and the structural context explicitly identifies the clause as an outputs
+    section.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:29:49.253002Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4bd4bf018313a53eff048639a6dd4fd86371e897e10b71e4236ae4c7306e8221
+  raw_response_hash: 37f3c2302fddbe90510df67ff389ece44497146156f7bb4bfd441dc6f6bdb683
+annotation:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.586751Z'

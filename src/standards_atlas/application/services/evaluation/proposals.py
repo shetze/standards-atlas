@@ -475,6 +475,7 @@ def _request(config, prompt, item_input, task):
             "dataset_version": config.dataset_version,
             "task_version": task.version,
             "content_hash": content.get("hash"),
+            "clause_context": context,
         },
     )
 

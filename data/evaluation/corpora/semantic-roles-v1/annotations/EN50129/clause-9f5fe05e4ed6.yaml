@@ -1,0 +1,45 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-9f5fe05e4ed6
+  content_hash: sha256:bff832520a297072f2fe19a11bc6353f61e5d4fec67c1a7e8c90bbc180ef31f8
+proposal:
+  semantic_roles:
+  - requirements
+  - verification
+  - inputs
+  - work_products
+  - recommendations
+  - annex
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause specifies mandatory fault-detection and safe-state requirements,
+    including evidence, calculations, failure-rate sources, and analysis methods;
+    it also includes a SIL 3/4 recommendation and is structurally located in an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:33:10.613122Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b54e4152e8a084ce97431987601fc5857ca196368451a61eaa9d366a2488115b
+  raw_response_hash: 9bb522ecd6a798e6e74cd8e57e0b460126be45579f2657e984fdc786b770db5b
+annotation:
+  semantic_roles:
+  - requirements
+  - verification
+  - inputs
+  - work_products
+  - recommendations
+  - annex
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.826811Z'

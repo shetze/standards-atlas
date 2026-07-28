@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-8282b9405a59
+  content_hash: sha256:ade16033a61d64e6c7dd252503aeef7f9fc6a9943b8cec050103ab3928337faa
+proposal:
+  semantic_roles:
+  - requirements
+  - verification
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause states a mandatory deliverable condition ('shall') and requires
+    that the analysis result be comprehensive and verifiable by qualified persons.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:40:22.131176Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 473a6680adeefe678a9b9b28b7f5cd43dadbfe621799e1ceed7e40377cd6c7e2
+  raw_response_hash: 0da34de65082f9e76c865e89263cc48e3f7d8f8b2ce0ddf5360eca2ee26a3780
+annotation:
+  semantic_roles:
+  - requirements
+  - verification
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.786432Z'

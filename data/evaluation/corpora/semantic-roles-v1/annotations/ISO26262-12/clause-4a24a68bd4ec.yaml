@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-12
+  clause_id: clause-4a24a68bd4ec
+  content_hash: sha256:80b9319ac53335ca63f98a06f8bd1818dfa2d8687e57a53dc30c4dfc7085fb93
+proposal:
+  semantic_roles:
+  - annex
+  - example
+  primary_role: example
+  confidence: 0.99
+  rationale: The clause explicitly presents examples of controllability classification
+    techniques and is structurally located in an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:03:04.675810Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 63b7522f24546a412c17270194b743c34cfce9ce36339d9d615a9ba93b73ab4f
+  raw_response_hash: a46c60450f27aedf7e956450be8991e274b4a7d1da82ef246a421b4b134eede8
+annotation:
+  semantic_roles:
+  - annex
+  - example
+  primary_role: example
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.683172Z'

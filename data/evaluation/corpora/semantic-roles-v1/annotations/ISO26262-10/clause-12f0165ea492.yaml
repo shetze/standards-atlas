@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-12f0165ea492
+  content_hash: sha256:f3eef5c047a797f369f2fa29b4e442059c82e38f93f37f3977f6d88c7836e3d8
+proposal:
+  semantic_roles:
+  - work_products
+  - outputs
+  primary_role: work_products
+  confidence: 0.98
+  rationale: The clause explicitly identifies documentation and information provided
+    as work products at the end of development; structurally, it is under 'Step 3
+    - Work products'.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:01:03.367971Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b8e973aca183d8eb40f1812dfa027b2bfb1f2e3c2d7f496c50ae52c8e870f23a
+  raw_response_hash: 8f67465121ea4957333a1554f6d780213dd59980d08a8db53f2feb297ca327eb
+annotation:
+  semantic_roles:
+  - work_products
+  - outputs
+  primary_role: work_products
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.594374Z'

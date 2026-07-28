@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-a7bc74f46cc6
+  content_hash: sha256:4dee1850de3921ab9af80a178323805f1274bdd5d50e125819dd255152d35187
+proposal:
+  semantic_roles:
+  - requirements
+  - work_products
+  primary_role: requirements
+  confidence: 0.91
+  rationale: The clause specifies applicability and required limitations of safety
+    analysis and integration documentation work products for IP without integrated
+    safety mechanisms.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:05:57.611955Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d44a739831df9405fea64cfef2a5c3c1c63f3b4a24b8e83df093ea605192b0cf
+  raw_response_hash: d142517e7418467b67c229a4cbbc3fca72b06f466e0e81f4ff8ad7e1ed844e7e
+annotation:
+  semantic_roles:
+  - requirements
+  - work_products
+  primary_role: requirements
+  confidence: 0.91
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.848325Z'

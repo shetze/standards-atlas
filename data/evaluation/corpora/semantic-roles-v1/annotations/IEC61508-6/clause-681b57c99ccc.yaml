@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-6
+  clause_id: clause-681b57c99ccc
+  content_hash: sha256:f6723410be21525e5387333a3c504a07648bf155bc863019ba9db199ceb1c327
+proposal:
+  semantic_roles:
+  - scope
+  - recommendations
+  primary_role: scope
+  confidence: 0.96
+  rationale: The clause defines the committee’s responsibility and clarifies the applicability
+    of the referenced basic safety publication, establishing scope and a recommended
+    practice.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:18:15.211565Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4395f533169499b551f2845f78ef3a3ee1cfe414981fd08884f5b2b6cc1c1f39
+  raw_response_hash: c4ebb7307985c6708b627e1b32766a27ee02ee7f171c5ccdc5a9d3d5718aff11
+annotation:
+  semantic_roles:
+  - scope
+  - recommendations
+  primary_role: scope
+  confidence: 0.96
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.739128Z'

@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-7dcd4cf74bf2
+  content_hash: sha256:ffb4ad82bf798ecf6ff567ad2ac0ddb72b58ae46c9fd726fe6e28a0fe60e40c2
+proposal:
+  semantic_roles:
+  - objectives
+  - annex
+  primary_role: objectives
+  confidence: 0.98
+  rationale: The clause states a goal for producing a complete, error-free, consistent,
+    and verifiable specification. Its annex placement is supporting structural context.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:26:30.511779Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: ebd13e205282f3157d0092d4746d6c5354eee9719ecd4ecfb4805cda3e7cfc52
+  raw_response_hash: df79adc7e440467a68d5b3cc2d90b9468acc3f6e565aeed13d636509ed77b22d
+annotation:
+  semantic_roles:
+  - objectives
+  - annex
+  primary_role: objectives
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.780486Z'

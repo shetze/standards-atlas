@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-0
+  clause_id: clause-02af99336964
+  content_hash: sha256:b08a877565828fac116c009e73ca7d4845b405f4ca07fed6d4c052203c2aaaf2
+proposal:
+  semantic_roles:
+  - example
+  - introduction
+  primary_role: example
+  confidence: 0.99
+  rationale: The clause presents a concrete machine scenario to illustrate hazard
+    analysis, risk assessment, safety functions, and safety integrity; its explanatory
+    framing matches the titled example.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:27:17.049191Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 1df18d577e6537d6eaacd787d0832091b6444b21ca9d21163a82c97a953e976c
+  raw_response_hash: f731b1104d7d1044f3b87601c178b8be194c3243d37e644aaff097494de33d91
+annotation:
+  semantic_roles:
+  - example
+  - introduction
+  primary_role: example
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.569772Z'

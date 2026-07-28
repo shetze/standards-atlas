@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3
+  clause_id: clause-db9aa707f152
+  content_hash: sha256:a0a477136a9670c5cbe1640ede396db8e7919436bd1d94e98aa278073d59ee8b
+proposal:
+  semantic_roles:
+  - requirements
+  - compliance
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause establishes a mandatory suitability condition for use in safety-related
+    systems when evidence is unavailable.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:42:40.586202Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 14b21acd07178fa2ae85545574523305effe9f5715930bfc05fba36394006fd5
+  raw_response_hash: f77a993ba1b58ebd72c84882267f46cfe7a3b23862a2c9bbb8cde47493bd8980
+annotation:
+  semantic_roles:
+  - requirements
+  - compliance
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.936154Z'

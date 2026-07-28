@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-c6a103e55367
+  content_hash: sha256:4396bb6fc55d9fb1129f48ddb89804476dcb3aff8f67b32494ee5354194cf4e5
+proposal:
+  semantic_roles:
+  - inputs
+  - annex
+  - requirements
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause states the aim and describes a diagnostic measure, including
+    its effectiveness condition and redundancy configuration; this is primarily a
+    technical requirement, located in an annex and involving inputs.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:09:49.593405Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 7fa7b8fda1d4d6592f626035b1186b4087adfba84e33bb3278b401ebabbd2c3e
+  raw_response_hash: 2417a69df6cd630439c4579eb3121aa51f358cd475f319f587c527eab9dc1607
+annotation:
+  semantic_roles:
+  - inputs
+  - annex
+  - requirements
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.903473Z'

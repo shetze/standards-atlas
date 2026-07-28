@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-597e38862df9
+  content_hash: sha256:39b5a523af371b9b224be9d67d7c0ffcfd22fce9bf1b420ace88e094480c3c40
+proposal:
+  semantic_roles:
+  - annex
+  - recommendations
+  primary_role: annex
+  confidence: 0.99
+  rationale: The clause is an annex providing guidance on SIL allocation, including
+    recommended interpretations and possible allocation approaches.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:15:04.925306Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: bc9ad4820e7c5e522d8249e766f5034e436e680f02cf27fdaf73696de88b6797
+  raw_response_hash: e381a6c95d2ea966e73e61db788418cf6101339f3663ed73d9619e7d84d88e85
+annotation:
+  semantic_roles:
+  - annex
+  - recommendations
+  primary_role: annex
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.717157Z'

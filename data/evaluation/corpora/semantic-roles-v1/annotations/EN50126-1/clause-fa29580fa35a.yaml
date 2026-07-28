@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-fa29580fa35a
+  content_hash: sha256:27c87993e7728cebcd7627cf00c68fdac2c39d68c575a210c5270de9518238d4
+proposal:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+  rationale: The clause explicitly states the objectives of the life cycle phase and
+    lists two intended outcomes.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:16:38.661643Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 46868a918bbacf8ffc41ca56f6920c331d39ae5f1c3a83ac8c0c7dbcb836acb0
+  raw_response_hash: cceab748dfd8ca96f9b401acc082edaab6e85dd107f6022ccd4fc357e85a120f
+annotation:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.985170Z'

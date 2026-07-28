@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-9
+  clause_id: clause-8b0d1404b547
+  content_hash: sha256:2e0a605ac568c5e553847fbb2b6355a41c1f1b89f9ef73d74c96d57de1467c08
+proposal:
+  semantic_roles:
+  - note
+  primary_role: note
+  confidence: 0.99
+  rationale: The clause is explicitly labeled as a NOTE and provides explanatory context
+    about when coexistence criteria are typically considered.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:45:52.549341Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c3b06184869306378e18e9bd151e4db1cea088edb7928fdc7e2d1ea6ce478ed5
+  raw_response_hash: 831c253ef8f231f52686cdafec004a635194c7478f51a9b089241cf882e57947
+annotation:
+  semantic_roles:
+  - note
+  primary_role: note
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.802807Z'

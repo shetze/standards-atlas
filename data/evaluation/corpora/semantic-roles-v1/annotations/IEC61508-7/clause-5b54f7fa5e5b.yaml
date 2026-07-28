@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-5b54f7fa5e5b
+  content_hash: sha256:829f6b57f6724648dcd89dbaee3b8a02a34ce57a43b71f9e4815da897e8589fb
+proposal:
+  semantic_roles:
+  - annex
+  - table
+  primary_role: annex
+  confidence: 0.99
+  rationale: The clause is an annex overview, and the title indicates a structured
+    overview of techniques and measures; the note provides supporting applicability
+    context.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:42:48.761697Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 352c3de394ff2f452745f2820088647d39839f239cea4953bdbe52d03b29f26d
+  raw_response_hash: d66e8f7d2fab11e4129d9b70a9926d30b28324caac2b6b7fc073fdc4760ed016
+annotation:
+  semantic_roles:
+  - annex
+  - table
+  primary_role: annex
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.720551Z'

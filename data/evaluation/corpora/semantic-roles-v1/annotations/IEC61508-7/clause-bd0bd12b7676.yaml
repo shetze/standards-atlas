@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-bd0bd12b7676
+  content_hash: sha256:d33b9689cec936e28f9e1ef21272e95aa51a7ebca851f6e6057eecd485c30e72
+proposal:
+  semantic_roles:
+  - note
+  - recommendations
+  - annex
+  - outputs
+  primary_role: note
+  confidence: 0.96
+  rationale: The clause is explicitly marked as a NOTE and provides an informative
+    description of a monitored-output diagnostic technique, including its aim, capabilities,
+    and limitations, without normative obligation language.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:05:03.919598Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 67098d4c62857399ab24193ccedba093635210045caa1f00cf3aeaab1d01ab47
+  raw_response_hash: 6ded38a015bc3001059b66e8289742cae1cf3117e56ab33f7347b0318c904cc2
+annotation:
+  semantic_roles:
+  - note
+  - recommendations
+  - annex
+  - outputs
+  primary_role: note
+  confidence: 0.96
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.879372Z'

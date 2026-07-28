@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3-1
+  clause_id: clause-4a08825ec0c9
+  content_hash: sha256:0cf6b3ab1dc843bf90bf9bfd25364ccac536717f0dfb5be5e6ec769206eeb093
+proposal:
+  semantic_roles:
+  - requirements
+  - verification
+  - work_products
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause uses normative 'shall' language to require documenting a proven-in-use
+    safety justification, including specified evidence and test results; it also identifies
+    verification evidence and resulting documentation as work products.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:21:30.420627Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 15bec0abfceb089d4a52a0268bce2896fb077fba7642f3dd79496d81fc2aa864
+  raw_response_hash: 0e7c3be4731c70fe1aaa56ee2d1765872cd34c61b4647b0e99d8648eaaf28b2f
+annotation:
+  semantic_roles:
+  - requirements
+  - verification
+  - work_products
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.682287Z'

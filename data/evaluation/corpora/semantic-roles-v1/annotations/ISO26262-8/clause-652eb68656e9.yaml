@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-652eb68656e9
+  content_hash: sha256:c5d87a3457918b5eb3aa1976e79d1c20c5514f07d07040a751ad9f41fd5140e2
+proposal:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause uses normative 'shall' language to require availability of
+    a rationale.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:18:05.158039Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 24a71f0bbd2ca6aac01103bdb65c63fbd32fb8dae6c3bab3d3db106470ddbfe1
+  raw_response_hash: 4205546d07bc7eac7ba4cf71233ca420236e328b7819b9b38b2c913cd553fc45
+annotation:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.733100Z'

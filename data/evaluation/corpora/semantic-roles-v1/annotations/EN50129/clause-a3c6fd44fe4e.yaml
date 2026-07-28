@@ -1,0 +1,43 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-a3c6fd44fe4e
+  content_hash: sha256:80e10d1856974a7efa6f2a72fb0d471b6c4171733c450fe02a4206b07cd42de1
+proposal:
+  semantic_roles:
+  - annex
+  - table
+  - compliance
+  - conformance
+  - bibliography
+  primary_role: conformance
+  confidence: 0.99
+  rationale: The clause maps the standard to EU Directive essential requirements and
+    states when compliance gives a presumption of conformity; it also contains a correspondence
+    table and a bibliography.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:26:06.897785Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 70eb89d2417d1e8ed4f1e8a331e4484bed475e7bbfaad10a19f40b3598182ffa
+  raw_response_hash: 5a10bdbbe126e10d240853289dc16dd9f790c727a692bc6e9e19f0d09332a3cb
+annotation:
+  semantic_roles:
+  - annex
+  - table
+  - compliance
+  - conformance
+  - bibliography
+  primary_role: conformance
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.839835Z'

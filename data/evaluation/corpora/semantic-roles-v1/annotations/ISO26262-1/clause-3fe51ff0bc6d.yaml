@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-3fe51ff0bc6d
+  content_hash: sha256:1040675698550cf9564940d5c177ffda14f027ed5e3aa2b0c88ac33d32617714
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - example
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “complete vehicle” and includes an explicitly
+    labeled example.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:16:20.750792Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e6b81e8393ea5e24506c95e42e010c434df24ed8a5afd40ef987b414c92c5031
+  raw_response_hash: 9d9aa3188098ed3645497aa774bcc8915803faddf32cf12f7bd3f525cd4ed30f
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - example
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.666617Z'

@@ -1,0 +1,42 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50657
+  clause_id: clause-235c275fdf05
+  content_hash: sha256:90dc1a5ef7e26c5cbb8db32987e4fe424307be308ebdad0b43b8ab809bccf8b8
+proposal:
+  semantic_roles:
+  - verification
+  - objectives
+  - inputs
+  - annex
+  primary_role: verification
+  confidence: 0.96
+  rationale: The clause defines an input-partition testing strategy and test-case
+    selection method, making verification the primary role. It also states the testing
+    objective and identifies test data/partitions as inputs; the annex context is
+    structural.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:10:38.347199Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 53c3d2951c69a1cb98151c9099effbf39c2d7009531bb4cab594f2d1c8d7e3bb
+  raw_response_hash: 307832263fe6e7c5a4305815e591839401fe537568a6b3b9a45759674257f84b
+annotation:
+  semantic_roles:
+  - verification
+  - objectives
+  - inputs
+  - annex
+  primary_role: verification
+  confidence: 0.96
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.622238Z'

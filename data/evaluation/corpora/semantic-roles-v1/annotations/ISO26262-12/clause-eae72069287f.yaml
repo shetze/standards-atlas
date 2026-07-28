@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-12
+  clause_id: clause-eae72069287f
+  content_hash: sha256:47d779ce353e2f4047154877a8fa0390581d5cbb97ff7cfb0dd6aa3824f472c9
+proposal:
+  semantic_roles:
+  - annex
+  - assessment
+  - recommendations
+  primary_role: assessment
+  confidence: 0.97
+  rationale: The clause defines and explains how to evaluate controllability, including
+    experimental/analytical approaches and expert-rider assessment guidance.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:13:22.681005Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 49778471420cf83761617382ba86f2e4bc197c40d42724542a27a4885bf09391
+  raw_response_hash: 79a3a920e699390ab6864a1dd16e8177c61eaef70518cd7e0850e770f159eaf7
+annotation:
+  semantic_roles:
+  - annex
+  - assessment
+  - recommendations
+  primary_role: assessment
+  confidence: 0.97
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.961019Z'

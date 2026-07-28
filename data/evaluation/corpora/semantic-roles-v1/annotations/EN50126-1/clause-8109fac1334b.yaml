@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-8109fac1334b
+  content_hash: sha256:bae959aa2584f48c4d730c8ceab25d89591150506ecf3c79decd2558e4849005
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause states the defining concept of “risk” as a combination of
+    loss frequency and loss severity.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:29:57.772610Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: adc1ede9d7c998a5f66f7c4cb457583d0e9ff03fd8810a56e54e007885eff90d
+  raw_response_hash: 32ba1b4a2eecf052c46877b3c87b3478d2f974a4014030ccbd8c2c4c2f7305e6
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.784731Z'

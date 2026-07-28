@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-6
+  clause_id: clause-555d9adefd29
+  content_hash: sha256:fd54e55d775625c7cb4c1afef35ef4c7a423889872d00e37d62acffff47ec4a6
+proposal:
+  semantic_roles:
+  - requirements
+  - inputs
+  - annex
+  primary_role: requirements
+  confidence: 0.88
+  rationale: The clause specifies a condition that prerequisites must satisfy, making
+    it primarily a requirement; it also identifies prerequisites as inputs and is
+    located in an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:28:31.244841Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d06d755a3d8c0230d656e0e1ed60b1fa92b465536ba3ded8bb820d2510d490d8
+  raw_response_hash: ad66168e1a88c0e04589c6f9f2f53e0a5738683d0c8f536053060cd297a93408
+annotation:
+  semantic_roles:
+  - requirements
+  - inputs
+  - annex
+  primary_role: requirements
+  confidence: 0.88
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.708395Z'

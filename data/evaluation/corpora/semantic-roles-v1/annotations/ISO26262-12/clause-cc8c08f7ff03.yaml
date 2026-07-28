@@ -1,0 +1,40 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-12
+  clause_id: clause-cc8c08f7ff03
+  content_hash: sha256:b4fc85a207e062f9f7c5ff01312d7028c55ef5161b1b1035a0ab9d20505e9ff1
+proposal:
+  semantic_roles:
+  - recommendations
+  - assessment
+  - annex
+  primary_role: recommendations
+  confidence: 0.98
+  rationale: The clause describes permissible controllability evaluation techniques,
+    notes that none is preferred, and provides guidance on assigning the highest class
+    when rider safety cannot be assured. Its annex context is supporting structural
+    evidence.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:15:46.853690Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c68ffd7087e0719b0ea2ee3542a1b3ca7a313cbf2729ef9caf830b9c8fa5d2fe
+  raw_response_hash: 95459993714b63b3bc13985f20622742cca6707fa9db91118e46c8ac477bcce0
+annotation:
+  semantic_roles:
+  - recommendations
+  - assessment
+  - annex
+  primary_role: recommendations
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.912174Z'

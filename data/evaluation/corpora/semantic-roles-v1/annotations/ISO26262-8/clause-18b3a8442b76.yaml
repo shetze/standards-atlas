@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-18b3a8442b76
+  content_hash: sha256:db72f8ecaa8795226850fabdabad5c43cffd1a935dc8e4aee10051e6463e8960
+proposal:
+  semantic_roles:
+  - requirements
+  - outputs
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause normatively requires the evaluation report to state the hardware
+    element’s pass/fail result against allocated safety requirements; the report is
+    the resulting work product/output.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:42:52.730629Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4c54584fa5ce049335f15ed29f6bd7d2131dac7a3f98655618a16f7ec3c2fa9e
+  raw_response_hash: 135e66d119e322e0c26403fec8e0cd7c0690948990043972b6a06a4c35ae594a
+annotation:
+  semantic_roles:
+  - requirements
+  - outputs
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.606030Z'

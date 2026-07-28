@@ -1,0 +1,44 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-33c3703af84f
+  content_hash: sha256:a11b5ec012b47b853f852d9d62641b4592021d269fd3dcb83eedc6533c757a32
+proposal:
+  semantic_roles:
+  - requirements
+  - verification
+  - table
+  - note
+  - example
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause states a normative shall requirement for demonstrating hardware
+    fault-detection effectiveness and specifies test methods in Table 7. The table
+    defines ASIL-specific applicability and effectiveness ratings; the note provides
+    a normative reference, while footnotes explain the test methods with examples.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:08:46.502184Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 19954a84518a101578aa04511151db96237db7022b8a3a093559c1ed32a9b025
+  raw_response_hash: 683957aeec1567e6913eb2d2eb43cdc4efc5892c96d3de1136b21e41d41760ef
+annotation:
+  semantic_roles:
+  - requirements
+  - verification
+  - table
+  - note
+  - example
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.650258Z'

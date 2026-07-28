@@ -1,0 +1,45 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-6
+  clause_id: clause-751c4a606695
+  content_hash: sha256:905633930545c8de9a5ed1d8367a7875436026019c0dd295bbc4fa05845aade6
+proposal:
+  semantic_roles:
+  - objectives
+  - requirements
+  - recommendations
+  - example
+  - note
+  - annex
+  primary_role: recommendations
+  confidence: 0.95
+  rationale: The clause explains acceptable uses and benefits of models, cautions
+    about omitted requirements, and recommends combining textual requirements with
+    other notations; it includes explicit examples and appears in an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:00:54.390517Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 7e51a4bc761bae0ec312406728eee667bd051c4af44078b8247e2a2b63643dc1
+  raw_response_hash: fc825bf3130f4631d0d8eb955237633463b157ea1baa8049840fae124b40d1de
+annotation:
+  semantic_roles:
+  - objectives
+  - requirements
+  - recommendations
+  - example
+  - note
+  - annex
+  primary_role: recommendations
+  confidence: 0.95
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.764029Z'

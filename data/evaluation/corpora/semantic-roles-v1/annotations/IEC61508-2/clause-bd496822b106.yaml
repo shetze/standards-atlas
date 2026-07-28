@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-bd496822b106
+  content_hash: sha256:1f299186b3aa22fe69a1c89ca7f8816f070786bf0675bb693fb971c6ccf327c5
+proposal:
+  semantic_roles:
+  - requirements
+  - annex
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause specifies mandatory safety-manual content using normative
+    “shall” statements, with supporting notes and annex context.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:13:41.556935Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 536bab35361b7586055eeaf65cf1c740ed513be4d2712d78d9515f2ef3c2e255
+  raw_response_hash: e4e522c4f54d54f5a31f36d256b39806e34025a3d313db7a2bfe1eac150ab416
+annotation:
+  semantic_roles:
+  - requirements
+  - annex
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.880257Z'

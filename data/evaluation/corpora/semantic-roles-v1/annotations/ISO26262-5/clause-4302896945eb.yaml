@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-5
+  clause_id: clause-4302896945eb
+  content_hash: sha256:d1827e521913672766d10cda773c7ec99dddf44ebf292b80913e302aa4abd51c
+proposal:
+  semantic_roles:
+  - note
+  - objectives
+  - recommendations
+  primary_role: objectives
+  confidence: 0.96
+  rationale: The explicit Aim states the detection objective; the NOTE provides a
+    cross-reference, and the Description gives informative guidance about the diagnostic
+    measure and its effectiveness conditions.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:01:21.739242Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 3ff1d1c012f324fdc9ba4a244defc94f83ca75058d8a8b4930bcc33d06fb2411
+  raw_response_hash: 1ac8a23f513adedfd6c44a61960948bf0011147a88c020dcae470679d205ed86
+annotation:
+  semantic_roles:
+  - note
+  - objectives
+  - recommendations
+  primary_role: objectives
+  confidence: 0.96
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.674409Z'

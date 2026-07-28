@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-fbb38334d2ac
+  content_hash: sha256:277bc0d3173e429b1da340c948efacae7ba2b921e05eb23a5f7086d0edd85b33
+proposal:
+  semantic_roles:
+  - annex
+  - introduction
+  primary_role: introduction
+  confidence: 0.98
+  rationale: The clause introduces how the GAME principle is used and states that
+    the subclause explains its purposes and role in risk acceptability assessment;
+    the annex context is supporting structure.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:36:11.789321Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 839ad4bce0a3882a8d862365f740432de184b850c08b5b11fb5aee1d924436a3
+  raw_response_hash: 718569c6d2311aa8e46a6e7b64d11c2bcee28883130c46a7132d8f37012780bb
+annotation:
+  semantic_roles:
+  - annex
+  - introduction
+  primary_role: introduction
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.988474Z'

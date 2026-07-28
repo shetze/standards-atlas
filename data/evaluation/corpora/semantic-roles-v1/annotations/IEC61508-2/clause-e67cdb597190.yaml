@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-e67cdb597190
+  content_hash: sha256:44729af570a09e0fd525df886655b9401b46e17e1087d85176fdf80d31d8212b
+proposal:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+  rationale: The clause explicitly states that it sets out objectives and requirements
+    for E/E/PE system safety lifecycle phases; the structural role and title also
+    identify it as an objective clause.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:25:47.294519Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b6c1ca50af5d6e6d604ee46592ae57e29a8896a29cb34f7e8de1d7145c507440
+  raw_response_hash: 2142a77770a70f3768fa4beaf782a3e15b30ac4ed2c2ee044e6edd2b5326c37b
+annotation:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.952374Z'

@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-f3691cef19b1
+  content_hash: sha256:6d24f64a2cbd071bb1176d091ae235ac60c4c579cedbdfa97f98e5728d020cfa
+proposal:
+  semantic_roles:
+  - requirements
+  - example
+  - annex
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause uses mandatory shall-statements establishing independence
+    and lifecycle design requirements, while also providing an explicit example and
+    belonging to Annex B.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:31:14.433216Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 073ab1a309a9c08256b48831bfa25980df98768d94f10fc440cda373ac0a25d1
+  raw_response_hash: a2b7184e6a4a167c172a95f2601fac968df09c0f4868a2d1110f153a15ad682b
+annotation:
+  semantic_roles:
+  - requirements
+  - example
+  - annex
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.971417Z'

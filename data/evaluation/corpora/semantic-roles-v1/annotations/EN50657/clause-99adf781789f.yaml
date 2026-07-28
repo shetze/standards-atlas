@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50657
+  clause_id: clause-99adf781789f
+  content_hash: sha256:23a0969ff4758a8beb7ff7f6af3e26dda74da87d52aff62fe2b570741b866c25
+proposal:
+  semantic_roles:
+  - inputs
+  primary_role: inputs
+  confidence: 0.99
+  rationale: The clause identifies documents required as deployment-related inputs;
+    the title and structural role directly support this classification.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:22:15.113276Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 3516a2c0d75dc38228c3a81f10205db977b06553d6923415cf3c80f070ceb005
+  raw_response_hash: e6be4900c41ea7eb8f1f370cd4486a9e95bef7f0d887e50f3c0ccbf399af8ebb
+annotation:
+  semantic_roles:
+  - inputs
+  primary_role: inputs
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.817356Z'

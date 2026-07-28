@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-63fbe6f7643b
+  content_hash: sha256:7faeaf518859b8dc0796cd99215b8cf7f89a85525855f30971a187244be80411
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause states which terms and definitions apply, and the structural
+    context identifies it as a terms-and-definitions section.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:09:10.308300Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 854081f324e190a5f1ef52900cf6dbfaef517456ae345bcc03b3cbd21300da00
+  raw_response_hash: 19db4f1e88281f40bce3db6507389788226f4b885062d7e9062129db01856f32
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.731444Z'

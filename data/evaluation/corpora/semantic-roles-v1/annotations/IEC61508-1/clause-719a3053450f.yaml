@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-1
+  clause_id: clause-719a3053450f
+  content_hash: sha256:9acd1dcd3a80e5dd3c52c0c60c015e5733e2cfc63a44ba94f09ed898cac4d28d
+proposal:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+  rationale: The clause defines the applicability, coverage, exclusions, and boundaries
+    of the standard.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:25:51.940852Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 0b288adda95fc7c30cd6c39ae6a20530ab54339b2b618a4fcd246f8efd55f1ca
+  raw_response_hash: eef9328417c5ce1472cd854e990ecb9370e5fdcdd0f32402e2d0dfeab489de15
+annotation:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.758916Z'

@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-7028b5ad9b19
+  content_hash: sha256:58e97eac48c12361f44c19f75abdecc3b3d58710502e72680cac4fe5d0d64bfd
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause is a definition fragment for the term “safe state,” supported
+    by the structural role terms_and_definitions.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:39:28.052671Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: eb9c4ad60f220447f655d39f1ea0f7ca2aa4f107d34a23d7a2da847484d1b313
+  raw_response_hash: 1a9770c1898ee235009f68a7e741233bf3aabbbf2169d372b405954c4174621a
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.753895Z'

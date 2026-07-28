@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-3
+  clause_id: clause-1716a44dcbac
+  content_hash: sha256:ee598d9d844a14a83e3523721a4a551de1a136e4455fa390656f6c4c36a8cce2
+proposal:
+  semantic_roles:
+  - requirements
+  - example
+  - note
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause states normative conditions for selecting controllability
+    class C0 and the consequence that no ASIL assignment is required. It also contains
+    two explicitly labeled examples and an explanatory note.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:59.934376Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 12981d728084a4c820d7ad230e50b1ef0816400c4c53f19abab577ee01901eb1
+  raw_response_hash: 3f2d34b1dbef272f50988454bbdd3f8a5d735bb9688de2d6935615e948bde015
+annotation:
+  semantic_roles:
+  - requirements
+  - example
+  - note
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.602656Z'

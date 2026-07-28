@@ -46,6 +46,16 @@ from standards_atlas.application.services.evaluation.proposals import (
     SemanticTaskDefinition,
     SemanticTaskRepository,
 )
+from standards_atlas.application.services.evaluation.references import (
+    ClauseReferenceAnalysis,
+    ClauseReferenceExtractionService,
+    ClauseReferenceOccurrence,
+    ClauseReferenceRepository,
+    ReferenceExtractionResult,
+    ReferenceKind,
+    ReferenceResolutionStatus,
+    ResolvedReferenceTarget,
+)
 from standards_atlas.application.services.evaluation.report import (
     EvaluationReporter,
     SemanticEvaluationReporter,
@@ -54,6 +64,13 @@ from standards_atlas.application.services.evaluation.repository import (
     EvaluationDatasetRepository,
     GoldenDatasetRepository,
     PromptRepository,
+)
+from standards_atlas.application.services.evaluation.review import (
+    ReviewExportResult,
+    ReviewForm,
+    ReviewImportResult,
+    ReviewPublishResult,
+    SemanticAnnotationReviewService,
 )
 from standards_atlas.application.services.evaluation.runner import (
     EvaluationRunner,
@@ -111,6 +128,14 @@ __all__ = [
     "ClauseProvider",
     "DocumentDescriptor",
     "SamplingStrategy",
+    "ClauseReferenceAnalysis",
+    "ClauseReferenceExtractionService",
+    "ClauseReferenceOccurrence",
+    "ClauseReferenceRepository",
+    "ReferenceExtractionResult",
+    "ReferenceKind",
+    "ReferenceResolutionStatus",
+    "ResolvedReferenceTarget",
     "BaselineProposalGenerator",
     "ProposalRunConfig",
     "ProposalRunResult",
@@ -122,4 +147,9 @@ __all__ = [
     "CorpusBuildResult",
     "EvaluationCorpusBuilder",
     "EvaluationMatrixRunner",
+    "ReviewExportResult",
+    "ReviewForm",
+    "ReviewImportResult",
+    "ReviewPublishResult",
+    "SemanticAnnotationReviewService",
 ]

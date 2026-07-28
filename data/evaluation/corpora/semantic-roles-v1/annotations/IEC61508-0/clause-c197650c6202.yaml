@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-0
+  clause_id: clause-c197650c6202
+  content_hash: sha256:fc8a776b31a28fdf40124e3e2430e24c63124f315a71b10064952077e47f6852
+proposal:
+  semantic_roles:
+  - annex
+  - table
+  primary_role: annex
+  confidence: 0.99
+  rationale: The clause is Annex A and contains Table A.1, an informative list of
+    frequently asked questions rather than normative requirements.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:09:06.522701Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 6fdeedc97724ae43cc01daff3d2b54a4b0893f84149ec880af03ee9c4c256799
+  raw_response_hash: be606c91c3aa56642310a72844f44c359aba9679a9ca7342f9a75c95d90d1843
+annotation:
+  semantic_roles:
+  - annex
+  - table
+  primary_role: annex
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.892188Z'

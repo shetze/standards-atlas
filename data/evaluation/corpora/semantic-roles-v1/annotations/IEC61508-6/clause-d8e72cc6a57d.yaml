@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-6
+  clause_id: clause-d8e72cc6a57d
+  content_hash: sha256:7ffb724cae6d2a1aa2c1e90d88ab740a694a9b06e9786e6d91cdf5ea8ed0d8a5
+proposal:
+  semantic_roles:
+  - annex
+  - requirements
+  primary_role: requirements
+  confidence: 0.86
+  rationale: The clause defines the 1oo1 architecture calculation equations, including
+    PFH and failure-rate relationships, as technical requirements/formulas within
+    an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:28:37.347837Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 6678d762c9bccdf3162511b71f7c45a777fca943bddaced04a9f088a58a70b20
+  raw_response_hash: 1a641fbad11467d105668a205354f0bc5957111ed5b5285ecd68d3bdb0b8d74a
+annotation:
+  semantic_roles:
+  - annex
+  - requirements
+  primary_role: requirements
+  confidence: 0.86
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.930145Z'

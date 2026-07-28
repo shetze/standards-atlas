@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-2
+  clause_id: clause-41e0bda35c98
+  content_hash: sha256:2d78623740f9a649897ea59234bb00576957e1d60b4cc34ca6dfbb66c322f82d
+proposal:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+  rationale: 'The clause states an intended objective: allocating technical safety
+    requirements to hardware and software elements and reviewing their interface.'
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:29:19.576590Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: eed40c731f4222de69e034135587b1b7fbbaaac7aaad688962b5863ad4b4654e
+  raw_response_hash: 4524d949cedc1ef282838d6fecf3180ac4a2077ba56a42a9491fc062da726a4c
+annotation:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.670016Z'

@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-5
+  clause_id: clause-6ba1dffe4e82
+  content_hash: sha256:ea51a8a697eb776ca0852554e8935487a64f86c020716ba889ecd8813d20532e
+proposal:
+  semantic_roles:
+  - annex
+  - table
+  primary_role: annex
+  confidence: 0.98
+  rationale: The structural context explicitly identifies an annex, while the title
+    indicates it contains a hazardous event severity matrix.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:32:11.054471Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c38de0bcdb61db5f10e2a6f90328abed338ba32fd7edf81047fb729be0302921
+  raw_response_hash: edd9c4d3e623a828c6322b5b7884baa0eab9704de0b6d0e07128ca7b3d1fdf71
+annotation:
+  semantic_roles:
+  - annex
+  - table
+  primary_role: annex
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.747033Z'

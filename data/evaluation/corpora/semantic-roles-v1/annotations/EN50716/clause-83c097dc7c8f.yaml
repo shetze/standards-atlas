@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-83c097dc7c8f
+  content_hash: sha256:f00dedfcdbabdab34a474b5e3202807a7fab1b6e9305088d7141239d42eb8c23
+proposal:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+  rationale: The clause enumerates documents produced as application outputs, with
+    structural context explicitly identifying the section as output documents.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:16:02.028812Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 8e8527f344b94f91ab8ad5307248a36012a6187dd09e64ef8320de1847a4ccee
+  raw_response_hash: 12b654f513ce1347e3df15df0baaf7c8841b96326c79f129bcb0c9f1f1e3fe67
+annotation:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.790859Z'

@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3-1
+  clause_id: clause-7d9d76c2671b
+  content_hash: sha256:223fdd89ffb434d0d2716f4fe56107cf06b21946c7edd52cc5c9f0cefdcdc2ef
+proposal:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+  rationale: The clause explicitly states what the Technical Specification presents
+    and the safety integrity levels it covers, defining the document’s scope.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:03:22.537645Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: bd154692d0911774910a022af60de676b31424646a6fd8b53acc669cc0cad271
+  raw_response_hash: e22b55adef70f5ceda73b56333fcbdc49768e312c4dd17eca382a8b351a88763
+annotation:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.779648Z'

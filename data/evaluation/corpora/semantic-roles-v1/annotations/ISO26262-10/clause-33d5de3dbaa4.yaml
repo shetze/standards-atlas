@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-33d5de3dbaa4
+  content_hash: sha256:160296bfb82d81025e8775963befb0098956b8917885d93bc8d3fa28434cb9e1
+proposal:
+  semantic_roles:
+  - requirements
+  - assessment
+  primary_role: requirements
+  confidence: 0.95
+  rationale: The clause prescribes conducting impact analysis and specifies required
+    decision outcomes when SEooC assumptions mismatch system requirements; it also
+    involves assessing safety-goal impact and recalculating safety metrics.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:14:20.277112Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 43285662ad382a739d5e74cc263d39b317c0ba63cffd9384611ec13e9213c94d
+  raw_response_hash: 92bc36c3eeceacd95946e85a92fa6aeeaddadd0a148039e6a511964db2eff9f1
+annotation:
+  semantic_roles:
+  - requirements
+  - assessment
+  primary_role: requirements
+  confidence: 0.95
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.651176Z'

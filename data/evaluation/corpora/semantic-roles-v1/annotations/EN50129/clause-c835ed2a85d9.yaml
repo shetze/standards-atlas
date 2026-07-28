@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-c835ed2a85d9
+  content_hash: sha256:f39b432bc0b9cf29a1f690dac6788cf1d4f4ca99ad4e42a716468d78bb708f0a
+proposal:
+  semantic_roles:
+  - requirements
+  - verification
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause mandates detection, safe-state enforcement, fault analysis,
+    supporting calculations, and CCF analysis using normative 'shall' statements.
+    The demonstrations and analyses provide verification evidence.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:42.306818Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d25c6217067dd4e27b68427acd95e3c6f6df36491d2b9f94aca4fd13970e1135
+  raw_response_hash: c98d6d73de31a6333e59093f9253c60c6d38513d6f6d42886d5391506d87aba5
+annotation:
+  semantic_roles:
+  - requirements
+  - verification
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.904350Z'

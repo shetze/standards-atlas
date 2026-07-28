@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3-1
+  clause_id: clause-5f27f414d6e1
+  content_hash: sha256:5dc44ae30d462b5b1161ee510760c1a460cb93c846e0d1d25319ee89b58fa958
+proposal:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+  rationale: 'The clause uses mandatory evidence criteria: it requires demonstrating
+    identity of specified features and phenomena and containing a complete description
+    of conditions of use. Notes provide explanatory context.'
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:12:52.105519Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 1ccc2d55cac0fac9352cb5c9d11919eb525c84278a6e311eaa35141e7c0b1085
+  raw_response_hash: c95ce7da3c81f0ae59553c2e1d7a4acaa98fb5244d18dbdb365b8255b13a6ad1
+annotation:
+  semantic_roles:
+  - requirements
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.725620Z'

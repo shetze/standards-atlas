@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-7ec9e8026caf
+  content_hash: sha256:d5ec226a97d8ac55f5eba06d95e5ad34577c5fdc19debb814fa24fead0cccdb8
+proposal:
+  semantic_roles:
+  - inputs
+  primary_role: inputs
+  confidence: 0.99
+  rationale: The clause identifies documents available during lifecycle stages as
+    input material, reinforced by the title and structural role.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:20:02.624451Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: bde002457459c8682cc3cb819f096f5145a1d781315d62698282f569a4d545a9
+  raw_response_hash: babbc75d56b61d687593fba0a20a28b5971163c111849974704facdc01e36de0
+annotation:
+  semantic_roles:
+  - inputs
+  primary_role: inputs
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.781331Z'

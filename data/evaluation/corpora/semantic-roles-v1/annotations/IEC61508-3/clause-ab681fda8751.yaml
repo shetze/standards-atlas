@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3
+  clause_id: clause-ab681fda8751
+  content_hash: sha256:ffb6ce3a5df295b88db1927501d029d9103d87c4a003320e5144b3d142731c4e
+proposal:
+  semantic_roles:
+  - conformance
+  primary_role: conformance
+  confidence: 0.99
+  rationale: The clause explicitly identifies where the standard's conformance requirements
+    are given, and the structural role is conformance.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:05:47.095808Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 283dee006e47dd479211d553a0f7c7ffd815202fce5d8e77383367694c206162
+  raw_response_hash: 4275d97b1684c4fdc05bb0d10c18e567abd6ea4a7c45e4d6d24f6c3b6fe36f65
+annotation:
+  semantic_roles:
+  - conformance
+  primary_role: conformance
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.852699Z'

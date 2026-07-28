@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50128
+  clause_id: clause-acdc42043d8b
+  content_hash: sha256:109136bbe813e19c39eebc9a2d120c50812484734485e69c74cb664a456ebca0
+proposal:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+  rationale: The clause lists test specifications and test reports as output documents,
+    which are work products produced by the testing processes.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:43:06.168858Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4413850cdd353cb86e535e4add1c3e3ec8539f9e75d57b18f294557941c8e2d3
+  raw_response_hash: 8d1261f21f59e50cae9d9b8ab66d52d3f9eec54c2728c63e865ebdbb37ad35fe
+annotation:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.856155Z'

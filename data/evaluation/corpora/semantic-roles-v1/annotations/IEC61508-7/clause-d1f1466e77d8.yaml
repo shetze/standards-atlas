@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-d1f1466e77d8
+  content_hash: sha256:f78514a8129aee8c78defe9abdebe284444933922f40a43cdd2c737d09029178
+proposal:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+  rationale: The clause states that this part provides an overview of safety techniques
+    and measures relevant to other parts and clarifies the status of its references,
+    defining the document's scope.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:32:39.145146Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 3592795e6ab9740660815233f02fa40bd1cbc2695330c1b7d959f1186d758d96
+  raw_response_hash: 4f31e990169b4e6b0d1e4f9c3ce34c4d5ba4522c4c24dc231585933ed14de764
+annotation:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.919891Z'

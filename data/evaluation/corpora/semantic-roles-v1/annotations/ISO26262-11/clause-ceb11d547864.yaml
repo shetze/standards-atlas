@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-ceb11d547864
+  content_hash: sha256:274446fae2a025a35d2af02836b9411040ed5af6e955b1235f3e92b253cae901
+proposal:
+  semantic_roles:
+  - example
+  - recommendations
+  - note
+  primary_role: example
+  confidence: 0.98
+  rationale: The clause is explicitly titled as an example and provides a worked electrical-overstress
+    failure-rate calculation. It also includes conditional guidance and a note about
+    treating electrical overstress as a systematic failure mode.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:11:18.917423Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 6fcf12d80c56c0f931f44f44d3677dd71168374f05a3b70a961099ecad4223ec
+  raw_response_hash: 9f60c11dda6b961cb732f871ceb1c34db31547c08db1b544dcee29e10cbc4850
+annotation:
+  semantic_roles:
+  - example
+  - recommendations
+  - note
+  primary_role: example
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.913918Z'

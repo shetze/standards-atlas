@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-bfcbd9d033de
+  content_hash: sha256:ab5c0008f52a33c1e790eb721e9c7ebdbb14513c42c1f9ef462fad59e9fa85e6
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - work_products
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “hazard log”; structurally it is in terms
+    and definitions, while the content describes a recorded work product.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:34:34.084603Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 621c6af2b387b0ad7ccb2bba5a73e2bf6e9e407428746c1911c5cc59eb0aaa1e
+  raw_response_hash: 704df9303db65054151180cd843507dc0d8d82355f48b00021a4cdd253ffbe3c
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - work_products
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.885342Z'

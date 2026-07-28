@@ -1,0 +1,40 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-5
+  clause_id: clause-aad62d741e60
+  content_hash: sha256:62494fd41ef28738cf2f147f190adb8e7786d3e0357bc7372b1ca6c01c39b766
+proposal:
+  semantic_roles:
+  - assessment
+  - compliance
+  - objectives
+  - annex
+  primary_role: assessment
+  confidence: 0.98
+  rationale: The clause provides considerations for assessing compliance with Clause
+    9 objectives, supported by annex and compliance context.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:03:29.683912Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 1e5d1774870684f25b3f222cfacbd04b6d2790bf25e4dc66b37d74ac9a9493f7
+  raw_response_hash: efe3a21c94bc347b247e9705acc4737c995cf526d2a2521430fd54ee9b6b1f93
+annotation:
+  semantic_roles:
+  - assessment
+  - compliance
+  - objectives
+  - annex
+  primary_role: assessment
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.851849Z'

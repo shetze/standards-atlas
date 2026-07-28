@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-0
+  clause_id: clause-c60104c60b6b
+  content_hash: sha256:6bee3984e06c79412c8f2a25ef5d0c6ebdbf90fa0f937904cd0d401fe13251fe
+proposal:
+  semantic_roles:
+  - requirements
+  - example
+  - terms_and_definitions
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause defines the functional safety requirements specification and
+    states mandatory requirements for determining safety and integrity requirements
+    before design, then illustrates them with a concrete SIL2 safety-function example.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:24:27.960847Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 82cb166c21f7357d588f437371c3163c694ffb978cbb932215dbcb92663c7595
+  raw_response_hash: 8da1a6e8d16ed0c74db1854cb4eef8ad40cc3376d83c53abf327d06b2fed9273
+annotation:
+  semantic_roles:
+  - requirements
+  - example
+  - terms_and_definitions
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.902507Z'

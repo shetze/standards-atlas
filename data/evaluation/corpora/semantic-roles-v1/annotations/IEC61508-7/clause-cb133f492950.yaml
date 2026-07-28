@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-cb133f492950
+  content_hash: sha256:417a9ef97af2874edb7ca2e14fc72eec3fc8bc24688bef090e434bddaaff9422
+proposal:
+  semantic_roles:
+  - note
+  - recommendations
+  primary_role: note
+  confidence: 0.98
+  rationale: The clause is explicitly introduced as a NOTE and provides explanatory
+    guidance and recommended design considerations for input acknowledgement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:02:09.035275Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 986a498adb7522b935709659282a72d54517c9deeeff6a6014fe86ac9a822b4d
+  raw_response_hash: 6d05f0e00cb56a8e1df7e1a16ec1d78c40c586e48773c773c3631dc023c696c5
+annotation:
+  semantic_roles:
+  - note
+  - recommendations
+  primary_role: note
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.908688Z'

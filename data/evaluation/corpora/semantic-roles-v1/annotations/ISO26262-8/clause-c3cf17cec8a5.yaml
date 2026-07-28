@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-c3cf17cec8a5
+  content_hash: sha256:903ea500e7ccf842c1312b6c2f964e3e98ff146456cecec717e9a0e122bf735f
+proposal:
+  semantic_roles:
+  - work_products
+  primary_role: work_products
+  confidence: 0.98
+  rationale: The clause title and structural role explicitly identify it as covering
+    work products; no normalized content is available.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:07:32.325701Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b5ba15d19482ec4b6c929339a768e693256ac524f4cd726d02ed123626f7bf24
+  raw_response_hash: 87ca3c7f9c41b00c7fac1a51888e7f3ec9c1f43a800b93c66452a0f333d96ac3
+annotation:
+  semantic_roles:
+  - work_products
+  primary_role: work_products
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.896526Z'

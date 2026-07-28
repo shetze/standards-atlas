@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-b5d98fd2d77f
+  content_hash: sha256:799e490aa01d0e363f3b2b02e3968fdf379ea2cbb486c6152f1448b033a30e1d
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “fail-safe” by describing the ability to
+    enter or remain in a safe state after a failure.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:41:46.689621Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 627e7ea6ca9eddfb41c97a362dd49fb016d0561fef35f26ddcc0bb8ea0202bc4
+  raw_response_hash: 5e089556747fb1cee8369699b0a1cf7ddf78d7ee0a01eb14ba3dcb18ac6e832a
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.869009Z'

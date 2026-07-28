@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-5
+  clause_id: clause-c475b65d0d60
+  content_hash: sha256:bd0a51a0ecd6f6021d8791ce7aa2ce95dcaac365840cc46f157e9f2fd6ef0247
+proposal:
+  semantic_roles:
+  - objectives
+  - note
+  - annex
+  primary_role: objectives
+  confidence: 0.98
+  rationale: The clause states the aim of detecting incorrect input current or voltage
+    behavior and describes the monitoring measure; it is also a note within Annex
+    D.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:05:16.663798Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: a9fe3c61ec0a5441f16de97f08e92f553fae78b8032151bba2cd122505f98745
+  raw_response_hash: 2f628c434731aac8582037fcc3d8bcb33ccba3d476da2ad67c31feb55f7b8fc5
+annotation:
+  semantic_roles:
+  - objectives
+  - note
+  - annex
+  primary_role: objectives
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.898231Z'

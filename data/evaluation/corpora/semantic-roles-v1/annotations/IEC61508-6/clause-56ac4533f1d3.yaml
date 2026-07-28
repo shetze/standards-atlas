@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-6
+  clause_id: clause-56ac4533f1d3
+  content_hash: sha256:075425d43d89f476262c35fcf400cd4b021297f1e0dfd55dcf420b48c8ed2ca4
+proposal:
+  semantic_roles:
+  - annex
+  - figure
+  - requirements
+  primary_role: requirements
+  confidence: 0.93
+  rationale: The clause defines a 2oo3 architecture, provides block diagrams, states
+    assumptions, and specifies the formula for its average probability of failure
+    on demand.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:05:10.176217Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d6c4e194e683712e5049855fa896fbbc1e4cec0b08607d2b8fc3c291e99e1333
+  raw_response_hash: d87cb38dd3e0d0f276172a7f190341129be7ea1a82d533e4a09ddcd179c114dd
+annotation:
+  semantic_roles:
+  - annex
+  - figure
+  - requirements
+  primary_role: requirements
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.710953Z'

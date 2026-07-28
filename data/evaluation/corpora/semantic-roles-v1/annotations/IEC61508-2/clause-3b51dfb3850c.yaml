@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-3b51dfb3850c
+  content_hash: sha256:d78c4dd664c5215718f1cbd89b2fa0be834c2add8bb27596115b18649e0e3eeb
+proposal:
+  semantic_roles:
+  - normative_references
+  - abbreviations
+  primary_role: normative_references
+  confidence: 0.98
+  rationale: The clause makes IEC 61508-4 definitions and abbreviations applicable,
+    functioning as a normative reference while supporting the document's abbreviations
+    section.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:17:34.284964Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 7854642bba68cea102eea39cba99b3127671b2ea6519b3aa947c604f7da6ccc0
+  raw_response_hash: c63db821fe804482323b5b706b497290f7ac8026a5e3249ea7ebdc7d2baa7463
+annotation:
+  semantic_roles:
+  - normative_references
+  - abbreviations
+  primary_role: normative_references
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.659811Z'

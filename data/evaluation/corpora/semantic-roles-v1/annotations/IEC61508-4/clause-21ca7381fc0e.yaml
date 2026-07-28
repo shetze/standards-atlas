@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-4
+  clause_id: clause-21ca7381fc0e
+  content_hash: sha256:016092b88183585554cea081df0a9496a063e50030e4566d434083098bfcd954
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “proof test” and provides explanatory notes
+    about its effectiveness, duration, availability, and repair considerations.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:38:08.820558Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 42610b410a6dcd0b984b643d49f2fddb35691db12ac93364b8a130a56054b120
+  raw_response_hash: 49a06d4f5e80459d0c1c713b764b42db897f51b3bfca9dba7b5c2a61b315833c
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.621351Z'

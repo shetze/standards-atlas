@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-e96e20d7c0f3
+  content_hash: sha256:34fa979fbed0729750c79064956fa5da16a80e6bf6bdd594da25906396985ee4
+proposal:
+  semantic_roles:
+  - example
+  - note
+  - table
+  primary_role: example
+  confidence: 0.99
+  rationale: The clause presents a simplified failure-mode example, includes an explanatory
+    note, and provides Table 1 summarizing situation-dependent safety goals.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:19:28.352767Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 66264a6c7e37fe4e6ddee0e4ebda7d37915150f033d12c3aff50a9727d699584
+  raw_response_hash: 1a357f818b1c9e19a417bf2739d6982e7da30bd500b8849589fb8e51e8741f0d
+annotation:
+  semantic_roles:
+  - example
+  - note
+  - table
+  primary_role: example
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.956755Z'

@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-5bd16606c1b1
+  content_hash: sha256:5836da5bc265f7a725403cedbcb2ba940b6b2e56c6145161d32d2d3f247a4676
+proposal:
+  semantic_roles:
+  - figure
+  - introduction
+  primary_role: figure
+  confidence: 0.98
+  rationale: The content explicitly presents Figure 1 and its caption, explaining
+    the overall framework and role of IEC 61508-7; it is descriptive rather than normative.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:20:13.050623Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 9006cfc53bd8006f82b8603d8697e731412c62b3ca7bee4d721e59fe9ca1f462
+  raw_response_hash: 5e31ffab063a7d892b4fa94d83ec5bebe09764074f512d26a16fd274aa590c50
+annotation:
+  semantic_roles:
+  - figure
+  - introduction
+  primary_role: figure
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.721394Z'

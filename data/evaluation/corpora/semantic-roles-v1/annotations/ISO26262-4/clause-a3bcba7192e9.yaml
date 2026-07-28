@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-a3bcba7192e9
+  content_hash: sha256:4d571623d29fd7898e66555a83b4b4e2c51ade8adbf9c847613b7ee4654ec36b
+proposal:
+  semantic_roles:
+  - requirements
+  - work_products
+  - outputs
+  primary_role: work_products
+  confidence: 0.9
+  rationale: The clause identifies a technical safety requirements specification produced
+    from preceding requirements, making it primarily a work product and resulting
+    output; its content also concerns requirements.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:10:03.590642Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 727ca4de3c58a42fd534f7762dbba11f111fb1c210f6f03a816091496907891e
+  raw_response_hash: 7ea22a6aeabe20071e2cc1a464819588db26caa2925079d7a8d93e06908003ec
+annotation:
+  semantic_roles:
+  - requirements
+  - work_products
+  - outputs
+  primary_role: work_products
+  confidence: 0.9
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.838928Z'

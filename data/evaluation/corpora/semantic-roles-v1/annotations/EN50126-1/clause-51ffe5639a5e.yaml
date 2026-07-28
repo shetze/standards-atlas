@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-51ffe5639a5e
+  content_hash: sha256:5ff9a17d2827e86c9485edeb615cb9ed1f23c2578eee97630931924a2e6e6370
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause is a sourced definition fragment describing a safety concept,
+    and its structural context identifies it as part of terms and definitions.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:11:08.568299Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 329dda2f69153c76a785a6dc3fe2f3e131893aa2b3bd020c11d320ba876dafd3
+  raw_response_hash: 840d6fd4e0c341dd17ede1d8dddfba4079a9acc7a0bbb35501f1f68b2a537088
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.698240Z'

@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-4cffd5b219b8
+  content_hash: sha256:22773f2679f26e8f85046ce49cd162f8582e829f133a0c1a04d875e6a699a0db
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines a term by describing a convention for combining fatalities
+    and weighted injuries into a single comparative risk figure.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:45:57.399208Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 35b45880829b2ae333d610b6748dabc8b64579a191f520c08174377056f8ffe2
+  raw_response_hash: 3de8716ac62f407c62eba48e56d87fb7c19a638aaf34d3d311cbacbaece386fe
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.687410Z'

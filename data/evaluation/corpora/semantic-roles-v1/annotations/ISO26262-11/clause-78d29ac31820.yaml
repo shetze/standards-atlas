@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-78d29ac31820
+  content_hash: sha256:9741536d79be3eb8118e1ee64a2fd2feecb2a25e70a611a0c258c8748cf0649d
+proposal:
+  semantic_roles:
+  - example
+  - table
+  - figure
+  primary_role: example
+  confidence: 0.98
+  rationale: The clause explains alternative calculation approaches through worked
+    numerical examples, equations, and illustrative tables; it does not state normative
+    obligations.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:03:54.767997Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 5fae353a82716b06c3a2e692ccdc837a130f61b52f9538da766125822c19b724
+  raw_response_hash: 8a421c32e07f841592a7d6162516e7bd5e8977615a03b816e8dfc4cd8efdbf8b
+annotation:
+  semantic_roles:
+  - example
+  - table
+  - figure
+  primary_role: example
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.769387Z'

@@ -1,0 +1,42 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-9
+  clause_id: clause-761040204423
+  content_hash: sha256:6b38dfab0537d35469649f063304d622cc52e219c40c0c1aa1b0e9aefaa6a1b6
+proposal:
+  semantic_roles:
+  - annex
+  - table
+  - objectives
+  - inputs
+  - work_products
+  primary_role: table
+  confidence: 0.99
+  rationale: The content is Annex A and consists of Table A.1 summarizing objectives,
+    prerequisites, and work products for several analysis clauses.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:26:35.641559Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: bb050a7024cbd8c8dcdbd5214f0904acbc93112cae098fccde7d28262a2278a7
+  raw_response_hash: 3b5ac9172bd55144b049e2c0081de68bd741cb8c1063fe9b64daf9087221f5e1
+annotation:
+  semantic_roles:
+  - annex
+  - table
+  - objectives
+  - inputs
+  - work_products
+  primary_role: table
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.764960Z'

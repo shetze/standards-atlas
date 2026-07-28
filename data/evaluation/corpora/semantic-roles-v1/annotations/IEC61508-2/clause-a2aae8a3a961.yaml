@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-a2aae8a3a961
+  content_hash: sha256:94127d90c505dfe3c322476ee4ca8cae3c63e7b227a379c73097a85ecf23008b
+proposal:
+  semantic_roles:
+  - conformance
+  - normative_references
+  primary_role: conformance
+  confidence: 0.99
+  rationale: The clause states where conformance requirements are specified and references
+    Clause 4 of IEC 61508-1.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:01:07.136692Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b4adacbf8a109a048a9952b40e08f328321cf984117bdb97e4e4fd71feba941e
+  raw_response_hash: d0ea07095dc4347993dc290d2296d3d0c64984d7d44ec9a95a0ba129aa56258c
+annotation:
+  semantic_roles:
+  - conformance
+  - normative_references
+  primary_role: conformance
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.834654Z'

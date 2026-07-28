@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-4
+  clause_id: clause-173df1f60394
+  content_hash: sha256:dd82dd00f2249a6e8fc54699bcdef76abd66dbfde3e1a87e545270d0a73e087a
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: Defines “software off-line support tool” and classifies it into T1, T2,
+    and T3 categories with examples.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:26:20.473790Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d2076c31ed4aa7968ddd025cb0110962100ac77adcf3b37dcd3a7952ba7318e2
+  raw_response_hash: 0360d1ae22c0e7cc956eadb05bd6370e7d22da8642608d1900e534b42a9e3618
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.603510Z'

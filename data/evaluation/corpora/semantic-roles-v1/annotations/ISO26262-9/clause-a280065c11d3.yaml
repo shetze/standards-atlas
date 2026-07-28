@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-9
+  clause_id: clause-a280065c11d3
+  content_hash: sha256:15c0701508fa72a496f859d0b94b27cf99d4bca12fc958a4bec0d03c7b0a95bc
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - abbreviations
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause establishes applicable terms, definitions, and abbreviated
+    terms, and identifies terminology databases.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:14:35.654418Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 1511976e4c6d8ddf8a711884e0135d33610d6453173edaca564779caedd822c7
+  raw_response_hash: 06269bd22aa1327afbb4898eb633f72dc6888cd77a157d42060eb3823b3b6c9d
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - abbreviations
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.833802Z'

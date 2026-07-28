@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3-1
+  clause_id: clause-a17c5d49beb0
+  content_hash: sha256:f07cf40c4c27d9f4b8ef424686e4e6a76454ea30234ccdc756413ce4635c41fb
+proposal:
+  semantic_roles:
+  - requirements
+  - note
+  - bibliography
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause imposes mandatory requirements using “shall,” includes an
+    explanatory NOTE, and is followed by bibliographic references.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:18:53.646660Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 70eb4430a6608209372f6f1a73c1858e35f9b9bdfc00e8ea1297c59851f2ed9e
+  raw_response_hash: 30a3f307693eaa78b1e0ceb64683cb4b29e350cd2e834f45485d56cdb6d604d6
+annotation:
+  semantic_roles:
+  - requirements
+  - note
+  - bibliography
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.832931Z'

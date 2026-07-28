@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-51b55f94ea7b
+  content_hash: sha256:d4aac161a131853a1a00820cbf9f6562fae921f0d19fe8613dc531faf2ce608c
+proposal:
+  semantic_roles:
+  - verification
+  - requirements
+  primary_role: verification
+  confidence: 0.99
+  rationale: The clause specifies verification of the evaluation report, with a normative
+    'shall' statement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:22:02.063044Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b6a194b4a7f9e5c49314dbc8c445416f7f43fd9533235cf5e7554f73e799f8c6
+  raw_response_hash: d53d902fe7407c94a2b607c5005bd3f0904c35a9e6991c6af269f41e47e93b42
+annotation:
+  semantic_roles:
+  - verification
+  - requirements
+  primary_role: verification
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.695788Z'

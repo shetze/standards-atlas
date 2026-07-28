@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-c129b96ae7e3
+  content_hash: sha256:c35ab3d139ff5f17d41967a7a59eaea8dafadcf0821184adecf88b211feeb3ab
+proposal:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.98
+  rationale: The clause is explicitly marked as intentionally left blank; the structural
+    context identifies it as clause 1.3 within the scope section.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:41:06.922485Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 33777e07e83a8d9fd7096927b136b13d860015fa68792244671ca9aca0eb1ae9
+  raw_response_hash: fa56afd45df63c9ce7b77d2e691ccba680b7a9dff16a476694e585b3b9a68e99
+annotation:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.891378Z'

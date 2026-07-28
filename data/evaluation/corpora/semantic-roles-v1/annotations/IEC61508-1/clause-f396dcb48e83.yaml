@@ -1,0 +1,44 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-1
+  clause_id: clause-f396dcb48e83
+  content_hash: sha256:51f028632b00fe0e534093128aec9cc5003f3e2b76ec347fce83b29cda1ef3ec
+proposal:
+  semantic_roles:
+  - table
+  - objectives
+  - scope
+  - requirements
+  - inputs
+  - outputs
+  primary_role: table
+  confidence: 0.99
+  rationale: The content is explicitly presented as Table 1, summarizing lifecycle
+    phases with their objectives, scope, requirements subclauses, inputs, and outputs.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:31:42.799131Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: ed607bef75a82630f95afdb7257cd57f690f8f6cdb7e578fe936d91b685f14a6
+  raw_response_hash: 049fbb4cc5774e6d00a95f6da3e996352d2e094fa5fdf3d4b27f9f5d03a8a670
+annotation:
+  semantic_roles:
+  - table
+  - objectives
+  - scope
+  - requirements
+  - inputs
+  - outputs
+  primary_role: table
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.972300Z'

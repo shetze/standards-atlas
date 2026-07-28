@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-d40a6a305a66
+  content_hash: sha256:5b36040bb426db7a3554c940499fa178f7038f76bd159203ab38b3b21c00e774
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - example
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The content defines “power take-off, PTO” and includes an illustrative
+    list of equipment applications.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:10:26.995306Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: dc87e0774542479931e4e70563e2e7878d3ff682ad6044a62cd5e37a98e1d852
+  raw_response_hash: 63a559329a3c7a5a52b7d8791acd2b40a8ad134c352c63ef9f61314477a53ddb
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - example
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.922445Z'

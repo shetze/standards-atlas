@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-9
+  clause_id: clause-ee2a876d2e6a
+  content_hash: sha256:db47c1edf0ed8f1909ca5c18eabd0549e73b0d5cccd209322a82e32e7ac260cf
+proposal:
+  semantic_roles:
+  - normative_references
+  primary_role: normative_references
+  confidence: 1.0
+  rationale: The clause identifies referenced standards whose content constitutes
+    requirements and specifies dated/undated reference applicability, which is characteristic
+    of normative references.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:04:51.501896Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e3e114093c4f8df80f17c82316b3eeddf5833ce6ad3288640cea63c722b6003f
+  raw_response_hash: 553b377bffefb4a6fbfdd20be2b9931cd1751f32b8815b9f4d21a049001db1c5
+annotation:
+  semantic_roles:
+  - normative_references
+  primary_role: normative_references
+  confidence: 1.0
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.965393Z'

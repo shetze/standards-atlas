@@ -1,0 +1,43 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-1b329a6de7fc
+  content_hash: sha256:5b91f8f486a6d4e1420eafd2c2ea73295e0d25bf770fe0baac73f6399fafb545
+proposal:
+  semantic_roles:
+  - requirements
+  - recommendations
+  - verification
+  - inputs
+  - annex
+  primary_role: verification
+  confidence: 0.97
+  rationale: The clause describes a software testing strategy, including test-data
+    selection and minimum coverage expectations; it provides verification guidance
+    rather than defining a system requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:16:49.157698Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 224c8b382460546d8fe839c4392df76219d5f085a8af5a5b196a22bafebe7159
+  raw_response_hash: 4de91216e924168a8f20e87652c2f0b90f7ebcac914d8da5f464407847c3acd5
+annotation:
+  semantic_roles:
+  - requirements
+  - recommendations
+  - verification
+  - inputs
+  - annex
+  primary_role: verification
+  confidence: 0.97
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.607775Z'

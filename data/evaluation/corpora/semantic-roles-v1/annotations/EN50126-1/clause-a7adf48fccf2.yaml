@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-a7adf48fccf2
+  content_hash: sha256:028f52eb6c1e495091ee8fd92db81e784a559409d5b2b249159d4f0ea490ec59
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - compliance
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: 'The clause defines the concept of compliance: demonstrating that a product,
+    system, or process characteristic satisfies specified requirements.'
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:00:58.766743Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: a6c4d8b1179dd2487461051e9e57e93b29c2002628a6f0ffa3e8450f277cbdef
+  raw_response_hash: 51d8d9e6a9695997357fe69ecba4c7625e1a5bd1c45256a7e760bd52bd5aae75
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - compliance
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.847478Z'

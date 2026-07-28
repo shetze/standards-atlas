@@ -1,0 +1,44 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-5
+  clause_id: clause-1002cfac3122
+  content_hash: sha256:0a04dd8e440e345a4ad86c4d7a92c037091a953167a63fbd4146753dfcbd7aa1
+proposal:
+  semantic_roles:
+  - recommendations
+  - objectives
+  - figure
+  - example
+  - note
+  - annex
+  primary_role: recommendations
+  confidence: 0.93
+  rationale: Describes a diagnostic technique, its purpose, implementation considerations,
+    examples, limitations, and alternative design; it does not state a mandatory requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:27:40.624268Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: bb5a4da7e2296b9c28b66b0253a82bfad10f5d5370fcb10c1e57d5ac6f9bbb9b
+  raw_response_hash: d46f5158a0ba3e5782ff6346e1c017a86eeb196da6af5f61e72411a51df3a052
+annotation:
+  semantic_roles:
+  - recommendations
+  - objectives
+  - figure
+  - example
+  - note
+  - annex
+  primary_role: recommendations
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.590109Z'

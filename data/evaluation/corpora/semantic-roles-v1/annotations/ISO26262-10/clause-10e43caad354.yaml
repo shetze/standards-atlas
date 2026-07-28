@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-10e43caad354
+  content_hash: sha256:ab695b7d000b8732cf02e738751db42713c151871f5557801e32aa7a5c81d7f3
+proposal:
+  semantic_roles:
+  - requirements
+  - note
+  - example
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause specifies mandatory safety behavior and limits for the emergency
+    operation time interval, with explanatory notes and an illustrative example.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:16:10.533052Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e49ba4379d86abd59e297b90e1699ac50d52a1d4bfd14f72e70f6dfa92e921d8
+  raw_response_hash: ee18df67c22d7cef863fc9e7cdf27aaf71b074fc0ec70b63153498543e810a15
+annotation:
+  semantic_roles:
+  - requirements
+  - note
+  - example
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.591815Z'

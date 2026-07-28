@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-0
+  clause_id: clause-36351ce7939a
+  content_hash: sha256:12949f25fdc292a230ae559e177f7861433ec5ae1cc5462ef6f069751b54f4a6
+proposal:
+  semantic_roles:
+  - introduction
+  - figure
+  primary_role: introduction
+  confidence: 0.98
+  rationale: Provides an informative overview of the IEC 61508 parts and includes
+    a requirements map figure; it does not state normative requirements.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:44:48.767463Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: da3eeae9ff3d4ad2cb7688bc40d4cad286df0d13a2cde6a0d698a3b00c315d6f
+  raw_response_hash: 697ea419c0434e527417be264d76d66066014831799311f04422909d818313a2
+annotation:
+  semantic_roles:
+  - introduction
+  - figure
+  primary_role: introduction
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.653789Z'

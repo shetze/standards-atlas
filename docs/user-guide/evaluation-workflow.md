@@ -34,3 +34,20 @@ Every prompt version is evaluated against every model using the same dataset. Th
 hash excludes only the output directory and is embedded into all runs. By default,
 `matrix-summary.json` contains metrics, hashes and errors but omits generated and expected
 case content. Set `include_case_details: true` only for protected local reports.
+
+## Extract clause references before review
+
+Run deterministic same-document extraction after EngineeringDocuments are available:
+
+```bash
+uv run standards-atlas evaluation references-extract \
+  --knowledge-domain functional-safety \
+  --workspace .atlas \
+  --output local/evaluation/references
+```
+
+The command writes one YAML analysis per clause. Single references and clause ranges are
+resolved against the actual EngineeringDocument structure. Unresolved or ambiguous
+references remain as diagnostics. `annotations-review-export` reads this location by
+default and adds resolved targets to the HITL document. Use `--reference-root` to select
+a different local analysis root.

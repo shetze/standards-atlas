@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-de4e827c020d
+  content_hash: sha256:a1365223302819363491cd24ebadb53038adb77aca71b3d12f81b0da59e1e432
+proposal:
+  semantic_roles:
+  - example
+  - table
+  - note
+  primary_role: example
+  confidence: 0.99
+  rationale: The clause explains an illustrative failure-rate calculation, includes
+    a labeled numerical table, and ends with an explanatory note.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:07:12.417760Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 0a855908ff004fdc3a15ae2ea4dccb63036935bec570463723fe8ab2b5efa339
+  raw_response_hash: 143360d977764092ad8b96e7b1369905c8f1181214bc424f08ae9a87f4a4c011
+annotation:
+  semantic_roles:
+  - example
+  - table
+  - note
+  primary_role: example
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.941209Z'

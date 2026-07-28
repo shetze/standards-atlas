@@ -1,0 +1,43 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-bcd725e989fd
+  content_hash: sha256:b0f9dacc4699c4b33ae38090dcab85d4f62613ee802d5dafcf1b9e836f1a0381
+proposal:
+  semantic_roles:
+  - example
+  - figure
+  - table
+  - note
+  - requirements
+  primary_role: example
+  confidence: 0.99
+  rationale: The clause is explicitly titled and framed as an example, containing
+    an illustrative figure, calculation equations, comparison table, notes, and a
+    stated requirement regarding EOTTI specification.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:37:29.311552Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 2d8fffbe1f3ced1c5b2b02a615a0328c4ba5ced06385b55b1def53d6601a2d11
+  raw_response_hash: 6df41ac670ff0eeec1b5150b3287ed0a15fa5291f913b2e9fd3ad81cd101f38a
+annotation:
+  semantic_roles:
+  - example
+  - figure
+  - table
+  - note
+  - requirements
+  primary_role: example
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.878469Z'

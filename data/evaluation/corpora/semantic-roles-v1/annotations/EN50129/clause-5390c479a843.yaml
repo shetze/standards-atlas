@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-5390c479a843
+  content_hash: sha256:a1a81b5e840a289e4b602c24f35540518b28f9231375438889eeb4923d8b528b
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The content defines causal analysis, and the structural context explicitly
+    identifies the clause as a term and definition.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:13:00.348521Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 3d47e0a19c27786e9a50edbb85d1912c2c84888acb7623e76a88f617f0dc5315
+  raw_response_hash: 3b1cd156ac9274268e3600440bf1804f9cfacf0b1cbbb207bce1888ac586b73e
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.703344Z'

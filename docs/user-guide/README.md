@@ -29,6 +29,7 @@ The user guide follows the lifecycle of a standard from catalog entry and privat
 | Understand `.atlas`, `data`, and generated output | [Workspace](workspace.md) |
 | Diagnose common command and data problems | [Troubleshooting](troubleshooting.md) |
 | Build local corpora and benchmark prompts/models | [Evaluation workflow](evaluation-workflow.md) |
+| Review and publish semantic annotation proposals | [Semantic annotation review](semantic-annotation-review.md) |
 
 ## Related material
 

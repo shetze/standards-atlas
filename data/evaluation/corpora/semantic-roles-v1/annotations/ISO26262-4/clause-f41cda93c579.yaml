@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-f41cda93c579
+  content_hash: sha256:6b8a51b31d5cc1ce445e525045358b5e5d0ac6df887b0733a49124fb6627fd7c
+proposal:
+  semantic_roles:
+  - requirements
+  - table
+  - note
+  - example
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause imposes a normative obligation to demonstrate robustness using
+    specified test methods. Table 8 defines ASIL-dependent test applicability, while
+    footnotes provide explanatory notes and examples.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:44:38.009809Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: a12736528b5f1fddcec6a812c8577993a2cbe14d840ee1f3e7c91d0f56f82cee
+  raw_response_hash: d3bb56d4170972b50e77f8d47ec7e564d19d94793d61e4c58d237febfebd9050
+annotation:
+  semantic_roles:
+  - requirements
+  - table
+  - note
+  - example
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.974986Z'

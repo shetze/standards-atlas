@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-a52464fa47ea
+  content_hash: sha256:71924a2ec03684ebe944df069950dc4c05672fda07436be62cf5b765882d5794
+proposal:
+  semantic_roles:
+  - annex
+  - recommendations
+  primary_role: annex
+  confidence: 0.88
+  rationale: The clause is identified as an annex and discusses analysis techniques,
+    which is guidance/recommendation rather than a mandatory requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:34:18.259620Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 21c06846191b413b2bb95161699de2133cff71cf0bdd8c4eca4a955bb42be3c4
+  raw_response_hash: d8670f81b42d894711d11fd149040aff2a504d9cac58c8b29108c5af9ef6f902
+annotation:
+  semantic_roles:
+  - annex
+  - recommendations
+  primary_role: annex
+  confidence: 0.88
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.843180Z'

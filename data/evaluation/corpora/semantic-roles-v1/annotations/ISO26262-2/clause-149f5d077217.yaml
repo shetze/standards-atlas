@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-2
+  clause_id: clause-149f5d077217
+  content_hash: sha256:b8c772eacf5a01be6509c9af9d56a04525d0e54d798e4cacdcdc237bedb544ac
+proposal:
+  semantic_roles:
+  - objectives
+  - annex
+  primary_role: objectives
+  confidence: 0.99
+  rationale: The clause states a development objective concerning planning of system
+    development, integration, and validation; structural context identifies it as
+    an OBJECTIVE in an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:37:46.431685Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: dac80f1450374a2e2aa40073d209d80fd8ac0b078f816b54497e44d7e614f105
+  raw_response_hash: e488beb0e20b12f6a8408e7800dce0c7ed77e42daee1444b6eb47d7aac5ab92d
+annotation:
+  semantic_roles:
+  - objectives
+  - annex
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.597700Z'

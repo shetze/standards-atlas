@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-4dd8b3e858c7
+  content_hash: sha256:2225c7265cfb3222c5a9cdbc6f76476fb7657f440fad7b50ad6ca4e422853e17
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines ASIL decomposition and includes three notes clarifying
+    its application, exclusions, and implications.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:19:04.345509Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 2293edfed8d88c9c3c8ef92c6b7708d32bd112b1804174a5be2053d19b6e4937
+  raw_response_hash: 78fbed2219b241a7bb5092808584379727959d88299fa47095c1909a194e06c1
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.690775Z'

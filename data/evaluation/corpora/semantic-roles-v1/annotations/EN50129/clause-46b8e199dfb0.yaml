@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-46b8e199dfb0
+  content_hash: sha256:9d378bc8c0e3c047045b49a528ce75ee07b8d6f282601a732334ce40723f720e
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The content defines the concept of fault detection time and cites an
+    authoritative source; the structural context explicitly identifies the clause
+    as a term and definition.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:02:37.864556Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 733c56a713be87b9fb6f874c3b43350b9dcb446ab3b8df5530edecc97f95de34
+  raw_response_hash: 3dcd8e3bca035c964c0acff3b994eb10e5022c61298950fcd5ded557ead15181
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.679691Z'

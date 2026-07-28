@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3-1
+  clause_id: clause-b0b935fdfdae
+  content_hash: sha256:68e845b83d056cd5ecfb77c7efc2766a338678da797e6ba3b4575f593d62a6f2
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The structural title identifies this as the Terms and definitions clause,
+    and the content explicitly addresses the absence of definitions and points to
+    terminology databases.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:36:07.252350Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 94f0c2045f9d258805c6c91adbd6328019d3c0b182b62ec850e749ff67e05033
+  raw_response_hash: f0c9021a28f0000ae4db6eea75603256b40eb4b4b032a90b3193ff436619dc21
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.861220Z'

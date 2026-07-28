@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3
+  clause_id: clause-2e229e6a8e9d
+  content_hash: sha256:2671538cbeaead25b3a740c6344342d73b1a961cec00893175b39fca73bc0042
+proposal:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+  rationale: The clause explicitly states the first objective of the requirements
+    and describes the intended safety-related software architecture outcome.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:18:37.847488Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 0dbf8d92c1b59ffd631dccdeff5d1ccb90b690fadc0b58059b611e0565263175
+  raw_response_hash: 42b6317d2af726c46557e36bc276635a6cc81c276801454458194e422e23f8d3
+annotation:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.639293Z'

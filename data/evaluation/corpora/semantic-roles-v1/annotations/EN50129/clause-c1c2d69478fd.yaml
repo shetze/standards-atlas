@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-c1c2d69478fd
+  content_hash: sha256:66a88a72c1191fd73524322f6e0b48725b18c6fca95a6164527c3ca77425c65f
+proposal:
+  semantic_roles:
+  - requirements
+  - figure
+  - annex
+  primary_role: requirements
+  confidence: 0.93
+  rationale: The clause organizes and characterizes safety-related requirements, including
+    functional safety and safety integrity requirements. It is located in an annex
+    and explicitly references Figure A.1, which illustrates the described relationship.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:46:20.087043Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: bff8ee502629545072388346fc27cf527198c1f100d407b4685428610f568051
+  raw_response_hash: 1449cd05525430e2ef1696f9b5525092fefaf7f0633b6d0f12966832cb7c7de7
+annotation:
+  semantic_roles:
+  - requirements
+  - figure
+  - annex
+  primary_role: requirements
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.893019Z'

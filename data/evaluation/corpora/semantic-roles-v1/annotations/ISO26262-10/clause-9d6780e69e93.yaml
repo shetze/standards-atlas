@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-9d6780e69e93
+  content_hash: sha256:bceaad15d4b2b456992e660d5113896ca9bee93ccf7cf3fdaaedac2f2b046141
+proposal:
+  semantic_roles:
+  - requirements
+  - normative_references
+  primary_role: requirements
+  confidence: 0.93
+  rationale: The clause normatively states when specified criteria apply, making it
+    a requirement; the cited ISO 26262 clauses provide supporting normative references.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:26:46.018227Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: dde4b006d7b834a981304cb492ed8f1eb5a192dc95baa4d897b8ecb0e677312b
+  raw_response_hash: e3d72fbf18ec1e24d0e737d49a06380b8376824a55091f663721ab73a9fcc286
+annotation:
+  semantic_roles:
+  - requirements
+  - normative_references
+  primary_role: requirements
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.825027Z'

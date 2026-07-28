@@ -31,6 +31,14 @@ The format is inspired by Keep a Changelog, and the project follows Semantic Ver
 
 ### Added
 
+- Add deterministic same-document clause reference extraction and range resolution, local reference-analysis persistence, CLI support, and HITL review context integration.
+
+- Add the Slice 5.4.4 human review workflow for semantic annotation proposals.
+- Export proposal runs as editable local Markdown with embedded, validated review YAML.
+- Import accepted, corrected, rejected, and ambiguous decisions as canonical reviewed annotations.
+- Publish reviewed annotations and corpus manifests from `local` to content-safe `data`.
+- Add ADR 0048 and a semantic annotation review user guide.
+
 #### Semantic evaluation framework
 
 - Generic, transport-independent clause-access services.

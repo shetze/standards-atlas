@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50657
+  clause_id: clause-07abffbeed1f
+  content_hash: sha256:c1a841b689da25898e752d6c7d22d99dbe7bf8255104e8f4983ad6ec4d036a88
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “Requirements Manager” as the entity that
+    carries out requirements management; the source citation and structural context
+    support a terminology definition.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:14:48.964380Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e908729baa56a105901bc998e3e3ebb37a7a8662ddaebdda63bb1efef9131ebb
+  raw_response_hash: d0867c9010e0840fc10a1de90ef7ae1db6cb35c866757d83aba9c5b692eb8d1b
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.579161Z'

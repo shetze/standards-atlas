@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-d6051f665465
+  content_hash: sha256:3c68c26a69d368c0d392872fc60f26e4b418bab222146f08ac58a7201c4bdcc6
+proposal:
+  semantic_roles:
+  - work_products
+  - recommendations
+  - example
+  primary_role: work_products
+  confidence: 0.95
+  rationale: The clause discusses reusing existing quality-management work products
+    to satisfy safety requirements and gives two explicit examples; the reuse language
+    is advisory rather than mandatory.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:17:45.515764Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b0154557be91200dea5c3cb2aae74916cd4d418f316fc904d3e76b1d5113c72d
+  raw_response_hash: b7c9aaa69bfa69ec9d486f7dce3db606891e70bf1ea9c548d7211db3ce64909a
+annotation:
+  semantic_roles:
+  - work_products
+  - recommendations
+  - example
+  primary_role: work_products
+  confidence: 0.95
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.925864Z'

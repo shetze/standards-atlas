@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-530f4cb25f6c
+  content_hash: sha256:e3338e55da8ebd303b9903496e7a4eaf67e892f48331cff3877a5f3e8d6e5e4e
+proposal:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.98
+  rationale: 'The clause states the intended purpose of the step: documenting assumptions
+    about the software component’s scope, environment, functionality, and properties.'
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:23:56.214538Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 2177264f8b42e7cb00fbf4e16ee34c1a453e6fee8c5c8fe4a70a79ebedc63383
+  raw_response_hash: 92bc23c583eb984cabebe514803c93683f9a22d70f82f4ee29bf95c991b7159e
+annotation:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.700815Z'

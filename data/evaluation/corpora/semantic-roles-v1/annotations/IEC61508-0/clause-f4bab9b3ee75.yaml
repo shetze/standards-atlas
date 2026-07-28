@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-0
+  clause_id: clause-f4bab9b3ee75
+  content_hash: sha256:7061e00772b29f930eaa4f4eb574dd2b9e121ecea1e1eb1f718da5b4dd2b1bfb
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - scope
+  - requirements
+  primary_role: requirements
+  confidence: 0.96
+  rationale: Defines safety integrity levels and their hierarchy, states that higher-level
+    requirements apply to the entire system when independence is insufficient, and
+    specifies when IEC 61508 does not apply.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:33.193906Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 7b54d5fb7f89f9f27248269150df546615c28bb4f1eff2a52990a33bf428bcf9
+  raw_response_hash: 006f3d443889b9dbc4734fc0515d61944452ce4af2c8eac9410895ffe3c77196
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - scope
+  - requirements
+  primary_role: requirements
+  confidence: 0.96
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.975867Z'

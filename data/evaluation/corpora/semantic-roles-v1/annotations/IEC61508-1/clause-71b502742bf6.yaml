@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-1
+  clause_id: clause-71b502742bf6
+  content_hash: sha256:df9b64bd5beb8750d680f1ea26f25601ee34bd620412961e6dc938adc2ff1788
+proposal:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.98
+  rationale: The clause defines what the overall safety lifecycle encompasses, specifying
+    the means used to meet tolerable risk; this is scope-defining content.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:06:47.807288Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d62007a5752be31ab6468080d55784a8d68613ab0f408ef0efc33d84f47d72da
+  raw_response_hash: 6b2ee83176c5fa36055741c8ce52a2bd969a8002a47e67e58c8539f120c80454
+annotation:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.759722Z'

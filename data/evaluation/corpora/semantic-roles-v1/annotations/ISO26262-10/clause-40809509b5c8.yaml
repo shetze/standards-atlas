@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-40809509b5c8
+  content_hash: sha256:ccde181fbe134e5ea0ba3325ca37b792595cba8fa0fe701d95b01c9ad992efb8
+proposal:
+  semantic_roles:
+  - example
+  - recommendations
+  - scope
+  - normative_references
+  primary_role: example
+  confidence: 0.98
+  rationale: The clause presents an illustrative sensor-fault scenario, recommends
+    reducing Δ Max under stated conditions, limits the evaluation scope to sensor
+    faults, and references ISO 26262-9:2018 Clause 7 for dependent failure analysis.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:43:39.964145Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 03ffe5ead63e88e1a6b17d975ef85f24ce735856050f169e446e363817fd1d45
+  raw_response_hash: e34566bbb4357c1c27f88f5465633cc41684e99e7f39da979f0d987d600df2e5
+annotation:
+  semantic_roles:
+  - example
+  - recommendations
+  - scope
+  - normative_references
+  primary_role: example
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.667481Z'

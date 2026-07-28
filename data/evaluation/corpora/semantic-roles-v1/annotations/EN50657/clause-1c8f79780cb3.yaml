@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50657
+  clause_id: clause-1c8f79780cb3
+  content_hash: sha256:109bb4df243b6a3095e5310c8289da5e9f40cbcfb174f18b0fb58a47c3aefdb0
+proposal:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+  rationale: The clause identifies software assessment plan and report as output documents.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:27:53.683485Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c79dcfbdc433083a1e84a182bda8a7f3e03f5bc20c0001728d9670eb6c2ffead
+  raw_response_hash: bcd7e756336a2721b90e2bc53083aecaa668325f571ef1e9f6ad6312593b62e7
+annotation:
+  semantic_roles:
+  - outputs
+  - work_products
+  primary_role: outputs
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.610332Z'

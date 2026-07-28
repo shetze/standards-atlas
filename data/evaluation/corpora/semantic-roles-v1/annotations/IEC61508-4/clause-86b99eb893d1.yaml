@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-4
+  clause_id: clause-86b99eb893d1
+  content_hash: sha256:e5503c03137f8c6935d8fbc46ac97ebd0721e7e457a86aabd6502f937e1779d8
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - requirements
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines a specification in terms of its purpose and scope,
+    while its subject concerns design requirements.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:01:44.371943Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 2572d7d3e6c6c4ec899aea0dafa254178ec90871db0722ca3573ec94a7d5307c
+  raw_response_hash: 370966f8eecfe2ac0af1a552a018c9aed15a78165cc1a664f15776391af7893d
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - requirements
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.794231Z'

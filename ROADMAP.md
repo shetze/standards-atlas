@@ -158,3 +158,12 @@ Examples include IEC 81346, ISO 15288, and SysML-based artefacts.
 ## Slice 5.4.3 — Baseline annotation proposals
 
 Completed: versioned semantic-role task and prompt resources, provider-independent proposal orchestration, Codex and RamaLama adapters, durable request/response evidence, schema validation, proposal provenance, and resumable generation.
+
+## Slice 5.4.4 — Human review workflow
+
+Completed: local Markdown review export with embedded review data, validated import into canonical reviewed annotations, conflict and plausibility checks, and controlled publication from `local` to `data`.
+
+### Slice 5.4.4a – Clause Reference Extraction and Resolution
+
+Implemented: deterministic same-document clause and range detection, target resolution,
+unresolved diagnostics, local persistence, CLI automation, and HITL context integration.

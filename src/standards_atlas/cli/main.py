@@ -82,6 +82,7 @@ from standards_atlas.application.services.atlasdata_toc_service import AtlasData
 from standards_atlas.application.services.evaluation import (
     BaselineProposalGenerator,
     BenchmarkManifest,
+    ClauseReferenceExtractionService,
     CorpusBuildConfig,
     EvaluationCorpusBuilder,
     EvaluationDatasetRepository,
@@ -91,6 +92,7 @@ from standards_atlas.application.services.evaluation import (
     PromptRepository,
     ProposalRunConfig,
     SamplingStrategy,
+    SemanticAnnotationReviewService,
 )
 from standards_atlas.application.services.evaluation.defaults import (
     SEMANTIC_ROLE_PROMPT_VERSIONS,
@@ -620,6 +622,162 @@ def propose_evaluation_annotations(
     typer.echo(f"Run directory            : {result.run_directory}")
     for error in result.errors:
         typer.echo(error, err=True)
+
+
+@evaluation_app.command("references-extract")
+def extract_clause_references(
+    knowledge_domain: Annotated[
+        str,
+        typer.Option("--knowledge-domain", help="KnowledgeDomain owning the documents."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", file_okay=False, help="EngineeringDocument workspace."),
+    ] = Path(".atlas"),
+    output_root: Annotated[
+        Path,
+        typer.Option("--output", file_okay=False, help="Local reference-analysis root."),
+    ] = Path("local/evaluation/references"),
+    document: Annotated[
+        list[str] | None,
+        typer.Option("--document", help="Limit extraction to one or more document keys."),
+    ] = None,
+    overwrite: Annotated[
+        bool,
+        typer.Option("--overwrite", help="Replace existing reference analyses."),
+    ] = cli_defaults.DEFAULT_FALSE,
+) -> None:
+    """Extract and resolve same-document clause references without an LLM."""
+    try:
+        result = ClauseReferenceExtractionService().run(
+            workspace=workspace,
+            knowledge_domain=knowledge_domain,
+            output_root=output_root,
+            document_keys=tuple(document or ()),
+            overwrite=overwrite,
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Documents                : {result.documents}")
+    typer.echo(f"Clauses analysed         : {result.clauses}")
+    typer.echo(f"References               : {result.references}")
+    typer.echo(f"Resolved                 : {result.resolved}")
+    typer.echo(f"Needs attention          : {result.unresolved}")
+    typer.echo(f"Output root              : {result.output_root}")
+
+
+@evaluation_app.command("annotations-review-export")
+def export_annotation_reviews(
+    run_directory: Annotated[
+        Path,
+        typer.Option("--run", exists=True, file_okay=False, help="Proposal run directory."),
+    ],
+    review_directory: Annotated[
+        Path,
+        typer.Option("--reviews", file_okay=False, help="Local Markdown review directory."),
+    ],
+    overwrite: Annotated[
+        bool,
+        typer.Option("--overwrite", help="Replace existing Markdown reviews."),
+    ] = cli_defaults.DEFAULT_FALSE,
+    reference_root: Annotated[
+        Path,
+        typer.Option(
+            "--reference-root",
+            file_okay=False,
+            help="Local clause-reference analyses included in HITL context.",
+        ),
+    ] = Path("local/evaluation/references"),
+) -> None:
+    """Export proposal candidates as editable local Markdown reviews."""
+    try:
+        result = SemanticAnnotationReviewService().export_run(
+            run_directory=run_directory,
+            review_directory=review_directory,
+            overwrite=overwrite,
+            reference_root=reference_root,
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Exported                 : {result.exported}")
+    typer.echo(f"Skipped                  : {result.skipped}")
+    typer.echo(f"Review directory         : {result.review_directory}")
+
+
+@evaluation_app.command("annotations-review-import")
+def import_annotation_reviews(
+    corpus_id: Annotated[str, typer.Option("--corpus-id", help="Stable corpus identifier.")],
+    run_directory: Annotated[
+        Path,
+        typer.Option("--run", exists=True, file_okay=False, help="Proposal run directory."),
+    ],
+    review_directory: Annotated[
+        Path,
+        typer.Option("--reviews", exists=True, file_okay=False, help="Markdown review directory."),
+    ],
+    local_corpus_root: Annotated[
+        Path,
+        typer.Option(
+            "--local-corpus-root",
+            file_okay=False,
+            help="Root for local reviewed corpus annotations.",
+        ),
+    ] = Path("local/evaluation/corpora"),
+    overwrite: Annotated[
+        bool,
+        typer.Option("--overwrite", help="Replace differing local reviewed annotations."),
+    ] = cli_defaults.DEFAULT_FALSE,
+) -> None:
+    """Validate Markdown reviews and import reviewed local annotations."""
+    try:
+        result = SemanticAnnotationReviewService().import_reviews(
+            review_directory=review_directory,
+            run_directory=run_directory,
+            local_corpus_root=local_corpus_root,
+            corpus_id=corpus_id,
+            overwrite=overwrite,
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Imported                 : {result.imported}")
+    typer.echo(f"Skipped                  : {result.skipped}")
+    for path in result.annotation_paths:
+        typer.echo(f"Annotation               : {path}")
+
+
+@evaluation_app.command("annotations-publish")
+def publish_annotation_reviews(
+    corpus_id: Annotated[str, typer.Option("--corpus-id", help="Stable corpus identifier.")],
+    local_corpus_root: Annotated[
+        Path,
+        typer.Option("--local-corpus-root", file_okay=False),
+    ] = Path("local/evaluation/corpora"),
+    published_corpus_root: Annotated[
+        Path,
+        typer.Option("--published-corpus-root", file_okay=False),
+    ] = Path("data/evaluation/corpora"),
+    publish_manifest: Annotated[
+        bool,
+        typer.Option("--manifest/--no-manifest", help="Publish the corpus manifest as well."),
+    ] = True,
+) -> None:
+    """Publish all reviewed local annotations into reproducible project data."""
+    try:
+        result = SemanticAnnotationReviewService().publish_reviews(
+            corpus_id=corpus_id,
+            local_corpus_root=local_corpus_root,
+            published_corpus_root=published_corpus_root,
+            publish_manifest=publish_manifest,
+        )
+    except (OSError, ValueError, RuntimeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Published                : {result.published}")
+    if result.manifest_path is not None:
+        typer.echo(f"Corpus manifest          : {result.manifest_path}")
 
 
 @evaluation_app.command("benchmark")

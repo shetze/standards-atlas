@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-617912be99c7
+  content_hash: sha256:3bfa6e60515472682ef7a418ec0303acfaba1224f87c20ee261e12dcd0b3b88e
+proposal:
+  semantic_roles:
+  - compliance
+  primary_role: compliance
+  confidence: 0.98
+  rationale: The clause defines conditions under which software may be considered
+    compliant and exempt from pre-existing software requirements; the note explains
+    continuity of compliance across standard versions.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:06:06.768188Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 2f1a07fdf6b5cae8f7db6d46bdac51aa0e19c83eabfc1adfb7db2f39f3a1e8bc
+  raw_response_hash: 445166b47893383b006a6ee3433c34570096746fdeae300fedece2b0634e7222
+annotation:
+  semantic_roles:
+  - compliance
+  primary_role: compliance
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.728122Z'

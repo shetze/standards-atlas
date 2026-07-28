@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-c2a3a7b1e2cd
+  content_hash: sha256:ad7aba7ccaa201f064c8e076c8e03c439c624a3271aad09b8d660b46b2327fa6
+proposal:
+  semantic_roles:
+  - example
+  - assessment
+  - outputs
+  - annex
+  primary_role: assessment
+  confidence: 0.98
+  rationale: The clause presents an example of DMA output failure modes and assesses
+    their detection mechanisms and estimated coverage; it also enumerates outputs
+    and is located in an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:16:45.055053Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 3dac9d44714c8e9f9642ceaad771315bf6405ffc07e43ecf0517cd38ceb17f09
+  raw_response_hash: ed2e1b4d898ecbcd77853ed23013da6accf4fc9a0f4c220c59219a2ce8f0962b
+annotation:
+  semantic_roles:
+  - example
+  - assessment
+  - outputs
+  - annex
+  primary_role: assessment
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.894790Z'

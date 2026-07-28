@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-29a5891a1839
+  content_hash: sha256:c875d8afeb9aea9457058f2fd98386298b05102ea0747a853be7123ffba4e5be
+proposal:
+  semantic_roles:
+  - recommendations
+  - objectives
+  - inputs
+  - annex
+  primary_role: recommendations
+  confidence: 0.99
+  rationale: The clause states an aim and provides explicit recommended measures for
+    synchronizing asynchronous inputs and controlling metastability; its context identifies
+    it as an annex concerning inputs.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:14:27.677552Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4febb1c24f79021500aed510d847734fffd54420237e2bda5d25877268b0391b
+  raw_response_hash: d6a80d24c830392db7f19c5457298f28c0c4fd985c1bd5c5e7d9dda7519c0a77
+annotation:
+  semantic_roles:
+  - recommendations
+  - objectives
+  - inputs
+  - annex
+  primary_role: recommendations
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.632425Z'

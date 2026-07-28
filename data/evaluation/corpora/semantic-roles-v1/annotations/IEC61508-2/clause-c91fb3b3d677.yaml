@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-c91fb3b3d677
+  content_hash: sha256:82b1240d8fd6ea909897893885614b128bd4649d6def328e23cbd15229665037
+proposal:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+  rationale: The clause explicitly states that it describes the second objective,
+    and its content specifies an objective concerning documentation throughout the
+    safety lifecycle.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:08:59.540678Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 979f81181fd172fde5b32a4210439409c34ea9240872159c0fec2ae020389df1
+  raw_response_hash: 873c38b33f751e10c4f2ce564ab1037697ca173d6fcdcac02c12b9289fe059dd
+annotation:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.906083Z'

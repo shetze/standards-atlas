@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-2
+  clause_id: clause-97150b4f88b4
+  content_hash: sha256:d0956d95043b006a31d90a932e4f61d78718c362df09dfeb40d7e67829691ad3
+proposal:
+  semantic_roles:
+  - objectives
+  - assessment
+  - annex
+  primary_role: objectives
+  confidence: 0.99
+  rationale: The clause explicitly states the goal of judging the clarity, sufficiency,
+    and adequacy of safety activities; structural context identifies it as an objective
+    in an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:13:46.743030Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: a6bc6ac33f928c3f2c5ffa346a795480a42eba30614f1b8c357d344bb4326b74
+  raw_response_hash: b5e25e934adcc6b33ce168d475a6f268fc3dc0835d1493fad782874f16cbba79
+annotation:
+  semantic_roles:
+  - objectives
+  - assessment
+  - annex
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.814816Z'

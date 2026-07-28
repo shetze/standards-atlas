@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-1
+  clause_id: clause-dd7fe8553b90
+  content_hash: sha256:4fb891ce7e2d22d74a82e131cce75dd1a750cf665b5099d5197fede6ac812ed2
+proposal:
+  semantic_roles:
+  - scope
+  - objectives
+  primary_role: scope
+  confidence: 0.99
+  rationale: The clause defines the standard's coverage and explicitly states its
+    major and second objectives.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:29:30.578755Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4426d3f271e14f3cdff956966497162840ebab71d4a593bec10e1dd103af0baf
+  raw_response_hash: df842f3aa0be11d1fbf0b181268a1ba0e98ef6cdab850e4a87034c813d02df5e
+annotation:
+  semantic_roles:
+  - scope
+  - objectives
+  primary_role: scope
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.937836Z'

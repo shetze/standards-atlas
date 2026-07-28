@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-9933e1dee23c
+  content_hash: sha256:28fb9834e149321764bcf463cce4fd98412a160a6348343c734dc375f30daf57
+proposal:
+  semantic_roles:
+  - work_products
+  - verification
+  primary_role: work_products
+  confidence: 0.98
+  rationale: The clause identifies a verification report as a documented deliverable
+    covering specified system design and safety artifacts.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:05:33.189682Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 0e360e95e83da6c12291f10529fa1714983500eba1676a00f25631a4a15d1ceb
+  raw_response_hash: 47944417f2b42f64df248d278717b9d21cb1a022a40e5fa97b0798e5fe7fd4b5
+annotation:
+  semantic_roles:
+  - work_products
+  - verification
+  primary_role: work_products
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.816533Z'

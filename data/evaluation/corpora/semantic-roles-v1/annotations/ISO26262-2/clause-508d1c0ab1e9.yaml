@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-2
+  clause_id: clause-508d1c0ab1e9
+  content_hash: sha256:34f2d7e9324c116e426fa0b091f82a716af2794f1f381f780508c746a53858b2
+proposal:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+  rationale: The clause states a concise intended objective—software integration and
+    testing. The structural context explicitly identifies it as an objective.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:29.279454Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 1c222b05565156ba02b6639a8510ce8ff89e97949cb57fa98978de72433c45b6
+  raw_response_hash: 4157f8a93558161d3eb43516ab39164f4fb70d37cea1c8917b0803c5a7627aad
+annotation:
+  semantic_roles:
+  - objectives
+  primary_role: objectives
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.694131Z'

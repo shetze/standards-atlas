@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-d53edfcca56c
+  content_hash: sha256:314d7788723db5119f25cabf0270a493845e89b0a7f35f7e1546e11fbf0c2619
+proposal:
+  semantic_roles:
+  - requirements
+  - objectives
+  primary_role: requirements
+  confidence: 0.98
+  rationale: Defines how accident safety targets can be specified and what contextual
+    information is needed, while explicitly stating a standard-level non-requirement
+    regarding national statistics.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:45:42.837635Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c2496054c821022cd32058ac37f344eb5d24d35f9bae340fd02c75a0beabeb4d
+  raw_response_hash: 1dc2d48d1bd3136844c04b4a2c668a5a08763e6de173bbea7a3fdd42d907c440
+annotation:
+  semantic_roles:
+  - requirements
+  - objectives
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.924981Z'

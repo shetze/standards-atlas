@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-6
+  clause_id: clause-6b9ad8ade602
+  content_hash: sha256:c87d0de2f2d82b5fad1e8706b5670194dc77818ac1ef9f588b016098e1872953
+proposal:
+  semantic_roles:
+  - recommendations
+  - annex
+  primary_role: recommendations
+  confidence: 0.94
+  rationale: The clause describes coupling factor classes and examples that may be
+    used to improve dependent failure analysis, making it guidance rather than a mandatory
+    requirement. Its annex context is also explicit.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:10:49.924861Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4375b7e743544cfb37146501eec604bad53d7ed706cf87a996070859c5eb119f
+  raw_response_hash: e9e431c1e08430bf424196790bfdf213401950272de23e4dd9d369ed45f8c575
+annotation:
+  semantic_roles:
+  - recommendations
+  - annex
+  primary_role: recommendations
+  confidence: 0.94
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.746157Z'

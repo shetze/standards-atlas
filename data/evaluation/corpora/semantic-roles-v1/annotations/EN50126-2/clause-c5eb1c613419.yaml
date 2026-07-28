@@ -1,0 +1,33 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-2
+  clause_id: clause-c5eb1c613419
+  content_hash: sha256:a15011e05c392a42ae9966b5cd400ec87e6bff54eac1f387d34440f1911a7dec
+proposal:
+  semantic_roles:
+  - abbreviations
+  primary_role: abbreviations
+  confidence: 0.99
+  rationale: The clause lists abbreviations and their expanded technical terms.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:02:47.333643Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 0fb0a3466ace4f6c18ed16df556036d8f41937271d13c366cd71873c840a4dff
+  raw_response_hash: 62c32b8810c123e0e50fa5bcb01190e5c58c4a144bf97d9890888a79fa1100ee
+annotation:
+  semantic_roles:
+  - abbreviations
+  primary_role: abbreviations
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.901635Z'

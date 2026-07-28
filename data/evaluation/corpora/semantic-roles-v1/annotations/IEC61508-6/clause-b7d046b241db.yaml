@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-6
+  clause_id: clause-b7d046b241db
+  content_hash: sha256:3a04be66154c1315860e2135648d986a024b3cb27ef304be45999c8484d4abfa
+proposal:
+  semantic_roles:
+  - annex
+  - outputs
+  primary_role: outputs
+  confidence: 0.88
+  rationale: The clause derives and presents a PFH calculation result under stated
+    assumptions, with figures and prior values as supporting inputs.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:34:04.240957Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 764080034c56f074d88f7e9ac9672560c7b8532b133c82d7fc0187f679e8d35e
+  raw_response_hash: 0cb3d50f7332200cc098475ffc3f8931da76fb8c23c2d8aebd4c0bac38fef528
+annotation:
+  semantic_roles:
+  - annex
+  - outputs
+  primary_role: outputs
+  confidence: 0.88
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.872427Z'

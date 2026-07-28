@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-6
+  clause_id: clause-0d85b5b13500
+  content_hash: sha256:2eaa20f4ceaffcab8388013f9163df9f42f5b5d000d0eb2ad2b4290e9b89df31
+proposal:
+  semantic_roles:
+  - annex
+  - requirements
+  primary_role: annex
+  confidence: 0.98
+  rationale: The clause is located in Annex B and presents the 1oo3 architecture,
+    assumptions, reliability diagram equivalence, and PFD equations. Its main role
+    is annexed technical calculation guidance, with requirements content expressed
+    through the stated architecture and assumptions.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:31:33.380871Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: fe40100668010ced6ae21ae0aa7c5b5626bd5563a8c91f554b06d5d17caf85f1
+  raw_response_hash: 4e5ae645d758c11b7ed24f2003a14aec518d06bd6f3be29c29d59fa293e3ad39
+annotation:
+  semantic_roles:
+  - annex
+  - requirements
+  primary_role: annex
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.585873Z'

@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-6
+  clause_id: clause-eca3dc93a20e
+  content_hash: sha256:63b0a1aeb4d92eb28405660c9bfda85771c5c7ca5f60dc489b8f547d3b414ecb
+proposal:
+  semantic_roles:
+  - annex
+  - example
+  primary_role: example
+  confidence: 0.93
+  rationale: The clause is an informative annex section deriving the failure-on-demand
+    calculation for a 1oo1 architecture, supported by explanatory text, equations,
+    and referenced block diagrams rather than normative obligations.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:25:36.340356Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 32cf563beb60592eae39ec238a3d83254433fe629837cd2df130b0c8485f4599
+  raw_response_hash: 44eeb7979c297ed05024d4a075bd805e6b36f9f48730f4427afc138f32339e38
+annotation:
+  semantic_roles:
+  - annex
+  - example
+  primary_role: example
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.963541Z'

@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50128
+  clause_id: clause-ffa63b81a4fc
+  content_hash: sha256:c38e452b608ccd2a81e14fcaac51d0ad3127695a64c56437af3bb27a166a55ca
+proposal:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+  rationale: The clause defines the standard’s subject, applicability, and covered
+    system architectures.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:25.214680Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c1e03f84e3edb081c3bf9b6d85bc9dbf202ba0e121e8011c16051b324969042e
+  raw_response_hash: a821730ef299880ce6ba21b252e3c5452b6138a828578b5d56434e32344cceb8
+annotation:
+  semantic_roles:
+  - scope
+  primary_role: scope
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.995216Z'

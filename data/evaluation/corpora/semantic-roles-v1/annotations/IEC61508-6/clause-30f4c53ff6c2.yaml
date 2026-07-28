@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-6
+  clause_id: clause-30f4c53ff6c2
+  content_hash: sha256:eb45be384017302f1bec168627f76469d356d2888d313d0a8a914ee68809f5c1
+proposal:
+  semantic_roles:
+  - example
+  primary_role: example
+  confidence: 0.93
+  rationale: The clause presents calculation equations and references illustrative
+    block diagrams within an annex subsection for a specific 1oo2D configuration,
+    indicating an example rather than a prescriptive requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:36:37.990618Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e8a223dfb4334d316b19cd275e46739f2b361ce771774176f27cd15bd0407711
+  raw_response_hash: de88c3d045ba1afb338bec2556598a27e937c66aa4014c3ef1cf573ab5c0d2d3
+annotation:
+  semantic_roles:
+  - example
+  primary_role: example
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.645202Z'

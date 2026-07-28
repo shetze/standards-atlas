@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-6
+  clause_id: clause-6ff88a0b8ea1
+  content_hash: sha256:64ebba00bc1da2d0f33569d616fe828cb11d29fe97cf0f48047b765675c239b7
+proposal:
+  semantic_roles:
+  - objectives
+  - annex
+  primary_role: objectives
+  confidence: 0.93
+  rationale: The clause directs consideration of Annex D's fault models during interference
+    analysis, expressing an objective or intended use rather than a mandatory requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:04:30.986003Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 9f8acf9e07996d78d9bf701dfc4bc4fa1f4478ae0a21cdcbac21fcbe5cd7335e
+  raw_response_hash: 33ad900c2a2e9a0a4b3937815debba5632f677cf4dda93dadd6e207751d560ec
+annotation:
+  semantic_roles:
+  - objectives
+  - annex
+  primary_role: objectives
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.753044Z'

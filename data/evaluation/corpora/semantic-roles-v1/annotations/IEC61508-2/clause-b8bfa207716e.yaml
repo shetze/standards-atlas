@@ -1,0 +1,41 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-b8bfa207716e
+  content_hash: sha256:cabcf8b3146e691a0cda43036463fc0fe79ab837c27342efbeccc816595172c8
+proposal:
+  semantic_roles:
+  - requirements
+  - recommendations
+  - note
+  - example
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause specifies mandatory reliability-data conditions and uncertainty
+    treatment using “shall”; it also contains an encouragement, explanatory notes,
+    and examples.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:39:52.916501Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: cc21faba6439e7c5d2b15ef3c3252deb119e4e4a88807be394214492f7a5383e
+  raw_response_hash: 0382492ea3c9588269cfbe3cf9c1ff9770f9c6053777ec5b53f4a010efa5b20b
+annotation:
+  semantic_roles:
+  - requirements
+  - recommendations
+  - note
+  - example
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.873300Z'

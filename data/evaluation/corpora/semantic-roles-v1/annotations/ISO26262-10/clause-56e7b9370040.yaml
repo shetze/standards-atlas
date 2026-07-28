@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-56e7b9370040
+  content_hash: sha256:1ae3962093ce59e6e442df3868497a5d6e8995d37557cc16171358388d34925f
+proposal:
+  semantic_roles:
+  - requirements
+  - recommendations
+  - verification
+  primary_role: requirements
+  confidence: 0.88
+  rationale: The clause specifies how to determine or restrict the Emergency Operation
+    Tolerance Time Interval using PMHF analysis, provides an equation and parameter
+    definitions, and allows alternative quantitative or qualitative approaches.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:06:21.292065Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 9aa8944031ee97be2b56435f528cbe5139cf00cb89b095dd4a7dd9ff990fe16e
+  raw_response_hash: 106b9095bc2cc3cf03b1b348146882e302666143c53f280d6bc6f03dae746b5f
+annotation:
+  semantic_roles:
+  - requirements
+  - recommendations
+  - verification
+  primary_role: requirements
+  confidence: 0.88
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.712706Z'

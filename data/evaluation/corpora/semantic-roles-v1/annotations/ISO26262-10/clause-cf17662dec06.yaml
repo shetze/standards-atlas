@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-cf17662dec06
+  content_hash: sha256:4a43c652a6236b457aeb2bea4f43a2f135b4c625b5f8135f820aa14cf5be250c
+proposal:
+  semantic_roles:
+  - requirements
+  - inputs
+  primary_role: requirements
+  confidence: 0.78
+  rationale: The clause specifies what the quantitative PMHF analysis must consider,
+    including exposure-duration components; these components serve as calculation
+    inputs.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:08:14.237201Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 27c70d6cdeea537388e712551b216fdc8cd969c3a3f7c14c58c29dbfb6db9629
+  raw_response_hash: 5852cb2eebcb7da511acac6512315c64111531882d20bfe164c1af1b37a7321a
+annotation:
+  semantic_roles:
+  - requirements
+  - inputs
+  primary_role: requirements
+  confidence: 0.78
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.914809Z'

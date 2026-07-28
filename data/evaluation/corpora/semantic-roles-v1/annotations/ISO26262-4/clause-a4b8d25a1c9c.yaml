@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-a4b8d25a1c9c
+  content_hash: sha256:b77b099f960a3e91a51196e31798112d4aa429961ed9d82e8008757f50ddc394
+proposal:
+  semantic_roles:
+  - normative_references
+  primary_role: normative_references
+  confidence: 1.0
+  rationale: The clause identifies referenced documents whose content constitutes
+    requirements, and its structural role is normative references.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:28:24.909918Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 6798e3f94c69d46a588eb8b50be0e4418274922911345b69778a20297b3eea78
+  raw_response_hash: 20b16aa70108d2d9412ed2c446c599a23728d498996c11be4b213886d4189111
+annotation:
+  semantic_roles:
+  - normative_references
+  primary_role: normative_references
+  confidence: 1.0
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.842357Z'

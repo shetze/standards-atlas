@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-f9dc04eca622
+  content_hash: sha256:c591f3a6a9ac6cc893a02986bab82ced227e9d1d4266e2052cf4c78be7a9f798
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “technical safety requirement” and includes
+    a note clarifying its scope.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:05:21.495877Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: d07ffedbb359724e451860f043603f7be7978240c66de3edf50b5b3ad744cf67
+  raw_response_hash: 1f9a72f1f7cd3b817601b4c0112a19f2827037f86d5aac36d874d0341d5b11d1
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - note
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.983421Z'

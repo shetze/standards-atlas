@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-4
+  clause_id: clause-99be13e2243e
+  content_hash: sha256:703571bcbdf285bd284b9b939d7924521601b61128e44c35c715b58a3a1f0acb
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - requirements
+  primary_role: terms_and_definitions
+  confidence: 0.98
+  rationale: The clause defines a specification by describing its contents, while
+    explicitly referring to safety requirements and integrity levels.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:04:02.799826Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 3d0da801f3491367636f11ba38ac6b907edcf372914a0b43214fc4415bd1f28f
+  raw_response_hash: 2dfa007dd4276f6ed000d8ff9191ea91261f416b18aa4a90e4c029c002d02012
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - requirements
+  primary_role: terms_and_definitions
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.818178Z'

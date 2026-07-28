@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-333b37698293
+  content_hash: sha256:8893537bd90ff3d2c6aad367a582cc68192dc63865962600a3af3a04aa12c1c2
+proposal:
+  semantic_roles:
+  - figure
+  - scope
+  primary_role: figure
+  confidence: 0.98
+  rationale: The clause explicitly describes Figure 1 and its depiction of the IEC
+    61508 framework; its placement in the SCOPE section provides supporting scope
+    context.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:24:08.243368Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 45156da7c534ec99f4bf2ef64ad2dd483550667da446256763c3a90c06fe0963
+  raw_response_hash: f335333b0d7adc9447d6ae19655d6320c13c42807022cea3ba05a13d491deeda
+annotation:
+  semantic_roles:
+  - figure
+  - scope
+  primary_role: figure
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.648564Z'

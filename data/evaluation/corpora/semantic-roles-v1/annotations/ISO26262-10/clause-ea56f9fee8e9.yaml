@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-ea56f9fee8e9
+  content_hash: sha256:98cebad897074eca422ff79a50bb3181be74c26352c9f412bb203a6d88ecc522
+proposal:
+  semantic_roles:
+  - figure
+  - example
+  - note
+  primary_role: example
+  confidence: 0.99
+  rationale: The clause describes example scenarios illustrated in Figures 27 and
+    28, including event timelines and explanatory notes about FTTI, fault reaction,
+    emergency operation, and safe-state timing.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:17:25.603266Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 11cd56ec34eded7512328a4b1bdd3644bbaff68bc813c5f60d0e8c39f6f61cba
+  raw_response_hash: c40ded1afbcd4a9e1ae524e3867e030524a8bcebcbb70c0993fa21a56e78c8e2
+annotation:
+  semantic_roles:
+  - figure
+  - example
+  - note
+  primary_role: example
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.960148Z'

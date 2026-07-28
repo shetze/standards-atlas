@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-4
+  clause_id: clause-3d749b6df0d1
+  content_hash: sha256:f2effa7f7191921d049acdb062de854fac62c84d3543aa079f69b57336166d4e
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term "software module"; structural context explicitly
+    identifies it as a terms-and-definitions clause.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:28:49.121477Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 85c37ddf328b1f6a7ef09ea418179749c800ee0f1dbde8fe8b663f096e0d6853
+  raw_response_hash: 2d032a5de86a34453bd86b11214d51de20a3467a45dfa52109f81597f5431cac
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.662377Z'

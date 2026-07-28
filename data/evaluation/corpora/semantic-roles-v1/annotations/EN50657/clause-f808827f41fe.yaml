@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50657
+  clause_id: clause-f808827f41fe
+  content_hash: sha256:49d0adcfc826b3abcce16eb5e9f186e4cc7c1603ad288f4e89c3f495e6ec410c
+proposal:
+  semantic_roles:
+  - inputs
+  primary_role: inputs
+  confidence: 0.98
+  rationale: The clause identifies documentation required as input documents, with
+    the Software Verification Plan specifying the applicable set.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:07.723427Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 71ee9a364154d352f475b4a4967a89ca53b4a74700e0171edf7afce3059c1a5a
+  raw_response_hash: 5b07d35478d7525303b1cb111f131c456b129eb1132ecd34aa46e0e5a530db30
+annotation:
+  semantic_roles:
+  - inputs
+  primary_role: inputs
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.981730Z'

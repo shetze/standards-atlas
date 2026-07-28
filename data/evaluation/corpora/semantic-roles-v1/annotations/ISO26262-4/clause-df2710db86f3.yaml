@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-4
+  clause_id: clause-df2710db86f3
+  content_hash: sha256:8fe4eed23a66e9acba0df07c5c00f8f66497861b36dece68e90e7d04a8492bd9
+proposal:
+  semantic_roles:
+  - requirements
+  - verification
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause mandates that test goals from specified requirements shall
+    be addressed using adequate test methods; this is a normative testing and verification
+    requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:39:23.518600Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 5cbef382d70068785590d23d65a1cb31b76f7baca302388660d09be0d03fb349
+  raw_response_hash: a955835af0d64fb6e7f2fdb50b54c4bf4d43e8c731ee3c388cf7b99cb14df085
+annotation:
+  semantic_roles:
+  - requirements
+  - verification
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.942067Z'

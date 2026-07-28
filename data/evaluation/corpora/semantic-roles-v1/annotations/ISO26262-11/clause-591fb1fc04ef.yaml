@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-591fb1fc04ef
+  content_hash: sha256:7604bf8519a5a8f83ba53027ce97dab2c0a00887026afb64fd1b604c9569e669
+proposal:
+  semantic_roles:
+  - note
+  - example
+  primary_role: example
+  confidence: 0.98
+  rationale: The clause describes a checksum-based memory-test technique, including
+    its purpose, procedure, detection behavior, and performance characteristics. The
+    leading NOTE provides a cross-reference to a table, while the main content is
+    an illustrative technique description rather than a normative requirement.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:16.781210Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 222ad60e6595cf529246a8e7e90b094ae7a6a76e2d359f0ef8df843560214e8d
+  raw_response_hash: c37622dab81e7c309d9fde120a66ae5fd584475382511cc3c28495e402c1b021
+annotation:
+  semantic_roles:
+  - note
+  - example
+  primary_role: example
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.716256Z'

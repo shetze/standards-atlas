@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50126-1
+  clause_id: clause-ebc526127e06
+  content_hash: sha256:9fb64d3dad0c63643f5bc7411f690a81e03042c37e6999f28cd4018df2f15bcd
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The clause defines the term “implementation” and is structurally located
+    in the terms and definitions section.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:25:01.342533Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 387c4922babbf6f487d90f17802b6428249b0461c2b7abed7377d82a434aa9af
+  raw_response_hash: 10e69ad5fff468dd382357c19287d37953ec20a2ab5b2b17c4ca5f29e1afc074
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.961868Z'

@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-5
+  clause_id: clause-8793b7e637d0
+  content_hash: sha256:56f610447541c136c35901be0b02bc4d65cd835dc7777667508cf8a3e38c0ede
+proposal:
+  semantic_roles:
+  - annex
+  primary_role: annex
+  confidence: 0.99
+  rationale: The content identifies an annex topic describing risk graph methods for
+    determining safety integrity levels; structural context explicitly marks it as
+    an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:35:12.697634Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 8e5c52937c66321dc5a413187106f969c2e0703656c875ce519259f26231ed47
+  raw_response_hash: a7d933729f088336f132b2e29e281c9168000f51d7c0ed4ca2360313beef809a
+annotation:
+  semantic_roles:
+  - annex
+  primary_role: annex
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.795060Z'

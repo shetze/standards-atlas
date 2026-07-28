@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-11
+  clause_id: clause-7fb4738a410e
+  content_hash: sha256:bc1041c7aa2c7d29ec01696f421ab7f869861b327aad6ff1878e59f63540dedc
+proposal:
+  semantic_roles:
+  - verification
+  - recommendations
+  - note
+  primary_role: verification
+  confidence: 0.98
+  rationale: Describes a RAM March test technique, its execution procedure, detectable
+    failure modes, limitations, and timing considerations; it primarily supports verification,
+    with a recommendation-like applicability note.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:40:02.272598Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 48001cc3a7103e1a716de298b830d533185db69c525b61c21919faf28a7818f0
+  raw_response_hash: 4cee163ab68b4a530922ebbf7636c15cb50a484d6f1afc87f202a62c22301859
+annotation:
+  semantic_roles:
+  - verification
+  - recommendations
+  - note
+  primary_role: verification
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.782172Z'

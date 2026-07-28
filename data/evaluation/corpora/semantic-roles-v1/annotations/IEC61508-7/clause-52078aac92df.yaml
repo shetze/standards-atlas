@@ -1,0 +1,43 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-52078aac92df
+  content_hash: sha256:5adaf802f291f2e074463c5b714719d2fb9a7bcc9febb2afa8292c94e71e08d9
+proposal:
+  semantic_roles:
+  - note
+  - objectives
+  - requirements
+  - outputs
+  - annex
+  primary_role: note
+  confidence: 0.98
+  rationale: The normalized content is explicitly labeled as a NOTE and provides the
+    technique’s aim, operational description, and effectiveness condition; structural
+    context supports outputs and annex roles.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:11:42.400066Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 585d1393e6b15c5e2259772f06c0e0ceccd850f3a780e15651530d39ebe0263e
+  raw_response_hash: 3fdc60a9a688685b587f3e91ede646951236a93b3606f331db6579967b1b002f
+annotation:
+  semantic_roles:
+  - note
+  - objectives
+  - requirements
+  - outputs
+  - annex
+  primary_role: note
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.699122Z'

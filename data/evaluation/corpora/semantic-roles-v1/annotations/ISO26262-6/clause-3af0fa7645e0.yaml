@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-6
+  clause_id: clause-3af0fa7645e0
+  content_hash: sha256:b1e7c8b92f4455625715b20cb53b8d275bbd1597fcb263aaccdc70c1fb9dc348
+proposal:
+  semantic_roles:
+  - introduction
+  - annex
+  primary_role: introduction
+  confidence: 0.98
+  rationale: The clause provides explanatory background on models, modelling notations,
+    guidelines, tools, and relevant use cases in an annex introduction; it does not
+    state normative requirements.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:27:06.871433Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: bc3970a22ccbcee8e584e440d9cdc0d05f9362192352bef3604341f22dfd972c
+  raw_response_hash: 29615a2e04356d7d9c3934cbca23e2b67eca1c8bf83cc368df37e2027152708a
+annotation:
+  semantic_roles:
+  - introduction
+  - annex
+  primary_role: introduction
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.658941Z'

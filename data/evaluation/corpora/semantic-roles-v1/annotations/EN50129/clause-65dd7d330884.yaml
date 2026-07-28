@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50129
+  clause_id: clause-65dd7d330884
+  content_hash: sha256:6c95bb808b1332205ecb5e5f63349d5719a11c29f639cac743acf9d239c80ae0
+proposal:
+  semantic_roles:
+  - requirements
+  - annex
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause states that using pre-existing logic components must follow
+    requirements in 6.2, making it a normative requirement. The annex context is structural.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:43:58.698733Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 97e164edaa90ef8b2875d5e71e8dee654b3e1fcc1f874f44d62390a22f62d3d9
+  raw_response_hash: fa52437c45c51886e6b57825697167a215fac2cc03ea6fbf9df75cf4fae871b4
+annotation:
+  semantic_roles:
+  - requirements
+  - annex
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.735733Z'

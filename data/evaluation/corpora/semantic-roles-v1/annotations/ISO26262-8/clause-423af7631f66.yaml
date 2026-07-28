@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-423af7631f66
+  content_hash: sha256:d4d80bb97ccb81a1f0e319ca4df38cb89717bb5cfe0ee63138d7b2c2579553bb
+proposal:
+  semantic_roles:
+  - requirements
+  - table
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause specifies a mandatory compliance condition using “shall” and
+    includes Table 8 with normative incident-rate limits.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:27:00.576657Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: afa77670774e0ba2e77f80c8ff488a802c268a932c2ed4c5cf465422deb849e3
+  raw_response_hash: 898f60dfa28b212d28a3368a907eec05c1501f2b392182a779a33695866e45d2
+annotation:
+  semantic_roles:
+  - requirements
+  - table
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.672670Z'

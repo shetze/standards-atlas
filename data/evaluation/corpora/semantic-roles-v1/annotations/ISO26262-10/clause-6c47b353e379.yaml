@@ -1,0 +1,39 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-6c47b353e379
+  content_hash: sha256:6d2177f1cbd713a1321a65b3230e1401545b309e89f2dc3da47e37b1f7118d8f
+proposal:
+  semantic_roles:
+  - requirements
+  - verification
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause specifies mandatory actions before integrating a SEooC, including
+    checking assumptions and initiating an impact analysis when discrepancies exist.
+    The stated outcomes prescribe required changes or acceptance decisions. The integration
+    and checking activities also constitute verification of assumptions against the
+    new context.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:10:08.080290Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 7b90ee50070b09d2502eb55b83a226b16513d0d393ea906480a1bb45d2d6c138
+  raw_response_hash: 842d1a1d6069bc19974463be507c3f3d04e367071d77280e6c70dec37411e73a
+annotation:
+  semantic_roles:
+  - requirements
+  - verification
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.748730Z'

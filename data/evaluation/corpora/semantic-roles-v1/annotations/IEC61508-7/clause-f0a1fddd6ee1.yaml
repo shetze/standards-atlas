@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-f0a1fddd6ee1
+  content_hash: sha256:33ed76be978e6243e5a6d997849f0a28cf6af6bcfd0e589c0189dc3379bc5a3b
+proposal:
+  semantic_roles:
+  - inputs
+  - annex
+  primary_role: inputs
+  confidence: 0.98
+  rationale: The clause defines an equivalence-class input-partition testing technique,
+    including selection of test data from input-domain partitions. Its aim and description
+    provide methodological guidance rather than mandatory requirements; the structural
+    context identifies it as an annex and inputs-related content.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:07:36.628356Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 488159961736d7ae45d9a44ec2e214cb0f76f4095a753cc3a5d6c1bb80b6dd25
+  raw_response_hash: 06ae40a1bbf513e77e37993049aef3f03e6a59073e2a97e097a91ce18bdccbaf
+annotation:
+  semantic_roles:
+  - inputs
+  - annex
+  primary_role: inputs
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.967076Z'

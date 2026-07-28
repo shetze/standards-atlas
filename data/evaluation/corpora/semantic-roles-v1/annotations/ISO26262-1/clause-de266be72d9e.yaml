@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-de266be72d9e
+  content_hash: sha256:1a309c73ccfce7b49802abe8232fab16982982cd4357658b86792ed677494fc8
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The normalized content defines a tractor as a truck designed to tow a
+    semi-trailer, matching the structural role of terms and definitions.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:24:39.169179Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 53481a5eb7421d3869428dd5dd086162ae887c1a5e4bd789f7759f9b3d59e28e
+  raw_response_hash: 877d2aa7fbafdd345f2a02b805f746f58cfabe1ac34c8320b2fc592b8ed00037
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.939534Z'

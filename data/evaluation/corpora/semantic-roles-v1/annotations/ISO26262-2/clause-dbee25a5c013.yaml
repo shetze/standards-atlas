@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-2
+  clause_id: clause-dbee25a5c013
+  content_hash: sha256:d715bde2419eacd88ce2e21af7997de65c1a95ce9842f9d921b4ab100eca8d4b
+proposal:
+  semantic_roles:
+  - objectives
+  - validation
+  primary_role: validation
+  confidence: 0.99
+  rationale: The clause states a safety validation activity, making validation the
+    primary semantic role; the structural role 'objectives' is supporting context.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:44:16.196859Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 4ec464c2e962cd3cecf70e0d8db093d5d209b3ac96f72754b71a494db333f73e
+  raw_response_hash: f79f53ebe719cf4790a57dbc428c102210cb2d492a023ff19ecae585a0f7e331
+annotation:
+  semantic_roles:
+  - objectives
+  - validation
+  primary_role: validation
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.936991Z'

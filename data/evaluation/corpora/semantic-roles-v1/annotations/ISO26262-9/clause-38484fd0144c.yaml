@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-9
+  clause_id: clause-38484fd0144c
+  content_hash: sha256:e91668309b152efaef22736febb838825f9de2694b1cda5137ceebd0192db680
+proposal:
+  semantic_roles:
+  - example
+  - annex
+  primary_role: example
+  confidence: 0.99
+  rationale: The clause explicitly presents example architectures, while the structural
+    context identifies it as an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:08:28.156260Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 29f419e67b6ed037f937f92d5b4a8762d47e37d4bb0d2470fbcc1d5bc9d7238a
+  raw_response_hash: e74c0ce32801e30f60790a7f9fa8ccf48b1b0af8855e9d94560e6867e6c3e54d
+annotation:
+  semantic_roles:
+  - example
+  - annex
+  primary_role: example
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.656362Z'

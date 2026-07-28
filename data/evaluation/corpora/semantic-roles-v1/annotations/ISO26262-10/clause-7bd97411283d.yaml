@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-10
+  clause_id: clause-7bd97411283d
+  content_hash: sha256:1810ed23add521d6a79a8ac50b4b2bc4a25b7f2cbe8d5bd3e7137e3be1f2034f
+proposal:
+  semantic_roles:
+  - requirements
+  - work_products
+  primary_role: work_products
+  confidence: 0.98
+  rationale: The clause describes executing hardware development and preparing applicable
+    ISO 26262 work products, including safety analyses and dependent-failure analysis,
+    based on SEooC assumptions and technical safety requirements.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:39:15.407765Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 0a93f85ba35271f09b0d50afdf102631bba4af5459a3a77f1bdebf4ea210a667
+  raw_response_hash: e9a8ab1e7b6f172fff50fa3d6cf6a2f3f4d93eefbb7e1286d33b1b767e8378c6
+annotation:
+  semantic_roles:
+  - requirements
+  - work_products
+  primary_role: work_products
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.775333Z'

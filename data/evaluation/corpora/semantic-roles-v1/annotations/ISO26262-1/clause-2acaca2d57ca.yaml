@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-2acaca2d57ca
+  content_hash: sha256:e3b328e4eb582386a4a65806178fe8a07ad1fde15c4d12943398e8b1fc0a8163
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+  rationale: The content defines the term “degradation,” and the structural context
+    identifies the clause as a terms-and-definitions entry.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:43:29.645813Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 1a0d1455b8269370c9999129cae586325fa75e6ac947f14a1302f328404b6a5b
+  raw_response_hash: 306eac6c3d8cf42bb5c83155fd4d401adbde5ac8e33aac59cd1f6c18121784df
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.635037Z'

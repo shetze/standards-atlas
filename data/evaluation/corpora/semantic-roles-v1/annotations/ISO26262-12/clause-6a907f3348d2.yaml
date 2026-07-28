@@ -1,0 +1,35 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-12
+  clause_id: clause-6a907f3348d2
+  content_hash: sha256:8d6514f184125ad764e53c418bfb6724327fabdf2e634ed7fce6adad0ebd28ac
+proposal:
+  semantic_roles:
+  - recommendations
+  primary_role: recommendations
+  confidence: 0.98
+  rationale: The clause provides permissive guidance and recommended considerations
+    for forming and using a controllability classification panel, using advisory language
+    such as “can” and “allowable” rather than mandatory requirements.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:07:55.794040Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: c54f9fa1651d05c597e4423760da6eb38728380d6ae58790735d85eb467cfe2c
+  raw_response_hash: f5db1d2ff8101b935a978c016da4d038486bb6a0d980e8bb133a4aea2b74fbf4
+annotation:
+  semantic_roles:
+  - recommendations
+  primary_role: recommendations
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.743564Z'

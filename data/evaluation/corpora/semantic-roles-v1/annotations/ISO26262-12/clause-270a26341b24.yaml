@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-12
+  clause_id: clause-270a26341b24
+  content_hash: sha256:9cbe2c62c04d17e1faec017f808c7dbfeb46aeaa61163c5776f6b5179379580f
+proposal:
+  semantic_roles:
+  - objectives
+  - terms_and_definitions
+  primary_role: objectives
+  confidence: 0.88
+  rationale: The clause is structurally titled and classified as an objective, and
+    its opening sentence states the clause’s tailoring purpose. The second sentence
+    provides a definition of vehicle integration.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:38:41.438474Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 0ab1d1cf7d4e3c36e277f7b6fcf0f7dd13ebc14efaebfa02f6a31bc4eabe6e1f
+  raw_response_hash: 9054b909e5ad82dd70c6ac7921d895a29b07a416f9e229b5a4092c35865a1243
+annotation:
+  semantic_roles:
+  - objectives
+  - terms_and_definitions
+  primary_role: objectives
+  confidence: 0.88
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.628971Z'

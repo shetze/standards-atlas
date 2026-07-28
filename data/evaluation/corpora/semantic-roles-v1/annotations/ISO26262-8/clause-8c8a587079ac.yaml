@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-8c8a587079ac
+  content_hash: sha256:c2a824608c0c24e6717f3af426c2e50539c5ff6d9052446d9114c603884cdbdc
+proposal:
+  semantic_roles:
+  - compliance
+  - requirements
+  - example
+  primary_role: compliance
+  confidence: 0.99
+  rationale: The clause mandates ensuring software-tool use complies with evaluation
+    or qualification criteria; the accompanying text is explicitly an example.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:02:52.739128Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 9ca78551343710f857e41cd007bebc5e4ad3e37ed293b0c2adc206c9fe1a06ad
+  raw_response_hash: aaa9d971f33217bd939185a7886ba34a395627686f5e3066e9a4e0b2be0fe6c0
+annotation:
+  semantic_roles:
+  - compliance
+  - requirements
+  - example
+  primary_role: compliance
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.804574Z'

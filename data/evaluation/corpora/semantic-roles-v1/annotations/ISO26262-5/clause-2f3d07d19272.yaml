@@ -1,0 +1,38 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-5
+  clause_id: clause-2f3d07d19272
+  content_hash: sha256:9cc5729739e77d59084698959309a3ecb18f1ce907ef37a2daaec79e625549b8
+proposal:
+  semantic_roles:
+  - requirements
+  - annex
+  - example
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The clause states mandatory obligations using “shall”; the embedded EXAMPLE
+    provides supporting guidance, and the clause is located in an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:21:14.214432Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: e5dd840ab22e80137b6991406b7bde4b32135e0eb99cf6cc975abb93ddfdbaa8
+  raw_response_hash: 8bf1cf9084f5d32fbc20b3e759d7f4d5bd764e0beae19250308ea700c5dfdf2c
+annotation:
+  semantic_roles:
+  - requirements
+  - annex
+  - example
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.640922Z'

@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: EN50716
+  clause_id: clause-06cdbba90791
+  content_hash: sha256:1ef8d3449f6996b53cd78217c9f422796598da4df0fa4435de751fa0359033fe
+proposal:
+  semantic_roles:
+  - compliance
+  - verification
+  primary_role: verification
+  confidence: 0.99
+  rationale: The clause specifies how compliance is to be verified through document
+    inspection and, where appropriate, objective evidence, audits, and witnessed tests.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:09:14.587864Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: a5bb23a157cc572556bf1d458167e9775aba26660bcc84fdea45a2194b8406a3
+  raw_response_hash: 586726c79bb38bf15480c755af532160598990b3d0a8151a5250452e8a36d6cd
+annotation:
+  semantic_roles:
+  - compliance
+  - verification
+  primary_role: verification
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.577476Z'

@@ -1,0 +1,34 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-528d44b62fe6
+  content_hash: sha256:221fa0edb5b8f9f495bc4ada03902cf1b77f1e5382162a98f3cb8a323aae8108
+proposal:
+  semantic_roles:
+  - normative_references
+  primary_role: normative_references
+  confidence: 0.99
+  rationale: The clause identifies an indispensable referenced document and specifies
+    dated/undated reference applicability rules.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:36:29.031453Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 9486ba11439944c342efa2ed98344b04dd8b1c552aad3fd7a02fb95ad12312a6
+  raw_response_hash: 82ea63ab3ec5e0deaa92185b134f0f1ec06266df97a5a22c3175e86e44b2dd1d
+annotation:
+  semantic_roles:
+  - normative_references
+  primary_role: normative_references
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.700001Z'

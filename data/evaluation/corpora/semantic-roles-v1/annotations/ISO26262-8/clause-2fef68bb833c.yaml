@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-2fef68bb833c
+  content_hash: sha256:415a71617e403a4029536d832036d18af28f39e2490dceeeb41e2a0fc3675fe6
+proposal:
+  semantic_roles:
+  - requirements
+  - note
+  primary_role: requirements
+  confidence: 0.99
+  rationale: The main sentence uses normative 'shall' language and specifies required
+    additional measures; the following 'NOTE' provides explanatory examples and clarification.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:29:13.422188Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 21a1b09e325cff3e69457472842e63d70fe98cf27f896545331e456395d310e1
+  raw_response_hash: 5b7ed3af4bfb4f1b4f2c8b150b6772040aa1c521304524e82a276c9be9183261
+annotation:
+  semantic_roles:
+  - requirements
+  - note
+  primary_role: requirements
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.642678Z'

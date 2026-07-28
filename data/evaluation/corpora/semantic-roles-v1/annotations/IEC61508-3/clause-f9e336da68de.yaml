@@ -1,0 +1,40 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-3
+  clause_id: clause-f9e336da68de
+  content_hash: sha256:c70b327d8f289509fe442da1b510d890ded96348906242c7d24271e34324c0a6
+proposal:
+  semantic_roles:
+  - annex
+  - table
+  - recommendations
+  - requirements
+  primary_role: annex
+  confidence: 0.99
+  rationale: The clause is explicitly an annex and contains extensive technique-selection
+    tables, recommendation rankings, and normative selection statements using 'shall'.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:12:12.724011Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 8d5a332c939728470b334beaf156130be07734f880642ba6000a182f79dfe759
+  raw_response_hash: d5a18952237ef74f62f34db8de955feb39543f28613c68b35e7ccfc3e122bab2
+annotation:
+  semantic_roles:
+  - annex
+  - table
+  - recommendations
+  - requirements
+  primary_role: annex
+  confidence: 0.99
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.984322Z'

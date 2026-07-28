@@ -1,0 +1,36 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-5
+  clause_id: clause-db76767120f9
+  content_hash: sha256:d78c4dd664c5215718f1cbd89b2fa0be834c2add8bb27596115b18649e0e3eeb
+proposal:
+  semantic_roles:
+  - abbreviations
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.98
+  rationale: The clause incorporates definitions and abbreviations from IEC 61508-4,
+    so it serves the terms-and-definitions and abbreviations roles.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:04:41.995430Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 42a42caa494c4ba89f58489213348df045d0d765c31d30d55631f9d5e8474b11
+  raw_response_hash: 18f809376b8f3adbddd6640d6e2a186af7f75b311bb321c55c664fb11a39242e
+annotation:
+  semantic_roles:
+  - abbreviations
+  - terms_and_definitions
+  primary_role: terms_and_definitions
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.935311Z'

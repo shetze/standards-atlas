@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-8
+  clause_id: clause-23d15bdb436d
+  content_hash: sha256:e1441bf69856bbfcd08a0ba665aa8704e031c17512039eda985266a9f0894021
+proposal:
+  semantic_roles:
+  - requirements
+  - recommendations
+  primary_role: requirements
+  confidence: 0.98
+  rationale: The clause defines when requirements and recommendations apply across
+    ASIL levels and clarifies their normative status, including exceptions for parenthesized
+    ASILs.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:19:33.383343Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: b65f7503764e17d022e93e4abd99b625b09dabc6424debfb87dd07c822353028
+  raw_response_hash: 3b205fc61f4251ca9bfb8863de38b815e71e6dc5a1e7211cc3505c5ccda92133
+annotation:
+  semantic_roles:
+  - requirements
+  - recommendations
+  primary_role: requirements
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.623929Z'

@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-2
+  clause_id: clause-a5b701220d4c
+  content_hash: sha256:129749d370c505dabf1f63a3e26c46345dbea8d33ee52d1ee4ee7f771ffa3393
+proposal:
+  semantic_roles:
+  - annex
+  - recommendations
+  primary_role: recommendations
+  confidence: 0.88
+  rationale: The clause describes techniques and measures for avoiding systematic
+    ASIC failures without imposing explicit normative obligations; the structural
+    context identifies it as an annex.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:37:16.890523Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 97e057ed4bf0913e544cd456c04cf537e1ff297f1f6c4dc975f00e16ffccbfa3
+  raw_response_hash: b219c026299c6991ab5cafb53a1a8cd9aa016ce14849242e8479253e66789659
+annotation:
+  semantic_roles:
+  - annex
+  - recommendations
+  primary_role: recommendations
+  confidence: 0.88
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.844023Z'

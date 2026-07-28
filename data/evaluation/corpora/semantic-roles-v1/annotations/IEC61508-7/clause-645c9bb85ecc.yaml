@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: IEC61508-7
+  clause_id: clause-645c9bb85ecc
+  content_hash: sha256:f6723410be21525e5387333a3c504a07648bf155bc863019ba9db199ceb1c327
+proposal:
+  semantic_roles:
+  - requirements
+  - scope
+  primary_role: requirements
+  confidence: 0.93
+  rationale: The clause imposes a responsibility on technical committees and specifies
+    when the publication’s requirements, test methods, and conditions apply; the scope
+    context is supporting structural evidence.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:30:08.320247Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: a82ba8837bf40991aae88e6f7734089cf23690aaad7cd63f428d7c23bd099d73
+  raw_response_hash: ca85ab3ea9bb120dfd924d3edc88357c86e93dd510a14e462a471bfb4d2e94ce
+annotation:
+  semantic_roles:
+  - requirements
+  - scope
+  primary_role: requirements
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.732271Z'

@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-2
+  clause_id: clause-f39b88398a05
+  content_hash: sha256:1d5c570f96d2b6911be77283f7d93b50201b036474319ddf031055f593a48cc8
+proposal:
+  semantic_roles:
+  - objectives
+  - assessment
+  primary_role: objectives
+  confidence: 0.93
+  rationale: The clause states the objective of judging whether safety arguments are
+    convincing; its content is assessment-oriented, while the structural title and
+    role identify it as an objective.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:16:26.073440Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 5df842eb21f8a9926a4bb1e88769be25fbdba656c54684c6a32eee0f89a64a81
+  raw_response_hash: afd997999350089ff1fa75c89a981fbc4272ce8bfb61bea9c13d2878f0e60e36
+annotation:
+  semantic_roles:
+  - objectives
+  - assessment
+  primary_role: objectives
+  confidence: 0.93
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.973183Z'

@@ -1,0 +1,37 @@
+schema_version: '1.0'
+task: semantic-role-classification
+lifecycle_status: published
+clause:
+  knowledge_domain: functional-safety
+  document_key: ISO26262-1
+  clause_id: clause-3e2503831292
+  content_hash: sha256:fb54f858141370aa45bb7361345c0daf877e5f3cbb81cd49e2757a3426453d4f
+proposal:
+  semantic_roles:
+  - terms_and_definitions
+  - requirements
+  primary_role: terms_and_definitions
+  confidence: 0.98
+  rationale: Defines the term “functional safety requirement” and describes its characteristics
+    and application; the structural context confirms a terminology entry with a requirements-related
+    concept.
+generator:
+  provider: codex-cli
+  model: gpt-5.6-luna
+  prompt_id: structure-aware-v1
+  generated_at: '2026-07-28T17:08:32.518771Z'
+  task_version: 1.0.0
+  temperature: 0.0
+  seed: 0
+  input_hash: 917f1b01596b875b404b42ce4af40b522c70e15b7edee389e020f88e77f386f1
+  raw_response_hash: 0d05586c8ebb9b9c0c6de35ce5d3b801a390b985babaa5aadc890ca2e97d7496
+annotation:
+  semantic_roles:
+  - terms_and_definitions
+  - requirements
+  primary_role: terms_and_definitions
+  confidence: 0.98
+review:
+  decision: accepted
+  reviewer: Pinoccio
+  reviewed_at: '2026-07-28T18:51:29.664888Z'
