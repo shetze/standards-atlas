@@ -68,3 +68,35 @@ fallback, while Structure Agreement remains a separate baseline. Reports are wri
 `qualification.json` and `qualification.md` below `local/evaluation/metrics/` and include
 coverage, exact match, primary-role accuracy, micro/macro F1, confusion data, calibration,
 and breakdowns by knowledge domain and corpus strata.
+
+## Qualify the model/prompt matrix
+
+Slice 5.4.6 compares a shortlist across exactly four prompt variants and repeated runs. `qualification-matrix` is the end-to-end orchestrator: it starts each declared RamaLama model, executes every mandatory prompt/model/repetition combination on the corpus, calculates the Slice 5.4.5 metrics, and finally aggregates the qualification report.
+
+```bash
+uv run standards-atlas evaluation qualification-matrix \
+  --manifest local/evaluation/qualification/semantic-role-v1.yaml \
+  --output local/evaluation/qualification
+```
+
+Optional reasoning modes are skipped by default because of their additional runtime. Include them explicitly:
+
+```bash
+uv run standards-atlas evaluation qualification-matrix \
+  --manifest local/evaluation/qualification/semantic-role-v1.yaml \
+  --include-optional-reasoning
+```
+
+Use `--aggregate-only` only when the manifest already contains complete `observations` referring to existing `qualification.json` files. Proposal runs are resumable; existing clause results are reused unless `--overwrite` is supplied.
+
+The command writes `qualification-matrix.json` and `qualification-matrix.md`. It exits with code 1 when repetitions are missing or a quality, stability, latency, memory, or baseline-relative threshold is violated. Execution or configuration failures use exit code 2. The Markdown report includes a ranking, the Pareto front, and candidate-specific regression diagnostics.
+
+### Optional reasoning-mode qualification
+
+A qualification matrix may declare `reasoning_modes`. The non-optional
+`disabled` mode is the default and must be completed for every model/prompt
+combination. An `enabled` mode can be marked `optional: true`; it is included in
+ranking and Pareto analysis when observations are present, but missing runs do
+not fail the matrix. Every reasoning-enabled observation should record
+`reasoning_mode_id: enabled` explicitly so that its runtime cost remains
+separable from direct classification.

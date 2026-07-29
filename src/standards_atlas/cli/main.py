@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
 
@@ -90,10 +92,15 @@ from standards_atlas.application.services.evaluation import (
     EvaluationMatrixRunner,
     EvaluationReporter,
     EvaluationRunner,
+    MatrixObservation,
+    ModelPromptQualificationService,
     PromptRepository,
+    ProposalProgress,
     ProposalRunConfig,
+    QualificationMatrixManifest,
     SamplingStrategy,
     SemanticAnnotationReviewService,
+    resolve_prompt_version,
 )
 from standards_atlas.application.services.evaluation.defaults import (
     SEMANTIC_ROLE_PROMPT_VERSIONS,
@@ -105,6 +112,73 @@ from standards_atlas.application.workflow import (
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
+
+
+class _MatrixProposalProgress:
+    """Render one continuously updated line for a matrix proposal run."""
+
+    def __init__(
+        self,
+        *,
+        candidate_index: int,
+        candidate_total: int,
+        label: str,
+    ) -> None:
+        self._candidate_index = candidate_index
+        self._candidate_total = candidate_total
+        self._label = label
+        self._generated = 0
+        self._failed = 0
+        self._started_at = time.monotonic()
+        self._last_width = 0
+
+    def __call__(self, progress: ProposalProgress) -> None:
+        if progress.status == "generated":
+            self._generated += 1
+        elif progress.status == "failed":
+            self._failed += 1
+        elapsed = max(time.monotonic() - self._started_at, 0.0)
+        completed = self._generated + self._failed
+        eta = None
+        if completed > 0 and progress.total > completed:
+            eta = elapsed / completed * (progress.total - completed)
+        suffix = (
+            f"[{progress.current:03d}/{progress.total:03d}] "
+            f"ok={self._generated} failed={self._failed} "
+            f"elapsed={_format_duration(elapsed)}"
+        )
+        if eta is not None:
+            suffix += f" eta={_format_duration(eta)}"
+        if progress.status == "retrying":
+            suffix += f" retry={progress.attempt}/{progress.max_attempts}"
+        line = (
+            f"[Candidate {self._candidate_index:02d}/{self._candidate_total:02d}] "
+            f"{self._label} {suffix}"
+        )
+        padding = " " * max(0, self._last_width - len(line))
+        typer.echo(f"\r{line}{padding}", nl=False)
+        self._last_width = len(line)
+
+    def finish(self, *, generated: int, failed: int, skipped: int) -> None:
+        elapsed = time.monotonic() - self._started_at
+        line = (
+            f"[Candidate {self._candidate_index:02d}/{self._candidate_total:02d}] "
+            f"{self._label} complete: ok={generated} failed={failed} "
+            f"skipped={skipped} elapsed={_format_duration(elapsed)}"
+        )
+        padding = " " * max(0, self._last_width - len(line))
+        typer.echo(f"\r{line}{padding}")
+        self._last_width = 0
+
+
+def _format_duration(seconds: float) -> str:
+    total_seconds = max(0, int(seconds))
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if hours:
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes:02d}:{seconds:02d}"
+
 
 app = typer.Typer(
     name="standards-atlas",
@@ -815,6 +889,216 @@ def evaluate_annotation_metrics(
     typer.echo(f"Structure agreement F1   : {report.structure_agreement.micro_f1:.4f}")
     typer.echo(f"JSON report              : {json_path}")
     typer.echo(f"Markdown report          : {markdown_path}")
+
+
+@evaluation_app.command("qualification-matrix")
+def qualify_model_prompt_matrix(
+    manifest_path: Annotated[Path, typer.Option("--manifest", exists=True, readable=True)],
+    output_directory: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
+        "local/evaluation/qualification"
+    ),
+    config: Annotated[
+        Path, typer.Option("--config", exists=True, readable=True)
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+    resources: Annotated[
+        Path, typer.Option("--resources", file_okay=False)
+    ] = cli_defaults.DEFAULT_EVALUATION_RESOURCES,
+    corpus_root: Annotated[Path, typer.Option("--corpus-root", file_okay=False)] = Path(
+        "local/evaluation/corpora"
+    ),
+    published_corpus_root: Annotated[
+        Path, typer.Option("--published-corpus-root", file_okay=False)
+    ] = Path("data/evaluation/corpora"),
+    runs_output: Annotated[Path, typer.Option("--runs-output", file_okay=False)] = Path(
+        "local/evaluation"
+    ),
+    metrics_output: Annotated[Path, typer.Option("--metrics-output", file_okay=False)] = Path(
+        "local/evaluation/metrics"
+    ),
+    aggregate_only: Annotated[
+        bool,
+        typer.Option(
+            "--aggregate-only",
+            help="Only aggregate observations already declared in the manifest.",
+        ),
+    ] = False,
+    include_optional_reasoning: Annotated[
+        bool,
+        typer.Option(
+            "--include-optional-reasoning",
+            help="Also execute reasoning modes marked optional.",
+        ),
+    ] = False,
+    overwrite: Annotated[
+        bool, typer.Option("--overwrite", help="Regenerate existing proposal runs.")
+    ] = False,
+    limit: Annotated[
+        int | None, typer.Option("--limit", min=1, help="Limit clauses per matrix run.")
+    ] = None,
+    max_tokens: Annotated[
+        int | None,
+        typer.Option("--max-tokens", min=1, help="Override prompt-specific output limit."),
+    ] = None,
+) -> None:
+    """Execute and qualify the complete model/prompt matrix.
+
+    By default this command creates every mandatory proposal run, calculates
+    Slice 5.4.5 metrics, and only then aggregates the qualification matrix.
+    Use ``--aggregate-only`` for the former Slice 5.4.6 behavior.
+    """
+    active_server: RamaLamaServerManager | None = None
+    try:
+        manifest = QualificationMatrixManifest.load(manifest_path)
+        if not aggregate_only:
+            observation_map = {
+                (
+                    item.prompt_id,
+                    item.model_id,
+                    item.reasoning_mode_id,
+                    item.repetition,
+                ): item
+                for item in manifest.observations
+            }
+            base_config = LlmConfig.load(config)
+            active_server = RamaLamaServerManager(base_config)
+            active_server.stop()
+            active_reasoning_modes = tuple(
+                reasoning
+                for reasoning in manifest.reasoning_modes
+                if include_optional_reasoning or not reasoning.optional
+            )
+            candidate_total = (
+                len(manifest.models)
+                * len(manifest.prompts)
+                * len(active_reasoning_modes)
+                * manifest.repetitions
+            )
+            candidate_index = 0
+            for model in manifest.models:
+                if model.provider != "ramalama":
+                    raise ValueError(
+                        f"matrix execution currently supports ramalama, got {model.provider}"
+                    )
+                if not model.model_ref:
+                    raise ValueError(f"model {model.id} has no model_ref")
+                if active_server is not None:
+                    active_server.stop()
+                model_config = replace(
+                    base_config,
+                    model=model.model_ref,
+                    server=replace(base_config.server, model=model.model_ref),
+                )
+                active_server = RamaLamaServerManager(model_config)
+                if model_config.server.enabled:
+                    active_server.start()
+                gateway = OpenAICompatibleLlmGateway(model_config)
+                for prompt in manifest.prompts:
+                    prompt_version = resolve_prompt_version(prompt, resources=resources)
+                    for reasoning in active_reasoning_modes:
+                        for repetition in range(1, manifest.repetitions + 1):
+                            candidate_index += 1
+                            run_label = (
+                                f"{model.id} / {prompt.id} / {reasoning.id} / repeat {repetition}"
+                            )
+                            progress_reporter = _MatrixProposalProgress(
+                                candidate_index=candidate_index,
+                                candidate_total=candidate_total,
+                                label=run_label,
+                            )
+                            run_root = (
+                                runs_output
+                                / "qualification-runs"
+                                / manifest.matrix_id
+                                / reasoning.id
+                                / f"repeat-{repetition}"
+                            )
+                            started = time.monotonic()
+                            result = BaselineProposalGenerator(gateway).run(
+                                ProposalRunConfig(
+                                    corpus_id=manifest.corpus_id,
+                                    task="semantic-role-classification",
+                                    task_version="1.0.0",
+                                    dataset_version=manifest.dataset_version,
+                                    prompt_version=prompt_version,
+                                    provider=model.provider,
+                                    model=model.model_ref,
+                                    seed=repetition,
+                                    overwrite=overwrite,
+                                    limit=limit,
+                                    max_tokens=max_tokens or prompt.max_output_tokens,
+                                ),
+                                resources=resources,
+                                corpus_root=corpus_root,
+                                output_root=run_root,
+                                progress=progress_reporter,
+                            )
+                            progress_reporter.finish(
+                                generated=result.generated,
+                                failed=result.failed,
+                                skipped=result.skipped,
+                            )
+                            if result.failed:
+                                failure_label = (
+                                    f"{model.id}/{prompt.id}/{reasoning.id}/repeat-{repetition}"
+                                )
+                                typer.echo(
+                                    "Proposal failures         : "
+                                    f"{failure_label}: {result.failed} clause(s)",
+                                    err=True,
+                                )
+                                for error in result.errors:
+                                    typer.echo(f"  - {error}", err=True)
+                            metric_dir = (
+                                metrics_output
+                                / manifest.matrix_id
+                                / model.id
+                                / prompt.id
+                                / reasoning.id
+                                / f"repeat-{repetition}"
+                            )
+                            _, qualification_path, _ = AnnotationQualificationService().evaluate(
+                                corpus_id=manifest.corpus_id,
+                                run_directory=result.run_directory,
+                                local_corpus_root=corpus_root,
+                                published_corpus_root=published_corpus_root,
+                                output_directory=metric_dir,
+                            )
+                            observation = MatrixObservation(
+                                prompt_id=prompt.id,
+                                model_id=model.id,
+                                reasoning_mode_id=reasoning.id,
+                                repetition=repetition,
+                                qualification_report=qualification_path,
+                                mean_duration_seconds=time.monotonic() - started,
+                                peak_memory_gb=model.declared_memory_gb,
+                            )
+                            observation_map[(prompt.id, model.id, reasoning.id, repetition)] = (
+                                observation
+                            )
+            manifest = QualificationMatrixManifest.model_validate(
+                {
+                    **manifest.model_dump(mode="python"),
+                    "observations": tuple(observation_map.values()),
+                }
+            )
+
+        report, json_path, markdown_path = ModelPromptQualificationService().evaluate(
+            manifest,
+            output_directory / manifest.matrix_id,
+        )
+    except (OSError, ValueError, RamaLamaServerError, RuntimeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    finally:
+        if active_server is not None:
+            active_server.stop()
+    typer.echo(f"Matrix result            : {'PASS' if report.passed else 'FAIL'}")
+    typer.echo(f"Candidates               : {len(report.candidates)}")
+    typer.echo(f"Pareto front             : {', '.join(report.pareto_front) or 'none'}")
+    typer.echo(f"JSON report              : {json_path}")
+    typer.echo(f"Markdown report          : {markdown_path}")
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @evaluation_app.command("benchmark")

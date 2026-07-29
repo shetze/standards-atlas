@@ -21,6 +21,19 @@ The format is inspired by Keep a Changelog, and the project follows Semantic Ver
 
 ## Unreleased
 
+### Fixed
+
+- Normalize otherwise valid semantic-role responses when `primary_role` is omitted
+  from `semantic_roles`; retain the primary role by inserting it into the role set
+  before strict schema and domain validation.
+
+- Continue qualification-matrix execution after clause-level proposal failures; failed clauses remain available as diagnostics and reduce coverage instead of aborting the complete benchmark.
+
+### Fixed
+
+- make `evaluation qualification-matrix` execute the complete mandatory model/prompt/repetition matrix before qualification instead of only aggregating predeclared observations; retain the previous behavior behind `--aggregate-only`.
+- map qualification prompt identifiers to their concrete prompt resource versions and keep optional reasoning runs opt-in through `--include-optional-reasoning`.
+
 ### Planned
 
 - Gold-dataset lifecycle and annotation review.
@@ -173,3 +186,19 @@ Development snapshots leading to the new architecture. No stable release.
 - report corpus coverage, stale diagnostics, knowledge-domain, and stratum slices;
 - add machine-readable JSON and reviewer-friendly Markdown qualification reports;
 - add the `evaluation annotations-metrics` CLI command and ADR 0049.
+
+### Slice 5.4.6 - Model/prompt qualification matrix
+
+- add a versioned shortlist contract with exactly four prompt variants and repeated runs;
+- aggregate Gold, Silver, Structure, coverage, stability, latency, and memory results;
+- calculate a Pareto front across quality, variation, runtime, and resource demand;
+- enforce absolute and baseline-relative regression thresholds with CI-compatible exit codes;
+- generate machine-readable JSON and human-readable Markdown comparison reports;
+- add the `evaluation qualification-matrix` CLI command, example manifest, tests, and ADR 0050.
+
+- Populate the example semantic-role qualification matrix with a realistic local
+  shortlist: Granite 3.3 8B, Qwen3 14B, Gemma 4 12B, and Mistral Small 3.2 24B.
+- Add optional reasoning modes as a third qualification dimension. Direct runs
+  remain mandatory; missing reasoning-enabled runs do not fail qualification.
+
+- Refine Slice 5.4.6 qualification shortlist and reliability gates: replace Granite with Qwen3 32B, correct Gemma 3 naming, add bounded-reasoning prompt, prompt-specific output limits, and explicit success/JSON/truncation metrics.

@@ -16,6 +16,28 @@ from standards_atlas.application.services.evaluation.proposals import (
 )
 
 
+class MissingPrimaryRoleGateway:
+    def health(self):
+        return LlmHealth(True, ("test-model",))
+
+    def generate_structured(self, request):
+        return StructuredGenerationResult(
+            value={
+                "semantic_roles": ["table"],
+                "primary_role": "requirements",
+                "confidence": 0.8,
+                "rationale": "The clause defines a normative requirement.",
+            },
+            model=request.model or "test-model",
+            provider="fake",
+            prompt_version=request.prompt_version,
+            input_hash="input-hash",
+            raw_response_hash="response-hash",
+            duration_ms=12,
+            raw_response={"choices": []},
+        )
+
+
 class FakeGateway:
     def health(self):
         return LlmHealth(True, ("test-model",))
@@ -484,3 +506,26 @@ def test_timeout_can_be_retried_explicitly(tmp_path: Path):
 
     assert gateway.calls == 2
     assert result.generated == 1
+
+
+def test_missing_primary_role_is_added_to_semantic_roles(tmp_path: Path):
+    result = BaselineProposalGenerator(MissingPrimaryRoleGateway()).run(
+        ProposalRunConfig(
+            corpus_id="semantic-roles-v1",
+            task="semantic-role-classification",
+            task_version="1.0.0",
+            dataset_version="1.0.0",
+            prompt_version="structure-aware-v1",
+            provider="fake",
+            model="inconsistent-model",
+        ),
+        resources=Path("src/standards_atlas/resources/semantic"),
+        corpus_root=_single_example_corpus(tmp_path),
+        output_root=tmp_path / "evaluation",
+    )
+
+    assert result.generated == 1
+    assert result.failed == 0
+    evaluation = (result.run_directory / "clause-1" / "evaluation.yaml").read_text(encoding="utf-8")
+    assert "- requirements" in evaluation
+    assert "primary_role: requirements" in evaluation

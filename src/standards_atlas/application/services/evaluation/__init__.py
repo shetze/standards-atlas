@@ -41,6 +41,7 @@ from standards_atlas.application.services.evaluation.models import (
 )
 from standards_atlas.application.services.evaluation.proposals import (
     BaselineProposalGenerator,
+    ProposalProgress,
     ProposalRunConfig,
     ProposalRunResult,
     SemanticTaskDefinition,
@@ -54,6 +55,18 @@ from standards_atlas.application.services.evaluation.qualification import (
     ConfusionEntry,
     CorpusCoverage,
     EvaluationSliceReport,
+)
+from standards_atlas.application.services.evaluation.qualification_matrix import (
+    CandidateQualification,
+    MatrixObservation,
+    ModelCandidate,
+    ModelPromptQualificationService,
+    PromptCandidate,
+    QualificationMatrixManifest,
+    QualificationMatrixReport,
+    ReasoningMode,
+    RegressionThresholds,
+    resolve_prompt_version,
 )
 from standards_atlas.application.services.evaluation.references import (
     ClauseReferenceAnalysis,
@@ -146,6 +159,7 @@ __all__ = [
     "ReferenceResolutionStatus",
     "ResolvedReferenceTarget",
     "BaselineProposalGenerator",
+    "ProposalProgress",
     "ProposalRunConfig",
     "ProposalRunResult",
     "SemanticTaskDefinition",
@@ -168,4 +182,14 @@ __all__ = [
     "ConfusionEntry",
     "CorpusCoverage",
     "EvaluationSliceReport",
+    "CandidateQualification",
+    "MatrixObservation",
+    "ModelCandidate",
+    "ModelPromptQualificationService",
+    "PromptCandidate",
+    "QualificationMatrixManifest",
+    "QualificationMatrixReport",
+    "RegressionThresholds",
+    "ReasoningMode",
+    "resolve_prompt_version",
 ]

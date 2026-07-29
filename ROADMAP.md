@@ -173,3 +173,11 @@ unresolved diagnostics, local persistence, CLI automation, and HITL context inte
 Implemented evidence priority `data > local > structure`, Gold and Silver qualification,
 Structure Agreement, multi-label and primary-role metrics, confusion matrices, confidence
 calibration, corpus coverage diagnostics, and domain/stratum slice reports.
+
+### Slice 5.4.6 - Model/Prompt Qualification Matrix — completed
+
+- Versioned model shortlist and four-prompt contract
+- Repeated-run aggregation and stability metrics
+- Quality/runtime/resource Pareto analysis
+- Absolute and baseline-relative regression thresholds
+- JSON and Markdown qualification reports suitable for CI

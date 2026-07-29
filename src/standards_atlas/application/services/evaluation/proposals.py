@@ -442,8 +442,12 @@ def _normalize_selection_payload(value: Any) -> dict[str, Any]:
         return dict(value)
     normalized = dict(value)
     roles = normalized.get("semantic_roles")
-    if isinstance(roles, list):
-        normalized["semantic_roles"] = list(dict.fromkeys(roles))
+    if isinstance(roles, (list, tuple)):
+        normalized_roles = list(dict.fromkeys(roles))
+        primary_role = normalized.get("primary_role")
+        if primary_role is not None and primary_role not in normalized_roles:
+            normalized_roles.insert(0, primary_role)
+        normalized["semantic_roles"] = normalized_roles
     return normalized
 
 

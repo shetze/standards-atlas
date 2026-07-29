@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -89,6 +90,22 @@ class CorpusCoverage(BaseModel):
     missing_predictions: int = Field(ge=0)
 
 
+class ReliabilityMetrics(BaseModel):
+    """Operational reliability of one proposal run."""
+
+    model_config = ConfigDict(frozen=True)
+
+    attempted_clauses: int = Field(ge=0)
+    successful_predictions: int = Field(ge=0)
+    failed_responses: int = Field(ge=0)
+    truncated_responses: int = Field(ge=0)
+    invalid_json_responses: int = Field(ge=0)
+    timeout_responses: int = Field(ge=0)
+    prediction_success_rate: float = Field(ge=0.0, le=1.0)
+    json_validity_rate: float = Field(ge=0.0, le=1.0)
+    truncation_rate: float = Field(ge=0.0, le=1.0)
+
+
 class AnnotationQualificationReport(BaseModel):
     """Machine-readable result of Slice 5.4.5 qualification."""
 
@@ -99,6 +116,17 @@ class AnnotationQualificationReport(BaseModel):
     generated_at: datetime
     prediction_source: str
     coverage: CorpusCoverage
+    reliability: ReliabilityMetrics = ReliabilityMetrics(
+        attempted_clauses=0,
+        successful_predictions=0,
+        failed_responses=0,
+        truncated_responses=0,
+        invalid_json_responses=0,
+        timeout_responses=0,
+        prediction_success_rate=0.0,
+        json_validity_rate=0.0,
+        truncation_rate=0.0,
+    )
     gold_agreement: AgreementMetrics
     silver_agreement: AgreementMetrics
     structure_agreement: AgreementMetrics
@@ -176,6 +204,7 @@ class AnnotationQualificationService:
             if row.prediction is not None and row.structure is not None
         ]
 
+        reliability = _reliability(run_directory, attempted=len(rows), successful=len(predictions))
         report = AnnotationQualificationReport(
             corpus_id=corpus_id,
             generated_at=datetime.now(UTC),
@@ -190,6 +219,7 @@ class AnnotationQualificationService:
                 stale_or_invalid=invalid,
                 missing_predictions=sum(row.prediction is None for row in rows),
             ),
+            reliability=reliability,
             gold_agreement=_agreement(
                 gold_pairs,
                 eligible=sum(
@@ -228,6 +258,37 @@ class _Row(BaseModel):
     resolution_source: AnnotationResolutionSource | None
     structure: SemanticRoleSelection | None
     strata: dict[str, str]
+
+
+def _reliability(run_directory: Path, *, attempted: int, successful: int) -> ReliabilityMetrics:
+    truncated = invalid_json = timeouts = failures = 0
+    for path in run_directory.rglob("failure.json"):
+        failures += 1
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        error = payload.get("error", {})
+        category = str(error.get("category", ""))
+        message = str(error.get("message", ""))
+        if category == "truncated_response" or "finish_reason=length" in message:
+            truncated += 1
+        if category in {"invalid_json", "truncated_response"} or "not valid JSON" in message:
+            invalid_json += 1
+        if category == "timeout" or "timed out" in message.lower():
+            timeouts += 1
+    denominator = attempted or 1
+    return ReliabilityMetrics(
+        attempted_clauses=attempted,
+        successful_predictions=successful,
+        failed_responses=failures,
+        truncated_responses=truncated,
+        invalid_json_responses=invalid_json,
+        timeout_responses=timeouts,
+        prediction_success_rate=successful / denominator,
+        json_validity_rate=(attempted - invalid_json) / denominator,
+        truncation_rate=truncated / denominator,
+    )
 
 
 def _load_predictions(run_directory: Path) -> dict[str, SemanticRoleSelection]:
@@ -441,6 +502,18 @@ def _markdown(report: AnnotationQualificationReport) -> str:
         f"- Local proposals: {report.coverage.local_proposals}",
         f"- Structure labels: {report.coverage.structure_labels}",
         f"- Missing predictions: {report.coverage.missing_predictions}",
+        "",
+        "## Reliability",
+        "",
+        f"- Attempted clauses: {report.reliability.attempted_clauses}",
+        f"- Successful predictions: {report.reliability.successful_predictions}",
+        f"- Failed responses: {report.reliability.failed_responses}",
+        f"- Truncated responses: {report.reliability.truncated_responses}",
+        f"- Invalid JSON responses: {report.reliability.invalid_json_responses}",
+        f"- Timeout responses: {report.reliability.timeout_responses}",
+        f"- Prediction success rate: {report.reliability.prediction_success_rate:.3f}",
+        f"- JSON validity rate: {report.reliability.json_validity_rate:.3f}",
+        f"- Truncation rate: {report.reliability.truncation_rate:.3f}",
         "",
         "## Agreement",
         "",

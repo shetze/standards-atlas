@@ -1,0 +1,86 @@
+schema_version: "1.2"
+matrix_id: semantic-role-qualification-v1
+corpus_id: semantic-roles-v1
+dataset_version: 1.0.0
+repetitions: 3
+
+prompts:
+  - id: content-only
+    prompt_version: content-only-v1
+    max_output_tokens: 512
+    description: Clause text without structural context.
+  - id: structure-aware
+    prompt_version: structure-aware-v1
+    max_output_tokens: 640
+    description: Clause text with reference, title, and hierarchy context.
+  - id: reference-aware
+    prompt_version: evidence-first-v1
+    max_output_tokens: 768
+    description: Clause text with deterministically resolved internal references.
+  - id: bounded-reasoning
+    prompt_version: bounded-reasoning-v1
+    max_output_tokens: 768
+    description: Bounded internal reasoning with concise schema-only output.
+
+reasoning_modes:
+  - id: disabled
+    enabled: false
+    optional: false
+    description: Direct classification without model-native thinking.
+  - id: enabled
+    enabled: true
+    optional: true
+    description: Optional model-native thinking for selected comparison runs.
+
+models:
+  - id: qwen3-14b-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/Qwen/Qwen3-14B-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Dense multilingual candidate with switchable thinking support.
+    accelerator: gpu
+    parameters_billion: 14
+    declared_memory_gb: 10
+
+  - id: qwen3-32b-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/Qwen/Qwen3-32B-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Larger Qwen candidate for semantic-quality scaling comparison.
+    accelerator: gpu
+    parameters_billion: 32
+    declared_memory_gb: 22
+
+  - id: gemma-3-12b-it-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/unsloth/gemma-3-12b-it-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Compact multilingual Gemma 3 instruction candidate.
+    accelerator: gpu
+    parameters_billion: 12
+    declared_memory_gb: 10
+
+  - id: mistral-small-3.2-24b-instruct-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/mistralai/Mistral-Small-3.2-24B-Instruct-2506
+    quantization: deployment-specific Q4
+    description: Efficient open-weight Mistral candidate for local evaluation.
+    accelerator: gpu
+    parameters_billion: 24
+    declared_memory_gb: 16
+
+observations: []
+
+thresholds:
+  min_gold_f1: 0.80
+  min_gold_coverage: 0.90
+  max_gold_f1_stddev: 0.03
+  min_prediction_success_rate: 0.98
+  min_json_validity_rate: 0.99
+  max_truncation_rate: 0.01
+  max_mean_duration_seconds: 60
+  max_peak_memory_gb: 24
+  baseline_prompt_id: structure-aware
+  baseline_model_id: qwen3-14b-q4-k-m
+  baseline_reasoning_mode_id: disabled
+  max_gold_f1_drop: 0.02
