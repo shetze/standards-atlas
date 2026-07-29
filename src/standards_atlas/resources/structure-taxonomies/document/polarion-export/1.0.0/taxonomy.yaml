@@ -1,0 +1,11 @@
+id: document.polarion-export
+version: 1.0.0
+categories:
+  - project_container
+  - module
+  - work_item
+  - requirement
+  - test_case
+  - test_record
+  - change_record
+  - custom_field_group

@@ -9,6 +9,13 @@
 - Improve semantic proposal progress diagnostics by reporting document key, clause reference, title, internal clause ID, retry attempts, elapsed time, and compact failure causes before and after long-running provider calls.
 ### Slice 5.3.7 - Codex integration
 
+### Managed MCP dependency for Codex evaluation
+
+- Start the configured MCP HTTP server automatically before Codex annotation proposals.
+- Reuse an already running MCP server without taking ownership of it.
+- Stop only a server started by the current Codex command.
+- Add `--mcp-config`, `--mcp-autostart`, and `--mcp-autostop` controls.
+
 - add a token-free Codex Streamable HTTP MCP configuration generator;
 - restrict Codex to the qualified read-only Standards Atlas tool set;
 - add safe Codex registration and verification scripts;
@@ -20,6 +27,22 @@ All notable changes to this project are documented in this file.
 The format is inspired by Keep a Changelog, and the project follows Semantic Versioning.
 
 ## Unreleased
+
+### Changed
+
+- Qualification-matrix models may override the global `repetitions` default.
+
+### Changed
+
+- Split qualification-matrix reruns into explicit `--resume`, `--overwrite`, and
+  `--recompute` modes. Resume remains the default, overwrite regenerates proposals,
+  and recompute rebuilds derived qualification and consensus artifacts without starting
+  an LLM provider.
+
+### Added
+
+- Managed MCP HTTP server lifecycle through `mcp start`, `mcp status`, and `mcp stop`,
+  including detached process execution, PID cleanup, endpoint monitoring, and persistent logs.
 
 ### Fixed
 
@@ -202,3 +225,21 @@ Development snapshots leading to the new architecture. No stable release.
   remain mandatory; missing reasoning-enabled runs do not fail qualification.
 
 - Refine Slice 5.4.6 qualification shortlist and reliability gates: replace Granite with Qwen3 32B, correct Gemma 3 naming, add bounded-reasoning prompt, prompt-specific output limits, and explicit success/JSON/truncation metrics.
+
+- Add a manifest-driven semantic-evaluation workflow with explicit reference, proposal,
+  review, publication, metrics, and qualification stages.
+- Add resumable evaluation workflow state markers, human-review gates, and auditable run
+  reports under `.atlas/evaluation-workflow/`.
+
+### Changed
+
+- Replaced the duplicate semantic-evaluation workflow manifest with orchestration in the existing qualification-matrix manifest.
+- Extended qualification matrices with optional reviewed-annotation imports and model-level consensus analysis.
+- Added a fifth example model and a text-focused consensus configuration to `examples/evaluation/qualification-matrix.yaml`.
+- Generate a Golden Corpus proposal and a focused HITL review queue after matrix execution.
+- Aggregate repetitions before cross-model comparison so every model contributes one vote per clause.
+
+### Fixed
+
+- Allow qualification matrices to declare optional review imports so a fresh corpus can be evaluated before any HITL review exists.
+- Correct manifest-relative paths in the qualification-matrix example for runs, corpora, and consensus outputs.

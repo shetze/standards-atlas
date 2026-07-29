@@ -17,7 +17,7 @@ from standards_atlas.application.services.evaluation.annotations import (
     EvaluationCorpusManifest,
     ResolvedClauseAnnotation,
     ReviewDecision,
-    SemanticRoleSelection,
+    StatementFunctionSelection,
     normalized_content_hash,
 )
 from standards_atlas.application.services.evaluation.clause_access import (
@@ -26,6 +26,11 @@ from standards_atlas.application.services.evaluation.clause_access import (
     ClauseProvider,
     DocumentDescriptor,
     SamplingStrategy,
+)
+from standards_atlas.application.services.evaluation.consensus import (
+    ConsensusCategory,
+    ConsensusReport,
+    ModelConsensusService,
 )
 from standards_atlas.application.services.evaluation.models import (
     AggregateMetrics,
@@ -46,6 +51,7 @@ from standards_atlas.application.services.evaluation.proposals import (
     ProposalRunResult,
     SemanticTaskDefinition,
     SemanticTaskRepository,
+    proposal_run_directory,
 )
 from standards_atlas.application.services.evaluation.qualification import (
     AgreementMetrics,
@@ -58,6 +64,7 @@ from standards_atlas.application.services.evaluation.qualification import (
 )
 from standards_atlas.application.services.evaluation.qualification_matrix import (
     CandidateQualification,
+    ConsensusConfig,
     MatrixObservation,
     ModelCandidate,
     ModelPromptQualificationService,
@@ -66,6 +73,7 @@ from standards_atlas.application.services.evaluation.qualification_matrix import
     QualificationMatrixReport,
     ReasoningMode,
     RegressionThresholds,
+    ReviewImportConfig,
     resolve_prompt_version,
 )
 from standards_atlas.application.services.evaluation.references import (
@@ -125,8 +133,11 @@ __all__ = [
     "EvaluationCorpusManifest",
     "ResolvedClauseAnnotation",
     "ReviewDecision",
-    "SemanticRoleSelection",
+    "StatementFunctionSelection",
     "normalized_content_hash",
+    "ConsensusCategory",
+    "ConsensusReport",
+    "ModelConsensusService",
     "AggregateMetrics",
     "EvaluationCaseResult",
     "EvaluationDataset",
@@ -161,6 +172,7 @@ __all__ = [
     "BaselineProposalGenerator",
     "ProposalProgress",
     "ProposalRunConfig",
+    "proposal_run_directory",
     "ProposalRunResult",
     "SemanticTaskDefinition",
     "SemanticTaskRepository",
@@ -189,6 +201,8 @@ __all__ = [
     "PromptCandidate",
     "QualificationMatrixManifest",
     "QualificationMatrixReport",
+    "ReviewImportConfig",
+    "ConsensusConfig",
     "RegressionThresholds",
     "ReasoningMode",
     "resolve_prompt_version",

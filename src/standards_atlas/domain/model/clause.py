@@ -14,7 +14,7 @@ from standards_atlas.domain.model.content import (
 )
 from standards_atlas.domain.model.doorstop_attributes import DoorstopItemAttributes
 from standards_atlas.domain.model.identifiers import ClauseId, StandardReference
-from standards_atlas.domain.model.semantic_role import SemanticRole
+from standards_atlas.domain.model.semantic_classification import SemanticClassification
 
 
 class ClauseType(StrEnum):
@@ -43,7 +43,7 @@ class Clause(BaseModel):
     reference: StandardReference
     clause_type: ClauseType
 
-    semantic_roles: tuple[SemanticRole, ...] = ()
+    semantic_classification: SemanticClassification = SemanticClassification()
 
     title: str | None = None
     content: tuple[ContentBlock, ...] = ()

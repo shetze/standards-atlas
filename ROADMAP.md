@@ -181,3 +181,14 @@ calibration, corpus coverage diagnostics, and domain/stratum slice reports.
 - Quality/runtime/resource Pareto analysis
 - Absolute and baseline-relative regression thresholds
 - JSON and Markdown qualification reports suitable for CI
+
+## Multidimensional semantic analysis
+
+The semantic evaluation framework now treats statement function, document structure, normative status, KnowledgeDomain function, and relations as separate dimensions. Follow-up slices shall add dedicated gold datasets and metrics for structural classification, normative-status classification, domain taxonomies, and relation extraction.
+
+- Treat document transformation and semantic method qualification as separate workflow
+  families sharing common orchestration principles and auditable derivation records.
+
+### Model-consensus Golden Corpus renewal
+
+The next Golden Corpus generation is based on agreement across the five qualification-matrix models. Statement functions are evaluated independently of already known structural classifications. Strong agreement becomes a proposal; majority cases, contradictions, and insufficient evidence are routed to focused HITL review. The current Golden Corpus remains diagnostic evidence during this transition rather than the unquestioned source of truth.

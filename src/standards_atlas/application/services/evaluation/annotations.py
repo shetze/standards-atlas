@@ -12,7 +12,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from standards_atlas.domain.model import SemanticRole
+from standards_atlas.domain.model import StatementFunction
 
 
 class AnnotationLifecycleStatus(StrEnum):
@@ -56,22 +56,25 @@ class ClauseReference(BaseModel):
         return f"{self.knowledge_domain}:{self.document_key}:{self.clause_id}"
 
 
-class SemanticRoleSelection(BaseModel):
+class StatementFunctionSelection(BaseModel):
     """Semantic-role classification assigned to a clause."""
 
     model_config = ConfigDict(frozen=True)
 
-    semantic_roles: tuple[SemanticRole, ...] = ()
-    primary_role: SemanticRole | None = None
+    statement_functions: tuple[StatementFunction, ...] = ()
+    primary_function: StatementFunction | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     rationale: str | None = None
 
     @model_validator(mode="after")
-    def primary_role_must_be_selected(self) -> SemanticRoleSelection:
-        if self.primary_role is not None and self.primary_role not in self.semantic_roles:
-            raise ValueError("primary_role must be included in semantic_roles")
-        if len(set(self.semantic_roles)) != len(self.semantic_roles):
-            raise ValueError("semantic_roles must not contain duplicates")
+    def primary_function_must_be_selected(self) -> StatementFunctionSelection:
+        if (
+            self.primary_function is not None
+            and self.primary_function not in self.statement_functions
+        ):
+            raise ValueError("primary_function must be included in statement_functions")
+        if len(set(self.statement_functions)) != len(self.statement_functions):
+            raise ValueError("statement_functions must not contain duplicates")
         return self
 
 
@@ -111,9 +114,9 @@ class ClauseEvaluationAnnotation(BaseModel):
     task: str = Field(min_length=1)
     lifecycle_status: AnnotationLifecycleStatus
     clause: ClauseReference
-    proposal: SemanticRoleSelection
+    proposal: StatementFunctionSelection
     generator: AnnotationGenerator
-    annotation: SemanticRoleSelection | None = None
+    annotation: StatementFunctionSelection | None = None
     review: AnnotationReview | None = None
 
     @model_validator(mode="after")

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-DEFAULT_EVALUATION_TASK = "semantic-role-classification"
+DEFAULT_EVALUATION_TASK = "statement-function-classification"
 DEFAULT_EVALUATION_TASK_VERSION = "1.0.0"
 DEFAULT_EVALUATION_DATASET_VERSION = "1.0.0"
 DEFAULT_EVALUATION_PROMPT_VERSION = "structure-aware-v1"
@@ -15,7 +15,7 @@ DEFAULT_EVALUATION_RETRY_ATTEMPTS = 3
 DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS = 2.0
 DEFAULT_EVALUATION_RETRY_TIMEOUTS = False
 
-SEMANTIC_ROLE_PROMPT_VERSIONS = (
+STATEMENT_FUNCTION_PROMPT_VERSIONS = (
     "content-only-v1",
     "structure-aware-v1",
     "evidence-first-v1",

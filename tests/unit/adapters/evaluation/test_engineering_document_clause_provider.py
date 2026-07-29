@@ -15,8 +15,9 @@ from standards_atlas.domain.model import (
     DocumentKey,
     DocumentType,
     EngineeringDocument,
-    SemanticRole,
+    SemanticClassification,
     StandardReference,
+    StatementFunction,
 )
 
 
@@ -26,7 +27,7 @@ def _clause(
     reference: str,
     text: str,
     *,
-    role: SemanticRole = SemanticRole.REQUIREMENTS,
+    function: StatementFunction = StatementFunction.REQUIREMENT,
 ) -> Clause:
     return Clause(
         id=ClauseId(value=clause_id),
@@ -34,7 +35,7 @@ def _clause(
         clause_type=ClauseType.REQUIREMENT,
         title=f"Clause {reference}",
         text=text,
-        semantic_roles=(role,),
+        semantic_classification=SemanticClassification(statement_functions=(function,)),
     )
 
 

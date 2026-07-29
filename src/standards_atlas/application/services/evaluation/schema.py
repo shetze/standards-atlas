@@ -23,9 +23,11 @@ def validate_schema(value: Mapping[str, Any], schema: Mapping[str, Any]) -> tupl
     return True, None
 
 
-def _matches_type(value: Any, expected: str | None) -> bool:
+def _matches_type(value: Any, expected: str | list[str] | None) -> bool:
     if expected is None:
         return True
+    if isinstance(expected, list):
+        return any(_matches_type(value, candidate) for candidate in expected)
     return {
         "string": lambda: isinstance(value, str),
         "number": lambda: isinstance(value, int | float) and not isinstance(value, bool),

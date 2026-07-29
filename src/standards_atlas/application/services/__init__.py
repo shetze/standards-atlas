@@ -58,11 +58,11 @@ from standards_atlas.application.services.markdown_export_service import (
 from standards_atlas.application.services.reference_candidate_service import (
     ReferenceCandidateService,
 )
-from standards_atlas.application.services.semantic_role_classifier import (
-    SemanticRoleClassification,
-    SemanticRoleClassifier,
-    SemanticRoleContext,
-    SemanticRoleEvidence,
+from standards_atlas.application.services.semantic_classifier import (
+    SemanticClassificationContext,
+    SemanticClassificationResult,
+    SemanticClassifier,
+    SemanticEvidence,
 )
 from standards_atlas.application.workflow.service import EndToEndWorkflowService
 
@@ -96,10 +96,10 @@ __all__ = [
     "ReferenceCandidateService",
     "MarkdownExportResult",
     "MarkdownExportService",
-    "SemanticRoleClassification",
-    "SemanticRoleClassifier",
-    "SemanticRoleContext",
-    "SemanticRoleEvidence",
+    "SemanticClassificationResult",
+    "SemanticClassifier",
+    "SemanticClassificationContext",
+    "SemanticEvidence",
     "EndToEndWorkflowService",
     "EngineeringConstructionContractValidator",
 ]

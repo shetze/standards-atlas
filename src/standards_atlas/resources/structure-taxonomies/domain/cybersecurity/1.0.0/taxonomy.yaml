@@ -1,0 +1,14 @@
+id: domain.cybersecurity
+version: 1.0.0
+categories:
+  - governance_and_risk_management
+  - concept_and_threat_analysis
+  - secure_development
+  - integration_and_verification
+  - validation_and_assurance
+  - vulnerability_management
+  - incident_response
+  - operations_and_maintenance
+  - supply_chain
+notes:
+  - Deliberately independent from the Functional Safety lifecycle taxonomy.

@@ -17,10 +17,13 @@ from standards_atlas.domain.model import (
     ClauseAnnotation,
     ClauseId,
     ClauseType,
-    SemanticRole,
+    DocumentStructure,
+    DocumentStructureClassification,
+    SemanticClassification,
     Standard,
     StandardKey,
     StandardReference,
+    StatementFunction,
 )
 
 _ITEM_TYPE_MAPPING: dict[AtlasItemType, ClauseType] = {
@@ -189,7 +192,7 @@ def _map_structure_item_to_clause(
             clause=item.visible_reference,
         ),
         clause_type=_ITEM_TYPE_MAPPING[item.item_type],
-        semantic_roles=_infer_semantic_roles(
+        semantic_classification=_infer_semantic_classification(
             clause_type=_ITEM_TYPE_MAPPING[item.item_type],
             visible_reference=item.visible_reference,
             title=title,
@@ -203,73 +206,46 @@ def _map_structure_item_to_clause(
     )
 
 
-def _infer_semantic_roles(
+def _infer_semantic_classification(
     *,
     clause_type: ClauseType,
     visible_reference: str,
     title: str | None,
-) -> tuple[SemanticRole, ...]:
-    """Infer semantic roles from clause type, reference and title.
-
-    This is intentionally conservative. More advanced classification
-    should later move into a dedicated semantic classification service.
-    """
-    roles: list[SemanticRole] = []
-
+) -> SemanticClassification:
+    """Infer independent structural and statement dimensions conservatively."""
     normalized_title = (title or "").strip().lower()
+    structure = DocumentStructure.BODY
+    functions: list[StatementFunction] = []
 
-    if clause_type == ClauseType.SCOPE:
-        roles.append(SemanticRole.SCOPE)
-
-    if clause_type == ClauseType.TERM:
-        roles.append(SemanticRole.TERMS_AND_DEFINITIONS)
-
-    if clause_type == ClauseType.OBJECTIVE:
-        roles.append(SemanticRole.OBJECTIVES)
+    if clause_type == ClauseType.SCOPE or normalized_title == "scope":
+        structure = DocumentStructure.SCOPE
+    elif clause_type == ClauseType.TERM or "terms and definition" in normalized_title:
+        structure = DocumentStructure.TERMINOLOGY
+        functions.append(StatementFunction.DEFINITION)
+    elif "normative reference" in normalized_title:
+        structure = DocumentStructure.REFERENCES
+    elif "bibliography" in normalized_title:
+        structure = DocumentStructure.BIBLIOGRAPHY
+    elif "annex" in normalized_title or re.match(r"^[A-Z]+(?:\.|$)", visible_reference):
+        structure = DocumentStructure.ANNEX
 
     if clause_type == ClauseType.REQUIREMENT:
-        roles.append(SemanticRole.REQUIREMENTS)
-
-    if "normative reference" in normalized_title:
-        roles.append(SemanticRole.NORMATIVE_REFERENCES)
-
-    if "terms and definition" in normalized_title:
-        roles.append(SemanticRole.TERMS_AND_DEFINITIONS)
-
-    if "abbreviation" in normalized_title:
-        roles.append(SemanticRole.ABBREVIATIONS)
-
-    if "objective" in normalized_title:
-        roles.append(SemanticRole.OBJECTIVES)
-
-    if "requirement" in normalized_title:
-        roles.append(SemanticRole.REQUIREMENTS)
-
+        functions.append(StatementFunction.REQUIREMENT)
     if "recommendation" in normalized_title:
-        roles.append(SemanticRole.RECOMMENDATIONS)
+        functions.append(StatementFunction.RECOMMENDATION)
+    if "conformance" in normalized_title or "compliance" in normalized_title:
+        functions.append(StatementFunction.CONFORMANCE_STATEMENT)
 
-    if "input" in normalized_title:
-        roles.append(SemanticRole.INPUTS)
-
-    if "output" in normalized_title:
-        roles.append(SemanticRole.OUTPUTS)
-
-    if "work product" in normalized_title:
-        roles.append(SemanticRole.WORK_PRODUCTS)
-
-    if "annex" in normalized_title or re.match(r"^[A-Z]+(?:\.|$)", visible_reference):
-        roles.append(SemanticRole.ANNEX)
-
-    if "bibliography" in normalized_title:
-        roles.append(SemanticRole.BIBLIOGRAPHY)
-
-    if "compliance" in normalized_title:
-        roles.append(SemanticRole.COMPLIANCE)
-
-    if "conformance" in normalized_title:
-        roles.append(SemanticRole.CONFORMANCE)
-
-    return tuple(dict.fromkeys(roles))
+    return SemanticClassification(
+        statement_functions=tuple(dict.fromkeys(functions)),
+        document_structure=DocumentStructureClassification(
+            family="iso_iec_standard",
+            category=structure,
+            annex_identifier=(
+                visible_reference.split(".", 1)[0] if structure is DocumentStructure.ANNEX else None
+            ),
+        ),
+    )
 
 
 def _build_clause_id(

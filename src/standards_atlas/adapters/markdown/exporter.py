@@ -9,18 +9,19 @@ from pathlib import Path
 from standards_atlas.adapters.artifact_lineage import write_file_lineage_manifest
 from standards_atlas.domain.model import (
     CodeBlock,
+    DocumentStructure,
     EngineeringDocument,
     FormulaBlock,
     ListBlock,
     NoteBlock,
     PictureBlock,
-    SemanticRole,
+    RelationScope,
     TableBlock,
     TextBlock,
 )
 
 _MAX_TOC_DEPTH = 4
-_OMITTED_ROLES = {SemanticRole.FOREWORD, SemanticRole.INTRODUCTION}
+_OMITTED_STRUCTURES = {DocumentStructure.FOREWORD, DocumentStructure.INTRODUCTION}
 
 
 class MarkdownExporter:
@@ -57,7 +58,7 @@ class MarkdownExporter:
                 )
             )
             for block in clause.content:
-                rendered = _render_block(block)
+                rendered = _render_block(block, clause, document)
                 if rendered:
                     lines.extend((rendered.rstrip(), ""))
         return "\n".join(lines).rstrip() + "\n"
@@ -68,7 +69,8 @@ def _exportable_clauses(document: EngineeringDocument):
         reference = clause.reference.clause.strip()
         if not reference or reference == "0":
             continue
-        if _OMITTED_ROLES.intersection(clause.semantic_roles):
+        structure = clause.semantic_classification.document_structure
+        if structure is not None and structure.category in _OMITTED_STRUCTURES:
             continue
         yield clause
 
@@ -122,12 +124,12 @@ def _anchor(reference: str) -> str:
     return f"clause-{normalized}"
 
 
-def _render_block(block: object) -> str:
+def _render_block(block: object, clause: object, document: EngineeringDocument) -> str:
     if isinstance(block, TextBlock):
-        return block.text
+        return _link_internal_references(block.text, clause, document)
     if isinstance(block, ListBlock):
         return "\n".join(
-            _render_list_item(item, block.ordered, index)
+            _render_list_item(item, block.ordered, index, clause=clause, document=document)
             for index, item in enumerate(block.items, 1)
         )
     if isinstance(block, TableBlock):
@@ -158,19 +160,51 @@ def _render_block(block: object) -> str:
     if isinstance(block, CodeBlock):
         return f"```{block.language or ''}\n{block.code}\n```"
     if isinstance(block, NoteBlock):
-        body = "\n\n".join(filter(None, (_render_block(item) for item in block.content)))
+        body = "\n\n".join(
+            filter(None, (_render_block(item, clause, document) for item in block.content))
+        )
         title = block.note_kind or "Note"
         text = f"**{title}.**" + (f" {body}" if body else "")
         return "\n".join(f"> {line}" if line else ">" for line in text.splitlines())
     raise TypeError(f"Unsupported content block: {type(block)!r}")
 
 
-def _render_list_item(item: object, ordered: bool, index: int, depth: int = 0) -> str:
+def _render_list_item(
+    item: object,
+    ordered: bool,
+    index: int,
+    depth: int = 0,
+    *,
+    clause: object,
+    document: EngineeringDocument,
+) -> str:
     marker = f"{index}." if ordered else "-"
-    lines = [f"{'  ' * depth}{marker} {item.text}"]
+    text = _link_internal_references(item.text, clause, document)
+    lines = [f"{'  ' * depth}{marker} {text}"]
     for child_index, child in enumerate(item.children, 1):
-        lines.append(_render_list_item(child, child.ordered, child_index, depth + 1))
+        lines.append(
+            _render_list_item(
+                child, child.ordered, child_index, depth + 1, clause=clause, document=document
+            )
+        )
     return "\n".join(lines)
+
+
+def _link_internal_references(text: str, clause: object, document: EngineeringDocument) -> str:
+    """Render resolved internal-reference relations as Markdown links."""
+    targets = {item.reference.clause for item in document.clauses}
+    relations = clause.semantic_classification.relations
+    for relation in sorted(relations, key=lambda item: len(item.target_reference), reverse=True):
+        if relation.scope is not RelationScope.INTERNAL:
+            continue
+        target = relation.target_reference.strip()
+        if not target or target not in targets:
+            continue
+        label = relation.display_text or target
+        pattern = re.compile(rf"(?<![\w.#-]){re.escape(label)}(?![\w.-])")
+        replacement = f"[{label}](#{_anchor(target)})"
+        text = pattern.sub(replacement, text)
+    return text
 
 
 def _materialize_visual_assets(

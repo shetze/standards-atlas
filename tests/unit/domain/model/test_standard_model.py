@@ -2,10 +2,11 @@ from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
-    SemanticRole,
+    SemanticClassification,
     Standard,
     StandardKey,
     StandardReference,
+    StatementFunction,
 )
 
 
@@ -49,7 +50,7 @@ def test_clause_model_is_json_serializable() -> None:
     assert data["clause_type"] == "requirement"
 
 
-def test_clause_can_have_semantic_roles() -> None:
+def test_clause_can_have_semantic_classification() -> None:
     clause = Clause(
         id=ClauseId(value="ISO26262-8-2018-6.5"),
         reference=StandardReference(
@@ -58,12 +59,14 @@ def test_clause_can_have_semantic_roles() -> None:
             clause="6.5",
         ),
         clause_type=ClauseType.CLAUSE,
-        semantic_roles=(SemanticRole.WORK_PRODUCTS,),
+        semantic_classification=SemanticClassification(
+            statement_functions=(StatementFunction.DESCRIPTION,)
+        ),
         title="Work products",
     )
 
-    assert clause.semantic_roles == (SemanticRole.WORK_PRODUCTS,)
+    assert clause.semantic_classification.statement_functions == (StatementFunction.DESCRIPTION,)
 
     data = clause.model_dump(mode="json")
 
-    assert data["semantic_roles"] == ["work_products"]
+    assert data["semantic_classification"]["statement_functions"] == ["description"]

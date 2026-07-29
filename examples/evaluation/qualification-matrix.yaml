@@ -1,5 +1,5 @@
-schema_version: "1.2"
-matrix_id: semantic-role-qualification-v1
+schema_version: "1.3"
+matrix_id: statement-function-qualification-v1
 corpus_id: semantic-roles-v1
 dataset_version: 1.0.0
 repetitions: 3
@@ -9,14 +9,17 @@ prompts:
     prompt_version: content-only-v1
     max_output_tokens: 512
     description: Clause text without structural context.
+
   - id: structure-aware
     prompt_version: structure-aware-v1
     max_output_tokens: 640
     description: Clause text with reference, title, and hierarchy context.
+
   - id: reference-aware
     prompt_version: evidence-first-v1
     max_output_tokens: 768
     description: Clause text with deterministically resolved internal references.
+
   - id: bounded-reasoning
     prompt_version: bounded-reasoning-v1
     max_output_tokens: 768
@@ -27,12 +30,20 @@ reasoning_modes:
     enabled: false
     optional: false
     description: Direct classification without model-native thinking.
+
   - id: enabled
     enabled: true
     optional: true
     description: Optional model-native thinking for selected comparison runs.
 
 models:
+  - id: codex-gpt-5.6-luna
+    provider: codex
+    model_ref: gpt-5.6-luna
+    repetitions: 1
+    description: Codex reference candidate using the Standards Atlas MCP server.
+    accelerator: remote
+
   - id: qwen3-14b-q4-k-m
     provider: ramalama
     model_ref: hf.co/Qwen/Qwen3-14B-GGUF:Q4_K_M
@@ -68,6 +79,32 @@ models:
     accelerator: gpu
     parameters_billion: 24
     declared_memory_gb: 16
+
+  - id: granite-3.3-8b-instruct-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Compact Granite baseline used by the local evaluation environment.
+    accelerator: gpu
+    parameters_billion: 8
+    declared_memory_gb: 8
+
+review_imports:
+  - run_directory: ../../runs/semantic-roles-v1/structure-aware-v1/codex/gpt-5.6-luna
+    review_directory: ../../runs/semantic-roles-v1/structure-aware-v1/codex/gpt-5.6-luna
+    local_corpus_root: ../../corpora
+    overwrite: false
+    required: false
+
+consensus:
+  enabled: true
+  prompt_id: content-only
+  reasoning_mode_id: disabled
+  min_models: 5
+  strong_threshold: 0.8
+  majority_threshold: 0.6
+  label_threshold: 0.6
+  output_directory: ../../consensus
 
 observations: []
 

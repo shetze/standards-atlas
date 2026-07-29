@@ -36,7 +36,7 @@ class McpClauseService:
         *,
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
-        semantic_roles: list[str] | None = None,
+        statement_functions: list[str] | None = None,
         min_text_length: int | None = None,
         max_text_length: int | None = None,
         limit: int = 20,
@@ -46,7 +46,7 @@ class McpClauseService:
         filters = self._filters(
             document_keys=document_keys,
             clause_types=clause_types,
-            semantic_roles=semantic_roles,
+            statement_functions=statement_functions,
             min_text_length=min_text_length,
             max_text_length=max_text_length,
         )
@@ -63,7 +63,7 @@ class McpClauseService:
         *,
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
-        semantic_roles: list[str] | None = None,
+        statement_functions: list[str] | None = None,
         limit: int = 20,
     ) -> list[dict[str, Any]]:
         bounded_limit = self._bounded_result_limit(limit)
@@ -72,7 +72,7 @@ class McpClauseService:
             filters=self._filters(
                 document_keys=document_keys,
                 clause_types=clause_types,
-                semantic_roles=semantic_roles,
+                statement_functions=statement_functions,
             ),
             limit=bounded_limit,
         )
@@ -86,7 +86,7 @@ class McpClauseService:
         seed: int = 0,
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
-        semantic_roles: list[str] | None = None,
+        statement_functions: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         if count > self._config.limits.max_sample_size:
             raise ValueError(
@@ -99,7 +99,7 @@ class McpClauseService:
             filters=self._filters(
                 document_keys=document_keys,
                 clause_types=clause_types,
-                semantic_roles=semantic_roles,
+                statement_functions=statement_functions,
             ),
         )
         return [self._serialize_clause(item.model_dump(mode="json")) for item in clauses]
@@ -109,7 +109,7 @@ class McpClauseService:
         *,
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
-        semantic_roles: list[str] | None = None,
+        statement_functions: list[str] | None = None,
         min_text_length: int | None = None,
         max_text_length: int | None = None,
     ) -> ClauseFilter:
@@ -126,7 +126,7 @@ class McpClauseService:
             {
                 "document_keys": keys,
                 "clause_types": tuple(clause_types or ()),
-                "semantic_roles": tuple(semantic_roles or ()),
+                "statement_functions": tuple(statement_functions or ()),
                 "min_text_length": min_text_length,
                 "max_text_length": max_text_length,
             }

@@ -39,7 +39,7 @@ def resolve_prompt_version(
     prompt: PromptCandidate,
     *,
     resources: Path,
-    task: str = "semantic-role-classification",
+    task: str = "statement-function-classification",
 ) -> str:
     """Resolve a matrix prompt id to an installed prompt resource version."""
     candidates = [prompt.prompt_version, _PROMPT_VERSION_ALIASES.get(prompt.id), prompt.id]
@@ -76,6 +76,7 @@ class ModelCandidate(BaseModel):
     accelerator: str | None = None
     parameters_billion: float | None = Field(default=None, gt=0.0)
     declared_memory_gb: float | None = Field(default=None, gt=0.0)
+    repetitions: int | None = Field(default=None, ge=1)
 
 
 class ReasoningMode(BaseModel):
@@ -99,6 +100,7 @@ class MatrixObservation(BaseModel):
     reasoning_mode_id: str = "disabled"
     repetition: int = Field(ge=1)
     qualification_report: Path
+    run_directory: Path | None = None
     mean_duration_seconds: float | None = Field(default=None, ge=0.0)
     peak_memory_gb: float | None = Field(default=None, ge=0.0)
 
@@ -128,6 +130,33 @@ class RegressionThresholds(BaseModel):
         return self
 
 
+class ReviewImportConfig(BaseModel):
+    """Existing HITL review imported before matrix execution."""
+
+    model_config = ConfigDict(frozen=True)
+
+    run_directory: Path
+    review_directory: Path
+    local_corpus_root: Path = Path("local/evaluation/corpora")
+    overwrite: bool = False
+    required: bool = True
+
+
+class ConsensusConfig(BaseModel):
+    """Cross-model consensus settings for a new Golden Corpus proposal."""
+
+    model_config = ConfigDict(frozen=True)
+
+    enabled: bool = True
+    prompt_id: str = "content-only"
+    reasoning_mode_id: str = "disabled"
+    min_models: int = Field(default=3, ge=2)
+    strong_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
+    majority_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
+    label_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
+    output_directory: Path = Path("local/evaluation/consensus")
+
+
 class QualificationMatrixManifest(BaseModel):
     """Versioned contract for Slice 5.4.6 qualification."""
 
@@ -137,12 +166,18 @@ class QualificationMatrixManifest(BaseModel):
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)
     dataset_version: str = Field(default="1.0.0", min_length=1)
-    repetitions: int = Field(default=3, ge=2)
+    repetitions: int = Field(default=3, ge=1)
     prompts: tuple[PromptCandidate, ...]
     models: tuple[ModelCandidate, ...] = Field(min_length=1)
     reasoning_modes: tuple[ReasoningMode, ...] = (ReasoningMode(id="disabled"),)
     observations: tuple[MatrixObservation, ...] = ()
+    review_imports: tuple[ReviewImportConfig, ...] = ()
+    consensus: ConsensusConfig = ConsensusConfig()
     thresholds: RegressionThresholds = RegressionThresholds()
+
+    def repetitions_for(self, model: ModelCandidate) -> int:
+        """Return the model-specific repetition count or the global default."""
+        return model.repetitions if model.repetitions is not None else self.repetitions
 
     @model_validator(mode="after")
     def validate_matrix(self) -> QualificationMatrixManifest:
@@ -196,12 +231,56 @@ class QualificationMatrixManifest(BaseModel):
                         item.qualification_report
                         if item.qualification_report.is_absolute()
                         else base / item.qualification_report
-                    )
+                    ),
+                    "run_directory": (
+                        None
+                        if item.run_directory is None
+                        else item.run_directory
+                        if item.run_directory.is_absolute()
+                        else base / item.run_directory
+                    ),
                 }
             )
             for item in manifest.observations
         )
-        return manifest.model_copy(update={"observations": observations})
+        review_imports = tuple(
+            item.model_copy(
+                update={
+                    "run_directory": (
+                        item.run_directory
+                        if item.run_directory.is_absolute()
+                        else base / item.run_directory
+                    ),
+                    "review_directory": (
+                        item.review_directory
+                        if item.review_directory.is_absolute()
+                        else base / item.review_directory
+                    ),
+                    "local_corpus_root": (
+                        item.local_corpus_root
+                        if item.local_corpus_root.is_absolute()
+                        else base / item.local_corpus_root
+                    ),
+                }
+            )
+            for item in manifest.review_imports
+        )
+        consensus = manifest.consensus.model_copy(
+            update={
+                "output_directory": (
+                    manifest.consensus.output_directory
+                    if manifest.consensus.output_directory.is_absolute()
+                    else base / manifest.consensus.output_directory
+                )
+            }
+        )
+        return manifest.model_copy(
+            update={
+                "observations": observations,
+                "review_imports": review_imports,
+                "consensus": consensus,
+            }
+        )
 
 
 class CandidateQualification(BaseModel):
@@ -293,7 +372,7 @@ class ModelPromptQualificationService:
                         model,
                         reasoning_mode,
                         entries,
-                        manifest.repetitions,
+                        manifest.repetitions_for(model),
                         manifest.thresholds,
                     )
                     raw_candidates.append(candidate)

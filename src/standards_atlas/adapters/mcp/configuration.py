@@ -65,6 +65,24 @@ class McpAuditConfig(BaseModel):
     path: Path = Path("local/logs/mcp-audit.jsonl")
 
 
+class McpProcessConfig(BaseModel):
+    """Files and timeouts used to manage the background MCP process."""
+
+    model_config = ConfigDict(frozen=True)
+    state_directory: Path = Path(".atlas/runtime/mcp")
+    startup_timeout_seconds: float = Field(default=15.0, gt=0)
+    shutdown_timeout_seconds: float = Field(default=10.0, gt=0)
+    health_timeout_seconds: float = Field(default=0.5, gt=0)
+
+    @property
+    def pid_file(self) -> Path:
+        return self.state_directory / "server.pid"
+
+    @property
+    def log_file(self) -> Path:
+        return self.state_directory / "server.log"
+
+
 class McpServerConfig(BaseModel):
     """Runtime configuration for the MCP inbound adapter."""
 
@@ -78,6 +96,7 @@ class McpServerConfig(BaseModel):
     http: McpHttpConfig = McpHttpConfig()
     auth: McpAuthConfig = McpAuthConfig()
     audit: McpAuditConfig = McpAuditConfig()
+    process: McpProcessConfig = McpProcessConfig()
 
     @model_validator(mode="after")
     def validate_remote_configuration(self) -> McpServerConfig:

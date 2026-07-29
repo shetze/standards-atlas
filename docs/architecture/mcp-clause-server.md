@@ -31,10 +31,14 @@ MCP support is optional:
 
 ```bash
 uv sync --extra mcp
-uv run standards-atlas mcp serve --config cfg/mcp.yaml
+uv run standards-atlas mcp start --config cfg/mcp.yaml
+uv run standards-atlas mcp status --config cfg/mcp.yaml
+uv run standards-atlas mcp stop --config cfg/mcp.yaml
 ```
 
-The adapter supports local STDIO and remote Streamable HTTP operation. Remote bindings require
+The managed process records its PID and combined output below `.atlas/runtime/mcp`.
+`mcp serve` remains available as a foreground diagnostic command. The adapter supports
+local STDIO and remote Streamable HTTP operation. Remote bindings require
 authentication; TLS termination remains the responsibility of a reverse proxy, VPN, or controlled
 tunnel in front of the server.
 

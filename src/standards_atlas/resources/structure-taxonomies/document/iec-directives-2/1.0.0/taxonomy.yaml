@@ -1,0 +1,11 @@
+id: document.iec-directives-2
+version: 1.0.0
+categories:
+  - preliminary_elements
+  - normative_general_elements
+  - normative_technical_elements
+  - supplementary_elements
+  - bibliography
+notes:
+  - Applicable to standards following ISO/IEC drafting conventions.
+  - Not a mandatory template for other engineering document families.

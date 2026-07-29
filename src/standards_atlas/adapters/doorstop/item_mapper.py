@@ -114,7 +114,9 @@ class DoorstopItemMapper:
                 "atlas-clause-id": clause.id.value,
                 "atlas-reference": qualified_reference,
                 "atlas-clause-type": clause.clause_type.value,
-                "semantic-roles": [role.value for role in clause.semantic_roles],
+                "statement-functions": [
+                    role.value for role in clause.semantic_classification.statement_functions
+                ],
             },
         )
 

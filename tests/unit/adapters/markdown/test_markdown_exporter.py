@@ -3,11 +3,13 @@ from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
+    DocumentStructure,
+    DocumentStructureClassification,
     FormulaBlock,
     ListBlock,
     ListItem,
     PictureBlock,
-    SemanticRole,
+    SemanticClassification,
     Standard,
     StandardKey,
     StandardReference,
@@ -23,7 +25,15 @@ def _clause(reference: str, title: str, *, roles=(), text: str | None = None) ->
         id=ClauseId(value=f"clause-{reference.replace('.', '-') or 'empty'}"),
         reference=StandardReference(standard="SAMPLE", year=2026, clause=reference),
         clause_type=ClauseType.CLAUSE,
-        semantic_roles=roles,
+        semantic_classification=(
+            SemanticClassification(
+                document_structure=DocumentStructureClassification(
+                    family="iso_iec_standard", category=roles[0]
+                )
+            )
+            if roles
+            else SemanticClassification()
+        ),
         title=title,
         content=(TextBlock(id=f"p-{reference}", text=text),) if text else (),
     )
@@ -133,8 +143,8 @@ def test_omits_foreword_and_introduction_roles():
     document = document.model_copy(
         update={
             "clauses": (
-                _clause("F", "Foreword", roles=(SemanticRole.FOREWORD,)),
-                _clause("I", "Introduction", roles=(SemanticRole.INTRODUCTION,)),
+                _clause("F", "Foreword", roles=(DocumentStructure.FOREWORD,)),
+                _clause("I", "Introduction", roles=(DocumentStructure.INTRODUCTION,)),
                 _clause("1", "Scope"),
             )
         }
@@ -271,3 +281,35 @@ def test_export_writes_lineage_manifest(tmp_path):
     MarkdownExporter().export_document(document, target)
 
     assert target.with_suffix(".md.lineage.json").exists()
+
+
+def test_internal_reference_relations_are_rendered_as_links():
+    from standards_atlas.domain.model import (
+        RelationScope,
+        SemanticClassification,
+        SemanticRelation,
+        SemanticRelationKind,
+    )
+
+    document = Standard.from_name(key=StandardKey(value="SAMPLE"), name="Sample", year=2026)
+    source = _clause("4.1", "Source", text="The procedure in 5.2 shall be applied.")
+    source = source.model_copy(
+        update={
+            "semantic_classification": SemanticClassification(
+                relations=(
+                    SemanticRelation(
+                        kind=SemanticRelationKind.NORMATIVE_REFERENCE,
+                        scope=RelationScope.INTERNAL,
+                        target_reference="5.2",
+                    ),
+                )
+            )
+        }
+    )
+    document = document.model_copy(
+        update={"clauses": (source, _clause("5.2", "Target", text="Target text."))}
+    )
+
+    rendered = MarkdownExporter().render(document)
+
+    assert "The procedure in [5.2](#clause-5-2) shall be applied." in rendered

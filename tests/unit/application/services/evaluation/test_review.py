@@ -20,7 +20,7 @@ def _proposal_run(root: Path) -> Path:
     case.mkdir(parents=True)
     annotation = {
         "schema_version": "1.0",
-        "task": "semantic-role-classification",
+        "task": "statement-function-classification",
         "lifecycle_status": "proposed",
         "clause": {
             "knowledge_domain": "functional-safety",
@@ -29,8 +29,8 @@ def _proposal_run(root: Path) -> Path:
             "content_hash": "sha256:" + "a" * 64,
         },
         "proposal": {
-            "semantic_roles": ["requirements"],
-            "primary_role": "requirements",
+            "statement_functions": ["requirement"],
+            "primary_function": "requirement",
             "confidence": 0.9,
             "rationale": "Normative language.",
         },
@@ -159,8 +159,8 @@ def test_import_rejects_accepted_review_with_changed_roles(tmp_path: Path) -> No
     _edit_review(
         review_path,
         reviewer="Sebastian",
-        semantic_roles=["verification"],
-        primary_role="verification",
+        statement_functions=["recommendation"],
+        primary_function="recommendation",
     )
 
     with pytest.raises(AnnotationContractError, match="accepted review must preserve"):
@@ -184,8 +184,8 @@ def test_corrected_review_and_batch_publish(tmp_path: Path) -> None:
         review_path,
         reviewer="Sebastian",
         decision="corrected",
-        semantic_roles=["verification"],
-        primary_role="verification",
+        statement_functions=["recommendation"],
+        primary_function="recommendation",
         comment="The clause defines verification activity.",
     )
     service.import_reviews(

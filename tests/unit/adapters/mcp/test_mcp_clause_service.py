@@ -5,7 +5,7 @@ from standards_atlas.application.services.evaluation import (
     DocumentDescriptor,
     SamplingStrategy,
 )
-from standards_atlas.domain.model import ClauseType, DocumentType, SemanticRole
+from standards_atlas.domain.model import ClauseType, DocumentType, StatementFunction
 
 
 class FakeClauseProvider:
@@ -20,7 +20,7 @@ class FakeClauseProvider:
                 clause_type=ClauseType.CLAUSE,
                 title="Allowed clause",
                 text="shall be verified",
-                semantic_roles=(SemanticRole.REQUIREMENTS,),
+                statement_functions=(StatementFunction.REQUIREMENT,),
             ),
             ClauseDescriptor(
                 id="clause-b",

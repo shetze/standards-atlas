@@ -132,7 +132,7 @@ class EvaluationCorpusBuilder:
                     "reference": clause.clause_reference,
                     "title": clause.title,
                     "parent_id": clause.parent_id,
-                    "structural_roles": [role.value for role in clause.semantic_roles],
+                    "structural_roles": [role.value for role in clause.statement_functions],
                 },
             }
             if config.include_text:
@@ -226,7 +226,7 @@ class EvaluationMatrixRunner:
 
 
 def _strata_for(clause: ClauseDescriptor) -> dict[str, str]:
-    roles = "+".join(sorted(role.value for role in clause.semantic_roles)) or "unknown"
+    roles = "+".join(sorted(role.value for role in clause.statement_functions)) or "unknown"
     return {
         "document": clause.document_key,
         "clause_type": clause.clause_type.value,

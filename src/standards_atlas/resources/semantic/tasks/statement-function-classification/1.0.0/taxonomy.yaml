@@ -1,0 +1,24 @@
+roles:
+- foreword
+- introduction
+- scope
+- normative_references
+- terms_and_definitions
+- abbreviations
+- objectives
+- requirements
+- recommendations
+- inputs
+- outputs
+- work_products
+- verification
+- validation
+- assessment
+- table
+- figure
+- note
+- example
+- annex
+- bibliography
+- compliance
+- conformance

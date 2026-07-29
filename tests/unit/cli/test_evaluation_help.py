@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 
 from standards_atlas.application.services.evaluation.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
-    SEMANTIC_ROLE_PROMPT_VERSIONS,
+    STATEMENT_FUNCTION_PROMPT_VERSIONS,
 )
 from standards_atlas.application.services.evaluation.proposals import ProposalRunConfig
 from standards_atlas.cli.main import app
@@ -20,7 +20,7 @@ def test_annotations_propose_help_lists_prompt_variants_and_defaults() -> None:
     )
 
     assert result.exit_code == 0
-    for prompt_version in SEMANTIC_ROLE_PROMPT_VERSIONS:
+    for prompt_version in STATEMENT_FUNCTION_PROMPT_VERSIONS:
         assert prompt_version in result.stdout
     assert str(DEFAULT_EVALUATION_MAX_TOKENS) in result.stdout
 
@@ -37,3 +37,15 @@ def test_proposal_config_uses_shared_max_tokens_default() -> None:
     )
 
     assert config.max_tokens == DEFAULT_EVALUATION_MAX_TOKENS
+
+
+def test_qualification_matrix_help_exposes_mcp_lifecycle_options() -> None:
+    result = runner.invoke(app, ["evaluation", "qualification-matrix", "--help"])
+
+    assert result.exit_code == 0
+    assert "--mcp-config" in result.stdout
+    assert "--mcp-autostart" in result.stdout
+    assert "--mcp-autostop" in result.stdout
+    assert "--resume" in result.stdout
+    assert "--overwrite" in result.stdout
+    assert "--recompute" in result.stdout

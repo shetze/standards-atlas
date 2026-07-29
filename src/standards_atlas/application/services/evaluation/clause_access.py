@@ -7,7 +7,7 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.domain.model import ClauseType, DocumentType, SemanticRole
+from standards_atlas.domain.model import ClauseType, DocumentType, StatementFunction
 
 
 class SamplingStrategy(StrEnum):
@@ -45,7 +45,7 @@ class ClauseDescriptor(BaseModel):
     title: str | None = None
     text: str = ""
     parent_id: str | None = None
-    semantic_roles: tuple[SemanticRole, ...] = ()
+    statement_functions: tuple[StatementFunction, ...] = ()
 
 
 class ClauseFilter(BaseModel):
@@ -56,7 +56,7 @@ class ClauseFilter(BaseModel):
     document_keys: tuple[str, ...] = ()
     document_types: tuple[DocumentType, ...] = ()
     clause_types: tuple[ClauseType, ...] = ()
-    semantic_roles: tuple[SemanticRole, ...] = ()
+    statement_functions: tuple[StatementFunction, ...] = ()
     language: str | None = None
     min_text_length: int | None = Field(default=None, ge=0)
     max_text_length: int | None = Field(default=None, ge=0)

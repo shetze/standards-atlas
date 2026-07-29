@@ -102,10 +102,10 @@ def test_generates_importable_public_atlasdata_file(tmp_path: Path) -> None:
     assert "t3 t3.{1..2}" in text
     assert "o4" in text
     assert "r5" in text
-    assert imported.clauses[0].semantic_roles == ("scope",)
-    assert imported.clauses[2].semantic_roles == ("terms_and_definitions",)
-    assert imported.clauses[4].semantic_roles == ("objectives",)
-    assert imported.clauses[5].semantic_roles == ("requirements",)
+    assert imported.clauses[0].semantic_classification.document_structure.category == "scope"
+    assert imported.clauses[2].semantic_classification.document_structure.category == "terminology"
+    assert imported.clauses[4].semantic_classification.document_structure.category == "body"
+    assert imported.clauses[5].semantic_classification.document_structure.category == "body"
     assert "Clause text is intentionally not included" in text
 
 

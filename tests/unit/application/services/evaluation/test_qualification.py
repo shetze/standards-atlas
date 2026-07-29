@@ -15,10 +15,10 @@ from standards_atlas.application.services.evaluation import (
     CorpusManifestRepository,
     EvaluationCorpusManifest,
     ReviewDecision,
-    SemanticRoleSelection,
+    StatementFunctionSelection,
     normalized_content_hash,
 )
-from standards_atlas.domain.model import SemanticRole
+from standards_atlas.domain.model import StatementFunction
 
 
 def _reference(clause_id: str, text: str) -> ClauseReference:
@@ -32,15 +32,15 @@ def _reference(clause_id: str, text: str) -> ClauseReference:
 
 def _candidate(
     reference: ClauseReference,
-    role: SemanticRole,
+    role: StatementFunction,
     confidence: float = 0.8,
 ) -> ClauseEvaluationAnnotation:
     return ClauseEvaluationAnnotation(
-        task="semantic-role-classification",
+        task="statement-function-classification",
         lifecycle_status=AnnotationLifecycleStatus.PROPOSED,
         clause=reference,
-        proposal=SemanticRoleSelection(
-            semantic_roles=(role,), primary_role=role, confidence=confidence
+        proposal=StatementFunctionSelection(
+            statement_functions=(role,), primary_function=role, confidence=confidence
         ),
         generator=AnnotationGenerator(
             provider="local",
@@ -72,28 +72,28 @@ def test_qualification_resolves_gold_silver_structure_and_slices(tmp_path: Path)
     run = tmp_path / "run-a"
     manifest = EvaluationCorpusManifest(
         corpus_id=corpus_id,
-        task="semantic-role-classification",
+        task="statement-function-classification",
         corpus_version="1.0.0",
         selection_strategy="representative_stratified",
         seed=42,
         clauses=(
             CorpusClause(
                 clause=first,
-                strata={"role": "verification", "document_type": "standard"},
+                strata={"role": "requirement", "document_type": "standard"},
             ),
             CorpusClause(
                 clause=second,
-                strata={"role": "validation", "document_type": "standard"},
+                strata={"role": "recommendation", "document_type": "standard"},
             ),
         ),
     )
     CorpusManifestRepository(local).write(manifest)
-    reviewed = _candidate(first, SemanticRole.VERIFICATION).model_copy(
+    reviewed = _candidate(first, StatementFunction.REQUIREMENT).model_copy(
         update={
             "lifecycle_status": AnnotationLifecycleStatus.PUBLISHED,
-            "annotation": SemanticRoleSelection(
-                semantic_roles=(SemanticRole.VERIFICATION,),
-                primary_role=SemanticRole.VERIFICATION,
+            "annotation": StatementFunctionSelection(
+                statement_functions=(StatementFunction.REQUIREMENT,),
+                primary_function=StatementFunction.REQUIREMENT,
             ),
             "review": AnnotationReview(
                 decision=ReviewDecision.ACCEPTED,
@@ -103,8 +103,8 @@ def test_qualification_resolves_gold_silver_structure_and_slices(tmp_path: Path)
         }
     )
     ClauseAnnotationRepository(published).write(corpus_id, reviewed)
-    _write_prediction(run, _candidate(first, SemanticRole.VERIFICATION, 0.9))
-    _write_prediction(run, _candidate(second, SemanticRole.VERIFICATION, 0.6))
+    _write_prediction(run, _candidate(first, StatementFunction.REQUIREMENT, 0.9))
+    _write_prediction(run, _candidate(second, StatementFunction.REQUIREMENT, 0.6))
 
     report, json_path, markdown_path = AnnotationQualificationService().evaluate(
         corpus_id=corpus_id,
@@ -138,23 +138,23 @@ def test_published_gold_shadows_local_proposal_for_silver(tmp_path: Path) -> Non
     CorpusManifestRepository(local).write(
         EvaluationCorpusManifest(
             corpus_id=corpus_id,
-            task="semantic-role-classification",
+            task="statement-function-classification",
             corpus_version="1",
             selection_strategy="random",
             seed=1,
-            clauses=(CorpusClause(clause=reference, strata={"role": "validation"}),),
+            clauses=(CorpusClause(clause=reference, strata={"role": "recommendation"}),),
         )
     )
     ClauseAnnotationRepository(local).write(
         corpus_id,
-        _candidate(reference, SemanticRole.VALIDATION),
+        _candidate(reference, StatementFunction.RECOMMENDATION),
     )
-    gold = _candidate(reference, SemanticRole.REQUIREMENTS).model_copy(
+    gold = _candidate(reference, StatementFunction.REQUIREMENT).model_copy(
         update={
             "lifecycle_status": AnnotationLifecycleStatus.PUBLISHED,
-            "annotation": SemanticRoleSelection(
-                semantic_roles=(SemanticRole.REQUIREMENTS,),
-                primary_role=SemanticRole.REQUIREMENTS,
+            "annotation": StatementFunctionSelection(
+                statement_functions=(StatementFunction.REQUIREMENT,),
+                primary_function=StatementFunction.REQUIREMENT,
             ),
             "review": AnnotationReview(
                 decision=ReviewDecision.CORRECTED,
@@ -164,7 +164,7 @@ def test_published_gold_shadows_local_proposal_for_silver(tmp_path: Path) -> Non
         }
     )
     ClauseAnnotationRepository(published).write(corpus_id, gold)
-    _write_prediction(run, _candidate(reference, SemanticRole.REQUIREMENTS))
+    _write_prediction(run, _candidate(reference, StatementFunction.REQUIREMENT))
 
     report, _, _ = AnnotationQualificationService().evaluate(
         corpus_id=corpus_id,

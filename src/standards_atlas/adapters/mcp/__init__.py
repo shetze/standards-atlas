@@ -9,7 +9,13 @@ from standards_atlas.adapters.mcp.compatibility import (
 from standards_atlas.adapters.mcp.configuration import (
     McpExposureConfig,
     McpLimitConfig,
+    McpProcessConfig,
     McpServerConfig,
+)
+from standards_atlas.adapters.mcp.process import (
+    McpServerProcessError,
+    McpServerProcessManager,
+    McpServerProcessStatus,
 )
 from standards_atlas.adapters.mcp.server import create_mcp_server, run_mcp_server
 from standards_atlas.adapters.mcp.service import McpClauseService
@@ -21,7 +27,11 @@ __all__ = [
     "McpCompatibilityProbe",
     "McpExposureConfig",
     "McpLimitConfig",
+    "McpProcessConfig",
     "McpServerConfig",
+    "McpServerProcessError",
+    "McpServerProcessManager",
+    "McpServerProcessStatus",
     "create_mcp_server",
     "run_mcp_server",
     "StreamableHttpJsonRpcTransport",

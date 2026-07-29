@@ -40,7 +40,17 @@ from standards_atlas.domain.model.identifiers import (
     StandardReference,
 )
 from standards_atlas.domain.model.relation import Relation, RelationType
-from standards_atlas.domain.model.semantic_role import SemanticRole
+from standards_atlas.domain.model.semantic_classification import (
+    DocumentStructure,
+    DocumentStructureClassification,
+    DomainFunctionClassification,
+    NormativeStatus,
+    RelationScope,
+    SemanticClassification,
+    SemanticRelation,
+    SemanticRelationKind,
+    StatementFunction,
+)
 from standards_atlas.domain.model.source_evidence import (
     BoundingBox,
     CoordinateOrigin,
@@ -75,7 +85,15 @@ __all__ = [
     "PictureBlock",
     "Relation",
     "RelationType",
-    "SemanticRole",
+    "DocumentStructure",
+    "DocumentStructureClassification",
+    "DomainFunctionClassification",
+    "NormativeStatus",
+    "RelationScope",
+    "SemanticClassification",
+    "SemanticRelation",
+    "SemanticRelationKind",
+    "StatementFunction",
     "Standard",
     "StandardKey",
     "StandardReference",

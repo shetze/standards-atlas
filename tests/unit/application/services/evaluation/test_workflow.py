@@ -147,7 +147,7 @@ def test_builds_representative_stratified_corpus_with_population_statistics(
             raise AssertionError("representative sampling must use the full population")
 
     config = CorpusBuildConfig(
-        task="semantic-role-classification",
+        task="statement-function-classification",
         version="1.0.0",
         corpus_id="semantic-roles-v1",
         knowledge_domain="functional-safety",
@@ -221,7 +221,7 @@ def test_excludes_empty_content_and_separates_content_from_context(tmp_path: Pat
 
     result = EvaluationCorpusBuilder(Provider()).build(
         CorpusBuildConfig(
-            task="semantic-role-classification",
+            task="statement-function-classification",
             version="1.0.0",
             count=2,
             strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
@@ -280,7 +280,7 @@ def test_excludes_composed_family_copies_and_uses_readable_duplicate_labels(
 
     result = EvaluationCorpusBuilder(Provider()).build(
         CorpusBuildConfig(
-            task="semantic-role-classification",
+            task="statement-function-classification",
             version="1.0.0",
             count=2,
             strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,

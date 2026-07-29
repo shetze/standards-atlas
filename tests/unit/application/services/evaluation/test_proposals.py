@@ -23,8 +23,8 @@ class MissingPrimaryRoleGateway:
     def generate_structured(self, request):
         return StructuredGenerationResult(
             value={
-                "semantic_roles": ["table"],
-                "primary_role": "requirements",
+                "statement_functions": ["description"],
+                "primary_function": "requirement",
                 "confidence": 0.8,
                 "rationale": "The clause defines a normative requirement.",
             },
@@ -45,8 +45,8 @@ class FakeGateway:
     def generate_structured(self, request):
         return StructuredGenerationResult(
             value={
-                "semantic_roles": ["requirements"],
-                "primary_role": "requirements",
+                "statement_functions": ["requirement"],
+                "primary_function": "requirement",
                 "confidence": 0.9,
                 "rationale": "The clause uses normative language.",
             },
@@ -62,10 +62,10 @@ class FakeGateway:
 
 def test_proposal_generation_persists_request_response_and_resumes(tmp_path: Path):
     corpus_root = tmp_path / "corpora"
-    dataset_dir = corpus_root / "semantic-role-classification" / "1.0.0"
+    dataset_dir = corpus_root / "statement-function-classification" / "1.0.0"
     dataset_dir.mkdir(parents=True)
     dataset = {
-        "task": "semantic-role-classification",
+        "task": "statement-function-classification",
         "version": "1.0.0",
         "examples": [
             {
@@ -82,7 +82,7 @@ def test_proposal_generation_persists_request_response_and_resumes(tmp_path: Pat
                         "reference": "7.4.2",
                         "title": "Verification",
                         "parent_id": None,
-                        "structural_roles": ["verification"],
+                        "structural_roles": ["requirement"],
                     },
                 },
                 "expected": {},
@@ -93,7 +93,7 @@ def test_proposal_generation_persists_request_response_and_resumes(tmp_path: Pat
     resources = Path("src/standards_atlas/resources/semantic")
     config = ProposalRunConfig(
         corpus_id="semantic-roles-v1",
-        task="semantic-role-classification",
+        task="statement-function-classification",
         task_version="1.0.0",
         dataset_version="1.0.0",
         prompt_version="structure-aware-v1",
@@ -124,7 +124,7 @@ def test_proposal_generation_persists_request_response_and_resumes(tmp_path: Pat
 
 def test_limit_applies_to_pending_examples_after_existing_annotations(tmp_path: Path):
     corpus_root = tmp_path / "corpora"
-    dataset_dir = corpus_root / "semantic-role-classification" / "1.0.0"
+    dataset_dir = corpus_root / "statement-function-classification" / "1.0.0"
     dataset_dir.mkdir(parents=True)
     examples = []
     for index in range(3):
@@ -150,7 +150,7 @@ def test_limit_applies_to_pending_examples_after_existing_annotations(tmp_path: 
             }
         )
     dataset = {
-        "task": "semantic-role-classification",
+        "task": "statement-function-classification",
         "version": "1.0.0",
         "examples": examples,
     }
@@ -160,7 +160,7 @@ def test_limit_applies_to_pending_examples_after_existing_annotations(tmp_path: 
     generator = BaselineProposalGenerator(FakeGateway())
     base = ProposalRunConfig(
         corpus_id="semantic-roles-v1",
-        task="semantic-role-classification",
+        task="statement-function-classification",
         task_version="1.0.0",
         dataset_version="1.0.0",
         prompt_version="structure-aware-v1",
@@ -187,10 +187,10 @@ def test_limit_applies_to_pending_examples_after_existing_annotations(tmp_path: 
 
 def test_proposal_generation_reports_progress(tmp_path: Path):
     corpus_root = tmp_path / "corpora"
-    dataset_dir = corpus_root / "semantic-role-classification" / "1.0.0"
+    dataset_dir = corpus_root / "statement-function-classification" / "1.0.0"
     dataset_dir.mkdir(parents=True)
     dataset = {
-        "task": "semantic-role-classification",
+        "task": "statement-function-classification",
         "version": "1.0.0",
         "examples": [
             {
@@ -207,7 +207,7 @@ def test_proposal_generation_reports_progress(tmp_path: Path):
                         "reference": "7.4.2",
                         "title": "Verification",
                         "parent_id": None,
-                        "structural_roles": ["verification"],
+                        "structural_roles": ["requirement"],
                     },
                 },
                 "expected": {},
@@ -219,7 +219,7 @@ def test_proposal_generation_reports_progress(tmp_path: Path):
     result = BaselineProposalGenerator(FakeGateway()).run(
         ProposalRunConfig(
             corpus_id="semantic-roles-v1",
-            task="semantic-role-classification",
+            task="statement-function-classification",
             task_version="1.0.0",
             dataset_version="1.0.0",
             prompt_version="structure-aware-v1",
@@ -243,10 +243,10 @@ def test_proposal_generation_reports_progress(tmp_path: Path):
 
 def test_proposals_are_isolated_by_provider_and_model(tmp_path: Path):
     corpus_root = tmp_path / "corpora"
-    dataset_dir = corpus_root / "semantic-role-classification" / "1.0.0"
+    dataset_dir = corpus_root / "statement-function-classification" / "1.0.0"
     dataset_dir.mkdir(parents=True)
     dataset = {
-        "task": "semantic-role-classification",
+        "task": "statement-function-classification",
         "version": "1.0.0",
         "examples": [
             {
@@ -271,7 +271,7 @@ def test_proposals_are_isolated_by_provider_and_model(tmp_path: Path):
     generator = BaselineProposalGenerator(FakeGateway())
     common = dict(
         corpus_id="semantic-roles-v1",
-        task="semantic-role-classification",
+        task="statement-function-classification",
         task_version="1.0.0",
         dataset_version="1.0.0",
         prompt_version="structure-aware-v1",
@@ -302,8 +302,8 @@ class DuplicateRoleGateway(FakeGateway):
             **{
                 **vars(result),
                 "value": {
-                    "semantic_roles": ["requirements", "requirements"],
-                    "primary_role": "requirements",
+                    "statement_functions": ["requirement", "requirement"],
+                    "primary_function": "requirement",
                     "confidence": 0.9,
                     "rationale": "Normative requirement.",
                 },
@@ -326,10 +326,10 @@ class TransientGateway(FakeGateway):
 
 def _single_example_corpus(tmp_path: Path) -> Path:
     corpus_root = tmp_path / "corpora"
-    dataset_dir = corpus_root / "semantic-role-classification" / "1.0.0"
+    dataset_dir = corpus_root / "statement-function-classification" / "1.0.0"
     dataset_dir.mkdir(parents=True)
     dataset = {
-        "task": "semantic-role-classification",
+        "task": "statement-function-classification",
         "version": "1.0.0",
         "examples": [
             {
@@ -354,11 +354,11 @@ def _single_example_corpus(tmp_path: Path) -> Path:
     return corpus_root
 
 
-def test_duplicate_semantic_roles_are_normalized(tmp_path: Path):
+def test_duplicate_statement_functions_are_normalized(tmp_path: Path):
     result = BaselineProposalGenerator(DuplicateRoleGateway()).run(
         ProposalRunConfig(
             corpus_id="semantic-roles-v1",
-            task="semantic-role-classification",
+            task="statement-function-classification",
             task_version="1.0.0",
             dataset_version="1.0.0",
             prompt_version="structure-aware-v1",
@@ -378,7 +378,7 @@ def test_transient_endpoint_failures_are_retried(tmp_path: Path):
     result = BaselineProposalGenerator(gateway).run(
         ProposalRunConfig(
             corpus_id="semantic-roles-v1",
-            task="semantic-role-classification",
+            task="statement-function-classification",
             task_version="1.0.0",
             dataset_version="1.0.0",
             prompt_version="structure-aware-v1",
@@ -407,7 +407,7 @@ def test_progress_identifies_clause_and_reports_failure_detail(tmp_path: Path):
     result = BaselineProposalGenerator(FailingGateway()).run(
         ProposalRunConfig(
             corpus_id="semantic-roles-v1",
-            task="semantic-role-classification",
+            task="statement-function-classification",
             task_version="1.0.0",
             dataset_version="1.0.0",
             prompt_version="structure-aware-v1",
@@ -448,7 +448,7 @@ def test_timeout_is_not_retried_by_default_and_writes_failure_diagnostics(tmp_pa
     result = BaselineProposalGenerator(gateway).run(
         ProposalRunConfig(
             corpus_id="semantic-roles-v1",
-            task="semantic-role-classification",
+            task="statement-function-classification",
             task_version="1.0.0",
             dataset_version="1.0.0",
             prompt_version="structure-aware-v1",
@@ -489,7 +489,7 @@ def test_timeout_can_be_retried_explicitly(tmp_path: Path):
     result = BaselineProposalGenerator(gateway).run(
         ProposalRunConfig(
             corpus_id="semantic-roles-v1",
-            task="semantic-role-classification",
+            task="statement-function-classification",
             task_version="1.0.0",
             dataset_version="1.0.0",
             prompt_version="structure-aware-v1",
@@ -508,11 +508,11 @@ def test_timeout_can_be_retried_explicitly(tmp_path: Path):
     assert result.generated == 1
 
 
-def test_missing_primary_role_is_added_to_semantic_roles(tmp_path: Path):
+def test_missing_primary_function_is_added_to_statement_functions(tmp_path: Path):
     result = BaselineProposalGenerator(MissingPrimaryRoleGateway()).run(
         ProposalRunConfig(
             corpus_id="semantic-roles-v1",
-            task="semantic-role-classification",
+            task="statement-function-classification",
             task_version="1.0.0",
             dataset_version="1.0.0",
             prompt_version="structure-aware-v1",
@@ -527,5 +527,5 @@ def test_missing_primary_role_is_added_to_semantic_roles(tmp_path: Path):
     assert result.generated == 1
     assert result.failed == 0
     evaluation = (result.run_directory / "clause-1" / "evaluation.yaml").read_text(encoding="utf-8")
-    assert "- requirements" in evaluation
-    assert "primary_role: requirements" in evaluation
+    assert "- requirement" in evaluation
+    assert "primary_function: requirement" in evaluation

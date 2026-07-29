@@ -9,7 +9,7 @@ from standards_atlas.domain.model import (
     AnnotationType,
     AnnotationVisibility,
     ClauseType,
-    SemanticRole,
+    DocumentStructure,
 )
 
 
@@ -112,7 +112,7 @@ def test_clause_ids_are_stable() -> None:
     assert first.clauses[0].id == second.clauses[0].id
 
 
-def test_domain_mapper_infers_semantic_roles_from_title() -> None:
+def test_domain_mapper_infers_document_structure_from_title() -> None:
     atlas_data = AtlasStandardData(
         metadata=AtlasMetadata(
             name="ISO 26262-8",
@@ -139,7 +139,10 @@ def test_domain_mapper_infers_semantic_roles_from_title() -> None:
 
     standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-8")
 
-    assert standard.clauses[0].semantic_roles == (SemanticRole.WORK_PRODUCTS,)
+    assert (
+        standard.clauses[0].semantic_classification.document_structure.category
+        is DocumentStructure.BODY
+    )
 
 
 def test_part_zero_titles_are_resolved_per_volume() -> None:

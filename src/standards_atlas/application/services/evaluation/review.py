@@ -20,7 +20,7 @@ from standards_atlas.application.services.evaluation.annotations import (
     ClauseAnnotationRepository,
     ClauseEvaluationAnnotation,
     ReviewDecision,
-    SemanticRoleSelection,
+    StatementFunctionSelection,
 )
 from standards_atlas.application.services.evaluation.references import (
     ClauseReferenceAnalysis,
@@ -42,8 +42,8 @@ class ReviewForm(BaseModel):
     clause_key: str = Field(min_length=1)
     content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     decision: ReviewDecision = ReviewDecision.ACCEPTED
-    semantic_roles: tuple[str, ...] = ()
-    primary_role: str | None = None
+    statement_functions: tuple[str, ...] = ()
+    primary_function: str | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     reviewer: str = ""
     reviewed_at: datetime | None = None
@@ -51,10 +51,13 @@ class ReviewForm(BaseModel):
 
     @model_validator(mode="after")
     def validate_selection(self) -> ReviewForm:
-        if self.primary_role is not None and self.primary_role not in self.semantic_roles:
-            raise ValueError("primary_role must be included in semantic_roles")
-        if len(set(self.semantic_roles)) != len(self.semantic_roles):
-            raise ValueError("semantic_roles must not contain duplicates")
+        if (
+            self.primary_function is not None
+            and self.primary_function not in self.statement_functions
+        ):
+            raise ValueError("primary_function must be included in statement_functions")
+        if len(set(self.statement_functions)) != len(self.statement_functions):
+            raise ValueError("statement_functions must not contain duplicates")
         return self
 
 
@@ -267,8 +270,8 @@ def _render_review(
         clause_key=candidate.clause.key,
         content_hash=candidate.clause.content_hash,
         decision=ReviewDecision.ACCEPTED,
-        semantic_roles=tuple(role.value for role in proposal.semantic_roles),
-        primary_role=proposal.primary_role.value if proposal.primary_role else None,
+        statement_functions=tuple(role.value for role in proposal.statement_functions),
+        primary_function=proposal.primary_function.value if proposal.primary_function else None,
         confidence=proposal.confidence,
     )
     editable = yaml.safe_dump(form.model_dump(mode="json"), sort_keys=False, allow_unicode=True)
@@ -291,8 +294,9 @@ def _render_review(
         f"- Prompt: `{candidate.generator.prompt_id}`\n\n"
         "## Local review context\n\n"
         f"```text\n{prompt}\n```\n\n" + _render_references(references) + "## Generated proposal\n\n"
-        f"- Roles: {', '.join(role.value for role in proposal.semantic_roles) or 'none'}\n"
-        f"- Primary role: {proposal.primary_role.value if proposal.primary_role else 'none'}\n"
+        f"- Roles: {', '.join(role.value for role in proposal.statement_functions) or 'none'}\n"
+        "- Primary role: "
+        f"{proposal.primary_function.value if proposal.primary_function else 'none'}\n"
         f"- Confidence: {proposal.confidence if proposal.confidence is not None else 'none'}\n"
         f"- Rationale: {rationale}\n\n"
         "## Review data\n\n"
@@ -349,10 +353,10 @@ def _apply_review(
     reviewer = form.reviewer.strip()
     if not reviewer:
         raise AnnotationContractError(f"reviewer must be set: {path}")
-    selection = SemanticRoleSelection.model_validate(
+    selection = StatementFunctionSelection.model_validate(
         {
-            "semantic_roles": form.semantic_roles,
-            "primary_role": form.primary_role,
+            "statement_functions": form.statement_functions,
+            "primary_function": form.primary_function,
             "confidence": form.confidence,
         }
     )
@@ -368,8 +372,10 @@ def _apply_review(
         update={"rationale": None}
     ):
         raise AnnotationContractError(f"corrected review must change the proposal: {path}")
-    if form.decision is ReviewDecision.REJECTED and selection.semantic_roles:
-        raise AnnotationContractError(f"rejected review must not select semantic roles: {path}")
+    if form.decision is ReviewDecision.REJECTED and selection.statement_functions:
+        raise AnnotationContractError(
+            f"rejected review must not select statement functions: {path}"
+        )
     return candidate.model_copy(
         update={
             "lifecycle_status": AnnotationLifecycleStatus.REVIEWED,

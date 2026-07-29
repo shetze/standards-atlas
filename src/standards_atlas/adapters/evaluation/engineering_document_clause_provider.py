@@ -113,8 +113,8 @@ class EngineeringDocumentClauseProvider:
                 descriptor = self._clause_descriptor(document, clause)
                 if filters.clause_types and descriptor.clause_type not in filters.clause_types:
                     continue
-                if filters.semantic_roles and not set(filters.semantic_roles).issubset(
-                    descriptor.semantic_roles
+                if filters.statement_functions and not set(filters.statement_functions).issubset(
+                    descriptor.statement_functions
                 ):
                     continue
                 text_length = len(descriptor.text)
@@ -151,7 +151,7 @@ class EngineeringDocumentClauseProvider:
             title=clause.title,
             text=clause.plain_text,
             parent_id=clause.parent_id.value if clause.parent_id else None,
-            semantic_roles=clause.semantic_roles,
+            statement_functions=clause.semantic_classification.statement_functions,
         )
 
     @staticmethod

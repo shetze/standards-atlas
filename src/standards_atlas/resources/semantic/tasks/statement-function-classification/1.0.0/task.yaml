@@ -1,0 +1,5 @@
+task: statement-function-classification
+version: 1.0.0
+description: Classify the statement function of normalized standards clause content.
+multi_label: true
+allow_unclassified: true

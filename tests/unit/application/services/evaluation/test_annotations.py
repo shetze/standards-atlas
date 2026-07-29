@@ -18,10 +18,10 @@ from standards_atlas.application.services.evaluation import (
     CorpusManifestRepository,
     EvaluationCorpusManifest,
     ReviewDecision,
-    SemanticRoleSelection,
+    StatementFunctionSelection,
     normalized_content_hash,
 )
-from standards_atlas.domain.model import SemanticRole
+from standards_atlas.domain.model import StatementFunction
 
 
 def clause_reference(text: str = "The system shall be verified.") -> ClauseReference:
@@ -35,12 +35,12 @@ def clause_reference(text: str = "The system shall be verified.") -> ClauseRefer
 
 def proposal(reference: ClauseReference) -> ClauseEvaluationAnnotation:
     return ClauseEvaluationAnnotation(
-        task="semantic-role-classification",
+        task="statement-function-classification",
         lifecycle_status=AnnotationLifecycleStatus.PROPOSED,
         clause=reference,
-        proposal=SemanticRoleSelection(
-            semantic_roles=(SemanticRole.VERIFICATION,),
-            primary_role=SemanticRole.VERIFICATION,
+        proposal=StatementFunctionSelection(
+            statement_functions=(StatementFunction.REQUIREMENT,),
+            primary_function=StatementFunction.REQUIREMENT,
             confidence=0.91,
         ),
         generator=AnnotationGenerator(
@@ -83,7 +83,7 @@ def test_manifest_rejects_duplicate_clause_references() -> None:
     with pytest.raises(ValueError, match="unique clause references"):
         EvaluationCorpusManifest(
             corpus_id="semantic-roles-v1",
-            task="semantic-role-classification",
+            task="statement-function-classification",
             corpus_version="1.0.0",
             selection_strategy="stratified",
             seed=42,
@@ -106,11 +106,11 @@ def test_manifest_repository_round_trip(tmp_path: Path) -> None:
     reference = clause_reference()
     manifest = EvaluationCorpusManifest(
         corpus_id="semantic-roles-v1",
-        task="semantic-role-classification",
+        task="statement-function-classification",
         corpus_version="1.0.0",
         selection_strategy="stratified",
         seed=42,
-        clauses=(CorpusClause(clause=reference, strata={"role": "verification"}),),
+        clauses=(CorpusClause(clause=reference, strata={"role": "requirement"}),),
     )
     repository = CorpusManifestRepository(tmp_path)
 

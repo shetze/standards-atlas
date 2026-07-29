@@ -22,7 +22,7 @@ def _agreement(f1: float, coverage: float = 1.0) -> AgreementMetrics:
         evaluated=round(10 * coverage),
         coverage=coverage,
         exact_match_rate=f1,
-        primary_role_accuracy=f1,
+        primary_function_accuracy=f1,
         micro_precision=f1,
         micro_recall=f1,
         micro_f1=f1,
@@ -209,5 +209,28 @@ def test_prompt_aliases_resolve_to_installed_resources() -> None:
     )
     assert (
         resolve_prompt_version(PromptCandidate(id="deliberative"), resources=resources)
-        == "conservative-v1"
+        == "bounded-reasoning-v1"
     )
+
+
+def test_model_repetitions_override_global_default(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["repetitions"] = 3
+    payload["models"][0]["repetitions"] = 1
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    manifest = QualificationMatrixManifest.load(path)
+
+    assert manifest.repetitions_for(manifest.models[0]) == 1
+    assert manifest.repetitions_for(manifest.models[1]) == 3
+
+
+def test_model_repetitions_must_be_positive(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["models"][0]["repetitions"] = 0
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="greater than or equal to 1"):
+        QualificationMatrixManifest.load(path)

@@ -14,11 +14,15 @@ from standards_atlas.adapters.atlasdata.metadata import (
     AtlasDataLifecycleStatus,
     parse_metadata,
 )
-from standards_atlas.application.services.semantic_role_classifier import (
-    SemanticRoleClassifier,
-    SemanticRoleContext,
+from standards_atlas.application.services.semantic_classifier import (
+    SemanticClassificationContext,
+    SemanticClassifier,
 )
-from standards_atlas.domain.model.semantic_role import SemanticRole
+from standards_atlas.domain.model.semantic_classification import (
+    DocumentStructure,
+    NormativeStatus,
+    StatementFunction,
+)
 
 _NUMERIC_HEADING = re.compile(
     r"^(?P<reference>0\.\d+(?:\.\d+)*|[1-9]\d*(?:\.\d+)*)"
@@ -137,8 +141,8 @@ def _detect_part_from_metadata(value: str, publication_year: int) -> str | None:
 class AtlasDataOnboardingService:
     """Create a public AtlasData structure from Docling section headings."""
 
-    def __init__(self, role_classifier: SemanticRoleClassifier | None = None) -> None:
-        self._role_classifier = role_classifier or SemanticRoleClassifier()
+    def __init__(self, role_classifier: SemanticClassifier | None = None) -> None:
+        self._role_classifier = role_classifier or SemanticClassifier()
 
     def generate(
         self,
@@ -305,18 +309,18 @@ class AtlasDataOnboardingService:
                 DiscoveredClause(
                     reference=clause.reference,
                     title=clause.title,
-                    type_marker=_legacy_marker_for_roles(
+                    type_marker=_atlasdata_marker(
                         self._role_classifier.classify(
-                            SemanticRoleContext(
+                            SemanticClassificationContext(
                                 reference=clause.reference,
                                 heading=clause.title,
-                                ancestor_roles=_ancestor_roles(
+                                ancestor_structures=_ancestor_structures(
                                     clause.reference, classified, self._role_classifier
                                 ),
-                                ancestor_headings=_ancestor_headings(clause.reference, classified),
-                                annex_status=clause.annex_status,
+                                annex_status=(clause.annex_status or NormativeStatus.UNSPECIFIED),
                             )
-                        ).roles
+                        ).classification,
+                        clause.title,
                     ),
                     source_item_ids=clause.source_item_ids,
                     annex_status=clause.annex_status,
@@ -453,16 +457,24 @@ def _default_heading(reference: str, annex_status: str | None = None) -> str:
     return "Heading"
 
 
-def _legacy_marker_for_roles(roles: tuple[SemanticRole, ...]) -> str:
-    precedence = (
-        (SemanticRole.TERMS_AND_DEFINITIONS, "t"),
-        (SemanticRole.SCOPE, "s"),
-        (SemanticRole.OBJECTIVES, "o"),
-        (SemanticRole.REQUIREMENTS, "r"),
-    )
-    for role, marker in precedence:
-        if role in roles:
-            return marker
+def _atlasdata_marker(classification, heading: str) -> str:
+    structure = classification.document_structure
+    if structure is not None:
+        if structure.category is DocumentStructure.SCOPE:
+            return "s"
+        if structure.category is DocumentStructure.TERMINOLOGY:
+            return "t"
+    normalized_heading = heading.strip().lower()
+    if "objective" in normalized_heading:
+        return "o"
+    if "requirement" in normalized_heading:
+        return "r"
+    if StatementFunction.DEFINITION in classification.statement_functions:
+        return "t"
+    if StatementFunction.DESCRIPTION in classification.statement_functions:
+        return "o"
+    if StatementFunction.REQUIREMENT in classification.statement_functions:
+        return "r"
     return "u"
 
 
@@ -472,20 +484,22 @@ def _ancestor_headings(reference: str, discovered: list[DiscoveredClause]) -> tu
     )
 
 
-def _ancestor_roles(
+def _ancestor_structures(
     reference: str,
     discovered: list[DiscoveredClause],
-    classifier: SemanticRoleClassifier,
-) -> tuple[SemanticRole, ...]:
-    roles: list[SemanticRole] = []
+    classifier: SemanticClassifier,
+) -> tuple[DocumentStructure, ...]:
+    structures: list[DocumentStructure] = []
     for clause in discovered:
         if not _is_descendant(reference, clause.reference):
             continue
         classification = classifier.classify_deterministically(
-            SemanticRoleContext(reference=clause.reference, heading=clause.title)
+            SemanticClassificationContext(reference=clause.reference, heading=clause.title)
         )
-        roles.extend(classification.roles)
-    return tuple(dict.fromkeys(roles))
+        structure = classification.classification.document_structure
+        if structure is not None:
+            structures.append(structure.category)
+    return tuple(dict.fromkeys(structures))
 
 
 def _is_descendant(reference: str, parent: str) -> bool:

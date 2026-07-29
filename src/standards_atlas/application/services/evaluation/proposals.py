@@ -26,7 +26,7 @@ from standards_atlas.application.services.evaluation.annotations import (
     AnnotationLifecycleStatus,
     ClauseEvaluationAnnotation,
     ClauseReference,
-    SemanticRoleSelection,
+    StatementFunctionSelection,
 )
 from standards_atlas.application.services.evaluation.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
@@ -117,6 +117,18 @@ class ProposalRunResult:
     errors: tuple[str, ...]
 
 
+def proposal_run_directory(config: ProposalRunConfig, output_root: Path) -> Path:
+    """Return the deterministic directory of a proposal run."""
+    return (
+        output_root
+        / "runs"
+        / config.corpus_id
+        / config.prompt_version
+        / _safe(config.provider)
+        / _safe(config.model)
+    )
+
+
 class BaselineProposalGenerator:
     """Generate annotation proposals while preserving every request and response."""
 
@@ -140,14 +152,7 @@ class BaselineProposalGenerator:
             raise ValueError("prompt schema differs from the canonical task schema")
         dataset = EvaluationDatasetRepository(corpus_root).load(config.task, config.dataset_version)
         all_examples = dataset.examples
-        run_dir = (
-            output_root
-            / "runs"
-            / config.corpus_id
-            / config.prompt_version
-            / _safe(config.provider)
-            / _safe(config.model)
-        )
+        run_dir = proposal_run_directory(config, output_root)
         pending = []
         skipped = 0
         for example in all_examples:
@@ -225,7 +230,7 @@ class BaselineProposalGenerator:
                 valid, error = validate_schema(normalized_value, canonical_schema)
                 if not valid:
                     raise ValueError(f"provider response violates task schema: {error}")
-                selection = SemanticRoleSelection.model_validate(normalized_value)
+                selection = StatementFunctionSelection.model_validate(normalized_value)
                 annotation = ClauseEvaluationAnnotation(
                     task=config.task,
                     lifecycle_status=AnnotationLifecycleStatus.PROPOSED,
@@ -441,13 +446,13 @@ def _normalize_selection_payload(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict):
         return dict(value)
     normalized = dict(value)
-    roles = normalized.get("semantic_roles")
+    roles = normalized.get("statement_functions")
     if isinstance(roles, (list, tuple)):
         normalized_roles = list(dict.fromkeys(roles))
-        primary_role = normalized.get("primary_role")
-        if primary_role is not None and primary_role not in normalized_roles:
-            normalized_roles.insert(0, primary_role)
-        normalized["semantic_roles"] = normalized_roles
+        primary_function = normalized.get("primary_function")
+        if primary_function is not None and primary_function not in normalized_roles:
+            normalized_roles.insert(0, primary_function)
+        normalized["statement_functions"] = normalized_roles
     return normalized
 
 

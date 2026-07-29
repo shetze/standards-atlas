@@ -1,0 +1,14 @@
+id: domain.functional-safety
+version: 1.0.0
+categories:
+  - lifecycle_management
+  - concept_and_hazard_analysis
+  - system_development
+  - hardware_development
+  - software_development
+  - integration
+  - verification
+  - validation
+  - safety_assessment
+  - production_operation_service
+  - supporting_processes

@@ -17,9 +17,9 @@ from standards_atlas.application.services.evaluation.annotations import (
     ClauseAnnotationResolver,
     ClauseEvaluationAnnotation,
     CorpusManifestRepository,
-    SemanticRoleSelection,
+    StatementFunctionSelection,
 )
-from standards_atlas.domain.model import SemanticRole
+from standards_atlas.domain.model import StatementFunction
 
 
 class AgreementMetrics(BaseModel):
@@ -31,7 +31,7 @@ class AgreementMetrics(BaseModel):
     evaluated: int = Field(ge=0)
     coverage: float = Field(ge=0.0, le=1.0)
     exact_match_rate: float = Field(ge=0.0, le=1.0)
-    primary_role_accuracy: float = Field(ge=0.0, le=1.0)
+    primary_function_accuracy: float = Field(ge=0.0, le=1.0)
     micro_precision: float = Field(ge=0.0, le=1.0)
     micro_recall: float = Field(ge=0.0, le=1.0)
     micro_f1: float = Field(ge=0.0, le=1.0)
@@ -131,7 +131,7 @@ class AnnotationQualificationReport(BaseModel):
     silver_agreement: AgreementMetrics
     structure_agreement: AgreementMetrics
     calibration: CalibrationMetrics
-    primary_role_confusion: tuple[ConfusionEntry, ...] = ()
+    primary_function_confusion: tuple[ConfusionEntry, ...] = ()
     slices: tuple[EvaluationSliceReport, ...] = ()
     diagnostics: tuple[str, ...] = ()
 
@@ -237,7 +237,7 @@ class AnnotationQualificationService:
                 structure_pairs, eligible=sum(row.structure is not None for row in rows)
             ),
             calibration=_calibration(gold_pairs),
-            primary_role_confusion=_confusion(gold_pairs),
+            primary_function_confusion=_confusion(gold_pairs),
             slices=_slice_reports(rows),
             diagnostics=tuple(diagnostics),
         )
@@ -253,10 +253,10 @@ class _Row(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     key: str
-    prediction: SemanticRoleSelection | None
+    prediction: StatementFunctionSelection | None
     resolved: ClauseEvaluationAnnotation | None
     resolution_source: AnnotationResolutionSource | None
-    structure: SemanticRoleSelection | None
+    structure: StatementFunctionSelection | None
     strata: dict[str, str]
 
 
@@ -291,8 +291,8 @@ def _reliability(run_directory: Path, *, attempted: int, successful: int) -> Rel
     )
 
 
-def _load_predictions(run_directory: Path) -> dict[str, SemanticRoleSelection]:
-    predictions: dict[str, SemanticRoleSelection] = {}
+def _load_predictions(run_directory: Path) -> dict[str, StatementFunctionSelection]:
+    predictions: dict[str, StatementFunctionSelection] = {}
     for path in sorted(run_directory.rglob("evaluation.yaml")):
         payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         candidate = ClauseEvaluationAnnotation.model_validate(payload["annotation_candidate"])
@@ -303,21 +303,21 @@ def _load_predictions(run_directory: Path) -> dict[str, SemanticRoleSelection]:
     return predictions
 
 
-def _structure_selection(strata: dict[str, str]) -> SemanticRoleSelection | None:
-    raw = strata.get("semantic_role") or strata.get("role") or strata.get("semantic_roles")
+def _structure_selection(strata: dict[str, str]) -> StatementFunctionSelection | None:
+    raw = strata.get("semantic_role") or strata.get("role") or strata.get("statement_functions")
     if not raw or raw in {"none", "unclassified", "unknown"}:
         return None
     values = [value.strip() for value in raw.replace(";", ",").split(",") if value.strip()]
     try:
-        roles = tuple(SemanticRole(value) for value in values)
+        roles = tuple(StatementFunction(value) for value in values)
     except ValueError:
         return None
     if not roles:
         return None
-    return SemanticRoleSelection(semantic_roles=roles, primary_role=roles[0])
+    return StatementFunctionSelection(statement_functions=roles, primary_function=roles[0])
 
 
-def _silver_expected(row: _Row) -> SemanticRoleSelection | None:
+def _silver_expected(row: _Row) -> StatementFunctionSelection | None:
     if row.resolved is not None:
         if row.resolved.annotation is not None:
             return row.resolved.annotation
@@ -326,20 +326,20 @@ def _silver_expected(row: _Row) -> SemanticRoleSelection | None:
 
 
 def _agreement(
-    pairs: Iterable[tuple[SemanticRoleSelection, SemanticRoleSelection]], *, eligible: int
+    pairs: Iterable[tuple[StatementFunctionSelection, StatementFunctionSelection]], *, eligible: int
 ) -> AgreementMetrics:
     items = list(pairs)
     tp = fp = fn = exact = primary = 0
     role_scores: list[float] = []
     for predicted, expected in items:
-        p = set(predicted.semantic_roles)
-        e = set(expected.semantic_roles)
+        p = set(predicted.statement_functions)
+        e = set(expected.statement_functions)
         tp += len(p & e)
         fp += len(p - e)
         fn += len(e - p)
         exact += p == e
-        primary += predicted.primary_role == expected.primary_role
-        for role in SemanticRole:
+        primary += predicted.primary_function == expected.primary_function
+        for role in StatementFunction:
             rtp = int(role in p and role in e)
             rfp = int(role in p and role not in e)
             rfn = int(role not in p and role in e)
@@ -355,7 +355,7 @@ def _agreement(
         evaluated=count,
         coverage=count / eligible if eligible else 0.0,
         exact_match_rate=exact / count if count else 0.0,
-        primary_role_accuracy=primary / count if count else 0.0,
+        primary_function_accuracy=primary / count if count else 0.0,
         micro_precision=precision if count else 0.0,
         micro_recall=recall if count else 0.0,
         micro_f1=f1 if count else 0.0,
@@ -364,12 +364,12 @@ def _agreement(
 
 
 def _confusion(
-    pairs: Iterable[tuple[SemanticRoleSelection, SemanticRoleSelection]],
+    pairs: Iterable[tuple[StatementFunctionSelection, StatementFunctionSelection]],
 ) -> tuple[ConfusionEntry, ...]:
     counts: Counter[tuple[str, str]] = Counter()
     for predicted, expected in pairs:
-        exp = expected.primary_role.value if expected.primary_role else "<none>"
-        pred = predicted.primary_role.value if predicted.primary_role else "<none>"
+        exp = expected.primary_function.value if expected.primary_function else "<none>"
+        pred = predicted.primary_function.value if predicted.primary_function else "<none>"
         counts[(exp, pred)] += 1
     return tuple(
         ConfusionEntry(expected=e, predicted=p, count=count)
@@ -378,10 +378,10 @@ def _confusion(
 
 
 def _calibration(
-    pairs: Iterable[tuple[SemanticRoleSelection, SemanticRoleSelection]],
+    pairs: Iterable[tuple[StatementFunctionSelection, StatementFunctionSelection]],
 ) -> CalibrationMetrics:
     entries = [
-        (pred.confidence, int(set(pred.semantic_roles) == set(exp.semantic_roles)))
+        (pred.confidence, int(set(pred.statement_functions) == set(exp.statement_functions)))
         for pred, exp in pairs
         if pred.confidence is not None
     ]
@@ -480,7 +480,7 @@ def _markdown(report: AnnotationQualificationReport) -> str:
             name,
             f"{metric.evaluated}/{metric.eligible}",
             f"{metric.exact_match_rate:.3f}",
-            f"{metric.primary_role_accuracy:.3f}",
+            f"{metric.primary_function_accuracy:.3f}",
             f"{metric.micro_f1:.3f}",
             f"{metric.macro_f1:.3f}",
         )
@@ -537,7 +537,7 @@ def _markdown(report: AnnotationQualificationReport) -> str:
     ]
     lines.extend(
         f"| {entry.expected} | {entry.predicted} | {entry.count} |"
-        for entry in report.primary_role_confusion
+        for entry in report.primary_function_confusion
     )
     lines.extend(
         [

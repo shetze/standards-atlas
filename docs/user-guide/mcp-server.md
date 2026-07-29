@@ -11,15 +11,21 @@ uv sync --extra mcp
 uv run standards-atlas mcp serve --config cfg/mcp.yaml
 ```
 
-## Streamable HTTP
+## Managed Streamable HTTP process
 
 Set `transport: streamable-http` and configure the listener in `cfg/mcp.yaml`.
-Remote bindings require bearer-token authentication.
+Remote bindings require bearer-token authentication. The CLI manages the server
+as a detached process with PID and log files below `.atlas/runtime/mcp`.
 
 ```bash
 export STANDARDS_ATLAS_MCP_TOKEN="$(openssl rand -hex 32)"
-uv run standards-atlas mcp serve --config deploy/mcp/mcp.remote.yaml
+uv run standards-atlas mcp start --config deploy/mcp/mcp.remote.yaml
+uv run standards-atlas mcp status --config deploy/mcp/mcp.remote.yaml
+uv run standards-atlas mcp stop --config deploy/mcp/mcp.remote.yaml
 ```
+
+For diagnostics, `mcp serve` still runs the server in the foreground. Managed
+background operation is intentionally unavailable for the STDIO transport.
 
 The MCP endpoint is `http://127.0.0.1:8765/mcp`; `/healthz` is available for
 local health checks. Put TLS termination in a reverse proxy or controlled

@@ -1,0 +1,11 @@
+id: document.railway-tsi
+version: 1.0.0
+categories:
+  - scope_and_subsystem_definition
+  - essential_requirements
+  - subsystem_characteristics
+  - interoperability_constituents
+  - conformity_assessment
+  - implementation
+  - specific_cases
+  - registers
