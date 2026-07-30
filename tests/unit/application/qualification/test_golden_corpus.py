@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from standards_atlas.application.qualification import GoldenCorpusQualifier
+from standards_atlas.cli.composition import build_golden_corpus_qualifier
 
 pytestmark = pytest.mark.qualification
 
@@ -28,7 +28,7 @@ REQUIRED_FEATURES = {
 
 
 def test_versioned_golden_corpus_passes() -> None:
-    report = GoldenCorpusQualifier().run(CORPUS)
+    report = build_golden_corpus_qualifier().run(CORPUS)
     assert report.passed, {case.case_id: case.failures for case in report.cases if not case.passed}
 
 

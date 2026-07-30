@@ -9,7 +9,7 @@ from standards_atlas.application.model import (
     NormalizedExtractedDocument,
     NormalizedHeading,
 )
-from standards_atlas.application.services import ReferenceCandidateService
+from standards_atlas.cli.composition import build_reference_candidate_service
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -58,7 +58,7 @@ def test_service_loads_inputs_detects_and_persists_candidates(tmp_path):
         ),
     )
 
-    service = ReferenceCandidateService(workspace)
+    service = build_reference_candidate_service(workspace)
     result = service.detect("SAMPLE")
 
     assert result.candidates[0].normalized_reference == "1"
@@ -111,7 +111,7 @@ def test_service_derives_missing_part_view_from_master_document(tmp_path):
         ),
     )
 
-    result = ReferenceCandidateService(workspace).detect("ISO26262-8")
+    result = build_reference_candidate_service(workspace).detect("ISO26262-8")
 
     derived = repository.load(StandardKey(value="ISO26262-8"))
     assert derived.parent_key.value == "ISO26262"

@@ -4,9 +4,9 @@ import yaml
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.application.semantic_qualification.references import (
-    ClauseReferenceExtractionService,
     ReferenceResolutionStatus,
 )
+from standards_atlas.cli.composition import build_clause_reference_extraction_service
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -50,8 +50,7 @@ def test_extracts_and_resolves_clause_range(tmp_path: Path) -> None:
     )
     FileSystemEngineeringDocumentRepository(workspace).save(document)
 
-    result = ClauseReferenceExtractionService().run(
-        workspace=workspace,
+    result = build_clause_reference_extraction_service(workspace).run(
         knowledge_domain="functional-safety",
         output_root=tmp_path / "references",
     )
@@ -81,8 +80,7 @@ def test_preserves_unresolved_reference_as_diagnostic(tmp_path: Path) -> None:
     )
     FileSystemEngineeringDocumentRepository(workspace).save(document)
 
-    ClauseReferenceExtractionService().run(
-        workspace=workspace,
+    build_clause_reference_extraction_service(workspace).run(
         knowledge_domain="functional-safety",
         output_root=tmp_path / "references",
     )
@@ -103,8 +101,7 @@ def test_does_not_treat_arbitrary_decimal_as_reference(tmp_path: Path) -> None:
     )
     FileSystemEngineeringDocumentRepository(workspace).save(document)
 
-    result = ClauseReferenceExtractionService().run(
-        workspace=workspace,
+    result = build_clause_reference_extraction_service(workspace).run(
         knowledge_domain="functional-safety",
         output_root=tmp_path / "references",
     )

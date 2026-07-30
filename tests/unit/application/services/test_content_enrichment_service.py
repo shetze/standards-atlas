@@ -27,8 +27,8 @@ from standards_atlas.application.model import (
     NormalizedTable,
     NormalizedText,
 )
-from standards_atlas.application.services import ContentEnrichmentService
 from standards_atlas.application.services.content_enrichment_service import ContentEnrichmentError
+from standards_atlas.cli.composition import build_content_enrichment_service
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -100,7 +100,7 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
         "SAMPLE", _alignment(normalized_hash=_model_hash(normalized))
     )
 
-    result = ContentEnrichmentService(workspace).enrich("SAMPLE")
+    result = build_content_enrichment_service(workspace).enrich("SAMPLE")
     persisted = repository.load(StandardKey(value="SAMPLE"))
 
     first, second = persisted.clauses
@@ -152,7 +152,7 @@ def test_prefers_reviewed_alignment_when_present(tmp_path):
         automatic_alignment_hash=review_repository.hash_alignment(automatic),
     )
 
-    result = ContentEnrichmentService(workspace).enrich("SAMPLE")
+    result = build_content_enrichment_service(workspace).enrich("SAMPLE")
 
     assert result.statistics.used_reviewed_alignment is True
     assert result.statistics.construction_contract.valid is True
@@ -175,7 +175,7 @@ def test_rejects_unresolved_alignment_by_default(tmp_path):
     AlignmentArtifactRepository(workspace).save("SAMPLE", alignment)
 
     with pytest.raises(ContentEnrichmentError, match="unresolved clauses"):
-        ContentEnrichmentService(workspace).enrich("SAMPLE")
+        build_content_enrichment_service(workspace).enrich("SAMPLE")
 
 
 def _document():

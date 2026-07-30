@@ -1,0 +1,84 @@
+"""Consumer-oriented persistence ports for application use cases."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Protocol
+
+from standards_atlas.application.model.alignment import AlignmentResult
+from standards_atlas.application.model.engineering_construction import (
+    EngineeringConstructionContract,
+)
+from standards_atlas.application.model.normalized_document import NormalizedExtractedDocument
+from standards_atlas.application.model.reference_candidates import ReferenceCandidateDocument
+from standards_atlas.domain.model import DocumentKey, EngineeringDocument
+
+
+class EngineeringDocumentRepository(Protocol):
+    def load(self, key: DocumentKey) -> EngineeringDocument: ...
+    def save(self, document: EngineeringDocument) -> Path: ...
+    def exists(self, key: DocumentKey) -> bool: ...
+    def list(self) -> tuple[EngineeringDocument, ...]: ...
+
+
+class NormalizationRepository(Protocol):
+    def load(self, document_key: str) -> NormalizedExtractedDocument: ...
+
+
+class ReferenceCandidateStore(Protocol):
+    def load(self, document_key: str) -> ReferenceCandidateDocument: ...
+    def save(self, document_key: str, result: ReferenceCandidateDocument) -> Path: ...
+
+
+class AlignmentStore(Protocol):
+    def load(self, document_key: str) -> AlignmentResult: ...
+    def save(self, document_key: str, result: AlignmentResult) -> Path: ...
+
+
+class AlignmentReviewStore(Protocol):
+    def save_review(self, document_key: str, markdown: str) -> Path: ...
+    def create_overrides(self, document_key: str, source_alignment_hash: str) -> Path: ...
+    def hash_alignment(self, result: AlignmentResult) -> str: ...
+    def save_full_document_review(
+        self,
+        document_key: str,
+        markdown: str,
+        *,
+        reset_edited: bool = False,
+    ) -> tuple[Path, Path]: ...
+    def load_generated_markdown(self, document_key: str) -> str: ...
+    def load_edited_markdown(self, document_key: str) -> str: ...
+    def save_overrides(self, document_key: str, overrides: Any) -> Path: ...
+    def load_overrides(self, document_key: str) -> Any: ...
+    def save_reviewed(
+        self,
+        document_key: str,
+        result: AlignmentResult,
+        *,
+        automatic_alignment_hash: str,
+    ) -> Path: ...
+    def load_reviewed(self, document_key: str) -> AlignmentResult: ...
+    def reviewed_path(self, document_key: str) -> Path: ...
+
+
+class EngineeringConstructionContractStore(Protocol):
+    def save(self, document_key: str, contract: EngineeringConstructionContract) -> Path: ...
+    def load(self, document_key: str) -> EngineeringConstructionContract: ...
+
+
+class AtlasDataDocumentReader(Protocol):
+    def import_document(self, source: Path) -> EngineeringDocument: ...
+
+
+class AtlasDataRoundTripWriterPort(Protocol):
+    def update_toc(
+        self,
+        source: Path,
+        document: EngineeringDocument,
+        *,
+        write: bool = False,
+    ) -> Any: ...
+
+
+class DoclingDocumentReader(Protocol):
+    def read(self, source: Path) -> Any: ...

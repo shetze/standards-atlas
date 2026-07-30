@@ -78,7 +78,12 @@ def _canonical_section(reference: str, heading: str) -> CanonicalDocumentSection
         "terms, definitions and abbreviated terms": CanonicalDocumentSection.TERMINOLOGY,
         "bibliography": CanonicalDocumentSection.BIBLIOGRAPHY,
     }
-    return exact.get(heading.casefold())
+    matched = exact.get(heading.casefold())
+    if matched is not None:
+        return matched
+    if re.fullmatch(r"[1-9]\d*(?:\.\d+)*", reference.strip()):
+        return CanonicalDocumentSection.BODY
+    return None
 
 
 def _annex_status(heading: str) -> AnnexStatus:

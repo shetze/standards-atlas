@@ -1,5 +1,16 @@
 """Application ports."""
 
+from standards_atlas.application.ports.artifact_repositories import (
+    AlignmentReviewStore,
+    AlignmentStore,
+    AtlasDataDocumentReader,
+    AtlasDataRoundTripWriterPort,
+    DoclingDocumentReader,
+    EngineeringConstructionContractStore,
+    EngineeringDocumentRepository,
+    NormalizationRepository,
+    ReferenceCandidateStore,
+)
 from standards_atlas.application.ports.document_converter import DocumentConverter
 from standards_atlas.application.ports.document_exporter import EngineeringDocumentExporter
 from standards_atlas.application.ports.document_importer import EngineeringDocumentImporter
@@ -15,13 +26,22 @@ from standards_atlas.application.ports.workflow_artifacts import (
 )
 
 __all__ = [
+    "AlignmentReviewStore",
+    "AlignmentStore",
+    "AtlasDataDocumentReader",
+    "AtlasDataRoundTripWriterPort",
+    "DoclingDocumentReader",
     "DocumentConverter",
+    "EngineeringConstructionContractStore",
     "EngineeringDocumentExporter",
     "EngineeringDocumentImporter",
-    "ExtractedDocumentReader",
     "EngineeringDocumentReader",
+    "EngineeringDocumentRepository",
+    "ExtractedDocumentReader",
     "ExtractedDocumentRepository",
-    "NormalizedDocumentRepository",
     "ExtractionState",
+    "NormalizationRepository",
+    "NormalizedDocumentRepository",
+    "ReferenceCandidateStore",
     "WorkflowArtifactStore",
 ]

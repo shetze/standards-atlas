@@ -4,14 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from standards_atlas.adapters.alignment import AlignmentArtifactRepository
-from standards_atlas.adapters.alignment_review import AlignmentReviewRepository
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.adapters.normalization import NormalizationArtifactRepository
-from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.model.alignment import AlignmentResult
 from standards_atlas.application.model.alignment_review import OverrideValidationResult
 from standards_atlas.application.model.markdown_review import MarkdownReviewDiff
+from standards_atlas.application.ports import (
+    AlignmentReviewStore,
+    AlignmentStore,
+    EngineeringDocumentRepository,
+    NormalizationRepository,
+    ReferenceCandidateStore,
+)
 from standards_atlas.application.review import (
     AlignmentOverrideEngine,
     AlignmentReviewRenderer,
@@ -24,12 +26,19 @@ from standards_atlas.domain.model import DocumentKey
 
 
 class AlignmentReviewService:
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
-        self._documents = FileSystemEngineeringDocumentRepository(workspace)
-        self._normalized = NormalizationArtifactRepository(workspace)
-        self._candidates = ReferenceCandidateRepository(workspace)
-        self._automatic = AlignmentArtifactRepository(workspace)
-        self._review = AlignmentReviewRepository(workspace)
+    def __init__(
+        self,
+        documents: EngineeringDocumentRepository,
+        normalized: NormalizationRepository,
+        candidates: ReferenceCandidateStore,
+        automatic: AlignmentStore,
+        review: AlignmentReviewStore,
+    ) -> None:
+        self._documents = documents
+        self._normalized = normalized
+        self._candidates = candidates
+        self._automatic = automatic
+        self._review = review
         self._engine = AlignmentOverrideEngine()
         self._renderer = AlignmentReviewRenderer()
         self._full_renderer = FullDocumentReviewRenderer()

@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 from typer.testing import CliRunner
 
@@ -24,8 +25,8 @@ def test_golden_corpus_cli_writes_reports(tmp_path: Path, monkeypatch) -> None:
         ),
     )
     monkeypatch.setattr(
-        "standards_atlas.cli.commands.evaluation.GoldenCorpusQualifier.run",
-        lambda self, root: qualification,
+        "standards_atlas.cli.commands.evaluation.build_golden_corpus_qualifier",
+        lambda: SimpleNamespace(run=lambda root: qualification),
     )
 
     result = CliRunner().invoke(
@@ -67,8 +68,8 @@ def test_golden_corpus_cli_returns_nonzero_after_writing_failed_evidence(
         ),
     )
     monkeypatch.setattr(
-        "standards_atlas.cli.commands.evaluation.GoldenCorpusQualifier.run",
-        lambda self, root: qualification,
+        "standards_atlas.cli.commands.evaluation.build_golden_corpus_qualifier",
+        lambda: SimpleNamespace(run=lambda root: qualification),
     )
 
     result = CliRunner().invoke(

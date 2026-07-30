@@ -3,10 +3,10 @@ from pathlib import Path
 import pytest
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services import DocumentCompositionService
 from standards_atlas.application.services.document_composition_service import (
     DocumentCompositionError,
 )
+from standards_atlas.cli.composition import build_document_composition_service
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -63,7 +63,7 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
     )
     repository.save(_part_document("PART-2", _clause("B", "Content B", volume="2"), volume="2"))
 
-    composed = DocumentCompositionService(tmp_path).compose(
+    composed = build_document_composition_service(tmp_path).compose(
         "FAMILY", ("PART-1", "SUPPLEMENT", "PART-2")
     )
 
@@ -92,7 +92,7 @@ def test_compose_creates_root_for_legacy_supplement_without_clause_zero(
     repository.save(_document("FAMILY", _clause("S", volume="3§1")))
     repository.save(_document("IEC61508-3-1", _clause("S", "Supplement", volume="3§1")))
 
-    composed = DocumentCompositionService(tmp_path).compose("FAMILY", ("IEC61508-3-1",))
+    composed = build_document_composition_service(tmp_path).compose("FAMILY", ("IEC61508-3-1",))
 
     root, clause = composed.clauses
     assert root.reference == StandardReference(standard="TEST", year=2026, clause="0")
@@ -109,7 +109,7 @@ def test_compose_rejects_duplicate_clause_ids_across_parts(tmp_path: Path) -> No
     repository.save(_part_document("PART-2", _clause("A", "Second"), volume="2"))
 
     with pytest.raises(DocumentCompositionError, match="more than one part"):
-        DocumentCompositionService(tmp_path).compose("FAMILY", ("PART-1", "PART-2"))
+        build_document_composition_service(tmp_path).compose("FAMILY", ("PART-1", "PART-2"))
 
 
 def test_compose_rejects_multiple_clause_zero_roots(tmp_path: Path) -> None:
@@ -120,4 +120,4 @@ def test_compose_rejects_multiple_clause_zero_roots(tmp_path: Path) -> None:
     repository.save(_document("PART-1", root_a, root_b, _clause("A", "Content")))
 
     with pytest.raises(DocumentCompositionError, match="at most one clause 0"):
-        DocumentCompositionService(tmp_path).compose("FAMILY", ("PART-1",))
+        build_document_composition_service(tmp_path).compose("FAMILY", ("PART-1",))

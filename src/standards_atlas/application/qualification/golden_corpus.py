@@ -9,8 +9,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
-from standards_atlas.adapters.docling import DoclingJsonReader
 from standards_atlas.application.normalization.document_normalizer import DocumentNormalizer
+from standards_atlas.application.ports import DoclingDocumentReader
 
 
 class GoldenInvariant(BaseModel):
@@ -52,6 +52,9 @@ class GoldenCorpusReport(BaseModel):
 class GoldenCorpusQualifier:
     """Execute a checked-in corpus without updating its expectations."""
 
+    def __init__(self, reader: DoclingDocumentReader) -> None:
+        self._reader = reader
+
     def run(self, root: Path) -> GoldenCorpusReport:
         index = json.loads((root / "corpus.json").read_text(encoding="utf-8"))
         results = tuple(self._run_case(root / "cases" / case_id) for case_id in index["cases"])
@@ -69,7 +72,7 @@ class GoldenCorpusQualifier:
         input_hash = _sha256(input_path.read_bytes())
         failures: list[str] = []
         try:
-            extracted = DoclingJsonReader().read(input_path)
+            extracted = self._reader.read(input_path)
             normalized = DocumentNormalizer().normalize(extracted)
             payload = normalized.model_dump(mode="json", exclude_none=True)
             normalized_bytes = _canonical_json(payload)

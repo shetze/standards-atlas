@@ -22,10 +22,7 @@ from standards_atlas.adapters.llm import (
 from standards_atlas.adapters.mcp import (
     McpServerProcessError,
 )
-from standards_atlas.application.qualification import (
-    GoldenCorpusQualifier,
-    QualificationRunReporter,
-)
+from standards_atlas.application.qualification import QualificationRunReporter
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 from standards_atlas.application.semantic_qualification.defaults import (
     STATEMENT_FUNCTION_PROMPT_VERSIONS,
@@ -47,7 +44,6 @@ from standards_atlas.application.semantic_qualification.workflow import (
 from standards_atlas.application.services.evaluation import (
     AnnotationQualificationService,
     BaselineProposalGenerator,
-    ClauseReferenceExtractionService,
     EvaluationCorpusBuilder,
     EvaluationDatasetRepository,
     EvaluationMatrixRunner,
@@ -63,6 +59,10 @@ from standards_atlas.cli.apps import (
     evaluation_app,
     qualification_app,
     semantic_evaluation_app,
+)
+from standards_atlas.cli.composition import (
+    build_clause_reference_extraction_service,
+    build_golden_corpus_qualifier,
 )
 from standards_atlas.cli.runtime_managers import managed_mcp_server
 
@@ -452,8 +452,7 @@ def extract_clause_references(
 ) -> None:
     """Extract and resolve same-document clause references without an LLM."""
     try:
-        result = ClauseReferenceExtractionService().run(
-            workspace=workspace,
+        result = build_clause_reference_extraction_service(workspace).run(
             knowledge_domain=knowledge_domain,
             output_root=output_root,
             document_keys=tuple(document or ()),
@@ -1087,7 +1086,7 @@ def qualify_golden_corpus(
         ),
     ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
-    report = GoldenCorpusQualifier().run(corpus)
+    report = build_golden_corpus_qualifier().run(corpus)
     report_json, report_md = QualificationRunReporter().write(
         report,
         corpus_root=corpus,

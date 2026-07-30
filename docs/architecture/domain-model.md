@@ -12,7 +12,8 @@ artifacts, and other structured engineering documents.
 
 A `Clause` carries a stable identifier, standard reference, clause type, title,
 ordered structured content, hierarchy information, adapter-neutral export
-attributes, and semantic classification. Content blocks distinguish paragraphs,
+attributes, semantic classification, and an optional multidimensional
+`StructuralProfile`. Content blocks distinguish paragraphs,
 lists, tables, figures, formulas, and other material rather than flattening the
 protected source into Markdown.
 
@@ -52,17 +53,18 @@ structural classification. It contains:
 - open, namespaced `domain_categories` for KnowledgeDomain structure;
 - explicit normative, informative, or unspecified `annex_status`.
 
-A deterministic `StructuralProfileClassifier` currently derives profiles from
-references and headings. The model and classifier are implemented and tested,
-but `StructuralProfile` is not yet persisted as a field of the canonical
-`Clause` aggregate. Until that integration is completed, it must be treated as
-an available classification contract rather than canonical stored clause data.
+A deterministic `StructuralProfileClassifier` derives profiles from references
+and headings. `Clause.structural_profile` stores the result as optional canonical
+clause metadata. AtlasData import creates the initial profile, content enrichment
+updates it after final titles are available, and filesystem persistence preserves
+it without invalidating legacy documents that do not contain the field. Doorstop
+exports and evaluation clause descriptors expose the available dimensions.
 
-`SemanticClassification.document_structure` and `StructuralProfile` overlap in
-purpose but serve different stages of the current transition. The former is the
-persisted semantic representation; the latter provides the more general target
-model for document-family and KnowledgeDomain structural taxonomies. Their
-long-term consolidation requires an explicit follow-up architecture decision.
+`SemanticClassification.document_structure` and `StructuralProfile` currently
+overlap in purpose. `SemanticClassification` carries the semantic-evaluation
+dimension, while `StructuralProfile` is the extensible document-family and
+KnowledgeDomain taxonomy model introduced by ADR 0050. Their eventual
+consolidation remains a separate architecture decision.
 
 ## Annotations, relations, and lineage
 

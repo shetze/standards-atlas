@@ -10,7 +10,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.domain.model import Clause, EngineeringDocument
 
 _REFERENCE = r"\d+(?:\.\d+){1,7}(?:[a-z])?"
@@ -134,20 +134,21 @@ class ClauseReferenceRepository:
 class ClauseReferenceExtractionService:
     """Extract and resolve same-document clause references deterministically."""
 
+    def __init__(self, documents: EngineeringDocumentRepository) -> None:
+        self._documents = documents
+
     def run(
         self,
         *,
-        workspace: Path,
         knowledge_domain: str,
         output_root: Path,
         document_keys: tuple[str, ...] = (),
         overwrite: bool = False,
     ) -> ReferenceExtractionResult:
-        repository = FileSystemEngineeringDocumentRepository(workspace)
         output = ClauseReferenceRepository(output_root)
         documents = tuple(
             document
-            for document in repository.list()
+            for document in self._documents.list()
             if not document_keys or document.key.value in document_keys
         )
         if document_keys:

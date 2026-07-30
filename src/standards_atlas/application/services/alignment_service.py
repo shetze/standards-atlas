@@ -1,29 +1,32 @@
 """Orchestrate deterministic document alignment."""
 
-from pathlib import Path
-
-from standards_atlas.adapters.alignment import AlignmentArtifactRepository
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.adapters.normalization import NormalizationArtifactRepository
-from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
 from standards_atlas.application.alignment import AlignmentEngine
 from standards_atlas.application.model.alignment import AlignmentOptions, AlignmentResult
+from standards_atlas.application.ports import (
+    AlignmentStore,
+    EngineeringDocumentRepository,
+    NormalizationRepository,
+    ReferenceCandidateStore,
+)
 from standards_atlas.domain.model import DocumentKey
 
 
 class AlignmentService:
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
-        self._documents = FileSystemEngineeringDocumentRepository(workspace)
-        self._normalized = NormalizationArtifactRepository(workspace)
-        self._candidates = ReferenceCandidateRepository(workspace)
-        self._results = AlignmentArtifactRepository(workspace)
-        self._engine = AlignmentEngine()
-
-    def run(
+    def __init__(
         self,
-        document_key: str,
-        options: AlignmentOptions | None = None,
-    ) -> AlignmentResult:
+        documents: EngineeringDocumentRepository,
+        normalized: NormalizationRepository,
+        candidates: ReferenceCandidateStore,
+        results: AlignmentStore,
+        engine: AlignmentEngine | None = None,
+    ) -> None:
+        self._documents = documents
+        self._normalized = normalized
+        self._candidates = candidates
+        self._results = results
+        self._engine = engine or AlignmentEngine()
+
+    def run(self, document_key: str, options: AlignmentOptions | None = None) -> AlignmentResult:
         engineering = self._documents.load(DocumentKey(value=document_key))
         normalized = self._normalized.load(document_key)
         candidates = self._candidates.load(document_key)

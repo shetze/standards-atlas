@@ -152,6 +152,21 @@ class EngineeringDocumentClauseProvider:
             text=clause.plain_text,
             parent_id=clause.parent_id.value if clause.parent_id else None,
             statement_functions=clause.semantic_classification.statement_functions,
+            canonical_section=(
+                clause.structural_profile.canonical_section
+                if clause.structural_profile is not None
+                else None
+            ),
+            document_categories=(
+                tuple(item.category for item in clause.structural_profile.document_categories)
+                if clause.structural_profile is not None
+                else ()
+            ),
+            domain_categories=(
+                tuple(item.category for item in clause.structural_profile.domain_categories)
+                if clause.structural_profile is not None
+                else ()
+            ),
         )
 
     @staticmethod

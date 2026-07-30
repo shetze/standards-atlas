@@ -7,7 +7,12 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.domain.model import ClauseType, DocumentType, StatementFunction
+from standards_atlas.domain.model import (
+    CanonicalDocumentSection,
+    ClauseType,
+    DocumentType,
+    StatementFunction,
+)
 
 
 class SamplingStrategy(StrEnum):
@@ -46,6 +51,9 @@ class ClauseDescriptor(BaseModel):
     text: str = ""
     parent_id: str | None = None
     statement_functions: tuple[StatementFunction, ...] = ()
+    canonical_section: CanonicalDocumentSection | None = None
+    document_categories: tuple[str, ...] = ()
+    domain_categories: tuple[str, ...] = ()
 
 
 class ClauseFilter(BaseModel):
@@ -57,6 +65,9 @@ class ClauseFilter(BaseModel):
     document_types: tuple[DocumentType, ...] = ()
     clause_types: tuple[ClauseType, ...] = ()
     statement_functions: tuple[StatementFunction, ...] = ()
+    canonical_section: CanonicalDocumentSection | None = None
+    document_categories: tuple[str, ...] = ()
+    domain_categories: tuple[str, ...] = ()
     language: str | None = None
     min_text_length: int | None = Field(default=None, ge=0)
     max_text_length: int | None = Field(default=None, ge=0)

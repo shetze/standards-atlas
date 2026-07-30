@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from pathlib import Path
 
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -23,8 +22,8 @@ class DocumentCompositionError(ValueError):
 class DocumentCompositionService:
     """Merge enriched child views into a persisted family document."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
-        self._documents = FileSystemEngineeringDocumentRepository(workspace)
+    def __init__(self, documents: EngineeringDocumentRepository) -> None:
+        self._documents = documents
 
     def compose(self, family_key: str, part_keys: tuple[str, ...]) -> EngineeringDocument:
         family = self._documents.load(DocumentKey(value=family_key))

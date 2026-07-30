@@ -2,17 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from pydantic import BaseModel, ConfigDict
 
-from standards_atlas.adapters.alignment import AlignmentArtifactRepository
-from standards_atlas.adapters.alignment_review import AlignmentReviewRepository
-from standards_atlas.adapters.engineering_construction import (
-    EngineeringConstructionContractRepository,
-)
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.application.model.alignment import (
     AlignmentResult,
     AlignmentStatus,
@@ -34,12 +25,23 @@ from standards_atlas.application.model.normalized_document import (
     NormalizedText,
     NormalizedUnknown,
 )
+from standards_atlas.application.ports import (
+    AlignmentReviewStore,
+    AlignmentStore,
+    EngineeringConstructionContractStore,
+    EngineeringDocumentRepository,
+    NormalizationRepository,
+)
 from standards_atlas.application.services.engineering_construction_contract import (
     EngineeringConstructionContractValidator,
 )
 from standards_atlas.application.services.semantic_classifier import (
     SemanticClassificationContext,
     SemanticClassifier,
+)
+from standards_atlas.application.services.structural_profile_classifier import (
+    StructuralProfileClassifier,
+    StructuralProfileContext,
 )
 from standards_atlas.domain.model import (
     ArtifactLineage,
@@ -90,14 +92,27 @@ class ContentEnrichmentResult(BaseModel):
 class ContentEnrichmentService:
     """Partition aligned normalized content into canonical clause blocks."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
-        self._documents = FileSystemEngineeringDocumentRepository(workspace)
-        self._normalized = NormalizationArtifactRepository(workspace)
-        self._alignments = AlignmentArtifactRepository(workspace)
-        self._semantic_classifier = SemanticClassifier()
-        self._reviews = AlignmentReviewRepository(workspace)
-        self._contracts = EngineeringConstructionContractRepository(workspace)
-        self._contract_validator = EngineeringConstructionContractValidator()
+    def __init__(
+        self,
+        documents: EngineeringDocumentRepository,
+        normalized: NormalizationRepository,
+        alignments: AlignmentStore,
+        reviews: AlignmentReviewStore,
+        contracts: EngineeringConstructionContractStore,
+        semantic_classifier: SemanticClassifier | None = None,
+        structural_profile_classifier: StructuralProfileClassifier | None = None,
+        contract_validator: EngineeringConstructionContractValidator | None = None,
+    ) -> None:
+        self._documents = documents
+        self._normalized = normalized
+        self._alignments = alignments
+        self._semantic_classifier = semantic_classifier or SemanticClassifier()
+        self._structural_profile_classifier = (
+            structural_profile_classifier or StructuralProfileClassifier()
+        )
+        self._reviews = reviews
+        self._contracts = contracts
+        self._contract_validator = contract_validator or EngineeringConstructionContractValidator()
 
     def enrich(
         self,
@@ -192,9 +207,31 @@ class ContentEnrichmentService:
                     document_title=document.title,
                 )
             ).classification
+            structural_profile = self._structural_profile_classifier.classify(
+                StructuralProfileContext(
+                    reference=enriched_clause.reference.clause,
+                    heading=enriched_clause.title or "",
+                )
+            )
+            if enriched_clause.structural_profile is not None:
+                existing_profile = enriched_clause.structural_profile
+                structural_profile = structural_profile.model_copy(
+                    update={
+                        "canonical_section": (
+                            structural_profile.canonical_section
+                            or existing_profile.canonical_section
+                        ),
+                        "document_categories": existing_profile.document_categories,
+                        "domain_categories": existing_profile.domain_categories,
+                        "annex_status": (
+                            structural_profile.annex_status or existing_profile.annex_status
+                        ),
+                    }
+                )
             enriched_clauses.append(
                 enriched_clause.model_copy(
                     update={
+                        "structural_profile": structural_profile,
                         "semantic_classification": current.model_copy(
                             update={
                                 "statement_functions": tuple(
@@ -207,7 +244,7 @@ class ContentEnrichmentService:
                                 ),
                                 "normative_status": detected.normative_status,
                             }
-                        )
+                        ),
                     }
                 )
             )

@@ -6,7 +6,6 @@ import hashlib
 import json
 from collections import Counter
 
-from standards_atlas.adapters.alignment_review import AlignmentReviewRepository
 from standards_atlas.application.model.alignment import AlignmentResult
 from standards_atlas.application.model.engineering_construction import (
     ConstructionCoverage,
@@ -39,8 +38,8 @@ class EngineeringConstructionContractValidator:
         structural: set[str] = set()
         following_labels: set[str] = set()
 
-        automatic_hash = AlignmentReviewRepository.hash_alignment(automatic_alignment)
-        alignment_hash = AlignmentReviewRepository.hash_alignment(alignment)
+        automatic_hash = _hash_model(automatic_alignment)
+        alignment_hash = _hash_model(alignment)
         normalized_hash = _hash_model(normalized)
 
         if alignment.metadata.normalized_document_hash != normalized_hash:

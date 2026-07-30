@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
-from standards_atlas.adapters.atlasdata import AtlasDataImporter
-from standards_atlas.adapters.atlasdata.roundtrip_writer import (
-    AtlasDataRoundTripResult,
-    AtlasDataRoundTripWriter,
+from standards_atlas.application.ports import (
+    AtlasDataDocumentReader,
+    AtlasDataRoundTripWriterPort,
 )
 
 
@@ -16,18 +16,18 @@ class AtlasDataTocService:
 
     def __init__(
         self,
-        reader: AtlasDataImporter | None = None,
-        writer: AtlasDataRoundTripWriter | None = None,
+        reader: AtlasDataDocumentReader,
+        writer: AtlasDataRoundTripWriterPort,
     ) -> None:
-        self._reader = reader or AtlasDataImporter()
-        self._writer = writer or AtlasDataRoundTripWriter()
+        self._reader = reader
+        self._writer = writer
 
     def update_toc(
         self,
         source: Path,
         *,
         write: bool = False,
-    ) -> AtlasDataRoundTripResult:
+    ) -> Any:
         """Generate and optionally write the TOC records for an AtlasData file."""
         document = self._reader.import_document(source)
 

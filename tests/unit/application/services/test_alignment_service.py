@@ -16,7 +16,7 @@ from standards_atlas.application.model import (
     ReferenceDetectionStatistics,
     ReferenceMatchKind,
 )
-from standards_atlas.application.services import AlignmentService
+from standards_atlas.cli.composition import build_alignment_service
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -91,7 +91,7 @@ def test_service_loads_aligns_persists_and_reloads(tmp_path):
         ),
     )
 
-    service = AlignmentService(workspace)
+    service = build_alignment_service(workspace)
     alignment = service.run("SAMPLE")
 
     assert alignment.clauses[0].clause_id == "SAMPLE-1"
@@ -167,7 +167,7 @@ def test_service_orders_expanded_subclauses_by_physical_reference(tmp_path):
         ),
     )
 
-    alignment = AlignmentService(workspace).run("SAMPLE")
+    alignment = build_alignment_service(workspace).run("SAMPLE")
 
     assert [item.expected_reference for item in alignment.clauses] == ["1", "1.1", "1.2", "2", "3"]
     assert alignment.metadata.statistics.missing == 0

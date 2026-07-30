@@ -59,8 +59,18 @@ from standards_atlas.domain.model.source_evidence import (
     SourceEvidence,
 )
 from standards_atlas.domain.model.standard import Standard
+from standards_atlas.domain.model.structural_profile import (
+    AnnexStatus,
+    CanonicalDocumentSection,
+    DomainCategory,
+    StructuralProfile,
+)
 
 __all__ = [
+    "AnnexStatus",
+    "CanonicalDocumentSection",
+    "DomainCategory",
+    "StructuralProfile",
     "ArtifactKind",
     "ArtifactLineage",
     "ArtifactReference",

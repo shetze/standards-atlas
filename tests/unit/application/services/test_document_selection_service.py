@@ -1,5 +1,5 @@
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services import DocumentSelectionService
+from standards_atlas.cli.composition import build_document_selection_service
 from standards_atlas.domain.model import (
     AnnotationId,
     Clause,
@@ -52,7 +52,7 @@ def test_derives_part_scoped_standard_and_related_annotations(tmp_path):
         )
     )
 
-    derived = DocumentSelectionService(workspace).derive_by_volume(
+    derived = build_document_selection_service(workspace).derive_by_volume(
         "ISO26262", "ISO26262-8", "8", "ISO 26262-8"
     )
 
@@ -87,7 +87,7 @@ def test_derive_by_volume_preserves_clause_zero_part_root(tmp_path):
         )
     )
 
-    derived = DocumentSelectionService(workspace).derive_by_volume(
+    derived = build_document_selection_service(workspace).derive_by_volume(
         "ISO26262", "ISO26262-8", "8", "ISO 26262-8"
     )
 

@@ -32,3 +32,11 @@ def test_classifier_does_not_assume_iec_main_body_for_unknown_document_heading()
     assert profile.canonical_section is None
     assert profile.document_categories[0].category == "requirement"
     assert profile.domain_categories[0].category == "software_development"
+
+
+def test_numeric_clause_is_classified_as_body() -> None:
+    profile = StructuralProfileClassifier().classify(
+        StructuralProfileContext(reference="6.4.2", heading="Verification")
+    )
+
+    assert profile.canonical_section is CanonicalDocumentSection.BODY

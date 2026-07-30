@@ -26,7 +26,6 @@ from standards_atlas.application.normalization import NormalizationDataLossError
 from standards_atlas.application.services import (
     DocumentExtractionService,
     ExtractionInspectionService,
-    ReferenceCandidateService,
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import (
@@ -34,7 +33,10 @@ from standards_atlas.cli.apps import (
     normalize_app,
     reference_app,
 )
-from standards_atlas.cli.composition import build_document_normalization_service
+from standards_atlas.cli.composition import (
+    build_document_normalization_service,
+    build_reference_candidate_service,
+)
 from standards_atlas.cli.runtime_managers import managed_llm_server
 
 
@@ -295,7 +297,7 @@ def detect_reference_candidates(
 ) -> None:
     """Detect clause-reference candidates and validate them against AtlasData structure."""
     try:
-        result = ReferenceCandidateService(workspace).detect(document_key)
+        result = build_reference_candidate_service(workspace).detect(document_key)
     except (OSError, ValueError, KeyError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -326,7 +328,7 @@ def inspect_reference_candidates(
 ) -> None:
     """Inspect persisted clause-reference candidates."""
     try:
-        result = ReferenceCandidateService(workspace).load(document_key)
+        result = build_reference_candidate_service(workspace).load(document_key)
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc

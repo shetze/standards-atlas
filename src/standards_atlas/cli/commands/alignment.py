@@ -9,13 +9,13 @@ import typer
 
 from standards_atlas.adapters.alignment import AlignmentArtifactRepository
 from standards_atlas.application.model import AlignmentOptions
-from standards_atlas.application.services import (
-    AlignmentReviewService,
-    AlignmentService,
-)
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import (
     align_app,
+)
+from standards_atlas.cli.composition import (
+    build_alignment_review_service,
+    build_alignment_service,
 )
 
 
@@ -53,7 +53,7 @@ def run_alignment(
         )
         raise typer.Exit(code=2)
     try:
-        result = AlignmentService(workspace).run(
+        result = build_alignment_service(workspace).run(
             document_key,
             AlignmentOptions(),
         )
@@ -104,9 +104,9 @@ def inspect_alignment(
     """Inspect a persisted alignment result."""
     try:
         result = (
-            AlignmentReviewService(workspace).load_reviewed(document_key)
+            build_alignment_review_service(workspace).load_reviewed(document_key)
             if reviewed
-            else AlignmentService(workspace).load(document_key)
+            else build_alignment_service(workspace).load(document_key)
         )
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
@@ -155,7 +155,7 @@ def generate_alignment_review(
 ) -> None:
     """Generate Markdown review context and an override YAML template."""
     try:
-        review_path, overrides_path = AlignmentReviewService(workspace).generate_review(
+        review_path, overrides_path = build_alignment_review_service(workspace).generate_review(
             document_key,
             context_before=context_before,
             context_after=context_after,
@@ -187,7 +187,7 @@ def export_full_alignment_review(
 ) -> None:
     """Export the complete normalized document as editable review Markdown."""
     try:
-        generated, edited = AlignmentReviewService(workspace).export_full_document_review(
+        generated, edited = build_alignment_review_service(workspace).export_full_document_review(
             document_key,
             reset_edited=reset_edited,
         )
@@ -211,7 +211,7 @@ def validate_full_alignment_review(
 ) -> None:
     """Validate that the edited review changes alignment markers only."""
     try:
-        diff = AlignmentReviewService(workspace).validate_full_document_review(document_key)
+        diff = build_alignment_review_service(workspace).validate_full_document_review(document_key)
     except (OSError, ValueError, KeyError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -232,7 +232,7 @@ def diff_full_alignment_review(
 ) -> None:
     """Show structural changes made in the editable review Markdown."""
     try:
-        diff = AlignmentReviewService(workspace).diff_full_document_review(document_key)
+        diff = build_alignment_review_service(workspace).diff_full_document_review(document_key)
     except (OSError, ValueError, KeyError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -258,7 +258,7 @@ def import_full_alignment_review(
 ) -> None:
     """Translate edited Markdown alignment markers into overrides.yaml."""
     try:
-        path = AlignmentReviewService(workspace).import_full_document_review(document_key)
+        path = build_alignment_review_service(workspace).import_full_document_review(document_key)
     except (OSError, ValueError, KeyError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -278,7 +278,7 @@ def validate_alignment_overrides(
 ) -> None:
     """Validate manual alignment decisions without applying them."""
     try:
-        result = AlignmentReviewService(workspace).validate_overrides(document_key)
+        result = build_alignment_review_service(workspace).validate_overrides(document_key)
     except (OSError, ValueError, KeyError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -302,7 +302,7 @@ def apply_alignment_overrides(
     ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Apply validated overrides and persist reviewed.json."""
-    service = AlignmentReviewService(workspace)
+    service = build_alignment_review_service(workspace)
     try:
         result = service.apply_overrides(document_key)
     except (OSError, ValueError, KeyError) as exc:

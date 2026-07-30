@@ -206,6 +206,10 @@ def _map_structure_item_to_clause(
             document_title=document_title,
             annex_status=annex_status,
         ),
+        structural_profile=_infer_structural_profile(
+            visible_reference=item.visible_reference,
+            title=title,
+        ),
         title=title,
         source_token=item.source_token,
         volume=item.volume,
@@ -321,3 +325,39 @@ def _extract_clause_identity(reference: str, standard_name: str) -> tuple[str | 
         volume = before_year[1:].replace("-", "§", 1) if "-" in before_year[1:] else before_year[1:]
 
     return volume, clause_reference.strip()
+
+
+def _infer_structural_profile(
+    *,
+    visible_reference: str,
+    title: str | None,
+):
+    from standards_atlas.application.services.structural_profile_classifier import (
+        StructuralProfileClassifier,
+        StructuralProfileContext,
+    )
+
+    return StructuralProfileClassifier().classify(
+        StructuralProfileContext(
+            reference=visible_reference,
+            heading=title or "",
+            document_taxonomy="document.iec-directives-2",
+            document_category=_iec_document_category(visible_reference, title or ""),
+            document_taxonomy_version="1.0.0",
+        )
+    )
+
+
+def _iec_document_category(reference: str, title: str) -> str | None:
+    normalized = title.casefold().strip()
+    if reference.isalpha() or normalized.startswith("annex "):
+        return "supplementary_elements"
+    if normalized in {"foreword", "introduction"}:
+        return "preliminary_elements"
+    if normalized in {"scope", "normative references", "terms and definitions"}:
+        return "normative_general_elements"
+    if normalized == "bibliography":
+        return "bibliography"
+    if reference and reference[0].isdigit():
+        return "normative_technical_elements"
+    return None

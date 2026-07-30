@@ -117,6 +117,7 @@ class DoorstopItemMapper:
                 "statement-functions": [
                     role.value for role in clause.semantic_classification.statement_functions
                 ],
+                **_structural_profile_attributes(clause),
             },
         )
 
@@ -225,3 +226,12 @@ def _volume_root_level(volume: str, context: DoorstopIdContext) -> str:
         return str(primary)
     encoded = str(primary) + "".join(f"{int(component):02d}" for component in components[1:])
     return str(int(encoded))
+
+
+def _structural_profile_attributes(clause: Clause) -> dict[str, object]:
+    profile = clause.structural_profile
+    if profile is None:
+        return {}
+    return {
+        "structural-profile": profile.model_dump(mode="json", exclude_none=True),
+    }

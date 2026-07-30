@@ -1,8 +1,6 @@
 """Create deterministic derived views of persisted engineering documents."""
 
-from pathlib import Path
-
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.domain.model import DocumentKey, EngineeringDocument, Standard, StandardKey
 
 
@@ -13,8 +11,8 @@ class DocumentSelectionError(ValueError):
 class DocumentSelectionService:
     """Derive a physical-source-sized document from a logical master document."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
-        self._documents = FileSystemEngineeringDocumentRepository(workspace)
+    def __init__(self, documents: EngineeringDocumentRepository) -> None:
+        self._documents = documents
 
     def derive_by_standard_name(
         self,

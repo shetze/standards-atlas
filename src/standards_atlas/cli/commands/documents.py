@@ -22,18 +22,14 @@ from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRep
 from standards_atlas.application.services import (
     AtlasDataLifecycleService,
     AtlasDataOnboardingService,
-    ContentEnrichmentService,
-    DocumentCompositionService,
     DocumentExportService,
     DocumentImportService,
-    DocumentSelectionService,
 )
 from standards_atlas.application.services.atlasdata_lifecycle_service import AtlasDataLifecycleError
 from standards_atlas.application.services.atlasdata_onboarding_service import (
     AtlasDataOnboardingError,
     DoclingPartSource,
 )
-from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
 from standards_atlas.application.services.content_enrichment_service import ContentEnrichmentError
 from standards_atlas.application.services.document_composition_service import (
     DocumentCompositionError,
@@ -47,7 +43,13 @@ from standards_atlas.cli.apps import (
     doorstop_app,
     inspect_app,
 )
-from standards_atlas.cli.composition import build_markdown_export_service
+from standards_atlas.cli.composition import (
+    build_atlasdata_toc_service,
+    build_content_enrichment_service,
+    build_document_composition_service,
+    build_document_selection_service,
+    build_markdown_export_service,
+)
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
 
@@ -236,7 +238,7 @@ def generate_toc(
     ] = cli_defaults.DEFAULT_FALSE,
 ) -> None:
     """Generate the TOC data section for an AtlasData file."""
-    service = AtlasDataTocService()
+    service = build_atlasdata_toc_service()
     result = service.update_toc(file, write=write)
 
     typer.echo(f"File                  : {result.source.name}")
@@ -307,7 +309,7 @@ def derive_document_view(
     ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Create a persisted document view matching one physical source document."""
-    service = DocumentSelectionService(workspace)
+    service = build_document_selection_service(workspace)
     try:
         document = service.derive_by_standard_name(source_key, target_key, standard_name)
     except DocumentSelectionError as error:
@@ -334,7 +336,7 @@ def derive_document_part(
     ] = cli_defaults.DEFAULT_WORKSPACE,
 ) -> None:
     """Create a persisted document view for one AtlasData volume or standard part."""
-    service = DocumentSelectionService(workspace)
+    service = build_document_selection_service(workspace)
     try:
         document = service.derive_by_volume(source_key, target_key, part, title)
     except DocumentSelectionError as error:
@@ -363,7 +365,7 @@ def compose_family_document(
     if not part_keys:
         raise typer.BadParameter("At least one --part document key is required.")
     try:
-        document = DocumentCompositionService(workspace).compose(family_key, part_keys)
+        document = build_document_composition_service(workspace).compose(family_key, part_keys)
     except (DocumentCompositionError, FileNotFoundError) as error:
         raise typer.BadParameter(str(error)) from error
 
@@ -401,7 +403,7 @@ def enrich_document_content(
 ) -> None:
     """Populate clause ContentBlocks from aligned normalized document ranges."""
     try:
-        result = ContentEnrichmentService(workspace).enrich(
+        result = build_content_enrichment_service(workspace).enrich(
             document_key,
             prefer_reviewed=not automatic_alignment,
             allow_unresolved=allow_unresolved,

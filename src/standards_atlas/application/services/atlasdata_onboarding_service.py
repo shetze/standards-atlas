@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from standards_atlas.adapters.atlasdata.metadata import (
+from standards_atlas.application.model.atlasdata_metadata import (
     AtlasDataLifecycleStatus,
     parse_metadata,
 )
