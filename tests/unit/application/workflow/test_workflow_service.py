@@ -582,7 +582,6 @@ def test_overwrite_can_keep_existing_docling_output(tmp_path: Path) -> None:
     docling_output = tmp_path / ".atlas" / "docling" / "DOC" / "document.json"
     docling_output.parent.mkdir(parents=True)
     docling_output.write_text("existing docling\n", encoding="utf-8")
-    conversion = docling_output.with_name("conversion.json")
     source = tmp_path / "DOC.pdf"
     source.write_bytes(b"pdf")
 
