@@ -15,6 +15,7 @@ from standards_atlas.domain.model import (
     DocumentType,
     EngineeringDocument,
     StandardReference,
+    TextBlock,
 )
 
 
@@ -24,7 +25,7 @@ def _clause(clause_id: str, reference: str, text: str, title: str | None = None)
         reference=StandardReference(standard="IEC61508-3", clause=reference),
         clause_type=ClauseType.CLAUSE,
         title=title,
-        text=text,
+        content=(TextBlock(id=f"{clause_id}-text", text=text),),
     )
 
 

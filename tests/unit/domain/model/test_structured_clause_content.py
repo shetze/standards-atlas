@@ -120,23 +120,17 @@ def test_content_block_carries_adapter_neutral_source_evidence() -> None:
     assert location.bounding_box.right == 200.0
 
 
-def test_legacy_text_is_migrated_to_canonical_text_block() -> None:
-    clause = _clause(text="Legacy protected text.")
-
-    assert len(clause.content) == 1
-    assert isinstance(clause.content[0], TextBlock)
-    assert clause.content[0].text == "Legacy protected text."
-    assert clause.plain_text == "Legacy protected text."
-    assert "text" not in clause.model_dump(mode="json")
+def test_clause_rejects_removed_legacy_text_field() -> None:
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        _clause(text="Legacy protected text.")
 
 
-def test_explicit_structured_content_takes_precedence_over_legacy_text() -> None:
-    clause = _clause(
-        text="Legacy text must not replace content.",
-        content=(TextBlock(id="canonical", text="Canonical content."),),
-    )
-
-    assert clause.plain_text == "Canonical content."
+def test_clause_rejects_legacy_text_even_with_structured_content() -> None:
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        _clause(
+            text="Legacy text must not replace content.",
+            content=(TextBlock(id="canonical", text="Canonical content."),),
+        )
 
 
 def test_bounding_box_rejects_inverted_coordinates() -> None:

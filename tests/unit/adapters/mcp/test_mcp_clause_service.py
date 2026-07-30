@@ -1,5 +1,5 @@
 from standards_atlas.adapters.mcp import McpClauseService, McpServerConfig
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseDescriptor,
     ClauseFilter,
     DocumentDescriptor,

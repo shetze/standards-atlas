@@ -90,7 +90,7 @@ class RamaLamaServerManager:
         server.pid_file.write_text(f"{process.pid}\n", encoding="utf-8")
         try:
             self._wait_for(running=True, timeout=server.startup_timeout_seconds)
-        except Exception:
+        except RamaLamaServerError:
             self._terminate_process(process.pid)
             server.pid_file.unlink(missing_ok=True)
             raise

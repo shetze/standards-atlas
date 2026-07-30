@@ -6,6 +6,7 @@ from standards_atlas.domain.model import (
     DocumentType,
     EngineeringDocument,
     StandardReference,
+    TextBlock,
 )
 
 
@@ -19,7 +20,15 @@ def test_create_generic_engineering_document_with_virtual_clause() -> None:
         ),
         clause_type=ClauseType.CLAUSE,
         title="System Element ODS",
-        text="The object detection system perceives the environment in front of the train unit.",
+        content=(
+            TextBlock(
+                id="AT-ARCH-2.3.1-text",
+                text=(
+                    "The object detection system perceives the environment "
+                    "in front of the train unit."
+                ),
+            ),
+        ),
     )
 
     document = EngineeringDocument(

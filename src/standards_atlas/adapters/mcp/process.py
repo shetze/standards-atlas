@@ -87,7 +87,7 @@ class McpServerProcessManager:
         process_config.pid_file.write_text(f"{process.pid}\n", encoding="utf-8")
         try:
             self._wait_until_available(process.pid)
-        except Exception:
+        except McpServerProcessError:
             self._terminate_process(process.pid)
             process_config.pid_file.unlink(missing_ok=True)
             raise

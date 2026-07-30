@@ -4,16 +4,18 @@ from pathlib import Path
 import pytest
 import yaml
 
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.qualification import (
     AgreementMetrics,
     AnnotationQualificationReport,
     CalibrationMetrics,
     CorpusCoverage,
-    ModelPromptQualificationService,
+)
+from standards_atlas.application.semantic_qualification.qualification_matrix import (
     PromptCandidate,
     QualificationMatrixManifest,
     resolve_prompt_version,
 )
+from standards_atlas.application.services.evaluation import ModelPromptQualificationService
 
 
 def _agreement(f1: float, coverage: float = 1.0) -> AgreementMetrics:

@@ -6,15 +6,19 @@ from pathlib import Path
 import yaml
 
 from standards_atlas.application.ports.llm_gateway import StructuredGenerationResult
-from standards_atlas.application.services.evaluation import (
-    BenchmarkManifest,
+from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseDescriptor,
+    SamplingStrategy,
+)
+from standards_atlas.application.semantic_qualification.workflow import (
+    BenchmarkManifest,
     CorpusBuildConfig,
+)
+from standards_atlas.application.services.evaluation import (
     EvaluationCorpusBuilder,
     EvaluationMatrixRunner,
     EvaluationReporter,
     EvaluationRunner,
-    SamplingStrategy,
 )
 from standards_atlas.domain.model import ClauseType
 

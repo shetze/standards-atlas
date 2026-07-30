@@ -3,9 +3,9 @@ from pathlib import Path
 import pytest
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services import (
+from standards_atlas.application.services import DocumentCompositionService
+from standards_atlas.application.services.document_composition_service import (
     DocumentCompositionError,
-    DocumentCompositionService,
 )
 from standards_atlas.domain.model import (
     Clause,

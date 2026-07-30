@@ -1,3 +1,6 @@
+import pytest
+from pydantic import ValidationError
+
 from standards_atlas.adapters.atlasdata.toc_generator import (
     generate_public_initialization_records,
 )
@@ -9,10 +12,11 @@ from standards_atlas.domain.model import (
     DocumentType,
     EngineeringDocument,
     StandardReference,
+    TextBlock,
 )
 
 
-def test_clause_text_is_never_exported_to_public_atlasdata() -> None:
+def test_clause_content_is_never_exported_to_public_atlasdata() -> None:
     clause = Clause(
         id=ClauseId(value="clause-1"),
         reference=StandardReference(
@@ -21,7 +25,12 @@ def test_clause_text_is_never_exported_to_public_atlasdata() -> None:
             clause="5.1",
         ),
         clause_type=ClauseType.REQUIREMENT,
-        text="Protected source text that must not be published.",
+        content=(
+            TextBlock(
+                id="clause-1-text",
+                text="Protected source text that must not be published.",
+            ),
+        ),
     )
 
     document = EngineeringDocument(
@@ -34,3 +43,13 @@ def test_clause_text_is_never_exported_to_public_atlasdata() -> None:
     records = generate_public_initialization_records(document)
 
     assert all("Protected source text" not in record.content for record in records)
+
+
+def test_clause_rejects_removed_text_compatibility_field() -> None:
+    with pytest.raises(ValidationError, match="text"):
+        Clause(
+            id=ClauseId(value="legacy-clause"),
+            reference=StandardReference(standard="Example", clause="1"),
+            clause_type=ClauseType.CLAUSE,
+            text="legacy content",
+        )

@@ -6,6 +6,7 @@ from standards_atlas.domain.model import (
     ClauseType,
     DocumentType,
     EngineeringDocument,
+    TextBlock,
 )
 from standards_atlas.domain.model.annotation import (
     AnnotationType,
@@ -29,7 +30,7 @@ def test_generate_public_text_records_only_exports_public_annotations() -> None:
             clause="5.1",
         ),
         clause_type=ClauseType.REQUIREMENT,
-        text="Copyright-protected standard text",
+        content=(TextBlock(id="clause-1-text", text="Copyright-protected standard text"),),
     )
 
     document = EngineeringDocument(

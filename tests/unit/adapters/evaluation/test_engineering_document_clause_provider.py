@@ -4,7 +4,7 @@ import pytest
 
 from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvider
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseFilter,
     SamplingStrategy,
 )
@@ -18,6 +18,7 @@ from standards_atlas.domain.model import (
     SemanticClassification,
     StandardReference,
     StatementFunction,
+    TextBlock,
 )
 
 
@@ -34,7 +35,7 @@ def _clause(
         reference=StandardReference(standard=document, year=2024, clause=reference),
         clause_type=ClauseType.REQUIREMENT,
         title=f"Clause {reference}",
-        text=text,
+        content=(TextBlock(id=f"{clause_id}-text", text=text),),
         semantic_classification=SemanticClassification(statement_functions=(function,)),
     )
 

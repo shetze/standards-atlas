@@ -73,7 +73,8 @@ def test_map_atlas_data_to_standard() -> None:
     requirement_clause = standard.clauses[1]
 
     assert requirement_clause.reference.clause == "5.1.1"
-    assert requirement_clause.text is None
+    assert requirement_clause.content == ()
+    assert requirement_clause.plain_text == ""
     assert requirement_clause.clause_type == ClauseType.REQUIREMENT
 
     requirement_annotations = standard.annotations_for_clause(

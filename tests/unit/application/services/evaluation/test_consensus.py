@@ -3,10 +3,10 @@ from pathlib import Path
 
 import yaml
 
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.qualification_matrix import (
     MatrixObservation,
-    ModelConsensusService,
 )
+from standards_atlas.application.services.evaluation import ModelConsensusService
 
 
 def _run(root: Path, model: str, repeat: int, roles: list[str]) -> Path:

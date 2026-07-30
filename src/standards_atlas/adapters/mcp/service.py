@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 from standards_atlas.adapters.mcp.configuration import McpServerConfig
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseFilter,
-    ClauseProvider,
     SamplingStrategy,
 )
+from standards_atlas.application.services.evaluation import ClauseProvider
 
 
 class McpClauseService:

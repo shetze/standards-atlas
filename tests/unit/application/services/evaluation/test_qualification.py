@@ -3,10 +3,9 @@ from pathlib import Path
 
 import yaml
 
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationGenerator,
     AnnotationLifecycleStatus,
-    AnnotationQualificationService,
     AnnotationReview,
     ClauseAnnotationRepository,
     ClauseEvaluationAnnotation,
@@ -18,6 +17,7 @@ from standards_atlas.application.services.evaluation import (
     StatementFunctionSelection,
     normalized_content_hash,
 )
+from standards_atlas.application.services.evaluation import AnnotationQualificationService
 from standards_atlas.domain.model import StatementFunction
 
 

@@ -55,7 +55,7 @@ class DoclingPdfConverter:
         except (FileExistsError, DocumentConversionError):
             temporary.unlink(missing_ok=True)
             raise
-        except Exception as exc:
+        except (AttributeError, OSError, RuntimeError, TypeError, ValueError) as exc:
             temporary.unlink(missing_ok=True)
             raise DocumentConversionError(f"Docling failed to convert {source}: {exc}") from exc
 

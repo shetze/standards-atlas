@@ -1,4 +1,4 @@
-from standards_atlas.application.services.evaluation import ProposalProgress
+from standards_atlas.application.semantic_qualification.proposals import ProposalProgress
 from standards_atlas.cli.commands.evaluation import _format_duration, _MatrixProposalProgress
 
 

@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from standards_atlas.adapters.mcp import McpServerConfig, create_mcp_server
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseDescriptor,
     ClauseFilter,
     DocumentDescriptor,

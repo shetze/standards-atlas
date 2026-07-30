@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
-from standards_atlas.application.services import (
+from standards_atlas.application.services import AtlasDataOnboardingService
+from standards_atlas.application.services.atlasdata_onboarding_service import (
     AtlasDataOnboardingError,
-    AtlasDataOnboardingService,
     DoclingPartSource,
 )
 

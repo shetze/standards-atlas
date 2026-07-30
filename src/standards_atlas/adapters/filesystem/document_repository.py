@@ -55,7 +55,7 @@ class FileSystemEngineeringDocumentRepository:
             raise FileNotFoundError(f"No persisted document found for key: {key.value}")
 
         payload = json.loads(path.read_text(encoding="utf-8"))
-        data = _extract_document_data(payload)
+        data = _migrate_legacy_clause_text(_extract_document_data(payload))
         document_type = DocumentType(data["document_type"])
         model = _DOCUMENT_MODELS[document_type]
 
@@ -70,7 +70,7 @@ class FileSystemEngineeringDocumentRepository:
         documents = []
         for path in sorted(self._documents_dir.glob("*.json")):
             payload = json.loads(path.read_text(encoding="utf-8"))
-            data = _extract_document_data(payload)
+            data = _migrate_legacy_clause_text(_extract_document_data(payload))
             document_type = DocumentType(data["document_type"])
             model = _DOCUMENT_MODELS[document_type]
             documents.append(model.model_validate(data))
@@ -100,6 +100,33 @@ def _extract_document_data(payload: Any) -> dict[str, Any]:
         raise ValueError("Versioned engineering document payload is missing 'document'")
 
     return document
+
+
+def _migrate_legacy_clause_text(data: dict[str, Any]) -> dict[str, Any]:
+    """Migrate persisted pre-v3 ``Clause.text`` values at the repository boundary."""
+    clauses = data.get("clauses")
+    if not isinstance(clauses, list):
+        return data
+
+    for clause in clauses:
+        if not isinstance(clause, dict) or "text" not in clause:
+            continue
+        legacy_text = clause.pop("text")
+        if clause.get("content") or not isinstance(legacy_text, str) or not legacy_text:
+            continue
+        clause_id = clause.get("id")
+        if isinstance(clause_id, dict):
+            block_id_prefix = str(clause_id.get("value", "clause"))
+        else:
+            block_id_prefix = str(clause_id or "clause")
+        clause["content"] = [
+            {
+                "id": f"{block_id_prefix}-legacy-text",
+                "type": "text",
+                "text": legacy_text,
+            }
+        ]
+    return data
 
 
 def _safe_filename(value: str) -> str:

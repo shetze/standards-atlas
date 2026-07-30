@@ -6,13 +6,13 @@ from pathlib import Path
 import pytest
 import yaml
 
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationContractError,
     AnnotationLifecycleStatus,
     ClauseAnnotationRepository,
     ReviewDecision,
-    SemanticAnnotationReviewService,
 )
+from standards_atlas.application.services.evaluation import SemanticAnnotationReviewService
 
 
 def _proposal_run(root: Path) -> Path:

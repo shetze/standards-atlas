@@ -3,10 +3,8 @@ from pathlib import Path
 import pytest
 
 from standards_atlas.adapters.atlasdata.metadata import AtlasDataLifecycleStatus, parse_metadata
-from standards_atlas.application.services import (
-    AtlasDataLifecycleError,
-    AtlasDataLifecycleService,
-)
+from standards_atlas.application.services import AtlasDataLifecycleService
+from standards_atlas.application.services.atlasdata_lifecycle_service import AtlasDataLifecycleError
 
 
 def _write(path: Path, status: str) -> None:

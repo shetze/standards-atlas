@@ -21,22 +21,26 @@ from standards_atlas.adapters.doorstop import (
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.application.services import (
-    AtlasDataLifecycleError,
     AtlasDataLifecycleService,
-    AtlasDataOnboardingError,
     AtlasDataOnboardingService,
-    ContentEnrichmentError,
     ContentEnrichmentService,
-    DoclingPartSource,
-    DocumentCompositionError,
     DocumentCompositionService,
     DocumentExportService,
     DocumentImportService,
-    DocumentSelectionError,
     DocumentSelectionService,
     MarkdownExportService,
 )
+from standards_atlas.application.services.atlasdata_lifecycle_service import AtlasDataLifecycleError
+from standards_atlas.application.services.atlasdata_onboarding_service import (
+    AtlasDataOnboardingError,
+    DoclingPartSource,
+)
 from standards_atlas.application.services.atlasdata_toc_service import AtlasDataTocService
+from standards_atlas.application.services.content_enrichment_service import ContentEnrichmentError
+from standards_atlas.application.services.document_composition_service import (
+    DocumentCompositionError,
+)
+from standards_atlas.application.services.document_selection_service import DocumentSelectionError
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import (
     atlasdata_app,

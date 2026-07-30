@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from standards_atlas.application.services.evaluation import (
+from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationContractError,
     AnnotationGenerator,
     AnnotationLifecycleStatus,

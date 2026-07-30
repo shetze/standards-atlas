@@ -27,10 +27,8 @@ from standards_atlas.application.model import (
     NormalizedTable,
     NormalizedText,
 )
-from standards_atlas.application.services import (
-    ContentEnrichmentError,
-    ContentEnrichmentService,
-)
+from standards_atlas.application.services import ContentEnrichmentService
+from standards_atlas.application.services.content_enrichment_service import ContentEnrichmentError
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,

@@ -63,7 +63,6 @@ def map_atlas_data_to_standard(
             standard_name=atlas_data.metadata.name,
             year=atlas_data.metadata.official_year,
             title=title_lookup.get((item.volume, item.visible_reference)),
-            text=None,
             document_title=atlas_data.metadata.name,
             annex_status=annex_statuses.get(
                 (item.volume, item.visible_reference.split(".", 1)[0]),
@@ -184,7 +183,6 @@ def _map_structure_item_to_clause(
     standard_name: str,
     year: int | None,
     title: str | None,
-    text: str | None,
     document_title: str,
     annex_status: NormativeStatus,
 ) -> Clause:
@@ -205,12 +203,10 @@ def _map_structure_item_to_clause(
             clause_type=_ITEM_TYPE_MAPPING[item.item_type],
             visible_reference=item.visible_reference,
             title=title,
-            text=text,
             document_title=document_title,
             annex_status=annex_status,
         ),
         title=title,
-        text=text,
         source_token=item.source_token,
         volume=item.volume,
         enum_prefix=item.enum_prefix,
@@ -223,7 +219,6 @@ def _infer_semantic_classification(
     clause_type: ClauseType,
     visible_reference: str,
     title: str | None,
-    text: str | None,
     document_title: str,
     annex_status: NormativeStatus,
 ) -> SemanticClassification:
@@ -238,7 +233,7 @@ def _infer_semantic_classification(
             SemanticClassificationContext(
                 reference=visible_reference,
                 heading=title or "",
-                text=text or "",
+                text="",
                 annex_status=annex_status,
                 document_title=document_title,
             )
