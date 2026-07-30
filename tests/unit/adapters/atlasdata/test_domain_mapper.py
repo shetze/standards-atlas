@@ -186,3 +186,55 @@ def test_part_zero_titles_are_resolved_per_volume() -> None:
         ("1", "Part 1"),
         ("2", "Part 2"),
     ]
+
+
+def test_domain_mapper_defaults_main_body_to_normative() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(name="ISO 26262-11", digits=8, official_year=2018),
+        structure_items=[
+            StructureItem(
+                visible_reference="5.3.1",
+                item_type=AtlasItemType.CLAUSE,
+                source_token="5.3.1",
+            )
+        ],
+        initialization_records=[
+            InitializationRecord(
+                kind="TOC",
+                hash_value="abc",
+                reference="ISO 26262-11:2018 5.3.1",
+                content="General",
+                type_marker="u",
+            )
+        ],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-11")
+
+    assert standard.clauses[0].semantic_classification.normative_status.value == "normative"
+
+
+def test_domain_mapper_preserves_informative_annex_status() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(name="ISO 26262-11", digits=8, official_year=2018),
+        structure_items=[
+            StructureItem(
+                visible_reference="A",
+                item_type=AtlasItemType.CLAUSE,
+                source_token="A",
+            )
+        ],
+        initialization_records=[
+            InitializationRecord(
+                kind="TOC",
+                hash_value="abc",
+                reference="ISO 26262-11:2018 A",
+                content="Annex A (informative) — Examples",
+                type_marker="u",
+            )
+        ],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-11")
+
+    assert standard.clauses[0].semantic_classification.normative_status.value == "informative"

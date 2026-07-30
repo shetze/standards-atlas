@@ -83,11 +83,12 @@ class SemanticClassifier:
         statement_functions = self._statement_functions(context.text, evidence)
         domain_functions = self._domain_functions(context, heading, evidence)
         confidence = max((item.confidence for item in evidence), default=0.0)
+        normative_status = self._normative_status(context, structure, evidence)
         return SemanticClassificationResult(
             classification=SemanticClassification(
                 statement_functions=statement_functions,
                 document_structure=structure,
-                normative_status=context.annex_status,
+                normative_status=normative_status,
                 domain_functions=domain_functions,
             ),
             confidence=confidence,
@@ -116,6 +117,32 @@ class SemanticClassifier:
         return DocumentStructureClassification(
             family=context.document_family, category=DocumentStructure.BODY
         )
+
+    @staticmethod
+    def _normative_status(context, structure, evidence):
+        if structure.category is DocumentStructure.ANNEX:
+            annex_status = NormativeStatus(context.annex_status)
+            if annex_status is not NormativeStatus.UNSPECIFIED:
+                evidence.append(SemanticEvidence("explicit_annex_status", annex_status.value, 1.0))
+                return annex_status
+            heading_status = _explicit_normative_status(context.heading)
+            if heading_status is not None:
+                evidence.append(SemanticEvidence("annex_heading_status", heading_status.value, 1.0))
+                return heading_status
+            return NormativeStatus.UNSPECIFIED
+
+        if structure.category in {
+            DocumentStructure.FRONT_MATTER,
+            DocumentStructure.FOREWORD,
+            DocumentStructure.INTRODUCTION,
+            DocumentStructure.BIBLIOGRAPHY,
+            DocumentStructure.BACK_MATTER,
+        }:
+            evidence.append(SemanticEvidence("structural_normative_default", "informative", 0.95))
+            return NormativeStatus.INFORMATIVE
+
+        evidence.append(SemanticEvidence("main_body_normative_default", "normative", 0.95))
+        return NormativeStatus.NORMATIVE
 
     @staticmethod
     def _statement_functions(text, evidence):
@@ -161,3 +188,10 @@ def _is_annex_heading(heading: str) -> bool:
 
 def _is_annex_reference(reference: str) -> bool:
     return re.fullmatch(r"[A-Z]{1,2}(?:\.\d+)*", reference) is not None
+
+
+def _explicit_normative_status(value: str) -> NormativeStatus | None:
+    match = re.search(r"\b(normative|informative)\b", value, re.I)
+    if match is None:
+        return None
+    return NormativeStatus(match.group(1).lower())

@@ -19,6 +19,7 @@ from standards_atlas.domain.model import (
     ClauseType,
     DocumentStructure,
     DocumentStructureClassification,
+    NormativeStatus,
     SemanticClassification,
     Standard,
     StandardKey,
@@ -236,6 +237,11 @@ def _infer_semantic_classification(
     if "conformance" in normalized_title or "compliance" in normalized_title:
         functions.append(StatementFunction.CONFORMANCE_STATEMENT)
 
+    normative_status = _infer_normative_status(
+        structure=structure,
+        title=title or "",
+    )
+
     return SemanticClassification(
         statement_functions=tuple(dict.fromkeys(functions)),
         document_structure=DocumentStructureClassification(
@@ -245,7 +251,25 @@ def _infer_semantic_classification(
                 visible_reference.split(".", 1)[0] if structure is DocumentStructure.ANNEX else None
             ),
         ),
+        normative_status=normative_status,
     )
+
+
+def _infer_normative_status(*, structure: DocumentStructure, title: str) -> NormativeStatus:
+    if structure is DocumentStructure.ANNEX:
+        match = re.search(r"\b(normative|informative)\b", title, re.I)
+        if match is None:
+            return NormativeStatus.UNSPECIFIED
+        return NormativeStatus(match.group(1).lower())
+    if structure in {
+        DocumentStructure.FRONT_MATTER,
+        DocumentStructure.FOREWORD,
+        DocumentStructure.INTRODUCTION,
+        DocumentStructure.BIBLIOGRAPHY,
+        DocumentStructure.BACK_MATTER,
+    }:
+        return NormativeStatus.INFORMATIVE
+    return NormativeStatus.NORMATIVE
 
 
 def _build_clause_id(
