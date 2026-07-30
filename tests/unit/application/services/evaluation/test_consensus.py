@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import yaml
@@ -13,6 +14,10 @@ def _run(root: Path, model: str, repeat: int, roles: list[str]) -> Path:
     case = run / "clause-1"
     case.mkdir(parents=True)
     payload = {
+        "run": {
+            "task": "statement-function-classification",
+            "dataset_version": "1.0.0",
+        },
         "annotation_candidate": {
             "task": "statement-function-classification",
             "lifecycle_status": "proposed",
@@ -21,7 +26,8 @@ def _run(root: Path, model: str, repeat: int, roles: list[str]) -> Path:
                 "document_key": "ISO26262-6",
                 "clause_id": "clause-1",
                 "content_hash": (
-                    "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    "sha256:"
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                 ),
             },
             "proposal": {
@@ -83,3 +89,71 @@ def test_consensus_counts_each_model_once_after_repetition_vote(tmp_path: Path) 
     assert json_path.is_file()
     assert proposal_path.is_file()
     assert review_path.read_text(encoding="utf-8").endswith("No clauses require review.\n")
+
+
+def test_review_includes_readable_reference_title_and_clause_text(tmp_path: Path) -> None:
+    corpus_root = tmp_path / "corpora"
+    dataset_dir = corpus_root / "statement-function-classification" / "1.0.0"
+    dataset_dir.mkdir(parents=True)
+    dataset = {
+        "task": "statement-function-classification",
+        "version": "1.0.0",
+        "examples": [
+            {
+                "id": "clause-1",
+                "input": {
+                    "content": {
+                        "hash": "sha256:" + "a" * 64,
+                        "text": "The supplier shall verify the software unit.",
+                    },
+                    "context": {
+                        "knowledge_domain": "functional-safety",
+                        "document_key": "ISO26262-6",
+                        "clause_id": "clause-1",
+                        "reference": "8.4.5",
+                        "title": "Software unit verification",
+                    },
+                },
+                "expected": {},
+            }
+        ],
+    }
+    (dataset_dir / "dataset.json").write_text(json.dumps(dataset), encoding="utf-8")
+
+    run = _run(tmp_path / "runs", "model-a", 1, ["requirement"])
+    qualification_report = tmp_path / "qualification.json"
+    qualification_report.write_text("{}", encoding="utf-8")
+    observation = MatrixObservation(
+        prompt_id="content-only",
+        model_id="model-a",
+        reasoning_mode_id="disabled",
+        repetition=1,
+        qualification_report=qualification_report,
+        run_directory=run,
+    )
+
+    report, _, proposal_path, review_path = ModelConsensusService().evaluate(
+        matrix_id="matrix-v1",
+        corpus_id="semantic-roles-v1",
+        prompt_id="content-only",
+        reasoning_mode_id="disabled",
+        observations=(observation,),
+        output_directory=tmp_path / "consensus",
+        corpus_root=corpus_root,
+        min_models=3,
+    )
+
+    clause = report.clauses[0]
+    assert clause.reference == "8.4.5"
+    assert clause.title == "Software unit verification"
+    assert clause.clause_text == "The supplier shall verify the software unit."
+
+    review = review_path.read_text(encoding="utf-8")
+    assert "## ISO26262-6:8.4.5 — Software unit verification" in review
+    assert "- Stable clause ID: `clause-1`" in review
+    assert "### Clause text" in review
+    assert "The supplier shall verify the software unit." in review
+
+    proposal = yaml.safe_load(proposal_path.read_text(encoding="utf-8"))
+    assert proposal["clauses"][0]["reference"] == "8.4.5"
+    assert proposal["clauses"][0]["clause_text"].startswith("The supplier")

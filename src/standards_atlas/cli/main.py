@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 import json
 import shutil
 import subprocess
 import time
-from contextlib import nullcontext
 from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
@@ -101,10 +101,10 @@ from standards_atlas.application.services.evaluation import (
     PromptRepository,
     ProposalProgress,
     ProposalRunConfig,
+    proposal_run_directory,
     QualificationMatrixManifest,
     SamplingStrategy,
     SemanticAnnotationReviewService,
-    proposal_run_directory,
     resolve_prompt_version,
 )
 from standards_atlas.application.services.evaluation.defaults import (
@@ -1104,16 +1104,21 @@ def qualify_model_prompt_matrix(
             if not proposal_candidates or not review_documents:
                 if review_import.required:
                     missing = (
-                        "proposal candidates" if not proposal_candidates else "Markdown reviews"
+                        "proposal candidates"
+                        if not proposal_candidates
+                        else "Markdown reviews"
                     )
                     missing_path = (
                         review_import.run_directory
                         if not proposal_candidates
                         else review_import.review_directory
                     )
-                    raise ValueError(f"required review import has no {missing}: {missing_path}")
+                    raise ValueError(
+                        f"required review import has no {missing}: {missing_path}"
+                    )
                 typer.echo(
-                    f"Skipping optional review import: {review_import.run_directory}",
+                    "Skipping optional review import: "
+                    f"{review_import.run_directory}",
                     err=True,
                 )
                 continue
@@ -1222,7 +1227,9 @@ def qualify_model_prompt_matrix(
                                 max_tokens=max_tokens or prompt.max_output_tokens,
                             )
                             if run_mode == "recompute":
-                                run_directory = proposal_run_directory(proposal_config, run_root)
+                                run_directory = proposal_run_directory(
+                                    proposal_config, run_root
+                                )
                                 proposal_candidates = tuple(
                                     run_directory.glob("*/evaluation.yaml")
                                 ) + tuple(run_directory.glob("*/evaluation.json"))
@@ -1313,7 +1320,10 @@ def qualify_model_prompt_matrix(
                     prompt_id=manifest.consensus.prompt_id,
                     reasoning_mode_id=manifest.consensus.reasoning_mode_id,
                     observations=manifest.observations,
-                    output_directory=(manifest.consensus.output_directory / manifest.matrix_id),
+                    output_directory=(
+                        manifest.consensus.output_directory / manifest.matrix_id
+                    ),
+                    corpus_root=corpus_root,
                     min_models=manifest.consensus.min_models,
                     strong_threshold=manifest.consensus.strong_threshold,
                     majority_threshold=manifest.consensus.majority_threshold,

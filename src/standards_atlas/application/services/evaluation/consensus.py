@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -12,6 +13,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.services.evaluation.annotations import (
     ClauseEvaluationAnnotation,
+)
+from standards_atlas.application.services.evaluation.repository import (
+    EvaluationDatasetRepository,
 )
 from standards_atlas.domain.model import StatementFunction
 
@@ -39,6 +43,8 @@ class ClauseConsensus(BaseModel):
     clause_id: str
     document_key: str
     reference: str | None = None
+    title: str | None = None
+    clause_text: str | None = None
     category: ConsensusCategory
     proposed_functions: tuple[StatementFunction, ...] = ()
     confidence: float = Field(ge=0.0, le=1.0)
@@ -74,6 +80,7 @@ class ModelConsensusService:
         reasoning_mode_id: str,
         observations: tuple[object, ...],
         output_directory: Path,
+        corpus_root: Path | None = None,
         min_models: int = 3,
         strong_threshold: float = 0.8,
         majority_threshold: float = 0.6,
@@ -82,8 +89,8 @@ class ModelConsensusService:
         selected = tuple(
             item
             for item in observations
-            if item.prompt_id == prompt_id
-            and item.reasoning_mode_id == reasoning_mode_id
+            if getattr(item, "prompt_id") == prompt_id
+            and getattr(item, "reasoning_mode_id") == reasoning_mode_id
             and getattr(item, "run_directory", None) is not None
         )
         if not selected:
@@ -95,9 +102,10 @@ class ModelConsensusService:
         predictions: dict[str, dict[str, list[ClauseEvaluationAnnotation]]] = defaultdict(
             lambda: defaultdict(list)
         )
+        clause_contexts = _load_clause_contexts(selected, corpus_root)
         for observation in selected:
-            run_directory = Path(observation.run_directory)
-            model_id = str(observation.model_id)
+            run_directory = Path(getattr(observation, "run_directory"))
+            model_id = str(getattr(observation, "model_id"))
             for evaluation_path in sorted(run_directory.glob("*/evaluation.yaml")):
                 payload = yaml.safe_load(evaluation_path.read_text(encoding="utf-8")) or {}
                 annotation = ClauseEvaluationAnnotation.model_validate(
@@ -157,11 +165,14 @@ class ModelConsensusService:
                 category = ConsensusCategory.DISPUTED
                 confidence = exact_agreement
 
+            context = clause_contexts.get(clause_id, {})
             clauses.append(
                 ClauseConsensus(
                     clause_id=clause_id,
                     document_key=clause_reference.document_key,
-                    reference=None,
+                    reference=_optional_text(context.get("reference")),
+                    title=_optional_text(context.get("title")),
+                    clause_text=_optional_text(context.get("text")),
                     category=category,
                     proposed_functions=proposed,
                     confidence=confidence,
@@ -200,6 +211,9 @@ class ModelConsensusService:
                         {
                             "clause_id": item.clause_id,
                             "document_key": item.document_key,
+                            "reference": item.reference,
+                            "title": item.title,
+                            "clause_text": item.clause_text,
                             "statement_functions": [
                                 value.value for value in item.proposed_functions
                             ],
@@ -235,7 +249,8 @@ def _render_review(report: ConsensusReport) -> str:
     uncertain = [
         item
         for item in report.clauses
-        if item.category not in {ConsensusCategory.UNANIMOUS, ConsensusCategory.STRONG}
+        if item.category
+        not in {ConsensusCategory.UNANIMOUS, ConsensusCategory.STRONG}
     ]
     if not uncertain:
         lines.extend(["No clauses require review.", ""])
@@ -244,7 +259,17 @@ def _render_review(report: ConsensusReport) -> str:
         proposed = ", ".join(value.value for value in item.proposed_functions) or "none"
         lines.extend(
             [
-                f"## {item.document_key}:{item.clause_id}",
+                _review_heading(item),
+                "",
+                f"- Stable clause ID: `{item.clause_id}`",
+                f"- Clause reference: `{item.reference or 'unavailable'}`",
+                *([f"- Clause title: {item.title}"] if item.title else []),
+                "",
+                "### Clause text",
+                "",
+                "```text",
+                item.clause_text or "Clause text unavailable in the evaluation dataset.",
+                "```",
                 "",
                 f"- Category: `{item.category.value}`",
                 f"- Proposal: `{proposed}`",
@@ -255,7 +280,53 @@ def _render_review(report: ConsensusReport) -> str:
         for vote in item.votes:
             labels = ", ".join(value.value for value in vote.statement_functions) or "none"
             lines.append(
-                f"  - `{vote.model_id}`: `{labels}` (repeat stability {vote.stability:.3f})"
+                f"  - `{vote.model_id}`: `{labels}` "
+                f"(repeat stability {vote.stability:.3f})"
             )
         lines.extend(["", "### HITL decision", "", "- Statement functions: ", "- Rationale: ", ""])
     return "\n".join(lines)
+
+
+def _load_clause_contexts(
+    observations: tuple[object, ...], corpus_root: Path | None
+) -> dict[str, dict[str, object]]:
+    if corpus_root is None:
+        return {}
+    for observation in observations:
+        run_directory = Path(getattr(observation, "run_directory"))
+        evaluation_path = next(iter(sorted(run_directory.glob("*/evaluation.yaml"))), None)
+        if evaluation_path is None:
+            continue
+        payload = yaml.safe_load(evaluation_path.read_text(encoding="utf-8")) or {}
+        run = payload.get("run") or {}
+        task = run.get("task")
+        dataset_version = run.get("dataset_version")
+        if not isinstance(task, str) or not isinstance(dataset_version, str):
+            continue
+        dataset = EvaluationDatasetRepository(corpus_root).load(task, dataset_version)
+        contexts: dict[str, dict[str, object]] = {}
+        for example in dataset.examples:
+            content = dict(example.input.get("content", {}))
+            context = dict(example.input.get("context", {}))
+            contexts[example.id] = {
+                "reference": context.get("reference"),
+                "title": context.get("title"),
+                "text": content.get("text"),
+            }
+        return contexts
+    return {}
+
+
+def _optional_text(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def _review_heading(item: ClauseConsensus) -> str:
+    readable = item.reference or item.clause_id
+    heading = f"## {item.document_key}:{readable}"
+    if item.title:
+        heading += f" — {item.title}"
+    return heading
