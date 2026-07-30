@@ -27,36 +27,45 @@ def test_classifier_separates_statement_structure_status_and_domain():
     assert classification.domain_functions[0].functions == ("verification",)
 
 
-def test_main_body_defaults_to_normative() -> None:
+def test_main_standard_body_defaults_to_normative():
     result = SemanticClassifier().classify(
-        SemanticClassificationContext(reference="5.3.1", heading="General requirements")
+        SemanticClassificationContext(reference="5.1", heading="General")
     )
-
     assert result.classification.normative_status is NormativeStatus.NORMATIVE
 
 
-def test_informative_annex_status_is_detected_from_heading() -> None:
+def test_note_example_and_guideline_are_informative():
+    classifier = SemanticClassifier()
+    cases = (
+        ("NOTE: This explains the requirement.", StatementFunction.NOTE),
+        ("EXAMPLE 1: A possible implementation.", StatementFunction.EXAMPLE),
+        ("Guidelines for verification", StatementFunction.GUIDELINE),
+    )
+    for text, function in cases:
+        result = classifier.classify(
+            SemanticClassificationContext(reference="5.1", heading=text, text=text)
+        )
+        assert function in result.classification.statement_functions
+        assert result.classification.normative_status is NormativeStatus.INFORMATIVE
+
+
+def test_guidelines_document_is_informative_by_default():
     result = SemanticClassifier().classify(
         SemanticClassificationContext(
-            reference="A",
-            heading="Annex A (informative) — Examples",
+            reference="5.1",
+            heading="General",
+            document_title="ISO 26262-10, Guidelines on ISO 26262",
         )
     )
-
     assert result.classification.normative_status is NormativeStatus.INFORMATIVE
 
 
-def test_annex_without_status_remains_unspecified() -> None:
+def test_annex_status_is_inherited_from_context():
     result = SemanticClassifier().classify(
-        SemanticClassificationContext(reference="A.1", heading="Examples")
+        SemanticClassificationContext(
+            reference="A.2.1",
+            heading="Example calculation",
+            annex_status=NormativeStatus.INFORMATIVE,
+        )
     )
-
-    assert result.classification.normative_status is NormativeStatus.UNSPECIFIED
-
-
-def test_bibliography_defaults_to_informative() -> None:
-    result = SemanticClassifier().classify(
-        SemanticClassificationContext(reference="", heading="Bibliography")
-    )
-
     assert result.classification.normative_status is NormativeStatus.INFORMATIVE

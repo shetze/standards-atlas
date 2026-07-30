@@ -113,6 +113,7 @@ from standards_atlas.application.services.evaluation.defaults import (
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
     WorkflowRunReporter,
+    WorkflowStage,
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.printers import print_document_summary
@@ -1549,10 +1550,29 @@ def run_workflow(
         bool,
         typer.Option(
             "--force",
-            help="Regenerate reproducible artifacts using supported replacement options.",
+            help="Regenerate all reproducible artifacts, including Docling output.",
         ),
     ] = cli_defaults.DEFAULT_FALSE,
+    overwrite: Annotated[
+        bool,
+        typer.Option(
+            "--overwrite",
+            help="Regenerate derived artifacts; combine with --keep to reuse selected stages.",
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
+    keep: Annotated[
+        list[WorkflowStage] | None,
+        typer.Option(
+            "--keep",
+            help="Reuse an existing stage while overwriting later artifacts; repeat as needed.",
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
+    if force and overwrite:
+        raise typer.BadParameter("--force and --overwrite are mutually exclusive")
+    if keep and not overwrite:
+        raise typer.BadParameter("--keep requires --overwrite")
+
     model = YamlStandardCatalogReader().read(catalog)
     keys = (
         model.doorstop_hierarchy(hierarchy).families
@@ -1563,7 +1583,8 @@ def run_workflow(
         model,
         family_keys=keys,
         catalog_root=Path.cwd(),
-        force=force,
+        force=force or overwrite,
+        keep_stages=tuple(keep or ()),
         hierarchy_key=hierarchy,
     )
     result = EndToEndWorkflowService().execute(
@@ -2302,7 +2323,7 @@ def convert_pdf_with_docling(
 
         target = repository.document_path(document_key)
         server = _managed_llm_server(llm_config)
-        with server.paused_for_exclusive_accelerator():
+        with server.stopped_for_exclusive_accelerator():
             generated = service.convert(file, target, overwrite=overwrite)
         repository.save_metadata(document_key, converter.conversion_metadata(file))
     except (

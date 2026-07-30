@@ -120,6 +120,13 @@ class RamaLamaServerManager:
             if was_running:
                 self.start()
 
+    @contextmanager
+    def stopped_for_exclusive_accelerator(self) -> Iterator[None]:
+        """Stop a running server and leave it stopped after an exclusive GPU workload."""
+        if self.status().running:
+            self.stop()
+        yield
+
     def _port(self) -> int:
         parsed = urlparse(self._config.base_url)
         if parsed.scheme not in {"http", "https"} or parsed.hostname not in {

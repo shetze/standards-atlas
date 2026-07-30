@@ -303,27 +303,40 @@ class AtlasDataOnboardingService:
         ordered = sorted(
             discovered.values(), key=lambda clause: _reference_sort_key(clause.reference)
         )
+        annex_statuses = {
+            clause.reference: NormativeStatus(clause.annex_status)
+            for clause in ordered
+            if clause.reference.isalpha() and clause.annex_status is not None
+        }
+        document_title = _document_title(document)
         classified: list[DiscoveredClause] = []
         for clause in ordered:
+            annex_identifier = clause.reference.split(".", 1)[0]
+            inherited_annex_status = annex_statuses.get(
+                annex_identifier, NormativeStatus.UNSPECIFIED
+            )
+            classification = self._role_classifier.classify(
+                SemanticClassificationContext(
+                    reference=clause.reference,
+                    heading=clause.title,
+                    ancestor_structures=_ancestor_structures(
+                        clause.reference, classified, self._role_classifier
+                    ),
+                    annex_status=inherited_annex_status,
+                    document_title=document_title,
+                )
+            ).classification
             classified.append(
                 DiscoveredClause(
                     reference=clause.reference,
                     title=clause.title,
-                    type_marker=_atlasdata_marker(
-                        self._role_classifier.classify(
-                            SemanticClassificationContext(
-                                reference=clause.reference,
-                                heading=clause.title,
-                                ancestor_structures=_ancestor_structures(
-                                    clause.reference, classified, self._role_classifier
-                                ),
-                                annex_status=(clause.annex_status or NormativeStatus.UNSPECIFIED),
-                            )
-                        ).classification,
-                        clause.title,
-                    ),
+                    type_marker=_atlasdata_marker(classification, clause.title),
                     source_item_ids=clause.source_item_ids,
-                    annex_status=clause.annex_status,
+                    annex_status=(
+                        inherited_annex_status.value
+                        if inherited_annex_status is not NormativeStatus.UNSPECIFIED
+                        else None
+                    ),
                 )
             )
         return tuple(classified)
@@ -579,3 +592,11 @@ def _parse_compressible_token(token: str) -> tuple[str, str, int] | None:
 
 def _sanitize_field(value: str) -> str:
     return value.replace(";", ",").replace("\n", " ").strip()
+
+
+def _document_title(document: dict[str, Any]) -> str:
+    candidates = [str(document.get("name", ""))]
+    for item in document.get("texts", [])[:20]:
+        if item.get("label") in {"title", "section_header"}:
+            candidates.append(str(item.get("text", "")))
+    return " — ".join(value.strip() for value in candidates if value.strip())

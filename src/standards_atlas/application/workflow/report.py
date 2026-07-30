@@ -83,6 +83,7 @@ class WorkflowRunReporter:
             "hierarchy": hierarchy_key,
             "families": list(plan.families),
             "force": plan.force,
+            "kept_stages": [stage.value for stage in plan.kept_stages],
             "plan_sha256": plan_hash,
             "inputs": [asdict(item) for item in inputs],
             "summary": {

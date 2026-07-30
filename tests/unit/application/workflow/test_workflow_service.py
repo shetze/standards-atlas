@@ -576,6 +576,44 @@ def test_force_removes_existing_outputs_before_regeneration(tmp_path: Path) -> N
     assert output.read_text(encoding="utf-8") == "new\n"
 
 
+def test_overwrite_can_keep_existing_docling_output(tmp_path: Path) -> None:
+    from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
+
+    docling_output = tmp_path / ".atlas" / "docling" / "DOC" / "document.json"
+    docling_output.parent.mkdir(parents=True)
+    docling_output.write_text("existing docling\n", encoding="utf-8")
+    conversion = docling_output.with_name("conversion.json")
+    source = tmp_path / "DOC.pdf"
+    source.write_bytes(b"pdf")
+
+    # Use a non-Docling step here to isolate the stage-preservation policy from
+    # Docling repository metadata validation.
+    step = WorkflowStep(
+        "FAMILY",
+        "DOC",
+        WorkflowStage.DOCLING,
+        ("noop",),
+        ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/docling/DOC/document.json",),
+    )
+    runner = RecordingRunner()
+
+    result = EndToEndWorkflowService().execute(
+        WorkflowPlan(
+            families=("FAMILY",),
+            steps=(step,),
+            force=True,
+            kept_stages=(WorkflowStage.DOCLING,),
+        ),
+        project_root=tmp_path,
+        runner=runner,
+    )
+
+    assert result.executed_steps == ()
+    assert runner.commands == []
+    assert docling_output.read_text(encoding="utf-8") == "existing docling\n"
+
+
 def test_force_resets_editable_review_exports() -> None:
     catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
     plan = EndToEndWorkflowService().plan(

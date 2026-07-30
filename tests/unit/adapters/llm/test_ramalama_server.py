@@ -87,6 +87,33 @@ def test_pause_restores_server_after_workload_failure() -> None:
     assert manager.start.call_count == 1
 
 
+def test_stop_for_exclusive_accelerator_leaves_running_server_stopped() -> None:
+    manager = RamaLamaServerManager(_config())
+    manager.status = Mock(return_value=RamaLamaServerStatus(True))  # type: ignore[method-assign]
+    manager.stop = Mock()  # type: ignore[method-assign]
+    manager.start = Mock()  # type: ignore[method-assign]
+
+    with manager.stopped_for_exclusive_accelerator():
+        pass
+
+    assert manager.stop.call_count == 1
+    manager.start.assert_not_called()
+
+
+def test_stop_for_exclusive_accelerator_does_not_restore_after_failure() -> None:
+    manager = RamaLamaServerManager(_config())
+    manager.status = Mock(return_value=RamaLamaServerStatus(True))  # type: ignore[method-assign]
+    manager.stop = Mock()  # type: ignore[method-assign]
+    manager.start = Mock()  # type: ignore[method-assign]
+
+    with pytest.raises(RuntimeError, match="conversion failed"):
+        with manager.stopped_for_exclusive_accelerator():
+            raise RuntimeError("conversion failed")
+
+    assert manager.stop.call_count == 1
+    manager.start.assert_not_called()
+
+
 def test_rejects_remote_endpoint_for_managed_server() -> None:
     manager = RamaLamaServerManager(LlmConfig(base_url="https://example.com/v1"))
     manager.status = Mock(return_value=RamaLamaServerStatus(False))  # type: ignore[method-assign]

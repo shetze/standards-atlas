@@ -20,6 +20,7 @@ class StatementFunction(StrEnum):
     RATIONALE = "rationale"
     EXAMPLE = "example"
     NOTE = "note"
+    GUIDELINE = "guideline"
     CONFORMANCE_STATEMENT = "conformance_statement"
 
 

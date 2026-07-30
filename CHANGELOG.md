@@ -5,3 +5,7 @@
   documents so HITL decisions can be made without looking up clauses externally.
 - Preserve the same clause context in consensus reports and golden-corpus proposals.
 - Resolve review context from existing corpus datasets during qualification-matrix recomputation.
+
+### Added
+
+- `workflow run --overwrite --keep <stage>` for regenerating downstream derived artifacts while reusing selected existing stages such as Docling conversion output.

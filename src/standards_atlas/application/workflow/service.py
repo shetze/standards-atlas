@@ -55,6 +55,7 @@ class WorkflowPlan:
     families: tuple[str, ...]
     steps: tuple[WorkflowStep, ...]
     force: bool = False
+    kept_stages: tuple[WorkflowStage, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -85,6 +86,7 @@ class EndToEndWorkflowService:
         family_keys: tuple[str, ...],
         catalog_root: Path,
         force: bool = False,
+        keep_stages: tuple[WorkflowStage, ...] = (),
         hierarchy_key: str | None = None,
     ) -> WorkflowPlan:
         steps: list[WorkflowStep] = []
@@ -125,7 +127,12 @@ class EndToEndWorkflowService:
                     output_paths=(f"local/exports/doorstop/{hierarchy.key}",),
                 )
             )
-        return WorkflowPlan(families=family_keys, steps=tuple(steps), force=force)
+        return WorkflowPlan(
+            families=family_keys,
+            steps=tuple(steps),
+            force=force,
+            kept_stages=keep_stages,
+        )
 
     def execute(
         self,
@@ -167,7 +174,7 @@ class EndToEndWorkflowService:
                 if docling_state is not None
                 else self._outputs_exist(step, project_root)
             )
-            if plan.force and outputs_exist:
+            if plan.force and outputs_exist and step.stage not in plan.kept_stages:
                 self._remove_outputs(step, project_root)
                 outputs_exist = False
 

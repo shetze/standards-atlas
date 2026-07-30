@@ -37,16 +37,22 @@ from standards_atlas.application.model.normalized_document import (
 from standards_atlas.application.services.engineering_construction_contract import (
     EngineeringConstructionContractValidator,
 )
+from standards_atlas.application.services.semantic_classifier import (
+    SemanticClassificationContext,
+    SemanticClassifier,
+)
 from standards_atlas.domain.model import (
     ArtifactLineage,
     Clause,
     CodeBlock,
     ContentBlock,
     DocumentKey,
+    DocumentStructure,
     EngineeringDocument,
     FormulaBlock,
     ListBlock,
     ListItem,
+    NormativeStatus,
     PictureBlock,
     TableBlock,
     TextBlock,
@@ -88,6 +94,7 @@ class ContentEnrichmentService:
         self._documents = FileSystemEngineeringDocumentRepository(workspace)
         self._normalized = NormalizationArtifactRepository(workspace)
         self._alignments = AlignmentArtifactRepository(workspace)
+        self._semantic_classifier = SemanticClassifier()
         self._reviews = AlignmentReviewRepository(workspace)
         self._contracts = EngineeringConstructionContractRepository(workspace)
         self._contract_validator = EngineeringConstructionContractValidator()
@@ -162,12 +169,45 @@ class ContentEnrichmentService:
                 enriched_count += 1
             else:
                 empty_count += 1
+            enriched_clause = clause.model_copy(
+                update={
+                    "title": _enriched_title(clause, clause_alignment),
+                    "content": blocks,
+                    "text": None,
+                }
+            )
+            current = enriched_clause.semantic_classification
+            structure = current.document_structure
+            annex_status = (
+                current.normative_status
+                if structure is not None and structure.category is DocumentStructure.ANNEX
+                else NormativeStatus.UNSPECIFIED
+            )
+            detected = self._semantic_classifier.classify_deterministically(
+                SemanticClassificationContext(
+                    reference=enriched_clause.reference.clause,
+                    heading=enriched_clause.title or "",
+                    text=enriched_clause.plain_text,
+                    annex_status=annex_status,
+                    document_title=document.title,
+                )
+            ).classification
             enriched_clauses.append(
-                clause.model_copy(
+                enriched_clause.model_copy(
                     update={
-                        "title": _enriched_title(clause, clause_alignment),
-                        "content": blocks,
-                        "text": None,
+                        "semantic_classification": current.model_copy(
+                            update={
+                                "statement_functions": tuple(
+                                    dict.fromkeys(
+                                        (
+                                            *current.statement_functions,
+                                            *detected.statement_functions,
+                                        )
+                                    )
+                                ),
+                                "normative_status": detected.normative_status,
+                            }
+                        )
                     }
                 )
             )

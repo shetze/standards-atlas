@@ -56,6 +56,7 @@ def map_atlas_data_to_standard(
 ) -> Standard:
     title_lookup = _build_title_lookup(atlas_data)
 
+    annex_statuses = _annex_statuses(atlas_data, title_lookup)
     clauses = tuple(
         _map_structure_item_to_clause(
             item=item,
@@ -63,6 +64,11 @@ def map_atlas_data_to_standard(
             year=atlas_data.metadata.official_year,
             title=title_lookup.get((item.volume, item.visible_reference)),
             text=None,
+            document_title=atlas_data.metadata.name,
+            annex_status=annex_statuses.get(
+                (item.volume, item.visible_reference.split(".", 1)[0]),
+                NormativeStatus.UNSPECIFIED,
+            ),
         )
         for item in atlas_data.structure_items
     )
@@ -179,6 +185,8 @@ def _map_structure_item_to_clause(
     year: int | None,
     title: str | None,
     text: str | None,
+    document_title: str,
+    annex_status: NormativeStatus,
 ) -> Clause:
     return Clause(
         id=_build_clause_id(
@@ -197,6 +205,9 @@ def _map_structure_item_to_clause(
             clause_type=_ITEM_TYPE_MAPPING[item.item_type],
             visible_reference=item.visible_reference,
             title=title,
+            text=text,
+            document_title=document_title,
+            annex_status=annex_status,
         ),
         title=title,
         text=text,
@@ -212,64 +223,63 @@ def _infer_semantic_classification(
     clause_type: ClauseType,
     visible_reference: str,
     title: str | None,
+    text: str | None,
+    document_title: str,
+    annex_status: NormativeStatus,
 ) -> SemanticClassification:
-    """Infer independent structural and statement dimensions conservatively."""
-    normalized_title = (title or "").strip().lower()
-    structure = DocumentStructure.BODY
-    functions: list[StatementFunction] = []
+    from standards_atlas.application.services.semantic_classifier import (
+        SemanticClassificationContext,
+        SemanticClassifier,
+    )
 
-    if clause_type == ClauseType.SCOPE or normalized_title == "scope":
-        structure = DocumentStructure.SCOPE
-    elif clause_type == ClauseType.TERM or "terms and definition" in normalized_title:
-        structure = DocumentStructure.TERMINOLOGY
+    classification = (
+        SemanticClassifier()
+        .classify_deterministically(
+            SemanticClassificationContext(
+                reference=visible_reference,
+                heading=title or "",
+                text=text or "",
+                annex_status=annex_status,
+                document_title=document_title,
+            )
+        )
+        .classification
+    )
+    functions = list(classification.statement_functions)
+    structure = classification.document_structure
+    if clause_type == ClauseType.SCOPE:
+        structure = DocumentStructureClassification(
+            family="iso_iec_standard", category=DocumentStructure.SCOPE
+        )
+    if clause_type == ClauseType.TERM:
         functions.append(StatementFunction.DEFINITION)
-    elif "normative reference" in normalized_title:
-        structure = DocumentStructure.REFERENCES
-    elif "bibliography" in normalized_title:
-        structure = DocumentStructure.BIBLIOGRAPHY
-    elif "annex" in normalized_title or re.match(r"^[A-Z]+(?:\.|$)", visible_reference):
-        structure = DocumentStructure.ANNEX
-
+        structure = DocumentStructureClassification(
+            family="iso_iec_standard", category=DocumentStructure.TERMINOLOGY
+        )
     if clause_type == ClauseType.REQUIREMENT:
         functions.append(StatementFunction.REQUIREMENT)
-    if "recommendation" in normalized_title:
-        functions.append(StatementFunction.RECOMMENDATION)
-    if "conformance" in normalized_title or "compliance" in normalized_title:
-        functions.append(StatementFunction.CONFORMANCE_STATEMENT)
-
-    normative_status = _infer_normative_status(
-        structure=structure,
-        title=title or "",
-    )
-
-    return SemanticClassification(
-        statement_functions=tuple(dict.fromkeys(functions)),
-        document_structure=DocumentStructureClassification(
-            family="iso_iec_standard",
-            category=structure,
-            annex_identifier=(
-                visible_reference.split(".", 1)[0] if structure is DocumentStructure.ANNEX else None
-            ),
-        ),
-        normative_status=normative_status,
+    return classification.model_copy(
+        update={
+            "statement_functions": tuple(dict.fromkeys(functions)),
+            "document_structure": structure,
+        }
     )
 
 
-def _infer_normative_status(*, structure: DocumentStructure, title: str) -> NormativeStatus:
-    if structure is DocumentStructure.ANNEX:
+def _annex_statuses(
+    atlas_data: AtlasStandardData,
+    title_lookup: dict[tuple[str | None, str], str],
+) -> dict[tuple[str | None, str], NormativeStatus]:
+    statuses: dict[tuple[str | None, str], NormativeStatus] = {}
+    for item in atlas_data.structure_items:
+        reference = item.visible_reference
+        if not reference.isalpha():
+            continue
+        title = title_lookup.get((item.volume, reference), "")
         match = re.search(r"\b(normative|informative)\b", title, re.I)
-        if match is None:
-            return NormativeStatus.UNSPECIFIED
-        return NormativeStatus(match.group(1).lower())
-    if structure in {
-        DocumentStructure.FRONT_MATTER,
-        DocumentStructure.FOREWORD,
-        DocumentStructure.INTRODUCTION,
-        DocumentStructure.BIBLIOGRAPHY,
-        DocumentStructure.BACK_MATTER,
-    }:
-        return NormativeStatus.INFORMATIVE
-    return NormativeStatus.NORMATIVE
+        if match is not None:
+            statuses[(item.volume, reference)] = NormativeStatus(match.group(1).lower())
+    return statuses
 
 
 def _build_clause_id(

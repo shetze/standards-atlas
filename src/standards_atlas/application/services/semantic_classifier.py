@@ -32,6 +32,8 @@ class SemanticClassificationContext:
     taxonomy_version: str = "1.0.0"
     ancestor_structures: tuple[DocumentStructure, ...] = ()
     annex_status: NormativeStatus = NormativeStatus.UNSPECIFIED
+    document_title: str = ""
+    document_normative_status: NormativeStatus = NormativeStatus.UNSPECIFIED
 
 
 @dataclass(frozen=True)
@@ -80,10 +82,14 @@ class SemanticClassifier:
         heading = _normalize_heading(context.heading)
         evidence: list[SemanticEvidence] = []
         structure = self._structure(context, heading, evidence)
-        statement_functions = self._statement_functions(context.text, evidence)
+        statement_functions = self._statement_functions(
+            "\n".join(value for value in (context.heading, context.text) if value), evidence
+        )
         domain_functions = self._domain_functions(context, heading, evidence)
+        normative_status = self._normative_status(
+            context, structure.category, statement_functions, evidence
+        )
         confidence = max((item.confidence for item in evidence), default=0.0)
-        normative_status = self._normative_status(context, structure, evidence)
         return SemanticClassificationResult(
             classification=SemanticClassification(
                 statement_functions=statement_functions,
@@ -94,6 +100,58 @@ class SemanticClassifier:
             confidence=confidence,
             evidence=tuple(evidence),
         )
+
+    @staticmethod
+    def _normative_status(context, structure, statement_functions, evidence):
+        # Notes, examples and guidelines never carry normative provisions.
+        informative_functions = {
+            StatementFunction.NOTE,
+            StatementFunction.EXAMPLE,
+            StatementFunction.GUIDELINE,
+        }
+        if informative_functions.intersection(statement_functions):
+            evidence.append(
+                SemanticEvidence("informative_statement_function", "semantic_role", 1.0)
+            )
+            return NormativeStatus.INFORMATIVE
+
+        # Explicit annex declarations govern the complete annex subtree.
+        if context.annex_status is not NormativeStatus.UNSPECIFIED:
+            evidence.append(
+                SemanticEvidence("annex_normative_status", context.annex_status.value, 1.0)
+            )
+            return context.annex_status
+
+        if structure in {
+            DocumentStructure.FOREWORD,
+            DocumentStructure.INTRODUCTION,
+            DocumentStructure.BIBLIOGRAPHY,
+            DocumentStructure.FRONT_MATTER,
+            DocumentStructure.BACK_MATTER,
+        }:
+            evidence.append(
+                SemanticEvidence("informative_document_structure", structure.value, 1.0)
+            )
+            return NormativeStatus.INFORMATIVE
+
+        document_status = context.document_normative_status
+        if document_status is NormativeStatus.UNSPECIFIED:
+            document_status = _document_normative_status(context.document_title)
+        if document_status is not NormativeStatus.UNSPECIFIED:
+            evidence.append(
+                SemanticEvidence("document_normative_status", document_status.value, 0.98)
+            )
+            return document_status
+
+        # Annexes without an explicit marker remain genuinely undecidable.
+        if structure is DocumentStructure.ANNEX:
+            return NormativeStatus.UNSPECIFIED
+
+        # ISO/IEC standards use the main body as the normative default.
+        if context.document_family == "iso_iec_standard":
+            evidence.append(SemanticEvidence("standard_body_default", "normative", 0.9))
+            return NormativeStatus.NORMATIVE
+        return NormativeStatus.UNSPECIFIED
 
     @staticmethod
     def _structure(context, heading, evidence):
@@ -119,35 +177,19 @@ class SemanticClassifier:
         )
 
     @staticmethod
-    def _normative_status(context, structure, evidence):
-        if structure.category is DocumentStructure.ANNEX:
-            annex_status = NormativeStatus(context.annex_status)
-            if annex_status is not NormativeStatus.UNSPECIFIED:
-                evidence.append(SemanticEvidence("explicit_annex_status", annex_status.value, 1.0))
-                return annex_status
-            heading_status = _explicit_normative_status(context.heading)
-            if heading_status is not None:
-                evidence.append(SemanticEvidence("annex_heading_status", heading_status.value, 1.0))
-                return heading_status
-            return NormativeStatus.UNSPECIFIED
-
-        if structure.category in {
-            DocumentStructure.FRONT_MATTER,
-            DocumentStructure.FOREWORD,
-            DocumentStructure.INTRODUCTION,
-            DocumentStructure.BIBLIOGRAPHY,
-            DocumentStructure.BACK_MATTER,
-        }:
-            evidence.append(SemanticEvidence("structural_normative_default", "informative", 0.95))
-            return NormativeStatus.INFORMATIVE
-
-        evidence.append(SemanticEvidence("main_body_normative_default", "normative", 0.95))
-        return NormativeStatus.NORMATIVE
-
-    @staticmethod
     def _statement_functions(text, evidence):
         text = text.strip()
         functions: list[StatementFunction] = []
+        prefix_patterns = (
+            (StatementFunction.NOTE, r"^\s*note(?:\s+\d+)?\s*[:.—-]"),
+            (StatementFunction.EXAMPLE, r"^\s*example(?:\s+\d+)?\s*[:.—-]"),
+            (StatementFunction.GUIDELINE, r"^\s*guidelines?\b"),
+        )
+        for function, pattern in prefix_patterns:
+            if re.search(pattern, text, re.I):
+                functions.append(function)
+                evidence.append(SemanticEvidence("statement_marker", function.value, 1.0))
+
         patterns = (
             (StatementFunction.PROHIBITION, r"\bshall\s+not\b"),
             (StatementFunction.REQUIREMENT, r"\bshall\b"),
@@ -190,8 +232,10 @@ def _is_annex_reference(reference: str) -> bool:
     return re.fullmatch(r"[A-Z]{1,2}(?:\.\d+)*", reference) is not None
 
 
-def _explicit_normative_status(value: str) -> NormativeStatus | None:
-    match = re.search(r"\b(normative|informative)\b", value, re.I)
-    if match is None:
-        return None
-    return NormativeStatus(match.group(1).lower())
+def _document_normative_status(title: str) -> NormativeStatus:
+    normalized = re.sub(r"\s+", " ", title).strip()
+    if not normalized:
+        return NormativeStatus.UNSPECIFIED
+    if re.search(r"\bguidelines?\s+(?:on|for|to)\b", normalized, re.I):
+        return NormativeStatus.INFORMATIVE
+    return NormativeStatus.UNSPECIFIED
