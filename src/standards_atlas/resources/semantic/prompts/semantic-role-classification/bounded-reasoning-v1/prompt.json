@@ -1,5 +1,0 @@
-{
-  "description": "Bounded internal reasoning with concise schema-only output.",
-  "task": "semantic-role-classification",
-  "version": "bounded-reasoning-v1"
-}

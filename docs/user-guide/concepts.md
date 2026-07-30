@@ -26,7 +26,7 @@ A mapping between detected source references and expected AtlasData structure. A
 
 ## EngineeringDocument
 
-The canonical, adapter-neutral domain representation. It contains clauses, structured content blocks, semantic roles, annotations, relations, and source evidence.
+The canonical, adapter-neutral domain representation. It contains clauses, structured content blocks, multidimensional semantic classifications, annotations, relations, and source evidence.
 
 ## Knowledge domain
 

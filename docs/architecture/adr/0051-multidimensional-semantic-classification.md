@@ -29,3 +29,9 @@ Resolved internal relations are rendered as Markdown links. Link generation uses
 ## Consequences
 
 Persisted EngineeringDocument and evaluation artefacts using `semantic_roles` must be regenerated. Existing gold annotations are not migrated automatically. Prompts and metrics can now be developed per semantic dimension without forcing unrelated labels into one taxonomy.
+
+
+## Supersedes
+
+- ADR 0022: Extensible semantic-role classification
+- The temporary `Clause.semantic_roles` compatibility decision in ADR 0050

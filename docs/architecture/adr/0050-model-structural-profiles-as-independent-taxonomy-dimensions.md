@@ -54,9 +54,7 @@ Extend `Relation` with an orthogonal `RelationScope`. Internal relations do not 
 a target document. External relations must identify `target_document_key`. The semantic
 relation type remains independent from its scope.
 
-Keep `Clause.semantic_roles` for compatibility with the existing evaluation and
-publication pipeline. It is now treated as a legacy mixed vocabulary to be migrated by
-later slices rather than expanded further.
+The structural profile is independent from semantic statement classification. The temporary compatibility decision for `Clause.semantic_roles` was superseded by ADR 0051 and is no longer part of the implemented architecture.
 
 ## Consequences
 
@@ -69,3 +67,8 @@ later slices rather than expanded further.
   scope metadata are optional or defaulted.
 - Evaluation schemas and metrics can be split by dimension in a later slice without a
   flag-day migration.
+
+
+## Amendment
+
+ADR 0051 supersedes the temporary compatibility decision concerning `Clause.semantic_roles`. No flat semantic-role compatibility layer remains.

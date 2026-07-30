@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by ADR 0051
 
 ## Context
 
@@ -28,3 +28,8 @@ AtlasData onboarding uses this service and maps only roles supported by legacy A
 ## Consequences
 
 Classification remains deterministic, testable, offline-capable, and explainable by default. LLM support can be added as an adapter without changing the domain model, onboarding service, or deterministic rules. The extension contract prevents silent replacement of high-confidence deterministic results.
+
+
+## Superseded by
+
+ADR 0051 replaces the flat `SemanticRole` taxonomy, classifier service, and extension port with independent `SemanticClassification` dimensions and dimension-specific evaluation tasks.

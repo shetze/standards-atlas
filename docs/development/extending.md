@@ -8,9 +8,9 @@ Translate the external representation into an existing application contract. Pre
 
 Make the rule deterministic, order-aware, and lossless. Record its transformation effect and add focused plus corpus regression tests.
 
-## Add a semantic role classifier
+## Add a semantic classifier
 
-Implement the classifier behind the application service boundary. Deterministic classification remains the default; optional LLM support must be explicit and must not silently replace reviewed metadata.
+Extend one explicit `SemanticClassification` dimension behind the application service boundary. Keep deterministic classification as the default, use the versioned dimension-specific evaluation tasks, and do not reintroduce a flat mixed-role vocabulary. Optional LLM support must be explicit and must not silently replace reviewed metadata.
 
 ## Add an exporter
 
