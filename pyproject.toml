@@ -29,7 +29,7 @@ classifiers = [
     "Intended Audience :: Information Technology",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Topic :: Software Development",
 ]
@@ -38,7 +38,6 @@ dependencies = [
     "pydantic>=2.11",
     "typer>=0.16",
     "pyyaml>=6",
-    "docling>=2.112,<3",
 ]
 
 [dependency-groups]
@@ -52,6 +51,10 @@ dev = [
 
 [project.optional-dependencies]
 
+docling = [
+    "docling>=2.112,<3",
+]
+
 mcp = [
     "mcp>=1.27,<2",
     "uvicorn>=0.35,<1",
@@ -60,14 +63,6 @@ mcp = [
 llm = [
     "sentence-transformers",
     "chromadb",
-]
-
-dev = [
-    "pytest>=8.4",
-    "pytest-cov",
-    "ruff",
-    "mypy",
-    "hypothesis>=6.135",
 ]
 
 docs = [
@@ -92,6 +87,11 @@ select = [
 ]
 
 [tool.pytest.ini_options]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+]
+xfail_strict = true
 testpaths = [
     "tests",
 ]

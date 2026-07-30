@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from standards_atlas.application.semantic_evaluation import (
+from standards_atlas.application.services.evaluation import (
     GoldenDatasetRepository,
     PromptRepository,
 )

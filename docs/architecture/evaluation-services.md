@@ -10,7 +10,7 @@ The canonical implementation lives in:
 src/standards_atlas/application/services/evaluation/
 ```
 
-The former `application/semantic_evaluation/` package remains as a compatibility facade. New code must import the generic service package.
+The former `application/semantic_evaluation/` compatibility facade has been removed. All code imports the generic service package directly.
 
 ## Responsibilities
 

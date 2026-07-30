@@ -1,10 +1,10 @@
 import json
 
-from standards_atlas.application.semantic_evaluation.models import (
+from standards_atlas.application.services.evaluation.models import (
     AggregateMetrics,
     EvaluationRun,
 )
-from standards_atlas.application.semantic_evaluation.report import SemanticEvaluationReporter
+from standards_atlas.application.services.evaluation.report import SemanticEvaluationReporter
 
 
 def test_writes_model_comparison_with_ranking(tmp_path) -> None:
