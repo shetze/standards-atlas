@@ -1,1 +1,403 @@
-{"issues":[],"items":[{"id":"normalized:b3d7950a6add1d2a4905c48a20fccbe247f3e555d737400b591c9dc6d404b5c2","layout_evidence":[{"caption_references":[],"footnote_references":[],"group_path":[],"original_text":"6.4 RAMS risk assessment","page_height":800.0,"page_width":600.0,"reference_references":[],"source_reference":"#/texts/1"}],"observed_level":2,"original_labels":["section_header"],"sequence_number":0,"source_evidence":[{"bounding_box":{"bottom":120.0,"coordinate_origin":"top_left","left":20.0,"right":200.0,"top":60.0},"extraction_method":"docling","locator":"#/texts/1","page_number":44,"source_id":"EN50126-1-EXCERPT","source_type":"pdf"}],"source_item_ids":["#/texts/1"],"text":"6.4 RAMS risk assessment","type":"heading"},{"id":"normalized:9e4540d102f74c21ca1cb47e2635a108b670eabc4f57504ae957ddf19d393d4d","layout_evidence":[{"caption_references":[],"footnote_references":[],"group_path":[],"original_text":"The risk assessment process shall identify hazards and associated risks.","page_height":800.0,"page_width":600.0,"reference_references":[],"source_reference":"#/texts/2"}],"original_labels":["text"],"sequence_number":1,"source_evidence":[{"bounding_box":{"bottom":120.0,"coordinate_origin":"top_left","left":20.0,"right":200.0,"top":100.0},"extraction_method":"docling","locator":"#/texts/2","page_number":44,"source_id":"EN50126-1-EXCERPT","source_type":"pdf"}],"source_item_ids":["#/texts/2"],"text":"The risk assessment process shall identify hazards and associated risks.","type":"text"},{"id":"normalized:e7b385b807cff45dbb8f62f5861f30aae964c3509cee7ba1f554871c60d0e4fb","layout_evidence":[{"caption_references":[],"footnote_references":[],"group_path":[],"original_text":"The results of the risk assessment shall be documented.","page_height":800.0,"page_width":600.0,"reference_references":[],"source_reference":"#/texts/4"}],"original_labels":["text"],"sequence_number":2,"source_evidence":[{"bounding_box":{"bottom":120.0,"coordinate_origin":"top_left","left":20.0,"right":200.0,"top":100.0},"extraction_method":"docling","locator":"#/texts/4","page_number":45,"source_id":"EN50126-1-EXCERPT","source_type":"pdf"}],"source_item_ids":["#/texts/4"],"text":"The results of the risk assessment shall be documented.","type":"text"},{"id":"normalized:7b6ca1152606280f8ca1b4ed8079619a2e002e8b250dd464963064db490bfb38","layout_evidence":[{"caption_references":[],"footnote_references":[],"group_path":[],"original_text":"Risk control measures shall be traceable.","page_height":800.0,"page_width":600.0,"reference_references":[],"source_reference":"#/texts/6"}],"original_labels":["text"],"sequence_number":3,"source_evidence":[{"bounding_box":{"bottom":120.0,"coordinate_origin":"top_left","left":20.0,"right":200.0,"top":100.0},"extraction_method":"docling","locator":"#/texts/6","page_number":46,"source_id":"EN50126-1-EXCERPT","source_type":"pdf"}],"source_item_ids":["#/texts/6"],"text":"Risk control measures shall be traceable.","type":"text"}],"lineage":{"artifact":{"content_hash":"a4922e8098b5ff8083d136eba994c568b7db26c6f13c69f8542185f671285754","id":"artifact:normalized_document:a4922e8098b5ff80","kind":"normalized_document"},"derived_from":[{"content_hash":"d8ebd6e1086a314d4763c7c743ff8dda42723777dc55a4891d30de04fd33e5e6","id":"artifact:docling_extraction:d8ebd6e1086a314d","kind":"docling_extraction","location":"tests/golden_corpus/cases/en50126-real-excerpt/input.docling.json","media_type":"application/json"}],"schema_version":1,"transformation_ids":["tx:9eeed04e9316130b","tx:d9354ddcbbcdfbc0","tx:359f61aaddc98f0d","tx:effd97acd0e750f4","tx:640ddab065a46d41","tx:c9a1f82de00920c1","tx:6ab29aed78439354"]},"metadata":{"normalizer_version":"0.7.0","options":{"exclude_page_ranges":[],"fail_on_data_loss":true,"merge_text_fragments":true,"normalize_lists":true,"normalize_whitespace":true,"page_list":[],"page_ranges":[],"repair_hyphenation":true,"repeated_page_element_min_occurrences":3,"suppress_footers":true,"suppress_headers":true,"suppress_repeated_page_elements":false,"unicode_form":"NFC"},"schema_version":9,"source_extraction_hash":"b6c257a20136237d9d22a9e96a768687528d12a3ceeb4db132e2d90e0b779850","statistics":{"active_source_items":4,"code_blocks":0,"duplicate_source_items":0,"excluded_pages":0,"footers_suppressed":0,"headers_suppressed":3,"hyphenations_repaired":0,"input_items":7,"lists_normalized":0,"output_items":4,"page_numbers_suppressed":0,"selected_pages":3,"source_pages":3,"suppressed_source_items":3,"text_fragments_merged":0,"unaccounted_source_items":0}},"page_furniture_decisions":[{"confidence":0.95,"distinct_pages":3,"margin_position_ratio":0.00625,"occurrences":3,"original_label":"page_header","page_number":44,"role":"page_header","rule_id":"repeated-margin-text","signature":"en <NUMBER>-<NUMBER>:<NUMBER> (e)","source_item_id":"#/texts/0","text":"EN 50126-1:2017 (E)"},{"confidence":0.95,"distinct_pages":3,"margin_position_ratio":0.00625,"occurrences":3,"original_label":"page_header","page_number":45,"role":"page_header","rule_id":"repeated-margin-text","signature":"en <NUMBER>-<NUMBER>:<NUMBER> (e)","source_item_id":"#/texts/3","text":"EN 50126-1:2017 (E)"},{"confidence":0.95,"distinct_pages":3,"margin_position_ratio":0.00625,"occurrences":3,"original_label":"page_header","page_number":46,"role":"page_header","rule_id":"repeated-margin-text","signature":"en <NUMBER>-<NUMBER>:<NUMBER> (e)","source_item_id":"#/texts/5","text":"EN 50126-1:2017 (E)"}],"source_id":"EN50126-1-EXCERPT","suppressed_items":[{"confidence":0.95,"page_number":44,"reason":"header","source_item_id":"#/texts/0","text":"EN 50126-1:2017 (E)"},{"confidence":0.95,"page_number":45,"reason":"header","source_item_id":"#/texts/3","text":"EN 50126-1:2017 (E)"},{"confidence":0.95,"page_number":46,"reason":"header","source_item_id":"#/texts/5","text":"EN 50126-1:2017 (E)"}],"transformation_ledger":{"events":[{"action":"suppress","details":{"confidence":0.95,"reason":"header"},"id":"tx:9eeed04e9316130b","output_item_ids":[],"rationale":"The source item is classified as repeated page-header furniture.","rule_id":"repeated-margin-text","source_item_ids":["#/texts/0"],"stage":"selection"},{"action":"suppress","details":{"confidence":0.95,"reason":"header"},"id":"tx:d9354ddcbbcdfbc0","output_item_ids":[],"rationale":"The source item is classified as repeated page-header furniture.","rule_id":"repeated-margin-text","source_item_ids":["#/texts/3"],"stage":"selection"},{"action":"suppress","details":{"confidence":0.95,"reason":"header"},"id":"tx:359f61aaddc98f0d","output_item_ids":[],"rationale":"The source item is classified as repeated page-header furniture.","rule_id":"repeated-margin-text","source_item_ids":["#/texts/5"],"stage":"selection"},{"action":"map","details":{},"id":"tx:effd97acd0e750f4","output_item_ids":["normalized:#/texts/1"],"rationale":"The extracted observation is mapped without semantic reinterpretation.","rule_id":"normalize.map.heading","source_item_ids":["#/texts/1"],"stage":"mapping"},{"action":"map","details":{},"id":"tx:640ddab065a46d41","output_item_ids":["normalized:#/texts/2"],"rationale":"The extracted observation is mapped without semantic reinterpretation.","rule_id":"normalize.map.text","source_item_ids":["#/texts/2"],"stage":"mapping"},{"action":"map","details":{},"id":"tx:c9a1f82de00920c1","output_item_ids":["normalized:#/texts/4"],"rationale":"The extracted observation is mapped without semantic reinterpretation.","rule_id":"normalize.map.text","source_item_ids":["#/texts/4"],"stage":"mapping"},{"action":"map","details":{},"id":"tx:6ab29aed78439354","output_item_ids":["normalized:#/texts/6"],"rationale":"The extracted observation is mapped without semantic reinterpretation.","rule_id":"normalize.map.text","source_item_ids":["#/texts/6"],"stage":"mapping"}],"schema_version":1}}
+{
+  "source_id": "EN50126-1-EXCERPT",
+  "items": [
+    {
+      "id": "normalized:b3d7950a6add1d2a4905c48a20fccbe247f3e555d737400b591c9dc6d404b5c2",
+      "sequence_number": 0,
+      "source_item_ids": [
+        "#/texts/1"
+      ],
+      "source_evidence": [
+        {
+          "source_id": "EN50126-1-EXCERPT",
+          "source_type": "pdf",
+          "locator": "#/texts/1",
+          "page_number": 44,
+          "bounding_box": {
+            "left": 20.0,
+            "top": 60.0,
+            "right": 200.0,
+            "bottom": 120.0,
+            "coordinate_origin": "top_left"
+          },
+          "extraction_method": "docling"
+        }
+      ],
+      "original_labels": [
+        "section_header"
+      ],
+      "layout_evidence": [
+        {
+          "source_reference": "#/texts/1",
+          "group_path": [],
+          "page_width": 600.0,
+          "page_height": 800.0,
+          "original_text": "6.4 RAMS risk assessment",
+          "caption_references": [],
+          "reference_references": [],
+          "footnote_references": []
+        }
+      ],
+      "type": "heading",
+      "text": "6.4 RAMS risk assessment",
+      "observed_level": 2
+    },
+    {
+      "id": "normalized:9e4540d102f74c21ca1cb47e2635a108b670eabc4f57504ae957ddf19d393d4d",
+      "sequence_number": 1,
+      "source_item_ids": [
+        "#/texts/2"
+      ],
+      "source_evidence": [
+        {
+          "source_id": "EN50126-1-EXCERPT",
+          "source_type": "pdf",
+          "locator": "#/texts/2",
+          "page_number": 44,
+          "bounding_box": {
+            "left": 20.0,
+            "top": 100.0,
+            "right": 200.0,
+            "bottom": 120.0,
+            "coordinate_origin": "top_left"
+          },
+          "extraction_method": "docling"
+        }
+      ],
+      "original_labels": [
+        "text"
+      ],
+      "layout_evidence": [
+        {
+          "source_reference": "#/texts/2",
+          "group_path": [],
+          "page_width": 600.0,
+          "page_height": 800.0,
+          "original_text": "The risk assessment process shall identify hazards and associated risks.",
+          "caption_references": [],
+          "reference_references": [],
+          "footnote_references": []
+        }
+      ],
+      "type": "text",
+      "text": "The risk assessment process shall identify hazards and associated risks."
+    },
+    {
+      "id": "normalized:e7b385b807cff45dbb8f62f5861f30aae964c3509cee7ba1f554871c60d0e4fb",
+      "sequence_number": 2,
+      "source_item_ids": [
+        "#/texts/4"
+      ],
+      "source_evidence": [
+        {
+          "source_id": "EN50126-1-EXCERPT",
+          "source_type": "pdf",
+          "locator": "#/texts/4",
+          "page_number": 45,
+          "bounding_box": {
+            "left": 20.0,
+            "top": 100.0,
+            "right": 200.0,
+            "bottom": 120.0,
+            "coordinate_origin": "top_left"
+          },
+          "extraction_method": "docling"
+        }
+      ],
+      "original_labels": [
+        "text"
+      ],
+      "layout_evidence": [
+        {
+          "source_reference": "#/texts/4",
+          "group_path": [],
+          "page_width": 600.0,
+          "page_height": 800.0,
+          "original_text": "The results of the risk assessment shall be documented.",
+          "caption_references": [],
+          "reference_references": [],
+          "footnote_references": []
+        }
+      ],
+      "type": "text",
+      "text": "The results of the risk assessment shall be documented."
+    },
+    {
+      "id": "normalized:7b6ca1152606280f8ca1b4ed8079619a2e002e8b250dd464963064db490bfb38",
+      "sequence_number": 3,
+      "source_item_ids": [
+        "#/texts/6"
+      ],
+      "source_evidence": [
+        {
+          "source_id": "EN50126-1-EXCERPT",
+          "source_type": "pdf",
+          "locator": "#/texts/6",
+          "page_number": 46,
+          "bounding_box": {
+            "left": 20.0,
+            "top": 100.0,
+            "right": 200.0,
+            "bottom": 120.0,
+            "coordinate_origin": "top_left"
+          },
+          "extraction_method": "docling"
+        }
+      ],
+      "original_labels": [
+        "text"
+      ],
+      "layout_evidence": [
+        {
+          "source_reference": "#/texts/6",
+          "group_path": [],
+          "page_width": 600.0,
+          "page_height": 800.0,
+          "original_text": "Risk control measures shall be traceable.",
+          "caption_references": [],
+          "reference_references": [],
+          "footnote_references": []
+        }
+      ],
+      "type": "text",
+      "text": "Risk control measures shall be traceable."
+    }
+  ],
+  "suppressed_items": [
+    {
+      "source_item_id": "#/texts/0",
+      "reason": "header",
+      "confidence": 0.95,
+      "text": "EN 50126-1:2017 (E)",
+      "page_number": 44
+    },
+    {
+      "source_item_id": "#/texts/3",
+      "reason": "header",
+      "confidence": 0.95,
+      "text": "EN 50126-1:2017 (E)",
+      "page_number": 45
+    },
+    {
+      "source_item_id": "#/texts/5",
+      "reason": "header",
+      "confidence": 0.95,
+      "text": "EN 50126-1:2017 (E)",
+      "page_number": 46
+    }
+  ],
+  "page_furniture_decisions": [
+    {
+      "source_item_id": "#/texts/0",
+      "role": "page_header",
+      "rule_id": "repeated-margin-text",
+      "confidence": 0.95,
+      "text": "EN 50126-1:2017 (E)",
+      "original_label": "page_header",
+      "page_number": 44,
+      "signature": "en <NUMBER>-<NUMBER>:<NUMBER> (e)",
+      "occurrences": 3,
+      "distinct_pages": 3,
+      "margin_position_ratio": 0.00625
+    },
+    {
+      "source_item_id": "#/texts/3",
+      "role": "page_header",
+      "rule_id": "repeated-margin-text",
+      "confidence": 0.95,
+      "text": "EN 50126-1:2017 (E)",
+      "original_label": "page_header",
+      "page_number": 45,
+      "signature": "en <NUMBER>-<NUMBER>:<NUMBER> (e)",
+      "occurrences": 3,
+      "distinct_pages": 3,
+      "margin_position_ratio": 0.00625
+    },
+    {
+      "source_item_id": "#/texts/5",
+      "role": "page_header",
+      "rule_id": "repeated-margin-text",
+      "confidence": 0.95,
+      "text": "EN 50126-1:2017 (E)",
+      "original_label": "page_header",
+      "page_number": 46,
+      "signature": "en <NUMBER>-<NUMBER>:<NUMBER> (e)",
+      "occurrences": 3,
+      "distinct_pages": 3,
+      "margin_position_ratio": 0.00625
+    }
+  ],
+  "transformation_ledger": {
+    "schema_version": 1,
+    "events": [
+      {
+        "id": "tx:9eeed04e9316130b",
+        "stage": "selection",
+        "rule_id": "repeated-margin-text",
+        "action": "suppress",
+        "source_item_ids": [
+          "#/texts/0"
+        ],
+        "output_item_ids": [],
+        "rationale": "The source item is classified as repeated page-header furniture.",
+        "details": {
+          "reason": "header",
+          "confidence": 0.95
+        }
+      },
+      {
+        "id": "tx:d9354ddcbbcdfbc0",
+        "stage": "selection",
+        "rule_id": "repeated-margin-text",
+        "action": "suppress",
+        "source_item_ids": [
+          "#/texts/3"
+        ],
+        "output_item_ids": [],
+        "rationale": "The source item is classified as repeated page-header furniture.",
+        "details": {
+          "reason": "header",
+          "confidence": 0.95
+        }
+      },
+      {
+        "id": "tx:359f61aaddc98f0d",
+        "stage": "selection",
+        "rule_id": "repeated-margin-text",
+        "action": "suppress",
+        "source_item_ids": [
+          "#/texts/5"
+        ],
+        "output_item_ids": [],
+        "rationale": "The source item is classified as repeated page-header furniture.",
+        "details": {
+          "reason": "header",
+          "confidence": 0.95
+        }
+      },
+      {
+        "id": "tx:effd97acd0e750f4",
+        "stage": "mapping",
+        "rule_id": "normalize.map.heading",
+        "action": "map",
+        "source_item_ids": [
+          "#/texts/1"
+        ],
+        "output_item_ids": [
+          "normalized:#/texts/1"
+        ],
+        "rationale": "The extracted observation is mapped without semantic reinterpretation.",
+        "details": {}
+      },
+      {
+        "id": "tx:640ddab065a46d41",
+        "stage": "mapping",
+        "rule_id": "normalize.map.text",
+        "action": "map",
+        "source_item_ids": [
+          "#/texts/2"
+        ],
+        "output_item_ids": [
+          "normalized:#/texts/2"
+        ],
+        "rationale": "The extracted observation is mapped without semantic reinterpretation.",
+        "details": {}
+      },
+      {
+        "id": "tx:c9a1f82de00920c1",
+        "stage": "mapping",
+        "rule_id": "normalize.map.text",
+        "action": "map",
+        "source_item_ids": [
+          "#/texts/4"
+        ],
+        "output_item_ids": [
+          "normalized:#/texts/4"
+        ],
+        "rationale": "The extracted observation is mapped without semantic reinterpretation.",
+        "details": {}
+      },
+      {
+        "id": "tx:6ab29aed78439354",
+        "stage": "mapping",
+        "rule_id": "normalize.map.text",
+        "action": "map",
+        "source_item_ids": [
+          "#/texts/6"
+        ],
+        "output_item_ids": [
+          "normalized:#/texts/6"
+        ],
+        "rationale": "The extracted observation is mapped without semantic reinterpretation.",
+        "details": {}
+      }
+    ]
+  },
+  "issues": [],
+  "method_technique_candidates": [],
+  "metadata": {
+    "schema_version": 10,
+    "normalizer_version": "0.8.0",
+    "source_extraction_hash": "b6c257a20136237d9d22a9e96a768687528d12a3ceeb4db132e2d90e0b779850",
+    "options": {
+      "unicode_form": "NFC",
+      "normalize_whitespace": true,
+      "suppress_headers": true,
+      "suppress_footers": true,
+      "repair_hyphenation": true,
+      "merge_text_fragments": true,
+      "normalize_lists": true,
+      "suppress_repeated_page_elements": false,
+      "fail_on_data_loss": true,
+      "repeated_page_element_min_occurrences": 3,
+      "page_ranges": [],
+      "exclude_page_ranges": [],
+      "page_list": []
+    },
+    "statistics": {
+      "input_items": 7,
+      "output_items": 4,
+      "headers_suppressed": 3,
+      "footers_suppressed": 0,
+      "page_numbers_suppressed": 0,
+      "hyphenations_repaired": 0,
+      "text_fragments_merged": 0,
+      "lists_normalized": 0,
+      "code_blocks": 0,
+      "method_technique_candidates": 0,
+      "active_source_items": 4,
+      "suppressed_source_items": 3,
+      "unaccounted_source_items": 0,
+      "duplicate_source_items": 0,
+      "source_pages": 3,
+      "selected_pages": 3,
+      "excluded_pages": 0
+    }
+  },
+  "lineage": {
+    "schema_version": 1,
+    "artifact": {
+      "id": "artifact:normalized_document:6a0c6f77fdbb0431",
+      "kind": "normalized_document",
+      "content_hash": "6a0c6f77fdbb043106e1e3bb417bc64d2a6695adee90d42620f49588e9da5310"
+    },
+    "derived_from": [
+      {
+        "id": "artifact:docling_extraction:d8ebd6e1086a314d",
+        "kind": "docling_extraction",
+        "content_hash": "d8ebd6e1086a314d4763c7c743ff8dda42723777dc55a4891d30de04fd33e5e6",
+        "location": "tests/golden_corpus/cases/en50126-real-excerpt/input.docling.json",
+        "media_type": "application/json"
+      }
+    ],
+    "transformation_ids": [
+      "tx:9eeed04e9316130b",
+      "tx:d9354ddcbbcdfbc0",
+      "tx:359f61aaddc98f0d",
+      "tx:effd97acd0e750f4",
+      "tx:640ddab065a46d41",
+      "tx:c9a1f82de00920c1",
+      "tx:6ab29aed78439354"
+    ]
+  }
+}

@@ -1,1 +1,183 @@
-{"issues":[],"items":[{"id":"normalized:a96f7b191cb76c3f0ca60636f9d0dc9fdbfcb64744504dc83b78fcef19b6d341","layout_evidence":[{"caption_references":[],"footnote_references":[],"group_path":[],"original_text":"1 Scope","page_height":800.0,"page_width":600.0,"reference_references":[],"source_reference":"#/texts/0"}],"observed_level":1,"original_labels":["section_header"],"sequence_number":0,"source_evidence":[{"bounding_box":{"bottom":120.0,"coordinate_origin":"top_left","left":20.0,"right":200.0,"top":100.0},"extraction_method":"docling","locator":"#/texts/0","page_number":1,"source_id":"SIMPLE","source_type":"pdf"}],"source_item_ids":["#/texts/0"],"text":"1 Scope","type":"heading"},{"id":"normalized:bc806cad84a940337bba3b8b0fa35c607ae69ee83e51b04a5dc6d030487bf151","layout_evidence":[{"caption_references":[],"footnote_references":[],"group_path":[],"original_text":"This standard applies.","page_height":800.0,"page_width":600.0,"reference_references":[],"source_reference":"#/texts/1"}],"original_labels":["text"],"sequence_number":1,"source_evidence":[{"bounding_box":{"bottom":120.0,"coordinate_origin":"top_left","left":20.0,"right":200.0,"top":100.0},"extraction_method":"docling","locator":"#/texts/1","page_number":1,"source_id":"SIMPLE","source_type":"pdf"}],"source_item_ids":["#/texts/1"],"text":"This standard applies.","type":"text"}],"lineage":{"artifact":{"content_hash":"ccc8eca44d58d44abf3d56c758f35d1bb6b3eea407a77c75bec1424f7d34ec65","id":"artifact:normalized_document:ccc8eca44d58d44a","kind":"normalized_document"},"derived_from":[{"content_hash":"f6fa4af94b005f58349134231208e4162ca88478c07c1b275946857361391c13","id":"artifact:docling_extraction:f6fa4af94b005f58","kind":"docling_extraction","location":"tests/golden_corpus/cases/simple-clause/input.docling.json","media_type":"application/json"}],"schema_version":1,"transformation_ids":["tx:46f9991a668e4e63","tx:5f40aeafd5c2fac5"]},"metadata":{"normalizer_version":"0.7.0","options":{"exclude_page_ranges":[],"fail_on_data_loss":true,"merge_text_fragments":true,"normalize_lists":true,"normalize_whitespace":true,"page_list":[],"page_ranges":[],"repair_hyphenation":true,"repeated_page_element_min_occurrences":3,"suppress_footers":true,"suppress_headers":true,"suppress_repeated_page_elements":false,"unicode_form":"NFC"},"schema_version":9,"source_extraction_hash":"4013e6c96e005b251e93680cdf42c88ec2f25087fcb70d21e5f68e3a01563bee","statistics":{"active_source_items":2,"code_blocks":0,"duplicate_source_items":0,"excluded_pages":0,"footers_suppressed":0,"headers_suppressed":0,"hyphenations_repaired":0,"input_items":2,"lists_normalized":0,"output_items":2,"page_numbers_suppressed":0,"selected_pages":1,"source_pages":1,"suppressed_source_items":0,"text_fragments_merged":0,"unaccounted_source_items":0}},"page_furniture_decisions":[],"source_id":"SIMPLE","suppressed_items":[],"transformation_ledger":{"events":[{"action":"map","details":{},"id":"tx:46f9991a668e4e63","output_item_ids":["normalized:#/texts/0"],"rationale":"The extracted observation is mapped without semantic reinterpretation.","rule_id":"normalize.map.heading","source_item_ids":["#/texts/0"],"stage":"mapping"},{"action":"map","details":{},"id":"tx:5f40aeafd5c2fac5","output_item_ids":["normalized:#/texts/1"],"rationale":"The extracted observation is mapped without semantic reinterpretation.","rule_id":"normalize.map.text","source_item_ids":["#/texts/1"],"stage":"mapping"}],"schema_version":1}}
+{
+  "source_id": "SIMPLE",
+  "items": [
+    {
+      "id": "normalized:a96f7b191cb76c3f0ca60636f9d0dc9fdbfcb64744504dc83b78fcef19b6d341",
+      "sequence_number": 0,
+      "source_item_ids": [
+        "#/texts/0"
+      ],
+      "source_evidence": [
+        {
+          "source_id": "SIMPLE",
+          "source_type": "pdf",
+          "locator": "#/texts/0",
+          "page_number": 1,
+          "bounding_box": {
+            "left": 20.0,
+            "top": 100.0,
+            "right": 200.0,
+            "bottom": 120.0,
+            "coordinate_origin": "top_left"
+          },
+          "extraction_method": "docling"
+        }
+      ],
+      "original_labels": [
+        "section_header"
+      ],
+      "layout_evidence": [
+        {
+          "source_reference": "#/texts/0",
+          "group_path": [],
+          "page_width": 600.0,
+          "page_height": 800.0,
+          "original_text": "1 Scope",
+          "caption_references": [],
+          "reference_references": [],
+          "footnote_references": []
+        }
+      ],
+      "type": "heading",
+      "text": "1 Scope",
+      "observed_level": 1
+    },
+    {
+      "id": "normalized:bc806cad84a940337bba3b8b0fa35c607ae69ee83e51b04a5dc6d030487bf151",
+      "sequence_number": 1,
+      "source_item_ids": [
+        "#/texts/1"
+      ],
+      "source_evidence": [
+        {
+          "source_id": "SIMPLE",
+          "source_type": "pdf",
+          "locator": "#/texts/1",
+          "page_number": 1,
+          "bounding_box": {
+            "left": 20.0,
+            "top": 100.0,
+            "right": 200.0,
+            "bottom": 120.0,
+            "coordinate_origin": "top_left"
+          },
+          "extraction_method": "docling"
+        }
+      ],
+      "original_labels": [
+        "text"
+      ],
+      "layout_evidence": [
+        {
+          "source_reference": "#/texts/1",
+          "group_path": [],
+          "page_width": 600.0,
+          "page_height": 800.0,
+          "original_text": "This standard applies.",
+          "caption_references": [],
+          "reference_references": [],
+          "footnote_references": []
+        }
+      ],
+      "type": "text",
+      "text": "This standard applies."
+    }
+  ],
+  "suppressed_items": [],
+  "page_furniture_decisions": [],
+  "transformation_ledger": {
+    "schema_version": 1,
+    "events": [
+      {
+        "id": "tx:46f9991a668e4e63",
+        "stage": "mapping",
+        "rule_id": "normalize.map.heading",
+        "action": "map",
+        "source_item_ids": [
+          "#/texts/0"
+        ],
+        "output_item_ids": [
+          "normalized:#/texts/0"
+        ],
+        "rationale": "The extracted observation is mapped without semantic reinterpretation.",
+        "details": {}
+      },
+      {
+        "id": "tx:5f40aeafd5c2fac5",
+        "stage": "mapping",
+        "rule_id": "normalize.map.text",
+        "action": "map",
+        "source_item_ids": [
+          "#/texts/1"
+        ],
+        "output_item_ids": [
+          "normalized:#/texts/1"
+        ],
+        "rationale": "The extracted observation is mapped without semantic reinterpretation.",
+        "details": {}
+      }
+    ]
+  },
+  "issues": [],
+  "method_technique_candidates": [],
+  "metadata": {
+    "schema_version": 10,
+    "normalizer_version": "0.8.0",
+    "source_extraction_hash": "4013e6c96e005b251e93680cdf42c88ec2f25087fcb70d21e5f68e3a01563bee",
+    "options": {
+      "unicode_form": "NFC",
+      "normalize_whitespace": true,
+      "suppress_headers": true,
+      "suppress_footers": true,
+      "repair_hyphenation": true,
+      "merge_text_fragments": true,
+      "normalize_lists": true,
+      "suppress_repeated_page_elements": false,
+      "fail_on_data_loss": true,
+      "repeated_page_element_min_occurrences": 3,
+      "page_ranges": [],
+      "exclude_page_ranges": [],
+      "page_list": []
+    },
+    "statistics": {
+      "input_items": 2,
+      "output_items": 2,
+      "headers_suppressed": 0,
+      "footers_suppressed": 0,
+      "page_numbers_suppressed": 0,
+      "hyphenations_repaired": 0,
+      "text_fragments_merged": 0,
+      "lists_normalized": 0,
+      "code_blocks": 0,
+      "method_technique_candidates": 0,
+      "active_source_items": 2,
+      "suppressed_source_items": 0,
+      "unaccounted_source_items": 0,
+      "duplicate_source_items": 0,
+      "source_pages": 1,
+      "selected_pages": 1,
+      "excluded_pages": 0
+    }
+  },
+  "lineage": {
+    "schema_version": 1,
+    "artifact": {
+      "id": "artifact:normalized_document:434f9129c7a64a22",
+      "kind": "normalized_document",
+      "content_hash": "434f9129c7a64a2234208729b984ef625b3e7941add3ed5329726f253e187fff"
+    },
+    "derived_from": [
+      {
+        "id": "artifact:docling_extraction:f6fa4af94b005f58",
+        "kind": "docling_extraction",
+        "content_hash": "f6fa4af94b005f58349134231208e4162ca88478c07c1b275946857361391c13",
+        "location": "tests/golden_corpus/cases/simple-clause/input.docling.json",
+        "media_type": "application/json"
+      }
+    ],
+    "transformation_ids": [
+      "tx:46f9991a668e4e63",
+      "tx:5f40aeafd5c2fac5"
+    ]
+  }
+}

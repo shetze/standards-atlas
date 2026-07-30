@@ -793,7 +793,7 @@ def propose_evaluation_annotations(
     typer.echo(f"Skipped                  : {result.skipped}")
     typer.echo(f"Failed                   : {result.failed}")
     typer.echo(f"Run directory            : {result.run_directory}")
-    for error in errors:
+    for error in result.errors:
         typer.echo(error, err=True)
 
 
