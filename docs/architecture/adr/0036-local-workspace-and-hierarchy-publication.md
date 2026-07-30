@@ -1,7 +1,12 @@
 # ADR-0036: Separate internal artifacts from hierarchy-based local publications
 
-- Status: Accepted
-- Date: 2026-07-24
+## Status
+
+Accepted
+
+## Date
+
+2026-07-24
 
 ## Context
 

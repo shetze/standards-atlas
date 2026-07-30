@@ -1,7 +1,12 @@
 # ADR 0007 – Structured Clause Content and Private Source Provenance
 
-- **Status:** Accepted
-- **Date:** 2026-07-13
+## Status
+
+Accepted
+
+## Date
+
+2026-07-13
 
 ## Context
 

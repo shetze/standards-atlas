@@ -2,7 +2,7 @@
 
 ## Status
 
-**Proposed**
+Accepted
 
 ## Context
 
@@ -119,4 +119,3 @@ uv run pytest
 ## Decision Date
 
 2026-07-07
-

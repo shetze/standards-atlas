@@ -1,7 +1,12 @@
 # ADR-0026: NormalizedDocument Contract
 
-* **Status:** Accepted
-* **Date:** 2026-07-21
+## Status
+
+Accepted
+
+## Date
+
+2026-07-21
 
 ## Context
 
@@ -328,4 +333,3 @@ validated, or the hash recorded in `run.json` does not match `document.json`.
 Schema version 3 removes `created_at` from `NormalizationMetadata`. Readers may
 accept older payloads for migration, but newly written artifacts always follow
 the deterministic split between `document.json` and `run.json`.
-

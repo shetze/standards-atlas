@@ -189,4 +189,3 @@ Future work will extend the application layer with reusable services, including:
 Additional adapters can be introduced without affecting the canonical domain model.
 
 The domain model is expected to evolve independently of individual storage formats or engineering tools.
-

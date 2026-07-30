@@ -1,12 +1,19 @@
-# Evaluation Clause Access
+# Evaluation clause access
 
-Slice 5.3.1 introduces transport-neutral, read-only access to persisted
-`EngineeringDocument` clauses. The application API deliberately has no MCP,
-HTTP, CLI, filesystem, or protected-source dependency.
+Semantic qualification needs read-only access to clauses without coupling its
+application logic to MCP, HTTP, CLI commands, persistence file layouts, or
+protected source documents. This boundary is expressed by the transport-neutral
+`ClauseProvider` application port.
 
-## Application port
+## Canonical application port
 
-`application/services/evaluation/clause_access.py` defines:
+The canonical definitions live in:
+
+```text
+src/standards_atlas/application/semantic_qualification/clause_access.py
+```
+
+The module defines:
 
 - `ClauseProvider`
 - `DocumentDescriptor`
@@ -14,30 +21,55 @@ HTTP, CLI, filesystem, or protected-source dependency.
 - `ClauseFilter`
 - `SamplingStrategy`
 
-The port supports document discovery, clause lookup, filtered listing,
-plain-text search, and reproducible sampling. Sampling can be random or
-balanced across documents.
+The port supports document discovery, stable clause lookup, filtered listing,
+plain-text search, and reproducible sampling. Available strategies include
+random, balanced-by-document, and representative-stratified sampling.
+
+For migration compatibility, `ClauseProvider` is also re-exported from
+`application.services.evaluation`. New code should use the canonical
+`application.semantic_qualification.clause_access` path.
+
+## Descriptor boundary
+
+`DocumentDescriptor` and `ClauseDescriptor` expose only data required by
+qualification clients. A clause descriptor contains stable identity,
+document key, reference, content hash, clause type, title, canonical plain-text
+content, hierarchy information, and statement functions.
+
+The contract deliberately excludes:
+
+- source PDF paths;
+- Docling and normalization internals;
+- arbitrary filesystem access;
+- persistence payload details;
+- mutable domain aggregates.
+
+This keeps remote transports and evaluation workflows independent of protected
+source locations and storage implementation details.
 
 ## Filesystem adapter
 
-`EngineeringDocumentClauseProvider` implements the port using
-`FileSystemEngineeringDocumentRepository`. It only exposes normalized
-metadata and the canonical plain-text projection of clause content. Source
-paths, PDFs, extraction internals, and arbitrary filesystem access are not
-part of the contract.
+```text
+src/standards_atlas/adapters/evaluation/
+    EngineeringDocumentClauseProvider
+```
 
-The filesystem repository now provides a read-only `list()` operation. It
-loads persisted payloads by their embedded document keys rather than deriving
-keys from sanitized filenames.
+`EngineeringDocumentClauseProvider` implements the application port using
+`FileSystemEngineeringDocumentRepository`. It reads persisted canonical
+`EngineeringDocument` objects and projects them into immutable descriptors.
+Document identities are taken from embedded document keys rather than inferred
+from sanitized filenames.
 
-## Language filtering
+## Filtering and language
 
-`EngineeringDocument` currently has no canonical language field. A language
-filter therefore returns no matches instead of inferring language from clause
-text. Explicit language metadata can be added in a later schema slice.
+Filters cover document keys, document types, clause types, statement functions,
+and text-length limits. `EngineeringDocument` currently has no canonical
+language field. A requested language filter therefore yields no matches rather
+than guessing from clause text.
 
-## Follow-up adapters
+## Inbound adapters
 
-MCP and possible REST transports should depend only on `ClauseProvider`.
-Transport-specific limits, authentication, and serialization belong in those
-inbound adapters, not in the clause access service.
+MCP and any future REST or GraphQL endpoint must depend on `ClauseProvider`, not
+on the filesystem repository. Authentication, exposure limits, request
+validation, serialization, and transport errors belong to those inbound
+adapters.

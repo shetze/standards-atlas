@@ -2,7 +2,8 @@
 
 Slices 5.3.2 and 5.3.3 add a read-only Model Context Protocol inbound adapter to Standards Atlas.
 The server is a separately started process, but remains part of the same package and uses the
-transport-neutral `ClauseProvider` application port introduced in Slice 5.3.1.
+transport-neutral `ClauseProvider` application port defined in
+`application/semantic_qualification/clause_access.py`.
 
 ## Dependency direction
 
@@ -13,7 +14,8 @@ MCP client
 adapters/mcp
     |
     v
-application/services/evaluation/ClauseProvider
+application/semantic_qualification/clause_access.py
+    ClauseProvider
     |
     v
 adapters/evaluation/EngineeringDocumentClauseProvider
@@ -21,6 +23,10 @@ adapters/evaluation/EngineeringDocumentClauseProvider
     v
 persisted EngineeringDocument objects
 ```
+
+The legacy `application.services.evaluation` package currently re-exports
+`ClauseProvider` for migration compatibility. It is not the canonical owner of
+the port; new adapter code should import the canonical path directly.
 
 The MCP adapter does not parse persistence files and does not call an LLM. Its responsibility is
 limited to protocol registration, request validation, exposure policy, and serialization.

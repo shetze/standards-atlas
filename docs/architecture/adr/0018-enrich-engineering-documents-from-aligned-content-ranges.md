@@ -1,7 +1,12 @@
 # ADR 0018 – Enrich EngineeringDocuments from Aligned Content Ranges
 
-- **Status:** Accepted
-- **Date:** 2026-07-18
+## Status
+
+Accepted
+
+## Date
+
+2026-07-18
 
 ## Context
 

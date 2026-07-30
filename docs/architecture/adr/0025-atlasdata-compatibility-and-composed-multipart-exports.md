@@ -1,7 +1,12 @@
 # ADR-0025: AtlasData compatibility and composed multi-part exports
 
-- Status: Accepted
-- Date: 2026-07-21
+## Status
+
+Accepted
+
+## Date
+
+2026-07-21
 
 ## Context
 

@@ -1,7 +1,12 @@
 # ADR 0006 – EngineeringDocument as Canonical Intermediate Representation
 
-- **Status:** Accepted
-- **Date:** 2026-07-13
+## Status
+
+Accepted
+
+## Date
+
+2026-07-13
 
 ## Context
 

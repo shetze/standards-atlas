@@ -28,7 +28,7 @@ The user guide follows the lifecycle of a standard from catalog entry and privat
 | Export Markdown or Doorstop artefacts | [Exports](exports.md) |
 | Understand `.atlas`, `data`, and generated output | [Workspace](workspace.md) |
 | Diagnose common command and data problems | [Troubleshooting](troubleshooting.md) |
-| Build local corpora and benchmark prompts/models | [Evaluation workflow](evaluation-workflow.md) |
+| Build local corpora and benchmark prompts/models | [Model consensus evaluation](model-consensus-evaluation.md) |
 | Review and publish semantic annotation proposals | [Semantic annotation review](semantic-annotation-review.md) |
 
 ## Related material

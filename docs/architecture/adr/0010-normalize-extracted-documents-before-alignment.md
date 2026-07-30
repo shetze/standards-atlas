@@ -1,7 +1,12 @@
 # ADR 0010: Normalize extracted documents before semantic alignment
 
-- Status: Accepted
-- Date: 2026-07-13
+## Status
+
+Accepted
+
+## Date
+
+2026-07-13
 
 ## Context
 

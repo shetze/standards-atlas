@@ -47,6 +47,8 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0020](0020-preserve-heading-semantics-as-legacy-atlasdata-types.md) | Preserve heading semantics as legacy AtlasData types |
 | [0022](0022-extensible-semantic-role-classification.md) | Use extensible semantic-role classification |
 | [0033](0033-engineering-document-construction-contract.md) | Establish the engineering-document construction contract |
+| [0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md) | Model structural profiles as independent taxonomy dimensions |
+| [0051](0051-multidimensional-semantic-classification.md) | Use multidimensional semantic classification |
 
 ## AtlasData, multi-part standards, and baseline governance
 
@@ -57,7 +59,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0025](0025-atlasdata-compatibility-and-composed-multipart-exports.md) | Preserve AtlasData compatibility in composed multi-part exports |
 | [0035](0035-atlasdata-lifecycle-and-baseline-governance.md) | Govern the AtlasData lifecycle and published baselines |
 
-## Workflow, export, lineage, and qualification
+## Workflow, publication, lineage, and qualification
 
 | ADR | Decision |
 |---|---|
@@ -66,9 +68,12 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0031](0031-deterministic-transformation-ledger.md) | Record a deterministic transformation ledger |
 | [0032](0032-end-to-end-artifact-lineage.md) | Preserve end-to-end artifact lineage |
 | [0034](0034-golden-corpus-and-regression-qualification.md) | Use a golden corpus for regression qualification |
+| [0036](0036-local-workspace-and-hierarchy-publication.md) | Separate internal artifacts from hierarchy-based local publications |
+| [0037](0037-workflow-run-derivation-reports.md) | Record workflow-run derivation reports |
+| [0038](0038-package-and-install-doorstop-publication-templates.md) | Package and install Doorstop publication templates |
 | [0039](0039-verification-and-qualification-framework.md) | Establish the verification and qualification framework |
 
-## Semantic evaluation and MCP access
+## Semantic evaluation, review, and MCP access
 
 | ADR | Decision |
 |---|---|
@@ -78,13 +83,25 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0043](0043-integrate-codex-as-a-restricted-mcp-client.md) | Integrate Codex as a restricted MCP client |
 | [0044](0044-publish-reviewed-clause-annotations-as-reproducible-data.md) | Publish reviewed clause annotations as reproducible data |
 | [0045](0045-build-representative-semantic-evaluation-corpora.md) | Build representative semantic-evaluation corpora by stratified coverage |
+| [0046](0046-persist-resumable-semantic-proposal-runs.md) | Persist resumable semantic proposal runs |
+| [0047](0047-separate-semantic-evaluation-runs-from-annotations.md) | Separate semantic evaluation runs from reviewed annotations |
+| [0048](0048-review-semantic-annotations-in-local-markdown.md) | Review semantic annotations in local Markdown |
+| [0049](0049-extract-and-resolve-clause-references-before-semantic-evaluation.md) | Extract and resolve clause references before semantic evaluation |
+| [0052](0052-build-golden-corpus-proposals-from-model-consensus.md) | Build Golden Corpus proposals from model consensus |
+
+## Application structure
+
+| ADR | Decision |
+|---|---|
+| [0053](0053-structural-application-refactoring.md) | Refactor CLI, workflow, evaluation, and normalization application structure |
 
 ## Reading guidance
 
 - For the architecture's overall shape, begin with [ADR 0002](0002-adopt-traceability-centric-architecture.md), [ADR 0003](0003-adopt-hexagonal-architecture.md), and [ADR 0004](0004-adopt-transformation-pipeline.md).
 - For the canonical contracts, continue with [ADR 0006](0006-engineeringdocument-as-canonical-repesenation.md), [ADR 0026](0026-normalized-document-contract.md), and [ADR 0033](0033-engineering-document-construction-contract.md).
-- For operational governance, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0034](0034-golden-corpus-and-regression-qualification.md), [ADR 0039](0039-verification-and-qualification-framework.md), and [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md).
-- For semantic evaluation and external model access, read [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0041](0041-keep-semantic-evaluation-data-local-and-reports-content-safe.md), and [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md).
+- For workflow and publication, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md), and [ADR 0036](0036-local-workspace-and-hierarchy-publication.md).
+- For semantic qualification and external model access, continue with [ADR 0039](0039-verification-and-qualification-framework.md), [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md), [ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), and [ADR 0051](0051-multidimensional-semantic-classification.md).
+- For the current application package structure, read [ADR 0053](0053-structural-application-refactoring.md).
 
 ## Related documentation
 
@@ -93,12 +110,3 @@ Architecture Decision Records (ADRs) document important design choices, their co
 - [Domain model](../domain-model.md)
 - [Diagram catalog](../diagrams/README.md)
 - [Documentation home](../../README.md)
-
-## Publication templates
-
-- [ADR-0038: Package and install Doorstop publication templates](ADR-0038-package-and-install-doorstop-publication-templates.md)
-
-- [ADR 0046: Persist resumable semantic proposal runs](0046-persist-resumable-semantic-proposal-runs.md)
-| [0047](0047-separate-semantic-evaluation-runs-from-annotations.md) | Separate semantic evaluation runs from reviewed annotations |
-| [0048](0048-review-semantic-annotations-in-local-markdown.md) | Review semantic annotations in local Markdown |
-- [ADR 0049: Extract and resolve clause references before semantic evaluation](0049-extract-and-resolve-clause-references-before-semantic-evaluation.md)

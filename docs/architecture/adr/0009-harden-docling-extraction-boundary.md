@@ -1,7 +1,12 @@
 # ADR 0009: Harden the Docling extraction boundary
 
-- Status: Accepted
-- Date: 2026-07-13
+## Status
+
+Accepted
+
+## Date
+
+2026-07-13
 
 ## Context
 

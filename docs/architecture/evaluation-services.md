@@ -1,33 +1,89 @@
-# Evaluation Services
+# Evaluation services
 
-The evaluation application service is intentionally domain-neutral. It supports semantic clause evaluation today, but its contracts are suitable for any versioned prompt, dataset, model, metric, regression, and report workflow.
+Standards Atlas separates reusable evaluation infrastructure from the
+standards-specific semantic qualification workflow. The split keeps generic
+prompt, dataset, model, metric, regression, and reporting code independent of
+clause access, annotation policy, standards taxonomies, and review workflows.
 
-## Location
+## Package structure
 
-The canonical implementation lives in:
+The canonical implementation is divided into two application packages:
+
+```text
+src/standards_atlas/application/evaluation/
+    Generic evaluation models, repositories, runners, schemas,
+    metrics, regression comparison, and reports.
+
+src/standards_atlas/application/semantic_qualification/
+    Standards-specific clause access, corpus construction, annotations,
+    proposal generation, reference analysis, review, qualification matrices,
+    model consensus, and workflow orchestration.
+```
+
+A compatibility facade currently remains at:
 
 ```text
 src/standards_atlas/application/services/evaluation/
 ```
 
-The former `application/semantic_evaluation/` compatibility facade has been removed. All code imports the generic service package directly.
+It re-exports selected types from both canonical packages for callers that have
+not yet migrated. New code should import directly from `application.evaluation`
+or `application.semantic_qualification`. The facade is not the owner of the
+implementation and may be removed after all callers have migrated.
 
-## Responsibilities
+## Generic evaluation responsibilities
 
-- load versioned prompt definitions and output schemas;
-- load versioned evaluation datasets;
-- execute a prompt against one or more models;
-- compare prompt versions under a fixed model;
-- calculate per-case and aggregate metrics;
-- detect regressions against a baseline;
-- persist machine-readable run and comparison reports.
+The `application.evaluation` package is responsible for:
 
-The service depends only on the `LlmGateway` application port. CLI, future HTTP APIs, and MCP adapters are clients of this service and must not duplicate evaluation logic.
+- loading versioned prompt definitions and output schemas;
+- loading versioned evaluation datasets;
+- executing prompts against one or more models through the `LlmGateway` port;
+- comparing prompt and model configurations;
+- calculating per-case and aggregate metrics;
+- detecting regressions against a baseline;
+- persisting machine-readable runs, comparisons, and reports.
 
-## Terminology
+Its canonical vocabulary includes `EvaluationDataset`, `EvaluationExample`,
+`EvaluationRunner`, `EvaluationReporter`, `EvaluationDatasetRepository`, and
+`PromptRepository`. Historical `Golden*` and `SemanticEvaluation*` names remain
+only as migration aliases where required by existing callers or persisted data.
 
-The canonical names are `EvaluationDataset`, `EvaluationExample`, `EvaluationRunner`, `EvaluationReporter`, and `EvaluationDatasetRepository`. The previous `Golden*` and `SemanticEvaluation*` names are aliases during the migration period.
+## Semantic qualification responsibilities
+
+The `application.semantic_qualification` package adds the domain-specific
+workflow around clauses from persisted `EngineeringDocument` aggregates:
+
+- transport-neutral clause discovery through `ClauseProvider`;
+- representative and reproducible corpus construction;
+- annotation repositories and publication precedence;
+- baseline and model proposal generation;
+- clause-reference extraction and resolution;
+- human review export and import;
+- prompt and model qualification matrices;
+- model-consensus calculation and golden-corpus proposals.
+
+These services may depend on the generic evaluation package, but the generic
+package must not depend on semantic qualification.
+
+## Dependency direction
+
+```text
+CLI / MCP / future API adapters
+            |
+            v
+application.semantic_qualification
+            |
+            v
+application.evaluation -----> LlmGateway port
+```
+
+Storage adapters implement repositories and gateways at the boundary. The CLI
+acts as the composition root and supplies concrete filesystem repositories,
+LLM gateways, and clause providers.
 
 ## Local protected corpora
 
-Copyrighted evaluation data belongs below `local/` and remains outside version control. Repositories receive their root path explicitly, so the same service can consume packaged synthetic corpora or local real-world corpora without coupling the application layer to storage policy.
+Copyrighted evaluation material belongs below `local/` and remains outside
+version control. Repositories receive their root path explicitly, allowing the
+same application services to consume packaged synthetic fixtures and protected
+local corpora without embedding storage policy in the domain model.

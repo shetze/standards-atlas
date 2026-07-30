@@ -2,7 +2,7 @@
 
 ## Status
 
-**Accepted**
+Accepted
 
 ## Context
 
@@ -150,4 +150,3 @@ The long-term vision is for Standards Atlas to provide a shared semantic traceab
 ## Decision Date
 
 2026-07-07
-

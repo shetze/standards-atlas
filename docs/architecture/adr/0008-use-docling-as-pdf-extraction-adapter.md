@@ -1,7 +1,12 @@
 # ADR 0008: Use Docling as the PDF extraction adapter
 
-- Status: Accepted
-- Date: 2026-07-13
+## Status
+
+Accepted
+
+## Date
+
+2026-07-13
 
 ## Context
 

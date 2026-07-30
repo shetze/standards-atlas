@@ -1,4 +1,4 @@
-# ADR 0052: Structural application refactoring
+# ADR 0053: Structural application refactoring
 
 ## Status
 
