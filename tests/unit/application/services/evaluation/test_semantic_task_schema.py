@@ -43,3 +43,28 @@ def test_statement_function_primary_function_uses_codex_compatible_nullable_enum
         assert "anyOf" not in primary_function
         assert primary_function["type"] == ["string", "null"]
         assert primary_function["enum"][-1] is None
+
+
+def test_multidimensional_selection_accepts_applicability_and_responsibility() -> None:
+    from standards_atlas.application.services.evaluation.annotations import (
+        StatementFunctionSelection,
+    )
+
+    selection = StatementFunctionSelection.model_validate(
+        {
+            "statement_functions": ["description"],
+            "primary_function": "description",
+            "applicability_functions": ["applicability_condition"],
+            "primary_applicability_function": "applicability_condition",
+            "responsibility_functions": [
+                "responsibility_exclusion",
+                "role_condition",
+            ],
+            "primary_responsibility_function": "responsibility_exclusion",
+            "confidence": 0.95,
+            "rationale": "Applicability and responsibility are stated explicitly.",
+        }
+    )
+
+    assert selection.applicability_functions[0].value == "applicability_condition"
+    assert selection.responsibility_functions[0].value == "responsibility_exclusion"

@@ -40,12 +40,15 @@ from standards_atlas.application.model.normalized_document import (
     TransformationEvent,
     TransformationLedger,
 )
+from standards_atlas.application.normalization.method_technique_extractor import (
+    MethodTechniqueExtractor,
+)
 from standards_atlas.application.normalization.page_furniture_classifier import (
     PageFurnitureClassifier,
 )
 from standards_atlas.domain.model import ArtifactLineage, artifact_reference
 
-NORMALIZER_VERSION = "0.7.0"
+NORMALIZER_VERSION = "0.8.0"
 
 _LIST_MARKER = re.compile(r"^\s*((?:\d+|[A-Za-z]|[ivxlcdmIVXLCDM]+)[.)]|[-–—•])\s+(.+)$")
 _PAGE_NUMBER = re.compile(r"^\s*(?:[-–—]\s*)?\d+(?:\s*[-–—])?\s*$")
@@ -102,6 +105,7 @@ class DocumentNormalizer:
                 page, options.page_ranges, options.exclude_page_ranges, options.page_list
             )
         }
+        method_technique_candidates = MethodTechniqueExtractor().extract(resequenced)
         accounting = _account_source_items(document, resequenced, suppressed)
         statistics = NormalizationStatistics(
             input_items=len(document.items),
@@ -113,6 +117,7 @@ class DocumentNormalizer:
             text_fragments_merged=merged_count,
             lists_normalized=list_count,
             code_blocks=sum(isinstance(item, NormalizedCode) for item in resequenced),
+            method_technique_candidates=len(method_technique_candidates),
             active_source_items=len(accounting.active_item_ids),
             suppressed_source_items=len(accounting.suppressed_item_ids),
             unaccounted_source_items=len(accounting.unaccounted_item_ids),
@@ -139,6 +144,7 @@ class DocumentNormalizer:
             page_furniture_decisions=page_furniture_decisions,
             transformation_ledger=TransformationLedger(events=tuple(events)),
             issues=(),
+            method_technique_candidates=method_technique_candidates,
             metadata=NormalizationMetadata(
                 normalizer_version=NORMALIZER_VERSION,
                 source_extraction_hash=extracted_document_hash(document),

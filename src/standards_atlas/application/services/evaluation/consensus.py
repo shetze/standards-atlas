@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -17,7 +16,11 @@ from standards_atlas.application.services.evaluation.annotations import (
 from standards_atlas.application.services.evaluation.repository import (
     EvaluationDatasetRepository,
 )
-from standards_atlas.domain.model import StatementFunction
+from standards_atlas.domain.model import (
+    ApplicabilityFunction,
+    ResponsibilityFunction,
+    StatementFunction,
+)
 
 
 class ConsensusCategory(StrEnum):
@@ -33,6 +36,8 @@ class ModelVote(BaseModel):
 
     model_id: str
     statement_functions: tuple[StatementFunction, ...]
+    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
     repetitions: int = Field(ge=1)
     stability: float = Field(ge=0.0, le=1.0)
 
@@ -47,10 +52,14 @@ class ClauseConsensus(BaseModel):
     clause_text: str | None = None
     category: ConsensusCategory
     proposed_functions: tuple[StatementFunction, ...] = ()
+    proposed_applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    proposed_responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
     confidence: float = Field(ge=0.0, le=1.0)
     participating_models: int = Field(ge=0)
     votes: tuple[ModelVote, ...] = ()
     label_support: dict[str, float] = Field(default_factory=dict)
+    applicability_support: dict[str, float] = Field(default_factory=dict)
+    responsibility_support: dict[str, float] = Field(default_factory=dict)
 
 
 class ConsensusReport(BaseModel):
@@ -89,8 +98,8 @@ class ModelConsensusService:
         selected = tuple(
             item
             for item in observations
-            if getattr(item, "prompt_id") == prompt_id
-            and getattr(item, "reasoning_mode_id") == reasoning_mode_id
+            if item.prompt_id == prompt_id
+            and item.reasoning_mode_id == reasoning_mode_id
             and getattr(item, "run_directory", None) is not None
         )
         if not selected:
@@ -104,8 +113,8 @@ class ModelConsensusService:
         )
         clause_contexts = _load_clause_contexts(selected, corpus_root)
         for observation in selected:
-            run_directory = Path(getattr(observation, "run_directory"))
-            model_id = str(getattr(observation, "model_id"))
+            run_directory = Path(observation.run_directory)
+            model_id = str(observation.model_id)
             for evaluation_path in sorted(run_directory.glob("*/evaluation.yaml")):
                 payload = yaml.safe_load(evaluation_path.read_text(encoding="utf-8")) or {}
                 annotation = ClauseEvaluationAnnotation.model_validate(
@@ -119,7 +128,22 @@ class ModelConsensusService:
             clause_reference = next(iter(next(iter(model_predictions.values())))).clause
             for model_id, model_annotations in sorted(model_predictions.items()):
                 selections = [
-                    tuple(sorted(item.proposal.statement_functions, key=lambda value: value.value))
+                    (
+                        tuple(
+                            sorted(item.proposal.statement_functions, key=lambda value: value.value)
+                        ),
+                        tuple(
+                            sorted(
+                                item.proposal.applicability_functions, key=lambda value: value.value
+                            )
+                        ),
+                        tuple(
+                            sorted(
+                                item.proposal.responsibility_functions,
+                                key=lambda value: value.value,
+                            )
+                        ),
+                    )
                     for item in model_annotations
                 ]
                 counts = Counter(selections)
@@ -127,14 +151,23 @@ class ModelConsensusService:
                 votes.append(
                     ModelVote(
                         model_id=model_id,
-                        statement_functions=selection,
+                        statement_functions=selection[0],
+                        applicability_functions=selection[1],
+                        responsibility_functions=selection[2],
                         repetitions=len(selections),
                         stability=count / len(selections),
                     )
                 )
 
             model_count = len(votes)
-            exact_counts = Counter(vote.statement_functions for vote in votes)
+            exact_counts = Counter(
+                (
+                    vote.statement_functions,
+                    vote.applicability_functions,
+                    vote.responsibility_functions,
+                )
+                for vote in votes
+            )
             _, exact_count = exact_counts.most_common(1)[0]
             exact_agreement = exact_count / model_count if model_count else 0.0
             all_labels = sorted(
@@ -148,7 +181,40 @@ class ModelConsensusService:
             proposed = tuple(
                 label for label in all_labels if label_support[label.value] >= label_threshold
             )
-            confidence = max(label_support.values(), default=exact_agreement)
+            applicability_labels = sorted(
+                {label for vote in votes for label in vote.applicability_functions},
+                key=lambda value: value.value,
+            )
+            applicability_support = {
+                label.value: sum(label in vote.applicability_functions for vote in votes)
+                / model_count
+                for label in applicability_labels
+            }
+            proposed_applicability = tuple(
+                label
+                for label in applicability_labels
+                if applicability_support[label.value] >= label_threshold
+            )
+            responsibility_labels = sorted(
+                {label for vote in votes for label in vote.responsibility_functions},
+                key=lambda value: value.value,
+            )
+            responsibility_support = {
+                label.value: sum(label in vote.responsibility_functions for vote in votes)
+                / model_count
+                for label in responsibility_labels
+            }
+            proposed_responsibility = tuple(
+                label
+                for label in responsibility_labels
+                if responsibility_support[label.value] >= label_threshold
+            )
+            all_support = {
+                **label_support,
+                **{f"applicability:{key}": value for key, value in applicability_support.items()},
+                **{f"responsibility:{key}": value for key, value in responsibility_support.items()},
+            }
+            confidence = max(all_support.values(), default=exact_agreement)
 
             if model_count < min_models:
                 category = ConsensusCategory.INSUFFICIENT
@@ -175,10 +241,14 @@ class ModelConsensusService:
                     clause_text=_optional_text(context.get("text")),
                     category=category,
                     proposed_functions=proposed,
+                    proposed_applicability_functions=proposed_applicability,
+                    proposed_responsibility_functions=proposed_responsibility,
                     confidence=confidence,
                     participating_models=model_count,
                     votes=tuple(votes),
                     label_support=label_support,
+                    applicability_support=applicability_support,
+                    responsibility_support=responsibility_support,
                 )
             )
 
@@ -217,6 +287,12 @@ class ModelConsensusService:
                             "statement_functions": [
                                 value.value for value in item.proposed_functions
                             ],
+                            "applicability_functions": [
+                                value.value for value in item.proposed_applicability_functions
+                            ],
+                            "responsibility_functions": [
+                                value.value for value in item.proposed_responsibility_functions
+                            ],
                             "confidence": item.confidence,
                             "consensus_category": item.category.value,
                             "requires_review": item.category
@@ -249,14 +325,19 @@ def _render_review(report: ConsensusReport) -> str:
     uncertain = [
         item
         for item in report.clauses
-        if item.category
-        not in {ConsensusCategory.UNANIMOUS, ConsensusCategory.STRONG}
+        if item.category not in {ConsensusCategory.UNANIMOUS, ConsensusCategory.STRONG}
     ]
     if not uncertain:
         lines.extend(["No clauses require review.", ""])
         return "\n".join(lines)
     for item in uncertain:
         proposed = ", ".join(value.value for value in item.proposed_functions) or "none"
+        applicability = (
+            ", ".join(value.value for value in item.proposed_applicability_functions) or "none"
+        )
+        responsibility = (
+            ", ".join(value.value for value in item.proposed_responsibility_functions) or "none"
+        )
         lines.extend(
             [
                 _review_heading(item),
@@ -272,18 +353,39 @@ def _render_review(report: ConsensusReport) -> str:
                 "```",
                 "",
                 f"- Category: `{item.category.value}`",
-                f"- Proposal: `{proposed}`",
+                f"- Statement-function proposal: `{proposed}`",
+                f"- Applicability proposal: `{applicability}`",
+                f"- Responsibility proposal: `{responsibility}`",
                 f"- Agreement: `{item.confidence:.3f}`",
                 "- Model votes:",
             ]
         )
         for vote in item.votes:
             labels = ", ".join(value.value for value in vote.statement_functions) or "none"
+            applicability_labels = (
+                ", ".join(value.value for value in vote.applicability_functions) or "none"
+            )
+            responsibility_labels = (
+                ", ".join(value.value for value in vote.responsibility_functions) or "none"
+            )
             lines.append(
-                f"  - `{vote.model_id}`: `{labels}` "
+                f"  - `{vote.model_id}`: statement=`{labels}`; "
+                f"applicability=`{applicability_labels}`; "
+                f"responsibility=`{responsibility_labels}` "
                 f"(repeat stability {vote.stability:.3f})"
             )
-        lines.extend(["", "### HITL decision", "", "- Statement functions: ", "- Rationale: ", ""])
+        lines.extend(
+            [
+                "",
+                "### HITL decision",
+                "",
+                "- Statement functions: ",
+                "- Applicability functions: ",
+                "- Responsibility functions: ",
+                "- Rationale: ",
+                "",
+            ]
+        )
     return "\n".join(lines)
 
 
@@ -293,7 +395,7 @@ def _load_clause_contexts(
     if corpus_root is None:
         return {}
     for observation in observations:
-        run_directory = Path(getattr(observation, "run_directory"))
+        run_directory = Path(observation.run_directory)
         evaluation_path = next(iter(sorted(run_directory.glob("*/evaluation.yaml"))), None)
         if evaluation_path is None:
             continue

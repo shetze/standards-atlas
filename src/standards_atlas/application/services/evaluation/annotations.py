@@ -12,7 +12,11 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from standards_atlas.domain.model import StatementFunction
+from standards_atlas.domain.model import (
+    ApplicabilityFunction,
+    ResponsibilityFunction,
+    StatementFunction,
+)
 
 
 class AnnotationLifecycleStatus(StrEnum):
@@ -63,6 +67,10 @@ class StatementFunctionSelection(BaseModel):
 
     statement_functions: tuple[StatementFunction, ...] = ()
     primary_function: StatementFunction | None = None
+    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    primary_applicability_function: ApplicabilityFunction | None = None
+    responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
+    primary_responsibility_function: ResponsibilityFunction | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     rationale: str | None = None
 
@@ -75,6 +83,24 @@ class StatementFunctionSelection(BaseModel):
             raise ValueError("primary_function must be included in statement_functions")
         if len(set(self.statement_functions)) != len(self.statement_functions):
             raise ValueError("statement_functions must not contain duplicates")
+        if (
+            self.primary_applicability_function is not None
+            and self.primary_applicability_function not in self.applicability_functions
+        ):
+            raise ValueError(
+                "primary_applicability_function must be included in applicability_functions"
+            )
+        if len(set(self.applicability_functions)) != len(self.applicability_functions):
+            raise ValueError("applicability_functions must not contain duplicates")
+        if (
+            self.primary_responsibility_function is not None
+            and self.primary_responsibility_function not in self.responsibility_functions
+        ):
+            raise ValueError(
+                "primary_responsibility_function must be included in responsibility_functions"
+            )
+        if len(set(self.responsibility_functions)) != len(self.responsibility_functions):
+            raise ValueError("responsibility_functions must not contain duplicates")
         return self
 
 

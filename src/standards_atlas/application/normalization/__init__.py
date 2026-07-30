@@ -8,12 +8,16 @@ from standards_atlas.application.normalization.errors import (
     NormalizationDataLossError,
     NormalizationError,
 )
+from standards_atlas.application.normalization.method_technique_extractor import (
+    MethodTechniqueExtractor,
+)
 from standards_atlas.application.normalization.page_furniture_classifier import (
     PageFurnitureClassifier,
 )
 
 __all__ = [
     "DocumentNormalizer",
+    "MethodTechniqueExtractor",
     "NormalizationDataLossError",
     "NormalizationError",
     "PageFurnitureClassifier",

@@ -13,6 +13,8 @@ The former `SemanticRole` taxonomy mixed linguistic statement functions, documen
 `Clause.semantic_roles` and `SemanticRole` are removed without a compatibility layer. Every clause owns a `SemanticClassification` with independent dimensions:
 
 - `statement_functions`
+- `applicability_functions`
+- `responsibility_functions`
 - `document_structure`
 - `normative_status`
 - `domain_functions`
@@ -20,7 +22,7 @@ The former `SemanticRole` taxonomy mixed linguistic statement functions, documen
 
 Document structures are qualified by a document family. Domain functions are qualified by a KnowledgeDomain and taxonomy version. Annex position and normative status are represented separately. Relations distinguish their semantic kind from their internal or external scope.
 
-The former `semantic-role-classification` evaluation task becomes `statement-function-classification`. Structure, status, domain functions, and relation extraction are separate evaluation concerns.
+The former `semantic-role-classification` evaluation task becomes `statement-function-classification`. Version 2.0.0 of that task classifies three independent clause-level dimensions: linguistic statement function, scope/applicability function, and responsibility allocation. Structure, status, domain functions, and relation extraction remain separate evaluation concerns.
 
 Resolved internal relations are rendered as Markdown links. Link generation uses relation targets rather than unverified textual pattern matching.
 

@@ -165,6 +165,7 @@ class QualificationMatrixManifest(BaseModel):
     schema_version: str = "1.0"
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)
+    task_version: str = Field(default="1.0.0", min_length=1)
     dataset_version: str = Field(default="1.0.0", min_length=1)
     repetitions: int = Field(default=3, ge=1)
     prompts: tuple[PromptCandidate, ...]

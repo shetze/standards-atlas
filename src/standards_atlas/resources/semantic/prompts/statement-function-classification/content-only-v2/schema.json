@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "statement_functions",
+    "primary_function",
+    "applicability_functions",
+    "primary_applicability_function",
+    "responsibility_functions",
+    "primary_responsibility_function",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "statement_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "requirement",
+          "recommendation",
+          "permission",
+          "prohibition",
+          "definition",
+          "description",
+          "explanation",
+          "rationale",
+          "example",
+          "note",
+          "conformance_statement"
+        ]
+      }
+    },
+    "primary_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "requirement",
+        "recommendation",
+        "permission",
+        "prohibition",
+        "definition",
+        "description",
+        "explanation",
+        "rationale",
+        "example",
+        "note",
+        "conformance_statement",
+        null
+      ]
+    },
+    "applicability_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "scope_definition",
+          "applicability_condition",
+          "inclusion",
+          "exclusion",
+          "exception"
+        ]
+      }
+    },
+    "primary_applicability_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "scope_definition",
+        "applicability_condition",
+        "inclusion",
+        "exclusion",
+        "exception",
+        null
+      ]
+    },
+    "responsibility_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "responsibility_assignment",
+          "responsibility_exclusion",
+          "role_condition"
+        ]
+      }
+    },
+    "primary_responsibility_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "responsibility_assignment",
+        "responsibility_exclusion",
+        "role_condition",
+        null
+      ]
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rationale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

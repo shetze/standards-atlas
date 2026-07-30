@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import StrEnum
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -194,6 +195,29 @@ NormalizedItem = Annotated[
 ]
 
 
+class MethodTechniqueKind(StrEnum):
+    """Knowledge-object category discovered in a standard."""
+
+    METHOD = "method"
+    TECHNIQUE = "technique"
+    METHOD_OR_TECHNIQUE = "method_or_technique"
+
+
+class MethodTechniqueCandidate(BaseModel):
+    """One provenance-preserving method or technique candidate."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(pattern=r"^method-technique:[0-9a-f]{16}$")
+    name: str = Field(min_length=1)
+    normalized_name: str = Field(min_length=1)
+    kind: MethodTechniqueKind
+    source_item_ids: tuple[str, ...] = ()
+    context: str | None = None
+    extraction_rule: str = Field(min_length=1)
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
 class NormalizationStatistics(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -206,6 +230,7 @@ class NormalizationStatistics(BaseModel):
     text_fragments_merged: int = 0
     lists_normalized: int = 0
     code_blocks: int = 0
+    method_technique_candidates: int = 0
     active_source_items: int = 0
     suppressed_source_items: int = 0
     unaccounted_source_items: int = 0
@@ -218,7 +243,7 @@ class NormalizationStatistics(BaseModel):
 class NormalizationMetadata(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: int = 9
+    schema_version: int = 10
     normalizer_version: str
     source_extraction_hash: str
     options: NormalizationOptions
@@ -246,5 +271,6 @@ class NormalizedExtractedDocument(BaseModel):
     page_furniture_decisions: tuple[PageFurnitureDecision, ...] = ()
     transformation_ledger: TransformationLedger = Field(default_factory=TransformationLedger)
     issues: tuple[NormalizationIssue, ...] = ()
+    method_technique_candidates: tuple[MethodTechniqueCandidate, ...] = ()
     metadata: NormalizationMetadata
     lineage: ArtifactLineage | None = None

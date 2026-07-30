@@ -1,0 +1,22 @@
+statement_functions:
+- requirement
+- recommendation
+- permission
+- prohibition
+- definition
+- description
+- explanation
+- rationale
+- example
+- note
+- conformance_statement
+applicability_functions:
+- scope_definition
+- applicability_condition
+- inclusion
+- exclusion
+- exception
+responsibility_functions:
+- responsibility_assignment
+- responsibility_exclusion
+- role_condition

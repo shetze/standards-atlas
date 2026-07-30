@@ -33,6 +33,9 @@ class NormalizationArtifactRepository:
     def document_path(self, document_key: str) -> Path:
         return self._private_path(document_key, "document.json")
 
+    def method_technique_index_path(self, document_key: str) -> Path:
+        return self._private_path(document_key, "methods-and-techniques.json")
+
     def run_path(self, document_key: str) -> Path:
         return self._private_path(document_key, "run.json")
 
@@ -40,6 +43,19 @@ class NormalizationArtifactRepository:
         path = self.document_path(document_key)
         path.parent.mkdir(parents=True, exist_ok=True)
         _atomic_write(path, canonical_json(document))
+        _atomic_write(
+            self.method_technique_index_path(document_key),
+            canonical_json(
+                {
+                    "schema_version": 1,
+                    "document_key": document_key,
+                    "candidates": [
+                        candidate.model_dump(mode="json")
+                        for candidate in document.method_technique_candidates
+                    ],
+                }
+            ),
+        )
         run = NormalizationRunMetadata(
             created_at=datetime.now(UTC),
             document_content_hash=canonical_sha256(document),

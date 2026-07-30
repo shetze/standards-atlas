@@ -41,11 +41,13 @@ from standards_atlas.domain.model.identifiers import (
 )
 from standards_atlas.domain.model.relation import Relation, RelationType
 from standards_atlas.domain.model.semantic_classification import (
+    ApplicabilityFunction,
     DocumentStructure,
     DocumentStructureClassification,
     DomainFunctionClassification,
     NormativeStatus,
     RelationScope,
+    ResponsibilityFunction,
     SemanticClassification,
     SemanticRelation,
     SemanticRelationKind,
@@ -85,11 +87,13 @@ __all__ = [
     "PictureBlock",
     "Relation",
     "RelationType",
+    "ApplicabilityFunction",
     "DocumentStructure",
     "DocumentStructureClassification",
     "DomainFunctionClassification",
     "NormativeStatus",
     "RelationScope",
+    "ResponsibilityFunction",
     "SemanticClassification",
     "SemanticRelation",
     "SemanticRelationKind",

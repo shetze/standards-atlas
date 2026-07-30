@@ -26,8 +26,7 @@ def _run(root: Path, model: str, repeat: int, roles: list[str]) -> Path:
                 "document_key": "ISO26262-6",
                 "clause_id": "clause-1",
                 "content_hash": (
-                    "sha256:"
-                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                 ),
             },
             "proposal": {
@@ -40,7 +39,7 @@ def _run(root: Path, model: str, repeat: int, roles: list[str]) -> Path:
                 "prompt_id": "content-only-v1",
                 "generated_at": "2026-07-29T08:00:00Z",
             },
-        }
+        },
     }
     (case / "evaluation.yaml").write_text(yaml.safe_dump(payload), encoding="utf-8")
     return run

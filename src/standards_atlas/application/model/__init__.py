@@ -56,6 +56,8 @@ from standards_atlas.application.model.markdown_review import (
     MarkdownReviewHeading,
 )
 from standards_atlas.application.model.normalized_document import (
+    MethodTechniqueCandidate,
+    MethodTechniqueKind,
     NormalizationIssue,
     NormalizationMetadata,
     NormalizationOptions,
@@ -107,6 +109,8 @@ __all__ = [
     "MarkdownReviewDiff",
     "MarkdownReviewDocument",
     "MarkdownReviewHeading",
+    "MethodTechniqueCandidate",
+    "MethodTechniqueKind",
     "OverrideAction",
     "OverrideValidationIssue",
     "OverrideValidationResult",

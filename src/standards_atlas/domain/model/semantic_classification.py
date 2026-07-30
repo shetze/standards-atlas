@@ -23,6 +23,24 @@ class StatementFunction(StrEnum):
     CONFORMANCE_STATEMENT = "conformance_statement"
 
 
+class ApplicabilityFunction(StrEnum):
+    """How a statement constrains the scope or applicability of normative content."""
+
+    SCOPE_DEFINITION = "scope_definition"
+    APPLICABILITY_CONDITION = "applicability_condition"
+    INCLUSION = "inclusion"
+    EXCLUSION = "exclusion"
+    EXCEPTION = "exception"
+
+
+class ResponsibilityFunction(StrEnum):
+    """How a statement allocates responsibility to roles or actors."""
+
+    RESPONSIBILITY_ASSIGNMENT = "responsibility_assignment"
+    RESPONSIBILITY_EXCLUSION = "responsibility_exclusion"
+    ROLE_CONDITION = "role_condition"
+
+
 class DocumentStructure(StrEnum):
     """Small document-family-neutral structural vocabulary."""
 
@@ -127,6 +145,8 @@ class SemanticClassification(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     statement_functions: tuple[StatementFunction, ...] = ()
+    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
     document_structure: DocumentStructureClassification | None = None
     normative_status: NormativeStatus = NormativeStatus.UNSPECIFIED
     domain_functions: tuple[DomainFunctionClassification, ...] = ()
@@ -136,6 +156,10 @@ class SemanticClassification(BaseModel):
     def dimensions_are_unique(self) -> SemanticClassification:
         if len(self.statement_functions) != len(set(self.statement_functions)):
             raise ValueError("statement_functions must not contain duplicates")
+        if len(self.applicability_functions) != len(set(self.applicability_functions)):
+            raise ValueError("applicability_functions must not contain duplicates")
+        if len(self.responsibility_functions) != len(set(self.responsibility_functions)):
+            raise ValueError("responsibility_functions must not contain duplicates")
         domains = [item.knowledge_domain for item in self.domain_functions]
         if len(domains) != len(set(domains)):
             raise ValueError("each knowledge domain may occur only once")

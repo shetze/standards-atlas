@@ -52,6 +52,8 @@ class SemanticTaskDefinition(BaseModel):
     version: str = Field(min_length=1)
     description: str = ""
     taxonomy: tuple[str, ...] = ()
+    applicability_taxonomy: tuple[str, ...] = ()
+    responsibility_taxonomy: tuple[str, ...] = ()
     multi_label: bool = True
     allow_unclassified: bool = True
 
@@ -66,7 +68,9 @@ class SemanticTaskRepository:
         root = self._root / task / version
         metadata = yaml.safe_load((root / "task.yaml").read_text(encoding="utf-8")) or {}
         taxonomy = yaml.safe_load((root / "taxonomy.yaml").read_text(encoding="utf-8")) or {}
-        metadata["taxonomy"] = tuple(taxonomy.get("roles", ()))
+        metadata["taxonomy"] = tuple(taxonomy.get("statement_functions", taxonomy.get("roles", ())))
+        metadata["applicability_taxonomy"] = tuple(taxonomy.get("applicability_functions", ()))
+        metadata["responsibility_taxonomy"] = tuple(taxonomy.get("responsibility_functions", ()))
         schema = json.loads((root / "schema.json").read_text(encoding="utf-8"))
         return SemanticTaskDefinition.model_validate(metadata), schema
 
@@ -453,6 +457,17 @@ def _normalize_selection_payload(value: Any) -> dict[str, Any]:
         if primary_function is not None and primary_function not in normalized_roles:
             normalized_roles.insert(0, primary_function)
         normalized["statement_functions"] = normalized_roles
+    for field, primary in (
+        ("applicability_functions", "primary_applicability_function"),
+        ("responsibility_functions", "primary_responsibility_function"),
+    ):
+        values = normalized.get(field)
+        if isinstance(values, (list, tuple)):
+            normalized_values = list(dict.fromkeys(values))
+            primary_value = normalized.get(primary)
+            if primary_value is not None and primary_value not in normalized_values:
+                normalized_values.insert(0, primary_value)
+            normalized[field] = normalized_values
     return normalized
 
 
