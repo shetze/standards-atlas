@@ -19,7 +19,6 @@ from standards_atlas.adapters.doorstop import (
     DoorstopTemplateInstaller,
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.application.services import (
     AtlasDataLifecycleService,
     AtlasDataOnboardingService,
@@ -28,7 +27,6 @@ from standards_atlas.application.services import (
     DocumentExportService,
     DocumentImportService,
     DocumentSelectionService,
-    MarkdownExportService,
 )
 from standards_atlas.application.services.atlasdata_lifecycle_service import AtlasDataLifecycleError
 from standards_atlas.application.services.atlasdata_onboarding_service import (
@@ -49,6 +47,7 @@ from standards_atlas.cli.apps import (
     doorstop_app,
     inspect_app,
 )
+from standards_atlas.cli.composition import build_markdown_export_service
 from standards_atlas.cli.printers import print_document_summary
 from standards_atlas.domain.model import DocumentKey
 
@@ -453,7 +452,7 @@ def export_document_to_markdown(
 ) -> None:
     """Export one standard family to one Markdown file per physical part."""
     export_target = target if target is not None else Path("local/exports/markdown") / document_key
-    service = MarkdownExportService(MarkdownExporter(), workspace=workspace)
+    service = build_markdown_export_service(workspace)
     try:
         result = service.export(
             document_key=document_key,

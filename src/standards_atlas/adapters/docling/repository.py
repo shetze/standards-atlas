@@ -6,18 +6,10 @@ import hashlib
 import json
 import os
 import re
-from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-
-class ExtractionState(StrEnum):
-    """Relationship between a persisted extraction and a source file."""
-
-    MISSING = "missing"
-    CURRENT = "current"
-    STALE = "stale"
-    INCOMPLETE = "incomplete"
+from standards_atlas.application.ports.workflow_artifacts import ExtractionState
 
 
 class DoclingArtifactRepository:

@@ -6,8 +6,10 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.ports import EngineeringDocumentExporter
+from standards_atlas.application.ports import (
+    EngineeringDocumentExporter,
+    EngineeringDocumentReader,
+)
 from standards_atlas.domain.model import DocumentKey, EngineeringDocument
 
 
@@ -24,10 +26,10 @@ class MarkdownExportService:
     def __init__(
         self,
         exporter: EngineeringDocumentExporter,
-        workspace: Path = Path(".atlas"),
+        documents: EngineeringDocumentReader,
     ) -> None:
         self._exporter = exporter
-        self._documents = FileSystemEngineeringDocumentRepository(workspace)
+        self._documents = documents
 
     def export(
         self,

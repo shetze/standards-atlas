@@ -18,6 +18,7 @@ from standards_atlas.cli.apps import (
     catalog_app,
     workflow_app,
 )
+from standards_atlas.cli.composition import build_workflow_service
 
 
 @catalog_app.command("validate")
@@ -126,7 +127,8 @@ def run_workflow(
         if hierarchy is not None
         else _select_catalog_families(model, tuple(family or ()), profile, all_families)
     )
-    plan = EndToEndWorkflowService().plan(
+    service = build_workflow_service(Path.cwd())
+    plan = service.plan(
         model,
         family_keys=keys,
         catalog_root=Path.cwd(),
@@ -134,7 +136,7 @@ def run_workflow(
         keep_stages=tuple(keep or ()),
         hierarchy_key=hierarchy,
     )
-    result = EndToEndWorkflowService().execute(
+    result = service.execute(
         plan, project_root=Path.cwd(), continue_after_review=continue_after_review
     )
     if result.completed:

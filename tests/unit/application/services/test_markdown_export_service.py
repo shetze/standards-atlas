@@ -26,7 +26,7 @@ def test_exports_multi_part_standard_to_separate_files(tmp_path):
     )
     repository.save(document)
 
-    result = MarkdownExportService(MarkdownExporter(), workspace).export(
+    result = MarkdownExportService(MarkdownExporter(), repository).export(
         "IEC11889", tmp_path / "markdown"
     )
 
@@ -43,7 +43,7 @@ def test_exports_single_part_document_to_one_file(tmp_path):
     document = document.model_copy(update={"clauses": (_clause("c1", None, "1", "Scope"),)})
     repository.save(document)
 
-    result = MarkdownExportService(MarkdownExporter(), workspace).export(
+    result = MarkdownExportService(MarkdownExporter(), repository).export(
         "EN50716", tmp_path / "markdown"
     )
 

@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from typing import Protocol
 
-from standards_atlas.adapters.docling import ExtractionState
+from standards_atlas.application.ports import ExtractionState
 from standards_atlas.application.workflow.models import (
     WorkflowExecutionResult,
     WorkflowPlan,
@@ -26,8 +26,8 @@ class SubprocessCommandRunner:
 
 
 class WorkflowExecutor:
-    def __init__(self, recovery: WorkflowRecovery | None = None) -> None:
-        self._recovery = recovery or WorkflowRecovery()
+    def __init__(self, recovery: WorkflowRecovery) -> None:
+        self._recovery = recovery
 
     def execute(
         self,

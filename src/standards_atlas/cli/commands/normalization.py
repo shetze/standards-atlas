@@ -25,7 +25,6 @@ from standards_atlas.application.model import NormalizationOptions
 from standards_atlas.application.normalization import NormalizationDataLossError
 from standards_atlas.application.services import (
     DocumentExtractionService,
-    DocumentNormalizationService,
     ExtractionInspectionService,
     ReferenceCandidateService,
 )
@@ -35,6 +34,7 @@ from standards_atlas.cli.apps import (
     normalize_app,
     reference_app,
 )
+from standards_atlas.cli.composition import build_document_normalization_service
 from standards_atlas.cli.runtime_managers import managed_llm_server
 
 
@@ -206,7 +206,7 @@ def normalize_extracted_document(
         page_ranges = tuple(_parse_page_range(value) for value in (page_range or ()))
         excluded_ranges = tuple(_parse_page_range(value) for value in (exclude_page_range or ()))
         selected_pages = parse_page_list(page_list) if page_list else ()
-        result = DocumentNormalizationService(workspace=workspace).normalize(
+        result = build_document_normalization_service(workspace).normalize(
             document_key,
             options=NormalizationOptions(
                 page_ranges=page_ranges,

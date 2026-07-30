@@ -1,10 +1,13 @@
 from pathlib import Path
 
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
+from standards_atlas.adapters.workflow import FileSystemWorkflowArtifactStore
 from standards_atlas.application.workflow import (
     ArtifactPolicy,
     EndToEndWorkflowService,
+    WorkflowExecutor,
     WorkflowPlan,
+    WorkflowRecovery,
     WorkflowStage,
     WorkflowStep,
 )
@@ -108,7 +111,9 @@ def test_execute_collects_all_review_gates_instead_of_stopping_at_first(tmp_path
     )
     runner = RecordingRunner()
 
-    result = EndToEndWorkflowService().execute(
+    result = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    ).execute(
         plan,
         project_root=tmp_path,
         runner=runner,
@@ -133,7 +138,9 @@ def test_continue_after_review_executes_remaining_pipeline(tmp_path: Path) -> No
     )
     runner = RecordingRunner()
 
-    result = EndToEndWorkflowService().execute(
+    result = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    ).execute(
         plan,
         project_root=tmp_path,
         runner=runner,
@@ -464,7 +471,9 @@ def test_clean_alignment_exports_review_and_continues_automatically(tmp_path: Pa
     )
     runner = RecordingRunner()
 
-    result = EndToEndWorkflowService().execute(plan, project_root=tmp_path, runner=runner)
+    result = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    ).execute(plan, project_root=tmp_path, runner=runner)
 
     assert result.completed is True
     assert result.blocked_documents == ()
@@ -501,7 +510,9 @@ def test_only_missing_or_conflicting_documents_block_their_pipeline(tmp_path: Pa
     plan = WorkflowPlan(families=("FAMILY",), steps=tuple(steps))
     runner = RecordingRunner()
 
-    result = EndToEndWorkflowService().execute(plan, project_root=tmp_path, runner=runner)
+    result = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    ).execute(plan, project_root=tmp_path, runner=runner)
 
     assert result.blocked_documents == ("CONFLICT", "MISSING")
     assert ("enrich", "CLEAN") in runner.commands
@@ -526,7 +537,9 @@ def test_existing_step_outputs_are_not_generated_again(tmp_path: Path) -> None:
     )
     runner = RecordingRunner()
 
-    result = EndToEndWorkflowService().execute(
+    result = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    ).execute(
         WorkflowPlan(families=("FAMILY",), steps=(step,)),
         project_root=tmp_path,
         runner=runner,
@@ -565,7 +578,9 @@ def test_force_removes_existing_outputs_before_regeneration(tmp_path: Path) -> N
     )
     runner = ReplacingRunner()
 
-    result = EndToEndWorkflowService().execute(
+    result = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    ).execute(
         WorkflowPlan(families=("FAMILY",), steps=(step,), force=True),
         project_root=tmp_path,
         runner=runner,
@@ -597,7 +612,9 @@ def test_overwrite_can_keep_existing_docling_output(tmp_path: Path) -> None:
     )
     runner = RecordingRunner()
 
-    result = EndToEndWorkflowService().execute(
+    result = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    ).execute(
         WorkflowPlan(
             families=("FAMILY",),
             steps=(step,),
@@ -690,7 +707,10 @@ def test_incomplete_docling_extraction_is_repaired_with_overwrite(tmp_path: Path
     )
     runner = RecordingRunner()
 
-    result = EndToEndWorkflowService().execute(
+    service = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    )
+    result = service.execute(
         WorkflowPlan(families=("TEST",), steps=(step,)),
         project_root=tmp_path,
         runner=runner,
@@ -735,7 +755,10 @@ def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
     )
     runner = RecordingRunner()
 
-    result = EndToEndWorkflowService().execute(
+    service = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    )
+    result = service.execute(
         WorkflowPlan(families=("TEST",), steps=(step,)),
         project_root=tmp_path,
         runner=runner,

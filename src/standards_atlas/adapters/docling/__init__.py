@@ -8,6 +8,9 @@ from standards_atlas.adapters.docling.errors import (
     DoclingNotInstalledError,
     DocumentConversionError,
 )
+from standards_atlas.adapters.docling.extracted_document_repository import (
+    DoclingExtractedDocumentRepository,
+)
 from standards_atlas.adapters.docling.options import (
     DoclingAcceleratorDevice,
     DoclingConversionOptions,
@@ -22,6 +25,7 @@ __all__ = [
     "DoclingAdapterError",
     "DoclingAcceleratorDevice",
     "DoclingArtifactRepository",
+    "DoclingExtractedDocumentRepository",
     "DoclingConversionOptions",
     "DoclingDocumentValidationError",
     "DoclingJsonReader",

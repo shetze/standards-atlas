@@ -28,7 +28,7 @@ class EndToEndWorkflowService:
         self, planner: WorkflowPlanner | None = None, executor: WorkflowExecutor | None = None
     ) -> None:
         self.planner = planner or WorkflowPlanner()
-        self.executor = executor or WorkflowExecutor()
+        self.executor = executor
 
     def plan(
         self,
@@ -57,6 +57,8 @@ class EndToEndWorkflowService:
         runner: CommandRunner | None = None,
         continue_after_review: bool = False,
     ) -> WorkflowExecutionResult:
+        if self.executor is None:
+            raise RuntimeError("Workflow execution requires an injected WorkflowExecutor")
         return self.executor.execute(
             plan,
             project_root=project_root,
