@@ -43,8 +43,9 @@ from standards_atlas.application.model.normalized_document import (
 from standards_atlas.application.normalization.method_technique_extractor import (
     MethodTechniqueExtractor,
 )
-from standards_atlas.application.normalization.page_furniture_classifier import (
-    PageFurnitureClassifier,
+from standards_atlas.application.normalization.pipeline import (
+    DEFAULT_NORMALIZATION_STEPS,
+    NormalizationRun,
 )
 from standards_atlas.domain.model import ArtifactLineage, artifact_reference
 
@@ -68,21 +69,15 @@ class DocumentNormalizer:
         options: NormalizationOptions | None = None,
     ) -> NormalizedExtractedDocument:
         options = options or NormalizationOptions()
-        page_furniture_decisions = PageFurnitureClassifier().classify(document, options)
-        suppressed, active = self._suppress_page_elements(
-            document, options, page_furniture_decisions
-        )
-        events = _selection_events(suppressed, page_furniture_decisions)
-        mapped = [
-            normalized_item for item in active for normalized_item in self._map_items(item, options)
-        ]
-        events.extend(_mapping_events(mapped))
-        repaired, repaired_count, repair_events = self._repair_hyphenation(mapped, options)
-        events.extend(repair_events)
-        merged, merged_count, merge_events = self._merge_text_fragments(repaired, options)
-        events.extend(merge_events)
-        listed, list_count, list_events = self._normalize_lists(merged, options)
-        events.extend(list_events)
+        run = NormalizationRun(document=document, options=options)
+        for step in DEFAULT_NORMALIZATION_STEPS:
+            step.apply(run, self)
+        page_furniture_decisions = run.page_furniture_decisions
+        suppressed = run.suppressed
+        events = run.events
+        repaired_count = run.repaired_count
+        merged_count = run.merged_count
+        list_count = run.list_count
         resequenced = tuple(
             item.model_copy(
                 update={
@@ -90,7 +85,7 @@ class DocumentNormalizer:
                     "sequence_number": index,
                 }
             )
-            for index, item in enumerate(listed)
+            for index, item in enumerate(run.items)
         )
         source_pages = {
             evidence.page_number

@@ -1,5 +1,5 @@
 from standards_atlas.application.services.evaluation import ProposalProgress
-from standards_atlas.cli.main import _format_duration, _MatrixProposalProgress
+from standards_atlas.cli.commands.evaluation import _format_duration, _MatrixProposalProgress
 
 
 def _progress(*, current: int, total: int, status: str) -> ProposalProgress:
@@ -26,7 +26,7 @@ def test_matrix_progress_updates_one_line(monkeypatch) -> None:
     def capture(message: str, *, nl: bool = True, **_: object) -> None:
         output.append((message, nl))
 
-    monkeypatch.setattr("standards_atlas.cli.main.typer.echo", capture)
+    monkeypatch.setattr("standards_atlas.cli.commands.evaluation.typer.echo", capture)
     reporter = _MatrixProposalProgress(
         candidate_index=1,
         candidate_total=48,

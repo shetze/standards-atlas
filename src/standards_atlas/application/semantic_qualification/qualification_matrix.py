@@ -10,7 +10,7 @@ from statistics import fmean, pstdev
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from standards_atlas.application.services.evaluation.qualification import (
+from standards_atlas.application.semantic_qualification.qualification import (
     AnnotationQualificationReport,
 )
 

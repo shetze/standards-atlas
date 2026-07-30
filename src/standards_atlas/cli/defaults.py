@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from standards_atlas.application.services.evaluation import defaults as evaluation_defaults
-from standards_atlas.application.services.evaluation.clause_access import SamplingStrategy
+from standards_atlas.application.semantic_qualification import defaults as evaluation_defaults
+from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 
 # Re-export application-level evaluation defaults for CLI declarations. Keeping
 # these aliases explicit makes the public CLI-default surface easy to inspect and

@@ -1,4 +1,4 @@
-from standards_atlas.application.services.evaluation import defaults as evaluation_defaults
+from standards_atlas.application.semantic_qualification import defaults as evaluation_defaults
 from standards_atlas.cli import defaults as cli_defaults
 
 

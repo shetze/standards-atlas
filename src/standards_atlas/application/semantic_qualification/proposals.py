@@ -15,20 +15,25 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.application.evaluation.repository import (
+    EvaluationDatasetRepository,
+    PromptRepository,
+)
+from standards_atlas.application.evaluation.schema import validate_schema
 from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
     LlmTimeoutError,
     LlmUnavailableError,
     StructuredGenerationRequest,
 )
-from standards_atlas.application.services.evaluation.annotations import (
+from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationGenerator,
     AnnotationLifecycleStatus,
     ClauseEvaluationAnnotation,
     ClauseReference,
     StatementFunctionSelection,
 )
-from standards_atlas.application.services.evaluation.defaults import (
+from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
     DEFAULT_EVALUATION_RETRY_ATTEMPTS,
     DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS,
@@ -36,11 +41,6 @@ from standards_atlas.application.services.evaluation.defaults import (
     DEFAULT_EVALUATION_SEED,
     DEFAULT_EVALUATION_TEMPERATURE,
 )
-from standards_atlas.application.services.evaluation.repository import (
-    EvaluationDatasetRepository,
-    PromptRepository,
-)
-from standards_atlas.application.services.evaluation.schema import validate_schema
 
 
 class SemanticTaskDefinition(BaseModel):

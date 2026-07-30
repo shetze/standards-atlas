@@ -13,25 +13,25 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from standards_atlas.application.services.evaluation.annotations import (
+from standards_atlas.application.evaluation.models import EvaluationDataset, EvaluationRun
+from standards_atlas.application.evaluation.repository import (
+    EvaluationDatasetRepository,
+    PromptRepository,
+)
+from standards_atlas.application.evaluation.runner import EvaluationRunner
+from standards_atlas.application.semantic_qualification.annotations import (
     ClauseReference,
     CorpusClause,
     CorpusManifestRepository,
     CorpusPopulationStatistics,
     EvaluationCorpusManifest,
 )
-from standards_atlas.application.services.evaluation.clause_access import (
+from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseDescriptor,
     ClauseFilter,
     ClauseProvider,
     SamplingStrategy,
 )
-from standards_atlas.application.services.evaluation.models import EvaluationDataset, EvaluationRun
-from standards_atlas.application.services.evaluation.repository import (
-    EvaluationDatasetRepository,
-    PromptRepository,
-)
-from standards_atlas.application.services.evaluation.runner import EvaluationRunner
 
 
 class CorpusBuildConfig(BaseModel):

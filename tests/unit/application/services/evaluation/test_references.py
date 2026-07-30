@@ -3,7 +3,7 @@ from pathlib import Path
 import yaml
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services.evaluation.references import (
+from standards_atlas.application.semantic_qualification.references import (
     ClauseReferenceExtractionService,
     ReferenceResolutionStatus,
 )

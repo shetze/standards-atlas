@@ -4,15 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from standards_atlas.application.ports.llm_gateway import (
-    LlmGateway,
-    StructuredGenerationRequest,
-)
-from standards_atlas.application.services.evaluation.metrics import (
+from standards_atlas.application.evaluation.metrics import (
     calculate_metrics,
     empty_metrics,
 )
-from standards_atlas.application.services.evaluation.models import (
+from standards_atlas.application.evaluation.models import (
     AggregateMetrics,
     EvaluationCaseResult,
     EvaluationDataset,
@@ -20,7 +16,11 @@ from standards_atlas.application.services.evaluation.models import (
     PromptDefinition,
     RegressionResult,
 )
-from standards_atlas.application.services.evaluation.schema import validate_schema
+from standards_atlas.application.evaluation.schema import validate_schema
+from standards_atlas.application.ports.llm_gateway import (
+    LlmGateway,
+    StructuredGenerationRequest,
+)
 
 
 class EvaluationRunner:

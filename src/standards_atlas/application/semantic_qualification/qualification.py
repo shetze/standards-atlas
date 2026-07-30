@@ -11,7 +11,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.application.services.evaluation.annotations import (
+from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationLifecycleStatus,
     AnnotationResolutionSource,
     ClauseAnnotationResolver,

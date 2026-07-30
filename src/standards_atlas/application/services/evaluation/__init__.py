@@ -1,6 +1,32 @@
 """Reusable prompt, model, dataset, regression, and reporting evaluation services."""
 
-from standards_atlas.application.services.evaluation.annotations import (
+from standards_atlas.application.evaluation.models import (
+    AggregateMetrics,
+    EvaluationCaseResult,
+    EvaluationDataset,
+    EvaluationExample,
+    EvaluationRun,
+    ExampleMetrics,
+    GoldenDataset,
+    GoldenExample,
+    PromptDefinition,
+    RegressionResult,
+)
+from standards_atlas.application.evaluation.report import (
+    EvaluationReporter,
+    SemanticEvaluationReporter,
+)
+from standards_atlas.application.evaluation.repository import (
+    EvaluationDatasetRepository,
+    GoldenDatasetRepository,
+    PromptRepository,
+)
+from standards_atlas.application.evaluation.runner import (
+    EvaluationRunner,
+    SemanticEvaluationRunner,
+    compare_runs,
+)
+from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationContractError,
     AnnotationGenerator,
     AnnotationLifecycleStatus,
@@ -20,31 +46,19 @@ from standards_atlas.application.services.evaluation.annotations import (
     StatementFunctionSelection,
     normalized_content_hash,
 )
-from standards_atlas.application.services.evaluation.clause_access import (
+from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseDescriptor,
     ClauseFilter,
     ClauseProvider,
     DocumentDescriptor,
     SamplingStrategy,
 )
-from standards_atlas.application.services.evaluation.consensus import (
+from standards_atlas.application.semantic_qualification.consensus import (
     ConsensusCategory,
     ConsensusReport,
     ModelConsensusService,
 )
-from standards_atlas.application.services.evaluation.models import (
-    AggregateMetrics,
-    EvaluationCaseResult,
-    EvaluationDataset,
-    EvaluationExample,
-    EvaluationRun,
-    ExampleMetrics,
-    GoldenDataset,
-    GoldenExample,
-    PromptDefinition,
-    RegressionResult,
-)
-from standards_atlas.application.services.evaluation.proposals import (
+from standards_atlas.application.semantic_qualification.proposals import (
     BaselineProposalGenerator,
     ProposalProgress,
     ProposalRunConfig,
@@ -53,7 +67,7 @@ from standards_atlas.application.services.evaluation.proposals import (
     SemanticTaskRepository,
     proposal_run_directory,
 )
-from standards_atlas.application.services.evaluation.qualification import (
+from standards_atlas.application.semantic_qualification.qualification import (
     AgreementMetrics,
     AnnotationQualificationReport,
     AnnotationQualificationService,
@@ -62,7 +76,7 @@ from standards_atlas.application.services.evaluation.qualification import (
     CorpusCoverage,
     EvaluationSliceReport,
 )
-from standards_atlas.application.services.evaluation.qualification_matrix import (
+from standards_atlas.application.semantic_qualification.qualification_matrix import (
     CandidateQualification,
     ConsensusConfig,
     MatrixObservation,
@@ -76,7 +90,7 @@ from standards_atlas.application.services.evaluation.qualification_matrix import
     ReviewImportConfig,
     resolve_prompt_version,
 )
-from standards_atlas.application.services.evaluation.references import (
+from standards_atlas.application.semantic_qualification.references import (
     ClauseReferenceAnalysis,
     ClauseReferenceExtractionService,
     ClauseReferenceOccurrence,
@@ -86,28 +100,14 @@ from standards_atlas.application.services.evaluation.references import (
     ReferenceResolutionStatus,
     ResolvedReferenceTarget,
 )
-from standards_atlas.application.services.evaluation.report import (
-    EvaluationReporter,
-    SemanticEvaluationReporter,
-)
-from standards_atlas.application.services.evaluation.repository import (
-    EvaluationDatasetRepository,
-    GoldenDatasetRepository,
-    PromptRepository,
-)
-from standards_atlas.application.services.evaluation.review import (
+from standards_atlas.application.semantic_qualification.review import (
     ReviewExportResult,
     ReviewForm,
     ReviewImportResult,
     ReviewPublishResult,
     SemanticAnnotationReviewService,
 )
-from standards_atlas.application.services.evaluation.runner import (
-    EvaluationRunner,
-    SemanticEvaluationRunner,
-    compare_runs,
-)
-from standards_atlas.application.services.evaluation.workflow import (
+from standards_atlas.application.semantic_qualification.workflow import (
     BenchmarkManifest,
     BenchmarkMatrixResult,
     CorpusBuildConfig,

@@ -7,7 +7,7 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
-from standards_atlas.application.services.evaluation.models import EvaluationRun
+from standards_atlas.application.evaluation.models import EvaluationRun
 
 
 class EvaluationReporter:

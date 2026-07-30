@@ -4,8 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from standards_atlas.application.services.evaluation.annotations import StatementFunctionSelection
-from standards_atlas.application.services.evaluation.proposals import SemanticTaskRepository
+from standards_atlas.application.semantic_qualification.annotations import (
+    StatementFunctionSelection,
+)
+from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
 
 
 def test_semantic_role_schema_uses_codex_supported_array_constraints() -> None:
@@ -46,7 +48,7 @@ def test_statement_function_primary_function_uses_codex_compatible_nullable_enum
 
 
 def test_multidimensional_selection_accepts_applicability_and_responsibility() -> None:
-    from standards_atlas.application.services.evaluation.annotations import (
+    from standards_atlas.application.semantic_qualification.annotations import (
         StatementFunctionSelection,
     )
 

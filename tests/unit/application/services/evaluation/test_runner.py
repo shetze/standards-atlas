@@ -1,15 +1,15 @@
-from standards_atlas.application.ports.llm_gateway import (
-    StructuredGenerationResult,
-    TokenUsage,
-)
-from standards_atlas.application.services.evaluation.models import (
+from standards_atlas.application.evaluation.models import (
     GoldenDataset,
     GoldenExample,
     PromptDefinition,
 )
-from standards_atlas.application.services.evaluation.runner import (
+from standards_atlas.application.evaluation.runner import (
     SemanticEvaluationRunner,
     compare_runs,
+)
+from standards_atlas.application.ports.llm_gateway import (
+    StructuredGenerationResult,
+    TokenUsage,
 )
 
 

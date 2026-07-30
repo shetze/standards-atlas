@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from standards_atlas.application.services.evaluation.models import (
+from standards_atlas.application.evaluation.models import (
     EvaluationDataset,
     EvaluationExample,
     PromptDefinition,

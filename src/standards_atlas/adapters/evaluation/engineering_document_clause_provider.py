@@ -8,8 +8,8 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services.evaluation.annotations import normalized_content_hash
-from standards_atlas.application.services.evaluation.clause_access import (
+from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
+from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseDescriptor,
     ClauseFilter,
     DocumentDescriptor,

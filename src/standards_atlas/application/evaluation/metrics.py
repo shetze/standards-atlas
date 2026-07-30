@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from standards_atlas.application.services.evaluation.models import ExampleMetrics
+from standards_atlas.application.evaluation.models import ExampleMetrics
 
 
 def calculate_metrics(actual: Mapping[str, Any], expected: Mapping[str, Any]) -> ExampleMetrics:

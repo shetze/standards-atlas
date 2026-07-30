@@ -1,6 +1,6 @@
 import pytest
 
-from standards_atlas.application.services.evaluation.metrics import calculate_metrics
+from standards_atlas.application.evaluation.metrics import calculate_metrics
 
 
 def test_exact_output_has_perfect_metrics_and_confidence() -> None:

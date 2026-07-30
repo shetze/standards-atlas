@@ -7,10 +7,10 @@ from standards_atlas.application.ports.llm_gateway import (
     LlmHealth,
     StructuredGenerationResult,
 )
-from standards_atlas.application.services.evaluation.defaults import (
+from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
 )
-from standards_atlas.application.services.evaluation.proposals import (
+from standards_atlas.application.semantic_qualification.proposals import (
     BaselineProposalGenerator,
     ProposalRunConfig,
 )

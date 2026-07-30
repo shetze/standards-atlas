@@ -12,7 +12,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from standards_atlas.application.services.evaluation.annotations import (
+from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationContractError,
     AnnotationLifecycleStatus,
     AnnotationReview,
@@ -22,7 +22,7 @@ from standards_atlas.application.services.evaluation.annotations import (
     ReviewDecision,
     StatementFunctionSelection,
 )
-from standards_atlas.application.services.evaluation.references import (
+from standards_atlas.application.semantic_qualification.references import (
     ClauseReferenceAnalysis,
     ClauseReferenceRepository,
 )

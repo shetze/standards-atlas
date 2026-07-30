@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from standards_atlas import __version__
-from standards_atlas.application.workflow.service import (
+from standards_atlas.application.workflow.models import (
     WorkflowExecutionResult,
     WorkflowPlan,
     WorkflowStep,

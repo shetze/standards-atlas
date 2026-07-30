@@ -24,7 +24,7 @@ def test_golden_corpus_cli_writes_reports(tmp_path: Path, monkeypatch) -> None:
         ),
     )
     monkeypatch.setattr(
-        "standards_atlas.cli.main.GoldenCorpusQualifier.run",
+        "standards_atlas.cli.commands.evaluation.GoldenCorpusQualifier.run",
         lambda self, root: qualification,
     )
 
@@ -67,7 +67,7 @@ def test_golden_corpus_cli_returns_nonzero_after_writing_failed_evidence(
         ),
     )
     monkeypatch.setattr(
-        "standards_atlas.cli.main.GoldenCorpusQualifier.run",
+        "standards_atlas.cli.commands.evaluation.GoldenCorpusQualifier.run",
         lambda self, root: qualification,
     )
 

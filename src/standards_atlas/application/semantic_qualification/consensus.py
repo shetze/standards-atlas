@@ -10,11 +10,11 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.application.services.evaluation.annotations import (
-    ClauseEvaluationAnnotation,
-)
-from standards_atlas.application.services.evaluation.repository import (
+from standards_atlas.application.evaluation.repository import (
     EvaluationDatasetRepository,
+)
+from standards_atlas.application.semantic_qualification.annotations import (
+    ClauseEvaluationAnnotation,
 )
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
