@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -165,5 +166,73 @@ def test_invalid_json_exposes_raw_response_and_finish_reason(tmp_path: Path) -> 
             assert error.raw_content == '{"summary":"truncated'
             assert error.raw_response == response
             assert error.finish_reason == "length"
+        else:
+            raise AssertionError("expected LlmResponseError")
+
+
+def test_qwen3_disabled_reasoning_appends_no_think_marker(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(model="hf.co/Qwen/Qwen3-14B-GGUF:Q4_K_M", cache_directory=tmp_path / "cache")
+    )
+    request = replace(_request(), metadata={"reasoning_enabled": False})
+    response = {
+        "model": "Qwen/Qwen3-14B-GGUF",
+        "choices": [{"finish_reason": "stop", "message": {"content": '{"summary":"Valid."}'}}],
+    }
+
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(response),
+    ) as urlopen:
+        gateway.generate_structured(request)
+
+    outbound = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+    assert outbound["messages"][1]["content"].endswith("\n\n/no_think")
+
+
+def test_qwen3_enabled_reasoning_appends_think_marker(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(model="Qwen/Qwen3-14B-GGUF", cache_directory=tmp_path / "cache")
+    )
+    request = replace(_request(), metadata={"reasoning_enabled": True})
+    response = {
+        "model": "Qwen/Qwen3-14B-GGUF",
+        "choices": [{"finish_reason": "stop", "message": {"content": '{"summary":"Valid."}'}}],
+    }
+
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(response),
+    ) as urlopen:
+        gateway.generate_structured(request)
+
+    outbound = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+    assert outbound["messages"][1]["content"].endswith("\n\n/think")
+
+
+def test_reasoning_budget_exhaustion_has_specific_category(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(model="Qwen/Qwen3-14B-GGUF", cache_directory=tmp_path / "cache")
+    )
+    response = {
+        "model": "Qwen/Qwen3-14B-GGUF",
+        "choices": [
+            {
+                "finish_reason": "length",
+                "message": {"content": "", "reasoning_content": "Long internal reasoning"},
+            }
+        ],
+    }
+
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(response),
+    ):
+        try:
+            gateway.generate_structured(_request())
+        except LlmResponseError as error:
+            assert error.category == "reasoning_budget_exhausted"
+            assert error.finish_reason == "length"
+            assert error.raw_response == response
         else:
             raise AssertionError("expected LlmResponseError")

@@ -57,11 +57,12 @@ class OpenAICompatibleLlmGateway:
         if cached is not None:
             return replace(cached, cached=True)
 
+        user_prompt = _apply_reasoning_mode(request.user_prompt, model, request.metadata)
         payload: dict[str, Any] = {
             "model": model,
             "messages": [
                 {"role": "system", "content": request.system_prompt},
-                {"role": "user", "content": request.user_prompt},
+                {"role": "user", "content": user_prompt},
             ],
             "temperature": request.temperature,
             "response_format": {
@@ -83,6 +84,16 @@ class OpenAICompatibleLlmGateway:
         duration_ms = round((time.monotonic() - started) * 1000)
         raw_content = _extract_content(response)
         finish_reason = _extract_finish_reason(response)
+        reasoning_content = _extract_reasoning_content(response)
+        if finish_reason == "length" and not raw_content.strip() and reasoning_content.strip():
+            raise LlmResponseError(
+                "LLM consumed the complete output budget in reasoning_content "
+                "and produced no final response (finish_reason=length)",
+                raw_content=raw_content,
+                raw_response=dict(response),
+                finish_reason=finish_reason,
+                category="reasoning_budget_exhausted",
+            )
         try:
             value = _parse_json_object(raw_content)
         except json.JSONDecodeError as error:
@@ -207,6 +218,31 @@ def _extract_content(response: Mapping[str, Any]) -> str:
     if not isinstance(content, str):
         raise LlmResponseError("LLM message content must be text")
     return content
+
+
+def _extract_reasoning_content(response: Mapping[str, Any]) -> str:
+    try:
+        value = response["choices"][0]["message"].get("reasoning_content", "")
+    except (KeyError, IndexError, TypeError, AttributeError):
+        return ""
+    return value if isinstance(value, str) else ""
+
+
+def _apply_reasoning_mode(user_prompt: str, model: str, metadata: Mapping[str, Any]) -> str:
+    """Apply model-native reasoning switches without leaking them into task prompts."""
+    reasoning_enabled = metadata.get("reasoning_enabled")
+    if reasoning_enabled is None or not _is_qwen3(model):
+        return user_prompt
+    marker = "/think" if bool(reasoning_enabled) else "/no_think"
+    stripped = user_prompt.rstrip()
+    if stripped.endswith(marker):
+        return user_prompt
+    return f"{stripped}\n\n{marker}"
+
+
+def _is_qwen3(model: str) -> bool:
+    normalized = model.casefold().replace("_", "-")
+    return "qwen3" in normalized or "qwen/qwen3" in normalized
 
 
 def _extract_finish_reason(response: Mapping[str, Any]) -> str | None:

@@ -849,6 +849,7 @@ def qualify_model_prompt_matrix(
                                 overwrite=run_mode == "overwrite",
                                 limit=limit,
                                 max_tokens=max_tokens or prompt.max_output_tokens,
+                                reasoning_enabled=reasoning.enabled,
                             )
                             if run_mode == "recompute":
                                 run_directory = proposal_run_directory(proposal_config, run_root)
