@@ -271,10 +271,9 @@ def _reliability(run_directory: Path, *, attempted: int, successful: int) -> Rel
         error = payload.get("error", {})
         category = str(error.get("category", ""))
         message = str(error.get("message", ""))
-        truncation_categories = {"truncated_response", "reasoning_budget_exhausted"}
-        if category in truncation_categories or "finish_reason=length" in message:
+        if category == "truncated_response" or "finish_reason=length" in message:
             truncated += 1
-        if category in {"invalid_json", *truncation_categories} or "not valid JSON" in message:
+        if category in {"invalid_json", "truncated_response"} or "not valid JSON" in message:
             invalid_json += 1
         if category == "timeout" or "timed out" in message.lower():
             timeouts += 1

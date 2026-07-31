@@ -9,6 +9,7 @@ import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import urlparse
 
 from standards_atlas.adapters.llm.config import LlmConfig
@@ -60,6 +61,8 @@ class RamaLamaServerManager:
         command = (
             server.executable,
             "serve",
+            "--name",
+            server.name,
             "--backend",
             server.backend,
             f"--selinux={str(server.selinux).lower()}",
@@ -95,6 +98,29 @@ class RamaLamaServerManager:
             server.pid_file.unlink(missing_ok=True)
             raise
 
+    def pull(self, model: str | None = None) -> None:
+        """Download one model into RamaLama local storage without starting it."""
+        model_ref = model or self._config.server.model
+        if not model_ref.strip():
+            raise RamaLamaServerError("RamaLama model reference must not be empty")
+        try:
+            subprocess.run(  # noqa: S603
+                (self._config.server.executable, "pull", model_ref),
+                check=True,
+            )
+        except FileNotFoundError as exc:
+            raise RamaLamaServerError(
+                f"RamaLama executable not found: {self._config.server.executable}"
+            ) from exc
+        except subprocess.CalledProcessError as exc:
+            raise RamaLamaServerError(
+                f"Could not preload RamaLama model {model_ref!r}: exit code {exc.returncode}"
+            ) from exc
+        except OSError as exc:
+            raise RamaLamaServerError(
+                f"Could not preload RamaLama model {model_ref!r}: {exc}"
+            ) from exc
+
     def stop(self) -> None:
         if not self._config.server.enabled:
             return
@@ -104,9 +130,17 @@ class RamaLamaServerManager:
             self._config.server.pid_file.unlink(missing_ok=True)
             return
 
-        self._terminate_process(pid)
-        self._wait_for_process_exit(pid, self._config.server.shutdown_timeout_seconds)
-        self._config.server.pid_file.unlink(missing_ok=True)
+        try:
+            self._terminate_process(pid)
+            try:
+                self._wait_for_process_exit(pid, self._config.server.shutdown_timeout_seconds)
+            except RamaLamaServerError:
+                self._stop_named_container()
+                if self._wait_until_process_stopped(pid, 5.0):
+                    return
+                raise
+        finally:
+            self._config.server.pid_file.unlink(missing_ok=True)
 
     @contextmanager
     def paused_for_exclusive_accelerator(self) -> Iterator[None]:
@@ -166,7 +200,13 @@ class RamaLamaServerManager:
             return False
         except PermissionError:
             return True
-        return True
+
+        stat_path = Path(f"/proc/{pid}/stat")
+        try:
+            fields = stat_path.read_text(encoding="utf-8").split()
+        except (FileNotFoundError, PermissionError, OSError):
+            return True
+        return len(fields) < 3 or fields[2] != "Z"
 
     @staticmethod
     def _terminate_process(pid: int) -> None:
@@ -180,17 +220,47 @@ class RamaLamaServerManager:
             except ProcessLookupError:
                 return
 
+    def _stop_named_container(self) -> None:
+        try:
+            subprocess.run(  # noqa: S603
+                (
+                    self._config.server.executable,
+                    "stop",
+                    self._config.server.name,
+                ),
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=10.0,
+            )
+        except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+            return
+
     def _wait_for_process_exit(self, pid: int, timeout: float) -> None:
-        deadline = time.monotonic() + timeout
-        while time.monotonic() < deadline:
-            if not self._pid_is_running(pid):
-                return
-            time.sleep(0.25)
+        if self._wait_until_process_stopped(pid, timeout):
+            return
         try:
             os.killpg(pid, signal.SIGKILL)
         except ProcessLookupError:
             return
+        except OSError:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                return
+
+        kill_timeout = min(max(timeout / 2, 1.0), 5.0)
+        if self._wait_until_process_stopped(pid, kill_timeout):
+            return
         raise RamaLamaServerError(f"RamaLama process {pid} did not stop within {timeout:g} seconds")
+
+    def _wait_until_process_stopped(self, pid: int, timeout: float) -> bool:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if not self._pid_is_running(pid):
+                return True
+            time.sleep(0.25)
+        return not self._pid_is_running(pid)
 
     def _tail_log(self, line_count: int = 20) -> str | None:
         try:

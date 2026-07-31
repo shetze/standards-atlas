@@ -95,7 +95,6 @@ class ProposalRunConfig(BaseModel):
     retry_attempts: int = Field(default=DEFAULT_EVALUATION_RETRY_ATTEMPTS, ge=1)
     retry_backoff_seconds: float = Field(default=DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS, ge=0.0)
     retry_timeouts: bool = DEFAULT_EVALUATION_RETRY_TIMEOUTS
-    reasoning_enabled: bool = False
 
 
 @dataclass(frozen=True)
@@ -433,9 +432,6 @@ def _error_category(error: Exception) -> str:
     if isinstance(error, LlmUnavailableError):
         return "provider_unavailable"
     if type(error).__name__ == "LlmResponseError":
-        category = getattr(error, "category", None)
-        if category is not None:
-            return str(category)
         if getattr(error, "finish_reason", None) == "length":
             return "truncated_response"
         return "invalid_provider_response"
@@ -504,7 +500,6 @@ def _request(config, prompt, item_input, task):
             "task_version": task.version,
             "content_hash": content.get("hash"),
             "clause_context": context,
-            "reasoning_enabled": config.reasoning_enabled,
         },
     )
 

@@ -9,7 +9,9 @@ from typing import Annotated
 import typer
 
 from standards_atlas.adapters.llm import (
+    LlmConfig,
     RamaLamaServerError,
+    RamaLamaServerManager,
 )
 from standards_atlas.adapters.mcp import (
     CodexMcpConfig,
@@ -18,6 +20,9 @@ from standards_atlas.adapters.mcp import (
     McpServerProcessError,
     StreamableHttpJsonRpcTransport,
     run_mcp_server,
+)
+from standards_atlas.application.semantic_qualification.qualification_matrix import (
+    QualificationMatrixManifest,
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import (
@@ -43,6 +48,46 @@ def start_llm_server(
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
     typer.echo("RamaLama server started.")
+
+
+@llm_app.command("preload-qualification-models")
+def preload_qualification_models(
+    manifest_path: Annotated[
+        Path,
+        typer.Option(
+            "--manifest",
+            exists=True,
+            readable=True,
+            help="Qualification matrix containing the models to preload.",
+        ),
+    ] = cli_defaults.DEFAULT_QUALIFICATION_MATRIX,
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, readable=True, help="LLM YAML configuration."),
+    ] = cli_defaults.DEFAULT_LLM_CONFIG,
+) -> None:
+    """Download all distinct RamaLama models declared by a qualification matrix."""
+    try:
+        manifest = QualificationMatrixManifest.load(manifest_path)
+        llm_config = LlmConfig.load(config)
+        manager = RamaLamaServerManager(llm_config)
+        models = tuple(
+            dict.fromkeys(
+                model.model_ref
+                for model in manifest.models
+                if model.provider == "ramalama" and model.model_ref
+            )
+        )
+        if not models:
+            typer.echo("No RamaLama models declared in qualification matrix.")
+            return
+        for index, model_ref in enumerate(models, start=1):
+            typer.echo(f"[{index}/{len(models)}] Preloading {model_ref}")
+            manager.pull(model_ref)
+    except (OSError, ValueError, RamaLamaServerError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Preloaded {len(models)} RamaLama model(s).")
 
 
 @llm_app.command("stop")

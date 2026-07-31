@@ -31,13 +31,11 @@ class LlmResponseError(LlmGatewayError):
         raw_content: str | None = None,
         raw_response: JsonObject | str | None = None,
         finish_reason: str | None = None,
-        category: str | None = None,
     ) -> None:
         super().__init__(message)
         self.raw_content = raw_content
         self.raw_response = raw_response
         self.finish_reason = finish_reason
-        self.category = category
 
 
 @dataclass(frozen=True)

@@ -764,8 +764,9 @@ def qualify_model_prompt_matrix(
                 for item in manifest.observations
             }
             base_config = LlmConfig.load(config)
-            active_server = RamaLamaServerManager(base_config)
-            active_server.stop()
+            initial_server = RamaLamaServerManager(base_config)
+            initial_server.stop()
+            active_server = None
             active_reasoning_modes = tuple(
                 reasoning
                 for reasoning in manifest.reasoning_modes
@@ -784,8 +785,9 @@ def qualify_model_prompt_matrix(
                 gateway = None
                 if run_mode != "recompute":
                     if active_server is not None:
-                        active_server.stop()
+                        server_to_stop = active_server
                         active_server = None
+                        server_to_stop.stop()
                     if model.provider == "ramalama":
                         model_config = replace(
                             base_config,
@@ -849,7 +851,6 @@ def qualify_model_prompt_matrix(
                                 overwrite=run_mode == "overwrite",
                                 limit=limit,
                                 max_tokens=max_tokens or prompt.max_output_tokens,
-                                reasoning_enabled=reasoning.enabled,
                             )
                             if run_mode == "recompute":
                                 run_directory = proposal_run_directory(proposal_config, run_root)
@@ -963,7 +964,9 @@ def qualify_model_prompt_matrix(
         raise typer.Exit(code=2) from exc
     finally:
         if active_server is not None:
-            active_server.stop()
+            server_to_stop = active_server
+            active_server = None
+            server_to_stop.stop()
         if active_mcp_lease is not None:
             active_mcp_lease.__exit__(None, None, None)
     typer.echo(f"Matrix result            : {'PASS' if report.passed else 'FAIL'}")

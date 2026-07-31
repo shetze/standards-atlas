@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import signal
 from pathlib import Path
 from unittest.mock import ANY, Mock, patch
 
@@ -45,6 +46,8 @@ def test_start_invokes_same_foreground_command_as_start_script(tmp_path: Path) -
         (
             "ramalama",
             "serve",
+            "--name",
+            "standards-atlas-llm",
             "--backend",
             "auto",
             "--selinux=false",
@@ -120,3 +123,87 @@ def test_rejects_remote_endpoint_for_managed_server() -> None:
 
     with pytest.raises(RamaLamaServerError, match="loopback"):
         manager.start()
+
+
+def test_wait_for_process_exit_accepts_exit_after_sigkill(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    waits = Mock(side_effect=(False, True))
+    killpg = Mock()
+    monkeypatch.setattr(manager, "_wait_until_process_stopped", waits)
+    monkeypatch.setattr("os.killpg", killpg)
+
+    manager._wait_for_process_exit(789, 0.01)
+
+    killpg.assert_called_once_with(789, signal.SIGKILL)
+    assert waits.call_count == 2
+
+
+def test_pid_is_running_treats_zombie_as_stopped(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("os.kill", Mock())
+    monkeypatch.setattr(
+        Path,
+        "read_text",
+        Mock(return_value="123 (ramalama) Z 1 2 3"),
+    )
+
+    assert not RamaLamaServerManager._pid_is_running(123)
+
+
+def test_stop_removes_pid_file_when_shutdown_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    manager._config.server.state_directory.mkdir(parents=True, exist_ok=True)
+    manager._config.server.pid_file.write_text("123\n", encoding="utf-8")
+    monkeypatch.setattr(manager, "_pid_is_running", Mock(return_value=True))
+    monkeypatch.setattr(manager, "_terminate_process", Mock())
+    monkeypatch.setattr(
+        manager,
+        "_wait_for_process_exit",
+        Mock(side_effect=RamaLamaServerError("shutdown failed")),
+    )
+    monkeypatch.setattr(manager, "_stop_named_container", Mock())
+    monkeypatch.setattr(manager, "_wait_until_process_stopped", Mock(return_value=False))
+
+    with pytest.raises(RamaLamaServerError, match="shutdown failed"):
+        manager.stop()
+
+    assert not manager._config.server.pid_file.exists()
+
+
+def test_pull_downloads_model_with_ramalama(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+
+    with patch("subprocess.run") as run:
+        manager.pull("hf.co/example/model-GGUF:Q4_K_M")
+
+    run.assert_called_once_with(
+        ("ramalama", "pull", "hf.co/example/model-GGUF:Q4_K_M"),
+        check=True,
+    )
+
+
+def test_stop_falls_back_to_named_container(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    manager._config.server.state_directory.mkdir(parents=True, exist_ok=True)
+    manager._config.server.pid_file.write_text("123\n", encoding="utf-8")
+    monkeypatch.setattr(manager, "_pid_is_running", Mock(return_value=True))
+    monkeypatch.setattr(manager, "_terminate_process", Mock())
+    monkeypatch.setattr(
+        manager,
+        "_wait_for_process_exit",
+        Mock(side_effect=RamaLamaServerError("shutdown failed")),
+    )
+    monkeypatch.setattr(manager, "_stop_named_container", Mock())
+    monkeypatch.setattr(manager, "_wait_until_process_stopped", Mock(return_value=True))
+
+    manager.stop()
+
+    manager._stop_named_container.assert_called_once_with()
+    assert not manager._config.server.pid_file.exists()
