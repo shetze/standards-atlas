@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
+from collections.abc import Mapping
 from pathlib import Path
 
 from standards_atlas.adapters.artifact_lineage import write_file_lineage_manifest
@@ -27,10 +28,19 @@ _OMITTED_STRUCTURES = {DocumentStructure.FOREWORD, DocumentStructure.INTRODUCTIO
 class MarkdownExporter:
     """Render one EngineeringDocument as a standalone Markdown file."""
 
-    def export_document(self, document: EngineeringDocument, target: Path) -> Path:
+    def export_document(
+        self,
+        document: EngineeringDocument,
+        target: Path,
+        *,
+        link_targets: Mapping[tuple[str, str], str] | None = None,
+    ) -> Path:
         target.parent.mkdir(parents=True, exist_ok=True)
         document = _materialize_visual_assets(document, target.parent)
-        target.write_text(self.render(document), encoding="utf-8")
+        target.write_text(
+            self.render(document, link_targets=link_targets),
+            encoding="utf-8",
+        )
         write_file_lineage_manifest(
             target,
             document,
@@ -39,7 +49,12 @@ class MarkdownExporter:
         )
         return target
 
-    def render(self, document: EngineeringDocument) -> str:
+    def render(
+        self,
+        document: EngineeringDocument,
+        *,
+        link_targets: Mapping[tuple[str, str], str] | None = None,
+    ) -> str:
         clauses = tuple(sorted(_exportable_clauses(document), key=_clause_sort_key))
         lines = [f"# {document.title}", ""]
         toc = _render_toc(clauses)
@@ -58,7 +73,7 @@ class MarkdownExporter:
                 )
             )
             for block in clause.content:
-                rendered = _render_block(block, clause, document)
+                rendered = _render_block(block, clause, document, link_targets=link_targets)
                 if rendered:
                     lines.extend((rendered.rstrip(), ""))
         return "\n".join(lines).rstrip() + "\n"
@@ -124,12 +139,25 @@ def _anchor(reference: str) -> str:
     return f"clause-{normalized}"
 
 
-def _render_block(block: object, clause: object, document: EngineeringDocument) -> str:
+def _render_block(
+    block: object,
+    clause: object,
+    document: EngineeringDocument,
+    *,
+    link_targets: Mapping[tuple[str, str], str] | None = None,
+) -> str:
     if isinstance(block, TextBlock):
-        return _link_internal_references(block.text, clause, document)
+        return _link_references(block.text, clause, document, link_targets=link_targets)
     if isinstance(block, ListBlock):
         return "\n".join(
-            _render_list_item(item, block.ordered, index, clause=clause, document=document)
+            _render_list_item(
+                item,
+                block.ordered,
+                index,
+                clause=clause,
+                document=document,
+                link_targets=link_targets,
+            )
             for index, item in enumerate(block.items, 1)
         )
     if isinstance(block, TableBlock):
@@ -161,7 +189,13 @@ def _render_block(block: object, clause: object, document: EngineeringDocument) 
         return f"```{block.language or ''}\n{block.code}\n```"
     if isinstance(block, NoteBlock):
         body = "\n\n".join(
-            filter(None, (_render_block(item, clause, document) for item in block.content))
+            filter(
+                None,
+                (
+                    _render_block(item, clause, document, link_targets=link_targets)
+                    for item in block.content
+                ),
+            )
         )
         title = block.note_kind or "Note"
         text = f"**{title}.**" + (f" {body}" if body else "")
@@ -177,33 +211,59 @@ def _render_list_item(
     *,
     clause: object,
     document: EngineeringDocument,
+    link_targets: Mapping[tuple[str, str], str] | None = None,
 ) -> str:
     marker = f"{index}." if ordered else "-"
-    text = _link_internal_references(item.text, clause, document)
+    text = _link_references(item.text, clause, document, link_targets=link_targets)
     lines = [f"{'  ' * depth}{marker} {text}"]
     for child_index, child in enumerate(item.children, 1):
         lines.append(
             _render_list_item(
-                child, child.ordered, child_index, depth + 1, clause=clause, document=document
+                child,
+                child.ordered,
+                child_index,
+                depth + 1,
+                clause=clause,
+                document=document,
+                link_targets=link_targets,
             )
         )
     return "\n".join(lines)
 
 
-def _link_internal_references(text: str, clause: object, document: EngineeringDocument) -> str:
-    """Render resolved internal-reference relations as Markdown links."""
-    targets = {item.reference.clause for item in document.clauses}
+def _link_references(
+    text: str,
+    clause: object,
+    document: EngineeringDocument,
+    *,
+    link_targets: Mapping[tuple[str, str], str] | None = None,
+) -> str:
+    """Render resolved internal and cross-document relations as Markdown links."""
+    internal_targets = {item.reference.clause for item in document.clauses}
     relations = clause.semantic_classification.relations
-    for relation in sorted(relations, key=lambda item: len(item.target_reference), reverse=True):
-        if relation.scope is not RelationScope.INTERNAL:
+    for relation in sorted(
+        relations,
+        key=lambda item: len(item.display_text or item.target_reference),
+        reverse=True,
+    ):
+        label = relation.display_text or relation.target_reference
+        destination: str | None = None
+        if relation.scope is RelationScope.INTERNAL:
+            target = relation.target_reference.strip()
+            if target in internal_targets:
+                destination = f"#{_anchor(target)}"
+            elif relation.target_clause_id and link_targets is not None:
+                destination = link_targets.get((document.key.value, relation.target_clause_id))
+        elif (
+            relation.target_document_key and relation.target_clause_id and link_targets is not None
+        ):
+            destination = link_targets.get(
+                (relation.target_document_key, relation.target_clause_id)
+            )
+        if not destination:
             continue
-        target = relation.target_reference.strip()
-        if not target or target not in targets:
-            continue
-        label = relation.display_text or target
-        pattern = re.compile(rf"(?<![\w.#-]){re.escape(label)}(?![\w.-])")
-        replacement = f"[{label}](#{_anchor(target)})"
-        text = pattern.sub(replacement, text)
+        pattern = re.compile(rf"(?<![\w.#-]){re.escape(label)}(?![\w-]|[.]\d)")
+        text = pattern.sub(f"[{label}]({destination})", text)
     return text
 
 

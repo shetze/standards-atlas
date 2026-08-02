@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol
 
@@ -15,6 +16,8 @@ class EngineeringDocumentExporter(Protocol):
         self,
         document: EngineeringDocument,
         target: Path,
+        *,
+        link_targets: Mapping[tuple[str, str], str] | None = None,
     ) -> Path:
         """Export a document and return the generated target path."""
         ...
