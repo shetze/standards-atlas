@@ -76,7 +76,7 @@ class ModelCandidate(BaseModel):
     accelerator: str | None = None
     parameters_billion: float | None = Field(default=None, gt=0.0)
     declared_memory_gb: float | None = Field(default=None, gt=0.0)
-    repetitions: int | None = Field(default=None, ge=1)
+    repetitions: int | None = Field(default=None, ge=0)
 
 
 class ReasoningMode(BaseModel):
@@ -195,6 +195,7 @@ class QualificationMatrixManifest(BaseModel):
             raise ValueError("at least one reasoning mode must be declared")
         if len(set(reasoning_mode_ids)) != len(reasoning_mode_ids):
             raise ValueError("reasoning mode ids must be unique")
+        model_repetitions = {item.id: self.repetitions_for(item) for item in self.models}
         seen: set[tuple[str, str, str, int]] = set()
         for item in self.observations:
             if item.prompt_id not in prompt_ids:
@@ -205,9 +206,11 @@ class QualificationMatrixManifest(BaseModel):
                 raise ValueError(
                     f"unknown reasoning_mode_id in observation: {item.reasoning_mode_id}"
                 )
-            if item.repetition > self.repetitions:
+            expected_repetitions = model_repetitions[item.model_id]
+            if expected_repetitions == 0:
                 raise ValueError(
-                    f"observation repetition {item.repetition} exceeds {self.repetitions}"
+                    f"observation repetition {item.repetition} exceeds "
+                    f"configured repetitions 0 for {item.model_id}"
                 )
             key = (
                 item.prompt_id,
@@ -363,6 +366,8 @@ class ModelPromptQualificationService:
         raw_candidates: list[CandidateQualification] = []
         for prompt in manifest.prompts:
             for model in manifest.models:
+                if manifest.repetitions_for(model) == 0:
+                    continue
                 for reasoning_mode in manifest.reasoning_modes:
                     entries = sorted(
                         grouped.get((prompt.id, model.id, reasoning_mode.id), []),

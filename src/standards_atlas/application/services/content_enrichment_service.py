@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
+from standards_atlas.application.analysis import resolve_internal_reference_relations
 from standards_atlas.application.model.alignment import (
     AlignmentResult,
     AlignmentStatus,
@@ -257,6 +258,43 @@ class ContentEnrichmentService:
             )
 
         draft = document.model_copy(update={"clauses": tuple(enriched_clauses)})
+        resolved_relations = resolve_internal_reference_relations(draft)
+        clauses_with_relations = []
+        for clause in draft.clauses:
+            current = clause.semantic_classification
+            detected_relations = resolved_relations.get(clause.id.value, ())
+            relation_keys = {
+                (
+                    relation.kind,
+                    relation.scope,
+                    relation.target_reference,
+                    relation.target_document_key,
+                    relation.display_text,
+                )
+                for relation in current.relations
+            }
+            merged_relations = list(current.relations)
+            for relation in detected_relations:
+                key = (
+                    relation.kind,
+                    relation.scope,
+                    relation.target_reference,
+                    relation.target_document_key,
+                    relation.display_text,
+                )
+                if key not in relation_keys:
+                    merged_relations.append(relation)
+                    relation_keys.add(key)
+            clauses_with_relations.append(
+                clause.model_copy(
+                    update={
+                        "semantic_classification": current.model_copy(
+                            update={"relations": tuple(merged_relations)}
+                        )
+                    }
+                )
+            )
+        draft = draft.model_copy(update={"clauses": tuple(clauses_with_relations)})
         parent_artifacts = []
         if document.lineage is not None:
             parent_artifacts.append(document.lineage.artifact)

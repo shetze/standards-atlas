@@ -56,6 +56,7 @@ class RamaLamaServerManager:
             return
 
         server = self._config.server
+        self._remove_named_container()
         state_directory = server.state_directory
         state_directory.mkdir(parents=True, exist_ok=True)
         command = (
@@ -219,6 +220,20 @@ class RamaLamaServerManager:
                 os.kill(pid, signal.SIGTERM)
             except ProcessLookupError:
                 return
+
+    def _remove_named_container(self) -> None:
+        """Remove a stale project-owned container before starting a new server."""
+        engine = os.environ.get("RAMALAMA_CONTAINER_ENGINE", "podman").strip() or "podman"
+        try:
+            subprocess.run(  # noqa: S603
+                (engine, "rm", "--force", self._config.server.name),
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=10.0,
+            )
+        except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+            return
 
     def _stop_named_container(self) -> None:
         try:

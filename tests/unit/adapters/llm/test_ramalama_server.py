@@ -38,10 +38,12 @@ def test_start_invokes_same_foreground_command_as_start_script(tmp_path: Path) -
 
     with (
         patch.object(manager, "status", side_effect=lambda: next(statuses)),
+        patch.object(manager, "_remove_named_container") as remove_container,
         patch("subprocess.Popen", return_value=process) as popen,
     ):
         manager.start()
 
+    remove_container.assert_called_once_with()
     popen.assert_called_once_with(
         (
             "ramalama",
@@ -207,3 +209,36 @@ def test_stop_falls_back_to_named_container(
 
     manager._stop_named_container.assert_called_once_with()
     assert not manager._config.server.pid_file.exists()
+
+
+def test_start_removes_stale_named_container_before_launch(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    statuses = iter([RamaLamaServerStatus(False), RamaLamaServerStatus(True)])
+    process = Mock(pid=1234)
+
+    with (
+        patch.object(manager, "status", side_effect=lambda: next(statuses)),
+        patch.object(manager, "_remove_named_container") as remove_container,
+        patch("subprocess.Popen", return_value=process),
+    ):
+        manager.start()
+
+    remove_container.assert_called_once_with()
+
+
+def test_remove_named_container_uses_configured_engine(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    monkeypatch.setenv("RAMALAMA_CONTAINER_ENGINE", "docker")
+
+    with patch("subprocess.run") as run:
+        manager._remove_named_container()
+
+    run.assert_called_once_with(
+        ("docker", "rm", "--force", "standards-atlas-llm"),
+        check=False,
+        stdout=-3,
+        stderr=-3,
+        timeout=10.0,
+    )

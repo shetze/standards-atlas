@@ -228,11 +228,32 @@ def test_model_repetitions_override_global_default(tmp_path: Path) -> None:
     assert manifest.repetitions_for(manifest.models[1]) == 3
 
 
-def test_model_repetitions_must_be_positive(tmp_path: Path) -> None:
+def test_model_repetitions_zero_disables_model(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["models"][0]["repetitions"] = 0
+    payload["observations"] = [
+        item for item in payload["observations"] if item["model_id"] != "fast"
+    ]
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    manifest = QualificationMatrixManifest.load(path)
+    report, _, _ = ModelPromptQualificationService().evaluate(
+        manifest, tmp_path / "disabled-model-output"
+    )
+
+    assert manifest.repetitions_for(manifest.models[0]) == 0
+    assert report.passed
+    assert len(report.candidates) == 4
+    assert all(candidate.model_id == "accurate" for candidate in report.candidates)
+    assert not any("fast" in diagnostic for diagnostic in report.diagnostics)
+
+
+def test_disabled_model_rejects_existing_observations(tmp_path: Path) -> None:
     path = _manifest(tmp_path)
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     payload["models"][0]["repetitions"] = 0
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="greater than or equal to 1"):
+    with pytest.raises(ValueError, match="configured repetitions 0 for fast"):
         QualificationMatrixManifest.load(path)
