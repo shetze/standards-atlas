@@ -178,3 +178,39 @@ def test_published_gold_shadows_local_proposal_for_silver(tmp_path: Path) -> Non
     assert report.silver_agreement.micro_f1 == 1.0
     assert report.coverage.published_gold == 1
     assert report.coverage.local_proposals == 0
+
+
+def test_reliability_aggregates_failure_categories_and_messages(tmp_path: Path) -> None:
+    reference = _reference("c1", "A requirement.")
+    corpus_id = "roles-v1"
+    local = tmp_path / "local"
+    run = tmp_path / "run"
+    CorpusManifestRepository(local).write(
+        EvaluationCorpusManifest(
+            corpus_id=corpus_id,
+            task="statement-function-classification",
+            corpus_version="1",
+            selection_strategy="random",
+            seed=1,
+            clauses=(CorpusClause(clause=reference, strata={}),),
+        )
+    )
+    failure = run / "c1" / "failure.json"
+    failure.parent.mkdir(parents=True)
+    failure.write_text(
+        '{"error":{"category":"validation_error",'
+        '"message":"schema validation failed for unknown label"}}',
+        encoding="utf-8",
+    )
+
+    report, _, _ = AnnotationQualificationService().evaluate(
+        corpus_id=corpus_id,
+        run_directory=run,
+        local_corpus_root=local,
+        published_corpus_root=tmp_path / "published",
+        output_directory=tmp_path / "out",
+    )
+
+    assert report.reliability.failure_categories[0].category == "schema_validation_error"
+    assert report.reliability.failure_categories[0].count == 1
+    assert report.reliability.top_failure_messages[0].count == 1

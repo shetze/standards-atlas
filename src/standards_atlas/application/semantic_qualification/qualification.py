@@ -90,6 +90,24 @@ class CorpusCoverage(BaseModel):
     missing_predictions: int = Field(ge=0)
 
 
+class FailureCategoryCount(BaseModel):
+    """Aggregated operational failure category for one proposal run."""
+
+    model_config = ConfigDict(frozen=True)
+
+    category: str
+    count: int = Field(ge=1)
+
+
+class FailureMessageCount(BaseModel):
+    """Frequently occurring normalized failure message."""
+
+    model_config = ConfigDict(frozen=True)
+
+    message: str
+    count: int = Field(ge=1)
+
+
 class ReliabilityMetrics(BaseModel):
     """Operational reliability of one proposal run."""
 
@@ -104,6 +122,8 @@ class ReliabilityMetrics(BaseModel):
     prediction_success_rate: float = Field(ge=0.0, le=1.0)
     json_validity_rate: float = Field(ge=0.0, le=1.0)
     truncation_rate: float = Field(ge=0.0, le=1.0)
+    failure_categories: tuple[FailureCategoryCount, ...] = ()
+    top_failure_messages: tuple[FailureMessageCount, ...] = ()
 
 
 class AnnotationQualificationReport(BaseModel):
@@ -261,23 +281,32 @@ class _Row(BaseModel):
 
 
 def _reliability(run_directory: Path, *, attempted: int, successful: int) -> ReliabilityMetrics:
+    categories: Counter[str] = Counter()
+    messages: Counter[str] = Counter()
     truncated = invalid_json = timeouts = failures = 0
     for path in run_directory.rglob("failure.json"):
         failures += 1
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError) as exc:
+            categories["unreadable_failure_record"] += 1
+            messages[f"{type(exc).__name__}: {exc}"] += 1
             continue
         error = payload.get("error", {})
-        category = str(error.get("category", ""))
-        message = str(error.get("message", ""))
-        if category == "truncated_response" or "finish_reason=length" in message:
+        raw_category = str(error.get("category", "")).strip()
+        message = str(error.get("message", "")).strip()
+        category = _failure_category(raw_category, message)
+        categories[category] += 1
+        if message:
+            messages[message[:500]] += 1
+        if category == "truncated_response":
             truncated += 1
-        if category in {"invalid_json", "truncated_response"} or "not valid JSON" in message:
+        if category in {"invalid_json", "truncated_response"}:
             invalid_json += 1
-        if category == "timeout" or "timed out" in message.lower():
+        if category == "timeout":
             timeouts += 1
     denominator = attempted or 1
+    json_denominator = max(successful + invalid_json, 1)
     return ReliabilityMetrics(
         attempted_clauses=attempted,
         successful_predictions=successful,
@@ -286,9 +315,39 @@ def _reliability(run_directory: Path, *, attempted: int, successful: int) -> Rel
         invalid_json_responses=invalid_json,
         timeout_responses=timeouts,
         prediction_success_rate=successful / denominator,
-        json_validity_rate=(attempted - invalid_json) / denominator,
+        json_validity_rate=successful / json_denominator,
         truncation_rate=truncated / denominator,
+        failure_categories=tuple(
+            FailureCategoryCount(category=category, count=count)
+            for category, count in categories.most_common()
+        ),
+        top_failure_messages=tuple(
+            FailureMessageCount(message=message, count=count)
+            for message, count in messages.most_common(10)
+        ),
     )
+
+
+def _failure_category(raw_category: str, message: str) -> str:
+    normalized = raw_category.lower().replace("-", "_").strip()
+    lower_message = message.lower()
+    if normalized == "truncated_response" or "finish_reason=length" in lower_message:
+        return "truncated_response"
+    if normalized == "timeout" or "timed out" in lower_message:
+        return "timeout"
+    if normalized in {"invalid_json", "json_decode_error"} or "not valid json" in lower_message:
+        return "invalid_json"
+    if normalized in {"schema_validation_error", "validation_error"} or (
+        "validation" in lower_message and "json" not in lower_message
+    ):
+        return "schema_validation_error"
+    if normalized in {"unknown_label", "invalid_label"} or "unknown label" in lower_message:
+        return "unknown_label"
+    if normalized == "invalid_cardinality" or "cardinality" in lower_message:
+        return "invalid_cardinality"
+    if normalized in {"provider_error", "transport_error", "connection_error"}:
+        return normalized
+    return normalized or "other"
 
 
 def _load_predictions(run_directory: Path) -> dict[str, StatementFunctionSelection]:

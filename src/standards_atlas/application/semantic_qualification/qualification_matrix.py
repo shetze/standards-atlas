@@ -78,6 +78,7 @@ class ModelCandidate(BaseModel):
     parameters_billion: float | None = Field(default=None, gt=0.0)
     declared_memory_gb: float | None = Field(default=None, gt=0.0)
     repetitions: int | None = Field(default=None, ge=0)
+    supported_reasoning_modes: tuple[str, ...] = ("disabled",)
 
 
 class ReasoningMode(BaseModel):
@@ -192,6 +193,12 @@ class QualificationMatrixManifest(BaseModel):
             raise ValueError("prompt candidate ids must be unique")
         if len(set(model_ids)) != len(model_ids):
             raise ValueError("model candidate ids must be unique")
+        for model in self.models:
+            unknown_modes = set(model.supported_reasoning_modes) - set(reasoning_mode_ids)
+            if unknown_modes:
+                raise ValueError(
+                    f"unknown supported_reasoning_modes for {model.id}: {sorted(unknown_modes)}"
+                )
         if not reasoning_mode_ids:
             raise ValueError("at least one reasoning mode must be declared")
         if len(set(reasoning_mode_ids)) != len(reasoning_mode_ids):
@@ -300,10 +307,12 @@ class CandidateQualification(BaseModel):
     reasoning_optional: bool
     expected_repetitions: int
     completed_repetitions: int
-    mean_gold_f1: float
-    min_gold_f1: float
-    gold_f1_stddev: float
-    mean_gold_coverage: float
+    status: str
+    qualification_eligible: bool
+    mean_gold_f1: float | None
+    min_gold_f1: float | None
+    gold_f1_stddev: float | None
+    mean_gold_coverage: float | None
     mean_silver_f1: float
     mean_structure_f1: float
     mean_prediction_success_rate: float
@@ -314,6 +323,8 @@ class CandidateQualification(BaseModel):
     pareto_optimal: bool = False
     passed: bool
     regressions: tuple[str, ...] = ()
+    failure_categories: dict[str, int] = {}
+    top_failure_messages: tuple[str, ...] = ()
 
 
 class QualificationMatrixReport(BaseModel):
@@ -383,7 +394,12 @@ class ModelPromptQualificationService:
                         manifest.thresholds,
                     )
                     raw_candidates.append(candidate)
-                    if not entries and not reasoning_mode.optional:
+                    if reasoning_mode.id not in model.supported_reasoning_modes:
+                        diagnostics.append(
+                            f"unsupported reasoning mode for {prompt.id} / {model.id} / "
+                            f"{reasoning_mode.id}"
+                        )
+                    elif not entries:
                         diagnostics.append(
                             f"missing all runs for {prompt.id} / {model.id} / {reasoning_mode.id}"
                         )
@@ -398,15 +414,16 @@ class ModelPromptQualificationService:
             item.model_copy(update={"pareto_optimal": _candidate_key(item) in pareto_keys})
             for item in candidates
         )
+        rankable = [item for item in candidates if item.qualification_eligible]
         ranking = tuple(
             _candidate_key(item)
             for item in sorted(
-                candidates,
+                rankable,
                 key=lambda item: (
                     item.passed,
-                    item.mean_gold_f1,
-                    -item.gold_f1_stddev,
-                    item.mean_gold_coverage,
+                    item.mean_gold_f1 if item.mean_gold_f1 is not None else -1.0,
+                    -(item.gold_f1_stddev or 0.0),
+                    item.mean_gold_coverage if item.mean_gold_coverage is not None else -1.0,
                     -(item.mean_duration_seconds or math.inf),
                 ),
                 reverse=True,
@@ -416,7 +433,11 @@ class ModelPromptQualificationService:
             matrix_id=manifest.matrix_id,
             corpus_id=manifest.corpus_id,
             generated_at=datetime.now(UTC),
-            passed=all(item.passed for item in candidates if not item.reasoning_optional),
+            passed=all(
+                item.passed or item.reasoning_optional or item.status == "unsupported"
+                for item in candidates
+            )
+            and any(item.qualification_eligible for item in candidates),
             ranking=ranking,
             pareto_front=tuple(key for key in ranking if key in pareto_keys),
             candidates=candidates,
@@ -438,53 +459,55 @@ def _aggregate_candidate(
     expected_repetitions: int,
     thresholds: RegressionThresholds,
 ) -> CandidateQualification:
-    f1_values = [item.gold_agreement.micro_f1 for _, item in entries]
-    coverage_values = [item.gold_agreement.coverage for _, item in entries]
-    silver_values = [item.silver_agreement.micro_f1 for _, item in entries]
-    structure_values = [item.structure_agreement.micro_f1 for _, item in entries]
-    success_values = [item.reliability.prediction_success_rate for _, item in entries]
-    json_values = [item.reliability.json_validity_rate for _, item in entries]
-    truncation_values = [item.reliability.truncation_rate for _, item in entries]
-    durations = [item.mean_duration_seconds for item, _ in entries if item.mean_duration_seconds]
-    memory = [item.peak_memory_gb for item, _ in entries if item.peak_memory_gb is not None]
-    regressions: list[str] = []
-    if not entries and reasoning_mode.optional:
-        return CandidateQualification(
-            prompt_id=prompt_id,
-            model_id=model.id,
-            provider=model.provider,
-            reasoning_mode_id=reasoning_mode.id,
-            reasoning_optional=True,
-            expected_repetitions=expected_repetitions,
-            completed_repetitions=0,
-            mean_gold_f1=0.0,
-            min_gold_f1=0.0,
-            gold_f1_stddev=0.0,
-            mean_gold_coverage=0.0,
-            mean_silver_f1=0.0,
-            mean_structure_f1=0.0,
-            mean_prediction_success_rate=0.0,
-            mean_json_validity_rate=0.0,
-            mean_truncation_rate=0.0,
-            peak_memory_gb=model.declared_memory_gb,
-            passed=True,
+    supported = reasoning_mode.id in model.supported_reasoning_modes
+    if not supported:
+        return _empty_candidate(
+            prompt_id, model, reasoning_mode, expected_repetitions, status="unsupported"
         )
-    if len(entries) != expected_repetitions and not reasoning_mode.optional:
+    if not entries:
+        return _empty_candidate(
+            prompt_id, model, reasoning_mode, expected_repetitions, status="not_executed"
+        )
+
+    regressions: list[str] = []
+    complete = len(entries) == expected_repetitions
+    if not complete:
         regressions.append(
             f"completed repetitions {len(entries)} != expected {expected_repetitions}"
         )
-    mean_f1 = fmean(f1_values) if f1_values else 0.0
-    minimum_f1 = min(f1_values) if f1_values else 0.0
-    stddev = pstdev(f1_values) if len(f1_values) > 1 else 0.0
-    mean_coverage = fmean(coverage_values) if coverage_values else 0.0
+
+    gold_available = any(report.gold_agreement.eligible > 0 for _, report in entries)
+    gold_entries = [report for _, report in entries if report.gold_agreement.eligible > 0]
+    f1_values = [report.gold_agreement.micro_f1 for report in gold_entries]
+    coverage_values = [report.gold_agreement.coverage for report in gold_entries]
+    silver_values = [report.silver_agreement.micro_f1 for _, report in entries]
+    structure_values = [report.structure_agreement.micro_f1 for _, report in entries]
+    success_values = [report.reliability.prediction_success_rate for _, report in entries]
+    json_values = [report.reliability.json_validity_rate for _, report in entries]
+    truncation_values = [report.reliability.truncation_rate for _, report in entries]
+    durations = [item.mean_duration_seconds for item, _ in entries if item.mean_duration_seconds]
+    memory = [item.peak_memory_gb for item, _ in entries if item.peak_memory_gb is not None]
+
+    mean_f1 = fmean(f1_values) if f1_values else None
+    minimum_f1 = min(f1_values) if f1_values else None
+    stddev = pstdev(f1_values) if len(f1_values) > 1 else (0.0 if f1_values else None)
+    mean_coverage = fmean(coverage_values) if coverage_values else None
     mean_duration = fmean(durations) if durations else None
     peak_memory = max(memory) if memory else model.declared_memory_gb
-    if mean_f1 < thresholds.min_gold_f1:
-        regressions.append(f"mean Gold F1 {mean_f1:.4f} < {thresholds.min_gold_f1:.4f}")
-    if mean_coverage < thresholds.min_gold_coverage:
-        regressions.append(
-            f"mean Gold coverage {mean_coverage:.4f} < {thresholds.min_gold_coverage:.4f}"
-        )
+
+    if gold_available:
+        assert mean_f1 is not None
+        assert mean_coverage is not None
+        assert stddev is not None
+        if mean_f1 < thresholds.min_gold_f1:
+            regressions.append(f"mean Gold F1 {mean_f1:.4f} < {thresholds.min_gold_f1:.4f}")
+        if mean_coverage < thresholds.min_gold_coverage:
+            regressions.append(
+                f"mean Gold coverage {mean_coverage:.4f} < {thresholds.min_gold_coverage:.4f}"
+            )
+        if stddev > thresholds.max_gold_f1_stddev:
+            regressions.append(f"Gold F1 stddev {stddev:.4f} > {thresholds.max_gold_f1_stddev:.4f}")
+
     mean_success = fmean(success_values) if success_values else 0.0
     mean_json = fmean(json_values) if json_values else 0.0
     mean_truncation = fmean(truncation_values) if truncation_values else 0.0
@@ -501,8 +524,6 @@ def _aggregate_candidate(
         regressions.append(
             f"truncation rate {mean_truncation:.4f} > {thresholds.max_truncation_rate:.4f}"
         )
-    if stddev > thresholds.max_gold_f1_stddev:
-        regressions.append(f"Gold F1 stddev {stddev:.4f} > {thresholds.max_gold_f1_stddev:.4f}")
     if (
         thresholds.max_mean_duration_seconds is not None
         and mean_duration is not None
@@ -519,6 +540,18 @@ def _aggregate_candidate(
         regressions.append(
             f"peak memory {peak_memory:.3f}GB > {thresholds.max_peak_memory_gb:.3f}GB"
         )
+
+    failure_categories: dict[str, int] = {}
+    messages: dict[str, int] = {}
+    for _, report in entries:
+        for item in report.reliability.failure_categories:
+            failure_categories[item.category] = (
+                failure_categories.get(item.category, 0) + item.count
+            )
+        for item in report.reliability.top_failure_messages:
+            messages[item.message] = messages.get(item.message, 0) + item.count
+
+    status = "passed" if complete and not regressions else "failed" if complete else "incomplete"
     return CandidateQualification(
         prompt_id=prompt_id,
         model_id=model.id,
@@ -527,6 +560,8 @@ def _aggregate_candidate(
         reasoning_optional=reasoning_mode.optional,
         expected_repetitions=expected_repetitions,
         completed_repetitions=len(entries),
+        status=status,
+        qualification_eligible=complete,
         mean_gold_f1=mean_f1,
         min_gold_f1=minimum_f1,
         gold_f1_stddev=stddev,
@@ -538,8 +573,44 @@ def _aggregate_candidate(
         mean_truncation_rate=mean_truncation,
         mean_duration_seconds=mean_duration,
         peak_memory_gb=peak_memory,
-        passed=not regressions,
+        passed=status == "passed",
         regressions=tuple(regressions),
+        failure_categories=failure_categories,
+        top_failure_messages=tuple(
+            message for message, _ in sorted(messages.items(), key=lambda item: -item[1])[:10]
+        ),
+    )
+
+
+def _empty_candidate(
+    prompt_id: str,
+    model: ModelCandidate,
+    reasoning_mode: ReasoningMode,
+    expected_repetitions: int,
+    *,
+    status: str,
+) -> CandidateQualification:
+    return CandidateQualification(
+        prompt_id=prompt_id,
+        model_id=model.id,
+        provider=model.provider,
+        reasoning_mode_id=reasoning_mode.id,
+        reasoning_optional=reasoning_mode.optional,
+        expected_repetitions=expected_repetitions,
+        completed_repetitions=0,
+        status=status,
+        qualification_eligible=False,
+        mean_gold_f1=None,
+        min_gold_f1=None,
+        gold_f1_stddev=None,
+        mean_gold_coverage=None,
+        mean_silver_f1=0.0,
+        mean_structure_f1=0.0,
+        mean_prediction_success_rate=0.0,
+        mean_json_validity_rate=0.0,
+        mean_truncation_rate=0.0,
+        peak_memory_gb=model.declared_memory_gb,
+        passed=False,
     )
 
 
@@ -567,6 +638,8 @@ def _apply_baseline_threshold(
 ) -> CandidateQualification:
     if baseline is None:
         return candidate
+    if baseline.mean_gold_f1 is None or candidate.mean_gold_f1 is None:
+        return candidate
     minimum = baseline.mean_gold_f1 - thresholds.max_gold_f1_drop
     if candidate.mean_gold_f1 >= minimum:
         return candidate
@@ -581,7 +654,7 @@ def _candidate_key(candidate: CandidateQualification) -> str:
 
 
 def _pareto_front(candidates: tuple[CandidateQualification, ...]) -> set[str]:
-    complete = [item for item in candidates if item.completed_repetitions > 0]
+    complete = [item for item in candidates if item.qualification_eligible]
     front: set[str] = set()
     for candidate in complete:
         dominated = any(
@@ -601,19 +674,27 @@ def _dominates(left: CandidateQualification, right: CandidateQualification) -> b
     )
     left_memory = left.peak_memory_gb if left.peak_memory_gb is not None else math.inf
     right_memory = right.peak_memory_gb if right.peak_memory_gb is not None else math.inf
+    left_f1 = left.mean_gold_f1 if left.mean_gold_f1 is not None else -1.0
+    right_f1 = right.mean_gold_f1 if right.mean_gold_f1 is not None else -1.0
+    left_stddev = left.gold_f1_stddev if left.gold_f1_stddev is not None else math.inf
+    right_stddev = right.gold_f1_stddev if right.gold_f1_stddev is not None else math.inf
     no_worse = (
-        left.mean_gold_f1 >= right.mean_gold_f1
-        and left.gold_f1_stddev <= right.gold_f1_stddev
+        left_f1 >= right_f1
+        and left_stddev <= right_stddev
         and left_duration <= right_duration
         and left_memory <= right_memory
     )
     strictly_better = (
-        left.mean_gold_f1 > right.mean_gold_f1
-        or left.gold_f1_stddev < right.gold_f1_stddev
+        left_f1 > right_f1
+        or left_stddev < right_stddev
         or left_duration < right_duration
         or left_memory < right_memory
     )
     return no_worse and strictly_better
+
+
+def _metric(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.4f}"
 
 
 def _markdown(report: QualificationMatrixReport, models: dict[str, ModelCandidate]) -> str:
@@ -642,15 +723,32 @@ def _markdown(report: QualificationMatrixReport, models: dict[str, ModelCandidat
             else "n/a"
         )
         memory = f"{item.peak_memory_gb:.2f}GB" if item.peak_memory_gb is not None else "n/a"
-        marker = "PASS" if item.passed else "FAIL"
+        marker = item.status.upper()
         if item.pareto_optimal:
             marker += " · Pareto"
         lines.append(
             f"| {rank} | `{item.prompt_id}` | `{model.id}` | "
-            f"`{item.reasoning_mode_id}` | {item.mean_gold_f1:.4f} | "
-            f"{item.gold_f1_stddev:.4f} | {item.mean_gold_coverage:.4f} | "
+            f"`{item.reasoning_mode_id}` | {_metric(item.mean_gold_f1)} | "
+            f"{_metric(item.gold_f1_stddev)} | {_metric(item.mean_gold_coverage)} | "
             f"{duration} | {memory} | {marker} |"
         )
+    excluded = [item for item in report.candidates if not item.qualification_eligible]
+    if excluded:
+        lines.extend(
+            [
+                "",
+                "## Not ranked",
+                "",
+                "| Prompt | Model | Reasoning | Status | Runs |",
+                "| --- | --- | --- | --- | ---: |",
+            ]
+        )
+        for item in excluded:
+            lines.append(
+                f"| `{item.prompt_id}` | `{item.model_id}` | `{item.reasoning_mode_id}` | "
+                f"{item.status} | {item.completed_repetitions}/{item.expected_repetitions} |"
+            )
+
     lines.extend(["", "## Regression diagnostics", ""])
     failures = [item for item in report.candidates if item.regressions]
     if not failures:
@@ -659,6 +757,20 @@ def _markdown(report: QualificationMatrixReport, models: dict[str, ModelCandidat
         lines.append(f"### {item.prompt_id} / {item.model_id} / {item.reasoning_mode_id}")
         lines.extend(f"- {message}" for message in item.regressions)
         lines.append("")
+    failures_with_categories = [item for item in report.candidates if item.failure_categories]
+    if failures_with_categories:
+        lines.extend(["## Failure diagnostics", ""])
+        for item in failures_with_categories:
+            lines.append(f"### {item.prompt_id} / {item.model_id} / {item.reasoning_mode_id}")
+            lines.extend(
+                f"- `{category}`: {count}"
+                for category, count in sorted(item.failure_categories.items())
+            )
+            if item.top_failure_messages:
+                lines.append("- Frequent messages:")
+                lines.extend(f"  - {message}" for message in item.top_failure_messages)
+            lines.append("")
+
     if report.diagnostics:
         lines.extend(["## Matrix diagnostics", ""])
         lines.extend(f"- {message}" for message in report.diagnostics)

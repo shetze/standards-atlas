@@ -774,7 +774,10 @@ def qualify_model_prompt_matrix(
             candidate_total = sum(
                 manifest.repetitions_for(model)
                 * len(manifest.prompts)
-                * len(active_reasoning_modes)
+                * sum(
+                    reasoning.id in model.supported_reasoning_modes
+                    for reasoning in active_reasoning_modes
+                )
                 for model in manifest.models
             )
             candidate_index = 0
@@ -822,6 +825,11 @@ def qualify_model_prompt_matrix(
                 for prompt in manifest.prompts:
                     prompt_version = resolve_prompt_version(prompt, resources=resources)
                     for reasoning in active_reasoning_modes:
+                        if reasoning.id not in model.supported_reasoning_modes:
+                            typer.echo(
+                                f"Skipping unsupported reasoning mode: {model.id} / {reasoning.id}"
+                            )
+                            continue
                         for repetition in range(1, model_repetitions + 1):
                             candidate_index += 1
                             run_label = (
