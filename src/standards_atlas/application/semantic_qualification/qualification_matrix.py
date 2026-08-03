@@ -33,6 +33,7 @@ class PromptCandidate(BaseModel):
     definition: Path | None = None
     prompt_version: str | None = None
     max_output_tokens: int = Field(default=512, gt=0)
+    adaptive_interview: bool = False
 
 
 def resolve_prompt_version(

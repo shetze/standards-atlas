@@ -3,22 +3,26 @@ matrix_id: multidimensional-semantic-qualification-v2
 corpus_id: semantic-roles-v1
 task_version: 2.0.0
 dataset_version: 1.0.0
-repetitions: 3
+repetitions: 1
 
 prompts:
   - id: content-only
     prompt_version: content-only-v2
     max_output_tokens: 512
+    adaptive_interview: true
     description: Clause text without structural context.
 
   - id: structure-aware
     prompt_version: structure-aware-v2
     max_output_tokens: 640
+    adaptive_interview: true
     description: Clause text with reference, title, and hierarchy context.
 
   - id: reference-aware
     prompt_version: evidence-first-v2
     max_output_tokens: 768
+    adaptive_interview: true
+    adaptive_interview: true
     description: Clause text with deterministically resolved internal references.
 
   - id: bounded-reasoning
@@ -41,7 +45,7 @@ models:
   - id: codex-gpt-5.6-luna
     provider: codex
     model_ref: gpt-5.6-luna
-    repetitions: 1
+    repetitions: 0
     description: Codex reference candidate using the Standards Atlas MCP server.
     accelerator: remote
 

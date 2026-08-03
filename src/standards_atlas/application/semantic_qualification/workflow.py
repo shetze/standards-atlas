@@ -133,6 +133,12 @@ class EvaluationCorpusBuilder:
                     "title": clause.title,
                     "parent_id": clause.parent_id,
                     "structural_roles": [role.value for role in clause.statement_functions],
+                    "clause_type": clause.clause_type.value,
+                    "canonical_section": (
+                        clause.canonical_section.value if clause.canonical_section else None
+                    ),
+                    "document_categories": list(clause.document_categories),
+                    "domain_categories": list(clause.domain_categories),
                 },
             }
             if config.include_text:

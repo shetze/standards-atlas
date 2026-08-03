@@ -26,6 +26,11 @@ from standards_atlas.application.ports.llm_gateway import (
     LlmUnavailableError,
     StructuredGenerationRequest,
 )
+from standards_atlas.application.semantic_qualification.adaptive_interview import (
+    AdaptiveInterviewPlanner,
+    InterviewDimension,
+    focused_response_schema,
+)
 from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationGenerator,
     AnnotationLifecycleStatus,
@@ -95,6 +100,7 @@ class ProposalRunConfig(BaseModel):
     retry_attempts: int = Field(default=DEFAULT_EVALUATION_RETRY_ATTEMPTS, ge=1)
     retry_backoff_seconds: float = Field(default=DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS, ge=0.0)
     retry_timeouts: bool = DEFAULT_EVALUATION_RETRY_TIMEOUTS
+    adaptive_interview: bool = False
 
 
 @dataclass(frozen=True)
@@ -209,14 +215,30 @@ class BaselineProposalGenerator:
                         context=context,
                     )
 
-                result = _generate_with_retry(
-                    self._gateway,
-                    request,
-                    attempts=config.retry_attempts,
-                    backoff_seconds=config.retry_backoff_seconds,
-                    retry_timeouts=config.retry_timeouts,
-                    on_retry=report_retry,
-                )
+                interview_payload = None
+                if config.adaptive_interview:
+                    result, normalized_value, interview_payload = _run_adaptive_interview(
+                        self._gateway,
+                        config=config,
+                        prompt=prompt,
+                        item_input=example.input,
+                        task=task,
+                        attempts=config.retry_attempts,
+                        backoff_seconds=config.retry_backoff_seconds,
+                        retry_timeouts=config.retry_timeouts,
+                        on_retry=report_retry,
+                    )
+                    _write_json(case_dir / "interview.json", interview_payload)
+                else:
+                    result = _generate_with_retry(
+                        self._gateway,
+                        request,
+                        attempts=config.retry_attempts,
+                        backoff_seconds=config.retry_backoff_seconds,
+                        retry_timeouts=config.retry_timeouts,
+                        on_retry=report_retry,
+                    )
+                    normalized_value = _normalize_selection_payload(result.value)
                 response_payload = {
                     "value": dict(result.value),
                     "provider": result.provider,
@@ -230,7 +252,6 @@ class BaselineProposalGenerator:
                     "raw_response": result.raw_response,
                 }
                 _write_json(case_dir / "response.json", response_payload)
-                normalized_value = _normalize_selection_payload(result.value)
                 valid, error = validate_schema(normalized_value, canonical_schema)
                 if not valid:
                     raise ValueError(f"provider response violates task schema: {error}")
@@ -332,6 +353,118 @@ class BaselineProposalGenerator:
             },
         )
         return ProposalRunResult(generated, skipped, failed, run_dir, tuple(errors))
+
+
+def _run_adaptive_interview(
+    gateway: LlmGateway,
+    *,
+    config: ProposalRunConfig,
+    prompt,
+    item_input,
+    task: SemanticTaskDefinition,
+    attempts: int,
+    backoff_seconds: float,
+    retry_timeouts: bool,
+    on_retry,
+):
+    plan = AdaptiveInterviewPlanner().plan(item_input)
+    content = dict(item_input.get("content", {}))
+    context = dict(item_input.get("context", {}))
+    answers: list[dict[str, Any]] = []
+    last_result = None
+    selection: dict[str, Any] = {
+        "statement_functions": [],
+        "primary_function": None,
+        "applicability_functions": [],
+        "primary_applicability_function": None,
+        "responsibility_functions": [],
+        "primary_responsibility_function": None,
+        "confidence": None,
+        "rationale": None,
+    }
+    confidences: list[float] = []
+    rationales: list[str] = []
+    for question in plan.questions:
+        request = StructuredGenerationRequest(
+            task=f"{config.task}:{question.id}",
+            system_prompt=(
+                "Answer exactly one focused taxonomy question. Use only the normalized "
+                "content and supplied structural context. Select 'none' or 'unclear' when "
+                "the evidence is insufficient. Return JSON matching the schema."
+            ),
+            user_prompt=(
+                f"Question: {question.question}\n"
+                f"Allowed labels: {', '.join(question.allowed_labels)}\n"
+                f"Selection reason: {question.reason}\n\n"
+                f"Normalized clause content:\n{content.get('text', '')}\n\n"
+                f"Structural context:\n{json.dumps(context, ensure_ascii=False, sort_keys=True)}"
+            ),
+            output_schema=focused_response_schema(question.allowed_labels),
+            prompt_version=f"{config.prompt_version}:{question.id}",
+            model=config.model,
+            temperature=config.temperature,
+            seed=config.seed,
+            max_tokens=min(config.max_tokens, 192),
+            metadata={
+                "corpus_id": config.corpus_id,
+                "dataset_version": config.dataset_version,
+                "task_version": task.version,
+                "content_hash": content.get("hash"),
+                "clause_context": context,
+                "interview_question": question.model_dump(mode="json"),
+            },
+        )
+        result = _generate_with_retry(
+            gateway,
+            request,
+            attempts=attempts,
+            backoff_seconds=backoff_seconds,
+            retry_timeouts=retry_timeouts,
+            on_retry=on_retry,
+        )
+        last_result = result
+        answer = dict(result.value)
+        label = str(answer["label"])
+        confidence = float(answer["confidence"])
+        evidence = str(answer["evidence"])
+        answers.append({"question": question.model_dump(mode="json"), "answer": answer})
+        confidences.append(confidence)
+        if evidence:
+            rationales.append(f"{question.id}: {evidence}")
+        if label in {"none", "unclear"}:
+            continue
+        if question.dimension is InterviewDimension.STATEMENT_FUNCTION:
+            selection["statement_functions"] = [label]
+            selection["primary_function"] = label
+        elif question.dimension is InterviewDimension.APPLICABILITY:
+            selection["applicability_functions"] = [label]
+            selection["primary_applicability_function"] = label
+        elif question.dimension is InterviewDimension.RESPONSIBILITY:
+            selection["responsibility_functions"] = [label]
+            selection["primary_responsibility_function"] = label
+    selection["confidence"] = min(confidences) if confidences else None
+    selection["rationale"] = " | ".join(rationales) or None
+    if last_result is None:
+        # Structural evidence made every dimension deterministic. Preserve a valid result-like
+        # object by falling back to the original prompt for one compatibility request.
+        last_result = _generate_with_retry(
+            gateway,
+            _request(config, prompt, item_input, task),
+            attempts=attempts,
+            backoff_seconds=backoff_seconds,
+            retry_timeouts=retry_timeouts,
+            on_retry=on_retry,
+        )
+        selection = _normalize_selection_payload(last_result.value)
+    return (
+        last_result,
+        selection,
+        {
+            "plan": plan.model_dump(mode="json"),
+            "answers": answers,
+            "aggregated_selection": selection,
+        },
+    )
 
 
 def _report_retry_progress(
