@@ -551,3 +551,63 @@ def test_error_category_identifies_reasoning_only_truncation() -> None:
     )
 
     assert _error_category(error) == "truncated_reasoning"
+
+
+def test_proposal_run_can_restrict_examples_for_cascade(tmp_path: Path) -> None:
+    corpus_root = tmp_path / "corpora"
+    dataset_dir = corpus_root / "statement-function-classification" / "1.0.0"
+    dataset_dir.mkdir(parents=True)
+    examples = []
+    for index in range(3):
+        examples.append(
+            {
+                "id": f"clause-{index}",
+                "input": {
+                    "content": {
+                        "hash": "sha256:" + str(index + 1) * 64,
+                        "text": f"Clause {index} shall be evaluated.",
+                    },
+                    "context": {
+                        "knowledge_domain": "functional-safety",
+                        "document_key": "IEC61508-3",
+                        "clause_id": f"clause-{index}",
+                        "reference": str(index),
+                        "title": None,
+                        "parent_id": None,
+                        "structural_roles": [],
+                    },
+                },
+                "expected": {},
+            }
+        )
+    (dataset_dir / "dataset.json").write_text(
+        json.dumps(
+            {
+                "task": "statement-function-classification",
+                "version": "1.0.0",
+                "examples": examples,
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = ProposalRunConfig(
+        corpus_id="semantic-roles-v1",
+        task="statement-function-classification",
+        task_version="1.0.0",
+        dataset_version="1.0.0",
+        prompt_version="structure-aware-v1",
+        provider="fake",
+        model="test-model",
+        include_example_ids=("clause-2",),
+    )
+
+    result = BaselineProposalGenerator(FakeGateway()).run(
+        config,
+        resources=Path("src/standards_atlas/resources/semantic"),
+        corpus_root=corpus_root,
+        output_root=tmp_path / "output",
+    )
+
+    assert result.generated == 1
+    assert (result.run_directory / "clause-2" / "evaluation.yaml").exists()
+    assert not (result.run_directory / "clause-0").exists()

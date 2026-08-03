@@ -771,180 +771,250 @@ def qualify_model_prompt_matrix(
                 for reasoning in manifest.reasoning_modes
                 if include_optional_reasoning or not reasoning.optional
             )
+            model_by_id = {model.id: model for model in manifest.models}
+            if manifest.execution.mode == "cascade":
+                execution_stages = manifest.execution.stages
+            else:
+                execution_stages = (
+                    type(
+                        "FullMatrixStage",
+                        (),
+                        {
+                            "id": "full-matrix",
+                            "models": tuple(model_by_id),
+                            "apply_to": "all",
+                        },
+                    )(),
+                )
             candidate_total = sum(
-                manifest.repetitions_for(model)
+                manifest.repetitions_for(model_by_id[model_id])
                 * len(manifest.prompts)
                 * len(active_reasoning_modes)
-                for model in manifest.models
+                for stage in execution_stages
+                for model_id in stage.models
             )
             candidate_index = 0
-            for model in manifest.models:
-                model_repetitions = manifest.repetitions_for(model)
-                if model_repetitions == 0:
-                    typer.echo(f"Skipping model {model.id} (repetitions=0)")
-                    continue
-                if not model.model_ref:
-                    raise ValueError(f"model {model.id} has no model_ref")
-                gateway = None
-                if run_mode != "recompute":
-                    if active_server is not None:
-                        active_server.stop()
-                        active_server = None
-                    if model.provider == "ramalama":
-                        model_config = replace(
-                            base_config,
-                            model=model.model_ref,
-                            server=replace(base_config.server, model=model.model_ref),
-                        )
-                        active_server = RamaLamaServerManager(model_config)
-                        if model_config.server.enabled:
-                            active_server.start()
-                        gateway = OpenAICompatibleLlmGateway(model_config)
-                    elif model.provider == "codex":
-                        if active_mcp_lease is None:
-                            mcp_manager = managed_mcp_server(mcp_config)
-                            active_mcp_lease = mcp_manager.ensure_running(
-                                autostart=mcp_autostart,
-                                autostop=mcp_autostop,
+            unresolved_clause_ids: tuple[str, ...] | None = None
+            for stage_index, stage in enumerate(execution_stages):
+                stage_clause_ids = unresolved_clause_ids if stage.apply_to == "unresolved" else None
+                if stage.apply_to == "unresolved" and not stage_clause_ids:
+                    typer.echo(f"Skipping cascade stage {stage.id}: no unresolved clauses")
+                    break
+                typer.echo(f"Matrix stage             : {stage.id}")
+                stage_models = tuple(model_by_id[model_id] for model_id in stage.models)
+                for model in stage_models:
+                    model_repetitions = manifest.repetitions_for(model)
+                    if model_repetitions == 0:
+                        typer.echo(f"Skipping model {model.id} (repetitions=0)")
+                        continue
+                    if not model.model_ref:
+                        raise ValueError(f"model {model.id} has no model_ref")
+                    gateway = None
+                    if run_mode != "recompute":
+                        if active_server is not None:
+                            active_server.stop()
+                            active_server = None
+                        if model.provider == "ramalama":
+                            model_config = replace(
+                                base_config,
+                                model=model.model_ref,
+                                server=replace(base_config.server, model=model.model_ref),
                             )
-                            active_mcp_lease.__enter__()
-                        gateway = CodexCliLlmGateway(CodexCliConfig())
-                    else:
+                            active_server = RamaLamaServerManager(model_config)
+                            if model_config.server.enabled:
+                                active_server.start()
+                            gateway = OpenAICompatibleLlmGateway(model_config)
+                        elif model.provider == "codex":
+                            if active_mcp_lease is None:
+                                mcp_manager = managed_mcp_server(mcp_config)
+                                active_mcp_lease = mcp_manager.ensure_running(
+                                    autostart=mcp_autostart,
+                                    autostop=mcp_autostop,
+                                )
+                                active_mcp_lease.__enter__()
+                            gateway = CodexCliLlmGateway(CodexCliConfig())
+                        else:
+                            raise ValueError(
+                                "matrix model provider must be 'ramalama' or 'codex', "
+                                f"got {model.provider!r} for {model.id}"
+                            )
+                    elif model.provider not in {"ramalama", "codex"}:
                         raise ValueError(
                             "matrix model provider must be 'ramalama' or 'codex', "
                             f"got {model.provider!r} for {model.id}"
                         )
-                elif model.provider not in {"ramalama", "codex"}:
-                    raise ValueError(
-                        "matrix model provider must be 'ramalama' or 'codex', "
-                        f"got {model.provider!r} for {model.id}"
-                    )
-                for prompt in manifest.prompts:
-                    prompt_version = resolve_prompt_version(prompt, resources=resources)
-                    for reasoning in active_reasoning_modes:
-                        for repetition in range(1, model_repetitions + 1):
-                            candidate_index += 1
-                            run_label = (
-                                f"{model.id} / {prompt.id} / {reasoning.id} / repeat {repetition}"
-                            )
-                            progress_reporter = _MatrixProposalProgress(
-                                candidate_index=candidate_index,
-                                candidate_total=candidate_total,
-                                label=run_label,
-                            )
-                            run_root = (
-                                runs_output
-                                / "qualification-runs"
-                                / manifest.matrix_id
-                                / reasoning.id
-                                / f"repeat-{repetition}"
-                            )
-                            started = time.monotonic()
-                            proposal_config = ProposalRunConfig(
-                                corpus_id=manifest.corpus_id,
-                                task="statement-function-classification",
-                                task_version=manifest.task_version,
-                                dataset_version=manifest.dataset_version,
-                                prompt_version=prompt_version,
-                                provider=model.provider,
-                                model=model.model_ref,
-                                seed=repetition,
-                                overwrite=run_mode == "overwrite",
-                                limit=limit,
-                                max_tokens=(
-                                    max_tokens
-                                    or model.generation.max_output_tokens
-                                    or prompt.max_output_tokens
-                                ),
-                                adaptive_interview=prompt.adaptive_interview,
-                                adaptive_question_max_tokens=(
-                                    max_tokens
-                                    or model.generation.adaptive_question_max_tokens
-                                    or model.generation.max_output_tokens
-                                    or prompt.max_output_tokens
-                                ),
-                                truncation_retry_max_tokens=(
-                                    model.generation.truncation_retry_max_tokens
-                                ),
-                                retry_on_truncation=(model.generation.retry_on_truncation),
-                                reasoning_enabled=(
-                                    reasoning.enabled
-                                    if reasoning.id != "disabled"
-                                    else model.generation.reasoning_mode == "enabled"
-                                ),
-                            )
-                            if run_mode == "recompute":
-                                run_directory = proposal_run_directory(proposal_config, run_root)
-                                proposal_candidates = tuple(
-                                    run_directory.glob("*/evaluation.yaml")
-                                ) + tuple(run_directory.glob("*/evaluation.json"))
-                                if not proposal_candidates:
-                                    raise ValueError(
-                                        "cannot recompute without proposal candidates: "
-                                        f"{run_directory}"
+                    for prompt in manifest.prompts:
+                        prompt_version = resolve_prompt_version(prompt, resources=resources)
+                        for reasoning in active_reasoning_modes:
+                            for repetition in range(1, model_repetitions + 1):
+                                candidate_index += 1
+                                run_label = " / ".join(
+                                    (
+                                        model.id,
+                                        prompt.id,
+                                        reasoning.id,
+                                        f"repeat {repetition}",
                                     )
-                                generated = failed = skipped = 0
-                                errors: tuple[str, ...] = ()
-                                progress_reporter.finish(
-                                    generated=0, failed=0, skipped=len(proposal_candidates)
                                 )
-                            else:
-                                if gateway is None:
-                                    raise RuntimeError("proposal gateway was not initialized")
-                                result = BaselineProposalGenerator(gateway).run(
-                                    proposal_config,
-                                    resources=resources,
-                                    corpus_root=corpus_root,
-                                    output_root=run_root,
-                                    progress=progress_reporter,
+                                progress_reporter = _MatrixProposalProgress(
+                                    candidate_index=candidate_index,
+                                    candidate_total=candidate_total,
+                                    label=run_label,
                                 )
-                                run_directory = result.run_directory
-                                generated = result.generated
-                                failed = result.failed
-                                skipped = result.skipped
-                                errors = result.errors
-                                progress_reporter.finish(
-                                    generated=generated, failed=failed, skipped=skipped
+                                run_root = (
+                                    runs_output
+                                    / "qualification-runs"
+                                    / manifest.matrix_id
+                                    / reasoning.id
+                                    / f"repeat-{repetition}"
                                 )
-                            if failed:
-                                failure_label = (
-                                    f"{model.id}/{prompt.id}/{reasoning.id}/repeat-{repetition}"
+                                started = time.monotonic()
+                                proposal_config = ProposalRunConfig(
+                                    corpus_id=manifest.corpus_id,
+                                    task="statement-function-classification",
+                                    task_version=manifest.task_version,
+                                    dataset_version=manifest.dataset_version,
+                                    prompt_version=prompt_version,
+                                    provider=model.provider,
+                                    model=model.model_ref,
+                                    seed=repetition,
+                                    overwrite=run_mode == "overwrite",
+                                    limit=limit,
+                                    include_example_ids=stage_clause_ids,
+                                    max_tokens=(
+                                        max_tokens
+                                        or model.generation.max_output_tokens
+                                        or prompt.max_output_tokens
+                                    ),
+                                    adaptive_interview=prompt.adaptive_interview,
+                                    adaptive_question_max_tokens=(
+                                        max_tokens
+                                        or model.generation.adaptive_question_max_tokens
+                                        or model.generation.max_output_tokens
+                                        or prompt.max_output_tokens
+                                    ),
+                                    truncation_retry_max_tokens=(
+                                        model.generation.truncation_retry_max_tokens
+                                    ),
+                                    retry_on_truncation=(model.generation.retry_on_truncation),
+                                    reasoning_enabled=(
+                                        reasoning.enabled
+                                        if reasoning.id != "disabled"
+                                        else model.generation.reasoning_mode == "enabled"
+                                    ),
                                 )
-                                typer.echo(
-                                    "Proposal failures         : "
-                                    f"{failure_label}: {failed} clause(s)",
-                                    err=True,
+                                if run_mode == "recompute":
+                                    run_directory = proposal_run_directory(
+                                        proposal_config, run_root
+                                    )
+                                    proposal_candidates = tuple(
+                                        run_directory.glob("*/evaluation.yaml")
+                                    ) + tuple(run_directory.glob("*/evaluation.json"))
+                                    if not proposal_candidates:
+                                        raise ValueError(
+                                            "cannot recompute without proposal candidates: "
+                                            f"{run_directory}"
+                                        )
+                                    generated = failed = skipped = 0
+                                    errors: tuple[str, ...] = ()
+                                    progress_reporter.finish(
+                                        generated=0, failed=0, skipped=len(proposal_candidates)
+                                    )
+                                else:
+                                    if gateway is None:
+                                        raise RuntimeError("proposal gateway was not initialized")
+                                    result = BaselineProposalGenerator(gateway).run(
+                                        proposal_config,
+                                        resources=resources,
+                                        corpus_root=corpus_root,
+                                        output_root=run_root,
+                                        progress=progress_reporter,
+                                    )
+                                    run_directory = result.run_directory
+                                    generated = result.generated
+                                    failed = result.failed
+                                    skipped = result.skipped
+                                    errors = result.errors
+                                    progress_reporter.finish(
+                                        generated=generated, failed=failed, skipped=skipped
+                                    )
+                                if failed:
+                                    failure_label = (
+                                        f"{model.id}/{prompt.id}/{reasoning.id}/repeat-{repetition}"
+                                    )
+                                    typer.echo(
+                                        "Proposal failures         : "
+                                        f"{failure_label}: {failed} clause(s)",
+                                        err=True,
+                                    )
+                                    for error in errors:
+                                        typer.echo(f"  - {error}", err=True)
+                                metric_dir = (
+                                    metrics_output
+                                    / manifest.matrix_id
+                                    / model.id
+                                    / prompt.id
+                                    / reasoning.id
+                                    / f"repeat-{repetition}"
                                 )
-                                for error in errors:
-                                    typer.echo(f"  - {error}", err=True)
-                            metric_dir = (
-                                metrics_output
-                                / manifest.matrix_id
-                                / model.id
-                                / prompt.id
-                                / reasoning.id
-                                / f"repeat-{repetition}"
-                            )
-                            _, qualification_path, _ = AnnotationQualificationService().evaluate(
-                                corpus_id=manifest.corpus_id,
-                                run_directory=run_directory,
-                                local_corpus_root=corpus_root,
-                                published_corpus_root=published_corpus_root,
-                                output_directory=metric_dir,
-                            )
-                            observation = MatrixObservation(
-                                prompt_id=prompt.id,
-                                model_id=model.id,
-                                reasoning_mode_id=reasoning.id,
-                                repetition=repetition,
-                                qualification_report=qualification_path,
-                                run_directory=run_directory,
-                                mean_duration_seconds=time.monotonic() - started,
-                                peak_memory_gb=model.declared_memory_gb,
-                            )
-                            observation_map[(prompt.id, model.id, reasoning.id, repetition)] = (
-                                observation
-                            )
+                                _, qualification_path, _ = (
+                                    AnnotationQualificationService().evaluate(
+                                        corpus_id=manifest.corpus_id,
+                                        run_directory=run_directory,
+                                        local_corpus_root=corpus_root,
+                                        published_corpus_root=published_corpus_root,
+                                        output_directory=metric_dir,
+                                    )
+                                )
+                                observation = MatrixObservation(
+                                    prompt_id=prompt.id,
+                                    model_id=model.id,
+                                    reasoning_mode_id=reasoning.id,
+                                    repetition=repetition,
+                                    qualification_report=qualification_path,
+                                    run_directory=run_directory,
+                                    mean_duration_seconds=time.monotonic() - started,
+                                    peak_memory_gb=model.declared_memory_gb,
+                                )
+                                observation_map[(prompt.id, model.id, reasoning.id, repetition)] = (
+                                    observation
+                                )
+
+                if manifest.execution.mode == "cascade" and stage_index < len(execution_stages) - 1:
+                    interim_manifest = QualificationMatrixManifest.model_validate(
+                        {
+                            **manifest.model_dump(mode="python"),
+                            "observations": tuple(observation_map.values()),
+                        }
+                    )
+                    interim_report, _, _, _ = ModelConsensusService().evaluate(
+                        matrix_id=manifest.matrix_id,
+                        corpus_id=manifest.corpus_id,
+                        prompt_id=manifest.consensus.prompt_id,
+                        reasoning_mode_id=manifest.consensus.reasoning_mode_id,
+                        observations=interim_manifest.observations,
+                        output_directory=(
+                            output_directory / manifest.matrix_id / "cascade" / stage.id
+                        ),
+                        corpus_root=corpus_root,
+                        min_models=manifest.execution.resolution.minimum_successful_models,
+                        strong_threshold=manifest.consensus.strong_threshold,
+                        majority_threshold=manifest.consensus.majority_threshold,
+                        label_threshold=manifest.consensus.label_threshold,
+                    )
+                    accepted = set(manifest.execution.resolution.accepted_categories)
+                    unresolved_clause_ids = tuple(
+                        clause.clause_id
+                        for clause in interim_report.clauses
+                        if clause.participating_models
+                        < manifest.execution.resolution.minimum_successful_models
+                        or clause.category.value not in accepted
+                        or clause.confidence < manifest.execution.resolution.minimum_confidence
+                    )
+                    typer.echo(
+                        "Cascade unresolved       : "
+                        f"{len(unresolved_clause_ids)} / {interim_report.clause_count}"
+                    )
             manifest = QualificationMatrixManifest.model_validate(
                 {
                     **manifest.model_dump(mode="python"),

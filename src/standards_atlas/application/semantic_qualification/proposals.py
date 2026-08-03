@@ -102,6 +102,7 @@ class ProposalRunConfig(BaseModel):
     retry_backoff_seconds: float = Field(default=DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS, ge=0.0)
     retry_timeouts: bool = DEFAULT_EVALUATION_RETRY_TIMEOUTS
     adaptive_interview: bool = False
+    include_example_ids: tuple[str, ...] | None = None
     adaptive_question_max_tokens: int | None = Field(default=None, gt=0)
     truncation_retry_max_tokens: int | None = Field(default=None, gt=0)
     retry_on_truncation: bool = True
@@ -170,7 +171,10 @@ class BaselineProposalGenerator:
         run_dir = proposal_run_directory(config, output_root)
         pending = []
         skipped = 0
+        included = set(config.include_example_ids or ())
         for example in all_examples:
+            if included and example.id not in included:
+                continue
             case_dir = run_dir / _safe(example.id)
             evaluation_path = case_dir / "evaluation.yaml"
             if evaluation_path.exists() and not config.overwrite:

@@ -5,6 +5,29 @@ task_version: 2.0.0
 dataset_version: 1.0.0
 repetitions: 1
 
+execution:
+  mode: cascade
+  stages:
+    - id: efficient-local
+      models:
+        - granite-3.3-8b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+      apply_to: all
+    - id: escalation
+      models:
+        # - qwen3-14b-q4-k-m
+        - qwen3-32b-q4-k-m
+        - codex-gpt-5.6-luna
+      apply_to: unresolved
+  resolution:
+    minimum_successful_models: 3
+    accepted_categories:
+      - unanimous
+      - strong_consensus
+      - majority_consensus
+    minimum_confidence: 0.60
+
 prompts:
   - id: content-only
     prompt_version: content-only-v2
@@ -44,7 +67,7 @@ models:
   - id: codex-gpt-5.6-luna
     provider: codex
     model_ref: gpt-5.6-luna
-    repetitions: 0
+    repetitions: 1
     description: Codex reference candidate using the Standards Atlas MCP server.
     accelerator: remote
 
@@ -56,6 +79,7 @@ models:
     accelerator: gpu
     parameters_billion: 14
     declared_memory_gb: 10
+    supported_reasoning_modes: [disabled, enabled]
     generation:
       max_output_tokens: 512
       adaptive_question_max_tokens: 384
@@ -71,6 +95,7 @@ models:
     accelerator: gpu
     parameters_billion: 32
     declared_memory_gb: 22
+    supported_reasoning_modes: [disabled, enabled]
     generation:
       max_output_tokens: 768
       adaptive_question_max_tokens: 512
@@ -147,7 +172,7 @@ consensus:
   enabled: true
   prompt_id: content-only
   reasoning_mode_id: disabled
-  min_models: 5
+  min_models: 3
   strong_threshold: 0.8
   majority_threshold: 0.6
   label_threshold: 0.6
