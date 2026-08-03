@@ -529,3 +529,25 @@ def test_missing_primary_function_is_added_to_statement_functions(tmp_path: Path
     evaluation = (result.run_directory / "clause-1" / "evaluation.yaml").read_text(encoding="utf-8")
     assert "- requirement" in evaluation
     assert "primary_function: requirement" in evaluation
+
+
+def test_error_category_identifies_reasoning_only_truncation() -> None:
+    from standards_atlas.application.ports.llm_gateway import LlmResponseError
+    from standards_atlas.application.semantic_qualification.proposals import _error_category
+
+    error = LlmResponseError(
+        "truncated",
+        finish_reason="length",
+        raw_response={
+            "choices": [
+                {
+                    "message": {
+                        "content": "",
+                        "reasoning_content": "The model used the complete token budget.",
+                    }
+                }
+            ]
+        },
+    )
+
+    assert _error_category(error) == "truncated_reasoning"

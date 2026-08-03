@@ -77,6 +77,10 @@ class OpenAICompatibleLlmGateway:
             payload["seed"] = request.seed
         if request.max_tokens is not None:
             payload["max_tokens"] = request.max_tokens
+        if request.reasoning_enabled is not None:
+            payload["chat_template_kwargs"] = {"enable_thinking": request.reasoning_enabled}
+            if not request.reasoning_enabled:
+                payload["messages"][-1]["content"] += "\n\n/no_think"
 
         started = time.monotonic()
         response = self._request_json("POST", "chat/completions", payload)
@@ -252,6 +256,7 @@ def _input_hash(request: StructuredGenerationRequest, model: str) -> str:
             "temperature": request.temperature,
             "seed": request.seed,
             "max_tokens": request.max_tokens,
+            "reasoning_enabled": request.reasoning_enabled,
             "metadata": request.metadata,
         },
         sort_keys=True,

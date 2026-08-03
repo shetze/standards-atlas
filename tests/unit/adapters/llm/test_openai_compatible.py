@@ -167,3 +167,24 @@ def test_invalid_json_exposes_raw_response_and_finish_reason(tmp_path: Path) -> 
             assert error.finish_reason == "length"
         else:
             raise AssertionError("expected LlmResponseError")
+
+
+def test_disabled_reasoning_is_forwarded_to_llama_cpp(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(model="qwen", cache_directory=tmp_path / "cache")
+    )
+    response = {
+        "model": "qwen",
+        "choices": [{"finish_reason": "stop", "message": {"content": '{"summary":"Direct."}'}}],
+    }
+    request = _request().__class__(**{**_request().__dict__, "reasoning_enabled": False})
+
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(response),
+    ) as urlopen:
+        gateway.generate_structured(request)
+
+    outbound = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+    assert outbound["chat_template_kwargs"] == {"enable_thinking": False}
+    assert outbound["messages"][-1]["content"].endswith("/no_think")

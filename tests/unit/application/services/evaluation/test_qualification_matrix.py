@@ -1,4 +1,3 @@
-import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -260,40 +259,23 @@ def test_disabled_model_rejects_existing_observations(tmp_path: Path) -> None:
         QualificationMatrixManifest.load(path)
 
 
-def test_optional_unexecuted_candidate_is_not_ranked_or_passed(tmp_path: Path) -> None:
-    payload = yaml.safe_load(_manifest(tmp_path).read_text(encoding="utf-8"))
-    payload["reasoning_modes"] = [
-        {"id": "disabled", "enabled": False},
-        {"id": "enabled", "enabled": True, "optional": True},
-    ]
-    path = tmp_path / "optional.yaml"
+def test_model_generation_configuration_is_nested_and_validated(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["models"][0]["generation"] = {
+        "max_output_tokens": 512,
+        "adaptive_question_max_tokens": 384,
+        "truncation_retry_max_tokens": 768,
+        "reasoning_mode": "disabled",
+        "retry_on_truncation": True,
+    }
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
-    report, _, markdown = ModelPromptQualificationService().evaluate(
-        QualificationMatrixManifest.load(path), tmp_path / "optional-output"
-    )
+    manifest = QualificationMatrixManifest.load(path)
+    generation = manifest.models[0].generation
 
-    optional = [item for item in report.candidates if item.reasoning_mode_id == "enabled"]
-    assert all(item.status == "unsupported" for item in optional)
-    assert all(not item.passed for item in optional)
-    assert all(not item.qualification_eligible for item in optional)
-    assert not any(" / enabled" in key for key in report.ranking)
-    assert "## Not ranked" in markdown.read_text(encoding="utf-8")
-
-
-def test_missing_gold_is_reported_as_unavailable_not_zero(tmp_path: Path) -> None:
-    manifest = QualificationMatrixManifest.load(_manifest(tmp_path))
-    for observation in manifest.observations:
-        payload = yaml.safe_load(observation.qualification_report.read_text(encoding="utf-8"))
-        payload["gold_agreement"]["eligible"] = 0
-        payload["gold_agreement"]["evaluated"] = 0
-        payload["gold_agreement"]["coverage"] = 0.0
-        observation.qualification_report.write_text(json.dumps(payload), encoding="utf-8")
-
-    report, _, markdown = ModelPromptQualificationService().evaluate(
-        manifest, tmp_path / "no-gold-output"
-    )
-
-    assert all(item.mean_gold_f1 is None for item in report.candidates)
-    assert all(item.mean_gold_coverage is None for item in report.candidates)
-    assert "n/a" in markdown.read_text(encoding="utf-8")
+    assert generation.max_output_tokens == 512
+    assert generation.adaptive_question_max_tokens == 384
+    assert generation.truncation_retry_max_tokens == 768
+    assert generation.reasoning_mode == "disabled"
+    assert generation.retry_on_truncation

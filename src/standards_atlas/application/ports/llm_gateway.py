@@ -51,6 +51,7 @@ class StructuredGenerationRequest:
     temperature: float = 0.0
     seed: int | None = None
     max_tokens: int | None = None
+    reasoning_enabled: bool | None = None
     metadata: JsonObject = field(default_factory=dict)
 
     def __post_init__(self) -> None:

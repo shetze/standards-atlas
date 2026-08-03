@@ -6,7 +6,7 @@ import hashlib
 import json
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
@@ -22,6 +22,7 @@ from standards_atlas.application.evaluation.repository import (
 from standards_atlas.application.evaluation.schema import validate_schema
 from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
+    LlmResponseError,
     LlmTimeoutError,
     LlmUnavailableError,
     StructuredGenerationRequest,
@@ -101,6 +102,10 @@ class ProposalRunConfig(BaseModel):
     retry_backoff_seconds: float = Field(default=DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS, ge=0.0)
     retry_timeouts: bool = DEFAULT_EVALUATION_RETRY_TIMEOUTS
     adaptive_interview: bool = False
+    adaptive_question_max_tokens: int | None = Field(default=None, gt=0)
+    truncation_retry_max_tokens: int | None = Field(default=None, gt=0)
+    retry_on_truncation: bool = True
+    reasoning_enabled: bool = False
 
 
 @dataclass(frozen=True)
@@ -237,6 +242,8 @@ class BaselineProposalGenerator:
                         backoff_seconds=config.retry_backoff_seconds,
                         retry_timeouts=config.retry_timeouts,
                         on_retry=report_retry,
+                        truncation_retry_max_tokens=config.truncation_retry_max_tokens,
+                        retry_on_truncation=config.retry_on_truncation,
                     )
                     normalized_value = _normalize_selection_payload(result.value)
                 response_payload = {
@@ -404,7 +411,8 @@ def _run_adaptive_interview(
             model=config.model,
             temperature=config.temperature,
             seed=config.seed,
-            max_tokens=min(config.max_tokens, 192),
+            max_tokens=config.adaptive_question_max_tokens or config.max_tokens,
+            reasoning_enabled=config.reasoning_enabled,
             metadata={
                 "corpus_id": config.corpus_id,
                 "dataset_version": config.dataset_version,
@@ -421,6 +429,8 @@ def _run_adaptive_interview(
             backoff_seconds=backoff_seconds,
             retry_timeouts=retry_timeouts,
             on_retry=on_retry,
+            truncation_retry_max_tokens=config.truncation_retry_max_tokens,
+            retry_on_truncation=config.retry_on_truncation,
         )
         last_result = result
         answer = dict(result.value)
@@ -454,6 +464,8 @@ def _run_adaptive_interview(
             backoff_seconds=backoff_seconds,
             retry_timeouts=retry_timeouts,
             on_retry=on_retry,
+            truncation_retry_max_tokens=config.truncation_retry_max_tokens,
+            retry_on_truncation=config.retry_on_truncation,
         )
         selection = _normalize_selection_payload(last_result.value)
     return (
@@ -501,25 +513,45 @@ def _generate_with_retry(
     attempts: int,
     backoff_seconds: float,
     retry_timeouts: bool = DEFAULT_EVALUATION_RETRY_TIMEOUTS,
-    on_retry: Callable[[int, LlmUnavailableError], None] | None = None,
+    on_retry: Callable[[int, Exception], None] | None = None,
+    truncation_retry_max_tokens: int | None = None,
+    retry_on_truncation: bool = True,
 ):
-    """Retry transient endpoint failures without repeating invalid responses."""
-    last_error: LlmUnavailableError | None = None
-    for attempt in range(1, attempts + 1):
+    """Retry transient failures and one truncated response with a larger budget."""
+    active_request = request
+    transient_attempt = 1
+    truncation_retried = False
+    while True:
         try:
-            return gateway.generate_structured(request)
-        except LlmUnavailableError as error:
-            last_error = error
-            if isinstance(error, LlmTimeoutError) and not retry_timeouts:
-                break
-            if attempt == attempts:
-                break
+            return gateway.generate_structured(active_request)
+        except LlmResponseError as error:
+            can_retry_truncation = (
+                retry_on_truncation
+                and not truncation_retried
+                and error.finish_reason == "length"
+                and truncation_retry_max_tokens is not None
+                and (active_request.max_tokens or 0) < truncation_retry_max_tokens
+            )
+            if not can_retry_truncation:
+                raise
+            truncation_retried = True
+            active_request = replace(
+                active_request,
+                max_tokens=truncation_retry_max_tokens,
+                reasoning_enabled=False,
+            )
             if on_retry is not None:
-                on_retry(attempt, error)
+                on_retry(transient_attempt, error)
+        except LlmUnavailableError as error:
+            if isinstance(error, LlmTimeoutError) and not retry_timeouts:
+                raise
+            if transient_attempt >= attempts:
+                raise
+            if on_retry is not None:
+                on_retry(transient_attempt, error)
             if backoff_seconds:
-                time.sleep(backoff_seconds * attempt)
-    assert last_error is not None
-    raise last_error
+                time.sleep(backoff_seconds * transient_attempt)
+            transient_attempt += 1
 
 
 def _progress_context(item_input: Any) -> dict[str, Any]:
@@ -564,8 +596,18 @@ def _error_category(error: Exception) -> str:
         return "generation_timeout"
     if isinstance(error, LlmUnavailableError):
         return "provider_unavailable"
-    if type(error).__name__ == "LlmResponseError":
-        if getattr(error, "finish_reason", None) == "length":
+    if isinstance(error, LlmResponseError):
+        if error.finish_reason == "length":
+            raw_response = error.raw_response
+            if isinstance(raw_response, dict):
+                choices = raw_response.get("choices", ())
+                if choices and isinstance(choices[0], dict):
+                    message = choices[0].get("message", {})
+                    if isinstance(message, dict):
+                        content = str(message.get("content") or "").strip()
+                        reasoning = str(message.get("reasoning_content") or "").strip()
+                        if reasoning and not content:
+                            return "truncated_reasoning"
             return "truncated_response"
         return "invalid_provider_response"
     if isinstance(error, ValueError):
@@ -627,6 +669,7 @@ def _request(config, prompt, item_input, task):
         temperature=config.temperature,
         seed=config.seed,
         max_tokens=config.max_tokens,
+        reasoning_enabled=config.reasoning_enabled,
         metadata={
             "corpus_id": config.corpus_id,
             "dataset_version": config.dataset_version,
@@ -659,6 +702,7 @@ def _request_payload(request: StructuredGenerationRequest) -> dict[str, Any]:
         "temperature": request.temperature,
         "seed": request.seed,
         "max_tokens": request.max_tokens,
+        "reasoning_enabled": request.reasoning_enabled,
         "metadata": dict(request.metadata),
     }
 

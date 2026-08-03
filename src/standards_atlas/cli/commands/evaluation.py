@@ -774,10 +774,7 @@ def qualify_model_prompt_matrix(
             candidate_total = sum(
                 manifest.repetitions_for(model)
                 * len(manifest.prompts)
-                * sum(
-                    reasoning.id in model.supported_reasoning_modes
-                    for reasoning in active_reasoning_modes
-                )
+                * len(active_reasoning_modes)
                 for model in manifest.models
             )
             candidate_index = 0
@@ -825,11 +822,6 @@ def qualify_model_prompt_matrix(
                 for prompt in manifest.prompts:
                     prompt_version = resolve_prompt_version(prompt, resources=resources)
                     for reasoning in active_reasoning_modes:
-                        if reasoning.id not in model.supported_reasoning_modes:
-                            typer.echo(
-                                f"Skipping unsupported reasoning mode: {model.id} / {reasoning.id}"
-                            )
-                            continue
                         for repetition in range(1, model_repetitions + 1):
                             candidate_index += 1
                             run_label = (
@@ -859,8 +851,27 @@ def qualify_model_prompt_matrix(
                                 seed=repetition,
                                 overwrite=run_mode == "overwrite",
                                 limit=limit,
-                                max_tokens=max_tokens or prompt.max_output_tokens,
+                                max_tokens=(
+                                    max_tokens
+                                    or model.generation.max_output_tokens
+                                    or prompt.max_output_tokens
+                                ),
                                 adaptive_interview=prompt.adaptive_interview,
+                                adaptive_question_max_tokens=(
+                                    max_tokens
+                                    or model.generation.adaptive_question_max_tokens
+                                    or model.generation.max_output_tokens
+                                    or prompt.max_output_tokens
+                                ),
+                                truncation_retry_max_tokens=(
+                                    model.generation.truncation_retry_max_tokens
+                                ),
+                                retry_on_truncation=(model.generation.retry_on_truncation),
+                                reasoning_enabled=(
+                                    reasoning.enabled
+                                    if reasoning.id != "disabled"
+                                    else model.generation.reasoning_mode == "enabled"
+                                ),
                             )
                             if run_mode == "recompute":
                                 run_directory = proposal_run_directory(proposal_config, run_root)
