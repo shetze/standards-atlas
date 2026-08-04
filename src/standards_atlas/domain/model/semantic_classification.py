@@ -27,6 +27,19 @@ class StatementFunction(StrEnum):
     ASSUMPTION = "assumption"
 
 
+class KnowledgeKind(StrEnum):
+    """Kind of engineering knowledge represented by a clause."""
+
+    TECHNIQUE = "technique"
+    MEASURE = "measure"
+    METHOD = "method"
+    PROCESS = "process"
+    ARTIFACT = "artifact"
+    ROLE = "role"
+    EVIDENCE = "evidence"
+    CONCEPT = "concept"
+
+
 class ProcessFunction(StrEnum):
     """Role of a clause in a process or lifecycle model."""
 
@@ -165,6 +178,7 @@ class SemanticClassification(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     statement_functions: tuple[StatementFunction, ...] = ()
+    knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
@@ -177,6 +191,8 @@ class SemanticClassification(BaseModel):
     def dimensions_are_unique(self) -> SemanticClassification:
         if len(self.statement_functions) != len(set(self.statement_functions)):
             raise ValueError("statement_functions must not contain duplicates")
+        if len(self.knowledge_kinds) != len(set(self.knowledge_kinds)):
+            raise ValueError("knowledge_kinds must not contain duplicates")
         if len(self.process_functions) != len(set(self.process_functions)):
             raise ValueError("process_functions must not contain duplicates")
         if len(self.applicability_functions) != len(set(self.applicability_functions)):

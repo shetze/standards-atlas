@@ -13,6 +13,8 @@ The former `SemanticRole` taxonomy mixed linguistic statement functions, documen
 `Clause.semantic_roles` and `SemanticRole` are removed without a compatibility layer. Every clause owns a `SemanticClassification` with independent dimensions:
 
 - `statement_functions`
+- `knowledge_kinds`
+- `process_functions`
 - `applicability_functions`
 - `responsibility_functions`
 - `document_structure`
@@ -22,7 +24,7 @@ The former `SemanticRole` taxonomy mixed linguistic statement functions, documen
 
 Document structures are qualified by a document family. Domain functions are qualified by a KnowledgeDomain and taxonomy version. Annex position and normative status are represented separately. Relations distinguish their semantic kind from their internal or external scope.
 
-The former `semantic-role-classification` evaluation task becomes `statement-function-classification`. Version 2.0.0 of that task classifies four independent clause-level dimensions: linguistic statement function, process-model function, semantic applicability, and responsibility allocation. Structure, status, domain functions, and relation extraction remain separate evaluation concerns.
+The former `semantic-role-classification` evaluation task becomes `statement-function-classification`. Version 2.0.0 of that task classifies five independent clause-level dimensions: linguistic statement function, engineering knowledge kind, process-model function, semantic applicability, and responsibility allocation. ADR 0054 adds the knowledge ontology contract. Structure, status, domain functions, and relation extraction remain separate evaluation concerns.
 
 Resolved internal relations are rendered as Markdown links. Link generation uses relation targets rather than unverified textual pattern matching.
 

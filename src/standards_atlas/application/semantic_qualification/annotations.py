@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
+    KnowledgeKind,
     ProcessFunction,
     ResponsibilityFunction,
     StatementFunction,
@@ -68,6 +69,8 @@ class StatementFunctionSelection(BaseModel):
 
     statement_functions: tuple[StatementFunction, ...] = ()
     primary_function: StatementFunction | None = None
+    knowledge_kinds: tuple[KnowledgeKind, ...] = ()
+    primary_knowledge_kind: KnowledgeKind | None = None
     process_functions: tuple[ProcessFunction, ...] = ()
     primary_process_function: ProcessFunction | None = None
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
@@ -86,6 +89,13 @@ class StatementFunctionSelection(BaseModel):
             raise ValueError("primary_function must be included in statement_functions")
         if len(set(self.statement_functions)) != len(self.statement_functions):
             raise ValueError("statement_functions must not contain duplicates")
+        if (
+            self.primary_knowledge_kind is not None
+            and self.primary_knowledge_kind not in self.knowledge_kinds
+        ):
+            raise ValueError("primary_knowledge_kind must be included in knowledge_kinds")
+        if len(set(self.knowledge_kinds)) != len(self.knowledge_kinds):
+            raise ValueError("knowledge_kinds must not contain duplicates")
         if (
             self.primary_process_function is not None
             and self.primary_process_function not in self.process_functions

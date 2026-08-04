@@ -174,6 +174,7 @@ consensus:
   reasoning_mode_id: disabled
   prompt_selection:
     statement_function: structure-aware
+    knowledge_kind: structure-aware
     applicability: structure-aware
     responsibility: reference-aware
   min_models: 3

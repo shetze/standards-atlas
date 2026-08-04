@@ -5,6 +5,8 @@
   "required": [
     "statement_functions",
     "primary_function",
+    "knowledge_kinds",
+    "primary_knowledge_kind",
     "process_functions",
     "primary_process_function",
     "applicability_functions",
@@ -36,6 +38,39 @@
           "assumption"
         ]
       }
+    },
+    "knowledge_kinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "technique",
+          "measure",
+          "method",
+          "process",
+          "artifact",
+          "role",
+          "evidence",
+          "concept"
+        ]
+      }
+    },
+    "primary_knowledge_kind": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "technique",
+        "measure",
+        "method",
+        "process",
+        "artifact",
+        "role",
+        "evidence",
+        "concept",
+        null
+      ]
     },
     "process_functions": {
       "type": "array",

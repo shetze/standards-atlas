@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class InterviewDimension(StrEnum):
     STATEMENT_FUNCTION = "statement_function"
+    KNOWLEDGE_KIND = "knowledge_kind"
     PROCESS_FUNCTION = "process_function"
     APPLICABILITY = "applicability"
     RESPONSIBILITY = "responsibility"
@@ -106,6 +107,43 @@ class AdaptiveInterviewPlanner:
                     reason="The normalized structure does not determine the statement function.",
                 )
             )
+
+        knowledge_markers = (
+            "technique",
+            "measure",
+            "method",
+            "procedure",
+            "process",
+            "artifact",
+            "record",
+            "evidence",
+            "role",
+            "concept",
+        )
+        if any(marker in content.lower() for marker in knowledge_markers) or bool(
+            structural & {"technique", "measure", "method", "techniques_and_measures"}
+        ):
+            questions.append(
+                InterviewQuestion(
+                    id="knowledge-kind",
+                    dimension=InterviewDimension.KNOWLEDGE_KIND,
+                    question="What engineering knowledge kind is represented by this clause?",
+                    allowed_labels=(
+                        "technique",
+                        "measure",
+                        "method",
+                        "process",
+                        "artifact",
+                        "role",
+                        "evidence",
+                        "concept",
+                        "none",
+                    ),
+                    reason="Clause wording or structure indicates an engineering knowledge kind.",
+                )
+            )
+        else:
+            skipped.append(InterviewDimension.KNOWLEDGE_KIND)
 
         process_markers = (
             "objective",

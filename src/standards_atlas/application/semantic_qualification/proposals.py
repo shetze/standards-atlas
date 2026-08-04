@@ -59,6 +59,7 @@ class SemanticTaskDefinition(BaseModel):
     version: str = Field(min_length=1)
     description: str = ""
     taxonomy: tuple[str, ...] = ()
+    knowledge_taxonomy: tuple[str, ...] = ()
     applicability_taxonomy: tuple[str, ...] = ()
     responsibility_taxonomy: tuple[str, ...] = ()
     multi_label: bool = True
@@ -76,6 +77,7 @@ class SemanticTaskRepository:
         metadata = yaml.safe_load((root / "task.yaml").read_text(encoding="utf-8")) or {}
         taxonomy = yaml.safe_load((root / "taxonomy.yaml").read_text(encoding="utf-8")) or {}
         metadata["taxonomy"] = tuple(taxonomy.get("statement_functions", taxonomy.get("roles", ())))
+        metadata["knowledge_taxonomy"] = tuple(taxonomy.get("knowledge_kinds", ()))
         metadata["applicability_taxonomy"] = tuple(taxonomy.get("applicability_functions", ()))
         metadata["responsibility_taxonomy"] = tuple(taxonomy.get("responsibility_functions", ()))
         schema = json.loads((root / "schema.json").read_text(encoding="utf-8"))
@@ -250,7 +252,9 @@ class BaselineProposalGenerator:
                         truncation_retry_max_tokens=config.truncation_retry_max_tokens,
                         retry_on_truncation=config.retry_on_truncation,
                     )
-                    normalized_value = _normalize_selection_payload(result.value)
+                    normalized_value = _normalize_selection_payload(
+                        result.value, required_fields=canonical_schema.get("required", ())
+                    )
                 response_payload = {
                     "value": dict(result.value),
                     "provider": result.provider,
@@ -387,6 +391,8 @@ def _run_adaptive_interview(
     selection: dict[str, Any] = {
         "statement_functions": [],
         "primary_function": None,
+        "knowledge_kinds": [],
+        "primary_knowledge_kind": None,
         "process_functions": [],
         "primary_process_function": None,
         "applicability_functions": [],
@@ -460,6 +466,9 @@ def _run_adaptive_interview(
         if question.dimension is InterviewDimension.STATEMENT_FUNCTION:
             selection["statement_functions"] = [label]
             selection["primary_function"] = label
+        elif question.dimension is InterviewDimension.KNOWLEDGE_KIND:
+            selection["knowledge_kinds"] = [label]
+            selection["primary_knowledge_kind"] = label
         elif question.dimension is InterviewDimension.PROCESS_FUNCTION:
             selection["process_functions"] = [label]
             selection["primary_process_function"] = label
@@ -484,7 +493,19 @@ def _run_adaptive_interview(
             truncation_retry_max_tokens=config.truncation_retry_max_tokens,
             retry_on_truncation=config.retry_on_truncation,
         )
-        selection = _normalize_selection_payload(last_result.value)
+        selection = _normalize_selection_payload(
+            last_result.value,
+            required_fields=(
+                "knowledge_kinds",
+                "primary_knowledge_kind",
+                "process_functions",
+                "primary_process_function",
+                "applicability_functions",
+                "primary_applicability_function",
+                "responsibility_functions",
+                "primary_responsibility_function",
+            ),
+        )
     return (
         last_result,
         selection,
@@ -637,11 +658,26 @@ def _content_preview(content: str, limit: int = 1000) -> str:
     return compact if len(compact) <= limit else compact[: limit - 3] + "..."
 
 
-def _normalize_selection_payload(value: Any) -> dict[str, Any]:
+def _normalize_selection_payload(
+    value: Any, *, required_fields: tuple[str, ...] | list[str] = ()
+) -> dict[str, Any]:
     """Canonicalize harmless provider variance before strict domain validation."""
     if not isinstance(value, dict):
         return dict(value)
     normalized = dict(value)
+    defaults = {
+        "knowledge_kinds": [],
+        "primary_knowledge_kind": None,
+        "process_functions": [],
+        "primary_process_function": None,
+        "applicability_functions": [],
+        "primary_applicability_function": None,
+        "responsibility_functions": [],
+        "primary_responsibility_function": None,
+    }
+    for field in required_fields:
+        if field in defaults:
+            normalized.setdefault(field, defaults[field])
     roles = normalized.get("statement_functions")
     if isinstance(roles, (list, tuple)):
         normalized_roles = list(dict.fromkeys(roles))

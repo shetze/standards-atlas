@@ -34,3 +34,12 @@ Reliability rates are ratios in the range `0..1`; raw counts are reported separa
 Consensus proposals can help prioritize review but can bias reviewers. Keep proposals, reviewer decisions and published gold data as distinct artifacts. Published reviewed annotations take precedence over local proposals.
 
 See [Annotation review](semantic-annotation-review.md) and [Testing and qualification](../development/testing-and-qualification.md).
+
+## Regenerating runs for the knowledge ontology
+
+The version 2.0.0 output contract now requires `knowledge_kinds` and
+`primary_knowledge_kind`. Delete or overwrite proposal runs generated with the older
+schema before rebuilding the qualification matrix. Use `--overwrite` for a complete
+rerun. Review disputed IEC 61508-7 clauses first: `description` or `recommendation`
+describes statement force, while `technique`, `measure`, or `method` captures the
+engineering knowledge represented.

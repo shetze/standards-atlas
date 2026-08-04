@@ -55,3 +55,11 @@ The second page of the UML class diagram shows representative application servic
 - Internal references resolve against known clauses before Markdown publication.
 - Normative status and structural dimensions may inherit from document structure only through explicit normalization rules.
 - No domain model depends on storage paths or external SDK types.
+
+## Engineering knowledge ontology
+
+`SemanticClassification.knowledge_kinds` identifies what engineering knowledge a clause
+represents independently from how the statement is phrased. The central vocabulary is
+`technique`, `measure`, `method`, `process`, `artifact`, `role`, `evidence`, and `concept`.
+For example, a clause can simultaneously be an informative `description` and a
+`technique`. Domain-specific refinements remain in versioned `domain_functions`.

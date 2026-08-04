@@ -13,6 +13,15 @@ statement_functions:
 - objective
 - prerequisite
 - assumption
+knowledge_kinds:
+- technique
+- measure
+- method
+- process
+- artifact
+- role
+- evidence
+- concept
 process_functions:
 - objective
 - prerequisite

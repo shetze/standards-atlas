@@ -44,6 +44,8 @@ class ReviewForm(BaseModel):
     decision: ReviewDecision = ReviewDecision.ACCEPTED
     statement_functions: tuple[str, ...] = ()
     primary_function: str | None = None
+    knowledge_kinds: tuple[str, ...] = ()
+    primary_knowledge_kind: str | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     reviewer: str = ""
     reviewed_at: datetime | None = None
@@ -58,6 +60,13 @@ class ReviewForm(BaseModel):
             raise ValueError("primary_function must be included in statement_functions")
         if len(set(self.statement_functions)) != len(self.statement_functions):
             raise ValueError("statement_functions must not contain duplicates")
+        if (
+            self.primary_knowledge_kind is not None
+            and self.primary_knowledge_kind not in self.knowledge_kinds
+        ):
+            raise ValueError("primary_knowledge_kind must be included in knowledge_kinds")
+        if len(set(self.knowledge_kinds)) != len(self.knowledge_kinds):
+            raise ValueError("knowledge_kinds must not contain duplicates")
         return self
 
 
@@ -272,6 +281,10 @@ def _render_review(
         decision=ReviewDecision.ACCEPTED,
         statement_functions=tuple(role.value for role in proposal.statement_functions),
         primary_function=proposal.primary_function.value if proposal.primary_function else None,
+        knowledge_kinds=tuple(kind.value for kind in proposal.knowledge_kinds),
+        primary_knowledge_kind=(
+            proposal.primary_knowledge_kind.value if proposal.primary_knowledge_kind else None
+        ),
         confidence=proposal.confidence,
     )
     editable = yaml.safe_dump(form.model_dump(mode="json"), sort_keys=False, allow_unicode=True)
@@ -295,6 +308,9 @@ def _render_review(
         "## Local review context\n\n"
         f"```text\n{prompt}\n```\n\n" + _render_references(references) + "## Generated proposal\n\n"
         f"- Roles: {', '.join(role.value for role in proposal.statement_functions) or 'none'}\n"
+        f"- Knowldg kinds: {', '.join(kind.value for kind in proposal.knowledge_kinds) or 'none'}\n"
+        "- Primary knowledge kind: "
+        f"{proposal.primary_knowledge_kind.value if proposal.primary_knowledge_kind else 'none'}\n"
         "- Primary role: "
         f"{proposal.primary_function.value if proposal.primary_function else 'none'}\n"
         f"- Confidence: {proposal.confidence if proposal.confidence is not None else 'none'}\n"
@@ -357,6 +373,8 @@ def _apply_review(
         {
             "statement_functions": form.statement_functions,
             "primary_function": form.primary_function,
+            "knowledge_kinds": form.knowledge_kinds,
+            "primary_knowledge_kind": form.primary_knowledge_kind,
             "confidence": form.confidence,
         }
     )

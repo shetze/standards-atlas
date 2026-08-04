@@ -1,5 +1,5 @@
 task: statement-function-classification
 version: 2.0.0
-description: Classify independent statement, applicability, and responsibility dimensions of normalized standards clauses.
+description: Classify independent statement, knowledge-kind, process, applicability, and responsibility dimensions of normalized standards clauses.
 multi_label: true
 allow_unclassified: true

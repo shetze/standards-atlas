@@ -1,1 +1,5 @@
-{"description":"Require an evidence-based rationale before assigning statement functions.","task":"statement-function-classification","version":"evidence-first-v1"}
+{
+  "description": "Require an evidence-based rationale before assigning statement functions.",
+  "task": "statement-function-classification",
+  "version": "evidence-first-v2"
+}

@@ -18,6 +18,7 @@ from standards_atlas.application.semantic_qualification.annotations import (
 )
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
+    KnowledgeKind,
     ResponsibilityFunction,
     StatementFunction,
 )
@@ -39,6 +40,8 @@ class ModelVote(BaseModel):
     model_id: str
     primary_function: StatementFunction | None = None
     secondary_functions: tuple[StatementFunction, ...] = ()
+    primary_knowledge_kind: KnowledgeKind | None = None
+    secondary_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
     applicability_function: ApplicabilityFunction | None = None
     responsibility_present: bool = False
@@ -54,6 +57,12 @@ class ModelVote(BaseModel):
         if self.primary_function is None:
             return self.secondary_functions
         return (self.primary_function, *self.secondary_functions)
+
+    @property
+    def knowledge_kinds(self) -> tuple[KnowledgeKind, ...]:
+        if self.primary_knowledge_kind is None:
+            return self.secondary_knowledge_kinds
+        return (self.primary_knowledge_kind, *self.secondary_knowledge_kinds)
 
     @property
     def applicability_functions(self) -> tuple[ApplicabilityFunction, ...]:
@@ -79,6 +88,8 @@ class ClauseConsensus(BaseModel):
     category: ConsensusCategory
     primary_function: StatementFunction | None = None
     proposed_functions: tuple[StatementFunction, ...] = ()
+    primary_knowledge_kind: KnowledgeKind | None = None
+    proposed_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
     proposed_applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     responsibility_present: bool = False
@@ -87,6 +98,7 @@ class ClauseConsensus(BaseModel):
     participating_models: int = Field(ge=0)
     votes: tuple[ModelVote, ...] = ()
     label_support: dict[str, float] = Field(default_factory=dict)
+    knowledge_kind_support: dict[str, float] = Field(default_factory=dict)
     applicability_support: dict[str, float] = Field(default_factory=dict)
     responsibility_support: dict[str, float] = Field(default_factory=dict)
     structural_prior: dict[str, Any] = Field(default_factory=dict)
@@ -137,6 +149,7 @@ class ModelConsensusService:
     ) -> tuple[ConsensusReport, Path, Path, Path]:
         prompts = {
             "statement_function": prompt_id,
+            "knowledge_kind": prompt_id,
             "applicability": prompt_id,
             "responsibility": prompt_id,
             **(prompt_selection or {}),
@@ -262,12 +275,16 @@ def _model_vote(
     role: str,
 ) -> ModelVote:
     statement = _modal_annotations(by_prompt.get(prompts["statement_function"], []))
+    knowledge = _modal_annotations(by_prompt.get(prompts["knowledge_kind"], []))
     applicability = _modal_annotations(by_prompt.get(prompts["applicability"], []))
     responsibility = _modal_annotations(by_prompt.get(prompts["responsibility"], []))
-    available = [item for item in (statement, applicability, responsibility) if item is not None]
+    available = [
+        item for item in (statement, knowledge, applicability, responsibility) if item is not None
+    ]
     if not available:
         raise ValueError(f"model {model_id!r} has no annotations for selected prompts")
     statement = statement or available[0]
+    knowledge = knowledge or available[0]
     applicability = applicability or available[0]
     responsibility = responsibility or available[0]
     proposal = statement[0].proposal
@@ -275,6 +292,13 @@ def _model_vote(
     if primary is None and proposal.statement_functions:
         primary = proposal.statement_functions[0]
     secondary = tuple(item for item in proposal.statement_functions if item != primary)
+    knowledge_proposal = knowledge[0].proposal
+    primary_knowledge = knowledge_proposal.primary_knowledge_kind
+    if primary_knowledge is None and knowledge_proposal.knowledge_kinds:
+        primary_knowledge = knowledge_proposal.knowledge_kinds[0]
+    secondary_knowledge = tuple(
+        item for item in knowledge_proposal.knowledge_kinds if item != primary_knowledge
+    )
     app = applicability[0].proposal.primary_applicability_function
     if app is None and applicability[0].proposal.applicability_functions:
         app = applicability[0].proposal.applicability_functions[0]
@@ -286,6 +310,7 @@ def _model_vote(
             value
             for value in (
                 statement[0].proposal.rationale,
+                knowledge[0].proposal.rationale,
                 applicability[0].proposal.rationale,
                 responsibility[0].proposal.rationale,
             )
@@ -295,13 +320,15 @@ def _model_vote(
     )
     confidences = [
         item[0].proposal.confidence
-        for item in (statement, applicability, responsibility)
+        for item in (statement, knowledge, applicability, responsibility)
         if item[0].proposal.confidence is not None
     ]
     return ModelVote(
         model_id=model_id,
         primary_function=primary,
         secondary_functions=secondary,
+        primary_knowledge_kind=primary_knowledge,
+        secondary_knowledge_kinds=secondary_knowledge,
         applicability_present=app is not None,
         applicability_function=app,
         responsibility_present=resp is not None,
@@ -323,6 +350,8 @@ def _modal_annotations(
         (
             item.proposal.primary_function,
             item.proposal.statement_functions,
+            item.proposal.primary_knowledge_kind,
+            item.proposal.knowledge_kinds,
             item.proposal.primary_applicability_function,
             item.proposal.applicability_functions,
             item.proposal.primary_responsibility_function,
@@ -385,6 +414,30 @@ def _resolve_clause(
     if primary is not None:
         label_support = {primary.value: primary_agreement, **label_support}
 
+    knowledge_counts = Counter(vote.primary_knowledge_kind for vote in votes)
+    primary_knowledge, knowledge_count = (
+        knowledge_counts.most_common(1)[0] if knowledge_counts else (None, 0)
+    )
+    knowledge_agreement = knowledge_count / model_count if model_count else 0.0
+    secondary_knowledge = sorted(
+        {label for vote in votes for label in vote.secondary_knowledge_kinds},
+        key=lambda item: item.value,
+    )
+    knowledge_kind_support = {
+        label.value: sum(label in vote.secondary_knowledge_kinds for vote in votes) / model_count
+        for label in secondary_knowledge
+    }
+    proposed_knowledge_kinds = (() if primary_knowledge is None else (primary_knowledge,)) + tuple(
+        label
+        for label in secondary_knowledge
+        if label != primary_knowledge and knowledge_kind_support[label.value] >= label_threshold
+    )
+    if primary_knowledge is not None:
+        knowledge_kind_support = {
+            primary_knowledge.value: knowledge_agreement,
+            **knowledge_kind_support,
+        }
+
     app_present_support = (
         sum(vote.applicability_present for vote in votes) / model_count if model_count else 0.0
     )
@@ -420,7 +473,7 @@ def _resolve_clause(
     else:
         category = ConsensusCategory.DISPUTED
 
-    confidence = max(primary_agreement, app_label_support, resp_label_support)
+    confidence = max(primary_agreement, knowledge_agreement, app_label_support, resp_label_support)
     review_reasons = _review_reasons(
         category=category,
         confidence=confidence,
@@ -435,6 +488,8 @@ def _resolve_clause(
         "category": category,
         "primary_function": primary,
         "proposed_functions": proposed_functions,
+        "primary_knowledge_kind": primary_knowledge,
+        "proposed_knowledge_kinds": proposed_knowledge_kinds,
         "applicability_present": app_accepted,
         "proposed_applicability_functions": ((app_label,) if app_accepted else ()),
         "responsibility_present": resp_accepted,
@@ -442,6 +497,7 @@ def _resolve_clause(
         "confidence": confidence,
         "participating_models": model_count,
         "label_support": label_support,
+        "knowledge_kind_support": knowledge_kind_support,
         "applicability_support": {
             "present": app_present_support,
             **({app_label.value: app_label_support} if app_label else {}),
@@ -565,6 +621,10 @@ def _write_outputs(
                 "primary_function": (
                     item.primary_function.value if item.primary_function else None
                 ),
+                "primary_knowledge_kind": (
+                    item.primary_knowledge_kind.value if item.primary_knowledge_kind else None
+                ),
+                "knowledge_kinds": [value.value for value in item.proposed_knowledge_kinds],
                 "secondary_functions": [
                     value.value
                     for value in item.proposed_functions
@@ -638,6 +698,7 @@ def _render_review(report: ConsensusReport) -> str:
         return "\n".join(lines)
     for item in uncertain:
         proposed = ", ".join(value.value for value in item.proposed_functions) or "none"
+        knowledge = ", ".join(value.value for value in item.proposed_knowledge_kinds) or "none"
         applicability = (
             ", ".join(value.value for value in item.proposed_applicability_functions) or "none"
         )
@@ -660,6 +721,7 @@ def _render_review(report: ConsensusReport) -> str:
                 "",
                 f"- Category: `{item.category.value}`",
                 f"- Primary/secondary statement functions: `{proposed}`",
+                f"- Knowledge kinds: `{knowledge}`",
                 f"- Applicability proposal: `{applicability}`",
                 f"- Responsibility proposal: `{responsibility}`",
                 f"- Agreement: `{item.confidence:.3f}`",
@@ -672,6 +734,7 @@ def _render_review(report: ConsensusReport) -> str:
         )
         for vote in item.votes:
             labels = ", ".join(value.value for value in vote.statement_functions) or "none"
+            knowledge_labels = ", ".join(value.value for value in vote.knowledge_kinds) or "none"
             applicability_labels = (
                 ", ".join(value.value for value in vote.applicability_functions) or "none"
             )
@@ -680,7 +743,7 @@ def _render_review(report: ConsensusReport) -> str:
             )
             lines.append(
                 f"  - `{vote.model_id}` ({vote.role}): statement=`{labels}`; "
-                f"applicability=`{applicability_labels}`; "
+                f"knowledge=`{knowledge_labels}`; applicability=`{applicability_labels}`; "
                 f"responsibility=`{responsibility_labels}` "
                 f"(repeat stability {vote.stability:.3f})"
             )
@@ -691,6 +754,7 @@ def _render_review(report: ConsensusReport) -> str:
                 "",
                 "- Primary statement function: ",
                 "- Secondary statement functions: ",
+                "- Knowledge kinds: ",
                 "- Applicability present/function: ",
                 "- Responsibility present/function: ",
                 "- Rationale: ",
