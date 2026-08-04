@@ -1,208 +1,39 @@
 # Roadmap
-- Correct representative corpus eligibility by excluding clauses without normalized content, separating content from structural context, hashing content only, and recording duplicate-content and eligible-population statistics.
 
-Standards Atlas is a deterministic engineering platform for analysing, maintaining, evaluating, and publishing relationships between international technical standards, specifications, and other engineering documents.
+This document provides a high-level view of the long-term evolution of
+standards-atlas. Detailed implementation plans are maintained under
+`docs/roadmap/`.
 
-The current programme replaces the former IntelliDoc implementation with a maintainable architecture while restoring and extending its cross-standard engineering capabilities.
+## Near term
 
-## Long-term vision
+### Classify existing standards
 
-Standards Atlas shall become the reference platform for analysing relationships between standards from different standardisation domains. Functional Safety is the first knowledge domain, followed by Cybersecurity, Railway Interoperability, and further engineering domains.
+Apply the established taxonomy and Structural Profiles to the existing
+standards corpus and continuously improve quality through evaluation.
 
-## Version 0.7 — Deterministic document and evaluation foundation
+## Medium term
 
-Status: **completed through 0.7.1**
+### Extend the taxonomy to further standards domains
 
-### Document pipeline
+Generalise the Functional Safety taxonomy to additional standards domains while
+preserving a common canonical model.
 
-- Docling extraction and private source persistence.
-- Deterministic normalized-document contract.
-- Reference detection, alignment, review, and manual overrides.
-- Canonical `EngineeringDocument` construction.
-- Transformation ledger and end-to-end lineage.
-- Golden corpus and layered qualification framework.
+### Extend the taxonomy to further document classes
 
-### Workspace and publication
+Support additional engineering artefacts such as Technical Specifications for
+Interoperability (TSI), Polarion exports and similar document classes.
 
-- Separation of `.atlas` internal artefacts and `local` protected/user-facing data.
-- Catalog-driven single-part and multipart workflows.
-- Functional Safety publication hierarchy.
-- Markdown and Doorstop publication with packaged templates.
-- Reproducible workflow derivation reports.
+## Long term
 
-### Semantic evaluation framework
+### Complete the IntelliDoc refactoring
 
-- Generic clause-access services independent of transport protocols.
-- Deterministic filtering, search, and balanced sampling.
-- Local annotation-ready corpus construction.
-- Versioned prompt/model benchmark manifests.
-- Content-safe benchmark summaries and manifest fingerprints.
+Re-establish the original IntelliDoc capabilities on top of the new
+architecture, including RAG-assisted and LLM-based relationship mapping across
+Knowledge Domains.
 
-### MCP evaluation server
+### Expand MCP capabilities
 
-- Read-only MCP adapter over the evaluation services.
-- stdio and Streamable HTTP transports.
-- Bearer authentication, host/origin policy, DNS-rebinding protection, request limits, and audit logging.
-- Container deployment examples.
-- Independent compatibility probe and CI-ready smoke test.
+Expose Knowledge Domains through progressively richer MCP skills for search,
+analysis, navigation, relationship exploration and engineering workflows.
 
-## Version 0.8 — Restore and improve IntelliDoc relationship analysis
-
-### 5.4 Gold-dataset management
-
-- Define task-specific gold-dataset schemas.
-- Add annotation, review, acceptance, and supersession states.
-- Validate references to corpus clauses and normalized clause hashes.
-- Support reviewer disagreement and adjudication.
-- Preserve dataset lineage across revisions.
-
-### 5.5 Benchmark and confidence framework
-
-- Calculate precision, recall, F1, and task-specific metrics.
-- Compare prompt and model versions against accepted gold datasets.
-- Add confidence calibration and threshold analysis.
-- Classify false positives, false negatives, and malformed outputs.
-- Generate protected local detail reports and shareable aggregate reports.
-- Establish regression gates for selected production configurations.
-
-### 5.6 Relationship discovery
-
-Restore the central IntelliDoc capability on top of the new architecture.
-
-Detect and review:
-
-- normative and informative references;
-- adapted or inherited clauses;
-- equivalent and overlapping concepts;
-- terminology mappings;
-- specialisation and constraint relationships;
-- potential conflicts and gaps.
-
-Support:
-
-- one-to-one, one-to-many, and many-to-one relationships;
-- partial clause mappings;
-- model confidence and evidence;
-- deterministic candidate persistence;
-- human review and override workflows;
-- relationship regression datasets.
-
-### Knowledge Domain graph
-
-Represent standards and relationships as an explicit graph rather than only as a publication tree. Initial relationship types include:
-
-- `references`;
-- `derives_from`;
-- `adapts`;
-- `specialises`;
-- `constrains`;
-- `equivalent_to`;
-- `conflicts_with`;
-- `supersedes`.
-
-## Version 0.9 — Engineering analysis
-
-Generate engineering artefacts directly from the Knowledge Domain:
-
-- impact and dependency analysis;
-- missing-mapping and coverage reports;
-- consistency and terminology comparison;
-- change propagation;
-- graph exports and exploration;
-- AI-assisted review based on traceable relationship evidence.
-
-## Version 1.0 — Functional Safety Atlas
-
-The first production-ready platform for analysing relationships between Functional Safety standards, with:
-
-- deterministic document processing;
-- qualified semantic evaluation;
-- reviewed cross-standard relationships;
-- complete navigation and engineering reports;
-- durable qualification evidence;
-- stable APIs and CLI;
-- secured MCP access for engineering assistants.
-
-## Beyond Functional Safety
-
-### Cybersecurity
-
-Examples include IEC 62443, ISO/SAE 21434, and the ISO/IEC 27000 family.
-
-### Railway interoperability and operations
-
-Examples include TSI, CCS, ERA guidance, and operational rules.
-
-### Systems engineering
-
-Examples include IEC 81346, ISO 15288, and SysML-based artefacts.
-
-## Research topics
-
-- semantic document comparison;
-- model-assisted relationship discovery;
-- confidence calibration for engineering decisions;
-- automated impact prediction;
-- knowledge-graph visualisation;
-- engineering assistants with protected local context;
-- configurable and qualifiable publication pipelines.
-
-
-### Slice 5.3.7 - Codex integration — completed
-
-- secure Streamable HTTP registration for Codex;
-- environment-backed bearer authentication;
-- explicit read-only tool allow list;
-- reproducible configuration and verification workflow.
-
-## Slice 5.4.3 — Baseline annotation proposals
-
-Completed: versioned semantic-role task and prompt resources, provider-independent proposal orchestration, Codex and RamaLama adapters, durable request/response evidence, schema validation, proposal provenance, and resumable generation.
-
-## Slice 5.4.4 — Human review workflow
-
-Completed: local Markdown review export with embedded review data, validated import into canonical reviewed annotations, conflict and plausibility checks, and controlled publication from `local` to `data`.
-
-### Slice 5.4.4a – Clause Reference Extraction and Resolution
-
-Implemented: deterministic same-document clause and range detection, target resolution,
-unresolved diagnostics, local persistence, CLI automation, and HITL context integration.
-
-### Slice 5.4.5 – Annotation Resolution and Metrics — completed
-
-Implemented evidence priority `data > local > structure`, Gold and Silver qualification,
-Structure Agreement, multi-label and primary-role metrics, confusion matrices, confidence
-calibration, corpus coverage diagnostics, and domain/stratum slice reports.
-
-### Slice 5.4.6 - Model/Prompt Qualification Matrix — completed
-
-- Versioned model shortlist and four-prompt contract
-- Repeated-run aggregation and stability metrics
-- Quality/runtime/resource Pareto analysis
-- Absolute and baseline-relative regression thresholds
-- JSON and Markdown qualification reports suitable for CI
-
-## Multidimensional semantic analysis
-
-The semantic evaluation framework now treats statement function, document structure, normative status, KnowledgeDomain function, and relations as separate dimensions. Follow-up slices shall add dedicated gold datasets and metrics for structural classification, normative-status classification, domain taxonomies, and relation extraction.
-
-- Treat document transformation and semantic method qualification as separate workflow
-  families sharing common orchestration principles and auditable derivation records.
-
-### Model-consensus Golden Corpus renewal
-
-The next Golden Corpus generation is based on agreement across the five qualification-matrix models. Statement functions are evaluated independently of already known structural classifications. Strong agreement becomes a proposal; majority cases, contradictions, and insufficient evidence are routed to focused HITL review. The current Golden Corpus remains diagnostic evidence during this transition rather than the unquestioned source of truth.
-
-
-
-## Version 0.8 — Cross-standard knowledge graph (next)
-
-Primary objective: restore and surpass the legacy IntelliDoc capability by identifying, qualifying and maintaining semantic relationships across standards from different knowledge domains.
-
-Key work items:
-- Cross-document relationship extraction.
-- Persistent relationship graph with provenance.
-- Human review workflow for inferred relationships.
-- MCP skills for graph exploration.
-- Domain-independent structural taxonomy extensions.
-- Qualification framework for relationship extraction.
+See `docs/roadmap/` for detailed implementation plans.
