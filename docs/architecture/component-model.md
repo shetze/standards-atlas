@@ -1,6 +1,10 @@
 # Component model
 
-![Component model](diagrams/svg/component-model.svg)
+![Overall component architecture](diagrams/svg/overall-component-architecture.svg)
+
+The UML component view is the primary map of the current implementation. It groups the major composition roots, application capabilities, domain core, ports, adapters, and external systems. It intentionally groups families of services and repositories instead of listing every concrete class, command module, artifact type, and compatibility facade described in this document.
+
+A smaller thematic overview remains available in the [diagram catalog](diagrams/README.md) as `component-model.svg`.
 
 The component model separates stable knowledge structures from orchestration and technology integrations.
 
@@ -34,6 +38,12 @@ The domain layer contains immutable value objects and aggregates for standards, 
 - **Doorstop** creates requirement-document hierarchies and installs publication templates.
 - **LLM** provides Codex CLI and OpenAI-compatible gateways plus managed RamaLama runtime control.
 - **MCP transport** hosts the clause service over STDIO or Streamable HTTP.
+
+## Cross-cutting component relationships
+
+The application layer is not a single monolith. Workflow orchestration coordinates extraction, normalization, alignment, construction, and publication through focused services and ports. Generic evaluation is provider-neutral; semantic qualification depends on it and adds clause access, standards-specific corpora, review, consensus, and qualification workflows. Runtime management for RamaLama and MCP belongs to the executable and adapter boundaries, not to the domain model.
+
+The diagram does not enumerate every specialized service, such as AtlasData lifecycle operations, extraction inspection, document selection, reference resolution, methods-and-techniques extraction, or individual review renderers. These are represented by their owning application capability and documented in the corresponding topic pages.
 
 ## Composition
 

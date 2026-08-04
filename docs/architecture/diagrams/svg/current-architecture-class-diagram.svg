@@ -1,0 +1,492 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1660" height="2877" viewBox="0 0 1660 2877">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#555"/></marker></defs>
+<style>text{font-family:DejaVu Sans,Arial,sans-serif;fill:#222}.title{font-size:22px;font-weight:bold}.label{font-size:12px}.small{font-size:10px}.edge{stroke:#555;stroke-width:1.4;fill:none}</style>
+<g transform="translate(0,0)"><text x="20" y="28" class="title">1 - Canonical Domain Model</text>
+<line class="edge" x1="525.0" y1="180.0" x2="205.0" y2="215.0" marker-end="url(#arrow)"/>
+<text x="365.0" y="193.5" class="small">extends</text>
+<line class="edge" x1="205.0" y1="215.0" x2="230.0" y2="490.0" marker-end="url(#arrow)"/>
+<text x="217.5" y="348.5" class="small">1  contains  0..*</text>
+<line class="edge" x1="205.0" y1="215.0" x2="575.0" y2="440.0" marker-end="url(#arrow)"/>
+<text x="390.0" y="323.5" class="small">1  contains  0..*</text>
+<line class="edge" x1="205.0" y1="215.0" x2="550.0" y2="792.5" marker-end="url(#arrow)"/>
+<text x="377.5" y="499.75" class="small">0..1</text>
+<line class="edge" x1="230.0" y1="490.0" x2="945.0" y2="192.5" marker-end="url(#arrow)"/>
+<text x="587.5" y="337.25" class="small">1  contains  0..*</text>
+<line class="edge" x1="230.0" y1="490.0" x2="1400.0" y2="235.0" marker-end="url(#arrow)"/>
+<text x="815.0" y="358.5" class="small">1</text>
+<line class="edge" x1="230.0" y1="490.0" x2="1400.0" y2="1035.0" marker-end="url(#arrow)"/>
+<text x="815.0" y="758.5" class="small">0..1</text>
+<line class="edge" x1="945.0" y1="192.5" x2="945.0" y2="355.0" marker-end="url(#arrow)"/>
+<line class="edge" x1="945.0" y1="192.5" x2="945.0" y2="485.0" marker-end="url(#arrow)"/>
+<line class="edge" x1="945.0" y1="192.5" x2="945.0" y2="625.0" marker-end="url(#arrow)"/>
+<line class="edge" x1="945.0" y1="192.5" x2="945.0" y2="775.0" marker-end="url(#arrow)"/>
+<line class="edge" x1="945.0" y1="192.5" x2="945.0" y2="940.0" marker-end="url(#arrow)"/>
+<line class="edge" x1="945.0" y1="192.5" x2="945.0" y2="1080.0" marker-end="url(#arrow)"/>
+<line class="edge" x1="1400.0" y1="235.0" x2="1400.0" y2="472.5" marker-end="url(#arrow)"/>
+<text x="1400.0" y="349.75" class="small">0..1</text>
+<line class="edge" x1="1400.0" y1="235.0" x2="1400.0" y2="640.0" marker-end="url(#arrow)"/>
+<text x="1400.0" y="433.5" class="small">0..*</text>
+<line class="edge" x1="1400.0" y1="235.0" x2="1400.0" y2="820.0" marker-end="url(#arrow)"/>
+<text x="1400.0" y="523.5" class="small">0..*</text>
+<line class="edge" x1="215.0" y1="815.0" x2="230.0" y2="490.0" marker-end="url(#arrow)"/>
+<text x="222.5" y="648.5" class="small">source / target</text>
+<rect x="20.0" y="60.0" width="690.0" height="1100.0" rx="8" fill="#dae8fc" stroke="#666666"/>
+<clipPath id="clip_p_doc_0"><rect x="23.0" y="63.0" width="684.0" height="1094.0"/></clipPath>
+<text x="28.0" y="81.0" font-size="14" font-weight="bold" clip-path="url(#clip_p_doc_0)">Canonical documents</text>
+<rect x="730.0" y="60.0" width="430.0" height="1100.0" rx="8" fill="#d5e8d4" stroke="#666666"/>
+<clipPath id="clip_p_content_0"><rect x="733.0" y="63.0" width="424.0" height="1094.0"/></clipPath>
+<text x="738.0" y="81.0" font-size="14" font-weight="bold" clip-path="url(#clip_p_content_0)">Content model</text>
+<rect x="1180.0" y="60.0" width="440.0" height="1100.0" rx="8" fill="#e1d5e7" stroke="#666666"/>
+<clipPath id="clip_p_sem_0"><rect x="1183.0" y="63.0" width="434.0" height="1094.0"/></clipPath>
+<text x="1188.0" y="81.0" font-size="14" font-weight="bold" clip-path="url(#clip_p_sem_0)">Semantic and structural classification</text>
+<rect x="55.0" y="120.0" width="300.0" height="190.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_EngineeringDocument_0"><rect x="58.0" y="123.0" width="294.0" height="184.0"/></clipPath>
+<text x="63.0" y="139.0" font-size="12" font-weight="bold" clip-path="url(#clip_EngineeringDocument_0)">&gt;</text>
+<text x="63.0" y="154.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">EngineeringDocument</text>
+<text x="63.0" y="169.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">────────+ key: DocumentKey</text>
+<text x="63.0" y="184.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">+ title: str</text>
+<text x="63.0" y="199.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">+ document_type: DocumentType</text>
+<text x="63.0" y="214.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">+ clauses: tuple[Clause, ...]</text>
+<text x="63.0" y="229.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">+ annotations: tuple[ClauseAnnotation,</text>
+<text x="63.0" y="244.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">...]</text>
+<text x="63.0" y="259.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">+ lineage: ArtifactLineage | None</text>
+<text x="63.0" y="274.0" font-size="12" clip-path="url(#clip_EngineeringDocument_0)">────────+ annotations_for_clause()</text>
+<rect x="390.0" y="120.0" width="270.0" height="120.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_Standard_0"><rect x="393.0" y="123.0" width="264.0" height="114.0"/></clipPath>
+<text x="398.0" y="139.0" font-size="12" font-weight="bold" clip-path="url(#clip_Standard_0)">&gt;</text>
+<text x="398.0" y="154.0" font-size="12" clip-path="url(#clip_Standard_0)">Standard</text>
+<text x="398.0" y="169.0" font-size="12" clip-path="url(#clip_Standard_0)">────────+ name: str</text>
+<text x="398.0" y="184.0" font-size="12" clip-path="url(#clip_Standard_0)">+ parent_key: StandardKey | None</text>
+<text x="398.0" y="199.0" font-size="12" clip-path="url(#clip_Standard_0)">────────+ from_name()</text>
+<rect x="55.0" y="360.0" width="350.0" height="260.0" rx="0" fill="#fff2cc" stroke="#d6b656"/>
+<clipPath id="clip_Clause_0"><rect x="58.0" y="363.0" width="344.0" height="254.0"/></clipPath>
+<text x="63.0" y="379.0" font-size="12" font-weight="bold" clip-path="url(#clip_Clause_0)">&gt;</text>
+<text x="63.0" y="394.0" font-size="12" clip-path="url(#clip_Clause_0)">Clause</text>
+<text x="63.0" y="409.0" font-size="12" clip-path="url(#clip_Clause_0)">────────+ id: ClauseId</text>
+<text x="63.0" y="424.0" font-size="12" clip-path="url(#clip_Clause_0)">+ reference: StandardReference</text>
+<text x="63.0" y="439.0" font-size="12" clip-path="url(#clip_Clause_0)">+ clause_type: ClauseType</text>
+<text x="63.0" y="454.0" font-size="12" clip-path="url(#clip_Clause_0)">+ title: str | None</text>
+<text x="63.0" y="469.0" font-size="12" clip-path="url(#clip_Clause_0)">+ parent_id: ClauseId | None</text>
+<text x="63.0" y="484.0" font-size="12" clip-path="url(#clip_Clause_0)">+ content: tuple[ContentBlock, ...]</text>
+<text x="63.0" y="499.0" font-size="12" clip-path="url(#clip_Clause_0)">+ semantic_classification:</text>
+<text x="63.0" y="514.0" font-size="12" clip-path="url(#clip_Clause_0)">SemanticClassification</text>
+<text x="63.0" y="529.0" font-size="12" clip-path="url(#clip_Clause_0)">+ structural_profile: StructuralProfile | None</text>
+<text x="63.0" y="544.0" font-size="12" clip-path="url(#clip_Clause_0)">+ doorstop: DoorstopItemAttributes | None</text>
+<text x="63.0" y="559.0" font-size="12" clip-path="url(#clip_Clause_0)">────────+ plain_text()</text>
+<rect x="440.0" y="360.0" width="270.0" height="160.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_ClauseAnnotation_0"><rect x="443.0" y="363.0" width="264.0" height="154.0"/></clipPath>
+<text x="448.0" y="379.0" font-size="12" font-weight="bold" clip-path="url(#clip_ClauseAnnotation_0)">&gt;</text>
+<text x="448.0" y="394.0" font-size="12" clip-path="url(#clip_ClauseAnnotation_0)">ClauseAnnotation</text>
+<text x="448.0" y="409.0" font-size="12" clip-path="url(#clip_ClauseAnnotation_0)">────────+ id: AnnotationId</text>
+<text x="448.0" y="424.0" font-size="12" clip-path="url(#clip_ClauseAnnotation_0)">+ clause_id: ClauseId</text>
+<text x="448.0" y="439.0" font-size="12" clip-path="url(#clip_ClauseAnnotation_0)">+ annotation_type: AnnotationType</text>
+<text x="448.0" y="454.0" font-size="12" clip-path="url(#clip_ClauseAnnotation_0)">+ visibility: AnnotationVisibility</text>
+<text x="448.0" y="469.0" font-size="12" clip-path="url(#clip_ClauseAnnotation_0)">+ content: str</text>
+<rect x="55.0" y="720.0" width="320.0" height="190.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_Relation_0"><rect x="58.0" y="723.0" width="314.0" height="184.0"/></clipPath>
+<text x="63.0" y="739.0" font-size="12" font-weight="bold" clip-path="url(#clip_Relation_0)">&gt;</text>
+<text x="63.0" y="754.0" font-size="12" clip-path="url(#clip_Relation_0)">Relation</text>
+<text x="63.0" y="769.0" font-size="12" clip-path="url(#clip_Relation_0)">────────+ source_id: ClauseId</text>
+<text x="63.0" y="784.0" font-size="12" clip-path="url(#clip_Relation_0)">+ target_id: ClauseId</text>
+<text x="63.0" y="799.0" font-size="12" clip-path="url(#clip_Relation_0)">+ relation_type: RelationType</text>
+<text x="63.0" y="814.0" font-size="12" clip-path="url(#clip_Relation_0)">+ scope: RelationScope</text>
+<text x="63.0" y="829.0" font-size="12" clip-path="url(#clip_Relation_0)">+ target_document_key: DocumentKey | None</text>
+<text x="63.0" y="844.0" font-size="12" clip-path="url(#clip_Relation_0)">+ confidence: float | None</text>
+<text x="63.0" y="859.0" font-size="12" clip-path="url(#clip_Relation_0)">────────+ validate_scope()</text>
+<rect x="410.0" y="720.0" width="280.0" height="145.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_ArtifactLineage_0"><rect x="413.0" y="723.0" width="274.0" height="139.0"/></clipPath>
+<text x="418.0" y="739.0" font-size="12" font-weight="bold" clip-path="url(#clip_ArtifactLineage_0)">&gt;</text>
+<text x="418.0" y="754.0" font-size="12" clip-path="url(#clip_ArtifactLineage_0)">ArtifactLineage</text>
+<text x="418.0" y="769.0" font-size="12" clip-path="url(#clip_ArtifactLineage_0)">────────+ artifact: ArtifactReference</text>
+<text x="418.0" y="784.0" font-size="12" clip-path="url(#clip_ArtifactLineage_0)">+ derived_from:</text>
+<text x="418.0" y="799.0" font-size="12" clip-path="url(#clip_ArtifactLineage_0)">tuple[ArtifactReference, ...]</text>
+<text x="418.0" y="814.0" font-size="12" clip-path="url(#clip_ArtifactLineage_0)">+ transformation_ids: tuple[str, ...]</text>
+<rect x="220.0" y="970.0" width="280.0" height="145.0" rx="0" fill="#f5f5f5" stroke="#666666"/>
+<clipPath id="clip_Identifiers_0"><rect x="223.0" y="973.0" width="274.0" height="139.0"/></clipPath>
+<text x="228.0" y="989.0" font-size="12" font-weight="bold" clip-path="url(#clip_Identifiers_0)">&gt;</text>
+<text x="228.0" y="1004.0" font-size="12" clip-path="url(#clip_Identifiers_0)">Identifiers</text>
+<text x="228.0" y="1019.0" font-size="12" clip-path="url(#clip_Identifiers_0)">────────DocumentKey</text>
+<text x="228.0" y="1034.0" font-size="12" clip-path="url(#clip_Identifiers_0)">StandardKey</text>
+<text x="228.0" y="1049.0" font-size="12" clip-path="url(#clip_Identifiers_0)">ClauseId</text>
+<text x="228.0" y="1064.0" font-size="12" clip-path="url(#clip_Identifiers_0)">AnnotationId</text>
+<text x="228.0" y="1079.0" font-size="12" clip-path="url(#clip_Identifiers_0)">StandardReference</text>
+<rect x="770.0" y="120.0" width="350.0" height="145.0" rx="0" fill="#f5f5f5" stroke="#666666"/>
+<clipPath id="clip_ContentBlock_0"><rect x="773.0" y="123.0" width="344.0" height="139.0"/></clipPath>
+<text x="778.0" y="139.0" font-size="12" font-weight="bold" clip-path="url(#clip_ContentBlock_0)">&gt;</text>
+<text x="778.0" y="154.0" font-size="12" clip-path="url(#clip_ContentBlock_0)">ContentBlock</text>
+<text x="778.0" y="169.0" font-size="12" clip-path="url(#clip_ContentBlock_0)">────────+ id: str</text>
+<text x="778.0" y="184.0" font-size="12" clip-path="url(#clip_ContentBlock_0)">+ normalized_item_ids: tuple[str, ...]</text>
+<text x="778.0" y="199.0" font-size="12" clip-path="url(#clip_ContentBlock_0)">+ source_evidence: tuple[SourceEvidence, ...]</text>
+<rect x="800.0" y="310.0" width="290.0" height="90.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_TextBlock_0"><rect x="803.0" y="313.0" width="284.0" height="84.0"/></clipPath>
+<text x="808.0" y="329.0" font-size="12" font-weight="bold" clip-path="url(#clip_TextBlock_0)">&gt;</text>
+<text x="808.0" y="344.0" font-size="12" clip-path="url(#clip_TextBlock_0)">TextBlock</text>
+<text x="808.0" y="359.0" font-size="12" clip-path="url(#clip_TextBlock_0)">────────+ text: str</text>
+<rect x="800.0" y="430.0" width="290.0" height="110.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_ListBlock_0"><rect x="803.0" y="433.0" width="284.0" height="104.0"/></clipPath>
+<text x="808.0" y="449.0" font-size="12" font-weight="bold" clip-path="url(#clip_ListBlock_0)">&gt;</text>
+<text x="808.0" y="464.0" font-size="12" clip-path="url(#clip_ListBlock_0)">ListBlock</text>
+<text x="808.0" y="479.0" font-size="12" clip-path="url(#clip_ListBlock_0)">────────+ ordered: bool</text>
+<text x="808.0" y="494.0" font-size="12" clip-path="url(#clip_ListBlock_0)">+ items: tuple[ListItem, ...]</text>
+<rect x="800.0" y="570.0" width="290.0" height="110.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_TableBlock_0"><rect x="803.0" y="573.0" width="284.0" height="104.0"/></clipPath>
+<text x="808.0" y="589.0" font-size="12" font-weight="bold" clip-path="url(#clip_TableBlock_0)">&gt;</text>
+<text x="808.0" y="604.0" font-size="12" clip-path="url(#clip_TableBlock_0)">TableBlock</text>
+<text x="808.0" y="619.0" font-size="12" clip-path="url(#clip_TableBlock_0)">────────+ rows: tuple[TableRow, ...]</text>
+<text x="808.0" y="634.0" font-size="12" clip-path="url(#clip_TableBlock_0)">+ caption: str | None</text>
+<rect x="800.0" y="720.0" width="290.0" height="110.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_PictureBlock_0"><rect x="803.0" y="723.0" width="284.0" height="104.0"/></clipPath>
+<text x="808.0" y="739.0" font-size="12" font-weight="bold" clip-path="url(#clip_PictureBlock_0)">&gt;</text>
+<text x="808.0" y="754.0" font-size="12" clip-path="url(#clip_PictureBlock_0)">PictureBlock</text>
+<text x="808.0" y="769.0" font-size="12" clip-path="url(#clip_PictureBlock_0)">────────+ caption: str | None</text>
+<text x="808.0" y="784.0" font-size="12" clip-path="url(#clip_PictureBlock_0)">+ image_path: str | None</text>
+<text x="808.0" y="799.0" font-size="12" clip-path="url(#clip_PictureBlock_0)">+ content_hash: str | None</text>
+<rect x="800.0" y="885.0" width="290.0" height="110.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_FormulaBlock_0"><rect x="803.0" y="888.0" width="284.0" height="104.0"/></clipPath>
+<text x="808.0" y="904.0" font-size="12" font-weight="bold" clip-path="url(#clip_FormulaBlock_0)">&gt;</text>
+<text x="808.0" y="919.0" font-size="12" clip-path="url(#clip_FormulaBlock_0)">FormulaBlock</text>
+<text x="808.0" y="934.0" font-size="12" clip-path="url(#clip_FormulaBlock_0)">────────+ expression: str</text>
+<text x="808.0" y="949.0" font-size="12" clip-path="url(#clip_FormulaBlock_0)">+ representation: latex | mathml | text</text>
+<rect x="800.0" y="1025.0" width="290.0" height="110.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_NoteBlock_0"><rect x="803.0" y="1028.0" width="284.0" height="104.0"/></clipPath>
+<text x="808.0" y="1044.0" font-size="12" font-weight="bold" clip-path="url(#clip_NoteBlock_0)">&gt;</text>
+<text x="808.0" y="1059.0" font-size="12" clip-path="url(#clip_NoteBlock_0)">NoteBlock</text>
+<text x="808.0" y="1074.0" font-size="12" clip-path="url(#clip_NoteBlock_0)">────────+ note_kind: str | None</text>
+<text x="808.0" y="1089.0" font-size="12" clip-path="url(#clip_NoteBlock_0)">+ content: tuple[ContentBlock, ...]</text>
+<rect x="1215.0" y="120.0" width="370.0" height="230.0" rx="0" fill="#fff2cc" stroke="#d6b656"/>
+<clipPath id="clip_SemanticClassification_0"><rect x="1218.0" y="123.0" width="364.0" height="224.0"/></clipPath>
+<text x="1223.0" y="139.0" font-size="12" font-weight="bold" clip-path="url(#clip_SemanticClassification_0)">&gt;</text>
+<text x="1223.0" y="154.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">SemanticClassification</text>
+<text x="1223.0" y="169.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">────────+ statement_functions: tuple[...]</text>
+<text x="1223.0" y="184.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">+ applicability_functions: tuple[...]</text>
+<text x="1223.0" y="199.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">+ responsibility_functions: tuple[...]</text>
+<text x="1223.0" y="214.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">+ document_structure: ... | None</text>
+<text x="1223.0" y="229.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">+ normative_status: NormativeStatus</text>
+<text x="1223.0" y="244.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">+ domain_functions: tuple[...]</text>
+<text x="1223.0" y="259.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">+ relations: tuple[SemanticRelation, ...]</text>
+<text x="1223.0" y="274.0" font-size="12" clip-path="url(#clip_SemanticClassification_0)">────────+ dimensions_are_unique()</text>
+<rect x="1215.0" y="400.0" width="370.0" height="145.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_DocumentStructureClassification_0"><rect x="1218.0" y="403.0" width="364.0" height="139.0"/></clipPath>
+<text x="1223.0" y="419.0" font-size="12" font-weight="bold" clip-path="url(#clip_DocumentStructureClassification_0)">&gt;</text>
+<text x="1223.0" y="434.0" font-size="12" clip-path="url(#clip_DocumentStructureClassification_0)">DocumentStructureClassification</text>
+<text x="1223.0" y="449.0" font-size="12" clip-path="url(#clip_DocumentStructureClassification_0)">────────+ family: str</text>
+<text x="1223.0" y="464.0" font-size="12" clip-path="url(#clip_DocumentStructureClassification_0)">+ category: DocumentStructure</text>
+<text x="1223.0" y="479.0" font-size="12" clip-path="url(#clip_DocumentStructureClassification_0)">+ function: str | None</text>
+<text x="1223.0" y="494.0" font-size="12" clip-path="url(#clip_DocumentStructureClassification_0)">+ annex_identifier: str | None</text>
+<rect x="1215.0" y="580.0" width="370.0" height="120.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_DomainFunctionClassification_0"><rect x="1218.0" y="583.0" width="364.0" height="114.0"/></clipPath>
+<text x="1223.0" y="599.0" font-size="12" font-weight="bold" clip-path="url(#clip_DomainFunctionClassification_0)">&gt;</text>
+<text x="1223.0" y="614.0" font-size="12" clip-path="url(#clip_DomainFunctionClassification_0)">DomainFunctionClassification</text>
+<text x="1223.0" y="629.0" font-size="12" clip-path="url(#clip_DomainFunctionClassification_0)">────────+ knowledge_domain: str</text>
+<text x="1223.0" y="644.0" font-size="12" clip-path="url(#clip_DomainFunctionClassification_0)">+ taxonomy_version: str</text>
+<text x="1223.0" y="659.0" font-size="12" clip-path="url(#clip_DomainFunctionClassification_0)">+ functions: tuple[str, ...]</text>
+<rect x="1215.0" y="740.0" width="370.0" height="160.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_SemanticRelation_0"><rect x="1218.0" y="743.0" width="364.0" height="154.0"/></clipPath>
+<text x="1223.0" y="759.0" font-size="12" font-weight="bold" clip-path="url(#clip_SemanticRelation_0)">&gt;</text>
+<text x="1223.0" y="774.0" font-size="12" clip-path="url(#clip_SemanticRelation_0)">SemanticRelation</text>
+<text x="1223.0" y="789.0" font-size="12" clip-path="url(#clip_SemanticRelation_0)">────────+ kind: SemanticRelationKind</text>
+<text x="1223.0" y="804.0" font-size="12" clip-path="url(#clip_SemanticRelation_0)">+ scope: RelationScope</text>
+<text x="1223.0" y="819.0" font-size="12" clip-path="url(#clip_SemanticRelation_0)">+ target_reference: str</text>
+<text x="1223.0" y="834.0" font-size="12" clip-path="url(#clip_SemanticRelation_0)">+ target_clause_id: str | None</text>
+<text x="1223.0" y="849.0" font-size="12" clip-path="url(#clip_SemanticRelation_0)">+ confidence: float | None</text>
+<rect x="1215.0" y="950.0" width="370.0" height="170.0" rx="0" fill="#fff2cc" stroke="#d6b656"/>
+<clipPath id="clip_StructuralProfile_0"><rect x="1218.0" y="953.0" width="364.0" height="164.0"/></clipPath>
+<text x="1223.0" y="969.0" font-size="12" font-weight="bold" clip-path="url(#clip_StructuralProfile_0)">&gt;</text>
+<text x="1223.0" y="984.0" font-size="12" clip-path="url(#clip_StructuralProfile_0)">StructuralProfile</text>
+<text x="1223.0" y="999.0" font-size="12" clip-path="url(#clip_StructuralProfile_0)">────────+ canonical_section:</text>
+<text x="1223.0" y="1014.0" font-size="12" clip-path="url(#clip_StructuralProfile_0)">CanonicalDocumentSection | None</text>
+<text x="1223.0" y="1029.0" font-size="12" clip-path="url(#clip_StructuralProfile_0)">+ document_categories: tuple[DomainCategory, ...]</text>
+<text x="1223.0" y="1044.0" font-size="12" clip-path="url(#clip_StructuralProfile_0)">+ domain_categories: tuple[DomainCategory, ...]</text>
+<text x="1223.0" y="1059.0" font-size="12" clip-path="url(#clip_StructuralProfile_0)">+ annex_status: AnnexStatus | None</text>
+<text x="1223.0" y="1074.0" font-size="12" clip-path="url(#clip_StructuralProfile_0)">────────+ validate_annex_status()</text>
+<rect x="435.0" y="550.0" width="270.0" height="130.0" rx="0" fill="#fff2cc" stroke="#d6b656"/>
+<clipPath id="clip_n1_0"><rect x="438.0" y="553.0" width="264.0" height="124.0"/></clipPath>
+<text x="443.0" y="568.0" font-size="11" font-weight="bold" clip-path="url(#clip_n1_0)">Design intent</text>
+<text x="443.0" y="582.0" font-size="11" clip-path="url(#clip_n1_0)">Clause is the semantic center of the</text>
+<text x="443.0" y="596.0" font-size="11" clip-path="url(#clip_n1_0)">canonical model. ADR 0050 adds an</text>
+<text x="443.0" y="610.0" font-size="11" clip-path="url(#clip_n1_0)">optional multi-dimensional</text>
+<text x="443.0" y="624.0" font-size="11" clip-path="url(#clip_n1_0)">StructuralProfile. ADR 0051 removes the</text>
+<text x="443.0" y="638.0" font-size="11" clip-path="url(#clip_n1_0)">former flat SemanticRole model;</text>
+<text x="443.0" y="652.0" font-size="11" clip-path="url(#clip_n1_0)">SemanticClassification is the only</text>
+<text x="443.0" y="666.0" font-size="11" clip-path="url(#clip_n1_0)">semantic classification API.</text>
+</g>
+<g transform="translate(0,1240.0)"><text x="20" y="28" class="title">2 - Hexagonal Application Architecture</text>
+<line class="edge" x1="795.0" y1="137.5" x2="280.0" y2="350.5" marker-end="url(#arrow)"/>
+<text x="537.5" y="240.0" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="280.0" y2="500.5" marker-end="url(#arrow)"/>
+<text x="537.5" y="315.0" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="280.0" y2="668.5" marker-end="url(#arrow)"/>
+<text x="537.5" y="399.0" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="280.0" y2="836.5" marker-end="url(#arrow)"/>
+<text x="537.5" y="483.0" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="280.0" y2="986.5" marker-end="url(#arrow)"/>
+<text x="537.5" y="558.0" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="280.0" y2="1127.5" marker-end="url(#arrow)"/>
+<text x="537.5" y="628.5" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="280.0" y2="1259.5" marker-end="url(#arrow)"/>
+<text x="537.5" y="694.5" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="334.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="231.75" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="466.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="297.75" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="607.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="368.25" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="739.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="434.25" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="862.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="495.75" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="985.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="557.25" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="1108.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="618.75" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="1231.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="680.25" class="small">constructs</text>
+<line class="edge" x1="795.0" y1="137.5" x2="1325.0" y2="1354.0" marker-end="url(#arrow)"/>
+<text x="1060.0" y="741.75" class="small">constructs</text>
+<line class="edge" x1="280.0" y1="350.5" x2="805.0" y2="333.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="337.75" class="small">uses</text>
+<line class="edge" x1="280.0" y1="350.5" x2="805.0" y2="460.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="401.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="500.5" x2="805.0" y2="614.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="553.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="500.5" x2="805.0" y2="460.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="476.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="500.5" x2="805.0" y2="768.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="630.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="668.5" x2="805.0" y2="614.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="637.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="668.5" x2="805.0" y2="460.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="560.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="668.5" x2="805.0" y2="768.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="714.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="668.5" x2="805.0" y2="904.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="782.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="836.5" x2="805.0" y2="614.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="721.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="836.5" x2="805.0" y2="460.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="644.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="836.5" x2="805.0" y2="768.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="798.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="836.5" x2="805.0" y2="904.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="866.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="836.5" x2="805.0" y2="1049.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="938.75" class="small">uses</text>
+<line class="edge" x1="280.0" y1="986.5" x2="805.0" y2="614.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="796.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="986.5" x2="805.0" y2="460.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="719.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="986.5" x2="805.0" y2="904.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="941.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="986.5" x2="805.0" y2="1049.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="1013.75" class="small">uses</text>
+<line class="edge" x1="280.0" y1="986.5" x2="805.0" y2="1194.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="1086.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="1127.5" x2="805.0" y2="614.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="866.75" class="small">uses</text>
+<line class="edge" x1="280.0" y1="1127.5" x2="805.0" y2="1321.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="1220.25" class="small">uses</text>
+<line class="edge" x1="280.0" y1="1505.5" x2="805.0" y2="1466.0" marker-end="url(#arrow)"/>
+<text x="542.5" y="1481.75" class="small">uses</text>
+<line class="edge" x1="1325.0" y1="334.0" x2="805.0" y2="333.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="329.5" class="small">implements</text>
+<line class="edge" x1="1325.0" y1="466.0" x2="805.0" y2="460.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="459.0" class="small">implements</text>
+<line class="edge" x1="1325.0" y1="607.0" x2="805.0" y2="614.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="606.5" class="small">implements</text>
+<line class="edge" x1="1325.0" y1="739.0" x2="805.0" y2="768.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="749.5" class="small">implements</text>
+<line class="edge" x1="1325.0" y1="862.0" x2="805.0" y2="904.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="879.0" class="small">implements</text>
+<line class="edge" x1="1325.0" y1="985.0" x2="805.0" y2="1049.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="1013.0" class="small">implements</text>
+<line class="edge" x1="1325.0" y1="1108.0" x2="805.0" y2="1194.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="1147.0" class="small">implements</text>
+<line class="edge" x1="1325.0" y1="1231.0" x2="805.0" y2="1321.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="1272.0" class="small">implements</text>
+<line class="edge" x1="1325.0" y1="1354.0" x2="805.0" y2="1466.0" marker-end="url(#arrow)"/>
+<text x="1065.0" y="1406.0" class="small">implements</text>
+<rect x="20.0" y="60.0" width="1580.0" height="150.0" rx="8" fill="#f8cecc" stroke="#666666"/>
+<clipPath id="clip_pkg_cli_1240"><rect x="23.0" y="63.0" width="1574.0" height="144.0"/></clipPath>
+<text x="28.0" y="81.0" font-size="14" font-weight="bold" clip-path="url(#clip_pkg_cli_1240)">CLI / Composition Root</text>
+<rect x="20.0" y="240.0" width="520.0" height="920.0" rx="8" fill="#dae8fc" stroke="#666666"/>
+<clipPath id="clip_pkg_services_1240"><rect x="23.0" y="243.0" width="514.0" height="914.0"/></clipPath>
+<text x="28.0" y="261.0" font-size="14" font-weight="bold" clip-path="url(#clip_pkg_services_1240)">Application services and workflow</text>
+<rect x="570.0" y="240.0" width="470.0" height="920.0" rx="8" fill="#fff2cc" stroke="#666666"/>
+<clipPath id="clip_pkg_ports_1240"><rect x="573.0" y="243.0" width="464.0" height="914.0"/></clipPath>
+<text x="578.0" y="261.0" font-size="14" font-weight="bold" clip-path="url(#clip_pkg_ports_1240)">Consumer-oriented ports</text>
+<rect x="1070.0" y="240.0" width="530.0" height="920.0" rx="8" fill="#d5e8d4" stroke="#666666"/>
+<clipPath id="clip_pkg_adapters_1240"><rect x="1073.0" y="243.0" width="524.0" height="914.0"/></clipPath>
+<text x="1078.0" y="261.0" font-size="14" font-weight="bold" clip-path="url(#clip_pkg_adapters_1240)">Infrastructure adapters</text>
+<rect x="70.0" y="100.0" width="1450.0" height="75.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_Composition_1240"><rect x="73.0" y="103.0" width="1444.0" height="69.0"/></clipPath>
+<text x="78.0" y="119.0" font-size="12" font-weight="bold" clip-path="url(#clip_Composition_1240)">&gt;</text>
+<text x="78.0" y="134.0" font-size="12" clip-path="url(#clip_Composition_1240)">composition.py</text>
+<text x="78.0" y="149.0" font-size="12" clip-path="url(#clip_Composition_1240)">────────build_*_service(workspace)</text>
+<text x="78.0" y="164.0" font-size="12" clip-path="url(#clip_Composition_1240)">constructs concrete adapters</text>
+<rect x="55.0" y="290.0" width="450.0" height="121.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_DocumentNormalizationService_1240"><rect x="58.0" y="293.0" width="444.0" height="115.0"/></clipPath>
+<text x="63.0" y="309.0" font-size="12" font-weight="bold" clip-path="url(#clip_DocumentNormalizationService_1240)">&gt;</text>
+<text x="63.0" y="324.0" font-size="12" clip-path="url(#clip_DocumentNormalizationService_1240)">DocumentNormalizationService</text>
+<text x="63.0" y="339.0" font-size="12" clip-path="url(#clip_DocumentNormalizationService_1240)">────────extracted_documents: ExtractedDocumentRepository</text>
+<text x="63.0" y="354.0" font-size="12" clip-path="url(#clip_DocumentNormalizationService_1240)">normalized_documents: NormalizedDocumentRepository</text>
+<rect x="55.0" y="431.0" width="450.0" height="139.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_ReferenceCandidateService_1240"><rect x="58.0" y="434.0" width="444.0" height="133.0"/></clipPath>
+<text x="63.0" y="450.0" font-size="12" font-weight="bold" clip-path="url(#clip_ReferenceCandidateService_1240)">&gt;</text>
+<text x="63.0" y="465.0" font-size="12" clip-path="url(#clip_ReferenceCandidateService_1240)">ReferenceCandidateService</text>
+<text x="63.0" y="480.0" font-size="12" clip-path="url(#clip_ReferenceCandidateService_1240)">────────documents: EngineeringDocumentRepository</text>
+<text x="63.0" y="495.0" font-size="12" clip-path="url(#clip_ReferenceCandidateService_1240)">normalized: NormalizationRepository</text>
+<text x="63.0" y="510.0" font-size="12" clip-path="url(#clip_ReferenceCandidateService_1240)">results: ReferenceCandidateStore</text>
+<rect x="55.0" y="590.0" width="450.0" height="157.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_AlignmentService_1240"><rect x="58.0" y="593.0" width="444.0" height="151.0"/></clipPath>
+<text x="63.0" y="609.0" font-size="12" font-weight="bold" clip-path="url(#clip_AlignmentService_1240)">&gt;</text>
+<text x="63.0" y="624.0" font-size="12" clip-path="url(#clip_AlignmentService_1240)">AlignmentService</text>
+<text x="63.0" y="639.0" font-size="12" clip-path="url(#clip_AlignmentService_1240)">────────documents: EngineeringDocumentRepository</text>
+<text x="63.0" y="654.0" font-size="12" clip-path="url(#clip_AlignmentService_1240)">normalized: NormalizationRepository</text>
+<text x="63.0" y="669.0" font-size="12" clip-path="url(#clip_AlignmentService_1240)">candidates: ReferenceCandidateStore</text>
+<text x="63.0" y="684.0" font-size="12" clip-path="url(#clip_AlignmentService_1240)">results: AlignmentStore</text>
+<rect x="55.0" y="767.0" width="450.0" height="139.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_AlignmentReviewService_1240"><rect x="58.0" y="770.0" width="444.0" height="133.0"/></clipPath>
+<text x="63.0" y="786.0" font-size="12" font-weight="bold" clip-path="url(#clip_AlignmentReviewService_1240)">&gt;</text>
+<text x="63.0" y="801.0" font-size="12" clip-path="url(#clip_AlignmentReviewService_1240)">AlignmentReviewService</text>
+<text x="63.0" y="816.0" font-size="12" clip-path="url(#clip_AlignmentReviewService_1240)">────────documents / normalized / candidates</text>
+<text x="63.0" y="831.0" font-size="12" clip-path="url(#clip_AlignmentReviewService_1240)">automatic: AlignmentStore</text>
+<text x="63.0" y="846.0" font-size="12" clip-path="url(#clip_AlignmentReviewService_1240)">review: AlignmentReviewStore</text>
+<rect x="55.0" y="926.0" width="450.0" height="121.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_ContentEnrichmentService_1240"><rect x="58.0" y="929.0" width="444.0" height="115.0"/></clipPath>
+<text x="63.0" y="945.0" font-size="12" font-weight="bold" clip-path="url(#clip_ContentEnrichmentService_1240)">&gt;</text>
+<text x="63.0" y="960.0" font-size="12" clip-path="url(#clip_ContentEnrichmentService_1240)">ContentEnrichmentService</text>
+<text x="63.0" y="975.0" font-size="12" clip-path="url(#clip_ContentEnrichmentService_1240)">────────documents / normalized / alignments</text>
+<text x="63.0" y="990.0" font-size="12" clip-path="url(#clip_ContentEnrichmentService_1240)">reviews / contracts</text>
+<rect x="55.0" y="1067.0" width="450.0" height="121.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_MarkdownExportService_1240"><rect x="58.0" y="1070.0" width="444.0" height="115.0"/></clipPath>
+<text x="63.0" y="1086.0" font-size="12" font-weight="bold" clip-path="url(#clip_MarkdownExportService_1240)">&gt;</text>
+<text x="63.0" y="1101.0" font-size="12" clip-path="url(#clip_MarkdownExportService_1240)">MarkdownExportService</text>
+<text x="63.0" y="1116.0" font-size="12" clip-path="url(#clip_MarkdownExportService_1240)">────────documents: EngineeringDocumentReader</text>
+<text x="63.0" y="1131.0" font-size="12" clip-path="url(#clip_MarkdownExportService_1240)">exporter: DocumentExporter</text>
+<rect x="55.0" y="1208.0" width="450.0" height="103.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_EndToEndWorkflowService_1240"><rect x="58.0" y="1211.0" width="444.0" height="97.0"/></clipPath>
+<text x="63.0" y="1227.0" font-size="12" font-weight="bold" clip-path="url(#clip_EndToEndWorkflowService_1240)">&gt;</text>
+<text x="63.0" y="1242.0" font-size="12" clip-path="url(#clip_EndToEndWorkflowService_1240)">EndToEndWorkflowService</text>
+<text x="63.0" y="1257.0" font-size="12" clip-path="url(#clip_EndToEndWorkflowService_1240)">────────executor: WorkflowExecutor</text>
+<rect x="55.0" y="1331.0" width="450.0" height="103.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_WorkflowExecutor_1240"><rect x="58.0" y="1334.0" width="444.0" height="97.0"/></clipPath>
+<text x="63.0" y="1350.0" font-size="12" font-weight="bold" clip-path="url(#clip_WorkflowExecutor_1240)">&gt;</text>
+<text x="63.0" y="1365.0" font-size="12" clip-path="url(#clip_WorkflowExecutor_1240)">WorkflowExecutor</text>
+<text x="63.0" y="1380.0" font-size="12" clip-path="url(#clip_WorkflowExecutor_1240)">────────recovery: WorkflowRecovery</text>
+<rect x="55.0" y="1454.0" width="450.0" height="103.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_WorkflowRecovery_1240"><rect x="58.0" y="1457.0" width="444.0" height="97.0"/></clipPath>
+<text x="63.0" y="1473.0" font-size="12" font-weight="bold" clip-path="url(#clip_WorkflowRecovery_1240)">&gt;</text>
+<text x="63.0" y="1488.0" font-size="12" clip-path="url(#clip_WorkflowRecovery_1240)">WorkflowRecovery</text>
+<text x="63.0" y="1503.0" font-size="12" clip-path="url(#clip_WorkflowRecovery_1240)">────────artifacts: WorkflowArtifactStore</text>
+<rect x="600.0" y="285.0" width="410.0" height="96.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_ExtractedDocumentRepository_1240"><rect x="603.0" y="288.0" width="404.0" height="90.0"/></clipPath>
+<text x="608.0" y="304.0" font-size="12" font-weight="bold" clip-path="url(#clip_ExtractedDocumentRepository_1240)">&lt;&gt;</text>
+<text x="608.0" y="319.0" font-size="12" clip-path="url(#clip_ExtractedDocumentRepository_1240)">ExtractedDocumentRepository</text>
+<text x="608.0" y="334.0" font-size="12" clip-path="url(#clip_ExtractedDocumentRepository_1240)">────────+ load(document_key)</text>
+<rect x="600.0" y="403.0" width="410.0" height="114.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_NormalizedDocumentRepository_1240"><rect x="603.0" y="406.0" width="404.0" height="108.0"/></clipPath>
+<text x="608.0" y="422.0" font-size="12" font-weight="bold" clip-path="url(#clip_NormalizedDocumentRepository_1240)">&lt;&gt;</text>
+<text x="608.0" y="437.0" font-size="12" clip-path="url(#clip_NormalizedDocumentRepository_1240)">NormalizedDocumentRepository</text>
+<text x="608.0" y="452.0" font-size="12" clip-path="url(#clip_NormalizedDocumentRepository_1240)">────────+ save()</text>
+<text x="608.0" y="467.0" font-size="12" clip-path="url(#clip_NormalizedDocumentRepository_1240)">+ load()</text>
+<rect x="600.0" y="539.0" width="410.0" height="150.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_EngineeringDocumentRepository_1240"><rect x="603.0" y="542.0" width="404.0" height="144.0"/></clipPath>
+<text x="608.0" y="558.0" font-size="12" font-weight="bold" clip-path="url(#clip_EngineeringDocumentRepository_1240)">&lt;&gt;</text>
+<text x="608.0" y="573.0" font-size="12" clip-path="url(#clip_EngineeringDocumentRepository_1240)">EngineeringDocumentRepository</text>
+<text x="608.0" y="588.0" font-size="12" clip-path="url(#clip_EngineeringDocumentRepository_1240)">────────+ load()</text>
+<text x="608.0" y="603.0" font-size="12" clip-path="url(#clip_EngineeringDocumentRepository_1240)">+ save()</text>
+<text x="608.0" y="618.0" font-size="12" clip-path="url(#clip_EngineeringDocumentRepository_1240)">+ exists()</text>
+<text x="608.0" y="633.0" font-size="12" clip-path="url(#clip_EngineeringDocumentRepository_1240)">+ list()</text>
+<rect x="600.0" y="711.0" width="410.0" height="114.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_ReferenceCandidateStore_1240"><rect x="603.0" y="714.0" width="404.0" height="108.0"/></clipPath>
+<text x="608.0" y="730.0" font-size="12" font-weight="bold" clip-path="url(#clip_ReferenceCandidateStore_1240)">&lt;&gt;</text>
+<text x="608.0" y="745.0" font-size="12" clip-path="url(#clip_ReferenceCandidateStore_1240)">ReferenceCandidateStore</text>
+<text x="608.0" y="760.0" font-size="12" clip-path="url(#clip_ReferenceCandidateStore_1240)">────────+ load()</text>
+<text x="608.0" y="775.0" font-size="12" clip-path="url(#clip_ReferenceCandidateStore_1240)">+ save()</text>
+<rect x="600.0" y="847.0" width="410.0" height="114.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_AlignmentStore_1240"><rect x="603.0" y="850.0" width="404.0" height="108.0"/></clipPath>
+<text x="608.0" y="866.0" font-size="12" font-weight="bold" clip-path="url(#clip_AlignmentStore_1240)">&lt;&gt;</text>
+<text x="608.0" y="881.0" font-size="12" clip-path="url(#clip_AlignmentStore_1240)">AlignmentStore</text>
+<text x="608.0" y="896.0" font-size="12" clip-path="url(#clip_AlignmentStore_1240)">────────+ load()</text>
+<text x="608.0" y="911.0" font-size="12" clip-path="url(#clip_AlignmentStore_1240)">+ save()</text>
+<rect x="600.0" y="983.0" width="410.0" height="132.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_AlignmentReviewStore_1240"><rect x="603.0" y="986.0" width="404.0" height="126.0"/></clipPath>
+<text x="608.0" y="1002.0" font-size="12" font-weight="bold" clip-path="url(#clip_AlignmentReviewStore_1240)">&lt;&gt;</text>
+<text x="608.0" y="1017.0" font-size="12" clip-path="url(#clip_AlignmentReviewStore_1240)">AlignmentReviewStore</text>
+<text x="608.0" y="1032.0" font-size="12" clip-path="url(#clip_AlignmentReviewStore_1240)">────────+ save_review()</text>
+<text x="608.0" y="1047.0" font-size="12" clip-path="url(#clip_AlignmentReviewStore_1240)">+ load_reviewed()</text>
+<text x="608.0" y="1062.0" font-size="12" clip-path="url(#clip_AlignmentReviewStore_1240)">+ save_reviewed()</text>
+<rect x="600.0" y="1137.0" width="410.0" height="114.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_EngineeringConstructionContractStore_1240"><rect x="603.0" y="1140.0" width="404.0" height="108.0"/></clipPath>
+<text x="608.0" y="1156.0" font-size="12" font-weight="bold" clip-path="url(#clip_EngineeringConstructionContractStore_1240)">&lt;&gt;</text>
+<text x="608.0" y="1171.0" font-size="12" clip-path="url(#clip_EngineeringConstructionContractStore_1240)">EngineeringConstructionContractStore</text>
+<text x="608.0" y="1186.0" font-size="12" clip-path="url(#clip_EngineeringConstructionContractStore_1240)">────────+ save()</text>
+<text x="608.0" y="1201.0" font-size="12" clip-path="url(#clip_EngineeringConstructionContractStore_1240)">+ load()</text>
+<rect x="600.0" y="1273.0" width="410.0" height="96.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_DocumentExporter_1240"><rect x="603.0" y="1276.0" width="404.0" height="90.0"/></clipPath>
+<text x="608.0" y="1292.0" font-size="12" font-weight="bold" clip-path="url(#clip_DocumentExporter_1240)">&lt;&gt;</text>
+<text x="608.0" y="1307.0" font-size="12" clip-path="url(#clip_DocumentExporter_1240)">DocumentExporter</text>
+<text x="608.0" y="1322.0" font-size="12" clip-path="url(#clip_DocumentExporter_1240)">────────+ export(document, target)</text>
+<rect x="600.0" y="1391.0" width="410.0" height="150.0" rx="0" fill="#fffaf0" stroke="#d6b656"/>
+<clipPath id="clip_WorkflowArtifactStore_1240"><rect x="603.0" y="1394.0" width="404.0" height="144.0"/></clipPath>
+<text x="608.0" y="1410.0" font-size="12" font-weight="bold" clip-path="url(#clip_WorkflowArtifactStore_1240)">&lt;&gt;</text>
+<text x="608.0" y="1425.0" font-size="12" clip-path="url(#clip_WorkflowArtifactStore_1240)">WorkflowArtifactStore</text>
+<text x="608.0" y="1440.0" font-size="12" clip-path="url(#clip_WorkflowArtifactStore_1240)">────────+ outputs_exist()</text>
+<text x="608.0" y="1455.0" font-size="12" clip-path="url(#clip_WorkflowArtifactStore_1240)">+ record_completion()</text>
+<text x="608.0" y="1470.0" font-size="12" clip-path="url(#clip_WorkflowArtifactStore_1240)">+ remove_outputs()</text>
+<text x="608.0" y="1485.0" font-size="12" clip-path="url(#clip_WorkflowArtifactStore_1240)">+ alignment_requires_review()</text>
+<rect x="1100.0" y="285.0" width="450.0" height="98.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_DoclingExtractedDocumentRepository_1240"><rect x="1103.0" y="288.0" width="444.0" height="92.0"/></clipPath>
+<text x="1108.0" y="304.0" font-size="12" font-weight="bold" clip-path="url(#clip_DoclingExtractedDocumentRepository_1240)">&gt;</text>
+<text x="1108.0" y="319.0" font-size="12" clip-path="url(#clip_DoclingExtractedDocumentRepository_1240)">DoclingExtractedDocumentRepository</text>
+<text x="1108.0" y="334.0" font-size="12" clip-path="url(#clip_DoclingExtractedDocumentRepository_1240)">────────implements ExtractedDocumentRepository</text>
+<rect x="1100.0" y="408.0" width="450.0" height="116.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_NormalizationArtifactRepository_1240"><rect x="1103.0" y="411.0" width="444.0" height="110.0"/></clipPath>
+<text x="1108.0" y="427.0" font-size="12" font-weight="bold" clip-path="url(#clip_NormalizationArtifactRepository_1240)">&gt;</text>
+<text x="1108.0" y="442.0" font-size="12" clip-path="url(#clip_NormalizationArtifactRepository_1240)">NormalizationArtifactRepository</text>
+<text x="1108.0" y="457.0" font-size="12" clip-path="url(#clip_NormalizationArtifactRepository_1240)">────────implements NormalizedDocumentRepository</text>
+<text x="1108.0" y="472.0" font-size="12" clip-path="url(#clip_NormalizationArtifactRepository_1240)">and NormalizationRepository</text>
+<rect x="1100.0" y="549.0" width="450.0" height="116.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_FileSystemEngineeringDocumentRepository_1240"><rect x="1103.0" y="552.0" width="444.0" height="110.0"/></clipPath>
+<text x="1108.0" y="568.0" font-size="12" font-weight="bold" clip-path="url(#clip_FileSystemEngineeringDocumentRepository_1240)">&gt;</text>
+<text x="1108.0" y="583.0" font-size="12" clip-path="url(#clip_FileSystemEngineeringDocumentRepository_1240)">FileSystemEngineeringDocumentRepository</text>
+<text x="1108.0" y="598.0" font-size="12" clip-path="url(#clip_FileSystemEngineeringDocumentRepository_1240)">────────implements EngineeringDocumentRepository</text>
+<text x="1108.0" y="613.0" font-size="12" clip-path="url(#clip_FileSystemEngineeringDocumentRepository_1240)">and EngineeringDocumentReader</text>
+<rect x="1100.0" y="690.0" width="450.0" height="98.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_ReferenceCandidateRepository_1240"><rect x="1103.0" y="693.0" width="444.0" height="92.0"/></clipPath>
+<text x="1108.0" y="709.0" font-size="12" font-weight="bold" clip-path="url(#clip_ReferenceCandidateRepository_1240)">&gt;</text>
+<text x="1108.0" y="724.0" font-size="12" clip-path="url(#clip_ReferenceCandidateRepository_1240)">ReferenceCandidateRepository</text>
+<text x="1108.0" y="739.0" font-size="12" clip-path="url(#clip_ReferenceCandidateRepository_1240)">────────implements ReferenceCandidateStore</text>
+<rect x="1100.0" y="813.0" width="450.0" height="98.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_AlignmentArtifactRepository_1240"><rect x="1103.0" y="816.0" width="444.0" height="92.0"/></clipPath>
+<text x="1108.0" y="832.0" font-size="12" font-weight="bold" clip-path="url(#clip_AlignmentArtifactRepository_1240)">&gt;</text>
+<text x="1108.0" y="847.0" font-size="12" clip-path="url(#clip_AlignmentArtifactRepository_1240)">AlignmentArtifactRepository</text>
+<text x="1108.0" y="862.0" font-size="12" clip-path="url(#clip_AlignmentArtifactRepository_1240)">────────implements AlignmentStore</text>
+<rect x="1100.0" y="936.0" width="450.0" height="98.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_AlignmentReviewRepository_1240"><rect x="1103.0" y="939.0" width="444.0" height="92.0"/></clipPath>
+<text x="1108.0" y="955.0" font-size="12" font-weight="bold" clip-path="url(#clip_AlignmentReviewRepository_1240)">&gt;</text>
+<text x="1108.0" y="970.0" font-size="12" clip-path="url(#clip_AlignmentReviewRepository_1240)">AlignmentReviewRepository</text>
+<text x="1108.0" y="985.0" font-size="12" clip-path="url(#clip_AlignmentReviewRepository_1240)">────────implements AlignmentReviewStore</text>
+<rect x="1100.0" y="1059.0" width="450.0" height="98.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_EngineeringConstructionContractRepository_1240"><rect x="1103.0" y="1062.0" width="444.0" height="92.0"/></clipPath>
+<text x="1108.0" y="1078.0" font-size="12" font-weight="bold" clip-path="url(#clip_EngineeringConstructionContractRepository_1240)">&gt;</text>
+<text x="1108.0" y="1093.0" font-size="12" clip-path="url(#clip_EngineeringConstructionContractRepository_1240)">EngineeringConstructionContractRepository</text>
+<text x="1108.0" y="1108.0" font-size="12" clip-path="url(#clip_EngineeringConstructionContractRepository_1240)">────────implements EngineeringConstructionContractStore</text>
+<rect x="1100.0" y="1182.0" width="450.0" height="98.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_MarkdownExporter_1240"><rect x="1103.0" y="1185.0" width="444.0" height="92.0"/></clipPath>
+<text x="1108.0" y="1201.0" font-size="12" font-weight="bold" clip-path="url(#clip_MarkdownExporter_1240)">&gt;</text>
+<text x="1108.0" y="1216.0" font-size="12" clip-path="url(#clip_MarkdownExporter_1240)">MarkdownExporter</text>
+<text x="1108.0" y="1231.0" font-size="12" clip-path="url(#clip_MarkdownExporter_1240)">────────implements DocumentExporter</text>
+<rect x="1100.0" y="1305.0" width="450.0" height="98.0" rx="0" fill="#ffffff" stroke="#666666"/>
+<clipPath id="clip_FileSystemWorkflowArtifactStore_1240"><rect x="1103.0" y="1308.0" width="444.0" height="92.0"/></clipPath>
+<text x="1108.0" y="1324.0" font-size="12" font-weight="bold" clip-path="url(#clip_FileSystemWorkflowArtifactStore_1240)">&gt;</text>
+<text x="1108.0" y="1339.0" font-size="12" clip-path="url(#clip_FileSystemWorkflowArtifactStore_1240)">FileSystemWorkflowArtifactStore</text>
+<text x="1108.0" y="1354.0" font-size="12" clip-path="url(#clip_FileSystemWorkflowArtifactStore_1240)">────────implements WorkflowArtifactStore</text>
+<rect x="1120.0" y="1050.0" width="430.0" height="90.0" rx="0" fill="#fff2cc" stroke="#d6b656"/>
+<clipPath id="clip_n2_1240"><rect x="1123.0" y="1053.0" width="424.0" height="84.0"/></clipPath>
+<text x="1128.0" y="1068.0" font-size="11" font-weight="bold" clip-path="url(#clip_n2_1240)">Dependency rule (ADR 0003)</text>
+<text x="1128.0" y="1082.0" font-size="11" clip-path="url(#clip_n2_1240)">Application services depend only on consumer-oriented Protocols.</text>
+<text x="1128.0" y="1096.0" font-size="11" clip-path="url(#clip_n2_1240)">Concrete adapters depend inward on those Protocols. Only the CLI</text>
+<text x="1128.0" y="1110.0" font-size="11" clip-path="url(#clip_n2_1240)">composition root selects and wires implementations.</text>
+</g>
+</svg>

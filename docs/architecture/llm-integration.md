@@ -2,6 +2,8 @@
 
 ![LLM integration](diagrams/svg/llm-integration.svg)
 
+The diagram shows the provider-neutral gateway boundary and managed runtime relationships. Configuration models, retry/error types, process-state details, health probes, and every qualification parameter remain textual or code-level concerns.
+
 LLMs are optional outbound capabilities used by evaluation and knowledge-enrichment workflows. They are not part of deterministic document extraction or normalization.
 
 ## Application port

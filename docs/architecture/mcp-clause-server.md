@@ -2,6 +2,8 @@
 
 ![MCP architecture](diagrams/svg/mcp-architecture.svg)
 
+The diagram is a protocol and trust-boundary view. It does not enumerate every MCP tool/resource, configuration field, compatibility-probe step, audit event, or process-management class described below.
+
 The MCP server is a read-only inbound adapter around the transport-neutral clause-access application boundary.
 
 ## Dependency direction

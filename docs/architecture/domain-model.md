@@ -1,6 +1,10 @@
 # Domain model
 
-![Domain model](diagrams/svg/domain-model.svg)
+![Current architecture class diagram](diagrams/svg/current-architecture-class-diagram.svg)
+
+The multi-view UML diagram contains the canonical domain model and a second view of principal application services, ports, and infrastructure adapters. The first view is the detailed companion to this document. It deliberately focuses on stable architectural types and representative relationships; helper models, all enum values, serialization schemas, validation internals, and every specialized application artifact are documented in code and in the topic-specific documents rather than duplicated in the class diagram.
+
+A simplified domain-only orientation diagram remains available as `domain-model.svg` in the [diagram catalog](diagrams/README.md).
 
 ## Canonical aggregate
 
@@ -38,6 +42,10 @@ Content is represented by immutable blocks such as text, lists, tables, notes, p
 ## Knowledge extension points
 
 `ClauseAnnotation` adds reviewed or generated explanatory knowledge with explicit visibility. `Relation` and semantic relation objects connect clauses and documents. These types are the basis for the planned cross-standard relationship graph. Model-generated proposals remain external evaluation artifacts until accepted and published into canonical data.
+
+## Relationship to application architecture
+
+The second page of the UML class diagram shows representative application services consuming ports implemented by infrastructure adapters. It is included to make the boundary around the canonical model explicit. It is not a complete service inventory: evaluation, semantic qualification, MCP transport, LLM runtime management, AtlasData lifecycle services, and several specialized workflow helpers are covered by their own architecture documents and diagrams.
 
 ## Model rules
 

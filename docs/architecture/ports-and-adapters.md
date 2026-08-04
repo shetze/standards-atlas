@@ -2,6 +2,8 @@
 
 ![Ports and adapters](diagrams/svg/ports-and-adapters.svg)
 
+This diagram explains the dependency rule and adapter direction. It is intentionally less detailed than the second page of the [current architecture class diagram](diagrams/svg/current-architecture-class-diagram.svg), which names representative services, protocols, and implementations. Neither view attempts to enumerate every repository or command-specific composition path.
+
 ## Dependency rule
 
 Standards Atlas uses hexagonal architecture as an enforceable dependency rule, not only as a diagram.

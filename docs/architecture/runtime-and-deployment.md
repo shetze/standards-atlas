@@ -2,6 +2,8 @@
 
 ![Runtime and deployment](diagrams/svg/runtime-deployment.svg)
 
+The deployment diagram shows supported process and trust-boundary patterns. It intentionally omits individual PID, lease, log, health, container-volume, and CLI configuration objects.
+
 Standards Atlas is primarily a local CLI application with optional managed helper processes.
 
 ## Processes

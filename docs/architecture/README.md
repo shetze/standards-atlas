@@ -4,6 +4,8 @@ Standards Atlas is a traceability-centered platform for transforming controlled 
 
 ![Architecture overview](diagrams/svg/architecture-overview.svg)
 
+The overview is deliberately compact. It shows the governing dependency and data-flow concepts, not every application service or adapter described below. The [overall UML component architecture](diagrams/svg/overall-component-architecture.svg) and the [current UML class diagram](diagrams/svg/current-architecture-class-diagram.svg) provide the broadest implementation-oriented views; the topic documents remain authoritative for omitted details.
+
 ## Architecture map
 
 | Concern | Document |
@@ -54,6 +56,10 @@ outbound adapters implement application ports
 - Protected standards and evaluation corpora remain below `local/` or another explicitly configured private root.
 - LLM output is proposal data until it passes qualification or human review.
 - Relationship extraction extends the canonical model; it does not replace source evidence.
+
+## Diagram scope
+
+Architecture diagrams in this documentation are views selected for a specific question. They omit secondary services, compatibility re-exports, individual persistence artifacts, configuration models, and operational edge cases where including them would obscure the main relationships. Such omissions do not imply that the element is architecturally irrelevant or absent from the implementation. Each topic document explains the intended scope of its embedded diagram.
 
 ## Design records and diagrams
 

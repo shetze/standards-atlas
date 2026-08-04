@@ -2,6 +2,8 @@
 
 ![Evaluation architecture](diagrams/svg/evaluation-architecture.svg)
 
+The diagram separates generic evaluation from semantic qualification and their principal artifacts. It groups the many runners, repositories, review helpers, consensus services, matrix models, and report types to keep the dependency direction readable.
+
 Standards Atlas separates provider-neutral evaluation infrastructure from standards-specific semantic qualification.
 
 ## Generic evaluation

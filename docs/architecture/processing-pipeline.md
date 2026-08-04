@@ -2,6 +2,8 @@
 
 ![Processing pipeline](diagrams/svg/processing-pipeline.svg)
 
+The diagram shows the principal artifact progression and review gates. The text additionally covers validation contracts, transformation ledger entries, layout evidence, reference resolution, invalidation rules, and publication variants that are intentionally not expanded into separate nodes.
+
 The document pipeline converts controlled publications into canonical engineering knowledge through persisted, inspectable stages.
 
 ## Stages

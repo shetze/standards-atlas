@@ -2,6 +2,8 @@
 
 ![Workflow orchestration](diagrams/svg/workflow-orchestration.svg)
 
+The diagram focuses on planner, executor, recovery, reporting, and manual gates. Individual services invoked by the executor, CLI option mapping, runtime leases, and every persisted workflow artifact are described in text rather than shown as separate UML elements.
+
 The workflow subsystem is split into planning, execution, recovery, and reporting.
 
 ## Planner

@@ -2,6 +2,8 @@
 
 ![Artifact lineage](diagrams/svg/artifact-lineage.svg)
 
+The diagram highlights lineage between major persisted stages. It does not show every review, report, cache, runtime-state, or renderer-specific artifact; the text defines their contracts and invalidation behavior.
+
 The `.atlas/` workspace is a private implementation workspace, not a public interchange format. It persists typed stage contracts, runtime state, and derivation metadata. Published outputs belong below configured local or public roots according to copyright and visibility policy.
 
 ## Artifact chain
