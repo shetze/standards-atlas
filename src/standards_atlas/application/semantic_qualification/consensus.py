@@ -1,18 +1,18 @@
-"""Model-level consensus analysis for semantic annotation matrices."""
+"""Normalization-aware model consensus for semantic qualification matrices."""
 
 from __future__ import annotations
 
+import re
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.application.evaluation.repository import (
-    EvaluationDatasetRepository,
-)
+from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
 )
@@ -32,14 +32,40 @@ class ConsensusCategory(StrEnum):
 
 
 class ModelVote(BaseModel):
+    """One stable, dimension-aware vote contributed by a model."""
+
     model_config = ConfigDict(frozen=True)
 
     model_id: str
-    statement_functions: tuple[StatementFunction, ...]
-    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
-    responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
+    primary_function: StatementFunction | None = None
+    secondary_functions: tuple[StatementFunction, ...] = ()
+    applicability_present: bool = False
+    applicability_function: ApplicabilityFunction | None = None
+    responsibility_present: bool = False
+    responsibility_function: ResponsibilityFunction | None = None
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    evidence: str | None = None
     repetitions: int = Field(ge=1)
     stability: float = Field(ge=0.0, le=1.0)
+    role: str = Field(default="voter", pattern="^(voter|adjudicator)$")
+
+    @property
+    def statement_functions(self) -> tuple[StatementFunction, ...]:
+        if self.primary_function is None:
+            return self.secondary_functions
+        return (self.primary_function, *self.secondary_functions)
+
+    @property
+    def applicability_functions(self) -> tuple[ApplicabilityFunction, ...]:
+        if not self.applicability_present or self.applicability_function is None:
+            return ()
+        return (self.applicability_function,)
+
+    @property
+    def responsibility_functions(self) -> tuple[ResponsibilityFunction, ...]:
+        if not self.responsibility_present or self.responsibility_function is None:
+            return ()
+        return (self.responsibility_function,)
 
 
 class ClauseConsensus(BaseModel):
@@ -51,8 +77,11 @@ class ClauseConsensus(BaseModel):
     title: str | None = None
     clause_text: str | None = None
     category: ConsensusCategory
+    primary_function: StatementFunction | None = None
     proposed_functions: tuple[StatementFunction, ...] = ()
+    applicability_present: bool = False
     proposed_applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    responsibility_present: bool = False
     proposed_responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
     confidence: float = Field(ge=0.0, le=1.0)
     participating_models: int = Field(ge=0)
@@ -60,25 +89,31 @@ class ClauseConsensus(BaseModel):
     label_support: dict[str, float] = Field(default_factory=dict)
     applicability_support: dict[str, float] = Field(default_factory=dict)
     responsibility_support: dict[str, float] = Field(default_factory=dict)
+    structural_prior: dict[str, Any] = Field(default_factory=dict)
+    adjudicated: bool = False
+    requires_review: bool = True
+    review_reasons: tuple[str, ...] = ()
 
 
 class ConsensusReport(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.0"
+    schema_version: str = "2.0"
     matrix_id: str
     corpus_id: str
     prompt_id: str
     reasoning_mode_id: str
+    prompt_selection: dict[str, str] = Field(default_factory=dict)
     generated_at: datetime
     model_count: int
     clause_count: int
     categories: dict[str, int]
+    review_count: int
     clauses: tuple[ClauseConsensus, ...]
 
 
 class ModelConsensusService:
-    """Build one vote per model, then compare models for each clause."""
+    """Build dimension-aware votes and apply priors, evidence gates and adjudication."""
 
     def evaluate(
         self,
@@ -94,144 +129,91 @@ class ModelConsensusService:
         strong_threshold: float = 0.8,
         majority_threshold: float = 0.6,
         label_threshold: float = 0.6,
+        prompt_selection: dict[str, str] | None = None,
+        review_policy: dict[str, Any] | None = None,
+        adjudication: dict[str, Any] | None = None,
+        structural_priors: dict[str, Any] | None = None,
     ) -> tuple[ConsensusReport, Path, Path, Path]:
+        prompts = {
+            "statement_function": prompt_id,
+            "applicability": prompt_id,
+            "responsibility": prompt_id,
+            **(prompt_selection or {}),
+        }
+        selected_prompt_ids = set(prompts.values())
         selected = tuple(
             item
             for item in observations
-            if item.prompt_id == prompt_id
+            if item.prompt_id in selected_prompt_ids
             and item.reasoning_mode_id == reasoning_mode_id
             and getattr(item, "run_directory", None) is not None
         )
         if not selected:
             raise ValueError(
-                f"no proposal runs available for consensus prompt={prompt_id!r}, "
-                f"reasoning={reasoning_mode_id!r}"
+                "no proposal runs available for consensus prompts="
+                f"{sorted(selected_prompt_ids)!r}, reasoning={reasoning_mode_id!r}"
             )
 
-        predictions: dict[str, dict[str, list[ClauseEvaluationAnnotation]]] = defaultdict(
-            lambda: defaultdict(list)
+        predictions: dict[str, dict[str, dict[str, list[ClauseEvaluationAnnotation]]]] = (
+            defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         )
         clause_contexts = _load_clause_contexts(selected, corpus_root)
         for observation in selected:
             run_directory = Path(observation.run_directory)
-            model_id = str(observation.model_id)
             for evaluation_path in sorted(run_directory.glob("*/evaluation.yaml")):
                 payload = yaml.safe_load(evaluation_path.read_text(encoding="utf-8")) or {}
                 annotation = ClauseEvaluationAnnotation.model_validate(
                     payload["annotation_candidate"]
                 )
-                predictions[annotation.clause.clause_id][model_id].append(annotation)
+                predictions[annotation.clause.clause_id][str(observation.model_id)][
+                    str(observation.prompt_id)
+                ].append(annotation)
+
+        policy = _review_policy(review_policy)
+        adjudicator_cfg = adjudication or {}
+        adjudicator_id = (
+            str(adjudicator_cfg.get("model_id"))
+            if adjudicator_cfg.get("enabled") and adjudicator_cfg.get("model_id")
+            else None
+        )
+        prior_cfg = structural_priors or {"enabled": True, "confidence": 0.95}
 
         clauses: list[ClauseConsensus] = []
         for clause_id, model_predictions in sorted(predictions.items()):
-            votes: list[ModelVote] = []
-            clause_reference = next(iter(next(iter(model_predictions.values())))).clause
-            for model_id, model_annotations in sorted(model_predictions.items()):
-                selections = [
-                    (
-                        tuple(
-                            sorted(item.proposal.statement_functions, key=lambda value: value.value)
-                        ),
-                        tuple(
-                            sorted(
-                                item.proposal.applicability_functions, key=lambda value: value.value
-                            )
-                        ),
-                        tuple(
-                            sorted(
-                                item.proposal.responsibility_functions,
-                                key=lambda value: value.value,
-                            )
-                        ),
-                    )
-                    for item in model_annotations
-                ]
-                counts = Counter(selections)
-                selection, count = counts.most_common(1)[0]
-                votes.append(
-                    ModelVote(
-                        model_id=model_id,
-                        statement_functions=selection[0],
-                        applicability_functions=selection[1],
-                        responsibility_functions=selection[2],
-                        repetitions=len(selections),
-                        stability=count / len(selections),
-                    )
-                )
-
-            model_count = len(votes)
-            exact_counts = Counter(
-                (
-                    vote.statement_functions,
-                    vote.applicability_functions,
-                    vote.responsibility_functions,
-                )
-                for vote in votes
-            )
-            _, exact_count = exact_counts.most_common(1)[0]
-            exact_agreement = exact_count / model_count if model_count else 0.0
-            all_labels = sorted(
-                {label for vote in votes for label in vote.statement_functions},
-                key=lambda value: value.value,
-            )
-            label_support = {
-                label.value: sum(label in vote.statement_functions for vote in votes) / model_count
-                for label in all_labels
-            }
-            proposed = tuple(
-                label for label in all_labels if label_support[label.value] >= label_threshold
-            )
-            applicability_labels = sorted(
-                {label for vote in votes for label in vote.applicability_functions},
-                key=lambda value: value.value,
-            )
-            applicability_support = {
-                label.value: sum(label in vote.applicability_functions for vote in votes)
-                / model_count
-                for label in applicability_labels
-            }
-            proposed_applicability = tuple(
-                label
-                for label in applicability_labels
-                if applicability_support[label.value] >= label_threshold
-            )
-            responsibility_labels = sorted(
-                {label for vote in votes for label in vote.responsibility_functions},
-                key=lambda value: value.value,
-            )
-            responsibility_support = {
-                label.value: sum(label in vote.responsibility_functions for vote in votes)
-                / model_count
-                for label in responsibility_labels
-            }
-            proposed_responsibility = tuple(
-                label
-                for label in responsibility_labels
-                if responsibility_support[label.value] >= label_threshold
-            )
-            all_support = {
-                **label_support,
-                **{f"applicability:{key}": value for key, value in applicability_support.items()},
-                **{f"responsibility:{key}": value for key, value in responsibility_support.items()},
-            }
-            confidence = max(all_support.values(), default=exact_agreement)
-
-            if model_count < min_models:
-                category = ConsensusCategory.INSUFFICIENT
-            elif exact_agreement == 1.0:
-                category = ConsensusCategory.UNANIMOUS
-                confidence = 1.0
-            elif exact_agreement >= strong_threshold:
-                category = ConsensusCategory.STRONG
-                confidence = exact_agreement
-            elif exact_agreement >= majority_threshold:
-                category = ConsensusCategory.MAJORITY
-                confidence = exact_agreement
-            else:
-                category = ConsensusCategory.DISPUTED
-                confidence = exact_agreement
-
             context = clause_contexts.get(clause_id, {})
+            all_annotations = [
+                annotation
+                for prompt_predictions in model_predictions.values()
+                for annotations in prompt_predictions.values()
+                for annotation in annotations
+            ]
+            clause_reference = all_annotations[0].clause
+            votes = [
+                _model_vote(model_id, by_prompt, prompts, role="voter")
+                for model_id, by_prompt in sorted(model_predictions.items())
+                if model_id != adjudicator_id
+            ]
+            adjudicator_vote = None
+            if adjudicator_id and adjudicator_id in model_predictions:
+                adjudicator_vote = _model_vote(
+                    adjudicator_id,
+                    model_predictions[adjudicator_id],
+                    prompts,
+                    role="adjudicator",
+                )
+
+            prior = _structural_prior(context) if prior_cfg.get("enabled", True) else {}
+            result = _resolve_clause(
+                votes=tuple(votes),
+                adjudicator_vote=adjudicator_vote,
+                structural_prior=prior,
+                minimum_models=min_models,
+                strong_threshold=strong_threshold,
+                majority_threshold=majority_threshold,
+                label_threshold=label_threshold,
+                adjudicator_min_confidence=float(adjudicator_cfg.get("minimum_confidence", 0.70)),
+                policy=policy,
+            )
             clauses.append(
                 ClauseConsensus(
                     clause_id=clause_id,
@@ -239,16 +221,9 @@ class ModelConsensusService:
                     reference=_optional_text(context.get("reference")),
                     title=_optional_text(context.get("title")),
                     clause_text=_optional_text(context.get("text")),
-                    category=category,
-                    proposed_functions=proposed,
-                    proposed_applicability_functions=proposed_applicability,
-                    proposed_responsibility_functions=proposed_responsibility,
-                    confidence=confidence,
-                    participating_models=model_count,
-                    votes=tuple(votes),
-                    label_support=label_support,
-                    applicability_support=applicability_support,
-                    responsibility_support=responsibility_support,
+                    votes=tuple(votes) + ((adjudicator_vote,) if adjudicator_vote else ()),
+                    structural_prior=prior,
+                    **result,
                 )
             )
 
@@ -258,75 +233,396 @@ class ModelConsensusService:
             corpus_id=corpus_id,
             prompt_id=prompt_id,
             reasoning_mode_id=reasoning_mode_id,
+            prompt_selection=prompts,
             generated_at=datetime.now(UTC),
             model_count=len({vote.model_id for clause in clauses for vote in clause.votes}),
             clause_count=len(clauses),
             categories=dict(sorted(category_counts.items())),
+            review_count=sum(item.requires_review for item in clauses),
             clauses=tuple(clauses),
         )
-        output_directory.mkdir(parents=True, exist_ok=True)
-        json_path = output_directory / "consensus-report.json"
-        yaml_path = output_directory / "golden-corpus-proposal.yaml"
-        review_path = output_directory / "consensus-review.md"
-        json_path.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
-        yaml_path.write_text(
-            yaml.safe_dump(
-                {
-                    "schema_version": "1.0",
-                    "kind": "golden_corpus_proposal",
-                    "matrix_id": matrix_id,
-                    "corpus_id": corpus_id,
-                    "prompt_id": prompt_id,
-                    "clauses": [
-                        {
-                            "clause_id": item.clause_id,
-                            "document_key": item.document_key,
-                            "reference": item.reference,
-                            "title": item.title,
-                            "clause_text": item.clause_text,
-                            "statement_functions": [
-                                value.value for value in item.proposed_functions
-                            ],
-                            "applicability_functions": [
-                                value.value for value in item.proposed_applicability_functions
-                            ],
-                            "responsibility_functions": [
-                                value.value for value in item.proposed_responsibility_functions
-                            ],
-                            "confidence": item.confidence,
-                            "consensus_category": item.category.value,
-                            "requires_review": item.category
-                            in {
-                                ConsensusCategory.MAJORITY,
-                                ConsensusCategory.DISPUTED,
-                                ConsensusCategory.INSUFFICIENT,
-                            },
-                        }
-                        for item in clauses
-                    ],
-                },
-                sort_keys=False,
-                allow_unicode=True,
-            ),
-            encoding="utf-8",
+        return _write_outputs(report, output_directory)
+
+
+def _model_vote(
+    model_id: str,
+    by_prompt: dict[str, list[ClauseEvaluationAnnotation]],
+    prompts: dict[str, str],
+    *,
+    role: str,
+) -> ModelVote:
+    statement = _modal_annotations(by_prompt.get(prompts["statement_function"], []))
+    applicability = _modal_annotations(by_prompt.get(prompts["applicability"], []))
+    responsibility = _modal_annotations(by_prompt.get(prompts["responsibility"], []))
+    available = [item for item in (statement, applicability, responsibility) if item is not None]
+    if not available:
+        raise ValueError(f"model {model_id!r} has no annotations for selected prompts")
+    statement = statement or available[0]
+    applicability = applicability or available[0]
+    responsibility = responsibility or available[0]
+    proposal = statement[0].proposal
+    primary = proposal.primary_function
+    if primary is None and proposal.statement_functions:
+        primary = proposal.statement_functions[0]
+    secondary = tuple(item for item in proposal.statement_functions if item != primary)
+    app = applicability[0].proposal.primary_applicability_function
+    if app is None and applicability[0].proposal.applicability_functions:
+        app = applicability[0].proposal.applicability_functions[0]
+    resp = responsibility[0].proposal.primary_responsibility_function
+    if resp is None and responsibility[0].proposal.responsibility_functions:
+        resp = responsibility[0].proposal.responsibility_functions[0]
+    evidence = (
+        " | ".join(
+            value
+            for value in (
+                statement[0].proposal.rationale,
+                applicability[0].proposal.rationale,
+                responsibility[0].proposal.rationale,
+            )
+            if value
         )
-        review_path.write_text(_render_review(report), encoding="utf-8")
-        return report, json_path, yaml_path, review_path
+        or None
+    )
+    confidences = [
+        item[0].proposal.confidence
+        for item in (statement, applicability, responsibility)
+        if item[0].proposal.confidence is not None
+    ]
+    return ModelVote(
+        model_id=model_id,
+        primary_function=primary,
+        secondary_functions=secondary,
+        applicability_present=app is not None,
+        applicability_function=app,
+        responsibility_present=resp is not None,
+        responsibility_function=resp,
+        confidence=min(confidences) if confidences else None,
+        evidence=evidence,
+        repetitions=max(item[1] for item in available),
+        stability=min(item[2] for item in available),
+        role=role,
+    )
+
+
+def _modal_annotations(
+    annotations: list[ClauseEvaluationAnnotation],
+) -> tuple[ClauseEvaluationAnnotation, int, float] | None:
+    if not annotations:
+        return None
+    keys = [
+        (
+            item.proposal.primary_function,
+            item.proposal.statement_functions,
+            item.proposal.primary_applicability_function,
+            item.proposal.applicability_functions,
+            item.proposal.primary_responsibility_function,
+            item.proposal.responsibility_functions,
+        )
+        for item in annotations
+    ]
+    key, count = Counter(keys).most_common(1)[0]
+    annotation = annotations[keys.index(key)]
+    return annotation, len(annotations), count / len(annotations)
+
+
+def _resolve_clause(
+    *,
+    votes: tuple[ModelVote, ...],
+    adjudicator_vote: ModelVote | None,
+    structural_prior: dict[str, Any],
+    minimum_models: int,
+    strong_threshold: float,
+    majority_threshold: float,
+    label_threshold: float,
+    adjudicator_min_confidence: float,
+    policy: dict[str, Any],
+) -> dict[str, Any]:
+    model_count = len(votes)
+    primary_counts = Counter(vote.primary_function for vote in votes)
+    primary, primary_count = primary_counts.most_common(1)[0] if primary_counts else (None, 0)
+    primary_agreement = primary_count / model_count if model_count else 0.0
+
+    prior_primary = structural_prior.get("primary_function")
+    prior_confidence = float(structural_prior.get("confidence", 0.0))
+    if prior_primary and (primary is None or primary_agreement < majority_threshold):
+        primary = StatementFunction(prior_primary)
+        primary_agreement = max(primary_agreement, prior_confidence)
+
+    adjudicated = False
+    if (
+        adjudicator_vote is not None
+        and adjudicator_vote.primary_function is not None
+        and primary_agreement < strong_threshold
+        and (adjudicator_vote.confidence or 0.0) >= adjudicator_min_confidence
+    ):
+        primary = adjudicator_vote.primary_function
+        primary_agreement = max(primary_agreement, adjudicator_vote.confidence or 0.0)
+        adjudicated = True
+
+    secondary_labels = sorted(
+        {label for vote in votes for label in vote.secondary_functions},
+        key=lambda item: item.value,
+    )
+    label_support = {
+        label.value: sum(label in vote.secondary_functions for vote in votes) / model_count
+        for label in secondary_labels
+    }
+    proposed_functions = (() if primary is None else (primary,)) + tuple(
+        label
+        for label in secondary_labels
+        if label != primary and label_support[label.value] >= label_threshold
+    )
+    if primary is not None:
+        label_support = {primary.value: primary_agreement, **label_support}
+
+    app_present_support = (
+        sum(vote.applicability_present for vote in votes) / model_count if model_count else 0.0
+    )
+    app_counts = Counter(
+        vote.applicability_function for vote in votes if vote.applicability_present
+    )
+    app_label, app_count = app_counts.most_common(1)[0] if app_counts else (None, 0)
+    app_label_support = app_count / model_count if model_count else 0.0
+    prior_app = structural_prior.get("applicability_function")
+    if prior_app and app_label_support < majority_threshold:
+        app_label = ApplicabilityFunction(prior_app)
+        app_present_support = max(app_present_support, prior_confidence)
+        app_label_support = max(app_label_support, prior_confidence)
+    app_accepted = app_present_support >= majority_threshold and app_label is not None
+
+    valid_responsibility_votes = tuple(
+        vote for vote in votes if _responsibility_evidence_is_valid(vote)
+    )
+    resp_present_support = len(valid_responsibility_votes) / model_count if model_count else 0.0
+    resp_counts = Counter(vote.responsibility_function for vote in valid_responsibility_votes)
+    resp_label, resp_count = resp_counts.most_common(1)[0] if resp_counts else (None, 0)
+    resp_label_support = resp_count / model_count if model_count else 0.0
+    resp_accepted = resp_present_support >= majority_threshold and resp_label is not None
+
+    if model_count < minimum_models:
+        category = ConsensusCategory.INSUFFICIENT
+    elif primary_agreement >= 1.0:
+        category = ConsensusCategory.UNANIMOUS
+    elif primary_agreement >= strong_threshold:
+        category = ConsensusCategory.STRONG
+    elif primary_agreement >= majority_threshold or adjudicated:
+        category = ConsensusCategory.MAJORITY
+    else:
+        category = ConsensusCategory.DISPUTED
+
+    confidence = max(primary_agreement, app_label_support, resp_label_support)
+    review_reasons = _review_reasons(
+        category=category,
+        confidence=confidence,
+        model_count=model_count,
+        applicability_present=app_accepted,
+        applicability_confidence=app_label_support,
+        responsibility_present=resp_accepted,
+        responsibility_confidence=resp_label_support,
+        policy=policy,
+    )
+    return {
+        "category": category,
+        "primary_function": primary,
+        "proposed_functions": proposed_functions,
+        "applicability_present": app_accepted,
+        "proposed_applicability_functions": ((app_label,) if app_accepted else ()),
+        "responsibility_present": resp_accepted,
+        "proposed_responsibility_functions": ((resp_label,) if resp_accepted else ()),
+        "confidence": confidence,
+        "participating_models": model_count,
+        "label_support": label_support,
+        "applicability_support": {
+            "present": app_present_support,
+            **({app_label.value: app_label_support} if app_label else {}),
+        },
+        "responsibility_support": {
+            "present": resp_present_support,
+            **({resp_label.value: resp_label_support} if resp_label else {}),
+        },
+        "adjudicated": adjudicated,
+        "requires_review": bool(review_reasons),
+        "review_reasons": tuple(review_reasons),
+    }
+
+
+def _review_policy(payload: dict[str, Any] | None) -> dict[str, Any]:
+    return {
+        "review_categories": {"disputed", "insufficient_evidence"},
+        "accept_majority_min_confidence": 0.67,
+        "accept_majority_min_models": 3,
+        "applicability_min_confidence": 0.75,
+        "responsibility_min_confidence": 0.80,
+        "require_responsibility_evidence": True,
+        **(payload or {}),
+    }
+
+
+def _review_reasons(
+    *,
+    category: ConsensusCategory,
+    confidence: float,
+    model_count: int,
+    applicability_present: bool,
+    applicability_confidence: float,
+    responsibility_present: bool,
+    responsibility_confidence: float,
+    policy: dict[str, Any],
+) -> list[str]:
+    reasons: list[str] = []
+    categories = {str(item) for item in policy["review_categories"]}
+    if category.value in categories:
+        reasons.append(f"consensus category is {category.value}")
+    if category is ConsensusCategory.MAJORITY and (
+        confidence < float(policy["accept_majority_min_confidence"])
+        or model_count < int(policy["accept_majority_min_models"])
+    ):
+        reasons.append("majority consensus does not meet automatic-acceptance policy")
+    if applicability_present and applicability_confidence < float(
+        policy["applicability_min_confidence"]
+    ):
+        reasons.append("applicability evidence is below its confidence threshold")
+    if responsibility_present and responsibility_confidence < float(
+        policy["responsibility_min_confidence"]
+    ):
+        reasons.append("responsibility evidence is below its confidence threshold")
+    return reasons
+
+
+def _responsibility_evidence_is_valid(vote: ModelVote) -> bool:
+    if not vote.responsibility_present or not vote.evidence:
+        return False
+    text = vote.evidence.lower()
+    actor = re.search(
+        r"\b(supplier|manufacturer|integrator|developer|operator|organization|team|"
+        r"assessor|manager|user|customer|role|party)\b",
+        text,
+    )
+    action = re.search(
+        r"\b(shall|must|responsib|assign|ensure|perform|provide|approve|verify|validate)\w*\b",
+        text,
+    )
+    return bool(actor and action)
+
+
+def _structural_prior(context: dict[str, object]) -> dict[str, Any]:
+    values = {
+        str(context.get("clause_type", "")).lower(),
+        str(context.get("canonical_section", "")).lower(),
+        *(str(item).lower() for item in context.get("structural_roles", ()) or ()),
+        *(str(item).lower() for item in context.get("document_categories", ()) or ()),
+        *(str(item).lower() for item in context.get("domain_categories", ()) or ()),
+    }
+    text = str(context.get("text", "")).lower()
+    result: dict[str, Any] = {}
+    if "requirement" in values or re.search(r"\bshall\b", text):
+        result["primary_function"] = StatementFunction.REQUIREMENT.value
+    elif values & {"definition", "term", "terminology"}:
+        result["primary_function"] = StatementFunction.DEFINITION.value
+    elif "example" in values:
+        result["primary_function"] = StatementFunction.EXAMPLE.value
+    elif "note" in values:
+        result["primary_function"] = StatementFunction.NOTE.value
+    if values & {"scope", "applicability"}:
+        result["applicability_function"] = ApplicabilityFunction.SCOPE_DEFINITION.value
+    if result:
+        result["confidence"] = 0.95
+        result["evidence"] = sorted(value for value in values if value)
+    return result
+
+
+def _write_outputs(
+    report: ConsensusReport, output_directory: Path
+) -> tuple[ConsensusReport, Path, Path, Path]:
+    output_directory.mkdir(parents=True, exist_ok=True)
+    json_path = output_directory / "consensus-report.json"
+    yaml_path = output_directory / "golden-corpus-proposal.yaml"
+    review_path = output_directory / "consensus-review.md"
+    json_path.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    payload = {
+        "schema_version": "2.0",
+        "kind": "golden_corpus_proposal",
+        "matrix_id": report.matrix_id,
+        "corpus_id": report.corpus_id,
+        "prompt_selection": report.prompt_selection,
+        "clauses": [
+            {
+                "clause_id": item.clause_id,
+                "document_key": item.document_key,
+                "reference": item.reference,
+                "title": item.title,
+                "clause_text": item.clause_text,
+                "primary_function": (
+                    item.primary_function.value if item.primary_function else None
+                ),
+                "secondary_functions": [
+                    value.value
+                    for value in item.proposed_functions
+                    if value != item.primary_function
+                ],
+                "applicability": {
+                    "present": item.applicability_present,
+                    "function": (
+                        item.proposed_applicability_functions[0].value
+                        if item.proposed_applicability_functions
+                        else None
+                    ),
+                },
+                "responsibility": {
+                    "present": item.responsibility_present,
+                    "function": (
+                        item.proposed_responsibility_functions[0].value
+                        if item.proposed_responsibility_functions
+                        else None
+                    ),
+                },
+                "confidence": item.confidence,
+                "consensus_category": item.category.value,
+                "adjudicated": item.adjudicated,
+                "structural_prior": item.structural_prior,
+                "requires_review": item.requires_review,
+                "review_reasons": list(item.review_reasons),
+            }
+            for item in report.clauses
+        ],
+    }
+    yaml_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8"
+    )
+    review_path.write_text(_render_review(report), encoding="utf-8")
+    return report, json_path, yaml_path, review_path
+
+
+_REVIEW_CATEGORY_PRIORITY = {
+    ConsensusCategory.DISPUTED: 0,
+    ConsensusCategory.INSUFFICIENT: 1,
+    ConsensusCategory.MAJORITY: 2,
+    ConsensusCategory.STRONG: 3,
+    ConsensusCategory.UNANIMOUS: 4,
+}
+
+
+def _review_sort_key(item: ClauseConsensus) -> tuple[int, float, str, str, str]:
+    return (
+        _REVIEW_CATEGORY_PRIORITY[item.category],
+        item.confidence,
+        item.document_key,
+        item.reference or "",
+        item.clause_id,
+    )
 
 
 def _render_review(report: ConsensusReport) -> str:
     lines = [
         f"# Consensus review: {report.matrix_id}",
         "",
-        "Only clauses without strong cross-model agreement are listed.",
-        "Structural classifications are intentionally outside this review.",
+        "Only clauses selected by the risk-based review policy are listed.",
         "",
     ]
-    uncertain = [
-        item
-        for item in report.clauses
-        if item.category not in {ConsensusCategory.UNANIMOUS, ConsensusCategory.STRONG}
-    ]
+    uncertain = sorted(
+        (item for item in report.clauses if item.requires_review),
+        key=_review_sort_key,
+    )
     if not uncertain:
         lines.extend(["No clauses require review.", ""])
         return "\n".join(lines)
@@ -353,10 +649,14 @@ def _render_review(report: ConsensusReport) -> str:
                 "```",
                 "",
                 f"- Category: `{item.category.value}`",
-                f"- Statement-function proposal: `{proposed}`",
+                f"- Primary/secondary statement functions: `{proposed}`",
                 f"- Applicability proposal: `{applicability}`",
                 f"- Responsibility proposal: `{responsibility}`",
                 f"- Agreement: `{item.confidence:.3f}`",
+                f"- Adjudicated: `{str(item.adjudicated).lower()}`",
+                f"- Structural prior: `{item.structural_prior or 'none'}`",
+                "- Review reasons:",
+                *[f"  - {reason}" for reason in item.review_reasons],
                 "- Model votes:",
             ]
         )
@@ -369,7 +669,7 @@ def _render_review(report: ConsensusReport) -> str:
                 ", ".join(value.value for value in vote.responsibility_functions) or "none"
             )
             lines.append(
-                f"  - `{vote.model_id}`: statement=`{labels}`; "
+                f"  - `{vote.model_id}` ({vote.role}): statement=`{labels}`; "
                 f"applicability=`{applicability_labels}`; "
                 f"responsibility=`{responsibility_labels}` "
                 f"(repeat stability {vote.stability:.3f})"
@@ -379,9 +679,10 @@ def _render_review(report: ConsensusReport) -> str:
                 "",
                 "### HITL decision",
                 "",
-                "- Statement functions: ",
-                "- Applicability functions: ",
-                "- Responsibility functions: ",
+                "- Primary statement function: ",
+                "- Secondary statement functions: ",
+                "- Applicability present/function: ",
+                "- Responsibility present/function: ",
                 "- Rationale: ",
                 "",
             ]
@@ -410,11 +711,7 @@ def _load_clause_contexts(
         for example in dataset.examples:
             content = dict(example.input.get("content", {}))
             context = dict(example.input.get("context", {}))
-            contexts[example.id] = {
-                "reference": context.get("reference"),
-                "title": context.get("title"),
-                "text": content.get("text"),
-            }
+            contexts[example.id] = {**context, "text": content.get("text")}
         return contexts
     return {}
 

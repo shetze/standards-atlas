@@ -31,6 +31,7 @@ from standards_atlas.application.semantic_qualification.adaptive_interview impor
     AdaptiveInterviewPlanner,
     InterviewDimension,
     focused_response_schema,
+    follow_up_question,
 )
 from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationGenerator,
@@ -395,7 +396,9 @@ def _run_adaptive_interview(
     }
     confidences: list[float] = []
     rationales: list[str] = []
-    for question in plan.questions:
+    pending_questions = list(plan.questions)
+    while pending_questions:
+        question = pending_questions.pop(0)
         request = StructuredGenerationRequest(
             task=f"{config.task}:{question.id}",
             system_prompt=(
@@ -445,6 +448,11 @@ def _run_adaptive_interview(
         confidences.append(confidence)
         if evidence:
             rationales.append(f"{question.id}: {evidence}")
+        if label == "present":
+            follow_up = follow_up_question(question)
+            if follow_up is not None:
+                pending_questions.insert(0, follow_up)
+            continue
         if label in {"none", "unclear"}:
             continue
         if question.dimension is InterviewDimension.STATEMENT_FUNCTION:

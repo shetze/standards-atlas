@@ -1001,6 +1001,10 @@ def qualify_model_prompt_matrix(
                         strong_threshold=manifest.consensus.strong_threshold,
                         majority_threshold=manifest.consensus.majority_threshold,
                         label_threshold=manifest.consensus.label_threshold,
+                        prompt_selection=manifest.consensus.prompt_selection.model_dump(),
+                        review_policy=manifest.consensus.review_policy.model_dump(),
+                        adjudication=manifest.consensus.adjudication.model_dump(),
+                        structural_priors=(manifest.consensus.structural_priors.model_dump()),
                     )
                     accepted = set(manifest.execution.resolution.accepted_categories)
                     unresolved_clause_ids = tuple(
@@ -1041,6 +1045,10 @@ def qualify_model_prompt_matrix(
                     strong_threshold=manifest.consensus.strong_threshold,
                     majority_threshold=manifest.consensus.majority_threshold,
                     label_threshold=manifest.consensus.label_threshold,
+                    prompt_selection=manifest.consensus.prompt_selection.model_dump(),
+                    review_policy=manifest.consensus.review_policy.model_dump(),
+                    adjudication=manifest.consensus.adjudication.model_dump(),
+                    structural_priors=manifest.consensus.structural_priors.model_dump(),
                 )
             )
             consensus_paths = (consensus_json, proposal_yaml, review_markdown)

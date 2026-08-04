@@ -115,17 +115,13 @@ class AdaptiveInterviewPlanner:
         if applicability_signal:
             questions.append(
                 InterviewQuestion(
-                    id="applicability",
+                    id="applicability-presence",
                     dimension=InterviewDimension.APPLICABILITY,
-                    question="Which applicability function is explicitly expressed, if any?",
-                    allowed_labels=(
-                        "scope_definition",
-                        "applicability_condition",
-                        "inclusion",
-                        "exclusion",
-                        "exception",
-                        "none",
+                    question=(
+                        "Does this clause explicitly govern whether a document, section, "
+                        "requirement, method, role, or situation applies?"
                     ),
+                    allowed_labels=("present", "none"),
                     reason="Normalization or clause wording indicates an applicability hypothesis.",
                 )
             )
@@ -145,15 +141,13 @@ class AdaptiveInterviewPlanner:
         if responsibility_signal:
             questions.append(
                 InterviewQuestion(
-                    id="responsibility",
+                    id="responsibility-presence",
                     dimension=InterviewDimension.RESPONSIBILITY,
-                    question="Which responsibility function is explicitly expressed, if any?",
-                    allowed_labels=(
-                        "responsibility_assignment",
-                        "responsibility_exclusion",
-                        "role_condition",
-                        "none",
+                    question=(
+                        "Does this clause explicitly connect an identifiable actor or role "
+                        "to a duty, exclusion, or responsibility condition?"
                     ),
+                    allowed_labels=("present", "none"),
                     reason="Clause wording indicates a responsibility allocation hypothesis.",
                 )
             )
@@ -211,3 +205,42 @@ def focused_response_schema(labels: tuple[str, ...]) -> dict[str, Any]:
             "evidence": {"type": "string"},
         },
     }
+
+
+def follow_up_question(question: InterviewQuestion) -> InterviewQuestion | None:
+    """Return the subtype question for a positive hierarchical presence decision."""
+    if question.id == "applicability-presence":
+        return InterviewQuestion(
+            id="applicability-subtype",
+            dimension=InterviewDimension.APPLICABILITY,
+            question=(
+                "Which single applicability subtype is explicitly expressed? Treat a local "
+                "logical condition as none unless it governs application of normative content."
+            ),
+            allowed_labels=(
+                "scope_definition",
+                "applicability_condition",
+                "inclusion",
+                "exclusion",
+                "exception",
+                "none",
+            ),
+            reason="A positive applicability-presence decision requires one subtype.",
+        )
+    if question.id == "responsibility-presence":
+        return InterviewQuestion(
+            id="responsibility-subtype",
+            dimension=InterviewDimension.RESPONSIBILITY,
+            question=(
+                "Which single responsibility subtype is explicitly expressed? Select none "
+                "unless the evidence names both an actor or role and its duty or exclusion."
+            ),
+            allowed_labels=(
+                "responsibility_assignment",
+                "responsibility_exclusion",
+                "role_condition",
+                "none",
+            ),
+            reason="A positive responsibility-presence decision requires one subtype.",
+        )
+    return None

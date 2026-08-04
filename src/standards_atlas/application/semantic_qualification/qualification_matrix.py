@@ -203,6 +203,51 @@ class ReviewImportConfig(BaseModel):
     required: bool = True
 
 
+class ReviewPolicyConfig(BaseModel):
+    """Risk-based policy deciding which consensus results require HITL review."""
+
+    model_config = ConfigDict(frozen=True)
+
+    review_categories: tuple[str, ...] = (
+        "disputed",
+        "insufficient_evidence",
+    )
+    accept_majority_min_confidence: float = Field(default=0.67, ge=0.0, le=1.0)
+    accept_majority_min_models: int = Field(default=3, ge=1)
+    applicability_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
+    responsibility_min_confidence: float = Field(default=0.80, ge=0.0, le=1.0)
+    require_responsibility_evidence: bool = True
+
+
+class ConsensusPromptSelection(BaseModel):
+    """Prompt family used for each semantic dimension."""
+
+    model_config = ConfigDict(frozen=True)
+
+    statement_function: str = "content-only"
+    applicability: str = "content-only"
+    responsibility: str = "content-only"
+
+
+class AdjudicationConfig(BaseModel):
+    """Optional model used as a tie-breaker instead of a regular equal-weight vote."""
+
+    model_config = ConfigDict(frozen=True)
+
+    enabled: bool = False
+    model_id: str | None = None
+    minimum_confidence: float = Field(default=0.70, ge=0.0, le=1.0)
+
+
+class StructuralPriorConfig(BaseModel):
+    """Deterministic priors derived from normalization context."""
+
+    model_config = ConfigDict(frozen=True)
+
+    enabled: bool = True
+    confidence: float = Field(default=0.95, ge=0.0, le=1.0)
+
+
 class ConsensusConfig(BaseModel):
     """Cross-model consensus settings for a new Golden Corpus proposal."""
 
@@ -211,10 +256,14 @@ class ConsensusConfig(BaseModel):
     enabled: bool = True
     prompt_id: str = "content-only"
     reasoning_mode_id: str = "disabled"
+    prompt_selection: ConsensusPromptSelection = ConsensusPromptSelection()
     min_models: int = Field(default=3, ge=2)
     strong_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
     majority_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
     label_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
+    review_policy: ReviewPolicyConfig = ReviewPolicyConfig()
+    adjudication: AdjudicationConfig = AdjudicationConfig()
+    structural_priors: StructuralPriorConfig = StructuralPriorConfig()
     output_directory: Path = Path("local/evaluation/consensus")
 
 
@@ -253,6 +302,9 @@ class QualificationMatrixManifest(BaseModel):
             raise ValueError("prompt candidate ids must be unique")
         if len(set(model_ids)) != len(model_ids):
             raise ValueError("model candidate ids must be unique")
+        adjudicator = self.consensus.adjudication
+        if adjudicator.enabled and adjudicator.model_id not in model_ids:
+            raise ValueError(f"unknown consensus adjudicator model: {adjudicator.model_id!r}")
         for model in self.models:
             unknown_modes = set(model.supported_reasoning_modes) - set(reasoning_mode_ids)
             if unknown_modes:

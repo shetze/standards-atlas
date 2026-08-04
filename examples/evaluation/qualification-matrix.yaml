@@ -16,9 +16,9 @@ execution:
       apply_to: all
     - id: escalation
       models:
-        # - qwen3-14b-q4-k-m
+        - qwen3-14b-q4-k-m
         - qwen3-32b-q4-k-m
-        - codex-gpt-5.6-luna
+        # - codex-gpt-5.6-luna
       apply_to: unresolved
   resolution:
     minimum_successful_models: 3
@@ -170,12 +170,30 @@ review_imports:
 
 consensus:
   enabled: true
-  prompt_id: content-only
+  prompt_id: structure-aware
   reasoning_mode_id: disabled
+  prompt_selection:
+    statement_function: structure-aware
+    applicability: structure-aware
+    responsibility: reference-aware
   min_models: 3
   strong_threshold: 0.8
   majority_threshold: 0.6
   label_threshold: 0.6
+  review_policy:
+    review_categories: [disputed, insufficient_evidence]
+    accept_majority_min_confidence: 0.67
+    accept_majority_min_models: 3
+    applicability_min_confidence: 0.75
+    responsibility_min_confidence: 0.80
+    require_responsibility_evidence: true
+  adjudication:
+    enabled: true
+    model_id: codex-gpt-5.6-luna
+    minimum_confidence: 0.70
+  structural_priors:
+    enabled: true
+    confidence: 0.95
   output_directory: ../../consensus
 
 observations: []
