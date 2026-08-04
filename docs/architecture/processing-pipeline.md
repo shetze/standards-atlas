@@ -2,15 +2,30 @@
 
 ![Processing pipeline](diagrams/svg/processing-pipeline.svg)
 
-The pipeline deliberately separates representations:
+The document pipeline converts controlled publications into canonical engineering knowledge through persisted, inspectable stages.
 
-1. **Extraction** converts a physical source to Docling-native evidence.
-2. **Normalization** creates a stable, lossless semantic input.
-3. **Reference detection** records plausible clause anchors without committing to a match.
-4. **Alignment** maps candidates to an expected AtlasData structure with confidence and diagnostics.
-5. **Review** records human corrections as explicit overrides and produces reviewed alignments.
-6. **Construction and enrichment** create canonical clauses and structured content blocks.
-7. **Composition** assembles part documents into a family while preserving provenance.
-8. **Export** projects the canonical document into a target ecosystem.
+## Stages
 
-Each stage persists an artefact with sufficient metadata to inspect, reproduce, or invalidate its output. Stages do not bypass manual gates merely because a downstream format can be generated.
+1. **Catalog resolution** selects document families, parts, profiles, source files, page ranges, and publication targets.
+2. **Extraction** converts selected PDF content through Docling and validates the extracted-document boundary.
+3. **Normalization** applies ordered deterministic steps for item mapping, page furniture, headings, lists, layout evidence, hyphenation, visual ownership, methods, techniques, and reference candidates.
+4. **Reference structure** imports or generates AtlasData-compatible structural baselines.
+5. **Alignment** proposes mappings from normalized ranges to reference clauses.
+6. **Human review** records alignment corrections and baseline decisions as separate artifacts.
+7. **Construction contract** freezes the reviewed inputs and verifies coverage before aggregate construction.
+8. **Engineering document construction** creates canonical clauses, content, evidence, profiles, and lineage.
+9. **Reference resolution** links clause references that can be resolved within available documents or knowledge domains.
+10. **Publication** creates Markdown, composed Markdown, and Doorstop projections.
+11. **Evaluation and enrichment** samples canonical clauses, generates model proposals, performs review, and may publish accepted annotations or relations.
+
+## Normalization contract
+
+Normalization is an ordered pipeline of explicit transformation steps. Each step receives a typed document, returns a typed document, and records deterministic ledger entries. The order is part of the contract because later steps may depend on evidence established earlier. LLMs are not part of the canonical normalization path.
+
+## Review gates
+
+Alignment review and AtlasData baseline review are blocking gates. The workflow may generate review material, but it must not silently treat a machine proposal as a reviewed decision. Evaluation follows the same rule: proposals and consensus reports are not canonical annotations.
+
+## Replacement and invalidation
+
+A changed source selection invalidates extraction and all descendants. A changed normalization implementation invalidates normalized descendants but not the source. A changed baseline invalidates alignment and construction. Renderer-only changes invalidate exports. The workflow report explains these derivations instead of relying only on timestamps.

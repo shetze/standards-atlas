@@ -1,37 +1,29 @@
 # Core concepts
 
-## Standard family
+## Standard family and physical document
 
-A logical standard such as IEC 61508 or ISO 26262. A family may contain one or many physical publications and parts.
+A **standard family** is the logical standard represented in the catalog. A family can contain several **physical source documents**, such as individual parts or editions. Physical documents retain their own provenance and page selection.
 
-## Physical source document
+## Extracted and normalized documents
 
-A specific PDF with provenance, publication metadata, and optional page selection. One logical family may be assembled from several physical sources.
+The **extracted document** is Docling-native source evidence. The **normalized document** is a deterministic and lossless representation used by subsequent stages. Normalization records transformations rather than silently rewriting content.
 
-## Extracted document
+## AtlasData and alignment
 
-Docling's source-oriented representation. It preserves layout and content evidence but is not the canonical domain model.
+**AtlasData** is the reviewable public structural baseline: identifiers, headings, clause types and copyright-safe annotations. **Alignment** maps references detected in normalized source content to that baseline. Automatic alignment is a proposal until a reviewer accepts or overrides it.
 
-## Normalized document
+## EngineeringDocument and Clause
 
-A deterministic, lossless normalization of extracted content. It stabilizes headings, lists, page furniture, visual references, and source anchors before semantic processing.
+`EngineeringDocument` is the canonical domain representation. A `Clause` contains structured `content`, source evidence, references, annotations and an optional multi-dimensional `StructuralProfile`. The former one-dimensional `SemanticRole` and `Clause.semantic_roles` model no longer exists.
 
-## AtlasData
+## StructuralProfile
 
-The public structural baseline used to describe expected clauses, headings, types, and public annotations. AtlasData has an explicit lifecycle and is not treated as copyrighted clause content.
+A structural profile classifies independent dimensions instead of forcing a clause into one role. Dimensions can describe, for example, normative status, statement function, lifecycle context, evidence relevance or document region. Taxonomies are knowledge-domain specific and must not be inferred from keywords alone when evidence is insufficient.
 
-## Alignment
+## Knowledge domain and hierarchy
 
-A mapping between detected source references and expected AtlasData structure. Automatic alignment is provisional until reviewed.
+A **knowledge domain** groups standards and relationships for a field such as functional safety. A configured hierarchy determines composed Doorstop publication, while the filesystem remains an implementation detail.
 
-## EngineeringDocument
+## Review gate
 
-The canonical, adapter-neutral domain representation. It contains clauses, structured content blocks, multidimensional semantic classifications, annotations, relations, and source evidence.
-
-## Knowledge domain
-
-A catalog-level model of standards and relationships. It expresses families, sectors, supersession, adaptation, and the hierarchy used by downstream exports.
-
-## Workflow gate
-
-A deliberate pause where human judgment is required. Standards Atlas does not silently turn uncertain extraction or alignment into an authoritative result.
+A **review gate** is an intentional workflow pause. Standards Atlas preserves uncertainty and requires a human decision rather than publishing weak extraction or alignment as authoritative data.

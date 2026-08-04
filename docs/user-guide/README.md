@@ -1,39 +1,36 @@
 # User guide
 
-The user guide follows the lifecycle of a standard from catalog entry and private source document to reviewed, composed, and exported engineering artefacts.
+This guide describes the supported user workflows for turning private standards documents into reviewed, traceable engineering artefacts.
 
-![Standards Atlas user workflow](../architecture/diagrams/svg/user-workflow.svg)
+## First steps
 
-## Start here
+1. [Install and prepare the project](../getting-started/README.md).
+2. [Understand the workspace and core concepts](concepts.md).
+3. [Validate a catalog and plan a workflow](catalogs-and-profiles.md).
+4. [Run the end-to-end workflow](document-workflow.md).
+5. Complete any [alignment](alignment-review.md) or [AtlasData](atlasdata-lifecycle.md) review gate.
+6. [Export Markdown or Doorstop output](exports.md).
 
-| Task | Document |
+## Processing and review
+
+| Goal | Guide |
 |---|---|
-| Install and execute a first workflow | [Getting started](getting-started.md) |
-| Learn the vocabulary and object lifecycle | [Core concepts](concepts.md) |
-| Configure standards, editions, parts, and page selection | [Catalogs and profiles](catalogs-and-profiles.md) |
-| Run individual pipeline stages or the end-to-end workflow | [Document workflow](document-workflow.md) |
+| Configure standards, parts, profiles and hierarchies | [Catalogs and profiles](catalogs-and-profiles.md) |
+| Run extraction, normalization, reference detection and construction | [Document workflow](document-workflow.md) |
+| Review uncertain clause mappings | [Alignment review](alignment-review.md) |
+| Govern public structural baselines | [AtlasData lifecycle](atlasdata-lifecycle.md) |
+| Process families made of several publications | [Multi-part standards](multipart-standards.md) |
+| Understand generated and local artefacts | [Workspace](workspace.md) |
 
-## Review and governance
+## Runtime and evaluation
 
-| Task | Document |
+| Goal | Guide |
 |---|---|
-| Review automatic clause alignment and record overrides | [Alignment review](alignment-review.md) |
-| Manage proposed, reviewed, and published structural baselines | [AtlasData lifecycle](atlasdata-lifecycle.md) |
-| Compose standards with multiple parts and annexes | [Multi-part standards](multipart-standards.md) |
+| Manage the project-owned RamaLama server | [Local LLM operation](local-llm.md) |
+| Run the read-only MCP server | [MCP server](mcp-server.md) |
+| Connect Codex to MCP | [Codex integration](codex-integration.md) |
+| Build corpora and execute qualification matrices | [Evaluation and qualification](evaluation-and-qualification.md) |
+| Review generated annotation proposals | [Annotation review](semantic-annotation-review.md) |
+| Diagnose common failures | [Troubleshooting](troubleshooting.md) |
 
-## Outputs and operations
-
-| Task | Document |
-|---|---|
-| Export Markdown or Doorstop artefacts | [Exports](exports.md) |
-| Understand `.atlas`, `data`, and generated output | [Workspace](workspace.md) |
-| Diagnose common command and data problems | [Troubleshooting](troubleshooting.md) |
-| Build local corpora and benchmark prompts/models | [Model consensus evaluation](model-consensus-evaluation.md) |
-| Review and publish semantic annotation proposals | [Semantic annotation review](semantic-annotation-review.md) |
-
-## Related material
-
-- [CLI reference](../reference/cli-reference.md)
-- [Catalog format reference](../reference/catalog-format.md)
-- [Architecture overview](../architecture/README.md)
-- [Documentation home](../README.md)
+The [CLI reference](../reference/cli-reference.md) lists command groups and options. Architecture rationale belongs in [Architecture](../architecture/README.md), not in this task-oriented guide.

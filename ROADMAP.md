@@ -192,3 +192,17 @@ The semantic evaluation framework now treats statement function, document struct
 ### Model-consensus Golden Corpus renewal
 
 The next Golden Corpus generation is based on agreement across the five qualification-matrix models. Statement functions are evaluated independently of already known structural classifications. Strong agreement becomes a proposal; majority cases, contradictions, and insufficient evidence are routed to focused HITL review. The current Golden Corpus remains diagnostic evidence during this transition rather than the unquestioned source of truth.
+
+
+
+## Version 0.8 — Cross-standard knowledge graph (next)
+
+Primary objective: restore and surpass the legacy IntelliDoc capability by identifying, qualifying and maintaining semantic relationships across standards from different knowledge domains.
+
+Key work items:
+- Cross-document relationship extraction.
+- Persistent relationship graph with provenance.
+- Human review workflow for inferred relationships.
+- MCP skills for graph exploration.
+- Domain-independent structural taxonomy extensions.
+- Qualification framework for relationship extraction.

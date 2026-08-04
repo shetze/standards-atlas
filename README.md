@@ -6,7 +6,7 @@
 
 **Import · Normalize · Align · Evaluate · Serve · Publish**
 
-[Documentation](docs/README.md) · [Getting started](docs/user-guide/getting-started.md) · [Architecture](docs/architecture/README.md) · [CLI reference](docs/reference/cli-reference.md) · [Architecture decisions](docs/architecture/adr/README.md)
+[Documentation](docs/README.md) · [Getting started](docs/getting-started/README.md) · [Architecture](docs/architecture/README.md) · [CLI reference](docs/reference/cli-reference.md) · [Architecture decisions](docs/architecture/adr/README.md)
 
 </div>
 
@@ -47,18 +47,18 @@ uv run standards-atlas evaluation --help
 uv run standards-atlas mcp --help
 ```
 
-The workflow intentionally stops at review boundaries when human confirmation is required. See the [getting-started guide](docs/user-guide/getting-started.md), the [document workflow](docs/user-guide/document-workflow.md), and the [MCP server guide](docs/user-guide/mcp-server.md) for operational details.
+The workflow intentionally stops at review boundaries when human confirmation is required. See the [getting-started path](docs/getting-started/README.md), the [document workflow](docs/user-guide/document-workflow.md), and the [MCP server guide](docs/user-guide/mcp-server.md) for operational details.
 
 ## Documentation
 
 | Area | Start here |
 |---|---|
-| **Using Standards Atlas** | [User guide](docs/user-guide/README.md) |
-| **Understanding the design** | [Architecture](docs/architecture/README.md) |
-| **Extending and testing** | [Development guide](docs/development/README.md) |
-| **Commands and formats** | [Reference](docs/reference/README.md) |
-| **Why the system is designed this way** | [ADR index](docs/architecture/adr/README.md) |
-| **Reusable architecture illustrations** | [Diagram catalog](docs/architecture/diagrams/README.md) |
+| **First use and guided learning** | [Getting started](docs/getting-started/README.md) · [Tutorials](docs/tutorials/README.md) |
+| **Operational tasks** | [User guide](docs/user-guide/README.md) |
+| **Architecture and decisions** | [Architecture](docs/architecture/README.md) · [ADR index](docs/architecture/adr/README.md) |
+| **Development and qualification** | [Development guide](docs/development/README.md) |
+| **Commands, formats, and vocabulary** | [Reference](docs/reference/README.md) |
+| **Current and planned direction** | [Project direction](docs/roadmap/README.md) |
 
 ## Design principles
 

@@ -1,89 +1,37 @@
-# Evaluation services
+# Evaluation architecture
 
-Standards Atlas separates reusable evaluation infrastructure from the
-standards-specific semantic qualification workflow. The split keeps generic
-prompt, dataset, model, metric, regression, and reporting code independent of
-clause access, annotation policy, standards taxonomies, and review workflows.
+![Evaluation architecture](diagrams/svg/evaluation-architecture.svg)
 
-## Package structure
+Standards Atlas separates provider-neutral evaluation infrastructure from standards-specific semantic qualification.
 
-The canonical implementation is divided into two application packages:
+## Generic evaluation
 
-```text
-src/standards_atlas/application/evaluation/
-    Generic evaluation models, repositories, runners, schemas,
-    metrics, regression comparison, and reports.
+`application.evaluation` owns versioned prompts, schemas, datasets, runners, per-case observations, aggregate metrics, regression comparison, and reports. It depends on the `LlmGateway` port but has no knowledge of clauses, structural taxonomies, standards publication policy, or HITL annotation precedence.
 
-src/standards_atlas/application/semantic_qualification/
-    Standards-specific clause access, corpus construction, annotations,
-    proposal generation, reference analysis, review, qualification matrices,
-    model consensus, and workflow orchestration.
-```
+## Semantic qualification
 
-A compatibility facade currently remains at:
-
-```text
-src/standards_atlas/application/services/evaluation/
-```
-
-It re-exports selected types from both canonical packages for callers that have
-not yet migrated. New code should import directly from `application.evaluation`
-or `application.semantic_qualification`. The facade is not the owner of the
-implementation and may be removed after all callers have migrated.
-
-## Generic evaluation responsibilities
-
-The `application.evaluation` package is responsible for:
-
-- loading versioned prompt definitions and output schemas;
-- loading versioned evaluation datasets;
-- executing prompts against one or more models through the `LlmGateway` port;
-- comparing prompt and model configurations;
-- calculating per-case and aggregate metrics;
-- detecting regressions against a baseline;
-- persisting machine-readable runs, comparisons, and reports.
-
-Its canonical vocabulary includes `EvaluationDataset`, `EvaluationExample`,
-`EvaluationRunner`, `EvaluationReporter`, `EvaluationDatasetRepository`, and
-`PromptRepository`. Historical `Golden*` and `SemanticEvaluation*` names remain
-only as migration aliases where required by existing callers or persisted data.
-
-## Semantic qualification responsibilities
-
-The `application.semantic_qualification` package adds the domain-specific
-workflow around clauses from persisted `EngineeringDocument` aggregates:
+`application.semantic_qualification` adds:
 
 - transport-neutral clause discovery through `ClauseProvider`;
-- representative and reproducible corpus construction;
-- annotation repositories and publication precedence;
-- baseline and model proposal generation;
-- clause-reference extraction and resolution;
-- human review export and import;
-- prompt and model qualification matrices;
-- model-consensus calculation and golden-corpus proposals.
+- representative stratified corpus construction;
+- structural-profile and semantic-classification tasks;
+- reference extraction and resolution;
+- baseline and model proposal runs;
+- local Markdown review and reviewed-data publication;
+- qualification matrices and repeated observations;
+- model consensus and golden-corpus proposals;
+- adaptive interview planning for difficult review cases.
 
-These services may depend on the generic evaluation package, but the generic
-package must not depend on semantic qualification.
+It may depend on generic evaluation; the reverse dependency is forbidden.
 
-## Dependency direction
+## Artifact separation
 
-```text
-CLI / MCP / future API adapters
-            |
-            v
-application.semantic_qualification
-            |
-            v
-application.evaluation -----> LlmGateway port
-```
+Corpora, proposal runs, reviewed annotations, consensus reports, and qualification reports are separate artifacts. Published reviewed data has higher authority than local review files; local review has higher authority than generated proposals only where the repository policy explicitly states this.
 
-Storage adapters implement repositories and gateways at the boundary. The CLI
-acts as the composition root and supplies concrete filesystem repositories,
-LLM gateways, and clause providers.
+## Matrix execution
 
-## Local protected corpora
+A matrix candidate is a reproducible combination of model, prompt, context mode, reasoning configuration, repetition, and runtime settings. Execution persists observations incrementally so `--resume` can continue incomplete work. `--overwrite` replaces selected outputs; `--recompute` intentionally reruns completed observations. Metrics distinguish availability, parse success, prediction success, agreement, calibration, and task quality.
 
-Copyrighted evaluation material belongs below `local/` and remains outside
-version control. Repositories receive their root path explicitly, allowing the
-same application services to consume packaged synthetic fixtures and protected
-local corpora without embedding storage policy in the domain model.
+## Compatibility
+
+Older imports below `application.services.evaluation` may re-export canonical types temporarily. New code must use `application.evaluation` or `application.semantic_qualification` directly.

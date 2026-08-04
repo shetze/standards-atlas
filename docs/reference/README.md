@@ -18,3 +18,7 @@ The reference section provides concise lookup material for commands, configurati
 - [Workspace](../user-guide/workspace.md)
 - [Domain model](../architecture/domain-model.md)
 - [Documentation home](../README.md)
+## Reference boundaries
+
+Reference pages describe the current interfaces and persisted formats. Task sequences belong in the [user guide](../user-guide/README.md); design rationale belongs in [architecture](../architecture/README.md) and the [ADRs](../architecture/adr/README.md).
+

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-## Start with inspection
+## Establish the failing stage
 
 ```bash
 uv run standards-atlas catalog validate catalogs/standards.yaml
@@ -8,29 +8,33 @@ uv run standards-atlas workflow plan --catalog catalogs/standards.yaml --family 
 uv run standards-atlas docling inspect DOCUMENT
 uv run standards-atlas normalize inspect DOCUMENT
 uv run standards-atlas references inspect DOCUMENT
-uv run standards-atlas align inspect DOCUMENT
+uv run standards-atlas align inspect DOCUMENT --show-conflicts
 ```
 
-## Workflow pauses at review
+## Persisted extraction is incomplete
 
-This is expected. Export or complete the requested alignment or AtlasData review, then rerun with `--continue-after-review`.
+Use `--overwrite` to regenerate derived artifacts. Preserve valid extraction with `--keep docling`; use `--force` only when Docling output must also be regenerated.
 
-## Part conflicts with a year
+## Workflow pauses at a review gate
 
-Ensure the catalog declares the physical document's part separately from its publication year. Filenames alone are not authoritative metadata.
+This is expected. Complete the indicated alignment or AtlasData review and rerun with `--continue-after-review`. The flag does not bypass missing review data.
 
-## No persisted document found
+## LLM stop says stopped, but status is running
 
-A downstream command was run before import, onboarding, enrichment, or composition produced `.atlas/documents/<key>.json`.
+Check whether a different RamaLama process owns the configured endpoint, whether runtime state refers to a container rather than the client process, and whether the configured stop timeout expired. Use the project workaround only as a diagnostic; then verify again with `llm status`.
 
-## Missing clauses after alignment
+## Model response ends with `finish_reason=length`
 
-Inspect content selection first, then normalized headings and candidate detection. A missing source page cannot be repaired by alignment heuristics.
+Increase the configured output budget where appropriate, simplify the prompt contract, and verify that reasoning text is not consuming the JSON response budget. Treat truncated JSON as a failed prediction, not a partial success.
 
-## Docling conversion already exists
+## Qualification reliability validation fails
 
-Treat conversion as private source evidence. Remove it deliberately only after confirming that regeneration is intended; `--force` is not a blanket overwrite switch.
+Success rates are fractions, not counts. A value such as `10.0` for ten successful predictions is invalid; the rate must be `1.0`, with `10` retained as a separate count.
 
-## Doorstop hierarchy is wrong
+## Doorstop export exits with code 2
 
-Check catalog knowledge-domain relationships and verify that every part has a clause `0` root before export.
+Exit code `2` generally indicates CLI usage or parameter validation, while an expected domain failure should use the documented command failure code. Inspect the command arguments and the underlying error before changing tests.
+
+## Missing Markdown links for clause references
+
+The target clause must be present in the exported set and resolvable to a known Markdown path. External references and unavailable clauses remain plain references.

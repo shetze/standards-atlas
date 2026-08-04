@@ -16,3 +16,10 @@
 ### Added
 
 - `workflow run --overwrite --keep <stage>` for regenerating downstream derived artifacts while reusing selected existing stages such as Docling conversion output.
+
+
+### Added
+- Multi-dimensional `StructuralProfile` replaced legacy semantic roles.
+- Internal cross-clause references are resolved during Markdown export and rendered as links when target clauses are available.
+- Domain-aware structural taxonomy with normative/informative inheritance.
+- Background MCP/LLM lifecycle management improvements and qualification-matrix reliability fixes.

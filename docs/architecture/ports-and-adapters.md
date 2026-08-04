@@ -2,73 +2,55 @@
 
 ![Ports and adapters](diagrams/svg/ports-and-adapters.svg)
 
-## Architectural target
+## Dependency rule
 
-Standards Atlas follows a hexagonal target architecture. In that target, inbound
-adapters such as the CLI and MCP invoke application use cases. Application code
-depends on domain types and explicit ports. Outbound adapters implement storage,
-LLM access, document conversion, and publication behavior.
+Standards Atlas uses hexagonal architecture as an enforceable dependency rule, not only as a diagram.
 
 ```text
-Inbound adapters
-    CLI, MCP, future APIs
-            |
-            v
-Application use cases and ports
-            |
-            v
-Domain model
-
-Outbound adapters implement application ports:
-    filesystem, Docling, AtlasData, LLM, Markdown, Doorstop
+inbound adapter -> application use case -> domain
+                         |
+                         v
+                    outbound port
+                         ^
+                         |
+                  outbound adapter
 ```
 
-The intended dependency rule is that the domain has no dependency on application
-or adapter packages, and reusable application-core logic does not construct or
-import concrete adapters. Concrete implementations are selected at composition
-roots, primarily the CLI application tree.
+The domain must not import application or adapters. Application code may depend on domain types and protocols declared in the application layer. Adapters may depend inward on both.
 
-## Current implementation state
+## Inbound side
 
-The domain boundary already follows the target: canonical models do not import
-CLI, persistence, Docling, Doorstop, or other adapter concerns. Newer subsystems,
-including generic evaluation and clause access, expose explicit protocols and
-are composed with adapters at the edge.
+The CLI maps arguments and configuration into application commands and services. It is also the primary composition root for repositories, converters, gateways, renderers, and runtime managers. MCP maps protocol requests into the transport-neutral `ClauseProvider` and `McpClauseService` boundary. Neither adapter owns business rules.
 
-The application layer is still in transition. Several older workflow and
-service facades directly import or construct standard filesystem, Docling,
-AtlasData, normalization, or export adapters. These classes provide convenient
-local composition, but they do not yet satisfy the strict target dependency
-rule. They should be understood as application-level composition facades rather
-than a fully adapter-independent application core.
+## Outbound ports
 
-Therefore this document is both:
+The application layer defines repositories and capabilities for, among other concerns:
 
-- the authoritative **target** for new architecture and refactoring decisions;
-- an explicit record that the current implementation only **partially** reaches
-  that target.
+- engineering documents and stage artifacts;
+- extracted and normalized documents;
+- alignment and review artifacts;
+- construction contracts;
+- prompt, dataset, corpus, annotation, and run persistence;
+- document conversion and rendering;
+- LLM completion;
+- command execution and runtime health.
 
-New code should not extend the transitional pattern. It should define an
-application port, inject the dependency, and place concrete construction in a
-composition root. Existing direct imports can be migrated incrementally without
-changing domain contracts.
+Ports should express application needs rather than mirror third-party APIs.
 
-## Current adapter responsibilities
+## Adapter ownership
 
-Adapters currently cover:
+| Adapter package | External concern |
+|---|---|
+| `adapters/docling` | PDF extraction and Docling contract validation |
+| `adapters/filesystem` | Persistent application repositories |
+| `adapters/atlasdata` | AtlasData import, lifecycle, and round-trip output |
+| `adapters/markdown` | Document and review rendering |
+| `adapters/doorstop` | Doorstop hierarchy and publication templates |
+| `adapters/llm` | Codex CLI, OpenAI-compatible APIs, RamaLama process control |
+| `adapters/mcp` | MCP protocol, HTTP security, process management, audit |
 
-- Docling PDF conversion and native artifact reading;
-- YAML catalog reading;
-- AtlasData parsing, lifecycle handling, onboarding, and TOC generation;
-- filesystem persistence of engineering documents and intermediate artifacts;
-- clause projection for evaluation and MCP access;
-- local LLM and external model gateways;
-- Markdown export;
-- Doorstop export and publication templates;
-- MCP transport, authentication, limits, and audit logging.
+## Migration state
 
-These boundaries prevent target-specific identifiers, serialization details,
-source paths, and tool behavior from leaking into the canonical domain model. A
-new importer, exporter, repository, transport, or model provider should
-implement a port and translate at the edge rather than add format-specific
-fields to the domain.
+ADR 0053 established the current structural refactoring direction. Canonical implementations now live in focused packages such as `application/workflow`, `application/normalization`, `application/evaluation`, and `application/semantic_qualification`. Compatibility exports below `application/services` may remain temporarily, but new code must import canonical packages and must not add new concrete-adapter dependencies to reusable application services.
+
+Architecture tests should guard the dependency direction. Unit tests construct application services with test doubles; integration tests verify real adapter contracts and composition roots.

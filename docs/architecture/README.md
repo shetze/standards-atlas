@@ -1,50 +1,70 @@
 # Architecture
 
-Standards Atlas uses a hexagonal architecture around canonical document models and a staged, evidence-preserving transformation pipeline. The architecture separates extraction technology, structural knowledge, review decisions, and output formats so each can evolve without becoming the system's internal representation.
+Standards Atlas is a traceability-centered platform for transforming controlled source publications into canonical, reviewable engineering knowledge. The implementation follows a hexagonal architecture, uses deterministic transformation stages, and preserves evidence and lineage across persisted artifacts.
 
 ![Architecture overview](diagrams/svg/architecture-overview.svg)
 
-## Architecture documents
+## Architecture map
 
-| Topic | Document |
+| Concern | Document |
 |---|---|
-| System boundaries and actors | [System context](system-context.md) |
-| End-to-end transformations | [Processing pipeline](processing-pipeline.md) |
-| Canonical entities and contracts | [Domain model](domain-model.md) |
-| Application core and adapters | [Ports and adapters](ports-and-adapters.md) |
-| Workspace artefacts and provenance | [Persistence and lineage](persistence-and-lineage.md) |
-| Planning, execution, and review gates | [Workflow orchestration](workflow-orchestration.md) |
-| Doorstop family structure | [Doorstop document hierarchy](doorstop-document-hierarchy.md) |
+| System boundary, actors, and external systems | [System context](system-context.md) |
+| Major deployable and logical building blocks | [Component model](component-model.md) |
+| Canonical entities and classification models | [Domain model](domain-model.md) |
+| Dependency direction and composition roots | [Ports and adapters](ports-and-adapters.md) |
+| Extraction, normalization, alignment, and publication | [Processing pipeline](processing-pipeline.md) |
+| Planning, execution, recovery, and review gates | [Workflow orchestration](workflow-orchestration.md) |
+| Persisted contracts, invalidation, and provenance | [Persistence and lineage](persistence-and-lineage.md) |
+| Generic evaluation and semantic qualification | [Evaluation architecture](evaluation-services.md) |
+| Structural profiles and semantic classification | [Structural classification](structural-classification.md) |
+| LLM gateways and managed local runtimes | [LLM integration](llm-integration.md) |
+| MCP service boundary and remote deployment | [MCP clause server](mcp-clause-server.md) |
+| Runtime processes and trust boundaries | [Runtime and deployment](runtime-and-deployment.md) |
+| Doorstop family projection | [Doorstop document hierarchy](doorstop-document-hierarchy.md) |
+| Methods and techniques extraction | [Methods and techniques](methods-and-techniques.md) |
 | Publication and licensed-content boundaries | [Security and copyright](security-and-copyright.md) |
-| Evaluation and external model access | [MCP clause server](mcp-clause-server.md) |
 
-## Design records and visual material
+## Current architectural baseline
 
-- [Architecture Decision Record index](adr/README.md) — all ADRs grouped by architectural concern.
-- [Diagram catalog](diagrams/README.md) — all SVG diagrams with links to editable draw.io sources.
+The canonical domain aggregate is `EngineeringDocument`, composed of structured `Clause` objects. A clause owns structured content blocks, source evidence, a multi-dimensional `StructuralProfile`, optional semantic classification, annotations, and relations. External representations such as Docling JSON, AtlasData, Markdown, and Doorstop are adapters or projections; none is the internal source of truth.
 
-## Architectural goals
+The application layer is organized around use cases and explicit ports. Important subsystems are workflow orchestration, normalization, alignment, document construction, publication, generic evaluation, and semantic qualification. The CLI is the primary composition root. MCP is an additional read-only inbound adapter. Filesystem, Docling, AtlasData, Markdown, Doorstop, LLM, and MCP integrations live in the adapter layer.
 
-- keep the domain model independent of PDF, AtlasData, Markdown, and Doorstop;
-- separate source extraction from semantic normalization and alignment;
-- preserve evidence and lineage across every transformation;
-- make uncertain decisions reviewable instead of hiding them;
-- enforce public, local, and private content boundaries;
-- support single-part and composed multi-part standards;
-- keep transformations deterministic unless an explicit extension says otherwise;
-- expose semantic evaluation through application ports before adding protocol adapters;
-- keep protected corpus content local and qualify remote access explicitly.
+The intended dependency direction is:
+
+```text
+CLI / MCP / future inbound adapters
+                |
+                v
+       application use cases
+                |
+                v
+          domain model
+
+outbound adapters implement application ports
+```
+
+## Architectural invariants
+
+- Domain code does not import application, CLI, persistence, Docling, Doorstop, or protocol packages.
+- Application services receive infrastructure through ports rather than constructing adapters.
+- The CLI and process launchers are composition roots.
+- Every persisted stage has an explicit contract and deterministic identity where practical.
+- Human review is a first-class gate, not an implicit correction inside adapters.
+- Protected standards and evaluation corpora remain below `local/` or another explicitly configured private root.
+- LLM output is proposal data until it passes qualification or human review.
+- Relationship extraction extends the canonical model; it does not replace source evidence.
+
+## Design records and diagrams
+
+- [Architecture Decision Records](adr/README.md)
+- [Diagram catalog](diagrams/README.md)
+- [Architecture principles](principles.md)
 
 ## Related documentation
 
-- [Core user concepts](../user-guide/concepts.md)
+- [Core concepts](../user-guide/concepts.md)
 - [Workspace guide](../user-guide/workspace.md)
-- [Artifact format reference](../reference/artifact-formats.md)
+- [Artifact formats](../reference/artifact-formats.md)
 - [Developer guide](../development/README.md)
 - [Documentation home](../README.md)
-
-
-## Codex client integration
-
-Codex consumes the client-neutral MCP adapter through a restricted, token-free
-configuration profile. See [ADR 0043](adr/0043-integrate-codex-as-a-restricted-mcp-client.md).

@@ -1,4 +1,4 @@
-i# Contributing to Standards Atlas
+# Contributing to Standards Atlas
 
 Thank you for contributing to Standards Atlas.
 
@@ -40,7 +40,7 @@ The project uses **uv** for dependency management.
 Install the development environment:
 
 ```bash
-uv sync
+uv sync --dev
 ```
 
 Run the command-line interface:
@@ -55,56 +55,16 @@ Run all tests:
 uv run pytest
 ```
 
-## Project Structure
+## Project structure
 
-```text
-src/
-    standards_atlas/
-        domain/
-        application/
-        adapters/
+The source tree follows the documented architecture rather than treating external formats as the core model. Start with the [project layout](docs/development/project-layout.md), then review [ports and adapters](docs/architecture/ports-and-adapters.md) and the [domain model](docs/architecture/domain-model.md).
 
-tests/
+The documentation entry points are:
 
-docs/
-    architecture/
-        adr/
-```
-
-### Domain
-
-The `domain` package contains technology-independent engineering concepts.
-
-Examples include:
-
-* Standard
-* Clause
-* Requirement
-* Concept
-* Relationship
-* Evidence
-
-The domain model must not depend on Doorstop, BASIL, Markdown, or AI libraries.
-
-### Application
-
-The `application` package contains workflows and orchestration.
-
-It coordinates domain objects but should contain very little business logic.
-
-### Adapters
-
-Adapters translate between the internal domain model and external systems.
-
-Examples include:
-
-* Atlas Data
-* Doorstop
-* BASIL
-* Markdown
-* AI services
-
-Adapters should never contain engineering knowledge that belongs in the domain model.
+- [documentation home](docs/README.md);
+- [development guide](docs/development/README.md);
+- [architecture guide](docs/architecture/README.md);
+- [reference](docs/reference/README.md).
 
 ## Testing
 

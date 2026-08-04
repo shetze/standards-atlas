@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450" viewBox="0 0 1200 450">
+<style>text{font-family:Arial,sans-serif;fill:#1f2937}.title{font-size:28px;font-weight:700}.head{font-size:19px;font-weight:700}.item{font-size:16px}.box{fill:#fff;stroke:#374151;stroke-width:2}.group{fill:#f3f4f6;stroke:#6b7280;stroke-width:2}.arrow{stroke:#374151;stroke-width:2;marker-end:url(#a)}</style>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#374151"/></marker></defs>
+<text x="40" y="45" class="title">Standards Atlas component model</text>
+<rect x="40" y="80" width="260" height="241" rx="12" class="group"/>
+<text x="55" y="112" class="head">Inbound</text>
+<rect x="55" y="128" width="230" height="44" rx="7" class="box"/>
+<text x="68" y="156" class="item">CLI</text>
+<rect x="55" y="190" width="230" height="44" rx="7" class="box"/>
+<text x="68" y="218" class="item">MCP server</text>
+<rect x="55" y="252" width="230" height="44" rx="7" class="box"/>
+<text x="68" y="280" class="item">Future APIs</text>
+<rect x="320" y="80" width="260" height="303" rx="12" class="group"/>
+<text x="335" y="112" class="head">Application</text>
+<rect x="335" y="128" width="230" height="44" rx="7" class="box"/>
+<text x="348" y="156" class="item">Workflow</text>
+<rect x="335" y="190" width="230" height="44" rx="7" class="box"/>
+<text x="348" y="218" class="item">Normalization &amp; alignment</text>
+<rect x="335" y="252" width="230" height="44" rx="7" class="box"/>
+<text x="348" y="280" class="item">Publication</text>
+<rect x="335" y="314" width="230" height="44" rx="7" class="box"/>
+<text x="348" y="342" class="item">Evaluation &amp; qualification</text>
+<rect x="600" y="80" width="260" height="303" rx="12" class="group"/>
+<text x="615" y="112" class="head">Domain</text>
+<rect x="615" y="128" width="230" height="44" rx="7" class="box"/>
+<text x="628" y="156" class="item">EngineeringDocument</text>
+<rect x="615" y="190" width="230" height="44" rx="7" class="box"/>
+<text x="628" y="218" class="item">Clause &amp; content</text>
+<rect x="615" y="252" width="230" height="44" rx="7" class="box"/>
+<text x="628" y="280" class="item">Profiles &amp; classifications</text>
+<rect x="615" y="314" width="230" height="44" rx="7" class="box"/>
+<text x="628" y="342" class="item">Evidence, annotations, relations</text>
+<rect x="880" y="80" width="260" height="303" rx="12" class="group"/>
+<text x="895" y="112" class="head">Outbound</text>
+<rect x="895" y="128" width="230" height="44" rx="7" class="box"/>
+<text x="908" y="156" class="item">Filesystem &amp; AtlasData</text>
+<rect x="895" y="190" width="230" height="44" rx="7" class="box"/>
+<text x="908" y="218" class="item">Docling</text>
+<rect x="895" y="252" width="230" height="44" rx="7" class="box"/>
+<text x="908" y="280" class="item">Markdown &amp; Doorstop</text>
+<rect x="895" y="314" width="230" height="44" rx="7" class="box"/>
+<text x="908" y="342" class="item">LLM runtimes</text>
+<line x1="304" y1="200.5" x2="314" y2="200.5" class="arrow"/>
+<line x1="584" y1="231.5" x2="594" y2="231.5" class="arrow"/>
+<line x1="864" y1="231.5" x2="874" y2="231.5" class="arrow"/>
+</svg>

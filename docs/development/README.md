@@ -27,4 +27,12 @@ uv run ruff check .
 uv run standards-atlas --help
 ```
 
+
+## Contributor entry points
+
+- [Contributing guidelines](../../CONTRIBUTING.md)
+- [Architecture principles](../architecture/principles.md)
+- [CLI reference](../reference/cli-reference.md)
+- [Project direction](../roadmap/README.md)
+
 [Back to documentation home](../README.md)
