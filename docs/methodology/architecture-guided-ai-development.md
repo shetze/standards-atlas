@@ -1,37 +1,46 @@
-# Architecture-Guided AI Development
+# Architecture-guided AI development
 
 ## Scope
 
-This methodology documents how *standards-atlas* is developed.
-
-It is intentionally separated from the architecture of the product itself.
+This methodology describes how Standards Atlas is developed. It does not define the runtime architecture of the product itself.
 
 ## Core principle
 
-The product is centred around **Knowledge Domains**.
-AI assists the engineering process but does not replace architectural decision
-making.
+Architecture and explicit domain contracts guide implementation. AI accelerates analysis and construction, but does not replace engineering authority or evidence-based acceptance.
 
 ## Human responsibilities
 
-- vision
-- architecture
-- domain model
-- acceptance
+Human maintainers retain responsibility for:
+
+- product vision and priorities;
+- architecture and domain semantics;
+- acceptance criteria and risk decisions;
+- review of generated code, tests, and documentation;
+- promotion of experimental results into maintained product behavior.
 
 ## AI responsibilities
 
-- implementation proposals
-- reviews
-- refactorings
-- documentation
-- tests
+AI may support:
+
+- architecture and implementation proposals;
+- code and documentation reviews;
+- vertical-slice implementation;
+- refactoring and migration work;
+- test design and failure analysis;
+- documentation and diagram maintenance.
+
+AI output remains a proposal until it has passed the same review and verification expected of human-authored changes.
 
 ## Engineering principles
 
-- ADR-first
-- Vertical slices
-- Continuous refactoring
-- Context engineering
-- Documentation as code
-- Human-in-the-loop
+- Architecture before implementation.
+- ADRs for durable decisions.
+- Small vertical slices instead of disconnected layer work.
+- Continuous refactoring toward explicit boundaries.
+- Documentation and tests evolve with behavior.
+- Context is curated rather than accumulated without structure.
+- Human-in-the-loop review is retained where evidence or semantics are uncertain.
+
+## Working sequence
+
+The repository-level sequence is defined in the [development workflow](../development/development-workflow.md). Methodology documents explain why those steps matter; they do not duplicate command-level contribution instructions.

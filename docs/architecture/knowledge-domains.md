@@ -1,44 +1,89 @@
 # Knowledge Domains
 
-## Historical context
+## Purpose
 
-The first implemented use case focused on Functional Safety standards and used
-Doorstop as the first publication adapter. This historical origin explains many
-implementation decisions but does not constrain the long-term architecture.
+Knowledge Domains classify engineering knowledge independently from source-document families and publication technologies. They provide the domain vocabulary used to organize clauses, taxonomies, relationships, evaluation corpora, and future MCP capabilities.
 
-## Current state
+A Knowledge Domain is not a directory format, a Doorstop hierarchy, or an exporter configuration. Those are projections or operational selections built from the catalog and canonical document model.
 
-Knowledge Domains are the canonical organisation of extracted engineering
-knowledge. They are intentionally independent from publication technologies.
+## Current model
 
-A Knowledge Domain may contain:
+Knowledge Domains are declared in `catalogs/standards.yaml` and may form a hierarchy through their optional `parent` relation. Standard families, lineages, and profiles can reference one or more domains.
 
-- clause identities
-- structural profiles
-- references
-- relationship information
-- travelogues
-- provenance
-- review metadata
+Examples from the current catalog include:
 
-## Adapters
+- Safety
+- Functional Safety
+- Software Engineering
+- Risk Management
+- Cybersecurity
+- Information Security
+- Software Testing
+- Standardization
+- Technical Writing
 
-Publication and integration adapters project a Knowledge Domain into specific
-ecosystems.
+A document can belong to several Knowledge Domains. This is intentional: a railway software standard may contribute simultaneously to Functional Safety, Software Engineering, and a railway industry-sector classification.
 
-Initially implemented:
+## Distinction from related concepts
 
-- Doorstop
+| Concept | Responsibility |
+|---|---|
+| **Knowledge Domain** | Classifies the engineering subject matter and owns domain-specific taxonomies |
+| **Industry sector** | Classifies the application context, such as railway or automotive |
+| **Document family** | Groups one standalone document or a multipart standard and its physical sources |
+| **Structural taxonomy** | Defines versioned categories used by `StructuralProfile` for a document family or Knowledge Domain |
+| **Profile** | Selects catalog families for a workflow use case |
+| **Doorstop hierarchy** | Defines a deterministic Doorstop publication tree |
+| **Exporter** | Projects canonical documents into Markdown, Doorstop, or another target format |
 
-Planned:
+These concepts can refer to one another but must not be collapsed into a single hierarchy.
 
-- BASIL
-- Markdown
-- Graph-oriented tooling (e.g. Tulip)
+## Canonical knowledge carried by clauses
 
-Adapters must not define the canonical information model.
+Within an `EngineeringDocument`, clauses can carry:
 
-## Travelogues
+- stable identity and hierarchy;
+- structured content and source evidence;
+- multidimensional structural profiles;
+- multidimensional semantic classifications;
+- normative or informative status;
+- internal and external relations;
+- provenance and transformation lineage.
 
-Travelogues are first-class artefacts of a Knowledge Domain and should be
-published together with generated adapter artefacts where supported.
+Review files, evaluation runs, travelogues, and publication artefacts are related resources, but they are not embedded wholesale into the Knowledge Domain classification itself.
+
+## Taxonomy ownership
+
+Domain-specific categories are open, namespaced, and versioned. Functional Safety therefore does not become the implicit template for Cybersecurity or other domains. A clause may carry categories from multiple domain taxonomies when a cross-domain interpretation is intentional.
+
+The small canonical section vocabulary remains separate from:
+
+- document-family categories, such as ISO/IEC drafting structure, Polarion exports, or Railway TSI structure;
+- Knowledge-Domain categories, such as Functional Safety lifecycle functions;
+- linguistic and process-oriented semantic functions.
+
+See [Structural classification](structural-classification.md) and [Domain model](domain-model.md).
+
+## Publication and integration adapters
+
+The canonical model is independent from publication technology. Implemented projections include:
+
+- Markdown export;
+- Doorstop document export and hierarchy publication.
+
+Graph-oriented tooling, BASIL integration, and additional document classes remain roadmap concerns. An adapter may omit information that its target format cannot represent, but it must not redefine the canonical model.
+
+## Travelogues and curated relationships
+
+Travelogues are curated explanatory artefacts associated with the knowledge base. They complement generated document projections but are not clause content and are not automatically part of every exporter output.
+
+Document-level relationships and lineages can be curated in the catalog. Clause-level references and semantic relations are represented in the canonical document model and can later support cross-standard relationship mapping.
+
+## Architectural consequences
+
+- Knowledge Domains stay stable when publication adapters change.
+- New domains can add taxonomies without extending a central enum.
+- Workflow profiles and Doorstop hierarchies remain explicit projections rather than alternate sources of truth.
+- MCP capabilities can grow around the knowledge represented in domains without coupling the domain model to a particular client or transport.
+
+Related decisions: [ADR 0050](adr/0050-model-structural-profiles-as-independent-taxonomy-dimensions.md) and [ADR 0051](adr/0051-multidimensional-semantic-classification.md).

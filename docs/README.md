@@ -21,7 +21,7 @@ The project follows four complementary documentation modes:
 
 - **Getting started and tutorials** teach through ordered learning paths.
 - **User guides** explain how to complete concrete engineering tasks.
-- **Architecture and development guides** explain design, constraints, and extension points.
+- **Architecture and development guides** explain design, constraints, contribution workflows, and extension points.
 - **Reference material** provides concise lookup information without repeating rationale.
 
 ## Recommended paths
@@ -42,8 +42,10 @@ The project follows four complementary documentation modes:
 3. [Domain model](architecture/domain-model.md)
 4. [Ports and adapters](architecture/ports-and-adapters.md)
 5. [Persistence and lineage](architecture/persistence-and-lineage.md)
-6. [Workflow orchestration](architecture/workflow-orchestration.md)
-7. [ADR index](architecture/adr/README.md)
+6. [Evolution and compatibility](architecture/evolution-and-compatibility.md)
+7. [Workflow orchestration](architecture/workflow-orchestration.md)
+8. [Relationship-mapping target architecture](architecture/relationship-mapping.md)
+9. [ADR index](architecture/adr/README.md)
 
 ### Evaluation and model-assisted review
 
@@ -62,12 +64,25 @@ The project follows four complementary documentation modes:
 4. [Testing and qualification](development/testing-and-qualification.md)
 5. [Architecture principles](architecture/principles.md)
 
+## Documentation boundaries
+
+Each maintained fact has one canonical home. Audience-specific pages should link to that source rather than copying it. Historical implementations are kept under [History](history/) and must state that they are not current product references. Documentation authoring rules are defined in the [documentation style guide](development/documentation-style-guide.md).
+
 ## Maintainer resources
 
 - [Diagram catalog](architecture/diagrams/README.md)
 - [Security and copyright boundaries](architecture/security-and-copyright.md)
+- [Evolution and compatibility policy](architecture/evolution-and-compatibility.md)
+- [Release and versioning](development/release-and-versioning.md)
 - [Artifact formats](reference/artifact-formats.md)
 - [Glossary](reference/glossary.md)
 - [Roadmap and next steps](roadmap/README.md)
+- [Engineering methodology](methodology/README.md)
+- [Documentation style guide](development/documentation-style-guide.md)
 
 [Back to the project README](../README.md)
+
+## Historical rationale
+
+- [Evolution of the semantic evaluation model](history/semantic-evaluation-model-evolution.md)
+- [Legacy relationship-mapping prototype](history/legacy-relationship-mapping.md)

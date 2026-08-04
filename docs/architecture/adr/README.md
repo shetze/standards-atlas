@@ -12,7 +12,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0004](0004-adopt-transformation-pipeline.md) | Adopt a transformation pipeline |
 | [0005](0005-separate-public-and-local-content.md) | Separate public and local document content |
 | [0006](0006-engineeringdocument-as-canonical-repesenation.md) | Use `EngineeringDocument` as the canonical intermediate representation |
-| [0007](0007-structured-clause-content-and-private-source-provenance.md) | Preserve structured clause content and private source provenance |
+| [0007](0007-structured-clause-content-and-private-source-provenance.md) | Preserve structured clause content and private source provenance; legacy `Clause.text` migration provision superseded |
 
 ## Extraction and normalized document evidence
 
@@ -44,7 +44,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | ADR | Decision |
 |---|---|
 | [0018](0018-enrich-engineering-documents-from-aligned-content-ranges.md) | Enrich engineering documents from aligned content ranges |
-| [0020](0020-preserve-heading-semantics-as-legacy-atlasdata-types.md) | Preserve heading semantics as legacy AtlasData types |
+| [0020](0020-preserve-heading-semantics-as-legacy-atlasdata-types.md) | Preserve heading semantics as legacy AtlasData types; semantic-role claims superseded by ADR 0050/0051 |
 | [0022](0022-extensible-semantic-role-classification.md) | Use extensible semantic-role classification |
 | [0033](0033-engineering-document-construction-contract.md) | Establish the engineering-document construction contract |
 | [0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md) | Model structural profiles as independent taxonomy dimensions |
@@ -94,6 +94,14 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | ADR | Decision |
 |---|---|
 | [0053](0053-structural-application-refactoring.md) | Refactor CLI, workflow, evaluation, and normalization application structure |
+
+## Decision lifecycle
+
+ADRs are historical records. A later decision does not cause an earlier record to be
+rewritten as though the earlier context never existed. Instead, the status and a
+supersession or amendment note identify which provisions still describe the current
+architecture. The index summaries call out partial supersession where a record contains
+both active and obsolete provisions.
 
 ## Reading guidance
 

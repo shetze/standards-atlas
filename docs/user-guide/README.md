@@ -34,3 +34,8 @@ This guide describes the supported user workflows for turning private standards 
 | Diagnose common failures | [Troubleshooting](troubleshooting.md) |
 
 The [CLI reference](../reference/cli-reference.md) lists command groups and options. Architecture rationale belongs in [Architecture](../architecture/README.md), not in this task-oriented guide.
+
+
+## Scope of this guide
+
+The user guide is task-oriented. End-to-end learning paths belong in [Tutorials](../tutorials/README.md), exact option and format definitions belong in [Reference](../reference/README.md), and design rationale belongs in [Architecture](../architecture/README.md).

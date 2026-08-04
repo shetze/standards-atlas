@@ -17,9 +17,11 @@ The overview is deliberately compact. It shows the governing dependency and data
 | Extraction, normalization, alignment, and publication | [Processing pipeline](processing-pipeline.md) |
 | Planning, execution, recovery, and review gates | [Workflow orchestration](workflow-orchestration.md) |
 | Persisted contracts, invalidation, and provenance | [Persistence and lineage](persistence-and-lineage.md) |
+| Compatibility, migration, regeneration, and deprecation | [Evolution and compatibility](evolution-and-compatibility.md) |
 | Generic evaluation and semantic qualification | [Evaluation architecture](evaluation-services.md) |
 | Structural profiles and semantic classification | [Structural classification](structural-classification.md) |
 | LLM gateways and managed local runtimes | [LLM integration](llm-integration.md) |
+| Target architecture for cross-document relationships | [Relationship mapping](relationship-mapping.md) |
 | MCP service boundary and remote deployment | [MCP clause server](mcp-clause-server.md) |
 | Runtime processes and trust boundaries | [Runtime and deployment](runtime-and-deployment.md) |
 | Doorstop family projection | [Doorstop document hierarchy](doorstop-document-hierarchy.md) |

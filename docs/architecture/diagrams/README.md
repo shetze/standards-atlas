@@ -29,6 +29,7 @@ The two broad UML baselines are:
 | LLM integration | [SVG](svg/llm-integration.svg) | [draw.io](drawio/llm-integration.drawio) |
 | MCP architecture | [SVG](svg/mcp-architecture.svg) | [draw.io](drawio/mcp-architecture.drawio) |
 | Runtime and deployment | [SVG](svg/runtime-deployment.svg) | [draw.io](drawio/runtime-deployment.drawio) |
+| Relationship-mapping target | [SVG](svg/relationship-mapping-target.svg) | [draw.io](drawio/relationship-mapping-target.drawio) |
 
 ## Specialized and historical diagrams
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted with a superseded migration provision
 
 ## Date
 
@@ -58,10 +58,11 @@ does not import or expose Docling classes.
 A stable `plain_text` projection is derived from the structured blocks for
 adapters that currently require text, including Doorstop.
 
-The legacy `Clause.text` constructor and persisted field remain supported as an
-input migration path. When structured content is absent, legacy text is
-converted into one deterministic `TextBlock`. The legacy field is excluded from
-new serialization so that content is not stored twice.
+At the time of this decision, the legacy `Clause.text` constructor and persisted
+field were retained as a temporary input migration path. That migration provision
+has since been removed: `Clause.content` is now the only clause-content field and
+old persisted artefacts or fixtures must be regenerated or migrated deliberately.
+The structured-content and provenance decision itself remains valid.
 
 Persisted engineering documents use a versioned JSON envelope:
 
@@ -140,3 +141,9 @@ application services in later work units.
 
 This ADR refines ADR 0006 by defining how heterogeneous, protected document
 content and its provenance are represented inside the canonical model.
+
+## Amendment
+
+The temporary `Clause.text` compatibility path described by the original decision is no
+longer part of the implemented architecture. This amendment records the current state
+without rewriting the historical context that motivated structured clause content.

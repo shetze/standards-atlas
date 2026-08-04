@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1460" height="540" viewBox="0 0 1460 540" role="img" aria-labelledby="title desc">
+<title id="title">Relationship-mapping target architecture</title><desc id="desc">Canonical clauses flow through candidate retrieval, assessment, review, accepted relationship data, and publication, with evidence and evaluation supporting the stages.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+<style>text{font-family:Arial,sans-serif;fill:#222}.box{fill:#fff;stroke:#555;stroke-width:2}.support{fill:#fafafa;stroke:#777;stroke-width:2;stroke-dasharray:8 5}.edge{stroke:#444;stroke-width:2;fill:none;marker-end:url(#arrow)}.dashed{stroke-dasharray:8 5}.h{font-size:17px;font-weight:bold}.t{font-size:14px}</style>
+<g color="#444">
+<rect class="box" x="20" y="85" rx="12" width="225" height="80"/><text class="h" x="132" y="116" text-anchor="middle">Canonical clauses</text><text class="t" x="132" y="141" text-anchor="middle">and resolved references</text>
+<rect class="box" x="305" y="85" rx="12" width="225" height="80"/><text class="h" x="417" y="116" text-anchor="middle">Candidate retrieval</text><text class="t" x="417" y="141" text-anchor="middle">lexical · structural · embedding</text>
+<rect class="box" x="590" y="85" rx="12" width="225" height="80"/><text class="h" x="702" y="116" text-anchor="middle">Assessment</text><text class="t" x="702" y="141" text-anchor="middle">rules · models · LLM</text>
+<rect class="box" x="875" y="85" rx="12" width="225" height="80"/><text class="h" x="987" y="116" text-anchor="middle">Review</text><text class="t" x="987" y="141" text-anchor="middle">and adjudication</text>
+<rect class="box" x="1160" y="85" rx="12" width="260" height="80"/><text class="h" x="1290" y="116" text-anchor="middle">Accepted relationship data</text><text class="t" x="1290" y="141" text-anchor="middle">canonical reviewed assertions</text>
+<path class="edge" d="M245 125 H305"/><path class="edge" d="M530 125 H590"/><path class="edge" d="M815 125 H875"/><path class="edge" d="M1100 125 H1160"/>
+<rect class="support" x="390" y="255" rx="12" width="620" height="90"/><text class="h" x="700" y="286" text-anchor="middle">Evidence and lineage</text><text class="t" x="700" y="313" text-anchor="middle">source references · ranks · model provenance · reviewer rationale</text>
+<path class="edge dashed" d="M417 165 V255"/><path class="edge dashed" d="M702 165 V255"/><path class="edge dashed" d="M987 165 V255"/>
+<rect class="box" x="1160" y="265" rx="12" width="260" height="80"/><text class="h" x="1290" y="296" text-anchor="middle">Publication and query</text><text class="t" x="1290" y="321" text-anchor="middle">Markdown · MCP · graph</text><path class="edge" d="M1290 165 V265"/>
+<rect class="support" x="590" y="425" rx="12" width="225" height="75"/><text class="h" x="702" y="454" text-anchor="middle">Evaluation</text><text class="t" x="702" y="479" text-anchor="middle">corpora and qualification</text><path class="edge dashed" d="M650 425 V365 H417 V165"/><path class="edge dashed" d="M755 425 V365 H702 V165"/>
+</g></svg>

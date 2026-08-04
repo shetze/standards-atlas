@@ -1,0 +1,29 @@
+<mxfile host="app.diagrams.net" modified="2026-08-04T09:00:00.000Z" agent="ChatGPT" version="24.7.17">
+  <diagram id="relationship-mapping-target" name="Relationship Mapping Target">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+      <root><mxCell id="0"/><mxCell id="1" parent="0"/>
+        <mxCell id="2" value="Canonical clauses and resolved references" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="40" y="110" width="230" height="70" as="geometry"/></mxCell>
+        <mxCell id="3" value="Candidate retrieval
+lexical · structural · embedding" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="330" y="110" width="230" height="70" as="geometry"/></mxCell>
+        <mxCell id="4" value="Relationship assessment
+rules · models · LLM" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="620" y="110" width="230" height="70" as="geometry"/></mxCell>
+        <mxCell id="5" value="Review and adjudication" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="910" y="110" width="230" height="70" as="geometry"/></mxCell>
+        <mxCell id="6" value="Accepted relationship data" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1200" y="110" width="230" height="70" as="geometry"/></mxCell>
+        <mxCell id="7" value="Evidence and lineage
+source references · ranks · model provenance · reviewer rationale" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1"><mxGeometry x="475" y="280" width="520" height="80" as="geometry"/></mxCell>
+        <mxCell id="8" value="Markdown / MCP / graph projections" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1200" y="280" width="230" height="70" as="geometry"/></mxCell>
+        <mxCell id="9" value="Evaluation corpora and qualification" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;" vertex="1" parent="1"><mxGeometry x="620" y="430" width="230" height="70" as="geometry"/></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="2" target="3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="3" target="4"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="4" target="5"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="5" target="6"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="6" target="8"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="3" target="7"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="4" target="7"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="5" target="7"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="9" target="3"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=open;" edge="1" parent="1" source="9" target="4"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

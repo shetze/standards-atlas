@@ -7,8 +7,13 @@ This section explains how the Standards Atlas codebase maps to the documented ar
 | Topic | Document |
 |---|---|
 | Packages, layers, and repository layout | [Project layout](project-layout.md) |
+| Development sequence and architectural guardrails | [Development workflow](development-workflow.md) |
 | Add importers, exporters, classifiers, and services | [Extending Standards Atlas](extending.md) |
 | Unit, integration, regression, and golden-corpus testing | [Testing and qualification](testing-and-qualification.md) |
+| Local model runtime development | [Local LLM](local-llm.md) |
+| Docling adapter implementation | [Docling adapter](docling-adapter.md) |
+| Documentation ownership and style | [Documentation style guide](documentation-style-guide.md) |
+| Release preparation and contract versioning | [Release and versioning](release-and-versioning.md) |
 
 ## Essential companion references
 
@@ -27,11 +32,11 @@ uv run ruff check .
 uv run standards-atlas --help
 ```
 
-
 ## Contributor entry points
 
 - [Contributing guidelines](../../CONTRIBUTING.md)
 - [Architecture principles](../architecture/principles.md)
+- [Architecture-guided AI development](../methodology/architecture-guided-ai-development.md)
 - [CLI reference](../reference/cli-reference.md)
 - [Project direction](../roadmap/README.md)
 

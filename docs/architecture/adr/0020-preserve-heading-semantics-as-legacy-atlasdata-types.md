@@ -2,12 +2,12 @@
 
 ## Status
 
-Accepted
+Partially superseded by ADR 0050 and ADR 0051
 
 ## Context
 
-The canonical domain model represents the meaning of a clause through one or
-more `SemanticRole` values. The compact AtlasData `structure` syntax predates
+At the time of this decision, the canonical domain model represented clause
+meaning through one or more `SemanticRole` values. The compact AtlasData `structure` syntax predates
 that model and encodes a small set of clause types through prefixes such as
 `s`, `t`, `o`, and `r`.
 
@@ -40,9 +40,10 @@ contains words such as `scope`, `objective`, or `requirement`. This inherited
 term classification takes precedence over keyword classification.
 
 No additional semantic categories are added to the AtlasData structure syntax.
-The imported `EngineeringDocument` continues to use `Clause.semantic_roles` as
-the canonical representation. Existing AtlasData prefixes are compatibility
-metadata from which initial semantic roles can be derived.
+The preserved prefixes remain compatibility metadata for AtlasData import and
+publication. They are no longer mapped to `Clause.semantic_roles`: ADR 0050 and
+ADR 0051 replaced the flat role model with independent structural and semantic
+dimensions.
 
 ## Consequences
 
@@ -56,3 +57,10 @@ metadata from which initial semantic roles can be derived.
   new structure prefixes and can be represented solely in the domain model.
 - Heading-based classification remains conservative and can later be replaced
   or supplemented by a dedicated semantic classification service.
+
+## Supersession note
+
+The heading-preservation and AtlasData-compatibility decisions remain active. The claims
+that `SemanticRole` and `Clause.semantic_roles` are canonical were superseded by
+[ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md) and
+[ADR 0051](0051-multidimensional-semantic-classification.md).

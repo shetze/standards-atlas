@@ -2,6 +2,13 @@
 
 ### Changed
 
+- Define compatibility, migration, regeneration, deprecation, and release policies for maintained contracts.
+- Extend security documentation with assets, actors, trust boundaries, threats, and mandatory controls.
+- Define the staged target architecture for reviewed cross-domain relationship mapping.
+- Establish documentation lifecycle, ownership, review-trigger, and removal rules.
+- Consolidate the catalog format and getting-started documentation into one canonical reference each.
+- Archive the semantic-model next-steps document as historical rationale after ADR 0050 and ADR 0051 implementation.
+- Mark superseded ADR provisions explicitly and update the Knowledge Domain architecture description.
 - Split the CLI composition root into focused command modules.
 - Separate generic evaluation from semantic qualification services.
 - Split workflow planning, execution, and recovery responsibilities.

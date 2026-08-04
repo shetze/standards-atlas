@@ -1,12 +1,14 @@
 # Getting started
 
+This is the canonical first-use path for Standards Atlas. The user guide links here rather than maintaining a second installation procedure.
+
 ## Prerequisites
 
 - Linux development environment
 - Git
 - `uv`
-- Python version selected by `.python-version`
-- optional: Docling dependencies for PDF conversion
+- the Python version selected by `.python-version`
+- access to source PDFs that you are permitted to process
 - optional: RamaLama and a supported GPU/runtime for local model evaluation
 
 ## Install the project
@@ -17,51 +19,88 @@ cd standards-atlas
 uv sync --all-extras --dev
 ```
 
-Check the command tree:
+Check the command tree and installed version:
 
 ```bash
+uv run standards-atlas --version
 uv run standards-atlas --help
 ```
 
-## Validate the shipped catalog
+## Validate the catalog
 
 ```bash
 uv run standards-atlas catalog validate catalogs/standards.yaml
 ```
 
-## Plan before executing
+The catalog defines source documents, classifications, workflow selections, relationships, and publication settings. See the [catalog reference](../reference/catalog-format.md) before making structural changes.
 
-Select exactly one of `--family`, `--profile`, `--all`, or use a configured `--hierarchy`:
+## Inspect a workflow before running it
+
+Select exactly one of `--family`, `--profile`, `--all`, or a configured `--hierarchy`:
 
 ```bash
-uv run standards-atlas workflow plan   --catalog catalogs/standards.yaml   --family EN50716
+uv run standards-atlas workflow plan \
+  --catalog catalogs/standards.yaml \
+  --family EN50716
 ```
 
-Planning is read-only. It shows every stage and identifies manual review gates.
+Planning is read-only. It lists deterministic stages and marks manual review gates.
+
+Other selections include:
+
+```bash
+uv run standards-atlas workflow plan --catalog catalogs/standards.yaml --profile railway
+uv run standards-atlas workflow plan --catalog catalogs/standards.yaml --hierarchy functional-safety
+uv run standards-atlas workflow plan --catalog catalogs/standards.yaml --all
+```
 
 ## Run a workflow
 
 ```bash
-uv run standards-atlas workflow run   --catalog catalogs/standards.yaml   --family EN50716
+uv run standards-atlas workflow run \
+  --catalog catalogs/standards.yaml \
+  --family EN50716
 ```
 
-A run may pause intentionally for alignment or AtlasData review. Complete the requested review, then continue:
+A run may pause intentionally for alignment or AtlasData review. Complete the generated review, then continue:
 
 ```bash
-uv run standards-atlas workflow run   --catalog catalogs/standards.yaml   --family EN50716   --continue-after-review
+uv run standards-atlas workflow run \
+  --catalog catalogs/standards.yaml \
+  --family EN50716 \
+  --continue-after-review
 ```
 
-To rebuild derived stages while reusing Docling output:
+Private source-derived artefacts, including Docling conversion output, belong below `.atlas/` and must not be committed to a public repository.
+
+## Regeneration options
+
+Use `--force` to regenerate all reproducible artefacts, including Docling output:
 
 ```bash
-uv run standards-atlas workflow run   --catalog catalogs/standards.yaml   --family EN50716   --overwrite   --keep docling
+uv run standards-atlas workflow run \
+  --catalog catalogs/standards.yaml \
+  --family EN50716 \
+  --force
 ```
 
-`--force` regenerates all reproducible artefacts, including Docling output. It is mutually exclusive with `--overwrite`.
+Use `--overwrite` to regenerate derived artefacts and `--keep` to retain selected stages. For example, reuse the existing Docling output:
+
+```bash
+uv run standards-atlas workflow run \
+  --catalog catalogs/standards.yaml \
+  --family EN50716 \
+  --overwrite \
+  --keep docling
+```
+
+`--force` and `--overwrite` are mutually exclusive. `--keep` requires `--overwrite` and may be repeated for multiple stages.
 
 ## Next steps
 
+- [Concepts](../user-guide/concepts.md)
 - [Document workflow](../user-guide/document-workflow.md)
+- [Catalogs and profiles](../user-guide/catalogs-and-profiles.md)
 - [Workspace](../user-guide/workspace.md)
 - [Exports](../user-guide/exports.md)
 - [Troubleshooting](../user-guide/troubleshooting.md)
