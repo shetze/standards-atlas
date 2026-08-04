@@ -10,8 +10,22 @@ statement_functions:
 - example
 - note
 - conformance_statement
+- objective
+- prerequisite
+- assumption
+process_functions:
+- objective
+- prerequisite
+- input
+- activity
+- decision
+- branch
+- sequence
+- output
+- completion_criterion
+- option
+- assumption
 applicability_functions:
-- scope_definition
 - applicability_condition
 - inclusion
 - exclusion

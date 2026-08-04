@@ -5,6 +5,7 @@ from standards_atlas.application.services.semantic_classifier import (
 from standards_atlas.domain.model import (
     DocumentStructure,
     NormativeStatus,
+    ProcessFunction,
     StatementFunction,
 )
 
@@ -69,3 +70,17 @@ def test_annex_status_is_inherited_from_context():
         )
     )
     assert result.classification.normative_status is NormativeStatus.INFORMATIVE
+
+
+def test_classifier_detects_process_semantics() -> None:
+    result = SemanticClassifier().classify_deterministically(
+        SemanticClassificationContext(
+            reference="6.4",
+            heading="Prerequisites",
+            text="Before the activity, the safety plan shall be available as an input.",
+        )
+    )
+
+    assert ProcessFunction.PREREQUISITE in result.classification.process_functions
+    assert ProcessFunction.SEQUENCE in result.classification.process_functions
+    assert ProcessFunction.INPUT in result.classification.process_functions

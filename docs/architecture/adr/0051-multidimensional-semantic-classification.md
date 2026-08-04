@@ -22,7 +22,7 @@ The former `SemanticRole` taxonomy mixed linguistic statement functions, documen
 
 Document structures are qualified by a document family. Domain functions are qualified by a KnowledgeDomain and taxonomy version. Annex position and normative status are represented separately. Relations distinguish their semantic kind from their internal or external scope.
 
-The former `semantic-role-classification` evaluation task becomes `statement-function-classification`. Version 2.0.0 of that task classifies three independent clause-level dimensions: linguistic statement function, scope/applicability function, and responsibility allocation. Structure, status, domain functions, and relation extraction remain separate evaluation concerns.
+The former `semantic-role-classification` evaluation task becomes `statement-function-classification`. Version 2.0.0 of that task classifies four independent clause-level dimensions: linguistic statement function, process-model function, semantic applicability, and responsibility allocation. Structure, status, domain functions, and relation extraction remain separate evaluation concerns.
 
 Resolved internal relations are rendered as Markdown links. Link generation uses relation targets rather than unverified textual pattern matching.
 
@@ -35,3 +35,15 @@ Persisted EngineeringDocument and evaluation artefacts using `semantic_roles` mu
 
 - ADR 0022: Extensible semantic-role classification
 - The temporary `Clause.semantic_roles` compatibility decision in ADR 0050
+
+
+## Process-oriented semantics
+
+Functional-safety standards describe lifecycle and process models as well as normative
+statements. `ProcessFunction` therefore captures objectives, prerequisites, inputs,
+activities, decisions, branches, sequences, outputs, completion criteria, options, and
+assumptions independently from the linguistic statement function.
+
+Structural membership in a Scope section is supplied by `StructuralProfile` and is not
+an LLM-predicted applicability function. Semantic applicability is limited to explicit
+inclusion, exclusion, exception, and conditional-application statements.

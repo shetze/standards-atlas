@@ -10,6 +10,7 @@ from standards_atlas.domain.model import (
     DocumentStructureClassification,
     DomainFunctionClassification,
     NormativeStatus,
+    ProcessFunction,
     SemanticClassification,
     StatementFunction,
 )
@@ -85,6 +86,9 @@ class SemanticClassifier:
         statement_functions = self._statement_functions(
             "\n".join(value for value in (context.heading, context.text) if value), evidence
         )
+        process_functions = self._process_functions(
+            "\n".join(value for value in (context.heading, context.text) if value), evidence
+        )
         domain_functions = self._domain_functions(context, heading, evidence)
         normative_status = self._normative_status(
             context, structure.category, statement_functions, evidence
@@ -93,6 +97,7 @@ class SemanticClassifier:
         return SemanticClassificationResult(
             classification=SemanticClassification(
                 statement_functions=statement_functions,
+                process_functions=process_functions,
                 document_structure=structure,
                 normative_status=normative_status,
                 domain_functions=domain_functions,
@@ -200,6 +205,27 @@ class SemanticClassifier:
             if re.search(pattern, text, re.I):
                 functions.append(function)
                 evidence.append(SemanticEvidence("modal_verb", function.value, 0.95))
+        return tuple(dict.fromkeys(functions))
+
+    @staticmethod
+    def _process_functions(text, evidence):
+        patterns = (
+            (ProcessFunction.OBJECTIVE, r"\b(objective|purpose|aim)\b"),
+            (ProcessFunction.PREREQUISITE, r"\b(before|prerequisite|shall be available)\b"),
+            (ProcessFunction.ASSUMPTION, r"\b(assume|assumed|assumption)\b"),
+            (ProcessFunction.INPUT, r"\binputs?\b"),
+            (ProcessFunction.OUTPUT, r"\b(outputs?|work products?|results?)\b"),
+            (ProcessFunction.DECISION, r"\b(decide|decision|determine whether)\b"),
+            (ProcessFunction.BRANCH, r"\b(if|unless|otherwise)\b"),
+            (ProcessFunction.SEQUENCE, r"\b(before|after|following|then|subsequently)\b"),
+            (ProcessFunction.OPTION, r"\b(option|alternative|either)\b"),
+            (ProcessFunction.COMPLETION_CRITERION, r"\b(completed?|completion|exit criteria)\b"),
+        )
+        functions = []
+        for function, pattern in patterns:
+            if re.search(pattern, text, re.I):
+                functions.append(function)
+                evidence.append(SemanticEvidence("process_signal", function.value, 0.8))
         return tuple(dict.fromkeys(functions))
 
     @staticmethod

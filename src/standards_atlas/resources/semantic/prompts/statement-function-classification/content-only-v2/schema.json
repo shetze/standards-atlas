@@ -5,6 +5,8 @@
   "required": [
     "statement_functions",
     "primary_function",
+    "process_functions",
+    "primary_process_function",
     "applicability_functions",
     "primary_applicability_function",
     "responsibility_functions",
@@ -28,7 +30,52 @@
           "rationale",
           "example",
           "note",
-          "conformance_statement"
+          "conformance_statement",
+          "objective",
+          "prerequisite",
+          "assumption"
+        ]
+      }
+    },
+    "process_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "objective",
+          "prerequisite",
+          "input",
+          "activity",
+          "decision",
+          "branch",
+          "sequence",
+          "output",
+          "completion_criterion",
+          "option",
+          "assumption"
+        ]
+      }
+    },
+    "applicability_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "applicability_condition",
+          "inclusion",
+          "exclusion",
+          "exception"
+        ]
+      }
+    },
+    "responsibility_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "responsibility_assignment",
+          "responsibility_exclusion",
+          "role_condition"
         ]
       }
     },
@@ -49,21 +96,31 @@
         "example",
         "note",
         "conformance_statement",
+        "objective",
+        "prerequisite",
+        "assumption",
         null
       ]
     },
-    "applicability_functions": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "scope_definition",
-          "applicability_condition",
-          "inclusion",
-          "exclusion",
-          "exception"
-        ]
-      }
+    "primary_process_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "objective",
+        "prerequisite",
+        "input",
+        "activity",
+        "decision",
+        "branch",
+        "sequence",
+        "output",
+        "completion_criterion",
+        "option",
+        "assumption",
+        null
+      ]
     },
     "primary_applicability_function": {
       "type": [
@@ -71,24 +128,12 @@
         "null"
       ],
       "enum": [
-        "scope_definition",
         "applicability_condition",
         "inclusion",
         "exclusion",
         "exception",
         null
       ]
-    },
-    "responsibility_functions": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "responsibility_assignment",
-          "responsibility_exclusion",
-          "role_condition"
-        ]
-      }
     },
     "primary_responsibility_function": {
       "type": [

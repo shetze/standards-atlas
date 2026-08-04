@@ -387,6 +387,8 @@ def _run_adaptive_interview(
     selection: dict[str, Any] = {
         "statement_functions": [],
         "primary_function": None,
+        "process_functions": [],
+        "primary_process_function": None,
         "applicability_functions": [],
         "primary_applicability_function": None,
         "responsibility_functions": [],
@@ -458,6 +460,9 @@ def _run_adaptive_interview(
         if question.dimension is InterviewDimension.STATEMENT_FUNCTION:
             selection["statement_functions"] = [label]
             selection["primary_function"] = label
+        elif question.dimension is InterviewDimension.PROCESS_FUNCTION:
+            selection["process_functions"] = [label]
+            selection["primary_process_function"] = label
         elif question.dimension is InterviewDimension.APPLICABILITY:
             selection["applicability_functions"] = [label]
             selection["primary_applicability_function"] = label
@@ -645,6 +650,7 @@ def _normalize_selection_payload(value: Any) -> dict[str, Any]:
             normalized_roles.insert(0, primary_function)
         normalized["statement_functions"] = normalized_roles
     for field, primary in (
+        ("process_functions", "primary_process_function"),
         ("applicability_functions", "primary_applicability_function"),
         ("responsibility_functions", "primary_responsibility_function"),
     ):

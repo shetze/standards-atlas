@@ -50,3 +50,48 @@ def test_planner_skips_structurally_deterministic_statement_function() -> None:
         question.dimension is not InterviewDimension.STATEMENT_FUNCTION
         for question in plan.questions
     )
+
+
+def test_scope_context_does_not_offer_scope_definition_as_applicability() -> None:
+    plan = AdaptiveInterviewPlanner().plan(
+        {
+            "content": {"text": "This part applies to software components."},
+            "context": {
+                "clause_type": "scope",
+                "canonical_section": "scope",
+            },
+        }
+    )
+
+    presence = next(
+        question for question in plan.questions if question.id == "applicability-presence"
+    )
+    from standards_atlas.application.semantic_qualification.adaptive_interview import (
+        follow_up_question,
+    )
+
+    subtype = follow_up_question(presence)
+    assert subtype is not None
+    assert "scope_definition" not in subtype.allowed_labels
+    assert set(subtype.allowed_labels) == {
+        "applicability_condition",
+        "inclusion",
+        "exclusion",
+        "exception",
+        "none",
+    }
+
+
+def test_planner_adds_process_question_for_process_signals() -> None:
+    plan = AdaptiveInterviewPlanner().plan(
+        {
+            "content": {"text": "Before verification, the safety plan shall be available."},
+            "context": {"clause_type": "requirement"},
+        }
+    )
+
+    question = next(
+        item for item in plan.questions if item.dimension is InterviewDimension.PROCESS_FUNCTION
+    )
+    assert "prerequisite" in question.allowed_labels
+    assert "sequence" in question.allowed_labels

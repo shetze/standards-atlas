@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class InterviewDimension(StrEnum):
     STATEMENT_FUNCTION = "statement_function"
+    PROCESS_FUNCTION = "process_function"
     APPLICABILITY = "applicability"
     RESPONSIBILITY = "responsibility"
     REFERENCE_SEMANTICS = "reference_semantics"
@@ -97,20 +98,71 @@ class AdaptiveInterviewPlanner:
                         "note",
                         "guideline",
                         "conformance_statement",
+                        "objective",
+                        "prerequisite",
+                        "assumption",
                         "none",
                     ),
                     reason="The normalized structure does not determine the statement function.",
                 )
             )
 
-        applicability_signal = (
-            canonical_section == "scope"
-            or clause_type == "scope"
-            or bool(structural & {"scope", "applicability"})
-            or any(
-                marker in content.lower()
-                for marker in ("applicable", "applies to", "only if", "unless", "out of scope")
+        process_markers = (
+            "objective",
+            "purpose",
+            "aim",
+            "before",
+            "after",
+            "following",
+            "input",
+            "output",
+            "if",
+            "when",
+            "unless",
+            "otherwise",
+            "option",
+            "alternative",
+            "assume",
+            "assumption",
+            "completion",
+        )
+        if any(marker in content.lower() for marker in process_markers):
+            questions.append(
+                InterviewQuestion(
+                    id="process-function",
+                    dimension=InterviewDimension.PROCESS_FUNCTION,
+                    question=(
+                        "What single process-model role is directly expressed by this clause?"
+                    ),
+                    allowed_labels=(
+                        "objective",
+                        "prerequisite",
+                        "input",
+                        "activity",
+                        "decision",
+                        "branch",
+                        "sequence",
+                        "output",
+                        "completion_criterion",
+                        "option",
+                        "assumption",
+                        "none",
+                    ),
+                    reason=(
+                        "Clause wording contains process, lifecycle, decision, or sequencing "
+                        "signals."
+                    ),
+                )
             )
+        else:
+            skipped.append(InterviewDimension.PROCESS_FUNCTION)
+
+        structural_scope = (
+            canonical_section == "scope" or clause_type == "scope" or bool(structural & {"scope"})
+        )
+        applicability_signal = bool(structural & {"applicability"}) or any(
+            marker in content.lower()
+            for marker in ("applicable", "applies to", "only if", "unless", "out of scope")
         )
         if applicability_signal:
             questions.append(
@@ -122,7 +174,14 @@ class AdaptiveInterviewPlanner:
                         "requirement, method, role, or situation applies?"
                     ),
                     allowed_labels=("present", "none"),
-                    reason="Normalization or clause wording indicates an applicability hypothesis.",
+                    reason=(
+                        "Clause wording indicates semantic applicability beyond structural "
+                        "section placement."
+                        if structural_scope
+                        else (
+                            "Normalization or clause wording indicates an applicability hypothesis."
+                        )
+                    ),
                 )
             )
         else:
@@ -148,7 +207,7 @@ class AdaptiveInterviewPlanner:
                         "to a duty, exclusion, or responsibility condition?"
                     ),
                     allowed_labels=("present", "none"),
-                    reason="Clause wording indicates a responsibility allocation hypothesis.",
+                    reason=("Clause wording indicates a responsibility allocation hypothesis."),
                 )
             )
         else:
@@ -218,7 +277,6 @@ def follow_up_question(question: InterviewQuestion) -> InterviewQuestion | None:
                 "logical condition as none unless it governs application of normative content."
             ),
             allowed_labels=(
-                "scope_definition",
                 "applicability_condition",
                 "inclusion",
                 "exclusion",

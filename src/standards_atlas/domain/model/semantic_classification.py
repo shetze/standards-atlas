@@ -22,6 +22,25 @@ class StatementFunction(StrEnum):
     NOTE = "note"
     GUIDELINE = "guideline"
     CONFORMANCE_STATEMENT = "conformance_statement"
+    OBJECTIVE = "objective"
+    PREREQUISITE = "prerequisite"
+    ASSUMPTION = "assumption"
+
+
+class ProcessFunction(StrEnum):
+    """Role of a clause in a process or lifecycle model."""
+
+    OBJECTIVE = "objective"
+    PREREQUISITE = "prerequisite"
+    INPUT = "input"
+    ACTIVITY = "activity"
+    DECISION = "decision"
+    BRANCH = "branch"
+    SEQUENCE = "sequence"
+    OUTPUT = "output"
+    COMPLETION_CRITERION = "completion_criterion"
+    OPTION = "option"
+    ASSUMPTION = "assumption"
 
 
 class ApplicabilityFunction(StrEnum):
@@ -146,6 +165,7 @@ class SemanticClassification(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     statement_functions: tuple[StatementFunction, ...] = ()
+    process_functions: tuple[ProcessFunction, ...] = ()
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
     document_structure: DocumentStructureClassification | None = None
@@ -157,6 +177,8 @@ class SemanticClassification(BaseModel):
     def dimensions_are_unique(self) -> SemanticClassification:
         if len(self.statement_functions) != len(set(self.statement_functions)):
             raise ValueError("statement_functions must not contain duplicates")
+        if len(self.process_functions) != len(set(self.process_functions)):
+            raise ValueError("process_functions must not contain duplicates")
         if len(self.applicability_functions) != len(set(self.applicability_functions)):
             raise ValueError("applicability_functions must not contain duplicates")
         if len(self.responsibility_functions) != len(set(self.responsibility_functions)):

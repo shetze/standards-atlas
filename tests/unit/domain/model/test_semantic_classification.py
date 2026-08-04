@@ -6,6 +6,7 @@ from standards_atlas.domain.model import (
     DocumentStructureClassification,
     DomainFunctionClassification,
     NormativeStatus,
+    ProcessFunction,
     RelationScope,
     SemanticClassification,
     SemanticRelation,
@@ -43,3 +44,15 @@ def test_external_relation_requires_target_document():
             scope=RelationScope.EXTERNAL,
             target_reference="4.2",
         )
+
+
+def test_semantic_classification_supports_process_functions() -> None:
+    classification = SemanticClassification(
+        statement_functions=(StatementFunction.REQUIREMENT,),
+        process_functions=(ProcessFunction.PREREQUISITE, ProcessFunction.INPUT),
+    )
+
+    assert classification.process_functions == (
+        ProcessFunction.PREREQUISITE,
+        ProcessFunction.INPUT,
+    )

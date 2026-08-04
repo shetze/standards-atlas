@@ -29,6 +29,7 @@ Every clause contains a `SemanticClassification`. It replaces the former flat
 - `statement_functions` for requirement, recommendation, permission,
   prohibition, definition, description, rationale, example, note, and related
   statement functions;
+- process-model functions such as objectives, prerequisites, decisions, and outputs;
 - `applicability_functions` for scope, conditions, inclusions, exclusions, and
   exceptions;
 - `responsibility_functions` for assignments, exclusions, and role conditions;
@@ -77,3 +78,9 @@ Artifact lineage records how the aggregate was derived. `NormalizedDocument`,
 reference candidates, alignments, transformation ledgers, and similar objects
 are pipeline contracts and evidence; they are not substitutes for the canonical
 `EngineeringDocument` aggregate.
+
+
+Structural scope and semantic applicability are intentionally separate. The structural
+profile records that a clause belongs to a Scope section. Semantic classification records
+only explicit inclusion, exclusion, exception, or conditional applicability expressed by
+the clause text.

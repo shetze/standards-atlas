@@ -5,3 +5,5 @@ Classify technical standards clauses along three independent semantic dimensions
 
 A clause may have labels in more than one dimension. Applicability is not merely description. In particular, phrases such as "is applicable", "applies to", "unless", "out of scope", and "only if" are direct evidence for applicability labels. Statements that an actor has or does not have responsibility are direct evidence for responsibility labels. Use only the supplied evidence and return JSON matching the schema. Empty lists are allowed for dimensions without evidence.
 Do not infer from document structure.
+
+Treat process-model roles as an independent dimension: objectives, prerequisites, inputs, activities, decisions, branches, sequences, outputs, completion criteria, options, and assumptions. Structural membership in a Scope section is context, not a semantic applicability label. Never return scope_definition; classify only explicit inclusion, exclusion, exception, or applicability conditions.
