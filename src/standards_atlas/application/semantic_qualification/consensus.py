@@ -18,7 +18,6 @@ from standards_atlas.application.semantic_qualification.annotations import (
 )
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
-    ProcessFunction,
     ResponsibilityFunction,
     StatementFunction,
 )
@@ -40,7 +39,6 @@ class ModelVote(BaseModel):
     model_id: str
     primary_function: StatementFunction | None = None
     secondary_functions: tuple[StatementFunction, ...] = ()
-    process_function: ProcessFunction | None = None
     applicability_present: bool = False
     applicability_function: ApplicabilityFunction | None = None
     responsibility_present: bool = False
@@ -81,8 +79,6 @@ class ClauseConsensus(BaseModel):
     category: ConsensusCategory
     primary_function: StatementFunction | None = None
     proposed_functions: tuple[StatementFunction, ...] = ()
-    proposed_process_functions: tuple[ProcessFunction, ...] = ()
-    structural_scope: bool = False
     applicability_present: bool = False
     proposed_applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     responsibility_present: bool = False
@@ -91,7 +87,6 @@ class ClauseConsensus(BaseModel):
     participating_models: int = Field(ge=0)
     votes: tuple[ModelVote, ...] = ()
     label_support: dict[str, float] = Field(default_factory=dict)
-    process_support: dict[str, float] = Field(default_factory=dict)
     applicability_support: dict[str, float] = Field(default_factory=dict)
     responsibility_support: dict[str, float] = Field(default_factory=dict)
     structural_prior: dict[str, Any] = Field(default_factory=dict)
@@ -138,10 +133,10 @@ class ModelConsensusService:
         review_policy: dict[str, Any] | None = None,
         adjudication: dict[str, Any] | None = None,
         structural_priors: dict[str, Any] | None = None,
+        example_ids: tuple[str, ...] | None = None,
     ) -> tuple[ConsensusReport, Path, Path, Path]:
         prompts = {
             "statement_function": prompt_id,
-            "process_function": prompt_id,
             "applicability": prompt_id,
             "responsibility": prompt_id,
             **(prompt_selection or {}),
@@ -163,7 +158,14 @@ class ModelConsensusService:
         predictions: dict[str, dict[str, dict[str, list[ClauseEvaluationAnnotation]]]] = (
             defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         )
+        included_example_ids = set(example_ids or ())
         clause_contexts = _load_clause_contexts(selected, corpus_root)
+        if included_example_ids:
+            clause_contexts = {
+                clause_id: context
+                for clause_id, context in clause_contexts.items()
+                if clause_id in included_example_ids
+            }
         for observation in selected:
             run_directory = Path(observation.run_directory)
             for evaluation_path in sorted(run_directory.glob("*/evaluation.yaml")):
@@ -171,6 +173,8 @@ class ModelConsensusService:
                 annotation = ClauseEvaluationAnnotation.model_validate(
                     payload["annotation_candidate"]
                 )
+                if included_example_ids and annotation.clause.clause_id not in included_example_ids:
+                    continue
                 predictions[annotation.clause.clause_id][str(observation.model_id)][
                     str(observation.prompt_id)
                 ].append(annotation)
@@ -258,16 +262,12 @@ def _model_vote(
     role: str,
 ) -> ModelVote:
     statement = _modal_annotations(by_prompt.get(prompts["statement_function"], []))
-    process = _modal_annotations(by_prompt.get(prompts["process_function"], []))
     applicability = _modal_annotations(by_prompt.get(prompts["applicability"], []))
     responsibility = _modal_annotations(by_prompt.get(prompts["responsibility"], []))
-    available = [
-        item for item in (statement, process, applicability, responsibility) if item is not None
-    ]
+    available = [item for item in (statement, applicability, responsibility) if item is not None]
     if not available:
         raise ValueError(f"model {model_id!r} has no annotations for selected prompts")
     statement = statement or available[0]
-    process = process or available[0]
     applicability = applicability or available[0]
     responsibility = responsibility or available[0]
     proposal = statement[0].proposal
@@ -275,9 +275,6 @@ def _model_vote(
     if primary is None and proposal.statement_functions:
         primary = proposal.statement_functions[0]
     secondary = tuple(item for item in proposal.statement_functions if item != primary)
-    process_value = process[0].proposal.primary_process_function
-    if process_value is None and process[0].proposal.process_functions:
-        process_value = process[0].proposal.process_functions[0]
     app = applicability[0].proposal.primary_applicability_function
     if app is None and applicability[0].proposal.applicability_functions:
         app = applicability[0].proposal.applicability_functions[0]
@@ -289,7 +286,6 @@ def _model_vote(
             value
             for value in (
                 statement[0].proposal.rationale,
-                process[0].proposal.rationale,
                 applicability[0].proposal.rationale,
                 responsibility[0].proposal.rationale,
             )
@@ -299,14 +295,13 @@ def _model_vote(
     )
     confidences = [
         item[0].proposal.confidence
-        for item in (statement, process, applicability, responsibility)
+        for item in (statement, applicability, responsibility)
         if item[0].proposal.confidence is not None
     ]
     return ModelVote(
         model_id=model_id,
         primary_function=primary,
         secondary_functions=secondary,
-        process_function=process_value,
         applicability_present=app is not None,
         applicability_function=app,
         responsibility_present=resp is not None,
@@ -328,8 +323,6 @@ def _modal_annotations(
         (
             item.proposal.primary_function,
             item.proposal.statement_functions,
-            item.proposal.primary_process_function,
-            item.proposal.process_functions,
             item.proposal.primary_applicability_function,
             item.proposal.applicability_functions,
             item.proposal.primary_responsibility_function,
@@ -392,11 +385,6 @@ def _resolve_clause(
     if primary is not None:
         label_support = {primary.value: primary_agreement, **label_support}
 
-    process_counts = Counter(vote.process_function for vote in votes if vote.process_function)
-    process_label, process_count = process_counts.most_common(1)[0] if process_counts else (None, 0)
-    process_label_support = process_count / model_count if model_count else 0.0
-    process_accepted = process_label is not None and process_label_support >= majority_threshold
-
     app_present_support = (
         sum(vote.applicability_present for vote in votes) / model_count if model_count else 0.0
     )
@@ -432,9 +420,7 @@ def _resolve_clause(
     else:
         category = ConsensusCategory.DISPUTED
 
-    confidence = max(
-        primary_agreement, process_label_support, app_label_support, resp_label_support
-    )
+    confidence = max(primary_agreement, app_label_support, resp_label_support)
     review_reasons = _review_reasons(
         category=category,
         confidence=confidence,
@@ -449,8 +435,6 @@ def _resolve_clause(
         "category": category,
         "primary_function": primary,
         "proposed_functions": proposed_functions,
-        "proposed_process_functions": ((process_label,) if process_accepted else ()),
-        "structural_scope": bool(structural_prior.get("structural_scope")),
         "applicability_present": app_accepted,
         "proposed_applicability_functions": ((app_label,) if app_accepted else ()),
         "responsibility_present": resp_accepted,
@@ -458,7 +442,6 @@ def _resolve_clause(
         "confidence": confidence,
         "participating_models": model_count,
         "label_support": label_support,
-        "process_support": ({process_label.value: process_label_support} if process_label else {}),
         "applicability_support": {
             "present": app_present_support,
             **({app_label.value: app_label_support} if app_label else {}),
@@ -550,8 +533,8 @@ def _structural_prior(context: dict[str, object]) -> dict[str, Any]:
         result["primary_function"] = StatementFunction.EXAMPLE.value
     elif "note" in values:
         result["primary_function"] = StatementFunction.NOTE.value
-    if "scope" in values:
-        result["structural_scope"] = True
+    if values & {"scope", "applicability"}:
+        result["applicability_function"] = ApplicabilityFunction.SCOPE_DEFINITION.value
     if result:
         result["confidence"] = 0.95
         result["evidence"] = sorted(value for value in values if value)
@@ -587,8 +570,6 @@ def _write_outputs(
                     for value in item.proposed_functions
                     if value != item.primary_function
                 ],
-                "process_functions": [value.value for value in item.proposed_process_functions],
-                "structural_scope": item.structural_scope,
                 "applicability": {
                     "present": item.applicability_present,
                     "function": (
@@ -657,9 +638,6 @@ def _render_review(report: ConsensusReport) -> str:
         return "\n".join(lines)
     for item in uncertain:
         proposed = ", ".join(value.value for value in item.proposed_functions) or "none"
-        process_functions = (
-            ", ".join(value.value for value in item.proposed_process_functions) or "none"
-        )
         applicability = (
             ", ".join(value.value for value in item.proposed_applicability_functions) or "none"
         )
@@ -682,8 +660,6 @@ def _render_review(report: ConsensusReport) -> str:
                 "",
                 f"- Category: `{item.category.value}`",
                 f"- Primary/secondary statement functions: `{proposed}`",
-                f"- Process functions: `{process_functions}`",
-                f"- Structural scope: `{str(item.structural_scope).lower()}`",
                 f"- Applicability proposal: `{applicability}`",
                 f"- Responsibility proposal: `{responsibility}`",
                 f"- Agreement: `{item.confidence:.3f}`",
@@ -696,7 +672,6 @@ def _render_review(report: ConsensusReport) -> str:
         )
         for vote in item.votes:
             labels = ", ".join(value.value for value in vote.statement_functions) or "none"
-            process_labels = vote.process_function.value if vote.process_function else "none"
             applicability_labels = (
                 ", ".join(value.value for value in vote.applicability_functions) or "none"
             )
@@ -705,7 +680,6 @@ def _render_review(report: ConsensusReport) -> str:
             )
             lines.append(
                 f"  - `{vote.model_id}` ({vote.role}): statement=`{labels}`; "
-                f"process=`{process_labels}`; "
                 f"applicability=`{applicability_labels}`; "
                 f"responsibility=`{responsibility_labels}` "
                 f"(repeat stability {vote.stability:.3f})"
@@ -717,7 +691,6 @@ def _render_review(report: ConsensusReport) -> str:
                 "",
                 "- Primary statement function: ",
                 "- Secondary statement functions: ",
-                "- Process functions: ",
                 "- Applicability present/function: ",
                 "- Responsibility present/function: ",
                 "- Rationale: ",

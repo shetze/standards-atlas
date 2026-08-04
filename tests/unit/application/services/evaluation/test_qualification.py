@@ -178,3 +178,42 @@ def test_published_gold_shadows_local_proposal_for_silver(tmp_path: Path) -> Non
     assert report.silver_agreement.micro_f1 == 1.0
     assert report.coverage.published_gold == 1
     assert report.coverage.local_proposals == 0
+
+
+def test_qualification_limits_reliability_to_selected_clause_ids(tmp_path: Path) -> None:
+    first = _reference("c1", "The system shall be verified.")
+    second = _reference("c2", "The system should be validated.")
+    corpus_id = "roles-v1"
+    local = tmp_path / "local"
+    published = tmp_path / "data"
+    run = tmp_path / "run"
+    CorpusManifestRepository(local).write(
+        EvaluationCorpusManifest(
+            corpus_id=corpus_id,
+            task="statement-function-classification",
+            corpus_version="1",
+            selection_strategy="random",
+            seed=1,
+            clauses=(
+                CorpusClause(clause=first, strata={"role": "requirement"}),
+                CorpusClause(clause=second, strata={"role": "recommendation"}),
+            ),
+        )
+    )
+    _write_prediction(run, _candidate(first, StatementFunction.REQUIREMENT))
+    _write_prediction(run, _candidate(second, StatementFunction.RECOMMENDATION))
+
+    report, _, _ = AnnotationQualificationService().evaluate(
+        corpus_id=corpus_id,
+        run_directory=run,
+        local_corpus_root=local,
+        published_corpus_root=published,
+        output_directory=tmp_path / "out",
+        example_ids=("c1",),
+    )
+
+    assert report.coverage.corpus_clauses == 1
+    assert report.coverage.predictions == 1
+    assert report.reliability.attempted_clauses == 1
+    assert report.reliability.successful_predictions == 1
+    assert report.reliability.prediction_success_rate == 1.0

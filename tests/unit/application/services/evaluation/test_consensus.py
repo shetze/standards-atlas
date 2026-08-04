@@ -25,9 +25,10 @@ def _run(
     applicability: list[str] | None = None,
     responsibility: list[str] | None = None,
     rationale: str | None = None,
+    clause_id: str = "clause-1",
 ) -> Path:
     run = root / model / f"repeat-{repeat}"
-    case = run / "clause-1"
+    case = run / clause_id
     case.mkdir(parents=True)
     payload = {
         "run": {
@@ -40,7 +41,7 @@ def _run(
             "clause": {
                 "knowledge_domain": "functional-safety",
                 "document_key": "ISO26262-6",
-                "clause_id": "clause-1",
+                "clause_id": clause_id,
                 "content_hash": (
                     "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                 ),
@@ -312,3 +313,42 @@ def test_review_sorts_disputed_clauses_before_other_review_categories() -> None:
     assert review.index("## DOC:1") < review.index("## DOC:2")
     assert review.index("## DOC:2") < review.index("## DOC:3")
     assert review.index("## DOC:3") < review.index("## DOC:4")
+
+
+def test_consensus_filters_predictions_to_selected_example_ids(tmp_path: Path) -> None:
+    observations = []
+    for model in ("model-a", "model-b", "model-c"):
+        run = _run(tmp_path / "runs", model, 1, ["requirement"])
+        _run(
+            tmp_path / "runs",
+            model,
+            1,
+            ["description"],
+            clause_id="clause-old",
+        )
+        report_path = tmp_path / f"{model}.json"
+        report_path.write_text("{}", encoding="utf-8")
+        observations.append(
+            MatrixObservation(
+                prompt_id="content-only",
+                model_id=model,
+                reasoning_mode_id="disabled",
+                repetition=1,
+                qualification_report=report_path,
+                run_directory=run,
+            )
+        )
+
+    report, _, _, _ = ModelConsensusService().evaluate(
+        matrix_id="matrix-v1",
+        corpus_id="semantic-roles-v1",
+        prompt_id="content-only",
+        reasoning_mode_id="disabled",
+        observations=tuple(observations),
+        output_directory=tmp_path / "consensus",
+        min_models=3,
+        example_ids=("clause-1",),
+    )
+
+    assert report.clause_count == 1
+    assert report.clauses[0].clause_id == "clause-1"

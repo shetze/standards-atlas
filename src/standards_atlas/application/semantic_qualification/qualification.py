@@ -167,6 +167,7 @@ class AnnotationQualificationService:
         local_corpus_root: Path,
         published_corpus_root: Path,
         output_directory: Path,
+        example_ids: tuple[str, ...] | None = None,
     ) -> tuple[AnnotationQualificationReport, Path, Path]:
         manifest = CorpusManifestRepository(local_corpus_root).load(corpus_id)
         resolver = ClauseAnnotationResolver(
@@ -178,8 +179,11 @@ class AnnotationQualificationService:
         diagnostics: list[str] = []
         source_counts: Counter[str] = Counter()
         invalid = 0
+        included_example_ids = set(example_ids or ())
 
         for member in manifest.clauses:
+            if included_example_ids and member.clause.clause_id not in included_example_ids:
+                continue
             key = member.clause.key
             prediction = predictions.get(key)
             structure = _structure_selection(member.strata)
@@ -224,7 +228,11 @@ class AnnotationQualificationService:
             if row.prediction is not None and row.structure is not None
         ]
 
-        reliability = _reliability(run_directory, attempted=len(rows), successful=len(predictions))
+        reliability = _reliability(
+            run_directory,
+            attempted=len(rows),
+            successful=sum(row.prediction is not None for row in rows),
+        )
         report = AnnotationQualificationReport(
             corpus_id=corpus_id,
             generated_at=datetime.now(UTC),

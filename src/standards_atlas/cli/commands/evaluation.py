@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 import time
 from contextlib import nullcontext
 from dataclasses import replace
@@ -754,15 +755,27 @@ def qualify_model_prompt_matrix(
                 overwrite=review_import.overwrite,
             )
         if not aggregate_only:
-            observation_map = {
-                (
-                    item.prompt_id,
-                    item.model_id,
-                    item.reasoning_mode_id,
-                    item.repetition,
-                ): item
-                for item in manifest.observations
-            }
+            observation_map = (
+                {}
+                if run_mode == "overwrite"
+                else {
+                    (
+                        item.prompt_id,
+                        item.model_id,
+                        item.reasoning_mode_id,
+                        item.repetition,
+                    ): item
+                    for item in manifest.observations
+                }
+            )
+            dataset = EvaluationDatasetRepository(corpus_root).load(
+                "statement-function-classification",
+                manifest.dataset_version,
+            )
+            selected_example_ids = tuple(
+                example.id
+                for example in (dataset.examples[:limit] if limit is not None else dataset.examples)
+            )
             base_config = LlmConfig.load(config)
             active_server = RamaLamaServerManager(base_config)
             active_server.stop()
@@ -796,7 +809,11 @@ def qualify_model_prompt_matrix(
             candidate_index = 0
             unresolved_clause_ids: tuple[str, ...] | None = None
             for stage_index, stage in enumerate(execution_stages):
-                stage_clause_ids = unresolved_clause_ids if stage.apply_to == "unresolved" else None
+                stage_clause_ids = (
+                    unresolved_clause_ids
+                    if stage.apply_to == "unresolved"
+                    else selected_example_ids
+                )
                 if stage.apply_to == "unresolved" and not stage_clause_ids:
                     typer.echo(f"Skipping cascade stage {stage.id}: no unresolved clauses")
                     break
@@ -879,7 +896,7 @@ def qualify_model_prompt_matrix(
                                     model=model.model_ref,
                                     seed=repetition,
                                     overwrite=run_mode == "overwrite",
-                                    limit=limit,
+                                    limit=None,
                                     include_example_ids=stage_clause_ids,
                                     max_tokens=(
                                         max_tokens
@@ -903,10 +920,10 @@ def qualify_model_prompt_matrix(
                                         else model.generation.reasoning_mode == "enabled"
                                     ),
                                 )
+                                run_directory = proposal_run_directory(proposal_config, run_root)
+                                if run_mode == "overwrite" and run_directory.exists():
+                                    shutil.rmtree(run_directory)
                                 if run_mode == "recompute":
-                                    run_directory = proposal_run_directory(
-                                        proposal_config, run_root
-                                    )
                                     proposal_candidates = tuple(
                                         run_directory.glob("*/evaluation.yaml")
                                     ) + tuple(run_directory.glob("*/evaluation.json"))
@@ -964,6 +981,7 @@ def qualify_model_prompt_matrix(
                                         local_corpus_root=corpus_root,
                                         published_corpus_root=published_corpus_root,
                                         output_directory=metric_dir,
+                                        example_ids=stage_clause_ids,
                                     )
                                 )
                                 observation = MatrixObservation(
@@ -1005,19 +1023,24 @@ def qualify_model_prompt_matrix(
                         review_policy=manifest.consensus.review_policy.model_dump(),
                         adjudication=manifest.consensus.adjudication.model_dump(),
                         structural_priors=(manifest.consensus.structural_priors.model_dump()),
+                        example_ids=selected_example_ids,
                     )
                     accepted = set(manifest.execution.resolution.accepted_categories)
+                    selected_id_set = set(selected_example_ids)
                     unresolved_clause_ids = tuple(
                         clause.clause_id
                         for clause in interim_report.clauses
-                        if clause.participating_models
-                        < manifest.execution.resolution.minimum_successful_models
-                        or clause.category.value not in accepted
-                        or clause.confidence < manifest.execution.resolution.minimum_confidence
+                        if clause.clause_id in selected_id_set
+                        and (
+                            clause.participating_models
+                            < manifest.execution.resolution.minimum_successful_models
+                            or clause.category.value not in accepted
+                            or clause.confidence < manifest.execution.resolution.minimum_confidence
+                        )
                     )
                     typer.echo(
                         "Cascade unresolved       : "
-                        f"{len(unresolved_clause_ids)} / {interim_report.clause_count}"
+                        f"{len(unresolved_clause_ids)} / {len(selected_example_ids)}"
                     )
             manifest = QualificationMatrixManifest.model_validate(
                 {
@@ -1049,6 +1072,7 @@ def qualify_model_prompt_matrix(
                     review_policy=manifest.consensus.review_policy.model_dump(),
                     adjudication=manifest.consensus.adjudication.model_dump(),
                     structural_priors=manifest.consensus.structural_priors.model_dump(),
+                    example_ids=selected_example_ids if not aggregate_only else None,
                 )
             )
             consensus_paths = (consensus_json, proposal_yaml, review_markdown)
