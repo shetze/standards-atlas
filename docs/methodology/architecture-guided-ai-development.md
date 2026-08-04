@@ -1,25 +1,37 @@
 # Architecture-Guided AI Development
 
-## Motivation
+## Scope
 
-Long-lived engineering software requires architectural continuity. LLMs are
-used as collaborators rather than autonomous developers.
+This methodology documents how *standards-atlas* is developed.
 
-## Lifecycle
+It is intentionally separated from the architecture of the product itself.
 
-Vision → ADR → Slice → Implementation → Tests → Review → Documentation → Commit
+## Core principle
+
+The product is centred around **Knowledge Domains**.
+AI assists the engineering process but does not replace architectural decision
+making.
 
 ## Human responsibilities
 
-- Product vision
-- Architecture
-- Domain modelling
-- Acceptance decisions
+- vision
+- architecture
+- domain model
+- acceptance
 
 ## AI responsibilities
 
-- Design alternatives
-- Refactoring proposals
-- Test generation
-- Documentation
-- Review support
+- implementation proposals
+- reviews
+- refactorings
+- documentation
+- tests
+
+## Engineering principles
+
+- ADR-first
+- Vertical slices
+- Continuous refactoring
+- Context engineering
+- Documentation as code
+- Human-in-the-loop
