@@ -390,3 +390,58 @@ def test_model_votes_are_rendered_as_space_padded_table() -> None:
         "none             | responsibility_assignment | 0.667     |",
     ]
     assert all(len(line) == len(lines[0]) for line in lines)
+
+
+def test_responsibility_accepts_development_function_as_actor(tmp_path: Path) -> None:
+    observations = []
+    selections = {
+        "model-a": ["responsibility_assignment"],
+        "model-b": ["responsibility_assignment"],
+        "model-c": ["responsibility_assignment"],
+        "model-d": ["responsibility_assignment"],
+        "model-e": [],
+    }
+    for model, responsibility in selections.items():
+        run = _run(
+            tmp_path / "runs",
+            model,
+            1,
+            ["description"],
+            responsibility=responsibility,
+            rationale=(
+                "It is the responsibility of hardware development to ensure "
+                "that the processing unit has a sufficiently low residual risk."
+            ),
+        )
+        report_path = tmp_path / f"{model}.json"
+        report_path.write_text("{}", encoding="utf-8")
+        observations.append(
+            MatrixObservation(
+                prompt_id="content-only",
+                model_id=model,
+                reasoning_mode_id="disabled",
+                repetition=1,
+                qualification_report=report_path,
+                run_directory=run,
+            )
+        )
+
+    report, _, _, _ = ModelConsensusService().evaluate(
+        matrix_id="matrix-v2",
+        corpus_id="semantic-roles-v1",
+        prompt_id="content-only",
+        reasoning_mode_id="disabled",
+        observations=tuple(observations),
+        output_directory=tmp_path / "consensus",
+        min_models=5,
+    )
+
+    clause = report.clauses[0]
+    assert clause.responsibility_present is True
+    assert [value.value for value in clause.proposed_responsibility_functions] == [
+        "responsibility_assignment"
+    ]
+    assert clause.responsibility_support == {
+        "present": 0.8,
+        "responsibility_assignment": 0.8,
+    }

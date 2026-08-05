@@ -560,8 +560,8 @@ def _responsibility_evidence_is_valid(vote: ModelVote) -> bool:
         return False
     text = vote.evidence.lower()
     actor = re.search(
-        r"\b(supplier|manufacturer|integrator|developer|operator|organization|team|"
-        r"assessor|manager|user|customer|role|party)\b",
+        r"\b(supplier|manufacturer|integrator|developer|development|operator|"
+        r"organization|team|assessor|manager|user|customer|role|party)\b",
         text,
     )
     action = re.search(
