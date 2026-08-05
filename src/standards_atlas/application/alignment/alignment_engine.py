@@ -2,37 +2,47 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
-import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from difflib import SequenceMatcher
 
 from standards_atlas import __version__
+from standards_atlas.application.alignment.matching import (
+    candidate_index,
+    candidate_score,
+    initial_alignments,
+    select_monotone,
+)
+from standards_atlas.application.alignment.matching import (
+    status_for_kind as _matching_status_for_kind,
+)
+from standards_atlas.application.alignment.recovery import (
+    infer_single_gaps,
+    recover_candidate_from_normalized_items,
+    recover_low_confidence_candidates,
+)
+from standards_atlas.application.alignment.result_building import (
+    alignment_statistics,
+    build_ranges,
+    is_legacy_part_anchor,
+    model_hash,
+    reference_sort_key,
+    structure_hash,
+    unassigned_ranges,
+)
 from standards_atlas.application.model.alignment import (
     AlignmentIssue,
     AlignmentMetadata,
     AlignmentOptions,
     AlignmentResult,
-    AlignmentStatistics,
     AlignmentStatus,
-    ClauseAlignment,
-    UnassignedRange,
 )
-from standards_atlas.application.model.normalized_document import (
-    NormalizedExtractedDocument,
-    NormalizedHeading,
-    NormalizedText,
-)
+from standards_atlas.application.model.normalized_document import NormalizedExtractedDocument
 from standards_atlas.application.model.reference_candidates import (
-    CandidateRemainderKind,
     ReferenceCandidate,
     ReferenceCandidateDocument,
-    ReferenceCandidateStatus,
     ReferenceMatchKind,
 )
-from standards_atlas.domain.model import Clause, EngineeringDocument, Standard
+from standards_atlas.domain.model import Clause, EngineeringDocument
 
 
 @dataclass(frozen=True)
@@ -114,164 +124,22 @@ class AlignmentEngine:
     def _candidate_index(
         document: ReferenceCandidateDocument,
     ) -> dict[str, list[ReferenceCandidate]]:
-        index: dict[str, list[ReferenceCandidate]] = {}
-        for candidate in document.candidates:
-            for clause_id in candidate.expected_clause_ids:
-                index.setdefault(clause_id, []).append(candidate)
-        for values in index.values():
-            values.sort(key=lambda candidate: candidate.sequence_number)
-        return index
+        return candidate_index(document)
 
-    def _select_monotone(self, expected, candidate_index):
-        selected: dict[str, ReferenceCandidate] = {}
-        alternatives: dict[str, tuple[str, ...]] = {}
-        issues: list[AlignmentIssue] = []
-        last_sequence = -1
-        for entry in expected:
-            clause_id = entry.clause.id.value
-            all_candidates = candidate_index.get(clause_id, [])
-            eligible = [
-                candidate
-                for candidate in all_candidates
-                if candidate.sequence_number > last_sequence
-            ]
-            if not eligible:
-                if all_candidates:
-                    issues.append(
-                        AlignmentIssue(
-                            code="OUT_OF_ORDER_REFERENCE",
-                            severity="error",
-                            clause_ids=(clause_id,),
-                            item_ids=tuple(candidate.item_id for candidate in all_candidates),
-                            message=(
-                                f"All candidates for {entry.clause.reference.clause!r} "
-                                "violate the expected clause order."
-                            ),
-                        )
-                    )
-                continue
-            chosen = max(
-                eligible,
-                key=lambda candidate: (
-                    self._candidate_score(candidate, entry.clause),
-                    -candidate.sequence_number,
-                ),
-            )
-            selected[clause_id] = chosen
-            last_sequence = chosen.sequence_number
-            discarded = tuple(
-                candidate.item_id
-                for candidate in all_candidates
-                if candidate.item_id != chosen.item_id
-            )
-            alternatives[clause_id] = discarded
-            if discarded:
-                issues.append(
-                    AlignmentIssue(
-                        code="DUPLICATE_REFERENCE",
-                        clause_ids=(clause_id,),
-                        item_ids=(chosen.item_id, *discarded),
-                        message=(
-                            f"Multiple candidates were found for "
-                            f"{entry.clause.reference.clause!r}; one was selected."
-                        ),
-                    )
-                )
-        return selected, alternatives, issues
+    @staticmethod
+    def _select_monotone(expected, candidate_index):
+        return select_monotone(expected, candidate_index)
 
     @staticmethod
     def _candidate_score(candidate: ReferenceCandidate, clause: Clause) -> float:
-        title_score = 0.0
-        if (
-            candidate.remainder_kind is CandidateRemainderKind.TITLE
-            and candidate.title_remainder
-            and clause.title
-        ):
-            title_score = SequenceMatcher(
-                None,
-                candidate.title_remainder.casefold(),
-                clause.title.casefold(),
-            ).ratio()
-        kind_bonus = {
-            ReferenceMatchKind.EXACT: 0.05,
-            ReferenceMatchKind.ANNEX: 0.04,
-            ReferenceMatchKind.NORMALIZED: 0.02,
-            ReferenceMatchKind.INLINE: 0.0,
-        }[candidate.match_kind]
-        return candidate.confidence + kind_bonus + (0.1 * title_score)
+        return candidate_score(candidate, clause)
 
-    def _initial_alignments(self, expected, selected, alternatives, issues, options):
-        result: list[ClauseAlignment] = []
-        for entry in expected:
-            clause = entry.clause
-            clause_id = clause.id.value
-            candidate = selected.get(clause_id)
-            if candidate is None:
-                result.append(
-                    ClauseAlignment(
-                        clause_id=clause_id,
-                        expected_reference=clause.reference.clause,
-                        status=AlignmentStatus.MISSING,
-                    )
-                )
-                issues.append(
-                    AlignmentIssue(
-                        code="MISSING_REFERENCE",
-                        clause_ids=(clause_id,),
-                        message=(
-                            f"No monotone candidate was selected for {clause.reference.clause!r}."
-                        ),
-                    )
-                )
-                continue
-            status = _status_for_kind(candidate.match_kind)
-            result.append(
-                ClauseAlignment(
-                    clause_id=clause_id,
-                    expected_reference=clause.reference.clause,
-                    candidate_item_id=candidate.item_id,
-                    status=status,
-                    match_kind=candidate.match_kind,
-                    confidence=candidate.confidence,
-                    start_sequence_number=candidate.sequence_number,
-                    observed_title=(
-                        candidate.title_remainder
-                        if candidate.remainder_kind is CandidateRemainderKind.TITLE
-                        else candidate.following_label
-                    ),
-                    observed_remainder=candidate.title_remainder,
-                    remainder_kind=candidate.remainder_kind,
-                    following_label_item_id=candidate.following_label_item_id,
-                    following_label=candidate.following_label,
-                    alternative_item_ids=alternatives.get(clause_id, ()),
-                )
-            )
-            if (
-                candidate.remainder_kind is CandidateRemainderKind.TITLE
-                and candidate.title_remainder
-                and clause.title
-            ):
-                similarity = SequenceMatcher(
-                    None,
-                    candidate.title_remainder.casefold(),
-                    clause.title.casefold(),
-                ).ratio()
-                if similarity < options.title_similarity_threshold:
-                    issues.append(
-                        AlignmentIssue(
-                            code="TITLE_MISMATCH",
-                            clause_ids=(clause_id,),
-                            item_ids=(candidate.item_id,),
-                            message=(
-                                f"Observed title differs from the AtlasData title "
-                                f"for {clause.reference.clause!r}."
-                            ),
-                        )
-                    )
-        return result
+    @staticmethod
+    def _initial_alignments(expected, selected, alternatives, issues, options):
+        return initial_alignments(expected, selected, alternatives, issues, options)
 
+    @staticmethod
     def _recover_low_confidence_candidates(
-        self,
         alignments,
         expected,
         candidate_index,
@@ -280,98 +148,15 @@ class AlignmentEngine:
         options,
         issues,
     ):
-        """Recover missing starts from candidates bounded by aligned neighbours.
-
-        The primary monotone pass deliberately favours strong heading candidates.
-        For clauses represented only by an inline clause number and copyrighted
-        content, a weaker candidate may otherwise remain unused. Recovery is
-        limited to the open interval between already aligned neighbouring clauses,
-        so it cannot reorder or displace established anchors.
-        """
-        if not options.recover_low_confidence_candidates:
-            return alignments
-        result = list(alignments)
-        for index, current in enumerate(result):
-            if current.status is not AlignmentStatus.MISSING:
-                continue
-            previous_start = next(
-                (
-                    result[position].start_sequence_number
-                    for position in range(index - 1, -1, -1)
-                    if result[position].start_sequence_number is not None
-                ),
-                -1,
-            )
-            following_start = next(
-                (
-                    result[position].start_sequence_number
-                    for position in range(index + 1, len(result))
-                    if result[position].start_sequence_number is not None
-                ),
-                None,
-            )
-            clause = expected[index].clause
-            bounded = [
-                candidate
-                for candidate in candidate_index.get(clause.id.value, ())
-                if candidate.sequence_number > previous_start
-                and (following_start is None or candidate.sequence_number < following_start)
-            ]
-            candidate = (
-                max(
-                    bounded,
-                    key=lambda value: (
-                        self._candidate_score(value, clause),
-                        -value.sequence_number,
-                    ),
-                )
-                if bounded
-                else self._recover_candidate_from_normalized_items(
-                    clause.reference.clause,
-                    normalized,
-                    previous_start,
-                    following_start,
-                )
-            )
-            if candidate is None:
-                continue
-            result[index] = current.model_copy(
-                update={
-                    "candidate_item_id": candidate.item_id,
-                    "status": AlignmentStatus.LOW_CONFIDENCE,
-                    "match_kind": candidate.match_kind,
-                    "confidence": candidate.confidence,
-                    "start_sequence_number": candidate.sequence_number,
-                    "observed_title": (
-                        candidate.title_remainder
-                        if candidate.remainder_kind is CandidateRemainderKind.TITLE
-                        else candidate.following_label
-                    ),
-                    "observed_remainder": candidate.title_remainder,
-                    "remainder_kind": candidate.remainder_kind,
-                    "following_label_item_id": candidate.following_label_item_id,
-                    "following_label": candidate.following_label,
-                    "alternative_item_ids": alternatives.get(clause.id.value, ()),
-                }
-            )
-            issues[:] = [
-                issue
-                for issue in issues
-                if not (issue.code == "MISSING_REFERENCE" and clause.id.value in issue.clause_ids)
-            ]
-            issues.append(
-                AlignmentIssue(
-                    code="LOW_CONFIDENCE_REFERENCE",
-                    severity="warning",
-                    clause_ids=(clause.id.value,),
-                    item_ids=(candidate.item_id,),
-                    message=(
-                        f"Recovered {clause.reference.clause!r} from a candidate "
-                        "between established neighbouring clause anchors."
-                    ),
-                )
-            )
-        return result
+        return recover_low_confidence_candidates(
+            alignments,
+            expected,
+            candidate_index,
+            alternatives,
+            normalized,
+            options,
+            issues,
+        )
 
     @staticmethod
     def _recover_candidate_from_normalized_items(
@@ -380,252 +165,45 @@ class AlignmentEngine:
         previous_start: int,
         following_start: int | None,
     ) -> ReferenceCandidate | None:
-        """Find one clause-number start missed by candidate detection.
-
-        This fallback is intentionally bounded by established anchors and accepts
-        only one matching top-level text or heading item. It tolerates common PDF
-        extraction prefixes such as bullets and list punctuation, but still
-        requires the expected reference at the beginning of the visible text.
-        """
-        escaped_parts = [re.escape(part) for part in reference.strip().split(".")]
-        reference_pattern = r"\s*[.]\s*".join(escaped_parts)
-        pattern = re.compile(
-            rf"^\s*(?:[-–—•]\s*)?(?P<ref>{reference_pattern})(?:[.]?)"
-            rf"(?=\s|$)(?P<remainder>.*)$",
-            re.IGNORECASE,
+        return recover_candidate_from_normalized_items(
+            reference,
+            normalized,
+            previous_start,
+            following_start,
         )
-        matches: list[ReferenceCandidate] = []
-        for item in normalized.items:
-            if item.sequence_number <= previous_start:
-                continue
-            if following_start is not None and item.sequence_number >= following_start:
-                continue
-            if not isinstance(item, (NormalizedHeading, NormalizedText)):
-                continue
-            match = pattern.match(item.text)
-            if match is None:
-                continue
-            remainder = match.group("remainder").strip()
-            is_heading = isinstance(item, NormalizedHeading)
-            matches.append(
-                ReferenceCandidate(
-                    item_id=item.id,
-                    sequence_number=item.sequence_number,
-                    raw_reference=match.group("ref"),
-                    normalized_reference=reference,
-                    title_remainder=remainder or None,
-                    remainder_kind=(
-                        CandidateRemainderKind.TITLE
-                        if remainder and is_heading
-                        else CandidateRemainderKind.CONTENT
-                        if remainder
-                        else CandidateRemainderKind.UNKNOWN
-                    ),
-                    match_kind=ReferenceMatchKind.INLINE,
-                    status=ReferenceCandidateStatus.EXPECTED,
-                    confidence=0.60,
-                    expected_clause_ids=(),
-                )
-            )
-        return matches[0] if len(matches) == 1 else None
 
     @staticmethod
     def _infer_single_gaps(alignments, normalized, options, issues):
-        if not options.infer_single_missing_clause:
-            return alignments
-        result = list(alignments)
-        for index in range(1, len(result) - 1):
-            current = result[index]
-            previous = result[index - 1]
-            following = result[index + 1]
-            if current.status is not AlignmentStatus.MISSING:
-                continue
-            if previous.start_sequence_number is None or following.start_sequence_number is None:
-                continue
-            start = previous.start_sequence_number + 1
-            end = following.start_sequence_number - 1
-            if start > end:
-                continue
-            result[index] = current.model_copy(
-                update={
-                    "status": AlignmentStatus.SEQUENCE_INFERRED,
-                    "confidence": 0.4,
-                    "start_sequence_number": start,
-                }
-            )
-            issues.append(
-                AlignmentIssue(
-                    code="INFERRED_REFERENCE",
-                    severity="info",
-                    clause_ids=(current.clause_id,),
-                    message=(
-                        f"The start of {current.expected_reference!r} was inferred "
-                        "from its aligned neighbours."
-                    ),
-                )
-            )
-        return result
+        return infer_single_gaps(alignments, normalized, options, issues)
 
     @staticmethod
     def _build_ranges(alignments, normalized, issues):
-        if not normalized.items:
-            return alignments
-        by_sequence = {item.sequence_number: item.id for item in normalized.items}
-        document_end = max(by_sequence)
-        starts = [
-            (index, alignment.start_sequence_number)
-            for index, alignment in enumerate(alignments)
-            if alignment.start_sequence_number is not None
-        ]
-        result = list(alignments)
-        for position, (index, start) in enumerate(starts):
-            next_start = starts[position + 1][1] if position + 1 < len(starts) else None
-            end = document_end if next_start is None else next_start - 1
-            if end < start:
-                issues.append(
-                    AlignmentIssue(
-                        code="OVERLAPPING_CLAUSE_RANGE",
-                        severity="error",
-                        clause_ids=(result[index].clause_id,),
-                        message="The calculated clause range overlaps the following clause.",
-                    )
-                )
-                end = start
-            item_ids = tuple(
-                by_sequence[sequence]
-                for sequence in range(start, end + 1)
-                if sequence in by_sequence
-            )
-            result[index] = result[index].model_copy(
-                update={"end_sequence_number": end, "source_item_ids": item_ids}
-            )
-            if not item_ids:
-                issues.append(
-                    AlignmentIssue(
-                        code="EMPTY_CLAUSE_RANGE",
-                        clause_ids=(result[index].clause_id,),
-                        message="The calculated clause range contains no normalized items.",
-                    )
-                )
-        return result
+        return build_ranges(alignments, normalized, issues)
 
     @staticmethod
     def _unassigned_ranges(alignments, normalized):
-        if not normalized.items:
-            return []
-        assigned = {
-            sequence
-            for alignment in alignments
-            if alignment.start_sequence_number is not None
-            and alignment.end_sequence_number is not None
-            for sequence in range(
-                alignment.start_sequence_number,
-                alignment.end_sequence_number + 1,
-            )
-        }
-        sequences = sorted(item.sequence_number for item in normalized.items)
-        item_ids = {item.sequence_number: item.id for item in normalized.items}
-        missing = [sequence for sequence in sequences if sequence not in assigned]
-        if not missing:
-            return []
-        ranges: list[UnassignedRange] = []
-        start = previous = missing[0]
-        first_aligned = min(assigned) if assigned else None
-        last_aligned = max(assigned) if assigned else None
-        for sequence in missing[1:] + [None]:
-            if sequence is not None and sequence == previous + 1:
-                previous = sequence
-                continue
-            kind = (
-                "front_matter"
-                if first_aligned is None or previous < first_aligned
-                else "back_matter"
-                if last_aligned is not None and start > last_aligned
-                else "between_clauses"
-            )
-            ranges.append(
-                UnassignedRange(
-                    kind=kind,
-                    start_sequence_number=start,
-                    end_sequence_number=previous,
-                    source_item_ids=tuple(
-                        item_ids[value] for value in range(start, previous + 1) if value in item_ids
-                    ),
-                )
-            )
-            if sequence is not None:
-                start = previous = sequence
-        return ranges
+        return unassigned_ranges(alignments, normalized)
 
     @staticmethod
     def _statistics(alignments, unassigned):
-        counts = {status: 0 for status in AlignmentStatus}
-        for alignment in alignments:
-            counts[alignment.status] += 1
-        return AlignmentStatistics(
-            expected_clauses=len(alignments),
-            exact_matches=counts[AlignmentStatus.EXACT],
-            normalized_matches=counts[AlignmentStatus.NORMALIZED],
-            annex_matches=counts[AlignmentStatus.ANNEX],
-            low_confidence_matches=counts[AlignmentStatus.LOW_CONFIDENCE],
-            inferred_matches=counts[AlignmentStatus.SEQUENCE_INFERRED],
-            ambiguous=counts[AlignmentStatus.AMBIGUOUS],
-            missing=counts[AlignmentStatus.MISSING],
-            conflicting=counts[AlignmentStatus.CONFLICTING],
-            unassigned_ranges=len(unassigned),
-        )
+        return alignment_statistics(alignments, unassigned)
 
 
 def _is_legacy_part_anchor(clause: Clause, document: EngineeringDocument) -> bool:
-    """Ignore AtlasData's synthetic clause 0 in derived standard-part views."""
-    return (
-        isinstance(document, Standard)
-        and document.parent_key is not None
-        and clause.reference.clause.strip() == "0"
-    )
+    return is_legacy_part_anchor(clause, document)
 
 
 def _status_for_kind(kind: ReferenceMatchKind) -> AlignmentStatus:
-    if kind is ReferenceMatchKind.EXACT:
-        return AlignmentStatus.EXACT
-    if kind is ReferenceMatchKind.ANNEX:
-        return AlignmentStatus.ANNEX
-    return AlignmentStatus.NORMALIZED
+    return _matching_status_for_kind(kind)
 
 
 def _hash_model(model) -> str:
-    payload = model.model_dump(mode="json")
-    payload.get("metadata", {}).pop("created_at", None)
-    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+    return model_hash(model)
 
 
 def _structure_hash(document: EngineeringDocument) -> str:
-    payload = [
-        (
-            clause.id.value,
-            clause.reference.clause,
-            clause.parent_id.value if clause.parent_id else None,
-        )
-        for clause in document.clauses
-    ]
-    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+    return structure_hash(document)
 
 
 def _reference_sort_key(reference: str) -> tuple[tuple[int, int | str], ...]:
-    """Return a deterministic physical-document order for clause references."""
-    import re
-
-    parts = [part for part in re.split(r"[.\-]", reference.strip()) if part]
-    key: list[tuple[int, int | str]] = []
-    for part in parts:
-        if part.isdigit():
-            key.append((0, int(part)))
-            continue
-        match = re.fullmatch(r"([A-Za-z]+)(\d*)", part)
-        if match:
-            key.append((1, match.group(1).casefold()))
-            if match.group(2):
-                key.append((0, int(match.group(2))))
-        else:
-            key.append((2, part.casefold()))
-    return tuple(key)
+    return reference_sort_key(reference)
