@@ -1,6 +1,9 @@
 from datetime import UTC, datetime
 
 from standards_atlas.application.alignment import AlignmentEngine
+from standards_atlas.application.alignment.alignment_engine import _ExpectedClause
+from standards_atlas.application.alignment.matching import candidate_index
+from standards_atlas.application.alignment.recovery import recover_low_confidence_candidates
 from standards_atlas.application.model import (
     AlignmentStatus,
     CandidateRemainderKind,
@@ -250,12 +253,8 @@ def test_missing_clause_recovers_bounded_lower_confidence_candidate() -> None:
 
     # Simulate a primary-pass miss caused by an earlier selection decision by
     # exercising recovery directly with the middle candidate omitted initially.
-    engine = AlignmentEngine()
     expected = tuple(
-        __import__(
-            "standards_atlas.application.alignment.alignment_engine",
-            fromlist=["_ExpectedClause"],
-        )._ExpectedClause(clause=clause, index=index)
+        _ExpectedClause(clause=clause, index=index)
         for index, clause in enumerate(engineering("1", "2", "3").clauses)
     )
     initial = [
@@ -275,10 +274,10 @@ def test_missing_clause_recovers_bounded_lower_confidence_candidate() -> None:
     ]
     candidate_document = candidates(candidate("2", 1, confidence=0.78))
     issues = []
-    recovered = engine._recover_low_confidence_candidates(
+    recovered = recover_low_confidence_candidates(
         initial,
         expected,
-        engine._candidate_index(candidate_document),
+        candidate_index(candidate_document),
         {},
         normalized(
             heading(0, "1 One"),

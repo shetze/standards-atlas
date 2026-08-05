@@ -53,6 +53,6 @@ Ports should express application needs rather than mirror third-party APIs.
 
 ## Migration state
 
-ADR 0053 established the current structural refactoring direction. Canonical implementations now live in focused packages such as `application/workflow`, `application/normalization`, `application/evaluation`, and `application/semantic_qualification`. Compatibility exports below `application/services` may remain temporarily, but new code must import canonical packages and must not add new concrete-adapter dependencies to reusable application services.
+ADR 0053 established the current structural refactoring direction. Canonical implementations now live in focused packages such as `application/workflow`, `application/normalization`, `application/evaluation`, and `application/semantic_qualification`. Compatibility exports below `application/services` may remain for existing imports, but they are noncanonical. New code must import canonical packages and must not add concrete-adapter dependencies to reusable application services. Their eventual removal requires an explicit compatibility decision rather than being implied by the package refactoring.
 
 Architecture tests should guard the dependency direction. Unit tests construct application services with test doubles; integration tests verify real adapter contracts and composition roots.

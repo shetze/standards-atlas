@@ -23,6 +23,7 @@ The command-line interface is the main composition root and exposes document, wo
 | Publication | Project engineering documents into Markdown and Doorstop without changing the canonical aggregate. |
 | Generic evaluation | Run versioned datasets, prompts, models, metrics, regression checks, and reports. |
 | Semantic qualification | Build eligible clause corpora, generate proposals, review annotations, resolve references, and qualify model/prompt candidates. |
+| Pipeline qualification | Verify extraction and normalization against checked-in golden corpora and persist auditable qualification evidence. |
 | Table knowledge projection | Project structured tables into addressable records, classify supported matrix schemas, and derive evidence-backed concepts and relations. |
 | Analysis | Extract methods, techniques, references, and future cross-standard relations. |
 
@@ -48,4 +49,4 @@ The diagram does not enumerate every specialized service, such as AtlasData life
 
 ## Composition
 
-Concrete adapters are selected at the executable boundary. Application services should be constructible in tests with in-memory or temporary-filesystem implementations. Older facades below `application/services/` may re-export canonical implementations during migration, but they are not architectural ownership boundaries.
+Concrete adapters are selected at the executable boundary. Application services should be constructible in tests with in-memory or temporary-filesystem implementations. Compatibility facades below `application/services/` may re-export canonical implementations for existing imports, but they are not architectural ownership boundaries and must not be used by new code.

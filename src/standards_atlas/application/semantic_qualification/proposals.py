@@ -36,7 +36,6 @@ from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationGenerator,
     AnnotationLifecycleStatus,
     ClauseEvaluationAnnotation,
-    ClauseReference,
     StatementFunctionSelection,
 )
 from standards_atlas.application.semantic_qualification.batch import (
@@ -206,8 +205,8 @@ class BaselineProposalGenerator:
             started_at = time.monotonic()
             case_dir = run_dir / _safe(example.id)
             case_dir.mkdir(parents=True, exist_ok=True)
-            request = _request(config, prompt, example.input, task)
-            request_payload = _request_payload(request)
+            request = build_proposal_request(config, prompt, example.input, task)
+            request_payload = serialize_generation_request(request)
             request_diagnostics = _request_diagnostics(request_payload)
             _write_json(case_dir / "request.json", request_payload)
             if progress is not None:
@@ -222,7 +221,7 @@ class BaselineProposalGenerator:
                     )
                 )
             try:
-                clause = _clause_reference(example.input)
+                clause = build_clause_reference(example.input)
 
                 report_retry = None
                 if progress is not None:
@@ -252,7 +251,7 @@ class BaselineProposalGenerator:
                     )
                     _write_json(case_dir / "interview.json", interview_payload)
                 else:
-                    result = _generate_with_retry(
+                    result = generate_with_retry(
                         self._gateway,
                         request,
                         attempts=config.retry_attempts,
@@ -451,7 +450,7 @@ def _run_adaptive_interview(
                 "interview_question": question.model_dump(mode="json"),
             },
         )
-        result = _generate_with_retry(
+        result = generate_with_retry(
             gateway,
             request,
             attempts=attempts,
@@ -497,9 +496,9 @@ def _run_adaptive_interview(
     if last_result is None:
         # Structural evidence made every dimension deterministic. Preserve a valid result-like
         # object by falling back to the original prompt for one compatibility request.
-        last_result = _generate_with_retry(
+        last_result = generate_with_retry(
             gateway,
-            _request(config, prompt, item_input, task),
+            build_proposal_request(config, prompt, item_input, task),
             attempts=attempts,
             backoff_seconds=backoff_seconds,
             retry_timeouts=retry_timeouts,
@@ -555,30 +554,6 @@ def _report_retry_progress(
             max_attempts=max_attempts,
             **context,
         )
-    )
-
-
-def _generate_with_retry(
-    gateway: LlmGateway,
-    request: StructuredGenerationRequest,
-    *,
-    attempts: int,
-    backoff_seconds: float,
-    retry_timeouts: bool = DEFAULT_EVALUATION_RETRY_TIMEOUTS,
-    on_retry=None,
-    truncation_retry_max_tokens: int | None = None,
-    retry_on_truncation: bool = True,
-):
-    """Compatibility wrapper for the extracted retry policy."""
-    return generate_with_retry(
-        gateway,
-        request,
-        attempts=attempts,
-        backoff_seconds=backoff_seconds,
-        retry_timeouts=retry_timeouts,
-        on_retry=on_retry,
-        truncation_retry_max_tokens=truncation_retry_max_tokens,
-        retry_on_truncation=retry_on_truncation,
     )
 
 
@@ -688,21 +663,6 @@ def _normalize_selection_payload(
                 normalized_values.insert(0, primary_value)
             normalized[field] = normalized_values
     return normalized
-
-
-def _request(config, prompt, item_input, task):
-    """Compatibility wrapper for the extracted request builder."""
-    return build_proposal_request(config, prompt, item_input, task)
-
-
-def _clause_reference(item_input) -> ClauseReference:
-    """Compatibility wrapper for the extracted clause-reference builder."""
-    return build_clause_reference(item_input)
-
-
-def _request_payload(request: StructuredGenerationRequest) -> dict[str, Any]:
-    """Compatibility wrapper for durable request serialization."""
-    return serialize_generation_request(request)
 
 
 def _write_json(path: Path, payload: Any) -> None:

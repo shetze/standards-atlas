@@ -49,18 +49,13 @@ from standards_atlas.application.normalization.list_normalization import (
 )
 from standards_atlas.application.normalization.list_normalization import (
     clause_reference_from_list_item,
-    merge_lists,
+    marker_is_ordered,
     normalize_list_marker,
     normalize_lists,
+    reconstruct_list_hierarchy,
 )
 from standards_atlas.application.normalization.list_normalization import (
     looks_like_clause_reference as _list_looks_like_clause_reference,
-)
-from standards_atlas.application.normalization.list_normalization import (
-    marker_is_ordered as _list_marker_is_ordered,
-)
-from standards_atlas.application.normalization.list_normalization import (
-    reconstruct_list_hierarchy as _list_reconstruct_list_hierarchy,
 )
 from standards_atlas.application.normalization.method_technique_extractor import (
     MethodTechniqueExtractor,
@@ -428,18 +423,6 @@ class DocumentNormalizer:
         return normalize_lists(items, options, _transformation_event)
 
 
-def reconstruct_list_hierarchy(
-    items: tuple[NormalizedListItem, ...],
-) -> tuple[NormalizedListItem, ...]:
-    """Compatibility wrapper for list hierarchy reconstruction."""
-    return _list_reconstruct_list_hierarchy(items)
-
-
-def marker_is_ordered(marker: str | None) -> bool:
-    """Compatibility wrapper for list marker classification."""
-    return _list_marker_is_ordered(marker)
-
-
 def _selection_events(
     suppressed_items: list[SuppressedItem],
     decisions: tuple[PageFurnitureDecision, ...],
@@ -589,34 +572,6 @@ def extracted_document_hash(document: ExtractedDocument) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def _normalize_list_marker(value: str | None) -> str | None:
-    """Compatibility wrapper for list marker normalization."""
-    return normalize_list_marker(value)
-
-
-def _clause_reference_from_list_item(
-    marker: str | None,
-    text: str,
-) -> tuple[str | None, bool]:
-    """Compatibility wrapper for clause-like list entries."""
-    return clause_reference_from_list_item(marker, text)
-
-
-def _normalize_text(value: str, options: NormalizationOptions) -> str:
-    """Compatibility wrapper for the shared prose normalizer."""
-    return normalize_text(value, options)
-
-
-def _normalize_code(value: str, options: NormalizationOptions) -> str:
-    """Compatibility wrapper for the shared code normalizer."""
-    return normalize_code(value, options)
-
-
-def _optional_text(value: str | None, options: NormalizationOptions) -> str | None:
-    """Compatibility wrapper for optional prose normalization."""
-    return normalize_optional_text(value, options)
-
-
 def _page_signature(text: str) -> str:
     normalized = " ".join(text.split())
     if _looks_like_clause_reference(normalized):
@@ -669,20 +624,6 @@ def _should_merge(previous: str, current: str) -> bool:
         and not _looks_like_clause_reference(previous)
         and not _looks_like_clause_reference(current)
     )
-
-
-def _merge_text_items(
-    first: NormalizedText,
-    second: NormalizedText,
-    text: str,
-) -> NormalizedText:
-    """Compatibility wrapper for provenance-preserving text merging."""
-    return merge_text_items(first, second, text)
-
-
-def _merge_lists(lists: list[NormalizedList]) -> NormalizedList:
-    """Compatibility wrapper for adjacent list merging."""
-    return merge_lists(lists)
 
 
 def _page_is_selected(

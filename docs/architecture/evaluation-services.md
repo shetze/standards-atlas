@@ -34,6 +34,18 @@ Corpora, proposal runs, reviewed annotations, consensus reports, and qualificati
 
 A matrix candidate is a reproducible combination of model, prompt, context mode, reasoning configuration, repetition, and runtime settings. Execution persists observations incrementally so `--resume` can continue incomplete work. `--overwrite` replaces selected outputs; `--recompute` intentionally reruns completed observations. Metrics distinguish availability, parse success, prediction success, agreement, calibration, and task quality.
 
+## Deterministic pipeline qualification
+
+`application.qualification` is a separate application capability for reproducible
+extraction and normalization checks against checked-in golden corpora. Its
+`GoldenCorpusQualifier` and `QualificationRunReporter` verify deterministic pipeline
+contracts and persist auditable reports. This package does not own LLM, prompt,
+consensus, or semantic annotation qualification.
+
 ## Compatibility
 
-Older imports below `application.services.evaluation` may re-export canonical types temporarily. New code must use `application.evaluation` or `application.semantic_qualification` directly.
+`application.services.evaluation` currently re-exports canonical generic-evaluation and
+semantic-qualification types for older imports. It is a compatibility facade only, not
+an ownership boundary. New code must import `application.evaluation` or
+`application.semantic_qualification` directly. Removal of the facade requires an
+explicit compatibility decision because external users may still import it.
