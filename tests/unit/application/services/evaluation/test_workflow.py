@@ -302,3 +302,95 @@ def test_excludes_composed_family_copies_and_uses_readable_duplicate_labels(
         "IEC61508-2:7.4.2 — Software requirements [clause-b]",
     ]
     assert all(not label.startswith("IEC61508:") for label in labels)
+
+
+def test_excludes_table_dominant_clauses_and_reports_reason(tmp_path: Path) -> None:
+    from standards_atlas.application.semantic_qualification.clause_access import (
+        ClauseContentProfile,
+    )
+
+    prose = ClauseDescriptor(
+        id="DOC:1",
+        document_key="DOC",
+        reference="DOC:1",
+        clause_reference="1",
+        content_hash="sha256:" + "1" * 64,
+        clause_type=ClauseType.REQUIREMENT,
+        text="The supplier shall review the plan.",
+    )
+    table = ClauseDescriptor(
+        id="DOC:A",
+        document_key="DOC",
+        reference="DOC:A",
+        clause_reference="A",
+        content_hash="sha256:" + "2" * 64,
+        clause_type=ClauseType.CLAUSE,
+        title="Technique selection matrix",
+        text="Technique | SIL 1 | SIL 2\nFormal methods | R | HR",
+        content_profile=ClauseContentProfile.TABLE_DOMINANT,
+        table_block_count=1,
+        table_text_length=240,
+        non_table_text_length=20,
+    )
+
+    class Provider:
+        def list_clauses(self, **kwargs):
+            return (prose, table)
+
+    result = EvaluationCorpusBuilder(Provider()).build(
+        CorpusBuildConfig(
+            task="statement-function-classification",
+            version="1.0.0",
+            count=1,
+        ),
+        tmp_path,
+    )
+    dataset = json.loads(result.dataset_path.read_text())
+    manifest = yaml.safe_load(result.manifest_path.read_text())
+
+    assert [example["id"] for example in dataset["examples"]] == ["DOC:1"]
+    assert manifest["statistics"]["ineligible_table_dominant_content"] == 1
+    assert manifest["statistics"]["eligible_occurrences"] == 1
+    assert manifest["exclusions"] == {
+        "table_dominant": ["DOC:A — Technique selection matrix [DOC:A]"]
+    }
+
+
+def test_can_explicitly_include_table_dominant_clauses(tmp_path: Path) -> None:
+    from standards_atlas.application.semantic_qualification.clause_access import (
+        ClauseContentProfile,
+    )
+
+    table = ClauseDescriptor(
+        id="DOC:A",
+        document_key="DOC",
+        reference="DOC:A",
+        clause_reference="A",
+        content_hash="sha256:" + "3" * 64,
+        clause_type=ClauseType.CLAUSE,
+        text="Technique | SIL 1 | SIL 2\nFormal methods | R | HR",
+        content_profile=ClauseContentProfile.TABLE_DOMINANT,
+        table_block_count=1,
+        table_text_length=240,
+    )
+
+    class Provider:
+        def list_clauses(self, **kwargs):
+            return (table,)
+
+    result = EvaluationCorpusBuilder(Provider()).build(
+        CorpusBuildConfig(
+            task="structured-table-extraction",
+            version="1.0.0",
+            count=1,
+            exclude_table_dominant=False,
+        ),
+        tmp_path,
+    )
+    dataset = json.loads(result.dataset_path.read_text())
+    manifest = yaml.safe_load(result.manifest_path.read_text())
+
+    assert dataset["examples"][0]["input"]["context"]["content_profile"] == ("table_dominant")
+    assert dataset["examples"][0]["input"]["context"]["table_block_count"] == 1
+    assert manifest["statistics"]["ineligible_table_dominant_content"] == 0
+    assert manifest["exclusions"] == {}

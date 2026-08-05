@@ -156,6 +156,10 @@ def build_evaluation_corpus(
         str, typer.Option("--knowledge-domain")
     ] = cli_defaults.DEFAULT_KNOWLEDGE_DOMAIN,
     corpus_id: Annotated[str | None, typer.Option("--corpus-id")] = cli_defaults.DEFAULT_NONE,
+    exclude_table_dominant: Annotated[
+        bool,
+        typer.Option("--exclude-table-dominant/--include-table-dominant"),
+    ] = True,
 ) -> None:
     """Create an annotation-ready corpus from persisted clauses."""
     try:
@@ -169,6 +173,7 @@ def build_evaluation_corpus(
                 include_text=include_text,
                 knowledge_domain=knowledge_domain,
                 corpus_id=corpus_id,
+                exclude_table_dominant=exclude_table_dominant,
             ),
             output,
         )

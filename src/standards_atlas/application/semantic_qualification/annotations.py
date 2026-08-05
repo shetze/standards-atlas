@@ -192,6 +192,7 @@ class CorpusPopulationStatistics(BaseModel):
 
     total_occurrences: int = Field(ge=0)
     ineligible_empty_content: int = Field(ge=0)
+    ineligible_table_dominant_content: int = Field(default=0, ge=0)
     duplicate_document_occurrences: int = Field(default=0, ge=0)
     eligible_occurrences: int = Field(ge=0)
     unique_contents: int = Field(ge=0)
@@ -215,6 +216,7 @@ class EvaluationCorpusManifest(BaseModel):
     filters: dict[str, Any] = Field(default_factory=dict)
     statistics: CorpusPopulationStatistics | None = None
     duplicate_content_groups: dict[str, tuple[str, ...]] = Field(default_factory=dict)
+    exclusions: dict[str, tuple[str, ...]] = Field(default_factory=dict)
     clauses: tuple[CorpusClause, ...]
 
     @model_validator(mode="after")

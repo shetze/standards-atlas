@@ -26,7 +26,10 @@ from standards_atlas.application.semantic_qualification.annotations import (
     CorpusPopulationStatistics,
     EvaluationCorpusManifest,
 )
+from standards_atlas.application.semantic_qualification.eligibility import SemanticTaskEligibilityPolicy
+from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
 from standards_atlas.application.semantic_qualification.clause_access import (
+    ClauseContentProfile,
     ClauseDescriptor,
     ClauseFilter,
     ClauseProvider,
@@ -48,6 +51,8 @@ class CorpusBuildConfig(BaseModel):
     include_text: bool = True
     knowledge_domain: str = "default"
     corpus_id: str | None = None
+    exclude_table_dominant: bool = True
+    resources: Path = Path("src/standards_atlas/resources/semantic")
 
 
 class BenchmarkManifest(BaseModel):
@@ -106,12 +111,25 @@ class EvaluationCorpusBuilder:
     def build(self, config: CorpusBuildConfig, output_root: Path) -> CorpusBuildResult:
         total_population = self._provider.list_clauses(filters=config.filters)
         non_empty_population = tuple(clause for clause in total_population if clause.text.strip())
-        population = _canonical_clause_occurrences(non_empty_population)
+        policy = _eligibility_policy(config)
+        table_dominant_population = tuple(
+            clause
+            for clause in non_empty_population
+            if not policy.evaluate_clause(clause).eligible
+        )
+        qualification_population = (
+            tuple(clause for clause in non_empty_population if policy.evaluate_clause(clause).eligible)
+            if config.exclude_table_dominant
+            else non_empty_population
+        )
+        population = _canonical_clause_occurrences(qualification_population)
         if config.count > len(population):
+            exclusions = "empty clauses and duplicate occurrences"
+            if config.exclude_table_dominant:
+                exclusions = "empty clauses, table-dominant clauses, and duplicate occurrences"
             raise ValueError(
                 f"sample count {config.count} exceeds eligible population {len(population)} "
-                "after excluding empty clauses and duplicate occurrences from "
-                "composed family documents"
+                f"after excluding {exclusions} from composed family documents"
             )
         clauses = _sample_eligible_population(
             population, config.count, config.strategy, config.seed
@@ -139,6 +157,9 @@ class EvaluationCorpusBuilder:
                     ),
                     "document_categories": list(clause.document_categories),
                     "domain_categories": list(clause.domain_categories),
+                    "content_profile": clause.content_profile.value,
+                    "table_block_count": clause.table_block_count,
+                    "eligibility": policy.evaluate_clause(clause).model_dump(mode="json"),
                 },
             }
             if config.include_text:
@@ -172,8 +193,24 @@ class EvaluationCorpusBuilder:
             selection_strategy=config.strategy.value,
             seed=config.seed,
             filters=config.filters.model_dump(mode="json"),
-            statistics=_statistics(total_population, non_empty_population, population, clauses),
+            statistics=_statistics(
+                total_population,
+                non_empty_population,
+                qualification_population,
+                population,
+                clauses,
+            ),
             duplicate_content_groups=_duplicate_content_groups(clauses),
+            exclusions=(
+                {
+                    "table_dominant": tuple(
+                        _readable_clause_occurrence(clause)
+                        for clause in table_dominant_population
+                    )
+                }
+                if config.exclude_table_dominant and table_dominant_population
+                else {}
+            ),
             clauses=tuple(corpus_clauses),
         )
         dataset_path = target / "dataset.json"
@@ -230,6 +267,17 @@ class EvaluationMatrixRunner:
         )
         return BenchmarkMatrixResult(manifest_hash, enriched)
 
+
+
+def _eligibility_policy(config: CorpusBuildConfig) -> SemanticTaskEligibilityPolicy:
+    try:
+        task, _ = SemanticTaskRepository(config.resources / "tasks").load(
+            config.task, config.version
+        )
+    except (FileNotFoundError, ValueError):
+        excluded = (ClauseContentProfile.TABLE_DOMINANT,) if config.exclude_table_dominant else ()
+        return SemanticTaskEligibilityPolicy(excluded_content_profiles=excluded)
+    return SemanticTaskEligibilityPolicy.from_task(task)
 
 def _strata_for(clause: ClauseDescriptor) -> dict[str, str]:
     roles = "+".join(sorted(role.value for role in clause.statement_functions)) or "unknown"
@@ -320,6 +368,7 @@ def _representative_sample(
 def _statistics(
     total_population: tuple[ClauseDescriptor, ...],
     non_empty_population: tuple[ClauseDescriptor, ...],
+    qualification_population: tuple[ClauseDescriptor, ...],
     eligible_population: tuple[ClauseDescriptor, ...],
     selected: tuple[ClauseDescriptor, ...],
 ) -> CorpusPopulationStatistics:
@@ -336,7 +385,12 @@ def _statistics(
     return CorpusPopulationStatistics(
         total_occurrences=len(total_population),
         ineligible_empty_content=len(total_population) - len(non_empty_population),
-        duplicate_document_occurrences=(len(non_empty_population) - len(eligible_population)),
+        ineligible_table_dominant_content=(
+            len(non_empty_population) - len(qualification_population)
+        ),
+        duplicate_document_occurrences=(
+            len(qualification_population) - len(eligible_population)
+        ),
         eligible_occurrences=len(eligible_population),
         unique_contents=len({clause.content_hash for clause in eligible_population}),
         selected_occurrences=len(selected),

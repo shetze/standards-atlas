@@ -40,6 +40,10 @@ from standards_atlas.application.semantic_qualification.annotations import (
     ClauseReference,
     StatementFunctionSelection,
 )
+from standards_atlas.application.semantic_qualification.eligibility import (
+    SemanticTaskEligibilityPolicy,
+    eligibility_from_input,
+)
 from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
     DEFAULT_EVALUATION_RETRY_ATTEMPTS,
@@ -64,6 +68,9 @@ class SemanticTaskDefinition(BaseModel):
     responsibility_taxonomy: tuple[str, ...] = ()
     multi_label: bool = True
     allow_unclassified: bool = True
+    supported_item_kinds: tuple[str, ...] = ("clause",)
+    excluded_content_profiles: tuple[str, ...] = ()
+    alternative_tasks: dict[str, str] = Field(default_factory=dict)
 
 
 class SemanticTaskRepository:
@@ -171,6 +178,7 @@ class BaselineProposalGenerator:
             raise ValueError("prompt schema differs from the canonical task schema")
         dataset = EvaluationDatasetRepository(corpus_root).load(config.task, config.dataset_version)
         all_examples = dataset.examples
+        eligibility_policy = SemanticTaskEligibilityPolicy.from_task(task)
         run_dir = proposal_run_directory(config, output_root)
         pending = []
         skipped = 0
@@ -179,6 +187,12 @@ class BaselineProposalGenerator:
             if included and example.id not in included:
                 continue
             case_dir = run_dir / _safe(example.id)
+            eligibility = eligibility_from_input(eligibility_policy, dict(example.input))
+            if not eligibility.eligible:
+                case_dir.mkdir(parents=True, exist_ok=True)
+                _write_json(case_dir / "eligibility.json", eligibility.model_dump(mode="json"))
+                skipped += 1
+                continue
             evaluation_path = case_dir / "evaluation.yaml"
             if evaluation_path.exists() and not config.overwrite:
                 skipped += 1

@@ -27,3 +27,5 @@ Return exactly one JSON object with every field below. Do not omit empty dimensi
   "rationale": null
 }
 Use [] and null when the supplied evidence does not support a label.
+
+The task applies to clause narrative, not to table-derived concepts or relations. For mixed clauses, classify only the linguistic function of the narrative text. Do not project a table's recommendation, responsibility, applicability, traceability, or other relation back onto the containing clause. Structured table semantics are interpreted by a separate task.

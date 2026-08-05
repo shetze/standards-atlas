@@ -3,3 +3,9 @@ version: 1.0.0
 description: Classify the statement function of normalized standards clause content.
 multi_label: true
 allow_unclassified: true
+supported_item_kinds:
+  - clause
+excluded_content_profiles:
+  - table_dominant
+alternative_tasks:
+  table_dominant: structured-table-interpretation

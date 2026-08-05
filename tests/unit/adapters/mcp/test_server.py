@@ -74,10 +74,15 @@ def test_registers_read_only_tools_and_resources() -> None:
         "list_clauses",
         "search_clauses",
         "sample_clauses",
+        "list_knowledge_tables",
+        "get_knowledge_table",
+        "list_knowledge_records",
+        "get_knowledge_record",
     }
     assert {str(resource.uri) for resource in resources} == {"standards-atlas://documents"}
     assert {template.uriTemplate for template in templates} == {
-        "standards-atlas://clauses/{clause_id}"
+        "standards-atlas://clauses/{clause_id}",
+        "standards-atlas://knowledge-tables/{table_id}",
     }
 
 

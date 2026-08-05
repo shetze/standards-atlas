@@ -10,12 +10,20 @@ from pathlib import Path
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.semantic_qualification.clause_access import (
+    ClauseContentProfile,
     ClauseDescriptor,
     ClauseFilter,
     DocumentDescriptor,
     SamplingStrategy,
 )
-from standards_atlas.domain.model import Clause, EngineeringDocument
+from standards_atlas.domain.model import (
+    Clause,
+    ContentBlock,
+    EngineeringDocument,
+    NoteBlock,
+    TableBlock,
+)
+from standards_atlas.domain.model.content import render_block_as_plain_text
 
 
 class EngineeringDocumentClauseProvider:
@@ -141,6 +149,14 @@ class EngineeringDocumentClauseProvider:
 
     @staticmethod
     def _clause_descriptor(document: EngineeringDocument, clause: Clause) -> ClauseDescriptor:
+        table_count, table_length, non_table_length = _content_metrics(clause.content)
+        total_length = table_length + non_table_length
+        table_dominant = (
+            table_count > 0
+            and table_length >= 200
+            and total_length > 0
+            and table_length / total_length >= 0.60
+        )
         return ClauseDescriptor(
             id=clause.id.value,
             document_key=document.key.value,
@@ -167,6 +183,14 @@ class EngineeringDocumentClauseProvider:
                 if clause.structural_profile is not None
                 else ()
             ),
+            content_profile=(
+                ClauseContentProfile.TABLE_DOMINANT
+                if table_dominant
+                else ClauseContentProfile.TEXT_DOMINANT
+            ),
+            table_block_count=table_count,
+            table_text_length=table_length,
+            non_table_text_length=non_table_length,
         )
 
     @staticmethod
@@ -192,3 +216,27 @@ class EngineeringDocumentClauseProvider:
             if not made_progress:
                 break
         return tuple(selected)
+
+
+def _content_metrics(content: tuple[ContentBlock, ...]) -> tuple[int, int, int]:
+    """Return table count, table text length, and other text length recursively."""
+    table_count = 0
+    table_length = 0
+    non_table_length = 0
+    for block in content:
+        rendered_length = len(render_block_as_plain_text(block).strip())
+        if isinstance(block, TableBlock):
+            table_count += 1
+            table_length += rendered_length
+        elif isinstance(block, NoteBlock):
+            nested_count, nested_table_length, nested_non_table_length = _content_metrics(
+                block.content
+            )
+            table_count += nested_count
+            table_length += nested_table_length
+            non_table_length += nested_non_table_length
+            if block.note_kind:
+                non_table_length += len(block.note_kind.strip())
+        else:
+            non_table_length += rendered_length
+    return table_count, table_length, non_table_length

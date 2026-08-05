@@ -94,6 +94,42 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
         )
 
     @mcp.tool()
+    def list_knowledge_tables(
+        document_keys: list[str] | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        """List addressable tables projected from structured clause content."""
+        return tool_call(
+            clause_service.list_knowledge_tables,
+            document_keys=document_keys,
+            limit=limit,
+            offset=offset,
+        )
+
+    @mcp.tool()
+    def get_knowledge_table(table_id: str) -> dict[str, Any]:
+        """Read one table artifact, including its lossless row records."""
+        return tool_call(clause_service.get_knowledge_table, table_id)
+
+    @mcp.tool()
+    def list_knowledge_records(
+        table_id: str, limit: int = 20, offset: int = 0
+    ) -> list[dict[str, Any]]:
+        """List addressable row records for one knowledge table."""
+        return tool_call(
+            clause_service.list_knowledge_records,
+            table_id,
+            limit=limit,
+            offset=offset,
+        )
+
+    @mcp.tool()
+    def get_knowledge_record(record_id: str) -> dict[str, Any]:
+        """Read one lossless table-row record by its stable identifier."""
+        return tool_call(clause_service.get_knowledge_record, record_id)
+
+    @mcp.tool()
     def sample_clauses(
         count: int,
         strategy: str = "random",
@@ -123,6 +159,16 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
         """Return one exposed clause as JSON."""
         try:
             payload = clause_service.get_clause(clause_id)
+        except (KeyError, ValueError) as exc:
+            message = exc.args[0] if exc.args else str(exc)
+            raise ValueError(str(message)) from exc
+        return json.dumps(payload, ensure_ascii=False, indent=2)
+
+    @mcp.resource("standards-atlas://knowledge-tables/{table_id}")
+    def knowledge_table_resource(table_id: str) -> str:
+        """Return one addressable table artifact as JSON."""
+        try:
+            payload = clause_service.get_knowledge_table(table_id)
         except (KeyError, ValueError) as exc:
             message = exc.args[0] if exc.args else str(exc)
             raise ValueError(str(message)) from exc

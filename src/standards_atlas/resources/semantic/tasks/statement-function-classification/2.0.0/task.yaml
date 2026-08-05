@@ -3,3 +3,9 @@ version: 2.0.0
 description: Classify independent statement, knowledge-kind, process, applicability, and responsibility dimensions of normalized standards clauses.
 multi_label: true
 allow_unclassified: true
+supported_item_kinds:
+  - clause
+excluded_content_profiles:
+  - table_dominant
+alternative_tasks:
+  table_dominant: structured-table-interpretation

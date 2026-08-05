@@ -15,6 +15,13 @@ from standards_atlas.domain.model import (
 )
 
 
+class ClauseContentProfile(StrEnum):
+    """Coarse structural profile used to route clauses to suitable evaluations."""
+
+    TEXT_DOMINANT = "text_dominant"
+    TABLE_DOMINANT = "table_dominant"
+
+
 class SamplingStrategy(StrEnum):
     """Supported deterministic sampling strategies."""
 
@@ -54,6 +61,10 @@ class ClauseDescriptor(BaseModel):
     canonical_section: CanonicalDocumentSection | None = None
     document_categories: tuple[str, ...] = ()
     domain_categories: tuple[str, ...] = ()
+    content_profile: ClauseContentProfile = ClauseContentProfile.TEXT_DOMINANT
+    table_block_count: int = Field(default=0, ge=0)
+    table_text_length: int = Field(default=0, ge=0)
+    non_table_text_length: int = Field(default=0, ge=0)
 
 
 class ClauseFilter(BaseModel):
