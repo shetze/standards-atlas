@@ -71,7 +71,7 @@ The workflow intentionally stops at review boundaries when human confirmation is
 
 ## Project status
 
-Standards Atlas 0.7.1 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
+Standards Atlas 0.8.0 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
 
 ## Development
 

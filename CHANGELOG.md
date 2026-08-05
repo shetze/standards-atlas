@@ -1,5 +1,29 @@
 ## Unreleased
 
+## 0.8.0 - 2026-08-05
+
+### Added
+
+- Addressable `KnowledgeTable` and `KnowledgeRecord` projections derived from structured table blocks.
+- Stable table and row identifiers with cell-level structure and source evidence.
+- IEC 61508-3 recommendation-matrix interpretation with normalized SIL recommendations,
+  cross-references, and alternative groups.
+- Portable table ontology for work-product, responsibility, verification, traceability,
+  and applicability matrices.
+- Read-only MCP operations for listing and retrieving knowledge tables and records.
+- Central semantic-task eligibility policy with alternative-task routing for
+  table-dominant content.
+
+### Changed
+
+- Statement-function corpora exclude table-dominant clauses by default and record the
+  exclusion reason in corpus and proposal-run evidence.
+- Mixed narrative/table clauses are classified only by their narrative statement
+  function; table-derived relations are not projected back onto clause labels.
+- The architecture now distinguishes clause semantics from table semantics while
+  retaining `EngineeringDocument` and structured clause content as the canonical source.
+
+
 ### Changed
 
 - Define compatibility, migration, regeneration, deprecation, and release policies for maintained contracts.

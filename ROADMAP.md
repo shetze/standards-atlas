@@ -6,6 +6,12 @@ standards-atlas. Detailed implementation plans are maintained under
 
 ## Near term
 
+### Qualify structured table knowledge
+
+Introduce typed table corpora and dedicated qualification for schema recognition, record
+extraction, relationships, references, and recommendation matrices without weakening the
+existing clause-classification boundary.
+
 ### Classify existing standards
 
 Apply the established taxonomy and Structural Profiles to the existing

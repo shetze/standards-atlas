@@ -39,3 +39,8 @@ The [CLI reference](../reference/cli-reference.md) lists command groups and opti
 ## Scope of this guide
 
 The user guide is task-oriented. End-to-end learning paths belong in [Tutorials](../tutorials/README.md), exact option and format definitions belong in [Reference](../reference/README.md), and design rationale belongs in [Architecture](../architecture/README.md).
+
+## Structured knowledge
+
+- [Evaluation and qualification](evaluation-and-qualification.md) explains clause eligibility and the planned table-specific corpus.
+- [Table semantics](../architecture/table-semantics.md) describes addressable table records and portable relations.

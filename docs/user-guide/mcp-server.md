@@ -1,8 +1,27 @@
 # MCP clause server
 
 The Standards Atlas MCP adapter can run locally over STDIO or as a remote
-Streamable HTTP resource server. Both modes expose the same read-only clause
+Streamable HTTP resource server. Both modes expose the same read-only clause and knowledge-table
 operations.
+
+## Knowledge-table operations
+
+The server exposes structured table projections without flattening them into clause text:
+
+- `list_knowledge_tables` lists addressable tables, optionally filtered by document;
+- `get_knowledge_table` returns table metadata, headers, records, kind, and evidence;
+- `list_knowledge_records` pages through logical rows of one table;
+- `get_knowledge_record` retrieves one record by stable identifier.
+
+Supported tables may include portable concepts and relations or IEC 61508-specific
+recommendation semantics. Generic tables still expose their lossless cells and evidence.
+Source locators follow the configured exposure policy and are omitted when private source
+paths are not enabled.
+
+The resource template
+`standards-atlas://knowledge-tables/{table_id}` provides the same read-only table view.
+These artefacts are deterministic projections of canonical engineering documents and are
+intended to become retrieval units for the future IntelliDoc RAG integration.
 
 ## Local STDIO
 

@@ -40,10 +40,6 @@ from standards_atlas.application.semantic_qualification.annotations import (
     ClauseReference,
     StatementFunctionSelection,
 )
-from standards_atlas.application.semantic_qualification.eligibility import (
-    SemanticTaskEligibilityPolicy,
-    eligibility_from_input,
-)
 from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
     DEFAULT_EVALUATION_RETRY_ATTEMPTS,
@@ -51,6 +47,10 @@ from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_RETRY_TIMEOUTS,
     DEFAULT_EVALUATION_SEED,
     DEFAULT_EVALUATION_TEMPERATURE,
+)
+from standards_atlas.application.semantic_qualification.eligibility import (
+    SemanticTaskEligibilityPolicy,
+    eligibility_from_input,
 )
 
 

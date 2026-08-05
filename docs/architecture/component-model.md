@@ -22,12 +22,13 @@ The command-line interface is the main composition root and exposes document, wo
 | Alignment and construction | Align extracted ranges with reference structures and construct canonical engineering documents. |
 | Publication | Project engineering documents into Markdown and Doorstop without changing the canonical aggregate. |
 | Generic evaluation | Run versioned datasets, prompts, models, metrics, regression checks, and reports. |
-| Semantic qualification | Build clause corpora, generate proposals, review annotations, resolve references, and qualify model/prompt candidates. |
+| Semantic qualification | Build eligible clause corpora, generate proposals, review annotations, resolve references, and qualify model/prompt candidates. |
+| Table knowledge projection | Project structured tables into addressable records, classify supported matrix schemas, and derive evidence-backed concepts and relations. |
 | Analysis | Extract methods, techniques, references, and future cross-standard relations. |
 
 ## Domain components
 
-The domain layer contains immutable value objects and aggregates for standards, engineering documents, clauses, structured content, source evidence, structural profiles, semantic classifications, annotations, relations, and artifact lineage. It has no runtime, filesystem, protocol, or model-provider responsibilities.
+The domain layer contains immutable value objects and aggregates for standards, engineering documents, clauses, structured content, source evidence, structural profiles, semantic classifications, knowledge tables and records, annotations, relations, and artifact lineage. It has no runtime, filesystem, protocol, or model-provider responsibilities.
 
 ## Outbound adapters
 
@@ -37,7 +38,7 @@ The domain layer contains immutable value objects and aggregates for standards, 
 - **Markdown** creates readable document and review projections, including resolved internal links.
 - **Doorstop** creates requirement-document hierarchies and installs publication templates.
 - **LLM** provides Codex CLI and OpenAI-compatible gateways plus managed RamaLama runtime control.
-- **MCP transport** hosts the clause service over STDIO or Streamable HTTP.
+- **MCP transport** hosts the read-only clause and knowledge-table service over STDIO or Streamable HTTP.
 
 ## Cross-cutting component relationships
 

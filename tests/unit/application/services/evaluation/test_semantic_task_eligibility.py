@@ -13,9 +13,9 @@ from standards_atlas.application.semantic_qualification.proposals import (
 
 
 def test_statement_function_task_excludes_table_dominant_content() -> None:
-    task, _ = SemanticTaskRepository(
-        Path("src/standards_atlas/resources/semantic/tasks")
-    ).load("statement-function-classification", "2.0.0")
+    task, _ = SemanticTaskRepository(Path("src/standards_atlas/resources/semantic/tasks")).load(
+        "statement-function-classification", "2.0.0"
+    )
 
     result = SemanticTaskEligibilityPolicy.from_task(task).evaluate(
         item_kind="clause",
@@ -32,9 +32,9 @@ def test_statement_function_task_excludes_table_dominant_content() -> None:
 
 
 def test_mixed_text_clause_remains_eligible() -> None:
-    task, _ = SemanticTaskRepository(
-        Path("src/standards_atlas/resources/semantic/tasks")
-    ).load("statement-function-classification", "2.0.0")
+    task, _ = SemanticTaskRepository(Path("src/standards_atlas/resources/semantic/tasks")).load(
+        "statement-function-classification", "2.0.0"
+    )
 
     result = eligibility_from_input(
         SemanticTaskEligibilityPolicy.from_task(task),

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseContentProfile,

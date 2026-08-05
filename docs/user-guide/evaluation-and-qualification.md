@@ -5,10 +5,46 @@ The evaluation subsystem separates datasets, proposal runs, human review, metric
 ## Build a representative corpus
 
 ```bash
-uv run standards-atlas evaluation corpus-build   --task semantic-role-classification   --version 1.0.0   --corpus-id semantic-roles-v1   --knowledge-domain functional-safety   --count 500   --strategy representative_stratified   --seed 20260728
+uv run standards-atlas evaluation corpus-build \
+  --task statement-function-classification \
+  --version 2.0.0 \
+  --corpus-id statement-functions-v2 \
+  --knowledge-domain functional-safety \
+  --count 500 \
+  --strategy representative_stratified \
+  --seed 20260804
 ```
 
-Legacy task and corpus identifiers may remain in existing data. New classification work should use the multi-dimensional structural-profile model and domain-specific taxonomies.
+The command remains the standard entry point for statement-function qualification. The
+task metadata and central eligibility policy exclude `table_dominant` clauses by default.
+The corpus manifest records the affected references, counts, content profiles, exclusion
+reason, and the alternative task `structured-table-interpretation`.
+
+`--include-table-dominant` exists for diagnostic or future table-specific tasks, but it
+should not be used to enlarge a statement-function corpus. A flattened table is not a
+single linguistic statement and would distort both labels and metrics.
+
+Legacy task and corpus identifiers may remain in existing data. New classification work
+should use the multi-dimensional semantic profile and domain-specific taxonomies.
+
+## Clause and table task boundaries
+
+Statement-function classification accepts clause artefacts and evaluates narrative
+statement force. Table-dominant clauses are routed away from that task. Text-dominant
+clauses with a small embedded table remain eligible, but prompts explicitly instruct the
+model not to copy table-derived recommendations, responsibilities, applicability, or
+traceability relations onto the surrounding clause.
+
+The implemented table projection already provides addressable `KnowledgeTable` and
+`KnowledgeRecord` artefacts. A separate evaluation task is planned for qualifying table
+schema recognition, row extraction, relation extraction, reference resolution, and
+IEC 61508 recommendation interpretation. Until that task exists, the deterministic
+projection and its regression tests are the qualification boundary. See the
+[structured table corpus roadmap](../roadmap/structured-table-corpora.md).
+
+Proposal generation re-evaluates eligibility, so older or manually assembled corpora
+cannot silently bypass the policy. Ineligible items are recorded in `eligibility.json`
+rather than being treated as model abstentions or failed predictions.
 
 ## Execute a qualification matrix
 

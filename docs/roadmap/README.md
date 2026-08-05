@@ -29,5 +29,6 @@ Each roadmap should describe:
 - extend-taxonomy-document-classes.md
 - intellidoc-refactoring.md
 - mcp-capabilities.md
+- structured-table-corpora.md
 
 Additional roadmap documents should be added as new strategic themes emerge.

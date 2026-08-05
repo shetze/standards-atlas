@@ -26,8 +26,6 @@ from standards_atlas.application.semantic_qualification.annotations import (
     CorpusPopulationStatistics,
     EvaluationCorpusManifest,
 )
-from standards_atlas.application.semantic_qualification.eligibility import SemanticTaskEligibilityPolicy
-from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
 from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseContentProfile,
     ClauseDescriptor,
@@ -35,6 +33,10 @@ from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseProvider,
     SamplingStrategy,
 )
+from standards_atlas.application.semantic_qualification.eligibility import (
+    SemanticTaskEligibilityPolicy,
+)
+from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
 
 
 class CorpusBuildConfig(BaseModel):
@@ -113,12 +115,12 @@ class EvaluationCorpusBuilder:
         non_empty_population = tuple(clause for clause in total_population if clause.text.strip())
         policy = _eligibility_policy(config)
         table_dominant_population = tuple(
-            clause
-            for clause in non_empty_population
-            if not policy.evaluate_clause(clause).eligible
+            clause for clause in non_empty_population if not policy.evaluate_clause(clause).eligible
         )
         qualification_population = (
-            tuple(clause for clause in non_empty_population if policy.evaluate_clause(clause).eligible)
+            tuple(
+                clause for clause in non_empty_population if policy.evaluate_clause(clause).eligible
+            )
             if config.exclude_table_dominant
             else non_empty_population
         )
@@ -204,8 +206,7 @@ class EvaluationCorpusBuilder:
             exclusions=(
                 {
                     "table_dominant": tuple(
-                        _readable_clause_occurrence(clause)
-                        for clause in table_dominant_population
+                        _readable_clause_occurrence(clause) for clause in table_dominant_population
                     )
                 }
                 if config.exclude_table_dominant and table_dominant_population
@@ -268,7 +269,6 @@ class EvaluationMatrixRunner:
         return BenchmarkMatrixResult(manifest_hash, enriched)
 
 
-
 def _eligibility_policy(config: CorpusBuildConfig) -> SemanticTaskEligibilityPolicy:
     try:
         task, _ = SemanticTaskRepository(config.resources / "tasks").load(
@@ -278,6 +278,7 @@ def _eligibility_policy(config: CorpusBuildConfig) -> SemanticTaskEligibilityPol
         excluded = (ClauseContentProfile.TABLE_DOMINANT,) if config.exclude_table_dominant else ()
         return SemanticTaskEligibilityPolicy(excluded_content_profiles=excluded)
     return SemanticTaskEligibilityPolicy.from_task(task)
+
 
 def _strata_for(clause: ClauseDescriptor) -> dict[str, str]:
     roles = "+".join(sorted(role.value for role in clause.statement_functions)) or "unknown"
@@ -388,9 +389,7 @@ def _statistics(
         ineligible_table_dominant_content=(
             len(non_empty_population) - len(qualification_population)
         ),
-        duplicate_document_occurrences=(
-            len(qualification_population) - len(eligible_population)
-        ),
+        duplicate_document_occurrences=(len(qualification_population) - len(eligible_population)),
         eligible_occurrences=len(eligible_population),
         unique_contents=len({clause.content_hash for clause in eligible_population}),
         selected_occurrences=len(selected),

@@ -27,6 +27,11 @@ Plain text is derived from structured content through `render_content_as_plain_t
 
 Content is represented by immutable blocks such as text, lists, tables, notes, pictures, formulas, and code. This preserves information needed for lossless normalization, readable exports, and later semantic analysis. Nested lists and table cells remain structured rather than being flattened prematurely.
 
+Tables can additionally be projected into addressable `KnowledgeTable` and
+`KnowledgeRecord` artefacts. These projections are deterministic views of the canonical
+`TableBlock`; they are not a second persisted source of truth. A record preserves its
+original cells and source evidence and may carry a conservative semantic interpretation.
+
 ## Structural profile
 
 `StructuralProfile` describes independently determined structural dimensions, including canonical document section, domain category, annex status, and taxonomy provenance. It replaced the former one-dimensional `Clause.semantic_roles` model. A clause can therefore be, for example, part of a normative annex, a verification-oriented domain category, and a canonical requirements section without forcing those meanings into one enum.
@@ -38,6 +43,22 @@ Content is represented by immutable blocks such as text, lists, tables, notes, p
 ## Evidence and provenance
 
 `SourceEvidence` links knowledge back to physical source material through page and geometric anchors. `ArtifactLineage` records how persisted artifacts derive from prior artifacts and deterministic transformations. Evidence belongs in the domain contract; adapter-specific parser objects do not.
+
+## Table-derived knowledge
+
+`KnowledgeTable` identifies one structured table within a clause and owns ordered
+`KnowledgeRecord` rows. Stable IDs are derived from the document, clause, table position,
+and row position. The table projection preserves captions, header cells, row and column
+spans, source evidence, and a deterministic plain-text representation for later retrieval.
+
+Known table kinds currently include generic tables, IEC 61508 technique-recommendation
+matrices, and portable work-product, responsibility, verification-criteria, traceability,
+and applicability matrices. Portable interpretations use `KnowledgeConcept` and
+`KnowledgeRelation` values with exact source-column provenance. IEC 61508 interpretations
+add SIL-qualified recommendation levels and resolved clause references. Unrecognized or
+ambiguous tables remain generic rather than receiving guessed semantics.
+
+See [Table semantics](table-semantics.md) for the projection and evaluation boundaries.
 
 ## Knowledge extension points
 

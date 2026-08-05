@@ -20,6 +20,7 @@ The overview is deliberately compact. It shows the governing dependency and data
 | Compatibility, migration, regeneration, and deprecation | [Evolution and compatibility](evolution-and-compatibility.md) |
 | Generic evaluation and semantic qualification | [Evaluation architecture](evaluation-services.md) |
 | Structural profiles and semantic classification | [Structural classification](structural-classification.md) |
+| Addressable tables, records, and portable relations | [Table semantics](table-semantics.md) |
 | LLM gateways and managed local runtimes | [LLM integration](llm-integration.md) |
 | Target architecture for cross-document relationships | [Relationship mapping](relationship-mapping.md) |
 | MCP service boundary and remote deployment | [MCP clause server](mcp-clause-server.md) |
@@ -30,7 +31,7 @@ The overview is deliberately compact. It shows the governing dependency and data
 
 ## Current architectural baseline
 
-The canonical domain aggregate is `EngineeringDocument`, composed of structured `Clause` objects. A clause owns structured content blocks, source evidence, a multi-dimensional `StructuralProfile`, optional semantic classification, annotations, and relations. External representations such as Docling JSON, AtlasData, Markdown, and Doorstop are adapters or projections; none is the internal source of truth.
+The canonical domain aggregate is `EngineeringDocument`, composed of structured `Clause` objects. Structured tables remain canonical clause content and can be projected deterministically into addressable knowledge tables and records. A clause owns structured content blocks, source evidence, a multi-dimensional `StructuralProfile`, optional semantic classification, annotations, and relations. External representations such as Docling JSON, AtlasData, Markdown, and Doorstop are adapters or projections; none is the internal source of truth.
 
 The application layer is organized around use cases and explicit ports. Important subsystems are workflow orchestration, normalization, alignment, document construction, publication, generic evaluation, and semantic qualification. The CLI is the primary composition root. MCP is an additional read-only inbound adapter. Filesystem, Docling, AtlasData, Markdown, Doorstop, LLM, and MCP integrations live in the adapter layer.
 
