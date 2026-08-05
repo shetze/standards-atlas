@@ -40,6 +40,28 @@ from standards_atlas.application.model.normalized_document import (
     TransformationEvent,
     TransformationLedger,
 )
+from standards_atlas.application.normalization.hyphenation import (
+    merge_text_items,
+    repair_hyphenation,
+)
+from standards_atlas.application.normalization.list_normalization import (
+    LIST_MARKER as _LIST_MARKER,
+)
+from standards_atlas.application.normalization.list_normalization import (
+    clause_reference_from_list_item,
+    merge_lists,
+    normalize_list_marker,
+    normalize_lists,
+)
+from standards_atlas.application.normalization.list_normalization import (
+    looks_like_clause_reference as _list_looks_like_clause_reference,
+)
+from standards_atlas.application.normalization.list_normalization import (
+    marker_is_ordered as _list_marker_is_ordered,
+)
+from standards_atlas.application.normalization.list_normalization import (
+    reconstruct_list_hierarchy as _list_reconstruct_list_hierarchy,
+)
 from standards_atlas.application.normalization.method_technique_extractor import (
     MethodTechniqueExtractor,
 )
@@ -47,17 +69,18 @@ from standards_atlas.application.normalization.pipeline import (
     DEFAULT_NORMALIZATION_STEPS,
     NormalizationRun,
 )
+from standards_atlas.application.normalization.text import (
+    normalize_code,
+    normalize_optional_text,
+    normalize_text,
+)
 from standards_atlas.domain.model import ArtifactLineage, artifact_reference
 
 NORMALIZER_VERSION = "0.8.0"
 
-_LIST_MARKER = re.compile(r"^\s*((?:\d+|[A-Za-z]|[ivxlcdmIVXLCDM]+)[.)]|[-–—•])\s+(.+)$")
 _PAGE_NUMBER = re.compile(r"^\s*(?:[-–—]\s*)?\d+(?:\s*[-–—])?\s*$")
 _VARIABLE_NUMBER = re.compile(r"\d+")
-_CLAUSE_REFERENCE = re.compile(r"^(?:\d+(?:\.\d+)+|[A-Z]{1,3}(?:\.\d+)*)$")
-_CLAUSE_REFERENCE_START = re.compile(r"^(?:\d+(?:\.\d+)+|[A-Z]{1,3}(?:\.\d+)*)(?:\s+|$)")
 _PROTECTED_CLAUSE_ANCHOR = re.compile(r"^(?:\d+(?:\.\d+)+|(?:[A-Z]|Z[A-Z])(?:\.\d+)*)(?:\s+|$)")
-_LOWERCASE_START = re.compile(r"^[a-zà-öø-ÿ]")
 
 
 class DocumentNormalizer:
@@ -240,28 +263,28 @@ class DocumentNormalizer:
         if isinstance(item, ExtractedCode):
             return NormalizedCode(
                 **common,
-                code=_normalize_code(item.code, options),
+                code=normalize_code(item.code, options),
                 language=item.language,
             )
         if isinstance(item, ExtractedText):
-            return NormalizedText(**common, text=_normalize_text(item.text, options))
+            return NormalizedText(**common, text=normalize_text(item.text, options))
         if isinstance(item, ExtractedHeading):
             return NormalizedHeading(
                 **common,
-                text=_normalize_text(item.text, options),
+                text=normalize_text(item.text, options),
                 observed_level=item.observed_level,
             )
         if isinstance(item, ExtractedTable):
             return NormalizedTable(
                 **common,
                 rows=item.rows,
-                caption=_optional_text(item.caption, options),
+                caption=normalize_optional_text(item.caption, options),
             )
         if isinstance(item, ExtractedPicture):
             return NormalizedPicture(
                 **common,
-                caption=_optional_text(item.caption, options),
-                description=_optional_text(item.description, options),
+                caption=normalize_optional_text(item.caption, options),
+                description=normalize_optional_text(item.description, options),
                 image_reference=item.image_reference,
                 visual_asset=item.visual_asset,
             )
@@ -269,14 +292,14 @@ class DocumentNormalizer:
             return NormalizedFormula(
                 **common,
                 expression=unicodedata.normalize(options.unicode_form, item.expression),
-                original_expression=_optional_text(item.original_expression, options),
+                original_expression=normalize_optional_text(item.original_expression, options),
                 representation=item.representation,
                 extraction_status=item.extraction_status,
             )
         if isinstance(item, ExtractedUnknown):
             return NormalizedUnknown(
                 **common,
-                text=_optional_text(item.text, options),
+                text=normalize_optional_text(item.text, options),
                 raw_attributes=item.raw_attributes,
             )
         raise TypeError(f"Unsupported extracted item: {type(item)!r}")
@@ -315,12 +338,12 @@ class DocumentNormalizer:
                     )
                     or item.layout_evidence,
                     ordered=item.ordered,
-                    items=_reconstruct_list_hierarchy(
+                    items=reconstruct_list_hierarchy(
                         tuple(
                             NormalizedListItem(
-                                text=_normalize_text(entry.text, options),
-                                marker=_normalize_list_marker(entry.marker),
-                                ordered=_marker_is_ordered(entry.marker),
+                                text=normalize_text(entry.text, options),
+                                marker=normalize_list_marker(entry.marker),
+                                ordered=marker_is_ordered(entry.marker),
                                 source_item_ids=(entry.id or f"{item.id}:item:{index}",),
                                 source_evidence=entry.source_evidence,
                                 layout_evidence=entry.layout_evidence,
@@ -333,10 +356,10 @@ class DocumentNormalizer:
             ordinary_run.clear()
 
         for index, entry in enumerate(item.items):
-            text = _normalize_text(entry.text, options)
-            marker = _normalize_list_marker(entry.marker)
+            text = normalize_text(entry.text, options)
+            marker = normalize_list_marker(entry.marker)
             source_id = entry.id or f"{item.id}:item:{index}"
-            clause_reference, reference_is_in_text = _clause_reference_from_list_item(
+            clause_reference, reference_is_in_text = clause_reference_from_list_item(
                 marker,
                 text,
             )
@@ -364,60 +387,7 @@ class DocumentNormalizer:
     def _repair_hyphenation(
         self, items: list[NormalizedItem], options: NormalizationOptions
     ) -> tuple[list[NormalizedItem], int, list[TransformationEvent]]:
-        if not options.repair_hyphenation:
-            return items, 0, []
-        output: list[NormalizedItem] = []
-        repaired = 0
-        events: list[TransformationEvent] = []
-        index = 0
-        while index < len(items):
-            current = items[index]
-            if (
-                index + 1 < len(items)
-                and isinstance(current, NormalizedText)
-                and isinstance(items[index + 1], NormalizedText)
-                and current.text.endswith("-")
-                and _LOWERCASE_START.match(items[index + 1].text)
-            ):
-                following = items[index + 1]
-                repaired_item = _merge_text_items(
-                    current,
-                    following,
-                    current.text[:-1] + following.text,
-                )
-                output.append(repaired_item)
-                events.append(
-                    _transformation_event(
-                        stage="hyphenation",
-                        rule_id="normalize.hyphenation.cross-item-lowercase",
-                        action="repair",
-                        source_item_ids=repaired_item.source_item_ids,
-                        output_item_ids=(repaired_item.id,),
-                        rationale="A trailing hyphen joins a lowercase continuation.",
-                    )
-                )
-                repaired += 1
-                index += 2
-                continue
-            if isinstance(current, NormalizedText):
-                text, count = re.subn(r"(?<=\w)-\s*\n\s*(?=[a-zà-öø-ÿ])", "", current.text)
-                if count:
-                    current = current.model_copy(update={"text": text})
-                    events.append(
-                        _transformation_event(
-                            stage="hyphenation",
-                            rule_id="normalize.hyphenation.intra-item-lowercase",
-                            action="repair",
-                            source_item_ids=current.source_item_ids,
-                            output_item_ids=(current.id,),
-                            rationale="Line-break hyphenation precedes a lowercase continuation.",
-                            details={"repairs": count},
-                        )
-                    )
-                    repaired += count
-            output.append(current)
-            index += 1
-        return output, repaired, events
+        return repair_hyphenation(items, options, _transformation_event)
 
     def _merge_text_fragments(
         self, items: list[NormalizedItem], options: NormalizationOptions
@@ -435,7 +405,7 @@ class DocumentNormalizer:
             ):
                 previous = output[-1]
                 if _should_merge(previous.text, item.text):
-                    merged_item = _merge_text_items(previous, item, f"{previous.text} {item.text}")
+                    merged_item = merge_text_items(previous, item, f"{previous.text} {item.text}")
                     output[-1] = merged_item
                     events.append(
                         _transformation_event(
@@ -455,169 +425,19 @@ class DocumentNormalizer:
     def _normalize_lists(
         self, items: list[NormalizedItem], options: NormalizationOptions
     ) -> tuple[list[NormalizedItem], int, list[TransformationEvent]]:
-        if not options.normalize_lists:
-            return items, 0, []
-        output: list[NormalizedItem] = []
-        index = 0
-        normalized = 0
-        events: list[TransformationEvent] = []
-        while index < len(items):
-            if isinstance(items[index], NormalizedList):
-                lists = [items[index]]
-                index += 1
-                while index < len(items) and isinstance(items[index], NormalizedList):
-                    lists.append(items[index])
-                    index += 1
-                if len(lists) > 1:
-                    merged_list = _merge_lists(lists)
-                    output.append(merged_list)
-                    events.append(
-                        _transformation_event(
-                            stage="list_normalization",
-                            rule_id="normalize.list.merge-adjacent",
-                            action="merge",
-                            source_item_ids=merged_list.source_item_ids,
-                            output_item_ids=(merged_list.id,),
-                            rationale="Adjacent list fragments belong to one logical list.",
-                            details={"input_lists": len(lists)},
-                        )
-                    )
-                    normalized += 1
-                else:
-                    output.append(lists[0])
-                continue
-            run: list[tuple[NormalizedText, re.Match[str]]] = []
-            cursor = index
-            while cursor < len(items) and isinstance(items[cursor], NormalizedText):
-                match = _LIST_MARKER.match(items[cursor].text)
-                if not match:
-                    break
-                run.append((items[cursor], match))
-                cursor += 1
-            if len(run) >= 2:
-                markers = [match.group(1) for _, match in run]
-                ordered = all(marker[0].isalnum() for marker in markers)
-                first = run[0][0]
-                output.append(
-                    NormalizedList(
-                        id=f"normalized-list:{first.id}",
-                        sequence_number=first.sequence_number,
-                        source_item_ids=tuple(
-                            source_id for item, _ in run for source_id in item.source_item_ids
-                        ),
-                        source_evidence=tuple(
-                            evidence for item, _ in run for evidence in item.source_evidence
-                        ),
-                        original_labels=tuple(
-                            label for item, _ in run for label in item.original_labels
-                        ),
-                        layout_evidence=tuple(
-                            layout for item, _ in run for layout in item.layout_evidence
-                        ),
-                        ordered=ordered,
-                        items=_reconstruct_list_hierarchy(
-                            tuple(
-                                NormalizedListItem(
-                                    text=match.group(2),
-                                    marker=match.group(1),
-                                    ordered=_marker_is_ordered(match.group(1)),
-                                    source_item_ids=item.source_item_ids,
-                                    source_evidence=item.source_evidence,
-                                    layout_evidence=item.layout_evidence,
-                                )
-                                for item, match in run
-                            )
-                        ),
-                    )
-                )
-                normalized_list = output[-1]
-                events.append(
-                    _transformation_event(
-                        stage="list_normalization",
-                        rule_id="normalize.list.detect-marked-run",
-                        action="create",
-                        source_item_ids=normalized_list.source_item_ids,
-                        output_item_ids=(normalized_list.id,),
-                        rationale="Consecutive marked text items form one logical list.",
-                        details={"items": len(run)},
-                    )
-                )
-                normalized += 1
-                index = cursor
-                continue
-            output.append(items[index])
-            index += 1
-        return output, normalized, events
+        return normalize_lists(items, options, _transformation_event)
 
 
-@dataclass
-class _MutableListItem:
-    item: NormalizedListItem
-    children: list[_MutableListItem]
-
-
-def _reconstruct_list_hierarchy(
+def reconstruct_list_hierarchy(
     items: tuple[NormalizedListItem, ...],
 ) -> tuple[NormalizedListItem, ...]:
-    """Reconstruct nesting from stable indentation while preserving source order."""
-    if len(items) < 2:
-        return items
-    left_positions = [_list_item_left(item) for item in items]
-    known_positions = sorted({position for position in left_positions if position is not None})
-    levels: list[float] = []
-    for position in known_positions:
-        if not levels or position - levels[-1] >= 6.0:
-            levels.append(position)
-    if len(levels) < 2:
-        return tuple(item.model_copy(update={"depth": 0}) for item in items)
-
-    roots: list[_MutableListItem] = []
-    stack: list[_MutableListItem] = []
-    for item, position in zip(items, left_positions, strict=True):
-        inferred_depth = _indentation_depth(position, levels)
-        depth = min(inferred_depth, len(stack))
-        while len(stack) > depth:
-            stack.pop()
-        node = _MutableListItem(item=item.model_copy(update={"depth": depth}), children=[])
-        if depth > 0 and stack:
-            stack[-1].children.append(node)
-        else:
-            roots.append(node)
-            depth = 0
-            node.item = node.item.model_copy(update={"depth": 0})
-        if len(stack) == depth:
-            stack.append(node)
-        else:
-            stack[depth] = node
-    return tuple(_freeze_list_item(node) for node in roots)
+    """Compatibility wrapper for list hierarchy reconstruction."""
+    return _list_reconstruct_list_hierarchy(items)
 
 
-def _list_item_left(item: NormalizedListItem) -> float | None:
-    for evidence in item.source_evidence:
-        if evidence.bounding_box is not None:
-            return evidence.bounding_box.left
-    for layout in item.layout_evidence:
-        # LayoutEvidence deliberately contains no duplicate bbox; source evidence is canonical.
-        if layout.group_path:
-            continue
-    return None
-
-
-def _indentation_depth(position: float | None, levels: list[float]) -> int:
-    if position is None:
-        return 0
-    return min(range(len(levels)), key=lambda index: abs(levels[index] - position))
-
-
-def _freeze_list_item(node: _MutableListItem) -> NormalizedListItem:
-    return node.item.model_copy(
-        update={"children": tuple(_freeze_list_item(child) for child in node.children)}
-    )
-
-
-def _marker_is_ordered(marker: str | None) -> bool:
-    normalized = _normalize_list_marker(marker)
-    return bool(normalized and normalized[0].isalnum())
+def marker_is_ordered(marker: str | None) -> bool:
+    """Compatibility wrapper for list marker classification."""
+    return _list_marker_is_ordered(marker)
 
 
 def _selection_events(
@@ -770,51 +590,31 @@ def extracted_document_hash(document: ExtractedDocument) -> str:
 
 
 def _normalize_list_marker(value: str | None) -> str | None:
-    if value is None:
-        return None
-    marker = "".join(value.split()).rstrip(".)")
-    return marker or None
+    """Compatibility wrapper for list marker normalization."""
+    return normalize_list_marker(value)
 
 
 def _clause_reference_from_list_item(
     marker: str | None,
     text: str,
 ) -> tuple[str | None, bool]:
-    if marker is not None and _CLAUSE_REFERENCE.fullmatch(marker):
-        return marker, False
-    match = _CLAUSE_REFERENCE_START.match(text)
-    if match is None:
-        return None, False
-    return match.group(0).strip(), True
+    """Compatibility wrapper for clause-like list entries."""
+    return clause_reference_from_list_item(marker, text)
 
 
 def _normalize_text(value: str, options: NormalizationOptions) -> str:
-    value = unicodedata.normalize(options.unicode_form, value)
-    value = "".join(
-        character
-        for character in value
-        if character in "\n\t" or unicodedata.category(character) != "Cc"
-    )
-    value = value.replace("\u00a0", " ").replace("\u2007", " ").replace("\u202f", " ")
-    if options.normalize_whitespace:
-        value = re.sub(r"[ \t]+", " ", value)
-        value = re.sub(r"\s*\n\s*", " ", value)
-    return value.strip()
+    """Compatibility wrapper for the shared prose normalizer."""
+    return normalize_text(value, options)
 
 
 def _normalize_code(value: str, options: NormalizationOptions) -> str:
-    value = (
-        unicodedata.normalize(options.unicode_form, value).replace("\r\n", "\n").replace("\r", "\n")
-    )
-    return "".join(
-        character
-        for character in value
-        if character in "\n\t" or unicodedata.category(character) != "Cc"
-    ).strip("\n")
+    """Compatibility wrapper for the shared code normalizer."""
+    return normalize_code(value, options)
 
 
 def _optional_text(value: str | None, options: NormalizationOptions) -> str | None:
-    return _normalize_text(value, options) if value is not None else None
+    """Compatibility wrapper for optional prose normalization."""
+    return normalize_optional_text(value, options)
 
 
 def _page_signature(text: str) -> str:
@@ -825,7 +625,7 @@ def _page_signature(text: str) -> str:
 
 
 def _looks_like_clause_reference(text: str) -> bool:
-    return bool(_CLAUSE_REFERENCE.fullmatch("".join(text.split())))
+    return _list_looks_like_clause_reference(text)
 
 
 def _looks_like_clause_anchor(text: str) -> bool:
@@ -871,30 +671,18 @@ def _should_merge(previous: str, current: str) -> bool:
     )
 
 
-def _merge_text_items(first: NormalizedText, second: NormalizedText, text: str) -> NormalizedText:
-    return NormalizedText(
-        id=f"{first.id}+{second.id}",
-        sequence_number=first.sequence_number,
-        source_item_ids=first.source_item_ids + second.source_item_ids,
-        source_evidence=first.source_evidence + second.source_evidence,
-        original_labels=first.original_labels + second.original_labels,
-        layout_evidence=first.layout_evidence + second.layout_evidence,
-        text=text,
-    )
+def _merge_text_items(
+    first: NormalizedText,
+    second: NormalizedText,
+    text: str,
+) -> NormalizedText:
+    """Compatibility wrapper for provenance-preserving text merging."""
+    return merge_text_items(first, second, text)
 
 
 def _merge_lists(lists: list[NormalizedList]) -> NormalizedList:
-    first = lists[0]
-    return NormalizedList(
-        id="+".join(item.id for item in lists),
-        sequence_number=first.sequence_number,
-        source_item_ids=tuple(source_id for item in lists for source_id in item.source_item_ids),
-        source_evidence=tuple(evidence for item in lists for evidence in item.source_evidence),
-        original_labels=tuple(label for item in lists for label in item.original_labels),
-        layout_evidence=tuple(layout for item in lists for layout in item.layout_evidence),
-        ordered=all(item.ordered for item in lists),
-        items=tuple(list_item for item in lists for list_item in item.items),
-    )
+    """Compatibility wrapper for adjacent list merging."""
+    return merge_lists(lists)
 
 
 def _page_is_selected(
