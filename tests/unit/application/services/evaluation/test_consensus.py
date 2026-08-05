@@ -8,7 +8,9 @@ from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
     ConsensusCategory,
     ConsensusReport,
+    ModelVote,
     _render_review,
+    _render_vote_table,
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     MatrixObservation,
@@ -352,3 +354,39 @@ def test_consensus_filters_predictions_to_selected_example_ids(tmp_path: Path) -
 
     assert report.clause_count == 1
     assert report.clauses[0].clause_id == "clause-1"
+
+
+def test_model_votes_are_rendered_as_space_padded_table() -> None:
+    votes = (
+        ModelVote(
+            model_id="granite",
+            primary_function="requirement",
+            primary_knowledge_kind="technique",
+            applicability_present=True,
+            applicability_function="scope_definition",
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="gemma-long-model-name",
+            primary_function="description",
+            responsibility_present=True,
+            responsibility_function="responsibility_assignment",
+            repetitions=3,
+            stability=0.667,
+        ),
+    )
+
+    lines = _render_vote_table(votes)
+
+    assert lines == [
+        "| Voter                 | Statement functions | Knowledge kinds | "
+        "Applicability    | Responsibility            | Stability |",
+        "| --------------------- | ------------------- | --------------- | "
+        "---------------- | ------------------------- | --------- |",
+        "| granite               | requirement         | technique       | "
+        "scope_definition | none                      | 1.000     |",
+        "| gemma-long-model-name | description         | none            | "
+        "none             | responsibility_assignment | 0.667     |",
+    ]
+    assert all(len(line) == len(lines[0]) for line in lines)

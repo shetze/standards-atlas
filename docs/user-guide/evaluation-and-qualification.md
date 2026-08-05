@@ -43,3 +43,47 @@ schema before rebuilding the qualification matrix. Use `--overwrite` for a compl
 rerun. Review disputed IEC 61508-7 clauses first: `description` or `recommendation`
 describes statement force, while `technique`, `measure`, or `method` captures the
 engineering knowledge represented.
+
+
+## Stage-specific prompt selection
+
+Cascade stages may restrict the globally declared prompt catalog with a `prompts` list.
+Omitting the list preserves the previous behaviour and executes every declared prompt for
+every model in the stage.
+
+```yaml
+execution:
+  mode: cascade
+  stages:
+    - id: efficient-local
+      models: [granite, gemma, mistral]
+      prompts: [content-only, structure-aware]
+      apply_to: all
+    - id: prompt-refinement
+      models: [qwen-14b, qwen-32b]
+      prompts:
+        - content-only
+        - structure-aware
+        - reference-aware
+        - bounded-reasoning
+      apply_to: unresolved
+```
+
+This keeps the first stage focused on the semantic baseline and the productive
+structure-aware variant. More expensive or specialised prompts are evaluated only for
+unresolved clauses in later stages. Qualification reports contain only combinations that
+were configured for the respective model; intentionally omitted combinations are not
+reported as missing runs.
+
+
+### Taxonomy distinctions
+
+The semantic profile distinguishes `recommendation` (typically “should”) from
+`condemnation` (typically “should not”). A condemnation is a negative
+recommendation and must not be classified as a prohibition unless the source
+uses mandatory negative language such as “shall not”.
+
+Engineering methods and measures share the `method_or_measure` knowledge kind.
+The distinction is not sufficiently stable or useful for qualification to justify
+separate model labels. Existing v2 results containing `method` or `measure` must
+be regenerated.

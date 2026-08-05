@@ -89,12 +89,13 @@ class ModelGenerationConfig(BaseModel):
 
 
 class CascadeStage(BaseModel):
-    """One ordered model stage in cascade execution."""
+    """One ordered model and prompt stage in cascade execution."""
 
     model_config = ConfigDict(frozen=True)
 
     id: str = Field(min_length=1)
     models: tuple[str, ...] = Field(min_length=1)
+    prompts: tuple[str, ...] = ()
     apply_to: str = Field(default="all", pattern="^(all|unresolved)$")
 
 
@@ -291,6 +292,23 @@ class QualificationMatrixManifest(BaseModel):
         """Return the model-specific repetition count or the global default."""
         return model.repetitions if model.repetitions is not None else self.repetitions
 
+    def prompts_for_stage(self, stage: CascadeStage) -> tuple[PromptCandidate, ...]:
+        """Return the prompts selected for a cascade stage."""
+        if not stage.prompts:
+            return self.prompts
+        selected = set(stage.prompts)
+        return tuple(prompt for prompt in self.prompts if prompt.id in selected)
+
+    def prompts_for_model(self, model_id: str) -> tuple[PromptCandidate, ...]:
+        """Return the prompts configured for one model."""
+        if self.execution.mode != "cascade":
+            return self.prompts
+        stage = next(
+            (item for item in self.execution.stages if model_id in item.models),
+            None,
+        )
+        return self.prompts if stage is None else self.prompts_for_stage(stage)
+
     @model_validator(mode="after")
     def validate_matrix(self) -> QualificationMatrixManifest:
         if len(self.prompts) != 4:
@@ -332,6 +350,13 @@ class QualificationMatrixManifest(BaseModel):
                     raise ValueError(
                         f"unknown models in cascade stage {stage.id}: {sorted(unknown)}"
                     )
+                unknown_prompts = set(stage.prompts) - set(prompt_ids)
+                if unknown_prompts:
+                    raise ValueError(
+                        f"unknown prompts in cascade stage {stage.id}: {sorted(unknown_prompts)}"
+                    )
+                if len(set(stage.prompts)) != len(stage.prompts):
+                    raise ValueError(f"duplicate prompts in cascade stage {stage.id}")
                 overlap = configured_models.intersection(stage.models)
                 if overlap:
                     raise ValueError(f"models occur in multiple cascade stages: {sorted(overlap)}")
@@ -343,6 +368,11 @@ class QualificationMatrixManifest(BaseModel):
                 raise ValueError(f"unknown prompt_id in observation: {item.prompt_id}")
             if item.model_id not in model_ids:
                 raise ValueError(f"unknown model_id in observation: {item.model_id}")
+            configured_prompt_ids = {prompt.id for prompt in self.prompts_for_model(item.model_id)}
+            if item.prompt_id not in configured_prompt_ids:
+                raise ValueError(
+                    f"prompt {item.prompt_id!r} is not configured for model {item.model_id!r}"
+                )
             if item.reasoning_mode_id not in reasoning_mode_ids:
                 raise ValueError(
                     f"unknown reasoning_mode_id in observation: {item.reasoning_mode_id}"
@@ -509,10 +539,10 @@ class ModelPromptQualificationService:
 
         model_map = {item.id: item for item in manifest.models}
         raw_candidates: list[CandidateQualification] = []
-        for prompt in manifest.prompts:
-            for model in manifest.models:
-                if manifest.repetitions_for(model) == 0:
-                    continue
+        for model in manifest.models:
+            if manifest.repetitions_for(model) == 0:
+                continue
+            for prompt in manifest.prompts_for_model(model.id):
                 for reasoning_mode in manifest.reasoning_modes:
                     entries = sorted(
                         grouped.get((prompt.id, model.id, reasoning_mode.id), []),

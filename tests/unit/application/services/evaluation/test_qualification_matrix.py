@@ -359,3 +359,89 @@ def test_cascade_rejects_unknown_models(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="unknown models"):
         QualificationMatrixManifest.load(path)
+
+
+def test_cascade_stage_can_select_prompts(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["execution"] = {
+        "mode": "cascade",
+        "stages": [
+            {
+                "id": "efficient",
+                "models": ["fast"],
+                "prompts": ["p1", "p2"],
+                "apply_to": "all",
+            },
+            {
+                "id": "escalation",
+                "models": ["accurate"],
+                "prompts": ["p3", "p4"],
+                "apply_to": "unresolved",
+            },
+        ],
+    }
+    payload["observations"] = [
+        item
+        for item in payload["observations"]
+        if (item["model_id"] == "fast" and item["prompt_id"] in {"p1", "p2"})
+        or (item["model_id"] == "accurate" and item["prompt_id"] in {"p3", "p4"})
+    ]
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    manifest = QualificationMatrixManifest.load(path)
+    report, _, _ = ModelPromptQualificationService().evaluate(
+        manifest, tmp_path / "stage-prompts-output"
+    )
+
+    assert [prompt.id for prompt in manifest.prompts_for_model("fast")] == ["p1", "p2"]
+    assert [prompt.id for prompt in manifest.prompts_for_model("accurate")] == ["p3", "p4"]
+    assert len(report.candidates) == 4
+    assert not any("missing all runs" in item for item in report.diagnostics)
+
+
+def test_cascade_stage_without_prompt_selection_uses_all_prompts(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["execution"] = {
+        "mode": "cascade",
+        "stages": [
+            {"id": "efficient", "models": ["fast"], "apply_to": "all"},
+            {
+                "id": "escalation",
+                "models": ["accurate"],
+                "apply_to": "unresolved",
+            },
+        ],
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    manifest = QualificationMatrixManifest.load(path)
+
+    assert manifest.prompts_for_model("fast") == manifest.prompts
+    assert manifest.prompts_for_model("accurate") == manifest.prompts
+
+
+def test_cascade_rejects_unknown_stage_prompts(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["execution"] = {
+        "mode": "cascade",
+        "stages": [
+            {
+                "id": "efficient",
+                "models": ["fast"],
+                "prompts": ["missing"],
+                "apply_to": "all",
+            },
+            {
+                "id": "escalation",
+                "models": ["accurate"],
+                "apply_to": "unresolved",
+            },
+        ],
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unknown prompts"):
+        QualificationMatrixManifest.load(path)

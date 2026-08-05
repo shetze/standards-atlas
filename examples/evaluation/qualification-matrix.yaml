@@ -13,12 +13,20 @@ execution:
         - granite-3.3-8b-instruct-q4-k-m
         - gemma-3-12b-it-q4-k-m
         - mistral-small-3.2-24b-instruct-q4-k-m
+      prompts:
+        - content-only
+        - structure-aware
       apply_to: all
     - id: escalation
       models:
         - qwen3-14b-q4-k-m
         - qwen3-32b-q4-k-m
         # - codex-gpt-5.6-luna
+      prompts:
+        - content-only
+        - structure-aware
+        - reference-aware
+        - bounded-reasoning
       apply_to: unresolved
   resolution:
     minimum_successful_models: 3

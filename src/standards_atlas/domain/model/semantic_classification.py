@@ -12,6 +12,7 @@ class StatementFunction(StrEnum):
 
     REQUIREMENT = "requirement"
     RECOMMENDATION = "recommendation"
+    CONDEMNATION = "condemnation"
     PERMISSION = "permission"
     PROHIBITION = "prohibition"
     DEFINITION = "definition"
@@ -31,8 +32,7 @@ class KnowledgeKind(StrEnum):
     """Kind of engineering knowledge represented by a clause."""
 
     TECHNIQUE = "technique"
-    MEASURE = "measure"
-    METHOD = "method"
+    METHOD_OR_MEASURE = "method_or_measure"
     PROCESS = "process"
     ARTIFACT = "artifact"
     ROLE = "role"

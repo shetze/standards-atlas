@@ -89,6 +89,7 @@ class AdaptiveInterviewPlanner:
                     allowed_labels=(
                         "requirement",
                         "recommendation",
+                        "condemnation",
                         "permission",
                         "prohibition",
                         "definition",
@@ -110,8 +111,7 @@ class AdaptiveInterviewPlanner:
 
         knowledge_markers = (
             "technique",
-            "measure",
-            "method",
+            "method_or_measure",
             "procedure",
             "process",
             "artifact",
@@ -121,7 +121,8 @@ class AdaptiveInterviewPlanner:
             "concept",
         )
         if any(marker in content.lower() for marker in knowledge_markers) or bool(
-            structural & {"technique", "measure", "method", "techniques_and_measures"}
+            structural
+            & {"technique", "method_or_measure", "measure", "method", "techniques_and_measures"}
         ):
             questions.append(
                 InterviewQuestion(
@@ -130,8 +131,7 @@ class AdaptiveInterviewPlanner:
                     question="What engineering knowledge kind is represented by this clause?",
                     allowed_labels=(
                         "technique",
-                        "measure",
-                        "method",
+                        "method_or_measure",
                         "process",
                         "artifact",
                         "role",

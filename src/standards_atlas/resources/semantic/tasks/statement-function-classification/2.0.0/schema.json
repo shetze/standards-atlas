@@ -24,6 +24,7 @@
         "enum": [
           "requirement",
           "recommendation",
+          "condemnation",
           "permission",
           "prohibition",
           "definition",
@@ -45,8 +46,7 @@
         "type": "string",
         "enum": [
           "technique",
-          "measure",
-          "method",
+          "method_or_measure",
           "process",
           "artifact",
           "role",
@@ -62,8 +62,7 @@
       ],
       "enum": [
         "technique",
-        "measure",
-        "method",
+        "method_or_measure",
         "process",
         "artifact",
         "role",
@@ -122,6 +121,7 @@
       "enum": [
         "requirement",
         "recommendation",
+        "condemnation",
         "permission",
         "prohibition",
         "definition",

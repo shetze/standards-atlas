@@ -1,6 +1,7 @@
 statement_functions:
 - requirement
 - recommendation
+- condemnation
 - permission
 - prohibition
 - definition
@@ -15,8 +16,7 @@ statement_functions:
 - assumption
 knowledge_kinds:
 - technique
-- measure
-- method
+- method_or_measure
 - process
 - artifact
 - role

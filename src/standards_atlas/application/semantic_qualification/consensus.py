@@ -729,24 +729,11 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Structural prior: `{item.structural_prior or 'none'}`",
                 "- Review reasons:",
                 *[f"  - {reason}" for reason in item.review_reasons],
-                "- Model votes:",
+                "### Model votes",
+                "",
+                *_render_vote_table(item.votes),
             ]
         )
-        for vote in item.votes:
-            labels = ", ".join(value.value for value in vote.statement_functions) or "none"
-            knowledge_labels = ", ".join(value.value for value in vote.knowledge_kinds) or "none"
-            applicability_labels = (
-                ", ".join(value.value for value in vote.applicability_functions) or "none"
-            )
-            responsibility_labels = (
-                ", ".join(value.value for value in vote.responsibility_functions) or "none"
-            )
-            lines.append(
-                f"  - `{vote.model_id}` ({vote.role}): statement=`{labels}`; "
-                f"knowledge=`{knowledge_labels}`; applicability=`{applicability_labels}`; "
-                f"responsibility=`{responsibility_labels}` "
-                f"(repeat stability {vote.stability:.3f})"
-            )
         lines.extend(
             [
                 "",
@@ -762,6 +749,55 @@ def _render_review(report: ConsensusReport) -> str:
             ]
         )
     return "\n".join(lines)
+
+
+def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
+    headers = (
+        "Voter",
+        "Statement functions",
+        "Knowledge kinds",
+        "Applicability",
+        "Responsibility",
+        "Stability",
+    )
+    rows = [
+        (
+            _vote_model_label(vote),
+            _enum_values(vote.statement_functions),
+            _enum_values(vote.knowledge_kinds),
+            _enum_values(vote.applicability_functions),
+            _enum_values(vote.responsibility_functions),
+            f"{vote.stability:.3f}",
+        )
+        for vote in votes
+    ]
+    widths = tuple(
+        max([len(header), *(len(row[index]) for row in rows)])
+        for index, header in enumerate(headers)
+    )
+    lines = [_table_row(headers, widths)]
+    lines.append("| " + " | ".join("-" * width for width in widths) + " |")
+    lines.extend(_table_row(row, widths) for row in rows)
+    return lines
+
+
+def _vote_model_label(vote: ModelVote) -> str:
+    if vote.role == "voter":
+        return _table_cell(vote.model_id)
+    return _table_cell(f"{vote.model_id} [{vote.role}]")
+
+
+def _enum_values(values: tuple[StrEnum, ...]) -> str:
+    return _table_cell(", ".join(value.value for value in values) or "none")
+
+
+def _table_cell(value: str) -> str:
+    return " ".join(value.replace("|", "\\|").splitlines())
+
+
+def _table_row(values: tuple[str, ...], widths: tuple[int, ...]) -> str:
+    cells = (value.ljust(width) for value, width in zip(values, widths, strict=True))
+    return "| " + " | ".join(cells) + " |"
 
 
 def _load_clause_contexts(

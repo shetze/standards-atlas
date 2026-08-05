@@ -795,13 +795,14 @@ def qualify_model_prompt_matrix(
                         {
                             "id": "full-matrix",
                             "models": tuple(model_by_id),
+                            "prompts": tuple(prompt.id for prompt in manifest.prompts),
                             "apply_to": "all",
                         },
                     )(),
                 )
             candidate_total = sum(
                 manifest.repetitions_for(model_by_id[model_id])
-                * len(manifest.prompts)
+                * len(manifest.prompts_for_stage(stage))
                 * len(active_reasoning_modes)
                 for stage in execution_stages
                 for model_id in stage.models
@@ -860,7 +861,7 @@ def qualify_model_prompt_matrix(
                             "matrix model provider must be 'ramalama' or 'codex', "
                             f"got {model.provider!r} for {model.id}"
                         )
-                    for prompt in manifest.prompts:
+                    for prompt in manifest.prompts_for_stage(stage):
                         prompt_version = resolve_prompt_version(prompt, resources=resources)
                         for reasoning in active_reasoning_modes:
                             for repetition in range(1, model_repetitions + 1):

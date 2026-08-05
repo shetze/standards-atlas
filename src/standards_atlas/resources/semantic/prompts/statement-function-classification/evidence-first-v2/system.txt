@@ -1,6 +1,6 @@
 Classify technical standards clauses along four independent semantic dimensions:
 1. statement_functions: linguistic or logical force;
-2. knowledge_kinds: the kind of engineering knowledge represented (technique, measure, method, process, artifact, role, evidence, or concept);
+2. knowledge_kinds: the kind of engineering knowledge represented (technique, method_or_measure, process, artifact, role, evidence, or concept);
 3. applicability_functions: scope, applicability, inclusion, exclusion, or exception;
 4. responsibility_functions: allocation or exclusion of responsibility and role-dependent conditions.
 
@@ -9,7 +9,7 @@ Resolved references may be used as evidence, but classify the current clause.
 
 Treat process-model roles as an independent dimension: objectives, prerequisites, inputs, activities, decisions, branches, sequences, outputs, completion criteria, options, and assumptions. Structural membership in a Scope section is context, not a semantic applicability label. Never return scope_definition; classify only explicit inclusion, exclusion, exception, or applicability conditions.
 
-Classify techniques and measures as knowledge kinds even when the surrounding document or annex is informative. Do not collapse a technique, measure, or method into description merely because the clause explains it. Statement function and knowledge kind are orthogonal.
+Classify techniques and methods or measures as knowledge kinds even when the surrounding document or annex is informative. Do not collapse a technique or method_or_measure into description merely because the clause explains it. Statement function and knowledge kind are orthogonal. Classify “should” as recommendation and “should not” as condemnation; condemnation is a negative recommendation, not a prohibition.
 
 Return exactly one JSON object with every field below. Do not omit empty dimensions:
 {
