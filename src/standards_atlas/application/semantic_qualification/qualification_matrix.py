@@ -13,6 +13,11 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from standards_atlas.application.semantic_qualification.qualification import (
     AnnotationQualificationReport,
 )
+from standards_atlas.shared.formatting import (
+    format_decimal,
+    format_gigabytes,
+    format_seconds,
+)
 
 _PROMPT_VERSION_ALIASES = {
     "content-only": "content-only-v1",
@@ -857,7 +862,7 @@ def _dominates(left: CandidateQualification, right: CandidateQualification) -> b
 
 
 def _metric(value: float | None) -> str:
-    return "n/a" if value is None else f"{value:.4f}"
+    return format_decimal(value)
 
 
 def _markdown(report: QualificationMatrixReport, models: dict[str, ModelCandidate]) -> str:
@@ -880,12 +885,8 @@ def _markdown(report: QualificationMatrixReport, models: dict[str, ModelCandidat
     for rank, key in enumerate(report.ranking, start=1):
         item = by_key[key]
         model = models[item.model_id]
-        duration = (
-            f"{item.mean_duration_seconds:.2f}s"
-            if item.mean_duration_seconds is not None
-            else "n/a"
-        )
-        memory = f"{item.peak_memory_gb:.2f}GB" if item.peak_memory_gb is not None else "n/a"
+        duration = format_seconds(item.mean_duration_seconds)
+        memory = format_gigabytes(item.peak_memory_gb)
         marker = item.status.upper()
         if item.pareto_optimal:
             marker += " · Pareto"

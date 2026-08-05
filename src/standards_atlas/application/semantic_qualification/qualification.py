@@ -20,6 +20,7 @@ from standards_atlas.application.semantic_qualification.annotations import (
     StatementFunctionSelection,
 )
 from standards_atlas.domain.model import StatementFunction
+from standards_atlas.shared.markdown import markdown_row
 
 
 class AgreementMetrics(BaseModel):
@@ -551,7 +552,7 @@ def _markdown(report: AnnotationQualificationReport) -> str:
             f"{metric.micro_f1:.3f}",
             f"{metric.macro_f1:.3f}",
         )
-        return "| " + " | ".join(values) + " |"
+        return markdown_row(values)
 
     brier = report.calibration.brier_score
     calibration_error = report.calibration.expected_calibration_error

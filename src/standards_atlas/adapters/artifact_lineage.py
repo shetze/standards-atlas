@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from pathlib import Path
 
 from standards_atlas.domain.model import (
@@ -13,6 +11,8 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     artifact_reference,
 )
+from standards_atlas.shared.artifacts import write_json
+from standards_atlas.shared.hashing import sha256_file
 
 
 def write_file_lineage_manifest(
@@ -69,11 +69,8 @@ def _document_parent(document: EngineeringDocument) -> tuple[ArtifactReference, 
 
 
 def _file_hash(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return sha256_file(path)
 
 
 def _write_manifest(path: Path, lineage: ArtifactLineage) -> None:
-    path.write_text(
-        json.dumps(lineage.model_dump(mode="json"), indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    write_json(path, lineage.model_dump(mode="json"))
