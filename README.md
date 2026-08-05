@@ -94,3 +94,8 @@ uv run standards-atlas mcp codex-config \
 ```
 
 See `docs/user-guide/codex-integration.md` for setup and verification.
+
+
+## Current version
+
+This snapshot corresponds to **standards-atlas 0.8.1**. Version 0.8.1 completes the architecture refactoring (Phases A–G) while preserving functional behaviour.

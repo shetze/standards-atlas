@@ -1,3 +1,13 @@
+## 0.8.1
+
+### Changed
+- Completed the modular refactoring of the core architecture.
+- Split CLI, qualification, proposal, normalization, alignment and Docling processing into cohesive modules.
+- Introduced shared infrastructure for artifacts, hashing, formatting and reporting.
+
+### Notes
+- This release is intended to preserve functional behaviour while significantly improving maintainability and extensibility.
+
 ## Unreleased
 
 ## 0.8.0 - 2026-08-05

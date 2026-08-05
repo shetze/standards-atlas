@@ -43,3 +43,8 @@ Expose Knowledge Domains through progressively richer MCP skills for search,
 analysis, navigation, relationship exploration and engineering workflows.
 
 See `docs/roadmap/` for detailed implementation plans.
+
+
+## Status after 0.8.1
+
+The architectural refactoring planned for the 0.8.x series has been completed. Future work can focus on functionality rather than structural reorganization.
