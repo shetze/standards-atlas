@@ -52,6 +52,10 @@ from standards_atlas.application.semantic_qualification.eligibility import (
     SemanticTaskEligibilityPolicy,
     eligibility_from_input,
 )
+from standards_atlas.application.semantic_qualification.progress import (
+    ProposalProgress,
+    ProposalProgressReporter,
+)
 
 
 class SemanticTaskDefinition(BaseModel):
@@ -120,21 +124,6 @@ class ProposalRunConfig(BaseModel):
 
 
 @dataclass(frozen=True)
-class ProposalProgress:
-    current: int
-    total: int
-    example_id: str
-    status: str
-    document_key: str
-    reference: str | None
-    title: str | None
-    detail: str | None = None
-    elapsed_seconds: float | None = None
-    attempt: int | None = None
-    max_attempts: int | None = None
-
-
-@dataclass(frozen=True)
 class ProposalRunResult:
     generated: int
     skipped: int
@@ -168,7 +157,7 @@ class BaselineProposalGenerator:
         resources: Path,
         corpus_root: Path,
         output_root: Path,
-        progress: Callable[[ProposalProgress], None] | None = None,
+        progress: ProposalProgressReporter | None = None,
     ) -> ProposalRunResult:
         task, canonical_schema = SemanticTaskRepository(resources / "tasks").load(
             config.task, config.task_version
@@ -535,7 +524,7 @@ def _report_retry_progress(
     attempt: int,
     error: LlmUnavailableError,
     *,
-    progress: Callable[[ProposalProgress], None],
+    progress: ProposalProgressReporter,
     current: int,
     total: int,
     example_id: str,

@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import math
 from datetime import UTC, datetime
 from pathlib import Path
-from statistics import fmean, pstdev
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -13,10 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from standards_atlas.application.semantic_qualification.qualification import (
     AnnotationQualificationReport,
 )
-from standards_atlas.shared.formatting import (
-    format_decimal,
-    format_gigabytes,
-    format_seconds,
+from standards_atlas.application.semantic_qualification.reports.matrix import (
+    render_qualification_matrix_markdown,
 )
 
 _PROMPT_VERSION_ALIASES = {
@@ -572,31 +568,20 @@ class ModelPromptQualificationService:
                             f"missing all runs for {prompt.id} / {model.id} / {reasoning_mode.id}"
                         )
 
-        baseline = _baseline(raw_candidates, manifest.thresholds)
-        candidates = tuple(
-            _apply_baseline_threshold(item, baseline, manifest.thresholds)
-            for item in raw_candidates
+        from standards_atlas.application.semantic_qualification.ranking import (
+            apply_baseline,
+            candidate_key,
+            pareto_front,
+            rank_candidates,
         )
-        pareto_keys = _pareto_front(candidates)
+
+        candidates = apply_baseline(raw_candidates, manifest.thresholds)
+        pareto_keys = pareto_front(candidates)
         candidates = tuple(
-            item.model_copy(update={"pareto_optimal": _candidate_key(item) in pareto_keys})
+            item.model_copy(update={"pareto_optimal": candidate_key(item) in pareto_keys})
             for item in candidates
         )
-        rankable = [item for item in candidates if item.qualification_eligible]
-        ranking = tuple(
-            _candidate_key(item)
-            for item in sorted(
-                rankable,
-                key=lambda item: (
-                    item.passed,
-                    item.mean_gold_f1 if item.mean_gold_f1 is not None else -1.0,
-                    -(item.gold_f1_stddev or 0.0),
-                    item.mean_gold_coverage if item.mean_gold_coverage is not None else -1.0,
-                    -(item.mean_duration_seconds or math.inf),
-                ),
-                reverse=True,
-            )
-        )
+        ranking = rank_candidates(candidates)
         report = QualificationMatrixReport(
             matrix_id=manifest.matrix_id,
             corpus_id=manifest.corpus_id,
@@ -615,7 +600,9 @@ class ModelPromptQualificationService:
         json_path = output_directory / "qualification-matrix.json"
         markdown_path = output_directory / "qualification-matrix.md"
         json_path.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
-        markdown_path.write_text(_markdown(report, model_map), encoding="utf-8")
+        markdown_path.write_text(
+            render_qualification_matrix_markdown(report, model_map), encoding="utf-8"
+        )
         return report, json_path, markdown_path
 
 
@@ -627,126 +614,18 @@ def _aggregate_candidate(
     expected_repetitions: int,
     thresholds: RegressionThresholds,
 ) -> CandidateQualification:
-    supported = reasoning_mode.id in model.supported_reasoning_modes
-    if not supported:
-        return _empty_candidate(
-            prompt_id, model, reasoning_mode, expected_repetitions, status="unsupported"
-        )
-    if not entries:
-        return _empty_candidate(
-            prompt_id, model, reasoning_mode, expected_repetitions, status="not_executed"
-        )
+    """Compatibility wrapper for candidate aggregation."""
+    from standards_atlas.application.semantic_qualification.aggregation import (
+        aggregate_candidate,
+    )
 
-    regressions: list[str] = []
-    complete = len(entries) == expected_repetitions
-    if not complete:
-        regressions.append(
-            f"completed repetitions {len(entries)} != expected {expected_repetitions}"
-        )
-
-    gold_available = any(report.gold_agreement.eligible > 0 for _, report in entries)
-    gold_entries = [report for _, report in entries if report.gold_agreement.eligible > 0]
-    f1_values = [report.gold_agreement.micro_f1 for report in gold_entries]
-    coverage_values = [report.gold_agreement.coverage for report in gold_entries]
-    silver_values = [report.silver_agreement.micro_f1 for _, report in entries]
-    structure_values = [report.structure_agreement.micro_f1 for _, report in entries]
-    success_values = [report.reliability.prediction_success_rate for _, report in entries]
-    json_values = [report.reliability.json_validity_rate for _, report in entries]
-    truncation_values = [report.reliability.truncation_rate for _, report in entries]
-    durations = [item.mean_duration_seconds for item, _ in entries if item.mean_duration_seconds]
-    memory = [item.peak_memory_gb for item, _ in entries if item.peak_memory_gb is not None]
-
-    mean_f1 = fmean(f1_values) if f1_values else None
-    minimum_f1 = min(f1_values) if f1_values else None
-    stddev = pstdev(f1_values) if len(f1_values) > 1 else (0.0 if f1_values else None)
-    mean_coverage = fmean(coverage_values) if coverage_values else None
-    mean_duration = fmean(durations) if durations else None
-    peak_memory = max(memory) if memory else model.declared_memory_gb
-
-    if gold_available:
-        assert mean_f1 is not None
-        assert mean_coverage is not None
-        assert stddev is not None
-        if mean_f1 < thresholds.min_gold_f1:
-            regressions.append(f"mean Gold F1 {mean_f1:.4f} < {thresholds.min_gold_f1:.4f}")
-        if mean_coverage < thresholds.min_gold_coverage:
-            regressions.append(
-                f"mean Gold coverage {mean_coverage:.4f} < {thresholds.min_gold_coverage:.4f}"
-            )
-        if stddev > thresholds.max_gold_f1_stddev:
-            regressions.append(f"Gold F1 stddev {stddev:.4f} > {thresholds.max_gold_f1_stddev:.4f}")
-
-    mean_success = fmean(success_values) if success_values else 0.0
-    mean_json = fmean(json_values) if json_values else 0.0
-    mean_truncation = fmean(truncation_values) if truncation_values else 0.0
-    if mean_success < thresholds.min_prediction_success_rate:
-        regressions.append(
-            f"prediction success rate {mean_success:.4f} < "
-            f"{thresholds.min_prediction_success_rate:.4f}"
-        )
-    if mean_json < thresholds.min_json_validity_rate:
-        regressions.append(
-            f"JSON validity rate {mean_json:.4f} < {thresholds.min_json_validity_rate:.4f}"
-        )
-    if mean_truncation > thresholds.max_truncation_rate:
-        regressions.append(
-            f"truncation rate {mean_truncation:.4f} > {thresholds.max_truncation_rate:.4f}"
-        )
-    if (
-        thresholds.max_mean_duration_seconds is not None
-        and mean_duration is not None
-        and mean_duration > thresholds.max_mean_duration_seconds
-    ):
-        regressions.append(
-            f"mean duration {mean_duration:.3f}s > {thresholds.max_mean_duration_seconds:.3f}s"
-        )
-    if (
-        thresholds.max_peak_memory_gb is not None
-        and peak_memory is not None
-        and peak_memory > thresholds.max_peak_memory_gb
-    ):
-        regressions.append(
-            f"peak memory {peak_memory:.3f}GB > {thresholds.max_peak_memory_gb:.3f}GB"
-        )
-
-    failure_categories: dict[str, int] = {}
-    messages: dict[str, int] = {}
-    for _, report in entries:
-        for item in report.reliability.failure_categories:
-            failure_categories[item.category] = (
-                failure_categories.get(item.category, 0) + item.count
-            )
-        for item in report.reliability.top_failure_messages:
-            messages[item.message] = messages.get(item.message, 0) + item.count
-
-    status = "passed" if complete and not regressions else "failed" if complete else "incomplete"
-    return CandidateQualification(
-        prompt_id=prompt_id,
-        model_id=model.id,
-        provider=model.provider,
-        reasoning_mode_id=reasoning_mode.id,
-        reasoning_optional=reasoning_mode.optional,
-        expected_repetitions=expected_repetitions,
-        completed_repetitions=len(entries),
-        status=status,
-        qualification_eligible=complete,
-        mean_gold_f1=mean_f1,
-        min_gold_f1=minimum_f1,
-        gold_f1_stddev=stddev,
-        mean_gold_coverage=mean_coverage,
-        mean_silver_f1=fmean(silver_values) if silver_values else 0.0,
-        mean_structure_f1=fmean(structure_values) if structure_values else 0.0,
-        mean_prediction_success_rate=mean_success,
-        mean_json_validity_rate=mean_json,
-        mean_truncation_rate=mean_truncation,
-        mean_duration_seconds=mean_duration,
-        peak_memory_gb=peak_memory,
-        passed=status == "passed",
-        regressions=tuple(regressions),
-        failure_categories=failure_categories,
-        top_failure_messages=tuple(
-            message for message, _ in sorted(messages.items(), key=lambda item: -item[1])[:10]
-        ),
+    return aggregate_candidate(
+        prompt_id,
+        model,
+        reasoning_mode,
+        entries,
+        expected_repetitions,
+        thresholds,
     )
 
 
@@ -758,45 +637,27 @@ def _empty_candidate(
     *,
     status: str,
 ) -> CandidateQualification:
-    return CandidateQualification(
-        prompt_id=prompt_id,
-        model_id=model.id,
-        provider=model.provider,
-        reasoning_mode_id=reasoning_mode.id,
-        reasoning_optional=reasoning_mode.optional,
-        expected_repetitions=expected_repetitions,
-        completed_repetitions=0,
+    """Compatibility wrapper for empty candidate construction."""
+    from standards_atlas.application.semantic_qualification.aggregation import (
+        empty_candidate,
+    )
+
+    return empty_candidate(
+        prompt_id,
+        model,
+        reasoning_mode,
+        expected_repetitions,
         status=status,
-        qualification_eligible=False,
-        mean_gold_f1=None,
-        min_gold_f1=None,
-        gold_f1_stddev=None,
-        mean_gold_coverage=None,
-        mean_silver_f1=0.0,
-        mean_structure_f1=0.0,
-        mean_prediction_success_rate=0.0,
-        mean_json_validity_rate=0.0,
-        mean_truncation_rate=0.0,
-        peak_memory_gb=model.declared_memory_gb,
-        passed=False,
     )
 
 
 def _baseline(
     candidates: list[CandidateQualification], thresholds: RegressionThresholds
 ) -> CandidateQualification | None:
-    if thresholds.baseline_prompt_id is None or thresholds.baseline_model_id is None:
-        return None
-    return next(
-        (
-            item
-            for item in candidates
-            if item.prompt_id == thresholds.baseline_prompt_id
-            and item.model_id == thresholds.baseline_model_id
-            and item.reasoning_mode_id == thresholds.baseline_reasoning_mode_id
-        ),
-        None,
-    )
+    """Compatibility wrapper for baseline selection."""
+    from standards_atlas.application.semantic_qualification.ranking import find_baseline
+
+    return find_baseline(candidates, thresholds)
 
 
 def _apply_baseline_threshold(
@@ -804,138 +665,38 @@ def _apply_baseline_threshold(
     baseline: CandidateQualification | None,
     thresholds: RegressionThresholds,
 ) -> CandidateQualification:
-    if baseline is None:
-        return candidate
-    if baseline.mean_gold_f1 is None or candidate.mean_gold_f1 is None:
-        return candidate
-    minimum = baseline.mean_gold_f1 - thresholds.max_gold_f1_drop
-    if candidate.mean_gold_f1 >= minimum:
-        return candidate
-    regressions = candidate.regressions + (
-        f"mean Gold F1 {candidate.mean_gold_f1:.4f} < baseline allowance {minimum:.4f}",
+    """Compatibility wrapper for baseline threshold application."""
+    from standards_atlas.application.semantic_qualification.ranking import (
+        apply_baseline_threshold,
     )
-    return candidate.model_copy(update={"passed": False, "regressions": regressions})
+
+    return apply_baseline_threshold(candidate, baseline, thresholds)
 
 
 def _candidate_key(candidate: CandidateQualification) -> str:
-    return f"{candidate.prompt_id} / {candidate.model_id} / {candidate.reasoning_mode_id}"
+    """Compatibility wrapper for candidate key generation."""
+    from standards_atlas.application.semantic_qualification.ranking import candidate_key
+
+    return candidate_key(candidate)
 
 
 def _pareto_front(candidates: tuple[CandidateQualification, ...]) -> set[str]:
-    complete = [item for item in candidates if item.qualification_eligible]
-    front: set[str] = set()
-    for candidate in complete:
-        dominated = any(
-            other is not candidate and _dominates(other, candidate) for other in complete
-        )
-        if not dominated:
-            front.add(_candidate_key(candidate))
-    return front
+    """Compatibility wrapper for Pareto-front calculation."""
+    from standards_atlas.application.semantic_qualification.ranking import pareto_front
+
+    return pareto_front(candidates)
 
 
 def _dominates(left: CandidateQualification, right: CandidateQualification) -> bool:
-    left_duration = (
-        left.mean_duration_seconds if left.mean_duration_seconds is not None else math.inf
-    )
-    right_duration = (
-        right.mean_duration_seconds if right.mean_duration_seconds is not None else math.inf
-    )
-    left_memory = left.peak_memory_gb if left.peak_memory_gb is not None else math.inf
-    right_memory = right.peak_memory_gb if right.peak_memory_gb is not None else math.inf
-    left_f1 = left.mean_gold_f1 if left.mean_gold_f1 is not None else -1.0
-    right_f1 = right.mean_gold_f1 if right.mean_gold_f1 is not None else -1.0
-    left_stddev = left.gold_f1_stddev if left.gold_f1_stddev is not None else math.inf
-    right_stddev = right.gold_f1_stddev if right.gold_f1_stddev is not None else math.inf
-    no_worse = (
-        left_f1 >= right_f1
-        and left_stddev <= right_stddev
-        and left_duration <= right_duration
-        and left_memory <= right_memory
-    )
-    strictly_better = (
-        left_f1 > right_f1
-        or left_stddev < right_stddev
-        or left_duration < right_duration
-        or left_memory < right_memory
-    )
-    return no_worse and strictly_better
+    """Compatibility wrapper for pairwise dominance checks."""
+    from standards_atlas.application.semantic_qualification.ranking import dominates
+
+    return dominates(left, right)
 
 
-def _metric(value: float | None) -> str:
-    return format_decimal(value)
-
-
-def _markdown(report: QualificationMatrixReport, models: dict[str, ModelCandidate]) -> str:
-    lines = [
-        f"# Model/prompt qualification matrix: {report.matrix_id}",
-        "",
-        f"- Corpus: `{report.corpus_id}`",
-        f"- Overall result: **{'PASS' if report.passed else 'FAIL'}**",
-        f"- Pareto front: {', '.join(report.pareto_front) or 'none'}",
-        "",
-        "## Ranking",
-        "",
-        (
-            "| Rank | Prompt | Model | Reasoning | Gold F1 | Stddev | "
-            "Coverage | Time | Memory | Result |"
-        ),
-        "| ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
-    ]
-    by_key = {_candidate_key(item): item for item in report.candidates}
-    for rank, key in enumerate(report.ranking, start=1):
-        item = by_key[key]
-        model = models[item.model_id]
-        duration = format_seconds(item.mean_duration_seconds)
-        memory = format_gigabytes(item.peak_memory_gb)
-        marker = item.status.upper()
-        if item.pareto_optimal:
-            marker += " · Pareto"
-        lines.append(
-            f"| {rank} | `{item.prompt_id}` | `{model.id}` | "
-            f"`{item.reasoning_mode_id}` | {_metric(item.mean_gold_f1)} | "
-            f"{_metric(item.gold_f1_stddev)} | {_metric(item.mean_gold_coverage)} | "
-            f"{duration} | {memory} | {marker} |"
-        )
-    excluded = [item for item in report.candidates if not item.qualification_eligible]
-    if excluded:
-        lines.extend(
-            [
-                "",
-                "## Not ranked",
-                "",
-                "| Prompt | Model | Reasoning | Status | Runs |",
-                "| --- | --- | --- | --- | ---: |",
-            ]
-        )
-        for item in excluded:
-            lines.append(
-                f"| `{item.prompt_id}` | `{item.model_id}` | `{item.reasoning_mode_id}` | "
-                f"{item.status} | {item.completed_repetitions}/{item.expected_repetitions} |"
-            )
-
-    lines.extend(["", "## Regression diagnostics", ""])
-    failures = [item for item in report.candidates if item.regressions]
-    if not failures:
-        lines.append("No threshold violations were detected.")
-    for item in failures:
-        lines.append(f"### {item.prompt_id} / {item.model_id} / {item.reasoning_mode_id}")
-        lines.extend(f"- {message}" for message in item.regressions)
-        lines.append("")
-    failures_with_categories = [item for item in report.candidates if item.failure_categories]
-    if failures_with_categories:
-        lines.extend(["## Failure diagnostics", ""])
-        for item in failures_with_categories:
-            lines.append(f"### {item.prompt_id} / {item.model_id} / {item.reasoning_mode_id}")
-            lines.extend(
-                f"- `{category}`: {count}"
-                for category, count in sorted(item.failure_categories.items())
-            )
-            if item.top_failure_messages:
-                lines.append("- Frequent messages:")
-                lines.extend(f"  - {message}" for message in item.top_failure_messages)
-            lines.append("")
-
-    if report.diagnostics:
-        lines.extend(["## Matrix diagnostics", ""])
-        lines.extend(f"- {message}" for message in report.diagnostics)
-    return "\n".join(lines).rstrip() + "\n"
+def _markdown(
+    report: QualificationMatrixReport,
+    models: dict[str, ModelCandidate],
+) -> str:
+    """Compatibility wrapper for the extracted Markdown renderer."""
+    return render_qualification_matrix_markdown(report, models)
