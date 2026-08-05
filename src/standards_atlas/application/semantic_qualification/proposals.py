@@ -5,8 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
@@ -40,6 +39,10 @@ from standards_atlas.application.semantic_qualification.annotations import (
     ClauseReference,
     StatementFunctionSelection,
 )
+from standards_atlas.application.semantic_qualification.batch import (
+    ProposalBatchExecutor,
+    ProposalItemOutcome,
+)
 from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
     DEFAULT_EVALUATION_RETRY_ATTEMPTS,
@@ -56,6 +59,12 @@ from standards_atlas.application.semantic_qualification.progress import (
     ProposalProgress,
     ProposalProgressReporter,
 )
+from standards_atlas.application.semantic_qualification.request_builder import (
+    build_clause_reference,
+    build_proposal_request,
+    serialize_generation_request,
+)
+from standards_atlas.application.semantic_qualification.retry import generate_with_retry
 
 
 class SemanticTaskDefinition(BaseModel):
@@ -190,11 +199,9 @@ class BaselineProposalGenerator:
             if config.limit is not None and len(pending) >= config.limit:
                 break
 
-        generated = failed = 0
-        errors: list[str] = []
-        total = len(pending)
-        for current, example in enumerate(pending, start=1):
+        def process_example(current, total, example):
             status = "failed"
+            error_message = None
             context = _progress_context(example.input)
             started_at = time.monotonic()
             case_dir = run_dir / _safe(example.id)
@@ -310,13 +317,11 @@ class BaselineProposalGenerator:
                     yaml.safe_dump(evaluation_payload, sort_keys=False, allow_unicode=True),
                     encoding="utf-8",
                 )
-                generated += 1
                 status = "generated"
             except Exception as exc:  # keep long runs resumable
-                failed += 1
                 elapsed_seconds = time.monotonic() - started_at
                 error = f"{example.id}: {type(exc).__name__}: {exc}"
-                errors.append(error)
+                error_message = error
                 detail = _error_summary(exc)
                 failure_payload = {
                     "clause": {"id": example.id, **context},
@@ -361,6 +366,12 @@ class BaselineProposalGenerator:
                             **context,
                         )
                     )
+            return ProposalItemOutcome(status == "generated", error_message)
+
+        batch = ProposalBatchExecutor().execute(pending, process_example)
+        generated = batch.generated
+        failed = batch.failed
+        errors = list(batch.errors)
         _write_json(
             run_dir / "run.json",
             {
@@ -554,45 +565,21 @@ def _generate_with_retry(
     attempts: int,
     backoff_seconds: float,
     retry_timeouts: bool = DEFAULT_EVALUATION_RETRY_TIMEOUTS,
-    on_retry: Callable[[int, Exception], None] | None = None,
+    on_retry=None,
     truncation_retry_max_tokens: int | None = None,
     retry_on_truncation: bool = True,
 ):
-    """Retry transient failures and one truncated response with a larger budget."""
-    active_request = request
-    transient_attempt = 1
-    truncation_retried = False
-    while True:
-        try:
-            return gateway.generate_structured(active_request)
-        except LlmResponseError as error:
-            can_retry_truncation = (
-                retry_on_truncation
-                and not truncation_retried
-                and error.finish_reason == "length"
-                and truncation_retry_max_tokens is not None
-                and (active_request.max_tokens or 0) < truncation_retry_max_tokens
-            )
-            if not can_retry_truncation:
-                raise
-            truncation_retried = True
-            active_request = replace(
-                active_request,
-                max_tokens=truncation_retry_max_tokens,
-                reasoning_enabled=False,
-            )
-            if on_retry is not None:
-                on_retry(transient_attempt, error)
-        except LlmUnavailableError as error:
-            if isinstance(error, LlmTimeoutError) and not retry_timeouts:
-                raise
-            if transient_attempt >= attempts:
-                raise
-            if on_retry is not None:
-                on_retry(transient_attempt, error)
-            if backoff_seconds:
-                time.sleep(backoff_seconds * transient_attempt)
-            transient_attempt += 1
+    """Compatibility wrapper for the extracted retry policy."""
+    return generate_with_retry(
+        gateway,
+        request,
+        attempts=attempts,
+        backoff_seconds=backoff_seconds,
+        retry_timeouts=retry_timeouts,
+        on_retry=on_retry,
+        truncation_retry_max_tokens=truncation_retry_max_tokens,
+        retry_on_truncation=retry_on_truncation,
+    )
 
 
 def _progress_context(item_input: Any) -> dict[str, Any]:
@@ -704,64 +691,18 @@ def _normalize_selection_payload(
 
 
 def _request(config, prompt, item_input, task):
-    content = dict(item_input.get("content", {}))
-    context = dict(item_input.get("context", {}))
-    values = {
-        "content": content.get("text", ""),
-        "content_hash": content.get("hash", ""),
-        "context_json": json.dumps(context, ensure_ascii=False, sort_keys=True),
-        **context,
-    }
-    try:
-        user_prompt = prompt.user_template.format(**values)
-    except KeyError as exc:
-        raise ValueError(f"prompt references unavailable field: {exc.args[0]}") from exc
-    return StructuredGenerationRequest(
-        task=config.task,
-        system_prompt=prompt.system_prompt,
-        user_prompt=user_prompt,
-        output_schema=prompt.output_schema,
-        prompt_version=config.prompt_version,
-        model=config.model,
-        temperature=config.temperature,
-        seed=config.seed,
-        max_tokens=config.max_tokens,
-        reasoning_enabled=config.reasoning_enabled,
-        metadata={
-            "corpus_id": config.corpus_id,
-            "dataset_version": config.dataset_version,
-            "task_version": task.version,
-            "content_hash": content.get("hash"),
-            "clause_context": context,
-        },
-    )
+    """Compatibility wrapper for the extracted request builder."""
+    return build_proposal_request(config, prompt, item_input, task)
 
 
 def _clause_reference(item_input) -> ClauseReference:
-    content = dict(item_input["content"])
-    context = dict(item_input["context"])
-    return ClauseReference(
-        knowledge_domain=context["knowledge_domain"],
-        document_key=context["document_key"],
-        clause_id=context["clause_id"],
-        content_hash=content["hash"],
-    )
+    """Compatibility wrapper for the extracted clause-reference builder."""
+    return build_clause_reference(item_input)
 
 
 def _request_payload(request: StructuredGenerationRequest) -> dict[str, Any]:
-    return {
-        "task": request.task,
-        "system_prompt": request.system_prompt,
-        "user_prompt": request.user_prompt,
-        "output_schema": dict(request.output_schema),
-        "prompt_version": request.prompt_version,
-        "model": request.model,
-        "temperature": request.temperature,
-        "seed": request.seed,
-        "max_tokens": request.max_tokens,
-        "reasoning_enabled": request.reasoning_enabled,
-        "metadata": dict(request.metadata),
-    }
+    """Compatibility wrapper for durable request serialization."""
+    return serialize_generation_request(request)
 
 
 def _write_json(path: Path, payload: Any) -> None:
