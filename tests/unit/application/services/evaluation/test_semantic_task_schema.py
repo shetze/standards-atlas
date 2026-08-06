@@ -70,3 +70,20 @@ def test_multidimensional_selection_accepts_applicability_and_responsibility() -
 
     assert selection.applicability_functions[0].value == "applicability_condition"
     assert selection.responsibility_functions[0].value == "responsibility_exclusion"
+
+
+def test_v2_prompts_require_secondary_warning_and_condemnation_detection() -> None:
+    resources = Path(
+        "src/standards_atlas/resources/semantic/prompts/statement-function-classification"
+    )
+    prompt_paths = sorted(resources.glob("*-v2/system.txt"))
+
+    assert prompt_paths
+    for prompt_path in prompt_paths:
+        prompt = prompt_path.read_text(encoding="utf-8")
+        assert "do not stop after finding one dominant function" in prompt
+        assert "However, be aware" in prompt
+        assert "[description, warning]" in prompt
+        assert "should not be regarded as complete or exhaustive" in prompt
+        assert "is condemnation" in prompt
+        assert "return both rather than replacing one with the other" in prompt

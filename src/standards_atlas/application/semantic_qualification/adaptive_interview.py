@@ -82,10 +82,7 @@ class AdaptiveInterviewPlanner:
                 InterviewQuestion(
                     id="statement-function",
                     dimension=InterviewDimension.STATEMENT_FUNCTION,
-                    question=(
-                        "What single primary statement function is directly expressed "
-                        "by this clause?"
-                    ),
+                    question=("Which statement functions are directly expressed by this clause?"),
                     allowed_labels=(
                         "requirement",
                         "recommendation",
@@ -99,7 +96,6 @@ class AdaptiveInterviewPlanner:
                         "rationale",
                         "example",
                         "note",
-                        "guideline",
                         "conformance_statement",
                         "objective",
                         "prerequisite",

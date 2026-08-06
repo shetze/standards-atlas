@@ -109,3 +109,19 @@ def test_planner_offers_warning_as_statement_function() -> None:
         item for item in plan.questions if item.dimension is InterviewDimension.STATEMENT_FUNCTION
     )
     assert "warning" in question.allowed_labels
+
+
+def test_statement_function_question_uses_current_taxonomy() -> None:
+    plan = AdaptiveInterviewPlanner().plan(
+        {
+            "content": {"text": "The overview should not be regarded as exhaustive."},
+            "context": {"clause_type": "paragraph"},
+        }
+    )
+
+    question = next(
+        item for item in plan.questions if item.dimension is InterviewDimension.STATEMENT_FUNCTION
+    )
+    assert "condemnation" in question.allowed_labels
+    assert "guideline" not in question.allowed_labels
+    assert "statement functions" in question.question.lower()
