@@ -13,6 +13,7 @@ class StatementFunction(StrEnum):
     REQUIREMENT = "requirement"
     RECOMMENDATION = "recommendation"
     CONDEMNATION = "condemnation"
+    WARNING = "warning"
     PERMISSION = "permission"
     PROHIBITION = "prohibition"
     DEFINITION = "definition"

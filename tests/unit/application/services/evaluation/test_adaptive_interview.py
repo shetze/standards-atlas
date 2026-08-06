@@ -95,3 +95,17 @@ def test_planner_adds_process_question_for_process_signals() -> None:
     )
     assert "prerequisite" in question.allowed_labels
     assert "sequence" in question.allowed_labels
+
+
+def test_planner_offers_warning_as_statement_function() -> None:
+    plan = AdaptiveInterviewPlanner().plan(
+        {
+            "content": {"text": "However, an unsuitable model can produce unreliable results."},
+            "context": {"clause_type": "paragraph"},
+        }
+    )
+
+    question = next(
+        item for item in plan.questions if item.dimension is InterviewDimension.STATEMENT_FUNCTION
+    )
+    assert "warning" in question.allowed_labels

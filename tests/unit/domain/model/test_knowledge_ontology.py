@@ -29,3 +29,8 @@ def test_primary_knowledge_kind_must_be_selected() -> None:
 def test_condemnation_represents_negative_recommendation() -> None:
     classification = SemanticClassification(statement_functions=(StatementFunction.CONDEMNATION,))
     assert classification.statement_functions == (StatementFunction.CONDEMNATION,)
+
+
+def test_warning_represents_adverse_risk_or_limitation() -> None:
+    classification = SemanticClassification(statement_functions=(StatementFunction.WARNING,))
+    assert classification.statement_functions == (StatementFunction.WARNING,)

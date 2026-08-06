@@ -90,6 +90,7 @@ class AdaptiveInterviewPlanner:
                         "requirement",
                         "recommendation",
                         "condemnation",
+                        "warning",
                         "permission",
                         "prohibition",
                         "definition",

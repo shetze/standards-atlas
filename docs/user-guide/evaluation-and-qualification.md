@@ -119,6 +119,14 @@ The semantic profile distinguishes `recommendation` (typically “should”) fro
 recommendation and must not be classified as a prohibition unless the source
 uses mandatory negative language such as “shall not”.
 
+The `warning` function identifies statements that draw attention to a risk,
+limitation, unsafe consequence, unreliable result, invalid assumption, or possible
+misuse. A warning can qualify an otherwise positive `description`, for example in a
+clause that first presents a useful method and then introduces limitations with
+“However, ...”. The connective alone is not sufficient: the clause must express an
+adverse consequence or risk. Unlike `recommendation` and `condemnation`, `warning`
+does not itself prescribe what should or should not be done.
+
 Engineering methods and measures share the `method_or_measure` knowledge kind.
 The distinction is not sufficiently stable or useful for qualification to justify
 separate model labels. Existing v2 results containing `method` or `measure` must
