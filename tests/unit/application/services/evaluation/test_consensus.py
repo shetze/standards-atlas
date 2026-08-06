@@ -16,6 +16,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     MatrixObservation,
 )
 from standards_atlas.application.services.evaluation import ModelConsensusService
+from standards_atlas.domain.model import StatementFunction
 
 
 def _run(
@@ -445,3 +446,60 @@ def test_responsibility_accepts_development_function_as_actor(tmp_path: Path) ->
         "present": 0.8,
         "responsibility_assignment": 0.8,
     }
+
+
+def test_structural_title_example_overrides_model_majority(tmp_path: Path) -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+    from standards_atlas.application.semantic_qualification.structural_evidence import (
+        derive_structural_evidence,
+    )
+
+    prior = derive_structural_evidence(
+        {"title": "Example architectures", "text": "Example architectures for coexistence."}
+    ).as_dict()
+    votes = tuple(
+        ModelVote(
+            model_id=f"model-{index}",
+            primary_function=StatementFunction.DESCRIPTION,
+            repetitions=1,
+            stability=1.0,
+        )
+        for index in range(3)
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior=prior,
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={
+            "review_categories": {"disputed", "insufficient_evidence"},
+            "accept_majority_min_confidence": 0.67,
+            "accept_majority_min_models": 3,
+            "applicability_min_confidence": 0.75,
+            "responsibility_min_confidence": 0.8,
+            "require_responsibility_evidence": True,
+        },
+    )
+    assert result["primary_function"] is StatementFunction.EXAMPLE
+    assert result["category"] is ConsensusCategory.STRONG
+
+
+def test_structural_evidence_detects_guideline_and_should_not() -> None:
+    from standards_atlas.application.semantic_qualification.structural_evidence import (
+        derive_structural_evidence,
+    )
+
+    guideline = derive_structural_evidence(
+        {"title": "Coding Standards and Style Guide", "text": "Coding guidance."}
+    )
+    assert guideline.primary_function is StatementFunction.GUIDELINE
+
+    condemnation = derive_structural_evidence(
+        {"title": "Overview", "text": "This annex should not be regarded as exhaustive."}
+    )
+    assert condemnation.primary_function is StatementFunction.CONDEMNATION
+    assert StatementFunction.CONDEMNATION in condemnation.statement_functions

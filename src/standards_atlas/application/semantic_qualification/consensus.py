@@ -16,6 +16,9 @@ from standards_atlas.application.evaluation.repository import EvaluationDatasetR
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
 )
+from standards_atlas.application.semantic_qualification.structural_evidence import (
+    derive_structural_evidence,
+)
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     KnowledgeKind,
@@ -225,7 +228,13 @@ class ModelConsensusService:
                     role="adjudicator",
                 )
 
-            prior = _structural_prior(context) if prior_cfg.get("enabled", True) else {}
+            prior = (
+                derive_structural_evidence(
+                    context, confidence=float(prior_cfg.get("confidence", 0.95))
+                ).as_dict()
+                if prior_cfg.get("enabled", True)
+                else {}
+            )
             result = _resolve_clause(
                 votes=tuple(votes),
                 adjudicator_vote=adjudicator_vote,
@@ -383,9 +392,13 @@ def _resolve_clause(
 
     prior_primary = structural_prior.get("primary_function")
     prior_confidence = float(structural_prior.get("confidence", 0.0))
-    if prior_primary and (primary is None or primary_agreement < majority_threshold):
-        primary = StatementFunction(prior_primary)
-        primary_agreement = max(primary_agreement, prior_confidence)
+    if prior_primary:
+        prior_function = StatementFunction(prior_primary)
+        if prior_function != primary:
+            primary = prior_function
+            primary_agreement = prior_confidence
+        else:
+            primary_agreement = max(primary_agreement, prior_confidence)
 
     adjudicated = False
     if (
@@ -406,11 +419,17 @@ def _resolve_clause(
         label.value: sum(label in vote.secondary_functions for vote in votes) / model_count
         for label in secondary_labels
     }
+    prior_functions = tuple(
+        StatementFunction(value) for value in structural_prior.get("statement_functions", ())
+    )
     proposed_functions = (() if primary is None else (primary,)) + tuple(
         label
-        for label in secondary_labels
-        if label != primary and label_support[label.value] >= label_threshold
+        for label in dict.fromkeys((*prior_functions, *secondary_labels))
+        if label != primary
+        and (label in prior_functions or label_support.get(label.value, 0.0) >= label_threshold)
     )
+    for label in prior_functions:
+        label_support[label.value] = max(label_support.get(label.value, 0.0), prior_confidence)
     if primary is not None:
         label_support = {primary.value: primary_agreement, **label_support}
 
@@ -569,32 +588,6 @@ def _responsibility_evidence_is_valid(vote: ModelVote) -> bool:
         text,
     )
     return bool(actor and action)
-
-
-def _structural_prior(context: dict[str, object]) -> dict[str, Any]:
-    values = {
-        str(context.get("clause_type", "")).lower(),
-        str(context.get("canonical_section", "")).lower(),
-        *(str(item).lower() for item in context.get("structural_roles", ()) or ()),
-        *(str(item).lower() for item in context.get("document_categories", ()) or ()),
-        *(str(item).lower() for item in context.get("domain_categories", ()) or ()),
-    }
-    text = str(context.get("text", "")).lower()
-    result: dict[str, Any] = {}
-    if "requirement" in values or re.search(r"\bshall\b", text):
-        result["primary_function"] = StatementFunction.REQUIREMENT.value
-    elif values & {"definition", "term", "terminology"}:
-        result["primary_function"] = StatementFunction.DEFINITION.value
-    elif "example" in values:
-        result["primary_function"] = StatementFunction.EXAMPLE.value
-    elif "note" in values:
-        result["primary_function"] = StatementFunction.NOTE.value
-    if values & {"scope", "applicability"}:
-        result["applicability_function"] = ApplicabilityFunction.SCOPE_DEFINITION.value
-    if result:
-        result["confidence"] = 0.95
-        result["evidence"] = sorted(value for value in values if value)
-    return result
 
 
 def _write_outputs(

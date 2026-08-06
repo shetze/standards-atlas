@@ -19,3 +19,24 @@ Reviewers must consider proposal anchoring: a plausible proposal from a strong m
 - permit an explicit unclassified result.
 
 Historical files may still use `semantic-role` names. The current domain model uses multi-dimensional `StructuralProfile` data.
+
+## Structural evidence and deterministic fusion
+
+The consensus stage evaluates statement functions in three conceptual steps:
+
+1. derive high-confidence evidence from normalized structure and explicit wording;
+2. retain the independent text classifications produced by every model;
+3. fuse both sources deterministically into the Golden Corpus proposal.
+
+Explicit function-bearing titles such as `Example`, `Style Guide`, `Definition`,
+`Objective`, `Rationale`, `Assumption`, `Prerequisite`, `Note`, `Warning`, or
+`Caution` can determine the proposed primary statement function. Conservative
+lexical evidence can add functions such as `condemnation` for `should not`,
+`prohibition` for `shall not`, or `warning` for an explicit warning marker with
+an adverse consequence.
+
+Structural evidence does not rewrite individual model votes. The consensus
+report records it separately under `structural_prior`, so reviewers can compare
+model behavior with the deterministic fusion decision. A structural override is
+reported as strong rather than unanimous consensus when the models themselves
+voted for another primary function.

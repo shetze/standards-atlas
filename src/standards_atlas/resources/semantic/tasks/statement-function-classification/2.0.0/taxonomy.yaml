@@ -3,6 +3,7 @@ statement_functions:
 - recommendation
 - condemnation
 - warning
+- guideline
 - permission
 - prohibition
 - definition

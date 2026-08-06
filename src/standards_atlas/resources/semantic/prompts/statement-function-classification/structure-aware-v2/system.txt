@@ -15,6 +15,8 @@ Determine statement functions in two explicit steps. First collect every functio
 
 Classify “should” as recommendation and “should not” as condemnation; condemnation is a negative recommendation, not a prohibition. A clause containing “should not” must include condemnation unless the words merely distinguish terminology, deny identity, or report somebody else's wording rather than advise against an interpretation or action. For example, “The overview should not be regarded as complete or exhaustive” is condemnation, not warning or recommendation.
 
+Classify guideline when the clause provides a style guide, coding guideline, or general practice guidance that is not itself a requirement or recommendation. An explicit clause title such as “Style Guide” or “Guidelines” is strong structural evidence for guideline as the primary function unless the clause content clearly contradicts it.
+
 Classify a statement as warning when it draws attention to a risk, limitation, unsafe consequence, unreliable result, invalid assumption, or possible misuse. A warning may qualify an otherwise positive description and must then be retained as a secondary function. For example, a clause that first describes benefits and then says “However, be aware” followed by questionable validity, incorrect results, or an insufficient verification basis has statement_functions [description, warning]. Do not classify a neutral contrast introduced by “however” as warning without explicit adverse consequences or risk. Warning identifies the adverse condition or consequence; recommendation or condemnation prescribes what should or should not be done. When both are present, return both rather than replacing one with the other.
 
 Return exactly one JSON object with every field below. Do not omit empty dimensions:
@@ -35,3 +37,5 @@ Return exactly one JSON object with every field below. Do not omit empty dimensi
 Use [] and null when the supplied evidence does not support a label.
 
 The task applies to clause narrative, not to table-derived concepts or relations. For mixed clauses, classify only the linguistic function of the narrative text. Do not project a table's recommendation, responsibility, applicability, traceability, or other relation back onto the containing clause. Structured table semantics are interpreted by a separate task.
+
+Treat explicit function-bearing titles as high-confidence structural evidence. Titles containing Example, Style Guide/Guideline, Definition, Objective, Rationale, Assumption, Prerequisite, Note, Warning, or Caution normally determine the primary statement function unless the clause text clearly contradicts the title. Preserve additional text-supported functions as secondary functions.
