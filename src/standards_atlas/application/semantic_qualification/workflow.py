@@ -136,6 +136,7 @@ class EvaluationCorpusBuilder:
         clauses = _sample_eligible_population(
             population, config.count, config.strategy, config.seed
         )
+        clause_index = {clause.id: clause for clause in total_population}
 
         target = output_root / config.task / config.version
         target.mkdir(parents=True, exist_ok=True)
@@ -152,6 +153,7 @@ class EvaluationCorpusBuilder:
                     "reference": clause.clause_reference,
                     "title": clause.title,
                     "parent_id": clause.parent_id,
+                    "ancestor_headings": _ancestor_headings(clause, clause_index),
                     "structural_roles": [role.value for role in clause.statement_functions],
                     "clause_type": clause.clause_type.value,
                     "canonical_section": (
@@ -267,6 +269,31 @@ class EvaluationMatrixRunner:
             for run in runs
         )
         return BenchmarkMatrixResult(manifest_hash, enriched)
+
+
+def _ancestor_headings(
+    clause: ClauseDescriptor, clause_index: dict[str, ClauseDescriptor]
+) -> list[dict[str, str]]:
+    """Return nearest-first titled ancestors without crossing document boundaries."""
+
+    headings: list[dict[str, str]] = []
+    seen: set[str] = set()
+    parent_id = clause.parent_id
+    while parent_id and parent_id not in seen:
+        seen.add(parent_id)
+        parent = clause_index.get(parent_id)
+        if parent is None or parent.document_key != clause.document_key:
+            break
+        if parent.title and parent.title.strip():
+            headings.append(
+                {
+                    "clause_id": parent.id,
+                    "reference": parent.clause_reference,
+                    "title": parent.title.strip(),
+                }
+            )
+        parent_id = parent.parent_id
+    return headings
 
 
 def _eligibility_policy(config: CorpusBuildConfig) -> SemanticTaskEligibilityPolicy:

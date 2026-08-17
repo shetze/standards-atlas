@@ -15,7 +15,8 @@ class StructuralEvidence:
 
     primary_function: StatementFunction | None = None
     statement_functions: tuple[StatementFunction, ...] = ()
-    applicability_function: ApplicabilityFunction | None = None
+    scope_context: bool = False
+    applicability_subtype: ApplicabilityFunction | None = None
     confidence: float = 0.0
     evidence: tuple[str, ...] = ()
 
@@ -25,8 +26,10 @@ class StructuralEvidence:
             result["primary_function"] = self.primary_function.value
         if self.statement_functions:
             result["statement_functions"] = [item.value for item in self.statement_functions]
-        if self.applicability_function is not None:
-            result["applicability_function"] = self.applicability_function.value
+        if self.scope_context:
+            result["scope_context"] = True
+        if self.applicability_subtype is not None:
+            result["applicability_subtype"] = self.applicability_subtype.value
         if result:
             result["confidence"] = self.confidence
             result["evidence"] = list(self.evidence)
@@ -112,15 +115,52 @@ def derive_structural_evidence(
     if warning_marker and adverse_consequence:
         add(StatementFunction.WARNING, "text:explicit-warning")
 
-    applicability = None
-    if values & {"scope", "applicability"}:
-        applicability = ApplicabilityFunction.SCOPE_DEFINITION
+    own_scope = bool(values & {"scope", "applicability"}) or bool(
+        re.search(r"\bscope\b|\bfield of application\b", title)
+    )
+    ancestor_headings = context.get("ancestor_headings", ()) or ()
+    inherited_scope = False
+    if not own_scope and not title:
+        for ancestor in ancestor_headings:
+            ancestor_title = (
+                (str(ancestor.get("title") or "") if isinstance(ancestor, dict) else str(ancestor))
+                .strip()
+                .lower()
+            )
+            if re.search(r"\bscope\b|\bfield of application\b", ancestor_title):
+                inherited_scope = True
+                evidence.append("ancestor-title:scope")
+                break
+    scope_context = own_scope or inherited_scope
+    if own_scope:
         evidence.append("structure:scope")
+
+    applicability_subtype = _derive_applicability_subtype(text) if scope_context else None
+    if applicability_subtype is not None:
+        evidence.append(f"text:{applicability_subtype.value}")
 
     return StructuralEvidence(
         primary_function=primary,
         statement_functions=tuple(functions),
-        applicability_function=applicability,
-        confidence=confidence if functions or applicability else 0.0,
+        scope_context=scope_context,
+        applicability_subtype=applicability_subtype,
+        confidence=confidence if functions or scope_context or applicability_subtype else 0.0,
         evidence=tuple(dict.fromkeys(evidence)),
     )
+
+
+def _derive_applicability_subtype(text: str) -> ApplicabilityFunction | None:
+    """Return a conservative subtype for an explicit scope/applicability statement."""
+
+    if re.search(r"\b(except|exception|unless)\b", text):
+        return ApplicabilityFunction.EXCEPTION
+    if re.search(
+        r"\b(does not apply|do not apply|not applicable|excluded|excludes|outside the scope)\b",
+        text,
+    ):
+        return ApplicabilityFunction.EXCLUSION
+    if re.search(r"\b(applies to|applicable to|includes|within the scope|covers)\b", text):
+        return ApplicabilityFunction.INCLUSION
+    if re.search(r"\b(if|when|where|provided that|subject to)\b", text):
+        return ApplicabilityFunction.APPLICABILITY_CONDITION
+    return None

@@ -503,3 +503,39 @@ def test_structural_evidence_detects_guideline_and_should_not() -> None:
     )
     assert condemnation.primary_function is StatementFunction.CONDEMNATION
     assert StatementFunction.CONDEMNATION in condemnation.statement_functions
+
+
+def test_scope_context_is_inherited_and_kept_separate_from_subtype() -> None:
+    from standards_atlas.application.semantic_qualification.structural_evidence import (
+        derive_structural_evidence,
+    )
+
+    evidence = derive_structural_evidence(
+        {
+            "title": None,
+            "text": "This document applies to railway software.",
+            "ancestor_headings": [{"clause_id": "DOC:1", "reference": "1", "title": "Scope"}],
+        }
+    )
+
+    assert evidence.scope_context is True
+    assert "ancestor-title:scope" in evidence.evidence
+    assert evidence.as_dict()["scope_context"] is True
+    assert evidence.as_dict()["applicability_subtype"] == "inclusion"
+
+
+def test_titled_child_does_not_blindly_inherit_scope_context() -> None:
+    from standards_atlas.application.semantic_qualification.structural_evidence import (
+        derive_structural_evidence,
+    )
+
+    evidence = derive_structural_evidence(
+        {
+            "title": "Definitions",
+            "text": "Terms are defined below.",
+            "ancestor_headings": [{"title": "Scope"}],
+        }
+    )
+
+    assert evidence.scope_context is False
+    assert evidence.applicability_subtype is None
