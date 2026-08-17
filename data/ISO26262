@@ -31,7 +31,7 @@ return 0;
 #
 ####
 #---data---#
-TOC;622a5cca149c2c722aea5652b83767a7;ISO 26262-1:2018 0;TOC;u
+TOC;622a5cca149c2c722aea5652b83767a7;ISO 26262-1:2018 0;Vocabluary;u
 TOC;bdd10b300eabbc4b98e234da1597f797;ISO 26262-1:2018 1;Scope;u
 TOC;1a2e2245c78e500404f02cb04cb68c6d;ISO 26262-1:2018 2;Normative references;u
 TOC;f4883b455ef5fa7cc37d33a607ae4081;ISO 26262-1:2018 3;Terms and definitions;u
@@ -221,7 +221,7 @@ TOC;f215e46bd873934842374ebcf47c3016;ISO 26262-1:2018 3.183;warning and degradat
 TOC;a19422b7e6e6157d233a256f84c3a89d;ISO 26262-1:2018 3.184;well-trusted;t
 TOC;01b4f9cc67390fe06a09858467fe4ff2;ISO 26262-1:2018 3.185;work product;t
 TOC;e6195c2b56d7fa71e12fa408a35334bb;ISO 26262-1:2018 4;Abbreviated terms;u
-TOC;af12fb720771eafc0d05369a66b1cba6;ISO 26262-2:2018 0;TOC;u
+TOC;af12fb720771eafc0d05369a66b1cba6;ISO 26262-2:2018 0;Management of functional safety;u
 TOC;9678db303aab97726ded9d79ffda8212;ISO 26262-2:2018 1;Scope;u
 TOC;c3875430358147800ef6f1148a20df45;ISO 26262-2:2018 2;Normative references;u
 TOC;be62f43af647c7a9332826b04bc5c573;ISO 26262-2:2018 3;Terms and definitions;u
@@ -492,7 +492,7 @@ TOC;fd1150b32d7e2fdd842a64f6b715c2ec;ISO 26262-2:2018 E.3.1;Functional safety ma
 TOC;53bf99e045e8a26d620990b613dbc0b8;ISO 26262-2:2018 E.3.2;Concept phase;u
 TOC;99082bae04b0aa66004b5c4f1fa95a71;ISO 26262-2:2018 E.3.3;Product development;u
 TOC;66ed0b02e9c4be6f19cd2246d36e9a02;ISO 26262-2:2018 E.3.4;Production and operation;u
-TOC;5e7327db57223c013f1a5576b13fd215;ISO 26262-3:2018 0;TOC;u
+TOC;5e7327db57223c013f1a5576b13fd215;ISO 26262-3:2018 0;Concept phase;u
 TOC;d619ae58511001d7bc8d6b9bb3e18892;ISO 26262-3:2018 1;Scope;u
 TOC;fa2af27b3f50af58556d8fe10b9c3863;ISO 26262-3:2018 2;Normative references;u
 TOC;4785d6f8b8a3ee91efb92f3562f28961;ISO 26262-3:2018 3;Terms and definitions;u
@@ -596,7 +596,7 @@ TOC;6611f4b3058164c47d55977a431a8f67;ISO 26262-3:2018 B.2.1;General;u
 TOC;9e70c24de5956144c7af6f5b53cd69c8;ISO 26262-3:2018 B.2.2;Description of the AIS stages;u
 TOC;bbe81c1c707bef87fd32dc238aa15543;ISO 26262-3:2018 B.3;Examples and explanations of the probability of exposure;u
 TOC;1dd1db499b1929cc8b035112e90187f0;ISO 26262-3:2018 B.4;Examples of controllability;u
-TOC;5b9961271e3d5c8b981471503c2428e2;ISO 26262-4:2018 0;TOC;u
+TOC;5b9961271e3d5c8b981471503c2428e2;ISO 26262-4:2018 0;Product development at the system level;u
 TOC;70b7c030c05b6199f02186213186b9cb;ISO 26262-4:2018 1;Scope;u
 TOC;6ed7a37d1bc8e60236d3b060f72b3969;ISO 26262-4:2018 2;Normative references;u
 TOC;3be9e355a1fc369b0c2529c98c99f54f;ISO 26262-4:2018 3;Terms and definitions;u
@@ -749,7 +749,7 @@ TOC;bef4297372ba6b59b0f27e9238e9cb3e;ISO 26262-4:2018 B;Example contents of hard
 TOC;3f87435b6f5de174d23578faf93d331f;ISO 26262-4:2018 B.1;General;u
 TOC;89c7fc587ce9a6e8bff78675ab68002f;ISO 26262-4:2018 B.2;HSI elements;u
 TOC;a372741cbbe02dda24f3d8ba19a7f1dc;ISO 26262-4:2018 B.3;HSI characteristics;u
-TOC;8b358b0f2149cf0b086ea0802ac932c9;ISO 26262-5:2018 0;TOC;u
+TOC;8b358b0f2149cf0b086ea0802ac932c9;ISO 26262-5:2018 0;Product Development at the hardware level;u
 TOC;5cb1212c3af28f039bee6059e3bcf13f;ISO 26262-5:2018 1;Scope;u
 TOC;7d16d8289c96aa7f3d721b9ef6b801a2;ISO 26262-5:2018 2;Normative references;u
 TOC;d0fdb2bc2a56fbe591e37aa4ed3e063f;ISO 26262-5:2018 3;Terms and definitions;u
@@ -979,7 +979,7 @@ TOC;2ac84a9237647f8ce72d6cda08bd6262;ISO 26262-5:2018 H;Example of latent fault 
 TOC;c7d509a69eceadd53b74a52018f87561;ISO 26262-5:2018 H.1;General;u
 TOC;5a08b5b2307affdebb66dfd3c9c27888;ISO 26262-5:2018 H.2;Example with a safety mechanism based on fault detection and control;u
 TOC;6f69d12f9ede49a440f23781ef3c2f6f;ISO 26262-5:2018 H.3;Example with a safety mechanism based on control of the fault effects;u
-TOC;f9ae733dde2f0590a9da51f9e23b5413;ISO 26262-6:2018 0;TOC;u
+TOC;f9ae733dde2f0590a9da51f9e23b5413;ISO 26262-6:2018 0;Product development at the software level;u
 TOC;01dffbe7c9031774e6d6a9740410df8f;ISO 26262-6:2018 1;Scope;u
 TOC;03d6ebf1edb19933045beae8b9bf4021;ISO 26262-6:2018 2;Normative references;u
 TOC;98ba0a3b00fd4378c2e27269d6300a42;ISO 26262-6:2018 3;Terms and definitions;u
@@ -1170,7 +1170,7 @@ TOC;1b2646c45b5d01b5ce89a813f522e4c1;ISO 26262-6:2018 E.3.4.1;Coupling factor cl
 TOC;22368003d51c82d51cfab38a145bb6b5;ISO 26262-6:2018 E.3.4.2;Use content of Annex D;o
 TOC;33ce41b1998b03faf781696f673b2597;ISO 26262-6:2018 E.3.4.3;Analyses supported by using guide words;o
 TOC;556695598650f7a057f7ea5d8d0c4542;ISO 26262-6:2018 E.4;Mitigation strategy for weaknesses identified during safety and dependent failure analyses;u
-TOC;dd8c506f4220b327a438207b646b2de1;ISO 26262-7:2018 0;TOC;u
+TOC;dd8c506f4220b327a438207b646b2de1;ISO 26262-7:2018 0;Production, operation, service and decommissioning;u
 TOC;d8d1de73dbd3d5e9971d698bdb5b11b5;ISO 26262-7:2018 1;Scope;u
 TOC;9b1fd90f595b308ffe41eca327457347;ISO 26262-7:2018 2;Normative references;u
 TOC;16db4b07bd1f3a43161895a79fc267b2;ISO 26262-7:2018 3;Terms and definitions;u
@@ -1249,7 +1249,7 @@ TOC;031eeaa8453af858e382ead96b38a2bb;ISO 26262-7:2018 7.4.1.3;REQUIREMENT;r
 TOC;06258289c70f0693744cd62e77ce4cea;ISO 26262-7:2018 7.5;Work products;u
 TOC;857213888371e6bfbd20e1ef4379546d;ISO 26262-7:2018 7.5.1;Field observation instructions;u
 TOC;11f9140dde1dc23cdca21e3bb5317ed1;ISO 26262-7:2018 A;Overview on and document flow of production, operation, service and decommissioning;u
-TOC;4c718cbe8fe14d7046cd6e49a013d35d;ISO 26262-8:2018 0;TOC;u
+TOC;4c718cbe8fe14d7046cd6e49a013d35d;ISO 26262-8:2018 0;Supporting processes;u
 TOC;53a07ec77031706ebe7bdbcb72dceb57;ISO 26262-8:2018 1;Scope;u
 TOC;9750b5b4257a406de695c12f42c8fe73;ISO 26262-8:2018 2;Normative references;u
 TOC;d3d87b5152e398f3e28c2f371124535f;ISO 26262-8:2018 3;Terms and definitions;u
@@ -1567,7 +1567,7 @@ TOC;077c46f77b4b853a4a29d781844cd8fd;ISO 26262-8:2018 B.1;Purpose;u
 TOC;debce7723948139b7c1d35b8a14fd74b;ISO 26262-8:2018 B.2;General;u
 TOC;afd5ff912f232ad8af97207a099b3e12;ISO 26262-8:2018 B.3;Application scenario;u
 TOC;1c58ddc4263f3c933817cc2ed68ed5f5;ISO 26262-8:2018 B.4;Premises;u
-TOC;47adb770dd5302412f17b025dcdb6814;ISO 26262-9:2018 0;TOC;u
+TOC;47adb770dd5302412f17b025dcdb6814;ISO 26262-9:2018 0;ASIL-oriented and safety-oriented analyses;u
 TOC;b7661d29eefc7703073042f73fb7528f;ISO 26262-9:2018 1;Scope;u
 TOC;47996e0171dc3773fa0ceab0b45962e2;ISO 26262-9:2018 2;Normative references;u
 TOC;0c8f393c7a9fd3d2d7b82a4b13009b99;ISO 26262-9:2018 3;Terms and definitions;u
@@ -1658,7 +1658,7 @@ TOC;b2a171ee35c0c1411c27f1f6fba4e672;ISO 26262-9:2018 B.1;Example architecture;u
 TOC;aee0c88606b4e1c311a31663a05ff01d;ISO 26262-9:2018 B.2;Coexistence (Clause 6);u
 TOC;a1ce88153d87fc31cdb463c9b0eeebac;ISO 26262-9:2018 B.3;Decomposition (Clause 5);u
 TOC;62ce801c1eb0d7e7c84f7211fc7346f3;ISO 26262-9:2018 C;Framework for Identifying Dependent Failures;u
-TOC;25e791e7b21895f563695dd88b56a869;ISO 26262-10:2018 0;TOC;u
+TOC;25e791e7b21895f563695dd88b56a869;ISO 26262-10:2018 0;Guidelines on ISO 26262;u
 TOC;d0dab8e3f4122f1c48f5573000c811fe;ISO 26262-10:2018 1;Scope;u
 TOC;35fe8ed46724027913b6aa592afe63a0;ISO 26262-10:2018 2;Normative references;u
 TOC;b190aa16d781d10755c343f14355678f;ISO 26262-10:2018 3;Terms and definitions;u
@@ -1804,7 +1804,7 @@ TOC;28529c92173f98f1c22b6afa93bc1c7f;ISO 26262-10:2018 14.4;Monitoring of the sa
 TOC;f0d36abf53b1b4789dbc62f0f05646a3;ISO 26262-10:2018 A;Fault tree construction and applications;u
 TOC;ec0461833fe92348d94819a1e15e3fd9;ISO 26262-10:2018 A.1;General;u
 TOC;7bea2fa645e325c217e63bbb303abc51;ISO 26262-10:2018 A.2;Combining FTA and FMEA;u
-TOC;9927c7d83a4e3901b1f4e2e55ad03ed5;ISO 26262-11:2018 0;TOC;u
+TOC;9927c7d83a4e3901b1f4e2e55ad03ed5;ISO 26262-11:2018 0;Guidelines on application of ISO 26262 to semiconductors;u
 TOC;0a2bdbbb45458873c63c130da4a88fe2;ISO 26262-11:2018 1;Scope;u
 TOC;5bf387e0c332606c64ac13a51e055f69;ISO 26262-11:2018 2;Normative references;u
 TOC;060ad5e2bf7799b8a4843b9ad994bd8b;ISO 26262-11:2018 3;Terms and definitions;u
@@ -2040,7 +2040,7 @@ TOC;8ee0387da9222eb432c0e7bcd2c77449;ISO 26262-11:2018 E;Examples of quantitativ
 TOC;ee66cffd95e7b49d206fe5bb2b2893a8;ISO 26262-11:2018 E.1;Architecture of the example;u
 TOC;9439e62c171a9273b78f656b9ca38cb1;ISO 26262-11:2018 E.2;PLD external measures;u
 TOC;02f5cae5f538b5400edabc9d2f250926;ISO 26262-11:2018 E.3;PLD internal measures;u
-TOC;af21b7b03a8b406c61a06f693ccfe9f2;ISO 26262-12:2018 0;TOC;u
+TOC;af21b7b03a8b406c61a06f693ccfe9f2;ISO 26262-12:2018 0;Adaption of ISO 26262 for motocycles;u
 TOC;d06b0ef3a4c56ede50c1fd4339106046;ISO 26262-12:2018 1;Scope;u
 TOC;66dd4241d0bbd620635c127ca86b22c7;ISO 26262-12:2018 2;Normative references;u
 TOC;598f7b4fb2e8e305d69af1ac5048bb45;ISO 26262-12:2018 3;Terms and definitions;u

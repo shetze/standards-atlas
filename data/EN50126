@@ -21,7 +21,7 @@ return 0;
 #
 ####
 #---data---#
-TOC;2f9c06c1291df2420cdd2ee4ff8b2143;EN 50126-1:2017 0;TOC;u
+TOC;2f9c06c1291df2420cdd2ee4ff8b2143;EN 50126-1:2017 0;Generic RAMS Process;u
 TOC;3038e5ff31b4c5dc35876c205afbb0fb;EN 50126-1:2017 1;Scope;u
 TOC;da680234a4869cd66b4d978452be8d02;EN 50126-1:2017 2;Normative references;u
 TOC;796d97865a942128da367fb0d894a37e;EN 50126-1:2017 3;Terms and definitions;u
@@ -243,7 +243,7 @@ TOC;dbfa62eac257a92d8b8277343ff0005f;EN 50126-1:2017 D.3.3;Functional breakdown;
 TOC;777dd9a9aed9af1a4037c4c9cc57963b;EN 50126-1:2017 D.4;Parties/stakeholders/boundaries of systems;u
 TOC;68369777a35f2826157adf2df959ed06;EN 50126-1:2017 D.5;Guidance on the content of a system definition;u
 TOC;14b2f04d80f186e65091517cd222ea84;EN 50126-1:2017 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive 2008/57/EC;u
-TOC;d1cc110c90adf6dbb76b89a0e81aa06a;EN 50126-2:2017 0;TOC;u
+TOC;d1cc110c90adf6dbb76b89a0e81aa06a;EN 50126-2:2017 0;Systems Approach to Safety;u
 TOC;ee96f356cd2a1941fd7498c338ae701b;EN 50126-2:2017 1;Scope;u
 TOC;e151ce8111ce1afa3eb0285deaf5f8f5;EN 50126-2:2017 2;Normative references;u
 TOC;9c72d7038f01ef736d14b051a457f511;EN 50126-2:2017 3;Terms and definitions;u

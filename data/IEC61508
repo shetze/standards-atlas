@@ -27,7 +27,7 @@ return 0;
 #
 ####
 #---data---#
-TOC;57cc1360cb46ac51016ebb686a6b99d6;IEC 61508-0:2005 0;TOC;u
+TOC;57cc1360cb46ac51016ebb686a6b99d6;IEC 61508-0:2005 0;Functional safety and IEC 61508;u
 TOC;60dd0d2143028c31cfaa4f6724e2e85d;IEC 61508-0:2005 1;Scope;u
 TOC;b0717acf2a81e095c55b47dda729b896;IEC 61508-0:2005 2;Normative references;u
 TOC;0eb0658fe149114959f39eb7639a9a15;IEC 61508-0:2005 3;Definitions and abbreviations;u
@@ -46,7 +46,7 @@ TOC;bdfdf129e7d553053d816c8091a57043;IEC 61508-0:2005 4.7;IEC 61508 as a basis f
 TOC;ff1bb30a26d941029343a3ff3ab46cb1;IEC 61508-0:2005 4.8;IEC 61508 as a stand-alone standard;u
 TOC;72d510a3027766e782d8b6f88ef5a210;IEC 61508-0:2005 4.9;Further information;u
 TOC;68412369ea6025d9e1ae3df5fd17566d;IEC 61508-0:2005 A;List of frequently askes questions;u
-TOC;b5f2631ed16da90a5aae411dff74e0c9;IEC 61508-1:2010 0;TOC;u
+TOC;b5f2631ed16da90a5aae411dff74e0c9;IEC 61508-1:2010 0;General Requirements;u
 TOC;3c0221221b6f3e58ff8ed1099abfc05c;IEC 61508-1:2010 1;Scope;u
 TOC;8ed2d4370fc75573aa797adfd3d55f99;IEC 61508-1:2010 1.1;SCOPE;s
 TOC;35f5b3e28cac0b813432384909792bee;IEC 61508-1:2010 1.2;SCOPE;s
@@ -301,7 +301,8 @@ TOC;20b9beaff6d4ce68bc7978be951fb977;IEC 61508-1:2010 A.1;General;u
 TOC;d7cefb88341fe573d2acd3efd1370cda;IEC 61508-1:2010 A.2;Safety lifecycle document structure;u
 TOC;9ff57461344b80fa761a0fa9672752f1;IEC 61508-1:2010 A.3;Physical document structure;u
 TOC;abf1849ee1117061e80e23b3d2ef00cb;IEC 61508-1:2010 A.4;List of documents;u
-TOC;2cb9c029730b98312f3cf260d5d07421;IEC 61508-2:2010 0;TOC;u
+TOC;2cb9c029730b98312f3cf260d5d07421;IEC 61508-2:2010 0;Requirements for electrical/electronic/programmable electronic safety-
+related systems;u
 TOC;fbd8564eb680af53d27970842a9223ce;IEC 61508-2:2010 1;Scope;u
 TOC;0bd1bfaf6d87e1edfa79adbd569e2514;IEC 61508-2:2010 1.1;SCOPE;s
 TOC;f88cc8f0b48c0d720834bbe9115511b3;IEC 61508-2:2010 1.2;SCOPE;s
@@ -494,7 +495,7 @@ TOC;9ce4417ea37ba826a7fa10fb4fe6ede2;IEC 61508-2:2010 E.3;β-factor;u
 TOC;08226988a6cf67229740abf28dc6ad0c;IEC 61508-2:2010 F;Techniques for achieving non-interference between software;u
 TOC;ef061283eef2d1b758a137740629b5ee;IEC 61508-2:2010 F.1;General;u
 TOC;42a265d595f92d0254ebd34ff6b668d6;IEC 61508-2:2010 F.2;Guidelines: Techniques and measures;u
-TOC;50cfc2a7f5b172012141c1e72d97c02b;IEC 61508-3:2010 0;TOC;u
+TOC;50cfc2a7f5b172012141c1e72d97c02b;IEC 61508-3:2010 0;Software requirements;u
 TOC;f6b5368651e9970c55a616df29c157dc;IEC 61508-3:2010 1;Scope;u
 TOC;f6c6455e94746c9ec8a2c3d7efec0b72;IEC 61508-3:2010 1.1;TOC;u
 TOC;0c53414331db72ede152e88092651ce0;IEC 61508-3:2010 1.2;TOC;u
@@ -709,7 +710,7 @@ TOC;3877d52f3cbb337a054f6bdfa0993437;IEC 61508-3:2010 G.4;Limited variability pr
 TOC;84e88dc8a15cdaa1de936e06678c57a9;IEC 61508-3:2010 G.5;Limited variability programming, full application configurability;u
 TOC;3769efa1e5f346ed7d32feec8c6cb0da;IEC 61508-3:2010 G.6;Full functionality programming/configuration, limited application configurability;u
 TOC;259c33b43508b950c9617884a1eaa7c9;IEC 61508-3:2010 G.7;Full functionality programming/configuration, full application configurability;u
-TOC;4de86ee80843566c1e9166da94c7558e;IEC 61508-4:2010 0;TOC;u
+TOC;4de86ee80843566c1e9166da94c7558e;IEC 61508-4:2010 0;Definitions and abbreviations;u
 TOC;b4344d425de11fc1107c80921fac4dba;IEC 61508-4:2010 1;Scope;u
 TOC;3e5ff954ccc18999ee1db3b546df101a;IEC 61508-4:2010 1.1;TOC;u
 TOC;9d97b9e26492469d424224b138d8273e;IEC 61508-4:2010 1.2;TOC;u
@@ -831,7 +832,7 @@ TOC;d4ea8be83bc034adb7e41a8e75b50e2b;IEC 61508-4:2010 3.8.15;dynamic testing;t
 TOC;842395a0689bdbf35a536f0cd67de187;IEC 61508-4:2010 3.8.16;test harness;t
 TOC;5e0d4e81fd2781ddb0d28e43d650a65a;IEC 61508-4:2010 3.8.17;safety manual for compliant items;t
 TOC;8067cdf749282afc8512a240509abc5f;IEC 61508-4:2010 3.8.18;proven in use;t
-TOC;a3a4fd5036e6b6197424a56595fb490a;IEC 61508-5:2010 0;TOC;u
+TOC;a3a4fd5036e6b6197424a56595fb490a;IEC 61508-5:2010 0;Examples of methods for the determination of safety integrity levels;u
 TOC;62e71f2e0ab79e80ee87f0a7dc10b1c4;IEC 61508-5:2010 1;Scope;u
 TOC;1029f028ca927bee779e8fe22cdb8581;IEC 61508-5:2010 1.1;SCOPE;s
 TOC;140ba9bf00eeb4082f0cedc19127037e;IEC 61508-5:2010 1.2;SCOPE;s
@@ -902,7 +903,7 @@ TOC;91a6a2143bc33c9fd97693932c428f4e;IEC 61508-5:2010 F.11;Tolerable mitigated e
 TOC;80ebf010db40e873ca5f6e74aab17637;IEC 61508-5:2010 G;Determination of safety integrity levels – A qualitative method – hazardous event severity matrix;u
 TOC;3946efbc1665b8e7c4d84277050b00d3;IEC 61508-5:2010 G.1;General;u
 TOC;385fd5d7799c117aa293a7aa661c97a9;IEC 61508-5:2010 G.2;Hazardous event severity matrix;u
-TOC;366981af0d53c2c6c1ae2242b38ae287;IEC 61508-6:2010 0;TOC;u
+TOC;366981af0d53c2c6c1ae2242b38ae287;IEC 61508-6:2010 0;Guidelines on the application of IEC 61508-2 and IEC 61508-3;u
 TOC;78e14530d1421edb7f89ee4e6448d904;IEC 61508-6:2010 1;Scope;u
 TOC;4f6561db64db49c29c7f6b4579db30a7;IEC 61508-6:2010 1.1;SCOPE;s
 TOC;2ba84d1109885f37ad2d6171ac5d2b7e;IEC 61508-6:2010 1.2;SCOPE;s
@@ -987,7 +988,7 @@ TOC;6379bbed0836ea984f785e95ee95fa3f;IEC 61508-6:2010 E;Example applications of 
 TOC;b42d08927e72c9e1c866b1b0f277eb46;IEC 61508-6:2010 E.1;General;u
 TOC;01452bfaf7b51dcc9454d578f86bc3b9;IEC 61508-6:2010 E.2;Example for safety integrity level 2;u
 TOC;2af147618037bf9ae1cc3f3d8dfb75c8;IEC 61508-6:2010 E.3;Example for safety integrity level 3;u
-TOC;31e7a04efb1c855a7c9c60e5eca71474;IEC 61508-7:2010 0;TOC;u
+TOC;31e7a04efb1c855a7c9c60e5eca71474;IEC 61508-7:2010 0;Overview of techniques and measures;u
 TOC;ac194f4d911225ce9429ab74a2e37368;IEC 61508-7:2010 1;Scope;u
 TOC;2494688fa170f4772ef007f4365a45d4;IEC 61508-7:2010 1.1;SCOPE;s
 TOC;603953d17ece67454709114e23b22648;IEC 61508-7:2010 1.2;SCOPE;s
