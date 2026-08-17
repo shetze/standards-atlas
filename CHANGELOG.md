@@ -8,9 +8,9 @@
 ### Notes
 - This release is intended to preserve functional behaviour while significantly improving maintainability and extensibility.
 
-- Add formula transcription enrichment with MCP discovery/read/submit tools, provenance-bearing LaTeX artifacts, explicit write capability gating, and deterministic application to preserved `FormulaBlock` values.
-
 ## Unreleased
+
+- Fixed Slice 1 packaging: PyMuPDF is now a regular runtime dependency, so `uv sync` installs formula visual extraction support without requiring the `docling` extra.
 
 ### Added
 

@@ -125,6 +125,7 @@ def _load_pymupdf() -> Any:
         import pymupdf
     except ImportError as exc:  # pragma: no cover - dependency declaration guards this path
         raise RuntimeError(
-            "Formula visual extraction requires PyMuPDF. Install the 'docling' extra."
+            "Formula visual extraction requires PyMuPDF, which is a required runtime dependency. "
+            "Run 'uv sync' to restore the project environment."
         ) from exc
     return pymupdf

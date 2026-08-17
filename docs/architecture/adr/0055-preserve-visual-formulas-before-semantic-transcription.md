@@ -58,7 +58,7 @@ semantic transcription.
 - Normalization remains deterministic and does not require an LLM.
 - Formula identity and source evidence remain attached to a `FormulaBlock`, avoiding a
   lossy detour through generic pictures.
-- PyMuPDF becomes part of the PDF/Docling installation surface.
+- PyMuPDF is a regular runtime dependency because formula visual preservation is part of the standard normalization path; Docling itself remains optional.
 - Engineering-document JSON may temporarily contain embedded base64 image data, matching
   the existing picture-asset approach; publication materializes those assets as files.
 - Later formula transcription can operate as a separate enrichment stage without changing
