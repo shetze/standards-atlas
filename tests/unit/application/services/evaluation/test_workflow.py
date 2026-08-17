@@ -394,3 +394,47 @@ def test_can_explicitly_include_table_dominant_clauses(tmp_path: Path) -> None:
     assert dataset["examples"][0]["input"]["context"]["table_block_count"] == 1
     assert manifest["statistics"]["ineligible_table_dominant_content"] == 0
     assert manifest["exclusions"] == {}
+
+
+def test_corpus_records_nearest_first_ancestor_headings(tmp_path: Path) -> None:
+    clauses = (
+        ClauseDescriptor(
+            id="DOC:1",
+            document_key="DOC",
+            reference="DOC:1",
+            clause_reference="1",
+            content_hash="sha256:" + "1" * 64,
+            clause_type=ClauseType.CLAUSE,
+            title="Scope",
+            text="Scope introduction.",
+        ),
+        ClauseDescriptor(
+            id="DOC:1.1",
+            document_key="DOC",
+            reference="DOC:1.1",
+            clause_reference="1.1",
+            content_hash="sha256:" + "2" * 64,
+            clause_type=ClauseType.CLAUSE,
+            title=None,
+            text="This document applies to software.",
+            parent_id="DOC:1",
+        ),
+    )
+
+    class Provider:
+        def list_clauses(self, **kwargs):
+            return clauses
+
+    result = EvaluationCorpusBuilder(Provider()).build(
+        CorpusBuildConfig(
+            task="statement-function-classification",
+            version="scope-context",
+            count=2,
+        ),
+        tmp_path,
+    )
+    dataset = json.loads(result.dataset_path.read_text())
+    child = next(item for item in dataset["examples"] if item["id"] == "DOC:1.1")
+    assert child["input"]["context"]["ancestor_headings"] == [
+        {"clause_id": "DOC:1", "reference": "1", "title": "Scope"}
+    ]

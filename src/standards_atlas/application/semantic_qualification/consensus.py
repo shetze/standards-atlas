@@ -105,6 +105,7 @@ class ClauseConsensus(BaseModel):
     applicability_support: dict[str, float] = Field(default_factory=dict)
     responsibility_support: dict[str, float] = Field(default_factory=dict)
     structural_prior: dict[str, Any] = Field(default_factory=dict)
+    scope_context: bool = False
     adjudicated: bool = False
     requires_review: bool = True
     review_reasons: tuple[str, ...] = ()
@@ -255,6 +256,7 @@ class ModelConsensusService:
                     clause_text=_optional_text(context.get("text")),
                     votes=tuple(votes) + ((adjudicator_vote,) if adjudicator_vote else ()),
                     structural_prior=prior,
+                    scope_context=bool(prior.get("scope_context", False)),
                     **result,
                 )
             )
@@ -465,7 +467,7 @@ def _resolve_clause(
     )
     app_label, app_count = app_counts.most_common(1)[0] if app_counts else (None, 0)
     app_label_support = app_count / model_count if model_count else 0.0
-    prior_app = structural_prior.get("applicability_function")
+    prior_app = structural_prior.get("applicability_subtype")
     if prior_app and app_label_support < majority_threshold:
         app_label = ApplicabilityFunction(prior_app)
         app_present_support = max(app_present_support, prior_confidence)

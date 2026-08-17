@@ -40,3 +40,22 @@ report records it separately under `structural_prior`, so reviewers can compare
 model behavior with the deterministic fusion decision. A structural override is
 reported as strong rather than unanimous consensus when the models themselves
 voted for another primary function.
+
+
+### Inherited section context and applicability subtypes
+
+Corpus entries carry a nearest-first `ancestor_headings` chain. A clause without
+an own heading inherits a `scope_context` marker from the nearest explicit
+`Scope` or `Field of application` heading. A titled child does not inherit this
+marker blindly, because its heading may introduce a different semantic section.
+
+Scope membership and applicability semantics are deliberately separate:
+
+- `scope_context` records that the clause belongs to a Scope section;
+- `applicability_subtype` records an explicit `inclusion`, `exclusion`,
+  `exception`, or `applicability_condition` expressed by the clause text.
+
+The consensus report preserves both values under `structural_prior`. Structural
+Scope membership therefore no longer competes with the model-voted applicability
+subtype as `scope_definition`. Existing corpora must be rebuilt once to populate
+the ancestor-heading chain.
