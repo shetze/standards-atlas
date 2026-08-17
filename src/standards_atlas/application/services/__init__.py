@@ -8,6 +8,9 @@ from standards_atlas.application.services.atlasdata_lifecycle_service import (
 from standards_atlas.application.services.atlasdata_onboarding_service import (
     AtlasDataOnboardingService,
 )
+from standards_atlas.application.services.atlasdata_toc_service import (
+    AtlasDataTocService,
+)
 from standards_atlas.application.services.content_enrichment_service import ContentEnrichmentService
 from standards_atlas.application.services.document_composition_service import (
     DocumentCompositionService,
@@ -46,6 +49,7 @@ __all__ = [
     "AlignmentService",
     "AtlasDataLifecycleService",
     "AtlasDataOnboardingService",
+    "AtlasDataTocService",
     "ContentEnrichmentService",
     "DocumentCompositionService",
     "DocumentExportService",

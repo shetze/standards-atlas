@@ -35,6 +35,8 @@ execution:
       - strong_consensus
       - majority_consensus
     minimum_confidence: 0.60
+    escalate_on_applicability_disagreement: true
+    escalate_on_responsibility_disagreement: true
 
 prompts:
   - id: content-only

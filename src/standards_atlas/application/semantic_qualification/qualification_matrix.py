@@ -112,6 +112,27 @@ class CascadeResolutionConfig(BaseModel):
         "majority_consensus",
     )
     minimum_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
+    escalate_on_applicability_disagreement: bool = True
+    escalate_on_responsibility_disagreement: bool = True
+
+
+def cascade_escalation_reasons(
+    clause: object, resolution: CascadeResolutionConfig
+) -> tuple[str, ...]:
+    """Return dimension-aware reasons why a clause must enter the next stage."""
+    reasons: list[str] = []
+    accepted = set(resolution.accepted_categories)
+    if clause.participating_models < resolution.minimum_successful_models:
+        reasons.append("insufficient_models")
+    if clause.category.value not in accepted:
+        reasons.append("consensus_category")
+    if clause.statement_function_confidence < resolution.minimum_confidence:
+        reasons.append("statement_function_confidence")
+    if resolution.escalate_on_applicability_disagreement and not clause.applicability_unanimous:
+        reasons.append("applicability_disagreement")
+    if resolution.escalate_on_responsibility_disagreement and not clause.responsibility_unanimous:
+        reasons.append("responsibility_disagreement")
+    return tuple(reasons)
 
 
 class MatrixExecutionConfig(BaseModel):

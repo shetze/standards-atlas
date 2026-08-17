@@ -445,3 +445,50 @@ def test_cascade_rejects_unknown_stage_prompts(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="unknown prompts"):
         QualificationMatrixManifest.load(path)
+
+
+def test_cascade_resolution_escalates_dimension_disagreement() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=3,
+        minimum_confidence=0.6,
+        escalate_on_applicability_disagreement=True,
+        escalate_on_responsibility_disagreement=True,
+    )
+    clause = SimpleNamespace(
+        participating_models=3,
+        category=SimpleNamespace(value="strong_consensus"),
+        statement_function_confidence=1.0,
+        applicability_unanimous=False,
+        responsibility_unanimous=False,
+    )
+
+    assert cascade_escalation_reasons(clause, resolution) == (
+        "applicability_disagreement",
+        "responsibility_disagreement",
+    )
+
+
+def test_cascade_resolution_accepts_unanimous_secondary_dimensions() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    clause = SimpleNamespace(
+        participating_models=3,
+        category=SimpleNamespace(value="majority_consensus"),
+        statement_function_confidence=2 / 3,
+        applicability_unanimous=True,
+        responsibility_unanimous=True,
+    )
+
+    assert cascade_escalation_reasons(clause, CascadeResolutionConfig()) == ()

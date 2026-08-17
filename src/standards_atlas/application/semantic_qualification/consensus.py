@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 import yaml
@@ -97,7 +98,16 @@ class ClauseConsensus(BaseModel):
     proposed_applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     responsibility_present: bool = False
     proposed_responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
+    # Overall confidence follows the primary statement-function dimension.
+    # Keep this field for report compatibility while exposing every semantic
+    # dimension explicitly below.
     confidence: float = Field(ge=0.0, le=1.0)
+    statement_function_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    knowledge_kind_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    applicability_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    responsibility_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    applicability_unanimous: bool = True
+    responsibility_unanimous: bool = True
     participating_models: int = Field(ge=0)
     votes: tuple[ModelVote, ...] = ()
     label_support: dict[str, float] = Field(default_factory=dict)
@@ -114,7 +124,7 @@ class ClauseConsensus(BaseModel):
 class ConsensusReport(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "2.0"
+    schema_version: str = "2.1"
     matrix_id: str
     corpus_id: str
     prompt_id: str
@@ -122,6 +132,10 @@ class ConsensusReport(BaseModel):
     prompt_selection: dict[str, str] = Field(default_factory=dict)
     generated_at: datetime
     model_count: int
+    minimum_participating_models: int = Field(default=0, ge=0)
+    median_participating_models: float = Field(default=0.0, ge=0.0)
+    maximum_participating_models: int = Field(default=0, ge=0)
+    participation_distribution: dict[str, int] = Field(default_factory=dict)
     clause_count: int
     categories: dict[str, int]
     review_count: int
@@ -262,6 +276,8 @@ class ModelConsensusService:
             )
 
         category_counts = Counter(item.category.value for item in clauses)
+        participation_counts = [item.participating_models for item in clauses]
+        participation_distribution = Counter(participation_counts)
         report = ConsensusReport(
             matrix_id=matrix_id,
             corpus_id=corpus_id,
@@ -270,6 +286,15 @@ class ModelConsensusService:
             prompt_selection=prompts,
             generated_at=datetime.now(UTC),
             model_count=len({vote.model_id for clause in clauses for vote in clause.votes}),
+            minimum_participating_models=min(participation_counts, default=0),
+            median_participating_models=(
+                float(median(participation_counts)) if participation_counts else 0.0
+            ),
+            maximum_participating_models=max(participation_counts, default=0),
+            participation_distribution={
+                str(count): occurrences
+                for count, occurrences in sorted(participation_distribution.items())
+            },
             clause_count=len(clauses),
             categories=dict(sorted(category_counts.items())),
             review_count=sum(item.requires_review for item in clauses),
@@ -435,7 +460,9 @@ def _resolve_clause(
     if primary is not None:
         label_support = {primary.value: primary_agreement, **label_support}
 
-    knowledge_counts = Counter(vote.primary_knowledge_kind for vote in votes)
+    knowledge_counts = Counter(
+        vote.primary_knowledge_kind for vote in votes if vote.primary_knowledge_kind is not None
+    )
     primary_knowledge, knowledge_count = (
         knowledge_counts.most_common(1)[0] if knowledge_counts else (None, 0)
     )
@@ -483,6 +510,25 @@ def _resolve_clause(
     resp_label_support = resp_count / model_count if model_count else 0.0
     resp_accepted = resp_present_support >= majority_threshold and resp_label is not None
 
+    applicability_unanimous = _dimension_votes_are_unanimous(
+        tuple(
+            (
+                vote.applicability_present,
+                vote.applicability_function if vote.applicability_present else None,
+            )
+            for vote in votes
+        )
+    )
+    responsibility_unanimous = _dimension_votes_are_unanimous(
+        tuple(
+            (
+                vote.responsibility_present,
+                vote.responsibility_function if vote.responsibility_present else None,
+            )
+            for vote in votes
+        )
+    )
+
     if model_count < minimum_models:
         category = ConsensusCategory.INSUFFICIENT
     elif primary_agreement >= 1.0:
@@ -494,15 +540,23 @@ def _resolve_clause(
     else:
         category = ConsensusCategory.DISPUTED
 
-    confidence = max(primary_agreement, knowledge_agreement, app_label_support, resp_label_support)
+    statement_function_confidence = primary_agreement if primary is not None else 0.0
+    knowledge_kind_confidence = knowledge_agreement if primary_knowledge is not None else 0.0
+    applicability_confidence = app_label_support if app_label is not None else 0.0
+    responsibility_confidence = resp_label_support if resp_label is not None else 0.0
+
+    # The consensus category is defined by the primary statement function, so
+    # the compatibility confidence value follows that same dimension. A high
+    # score in another dimension must never mask a weak statement-function vote.
+    confidence = statement_function_confidence
     review_reasons = _review_reasons(
         category=category,
-        confidence=confidence,
+        statement_function_confidence=statement_function_confidence,
         model_count=model_count,
         applicability_present=app_accepted,
-        applicability_confidence=app_label_support,
+        applicability_confidence=applicability_confidence,
         responsibility_present=resp_accepted,
-        responsibility_confidence=resp_label_support,
+        responsibility_confidence=responsibility_confidence,
         policy=policy,
     )
     return {
@@ -516,6 +570,12 @@ def _resolve_clause(
         "responsibility_present": resp_accepted,
         "proposed_responsibility_functions": ((resp_label,) if resp_accepted else ()),
         "confidence": confidence,
+        "statement_function_confidence": statement_function_confidence,
+        "knowledge_kind_confidence": knowledge_kind_confidence,
+        "applicability_confidence": applicability_confidence,
+        "responsibility_confidence": responsibility_confidence,
+        "applicability_unanimous": applicability_unanimous,
+        "responsibility_unanimous": responsibility_unanimous,
         "participating_models": model_count,
         "label_support": label_support,
         "knowledge_kind_support": knowledge_kind_support,
@@ -533,6 +593,16 @@ def _resolve_clause(
     }
 
 
+def _dimension_votes_are_unanimous(votes: tuple[tuple[object, ...], ...]) -> bool:
+    """Return whether every participating model made the same dimension decision.
+
+    ``none`` is a real model decision for disagreement detection. This is
+    intentionally different from positive-label confidence, where absence of a
+    label contributes no positive evidence.
+    """
+    return len(set(votes)) <= 1
+
+
 def _review_policy(payload: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "review_categories": {"disputed", "insufficient_evidence"},
@@ -548,7 +618,7 @@ def _review_policy(payload: dict[str, Any] | None) -> dict[str, Any]:
 def _review_reasons(
     *,
     category: ConsensusCategory,
-    confidence: float,
+    statement_function_confidence: float,
     model_count: int,
     applicability_present: bool,
     applicability_confidence: float,
@@ -561,7 +631,7 @@ def _review_reasons(
     if category.value in categories:
         reasons.append(f"consensus category is {category.value}")
     if category is ConsensusCategory.MAJORITY and (
-        confidence < float(policy["accept_majority_min_confidence"])
+        statement_function_confidence < float(policy["accept_majority_min_confidence"])
         or model_count < int(policy["accept_majority_min_models"])
     ):
         reasons.append("majority consensus does not meet automatic-acceptance policy")
@@ -601,7 +671,7 @@ def _write_outputs(
     review_path = output_directory / "consensus-review.md"
     json_path.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
     payload = {
-        "schema_version": "2.0",
+        "schema_version": "2.1",
         "kind": "golden_corpus_proposal",
         "matrix_id": report.matrix_id,
         "corpus_id": report.corpus_id,
@@ -642,6 +712,12 @@ def _write_outputs(
                     ),
                 },
                 "confidence": item.confidence,
+                "dimension_confidence": {
+                    "statement_function": item.statement_function_confidence,
+                    "knowledge_kind": item.knowledge_kind_confidence,
+                    "applicability": item.applicability_confidence,
+                    "responsibility": item.responsibility_confidence,
+                },
                 "consensus_category": item.category.value,
                 "adjudicated": item.adjudicated,
                 "structural_prior": item.structural_prior,
@@ -683,6 +759,16 @@ def _render_review(report: ConsensusReport) -> str:
         "",
         "Only clauses selected by the risk-based review policy are listed.",
         "",
+        f"- Models available globally: `{report.model_count}`",
+        f"- Participating models per clause: min `{report.minimum_participating_models}`, "
+        f"median `{report.median_participating_models:g}`, max "
+        f"`{report.maximum_participating_models}`",
+        "- Participation distribution: "
+        + ", ".join(
+            f"{count} voters={clauses}"
+            for count, clauses in report.participation_distribution.items()
+        ),
+        "",
     ]
     uncertain = sorted(
         (item for item in report.clauses if item.requires_review),
@@ -719,7 +805,11 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Knowledge kinds: `{knowledge}`",
                 f"- Applicability proposal: `{applicability}`",
                 f"- Responsibility proposal: `{responsibility}`",
-                f"- Agreement: `{item.confidence:.3f}`",
+                f"- Statement-function confidence: `{item.statement_function_confidence:.3f}`",
+                f"- Knowledge-kind confidence: `{item.knowledge_kind_confidence:.3f}`",
+                f"- Applicability confidence: `{item.applicability_confidence:.3f}`",
+                f"- Responsibility confidence: `{item.responsibility_confidence:.3f}`",
+                f"- Participating models: `{item.participating_models}`",
                 f"- Adjudicated: `{str(item.adjudicated).lower()}`",
                 f"- Structural prior: `{item.structural_prior or 'none'}`",
                 "- Review reasons:",

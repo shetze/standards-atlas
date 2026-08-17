@@ -2,6 +2,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 import yaml
 
 from standards_atlas.application.semantic_qualification.consensus import (
@@ -539,3 +540,109 @@ def test_titled_child_does_not_blindly_inherit_scope_context() -> None:
 
     assert evidence.scope_context is False
     assert evidence.applicability_subtype is None
+
+
+def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = (
+        ModelVote(
+            model_id="a",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function="exclusion",
+            responsibility_present=True,
+            responsibility_function="responsibility_assignment",
+            evidence="The supplier shall ensure verification.",
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="b",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function="exclusion",
+            responsibility_present=True,
+            responsibility_function="responsibility_assignment",
+            evidence="The supplier shall ensure verification.",
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="c",
+            primary_function=StatementFunction.DESCRIPTION,
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={
+            "review_categories": {"disputed", "insufficient_evidence"},
+            "accept_majority_min_confidence": 0.67,
+            "accept_majority_min_models": 3,
+            "applicability_min_confidence": 0.75,
+            "responsibility_min_confidence": 0.8,
+            "require_responsibility_evidence": True,
+        },
+    )
+
+    assert result["confidence"] == pytest.approx(2 / 3)
+    assert result["statement_function_confidence"] == pytest.approx(2 / 3)
+    assert result["knowledge_kind_confidence"] == 0.0
+    assert result["applicability_confidence"] == pytest.approx(2 / 3)
+    assert result["responsibility_confidence"] == pytest.approx(2 / 3)
+    assert result["applicability_unanimous"] is False
+    assert result["responsibility_unanimous"] is False
+    assert (
+        "majority consensus does not meet automatic-acceptance policy" in result["review_reasons"]
+    )
+
+
+def test_high_responsibility_confidence_does_not_mask_missing_statement_function() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = tuple(
+        ModelVote(
+            model_id=f"model-{index}",
+            primary_function=(None if index < 3 else StatementFunction.DESCRIPTION),
+            responsibility_present=True,
+            responsibility_function="responsibility_assignment",
+            evidence="The supplier shall ensure verification.",
+            repetitions=1,
+            stability=1.0,
+        )
+        for index in range(5)
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={
+            "review_categories": {"disputed", "insufficient_evidence"},
+            "accept_majority_min_confidence": 0.67,
+            "accept_majority_min_models": 3,
+            "applicability_min_confidence": 0.75,
+            "responsibility_min_confidence": 0.8,
+            "require_responsibility_evidence": True,
+        },
+    )
+
+    assert result["category"] is ConsensusCategory.MAJORITY
+    assert result["primary_function"] is None
+    assert result["statement_function_confidence"] == 0.0
+    assert result["responsibility_confidence"] == 1.0
+    assert result["confidence"] == 0.0
+    assert result["requires_review"] is True

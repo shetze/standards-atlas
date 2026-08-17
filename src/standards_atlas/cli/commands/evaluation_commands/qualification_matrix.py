@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import time
+from collections import Counter
 from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
@@ -29,6 +30,7 @@ from standards_atlas.application.semantic_qualification.proposals import (
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     MatrixObservation,
     QualificationMatrixManifest,
+    cascade_escalation_reasons,
     resolve_prompt_version,
 )
 from standards_atlas.application.services.evaluation import (
@@ -517,23 +519,32 @@ def qualify_model_prompt_matrix(
                         structural_priors=(manifest.consensus.structural_priors.model_dump()),
                         example_ids=selected_example_ids,
                     )
-                    accepted = set(manifest.execution.resolution.accepted_categories)
                     selected_id_set = set(selected_example_ids)
-                    unresolved_clause_ids = tuple(
-                        clause.clause_id
+                    escalation_reasons = {
+                        clause.clause_id: cascade_escalation_reasons(
+                            clause, manifest.execution.resolution
+                        )
                         for clause in interim_report.clauses
                         if clause.clause_id in selected_id_set
-                        and (
-                            clause.participating_models
-                            < manifest.execution.resolution.minimum_successful_models
-                            or clause.category.value not in accepted
-                            or clause.confidence < manifest.execution.resolution.minimum_confidence
-                        )
+                    }
+                    unresolved_clause_ids = tuple(
+                        clause_id for clause_id, reasons in escalation_reasons.items() if reasons
+                    )
+                    reason_counts = Counter(
+                        reason for reasons in escalation_reasons.values() for reason in reasons
                     )
                     typer.echo(
                         "Cascade unresolved       : "
                         f"{len(unresolved_clause_ids)} / {len(selected_example_ids)}"
                     )
+                    if reason_counts:
+                        typer.echo(
+                            "Cascade escalation     : "
+                            + ", ".join(
+                                f"{reason}={count}"
+                                for reason, count in sorted(reason_counts.items())
+                            )
+                        )
             manifest = QualificationMatrixManifest.model_validate(
                 {
                     **manifest.model_dump(mode="python"),
