@@ -37,6 +37,8 @@ execution:
         minimum_successful_models: 5
         accepted_categories: [unanimous, strong_consensus, majority_consensus]
         minimum_confidence: 0.60
+        statement_function_resolution_mode: stage_resolver
+        statement_function_resolver_min_confidence: 0.75
         escalate_on_applicability_disagreement: false
         escalate_on_responsibility_disagreement: false
         minimum_applicability_confidence: 0.75

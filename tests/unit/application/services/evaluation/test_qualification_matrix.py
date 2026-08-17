@@ -639,3 +639,122 @@ def test_cascade_unresolved_clause_ids_are_monotonic_per_stage() -> None:
     assert unresolved == ("unresolved-in-stage",)
     assert set(reasons) == {"resolved-in-stage", "unresolved-in-stage"}
     assert "resolved-before-stage" not in reasons
+
+
+def test_stage_resolver_accepts_three_of_four_statement_votes() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_stage_escalation_reasons,
+    )
+
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=5,
+        statement_function_resolution_mode="stage_resolver",
+        statement_function_resolver_min_confidence=0.75,
+        minimum_applicability_confidence=0.75,
+        minimum_responsibility_confidence=0.80,
+    )
+    cumulative = SimpleNamespace(
+        participating_models=7,
+        category=SimpleNamespace(value="disputed"),
+        statement_function_confidence=4 / 7,
+        applicability_present=False,
+        applicability_confidence=0.0,
+        applicability_support={"present": 0.0},
+        applicability_unanimous=True,
+        responsibility_present=False,
+        responsibility_confidence=0.0,
+        responsibility_support={"present": 0.0},
+        responsibility_unanimous=True,
+    )
+    stage = SimpleNamespace(statement_function_confidence=3 / 4)
+
+    assert (
+        cascade_stage_escalation_reasons(
+            cumulative_clause=cumulative,
+            stage_clause=stage,
+            previous_reasons=("statement_function_confidence",),
+            resolution=resolution,
+        )
+        == ()
+    )
+
+
+def test_stage_resolution_does_not_reopen_resolved_statement_function() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_stage_escalation_reasons,
+    )
+
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=5,
+        statement_function_resolution_mode="stage_resolver",
+        statement_function_resolver_min_confidence=0.75,
+        minimum_applicability_confidence=0.75,
+        minimum_responsibility_confidence=0.80,
+    )
+    cumulative = SimpleNamespace(
+        participating_models=7,
+        category=SimpleNamespace(value="disputed"),
+        statement_function_confidence=3 / 7,
+        applicability_present=True,
+        applicability_confidence=6 / 7,
+        applicability_support={"present": 6 / 7, "exception": 6 / 7},
+        applicability_unanimous=False,
+        responsibility_present=False,
+        responsibility_confidence=0.0,
+        responsibility_support={"present": 0.0},
+        responsibility_unanimous=True,
+    )
+    stage = SimpleNamespace(statement_function_confidence=0.25)
+
+    assert (
+        cascade_stage_escalation_reasons(
+            cumulative_clause=cumulative,
+            stage_clause=stage,
+            previous_reasons=("applicability_disagreement",),
+            resolution=resolution,
+        )
+        == ()
+    )
+
+
+def test_stage_resolution_uses_cumulative_applicability_confidence() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_stage_escalation_reasons,
+    )
+
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=5,
+        statement_function_resolution_mode="stage_resolver",
+        minimum_applicability_confidence=0.75,
+        minimum_responsibility_confidence=0.80,
+    )
+    cumulative = SimpleNamespace(
+        participating_models=7,
+        category=SimpleNamespace(value="strong_consensus"),
+        statement_function_confidence=1.0,
+        applicability_present=True,
+        applicability_confidence=5 / 7,
+        applicability_support={"present": 5 / 7, "exception": 5 / 7},
+        applicability_unanimous=False,
+        responsibility_present=False,
+        responsibility_confidence=0.0,
+        responsibility_support={"present": 0.0},
+        responsibility_unanimous=True,
+    )
+    stage = SimpleNamespace(statement_function_confidence=1.0)
+
+    assert cascade_stage_escalation_reasons(
+        cumulative_clause=cumulative,
+        stage_clause=stage,
+        previous_reasons=("applicability_disagreement",),
+        resolution=resolution,
+    ) == ("applicability_confidence",)

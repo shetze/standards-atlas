@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -105,6 +106,8 @@ class CascadeResolutionConfig(BaseModel):
     escalate_on_responsibility_disagreement: bool = True
     minimum_applicability_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     minimum_responsibility_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    statement_function_resolution_mode: Literal["cumulative", "stage_resolver"] = "cumulative"
+    statement_function_resolver_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
 
 
 class CascadeStage(BaseModel):
@@ -175,6 +178,109 @@ def cascade_unresolved_clause_ids(
         clause_id for clause_id in stage_clause_ids if escalation_reasons.get(clause_id)
     )
     return unresolved, escalation_reasons
+
+
+def cascade_stage_escalation_reasons(
+    *,
+    cumulative_clause: object,
+    stage_clause: object,
+    previous_reasons: tuple[str, ...],
+    resolution: CascadeResolutionConfig,
+) -> tuple[str, ...]:
+    """Re-evaluate only dimensions that were unresolved before this stage.
+
+    Statement function can use a stage-local resolver, while applicability and
+    responsibility continue to use cumulative evidence. Resolved dimensions
+    never become unresolved again merely because later models disagree.
+    """
+    unresolved = set(previous_reasons)
+    reasons: list[str] = []
+
+    if "insufficient_models" in unresolved:
+        if cumulative_clause.participating_models < resolution.minimum_successful_models:
+            reasons.append("insufficient_models")
+
+    statement_unresolved = bool(
+        unresolved & {"consensus_category", "statement_function_confidence"}
+    )
+    if statement_unresolved:
+        if resolution.statement_function_resolution_mode == "stage_resolver":
+            if (
+                stage_clause.statement_function_confidence
+                < resolution.statement_function_resolver_min_confidence
+            ):
+                reasons.append("statement_function_resolver_confidence")
+        else:
+            accepted = set(resolution.accepted_categories)
+            if cumulative_clause.category.value not in accepted:
+                reasons.append("consensus_category")
+            if cumulative_clause.statement_function_confidence < resolution.minimum_confidence:
+                reasons.append("statement_function_confidence")
+
+    applicability_unresolved = bool(
+        unresolved & {"applicability_disagreement", "applicability_confidence"}
+    )
+    if applicability_unresolved:
+        threshold = resolution.minimum_applicability_confidence
+        if threshold is not None:
+            confidence = _dimension_decision_confidence(
+                present=cumulative_clause.applicability_present,
+                positive_confidence=cumulative_clause.applicability_confidence,
+                support=cumulative_clause.applicability_support,
+            )
+            if confidence < threshold:
+                reasons.append("applicability_confidence")
+        elif (
+            resolution.escalate_on_applicability_disagreement
+            and not cumulative_clause.applicability_unanimous
+        ):
+            reasons.append("applicability_disagreement")
+
+    responsibility_unresolved = bool(
+        unresolved & {"responsibility_disagreement", "responsibility_confidence"}
+    )
+    if responsibility_unresolved:
+        threshold = resolution.minimum_responsibility_confidence
+        if threshold is not None:
+            confidence = _dimension_decision_confidence(
+                present=cumulative_clause.responsibility_present,
+                positive_confidence=cumulative_clause.responsibility_confidence,
+                support=cumulative_clause.responsibility_support,
+            )
+            if confidence < threshold:
+                reasons.append("responsibility_confidence")
+        elif (
+            resolution.escalate_on_responsibility_disagreement
+            and not cumulative_clause.responsibility_unanimous
+        ):
+            reasons.append("responsibility_disagreement")
+
+    return tuple(reasons)
+
+
+def cascade_stage_unresolved_clause_ids(
+    cumulative_clauses: tuple[object, ...] | list[object],
+    stage_clauses: tuple[object, ...] | list[object],
+    *,
+    stage_clause_ids: tuple[str, ...],
+    previous_reasons: dict[str, tuple[str, ...]],
+    resolution: CascadeResolutionConfig,
+) -> tuple[tuple[str, ...], dict[str, tuple[str, ...]]]:
+    """Resolve one later cascade stage with dimension-level monotonicity."""
+    cumulative_by_id = {clause.clause_id: clause for clause in cumulative_clauses}
+    stage_by_id = {clause.clause_id: clause for clause in stage_clauses}
+    reasons = {
+        clause_id: cascade_stage_escalation_reasons(
+            cumulative_clause=cumulative_by_id[clause_id],
+            stage_clause=stage_by_id[clause_id],
+            previous_reasons=previous_reasons.get(clause_id, ()),
+            resolution=resolution,
+        )
+        for clause_id in stage_clause_ids
+        if clause_id in cumulative_by_id and clause_id in stage_by_id
+    }
+    unresolved = tuple(clause_id for clause_id in stage_clause_ids if reasons.get(clause_id))
+    return unresolved, reasons
 
 
 def _dimension_decision_confidence(

@@ -30,6 +30,7 @@ from standards_atlas.application.semantic_qualification.proposals import (
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     MatrixObservation,
     QualificationMatrixManifest,
+    cascade_stage_unresolved_clause_ids,
     cascade_unresolved_clause_ids,
     resolve_prompt_version,
 )
@@ -110,6 +111,45 @@ def _format_duration(seconds: float) -> str:
     if hours:
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     return f"{minutes:02d}:{seconds:02d}"
+
+
+def _cascade_reason_dimensions(reasons: tuple[str, ...]) -> set[str]:
+    dimensions: set[str] = set()
+    for reason in reasons:
+        if reason in {
+            "statement_function_confidence",
+            "statement_function_resolver_confidence",
+            "consensus_category",
+        }:
+            dimensions.add("statement_function")
+        elif reason.startswith("applicability_"):
+            dimensions.add("applicability")
+        elif reason.startswith("responsibility_"):
+            dimensions.add("responsibility")
+    return dimensions
+
+
+def _render_intermediate_resolution_summary(
+    previous: dict[str, tuple[str, ...]],
+    current: dict[str, tuple[str, ...]],
+) -> None:
+    for dimension in ("statement_function", "applicability", "responsibility"):
+        candidates = {
+            clause_id
+            for clause_id, reasons in previous.items()
+            if dimension in _cascade_reason_dimensions(reasons)
+        }
+        if not candidates:
+            continue
+        remaining = {
+            clause_id
+            for clause_id, reasons in current.items()
+            if dimension in _cascade_reason_dimensions(reasons)
+        }
+        typer.echo(
+            f"Intermediate resolution  : {dimension}="
+            f"{len(candidates - remaining)}/{len(candidates)}"
+        )
 
 
 @evaluation_app.command("qualification-matrix")
@@ -302,6 +342,7 @@ def qualify_model_prompt_matrix(
             )
             candidate_index = 0
             unresolved_clause_ids: tuple[str, ...] | None = None
+            escalation_reasons: dict[str, tuple[str, ...]] = {}
             for stage_index, stage in enumerate(execution_stages):
                 stage_clause_ids = (
                     unresolved_clause_ids
@@ -312,6 +353,7 @@ def qualify_model_prompt_matrix(
                     typer.echo(f"Skipping cascade stage {stage.id}: no unresolved clauses")
                     break
                 typer.echo(f"Matrix stage             : {stage.id}")
+                stage_observation_keys: list[tuple[str, str, str, int]] = []
                 stage_models = tuple(model_by_id[model_id] for model_id in stage.models)
                 for model in stage_models:
                     model_repetitions = manifest.repetitions_for(model)
@@ -488,9 +530,9 @@ def qualify_model_prompt_matrix(
                                     mean_duration_seconds=time.monotonic() - started,
                                     peak_memory_gb=model.declared_memory_gb,
                                 )
-                                observation_map[(prompt.id, model.id, reasoning.id, repetition)] = (
-                                    observation
-                                )
+                                observation_key = (prompt.id, model.id, reasoning.id, repetition)
+                                observation_map[observation_key] = observation
+                                stage_observation_keys.append(observation_key)
 
                 if manifest.execution.mode == "cascade" and stage_index < len(execution_stages) - 1:
                     stage_resolution = stage.resolution or manifest.execution.resolution
@@ -520,11 +562,53 @@ def qualify_model_prompt_matrix(
                         structural_priors=(manifest.consensus.structural_priors.model_dump()),
                         example_ids=stage_clause_ids,
                     )
-                    unresolved_clause_ids, escalation_reasons = cascade_unresolved_clause_ids(
-                        interim_report.clauses,
-                        stage_clause_ids=stage_clause_ids,
-                        resolution=stage_resolution,
-                    )
+                    previous_escalation_reasons = escalation_reasons
+                    if stage_index == 0:
+                        unresolved_clause_ids, escalation_reasons = cascade_unresolved_clause_ids(
+                            interim_report.clauses,
+                            stage_clause_ids=stage_clause_ids,
+                            resolution=stage_resolution,
+                        )
+                    else:
+                        stage_only_observations = tuple(
+                            observation_map[key] for key in stage_observation_keys
+                        )
+                        stage_report, _, _, _ = ModelConsensusService().evaluate(
+                            matrix_id=manifest.matrix_id,
+                            corpus_id=manifest.corpus_id,
+                            prompt_id=manifest.consensus.prompt_id,
+                            reasoning_mode_id=manifest.consensus.reasoning_mode_id,
+                            observations=stage_only_observations,
+                            output_directory=(
+                                output_directory
+                                / manifest.matrix_id
+                                / "cascade"
+                                / stage.id
+                                / "stage-resolver"
+                            ),
+                            corpus_root=corpus_root,
+                            min_models=1,
+                            strong_threshold=manifest.consensus.strong_threshold,
+                            majority_threshold=manifest.consensus.majority_threshold,
+                            label_threshold=manifest.consensus.label_threshold,
+                            prompt_selection=(manifest.consensus.prompt_selection.model_dump()),
+                            review_policy=manifest.consensus.review_policy.model_dump(),
+                            adjudication=manifest.consensus.adjudication.model_dump(),
+                            structural_priors=(manifest.consensus.structural_priors.model_dump()),
+                            example_ids=stage_clause_ids,
+                        )
+                        unresolved_clause_ids, escalation_reasons = (
+                            cascade_stage_unresolved_clause_ids(
+                                interim_report.clauses,
+                                stage_report.clauses,
+                                stage_clause_ids=stage_clause_ids,
+                                previous_reasons=previous_escalation_reasons,
+                                resolution=stage_resolution,
+                            )
+                        )
+                        _render_intermediate_resolution_summary(
+                            previous_escalation_reasons, escalation_reasons
+                        )
                     reason_counts = Counter(
                         reason for reasons in escalation_reasons.values() for reason in reasons
                     )
