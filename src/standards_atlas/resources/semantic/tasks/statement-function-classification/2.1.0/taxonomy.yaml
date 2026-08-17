@@ -44,3 +44,67 @@ responsibility_functions:
 - responsibility_assignment
 - responsibility_exclusion
 - role_condition
+semantic_codes:
+  statement_functions:
+    requirement: REQ
+    recommendation: REC
+    condemnation: CND
+    warning: WRN
+    guideline: GDL
+    permission: PER
+    prohibition: PRH
+    definition: DEF
+    description: DES
+    explanation: EXP
+    rationale: RAT
+    example: EXA
+    note: NOT
+    conformance_statement: CNF
+    objective: OBJ
+    prerequisite: PRE
+    assumption: ASM
+  knowledge_kinds:
+    technique_or_measure: TOM
+    process: PRC
+    artifact: ART
+    role: ROL
+    evidence: EVD
+    concept: CNC
+  process_functions:
+    objective: OBJ
+    prerequisite: PRE
+    input: INP
+    activity: ACT
+    decision: DEC
+    branch: BRN
+    sequence: SEQ
+    output: OUT
+    completion_criterion: CMP
+    option: OPT
+    assumption: ASM
+  applicability_functions:
+    applicability_condition: APC
+    inclusion: INC
+    exclusion: EXC
+    exception: XCP
+  responsibility_functions:
+    responsibility_assignment: RAS
+    responsibility_exclusion: REX
+    role_condition: RLC
+  document_structure:
+    front_matter: FMT
+    foreword: FRW
+    introduction: INT
+    scope: SCP
+    references: REF
+    terminology: TRM
+    body: BDY
+    annex: ANX
+    bibliography: BIB
+    back_matter: BMT
+  normative_status:
+    normative: NRM
+    informative: INF
+    mixed: MIX
+    unspecified: UNS
+    not_applicable: NAP

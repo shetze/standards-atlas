@@ -55,6 +55,8 @@ def map_atlas_data_to_standard(
     key: str,
 ) -> Standard:
     title_lookup = _build_title_lookup(atlas_data)
+    semantic_tag_lookup = _build_semantic_tag_lookup(atlas_data)
+    semantic_profile = atlas_data.metadata.extra_fields.get("semanticProfile")
 
     annex_statuses = _annex_statuses(atlas_data, title_lookup)
     clauses = tuple(
@@ -64,6 +66,8 @@ def map_atlas_data_to_standard(
             year=atlas_data.metadata.official_year,
             title=title_lookup.get((item.volume, item.visible_reference)),
             document_title=atlas_data.metadata.name,
+            semantic_tags=semantic_tag_lookup.get((item.volume, item.visible_reference), ()),
+            semantic_profile=semantic_profile,
             annex_status=annex_statuses.get(
                 (item.volume, item.visible_reference.split(".", 1)[0]),
                 NormativeStatus.UNSPECIFIED,
@@ -144,6 +148,78 @@ def _map_initialization_records_to_annotations(
     return tuple(annotations)
 
 
+def _build_semantic_tag_lookup(
+    atlas_data: AtlasStandardData,
+) -> dict[tuple[str | None, str], tuple[str, ...]]:
+    result: dict[tuple[str | None, str], tuple[str, ...]] = {}
+    for record in atlas_data.initialization_records:
+        if record.kind != "TOC" or not record.semantic_tags:
+            continue
+        identity = _extract_clause_identity(record.reference, atlas_data.metadata.name)
+        if identity is not None:
+            result[identity] = record.semantic_tags
+    return result
+
+
+def _merge_semantic_tags(
+    classification: SemanticClassification,
+    *,
+    semantic_tags: tuple[str, ...],
+    semantic_profile: str | None,
+) -> SemanticClassification:
+    if not semantic_tags:
+        return classification
+    if not semantic_profile or ":" not in semantic_profile:
+        raise ValueError("AtlasData semantic tags require semanticProfile metadata")
+    task, version = semantic_profile.rsplit(":", 1)
+    if task != "statement-function-classification":
+        raise ValueError(f"Unsupported AtlasData semantic profile: {semantic_profile!r}")
+
+    from standards_atlas.adapters.atlasdata.semantic_tags import decode_semantic_tags
+    from standards_atlas.domain.model import (
+        ApplicabilityFunction,
+        DocumentStructure,
+        DocumentStructureClassification,
+        KnowledgeKind,
+        ProcessFunction,
+        ResponsibilityFunction,
+        StatementFunction,
+    )
+
+    decoded = decode_semantic_tags(semantic_tags, version=version)
+    statements = (
+        *decoded["primary_statement_function"],
+        *decoded["secondary_statement_functions"],
+    )
+    update: dict[str, object] = {}
+    if statements:
+        update["statement_functions"] = tuple(StatementFunction(value) for value in statements)
+    if decoded["knowledge_kinds"]:
+        update["knowledge_kinds"] = tuple(
+            KnowledgeKind(value) for value in decoded["knowledge_kinds"]
+        )
+    if decoded["process_functions"]:
+        update["process_functions"] = tuple(
+            ProcessFunction(value) for value in decoded["process_functions"]
+        )
+    if decoded["applicability_functions"]:
+        update["applicability_functions"] = tuple(
+            ApplicabilityFunction(value) for value in decoded["applicability_functions"]
+        )
+    if decoded["responsibility_functions"]:
+        update["responsibility_functions"] = tuple(
+            ResponsibilityFunction(value) for value in decoded["responsibility_functions"]
+        )
+    if decoded["document_structure"]:
+        update["document_structure"] = DocumentStructureClassification(
+            family="public_semantic_annotation",
+            category=DocumentStructure(decoded["document_structure"][0]),
+        )
+    if decoded["normative_status"]:
+        update["normative_status"] = NormativeStatus(decoded["normative_status"][0])
+    return classification.model_copy(update=update)
+
+
 def _build_title_lookup(
     atlas_data: AtlasStandardData,
 ) -> dict[tuple[str | None, str], str]:
@@ -185,6 +261,8 @@ def _map_structure_item_to_clause(
     title: str | None,
     document_title: str,
     annex_status: NormativeStatus,
+    semantic_tags: tuple[str, ...] = (),
+    semantic_profile: str | None = None,
 ) -> Clause:
     return Clause(
         id=_build_clause_id(
@@ -199,12 +277,16 @@ def _map_structure_item_to_clause(
             clause=item.visible_reference,
         ),
         clause_type=_ITEM_TYPE_MAPPING[item.item_type],
-        semantic_classification=_infer_semantic_classification(
-            clause_type=_ITEM_TYPE_MAPPING[item.item_type],
-            visible_reference=item.visible_reference,
-            title=title,
-            document_title=document_title,
-            annex_status=annex_status,
+        semantic_classification=_merge_semantic_tags(
+            _infer_semantic_classification(
+                clause_type=_ITEM_TYPE_MAPPING[item.item_type],
+                visible_reference=item.visible_reference,
+                title=title,
+                document_title=document_title,
+                annex_status=annex_status,
+            ),
+            semantic_tags=semantic_tags,
+            semantic_profile=semantic_profile,
         ),
         structural_profile=_infer_structural_profile(
             visible_reference=item.visible_reference,

@@ -22,6 +22,7 @@ class InitializationRecord:
     reference: str
     content: str
     type_marker: str
+    semantic_tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -110,14 +111,19 @@ def parse_initialization_records(text: str) -> list[InitializationRecord]:
         if not line or line.startswith("#"):
             continue
 
-        parts = line.split(";", 4)
+        parts = line.split(";", 5)
 
-        if len(parts) != 5:
+        if len(parts) not in {5, 6}:
             raise ValueError(
                 f"Invalid initialization record at data section line {line_number}: {line!r}"
             )
 
-        kind, hash_value, reference, content, type_marker = [part.strip() for part in parts]
+        kind, hash_value, reference, content, type_marker = [part.strip() for part in parts[:5]]
+        semantic_tags = (
+            tuple(tag.strip() for tag in parts[5].split(",") if tag.strip())
+            if len(parts) == 6
+            else ()
+        )
 
         if kind not in _INITIALIZATION_RECORD_KINDS:
             raise ValueError(
@@ -131,6 +137,7 @@ def parse_initialization_records(text: str) -> list[InitializationRecord]:
                 reference=reference,
                 content=content,
                 type_marker=type_marker,
+                semantic_tags=semantic_tags,
             )
         )
 

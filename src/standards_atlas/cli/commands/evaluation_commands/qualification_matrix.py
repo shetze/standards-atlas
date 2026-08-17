@@ -30,7 +30,7 @@ from standards_atlas.application.semantic_qualification.proposals import (
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     MatrixObservation,
     QualificationMatrixManifest,
-    cascade_escalation_reasons,
+    cascade_unresolved_clause_ids,
     resolve_prompt_version,
 )
 from standards_atlas.application.services.evaluation import (
@@ -518,23 +518,19 @@ def qualify_model_prompt_matrix(
                         review_policy=manifest.consensus.review_policy.model_dump(),
                         adjudication=manifest.consensus.adjudication.model_dump(),
                         structural_priors=(manifest.consensus.structural_priors.model_dump()),
-                        example_ids=selected_example_ids,
+                        example_ids=stage_clause_ids,
                     )
-                    selected_id_set = set(selected_example_ids)
-                    escalation_reasons = {
-                        clause.clause_id: cascade_escalation_reasons(clause, stage_resolution)
-                        for clause in interim_report.clauses
-                        if clause.clause_id in selected_id_set
-                    }
-                    unresolved_clause_ids = tuple(
-                        clause_id for clause_id, reasons in escalation_reasons.items() if reasons
+                    unresolved_clause_ids, escalation_reasons = cascade_unresolved_clause_ids(
+                        interim_report.clauses,
+                        stage_clause_ids=stage_clause_ids,
+                        resolution=stage_resolution,
                     )
                     reason_counts = Counter(
                         reason for reasons in escalation_reasons.values() for reason in reasons
                     )
                     typer.echo(
                         "Cascade unresolved       : "
-                        f"{len(unresolved_clause_ids)} / {len(selected_example_ids)}"
+                        f"{len(unresolved_clause_ids)} / {len(stage_clause_ids)}"
                     )
                     if reason_counts:
                         typer.echo(

@@ -88,6 +88,7 @@ parent="<parent standard key>"
 partShift=<integer>
 partDigits=<integer>
 oyr=<year>
+semanticProfile="<task>:<version>"
 ```
 
 ### Field Semantics
@@ -100,6 +101,7 @@ oyr=<year>
 | `partShift`  | Numeric offset applied to part or volume numbers            |
 | `partDigits` | Number of digits reserved for part or volume numbers        |
 | `oyr`        | Official publication year of the standard                   |
+| `semanticProfile` | Optional taxonomy profile for public semantic TOC tags |
 
 The parser must treat metadata as declarative data. It must not execute the file as shell code.
 
@@ -467,3 +469,86 @@ However, such a migration should happen only after a stable internal domain mode
 
 Until then, the existing compact format remains the preferred manual authoring format for standard structures.
 
+
+## Public Semantic Annotations
+
+TOC records may contain an optional sixth field with publishable semantic
+annotations. The field is a comma-separated list of namespaced taxonomy codes:
+
+```text
+TOC;<hash>;<reference>;<heading>;<type-marker>;<semantic-tags>
+```
+
+Example:
+
+```text
+TOC;...;IEC 61508-2:2010 7.4.2;Software requirements;r;SP-REQ,SS-PRE,KK-PRC,RF-RAS
+```
+
+The five-field legacy form remains valid. Semantic tags do not contain clause
+text, model confidence, rationale, or other evaluation provenance. They express
+only reviewed semantic facts suitable for publication.
+
+The namespaces are:
+
+| Namespace | Meaning |
+| --------- | ------- |
+| `SP` | primary statement function |
+| `SS` | secondary statement function |
+| `KK` | knowledge kind |
+| `PF` | process function |
+| `AF` | applicability function |
+| `RF` | responsibility function |
+| `DS` | document structure |
+| `NS` | normative status |
+
+The three-letter category codes are owned by the versioned semantic taxonomy,
+not by the AtlasData parser. A file containing semantic tags must declare the
+profile used to interpret them:
+
+```text
+semanticProfile="statement-function-classification:2.1.0"
+```
+
+Absence of an `AF-*` or `RF-*` tag represents no accepted positive
+applicability or responsibility category. `unspecified` normative status is not
+serialized as a semantic tag.
+
+### Applying Reviewed Annotations
+
+Reviewed annotations are persisted through a separate text-free manifest so
+that protected clause content never has to be committed with the gold labels:
+
+```yaml
+schema_version: "1.0"
+semantic_profile: statement-function-classification:2.1.0
+annotations:
+  - reference: IEC 61508-2:2010 7.4.2
+    primary_statement_function: requirement
+    secondary_statement_functions:
+      - prerequisite
+    knowledge_kinds:
+      - process
+    responsibility_functions:
+      - responsibility_assignment
+```
+
+Apply the manifest with a dry run first:
+
+```bash
+uv run standards-atlas atlasdata apply-semantic-annotations \
+  data/IEC61508 local/evaluation/reviewed-semantic-annotations.yaml
+```
+
+Persist it explicitly with `--write`:
+
+```bash
+uv run standards-atlas atlasdata apply-semantic-annotations \
+  data/IEC61508 local/evaluation/reviewed-semantic-annotations.yaml \
+  --write
+```
+
+`generate-toc` preserves existing semantic tags but never promotes inferred or
+model-generated classifications to published gold automatically. This keeps the
+publication boundary explicit: only the reviewed annotation manifest can add or
+replace public semantic tags.

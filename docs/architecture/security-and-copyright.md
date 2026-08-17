@@ -106,3 +106,30 @@ Security-relevant behavior should be covered by tests for path containment, visi
 - [MCP server user guide](../user-guide/mcp-server.md)
 - [Local LLM user guide](../user-guide/local-llm.md)
 - [Release and versioning](../development/release-and-versioning.md)
+
+## Publishable semantic gold
+
+Reviewed semantic classifications are publishable independently from protected
+clause content. AtlasData TOC records may therefore carry versioned semantic
+tags while the licensed normalized clause text remains local.
+
+The public persistence boundary is intentionally narrow:
+
+```text
+public Git data                 local/licensed evaluation data
+---------------                 ------------------------------
+clause reference                normalized clause content
+public heading                  model predictions and evidence
+semantic profile version        confidence and vote provenance
+accepted semantic tags          HITL rationale
+```
+
+`generate-toc` only preserves existing semantic tags. It must not promote an
+inferred or model-generated `SemanticClassification` to public gold implicitly.
+Adding or replacing public semantic tags requires the explicit
+`atlasdata apply-semantic-annotations` workflow with a reviewed, text-free
+annotation manifest.
+
+This makes the checked-in AtlasData annotations the canonical publishable gold
+facts. A full evaluation gold dataset can be reconstructed locally by joining
+those facts with licensed clause content using stable clause references.

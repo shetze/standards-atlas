@@ -594,3 +594,48 @@ def test_cascade_resolution_can_accept_confident_absence() -> None:
     )
 
     assert cascade_escalation_reasons(clause, resolution) == ()
+
+
+def test_cascade_unresolved_clause_ids_are_monotonic_per_stage() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_unresolved_clause_ids,
+    )
+
+    resolution = CascadeResolutionConfig(minimum_successful_models=5)
+    resolved_before_stage = SimpleNamespace(
+        clause_id="resolved-before-stage",
+        participating_models=3,
+        category=SimpleNamespace(value="strong_consensus"),
+        statement_function_confidence=1.0,
+        applicability_unanimous=True,
+        responsibility_unanimous=True,
+    )
+    resolved_in_stage = SimpleNamespace(
+        clause_id="resolved-in-stage",
+        participating_models=7,
+        category=SimpleNamespace(value="strong_consensus"),
+        statement_function_confidence=1.0,
+        applicability_unanimous=True,
+        responsibility_unanimous=True,
+    )
+    unresolved_in_stage = SimpleNamespace(
+        clause_id="unresolved-in-stage",
+        participating_models=7,
+        category=SimpleNamespace(value="disputed"),
+        statement_function_confidence=0.4,
+        applicability_unanimous=True,
+        responsibility_unanimous=True,
+    )
+
+    unresolved, reasons = cascade_unresolved_clause_ids(
+        [resolved_before_stage, resolved_in_stage, unresolved_in_stage],
+        stage_clause_ids=("resolved-in-stage", "unresolved-in-stage"),
+        resolution=resolution,
+    )
+
+    assert unresolved == ("unresolved-in-stage",)
+    assert set(reasons) == {"resolved-in-stage", "unresolved-in-stage"}
+    assert "resolved-before-stage" not in reasons

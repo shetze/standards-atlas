@@ -131,3 +131,10 @@ structure=(
     parsed = parse_standard_text(text)
 
     assert parsed.initialization_records == []
+
+
+def test_parse_semantic_tags_from_optional_sixth_toc_field() -> None:
+    records = parse_initialization_records(
+        "#---data---#\nTOC;abc;EN 50716:2023 5.1;Heading;r;SP-REQ,KK-PRC,RF-RAS\n"
+    )
+    assert records[0].semantic_tags == ("SP-REQ", "KK-PRC", "RF-RAS")

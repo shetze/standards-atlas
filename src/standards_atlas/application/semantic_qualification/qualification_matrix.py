@@ -158,6 +158,25 @@ def cascade_escalation_reasons(
     return tuple(reasons)
 
 
+def cascade_unresolved_clause_ids(
+    clauses: tuple[object, ...] | list[object],
+    *,
+    stage_clause_ids: tuple[str, ...],
+    resolution: CascadeResolutionConfig,
+) -> tuple[tuple[str, ...], dict[str, tuple[str, ...]]]:
+    """Resolve only clauses that actually participated in the current cascade stage."""
+    stage_id_set = set(stage_clause_ids)
+    escalation_reasons = {
+        clause.clause_id: cascade_escalation_reasons(clause, resolution)
+        for clause in clauses
+        if clause.clause_id in stage_id_set
+    }
+    unresolved = tuple(
+        clause_id for clause_id in stage_clause_ids if escalation_reasons.get(clause_id)
+    )
+    return unresolved, escalation_reasons
+
+
 def _dimension_decision_confidence(
     *, present: bool, positive_confidence: float, support: dict[str, float]
 ) -> float:

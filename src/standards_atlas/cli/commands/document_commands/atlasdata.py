@@ -9,6 +9,9 @@ from typing import Annotated
 import typer
 
 from standards_atlas.adapters.atlasdata.metadata import AtlasDataLifecycleStatus
+from standards_atlas.adapters.atlasdata.semantic_annotation_writer import (
+    AtlasDataSemanticAnnotationService,
+)
 from standards_atlas.application.services import (
     AtlasDataLifecycleService,
     AtlasDataOnboardingService,
@@ -203,4 +206,36 @@ def generate_toc(
             typer.echo("Backup                : not created; file unchanged")
     else:
         typer.echo()
+        typer.echo("Dry run only. Use --write to update the file.")
+
+
+@atlasdata_app.command("apply-semantic-annotations")
+def apply_semantic_annotations(
+    file: Annotated[
+        Path,
+        typer.Argument(exists=True, readable=True, resolve_path=True),
+    ],
+    annotations: Annotated[
+        Path,
+        typer.Argument(exists=True, readable=True, resolve_path=True),
+    ],
+    write: Annotated[
+        bool,
+        typer.Option("--write", help="Write semantic annotations to the AtlasData file."),
+    ] = cli_defaults.DEFAULT_FALSE,
+) -> None:
+    """Apply reviewed, publishable semantic annotations to TOC records."""
+    try:
+        result = AtlasDataSemanticAnnotationService().apply(file, annotations, write=write)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"File                  : {result.source.name}")
+    typer.echo(f"Semantic profile      : {result.semantic_profile}")
+    typer.echo(f"Updated TOC records   : {result.updated_records}")
+    typer.echo(f"Unchanged TOC records : {result.unchanged_records}")
+    typer.echo(f"Changed               : {result.changed}")
+    if write and result.backup:
+        typer.echo(f"Backup                : {result.backup.name}")
+    elif not write:
         typer.echo("Dry run only. Use --write to update the file.")

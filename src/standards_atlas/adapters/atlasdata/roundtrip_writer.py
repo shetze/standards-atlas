@@ -106,15 +106,17 @@ class AtlasDataRoundTripWriter:
 
             existing = existing_toc.get(generated.reference)
 
-            if existing and existing.content.strip():
-                preserved_headings += 1
+            if existing is not None:
+                if existing.content.strip():
+                    preserved_headings += 1
                 merged.append(
                     InitializationRecord(
                         kind="TOC",
                         hash_value=generated.hash_value,
                         reference=generated.reference,
-                        content=existing.content,
+                        content=existing.content if existing.content.strip() else generated.content,
                         type_marker=generated.type_marker,
+                        semantic_tags=existing.semantic_tags,
                     )
                 )
             else:
@@ -161,10 +163,13 @@ def _validate_public_records(
 
 
 def _render_record(record: InitializationRecord) -> str:
-    return (
+    rendered = (
         f"{record.kind};"
         f"{record.hash_value};"
         f"{record.reference};"
         f"{record.content};"
         f"{record.type_marker}"
     )
+    if record.semantic_tags:
+        return f"{rendered};{','.join(record.semantic_tags)}"
+    return rendered

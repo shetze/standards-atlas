@@ -107,3 +107,15 @@ def _example_document() -> EngineeringDocument:
             ),
         ),
     )
+
+
+def test_roundtrip_writer_preserves_existing_semantic_tags(tmp_path: Path) -> None:
+    source = tmp_path / "EXAMPLE"
+    source.write_text(
+        'name="Example"\ndigits=4\n\nstructure=(\n "2025 1"\n)\n\n'
+        "#---data---#\nTOC;oldhash;Example:2025 1;Heading;u;SP-DES,KK-CNC\n",
+        encoding="utf-8",
+    )
+    writer = AtlasDataRoundTripWriter()
+    writer.update_toc(source, _example_document(), write=True)
+    assert ";SP-DES,KK-CNC\n" in source.read_text(encoding="utf-8")
