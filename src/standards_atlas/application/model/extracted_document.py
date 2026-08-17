@@ -115,6 +115,7 @@ class ExtractedFormula(ExtractedItemBase):
     extraction_status: Literal["visual_only", "machine_extracted", "human_verified"] = (
         "machine_extracted"
     )
+    visual_asset: VisualAsset | None = None
 
 
 class ExtractedCode(ExtractedItemBase):

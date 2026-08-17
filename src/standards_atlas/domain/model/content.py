@@ -93,6 +93,10 @@ class FormulaBlock(ContentBlockBase):
     extraction_status: Literal["visual_only", "machine_extracted", "human_verified"] = (
         "machine_extracted"
     )
+    image_path: str | None = None
+    media_type: str | None = None
+    content_hash: str | None = None
+    embedded_data_uri: str | None = None
 
 
 class CodeBlock(ContentBlockBase):

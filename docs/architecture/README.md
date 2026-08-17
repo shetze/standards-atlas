@@ -31,9 +31,9 @@ The overview is deliberately compact. It shows the governing dependency and data
 
 ## Current architectural baseline
 
-The canonical domain aggregate is `EngineeringDocument`, composed of structured `Clause` objects. Structured tables remain canonical clause content and can be projected deterministically into addressable knowledge tables and records. A clause owns structured content blocks, source evidence, a multi-dimensional `StructuralProfile`, optional semantic classification, annotations, and relations. External representations such as Docling JSON, AtlasData, Markdown, and Doorstop are adapters or projections; none is the internal source of truth.
+The canonical domain aggregate is `EngineeringDocument`, composed of structured `Clause` objects. Visual-only formulas remain typed `FormulaBlock` values and may carry source-derived PNG assets until a later semantic transcription is available. Structured tables remain canonical clause content and can be projected deterministically into addressable knowledge tables and records. A clause owns structured content blocks, source evidence, a multi-dimensional `StructuralProfile`, optional semantic classification, annotations, and relations. External representations such as Docling JSON, AtlasData, Markdown, and Doorstop are adapters or projections; none is the internal source of truth.
 
-The application layer is organized around use cases and explicit ports. Important subsystems are workflow orchestration, normalization, alignment, document construction, publication, generic evaluation, and semantic qualification. The CLI is the primary composition root. MCP is an additional read-only inbound adapter. Filesystem, Docling, AtlasData, Markdown, Doorstop, LLM, and MCP integrations live in the adapter layer.
+The application layer is organized around use cases and explicit ports. Important subsystems are workflow orchestration, normalization, alignment, document construction, publication, generic evaluation, and semantic qualification. The CLI is the primary composition root. MCP is an additional read-only inbound adapter. Filesystem, Docling, source-PDF formula rendering, AtlasData, Markdown, Doorstop, LLM, and MCP integrations live in the adapter layer.
 
 The intended dependency direction is:
 

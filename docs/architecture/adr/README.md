@@ -29,6 +29,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0028](0028-deterministic-page-furniture-classification.md) | Classify page furniture deterministically |
 | [0029](0029-visual-content-contract-and-caption-ownership.md) | Define visual content and caption ownership |
 | [0030](0030-hierarchical-list-reconstruction.md) | Reconstruct hierarchical lists from layout evidence |
+| [0055](0055-preserve-visual-formulas-before-semantic-transcription.md) | Preserve visual formulas before semantic transcription |
 
 ## Candidate detection, alignment, and review
 
@@ -110,6 +111,7 @@ both active and obsolete provisions.
 - For the canonical contracts, continue with [ADR 0006](0006-engineeringdocument-as-canonical-repesenation.md), [ADR 0026](0026-normalized-document-contract.md), and [ADR 0033](0033-engineering-document-construction-contract.md).
 - For workflow and publication, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md), and [ADR 0036](0036-local-workspace-and-hierarchy-publication.md).
 - For semantic qualification and external model access, continue with [ADR 0039](0039-verification-and-qualification-framework.md), [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md), [ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), and [ADR 0051](0051-multidimensional-semantic-classification.md), followed by [ADR 0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md).
+- For lossless formula handling, read [ADR 0055](0055-preserve-visual-formulas-before-semantic-transcription.md).
 - For the current application package structure, read [ADR 0053](0053-structural-application-refactoring.md).
 
 ## Related documentation

@@ -313,3 +313,44 @@ def test_internal_reference_relations_are_rendered_as_links():
     rendered = MarkdownExporter().render(document)
 
     assert "The procedure in [5.2](#clause-5-2) shall be applied." in rendered
+
+
+def test_visual_only_formula_asset_is_materialized_and_rendered(tmp_path):
+    import base64
+    import hashlib
+
+    payload = b"formula-png"
+    digest = hashlib.sha256(payload).hexdigest()
+    data_uri = "data:image/png;base64," + base64.b64encode(payload).decode("ascii")
+    document = Standard.from_name(key=StandardKey(value="SAMPLE"), name="Sample", year=2026)
+    document = document.model_copy(
+        update={
+            "clauses": (
+                Clause(
+                    id=ClauseId(value="formula-visual"),
+                    reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
+                    clause_type=ClauseType.CLAUSE,
+                    title="Formula",
+                    content=(
+                        FormulaBlock(
+                            id="f1",
+                            expression="",
+                            extraction_status="visual_only",
+                            media_type="image/png",
+                            content_hash=digest,
+                            embedded_data_uri=data_uri,
+                        ),
+                    ),
+                ),
+            )
+        }
+    )
+    target = tmp_path / "sample.md"
+
+    MarkdownExporter().export_document(document, target)
+
+    asset = tmp_path / "assets" / f"{digest}.png"
+    assert asset.read_bytes() == payload
+    rendered = target.read_text(encoding="utf-8")
+    assert f"![Formula](assets/{digest}.png)" in rendered
+    assert "semantic transcription unavailable" in rendered

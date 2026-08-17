@@ -168,6 +168,7 @@ class NormalizedFormula(NormalizedItemBase):
     extraction_status: Literal["visual_only", "machine_extracted", "human_verified"] = (
         "machine_extracted"
     )
+    visual_asset: VisualAsset | None = None
 
 
 class NormalizedCode(NormalizedItemBase):

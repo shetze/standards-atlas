@@ -475,6 +475,9 @@ def _item_to_block(
             original_expression=item.original_expression,
             representation=item.representation,
             extraction_status=item.extraction_status,
+            media_type=item.visual_asset.media_type if item.visual_asset else None,
+            content_hash=item.visual_asset.content_hash if item.visual_asset else None,
+            embedded_data_uri=item.visual_asset.data_uri if item.visual_asset else None,
             normalized_item_ids=(item.id,),
             source_evidence=item.source_evidence,
         )

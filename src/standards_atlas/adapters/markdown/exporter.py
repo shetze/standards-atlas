@@ -181,7 +181,11 @@ def _render_block(
             suffix = f" on page {page}" if page is not None else ""
             original = block.original_expression or block.expression
             detail = f" `{original}`" if original else ""
-            return f"*[Formula{suffix} — semantic transcription unavailable]*{detail}"
+            status = f"*[Formula{suffix} — semantic transcription unavailable]*{detail}"
+            reference = block.image_path or block.embedded_data_uri
+            if reference:
+                return f"![Formula{suffix}]({reference})\n\n{status}"
+            return status
         if block.representation == "latex":
             return f"$$\n{block.expression}\n$$"
         return block.expression
@@ -280,7 +284,7 @@ def _materialize_visual_assets(
         clause_changed = False
         for block in clause.content:
             if (
-                not isinstance(block, PictureBlock)
+                not isinstance(block, (PictureBlock, FormulaBlock))
                 or not block.embedded_data_uri
                 or not block.content_hash
             ):

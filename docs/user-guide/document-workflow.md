@@ -38,6 +38,8 @@ uv run standards-atlas docling inspect EN50716
 
 ### Normalize
 
+Normalization also preserves formula imagery when Docling identified a formula but could not transcribe it semantically. The existing conversion metadata is used to reopen the source PDF, and PyMuPDF renders only the recorded formula bounding boxes. No additional command is required.
+
 ```bash
 uv run standards-atlas normalize run EN50716
 uv run standards-atlas normalize inspect EN50716
@@ -61,7 +63,7 @@ Continue with [Alignment review](alignment-review.md) when the result is uncerta
 
 ### Construct and enrich
 
-The workflow imports the reviewed structure, enriches clauses from aligned normalized ranges, derives parts where required and composes families. Persisted canonical documents are placed below `.atlas/documents/`.
+The workflow imports the reviewed structure, enriches clauses from aligned normalized ranges, derives parts where required and composes families. Persisted canonical documents are placed below `.atlas/documents/`. Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; semantic transcription remains a later enrichment concern.
 
 ## Review-aware continuation
 

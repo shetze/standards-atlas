@@ -10,6 +10,15 @@
 
 ## Unreleased
 
+### Added
+
+- Preserve Docling-identified `visual_only` formulas as source-derived PNG assets using a
+  dedicated PyMuPDF adapter and existing page/bounding-box evidence.
+- Propagate formula visual assets through normalized documents, `FormulaBlock`, and
+  Markdown publication.
+- ADR 0055 defines the separation between deterministic visual preservation and later
+  semantic formula transcription.
+
 ## 0.8.0 - 2026-08-05
 
 ### Added

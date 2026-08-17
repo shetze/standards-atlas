@@ -9,7 +9,7 @@ The document pipeline converts controlled publications into canonical engineerin
 ## Stages
 
 1. **Catalog resolution** selects document families, parts, profiles, source files, page ranges, and publication targets.
-2. **Extraction** converts selected PDF content through Docling and validates the extracted-document boundary.
+2. **Extraction** converts selected PDF content through Docling and validates the extracted-document boundary. Known `visual_only` formula regions are then rendered deterministically from the source PDF through the dedicated PyMuPDF formula-visual adapter; the adapter does not discover formulas.
 3. **Normalization** applies ordered deterministic steps for item mapping, page furniture, headings, lists, layout evidence, hyphenation, visual ownership, methods, techniques, and reference candidates.
 4. **Reference structure** imports or generates AtlasData-compatible structural baselines.
 5. **Alignment** proposes mappings from normalized ranges to reference clauses.
@@ -22,7 +22,7 @@ The document pipeline converts controlled publications into canonical engineerin
 
 ## Normalization contract
 
-Normalization is an ordered pipeline of explicit transformation steps. Each step receives a typed document, returns a typed document, and records deterministic ledger entries. The order is part of the contract because later steps may depend on evidence established earlier. LLMs are not part of the canonical normalization path.
+Normalization is an ordered pipeline of explicit transformation steps. Each step receives a typed document, returns a typed document, and records deterministic ledger entries. The order is part of the contract because later steps may depend on evidence established earlier. Visual formula preservation is deterministic input enrichment based only on source evidence and therefore does not introduce semantic inference. LLMs are not part of the canonical normalization path.
 
 ## Review gates
 
@@ -31,3 +31,9 @@ Alignment review and AtlasData baseline review are blocking gates. The workflow 
 ## Replacement and invalidation
 
 A changed source selection invalidates extraction and all descendants. A changed normalization implementation invalidates normalized descendants but not the source. A changed baseline invalidates alignment and construction. Renderer-only changes invalidate exports. The workflow report explains these derivations instead of relying only on timestamps.
+
+## Visual formula preservation
+
+When Docling identifies a formula but cannot provide a semantic transcription, the extracted item retains its page and bounding box. The PDF formula-visual adapter clips that exact region, applies bounded padding, renders it as PNG, and attaches the result as a `VisualAsset`. The asset is propagated through normalization and engineering-document construction as part of the `FormulaBlock`. Missing source files or incomplete geometric evidence do not trigger guessed crops.
+
+Semantic transcription is intentionally outside this stage. A future enrichment step may derive LaTeX, MathML, OpenMath, or another representation while retaining the original visual asset and source evidence.

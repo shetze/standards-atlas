@@ -290,6 +290,7 @@ class DocumentNormalizer:
                 original_expression=normalize_optional_text(item.original_expression, options),
                 representation=item.representation,
                 extraction_status=item.extraction_status,
+                visual_asset=item.visual_asset,
             )
         if isinstance(item, ExtractedUnknown):
             return NormalizedUnknown(

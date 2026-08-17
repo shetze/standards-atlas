@@ -53,6 +53,7 @@ dev = [
 
 docling = [
     "docling>=2.112,<3",
+    "pymupdf>=1.26,<2",
 ]
 
 mcp = [

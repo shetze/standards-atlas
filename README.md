@@ -19,7 +19,7 @@ Standards Atlas turns licensed source documents and open structural baselines in
 | Capability | What it provides |
 |---|---|
 | **Catalog-driven onboarding** | Reproducible configuration for single-part and multi-part standards, editions, source files, page selection, and relationships. |
-| **Document extraction and normalization** | Docling-based PDF extraction followed by deterministic structural normalization into stable domain contracts. |
+| **Document extraction and normalization** | Docling-based PDF extraction followed by deterministic structural normalization into stable domain contracts, including source-derived visual preservation for formulas that cannot yet be transcribed semantically. |
 | **Reference detection and alignment** | Candidate detection, automatic matching against AtlasData baselines, confidence information, and a human review gate. |
 | **Traceable engineering documents** | Canonical documents, content blocks, transformation evidence, source lineage, and durable workspace artefacts. |
 | **Semantic evaluation** | Reproducible local corpora, versioned prompt/model matrices, protected-content-safe reports, and regression evidence. |
@@ -71,7 +71,7 @@ The workflow intentionally stops at review boundaries when human confirmation is
 
 ## Project status
 
-Standards Atlas 0.8.0 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
+Standards Atlas 0.8.1 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
 
 ## Development
 

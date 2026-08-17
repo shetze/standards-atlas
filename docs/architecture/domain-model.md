@@ -25,7 +25,7 @@ Plain text is derived from structured content through `render_content_as_plain_t
 
 ## Structured content
 
-Content is represented by immutable blocks such as text, lists, tables, notes, pictures, formulas, and code. This preserves information needed for lossless normalization, readable exports, and later semantic analysis. Nested lists and table cells remain structured rather than being flattened prematurely.
+Content is represented by immutable blocks such as text, lists, tables, notes, pictures, formulas, and code. This preserves information needed for lossless normalization, readable exports, and later semantic analysis. Nested lists and table cells remain structured rather than being flattened prematurely. A `FormulaBlock` remains a formula even when semantic transcription is unavailable; in that state it may carry a PNG visual asset rendered from its source bounding box instead of being demoted to a generic `PictureBlock`.
 
 Tables can additionally be projected into addressable `KnowledgeTable` and
 `KnowledgeRecord` artefacts. These projections are deterministic views of the canonical
@@ -42,7 +42,7 @@ original cells and source evidence and may carry a conservative semantic interpr
 
 ## Evidence and provenance
 
-`SourceEvidence` links knowledge back to physical source material through page and geometric anchors. `ArtifactLineage` records how persisted artifacts derive from prior artifacts and deterministic transformations. Evidence belongs in the domain contract; adapter-specific parser objects do not.
+`SourceEvidence` links knowledge back to physical source material through page and geometric anchors. Formula visual preservation consumes those anchors without changing their meaning. `ArtifactLineage` records how persisted artifacts derive from prior artifacts and deterministic transformations. Evidence belongs in the domain contract; adapter-specific parser objects do not.
 
 ## Table-derived knowledge
 

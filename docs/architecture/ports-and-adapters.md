@@ -37,13 +37,14 @@ The application layer defines repositories and capabilities for, among other con
 - LLM completion;
 - command execution and runtime health.
 
-Ports should express application needs rather than mirror third-party APIs.
+Ports should express application needs rather than mirror third-party APIs. The formula-visual adapter is deliberately narrow: it consumes adapter-neutral page/bounding-box evidence and does not perform formula discovery or semantic recognition.
 
 ## Adapter ownership
 
 | Adapter package | External concern |
 |---|---|
-| `adapters/docling` | PDF extraction and Docling contract validation |
+| `adapters/docling` | Primary PDF extraction, Docling contract validation, and composition with source-backed formula visuals |
+| `adapters/pdf` | Deterministic source-PDF region rendering for already identified formula items |
 | `adapters/filesystem` | Persistent application repositories |
 | `adapters/atlasdata` | AtlasData import, lifecycle, and round-trip output |
 | `adapters/markdown` | Document and review rendering |

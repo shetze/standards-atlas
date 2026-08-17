@@ -9,6 +9,7 @@ from standards_atlas.adapters.docling import (
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
+from standards_atlas.adapters.pdf import FormulaVisualExtractor
 from standards_atlas.adapters.workflow import FileSystemWorkflowArtifactStore
 from standards_atlas.application.services import (
     DocumentNormalizationService,
@@ -26,7 +27,9 @@ def build_document_normalization_service(
 ) -> DocumentNormalizationService:
     artifacts = DoclingArtifactRepository(workspace)
     return DocumentNormalizationService(
-        extracted_documents=DoclingExtractedDocumentRepository(artifacts),
+        extracted_documents=DoclingExtractedDocumentRepository(
+            artifacts, formula_visuals=FormulaVisualExtractor()
+        ),
         normalized_documents=NormalizationArtifactRepository(workspace),
     )
 
