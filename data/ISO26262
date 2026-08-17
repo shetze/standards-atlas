@@ -30,6 +30,7 @@ return 0;
 #      actual standard documents, which are copyright protected by ISO and available at www.iso.org
 #
 ####
+
 #---data---#
 TOC;622a5cca149c2c722aea5652b83767a7;ISO 26262-1:2018 0;Vocabluary;u
 TOC;bdd10b300eabbc4b98e234da1597f797;ISO 26262-1:2018 1;Scope;u
@@ -913,55 +914,55 @@ TOC;c6cb223bfe7c7a4991f51b6ab8f4b624;ISO 26262-5:2018 C.3.2;REQUIREMENT;r
 TOC;12573521038f149a6cf960e8cd114dbd;ISO 26262-5:2018 D;Evaluation of the diagnostic coverage;u
 TOC;0119afc7aa8be28a74bfd29dd90bd45a;ISO 26262-5:2018 D.1;General;u
 TOC;00ab110fe3688efda2b57b299469a6cb;ISO 26262-5:2018 D.2;Overview of techniques for embedded diagnostic self-tests;u
-TOC;87c27132fb4a41f41129512a4d653bca;ISO 26262-5:2018 D.2.1;Electrical;u
-TOC;69c1ae024f3b89830a6819266e18bec8;ISO 26262-5:2018 D.2.1.1;Failure detection by on-line monitoring;u
-TOC;227c516b10186df385f1128491a99baa;ISO 26262-5:2018 D.2.1.2;Comparator;u
-TOC;dcac980a7037dac0537bb0aa732a6e30;ISO 26262-5:2018 D.2.1.3;Majority voter;u
-TOC;2cde7aafd7f7a3b10183253da0a0dfe1;ISO 26262-5:2018 D.2.2;Electronic;u
-TOC;3537879dba7ca2460759409c136b9267;ISO 26262-5:2018 D.2.2.1;Dynamic principles;u
-TOC;a5a31ebf61dbff3db8ea488a2c538393;ISO 26262-5:2018 D.2.2.2;Dynamic principles;u
-TOC;f0e48aea79fd172efcf3f85e31b73725;ISO 26262-5:2018 D.2.3;Processing units;u
-TOC;205439384abb0718dd911f479c45d255;ISO 26262-5:2018 D.2.3.1;Self-test by software;u
-TOC;5cd02013266eb834d314c273459025a8;ISO 26262-5:2018 D.2.3.2;Self-test supported by hardware (one-channel);u
-TOC;5864506b4e41b3e3e6f9d85a0827a2ea;ISO 26262-5:2018 D.2.3.3;Self-test by software cross exchanged between two independent units;u
-TOC;d76e87935db44abfd44b6a2ba4f64455;ISO 26262-5:2018 D.2.3.4;Software diversified redundancy (one hardware channel);u
-TOC;68524dee4f6d893f71d3f94cd719924e;ISO 26262-5:2018 D.2.3.5;Reciprocal comparison by software in separate processing units;u
-TOC;eae118068081239c0b5a032da6344833;ISO 26262-5:2018 D.2.3.6;HW redundancy (e.g. Dual Core Lockstep, asymmetric redundancy, coded processing);u
-TOC;32aa025215474fda6f96047a0d2b5f36;ISO 26262-5:2018 D.2.3.7;Configuration register test;u
-TOC;a71bdc13c1919cbd29c29c8d88f5de7c;ISO 26262-5:2018 D.2.3.8;Stack over/under flow detection;u
-TOC;788b9d70f4d6bbf080a3387601e6a267;ISO 26262-5:2018 D.2.3.9;Integrated hardware consistency monitoring;u
-TOC;22f81cd84c44628cb4f6a2a880e4685f;ISO 26262-5:2018 D.2.4;I/O-units and interfaces;u
-TOC;16530a1541dcd8692efc713fc20d7f6f;ISO 26262-5:2018 D.2.4.1;Test pattern;u
-TOC;6728173f07ba23ecb58151e924941192;ISO 26262-5:2018 D.2.4.2;Code protection;u
-TOC;69752605efeb6c737266056025aed158;ISO 26262-5:2018 D.2.4.3;Multi-channel parallel output;u
-TOC;0cf47f806bb839cb27907b5d4501a163;ISO 26262-5:2018 D.2.4.4;Monitored outputs;u
-TOC;1efc84dd220a61f2b41cdc3175bf9af1;ISO 26262-5:2018 D.2.4.5;Input comparison/voting;u
-TOC;8cdbb7a6abd07b2b0c10db22ec13a3bf;ISO 26262-5:2018 D.2.5;Communication bus;u
-TOC;878c7f4a57b4804434ff5249a082cc72;ISO 26262-5:2018 D.2.5.1;One-bit hardware redundancy;u
-TOC;0ad1b15a24fa1fc46f09d928b872a8b9;ISO 26262-5:2018 D.2.5.2;Multi-bit hardware redundancy;u
-TOC;ab87a89004651bb5964b9f314b2488eb;ISO 26262-5:2018 D.2.5.3;Complete hardware redundancy;u
-TOC;98a956630388b73cbbd1a43d89c437df;ISO 26262-5:2018 D.2.5.4;Inspection using test patterns;u
-TOC;1080b228b7c7814de2da7eff4267f810;ISO 26262-5:2018 D.2.5.5;Transmission redundancy;u
-TOC;872f03c63d14548b763ad5a4556ff008;ISO 26262-5:2018 D.2.5.6;Information redundancy;u
-TOC;b7c3503cd2801767b65da17692ce2400;ISO 26262-5:2018 D.2.5.7;Frame counter;u
-TOC;680d7b96f2ff11334b68bda9dde8f7dd;ISO 26262-5:2018 D.2.5.8;Timeout monitoring;u
-TOC;dea86f8916f918ce597e844bc4a85f80;ISO 26262-5:2018 D.2.5.9;Read back of sent message;u
-TOC;867022f6f492618a2ee3efb2aecef347;ISO 26262-5:2018 D.2.6;Power supply;u
-TOC;34691eaa7913021f1065a18dfaa37772;ISO 26262-5:2018 D.2.6.1;Voltage or current control (input);u
-TOC;536a0f58a9049a5eb5f7145ac6f10e3e;ISO 26262-5:2018 D.2.6.2;Voltage or current control (output);u
-TOC;093c993af96a76c8c69196458ab0c974;ISO 26262-5:2018 D.2.7;Temporal and logical programme sequence monitoring;u
-TOC;7fe23cc832705ee9ab01b148b8d460fb;ISO 26262-5:2018 D.2.7.1;Watchdog with separate time base without time-window;u
-TOC;bd5438e8f7d98d4b5388c2fd6926c066;ISO 26262-5:2018 D.2.7.2;Watchdog with separate time base and time-window;u
-TOC;a6655be468f7aa552f4001d8a72384cd;ISO 26262-5:2018 D.2.7.3;Logical monitoring of programme sequence;u
-TOC;51d5bd4d049af9f123b65d26ce71b11a;ISO 26262-5:2018 D.2.7.4;Combination of temporal and logical monitoring of programme sequences;u
-TOC;ee17a2c4838fa354ce079b802377f9f0;ISO 26262-5:2018 D.2.7.5;Combination of temporal and logical monitoring of programme sequences with time dependency;u
-TOC;1e9bd80871edcfb5f7d6979253d0cb55;ISO 26262-5:2018 D.2.8;Sensors;u
-TOC;72ce1a6fe762c55fda3c203a8955ac8b;ISO 26262-5:2018 D.2.8.1;Sensor valid range;u
-TOC;843b48742d4c29994fe7d4db6c6d7caf;ISO 26262-5:2018 D.2.8.2;Sensor correlation;u
-TOC;755d8a60a0367d9ac2efaef553e0393e;ISO 26262-5:2018 D.2.8.3;Sensor rationality check;u
-TOC;772aff32b39d833daaf2325e877eaf3c;ISO 26262-5:2018 D.2.9;Actuators;u
-TOC;379c540e67231bd401cfc8afab41bba5;ISO 26262-5:2018 D.2.9.1;Monitoring;u
-TOC;60f5d48f141dfd6a644aaf2729efdb09;ISO 26262-5:2018 E;Example calculation of hardware architectural metrics:"single-point fault metric" and "latent-fault metric" ;u
+TOC;87c27132fb4a41f41129512a4d653bca;ISO 26262-5:2018 D.2.1;Electrical;m
+TOC;69c1ae024f3b89830a6819266e18bec8;ISO 26262-5:2018 D.2.1.1;Failure detection by on-line monitoring;m
+TOC;227c516b10186df385f1128491a99baa;ISO 26262-5:2018 D.2.1.2;Comparator;m
+TOC;dcac980a7037dac0537bb0aa732a6e30;ISO 26262-5:2018 D.2.1.3;Majority voter;m
+TOC;2cde7aafd7f7a3b10183253da0a0dfe1;ISO 26262-5:2018 D.2.2;Electronic;m
+TOC;3537879dba7ca2460759409c136b9267;ISO 26262-5:2018 D.2.2.1;Dynamic principles;m
+TOC;a5a31ebf61dbff3db8ea488a2c538393;ISO 26262-5:2018 D.2.2.2;Dynamic principles;m
+TOC;f0e48aea79fd172efcf3f85e31b73725;ISO 26262-5:2018 D.2.3;Processing units;m
+TOC;205439384abb0718dd911f479c45d255;ISO 26262-5:2018 D.2.3.1;Self-test by software;m
+TOC;5cd02013266eb834d314c273459025a8;ISO 26262-5:2018 D.2.3.2;Self-test supported by hardware (one-channel);m
+TOC;5864506b4e41b3e3e6f9d85a0827a2ea;ISO 26262-5:2018 D.2.3.3;Self-test by software cross exchanged between two independent units;m
+TOC;d76e87935db44abfd44b6a2ba4f64455;ISO 26262-5:2018 D.2.3.4;Software diversified redundancy (one hardware channel);m
+TOC;68524dee4f6d893f71d3f94cd719924e;ISO 26262-5:2018 D.2.3.5;Reciprocal comparison by software in separate processing units;m
+TOC;eae118068081239c0b5a032da6344833;ISO 26262-5:2018 D.2.3.6;HW redundancy (e.g. Dual Core Lockstep, asymmetric redundancy, coded processing);m
+TOC;32aa025215474fda6f96047a0d2b5f36;ISO 26262-5:2018 D.2.3.7;Configuration register test;m
+TOC;a71bdc13c1919cbd29c29c8d88f5de7c;ISO 26262-5:2018 D.2.3.8;Stack over/under flow detection;m
+TOC;788b9d70f4d6bbf080a3387601e6a267;ISO 26262-5:2018 D.2.3.9;Integrated hardware consistency monitoring;m
+TOC;22f81cd84c44628cb4f6a2a880e4685f;ISO 26262-5:2018 D.2.4;I/O-units and interfaces;m
+TOC;16530a1541dcd8692efc713fc20d7f6f;ISO 26262-5:2018 D.2.4.1;Test pattern;m
+TOC;6728173f07ba23ecb58151e924941192;ISO 26262-5:2018 D.2.4.2;Code protection;m
+TOC;69752605efeb6c737266056025aed158;ISO 26262-5:2018 D.2.4.3;Multi-channel parallel output;m
+TOC;0cf47f806bb839cb27907b5d4501a163;ISO 26262-5:2018 D.2.4.4;Monitored outputs;m
+TOC;1efc84dd220a61f2b41cdc3175bf9af1;ISO 26262-5:2018 D.2.4.5;Input comparison/voting;m
+TOC;8cdbb7a6abd07b2b0c10db22ec13a3bf;ISO 26262-5:2018 D.2.5;Communication bus;m
+TOC;878c7f4a57b4804434ff5249a082cc72;ISO 26262-5:2018 D.2.5.1;One-bit hardware redundancy;m
+TOC;0ad1b15a24fa1fc46f09d928b872a8b9;ISO 26262-5:2018 D.2.5.2;Multi-bit hardware redundancy;m
+TOC;ab87a89004651bb5964b9f314b2488eb;ISO 26262-5:2018 D.2.5.3;Complete hardware redundancy;m
+TOC;98a956630388b73cbbd1a43d89c437df;ISO 26262-5:2018 D.2.5.4;Inspection using test patterns;m
+TOC;1080b228b7c7814de2da7eff4267f810;ISO 26262-5:2018 D.2.5.5;Transmission redundancy;m
+TOC;872f03c63d14548b763ad5a4556ff008;ISO 26262-5:2018 D.2.5.6;Information redundancy;m
+TOC;b7c3503cd2801767b65da17692ce2400;ISO 26262-5:2018 D.2.5.7;Frame counter;m
+TOC;680d7b96f2ff11334b68bda9dde8f7dd;ISO 26262-5:2018 D.2.5.8;Timeout monitoring;m
+TOC;dea86f8916f918ce597e844bc4a85f80;ISO 26262-5:2018 D.2.5.9;Read back of sent message;m
+TOC;867022f6f492618a2ee3efb2aecef347;ISO 26262-5:2018 D.2.6;Power supply;m
+TOC;34691eaa7913021f1065a18dfaa37772;ISO 26262-5:2018 D.2.6.1;Voltage or current control (input);m
+TOC;536a0f58a9049a5eb5f7145ac6f10e3e;ISO 26262-5:2018 D.2.6.2;Voltage or current control (output);m
+TOC;093c993af96a76c8c69196458ab0c974;ISO 26262-5:2018 D.2.7;Temporal and logical programme sequence monitoring;m
+TOC;7fe23cc832705ee9ab01b148b8d460fb;ISO 26262-5:2018 D.2.7.1;Watchdog with separate time base without time-window;m
+TOC;bd5438e8f7d98d4b5388c2fd6926c066;ISO 26262-5:2018 D.2.7.2;Watchdog with separate time base and time-window;m
+TOC;a6655be468f7aa552f4001d8a72384cd;ISO 26262-5:2018 D.2.7.3;Logical monitoring of programme sequence;m
+TOC;51d5bd4d049af9f123b65d26ce71b11a;ISO 26262-5:2018 D.2.7.4;Combination of temporal and logical monitoring of programme sequences;m
+TOC;ee17a2c4838fa354ce079b802377f9f0;ISO 26262-5:2018 D.2.7.5;Combination of temporal and logical monitoring of programme sequences with time dependency;m
+TOC;1e9bd80871edcfb5f7d6979253d0cb55;ISO 26262-5:2018 D.2.8;Sensors;m
+TOC;72ce1a6fe762c55fda3c203a8955ac8b;ISO 26262-5:2018 D.2.8.1;Sensor valid range;m
+TOC;843b48742d4c29994fe7d4db6c6d7caf;ISO 26262-5:2018 D.2.8.2;Sensor correlation;m
+TOC;755d8a60a0367d9ac2efaef553e0393e;ISO 26262-5:2018 D.2.8.3;Sensor rationality check;m
+TOC;772aff32b39d833daaf2325e877eaf3c;ISO 26262-5:2018 D.2.9;Actuators;m
+TOC;379c540e67231bd401cfc8afab41bba5;ISO 26262-5:2018 D.2.9.1;Monitoring;m
+TOC;60f5d48f141dfd6a644aaf2729efdb09;ISO 26262-5:2018 E;Example calculation of hardware architectural metrics:"single-point fault metric" and "latent-fault metric";u
 TOC;b9984a0fbefc27fd1f14fb999861ea3d;ISO 26262-5:2018 F;Example for rationale that objectives of Clause 9 in accordance with 4.2 are met;u
 TOC;4a5adbb66c2ad607dc079efad13deeaa;ISO 26262-5:2018 F.1;General;u
 TOC;92976d39eedb78ee5efe40116ea8cae3;ISO 26262-5:2018 F.2;Safety analysis providing the PMHF evaluation;u
@@ -1664,15 +1665,15 @@ TOC;35fe8ed46724027913b6aa592afe63a0;ISO 26262-10:2018 2;Normative references;u
 TOC;b190aa16d781d10755c343f14355678f;ISO 26262-10:2018 3;Terms and definitions;u
 TOC;2a3a233a0bce94f5d4a56488aa2bf015;ISO 26262-10:2018 4;Key concepts of ISO 26262;u
 TOC;614ff37afacef5cc139ad64bea45a593;ISO 26262-10:2018 4.1;Functional safety for automotive systems (relationship with IEC 61508);u
-TOC;c8bd5f48ed145f615c3475817181c09e;ISO 26262-10:2018 4.2;Item,system,element,component,hardware part and software unit ;u
+TOC;c8bd5f48ed145f615c3475817181c09e;ISO 26262-10:2018 4.2;Item,system,element,component,hardware part and software unit;u
 TOC;0960eff4d1ce7db4da83ae172c0fc535;ISO 26262-10:2018 4.3;Relationship between faults, errors and failures;u
 TOC;dc6ffa396937882eabf77f6ea5b74441;ISO 26262-10:2018 4.3.1;Progression of faults to errors to failures;u
 TOC;4e290c9cfb2dda5b9ae988bdd7240810;ISO 26262-10:2018 4.4;FTTI and emergency operation tolerant time interval;u
 TOC;fe20c61c84483015092e6bc7237c0ac3;ISO 26262-10:2018 4.4.1;Introduction;u
 TOC;54bd6b5b932fd178c2f305ce35a36202;ISO 26262-10:2018 4.4.2;Timing model - Example control system;u
-TOC;b1eb92f04ee5f38aa742896e6e143481;ISO 26262-10:2018 4.4.2.1;Control system description;c
-TOC;4a3a1c899bf7054980f2dbaca661aba8;ISO 26262-10:2018 4.4.2.2;Application of timing model to example control system;c
-TOC;0339c0ab4dced0c2b0690e091f1ccd94;ISO 26262-10:2018 4.4.2.3;Warning and degradation strategy;c
+TOC;b1eb92f04ee5f38aa742896e6e143481;ISO 26262-10:2018 4.4.2.1;Control system description;u
+TOC;4a3a1c899bf7054980f2dbaca661aba8;ISO 26262-10:2018 4.4.2.2;Application of timing model to example control system;u
+TOC;0339c0ab4dced0c2b0690e091f1ccd94;ISO 26262-10:2018 4.4.2.3;Warning and degradation strategy;u
 TOC;9c55db2820c18ec7b80b52c8e3f1cdf7;ISO 26262-10:2018 5;Selected topics regarding safety management;u
 TOC;10e5f99829ac25282ae231e3b7a377e9;ISO 26262-10:2018 5.1;Work product;u
 TOC;6851adfdc3934416950ff8a70a24fb16;ISO 26262-10:2018 5.2;Confirmation measures;u
@@ -1697,8 +1698,8 @@ TOC;f1e7f4f6902e3034c87e07f2f513c7fc;ISO 26262-10:2018 6.5.1;Introduction;u
 TOC;41a84035bf9c8aaf6674f8d963086774;ISO 26262-10:2018 6.5.2;General;u
 TOC;f1036d41096635fcd993909b226e86ac;ISO 26262-10:2018 6.5.3;Function definition;u
 TOC;fb2fcf25e913eea4f5bc20da08ddd0d0;ISO 26262-10:2018 6.5.4;Safety goals applied to the same hazard in different situations;u
-TOC;c32887e40082ed89d9628bb155272833;ISO 26262-10:2018 6.5.4.1;Hazard analysis and risk assessment;c
-TOC;e670f0cf53ef1d8eab184fd0d99b1ba3;ISO 26262-10:2018 6.5.4.2;Safety goals elaboration;c
+TOC;c32887e40082ed89d9628bb155272833;ISO 26262-10:2018 6.5.4.1;Hazard analysis and risk assessment;u
+TOC;e670f0cf53ef1d8eab184fd0d99b1ba3;ISO 26262-10:2018 6.5.4.2;Safety goals elaboration;u
 TOC;2bfec595e3ea45f0f64f17383aeb6d46;ISO 26262-10:2018 7;Safety process requirement structure - Flow and sequence of the safety requirements;u
 TOC;586c3a9894384d6c5766c7a4f6d46131;ISO 26262-10:2018 8;Concerning hardware development;u
 TOC;462709565e2fa498e5ff616d7adb655f;ISO 26262-10:2018 8.1;The classification of random hardware faults;u
@@ -1716,19 +1717,19 @@ TOC;c0e23c0964a8f8851f8f6724ca649f15;ISO 26262-10:2018 8.2.1;General;u
 TOC;26ec3c26157a52e7c73938a9dac094d7;ISO 26262-10:2018 8.2.2;Technical safety requirement for sensor A_Master;u
 TOC;51ad54212e66633251bff86bf5d7a239;ISO 26262-10:2018 8.2.3;Description of the safety mechanism;u
 TOC;39fec06fd71d9be2327ff1ab82acae16;ISO 26262-10:2018 8.2.4;Evaluation of example 1 described in Figure 12;u
-TOC;868ce1d6c99cb3c37569c5eede00338b;ISO 26262-10:2018 8.2.4.1;General;c
-TOC;e988cab14e25734ce07173762aa00aef;ISO 26262-10:2018 8.2.4.2;Case 1: Sensor stuck-at value m > m2 fault;c
-TOC;6fbb0d6907cd90049fe3a68530162bc3;ISO 26262-10:2018 8.2.4.3;Case 2: Sensor stuck-at value m < m1 fault;c
-TOC;2f26f5cf662f0a9cba230a588481765b;ISO 26262-10:2018 8.2.4.4;Case 3: Sensor stuck-at value m ∈ [m1, m2] fault;c
-TOC;546b65df749777240a9b3fd9352c2ee4;ISO 26262-10:2018 8.2.4.5;Final residual failure rate assessment;c
-TOC;c53a1eca641baebe6114ac3481ef2f94;ISO 26262-10:2018 8.2.4.6;Improvement of SPFMSensor;c
+TOC;868ce1d6c99cb3c37569c5eede00338b;ISO 26262-10:2018 8.2.4.1;General;u
+TOC;e988cab14e25734ce07173762aa00aef;ISO 26262-10:2018 8.2.4.2;Case 1: Sensor stuck-at value m > m2 fault;u
+TOC;6fbb0d6907cd90049fe3a68530162bc3;ISO 26262-10:2018 8.2.4.3;Case 2: Sensor stuck-at value m < m1 fault;u
+TOC;2f26f5cf662f0a9cba230a588481765b;ISO 26262-10:2018 8.2.4.4;Case 3: Sensor stuck-at value m ∈ [m1, m2] fault;u
+TOC;546b65df749777240a9b3fd9352c2ee4;ISO 26262-10:2018 8.2.4.5;Final residual failure rate assessment;u
+TOC;c53a1eca641baebe6114ac3481ef2f94;ISO 26262-10:2018 8.2.4.6;Improvement of SPFMSensor;u
 TOC;0390da292e3c60615ae32ddc4ce07f79;ISO 26262-10:2018 8.3;Further explanation concerning hardware;u
 TOC;77db5b827d254fc7b41043a9bc4db6ea;ISO 26262-10:2018 8.3.1;how to deal with microcontrollers in the context of an ISO 26262 series of standards application;u
 TOC;7abc230b900491d6558d79e532c096a8;ISO 26262-10:2018 8.3.2;Safety analysis methods;u
-TOC;b8b475225249df353d7d7ca0c9c13652;ISO 26262-10:2018 8.3.2.1;General;c
-TOC;ecc8039313ee565a755cdec3ced0df52;ISO 26262-10:2018 8.3.2.2;Consideration of exposure duration in the calculation of Probabilistic Metric for random Hardware Failures (PMHF);c
-TOC;06f8f7e6e771db6df5a6f2a9f3017c7b;ISO 26262-10:2018 8.3.2.3;Typical pattern of dual point failure (Intended functionality and safety mechanism);c
-TOC;61ffe11c4f4ab32192574d1cc90a1628;ISO 26262-10:2018 8.3.2.4;The formula for calculation;c
+TOC;b8b475225249df353d7d7ca0c9c13652;ISO 26262-10:2018 8.3.2.1;General;u
+TOC;ecc8039313ee565a755cdec3ced0df52;ISO 26262-10:2018 8.3.2.2;Consideration of exposure duration in the calculation of Probabilistic Metric for random Hardware Failures (PMHF);u
+TOC;06f8f7e6e771db6df5a6f2a9f3017c7b;ISO 26262-10:2018 8.3.2.3;Typical pattern of dual point failure (Intended functionality and safety mechanism);u
+TOC;61ffe11c4f4ab32192574d1cc90a1628;ISO 26262-10:2018 8.3.2.4;The formula for calculation;u
 TOC;4c6b97010241257f3d82c731fb0830d4;ISO 26262-10:2018 8.4;PMHF units - Average probability per hour;u
 TOC;4ce4ac2966dcb503fafbda16fd45f876;ISO 26262-10:2018 9;Safety Element out of Context;u
 TOC;adacad42802504626fa24018e380a67f;ISO 26262-10:2018 9.1;Safety Element out of Context development;u
@@ -1736,19 +1737,19 @@ TOC;839cdcd7b65a6de6b1316c1bc207ced9;ISO 26262-10:2018 9.2;Use cases;u
 TOC;47441eb86b22e65a34140f27eeddcb4a;ISO 26262-10:2018 9.2.1;General;u
 TOC;bddbc8a834368c7e75035b80242d3fc2;ISO 26262-10:2018 9.2.2;Development of a system as a Safety Element out of Context example;u
 TOC;ab9789636e7dafaa8ac66438817da7d1;ISO 26262-10:2018 9.2.3;Development of a hardware component as a Safety Element out of Context example;u
-TOC;f27cba2f482e4793e2e6e00ec9b4f28f;ISO 26262-10:2018 9.2.3.1;General;c
-TOC;2a11eba8cf5732e5239e2454f06e3194;ISO 26262-10:2018 9.2.3.2;Step 1 — Assumptions on system level;c
-TOC;bfc28363e32e814669d5cae0a76b7708;ISO 26262-10:2018 9.2.3.3;Step 1a — Assumptions on technical safety requirements;c
-TOC;95881548548763b1ad37bce87dd32757;ISO 26262-10:2018 9.2.3.4;Step 1b — Assumptions on system level design;c
-TOC;5ecaa51f0c776cb8feeea7e169a9dbf1;ISO 26262-10:2018 9.2.3.5;Step 2 — Execution of hardware development;c
-TOC;47ee6e7eac69282a58026ddc2ec9a281;ISO 26262-10:2018 9.2.3.6;Step 3 — Work products;c
-TOC;efe4960a07d6d041afd81f27fb5ba942;ISO 26262-10:2018 9.2.3.7;Step 4 — Integration of the SEooC into the system;c
+TOC;f27cba2f482e4793e2e6e00ec9b4f28f;ISO 26262-10:2018 9.2.3.1;General;u
+TOC;2a11eba8cf5732e5239e2454f06e3194;ISO 26262-10:2018 9.2.3.2;Step 1 — Assumptions on system level;u
+TOC;bfc28363e32e814669d5cae0a76b7708;ISO 26262-10:2018 9.2.3.3;Step 1a — Assumptions on technical safety requirements;u
+TOC;95881548548763b1ad37bce87dd32757;ISO 26262-10:2018 9.2.3.4;Step 1b — Assumptions on system level design;u
+TOC;5ecaa51f0c776cb8feeea7e169a9dbf1;ISO 26262-10:2018 9.2.3.5;Step 2 — Execution of hardware development;u
+TOC;47ee6e7eac69282a58026ddc2ec9a281;ISO 26262-10:2018 9.2.3.6;Step 3 — Work products;u
+TOC;efe4960a07d6d041afd81f27fb5ba942;ISO 26262-10:2018 9.2.3.7;Step 4 — Integration of the SEooC into the system;u
 TOC;c9cbc9acd2c100f613b7dfdaefc2dcca;ISO 26262-10:2018 9.2.4;Development of a software component as a Safety Element out of Context example;u
-TOC;e39cb8055871d42c12e4bae76a2d69c7;ISO 26262-10:2018 9.2.4.1;General;c
-TOC;01c3b725f8206ec10cf326c5eb360ce7;ISO 26262-10:2018 9.2.4.2;Step 1a — Assumptions on the scope of the software component as an SEooC;c
-TOC;212f88b671d53158f3ed50b5048e4ff6;ISO 26262-10:2018 9.2.4.3;Step 1b — Assumptions on the safety requirements of the software component;c
-TOC;d2234b11889dab504032e09efdc63f0b;ISO 26262-10:2018 9.2.4.4;Step 2 — Development of the software component;c
-TOC;40d5c17888c904842ce70aa595caebbd;ISO 26262-10:2018 9.2.4.5;Step 3 — Integration of the software component in a new particular context;c
+TOC;e39cb8055871d42c12e4bae76a2d69c7;ISO 26262-10:2018 9.2.4.1;General;u
+TOC;01c3b725f8206ec10cf326c5eb360ce7;ISO 26262-10:2018 9.2.4.2;Step 1a — Assumptions on the scope of the software component as an SEooC;u
+TOC;212f88b671d53158f3ed50b5048e4ff6;ISO 26262-10:2018 9.2.4.3;Step 1b — Assumptions on the safety requirements of the software component;u
+TOC;d2234b11889dab504032e09efdc63f0b;ISO 26262-10:2018 9.2.4.4;Step 2 — Development of the software component;u
+TOC;40d5c17888c904842ce70aa595caebbd;ISO 26262-10:2018 9.2.4.5;Step 3 — Integration of the software component in a new particular context;u
 TOC;6ba70ce6d264e7295ac455ff4f0d3207;ISO 26262-10:2018 10;An example of proven in use argument;u
 TOC;0cd53c83497a493fa3c98f8e7bc821cd;ISO 26262-10:2018 10.1;General;u
 TOC;99eb80797e36cfb0456b80fd832a5fbb;ISO 26262-10:2018 10.2;Iteam definition and definition of the proven in use candidate;u
@@ -1764,33 +1765,33 @@ TOC;38382a2cef954a1389eb5269c954b50d;ISO 26262-10:2018 11.3.3;Hazard analysis an
 TOC;358dd3074ed2b71a03fbd0a6e20c0b0a;ISO 26262-10:2018 11.3.4;Associated safety goal;u
 TOC;56311a8669ae49b01bebda435bc33c1e;ISO 26262-10:2018 11.3.5;System architectural design;u
 TOC;6fb08138769c5e93d1119b4285fc3000;ISO 26262-10:2018 11.3.6;Functional safety concept;u
-TOC;967b2cf9b33632a1bd51ca39169fb58d;ISO 26262-10:2018 11.3.6.1;General;c
-TOC;c7f5931c5e4a9ecbf730d32c7ce0c595;ISO 26262-10:2018 11.3.6.2;Evolved safety concept of the item;c
+TOC;967b2cf9b33632a1bd51ca39169fb58d;ISO 26262-10:2018 11.3.6.1;General;u
+TOC;c7f5931c5e4a9ecbf730d32c7ce0c595;ISO 26262-10:2018 11.3.6.2;Evolved safety concept of the item;u
 TOC;47d6d073a79d18603bb9c202120f450e;ISO 26262-10:2018 12;Guidance for system development with safety-related availability requirements;u
 TOC;ce57836f5c606acd7c6052538cfbfb96;ISO 26262-10:2018 12.1;Introduction;u
 TOC;bac8758c284bd4168667ef77dff58690;ISO 26262-10:2018 12.2;Notes on concept phase when specifying fault tolerance;u
 TOC;fe846167abb4f5b6bd99aa29a8d8b611;ISO 26262-10:2018 12.2.1;General;u
 TOC;b86ec7763413755b73e60fed23c81994;ISO 26262-10:2018 12.2.2;Vehicle operating states in which the availability of a functionality is safety-related;u
 TOC;8bd48a86c3ff42b6342b57efa5660778;ISO 26262-10:2018 12.2.3;Prevention of hazardous events after a fault;u
-TOC;3b7ae6182b17a580482d8cdd7cab4094;ISO 26262-10:2018 12.2.3.1;Allowable time-span from the occurrence of a fault to completion of fault reaction;c
-TOC;8a8cc0912083fff96fa756668c56c90e;ISO 26262-10:2018 12.2.3.2;Functions and performance to be maintained after fault reaction;c
+TOC;3b7ae6182b17a580482d8cdd7cab4094;ISO 26262-10:2018 12.2.3.1;Allowable time-span from the occurrence of a fault to completion of fault reaction;u
+TOC;8a8cc0912083fff96fa756668c56c90e;ISO 26262-10:2018 12.2.3.2;Functions and performance to be maintained after fault reaction;u
 TOC;be4aa8a81283bf14421807b8a19b8055;ISO 26262-10:2018 12.2.4;Operation after fault reaction;u
-TOC;e04d0e19c2b1df15895c6599b6784d1b;ISO 26262-10:2018 12.2.4.1;Emergency operation;c
-TOC;919e5316daa2a39248f748b2c718cc73;ISO 26262-10:2018 12.2.4.2;Safe states for fault tolerant item;c
-TOC;2fbcf5f29376ad71bded594914eaa17d;ISO 26262-10:2018 12.2.4.3;Emergency operation time interval;c
+TOC;e04d0e19c2b1df15895c6599b6784d1b;ISO 26262-10:2018 12.2.4.1;Emergency operation;u
+TOC;919e5316daa2a39248f748b2c718cc73;ISO 26262-10:2018 12.2.4.2;Safe states for fault tolerant item;u
+TOC;2fbcf5f29376ad71bded594914eaa17d;ISO 26262-10:2018 12.2.4.3;Emergency operation time interval;u
 TOC;5bc494fb0de097cce697e29d15eeecac;ISO 26262-10:2018 12.2.5;Fault tolerant item example;u
-TOC;be677d33f01e2ecaae86206070dfb495;ISO 26262-10:2018 12.2.5.1;Introduction;c
-TOC;17764fe413493c077bdc60f9e94040f4;ISO 26262-10:2018 12.2.5.2;Assumptions;c
-TOC;122739cb6ce7ffd39fe54f166d708c43;ISO 26262-10:2018 12.2.5.3;Strategies of the example;c
-TOC;e6674f23099a7763b68a3209ce66a22d;ISO 26262-10:2018 12.2.5.4;System architecture description of the item;c
-TOC;82d17d93f05e3e66afa0c4fc97a347d4;ISO 26262-10:2018 12.2.5.5;Flow of events for this example;c
+TOC;be677d33f01e2ecaae86206070dfb495;ISO 26262-10:2018 12.2.5.1;Introduction;u
+TOC;17764fe413493c077bdc60f9e94040f4;ISO 26262-10:2018 12.2.5.2;Assumptions;u
+TOC;122739cb6ce7ffd39fe54f166d708c43;ISO 26262-10:2018 12.2.5.3;Strategies of the example;u
+TOC;e6674f23099a7763b68a3209ce66a22d;ISO 26262-10:2018 12.2.5.4;System architecture description of the item;u
+TOC;82d17d93f05e3e66afa0c4fc97a347d4;ISO 26262-10:2018 12.2.5.5;Flow of events for this example;u
 TOC;8a80a13fcf56677e277f62be7898bde9;ISO 26262-10:2018 12.2.6;ASIL decomposition of fault tolerant items;u
 TOC;a1f86ca0f68a23ee53be2762b52b5e72;ISO 26262-10:2018 12.3;Availability considerations during hardware design phase;u
 TOC;11ece5c937951c2d03d611d9cb90533b;ISO 26262-10:2018 12.3.1;Random hardware fault quantitative analysis;u
-TOC;eb9e51d0b1527477b3d9821b1a97d555;ISO 26262-10:2018 12.3.1.1;Emergency Operation Tolerance Time Interval calculation method;c
-TOC;ff58495cc336c93697c229b62f599ced;ISO 26262-10:2018 12.3.1.2;Example - Dynamic redundant architecture with standby;c
-TOC;f5536827105ac751b310e5730c1c0bba;ISO 26262-10:2018 12.3.1.3;Emergency Operation Time Interval calculation if no PMHF value is available;c
-TOC;461bfd1e9f87398dc1911c93a5a66b27;ISO 26262-10:2018 12.3.1.4;Allocation of requirements after transition to safe state;c
+TOC;eb9e51d0b1527477b3d9821b1a97d555;ISO 26262-10:2018 12.3.1.1;Emergency Operation Tolerance Time Interval calculation method;u
+TOC;ff58495cc336c93697c229b62f599ced;ISO 26262-10:2018 12.3.1.2;Example - Dynamic redundant architecture with standby;u
+TOC;f5536827105ac751b310e5730c1c0bba;ISO 26262-10:2018 12.3.1.3;Emergency Operation Time Interval calculation if no PMHF value is available;u
+TOC;461bfd1e9f87398dc1911c93a5a66b27;ISO 26262-10:2018 12.3.1.4;Allocation of requirements after transition to safe state;u
 TOC;8d7b7361f8d20c93f795d48d7b56859e;ISO 26262-10:2018 12.4;Software development phase;u
 TOC;a24a75d523107777a2dd6cbcd7b4446f;ISO 26262-10:2018 12.4.1;Software fault avoidance and tolerance;u
 TOC;45397ffbc15fb0adf33d1d4b74615634;ISO 26262-10:2018 12.4.2;Software fault avoidance;u
@@ -1924,14 +1925,14 @@ TOC;f528c21c596bc1e7012e54b5e7c18d71;ISO 26262-11:2018 5.1.10.2;About verificati
 TOC;cb29ef01c824ceb01d64a1a6407d453d;ISO 26262-11:2018 5.1.11;Example of safety documentation for a digital component;u
 TOC;806890e7c6e04b73dda420053c4e1adc;ISO 26262-11:2018 5.1.12;Examples of safety mechanisms for digital components and memories;u
 TOC;6ee6fe22e224800602d46a83bdf14a20;ISO 26262-11:2018 5.1.13;Overview of techniques for digital components and memories;u
-TOC;c4f6dad9097f801ac0376a7704e0212e;ISO 26262-11:2018 5.1.13.1;Memory monitoring using error-detection-correction codes (ECC);u
-TOC;33ebd808c84e11a36778eea407455770;ISO 26262-11:2018 5.1.13.2;Modified checksum;u
-TOC;97b7cd07587f9a3217f07fb868bc9d6e;ISO 26262-11:2018 5.1.13.3;Memory signature;u
-TOC;e075e702a4ce9cf04c1237553b371de2;ISO 26262-11:2018 5.1.13.4;Block replication (for example double memory with hardware or software comparison);u
-TOC;a78ef2d796e9b08d5eab93e436ca067f;ISO 26262-11:2018 5.1.13.5;RAM Pattern test;u
-TOC;5bc1aaf42d55cc61814855ce9b4482ee;ISO 26262-11:2018 5.1.13.6;Parity bit;u
-TOC;2583dd2267240261deffb330c04b5aeb;ISO 26262-11:2018 5.1.13.7;RAM March test;u
-TOC;bb69c398bd476201039a55e697a5ecbd;ISO 26262-11:2018 5.1.13.8;Running checksum/CRC;u
+TOC;c4f6dad9097f801ac0376a7704e0212e;ISO 26262-11:2018 5.1.13.1;Memory monitoring using error-detection-correction codes (ECC);m
+TOC;33ebd808c84e11a36778eea407455770;ISO 26262-11:2018 5.1.13.2;Modified checksum;m
+TOC;97b7cd07587f9a3217f07fb868bc9d6e;ISO 26262-11:2018 5.1.13.3;Memory signature;m
+TOC;e075e702a4ce9cf04c1237553b371de2;ISO 26262-11:2018 5.1.13.4;Block replication (for example double memory with hardware or software comparison);m
+TOC;a78ef2d796e9b08d5eab93e436ca067f;ISO 26262-11:2018 5.1.13.5;RAM Pattern test;m
+TOC;5bc1aaf42d55cc61814855ce9b4482ee;ISO 26262-11:2018 5.1.13.6;Parity bit;m
+TOC;2583dd2267240261deffb330c04b5aeb;ISO 26262-11:2018 5.1.13.7;RAM March test;m
+TOC;bb69c398bd476201039a55e697a5ecbd;ISO 26262-11:2018 5.1.13.8;Running checksum/CRC;m
 TOC;8a2d6ab4c3b7aa0c916c5633f6a0d186;ISO 26262-11:2018 5.2;Analogue/mixed signal components;u
 TOC;9e813bb21b4540183f59f9054a3d6876;ISO 26262-11:2018 5.2.1;About analogue and mixed signal components;u
 TOC;65bb578a48a32e8e0fda1cd9ce633e74;ISO 26262-11:2018 5.2.2;Analogue and mixed signal components and failure modes;u
@@ -2157,12 +2158,10 @@ TOC;7e83ba4a72bf86276f248edab2fc9a9b;ISO 26262-12:2018 B.2.1;General;u
 TOC;9de012b4eef67cbc8dfc300181fb4aa5;ISO 26262-12:2018 B.2.2;Description of the AIS stages;u
 TOC;337b56e166b286d1793be8c18de77056;ISO 26262-12:2018 B.3;Examples and explanations of the probability of exposure;u
 TOC;5def6968b11a4d0d39f5001189c8a1fe;ISO 26262-12:2018 B.4;Examples of controllability;u
-TOC;ac5f4c5541d4e2f98917709d76fe139a;ISO 26262-12:2018 C;Example of controllability classification techniques;u
-TOC;dae5b8d6bfa97213e47e5f1ee71abf88;ISO 26262-12:2018 C.1;General;u
-TOC;ec7cffda769332cefe387749532fd3e6;ISO 26262-12:2018 C.2;Concept of controllability classification panel;u
-TOC;9c9f054c30651d1f1dad7bfe48b3d4ac;ISO 26262-12:2018 C.3;Evaluating controllability of motorcycle hazardous events;u
-TOC;4d5d4ae21c3f5ddf69e0c177d434f403;ISO 26262-12:2018 C.4;Expert riders;u
-TOC;2ef77a8aa78f254ab1643f9a8989206b;ISO 26262-12:2018 C.5;Controllability evaluation techniques;u
-TOC;92547eb58ac4e18d1f909eac267a68f7;ISO 26262-12:2018 C.6;Evaluating Controllability;u
-TOC;1c41b2bffadae4104732d1be799b454d;ISO PAS 8926:2024 4;Use of pre-existing software architectural elements into safety-related embedded software comformant with the ISO 26262 series;u
-TOC;844d3ae7ee93a66cf584413433cd3c0b;ISO PAS 8926:2024 B.2;Complexity measures derived from ISO 26262-6;u
+TOC;ac5f4c5541d4e2f98917709d76fe139a;ISO 26262-12:2018 C;Example of controllability classification techniques;m
+TOC;dae5b8d6bfa97213e47e5f1ee71abf88;ISO 26262-12:2018 C.1;General;m
+TOC;ec7cffda769332cefe387749532fd3e6;ISO 26262-12:2018 C.2;Concept of controllability classification panel;m
+TOC;9c9f054c30651d1f1dad7bfe48b3d4ac;ISO 26262-12:2018 C.3;Evaluating controllability of motorcycle hazardous events;m
+TOC;4d5d4ae21c3f5ddf69e0c177d434f403;ISO 26262-12:2018 C.4;Expert riders;m
+TOC;2ef77a8aa78f254ab1643f9a8989206b;ISO 26262-12:2018 C.5;Controllability evaluation techniques;m
+TOC;92547eb58ac4e18d1f909eac267a68f7;ISO 26262-12:2018 C.6;Evaluating Controllability;m

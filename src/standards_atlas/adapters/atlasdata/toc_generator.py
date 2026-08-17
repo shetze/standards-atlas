@@ -98,11 +98,11 @@ def _generate_toc_record(
     clause: Clause,
     annotations: tuple[ClauseAnnotation, ...],
 ) -> InitializationRecord:
-    reference = clause.reference.as_text()
+    reference = _atlasdata_reference(clause)
 
     return InitializationRecord(
         kind="TOC",
-        hash_value=_hash_value(f"toc|{reference}"),
+        hash_value=_hash_value(reference),
         reference=reference,
         content=_public_heading(clause, annotations),
         type_marker=_type_marker(clause),
@@ -114,7 +114,7 @@ def _generate_public_text_record(
     clause: Clause,
     annotation: ClauseAnnotation,
 ) -> InitializationRecord:
-    reference = clause.reference.as_text()
+    reference = _atlasdata_reference(clause)
 
     return InitializationRecord(
         kind="PublicTXT",
@@ -123,6 +123,20 @@ def _generate_public_text_record(
         content=annotation.content,
         type_marker=_type_marker(clause),
     )
+
+
+def _atlasdata_reference(clause: Clause) -> str:
+    """Serialize a clause reference using AtlasData part notation."""
+    standard = clause.reference.standard
+
+    if clause.volume:
+        part = clause.volume.replace("§", "-")
+        standard = f"{standard}-{part}"
+
+    if clause.reference.year is None:
+        return f"{standard} {clause.reference.clause}"
+
+    return f"{standard}:{clause.reference.year} {clause.reference.clause}"
 
 
 def _public_heading(

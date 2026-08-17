@@ -19,6 +19,7 @@ return 0;
 #      actual standard documents, which are copyright protected by Cenelec and available at www.cenelec.eu
 #
 ####
+
 #---data---#
 TOC;0f2998b33615d8c37c322e2f4f8b7b7e;EN 50128:2011 0;Software for railway control and protection systems;u
 TOC;2f47eccdd00095d81df0bf34547849e9;EN 50128:2011 1;Scope;u
@@ -638,4 +639,3 @@ TOC;c0021c5a9f6ceb200f25df2249fd3314;EN 50128:2011 D.68;Tabular Specification Me
 TOC;d6844be9a47478464cd59ee9bd7053d9;EN 50128:2011 D.69;Application specific language;u
 TOC;36c607da98c822136d40fd5de8f06b3a;EN 50128:2011 D.70;UML (Unified Modelling Language);u
 TOC;dd99289e3822d173044e6bde2242cb13;EN 50128:2011 D.71;Domain specific languages;u
-TOC;b5026fc0d8a52bb1805943832e9ec381;EN 50657:2017 E;Changes in this European Standard compared to EN 50128:2011;u
