@@ -12,6 +12,8 @@ mcp:
     clause_text: true
     source_paths: false
     internal_metadata: false
+  capabilities:
+    formula_transcription: false
   http:
     host: 192.168.0.77
     port: 8765

@@ -90,9 +90,9 @@ class FormulaBlock(ContentBlockBase):
     expression: str
     original_expression: str | None = None
     representation: Literal["latex", "mathml", "text"] = "text"
-    extraction_status: Literal["visual_only", "machine_extracted", "human_verified"] = (
-        "machine_extracted"
-    )
+    extraction_status: Literal[
+        "visual_only", "machine_extracted", "machine_transcribed", "human_verified"
+    ] = "machine_extracted"
     image_path: str | None = None
     media_type: str | None = None
     content_hash: str | None = None

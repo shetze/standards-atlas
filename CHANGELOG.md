@@ -8,6 +8,8 @@
 ### Notes
 - This release is intended to preserve functional behaviour while significantly improving maintainability and extensibility.
 
+- Add formula transcription enrichment with MCP discovery/read/submit tools, provenance-bearing LaTeX artifacts, explicit write capability gating, and deterministic application to preserved `FormulaBlock` values.
+
 ## Unreleased
 
 ### Added

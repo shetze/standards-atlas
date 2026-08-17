@@ -20,6 +20,10 @@ from standards_atlas.application.ports.document_repositories import (
     NormalizedDocumentRepository,
 )
 from standards_atlas.application.ports.extracted_document_reader import ExtractedDocumentReader
+from standards_atlas.application.ports.formula_transcriptions import (
+    FormulaTranscriptionDocumentRepository,
+    FormulaTranscriptionRepository,
+)
 from standards_atlas.application.ports.formula_visuals import FormulaVisualEnricher
 from standards_atlas.application.ports.workflow_artifacts import (
     ExtractionState,
@@ -40,6 +44,8 @@ __all__ = [
     "EngineeringDocumentRepository",
     "ExtractedDocumentReader",
     "ExtractedDocumentRepository",
+    "FormulaTranscriptionDocumentRepository",
+    "FormulaTranscriptionRepository",
     "FormulaVisualEnricher",
     "ExtractionState",
     "NormalizationRepository",

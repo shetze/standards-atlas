@@ -135,3 +135,17 @@ uv run standards-atlas mcp codex-config --url "$MCP_URL"
 
 See [Codex integration](codex-integration.md) for registration, verification,
 security boundaries, and example prompts.
+
+## Transcribing preserved formulas
+
+Slice 2 adds a controlled formula-enrichment workflow for MCP clients such as Codex. `list_untranscribed_formulas` discovers preserved visual formulas, and `get_formula` returns the PNG data URI plus source evidence and adjacent clause text. After inspecting the image, a client may submit a LaTeX transcription with `submit_formula_transcription`.
+
+Writing is disabled by default. Enable it explicitly when running a trusted transcription workflow:
+
+```yaml
+mcp:
+  capabilities:
+    formula_transcription: true
+```
+
+Every accepted submission is saved under `.atlas/enrichments/formula-transcriptions/` with actor, provider/model, confidence and source-image hash before the corresponding `FormulaBlock` is changed to `machine_transcribed`. The visual source remains attached to the block for later review.

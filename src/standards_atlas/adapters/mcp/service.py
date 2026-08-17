@@ -4,13 +4,20 @@ from __future__ import annotations
 
 from typing import Any
 
-from standards_atlas.adapters.filesystem import FileSystemKnowledgeTableRepository
+from standards_atlas.adapters.filesystem import (
+    FileSystemEngineeringDocumentRepository,
+    FileSystemFormulaTranscriptionRepository,
+    FileSystemKnowledgeTableRepository,
+)
 from standards_atlas.adapters.mcp.configuration import McpServerConfig
 from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseFilter,
     SamplingStrategy,
 )
 from standards_atlas.application.services.evaluation import ClauseProvider
+from standards_atlas.application.services.formula_transcription_service import (
+    FormulaTranscriptionService,
+)
 
 
 class McpClauseService:
@@ -26,6 +33,10 @@ class McpClauseService:
         self._config = config
         self._knowledge_tables = knowledge_tables or FileSystemKnowledgeTableRepository(
             config.workspace
+        )
+        self._formula_transcriptions = FormulaTranscriptionService(
+            FileSystemEngineeringDocumentRepository(config.workspace),
+            FileSystemFormulaTranscriptionRepository(config.workspace),
         )
 
     def list_documents(self) -> list[dict[str, Any]]:
@@ -124,6 +135,52 @@ class McpClauseService:
         record = self._knowledge_tables.get_record(record_id)
         self._ensure_document_allowed(record.document_key)
         return self._redact_source_evidence(record.model_dump(mode="json"))
+
+    def list_untranscribed_formulas(
+        self,
+        *,
+        document_keys: list[str] | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        bounded_limit = self._bounded_result_limit(limit)
+        keys = list(self._allowed_document_keys(document_keys))
+        return [
+            self._redact_source_evidence(item)
+            for item in self._formula_transcriptions.list_untranscribed(
+                document_keys=keys or None, limit=bounded_limit, offset=offset
+            )
+        ]
+
+    def get_formula(self, formula_id: str) -> dict[str, Any]:
+        payload = self._formula_transcriptions.get(formula_id)
+        self._ensure_document_allowed(payload["document_key"])
+        return self._redact_source_evidence(payload)
+
+    def submit_formula_transcription(
+        self,
+        formula_id: str,
+        *,
+        latex: str,
+        actor: str,
+        provider: str | None = None,
+        model: str | None = None,
+        confidence: float | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        if not self._config.capabilities.formula_transcription:
+            raise ValueError("formula transcription is disabled by MCP configuration")
+        formula = self._formula_transcriptions.get(formula_id)
+        self._ensure_document_allowed(formula["document_key"])
+        return self._formula_transcriptions.submit(
+            formula_id,
+            latex=latex,
+            actor=actor,
+            provider=provider,
+            model=model,
+            confidence=confidence,
+            notes=notes,
+        )
 
     def sample_clauses(
         self,

@@ -40,3 +40,7 @@ Remote operation validates host and origin headers, optionally enforces bearer a
 ## Compatibility probe
 
 An independent JSON-RPC probe verifies initialization, protocol negotiation, required tool discovery, execution of `list_standards`, and discovery of the documents resource. It tests the external contract rather than FastMCP internals.
+
+## Formula transcription enrichment
+
+Visual-only formulas preserved by the normalization pipeline are available through `list_untranscribed_formulas` and `get_formula`. The latter returns the formula image, source evidence, and adjacent text context for multimodal transcription. `submit_formula_transcription` persists a provenance-bearing LaTeX enrichment artifact before deterministically applying it to the canonical `FormulaBlock`. Mutating formula transcription is opt-in through `mcp.capabilities.formula_transcription`; document allowlists remain enforced.

@@ -63,7 +63,7 @@ Continue with [Alignment review](alignment-review.md) when the result is uncerta
 
 ### Construct and enrich
 
-The workflow imports the reviewed structure, enriches clauses from aligned normalized ranges, derives parts where required and composes families. Persisted canonical documents are placed below `.atlas/documents/`. Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; semantic transcription remains a later enrichment concern.
+The workflow imports the reviewed structure, enriches clauses from aligned normalized ranges, derives parts where required and composes families. Persisted canonical documents are placed below `.atlas/documents/`. Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; semantic transcription is a separate enrichment concern. MCP clients can now transcribe those preserved assets to LaTeX through the auditable formula-transcription enrichment stage; normalization itself remains deterministic.
 
 ## Review-aware continuation
 

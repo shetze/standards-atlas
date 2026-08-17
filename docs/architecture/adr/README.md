@@ -121,3 +121,5 @@ both active and obsolete provisions.
 - [Domain model](../domain-model.md)
 - [Diagram catalog](../diagrams/README.md)
 - [Documentation home](../../README.md)
+
+- [ADR 0056](0056-enrich-visual-formulas-through-auditable-transcription-artifacts.md) — Formula transcription enrichment through auditable LaTeX artifacts.

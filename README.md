@@ -99,3 +99,7 @@ See `docs/user-guide/codex-integration.md` for setup and verification.
 ## Current version
 
 This snapshot corresponds to **standards-atlas 0.8.1**. Version 0.8.1 completes the architecture refactoring (Phases A–G) while preserving functional behaviour.
+
+### Formula transcription enrichment
+
+Visual-only formulas preserved during PDF normalization can be exposed to trusted MCP clients for LaTeX transcription. Submissions are stored as provenance-bearing enrichment artifacts and then deterministically applied to the canonical formula block; MCP writes require the explicit `capabilities.formula_transcription` opt-in.

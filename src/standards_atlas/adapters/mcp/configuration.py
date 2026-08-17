@@ -18,6 +18,13 @@ class McpExposureConfig(BaseModel):
     internal_metadata: bool = False
 
 
+class McpCapabilityConfig(BaseModel):
+    """Explicitly enabled mutating MCP capabilities."""
+
+    model_config = ConfigDict(frozen=True)
+    formula_transcription: bool = False
+
+
 class McpLimitConfig(BaseModel):
     """Upper bounds applied to all externally supplied MCP requests."""
 
@@ -93,6 +100,7 @@ class McpServerConfig(BaseModel):
     allowed_document_keys: tuple[str, ...] = ()
     limits: McpLimitConfig = McpLimitConfig()
     expose: McpExposureConfig = McpExposureConfig()
+    capabilities: McpCapabilityConfig = McpCapabilityConfig()
     http: McpHttpConfig = McpHttpConfig()
     auth: McpAuthConfig = McpAuthConfig()
     audit: McpAuditConfig = McpAuditConfig()

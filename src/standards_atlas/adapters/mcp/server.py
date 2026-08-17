@@ -130,6 +130,47 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
         return tool_call(clause_service.get_knowledge_record, record_id)
 
     @mcp.tool()
+    def list_untranscribed_formulas(
+        document_keys: list[str] | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        """List visual-only formulas that do not yet have a transcription artifact."""
+        return tool_call(
+            clause_service.list_untranscribed_formulas,
+            document_keys=document_keys,
+            limit=limit,
+            offset=offset,
+        )
+
+    @mcp.tool()
+    def get_formula(formula_id: str) -> dict[str, Any]:
+        """Read one formula image, source evidence and adjacent text context."""
+        return tool_call(clause_service.get_formula, formula_id)
+
+    @mcp.tool()
+    def submit_formula_transcription(
+        formula_id: str,
+        latex: str,
+        actor: str,
+        provider: str | None = None,
+        model: str | None = None,
+        confidence: float | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Persist a LaTeX transcription and deterministically apply it to its formula block."""
+        return tool_call(
+            clause_service.submit_formula_transcription,
+            formula_id,
+            latex=latex,
+            actor=actor,
+            provider=provider,
+            model=model,
+            confidence=confidence,
+            notes=notes,
+        )
+
+    @mcp.tool()
     def sample_clauses(
         count: int,
         strategy: str = "random",
