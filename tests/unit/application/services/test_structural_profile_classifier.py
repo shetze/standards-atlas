@@ -40,3 +40,40 @@ def test_numeric_clause_is_classified_as_body() -> None:
     )
 
     assert profile.canonical_section is CanonicalDocumentSection.BODY
+
+
+def test_classifier_detects_labelled_semantic_sections_in_clause_text() -> None:
+    text = (
+        "Aim: Establish the intended objective.\n"
+        "Description: The technique analyses the control flow.\n"
+        "References: IEC 61508-7."
+    )
+
+    profile = StructuralProfileClassifier().classify(
+        StructuralProfileContext(reference="C.2.6.1", heading="Control flow analysis", text=text)
+    )
+
+    assert [section.role.value for section in profile.semantic_sections] == [
+        "aim",
+        "description",
+        "references",
+    ]
+    labels = [
+        text[section.start_offset : section.end_offset].split(":", 1)[0].strip()
+        for section in profile.semantic_sections
+    ]
+    assert labels == ["Aim", "Description", "References"]
+
+
+def test_classifier_detects_inline_labelled_sections_after_sentence_boundary() -> None:
+    text = "Aim: Do X. Description: Explain Y. References: ISO 1234."
+
+    profile = StructuralProfileClassifier().classify(
+        StructuralProfileContext(reference="B.4.3", heading="Technique", text=text)
+    )
+
+    assert tuple(section.role.value for section in profile.semantic_sections) == (
+        "aim",
+        "description",
+        "references",
+    )

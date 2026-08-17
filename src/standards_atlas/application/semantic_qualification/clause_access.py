@@ -11,6 +11,7 @@ from standards_atlas.domain.model import (
     CanonicalDocumentSection,
     ClauseType,
     DocumentType,
+    SemanticSection,
     StatementFunction,
 )
 
@@ -61,6 +62,7 @@ class ClauseDescriptor(BaseModel):
     canonical_section: CanonicalDocumentSection | None = None
     document_categories: tuple[str, ...] = ()
     domain_categories: tuple[str, ...] = ()
+    semantic_sections: tuple[SemanticSection, ...] = ()
     content_profile: ClauseContentProfile = ClauseContentProfile.TEXT_DOMINANT
     table_block_count: int = Field(default=0, ge=0)
     table_text_length: int = Field(default=0, ge=0)
@@ -79,6 +81,7 @@ class ClauseFilter(BaseModel):
     canonical_section: CanonicalDocumentSection | None = None
     document_categories: tuple[str, ...] = ()
     domain_categories: tuple[str, ...] = ()
+    semantic_sections: tuple[SemanticSection, ...] = ()
     language: str | None = None
     min_text_length: int | None = Field(default=None, ge=0)
     max_text_length: int | None = Field(default=None, ge=0)

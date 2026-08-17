@@ -89,17 +89,6 @@ class ModelGenerationConfig(BaseModel):
         return self
 
 
-class CascadeStage(BaseModel):
-    """One ordered model and prompt stage in cascade execution."""
-
-    model_config = ConfigDict(frozen=True)
-
-    id: str = Field(min_length=1)
-    models: tuple[str, ...] = Field(min_length=1)
-    prompts: tuple[str, ...] = ()
-    apply_to: str = Field(default="all", pattern="^(all|unresolved)$")
-
-
 class CascadeResolutionConfig(BaseModel):
     """Rules used to decide whether a clause needs escalation."""
 
@@ -114,6 +103,20 @@ class CascadeResolutionConfig(BaseModel):
     minimum_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
     escalate_on_applicability_disagreement: bool = True
     escalate_on_responsibility_disagreement: bool = True
+    minimum_applicability_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    minimum_responsibility_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class CascadeStage(BaseModel):
+    """One ordered model and prompt stage in cascade execution."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(min_length=1)
+    models: tuple[str, ...] = Field(min_length=1)
+    prompts: tuple[str, ...] = ()
+    apply_to: str = Field(default="all", pattern="^(all|unresolved)$")
+    resolution: CascadeResolutionConfig | None = None
 
 
 def cascade_escalation_reasons(
@@ -132,7 +135,35 @@ def cascade_escalation_reasons(
         reasons.append("applicability_disagreement")
     if resolution.escalate_on_responsibility_disagreement and not clause.responsibility_unanimous:
         reasons.append("responsibility_disagreement")
+
+    applicability_threshold = resolution.minimum_applicability_confidence
+    if applicability_threshold is not None:
+        applicability_confidence = _dimension_decision_confidence(
+            present=clause.applicability_present,
+            positive_confidence=clause.applicability_confidence,
+            support=clause.applicability_support,
+        )
+        if applicability_confidence < applicability_threshold:
+            reasons.append("applicability_confidence")
+
+    responsibility_threshold = resolution.minimum_responsibility_confidence
+    if responsibility_threshold is not None:
+        responsibility_confidence = _dimension_decision_confidence(
+            present=clause.responsibility_present,
+            positive_confidence=clause.responsibility_confidence,
+            support=clause.responsibility_support,
+        )
+        if responsibility_confidence < responsibility_threshold:
+            reasons.append("responsibility_confidence")
     return tuple(reasons)
+
+
+def _dimension_decision_confidence(
+    *, present: bool, positive_confidence: float, support: dict[str, float]
+) -> float:
+    if present:
+        return positive_confidence
+    return max(0.0, 1.0 - float(support.get("present", 0.0)))
 
 
 class MatrixExecutionConfig(BaseModel):

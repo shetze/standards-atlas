@@ -34,6 +34,7 @@ class KnowledgeKind(StrEnum):
 
     TECHNIQUE = "technique"
     METHOD_OR_MEASURE = "method_or_measure"
+    TECHNIQUE_OR_MEASURE = "technique_or_measure"
     PROCESS = "process"
     ARTIFACT = "artifact"
     ROLE = "role"

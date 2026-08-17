@@ -136,6 +136,7 @@ class ConsensusReport(BaseModel):
     median_participating_models: float = Field(default=0.0, ge=0.0)
     maximum_participating_models: int = Field(default=0, ge=0)
     participation_distribution: dict[str, int] = Field(default_factory=dict)
+    review_policy: dict[str, Any] = Field(default_factory=dict)
     clause_count: int
     categories: dict[str, int]
     review_count: int
@@ -295,6 +296,7 @@ class ModelConsensusService:
                 str(count): occurrences
                 for count, occurrences in sorted(participation_distribution.items())
             },
+            review_policy=policy,
             clause_count=len(clauses),
             categories=dict(sorted(category_counts.items())),
             review_count=sum(item.requires_review for item in clauses),
@@ -819,16 +821,18 @@ def _render_review(report: ConsensusReport) -> str:
                 *_render_vote_table(item.votes),
             ]
         )
+        hitl = _hitl_prefill(item, report.review_policy)
         lines.extend(
             [
                 "",
                 "### HITL decision",
                 "",
-                "- Primary statement function: ",
-                "- Secondary statement functions: ",
-                "- Knowledge kinds: ",
-                "- Applicability present/function: ",
-                "- Responsibility present/function: ",
+                f"- HITL required for: {hitl['required_for']}",
+                f"- Primary statement function: {hitl['primary_function']}",
+                f"- Secondary statement functions: {hitl['secondary_functions']}",
+                f"- Knowledge kinds: {hitl['knowledge_kinds']}",
+                f"- Applicability present/function: {hitl['applicability']}",
+                f"- Responsibility present/function: {hitl['responsibility']}",
                 "- Rationale: ",
                 "",
             ]
@@ -836,10 +840,93 @@ def _render_review(report: ConsensusReport) -> str:
     return "\n".join(lines)
 
 
+def _hitl_prefill(item: ClauseConsensus, policy: dict[str, Any]) -> dict[str, str]:
+    """Build a conservative HITL form from already accepted dimensions."""
+    effective_policy = _review_policy(policy)
+    statement_reliable = (
+        item.primary_function is not None
+        and item.category
+        not in {
+            ConsensusCategory.DISPUTED,
+            ConsensusCategory.INSUFFICIENT,
+        }
+        and not (
+            item.category is ConsensusCategory.MAJORITY
+            and (
+                item.statement_function_confidence
+                < float(effective_policy["accept_majority_min_confidence"])
+                or item.participating_models < int(effective_policy["accept_majority_min_models"])
+            )
+        )
+    )
+    knowledge_reliable = (
+        item.primary_knowledge_kind is not None
+        and item.knowledge_kind_confidence
+        >= float(effective_policy["accept_majority_min_confidence"])
+    )
+    applicability_reliable = (
+        item.applicability_present
+        and item.applicability_confidence >= float(effective_policy["applicability_min_confidence"])
+    ) or (not item.applicability_present and item.applicability_unanimous)
+    responsibility_reliable = (
+        item.responsibility_present
+        and item.responsibility_confidence
+        >= float(effective_policy["responsibility_min_confidence"])
+    ) or (not item.responsibility_present and item.responsibility_unanimous)
+
+    secondary = tuple(value for value in item.proposed_functions if value != item.primary_function)
+    required: list[str] = []
+    if not statement_reliable:
+        required.append("statement functions")
+    if not knowledge_reliable:
+        required.append("knowledge kinds")
+    if not applicability_reliable:
+        required.append("applicability")
+    if not responsibility_reliable:
+        required.append("responsibility")
+
+    return {
+        "required_for": ", ".join(required) or "none",
+        "primary_function": (
+            item.primary_function.value if statement_reliable and item.primary_function else ""
+        ),
+        "secondary_functions": (
+            ", ".join(value.value for value in secondary) or "none" if statement_reliable else ""
+        ),
+        "knowledge_kinds": (
+            ", ".join(value.value for value in item.proposed_knowledge_kinds)
+            if knowledge_reliable
+            else ""
+        ),
+        "applicability": (
+            _present_function_value(
+                item.applicability_present,
+                item.proposed_applicability_functions,
+            )
+            if applicability_reliable
+            else ""
+        ),
+        "responsibility": (
+            _present_function_value(
+                item.responsibility_present,
+                item.proposed_responsibility_functions,
+            )
+            if responsibility_reliable
+            else ""
+        ),
+    }
+
+
+def _present_function_value(present: bool, values: tuple[StrEnum, ...]) -> str:
+    function = values[0].value if values else "none"
+    return f"{str(present).lower()} / {function}"
+
+
 def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
     headers = (
         "Voter",
-        "Statement functions",
+        "Primary statement",
+        "Secondary statements",
         "Knowledge kinds",
         "Applicability",
         "Responsibility",
@@ -848,7 +935,8 @@ def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
     rows = [
         (
             _vote_model_label(vote),
-            _enum_values(vote.statement_functions),
+            _enum_value(vote.primary_function),
+            _enum_values(vote.secondary_functions),
             _enum_values(vote.knowledge_kinds),
             _enum_values(vote.applicability_functions),
             _enum_values(vote.responsibility_functions),
@@ -870,6 +958,10 @@ def _vote_model_label(vote: ModelVote) -> str:
     if vote.role == "voter":
         return _table_cell(vote.model_id)
     return _table_cell(f"{vote.model_id} [{vote.role}]")
+
+
+def _enum_value(value: StrEnum | None) -> str:
+    return _table_cell(value.value if value is not None else "none")
 
 
 def _enum_values(values: tuple[StrEnum, ...]) -> str:

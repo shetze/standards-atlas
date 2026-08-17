@@ -183,6 +183,11 @@ class EngineeringDocumentClauseProvider:
                 if clause.structural_profile is not None
                 else ()
             ),
+            semantic_sections=(
+                clause.structural_profile.semantic_sections
+                if clause.structural_profile is not None
+                else ()
+            ),
             content_profile=(
                 ClauseContentProfile.TABLE_DOMINANT
                 if table_dominant

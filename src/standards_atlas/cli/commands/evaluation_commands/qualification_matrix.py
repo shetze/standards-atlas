@@ -493,6 +493,7 @@ def qualify_model_prompt_matrix(
                                 )
 
                 if manifest.execution.mode == "cascade" and stage_index < len(execution_stages) - 1:
+                    stage_resolution = stage.resolution or manifest.execution.resolution
                     interim_manifest = QualificationMatrixManifest.model_validate(
                         {
                             **manifest.model_dump(mode="python"),
@@ -509,7 +510,7 @@ def qualify_model_prompt_matrix(
                             output_directory / manifest.matrix_id / "cascade" / stage.id
                         ),
                         corpus_root=corpus_root,
-                        min_models=manifest.execution.resolution.minimum_successful_models,
+                        min_models=stage_resolution.minimum_successful_models,
                         strong_threshold=manifest.consensus.strong_threshold,
                         majority_threshold=manifest.consensus.majority_threshold,
                         label_threshold=manifest.consensus.label_threshold,
@@ -521,9 +522,7 @@ def qualify_model_prompt_matrix(
                     )
                     selected_id_set = set(selected_example_ids)
                     escalation_reasons = {
-                        clause.clause_id: cascade_escalation_reasons(
-                            clause, manifest.execution.resolution
-                        )
+                        clause.clause_id: cascade_escalation_reasons(clause, stage_resolution)
                         for clause in interim_report.clauses
                         if clause.clause_id in selected_id_set
                     }

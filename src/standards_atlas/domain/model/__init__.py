@@ -82,6 +82,8 @@ from standards_atlas.domain.model.structural_profile import (
     AnnexStatus,
     CanonicalDocumentSection,
     DomainCategory,
+    SemanticSection,
+    SemanticSectionRole,
     StructuralProfile,
 )
 
@@ -89,6 +91,8 @@ __all__ = [
     "AnnexStatus",
     "CanonicalDocumentSection",
     "DomainCategory",
+    "SemanticSection",
+    "SemanticSectionRole",
     "StructuralProfile",
     "ArtifactKind",
     "ArtifactLineage",

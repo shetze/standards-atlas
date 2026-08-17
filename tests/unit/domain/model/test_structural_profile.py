@@ -52,3 +52,14 @@ def test_clause_accepts_optional_structural_profile() -> None:
         ).structural_profile
         is None
     )
+
+
+def test_profile_accepts_open_label_with_optional_canonical_semantic_section_role() -> None:
+    from standards_atlas.domain.model.structural_profile import SemanticSection
+
+    profile = StructuralProfile(
+        semantic_sections=(SemanticSection(label="Tool support", start_offset=0, end_offset=12),)
+    )
+
+    assert profile.semantic_sections[0].label == "Tool support"
+    assert profile.semantic_sections[0].role is None

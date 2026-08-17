@@ -212,6 +212,7 @@ class ContentEnrichmentService:
                 StructuralProfileContext(
                     reference=enriched_clause.reference.clause,
                     heading=enriched_clause.title or "",
+                    text=enriched_clause.plain_text,
                 )
             )
             if enriched_clause.structural_profile is not None:
@@ -226,6 +227,10 @@ class ContentEnrichmentService:
                         "domain_categories": existing_profile.domain_categories,
                         "annex_status": (
                             structural_profile.annex_status or existing_profile.annex_status
+                        ),
+                        "semantic_sections": (
+                            structural_profile.semantic_sections
+                            or existing_profile.semantic_sections
                         ),
                     }
                 )

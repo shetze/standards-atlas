@@ -127,8 +127,7 @@ class AdaptiveInterviewPlanner:
                     dimension=InterviewDimension.KNOWLEDGE_KIND,
                     question="What engineering knowledge kind is represented by this clause?",
                     allowed_labels=(
-                        "technique",
-                        "method_or_measure",
+                        "technique_or_measure",
                         "process",
                         "artifact",
                         "role",

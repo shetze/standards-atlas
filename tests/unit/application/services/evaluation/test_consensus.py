@@ -382,13 +382,13 @@ def test_model_votes_are_rendered_as_space_padded_table() -> None:
     lines = _render_vote_table(votes)
 
     assert lines == [
-        "| Voter                 | Statement functions | Knowledge kinds | "
+        "| Voter                 | Primary statement | Secondary statements | Knowledge kinds | "
         "Applicability    | Responsibility            | Stability |",
-        "| --------------------- | ------------------- | --------------- | "
+        "| --------------------- | ----------------- | -------------------- | --------------- | "
         "---------------- | ------------------------- | --------- |",
-        "| granite               | requirement         | technique       | "
+        "| granite               | requirement       | none                 | technique       | "
         "scope_definition | none                      | 1.000     |",
-        "| gemma-long-model-name | description         | none            | "
+        "| gemma-long-model-name | description       | none                 | none            | "
         "none             | responsibility_assignment | 0.667     |",
     ]
     assert all(len(line) == len(lines[0]) for line in lines)
@@ -646,3 +646,109 @@ def test_high_responsibility_confidence_does_not_mask_missing_statement_function
     assert result["responsibility_confidence"] == 1.0
     assert result["confidence"] == 0.0
     assert result["requires_review"] is True
+
+
+def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> None:
+    report = ConsensusReport(
+        matrix_id="matrix-v1",
+        corpus_id="semantic-roles-v1",
+        prompt_id="structure-aware",
+        reasoning_mode_id="disabled",
+        generated_at=datetime.now(UTC),
+        model_count=5,
+        review_policy={
+            "review_categories": ["disputed", "insufficient_evidence"],
+            "accept_majority_min_confidence": 0.67,
+            "accept_majority_min_models": 3,
+            "applicability_min_confidence": 0.75,
+            "responsibility_min_confidence": 0.80,
+        },
+        clause_count=1,
+        categories={"strong_consensus": 1},
+        review_count=1,
+        clauses=(
+            ClauseConsensus(
+                clause_id="clause-1",
+                document_key="DOC",
+                reference="7.1",
+                category=ConsensusCategory.STRONG,
+                primary_function="requirement",
+                proposed_functions=("requirement", "prerequisite"),
+                primary_knowledge_kind="process",
+                proposed_knowledge_kinds=("process",),
+                applicability_present=True,
+                proposed_applicability_functions=("exception",),
+                responsibility_present=True,
+                proposed_responsibility_functions=("responsibility_assignment",),
+                confidence=0.8,
+                statement_function_confidence=0.8,
+                knowledge_kind_confidence=0.8,
+                applicability_confidence=0.8,
+                responsibility_confidence=0.6,
+                applicability_unanimous=False,
+                responsibility_unanimous=False,
+                participating_models=5,
+                requires_review=True,
+                review_reasons=("responsibility evidence is below its confidence threshold",),
+                votes=(
+                    ModelVote(
+                        model_id="model-a",
+                        primary_function="requirement",
+                        secondary_functions=("prerequisite",),
+                        primary_knowledge_kind="process",
+                        applicability_present=True,
+                        applicability_function="exception",
+                        responsibility_present=True,
+                        responsibility_function="responsibility_assignment",
+                        repetitions=1,
+                        stability=1.0,
+                    ),
+                ),
+            ),
+        ),
+    )
+
+    review = _render_review(report)
+
+    assert "- HITL required for: responsibility" in review
+    assert "- Primary statement function: requirement" in review
+    assert "- Secondary statement functions: prerequisite" in review
+    assert "- Knowledge kinds: process" in review
+    assert "- Applicability present/function: true / exception" in review
+    assert "- Responsibility present/function: \n" in review
+    assert "| Primary statement | Secondary statements |" in review
+    assert "| requirement" in review and "| prerequisite" in review
+
+
+def test_review_prefills_unanimous_absent_secondary_dimensions() -> None:
+    report = ConsensusReport(
+        matrix_id="matrix-v1",
+        corpus_id="semantic-roles-v1",
+        prompt_id="structure-aware",
+        reasoning_mode_id="disabled",
+        generated_at=datetime.now(UTC),
+        model_count=3,
+        clause_count=1,
+        categories={"disputed": 1},
+        review_count=1,
+        clauses=(
+            ClauseConsensus(
+                clause_id="clause-1",
+                document_key="DOC",
+                category=ConsensusCategory.DISPUTED,
+                confidence=0.33,
+                statement_function_confidence=0.33,
+                applicability_unanimous=True,
+                responsibility_unanimous=True,
+                participating_models=3,
+                requires_review=True,
+                review_reasons=("consensus category is disputed",),
+            ),
+        ),
+    )
+
+    review = _render_review(report)
+
+    assert "- Applicability present/function: false / none" in review
+    assert "- Responsibility present/function: false / none" in review
+    assert "- HITL required for: statement functions, knowledge kinds" in review

@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "statement_functions",
+    "primary_function",
+    "knowledge_kinds",
+    "primary_knowledge_kind",
+    "process_functions",
+    "primary_process_function",
+    "applicability_functions",
+    "primary_applicability_function",
+    "responsibility_functions",
+    "primary_responsibility_function",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "statement_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "requirement",
+          "recommendation",
+          "condemnation",
+          "warning",
+          "guideline",
+          "permission",
+          "prohibition",
+          "definition",
+          "description",
+          "explanation",
+          "rationale",
+          "example",
+          "note",
+          "conformance_statement",
+          "objective",
+          "prerequisite",
+          "assumption"
+        ]
+      }
+    },
+    "knowledge_kinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "technique_or_measure",
+          "process",
+          "artifact",
+          "role",
+          "evidence",
+          "concept"
+        ]
+      }
+    },
+    "primary_knowledge_kind": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "technique_or_measure",
+        "process",
+        "artifact",
+        "role",
+        "evidence",
+        "concept",
+        null
+      ]
+    },
+    "process_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "objective",
+          "prerequisite",
+          "input",
+          "activity",
+          "decision",
+          "branch",
+          "sequence",
+          "output",
+          "completion_criterion",
+          "option",
+          "assumption"
+        ]
+      }
+    },
+    "applicability_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "applicability_condition",
+          "inclusion",
+          "exclusion",
+          "exception"
+        ]
+      }
+    },
+    "responsibility_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "responsibility_assignment",
+          "responsibility_exclusion",
+          "role_condition"
+        ]
+      }
+    },
+    "primary_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "requirement",
+        "recommendation",
+        "condemnation",
+        "warning",
+        "guideline",
+        "permission",
+        "prohibition",
+        "definition",
+        "description",
+        "explanation",
+        "rationale",
+        "example",
+        "note",
+        "conformance_statement",
+        "objective",
+        "prerequisite",
+        "assumption",
+        null
+      ]
+    },
+    "primary_process_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "objective",
+        "prerequisite",
+        "input",
+        "activity",
+        "decision",
+        "branch",
+        "sequence",
+        "output",
+        "completion_criterion",
+        "option",
+        "assumption",
+        null
+      ]
+    },
+    "primary_applicability_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "applicability_condition",
+        "inclusion",
+        "exclusion",
+        "exception",
+        null
+      ]
+    },
+    "primary_responsibility_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "responsibility_assignment",
+        "responsibility_exclusion",
+        "role_condition",
+        null
+      ]
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rationale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

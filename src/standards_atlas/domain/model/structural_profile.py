@@ -35,6 +35,43 @@ class AnnexStatus(StrEnum):
     UNSPECIFIED = "unspecified"
 
 
+class SemanticSectionRole(StrEnum):
+    """Canonical role of an explicitly labelled subsection within clause content."""
+
+    AIM = "aim"
+    DESCRIPTION = "description"
+    REFERENCES = "references"
+    RATIONALE = "rationale"
+    EXAMPLE = "example"
+    NOTE = "note"
+    INPUTS = "inputs"
+    OUTPUTS = "outputs"
+    PREREQUISITES = "prerequisites"
+
+
+class SemanticSection(BaseModel):
+    """Location of an explicitly labelled semantic subsection in clause plain text.
+
+    Text is not duplicated here. ``start_offset`` and ``end_offset`` address the
+    corresponding slice of the clause's canonical plain-text projection.
+    ``role`` is intentionally optional so document-family-specific labels can be
+    preserved without extending a central enum.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    label: str = Field(min_length=1)
+    role: SemanticSectionRole | None = None
+    start_offset: int = Field(ge=0)
+    end_offset: int = Field(gt=0)
+
+    @model_validator(mode="after")
+    def validate_offsets(self) -> SemanticSection:
+        if self.end_offset <= self.start_offset:
+            raise ValueError("semantic section end_offset must be greater than start_offset")
+        return self
+
+
 class DomainCategory(BaseModel):
     """Category owned by a versioned, domain-specific taxonomy."""
 
@@ -63,6 +100,7 @@ class StructuralProfile(BaseModel):
     document_categories: tuple[DomainCategory, ...] = ()
     domain_categories: tuple[DomainCategory, ...] = ()
     annex_status: AnnexStatus | None = None
+    semantic_sections: tuple[SemanticSection, ...] = ()
 
     @model_validator(mode="after")
     def validate_annex_status(self) -> StructuralProfile:

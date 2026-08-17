@@ -9,6 +9,8 @@ from standards_atlas.domain.model.structural_profile import (
     AnnexStatus,
     CanonicalDocumentSection,
     DomainCategory,
+    SemanticSection,
+    SemanticSectionRole,
     StructuralProfile,
 )
 
@@ -19,6 +21,7 @@ class StructuralProfileContext:
 
     reference: str
     heading: str
+    text: str = ""
     document_taxonomy: str | None = None
     document_category: str | None = None
     document_taxonomy_version: str | None = None
@@ -52,6 +55,7 @@ class StructuralProfileClassifier:
             document_categories=document_categories,
             domain_categories=domain_categories,
             annex_status=annex_status,
+            semantic_sections=_semantic_sections(context.text),
         )
 
 
@@ -107,3 +111,51 @@ def _normalize_heading(value: str) -> str:
         "",
         heading,
     ).strip(" :-")
+
+
+_SECTION_LABEL_PATTERN = re.compile(
+    r"(?im)(?:^|(?<=\n)|(?<=\r)|(?<=[.;]))[ \t]*"
+    r"(?P<label>aim|objective|description|references?|rationale|examples?|notes?|"
+    r"inputs?|outputs?|prerequisites?)[ \t]*:[ \t]*"
+)
+
+_SECTION_ROLES = {
+    "aim": SemanticSectionRole.AIM,
+    "objective": SemanticSectionRole.AIM,
+    "description": SemanticSectionRole.DESCRIPTION,
+    "reference": SemanticSectionRole.REFERENCES,
+    "references": SemanticSectionRole.REFERENCES,
+    "rationale": SemanticSectionRole.RATIONALE,
+    "example": SemanticSectionRole.EXAMPLE,
+    "examples": SemanticSectionRole.EXAMPLE,
+    "note": SemanticSectionRole.NOTE,
+    "notes": SemanticSectionRole.NOTE,
+    "input": SemanticSectionRole.INPUTS,
+    "inputs": SemanticSectionRole.INPUTS,
+    "output": SemanticSectionRole.OUTPUTS,
+    "outputs": SemanticSectionRole.OUTPUTS,
+    "prerequisite": SemanticSectionRole.PREREQUISITES,
+    "prerequisites": SemanticSectionRole.PREREQUISITES,
+}
+
+
+def _semantic_sections(text: str) -> tuple[SemanticSection, ...]:
+    """Locate explicit labelled content sections without duplicating clause text."""
+
+    if not text.strip():
+        return ()
+    matches = list(_SECTION_LABEL_PATTERN.finditer(text))
+    sections: list[SemanticSection] = []
+    for index, match in enumerate(matches):
+        label = match.group("label")
+        start = match.start("label")
+        end = matches[index + 1].start("label") if index + 1 < len(matches) else len(text)
+        sections.append(
+            SemanticSection(
+                label=label,
+                role=_SECTION_ROLES.get(label.casefold()),
+                start_offset=start,
+                end_offset=end,
+            )
+        )
+    return tuple(sections)

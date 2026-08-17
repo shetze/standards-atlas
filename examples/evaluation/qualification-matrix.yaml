@@ -1,8 +1,8 @@
 schema_version: "1.3"
-matrix_id: multidimensional-semantic-qualification-v2
-corpus_id: semantic-roles-v1
-task_version: 2.0.0
-dataset_version: 1.0.0
+matrix_id: multidimensional-semantic-qualification-v3
+corpus_id: semantic-profile-v1
+task_version: 2.1.0
+dataset_version: 2.1.0
 repetitions: 1
 
 execution:
@@ -17,6 +17,30 @@ execution:
         - content-only
         - structure-aware
       apply_to: all
+      resolution:
+        minimum_successful_models: 3
+        accepted_categories: [unanimous, strong_consensus, majority_consensus]
+        minimum_confidence: 0.60
+        escalate_on_applicability_disagreement: true
+        escalate_on_responsibility_disagreement: true
+    - id: intermediate-escalation
+      models:
+        - llama-3.1-8b-instruct-q4-k-m
+        - qwen3-8b-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - phi-4-14b-q4-k-m
+      prompts:
+        - content-only
+        - structure-aware
+      apply_to: unresolved
+      resolution:
+        minimum_successful_models: 5
+        accepted_categories: [unanimous, strong_consensus, majority_consensus]
+        minimum_confidence: 0.60
+        escalate_on_applicability_disagreement: false
+        escalate_on_responsibility_disagreement: false
+        minimum_applicability_confidence: 0.75
+        minimum_responsibility_confidence: 0.80
     - id: escalation
       models:
         - qwen3-14b-q4-k-m
@@ -40,25 +64,25 @@ execution:
 
 prompts:
   - id: content-only
-    prompt_version: content-only-v2
+    prompt_version: content-only-v3
     max_output_tokens: 512
     adaptive_interview: true
     description: Clause text without structural context.
 
   - id: structure-aware
-    prompt_version: structure-aware-v2
+    prompt_version: structure-aware-v3
     max_output_tokens: 640
     adaptive_interview: true
     description: Clause text with reference, title, and hierarchy context.
 
   - id: reference-aware
-    prompt_version: evidence-first-v2
+    prompt_version: evidence-first-v3
     max_output_tokens: 768
     adaptive_interview: true
     description: Clause text with deterministically resolved internal references.
 
   - id: bounded-reasoning
-    prompt_version: bounded-reasoning-v2
+    prompt_version: bounded-reasoning-v3
     max_output_tokens: 768
     description: Bounded internal reasoning with concise schema-only output.
 
@@ -80,6 +104,67 @@ models:
     repetitions: 1
     description: Codex reference candidate using the Standards Atlas MCP server.
     accelerator: remote
+
+  - id: llama-3.1-8b-instruct-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Independent 8B Llama-family candidate for intermediate cascade resolution.
+    accelerator: gpu
+    parameters_billion: 8
+    declared_memory_gb: 8
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: qwen3-8b-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/Qwen/Qwen3-8B-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Compact Qwen 3 candidate for intermediate cascade resolution.
+    accelerator: gpu
+    parameters_billion: 8
+    declared_memory_gb: 8
+    supported_reasoning_modes: [disabled, enabled]
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: ministral-3-8b-instruct-2512-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/mistralai/Ministral-3-8B-Instruct-2512-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Independent 8B Ministral candidate for intermediate cascade resolution.
+    accelerator: gpu
+    parameters_billion: 8
+    declared_memory_gb: 8
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: phi-4-14b-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/bartowski/phi-4-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Phi-4 14B reasoning-oriented candidate for intermediate cascade resolution.
+    accelerator: gpu
+    parameters_billion: 14
+    declared_memory_gb: 12
+    generation:
+      max_output_tokens: 512
+      adaptive_question_max_tokens: 384
+      truncation_retry_max_tokens: 768
+      reasoning_mode: disabled
+      retry_on_truncation: true
 
   - id: qwen3-14b-q4-k-m
     provider: ramalama

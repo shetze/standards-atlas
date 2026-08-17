@@ -492,3 +492,105 @@ def test_cascade_resolution_accepts_unanimous_secondary_dimensions() -> None:
     )
 
     assert cascade_escalation_reasons(clause, CascadeResolutionConfig()) == ()
+
+
+def test_cascade_stage_can_override_resolution_policy() -> None:
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeStage,
+    )
+
+    stage = CascadeStage.model_validate(
+        {
+            "id": "intermediate",
+            "models": ["fast-a", "fast-b"],
+            "apply_to": "unresolved",
+            "resolution": {
+                "minimum_successful_models": 5,
+                "escalate_on_applicability_disagreement": False,
+                "escalate_on_responsibility_disagreement": False,
+                "minimum_applicability_confidence": 0.75,
+                "minimum_responsibility_confidence": 0.80,
+            },
+        }
+    )
+
+    assert stage.resolution is not None
+    assert stage.resolution.minimum_successful_models == 5
+    assert stage.resolution.minimum_applicability_confidence == 0.75
+    assert stage.resolution.minimum_responsibility_confidence == 0.80
+
+
+def test_cascade_resolution_uses_dimension_confidence_after_intermediate_stage() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=5,
+        minimum_confidence=0.6,
+        escalate_on_applicability_disagreement=False,
+        escalate_on_responsibility_disagreement=False,
+        minimum_applicability_confidence=0.75,
+        minimum_responsibility_confidence=0.80,
+    )
+    resolved = SimpleNamespace(
+        participating_models=7,
+        category=SimpleNamespace(value="strong_consensus"),
+        statement_function_confidence=6 / 7,
+        applicability_unanimous=False,
+        responsibility_unanimous=False,
+        applicability_present=True,
+        applicability_confidence=6 / 7,
+        applicability_support={"present": 6 / 7, "exception": 6 / 7},
+        responsibility_present=True,
+        responsibility_confidence=6 / 7,
+        responsibility_support={
+            "present": 6 / 7,
+            "responsibility_assignment": 6 / 7,
+        },
+    )
+    unresolved = SimpleNamespace(
+        **{
+            **resolved.__dict__,
+            "applicability_confidence": 5 / 7,
+            "applicability_support": {"present": 5 / 7, "exception": 5 / 7},
+        }
+    )
+
+    assert cascade_escalation_reasons(resolved, resolution) == ()
+    assert cascade_escalation_reasons(unresolved, resolution) == ("applicability_confidence",)
+
+
+def test_cascade_resolution_can_accept_confident_absence() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=5,
+        escalate_on_applicability_disagreement=False,
+        escalate_on_responsibility_disagreement=False,
+        minimum_applicability_confidence=0.75,
+        minimum_responsibility_confidence=0.80,
+    )
+    clause = SimpleNamespace(
+        participating_models=7,
+        category=SimpleNamespace(value="strong_consensus"),
+        statement_function_confidence=6 / 7,
+        applicability_unanimous=False,
+        responsibility_unanimous=False,
+        applicability_present=False,
+        applicability_confidence=0.0,
+        applicability_support={"present": 1 / 7},
+        responsibility_present=False,
+        responsibility_confidence=0.0,
+        responsibility_support={"present": 1 / 7},
+    )
+
+    assert cascade_escalation_reasons(clause, resolution) == ()

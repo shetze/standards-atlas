@@ -1,0 +1,46 @@
+statement_functions:
+- requirement
+- recommendation
+- condemnation
+- warning
+- guideline
+- permission
+- prohibition
+- definition
+- description
+- explanation
+- rationale
+- example
+- note
+- conformance_statement
+- objective
+- prerequisite
+- assumption
+knowledge_kinds:
+- technique_or_measure
+- process
+- artifact
+- role
+- evidence
+- concept
+process_functions:
+- objective
+- prerequisite
+- input
+- activity
+- decision
+- branch
+- sequence
+- output
+- completion_criterion
+- option
+- assumption
+applicability_functions:
+- applicability_condition
+- inclusion
+- exclusion
+- exception
+responsibility_functions:
+- responsibility_assignment
+- responsibility_exclusion
+- role_condition
