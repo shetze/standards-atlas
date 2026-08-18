@@ -597,7 +597,9 @@ def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None
     assert result["confidence"] == pytest.approx(2 / 3)
     assert result["statement_function_confidence"] == pytest.approx(2 / 3)
     assert result["knowledge_kind_confidence"] == 0.0
+    assert result["knowledge_kind_decision_confidence"] == 1.0
     assert result["applicability_confidence"] == pytest.approx(2 / 3)
+    assert result["applicability_decision_confidence"] == pytest.approx(2 / 3)
     assert result["responsibility_confidence"] == pytest.approx(2 / 3)
     assert result["applicability_unanimous"] is False
     assert result["responsibility_unanimous"] is False
@@ -642,9 +644,10 @@ def test_high_responsibility_confidence_does_not_mask_missing_statement_function
 
     assert result["category"] is ConsensusCategory.MAJORITY
     assert result["primary_function"] is None
-    assert result["statement_function_confidence"] == 0.0
+    assert result["statement_function_confidence"] == pytest.approx(3 / 5)
+    assert result["statement_function_decision_confidence"] == pytest.approx(3 / 5)
     assert result["responsibility_confidence"] == 1.0
-    assert result["confidence"] == 0.0
+    assert result["confidence"] == pytest.approx(3 / 5)
     assert result["requires_review"] is True
 
 
@@ -752,3 +755,170 @@ def test_review_prefills_unanimous_absent_secondary_dimensions() -> None:
     assert "- Applicability present/function: false / none" in review
     assert "- Responsibility present/function: false / none" in review
     assert "- HITL required for: statement functions, knowledge kinds" in review
+
+
+def test_unanimous_none_statement_function_is_high_confidence_decision() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = tuple(
+        ModelVote(model_id=f"model-{index}", repetitions=1, stability=1.0) for index in range(3)
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+    )
+
+    assert result["primary_function"] is None
+    assert result["statement_function_confidence"] == 1.0
+    assert result["statement_function_category"] is ConsensusCategory.UNANIMOUS
+
+
+def test_cascade_resolution_override_is_authoritative_in_final_consensus() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = (
+        ModelVote(
+            model_id="old-a",
+            primary_function=StatementFunction.REQUIREMENT,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="old-b",
+            primary_function=StatementFunction.REQUIREMENT,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="resolver-a",
+            primary_function=StatementFunction.DESCRIPTION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="resolver-b",
+            primary_function=StatementFunction.DESCRIPTION,
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+        resolution_override={
+            "statement_function": {
+                "value": "description",
+                "confidence": 1.0,
+                "category": "unanimous",
+                "source": "resolver",
+            }
+        },
+    )
+
+    assert result["primary_function"] is StatementFunction.DESCRIPTION
+    assert result["statement_function_confidence"] == 1.0
+    assert result["statement_function_category"] is ConsensusCategory.UNANIMOUS
+    assert result["resolution_sources"] == {"statement_function": "resolver"}
+
+
+def test_scope_context_uses_applicability_as_compatibility_category() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = (
+        ModelVote(
+            model_id="a",
+            primary_function=StatementFunction.DESCRIPTION,
+            applicability_present=True,
+            applicability_function="inclusion",
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="b",
+            primary_function=StatementFunction.OBJECTIVE,
+            applicability_present=True,
+            applicability_function="inclusion",
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="c",
+            applicability_present=True,
+            applicability_function="inclusion",
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={
+            "scope_context": True,
+            "applicability_subtype": "inclusion",
+            "confidence": 0.95,
+        },
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+        scope_context=True,
+    )
+
+    assert result["statement_function_category"] is ConsensusCategory.DISPUTED
+    assert result["applicability_category"] is ConsensusCategory.UNANIMOUS
+    assert result["category"] is ConsensusCategory.UNANIMOUS
+    assert result["overall_status"].value == "partially_resolved"
+
+
+def test_applicability_structural_prior_conflict_requires_review() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = tuple(
+        ModelVote(
+            model_id=f"model-{index}",
+            primary_function=StatementFunction.DESCRIPTION,
+            applicability_present=True,
+            applicability_function="exclusion",
+            repetitions=1,
+            stability=1.0,
+        )
+        for index in range(3)
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={
+            "scope_context": True,
+            "applicability_subtype": "exception",
+            "confidence": 0.95,
+        },
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+        scope_context=True,
+    )
+
+    assert result["applicability_structural_conflict"] is True
+    assert result["requires_review"] is True
+    assert (
+        "applicability structural prior conflicts with model consensus" in result["review_reasons"]
+    )

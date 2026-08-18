@@ -30,6 +30,7 @@ from standards_atlas.application.semantic_qualification.proposals import (
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     MatrixObservation,
     QualificationMatrixManifest,
+    capture_resolved_dimensions,
     cascade_stage_unresolved_clause_ids,
     cascade_unresolved_clause_ids,
     resolve_prompt_version,
@@ -343,6 +344,7 @@ def qualify_model_prompt_matrix(
             candidate_index = 0
             unresolved_clause_ids: tuple[str, ...] | None = None
             escalation_reasons: dict[str, tuple[str, ...]] = {}
+            dimension_resolutions: dict[str, dict[str, dict[str, object]]] = {}
             for stage_index, stage in enumerate(execution_stages):
                 stage_clause_ids = (
                     unresolved_clause_ids
@@ -534,7 +536,7 @@ def qualify_model_prompt_matrix(
                                 observation_map[observation_key] = observation
                                 stage_observation_keys.append(observation_key)
 
-                if manifest.execution.mode == "cascade" and stage_index < len(execution_stages) - 1:
+                if manifest.execution.mode == "cascade":
                     stage_resolution = stage.resolution or manifest.execution.resolution
                     interim_manifest = QualificationMatrixManifest.model_validate(
                         {
@@ -569,6 +571,20 @@ def qualify_model_prompt_matrix(
                             stage_clause_ids=stage_clause_ids,
                             resolution=stage_resolution,
                         )
+                        interim_by_id = {item.clause_id: item for item in interim_report.clauses}
+                        for clause_id in stage_clause_ids:
+                            clause = interim_by_id.get(clause_id)
+                            if clause is None:
+                                continue
+                            captured = capture_resolved_dimensions(
+                                cumulative_clause=clause,
+                                stage_clause=clause,
+                                previous_reasons=(),
+                                remaining_reasons=escalation_reasons.get(clause_id, ()),
+                                source=stage.id,
+                                initial_stage=True,
+                            )
+                            dimension_resolutions.setdefault(clause_id, {}).update(captured)
                     else:
                         stage_only_observations = tuple(
                             observation_map[key] for key in stage_observation_keys
@@ -606,6 +622,27 @@ def qualify_model_prompt_matrix(
                                 resolution=stage_resolution,
                             )
                         )
+                        cumulative_by_id = {item.clause_id: item for item in interim_report.clauses}
+                        stage_by_id = {item.clause_id: item for item in stage_report.clauses}
+                        for clause_id in stage_clause_ids:
+                            cumulative_clause = cumulative_by_id.get(clause_id)
+                            stage_clause = stage_by_id.get(clause_id)
+                            if cumulative_clause is None or stage_clause is None:
+                                continue
+                            resolver_clause = (
+                                stage_clause
+                                if stage_resolution.statement_function_resolution_mode
+                                == "stage_resolver"
+                                else cumulative_clause
+                            )
+                            captured = capture_resolved_dimensions(
+                                cumulative_clause=cumulative_clause,
+                                stage_clause=resolver_clause,
+                                previous_reasons=previous_escalation_reasons.get(clause_id, ()),
+                                remaining_reasons=escalation_reasons.get(clause_id, ()),
+                                source=stage.id,
+                            )
+                            dimension_resolutions.setdefault(clause_id, {}).update(captured)
                         _render_intermediate_resolution_summary(
                             previous_escalation_reasons, escalation_reasons
                         )
@@ -655,6 +692,11 @@ def qualify_model_prompt_matrix(
                     adjudication=manifest.consensus.adjudication.model_dump(),
                     structural_priors=manifest.consensus.structural_priors.model_dump(),
                     example_ids=selected_example_ids if not aggregate_only else None,
+                    resolution_overrides=(
+                        dimension_resolutions
+                        if manifest.execution.mode == "cascade" and not aggregate_only
+                        else None
+                    ),
                 )
             )
             consensus_paths = (consensus_json, proposal_yaml, review_markdown)

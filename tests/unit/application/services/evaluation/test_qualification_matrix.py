@@ -758,3 +758,75 @@ def test_stage_resolution_uses_cumulative_applicability_confidence() -> None:
         previous_reasons=("applicability_disagreement",),
         resolution=resolution,
     ) == ("applicability_confidence",)
+
+
+def test_capture_resolved_dimensions_persists_stage_resolver_statement() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        capture_resolved_dimensions,
+    )
+
+    cumulative = SimpleNamespace(
+        primary_knowledge_kind=None,
+        knowledge_kind_confidence=1.0,
+        knowledge_kind_category=SimpleNamespace(value="unanimous"),
+        applicability_present=False,
+        proposed_applicability_functions=(),
+        applicability_decision_confidence=1.0,
+        applicability_category=SimpleNamespace(value="unanimous"),
+        responsibility_present=False,
+        proposed_responsibility_functions=(),
+        responsibility_decision_confidence=1.0,
+        responsibility_category=SimpleNamespace(value="unanimous"),
+    )
+    resolver = SimpleNamespace(
+        primary_function=SimpleNamespace(value="description"),
+        statement_function_confidence=1.0,
+        statement_function_category=SimpleNamespace(value="unanimous"),
+    )
+
+    captured = capture_resolved_dimensions(
+        cumulative_clause=cumulative,
+        stage_clause=resolver,
+        previous_reasons=("statement_function_confidence",),
+        remaining_reasons=(),
+        source="resolver-stage",
+    )
+
+    assert captured == {
+        "statement_function": {
+            "value": "description",
+            "confidence": 1.0,
+            "category": "unanimous",
+            "source": "resolver-stage",
+        }
+    }
+
+
+def test_cascade_escalates_applicability_structural_conflict() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    clause = SimpleNamespace(
+        participating_models=3,
+        category=SimpleNamespace(value="unanimous"),
+        statement_function_confidence=1.0,
+        applicability_unanimous=True,
+        applicability_structural_conflict=True,
+        applicability_present=True,
+        applicability_confidence=1.0,
+        applicability_support={"present": 1.0, "exclusion": 1.0},
+        responsibility_unanimous=True,
+        responsibility_present=False,
+        responsibility_confidence=0.0,
+        responsibility_support={"present": 0.0},
+    )
+
+    reasons = cascade_escalation_reasons(clause, CascadeResolutionConfig())
+
+    assert "applicability_structural_conflict" in reasons

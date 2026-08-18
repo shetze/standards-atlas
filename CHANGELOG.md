@@ -8,9 +8,18 @@
 ### Notes
 - This release is intended to preserve functional behaviour while significantly improving maintainability and extensibility.
 
+- Add formula transcription enrichment with MCP discovery/read/submit tools, provenance-bearing LaTeX artifacts, explicit write capability gating, and deterministic application to preserved `FormulaBlock` values.
+
 ## Unreleased
 
-- Fixed Slice 1 packaging: PyMuPDF is now a regular runtime dependency, so `uv sync` installs formula visual extraction support without requiring the `docling` extra.
+### Changed
+
+- Make semantic consensus dimension-aware: unanimous `none` decisions now carry decision
+  confidence, cascade resolver decisions remain authoritative in final aggregation, scope
+  context is governed by applicability, and structural-prior/applicability conflicts are
+  surfaced for escalation or HITL review.
+- Report per-dimension consensus categories, decision confidence, overall resolution status,
+  and cascade resolution sources.
 
 ### Added
 

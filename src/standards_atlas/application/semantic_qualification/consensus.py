@@ -36,6 +36,12 @@ class ConsensusCategory(StrEnum):
     INSUFFICIENT = "insufficient_evidence"
 
 
+class OverallConsensusStatus(StrEnum):
+    RESOLVED = "resolved"
+    PARTIAL = "partially_resolved"
+    REVIEW_REQUIRED = "review_required"
+
+
 class ModelVote(BaseModel):
     """One stable, dimension-aware vote contributed by a model."""
 
@@ -90,6 +96,11 @@ class ClauseConsensus(BaseModel):
     title: str | None = None
     clause_text: str | None = None
     category: ConsensusCategory
+    statement_function_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    knowledge_kind_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    applicability_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    responsibility_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    overall_status: OverallConsensusStatus = OverallConsensusStatus.REVIEW_REQUIRED
     primary_function: StatementFunction | None = None
     proposed_functions: tuple[StatementFunction, ...] = ()
     primary_knowledge_kind: KnowledgeKind | None = None
@@ -106,8 +117,13 @@ class ClauseConsensus(BaseModel):
     knowledge_kind_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     responsibility_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    statement_function_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    knowledge_kind_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    applicability_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    responsibility_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_unanimous: bool = True
     responsibility_unanimous: bool = True
+    applicability_structural_conflict: bool = False
     participating_models: int = Field(ge=0)
     votes: tuple[ModelVote, ...] = ()
     label_support: dict[str, float] = Field(default_factory=dict)
@@ -119,6 +135,7 @@ class ClauseConsensus(BaseModel):
     adjudicated: bool = False
     requires_review: bool = True
     review_reasons: tuple[str, ...] = ()
+    resolution_sources: dict[str, str] = Field(default_factory=dict)
 
 
 class ConsensusReport(BaseModel):
@@ -140,6 +157,9 @@ class ConsensusReport(BaseModel):
     clause_count: int
     categories: dict[str, int]
     review_count: int
+    dimension_categories: dict[str, dict[str, int]] = Field(default_factory=dict)
+    overall_statuses: dict[str, int] = Field(default_factory=dict)
+    resolution_sources: dict[str, int] = Field(default_factory=dict)
     clauses: tuple[ClauseConsensus, ...]
 
 
@@ -165,6 +185,7 @@ class ModelConsensusService:
         adjudication: dict[str, Any] | None = None,
         structural_priors: dict[str, Any] | None = None,
         example_ids: tuple[str, ...] | None = None,
+        resolution_overrides: dict[str, dict[str, dict[str, Any]]] | None = None,
     ) -> tuple[ConsensusReport, Path, Path, Path]:
         prompts = {
             "statement_function": prompt_id,
@@ -261,6 +282,8 @@ class ModelConsensusService:
                 label_threshold=label_threshold,
                 adjudicator_min_confidence=float(adjudicator_cfg.get("minimum_confidence", 0.70)),
                 policy=policy,
+                resolution_override=(resolution_overrides or {}).get(clause_id, {}),
+                scope_context=bool(prior.get("scope_context", False)),
             )
             clauses.append(
                 ClauseConsensus(
@@ -300,6 +323,29 @@ class ModelConsensusService:
             clause_count=len(clauses),
             categories=dict(sorted(category_counts.items())),
             review_count=sum(item.requires_review for item in clauses),
+            dimension_categories={
+                dimension: dict(
+                    sorted(Counter(getattr(item, field).value for item in clauses).items())
+                )
+                for dimension, field in (
+                    ("statement_function", "statement_function_category"),
+                    ("knowledge_kind", "knowledge_kind_category"),
+                    ("applicability", "applicability_category"),
+                    ("responsibility", "responsibility_category"),
+                )
+            },
+            overall_statuses=dict(
+                sorted(Counter(item.overall_status.value for item in clauses).items())
+            ),
+            resolution_sources=dict(
+                sorted(
+                    Counter(
+                        f"{dimension}:{source}"
+                        for item in clauses
+                        for dimension, source in item.resolution_sources.items()
+                    ).items()
+                )
+            ),
             clauses=tuple(clauses),
         )
         return _write_outputs(report, output_directory)
@@ -413,7 +459,10 @@ def _resolve_clause(
     label_threshold: float,
     adjudicator_min_confidence: float,
     policy: dict[str, Any],
+    resolution_override: dict[str, dict[str, Any]] | None = None,
+    scope_context: bool = False,
 ) -> dict[str, Any]:
+    policy = _review_policy(policy)
     model_count = len(votes)
     primary_counts = Counter(vote.primary_function for vote in votes)
     primary, primary_count = primary_counts.most_common(1)[0] if primary_counts else (None, 0)
@@ -462,9 +511,7 @@ def _resolve_clause(
     if primary is not None:
         label_support = {primary.value: primary_agreement, **label_support}
 
-    knowledge_counts = Counter(
-        vote.primary_knowledge_kind for vote in votes if vote.primary_knowledge_kind is not None
-    )
+    knowledge_counts = Counter(vote.primary_knowledge_kind for vote in votes)
     primary_knowledge, knowledge_count = (
         knowledge_counts.most_common(1)[0] if knowledge_counts else (None, 0)
     )
@@ -497,6 +544,13 @@ def _resolve_clause(
     app_label, app_count = app_counts.most_common(1)[0] if app_counts else (None, 0)
     app_label_support = app_count / model_count if model_count else 0.0
     prior_app = structural_prior.get("applicability_subtype")
+    applicability_structural_conflict = bool(
+        prior_app
+        and app_label is not None
+        and app_label.value != prior_app
+        and app_label_support >= majority_threshold
+        and prior_confidence >= majority_threshold
+    )
     if prior_app and app_label_support < majority_threshold:
         app_label = ApplicabilityFunction(prior_app)
         app_present_support = max(app_present_support, prior_confidence)
@@ -542,15 +596,98 @@ def _resolve_clause(
     else:
         category = ConsensusCategory.DISPUTED
 
-    statement_function_confidence = primary_agreement if primary is not None else 0.0
+    statement_function_confidence = primary_agreement
     knowledge_kind_confidence = knowledge_agreement if primary_knowledge is not None else 0.0
+    applicability_decision_confidence = _dimension_decision_confidence(
+        present=app_accepted,
+        positive_confidence=app_label_support,
+        support={"present": app_present_support},
+    )
+    responsibility_decision_confidence = _dimension_decision_confidence(
+        present=resp_accepted,
+        positive_confidence=resp_label_support,
+        support={"present": resp_present_support},
+    )
     applicability_confidence = app_label_support if app_label is not None else 0.0
     responsibility_confidence = resp_label_support if resp_label is not None else 0.0
 
-    # The consensus category is defined by the primary statement function, so
-    # the compatibility confidence value follows that same dimension. A high
-    # score in another dimension must never mask a weak statement-function vote.
-    confidence = statement_function_confidence
+    statement_category = category
+    knowledge_category = _category_for_confidence(
+        knowledge_kind_confidence, model_count, minimum_models, strong_threshold, majority_threshold
+    )
+    applicability_category = _category_for_confidence(
+        applicability_decision_confidence,
+        model_count,
+        minimum_models,
+        strong_threshold,
+        majority_threshold,
+    )
+    responsibility_category = _category_for_confidence(
+        responsibility_decision_confidence,
+        model_count,
+        minimum_models,
+        strong_threshold,
+        majority_threshold,
+    )
+
+    statement_function_decision_confidence = statement_function_confidence
+    knowledge_kind_decision_confidence = knowledge_agreement
+    resolution_sources: dict[str, str] = {}
+    override = resolution_override or {}
+    if "statement_function" in override:
+        item = override["statement_function"]
+        primary = StatementFunction(item["value"]) if item.get("value") else None
+        statement_function_confidence = float(item["confidence"])
+        statement_function_decision_confidence = float(item["confidence"])
+        statement_category = ConsensusCategory(item["category"])
+        category = statement_category
+        resolution_sources["statement_function"] = str(item.get("source", "cascade"))
+    if "knowledge_kind" in override:
+        item = override["knowledge_kind"]
+        primary_knowledge = KnowledgeKind(item["value"]) if item.get("value") else None
+        knowledge_kind_decision_confidence = float(item["confidence"])
+        knowledge_kind_confidence = (
+            knowledge_kind_decision_confidence if primary_knowledge is not None else 0.0
+        )
+        knowledge_category = ConsensusCategory(item["category"])
+        resolution_sources["knowledge_kind"] = str(item.get("source", "cascade"))
+    if "applicability" in override:
+        item = override["applicability"]
+        app_label = ApplicabilityFunction(item["value"]) if item.get("value") else None
+        app_accepted = bool(item.get("present", app_label is not None))
+        applicability_decision_confidence = float(item["confidence"])
+        applicability_confidence = (
+            applicability_decision_confidence if app_accepted and app_label is not None else 0.0
+        )
+        applicability_category = ConsensusCategory(item["category"])
+        resolution_sources["applicability"] = str(item.get("source", "cascade"))
+    if "responsibility" in override:
+        item = override["responsibility"]
+        resp_label = ResponsibilityFunction(item["value"]) if item.get("value") else None
+        resp_accepted = bool(item.get("present", resp_label is not None))
+        responsibility_decision_confidence = float(item["confidence"])
+        responsibility_confidence = (
+            responsibility_decision_confidence if resp_accepted and resp_label is not None else 0.0
+        )
+        responsibility_category = ConsensusCategory(item["category"])
+        resolution_sources["responsibility"] = str(item.get("source", "cascade"))
+
+    proposed_functions = (() if primary is None else (primary,)) + tuple(
+        value for value in proposed_functions if value != primary
+    )
+    proposed_knowledge_kinds = (() if primary_knowledge is None else (primary_knowledge,)) + tuple(
+        value for value in proposed_knowledge_kinds if value != primary_knowledge
+    )
+
+    # Keep ``category`` as a compatibility field. In scope context applicability
+    # is the governing semantic dimension; elsewhere statement function remains
+    # the compatibility category. The per-dimension categories are authoritative.
+    category = applicability_category if scope_context else statement_category
+    confidence = (
+        applicability_decision_confidence
+        if scope_context
+        else statement_function_decision_confidence
+    )
     review_reasons = _review_reasons(
         category=category,
         statement_function_confidence=statement_function_confidence,
@@ -559,10 +696,32 @@ def _resolve_clause(
         applicability_confidence=applicability_confidence,
         responsibility_present=resp_accepted,
         responsibility_confidence=responsibility_confidence,
+        applicability_structural_conflict=applicability_structural_conflict,
         policy=policy,
     )
     return {
         "category": category,
+        "statement_function_category": statement_category,
+        "knowledge_kind_category": knowledge_category,
+        "applicability_category": applicability_category,
+        "responsibility_category": responsibility_category,
+        "overall_status": (
+            OverallConsensusStatus.REVIEW_REQUIRED
+            if review_reasons
+            else (
+                OverallConsensusStatus.PARTIAL
+                if any(
+                    item in {ConsensusCategory.DISPUTED, ConsensusCategory.INSUFFICIENT}
+                    for item in (
+                        statement_category,
+                        knowledge_category,
+                        applicability_category,
+                        responsibility_category,
+                    )
+                )
+                else OverallConsensusStatus.RESOLVED
+            )
+        ),
         "primary_function": primary,
         "proposed_functions": proposed_functions,
         "primary_knowledge_kind": primary_knowledge,
@@ -576,8 +735,13 @@ def _resolve_clause(
         "knowledge_kind_confidence": knowledge_kind_confidence,
         "applicability_confidence": applicability_confidence,
         "responsibility_confidence": responsibility_confidence,
+        "statement_function_decision_confidence": statement_function_decision_confidence,
+        "knowledge_kind_decision_confidence": knowledge_kind_decision_confidence,
+        "applicability_decision_confidence": applicability_decision_confidence,
+        "responsibility_decision_confidence": responsibility_decision_confidence,
         "applicability_unanimous": applicability_unanimous,
         "responsibility_unanimous": responsibility_unanimous,
+        "applicability_structural_conflict": applicability_structural_conflict,
         "participating_models": model_count,
         "label_support": label_support,
         "knowledge_kind_support": knowledge_kind_support,
@@ -592,7 +756,34 @@ def _resolve_clause(
         "adjudicated": adjudicated,
         "requires_review": bool(review_reasons),
         "review_reasons": tuple(review_reasons),
+        "resolution_sources": resolution_sources,
     }
+
+
+def _dimension_decision_confidence(
+    *, present: bool, positive_confidence: float, support: dict[str, float]
+) -> float:
+    if present:
+        return positive_confidence
+    return max(0.0, 1.0 - float(support.get("present", 0.0)))
+
+
+def _category_for_confidence(
+    confidence: float,
+    model_count: int,
+    minimum_models: int,
+    strong_threshold: float,
+    majority_threshold: float,
+) -> ConsensusCategory:
+    if model_count < minimum_models:
+        return ConsensusCategory.INSUFFICIENT
+    if confidence >= 1.0:
+        return ConsensusCategory.UNANIMOUS
+    if confidence >= strong_threshold:
+        return ConsensusCategory.STRONG
+    if confidence >= majority_threshold:
+        return ConsensusCategory.MAJORITY
+    return ConsensusCategory.DISPUTED
 
 
 def _dimension_votes_are_unanimous(votes: tuple[tuple[object, ...], ...]) -> bool:
@@ -626,6 +817,7 @@ def _review_reasons(
     applicability_confidence: float,
     responsibility_present: bool,
     responsibility_confidence: float,
+    applicability_structural_conflict: bool = False,
     policy: dict[str, Any],
 ) -> list[str]:
     reasons: list[str] = []
@@ -645,6 +837,8 @@ def _review_reasons(
         policy["responsibility_min_confidence"]
     ):
         reasons.append("responsibility evidence is below its confidence threshold")
+    if applicability_structural_conflict:
+        reasons.append("applicability structural prior conflicts with model consensus")
     return reasons
 
 
@@ -720,7 +914,22 @@ def _write_outputs(
                     "applicability": item.applicability_confidence,
                     "responsibility": item.responsibility_confidence,
                 },
+                "dimension_decision_confidence": {
+                    "statement_function": item.statement_function_decision_confidence,
+                    "knowledge_kind": item.knowledge_kind_decision_confidence,
+                    "applicability": item.applicability_decision_confidence,
+                    "responsibility": item.responsibility_decision_confidence,
+                },
                 "consensus_category": item.category.value,
+                "dimension_categories": {
+                    "statement_function": item.statement_function_category.value,
+                    "knowledge_kind": item.knowledge_kind_category.value,
+                    "applicability": item.applicability_category.value,
+                    "responsibility": item.responsibility_category.value,
+                },
+                "overall_status": item.overall_status.value,
+                "resolution_sources": item.resolution_sources,
+                "applicability_structural_conflict": item.applicability_structural_conflict,
                 "adjudicated": item.adjudicated,
                 "structural_prior": item.structural_prior,
                 "requires_review": item.requires_review,
@@ -765,6 +974,13 @@ def _render_review(report: ConsensusReport) -> str:
         f"- Participating models per clause: min `{report.minimum_participating_models}`, "
         f"median `{report.median_participating_models:g}`, max "
         f"`{report.maximum_participating_models}`",
+        "- Overall statuses: "
+        + ", ".join(f"{status}={count}" for status, count in report.overall_statuses.items()),
+        "- Resolution sources: "
+        + (
+            ", ".join(f"{source}={count}" for source, count in report.resolution_sources.items())
+            or "model consensus only"
+        ),
         "- Participation distribution: "
         + ", ".join(
             f"{count} voters={clauses}"
@@ -802,7 +1018,14 @@ def _render_review(report: ConsensusReport) -> str:
                 item.clause_text or "Clause text unavailable in the evaluation dataset.",
                 "```",
                 "",
-                f"- Category: `{item.category.value}`",
+                f"- Overall status: `{item.overall_status.value}`",
+                f"- Compatibility category: `{item.category.value}`",
+                "- Dimension categories: "
+                f"statement_function=`{item.statement_function_category.value}`, "
+                f"knowledge_kind=`{item.knowledge_kind_category.value}`, "
+                f"applicability=`{item.applicability_category.value}`, "
+                f"responsibility=`{item.responsibility_category.value}`",
+                f"- Resolution sources: `{item.resolution_sources or 'model_consensus'}`",
                 f"- Primary/secondary statement functions: `{proposed}`",
                 f"- Knowledge kinds: `{knowledge}`",
                 f"- Applicability proposal: `{applicability}`",
@@ -811,9 +1034,16 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Knowledge-kind confidence: `{item.knowledge_kind_confidence:.3f}`",
                 f"- Applicability confidence: `{item.applicability_confidence:.3f}`",
                 f"- Responsibility confidence: `{item.responsibility_confidence:.3f}`",
+                "- Decision confidence: "
+                f"statement_function=`{item.statement_function_decision_confidence:.3f}`, "
+                f"knowledge_kind=`{item.knowledge_kind_decision_confidence:.3f}`, "
+                f"applicability=`{item.applicability_decision_confidence:.3f}`, "
+                f"responsibility=`{item.responsibility_decision_confidence:.3f}`",
                 f"- Participating models: `{item.participating_models}`",
                 f"- Adjudicated: `{str(item.adjudicated).lower()}`",
                 f"- Structural prior: `{item.structural_prior or 'none'}`",
+                "- Applicability structural conflict: "
+                f"`{str(item.applicability_structural_conflict).lower()}`",
                 "- Review reasons:",
                 *[f"  - {reason}" for reason in item.review_reasons],
                 "### Model votes",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -136,6 +136,8 @@ def cascade_escalation_reasons(
         reasons.append("statement_function_confidence")
     if resolution.escalate_on_applicability_disagreement and not clause.applicability_unanimous:
         reasons.append("applicability_disagreement")
+    if getattr(clause, "applicability_structural_conflict", False):
+        reasons.append("applicability_structural_conflict")
     if resolution.escalate_on_responsibility_disagreement and not clause.responsibility_unanimous:
         reasons.append("responsibility_disagreement")
 
@@ -221,6 +223,10 @@ def cascade_stage_escalation_reasons(
         unresolved & {"applicability_disagreement", "applicability_confidence"}
     )
     if applicability_unresolved:
+        if "applicability_structural_conflict" in unresolved and getattr(
+            cumulative_clause, "applicability_structural_conflict", False
+        ):
+            reasons.append("applicability_structural_conflict")
         threshold = resolution.minimum_applicability_confidence
         if threshold is not None:
             confidence = _dimension_decision_confidence(
@@ -289,6 +295,93 @@ def _dimension_decision_confidence(
     if present:
         return positive_confidence
     return max(0.0, 1.0 - float(support.get("present", 0.0)))
+
+
+_STATEMENT_REASONS = {
+    "consensus_category",
+    "statement_function_confidence",
+    "statement_function_resolver_confidence",
+}
+_APPLICABILITY_REASONS = {
+    "applicability_disagreement",
+    "applicability_confidence",
+    "applicability_structural_conflict",
+}
+_RESPONSIBILITY_REASONS = {"responsibility_disagreement", "responsibility_confidence"}
+
+
+def capture_resolved_dimensions(
+    *,
+    cumulative_clause: object,
+    stage_clause: object,
+    previous_reasons: tuple[str, ...],
+    remaining_reasons: tuple[str, ...],
+    source: str,
+    initial_stage: bool = False,
+) -> dict[str, dict[str, Any]]:
+    """Capture semantic decisions that became final in one cascade stage.
+
+    Later stages may add evidence only for dimensions that remain unresolved.
+    Persisting these snapshots makes the monotonic cascade semantics survive the
+    final all-observations report.
+    """
+    previous = set(previous_reasons)
+    remaining = set(remaining_reasons)
+    result: dict[str, dict[str, Any]] = {}
+
+    def resolved(reason_set: set[str]) -> bool:
+        if initial_stage:
+            return not bool(remaining & reason_set)
+        return bool(previous & reason_set) and not bool(remaining & reason_set)
+
+    if resolved(_STATEMENT_REASONS):
+        clause = stage_clause
+        result["statement_function"] = {
+            "value": (
+                clause.primary_function.value if clause.primary_function is not None else None
+            ),
+            "confidence": clause.statement_function_confidence,
+            "category": clause.statement_function_category.value,
+            "source": source,
+        }
+    if initial_stage:
+        # Knowledge kind has no cascade escalation rule today, so its first-stage
+        # decision is final by construction.
+        result["knowledge_kind"] = {
+            "value": (
+                cumulative_clause.primary_knowledge_kind.value
+                if cumulative_clause.primary_knowledge_kind is not None
+                else None
+            ),
+            "confidence": cumulative_clause.knowledge_kind_confidence,
+            "category": cumulative_clause.knowledge_kind_category.value,
+            "source": source,
+        }
+    if resolved(_APPLICABILITY_REASONS):
+        result["applicability"] = {
+            "present": cumulative_clause.applicability_present,
+            "value": (
+                cumulative_clause.proposed_applicability_functions[0].value
+                if cumulative_clause.proposed_applicability_functions
+                else None
+            ),
+            "confidence": cumulative_clause.applicability_decision_confidence,
+            "category": cumulative_clause.applicability_category.value,
+            "source": source,
+        }
+    if resolved(_RESPONSIBILITY_REASONS):
+        result["responsibility"] = {
+            "present": cumulative_clause.responsibility_present,
+            "value": (
+                cumulative_clause.proposed_responsibility_functions[0].value
+                if cumulative_clause.proposed_responsibility_functions
+                else None
+            ),
+            "confidence": cumulative_clause.responsibility_decision_confidence,
+            "category": cumulative_clause.responsibility_category.value,
+            "source": source,
+        }
+    return result
 
 
 class MatrixExecutionConfig(BaseModel):
