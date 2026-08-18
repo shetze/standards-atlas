@@ -12,6 +12,8 @@
 
 ## Unreleased
 
+- Visual-only formulas no longer propagate Docling pseudo-expressions into EngineeringDocuments or Markdown; the preserved PNG and `semantic transcription unavailable` caption remain the authoritative fallback.
+
 - Archive completed qualification executions as immutable `qualification-run-NNN.zip` evidence under `local/evaluation/`, with embedded run metadata and a compact `qualification-run-index.json` instead of encoding matrix/tool versions in long archive filenames.
 
 - Fix qualification workflow execution so a completed matrix with a failing

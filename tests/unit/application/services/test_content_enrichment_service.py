@@ -21,6 +21,7 @@ from standards_atlas.application.model import (
     NormalizationStatistics,
     NormalizedCode,
     NormalizedExtractedDocument,
+    NormalizedFormula,
     NormalizedHeading,
     NormalizedList,
     NormalizedListItem,
@@ -34,6 +35,7 @@ from standards_atlas.domain.model import (
     ClauseId,
     ClauseType,
     CodeBlock,
+    FormulaBlock,
     ListBlock,
     SourceEvidence,
     Standard,
@@ -114,6 +116,54 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
     assert result.statistics.clauses_enriched == 2
     assert result.statistics.content_blocks == 5
     assert result.statistics.normalized_items_consumed == 6
+
+
+def test_visual_only_formula_discards_docling_pseudo_expression(tmp_path):
+    workspace = tmp_path / ".atlas"
+    repository = FileSystemEngineeringDocumentRepository(workspace)
+    repository.save(_document())
+    evidence = (SourceEvidence(source_id="PDF", source_type="pdf", page_number=37),)
+    normalized = _normalized(
+        NormalizedHeading(
+            id="h1",
+            sequence_number=0,
+            source_item_ids=("h1",),
+            source_evidence=evidence,
+            text="1 Formula",
+        ),
+        NormalizedFormula(
+            id="f1",
+            sequence_number=1,
+            source_item_ids=("f1",),
+            source_evidence=evidence,
+            expression="1 MUT A MUT MDT = <= +",
+            original_expression="1 MUT A MUT MDT = <= +",
+            extraction_status="visual_only",
+        ),
+        NormalizedHeading(
+            id="h2",
+            sequence_number=2,
+            source_item_ids=("h2",),
+            source_evidence=evidence,
+            text="2",
+        ),
+    )
+    NormalizationArtifactRepository(workspace).save("SAMPLE", normalized)
+    AlignmentArtifactRepository(workspace).save(
+        "SAMPLE",
+        _alignment(
+            first_end=1, second_start=2, second_end=2, normalized_hash=_model_hash(normalized)
+        ),
+    )
+
+    build_content_enrichment_service(workspace).enrich("SAMPLE")
+
+    persisted = repository.load(StandardKey(value="SAMPLE"))
+    formula = persisted.clauses[0].content[0]
+    assert isinstance(formula, FormulaBlock)
+    assert formula.extraction_status == "visual_only"
+    assert formula.expression == ""
+    assert formula.original_expression is None
 
 
 def test_prefers_reviewed_alignment_when_present(tmp_path):

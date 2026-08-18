@@ -221,6 +221,7 @@ def test_visual_only_formula_is_not_presented_as_verified_semantics():
     rendered = MarkdownExporter().render(document)
 
     assert "semantic transcription unavailable" in rendered
+    assert "1 MUT A MUT MDT = <= +" not in rendered
     assert "$$" not in rendered
 
 

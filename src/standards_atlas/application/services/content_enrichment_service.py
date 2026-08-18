@@ -469,10 +469,11 @@ def _item_to_block(
         )
 
     if isinstance(item, NormalizedFormula):
+        visual_only = item.extraction_status == "visual_only"
         return FormulaBlock(
             id=f"content:{item.id}",
-            expression=item.expression,
-            original_expression=item.original_expression,
+            expression="" if visual_only else item.expression,
+            original_expression=None if visual_only else item.original_expression,
             representation=item.representation,
             extraction_status=item.extraction_status,
             media_type=item.visual_asset.media_type if item.visual_asset else None,

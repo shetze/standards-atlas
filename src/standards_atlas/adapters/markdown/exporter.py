@@ -179,9 +179,7 @@ def _render_block(
         if block.extraction_status == "visual_only":
             page = block.source_evidence[0].page_number if block.source_evidence else None
             suffix = f" on page {page}" if page is not None else ""
-            original = block.original_expression or block.expression
-            detail = f" `{original}`" if original else ""
-            status = f"*[Formula{suffix} — semantic transcription unavailable]*{detail}"
+            status = f"*[Formula{suffix} — semantic transcription unavailable]*"
             reference = block.image_path or block.embedded_data_uri
             if reference:
                 return f"![Formula{suffix}]({reference})\n\n{status}"

@@ -49,6 +49,9 @@ available, the formula remains `visual_only` without an image; no location is gu
 
 Markdown publication materializes embedded formula assets beside other visual assets and
 renders the image together with the existing `semantic transcription unavailable` status.
+For `visual_only` formulas, diagnostic pseudo-expressions emitted by Docling are not copied
+into the canonical `EngineeringDocument` and are not rendered in Markdown. The source PNG
+and status caption remain the fallback representation until semantic transcription succeeds.
 This preserves the distinction between a visual source representation and a verified
 semantic transcription.
 
