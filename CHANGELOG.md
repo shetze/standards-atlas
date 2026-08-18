@@ -12,6 +12,8 @@
 
 ## Unreleased
 
+- Archive completed qualification executions as immutable `qualification-run-NNN.zip` evidence under `local/evaluation/`, with embedded run metadata and a compact `qualification-run-index.json` instead of encoding matrix/tool versions in long archive filenames.
+
 - Fix qualification workflow execution so a completed matrix with a failing
   qualification result remains a valid workflow outcome while direct matrix
   invocations can still use exit status 1 as a CI quality gate.

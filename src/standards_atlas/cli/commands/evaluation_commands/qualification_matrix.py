@@ -822,6 +822,8 @@ def qualify_model_prompt_matrix(
                     analysis_metrics_path,
                 ),
                 cascade_directory=(output_directory / manifest.matrix_id / "cascade"),
+                analysis_metrics=analysis_metrics,
+                matrix_passed=report.passed,
             )
     except (
         McpServerProcessError,

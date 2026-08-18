@@ -144,11 +144,18 @@ matrix report:
   categories, overall resolution states, participation, review reasons, resolution sources,
   and observed versus unresolved structural conflicts.
 
-The command also creates a versioned ZIP named like
-`<matrix>-qualification-analysis-v1.0-standards-atlas-<version>.zip`. It contains the
-qualification manifest snapshot, qualification and consensus reports, Golden Corpus
-proposal, HITL queue, analysis metrics, cascade provenance, cascade JSON reports, and an
-`archive-manifest.json` with SHA-256 hashes and file sizes.
+The command also creates an immutable qualification-run archive directly below
+`local/evaluation/`, for example `qualification-run-012.zip`. Run numbers are monotonic and
+are never reused by `--overwrite`. The archive contains the qualification manifest snapshot,
+qualification and consensus reports, Golden Corpus proposal, HITL queue, analysis metrics,
+cascade provenance, cascade JSON reports, and an `archive-manifest.json` with SHA-256 hashes
+and file sizes.
+
+Each ZIP also contains `qualification-run-metadata.json`. This is the canonical description
+of the archived run and records the Standards Atlas version, qualification-manifest schema,
+matrix and corpus IDs, task and dataset versions, prompt versions, model references,
+manifest hash, and result metrics. `local/evaluation/qualification-run-index.json` is a
+compact derived index for locating and comparing archived runs without opening every ZIP.
 
 The cascade keeps the manifest's configured thresholds as provenance. Its effective
 statement-function confidence floor is raised when necessary to match the downstream

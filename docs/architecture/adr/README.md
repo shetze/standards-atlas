@@ -92,6 +92,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0049](0049-extract-and-resolve-clause-references-before-semantic-evaluation.md) | Extract and resolve clause references before semantic evaluation |
 | [0052](0052-build-golden-corpus-proposals-from-model-consensus.md) | Build Golden Corpus proposals from model consensus |
 | [0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md) | Model engineering knowledge as an orthogonal ontology |
+| [0059](0059-archive-qualification-runs-as-immutable-sequential-evidence.md) | Archive qualification runs as immutable sequential evidence |
 
 ## Application structure
 
