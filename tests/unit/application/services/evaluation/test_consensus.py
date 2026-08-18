@@ -525,6 +525,94 @@ def test_scope_context_is_inherited_and_kept_separate_from_subtype() -> None:
     assert evidence.as_dict()["applicability_subtype"] == "inclusion"
 
 
+def test_structural_applicability_subtypes_follow_explicit_semantics() -> None:
+    from standards_atlas.application.semantic_qualification.structural_evidence import (
+        derive_structural_evidence,
+    )
+
+    cases = (
+        ("This part applies to ASIL C and D.", "inclusion"),
+        ("This part does not apply to medical equipment.", "exclusion"),
+        ("Each requirement shall be met, unless an exemption applies.", "exception"),
+        (
+            "If the method is used, the verification requirement is applicable to the result.",
+            "applicability_condition",
+        ),
+    )
+    for text, expected in cases:
+        evidence = derive_structural_evidence({"clause_type": "scope", "text": text})
+        assert evidence.applicability_subtype is not None
+        assert evidence.applicability_subtype.value == expected
+
+
+def test_structural_applicability_prior_is_omitted_for_compound_mixed_subtypes() -> None:
+    from standards_atlas.application.semantic_qualification.structural_evidence import (
+        derive_structural_evidence,
+    )
+
+    evidence = derive_structural_evidence(
+        {
+            "clause_type": "scope",
+            "text": (
+                "This part does not apply to medical equipment. "
+                "Each requirement shall be met, unless an exemption applies."
+            ),
+        }
+    )
+
+    assert evidence.scope_context is True
+    assert evidence.applicability_subtype is None
+
+
+def test_applicability_presence_and_subtype_confidence_are_separate() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    labels = (
+        "inclusion",
+        "inclusion",
+        "inclusion",
+        "inclusion",
+        "inclusion",
+        "applicability_condition",
+        "applicability_condition",
+        "applicability_condition",
+        None,
+    )
+    votes = tuple(
+        ModelVote(
+            model_id=f"model-{index}",
+            primary_function=StatementFunction.DESCRIPTION,
+            applicability_present=label is not None,
+            applicability_function=label,
+            repetitions=1,
+            stability=1.0,
+        )
+        for index, label in enumerate(labels)
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.5,
+        label_threshold=0.5,
+        adjudicator_min_confidence=0.7,
+        policy={
+            "applicability_min_confidence": 0.75,
+        },
+    )
+
+    assert result["applicability_present"] is True
+    assert result["applicability_presence_confidence"] == pytest.approx(8 / 9)
+    assert result["applicability_subtype_confidence"] == pytest.approx(5 / 9)
+    assert result["applicability_confidence"] == pytest.approx(5 / 9)
+    assert (
+        "applicability subtype confidence is below its confidence threshold"
+        in result["review_reasons"]
+    )
+
+
 def test_titled_child_does_not_blindly_inherit_scope_context() -> None:
     from standards_atlas.application.semantic_qualification.structural_evidence import (
         derive_structural_evidence,

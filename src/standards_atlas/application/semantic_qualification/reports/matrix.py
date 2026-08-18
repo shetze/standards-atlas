@@ -38,9 +38,9 @@ def render_qualification_matrix_markdown(
         "",
         (
             "| Rank | Prompt | Model | Reasoning | Gold F1 | Stddev | "
-            "Coverage | Time | Memory | Result |"
+            "Coverage | Inference time | Perf source | Fresh/Cache/Reuse | Memory | Result |"
         ),
-        "| ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |",
+        ("| ---: | --- | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |"),
     ]
     by_key = {_candidate_key(item): item for item in report.candidates}
     for rank, key in enumerate(report.ranking, start=1):
@@ -49,6 +49,8 @@ def render_qualification_matrix_markdown(
         duration = format_seconds(item.mean_duration_seconds)
         memory = format_gigabytes(item.peak_memory_gb)
         marker = item.status.upper()
+        fresh = "?" if item.fresh_prediction_count is None else str(item.fresh_prediction_count)
+        execution_mix = f"{fresh}/{item.cached_prediction_count}/{item.reused_prediction_count}"
         if item.pareto_optimal:
             marker += " · Pareto"
         lines.append(
@@ -56,7 +58,8 @@ def render_qualification_matrix_markdown(
             f"`{item.reasoning_mode_id}` | {format_decimal(item.mean_gold_f1)} | "
             f"{format_decimal(item.gold_f1_stddev)} | "
             f"{format_decimal(item.mean_gold_coverage)} | "
-            f"{duration} | {memory} | {marker} |"
+            f"{duration} | `{item.performance_measurement_source}` | {execution_mix} | "
+            f"{memory} | {marker} |"
         )
     excluded = [item for item in report.candidates if not item.qualification_eligible]
     if excluded:

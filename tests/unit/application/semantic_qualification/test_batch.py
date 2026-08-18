@@ -11,7 +11,11 @@ def test_batch_executor_aggregates_item_outcomes() -> None:
         seen.append((current, total, item))
         if item == "bad":
             return ProposalItemOutcome(False, "bad: failed")
-        return ProposalItemOutcome(True)
+        return ProposalItemOutcome(
+            True,
+            fresh_predictions=1,
+            fresh_inference_duration_seconds=0.25,
+        )
 
     outcome = ProposalBatchExecutor[str]().execute(("good", "bad"), handle)
 
@@ -19,3 +23,6 @@ def test_batch_executor_aggregates_item_outcomes() -> None:
     assert outcome.generated == 1
     assert outcome.failed == 1
     assert outcome.errors == ("bad: failed",)
+    assert outcome.fresh_predictions == 1
+    assert outcome.cached_predictions == 0
+    assert outcome.fresh_inference_duration_seconds == 0.25

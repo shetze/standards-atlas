@@ -65,6 +65,11 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         core_paths=(report_path,),
         analysis_metrics=metrics,
         matrix_passed=False,
+        execution_policy={
+            "proposal_reuse": False,
+            "llm_cache": False,
+            "fresh_requested": True,
+        },
     )
 
     assert archive == tmp_path / "local" / "evaluation" / "qualification-run-001.zip"
@@ -74,6 +79,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         assert "qualification-run-metadata.json" in names
         assert "configuration/qualification-manifest.yaml" in names
         metadata = json.loads(payload.read("qualification-run-metadata.json"))
+        assert metadata["schema_version"] == "1.1"
         assert metadata["archive_id"] == "qualification-run-001"
         assert metadata["sequence_number"] == 1
         assert metadata["qualification_matrix"] == {
@@ -87,6 +93,11 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         assert metadata["prompts"] == [{"id": "content-only", "prompt_version": "content-only-v3"}]
         assert metadata["result"]["review_count"] == 25
         assert metadata["result"]["passed"] is False
+        assert metadata["execution_policy"] == {
+            "fresh_requested": True,
+            "llm_cache": False,
+            "proposal_reuse": False,
+        }
         archive_manifest = json.loads(payload.read("archive-manifest.json"))
         assert archive_manifest["archive_id"] == "qualification-run-001"
         assert archive_manifest["schema_version"] == "1.1"
@@ -173,3 +184,86 @@ def test_analysis_metrics_separate_observed_and_unresolved_structural_conflicts(
         "unresolved": 0,
         "resolved_during_cascade": 1,
     }
+
+
+def test_analysis_metrics_include_non_normative_diagnostics() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import ModelVote
+    from standards_atlas.domain.model import ApplicabilityFunction
+
+    clauses = (
+        ClauseConsensus(
+            clause_id="one",
+            document_key="DOC",
+            reference="1",
+            clause_text="This requirement applies to ASIL C and D.",
+            category=ConsensusCategory.MAJORITY,
+            applicability_category=ConsensusCategory.MAJORITY,
+            overall_status=OverallConsensusStatus.REVIEW_REQUIRED,
+            applicability_present=True,
+            proposed_applicability_functions=(ApplicabilityFunction.INCLUSION,),
+            applicability_presence_confidence=2 / 3,
+            applicability_subtype_confidence=2 / 3,
+            confidence=0.7,
+            participating_models=3,
+            requires_review=True,
+            votes=(
+                ModelVote(
+                    model_id="model-a",
+                    applicability_present=True,
+                    applicability_function=ApplicabilityFunction.INCLUSION,
+                    repetitions=1,
+                    stability=1.0,
+                ),
+                ModelVote(
+                    model_id="model-b",
+                    applicability_present=True,
+                    applicability_function=ApplicabilityFunction.INCLUSION,
+                    repetitions=1,
+                    stability=1.0,
+                ),
+                ModelVote(
+                    model_id="model-c",
+                    applicability_present=False,
+                    repetitions=1,
+                    stability=1.0,
+                ),
+            ),
+        ),
+    )
+    report = ConsensusReport(
+        matrix_id="matrix-v1",
+        corpus_id="corpus-v1",
+        prompt_id="content-only",
+        reasoning_mode_id="disabled",
+        generated_at=datetime.now(UTC),
+        model_count=3,
+        clause_count=1,
+        categories={"majority_consensus": 1},
+        review_count=1,
+        clauses=clauses,
+    )
+
+    metrics = build_analysis_metrics(
+        report=report,
+        cascade_stages=[
+            {
+                "stage_id": "efficient-local",
+                "entered_clause_count": 1,
+                "unresolved_clause_count": 1,
+                "entry_reason_counts": {"initial_stage": 1},
+                "exit_reason_counts": {"applicability_disagreement": 1},
+                "resolution_counts_before": {"applicability": 0},
+                "resolution_counts_after": {"applicability": 0},
+                "newly_resolved_counts": {"applicability": 0},
+            }
+        ],
+    )
+
+    diagnostics = metrics["diagnostics"]
+    assert diagnostics["applicability_conflicts"]["clause_count"] == 1
+    assert diagnostics["applicability_conflicts"]["presence_disagreement_count"] == 1
+    model_c = next(
+        item for item in diagnostics["applicability_model_fitness"] if item["model_id"] == "model-c"
+    )
+    assert model_c["conflict_none_rate"] == 1.0
+    assert diagnostics["stage_contributions"][0]["stage_id"] == "efficient-local"

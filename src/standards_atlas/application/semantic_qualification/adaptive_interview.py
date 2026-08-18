@@ -307,8 +307,16 @@ def follow_up_question(question: InterviewQuestion) -> InterviewQuestion | None:
             id="applicability-subtype",
             dimension=InterviewDimension.APPLICABILITY,
             question=(
-                "Which single applicability subtype is explicitly expressed? Treat a local "
-                "logical condition as none unless it governs application of normative content."
+                "Which single applicability subtype is explicitly expressed? Use inclusion "
+                "when the clause directly names what is in scope (for example, 'applies to X'); "
+                "use exclusion when it directly names what is outside scope ('does not apply "
+                "to X'); use exception when it carves out part of an otherwise applicable rule "
+                "('except' or 'unless'); and use applicability_condition when application of "
+                "normative content depends on a condition ('if/when X, Y applies'). For mixed "
+                "wording choose the subtype governing the applicability assertion, with "
+                "exception over exclusion, applicability_condition over inclusion, and never "
+                "treat a merely local logical condition as applicability. Select none when no "
+                "explicit applicability assertion is present."
             ),
             allowed_labels=(
                 "applicability_condition",

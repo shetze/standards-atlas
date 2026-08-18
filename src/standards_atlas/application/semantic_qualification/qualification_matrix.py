@@ -393,6 +393,16 @@ def capture_resolved_dimensions(
                 else None
             ),
             "confidence": cumulative_clause.applicability_decision_confidence,
+            "presence_confidence": getattr(
+                cumulative_clause,
+                "applicability_presence_confidence",
+                cumulative_clause.applicability_decision_confidence,
+            ),
+            "subtype_confidence": getattr(
+                cumulative_clause,
+                "applicability_subtype_confidence",
+                cumulative_clause.applicability_decision_confidence,
+            ),
             "category": cumulative_clause.applicability_category.value,
             "source": source,
             "structural_conflict_observed": (
@@ -474,6 +484,11 @@ class MatrixObservation(BaseModel):
     qualification_report: Path
     run_directory: Path | None = None
     mean_duration_seconds: float | None = Field(default=None, ge=0.0)
+    elapsed_duration_seconds: float | None = Field(default=None, ge=0.0)
+    performance_measurement_source: str = "legacy"
+    fresh_prediction_count: int | None = Field(default=None, ge=0)
+    cached_prediction_count: int = Field(default=0, ge=0)
+    reused_prediction_count: int = Field(default=0, ge=0)
     peak_memory_gb: float | None = Field(default=None, ge=0.0)
 
 
@@ -793,6 +808,10 @@ class CandidateQualification(BaseModel):
     mean_json_validity_rate: float
     mean_truncation_rate: float
     mean_duration_seconds: float | None = None
+    performance_measurement_source: str = "legacy"
+    fresh_prediction_count: int | None = None
+    cached_prediction_count: int = 0
+    reused_prediction_count: int = 0
     peak_memory_gb: float | None = None
     pareto_optimal: bool = False
     passed: bool

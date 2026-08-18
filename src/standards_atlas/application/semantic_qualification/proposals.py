@@ -138,6 +138,11 @@ class ProposalRunResult:
     failed: int
     run_directory: Path
     errors: tuple[str, ...]
+    fresh_predictions: int = 0
+    cached_predictions: int = 0
+    reused_predictions: int = 0
+    ineligible_predictions: int = 0
+    fresh_inference_duration_seconds: float | None = None
 
 
 def proposal_run_directory(config: ProposalRunConfig, output_root: Path) -> Path:
@@ -150,6 +155,33 @@ def proposal_run_directory(config: ProposalRunConfig, output_root: Path) -> Path
         / _safe(config.provider)
         / _safe(config.model)
     )
+
+
+def historical_inference_duration(
+    run_directory: Path, example_ids: tuple[str, ...] | list[str]
+) -> tuple[int, float | None]:
+    """Recover stored provider inference durations for reused proposal responses.
+
+    ``duration_ms`` in an LLM cache entry is the duration of the original provider
+    inference, not the cache lookup. Reusing it therefore preserves the last measured
+    inference performance without timing the resume/recompute bookkeeping path.
+    """
+    measured = 0
+    duration_seconds = 0.0
+    for example_id in example_ids:
+        response_path = run_directory / _safe(example_id) / "response.json"
+        if not response_path.is_file():
+            continue
+        try:
+            payload = json.loads(response_path.read_text(encoding="utf-8"))
+            duration_ms = payload.get("duration_ms")
+            if duration_ms is None:
+                continue
+            duration_seconds += float(duration_ms) / 1000.0
+            measured += 1
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            continue
+    return measured, duration_seconds if measured else None
 
 
 class BaselineProposalGenerator:
@@ -179,6 +211,8 @@ class BaselineProposalGenerator:
         run_dir = proposal_run_directory(config, output_root)
         pending = []
         skipped = 0
+        reused_predictions = 0
+        ineligible_predictions = 0
         included = set(config.include_example_ids or ())
         for example in all_examples:
             if included and example.id not in included:
@@ -189,10 +223,12 @@ class BaselineProposalGenerator:
                 case_dir.mkdir(parents=True, exist_ok=True)
                 _write_json(case_dir / "eligibility.json", eligibility.model_dump(mode="json"))
                 skipped += 1
+                ineligible_predictions += 1
                 continue
             evaluation_path = case_dir / "evaluation.yaml"
             if evaluation_path.exists() and not config.overwrite:
                 skipped += 1
+                reused_predictions += 1
                 continue
             pending.append(example)
             if config.limit is not None and len(pending) >= config.limit:
@@ -208,6 +244,9 @@ class BaselineProposalGenerator:
             request = build_proposal_request(config, prompt, example.input, task)
             request_payload = serialize_generation_request(request)
             request_diagnostics = _request_diagnostics(request_payload)
+            fresh_predictions = 0
+            cached_predictions = 0
+            fresh_inference_duration_seconds = 0.0
             _write_json(case_dir / "request.json", request_payload)
             if progress is not None:
                 progress(
@@ -250,6 +289,12 @@ class BaselineProposalGenerator:
                         on_retry=report_retry,
                     )
                     _write_json(case_dir / "interview.json", interview_payload)
+                    execution = interview_payload.get("execution", {})
+                    fresh_predictions = int(execution.get("fresh_predictions", 0))
+                    cached_predictions = int(execution.get("cached_predictions", 0))
+                    fresh_inference_duration_seconds = float(
+                        execution.get("fresh_inference_duration_seconds", 0.0)
+                    )
                 else:
                     result = generate_with_retry(
                         self._gateway,
@@ -264,6 +309,11 @@ class BaselineProposalGenerator:
                     normalized_value = _normalize_selection_payload(
                         result.value, required_fields=canonical_schema.get("required", ())
                     )
+                    if result.cached:
+                        cached_predictions = 1
+                    else:
+                        fresh_predictions = 1
+                        fresh_inference_duration_seconds = result.duration_ms / 1000.0
                 response_payload = {
                     "value": dict(result.value),
                     "provider": result.provider,
@@ -365,7 +415,13 @@ class BaselineProposalGenerator:
                             **context,
                         )
                     )
-            return ProposalItemOutcome(status == "generated", error_message)
+            return ProposalItemOutcome(
+                status == "generated",
+                error_message,
+                fresh_predictions=fresh_predictions,
+                cached_predictions=cached_predictions,
+                fresh_inference_duration_seconds=fresh_inference_duration_seconds,
+            )
 
         batch = ProposalBatchExecutor().execute(pending, process_example)
         generated = batch.generated
@@ -379,9 +435,31 @@ class BaselineProposalGenerator:
                 "skipped": skipped,
                 "failed": failed,
                 "errors": errors,
+                "execution": {
+                    "fresh_predictions": batch.fresh_predictions,
+                    "cached_predictions": batch.cached_predictions,
+                    "reused_predictions": reused_predictions,
+                    "ineligible_predictions": ineligible_predictions,
+                    "fresh_inference_duration_seconds": (
+                        batch.fresh_inference_duration_seconds if batch.fresh_predictions else None
+                    ),
+                },
             },
         )
-        return ProposalRunResult(generated, skipped, failed, run_dir, tuple(errors))
+        return ProposalRunResult(
+            generated,
+            skipped,
+            failed,
+            run_dir,
+            tuple(errors),
+            fresh_predictions=batch.fresh_predictions,
+            cached_predictions=batch.cached_predictions,
+            reused_predictions=reused_predictions,
+            ineligible_predictions=ineligible_predictions,
+            fresh_inference_duration_seconds=(
+                batch.fresh_inference_duration_seconds if batch.fresh_predictions else None
+            ),
+        )
 
 
 def _run_adaptive_interview(
@@ -401,6 +479,9 @@ def _run_adaptive_interview(
     context = dict(item_input.get("context", {}))
     answers: list[dict[str, Any]] = []
     last_result = None
+    fresh_predictions = 0
+    cached_predictions = 0
+    fresh_inference_duration_seconds = 0.0
     selection: dict[str, Any] = {
         "statement_functions": [],
         "primary_function": None,
@@ -461,6 +542,11 @@ def _run_adaptive_interview(
             retry_on_truncation=config.retry_on_truncation,
         )
         last_result = result
+        if result.cached:
+            cached_predictions += 1
+        else:
+            fresh_predictions += 1
+            fresh_inference_duration_seconds += result.duration_ms / 1000.0
         answer = dict(result.value)
         label = str(answer["label"])
         confidence = float(answer["confidence"])
@@ -506,6 +592,11 @@ def _run_adaptive_interview(
             truncation_retry_max_tokens=config.truncation_retry_max_tokens,
             retry_on_truncation=config.retry_on_truncation,
         )
+        if last_result.cached:
+            cached_predictions += 1
+        else:
+            fresh_predictions += 1
+            fresh_inference_duration_seconds += last_result.duration_ms / 1000.0
         selection = _normalize_selection_payload(
             last_result.value,
             required_fields=(
@@ -526,6 +617,11 @@ def _run_adaptive_interview(
             "plan": plan.model_dump(mode="json"),
             "answers": answers,
             "aggregated_selection": selection,
+            "execution": {
+                "fresh_predictions": fresh_predictions,
+                "cached_predictions": cached_predictions,
+                "fresh_inference_duration_seconds": fresh_inference_duration_seconds,
+            },
         },
     )
 

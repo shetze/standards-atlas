@@ -16,10 +16,14 @@ import yaml
 
 from standards_atlas import __version__
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
+from standards_atlas.application.semantic_qualification.diagnostics import (
+    build_qualification_diagnostics,
+    render_qualification_diagnostics_markdown,
+)
 from standards_atlas.shared.hashing import sha256_file
 
 ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.1"
-QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.0"
+QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.1"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
 
@@ -30,6 +34,7 @@ def write_cascade_provenance(
     matrix_id: str,
     manifest_path: Path,
     run_mode: str,
+    execution_policy: dict[str, bool] | None = None,
     stages: list[dict[str, Any]],
 ) -> Path:
     """Persist clause-level stage entry/exit reasons and resolution deltas."""
@@ -43,6 +48,7 @@ def write_cascade_provenance(
         "manifest_path": str(manifest_path),
         "manifest_sha256": sha256_file(manifest_path),
         "run_mode": run_mode,
+        "execution_policy": execution_policy,
         "stages": stages,
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -64,6 +70,7 @@ def build_analysis_metrics(
     structural_unresolved = sum(
         clause.applicability_structural_conflict_unresolved for clause in report.clauses
     )
+    diagnostics = build_qualification_diagnostics(report=report, cascade_stages=cascade_stages)
     return {
         "schema_version": ANALYSIS_ARCHIVE_SCHEMA_VERSION,
         "matrix_id": report.matrix_id,
@@ -78,6 +85,7 @@ def build_analysis_metrics(
         "participation_distribution": report.participation_distribution,
         "resolution_sources": report.resolution_sources,
         "review_reasons": dict(sorted(review_reasons.items())),
+        "diagnostics": diagnostics,
         "structural_conflicts": {
             "observed": structural_observed,
             "unresolved": structural_unresolved,
@@ -111,6 +119,25 @@ def write_analysis_metrics(
     return path
 
 
+def write_qualification_diagnostics(
+    *,
+    output_directory: Path,
+    matrix_id: str,
+    report: ConsensusReport,
+    metrics: dict[str, Any],
+) -> Path:
+    """Persist a human-readable non-normative qualification diagnostic report."""
+    path = output_directory / matrix_id / "qualification-diagnostics.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        render_qualification_diagnostics_markdown(
+            report=report, diagnostics=metrics["diagnostics"]
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def create_analysis_archive(
     *,
     output_directory: Path,
@@ -120,6 +147,7 @@ def create_analysis_archive(
     cascade_directory: Path | None = None,
     analysis_metrics: dict[str, Any] | None = None,
     matrix_passed: bool | None = None,
+    execution_policy: dict[str, bool] | None = None,
 ) -> Path:
     """Create an immutable, sequentially numbered qualification-run ZIP."""
     archive_dir = output_directory.parent
@@ -140,6 +168,7 @@ def create_analysis_archive(
         manifest_payload=manifest_payload,
         analysis_metrics=analysis_metrics,
         matrix_passed=matrix_passed,
+        execution_policy=execution_policy,
     )
     metadata_bytes = _json_bytes(metadata)
 
@@ -222,6 +251,7 @@ def _build_run_metadata(
     manifest_payload: dict[str, Any],
     analysis_metrics: dict[str, Any] | None,
     matrix_passed: bool | None,
+    execution_policy: dict[str, bool] | None,
 ) -> dict[str, Any]:
     prompts = [
         {
@@ -271,6 +301,7 @@ def _build_run_metadata(
         },
         "prompts": prompts,
         "models": models,
+        "execution_policy": execution_policy,
         "inputs": {
             "qualification_manifest": {
                 "path": str(manifest_path),

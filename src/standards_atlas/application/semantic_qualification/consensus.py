@@ -115,7 +115,12 @@ class ClauseConsensus(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     statement_function_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     knowledge_kind_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    # ``applicability_confidence`` remains the compatibility alias for subtype
+    # confidence. Presence confidence is exposed separately so that strong
+    # evidence that applicability exists is not confused with subtype agreement.
     applicability_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    applicability_presence_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    applicability_subtype_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     responsibility_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     statement_function_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     knowledge_kind_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -601,9 +606,13 @@ def _resolve_clause(
     statement_function_confidence = primary_agreement
     knowledge_kind_confidence = knowledge_agreement if primary_knowledge is not None else 0.0
     knowledge_kind_decision_confidence = knowledge_agreement
+    applicability_presence_confidence = (
+        app_present_support if app_accepted else 1.0 - app_present_support
+    )
+    applicability_subtype_confidence = app_label_support if app_label is not None else 0.0
     applicability_decision_confidence = _dimension_decision_confidence(
         present=app_accepted,
-        positive_confidence=app_label_support,
+        positive_confidence=applicability_subtype_confidence,
         support={"present": app_present_support},
     )
     responsibility_decision_confidence = _dimension_decision_confidence(
@@ -611,7 +620,7 @@ def _resolve_clause(
         positive_confidence=resp_label_support,
         support={"present": resp_present_support},
     )
-    applicability_confidence = app_label_support if app_label is not None else 0.0
+    applicability_confidence = applicability_subtype_confidence
     responsibility_confidence = resp_label_support if resp_label is not None else 0.0
 
     statement_category = category
@@ -673,9 +682,15 @@ def _resolve_clause(
         app_label = ApplicabilityFunction(item["value"]) if item.get("value") else None
         app_accepted = bool(item.get("present", app_label is not None))
         applicability_decision_confidence = float(item["confidence"])
-        applicability_confidence = (
-            applicability_decision_confidence if app_accepted and app_label is not None else 0.0
+        applicability_presence_confidence = float(
+            item.get("presence_confidence", applicability_decision_confidence)
         )
+        applicability_subtype_confidence = (
+            float(item.get("subtype_confidence", applicability_decision_confidence))
+            if app_accepted and app_label is not None
+            else 0.0
+        )
+        applicability_confidence = applicability_subtype_confidence
         applicability_category = ConsensusCategory(item["category"])
         resolution_sources["applicability"] = str(item.get("source", "cascade"))
     if "responsibility" in override:
@@ -751,6 +766,8 @@ def _resolve_clause(
         "statement_function_confidence": statement_function_confidence,
         "knowledge_kind_confidence": knowledge_kind_confidence,
         "applicability_confidence": applicability_confidence,
+        "applicability_presence_confidence": applicability_presence_confidence,
+        "applicability_subtype_confidence": applicability_subtype_confidence,
         "responsibility_confidence": responsibility_confidence,
         "statement_function_decision_confidence": statement_function_decision_confidence,
         "knowledge_kind_decision_confidence": knowledge_kind_decision_confidence,
@@ -853,7 +870,7 @@ def _review_reasons(
     if applicability_present and applicability_confidence < float(
         policy["applicability_min_confidence"]
     ):
-        reasons.append("applicability evidence is below its confidence threshold")
+        reasons.append("applicability subtype confidence is below its confidence threshold")
     if responsibility_present and responsibility_confidence < float(
         policy["responsibility_min_confidence"]
     ):
@@ -1059,7 +1076,9 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Responsibility proposal: `{responsibility}`",
                 f"- Statement-function confidence: `{item.statement_function_confidence:.3f}`",
                 f"- Knowledge-kind confidence: `{item.knowledge_kind_confidence:.3f}`",
-                f"- Applicability confidence: `{item.applicability_confidence:.3f}`",
+                "- Applicability confidence: "
+                f"presence=`{item.applicability_presence_confidence:.3f}`, "
+                f"subtype=`{item.applicability_subtype_confidence:.3f}`",
                 f"- Responsibility confidence: `{item.responsibility_confidence:.3f}`",
                 "- Decision confidence: "
                 f"statement_function=`{item.statement_function_decision_confidence:.3f}`, "

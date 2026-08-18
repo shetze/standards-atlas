@@ -27,10 +27,12 @@ from standards_atlas.application.semantic_qualification.analysis_archive import 
     create_analysis_archive,
     write_analysis_metrics,
     write_cascade_provenance,
+    write_qualification_diagnostics,
 )
 from standards_atlas.application.semantic_qualification.proposals import (
     ProposalProgress,
     ProposalRunConfig,
+    historical_inference_duration,
     proposal_run_directory,
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -263,6 +265,27 @@ def qualify_model_prompt_matrix(
             help="Keep proposals and recompute metrics, qualification, and consensus only.",
         ),
     ] = False,
+    no_cache: Annotated[
+        bool,
+        typer.Option(
+            "--no-cache",
+            help="Bypass the LLM response cache while preserving proposal reuse.",
+        ),
+    ] = False,
+    no_reuse: Annotated[
+        bool,
+        typer.Option(
+            "--no-reuse",
+            help="Regenerate proposals instead of reusing completed proposal results.",
+        ),
+    ] = False,
+    fresh: Annotated[
+        bool,
+        typer.Option(
+            "--fresh",
+            help="Run fresh inference: equivalent to --no-reuse --no-cache.",
+        ),
+    ] = False,
     fail_on_matrix_failure: Annotated[
         bool,
         typer.Option(
@@ -287,8 +310,10 @@ def qualify_model_prompt_matrix(
     The default mode is ``resume``: completed proposals are reused and missing
     results are generated. ``--overwrite`` regenerates proposals and all derived
     outputs. ``--recompute`` keeps proposals and rebuilds only metrics, matrix
-    qualification, and consensus. Use ``--aggregate-only`` only for observations
-    already declared in the manifest.
+    qualification, and consensus. ``--no-reuse`` regenerates proposals while still
+    permitting LLM-cache hits; ``--no-cache`` bypasses only the LLM response cache.
+    ``--fresh`` combines both for a true new inference run. Use ``--aggregate-only``
+    only for observations already declared in the manifest.
     """
     active_server: RamaLamaServerManager | None = None
     active_mcp_lease = None
@@ -301,6 +326,21 @@ def qualify_model_prompt_matrix(
         if selected_modes > 1:
             raise ValueError("--resume, --overwrite, and --recompute are mutually exclusive")
         run_mode = "overwrite" if overwrite else "recompute" if recompute else "resume"
+        if (recompute or aggregate_only) and (no_cache or no_reuse or fresh):
+            mode = "--recompute" if recompute else "--aggregate-only"
+            raise ValueError(f"{mode} cannot be combined with --no-cache, --no-reuse, or --fresh")
+        proposal_reuse_enabled = not (overwrite or no_reuse or fresh)
+        llm_cache_enabled = not (no_cache or fresh)
+        execution_policy = {
+            "proposal_reuse": proposal_reuse_enabled,
+            "llm_cache": llm_cache_enabled,
+            "fresh_requested": fresh,
+        }
+        typer.echo(
+            "Execution policy         : "
+            f"proposal_reuse={'enabled' if proposal_reuse_enabled else 'disabled'}, "
+            f"llm_cache={'enabled' if llm_cache_enabled else 'disabled'}"
+        )
         manifest = QualificationMatrixManifest.load(manifest_path)
         for review_import in manifest.review_imports:
             proposal_candidates = tuple(
@@ -333,7 +373,7 @@ def qualify_model_prompt_matrix(
         if not aggregate_only:
             observation_map = (
                 {}
-                if run_mode == "overwrite"
+                if not proposal_reuse_enabled
                 else {
                     (
                         item.prompt_id,
@@ -353,6 +393,8 @@ def qualify_model_prompt_matrix(
                 for example in (dataset.examples[:limit] if limit is not None else dataset.examples)
             )
             base_config = LlmConfig.load(config)
+            if not llm_cache_enabled:
+                base_config = replace(base_config, cache_directory=None)
             active_server = RamaLamaServerManager(base_config)
             active_server.stop()
             active_reasoning_modes = tuple(
@@ -475,7 +517,7 @@ def qualify_model_prompt_matrix(
                                     provider=model.provider,
                                     model=model.model_ref,
                                     seed=repetition,
-                                    overwrite=run_mode == "overwrite",
+                                    overwrite=not proposal_reuse_enabled,
                                     limit=None,
                                     include_example_ids=stage_clause_ids,
                                     max_tokens=(
@@ -501,8 +543,11 @@ def qualify_model_prompt_matrix(
                                     ),
                                 )
                                 run_directory = proposal_run_directory(proposal_config, run_root)
-                                if run_mode == "overwrite" and run_directory.exists():
+                                if not proposal_reuse_enabled and run_directory.exists():
                                     shutil.rmtree(run_directory)
+                                fresh_prediction_count = 0
+                                cached_prediction_count = 0
+                                reused_prediction_count = 0
                                 if run_mode == "recompute":
                                     proposal_candidates = tuple(
                                         run_directory.glob("*/evaluation.yaml")
@@ -513,6 +558,7 @@ def qualify_model_prompt_matrix(
                                             f"{run_directory}"
                                         )
                                     generated = failed = skipped = 0
+                                    reused_prediction_count = len(proposal_candidates)
                                     errors: tuple[str, ...] = ()
                                     progress_reporter.finish(
                                         generated=0, failed=0, skipped=len(proposal_candidates)
@@ -532,6 +578,9 @@ def qualify_model_prompt_matrix(
                                     failed = result.failed
                                     skipped = result.skipped
                                     errors = result.errors
+                                    fresh_prediction_count = result.fresh_predictions
+                                    cached_prediction_count = result.cached_predictions
+                                    reused_prediction_count = result.reused_predictions
                                     progress_reporter.finish(
                                         generated=generated, failed=failed, skipped=skipped
                                     )
@@ -564,6 +613,29 @@ def qualify_model_prompt_matrix(
                                         example_ids=stage_clause_ids,
                                     )
                                 )
+                                elapsed_duration_seconds = time.monotonic() - started
+                                measured_predictions, measured_duration_seconds = (
+                                    historical_inference_duration(
+                                        run_directory, list(stage_clause_ids)
+                                    )
+                                )
+                                if fresh_prediction_count > 0 and not (
+                                    cached_prediction_count or reused_prediction_count
+                                ):
+                                    performance_source = "fresh"
+                                    inference_duration_seconds = (
+                                        result.fresh_inference_duration_seconds
+                                    )
+                                elif measured_predictions > 0:
+                                    performance_source = (
+                                        "recompute_historical"
+                                        if run_mode == "recompute"
+                                        else "historical_mixed"
+                                    )
+                                    inference_duration_seconds = measured_duration_seconds
+                                else:
+                                    performance_source = "not_measured"
+                                    inference_duration_seconds = None
                                 observation = MatrixObservation(
                                     prompt_id=prompt.id,
                                     model_id=model.id,
@@ -571,7 +643,12 @@ def qualify_model_prompt_matrix(
                                     repetition=repetition,
                                     qualification_report=qualification_path,
                                     run_directory=run_directory,
-                                    mean_duration_seconds=time.monotonic() - started,
+                                    mean_duration_seconds=inference_duration_seconds,
+                                    elapsed_duration_seconds=elapsed_duration_seconds,
+                                    performance_measurement_source=performance_source,
+                                    fresh_prediction_count=fresh_prediction_count,
+                                    cached_prediction_count=cached_prediction_count,
+                                    reused_prediction_count=reused_prediction_count,
                                     peak_memory_gb=model.declared_memory_gb,
                                 )
                                 observation_key = (prompt.id, model.id, reasoning.id, repetition)
@@ -750,6 +827,7 @@ def qualify_model_prompt_matrix(
                 matrix_id=manifest.matrix_id,
                 manifest_path=manifest_path,
                 run_mode=run_mode,
+                execution_policy=execution_policy,
                 stages=cascade_stage_metrics,
             )
             manifest = QualificationMatrixManifest.model_validate(
@@ -797,6 +875,7 @@ def qualify_model_prompt_matrix(
                     matrix_id=manifest.matrix_id,
                     manifest_path=manifest_path,
                     run_mode=run_mode,
+                    execution_policy=execution_policy,
                     stages=cascade_stage_metrics,
                 )
             analysis_metrics = build_analysis_metrics(
@@ -806,6 +885,12 @@ def qualify_model_prompt_matrix(
             analysis_metrics_path = write_analysis_metrics(
                 output_directory=output_directory,
                 matrix_id=manifest.matrix_id,
+                metrics=analysis_metrics,
+            )
+            diagnostics_path = write_qualification_diagnostics(
+                output_directory=output_directory,
+                matrix_id=manifest.matrix_id,
+                report=consensus_report,
                 metrics=analysis_metrics,
             )
             analysis_archive_path = create_analysis_archive(
@@ -820,10 +905,12 @@ def qualify_model_prompt_matrix(
                     review_markdown,
                     provenance_path,
                     analysis_metrics_path,
+                    diagnostics_path,
                 ),
                 cascade_directory=(output_directory / manifest.matrix_id / "cascade"),
                 analysis_metrics=analysis_metrics,
                 matrix_passed=report.passed,
+                execution_policy=execution_policy,
             )
     except (
         McpServerProcessError,

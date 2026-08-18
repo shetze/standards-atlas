@@ -13,6 +13,7 @@ from standards_atlas.application.semantic_qualification.defaults import (
 from standards_atlas.application.semantic_qualification.proposals import (
     BaselineProposalGenerator,
     ProposalRunConfig,
+    historical_inference_duration,
 )
 
 
@@ -109,6 +110,10 @@ def test_proposal_generation_persists_request_response_and_resumes(tmp_path: Pat
     )
     assert result.generated == 1
     assert result.failed == 0
+    assert result.fresh_predictions == 1
+    assert result.cached_predictions == 0
+    assert result.reused_predictions == 0
+    assert result.fresh_inference_duration_seconds == 0.012
     case = result.run_directory / "clause-1"
     assert (case / "request.json").exists()
     assert (case / "response.json").exists()
@@ -120,6 +125,13 @@ def test_proposal_generation_persists_request_response_and_resumes(tmp_path: Pat
         output_root=tmp_path / "evaluation",
     )
     assert resumed.skipped == 1
+    assert resumed.generated == 0
+    assert resumed.fresh_predictions == 0
+    assert resumed.reused_predictions == 1
+    assert resumed.fresh_inference_duration_seconds is None
+    measured, duration = historical_inference_duration(resumed.run_directory, ["clause-1"])
+    assert measured == 1
+    assert duration == 0.012
 
 
 def test_limit_applies_to_pending_examples_after_existing_annotations(tmp_path: Path):

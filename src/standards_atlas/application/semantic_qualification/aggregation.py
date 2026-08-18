@@ -52,8 +52,22 @@ def aggregate_candidate(
     success_values = [report.reliability.prediction_success_rate for _, report in entries]
     json_values = [report.reliability.json_validity_rate for _, report in entries]
     truncation_values = [report.reliability.truncation_rate for _, report in entries]
-    durations = [item.mean_duration_seconds for item, _ in entries if item.mean_duration_seconds]
+    durations = [
+        item.mean_duration_seconds
+        for item, _ in entries
+        if item.mean_duration_seconds is not None
+        and item.performance_measurement_source != "not_measured"
+    ]
     memory = [item.peak_memory_gb for item, _ in entries if item.peak_memory_gb is not None]
+    measurement_sources = {item.performance_measurement_source for item, _ in entries}
+    fresh_prediction_counts = [item.fresh_prediction_count for item, _ in entries]
+    fresh_prediction_count = (
+        None
+        if any(value is None for value in fresh_prediction_counts)
+        else sum(value or 0 for value in fresh_prediction_counts)
+    )
+    cached_prediction_count = sum(item.cached_prediction_count for item, _ in entries)
+    reused_prediction_count = sum(item.reused_prediction_count for item, _ in entries)
 
     mean_f1 = fmean(f1_values) if f1_values else None
     minimum_f1 = min(f1_values) if f1_values else None
@@ -61,6 +75,10 @@ def aggregate_candidate(
     mean_coverage = fmean(coverage_values) if coverage_values else None
     mean_duration = fmean(durations) if durations else None
     peak_memory = max(memory) if memory else model.declared_memory_gb
+    if len(measurement_sources) == 1:
+        performance_measurement_source = next(iter(measurement_sources))
+    else:
+        performance_measurement_source = "mixed"
 
     if gold_available:
         assert mean_f1 is not None
@@ -91,6 +109,8 @@ def aggregate_candidate(
         regressions.append(
             f"truncation rate {mean_truncation:.4f} > {thresholds.max_truncation_rate:.4f}"
         )
+    if thresholds.max_mean_duration_seconds is not None and mean_duration is None:
+        regressions.append("fresh inference performance not measured")
     if (
         thresholds.max_mean_duration_seconds is not None
         and mean_duration is not None
@@ -143,6 +163,10 @@ def aggregate_candidate(
         mean_json_validity_rate=mean_json,
         mean_truncation_rate=mean_truncation,
         mean_duration_seconds=mean_duration,
+        performance_measurement_source=performance_measurement_source,
+        fresh_prediction_count=fresh_prediction_count,
+        cached_prediction_count=cached_prediction_count,
+        reused_prediction_count=reused_prediction_count,
         peak_memory_gb=peak_memory,
         passed=status == "passed",
         regressions=tuple(regressions),
@@ -185,6 +209,10 @@ def empty_candidate(
         mean_prediction_success_rate=0.0,
         mean_json_validity_rate=0.0,
         mean_truncation_rate=0.0,
+        performance_measurement_source="not_measured",
+        fresh_prediction_count=0,
+        cached_prediction_count=0,
+        reused_prediction_count=0,
         peak_memory_gb=model.declared_memory_gb,
         passed=False,
     )

@@ -150,17 +150,47 @@ def derive_structural_evidence(
 
 
 def _derive_applicability_subtype(text: str) -> ApplicabilityFunction | None:
-    """Return a conservative subtype for an explicit scope/applicability statement."""
+    """Return a conservative subtype for explicit applicability wording.
 
-    if re.search(r"\b(except|exception|unless)\b", text):
+    Applicability evidence is classified per sentence/statement.  If a compound
+    clause expresses different applicability functions, no single structural
+    prior is emitted; model consensus must resolve the compound semantics.
+    """
+
+    detected: set[ApplicabilityFunction] = set()
+    statements = tuple(
+        item.strip() for item in re.split(r"(?<=[.!?;])\s+|\n+", text) if item.strip()
+    ) or (text,)
+
+    for statement in statements:
+        subtype = _derive_statement_applicability_subtype(statement)
+        if subtype is not None:
+            detected.add(subtype)
+
+    if len(detected) == 1:
+        return next(iter(detected))
+    return None
+
+
+def _derive_statement_applicability_subtype(
+    statement: str,
+) -> ApplicabilityFunction | None:
+    """Classify one applicability statement using explicit semantic precedence."""
+
+    if re.search(r"\b(except|exception|unless)\b", statement):
         return ApplicabilityFunction.EXCEPTION
     if re.search(
         r"\b(does not apply|do not apply|not applicable|excluded|excludes|outside the scope)\b",
-        text,
+        statement,
     ):
         return ApplicabilityFunction.EXCLUSION
-    if re.search(r"\b(applies to|applicable to|includes|within the scope|covers)\b", text):
-        return ApplicabilityFunction.INCLUSION
-    if re.search(r"\b(if|when|where|provided that|subject to)\b", text):
+
+    inclusion = bool(
+        re.search(r"\b(applies to|applicable to|includes|within the scope|covers)\b", statement)
+    )
+    condition = bool(re.search(r"\b(if|when|where|provided that|subject to|only if)\b", statement))
+    if condition and inclusion:
         return ApplicabilityFunction.APPLICABILITY_CONDITION
+    if inclusion:
+        return ApplicabilityFunction.INCLUSION
     return None

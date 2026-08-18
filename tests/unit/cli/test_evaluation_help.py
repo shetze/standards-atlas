@@ -49,3 +49,6 @@ def test_qualification_matrix_help_exposes_mcp_lifecycle_options() -> None:
     assert "--resume" in result.stdout
     assert "--overwrite" in result.stdout
     assert "--recompute" in result.stdout
+    assert "--no-cache" in result.stdout
+    assert "--no-reuse" in result.stdout
+    assert "--fresh" in result.stdout

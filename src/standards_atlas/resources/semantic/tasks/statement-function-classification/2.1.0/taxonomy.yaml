@@ -40,6 +40,15 @@ applicability_functions:
 - inclusion
 - exclusion
 - exception
+applicability_semantics:
+  inclusion: Directly names what belongs to the governed scope or population.
+  exclusion: Directly names what does not belong to the governed scope or population.
+  exception: Carves out a case from an otherwise applicable rule.
+  applicability_condition: Makes application of normative content depend on a condition.
+  tie_break_rules:
+  - exception over exclusion when wording expresses an exception to a general rule
+  - applicability_condition over inclusion when a condition governs whether content applies
+  - local logical conditions do not imply applicability
 responsibility_functions:
 - responsibility_assignment
 - responsibility_exclusion

@@ -82,6 +82,29 @@ def test_scope_context_does_not_offer_scope_definition_as_applicability() -> Non
     }
 
 
+def test_applicability_follow_up_operationalizes_subtype_boundaries() -> None:
+    from standards_atlas.application.semantic_qualification.adaptive_interview import (
+        InterviewQuestion,
+        follow_up_question,
+    )
+
+    presence = InterviewQuestion(
+        id="applicability-presence",
+        dimension=InterviewDimension.APPLICABILITY,
+        question="Is applicability explicit?",
+        allowed_labels=("present", "none"),
+        reason="test",
+    )
+    subtype = follow_up_question(presence)
+
+    assert subtype is not None
+    assert "applies to x" in subtype.question.lower()
+    assert "does not apply" in subtype.question.lower()
+    assert "except" in subtype.question.lower()
+    assert "if/when" in subtype.question.lower()
+    assert "local logical condition" in subtype.question.lower()
+
+
 def test_planner_adds_process_question_for_process_signals() -> None:
     plan = AdaptiveInterviewPlanner().plan(
         {

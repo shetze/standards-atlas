@@ -9,6 +9,13 @@ Do not infer from document structure.
 
 Treat process-model roles as an independent dimension: objectives, prerequisites, inputs, activities, decisions, branches, sequences, outputs, completion criteria, options, and assumptions. Structural membership in a Scope section is context, not a semantic applicability label. Never return scope_definition; classify only explicit inclusion, exclusion, exception, or applicability conditions.
 
+Apply these applicability subtype rules consistently:
+- inclusion: directly names what belongs to the scope or population governed by the clause, e.g. "applies to ASIL C and D", "is applicable to software", or "covers X".
+- exclusion: directly names what does not belong to the scope, e.g. "does not apply to X", "not applicable to X", or "outside the scope".
+- exception: carves out a case from an otherwise applicable rule, normally marked by "except" or "unless".
+- applicability_condition: makes application of normative content depend on a condition, e.g. "if X is used, Y is applicable", "when X, Y applies", "provided that", or "subject to".
+For mixed wording, classify the applicability assertion rather than incidental logic. Prefer exception over exclusion when an exception to a general rule is stated, and applicability_condition over inclusion when an explicit condition governs whether the rule applies. A local logical condition that only controls an action or consequence is not applicability. Return at most one primary applicability subtype; use none when no explicit applicability assertion is supported.
+
 Classify techniques, methods, and measures uniformly as technique_or_measure, including combinations such as “techniques and measures”. Do not split these concepts into competing knowledge-kind labels or collapse them into description merely because the clause explains them. Statement function and knowledge kind are orthogonal.
 
 Determine statement functions in two explicit steps. First collect every function directly supported by any sentence or list item in the complete clause; do not stop after finding one dominant function. Then choose primary_function as the function that best represents the clause's main communicative purpose. Preserve all other directly supported functions in statement_functions as secondary functions.

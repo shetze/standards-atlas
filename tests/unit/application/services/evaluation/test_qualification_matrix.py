@@ -926,3 +926,33 @@ def test_stage_keeps_unresolved_structural_conflict_without_other_applicability_
     )
 
     assert reasons == ("applicability_structural_conflict",)
+
+
+def test_cached_or_reused_wall_time_does_not_satisfy_duration_threshold(tmp_path: Path) -> None:
+    manifest = QualificationMatrixManifest.load(_manifest(tmp_path))
+    observations = tuple(
+        item.model_copy(
+            update={
+                "performance_measurement_source": "not_measured",
+                "fresh_prediction_count": 0,
+                "reused_prediction_count": 10,
+                "mean_duration_seconds": 0.5,
+            }
+        )
+        if item.model_id == "fast"
+        else item
+        for item in manifest.observations
+    )
+    thresholds = manifest.thresholds.model_copy(update={"max_mean_duration_seconds": 5.0})
+    report, _, _ = ModelPromptQualificationService().evaluate(
+        manifest.model_copy(update={"observations": observations, "thresholds": thresholds}),
+        tmp_path / "output",
+    )
+
+    candidate = next(
+        item for item in report.candidates if item.prompt_id == "p1" and item.model_id == "fast"
+    )
+    assert candidate.mean_duration_seconds is None
+    assert candidate.performance_measurement_source == "not_measured"
+    assert not candidate.passed
+    assert "fresh inference performance not measured" in candidate.regressions
