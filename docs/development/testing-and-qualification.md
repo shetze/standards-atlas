@@ -87,6 +87,12 @@ and human-readable Markdown reports.
 Golden outputs are changed only after reviewing the semantic diff and documenting an intentional
 contract change. They are never updated merely to make CI green.
 
+
+LLM-assisted normalization-quality qualification is intentionally separate from golden-corpus
+qualification. It may reuse a representative semantic corpus for exploratory model comparison,
+but its semantic expected labels are ignored. The qualification is observational and therefore
+does not constitute deterministic normalization evidence or modify golden outputs.
+
 ## Coverage model
 
 Coverage is used to locate untested decisions, not to reward execution of trivial lines. The

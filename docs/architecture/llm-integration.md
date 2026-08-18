@@ -27,3 +27,15 @@ A model name does not establish fitness. Qualification matrices combine model, p
 ## Safety and privacy
 
 Protected clause text may be sent only to explicitly approved local or remote gateways. MCP exposure and LLM access are separate policy decisions. Audit and run artifacts must avoid credentials and unnecessary source paths.
+
+## Normalization quality review
+
+The optional `evaluation normalization-quality` command uses the same `LlmGateway` boundary and
+managed RamaLama models as semantic qualification, but it is not part of canonical document
+normalization. It reviews every selected corpus clause without a deterministic prefilter and emits
+observational findings only. The initial prompt is conservative: unusual standards language is not
+a defect unless the clause contains concrete evidence of extraction or normalization damage.
+
+Model definitions are resolved from an existing qualification-matrix manifest so the exploratory
+review does not duplicate model references or runtime settings. The shared LLM response cache is
+used by default and can be bypassed with `--no-cache`.

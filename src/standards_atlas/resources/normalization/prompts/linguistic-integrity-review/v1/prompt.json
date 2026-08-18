@@ -1,0 +1,5 @@
+{
+  "description": "Review normalized clause text for probable extraction or normalization artifacts without rewriting it.",
+  "task": "linguistic-integrity-review",
+  "version": "v1"
+}

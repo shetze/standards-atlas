@@ -1,0 +1,14 @@
+Review this normalized EngineeringDocument clause for probable extraction or normalization artifacts.
+
+Document: {document_key}
+Reference: {reference}
+Title: {title}
+Ancestor headings: {ancestor_headings}
+Content profile: {content_profile}
+
+Normalized clause text:
+---
+{text}
+---
+
+Return only the schema-constrained result. Use "ok" when there is no concrete evidence of an extraction/normalization artifact. Do not propose corrected text.

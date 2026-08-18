@@ -34,6 +34,18 @@ Corpora, proposal runs, reviewed annotations, consensus reports, and qualificati
 
 A matrix candidate is a reproducible combination of model, prompt, context mode, reasoning configuration, repetition, and runtime settings. Execution persists observations incrementally so `--resume` can continue incomplete work. `--overwrite` replaces selected outputs; `--recompute` intentionally reruns completed observations. Metrics distinguish availability, parse success, prediction success, agreement, calibration, and task quality.
 
+## Normalization quality qualification
+
+`application.normalization_quality` is an optional, read-only evaluation capability for
+linguistic integrity checks over already normalized clause text. It reuses existing evaluation
+corpora as clause samples but ignores their semantic gold labels. The LLM classifies only
+probable extraction or normalization artifacts and never rewrites EngineeringDocuments.
+
+Slice 1 intentionally separates this observational model qualification from the deterministic
+normalization pipeline and from any future HITL correction workflow. Reports persist complete
+per-model observations, suspicious findings, agreement/disagreement counts, cache information,
+and a Markdown view optimized for manual inspection.
+
 ## Deterministic pipeline qualification
 
 `application.qualification` is a separate application capability for reproducible
