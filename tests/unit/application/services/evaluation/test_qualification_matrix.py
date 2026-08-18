@@ -830,3 +830,99 @@ def test_cascade_escalates_applicability_structural_conflict() -> None:
     reasons = cascade_escalation_reasons(clause, CascadeResolutionConfig())
 
     assert "applicability_structural_conflict" in reasons
+
+
+def test_capture_initial_knowledge_kind_uses_decision_confidence_for_none() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        capture_resolved_dimensions,
+    )
+
+    clause = SimpleNamespace(
+        primary_function=None,
+        statement_function_confidence=1.0,
+        statement_function_category=SimpleNamespace(value="unanimous"),
+        primary_knowledge_kind=None,
+        knowledge_kind_confidence=0.0,
+        knowledge_kind_decision_confidence=1.0,
+        knowledge_kind_category=SimpleNamespace(value="unanimous"),
+        applicability_present=False,
+        proposed_applicability_functions=(),
+        applicability_decision_confidence=1.0,
+        applicability_category=SimpleNamespace(value="unanimous"),
+        applicability_structural_conflict=False,
+        responsibility_present=False,
+        proposed_responsibility_functions=(),
+        responsibility_decision_confidence=1.0,
+        responsibility_category=SimpleNamespace(value="unanimous"),
+    )
+
+    captured = capture_resolved_dimensions(
+        cumulative_clause=clause,
+        stage_clause=clause,
+        previous_reasons=(),
+        remaining_reasons=(),
+        source="efficient-local",
+        initial_stage=True,
+    )
+
+    assert captured["knowledge_kind"] == {
+        "value": None,
+        "confidence": 1.0,
+        "category": "unanimous",
+        "source": "efficient-local",
+    }
+
+
+def test_effective_cascade_resolution_honors_review_majority_threshold() -> None:
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        effective_cascade_resolution,
+    )
+
+    configured = CascadeResolutionConfig(minimum_confidence=0.60)
+    effective = effective_cascade_resolution(
+        configured,
+        review_majority_min_confidence=0.67,
+    )
+
+    assert configured.minimum_confidence == 0.60
+    assert effective.minimum_confidence == 0.67
+
+
+def test_stage_keeps_unresolved_structural_conflict_without_other_applicability_reason() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_stage_escalation_reasons,
+    )
+
+    cumulative = SimpleNamespace(
+        participating_models=7,
+        category=SimpleNamespace(value="unanimous"),
+        statement_function_confidence=1.0,
+        applicability_structural_conflict=True,
+        applicability_present=True,
+        applicability_confidence=1.0,
+        applicability_support={"present": 1.0, "exclusion": 1.0},
+        applicability_unanimous=True,
+        responsibility_present=False,
+        responsibility_confidence=0.0,
+        responsibility_support={"present": 0.0},
+        responsibility_unanimous=True,
+    )
+    stage = SimpleNamespace(statement_function_confidence=1.0)
+
+    reasons = cascade_stage_escalation_reasons(
+        cumulative_clause=cumulative,
+        stage_clause=stage,
+        previous_reasons=("applicability_structural_conflict",),
+        resolution=CascadeResolutionConfig(
+            escalate_on_applicability_disagreement=False,
+            minimum_applicability_confidence=0.75,
+        ),
+    )
+
+    assert reasons == ("applicability_structural_conflict",)

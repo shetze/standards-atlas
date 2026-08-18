@@ -131,3 +131,36 @@ Engineering methods and measures share the `method_or_measure` knowledge kind.
 The distinction is not sufficiently stable or useful for qualification to justify
 separate model labels. Existing v2 results containing `method` or `measure` must
 be regenerated.
+
+## Qualification analysis artifacts
+
+A consensus-enabled qualification-matrix run writes two analysis artifacts beside the
+matrix report:
+
+- `cascade-provenance.json` records clause-level entry and exit reasons for every cascade
+  stage, configured versus effective resolution policy, and per-dimension resolution
+  counts before and after the stage;
+- `qualification-analysis-metrics.json` summarizes consensus categories, dimension
+  categories, overall resolution states, participation, review reasons, resolution sources,
+  and observed versus unresolved structural conflicts.
+
+The command also creates a versioned ZIP named like
+`<matrix>-qualification-analysis-v1.0-standards-atlas-<version>.zip`. It contains the
+qualification manifest snapshot, qualification and consensus reports, Golden Corpus
+proposal, HITL queue, analysis metrics, cascade provenance, cascade JSON reports, and an
+`archive-manifest.json` with SHA-256 hashes and file sizes.
+
+The cascade keeps the manifest's configured thresholds as provenance. Its effective
+statement-function confidence floor is raised when necessary to match the downstream
+majority auto-acceptance threshold. This prevents a `2/3` majority from being frozen as a
+final cascade decision when the review policy would immediately reject that same
+confidence.
+
+Structural applicability conflicts have separate observed and unresolved states. An
+observed conflict remains available for audit after a later stage resolves it; only an
+unresolved structural conflict forces final review.
+
+Use `--overwrite` after changing cascade resolution semantics when the goal is to measure
+execution behavior itself. `--recompute` can rebuild derived metrics from persisted
+observations, but it cannot retroactively change which clauses earlier runs sent to later
+model stages.

@@ -124,6 +124,8 @@ class ClauseConsensus(BaseModel):
     applicability_unanimous: bool = True
     responsibility_unanimous: bool = True
     applicability_structural_conflict: bool = False
+    applicability_structural_conflict_observed: bool = False
+    applicability_structural_conflict_unresolved: bool = False
     participating_models: int = Field(ge=0)
     votes: tuple[ModelVote, ...] = ()
     label_support: dict[str, float] = Field(default_factory=dict)
@@ -634,6 +636,8 @@ def _resolve_clause(
     knowledge_kind_decision_confidence = knowledge_agreement
     resolution_sources: dict[str, str] = {}
     override = resolution_override or {}
+    applicability_structural_conflict_observed = applicability_structural_conflict
+    applicability_structural_conflict_unresolved = applicability_structural_conflict
     if "statement_function" in override:
         item = override["statement_function"]
         primary = StatementFunction(item["value"]) if item.get("value") else None
@@ -653,6 +657,15 @@ def _resolve_clause(
         resolution_sources["knowledge_kind"] = str(item.get("source", "cascade"))
     if "applicability" in override:
         item = override["applicability"]
+        applicability_structural_conflict_observed = bool(
+            item.get(
+                "structural_conflict_observed",
+                applicability_structural_conflict_observed,
+            )
+        )
+        applicability_structural_conflict_unresolved = bool(
+            item.get("structural_conflict_unresolved", False)
+        )
         app_label = ApplicabilityFunction(item["value"]) if item.get("value") else None
         app_accepted = bool(item.get("present", app_label is not None))
         applicability_decision_confidence = float(item["confidence"])
@@ -696,7 +709,7 @@ def _resolve_clause(
         applicability_confidence=applicability_confidence,
         responsibility_present=resp_accepted,
         responsibility_confidence=responsibility_confidence,
-        applicability_structural_conflict=applicability_structural_conflict,
+        applicability_structural_conflict=applicability_structural_conflict_unresolved,
         policy=policy,
     )
     return {
@@ -741,7 +754,11 @@ def _resolve_clause(
         "responsibility_decision_confidence": responsibility_decision_confidence,
         "applicability_unanimous": applicability_unanimous,
         "responsibility_unanimous": responsibility_unanimous,
-        "applicability_structural_conflict": applicability_structural_conflict,
+        "applicability_structural_conflict": applicability_structural_conflict_unresolved,
+        "applicability_structural_conflict_observed": (applicability_structural_conflict_observed),
+        "applicability_structural_conflict_unresolved": (
+            applicability_structural_conflict_unresolved
+        ),
         "participating_models": model_count,
         "label_support": label_support,
         "knowledge_kind_support": knowledge_kind_support,
@@ -930,6 +947,12 @@ def _write_outputs(
                 "overall_status": item.overall_status.value,
                 "resolution_sources": item.resolution_sources,
                 "applicability_structural_conflict": item.applicability_structural_conflict,
+                "applicability_structural_conflict_observed": (
+                    item.applicability_structural_conflict_observed
+                ),
+                "applicability_structural_conflict_unresolved": (
+                    item.applicability_structural_conflict_unresolved
+                ),
                 "adjudicated": item.adjudicated,
                 "structural_prior": item.structural_prior,
                 "requires_review": item.requires_review,
@@ -1043,7 +1066,7 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Adjudicated: `{str(item.adjudicated).lower()}`",
                 f"- Structural prior: `{item.structural_prior or 'none'}`",
                 "- Applicability structural conflict: "
-                f"`{str(item.applicability_structural_conflict).lower()}`",
+                f"`{str(item.applicability_structural_conflict_unresolved).lower()}`",
                 "- Review reasons:",
                 *[f"  - {reason}" for reason in item.review_reasons],
                 "### Model votes",

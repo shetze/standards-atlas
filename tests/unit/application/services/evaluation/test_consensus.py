@@ -922,3 +922,71 @@ def test_applicability_structural_prior_conflict_requires_review() -> None:
     assert (
         "applicability structural prior conflicts with model consensus" in result["review_reasons"]
     )
+
+
+def test_resolved_structural_conflict_is_audited_but_not_reviewed() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = (
+        ModelVote(
+            model_id="a",
+            primary_function=StatementFunction.DESCRIPTION,
+            applicability_present=True,
+            applicability_function="exclusion",
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="b",
+            primary_function=StatementFunction.DESCRIPTION,
+            applicability_present=True,
+            applicability_function="exclusion",
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="c",
+            primary_function=StatementFunction.DESCRIPTION,
+            applicability_present=True,
+            applicability_function="exception",
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={"applicability_subtype": "exception", "confidence": 0.95},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={
+            "review_categories": {"disputed", "insufficient_evidence"},
+            "accept_majority_min_confidence": 0.67,
+            "accept_majority_min_models": 3,
+            "applicability_min_confidence": 0.75,
+            "responsibility_min_confidence": 0.8,
+            "require_responsibility_evidence": True,
+        },
+        resolution_override={
+            "applicability": {
+                "present": True,
+                "value": "exception",
+                "confidence": 0.95,
+                "category": "strong_consensus",
+                "source": "resolver-stage",
+                "structural_conflict_observed": True,
+                "structural_conflict_unresolved": False,
+            }
+        },
+    )
+
+    assert result["applicability_structural_conflict_observed"] is True
+    assert result["applicability_structural_conflict_unresolved"] is False
+    assert result["applicability_structural_conflict"] is False
+    assert (
+        "applicability structural prior conflicts with model consensus"
+        not in result["review_reasons"]
+    )

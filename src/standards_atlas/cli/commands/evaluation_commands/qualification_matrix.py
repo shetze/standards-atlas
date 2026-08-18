@@ -22,6 +22,12 @@ from standards_atlas.adapters.llm import (
 from standards_atlas.adapters.mcp import (
     McpServerProcessError,
 )
+from standards_atlas.application.semantic_qualification.analysis_archive import (
+    build_analysis_metrics,
+    create_analysis_archive,
+    write_analysis_metrics,
+    write_cascade_provenance,
+)
 from standards_atlas.application.semantic_qualification.proposals import (
     ProposalProgress,
     ProposalRunConfig,
@@ -33,6 +39,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     capture_resolved_dimensions,
     cascade_stage_unresolved_clause_ids,
     cascade_unresolved_clause_ids,
+    effective_cascade_resolution,
     resolve_prompt_version,
 )
 from standards_atlas.application.services.evaluation import (
@@ -153,6 +160,26 @@ def _render_intermediate_resolution_summary(
         )
 
 
+def _resolution_counts(
+    resolutions: dict[str, dict[str, dict[str, object]]],
+) -> dict[str, int]:
+    dimensions = (
+        "statement_function",
+        "knowledge_kind",
+        "applicability",
+        "responsibility",
+    )
+    return {
+        dimension: sum(dimension in clause for clause in resolutions.values())
+        for dimension in dimensions
+    }
+
+
+def _count_reasons(reasons: dict[str, tuple[str, ...]]) -> dict[str, int]:
+    counts = Counter(reason for values in reasons.values() for reason in values)
+    return dict(sorted(counts.items()))
+
+
 @evaluation_app.command("qualification-matrix")
 def qualify_model_prompt_matrix(
     manifest_path: Annotated[Path, typer.Option("--manifest", exists=True, readable=True)],
@@ -254,6 +281,10 @@ def qualify_model_prompt_matrix(
     """
     active_server: RamaLamaServerManager | None = None
     active_mcp_lease = None
+    cascade_stage_metrics: list[dict[str, object]] = []
+    provenance_path: Path | None = None
+    analysis_metrics_path: Path | None = None
+    analysis_archive_path: Path | None = None
     try:
         selected_modes = sum((resume, overwrite, recompute))
         if selected_modes > 1:
@@ -537,7 +568,23 @@ def qualify_model_prompt_matrix(
                                 stage_observation_keys.append(observation_key)
 
                 if manifest.execution.mode == "cascade":
-                    stage_resolution = stage.resolution or manifest.execution.resolution
+                    previous_escalation_reasons = escalation_reasons
+                    configured_resolution = stage.resolution or manifest.execution.resolution
+                    stage_resolution = effective_cascade_resolution(
+                        configured_resolution,
+                        review_majority_min_confidence=(
+                            manifest.consensus.review_policy.accept_majority_min_confidence
+                        ),
+                    )
+                    resolution_counts_before = _resolution_counts(dimension_resolutions)
+                    entry_reasons = (
+                        {clause_id: ("initial_stage",) for clause_id in stage_clause_ids}
+                        if stage_index == 0
+                        else {
+                            clause_id: previous_escalation_reasons.get(clause_id, ())
+                            for clause_id in stage_clause_ids
+                        }
+                    )
                     interim_manifest = QualificationMatrixManifest.model_validate(
                         {
                             **manifest.model_dump(mode="python"),
@@ -564,7 +611,6 @@ def qualify_model_prompt_matrix(
                         structural_priors=(manifest.consensus.structural_priors.model_dump()),
                         example_ids=stage_clause_ids,
                     )
-                    previous_escalation_reasons = escalation_reasons
                     if stage_index == 0:
                         unresolved_clause_ids, escalation_reasons = cascade_unresolved_clause_ids(
                             interim_report.clauses,
@@ -661,6 +707,40 @@ def qualify_model_prompt_matrix(
                                 for reason, count in sorted(reason_counts.items())
                             )
                         )
+                    resolution_counts_after = _resolution_counts(dimension_resolutions)
+                    cascade_stage_metrics.append(
+                        {
+                            "stage_id": stage.id,
+                            "configured_resolution": configured_resolution.model_dump(),
+                            "effective_resolution": stage_resolution.model_dump(),
+                            "entered_clause_count": len(stage_clause_ids),
+                            "entered_clause_ids": list(stage_clause_ids),
+                            "entry_reasons": {
+                                key: list(value) for key, value in entry_reasons.items()
+                            },
+                            "entry_reason_counts": _count_reasons(entry_reasons),
+                            "unresolved_clause_count": len(unresolved_clause_ids),
+                            "unresolved_clause_ids": list(unresolved_clause_ids),
+                            "exit_reasons": {
+                                key: list(value) for key, value in escalation_reasons.items()
+                            },
+                            "exit_reason_counts": _count_reasons(escalation_reasons),
+                            "resolution_counts_before": resolution_counts_before,
+                            "resolution_counts_after": resolution_counts_after,
+                            "newly_resolved_counts": {
+                                dimension: resolution_counts_after[dimension]
+                                - resolution_counts_before[dimension]
+                                for dimension in resolution_counts_after
+                            },
+                        }
+                    )
+            provenance_path = write_cascade_provenance(
+                output_directory=output_directory,
+                matrix_id=manifest.matrix_id,
+                manifest_path=manifest_path,
+                run_mode=run_mode,
+                stages=cascade_stage_metrics,
+            )
             manifest = QualificationMatrixManifest.model_validate(
                 {
                     **manifest.model_dump(mode="python"),
@@ -700,6 +780,38 @@ def qualify_model_prompt_matrix(
                 )
             )
             consensus_paths = (consensus_json, proposal_yaml, review_markdown)
+            if provenance_path is None:
+                provenance_path = write_cascade_provenance(
+                    output_directory=output_directory,
+                    matrix_id=manifest.matrix_id,
+                    manifest_path=manifest_path,
+                    run_mode=run_mode,
+                    stages=cascade_stage_metrics,
+                )
+            analysis_metrics = build_analysis_metrics(
+                report=consensus_report,
+                cascade_stages=cascade_stage_metrics,
+            )
+            analysis_metrics_path = write_analysis_metrics(
+                output_directory=output_directory,
+                matrix_id=manifest.matrix_id,
+                metrics=analysis_metrics,
+            )
+            analysis_archive_path = create_analysis_archive(
+                output_directory=output_directory,
+                matrix_id=manifest.matrix_id,
+                manifest_path=manifest_path,
+                core_paths=(
+                    json_path,
+                    markdown_path,
+                    consensus_json,
+                    proposal_yaml,
+                    review_markdown,
+                    provenance_path,
+                    analysis_metrics_path,
+                ),
+                cascade_directory=(output_directory / manifest.matrix_id / "cascade"),
+            )
     except (
         McpServerProcessError,
         OSError,
@@ -723,5 +835,11 @@ def qualify_model_prompt_matrix(
         typer.echo(f"Consensus report         : {consensus_paths[0]}")
         typer.echo(f"Golden proposal          : {consensus_paths[1]}")
         typer.echo(f"HITL review queue        : {consensus_paths[2]}")
+    if provenance_path is not None:
+        typer.echo(f"Cascade provenance       : {provenance_path}")
+    if analysis_metrics_path is not None:
+        typer.echo(f"Analysis metrics         : {analysis_metrics_path}")
+    if analysis_archive_path is not None:
+        typer.echo(f"Analysis archive         : {analysis_archive_path}")
     if not report.passed:
         raise typer.Exit(code=1)

@@ -14,6 +14,18 @@
 
 ### Changed
 
+- Persist negative Knowledge Kind decisions with decision confidence instead of positive-label confidence.
+- Align effective cascade statement-function finalization with the downstream review acceptance threshold.
+- Distinguish observed from unresolved structural-applicability conflicts so resolved conflicts remain auditable without forcing stale HITL review.
+- Record clause-level cascade entry/exit provenance and per-stage dimension-resolution deltas.
+
+### Added
+
+- Generate `qualification-analysis-metrics.json` and a versioned qualification-analysis ZIP with report, configuration, cascade, provenance, and SHA-256 manifest data at the end of consensus-enabled matrix runs.
+- ADR 0056 documents qualification cascade provenance and policy coherence.
+
+### Changed
+
 - Make semantic consensus dimension-aware: unanimous `none` decisions now carry decision
   confidence, cascade resolver decisions remain authoritative in final aggregation, scope
   context is governed by applicability, and structural-prior/applicability conflicts are

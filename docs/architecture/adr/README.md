@@ -30,6 +30,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0029](0029-visual-content-contract-and-caption-ownership.md) | Define visual content and caption ownership |
 | [0030](0030-hierarchical-list-reconstruction.md) | Reconstruct hierarchical lists from layout evidence |
 | [0055](0055-preserve-visual-formulas-before-semantic-transcription.md) | Preserve visual formulas before semantic transcription |
+| [0056](0056-preserve-cascade-resolution-provenance.md) | Preserve cascade resolution provenance |
 
 ## Candidate detection, alignment, and review
 

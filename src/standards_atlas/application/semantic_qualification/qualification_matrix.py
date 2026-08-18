@@ -110,6 +110,28 @@ class CascadeResolutionConfig(BaseModel):
     statement_function_resolver_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
 
 
+def effective_cascade_resolution(
+    resolution: CascadeResolutionConfig,
+    *,
+    review_majority_min_confidence: float,
+) -> CascadeResolutionConfig:
+    """Align cascade finalization with downstream review acceptance.
+
+    A statement-function majority must not be frozen as resolved when the
+    configured review policy would deterministically send the same confidence
+    to HITL. The manifest remains unchanged; this returns the auditable
+    effective policy used for execution.
+    """
+    return resolution.model_copy(
+        update={
+            "minimum_confidence": max(
+                resolution.minimum_confidence,
+                review_majority_min_confidence,
+            )
+        }
+    )
+
+
 class CascadeStage(BaseModel):
     """One ordered model and prompt stage in cascade execution."""
 
@@ -220,7 +242,12 @@ def cascade_stage_escalation_reasons(
                 reasons.append("statement_function_confidence")
 
     applicability_unresolved = bool(
-        unresolved & {"applicability_disagreement", "applicability_confidence"}
+        unresolved
+        & {
+            "applicability_disagreement",
+            "applicability_confidence",
+            "applicability_structural_conflict",
+        }
     )
     if applicability_unresolved:
         if "applicability_structural_conflict" in unresolved and getattr(
@@ -353,7 +380,7 @@ def capture_resolved_dimensions(
                 if cumulative_clause.primary_knowledge_kind is not None
                 else None
             ),
-            "confidence": cumulative_clause.knowledge_kind_confidence,
+            "confidence": cumulative_clause.knowledge_kind_decision_confidence,
             "category": cumulative_clause.knowledge_kind_category.value,
             "source": source,
         }
@@ -368,6 +395,18 @@ def capture_resolved_dimensions(
             "confidence": cumulative_clause.applicability_decision_confidence,
             "category": cumulative_clause.applicability_category.value,
             "source": source,
+            "structural_conflict_observed": (
+                "applicability_structural_conflict" in previous
+                or "applicability_structural_conflict" in remaining
+                or bool(
+                    getattr(
+                        cumulative_clause,
+                        "applicability_structural_conflict_observed",
+                        getattr(cumulative_clause, "applicability_structural_conflict", False),
+                    )
+                )
+            ),
+            "structural_conflict_unresolved": ("applicability_structural_conflict" in remaining),
         }
     if resolved(_RESPONSIBILITY_REASONS):
         result["responsibility"] = {
