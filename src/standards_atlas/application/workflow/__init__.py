@@ -5,6 +5,12 @@ from standards_atlas.application.workflow.executor import (
     SubprocessCommandRunner,
     WorkflowExecutor,
 )
+from standards_atlas.application.workflow.manifest_registry import (
+    WorkflowManifestLoader,
+    WorkflowManifestSet,
+    WorkflowManifestType,
+    parse_manifest_options,
+)
 from standards_atlas.application.workflow.models import (
     ArtifactPolicy,
     WorkflowExecutionResult,
@@ -30,6 +36,9 @@ __all__ = [
     "QualificationWorkflowPlanner",
     "SubprocessCommandRunner",
     "WorkflowExecutionResult",
+    "WorkflowManifestLoader",
+    "WorkflowManifestSet",
+    "WorkflowManifestType",
     "WorkflowExecutor",
     "WorkflowPlan",
     "WorkflowPlanner",
@@ -38,4 +47,5 @@ __all__ = [
     "WorkflowStage",
     "WorkflowStep",
     "WorkflowTask",
+    "parse_manifest_options",
 ]

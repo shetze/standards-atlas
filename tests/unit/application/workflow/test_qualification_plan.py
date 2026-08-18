@@ -64,6 +64,7 @@ def test_overwrite_propagates_to_derived_document_and_matrix_steps() -> None:
     plan = _plan(overwrite=True)
     matrix = plan.steps[-1]
 
+    assert "--no-fail-on-matrix-failure" in matrix.command
     assert matrix.command[-1] == "--overwrite"
     assert any(
         step.stage is WorkflowStage.NORMALIZE and "--overwrite" in step.command

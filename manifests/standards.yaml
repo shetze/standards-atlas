@@ -1,4 +1,5 @@
-version: 2
+manifest_type: standards
+schema_version: 2
 knowledge_domains:
 - key: safety
   name: Safety

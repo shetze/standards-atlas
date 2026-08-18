@@ -4,7 +4,7 @@
 
 ```bash
 uv run standards-atlas catalog validate manifests/standards.yaml
-uv run standards-atlas workflow plan --manifest manifests/standards.yaml --family FAMILY
+uv run standards-atlas workflow plan --manifests manifests/standards.yaml --family FAMILY
 uv run standards-atlas docling inspect DOCUMENT
 uv run standards-atlas normalize inspect DOCUMENT
 uv run standards-atlas references inspect DOCUMENT

@@ -114,6 +114,7 @@ class QualificationWorkflowPlanner:
             str(manifest_path),
             "--output",
             str(qualification_output),
+            "--no-fail-on-matrix-failure",
         ]
         if overwrite:
             matrix_command.append("--overwrite")

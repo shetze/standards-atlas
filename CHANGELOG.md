@@ -12,6 +12,12 @@
 
 ## Unreleased
 
+- Fix qualification workflow execution so a completed matrix with a failing
+  qualification result remains a valid workflow outcome while direct matrix
+  invocations can still use exit status 1 as a CI quality gate.
+
+- Add a typed workflow manifest envelope and consolidate workflow inputs under repeatable/comma-separated `--manifests`.
+
 - Unify workflow orchestration under `workflow plan` and `workflow run` with `--task documents|qualification`; qualification composes Markdown publication, corpus build, and matrix evaluation while excluding Doorstop publication.
 - Replace the workflow `--catalog` option with `--manifest` and move the canonical standards definition to `manifests/standards.yaml`.
 - Move the canonical qualification matrix manifest to `manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml` and expose it as `--qualification-manifest`.

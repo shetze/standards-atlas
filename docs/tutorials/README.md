@@ -9,10 +9,10 @@ Tutorials provide complete learning paths through representative workflows. Repl
 ```bash
 uv run standards-atlas catalog validate manifests/standards.yaml
 uv run standards-atlas workflow plan \\
-  --manifest manifests/standards.yaml \\
+  --manifests manifests/standards.yaml \\
   --family EN50716
 uv run standards-atlas workflow run \\
-  --manifest manifests/standards.yaml \\
+  --manifests manifests/standards.yaml \\
   --family EN50716
 ```
 
@@ -28,7 +28,7 @@ uv run standards-atlas document export markdown EN50716 \\
 
 ```bash
 uv run standards-atlas workflow run \\
-  --manifest manifests/standards.yaml \\
+  --manifests manifests/standards.yaml \\
   --family EN50716 \\
   --overwrite \\
   --keep docling

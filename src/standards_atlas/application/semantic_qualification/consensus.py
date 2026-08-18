@@ -600,6 +600,7 @@ def _resolve_clause(
 
     statement_function_confidence = primary_agreement
     knowledge_kind_confidence = knowledge_agreement if primary_knowledge is not None else 0.0
+    knowledge_kind_decision_confidence = knowledge_agreement
     applicability_decision_confidence = _dimension_decision_confidence(
         present=app_accepted,
         positive_confidence=app_label_support,
@@ -615,7 +616,11 @@ def _resolve_clause(
 
     statement_category = category
     knowledge_category = _category_for_confidence(
-        knowledge_kind_confidence, model_count, minimum_models, strong_threshold, majority_threshold
+        knowledge_kind_decision_confidence,
+        model_count,
+        minimum_models,
+        strong_threshold,
+        majority_threshold,
     )
     applicability_category = _category_for_confidence(
         applicability_decision_confidence,
@@ -633,7 +638,6 @@ def _resolve_clause(
     )
 
     statement_function_decision_confidence = statement_function_confidence
-    knowledge_kind_decision_confidence = knowledge_agreement
     resolution_sources: dict[str, str] = {}
     override = resolution_override or {}
     applicability_structural_conflict_observed = applicability_structural_conflict

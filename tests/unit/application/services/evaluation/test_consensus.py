@@ -17,7 +17,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     MatrixObservation,
 )
 from standards_atlas.application.services.evaluation import ModelConsensusService
-from standards_atlas.domain.model import StatementFunction
+from standards_atlas.domain.model import KnowledgeKind, StatementFunction
 
 
 def _run(
@@ -606,6 +606,123 @@ def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None
     assert (
         "majority consensus does not meet automatic-acceptance policy" in result["review_reasons"]
     )
+
+
+def test_unanimous_none_knowledge_kind_is_unanimous_decision() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = tuple(
+        ModelVote(
+            model_id=f"model-{index}",
+            primary_function=StatementFunction.DESCRIPTION,
+            repetitions=1,
+            stability=1.0,
+        )
+        for index in range(3)
+    )
+
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+    )
+
+    assert result["primary_knowledge_kind"] is None
+    assert result["knowledge_kind_confidence"] == 0.0
+    assert result["knowledge_kind_decision_confidence"] == 1.0
+    assert result["knowledge_kind_category"] is ConsensusCategory.UNANIMOUS
+
+
+def test_majority_none_knowledge_kind_uses_decision_confidence() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = (
+        ModelVote(
+            model_id="a",
+            primary_function=StatementFunction.DESCRIPTION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="b",
+            primary_function=StatementFunction.DESCRIPTION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="c",
+            primary_function=StatementFunction.DESCRIPTION,
+            primary_knowledge_kind=KnowledgeKind.CONCEPT,
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+    )
+
+    assert result["primary_knowledge_kind"] is None
+    assert result["knowledge_kind_confidence"] == 0.0
+    assert result["knowledge_kind_decision_confidence"] == pytest.approx(2 / 3)
+    assert result["knowledge_kind_category"] is ConsensusCategory.MAJORITY
+
+
+def test_disputed_knowledge_kind_remains_disputed() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = (
+        ModelVote(
+            model_id="a",
+            primary_function=StatementFunction.DESCRIPTION,
+            primary_knowledge_kind=KnowledgeKind.CONCEPT,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="b",
+            primary_function=StatementFunction.DESCRIPTION,
+            primary_knowledge_kind=KnowledgeKind.PROCESS,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="c",
+            primary_function=StatementFunction.DESCRIPTION,
+            primary_knowledge_kind=KnowledgeKind.TECHNIQUE_OR_MEASURE,
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+    )
+
+    assert result["knowledge_kind_decision_confidence"] == pytest.approx(1 / 3)
+    assert result["knowledge_kind_category"] is ConsensusCategory.DISPUTED
 
 
 def test_high_responsibility_confidence_does_not_mask_missing_statement_function() -> None:

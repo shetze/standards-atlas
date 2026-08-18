@@ -30,7 +30,8 @@ The catalog is therefore a **curated configuration file**. It is **not** generat
 The catalog consists of several independent sections.
 
 ```yaml
-version: 1
+manifest_type: standards
+schema_version: 1
 
 standards:
   ...

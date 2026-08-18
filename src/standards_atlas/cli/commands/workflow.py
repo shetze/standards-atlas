@@ -12,10 +12,13 @@ from standards_atlas.application.semantic_qualification.clause_access import Sam
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
     QualificationWorkflowPlanner,
+    WorkflowManifestLoader,
+    WorkflowManifestType,
     WorkflowPlan,
     WorkflowRunReporter,
     WorkflowStage,
     WorkflowTask,
+    parse_manifest_options,
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import catalog_app, workflow_app
@@ -27,7 +30,7 @@ def validate_catalog(
     manifest: Annotated[Path, typer.Argument(help="YAML standards manifest.")],
 ) -> None:
     model = YamlStandardCatalogReader().read(manifest)
-    typer.echo(f"Manifest version       : {model.version}")
+    typer.echo(f"Manifest schema        : {model.schema_version}")
     typer.echo(f"Knowledge domains      : {len(model.knowledge_domains)}")
     typer.echo(f"Industry sectors       : {len(model.industry_sectors)}")
     typer.echo(f"Standard families      : {len(model.families)}")
@@ -37,19 +40,16 @@ def validate_catalog(
 
 @workflow_app.command("plan")
 def plan_workflow(
-    manifest: Annotated[Path, typer.Option("--manifest", help="YAML standards manifest.")],
+    manifests: Annotated[
+        list[str],
+        typer.Option(
+            "--manifests",
+            help="Workflow manifests; repeat or provide comma-separated paths.",
+        ),
+    ],
     task: Annotated[
         WorkflowTask, typer.Option("--task", help="Workflow task to plan.")
     ] = WorkflowTask.DOCUMENTS,
-    qualification_manifest: Annotated[
-        Path,
-        typer.Option(
-            "--qualification-manifest",
-            exists=True,
-            readable=True,
-            help="Qualification-matrix manifest used by the qualification task.",
-        ),
-    ] = cli_defaults.DEFAULT_QUALIFICATION_MATRIX,
     family: Annotated[
         list[str] | None, typer.Option("--family", help="Family key; repeat as needed.")
     ] = cli_defaults.DEFAULT_NONE,
@@ -111,9 +111,8 @@ def plan_workflow(
 ) -> None:
     """Plan either document publication or the full qualification workflow."""
     plan = _build_task_plan(
-        manifest=manifest,
+        manifests=tuple(manifests),
         task=task,
-        qualification_manifest=qualification_manifest,
         family=tuple(family or ()),
         profile=profile,
         all_families=all_families,
@@ -136,19 +135,16 @@ def plan_workflow(
 
 @workflow_app.command("run")
 def run_workflow(
-    manifest: Annotated[Path, typer.Option("--manifest", help="YAML standards manifest.")],
+    manifests: Annotated[
+        list[str],
+        typer.Option(
+            "--manifests",
+            help="Workflow manifests; repeat or provide comma-separated paths.",
+        ),
+    ],
     task: Annotated[
         WorkflowTask, typer.Option("--task", help="Workflow task to execute.")
     ] = WorkflowTask.DOCUMENTS,
-    qualification_manifest: Annotated[
-        Path,
-        typer.Option(
-            "--qualification-manifest",
-            exists=True,
-            readable=True,
-            help="Qualification-matrix manifest used by the qualification task.",
-        ),
-    ] = cli_defaults.DEFAULT_QUALIFICATION_MATRIX,
     family: Annotated[
         list[str] | None, typer.Option("--family", help="Family key; repeat as needed.")
     ] = cli_defaults.DEFAULT_NONE,
@@ -217,9 +213,8 @@ def run_workflow(
 ) -> None:
     """Execute either document publication or the full qualification workflow."""
     plan = _build_task_plan(
-        manifest=manifest,
+        manifests=tuple(manifests),
         task=task,
-        qualification_manifest=qualification_manifest,
         family=tuple(family or ()),
         profile=profile,
         all_families=all_families,
@@ -246,12 +241,9 @@ def run_workflow(
             plan,
             result,
             project_root=Path.cwd(),
-            manifest_path=manifest,
+            manifest_paths=_resolved_manifest_paths(tuple(manifests)),
             hierarchy_key=hierarchy,
             task=task,
-            qualification_manifest_path=(
-                qualification_manifest if task is WorkflowTask.QUALIFICATION else None
-            ),
         )
         typer.echo(f"Workflow completed      : {len(result.executed_steps)} steps")
         typer.echo(f"Run report JSON         : {report_json}")
@@ -268,9 +260,8 @@ def run_workflow(
 
 def _build_task_plan(
     *,
-    manifest: Path,
+    manifests: tuple[str, ...],
     task: WorkflowTask,
-    qualification_manifest: Path,
     family: tuple[str, ...],
     profile: str | None,
     all_families: bool,
@@ -297,7 +288,17 @@ def _build_task_plan(
             "--force is only valid for --task documents; use --regenerate-docling or --overwrite"
         )
 
-    model = YamlStandardCatalogReader().read(manifest)
+    try:
+        resolved = WorkflowManifestLoader().load(parse_manifest_options(manifests))
+        standards_manifest = resolved.require(WorkflowManifestType.STANDARDS)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    qualification_manifest = resolved.optional(WorkflowManifestType.QUALIFICATION_MATRIX)
+    if task is WorkflowTask.QUALIFICATION and qualification_manifest is None:
+        raise typer.BadParameter(
+            "--task qualification requires a manifest of type 'qualification_matrix'"
+        )
+    model = YamlStandardCatalogReader().read(standards_manifest)
     keys = (
         model.doorstop_hierarchy(hierarchy).families
         if hierarchy is not None
@@ -313,6 +314,7 @@ def _build_task_plan(
             hierarchy_key=hierarchy,
         )
 
+    assert qualification_manifest is not None
     qualification = QualificationWorkflowPlanner().plan(
         model,
         family_keys=keys,
@@ -335,6 +337,13 @@ def _build_task_plan(
         force=qualification.document_plan.force,
         kept_stages=qualification.document_plan.kept_stages,
     )
+
+
+def _resolved_manifest_paths(values: tuple[str, ...]) -> tuple[Path, ...]:
+    try:
+        return WorkflowManifestLoader().load(parse_manifest_options(values)).paths
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
 
 def _select_manifest_families(

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -265,7 +266,8 @@ class DoorstopHierarchyDefinition(BaseModel):
 
 class StandardCatalog(BaseModel):
     model_config = ConfigDict(frozen=True)
-    version: int = 1
+    manifest_type: Literal["standards"] = "standards"
+    schema_version: int = 1
     knowledge_domains: tuple[KnowledgeDomain, ...]
     industry_sectors: tuple[IndustrySector, ...]
     families: tuple[StandardFamilyDefinition, ...]

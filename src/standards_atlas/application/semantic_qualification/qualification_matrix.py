@@ -583,6 +583,7 @@ class QualificationMatrixManifest(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    manifest_type: Literal["qualification_matrix"] = "qualification_matrix"
     schema_version: str = "1.0"
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)

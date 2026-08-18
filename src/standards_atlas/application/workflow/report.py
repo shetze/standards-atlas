@@ -29,7 +29,7 @@ class ArtifactDigest:
 class WorkflowRunReporter:
     """Persist an auditable derivation record for a completed workflow run."""
 
-    schema_version = 2
+    schema_version = 3
 
     def write(
         self,
@@ -37,22 +37,16 @@ class WorkflowRunReporter:
         result: WorkflowExecutionResult,
         *,
         project_root: Path,
-        manifest_path: Path,
+        manifest_paths: tuple[Path, ...],
         hierarchy_key: str | None = None,
         task: WorkflowTask = WorkflowTask.DOCUMENTS,
-        qualification_manifest_path: Path | None = None,
         now: Callable[[], datetime] | None = None,
     ) -> tuple[Path, Path]:
         if not result.completed:
             raise ValueError("workflow run reports may only be written for completed runs")
 
         root = project_root.resolve()
-        manifest = manifest_path.resolve()
-        qualification_manifest = (
-            qualification_manifest_path.resolve()
-            if qualification_manifest_path is not None
-            else None
-        )
+        manifests = tuple(path.resolve() for path in manifest_paths)
         executed = set(result.executed_steps)
         plan_payload = [self._step_payload(step) for step in plan.steps]
         plan_hash = self._json_hash(plan_payload)
@@ -78,9 +72,7 @@ class WorkflowRunReporter:
                 }
             )
 
-        inputs = [self._digest(manifest, root)]
-        if qualification_manifest is not None:
-            inputs.append(self._digest(qualification_manifest, root))
+        inputs = [self._digest(manifest, root) for manifest in manifests]
         payload = {
             "schema_version": self.schema_version,
             "run_id": run_id,
@@ -89,13 +81,8 @@ class WorkflowRunReporter:
             "standards_atlas_version": __version__,
             "python_version": platform.python_version(),
             "git": self._git_identity(root),
-            "manifest": self._relative(manifest, root),
+            "manifests": [self._relative(manifest, root) for manifest in manifests],
             "task": task.value,
-            "qualification_manifest": (
-                self._relative(qualification_manifest, root)
-                if qualification_manifest is not None
-                else None
-            ),
             "hierarchy": hierarchy_key,
             "families": list(plan.families),
             "force": plan.force,
@@ -192,8 +179,7 @@ class WorkflowRunReporter:
             f"- **Completed:** {payload['completed_at']}",
             f"- **Standards Atlas:** {payload['standards_atlas_version']}",
             f"- **Task:** `{payload['task']}`",
-            f"- **Manifest:** `{payload['manifest']}`",
-            f"- **Qualification manifest:** `{payload['qualification_manifest'] or '-'}`",
+            "- **Manifests:** " + ", ".join(f"`{item}`" for item in payload["manifests"]),
             f"- **Hierarchy:** `{payload['hierarchy'] or '-'}`",
             f"- **Plan SHA-256:** `{payload['plan_sha256']}`",
             "- **Steps:** "

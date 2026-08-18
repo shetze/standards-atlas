@@ -15,7 +15,8 @@ uv run standards-atlas catalog validate manifests/standards.yaml
 ## Top-level structure
 
 ```yaml
-version: 2
+manifest_type: standards
+schema_version: 2
 knowledge_domains: []
 industry_sectors: []
 families: []

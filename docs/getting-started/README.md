@@ -40,7 +40,7 @@ Select exactly one of `--family`, `--profile`, `--all`, or a configured `--hiera
 
 ```bash
 uv run standards-atlas workflow plan \
-  --manifest manifests/standards.yaml \
+  --manifests manifests/standards.yaml \
   --family EN50716
 ```
 
@@ -49,16 +49,16 @@ Planning is read-only. It lists deterministic stages and marks manual review gat
 Other selections include:
 
 ```bash
-uv run standards-atlas workflow plan --manifest manifests/standards.yaml --profile railway
-uv run standards-atlas workflow plan --manifest manifests/standards.yaml --hierarchy functional-safety
-uv run standards-atlas workflow plan --manifest manifests/standards.yaml --all
+uv run standards-atlas workflow plan --manifests manifests/standards.yaml --profile railway
+uv run standards-atlas workflow plan --manifests manifests/standards.yaml --hierarchy functional-safety
+uv run standards-atlas workflow plan --manifests manifests/standards.yaml --all
 ```
 
 ## Run a workflow
 
 ```bash
 uv run standards-atlas workflow run \
-  --manifest manifests/standards.yaml \
+  --manifests manifests/standards.yaml \
   --family EN50716
 ```
 
@@ -66,7 +66,7 @@ A run may pause intentionally for alignment or AtlasData review. Complete the ge
 
 ```bash
 uv run standards-atlas workflow run \
-  --manifest manifests/standards.yaml \
+  --manifests manifests/standards.yaml \
   --family EN50716 \
   --continue-after-review
 ```
@@ -79,7 +79,7 @@ Use `--force` to regenerate all reproducible artefacts, including Docling output
 
 ```bash
 uv run standards-atlas workflow run \
-  --manifest manifests/standards.yaml \
+  --manifests manifests/standards.yaml \
   --family EN50716 \
   --force
 ```
@@ -88,7 +88,7 @@ Use `--overwrite` to regenerate derived artefacts and `--keep` to retain selecte
 
 ```bash
 uv run standards-atlas workflow run \
-  --manifest manifests/standards.yaml \
+  --manifests manifests/standards.yaml \
   --family EN50716 \
   --overwrite \
   --keep docling

@@ -263,6 +263,17 @@ def qualify_model_prompt_matrix(
             help="Keep proposals and recompute metrics, qualification, and consensus only.",
         ),
     ] = False,
+    fail_on_matrix_failure: Annotated[
+        bool,
+        typer.Option(
+            "--fail-on-matrix-failure/--no-fail-on-matrix-failure",
+            help=(
+                "Exit with status 1 when qualification thresholds are not met; "
+                "disable for orchestrated workflows that consume the reports."
+            ),
+            show_default=True,
+        ),
+    ] = True,
     limit: Annotated[
         int | None, typer.Option("--limit", min=1, help="Limit clauses per matrix run.")
     ] = None,
@@ -841,5 +852,5 @@ def qualify_model_prompt_matrix(
         typer.echo(f"Analysis metrics         : {analysis_metrics_path}")
     if analysis_archive_path is not None:
         typer.echo(f"Analysis archive         : {analysis_archive_path}")
-    if not report.passed:
+    if not report.passed and fail_on_matrix_failure:
         raise typer.Exit(code=1)

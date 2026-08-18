@@ -175,10 +175,9 @@ and the qualification matrix:
 ```bash
 uv run standards-atlas workflow plan \
   --task qualification \
-  --manifest manifests/standards.yaml \
+  --manifests \
+    manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
   --hierarchy functional-safety \
-  --qualification-manifest \
-    manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
   --knowledge-domain functional-safety \
   --corpus-count 500 \
   --corpus-strategy representative_stratified \
@@ -191,8 +190,9 @@ stops document publication at Markdown and never contains Doorstop export or Doo
 publication steps. By default it reuses existing `.atlas/docling` artifacts. Add
 `--regenerate-docling` to regenerate Docling and all downstream artifacts.
 
-The standards manifest is always supplied with `--manifest`. The separate
-`--qualification-manifest` is the source of truth for `matrix_id`, `corpus_id`, and the
+Workflow inputs are supplied through the repeatable `--manifests` option. Each file declares
+its role through the common `manifest_type` and `schema_version` header. The
+`qualification_matrix` manifest is the source of truth for `matrix_id`, `corpus_id`, and the
 semantic task version used by corpus construction. The canonical checked-in qualification
 manifest is
 `manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml`.
