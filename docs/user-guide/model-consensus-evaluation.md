@@ -5,7 +5,7 @@ Model consensus is a proposal mechanism for focusing human review. It is not an 
 Run the configured qualification matrix first:
 
 ```bash
-uv run standards-atlas evaluation qualification-matrix   --manifest local/evaluation/qualification/semantic-role-v1.yaml   --output local/evaluation/qualification
+uv run standards-atlas evaluation qualification-matrix   --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml   --output local/evaluation/qualification
 ```
 
 Repeated predictions are collapsed per model before votes are compared across models. Reports distinguish unanimous agreement, strong or majority consensus, disputes and insufficient evidence.

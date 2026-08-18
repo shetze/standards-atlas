@@ -5,7 +5,7 @@ The YAML catalog is the control plane for repeatable processing. It declares kno
 Validate every catalog change:
 
 ```bash
-uv run standards-atlas catalog validate catalogs/standards.yaml
+uv run standards-atlas catalog validate manifests/standards.yaml
 ```
 
 ## Page selection

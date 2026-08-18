@@ -5,15 +5,15 @@ The catalog-driven workflow is the preferred entry point. Individual commands re
 ## Plan and run
 
 ```bash
-uv run standards-atlas workflow plan   --catalog catalogs/standards.yaml   --profile functional-safety
+uv run standards-atlas workflow plan   --manifest manifests/standards.yaml   --profile functional-safety
 
-uv run standards-atlas workflow run   --catalog catalogs/standards.yaml   --profile functional-safety
+uv run standards-atlas workflow run   --manifest manifests/standards.yaml   --profile functional-safety
 ```
 
 Select exactly one family selection mode. A hierarchy can be processed directly:
 
 ```bash
-uv run standards-atlas workflow run   --catalog catalogs/standards.yaml   --hierarchy functional-safety
+uv run standards-atlas workflow run   --manifest manifests/standards.yaml   --hierarchy functional-safety
 ```
 
 Successful runs write JSON and Markdown derivation reports.
@@ -70,7 +70,7 @@ The workflow imports the reviewed structure, enriches clauses from aligned norma
 After completing requested reviews, rerun the same selection with:
 
 ```bash
-uv run standards-atlas workflow run   --catalog catalogs/standards.yaml   --family EN50716   --continue-after-review
+uv run standards-atlas workflow run   --manifest manifests/standards.yaml   --family EN50716   --continue-after-review
 ```
 
 This flag does not approve proposals. It only permits execution when the expected reviewed artefacts already exist.

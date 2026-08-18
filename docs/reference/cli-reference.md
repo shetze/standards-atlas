@@ -13,7 +13,7 @@ uv run standards-atlas workflow run --help
 - `validate`, `trace`: repository validation and traceability helpers
 - `inspect data`: inspect legacy data artefacts
 - `catalog validate`: validate catalog structure and references
-- `workflow plan`, `workflow run`: plan or execute catalog-driven processing
+- `workflow plan --task documents|qualification`, `workflow run`: plan or execute catalog-driven processing
 
 ## AtlasData
 

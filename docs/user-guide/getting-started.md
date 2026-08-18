@@ -12,7 +12,7 @@
 ```bash
 uv sync --dev
 uv run standards-atlas --version
-uv run standards-atlas catalog validate catalogs/standards.yaml
+uv run standards-atlas catalog validate manifests/standards.yaml
 ```
 
 Docling is installed as a project dependency. Its conversion output is private source-derived material and belongs under `.atlas/`, not in a public repository.
@@ -21,7 +21,7 @@ Docling is installed as a project dependency. Its conversion output is private s
 
 ```bash
 uv run standards-atlas workflow plan \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --family EN50716
 ```
 
@@ -31,7 +31,7 @@ The plan lists deterministic steps and marks manual review gates.
 
 ```bash
 uv run standards-atlas workflow run \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --family EN50716
 ```
 
@@ -39,7 +39,7 @@ The first run normally pauses at a review gate. Complete the generated alignment
 
 ```bash
 uv run standards-atlas workflow run \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --family EN50716 \
   --continue-after-review
 ```
@@ -47,8 +47,8 @@ uv run standards-atlas workflow run \
 ## Run a profile or the complete catalog
 
 ```bash
-uv run standards-atlas workflow plan --catalog catalogs/standards.yaml --profile railway
-uv run standards-atlas workflow run --catalog catalogs/standards.yaml --all
+uv run standards-atlas workflow plan --manifest manifests/standards.yaml --profile railway
+uv run standards-atlas workflow run --manifest manifests/standards.yaml --all
 ```
 
 Use `--force` only to regenerate artefacts for commands that explicitly support safe replacement. It does not authorize destructive replacement of private Docling conversion results.

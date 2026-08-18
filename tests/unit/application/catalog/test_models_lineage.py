@@ -10,7 +10,7 @@ from standards_atlas.application.catalog.models import (
 
 
 def test_catalog_models_railway_software_lineage() -> None:
-    catalog_path = Path(__file__).parents[4] / "catalogs" / "standards.yaml"
+    catalog_path = Path(__file__).parents[4] / "manifests" / "standards.yaml"
     payload = yaml.safe_load(catalog_path.read_text(encoding="utf-8"))
     model = StandardCatalog.model_validate(payload)
     lineage = next(item for item in model.lineages if item.key == "cenelec-railway-software-safety")

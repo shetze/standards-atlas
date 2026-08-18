@@ -14,7 +14,7 @@ from standards_atlas.application.workflow import (
 
 
 def test_plans_multipart_family_with_one_family_export() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("ISO26262",), catalog_root=Path.cwd()
     )
@@ -25,7 +25,7 @@ def test_plans_multipart_family_with_one_family_export() -> None:
 
 
 def test_multipart_family_without_atlasdata_uses_docling_onboarding() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("IEC11889",), catalog_root=Path.cwd()
     )
@@ -54,7 +54,7 @@ def test_multipart_family_without_atlasdata_uses_docling_onboarding() -> None:
 
 
 def test_missing_atlasdata_stops_at_onboarding_gate() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("IEC29100",), catalog_root=Path.cwd()
     )
@@ -63,7 +63,7 @@ def test_missing_atlasdata_stops_at_onboarding_gate() -> None:
 
 
 def test_references_detect_uses_no_override_option() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("EN50716",), catalog_root=Path.cwd()
     )
@@ -79,7 +79,7 @@ def test_references_detect_uses_no_override_option() -> None:
 
 
 def test_align_review_export_uses_no_overwrite_option() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("EN50716",), catalog_root=Path.cwd()
     )
@@ -103,7 +103,7 @@ class RecordingRunner:
 
 
 def test_execute_collects_all_review_gates_instead_of_stopping_at_first(tmp_path: Path) -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("EN50716", "EN50657"),
@@ -130,7 +130,7 @@ def test_execute_collects_all_review_gates_instead_of_stopping_at_first(tmp_path
 
 
 def test_continue_after_review_executes_remaining_pipeline(tmp_path: Path) -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("EN50716",),
@@ -154,7 +154,7 @@ def test_continue_after_review_executes_remaining_pipeline(tmp_path: Path) -> No
 
 
 def test_enrich_content_uses_no_overwrite_option() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("EN50716",), catalog_root=Path.cwd()
     )
@@ -170,7 +170,7 @@ def test_enrich_content_uses_no_overwrite_option() -> None:
 
 
 def test_force_only_replaces_supported_derived_artifacts() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("EN50716",),
@@ -189,7 +189,7 @@ def test_force_only_replaces_supported_derived_artifacts() -> None:
 
 
 def test_force_never_overwrites_docling_source_artifacts() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("EN50716",),
@@ -205,7 +205,7 @@ def test_force_never_overwrites_docling_source_artifacts() -> None:
 
 
 def test_force_adds_overwrite_to_atlasdata_onboarding_only() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("IEC29100",),
@@ -219,7 +219,7 @@ def test_force_adds_overwrite_to_atlasdata_onboarding_only() -> None:
 
 
 def test_normal_plan_contains_no_unnecessary_overwrite_options() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("EN50716", "IEC29100"),
@@ -231,7 +231,7 @@ def test_normal_plan_contains_no_unnecessary_overwrite_options() -> None:
 
 
 def test_review_exports_are_protected_artifacts() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("EN50716",),
@@ -247,7 +247,7 @@ def test_review_exports_are_protected_artifacts() -> None:
 
 
 def test_iec61508_normalization_uses_catalog_page_selection() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("IEC61508",), catalog_root=Path.cwd()
     )
@@ -270,7 +270,7 @@ def test_iec61508_normalization_uses_catalog_page_selection() -> None:
 
 
 def test_catalog_source_paths_are_below_local_sources() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     for family in catalog.families:
         sources = (
             [family.source] if family.source is not None else [part.source for part in family.parts]
@@ -299,7 +299,7 @@ def test_content_selection_emits_page_list_and_exclusions() -> None:
 
 
 def test_iec61508_supplement_is_planned_as_own_document() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("IEC61508",),
@@ -321,7 +321,7 @@ def test_iec61508_supplement_is_planned_as_own_document() -> None:
 
 
 def test_parts_are_derived_but_supplement_with_own_atlasdata_is_imported() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("IEC61508",),
@@ -352,7 +352,7 @@ def test_parts_are_derived_but_supplement_with_own_atlasdata_is_imported() -> No
 
 
 def test_supplement_is_imported_before_reference_detection() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("IEC61508",),
@@ -374,7 +374,7 @@ def test_supplement_is_imported_before_reference_detection() -> None:
 
 
 def test_multi_part_family_is_composed_before_exports() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("IEC61508",), catalog_root=Path.cwd()
     )
@@ -400,7 +400,7 @@ def test_multi_part_family_is_composed_before_exports() -> None:
 
 
 def test_doorstop_parent_prefers_specific_catalog_relationships() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("IEC61508", "EN50128", "EN50657", "EN50716"),
@@ -631,7 +631,7 @@ def test_overwrite_can_keep_existing_docling_output(tmp_path: Path) -> None:
 
 
 def test_force_resets_editable_review_exports() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog,
         family_keys=("EN50716",),
@@ -649,7 +649,7 @@ def test_force_resets_editable_review_exports() -> None:
 
 
 def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     hierarchy = catalog.doorstop_hierarchy("functional-safety")
 
     assert hierarchy.root == "IEC61508"

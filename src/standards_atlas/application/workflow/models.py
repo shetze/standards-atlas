@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 
+class WorkflowTask(StrEnum):
+    DOCUMENTS = "documents"
+    QUALIFICATION = "qualification"
+
+
 class ArtifactPolicy(StrEnum):
     SOURCE = "source"
     DERIVED = "derived"
@@ -26,6 +31,8 @@ class WorkflowStage(StrEnum):
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"
     DOORSTOP_PUBLISH = "doorstop-publish"
+    CORPUS_BUILD = "corpus-build"
+    QUALIFICATION_MATRIX = "qualification-matrix"
 
 
 @dataclass(frozen=True)

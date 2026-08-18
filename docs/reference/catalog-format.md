@@ -1,15 +1,15 @@
-# Catalog format (`catalogs/standards.yaml`)
+# Catalog format (`manifests/standards.yaml`)
 
 ## Purpose and authority
 
 The catalog is the curated configuration source for standards known to Standards Atlas. It describes document families, physical source documents, classifications, relationships, publication settings, profiles, lineages, and Doorstop hierarchies.
 
-This document is the canonical field-level reference. The checked-in [`catalogs/standards.yaml`](../../catalogs/standards.yaml) is the executable example, while the Pydantic models in `src/standards_atlas/application/catalog/models.py` define the validation contract.
+This document is the canonical field-level reference. The checked-in [`manifests/standards.yaml`](../../manifests/standards.yaml) is the executable example, while the Pydantic models in `src/standards_atlas/application/catalog/models.py` define the validation contract.
 
 Validate every catalog change with:
 
 ```bash
-uv run standards-atlas catalog validate catalogs/standards.yaml
+uv run standards-atlas catalog validate manifests/standards.yaml
 ```
 
 ## Top-level structure

@@ -1,8 +1,8 @@
-# Catalog Format (`catalogs/standards.yaml`)
+# Catalog Format (`manifests/standards.yaml`)
 
 ## Purpose
 
-The `catalogs/standards.yaml` file is the central catalog of all standards known to Standards Atlas.
+The `manifests/standards.yaml` file is the central catalog of all standards known to Standards Atlas.
 
 It serves three purposes:
 

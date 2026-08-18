@@ -87,7 +87,7 @@ Prefer 80 columns and avoid exceeding 100 columns where practical. Wrap long com
 
 ```bash
 uv run standards-atlas workflow run \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --hierarchy functional-safety \
   --overwrite \
   --keep docling

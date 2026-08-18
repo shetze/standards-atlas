@@ -12,6 +12,10 @@
 
 ## Unreleased
 
+- Unify workflow orchestration under `workflow plan` and `workflow run` with `--task documents|qualification`; qualification composes Markdown publication, corpus build, and matrix evaluation while excluding Doorstop publication.
+- Replace the workflow `--catalog` option with `--manifest` and move the canonical standards definition to `manifests/standards.yaml`.
+- Move the canonical qualification matrix manifest to `manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml` and expose it as `--qualification-manifest`.
+
 ### Changed
 
 - Persist negative Knowledge Kind decisions with decision confidence instead of positive-label confidence.

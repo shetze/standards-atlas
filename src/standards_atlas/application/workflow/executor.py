@@ -44,6 +44,11 @@ class WorkflowExecutor:
 
         for step in plan.steps:
             if not continue_after_review:
+                if step.stage in {
+                    WorkflowStage.CORPUS_BUILD,
+                    WorkflowStage.QUALIFICATION_MATRIX,
+                } and (blocked_documents or blocked_families):
+                    continue
                 if step.family in blocked_families:
                     continue
                 if step.document in blocked_documents:

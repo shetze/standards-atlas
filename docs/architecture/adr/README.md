@@ -74,6 +74,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0037](0037-workflow-run-derivation-reports.md) | Record workflow-run derivation reports |
 | [0038](0038-package-and-install-doorstop-publication-templates.md) | Package and install Doorstop publication templates |
 | [0039](0039-verification-and-qualification-framework.md) | Establish the verification and qualification framework |
+| [0057](0057-unify-workflow-task-selection-and-manifests.md) | Unify workflow task selection and manifest inputs |
 
 ## Semantic evaluation, review, and MCP access
 

@@ -29,7 +29,7 @@ The result is divided into unanimous, strong-consensus, majority-consensus, disp
 
 ## Consequences
 
-- `examples/evaluation/qualification-matrix.yaml` owns review import and consensus configuration.
+- `manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml` owns review import and consensus configuration.
 - The separate `workflow evaluation` manifest and commands are removed.
 - Qualification metrics against the existing corpus remain available as diagnostics.
 - A failed qualification threshold does not prevent generation of the consensus proposal.

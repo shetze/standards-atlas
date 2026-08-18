@@ -29,7 +29,7 @@ uv run standards-atlas --help
 ## Validate the catalog
 
 ```bash
-uv run standards-atlas catalog validate catalogs/standards.yaml
+uv run standards-atlas catalog validate manifests/standards.yaml
 ```
 
 The catalog defines source documents, classifications, workflow selections, relationships, and publication settings. See the [catalog reference](../reference/catalog-format.md) before making structural changes.
@@ -40,7 +40,7 @@ Select exactly one of `--family`, `--profile`, `--all`, or a configured `--hiera
 
 ```bash
 uv run standards-atlas workflow plan \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --family EN50716
 ```
 
@@ -49,16 +49,16 @@ Planning is read-only. It lists deterministic stages and marks manual review gat
 Other selections include:
 
 ```bash
-uv run standards-atlas workflow plan --catalog catalogs/standards.yaml --profile railway
-uv run standards-atlas workflow plan --catalog catalogs/standards.yaml --hierarchy functional-safety
-uv run standards-atlas workflow plan --catalog catalogs/standards.yaml --all
+uv run standards-atlas workflow plan --manifest manifests/standards.yaml --profile railway
+uv run standards-atlas workflow plan --manifest manifests/standards.yaml --hierarchy functional-safety
+uv run standards-atlas workflow plan --manifest manifests/standards.yaml --all
 ```
 
 ## Run a workflow
 
 ```bash
 uv run standards-atlas workflow run \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --family EN50716
 ```
 
@@ -66,7 +66,7 @@ A run may pause intentionally for alignment or AtlasData review. Complete the ge
 
 ```bash
 uv run standards-atlas workflow run \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --family EN50716 \
   --continue-after-review
 ```
@@ -79,7 +79,7 @@ Use `--force` to regenerate all reproducible artefacts, including Docling output
 
 ```bash
 uv run standards-atlas workflow run \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --family EN50716 \
   --force
 ```
@@ -88,7 +88,7 @@ Use `--overwrite` to regenerate derived artefacts and `--keep` to retain selecte
 
 ```bash
 uv run standards-atlas workflow run \
-  --catalog catalogs/standards.yaml \
+  --manifest manifests/standards.yaml \
   --family EN50716 \
   --overwrite \
   --keep docling

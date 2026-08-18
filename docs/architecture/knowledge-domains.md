@@ -8,7 +8,7 @@ A Knowledge Domain is not a directory format, a Doorstop hierarchy, or an export
 
 ## Current model
 
-Knowledge Domains are declared in `catalogs/standards.yaml` and may form a hierarchy through their optional `parent` relation. Standard families, lineages, and profiles can reference one or more domains.
+Knowledge Domains are declared in `manifests/standards.yaml` and may form a hierarchy through their optional `parent` relation. Standard families, lineages, and profiles can reference one or more domains.
 
 Examples from the current catalog include:
 

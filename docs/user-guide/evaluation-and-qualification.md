@@ -49,7 +49,7 @@ rather than being treated as model abstentions or failed predictions.
 ## Execute a qualification matrix
 
 ```bash
-uv run standards-atlas evaluation qualification-matrix   --manifest local/evaluation/qualification/semantic-role-v1.yaml   --output local/evaluation/qualification
+uv run standards-atlas evaluation qualification-matrix   --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml   --output local/evaluation/qualification
 ```
 
 Useful execution modes include:
@@ -164,3 +164,40 @@ Use `--overwrite` after changing cascade resolution semantics when the goal is t
 execution behavior itself. `--recompute` can rebuild derived metrics from persisted
 observations, but it cannot retroactively change which clauses earlier runs sent to later
 model stages.
+
+## Plan or run the complete qualification workflow
+
+The workflow CLI has two operations, `plan` and `run`. Select the actual workflow with
+`--task`. The default task is `documents`; use `--task qualification` for the complete
+path from existing extraction artifacts through Markdown publication, corpus construction,
+and the qualification matrix:
+
+```bash
+uv run standards-atlas workflow plan \
+  --task qualification \
+  --manifest manifests/standards.yaml \
+  --hierarchy functional-safety \
+  --qualification-manifest \
+    manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
+  --knowledge-domain functional-safety \
+  --corpus-count 500 \
+  --corpus-strategy representative_stratified \
+  --corpus-seed 20260818 \
+  --overwrite
+```
+
+Replace `plan` with `run` to execute the same task. The qualification task deliberately
+stops document publication at Markdown and never contains Doorstop export or Doorstop
+publication steps. By default it reuses existing `.atlas/docling` artifacts. Add
+`--regenerate-docling` to regenerate Docling and all downstream artifacts.
+
+The standards manifest is always supplied with `--manifest`. The separate
+`--qualification-manifest` is the source of truth for `matrix_id`, `corpus_id`, and the
+semantic task version used by corpus construction. The canonical checked-in qualification
+manifest is
+`manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml`.
+
+`--overwrite` applies replacement policy to derived artifacts and requests a fresh
+qualification-matrix run. `--keep` may be repeated to preserve selected document stages and
+requires `--overwrite`. Use `workflow plan` first when you want to inspect the exact command
+sequence without side effects.

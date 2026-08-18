@@ -43,7 +43,7 @@ def _command_path(command: tuple[str, ...]) -> tuple[str, ...]:
 def test_workflow_options_exist_on_the_real_cli() -> None:
     from typer.testing import CliRunner
 
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     service = EndToEndWorkflowService()
     runner = CliRunner()
     help_by_path: dict[tuple[str, ...], str] = {}

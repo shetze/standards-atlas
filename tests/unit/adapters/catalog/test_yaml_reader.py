@@ -4,7 +4,7 @@ from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 
 
 def test_reads_project_catalog() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     assert len(catalog.families) == 17
     assert (
         sum(
@@ -20,7 +20,7 @@ def test_reads_project_catalog() -> None:
 
 
 def test_iec61508_3_1_is_a_supplement_of_part_3() -> None:
-    catalog = YamlStandardCatalogReader().read(Path("catalogs/standards.yaml"))
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     family = catalog.family("IEC61508")
     part = next(item for item in family.parts if item.key == "IEC61508-3")
 

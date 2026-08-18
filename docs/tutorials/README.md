@@ -7,12 +7,12 @@ Tutorials provide complete learning paths through representative workflows. Repl
 ### Process one standard family
 
 ```bash
-uv run standards-atlas catalog validate catalogs/standards.yaml
+uv run standards-atlas catalog validate manifests/standards.yaml
 uv run standards-atlas workflow plan \\
-  --catalog catalogs/standards.yaml \\
+  --manifest manifests/standards.yaml \\
   --family EN50716
 uv run standards-atlas workflow run \\
-  --catalog catalogs/standards.yaml \\
+  --manifest manifests/standards.yaml \\
   --family EN50716
 ```
 
@@ -28,7 +28,7 @@ uv run standards-atlas document export markdown EN50716 \\
 
 ```bash
 uv run standards-atlas workflow run \\
-  --catalog catalogs/standards.yaml \\
+  --manifest manifests/standards.yaml \\
   --family EN50716 \\
   --overwrite \\
   --keep docling
@@ -40,10 +40,10 @@ Use this after normalization, reference-resolution, or construction changes when
 
 ```bash
 uv run standards-atlas llm preload-qualification-models \\
-  --manifest local/evaluation/qualification/semantic-role-v1.yaml
+  --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml
 
 uv run standards-atlas evaluation qualification-matrix \\
-  --manifest local/evaluation/qualification/semantic-role-v1.yaml \\
+  --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \\
   --output local/evaluation/qualification \\
   --limit 10 \\
   --overwrite

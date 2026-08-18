@@ -17,9 +17,9 @@ from standards_atlas.application.workflow import (
 
 
 def test_completed_run_report_records_plan_and_artifact_hashes(tmp_path: Path) -> None:
-    catalog = tmp_path / "catalogs" / "standards.yaml"
-    catalog.parent.mkdir()
-    catalog.write_text("version: 1\n", encoding="utf-8")
+    manifest = tmp_path / "manifests" / "standards.yaml"
+    manifest.parent.mkdir()
+    manifest.write_text("version: 1\n", encoding="utf-8")
     artifact = tmp_path / ".atlas" / "normalized" / "DOC" / "document.json"
     artifact.parent.mkdir(parents=True)
     artifact.write_text('{"value":1}\n', encoding="utf-8")
@@ -38,12 +38,15 @@ def test_completed_run_report_records_plan_and_artifact_hashes(tmp_path: Path) -
         plan,
         result,
         project_root=tmp_path,
-        catalog_path=catalog,
+        manifest_path=manifest,
         now=lambda: datetime(2026, 7, 24, 12, 0, tzinfo=UTC),
     )
 
     payload = json.loads(report_json.read_text(encoding="utf-8"))
     assert payload["status"] == "completed"
+    assert payload["schema_version"] == 2
+    assert payload["task"] == "documents"
+    assert payload["manifest"] == "manifests/standards.yaml"
     assert payload["run_id"].startswith("20260724T120000Z-")
     assert payload["steps"][0]["disposition"] == "executed"
     assert payload["steps"][0]["artifacts"][0]["path"] == (".atlas/normalized/DOC/document.json")
@@ -52,8 +55,8 @@ def test_completed_run_report_records_plan_and_artifact_hashes(tmp_path: Path) -
 
 
 def test_report_marks_existing_outputs_as_reused(tmp_path: Path) -> None:
-    catalog = tmp_path / "catalog.yaml"
-    catalog.write_text("version: 1\n", encoding="utf-8")
+    manifest = tmp_path / "manifest.yaml"
+    manifest.write_text("version: 1\n", encoding="utf-8")
     output = tmp_path / "local" / "exports" / "markdown" / "DOC.md"
     output.parent.mkdir(parents=True)
     output.write_text("# Document\n", encoding="utf-8")
@@ -72,7 +75,7 @@ def test_report_marks_existing_outputs_as_reused(tmp_path: Path) -> None:
         plan,
         result,
         project_root=tmp_path,
-        catalog_path=catalog,
+        manifest_path=manifest,
         now=lambda: datetime(2026, 7, 24, 12, 1, tzinfo=UTC),
     )
 
@@ -82,8 +85,8 @@ def test_report_marks_existing_outputs_as_reused(tmp_path: Path) -> None:
 
 
 def test_paused_run_does_not_receive_completion_report(tmp_path: Path) -> None:
-    catalog = tmp_path / "catalog.yaml"
-    catalog.write_text("version: 1\n", encoding="utf-8")
+    manifest = tmp_path / "manifest.yaml"
+    manifest.write_text("version: 1\n", encoding="utf-8")
     result = WorkflowExecutionResult((), ("DOC",), ())
 
     with pytest.raises(ValueError, match="completed runs"):
@@ -91,5 +94,5 @@ def test_paused_run_does_not_receive_completion_report(tmp_path: Path) -> None:
             WorkflowPlan(("FAMILY",), ()),
             result,
             project_root=tmp_path,
-            catalog_path=catalog,
+            manifest_path=manifest,
         )
