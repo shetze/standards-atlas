@@ -15,10 +15,8 @@ from standards_atlas.cli.commands.evaluation_commands.benchmark import (
     run_evaluation_matrix,
     run_semantic_evaluation,
 )
+from standards_atlas.cli.commands.evaluation_commands.challenger import qualify_challengers
 from standards_atlas.cli.commands.evaluation_commands.corpus import build_evaluation_corpus
-from standards_atlas.cli.commands.evaluation_commands.normalization_quality import (
-    qualify_normalization_quality,
-)
 from standards_atlas.cli.commands.evaluation_commands.qualification_matrix import (
     _format_duration,
     _MatrixProposalProgress,
@@ -37,9 +35,9 @@ __all__ = [
     "import_annotation_reviews",
     "propose_evaluation_annotations",
     "publish_annotation_reviews",
+    "qualify_challengers",
     "qualify_golden_corpus",
     "qualify_model_prompt_matrix",
-    "qualify_normalization_quality",
     "run_evaluation_matrix",
     "run_semantic_evaluation",
     "typer",

@@ -29,6 +29,9 @@ from standards_atlas.application.semantic_qualification.analysis_archive import 
     write_cascade_provenance,
     write_qualification_diagnostics,
 )
+from standards_atlas.application.semantic_qualification.challenger import (
+    write_challenger_comparison,
+)
 from standards_atlas.application.semantic_qualification.proposals import (
     ProposalProgress,
     ProposalRunConfig,
@@ -304,6 +307,23 @@ def qualify_model_prompt_matrix(
         int | None,
         typer.Option("--max-tokens", min=1, help="Override prompt-specific output limit."),
     ] = None,
+    challenger_source_manifest: Annotated[
+        Path | None,
+        typer.Option(
+            "--challenger-source-manifest",
+            exists=True,
+            readable=True,
+            hidden=True,
+        ),
+    ] = None,
+    selected_example_ids_override: Annotated[
+        list[str] | None,
+        typer.Option("--selected-example-id", hidden=True),
+    ] = None,
+    challenger_sample_path: Annotated[
+        Path | None,
+        typer.Option("--challenger-sample-path", hidden=True),
+    ] = None,
 ) -> None:
     """Execute and qualify the complete model/prompt matrix.
 
@@ -388,10 +408,26 @@ def qualify_model_prompt_matrix(
                 "statement-function-classification",
                 manifest.dataset_version,
             )
-            selected_example_ids = tuple(
-                example.id
-                for example in (dataset.examples[:limit] if limit is not None else dataset.examples)
-            )
+            dataset_example_ids = tuple(example.id for example in dataset.examples)
+            if selected_example_ids_override is not None:
+                unknown = tuple(
+                    clause_id
+                    for clause_id in selected_example_ids_override
+                    if clause_id not in dataset_example_ids
+                )
+                if unknown:
+                    raise ValueError(
+                        "selected challenger clauses are not present in the dataset: "
+                        + ", ".join(unknown[:5])
+                    )
+                selected_set = set(selected_example_ids_override)
+                selected_example_ids = tuple(
+                    clause_id for clause_id in dataset_example_ids if clause_id in selected_set
+                )
+            else:
+                selected_example_ids = tuple(
+                    dataset_example_ids[:limit] if limit is not None else dataset_example_ids
+                )
             base_config = LlmConfig.load(config)
             if not llm_cache_enabled:
                 base_config = replace(base_config, cache_directory=None)
@@ -893,6 +929,13 @@ def qualify_model_prompt_matrix(
                 report=consensus_report,
                 metrics=analysis_metrics,
             )
+            challenger_paths: tuple[Path, ...] = ()
+            if challenger_source_manifest is not None:
+                source_manifest = QualificationMatrixManifest.load(challenger_source_manifest)
+                challenger_paths = write_challenger_comparison(
+                    source_manifest=source_manifest,
+                    run_directory=output_directory / manifest.matrix_id,
+                )
             analysis_archive_path = create_analysis_archive(
                 output_directory=output_directory,
                 matrix_id=manifest.matrix_id,
@@ -906,6 +949,8 @@ def qualify_model_prompt_matrix(
                     provenance_path,
                     analysis_metrics_path,
                     diagnostics_path,
+                    *challenger_paths,
+                    *((challenger_sample_path,) if challenger_sample_path is not None else ()),
                 ),
                 cascade_directory=(output_directory / manifest.matrix_id / "cascade"),
                 analysis_metrics=analysis_metrics,

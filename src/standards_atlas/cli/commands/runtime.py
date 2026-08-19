@@ -50,6 +50,22 @@ def start_llm_server(
     typer.echo("RamaLama server started.")
 
 
+def _qualification_ramalama_model_refs(
+    manifest: QualificationMatrixManifest,
+) -> tuple[str, ...]:
+    """Return distinct RamaLama refs used by production and enabled challengers."""
+    candidates = list(manifest.models)
+    if manifest.challenger_qualification.enabled:
+        candidates.extend(manifest.challenger_qualification.models)
+    return tuple(
+        dict.fromkeys(
+            model.model_ref
+            for model in candidates
+            if model.provider == "ramalama" and model.model_ref
+        )
+    )
+
+
 @llm_app.command("preload-qualification-models")
 def preload_qualification_models(
     manifest_path: Annotated[
@@ -66,18 +82,12 @@ def preload_qualification_models(
         typer.Option("--config", exists=True, readable=True, help="LLM YAML configuration."),
     ] = cli_defaults.DEFAULT_LLM_CONFIG,
 ) -> None:
-    """Download all distinct RamaLama models declared by a qualification matrix."""
+    """Download distinct production and enabled challenger RamaLama models."""
     try:
         manifest = QualificationMatrixManifest.load(manifest_path)
         llm_config = LlmConfig.load(config)
         manager = RamaLamaServerManager(llm_config)
-        models = tuple(
-            dict.fromkeys(
-                model.model_ref
-                for model in manifest.models
-                if model.provider == "ramalama" and model.model_ref
-            )
-        )
+        models = _qualification_ramalama_model_refs(manifest)
         if not models:
             typer.echo("No RamaLama models declared in qualification matrix.")
             return

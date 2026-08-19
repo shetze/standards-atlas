@@ -54,11 +54,11 @@ def test_qualification_matrix_help_exposes_mcp_lifecycle_options() -> None:
     assert "--fresh" in result.stdout
 
 
-def test_normalization_quality_help_exposes_observational_review_options() -> None:
-    result = runner.invoke(app, ["evaluation", "normalization-quality", "--help"])
+def test_challenger_qualification_help_is_registered() -> None:
+    result = runner.invoke(app, ["evaluation", "challenger-qualification", "--help"])
 
     assert result.exit_code == 0
-    assert "--corpus" in result.stdout
     assert "--manifest" in result.stdout
-    assert "--model" in result.stdout
-    assert "--no-cache" in result.stdout
+    assert "--fresh" in result.stdout
+    assert "--allow-reuse" in result.stdout
+    assert "--challenger-source-manifest" not in result.stdout

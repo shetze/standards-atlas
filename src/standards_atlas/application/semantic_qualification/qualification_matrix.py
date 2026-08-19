@@ -593,6 +593,36 @@ class ConsensusConfig(BaseModel):
     output_directory: Path = Path("local/evaluation/consensus")
 
 
+class ChallengerGroup(BaseModel):
+    """Incumbent and challenger models competing for one cascade role."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(min_length=1)
+    incumbents: tuple[str, ...] = Field(min_length=1)
+    challengers: tuple[str, ...] = Field(min_length=1)
+
+
+class ChallengerQualificationConfig(BaseModel):
+    """Optional head-to-head qualification configuration embedded in a matrix manifest."""
+
+    model_config = ConfigDict(frozen=True)
+
+    enabled: bool = False
+    repetitions: int = Field(default=1, ge=1)
+    models: tuple[ModelCandidate, ...] = ()
+    groups: tuple[ChallengerGroup, ...] = ()
+
+    @property
+    def model_ids(self) -> tuple[str, ...]:
+        result: list[str] = []
+        for group in self.groups:
+            for model_id in (*group.incumbents, *group.challengers):
+                if model_id not in result:
+                    result.append(model_id)
+        return tuple(result)
+
+
 class QualificationMatrixManifest(BaseModel):
     """Versioned contract for Slice 5.4.6 qualification."""
 
@@ -613,6 +643,7 @@ class QualificationMatrixManifest(BaseModel):
     consensus: ConsensusConfig = ConsensusConfig()
     execution: MatrixExecutionConfig = MatrixExecutionConfig()
     thresholds: RegressionThresholds = RegressionThresholds()
+    challenger_qualification: ChallengerQualificationConfig = ChallengerQualificationConfig()
 
     def repetitions_for(self, model: ModelCandidate) -> int:
         """Return the model-specific repetition count or the global default."""
@@ -646,6 +677,33 @@ class QualificationMatrixManifest(BaseModel):
             raise ValueError("prompt candidate ids must be unique")
         if len(set(model_ids)) != len(model_ids):
             raise ValueError("model candidate ids must be unique")
+        challenger = self.challenger_qualification
+        if challenger.enabled and not challenger.groups:
+            raise ValueError("enabled challenger qualification requires at least one group")
+        challenger_model_ids = [item.id for item in challenger.models]
+        if len(set(challenger_model_ids)) != len(challenger_model_ids):
+            raise ValueError("challenger model ids must be unique")
+        overlap_models = set(model_ids).intersection(challenger_model_ids)
+        if overlap_models:
+            raise ValueError(
+                f"challenger models must not duplicate production models: {sorted(overlap_models)}"
+            )
+        known_challenger_models = set(model_ids).union(challenger_model_ids)
+        group_ids = [group.id for group in challenger.groups]
+        if len(set(group_ids)) != len(group_ids):
+            raise ValueError("challenger qualification group ids must be unique")
+        for group in challenger.groups:
+            overlap = set(group.incumbents).intersection(group.challengers)
+            if overlap:
+                raise ValueError(
+                    f"challenger group {group.id} contains models on both sides: {sorted(overlap)}"
+                )
+            unknown = set((*group.incumbents, *group.challengers)) - known_challenger_models
+            if unknown:
+                raise ValueError(
+                    f"unknown models in challenger group {group.id}: {sorted(unknown)}"
+                )
+
         adjudicator = self.consensus.adjudication
         if adjudicator.enabled and adjudicator.model_id not in model_ids:
             raise ValueError(f"unknown consensus adjudicator model: {adjudicator.model_id!r}")

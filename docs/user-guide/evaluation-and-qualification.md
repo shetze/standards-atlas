@@ -92,11 +92,15 @@ execution:
   mode: cascade
   stages:
     - id: efficient-local
-      models: [granite, gemma, mistral]
+      models: [granite-8b, gemma-12b, llama-8b, smollm3-3b]
       prompts: [content-only, structure-aware]
       apply_to: all
-    - id: prompt-refinement
-      models: [qwen-14b, qwen-32b]
+    - id: intermediate-escalation
+      models: [ministral-8b, mistral-small-24b, glm-4-9b]
+      prompts: [content-only, structure-aware]
+      apply_to: unresolved
+    - id: escalation
+      models: [qwen3-14b, exaone-32b]
       prompts:
         - content-only
         - structure-aware
@@ -208,3 +212,62 @@ manifest is
 qualification-matrix run. `--keep` may be repeated to preserve selected document stages and
 requires `--overwrite`. Use `workflow plan` first when you want to inspect the exact command
 sequence without side effects.
+
+## Challenger qualification
+
+The qualification-matrix manifest is also the single source of truth for model challenger
+experiments. Optional `challenger_qualification` configuration declares challenger model
+definitions separately from the production `models` pool and groups them with the incumbent
+models whose cascade roles they challenge. A normal `qualification-matrix` run ignores these
+challenger-only models.
+
+The applicability hard-case qualification promoted SmolLM3 3B, GLM-4 9B, and EXAONE
+3.5 32B into the production cascade. The displaced Qwen3 8B, Phi-4 14B, and Qwen3 32B
+models remain in `challenger_qualification.models` as regression baselines. This keeps the
+head-to-head workflow useful without duplicating a model between the production and challenger
+pools. Challenger comparison aggregates only `qualification_eligible` candidates; unsupported
+or non-executed candidate rows do not dilute model-level success or duration metrics.
+
+Run the isolated comparison with:
+
+```bash
+uv run standards-atlas evaluation challenger-qualification \
+  --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
+  --output local/evaluation/challenger
+```
+
+Fresh provider inference is the default for challenger runs. Use `--allow-reuse` only for
+iterative diagnostics where cached or persisted results are acceptable. The command derives
+a separate `<matrix-id>-challengers` full matrix, disables production adjudication, and keeps
+the productive cascade unchanged.
+
+For targeted semantic qualification, reuse the difficult applicability clauses from an earlier
+qualification-run archive instead of taking the first clauses with `--limit`:
+
+```bash
+uv run standards-atlas evaluation challenger-qualification \
+  --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
+  --output local/evaluation/challenger \
+  --sample applicability-conflicts \
+  --sample-from local/evaluation/qualification/qualification-run-005.zip
+```
+
+`applicability-conflicts` selects clauses whose final archived model votes disagree either on
+applicability presence or, among positive votes, on the applicability subtype. The source
+archive must use the same corpus and dataset version as the current manifest. The exact clause
+IDs and source archive are persisted as `challenger-sample-selection.json` and included in the
+qualification-run archive. `--limit` may be added to shorten a hard-case smoke test; it limits
+the selected hard-case set rather than the start of the corpus.
+
+The challenger run emits the normal qualification and diagnostics artifacts plus
+`challenger-comparison.json` and `challenger-comparison.md`. Both comparison artifacts are
+created before the immutable qualification-run archive is written and are included in that
+archive. The comparison groups incumbents and challengers by cascade role and reports
+applicability conflict `none` rate, reference agreement for applicability presence and subtype,
+prediction success, and measured duration. These signals are observational and do not
+automatically replace, weight, or promote models.
+
+All v3 semantic prompts use the same confidence contract: confidence is a JSON number from
+`0.0` through `1.0` (for example, `0.95`), never a percentage such as `95` or `95%`. Invalid
+confidence values remain validation failures; the evaluation pipeline does not silently
+normalize percentages because prediction success is part of model qualification.

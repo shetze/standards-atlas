@@ -42,5 +42,6 @@ Return exactly one JSON object with every field below. Do not omit empty dimensi
   "rationale": null
 }
 Use [] and null when the supplied evidence does not support a label.
+Confidence values MUST be JSON numbers from 0.0 through 1.0. Use 0.95 for ninety-five percent confidence; never use 95, 95.0, or "95%".
 
 The task applies to clause narrative, not to table-derived concepts or relations. For mixed clauses, classify only the linguistic function of the narrative text. Do not project a table's recommendation, responsibility, applicability, traceability, or other relation back onto the containing clause. Structured table semantics are interpreted by a separate task.
