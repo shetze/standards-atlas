@@ -1,3 +1,4 @@
+schema_version: 1
 task: statement-function-classification
 version: 1.0.0
 description: Classify the statement function of normalized standards clause content.

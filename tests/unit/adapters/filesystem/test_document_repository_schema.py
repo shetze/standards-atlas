@@ -60,9 +60,7 @@ def test_repository_writes_versioned_document_envelope(tmp_path: Path) -> None:
     assert loaded.clauses[0].structural_profile.canonical_section is CanonicalDocumentSection.BODY
 
 
-def test_repository_loads_legacy_unversioned_document_and_migrates_text(
-    tmp_path: Path,
-) -> None:
+def test_repository_rejects_unversioned_legacy_document(tmp_path: Path) -> None:
     workspace = tmp_path / ".atlas"
     documents = workspace / "documents"
     documents.mkdir(parents=True)
@@ -70,26 +68,13 @@ def test_repository_loads_legacy_unversioned_document_and_migrates_text(
         "key": {"value": "DOC"},
         "title": "Legacy Document",
         "document_type": "other",
-        "clauses": [
-            {
-                "id": {"value": "DOC-1"},
-                "reference": {
-                    "standard": "Example",
-                    "year": 2026,
-                    "clause": "1",
-                },
-                "clause_type": "clause",
-                "text": "Legacy protected text.",
-            }
-        ],
+        "clauses": [],
     }
     (documents / "DOC.json").write_text(json.dumps(legacy), encoding="utf-8")
 
     repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
-    loaded = repository.load(DocumentKey(value="DOC"))
-
-    assert loaded.clauses[0].plain_text == "Legacy protected text."
-    assert isinstance(loaded.clauses[0].content[0], TextBlock)
+    with pytest.raises(ValueError, match="missing 'schema_version'"):
+        repository.load(DocumentKey(value="DOC"))
 
 
 def test_repository_rejects_unknown_schema_version(tmp_path: Path) -> None:

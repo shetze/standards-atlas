@@ -96,6 +96,9 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md) | Model engineering knowledge as an orthogonal ontology |
 | [0059](0059-archive-qualification-runs-as-immutable-sequential-evidence.md) | Archive qualification runs as immutable sequential evidence |
 | [0060](0060-classify-workspace-artifacts-by-audience-and-lifecycle.md) | Classify generated artifacts by audience and lifecycle |
+| [0061](0061-modular-deterministic-structural-taxonomy-engine.md) | Modular deterministic structural-taxonomy engine |
+| [0062](0062-separate-semantic-taxonomies-from-semantic-tasks.md) | Separate semantic taxonomies from semantic tasks |
+| [0063](0063-schema-compatibility-baseline.md) | Establish a clean schema compatibility baseline |
 
 ## Application structure
 

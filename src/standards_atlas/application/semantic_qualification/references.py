@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -75,7 +76,7 @@ class ClauseReferenceAnalysis(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     knowledge_domain: str = Field(min_length=1)
     document_key: str = Field(min_length=1)
     clause_id: str = Field(min_length=1)

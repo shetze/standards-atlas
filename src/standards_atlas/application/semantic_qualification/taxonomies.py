@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -14,6 +14,7 @@ class SemanticTaxonomyDefinition(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    schema_version: Literal[1] = 1
     id: str = Field(min_length=1)
     version: str = Field(min_length=1)
     dimension: str = Field(min_length=1)

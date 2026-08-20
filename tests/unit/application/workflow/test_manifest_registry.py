@@ -22,7 +22,7 @@ def test_loader_resolves_manifest_types_independent_of_order(tmp_path: Path) -> 
     standards.write_text("manifest_type: standards\nschema_version: 2\n", encoding="utf-8")
     qualification = tmp_path / "qualification.yaml"
     qualification.write_text(
-        "manifest_type: qualification_matrix\nschema_version: '1.3'\n",
+        "manifest_type: qualification_matrix\nschema_version: '1.5'\n",
         encoding="utf-8",
     )
 

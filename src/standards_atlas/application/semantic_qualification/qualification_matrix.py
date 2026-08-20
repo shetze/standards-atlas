@@ -643,7 +643,7 @@ class QualificationMatrixManifest(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     manifest_type: Literal["qualification_matrix"] = "qualification_matrix"
-    schema_version: str = "1.0"
+    schema_version: Literal["1.5"] = "1.5"
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)
     task: str = Field(default="semantic-profile-classification", min_length=1)

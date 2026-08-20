@@ -13,6 +13,7 @@ class StructuralTaxonomyDefinition:
     taxonomy_id: str
     version: str
     categories: frozenset[str]
+    schema_version: int = 1
 
 
 class StructuralTaxonomyDefinitionRepository(Protocol):

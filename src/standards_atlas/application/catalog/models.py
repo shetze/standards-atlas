@@ -267,7 +267,7 @@ class DoorstopHierarchyDefinition(BaseModel):
 class StandardCatalog(BaseModel):
     model_config = ConfigDict(frozen=True)
     manifest_type: Literal["standards"] = "standards"
-    schema_version: int = 1
+    schema_version: Literal[2] = 2
     knowledge_domains: tuple[KnowledgeDomain, ...]
     industry_sectors: tuple[IndustrySector, ...]
     families: tuple[StandardFamilyDefinition, ...]

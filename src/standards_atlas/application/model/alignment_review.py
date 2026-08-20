@@ -93,7 +93,7 @@ AlignmentOverride = Annotated[
 class AlignmentOverrideDocument(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: int = 1
+    schema_version: Literal[1] = 1
     document_key: str
     source_alignment_hash: str | None = None
     overrides: tuple[AlignmentOverride, ...] = ()
@@ -123,7 +123,7 @@ class OverrideValidationResult(BaseModel):
 class ReviewMetadata(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: int = 1
+    schema_version: Literal[1] = 1
     created_at: datetime
     automatic_alignment_hash: str
     override_document_hash: str

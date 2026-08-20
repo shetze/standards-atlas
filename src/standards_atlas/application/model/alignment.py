@@ -92,7 +92,7 @@ class AlignmentOptions(BaseModel):
 class AlignmentMetadata(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: int = 2
+    schema_version: Literal[2] = 2
     alignment_version: str
     normalized_document_hash: str
     candidate_document_hash: str

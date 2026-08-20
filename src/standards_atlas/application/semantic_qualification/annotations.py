@@ -7,7 +7,7 @@ import shutil
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -156,7 +156,7 @@ class ClauseEvaluationAnnotation(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     task: str = Field(min_length=1)
     lifecycle_status: AnnotationLifecycleStatus
     clause: ClauseReference
@@ -207,7 +207,7 @@ class EvaluationCorpusManifest(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     corpus_id: str = Field(min_length=1)
     task: str = Field(min_length=1)
     corpus_version: str = Field(min_length=1)

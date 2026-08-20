@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -75,6 +75,7 @@ class SemanticTaskDefinition(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    schema_version: Literal[1] = 1
     task: str = Field(min_length=1)
     version: str = Field(min_length=1)
     description: str = ""

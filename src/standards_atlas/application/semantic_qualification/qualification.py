@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -134,7 +135,7 @@ class AnnotationQualificationReport(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     corpus_id: str
     generated_at: datetime
     prediction_source: str

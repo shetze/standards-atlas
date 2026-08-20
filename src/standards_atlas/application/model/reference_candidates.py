@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -70,7 +71,7 @@ class ReferenceDetectionStatistics(BaseModel):
 class ReferenceDetectionMetadata(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: int = 2
+    schema_version: Literal[2] = 2
     detector_version: str
     source_normalization_hash: str
     expected_structure_hash: str

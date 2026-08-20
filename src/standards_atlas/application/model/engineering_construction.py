@@ -39,7 +39,7 @@ class EngineeringConstructionContract(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: int = 1
+    schema_version: Literal[1] = 1
     valid: bool
     normalized_document_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     alignment_hash: str = Field(pattern=r"^[0-9a-f]{64}$")

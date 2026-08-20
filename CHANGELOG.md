@@ -12,6 +12,8 @@
 
 ## Unreleased
 
+- Establish a clean schema compatibility baseline: persistent contracts declare current schema versions explicitly, legacy EngineeringDocument readers are removed, and cache/work formats are excluded from compatibility guarantees.
+
 - Separate semantic taxonomies from semantic tasks; introduce independently versioned statement, knowledge, process, applicability, and responsibility taxonomies and make `semantic-profile-classification` the canonical multidimensional 2.x task while retaining the previous name as a compatibility alias.
 - Add a modular deterministic structural-taxonomy engine with versioned classifier registry and YAML contract validation; move ISO/IEC document categorization out of the AtlasData adapter.
 - Introduce lifecycle-based generated storage: persistent machine state in `.atlas/data`, disposable caches in `.atlas/cache`, retained workflow scratch state in `.atlas/work`, and all HITL artifacts below `local/review`.

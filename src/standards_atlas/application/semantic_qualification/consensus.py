@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from statistics import median
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -148,7 +148,7 @@ class ClauseConsensus(BaseModel):
 class ConsensusReport(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "2.1"
+    schema_version: Literal["2.1"] = "2.1"
     matrix_id: str
     corpus_id: str
     prompt_id: str

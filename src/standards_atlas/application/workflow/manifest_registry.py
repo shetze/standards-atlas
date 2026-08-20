@@ -8,6 +8,8 @@ from pathlib import Path
 
 import yaml
 
+from standards_atlas.application.schema import require_current_schema
+
 
 class WorkflowManifestType(StrEnum):
     STANDARDS = "standards"
@@ -59,6 +61,11 @@ class WorkflowManifestLoader:
                     f"manifest {path} declares unsupported manifest_type {raw_type!r}; "
                     f"expected one of: {known}"
                 ) from exc
+            schema_family = {
+                WorkflowManifestType.STANDARDS: "standards-manifest",
+                WorkflowManifestType.QUALIFICATION_MATRIX: "qualification-matrix-manifest",
+            }[manifest_type]
+            require_current_schema(schema_family, payload["schema_version"])
             if manifest_type in by_type:
                 raise ValueError(
                     f"workflow accepts exactly one manifest of type {manifest_type.value!r}; "
