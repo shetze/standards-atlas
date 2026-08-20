@@ -56,6 +56,12 @@ from standards_atlas.domain.model.knowledge_table import (
     StructuredKnowledgeRecord,
     TechniqueRecommendation,
 )
+from standards_atlas.domain.model.reference_mention import (
+    ReferenceMention,
+    ReferenceMentionKind,
+    ReferenceResolutionStatus,
+    ReferenceTarget,
+)
 from standards_atlas.domain.model.relation import Relation, RelationType
 from standards_atlas.domain.model.semantic_classification import (
     ApplicabilityFunction,
@@ -143,6 +149,10 @@ __all__ = [
     "NormativeStatus",
     "ProcessFunction",
     "RelationScope",
+    "ReferenceMention",
+    "ReferenceMentionKind",
+    "ReferenceResolutionStatus",
+    "ReferenceTarget",
     "ResponsibilityFunction",
     "SemanticClassification",
     "SemanticRelation",

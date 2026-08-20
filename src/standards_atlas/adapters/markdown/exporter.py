@@ -242,6 +242,16 @@ def _link_references(
 ) -> str:
     """Render resolved internal and cross-document relations as Markdown links."""
     internal_targets = {item.reference.clause for item in document.clauses}
+    # Link explicit same-document references even when semantic relation materialization
+    # has not run. This keeps Markdown rendering aligned with preserved reference evidence.
+    by_reference = {item.reference.clause.strip(): item for item in document.clauses}
+    for mention in getattr(clause, "reference_mentions", ()):
+        if mention.reference and mention.reference in by_reference:
+            label = mention.surface_text
+            target = by_reference[mention.reference].reference.clause.strip()
+            pattern = re.compile(re.escape(label), re.IGNORECASE)
+            text = pattern.sub(f"[{label}](#{_anchor(target)})", text, count=1)
+
     relations = clause.semantic_classification.relations
     for relation in sorted(
         relations,

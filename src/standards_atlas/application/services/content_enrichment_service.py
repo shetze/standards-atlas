@@ -33,6 +33,10 @@ from standards_atlas.application.ports import (
     EngineeringDocumentRepository,
     NormalizationRepository,
 )
+from standards_atlas.application.references import (
+    extract_reference_mentions,
+    resolve_document_reference_mentions,
+)
 from standards_atlas.application.services.engineering_construction_contract import (
     EngineeringConstructionContractValidator,
 )
@@ -192,6 +196,11 @@ class ContentEnrichmentService:
                     "text": None,
                 }
             )
+            enriched_clause = enriched_clause.model_copy(
+                update={
+                    "reference_mentions": extract_reference_mentions(enriched_clause.plain_text)
+                }
+            )
             current = enriched_clause.semantic_classification
             structure = current.document_structure
             annex_status = (
@@ -263,6 +272,7 @@ class ContentEnrichmentService:
             )
 
         draft = document.model_copy(update={"clauses": tuple(enriched_clauses)})
+        draft = resolve_document_reference_mentions(draft)
         resolved_relations = resolve_internal_reference_relations(draft)
         clauses_with_relations = []
         for clause in draft.clauses:
