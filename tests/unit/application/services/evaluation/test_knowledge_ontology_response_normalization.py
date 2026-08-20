@@ -18,8 +18,8 @@ def test_missing_ontology_dimensions_are_normalized_to_abstentions() -> None:
             "primary_process_function",
             "applicability_functions",
             "primary_applicability_function",
-            "responsibility_functions",
-            "primary_responsibility_function",
+            "role_relation_types",
+            "primary_role_relation_type",
         ],
     )
 
@@ -29,8 +29,8 @@ def test_missing_ontology_dimensions_are_normalized_to_abstentions() -> None:
     assert normalized["primary_process_function"] is None
     assert normalized["applicability_functions"] == []
     assert normalized["primary_applicability_function"] is None
-    assert normalized["responsibility_functions"] == []
-    assert normalized["primary_responsibility_function"] is None
+    assert normalized["role_relation_types"] == []
+    assert normalized["primary_role_relation_type"] is None
 
 
 def test_v1_payload_is_not_extended_with_v2_fields() -> None:

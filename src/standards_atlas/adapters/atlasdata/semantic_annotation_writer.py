@@ -24,7 +24,7 @@ from standards_atlas.domain.model import (
     KnowledgeKind,
     NormativeStatus,
     ProcessFunction,
-    ResponsibilityFunction,
+    RoleRelationType,
     SemanticClassification,
     StatementFunction,
 )
@@ -42,7 +42,7 @@ class PublicSemanticAnnotation(BaseModel):
     knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
-    responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
+    role_relation_types: tuple[RoleRelationType, ...] = ()
     document_structure: DocumentStructure | None = None
     normative_status: NormativeStatus | None = None
 
@@ -55,7 +55,7 @@ class PublicSemanticAnnotation(BaseModel):
             knowledge_kinds=self.knowledge_kinds,
             process_functions=self.process_functions,
             applicability_functions=self.applicability_functions,
-            responsibility_functions=self.responsibility_functions,
+            role_relation_types=self.role_relation_types,
             document_structure=(
                 DocumentStructureClassification(
                     family="public_semantic_annotation",

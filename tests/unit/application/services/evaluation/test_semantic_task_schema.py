@@ -58,18 +58,18 @@ def test_multidimensional_selection_accepts_applicability_and_responsibility() -
             "primary_function": "description",
             "applicability_functions": ["applicability_condition"],
             "primary_applicability_function": "applicability_condition",
-            "responsibility_functions": [
-                "responsibility_exclusion",
-                "role_condition",
+            "role_relation_types": [
+                "excluded_from",
+                "assumes_role",
             ],
-            "primary_responsibility_function": "responsibility_exclusion",
+            "primary_role_relation_type": "excluded_from",
             "confidence": 0.95,
             "rationale": "Applicability and responsibility are stated explicitly.",
         }
     )
 
     assert selection.applicability_functions[0].value == "applicability_condition"
-    assert selection.responsibility_functions[0].value == "responsibility_exclusion"
+    assert selection.role_relation_types[0].value == "excluded_from"
 
 
 def test_v2_prompts_require_secondary_warning_and_condemnation_detection() -> None:

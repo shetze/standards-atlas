@@ -94,7 +94,7 @@ def render_qualification_diagnostics_markdown(
         lines.extend(
             [
                 "| Stage | Entered | Remaining | Statement | Knowledge | Applicability | "
-                "Responsibility |",
+                "Role relation |",
                 "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
             ]
         )
@@ -106,7 +106,7 @@ def render_qualification_diagnostics_markdown(
                 f"{resolved.get('statement_function', 0)} | "
                 f"{resolved.get('knowledge_kind', 0)} | "
                 f"{resolved.get('applicability', 0)} | "
-                f"{resolved.get('responsibility', 0)} |"
+                f"{resolved.get('role_relation', 0)} |"
             )
     else:
         lines.append("No cascade stages were recorded.")

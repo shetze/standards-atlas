@@ -1,0 +1,32 @@
+schema_version: 1
+id: role-relation-types
+version: 1.0.0
+dimension: role_relation_types
+description: Controlled relation types between identifiable roles or actors and explicit
+  targets.
+values:
+- responsible_for
+- performs
+- approves
+- verifies
+- validates
+- consulted_for
+- informed_about
+- independent_of
+- excluded_from
+- assigned_to
+- assumes_role
+- participates_in
+codes:
+  responsible_for: RSP
+  performs: PRF
+  approves: APR
+  verifies: VRF
+  validates: VLD
+  consulted_for: CNS
+  informed_about: INF
+  independent_of: IND
+  excluded_from: EXC
+  assigned_to: ASN
+  assumes_role: ASR
+  participates_in: PAR

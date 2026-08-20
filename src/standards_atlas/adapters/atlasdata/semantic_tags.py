@@ -84,8 +84,8 @@ def encode_semantic_tags(
         for value in classification.applicability_functions
     )
     tags.extend(
-        f"RF-{codes['responsibility_functions'][value.value]}"
-        for value in classification.responsibility_functions
+        f"RR-{codes['role_relation_types'][value.value]}"
+        for value in classification.role_relation_types
     )
 
     if classification.document_structure is not None:
@@ -119,7 +119,7 @@ def decode_semantic_tags(
         "knowledge_kinds": [],
         "process_functions": [],
         "applicability_functions": [],
-        "responsibility_functions": [],
+        "role_relation_types": [],
         "document_structure": [],
         "normative_status": [],
     }
@@ -129,7 +129,8 @@ def decode_semantic_tags(
         "KK": ("knowledge_kinds", "knowledge_kinds"),
         "PF": ("process_functions", "process_functions"),
         "AF": ("applicability_functions", "applicability_functions"),
-        "RF": ("responsibility_functions", "responsibility_functions"),
+        "RR": ("role_relation_types", "role_relation_types"),
+        "RF": ("responsibility_functions", "role_relation_types"),
         "DS": ("document_structure", "document_structure"),
         "NS": ("normative_status", "normative_status"),
     }

@@ -73,8 +73,8 @@ def map_atlas_data_to_standard(
         )
         for item in atlas_data.structure_items
     )
-    clauses = _materialize_parent_ids(clauses)
 
+    clauses = _materialize_parent_hierarchy(clauses)
     clauses_by_reference = {(clause.volume, clause.reference.clause): clause for clause in clauses}
 
     annotations = _map_initialization_records_to_annotations(
@@ -95,37 +95,36 @@ def map_atlas_data_to_standard(
     )
 
 
-def _materialize_parent_ids(clauses: tuple[Clause, ...]) -> tuple[Clause, ...]:
-    """Materialize the hierarchy encoded by AtlasData clause references.
+def _materialize_parent_hierarchy(clauses: tuple[Clause, ...]) -> tuple[Clause, ...]:
+    """Attach each clause to its nearest materialized structural parent.
 
-    AtlasData stores the canonical document hierarchy implicitly in visible clause
-    references (for example ``7 -> 7.4 -> 7.4.2``).  ``Clause.parent_id`` is the
-    canonical relationship consumed by the structural taxonomy, so the adapter must
-    make that implicit structure explicit when the domain model is created.
-
-    The nearest existing dotted reference in the same volume is used as parent.
-    Part documents that expose a clause ``0`` root attach otherwise top-level
-    clauses to that root. Missing intermediate references are tolerated by walking
-    outward to the nearest existing ancestor instead of inventing synthetic nodes.
+    AtlasData structure expansion yields a flat sequence.  The canonical domain
+    model carries the hierarchy explicitly through ``Clause.parent_id``.  Resolve
+    the nearest existing dotted reference within the same volume, falling back to
+    the synthetic ``0`` root when present.
     """
-    by_reference = {(clause.volume, clause.reference.clause): clause for clause in clauses}
-    roots = {clause.volume: clause for clause in clauses if clause.reference.clause.strip() == "0"}
-    updated: list[Clause] = []
+    by_identity = {(clause.volume, clause.reference.clause.strip()): clause for clause in clauses}
+    materialized: list[Clause] = []
+
     for clause in clauses:
         reference = clause.reference.clause.strip()
         parent: Clause | None = None
         candidate = reference
+
         while "." in candidate:
             candidate = candidate.rsplit(".", 1)[0]
-            parent = by_reference.get((clause.volume, candidate))
+            parent = by_identity.get((clause.volume, candidate))
             if parent is not None:
                 break
+
         if parent is None and reference != "0":
-            parent = roots.get(clause.volume)
-        updated.append(
+            parent = by_identity.get((clause.volume, "0"))
+
+        materialized.append(
             clause.model_copy(update={"parent_id": parent.id if parent is not None else None})
         )
-    return tuple(updated)
+
+    return tuple(materialized)
 
 
 def _map_initialization_records_to_annotations(
@@ -217,7 +216,7 @@ def _merge_semantic_tags(
         DocumentStructureClassification,
         KnowledgeKind,
         ProcessFunction,
-        ResponsibilityFunction,
+        RoleRelationType,
         StatementFunction,
     )
 
@@ -241,9 +240,9 @@ def _merge_semantic_tags(
         update["applicability_functions"] = tuple(
             ApplicabilityFunction(value) for value in decoded["applicability_functions"]
         )
-    if decoded["responsibility_functions"]:
-        update["responsibility_functions"] = tuple(
-            ResponsibilityFunction(value) for value in decoded["responsibility_functions"]
+    if decoded["role_relation_types"]:
+        update["role_relation_types"] = tuple(
+            RoleRelationType(value) for value in decoded["role_relation_types"]
         )
     if decoded["document_structure"]:
         update["document_structure"] = DocumentStructureClassification(

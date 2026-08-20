@@ -1,0 +1,52 @@
+Classify technical standards clauses along four independent semantic dimensions:
+1. statement_functions: linguistic or logical force;
+2. knowledge_kinds: the kind of engineering knowledge represented (technique_or_measure, process, artifact, role, evidence, or concept);
+3. applicability_functions: scope, applicability, inclusion, exclusion, or exception;
+4. role_relation_types: explicit relations between an identifiable actor/role and a target.
+
+A clause may have labels in more than one dimension. Applicability is not merely description. In particular, phrases such as "is applicable", "applies to", "unless", "out of scope", and "only if" are direct evidence for applicability labels. Assign a role relation only when the clause explicitly identifies an actor or role and a target. Extract role, relation, target, optional condition, and exact supporting evidence. Do not infer RACI Accountable/Consulted/Informed without explicit evidence. Use only the supplied evidence and return JSON matching the schema. Empty lists are allowed for dimensions without evidence.
+Document structure is context evidence, but do not infer labels solely from a heading.
+
+Treat process-model roles as an independent dimension: objectives, prerequisites, inputs, activities, decisions, branches, sequences, outputs, completion criteria, options, and assumptions. Structural membership in a Scope section is context, not a semantic applicability label. Never return scope_definition; classify only explicit inclusion, exclusion, exception, or applicability conditions.
+
+Apply these applicability subtype rules consistently:
+- inclusion: directly names what belongs to the scope or population governed by the clause, e.g. "applies to ASIL C and D", "is applicable to software", or "covers X".
+- exclusion: directly names what does not belong to the scope, e.g. "does not apply to X", "not applicable to X", or "outside the scope".
+- exception: carves out a case from an otherwise applicable rule, normally marked by "except" or "unless".
+- applicability_condition: makes application of normative content depend on a condition, e.g. "if X is used, Y is applicable", "when X, Y applies", "provided that", or "subject to".
+For mixed wording, classify the applicability assertion rather than incidental logic. Prefer exception over exclusion when an exception to a general rule is stated, and applicability_condition over inclusion when an explicit condition governs whether the rule applies. A local logical condition that only controls an action or consequence is not applicability. Return at most one primary applicability subtype; use none when no explicit applicability assertion is supported.
+
+Classify techniques, methods, and measures uniformly as technique_or_measure, including combinations such as “techniques and measures”. Do not split these concepts into competing knowledge-kind labels or collapse them into description merely because the clause explains them. Statement function and knowledge kind are orthogonal.
+
+Determine statement functions in two explicit steps. First collect every function directly supported by any sentence or list item in the complete clause; do not stop after finding one dominant function. Then choose primary_function as the function that best represents the clause's main communicative purpose. Preserve all other directly supported functions in statement_functions as secondary functions.
+
+Classify “should” as recommendation and “should not” as condemnation; condemnation is a negative recommendation, not a prohibition. A clause containing “should not” must include condemnation unless the words merely distinguish terminology, deny identity, or report somebody else's wording rather than advise against an interpretation or action. For example, “The overview should not be regarded as complete or exhaustive” is condemnation, not warning or recommendation.
+
+Classify guideline when the clause provides a style guide, coding guideline, or general practice guidance that is not itself a requirement or recommendation. An explicit clause title such as “Style Guide” or “Guidelines” is strong structural evidence for guideline as the primary function unless the clause content clearly contradicts it.
+
+Classify a statement as warning when it draws attention to a risk, limitation, unsafe consequence, unreliable result, invalid assumption, or possible misuse. A warning may qualify an otherwise positive description and must then be retained as a secondary function. For example, a clause that first describes benefits and then says “However, be aware” followed by questionable validity, incorrect results, or an insufficient verification basis has statement_functions [description, warning]. Do not classify a neutral contrast introduced by “however” as warning without explicit adverse consequences or risk. Warning identifies the adverse condition or consequence; recommendation or condemnation prescribes what should or should not be done. When both are present, return both rather than replacing one with the other.
+
+Return exactly one JSON object with every field below. Do not omit empty dimensions:
+{
+  "statement_functions": [],
+  "primary_function": null,
+  "knowledge_kinds": [],
+  "primary_knowledge_kind": null,
+  "process_functions": [],
+  "primary_process_function": null,
+  "applicability_functions": [],
+  "primary_applicability_function": null,
+  "role_relation_types": [],
+  "primary_role_relation_type": null,
+  "role_relations": [],
+  "confidence": null,
+  "rationale": null
+}
+Use [] and null when the supplied evidence does not support a label.
+Confidence values MUST be JSON numbers from 0.0 through 1.0. Use 0.95 for ninety-five percent confidence; never use 95, 95.0, or "95%".
+
+The task applies to clause narrative, not to table-derived concepts or relations. For mixed clauses, classify only the linguistic function of the narrative text. Do not project a table's recommendation, role relations, applicability, traceability, or other relation back onto the containing clause. Structured table semantics are interpreted by a separate task.
+
+Treat explicit function-bearing titles as high-confidence structural evidence. Titles containing Example, Style Guide/Guideline, Definition, Objective, Rationale, Assumption, Prerequisite, Note, Warning, or Caution normally determine the primary statement function unless the clause text clearly contradicts the title. Preserve additional text-supported functions as secondary functions.
+
+Explicit semantic_sections in structural context (for example Aim, Description, or References) are high-confidence evidence about the labelled subsection structure. Use them to distinguish multiple functions within a compound clause, but classify only content actually present in the clause.

@@ -459,19 +459,19 @@ def test_cascade_resolution_escalates_dimension_disagreement() -> None:
         minimum_successful_models=3,
         minimum_confidence=0.6,
         escalate_on_applicability_disagreement=True,
-        escalate_on_responsibility_disagreement=True,
+        escalate_on_role_relation_disagreement=True,
     )
     clause = SimpleNamespace(
         participating_models=3,
         category=SimpleNamespace(value="strong_consensus"),
         statement_function_confidence=1.0,
         applicability_unanimous=False,
-        responsibility_unanimous=False,
+        role_relation_unanimous=False,
     )
 
     assert cascade_escalation_reasons(clause, resolution) == (
         "applicability_disagreement",
-        "responsibility_disagreement",
+        "role_relation_disagreement",
     )
 
 
@@ -488,7 +488,7 @@ def test_cascade_resolution_accepts_unanimous_secondary_dimensions() -> None:
         category=SimpleNamespace(value="majority_consensus"),
         statement_function_confidence=2 / 3,
         applicability_unanimous=True,
-        responsibility_unanimous=True,
+        role_relation_unanimous=True,
     )
 
     assert cascade_escalation_reasons(clause, CascadeResolutionConfig()) == ()
@@ -507,9 +507,9 @@ def test_cascade_stage_can_override_resolution_policy() -> None:
             "resolution": {
                 "minimum_successful_models": 5,
                 "escalate_on_applicability_disagreement": False,
-                "escalate_on_responsibility_disagreement": False,
+                "escalate_on_role_relation_disagreement": False,
                 "minimum_applicability_confidence": 0.75,
-                "minimum_responsibility_confidence": 0.80,
+                "minimum_role_relation_confidence": 0.80,
             },
         }
     )
@@ -517,7 +517,7 @@ def test_cascade_stage_can_override_resolution_policy() -> None:
     assert stage.resolution is not None
     assert stage.resolution.minimum_successful_models == 5
     assert stage.resolution.minimum_applicability_confidence == 0.75
-    assert stage.resolution.minimum_responsibility_confidence == 0.80
+    assert stage.resolution.minimum_role_relation_confidence == 0.80
 
 
 def test_cascade_resolution_uses_dimension_confidence_after_intermediate_stage() -> None:
@@ -532,24 +532,24 @@ def test_cascade_resolution_uses_dimension_confidence_after_intermediate_stage()
         minimum_successful_models=5,
         minimum_confidence=0.6,
         escalate_on_applicability_disagreement=False,
-        escalate_on_responsibility_disagreement=False,
+        escalate_on_role_relation_disagreement=False,
         minimum_applicability_confidence=0.75,
-        minimum_responsibility_confidence=0.80,
+        minimum_role_relation_confidence=0.80,
     )
     resolved = SimpleNamespace(
         participating_models=7,
         category=SimpleNamespace(value="strong_consensus"),
         statement_function_confidence=6 / 7,
         applicability_unanimous=False,
-        responsibility_unanimous=False,
+        role_relation_unanimous=False,
         applicability_present=True,
         applicability_confidence=6 / 7,
         applicability_support={"present": 6 / 7, "exception": 6 / 7},
-        responsibility_present=True,
-        responsibility_confidence=6 / 7,
-        responsibility_support={
+        role_relation_present=True,
+        role_relation_confidence=6 / 7,
+        role_relation_support={
             "present": 6 / 7,
-            "responsibility_assignment": 6 / 7,
+            "responsible_for": 6 / 7,
         },
     )
     unresolved = SimpleNamespace(
@@ -575,22 +575,22 @@ def test_cascade_resolution_can_accept_confident_absence() -> None:
     resolution = CascadeResolutionConfig(
         minimum_successful_models=5,
         escalate_on_applicability_disagreement=False,
-        escalate_on_responsibility_disagreement=False,
+        escalate_on_role_relation_disagreement=False,
         minimum_applicability_confidence=0.75,
-        minimum_responsibility_confidence=0.80,
+        minimum_role_relation_confidence=0.80,
     )
     clause = SimpleNamespace(
         participating_models=7,
         category=SimpleNamespace(value="strong_consensus"),
         statement_function_confidence=6 / 7,
         applicability_unanimous=False,
-        responsibility_unanimous=False,
+        role_relation_unanimous=False,
         applicability_present=False,
         applicability_confidence=0.0,
         applicability_support={"present": 1 / 7},
-        responsibility_present=False,
-        responsibility_confidence=0.0,
-        responsibility_support={"present": 1 / 7},
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 1 / 7},
     )
 
     assert cascade_escalation_reasons(clause, resolution) == ()
@@ -611,7 +611,7 @@ def test_cascade_unresolved_clause_ids_are_monotonic_per_stage() -> None:
         category=SimpleNamespace(value="strong_consensus"),
         statement_function_confidence=1.0,
         applicability_unanimous=True,
-        responsibility_unanimous=True,
+        role_relation_unanimous=True,
     )
     resolved_in_stage = SimpleNamespace(
         clause_id="resolved-in-stage",
@@ -619,7 +619,7 @@ def test_cascade_unresolved_clause_ids_are_monotonic_per_stage() -> None:
         category=SimpleNamespace(value="strong_consensus"),
         statement_function_confidence=1.0,
         applicability_unanimous=True,
-        responsibility_unanimous=True,
+        role_relation_unanimous=True,
     )
     unresolved_in_stage = SimpleNamespace(
         clause_id="unresolved-in-stage",
@@ -627,7 +627,7 @@ def test_cascade_unresolved_clause_ids_are_monotonic_per_stage() -> None:
         category=SimpleNamespace(value="disputed"),
         statement_function_confidence=0.4,
         applicability_unanimous=True,
-        responsibility_unanimous=True,
+        role_relation_unanimous=True,
     )
 
     unresolved, reasons = cascade_unresolved_clause_ids(
@@ -654,7 +654,7 @@ def test_stage_resolver_accepts_three_of_four_statement_votes() -> None:
         statement_function_resolution_mode="stage_resolver",
         statement_function_resolver_min_confidence=0.75,
         minimum_applicability_confidence=0.75,
-        minimum_responsibility_confidence=0.80,
+        minimum_role_relation_confidence=0.80,
     )
     cumulative = SimpleNamespace(
         participating_models=7,
@@ -664,10 +664,10 @@ def test_stage_resolver_accepts_three_of_four_statement_votes() -> None:
         applicability_confidence=0.0,
         applicability_support={"present": 0.0},
         applicability_unanimous=True,
-        responsibility_present=False,
-        responsibility_confidence=0.0,
-        responsibility_support={"present": 0.0},
-        responsibility_unanimous=True,
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
+        role_relation_unanimous=True,
     )
     stage = SimpleNamespace(statement_function_confidence=3 / 4)
 
@@ -695,7 +695,7 @@ def test_stage_resolution_does_not_reopen_resolved_statement_function() -> None:
         statement_function_resolution_mode="stage_resolver",
         statement_function_resolver_min_confidence=0.75,
         minimum_applicability_confidence=0.75,
-        minimum_responsibility_confidence=0.80,
+        minimum_role_relation_confidence=0.80,
     )
     cumulative = SimpleNamespace(
         participating_models=7,
@@ -705,10 +705,10 @@ def test_stage_resolution_does_not_reopen_resolved_statement_function() -> None:
         applicability_confidence=6 / 7,
         applicability_support={"present": 6 / 7, "exception": 6 / 7},
         applicability_unanimous=False,
-        responsibility_present=False,
-        responsibility_confidence=0.0,
-        responsibility_support={"present": 0.0},
-        responsibility_unanimous=True,
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
+        role_relation_unanimous=True,
     )
     stage = SimpleNamespace(statement_function_confidence=0.25)
 
@@ -735,7 +735,7 @@ def test_stage_resolution_uses_cumulative_applicability_confidence() -> None:
         minimum_successful_models=5,
         statement_function_resolution_mode="stage_resolver",
         minimum_applicability_confidence=0.75,
-        minimum_responsibility_confidence=0.80,
+        minimum_role_relation_confidence=0.80,
     )
     cumulative = SimpleNamespace(
         participating_models=7,
@@ -745,10 +745,10 @@ def test_stage_resolution_uses_cumulative_applicability_confidence() -> None:
         applicability_confidence=5 / 7,
         applicability_support={"present": 5 / 7, "exception": 5 / 7},
         applicability_unanimous=False,
-        responsibility_present=False,
-        responsibility_confidence=0.0,
-        responsibility_support={"present": 0.0},
-        responsibility_unanimous=True,
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
+        role_relation_unanimous=True,
     )
     stage = SimpleNamespace(statement_function_confidence=1.0)
 
@@ -775,10 +775,10 @@ def test_capture_resolved_dimensions_persists_stage_resolver_statement() -> None
         proposed_applicability_functions=(),
         applicability_decision_confidence=1.0,
         applicability_category=SimpleNamespace(value="unanimous"),
-        responsibility_present=False,
-        proposed_responsibility_functions=(),
-        responsibility_decision_confidence=1.0,
-        responsibility_category=SimpleNamespace(value="unanimous"),
+        role_relation_present=False,
+        proposed_role_relation_types=(),
+        role_relation_decision_confidence=1.0,
+        role_relation_category=SimpleNamespace(value="unanimous"),
     )
     resolver = SimpleNamespace(
         primary_function=SimpleNamespace(value="description"),
@@ -821,10 +821,10 @@ def test_cascade_escalates_applicability_structural_conflict() -> None:
         applicability_present=True,
         applicability_confidence=1.0,
         applicability_support={"present": 1.0, "exclusion": 1.0},
-        responsibility_unanimous=True,
-        responsibility_present=False,
-        responsibility_confidence=0.0,
-        responsibility_support={"present": 0.0},
+        role_relation_unanimous=True,
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
     )
 
     reasons = cascade_escalation_reasons(clause, CascadeResolutionConfig())
@@ -852,10 +852,10 @@ def test_capture_initial_knowledge_kind_uses_decision_confidence_for_none() -> N
         applicability_decision_confidence=1.0,
         applicability_category=SimpleNamespace(value="unanimous"),
         applicability_structural_conflict=False,
-        responsibility_present=False,
-        proposed_responsibility_functions=(),
-        responsibility_decision_confidence=1.0,
-        responsibility_category=SimpleNamespace(value="unanimous"),
+        role_relation_present=False,
+        proposed_role_relation_types=(),
+        role_relation_decision_confidence=1.0,
+        role_relation_category=SimpleNamespace(value="unanimous"),
     )
 
     captured = capture_resolved_dimensions(
@@ -908,10 +908,10 @@ def test_stage_keeps_unresolved_structural_conflict_without_other_applicability_
         applicability_confidence=1.0,
         applicability_support={"present": 1.0, "exclusion": 1.0},
         applicability_unanimous=True,
-        responsibility_present=False,
-        responsibility_confidence=0.0,
-        responsibility_support={"present": 0.0},
-        responsibility_unanimous=True,
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
+        role_relation_unanimous=True,
     )
     stage = SimpleNamespace(statement_function_confidence=1.0)
 

@@ -87,7 +87,7 @@ class SemanticTaskDefinition(BaseModel):
     knowledge_taxonomy: tuple[str, ...] = ()
     process_taxonomy: tuple[str, ...] = ()
     applicability_taxonomy: tuple[str, ...] = ()
-    responsibility_taxonomy: tuple[str, ...] = ()
+    role_relation_taxonomy: tuple[str, ...] = ()
     multi_label: bool = True
     allow_unclassified: bool = True
     supported_item_kinds: tuple[str, ...] = ("clause",)
@@ -139,10 +139,8 @@ class SemanticTaskRepository:
             if "applicability_functions" in loaded
             else ()
         )
-        metadata["responsibility_taxonomy"] = tuple(
-            loaded.get("responsibility_functions").values
-            if "responsibility_functions" in loaded
-            else ()
+        metadata["role_relation_taxonomy"] = tuple(
+            loaded.get("role_relation_types").values if "role_relation_types" in loaded else ()
         )
         schema = json.loads((root / "schema.json").read_text(encoding="utf-8"))
         return SemanticTaskDefinition.model_validate(metadata), schema
@@ -538,8 +536,8 @@ def _run_adaptive_interview(
         "primary_process_function": None,
         "applicability_functions": [],
         "primary_applicability_function": None,
-        "responsibility_functions": [],
-        "primary_responsibility_function": None,
+        "role_relation_types": [],
+        "primary_role_relation_type": None,
         "confidence": None,
         "rationale": None,
     }
@@ -621,9 +619,9 @@ def _run_adaptive_interview(
         elif question.dimension is InterviewDimension.APPLICABILITY:
             selection["applicability_functions"] = [label]
             selection["primary_applicability_function"] = label
-        elif question.dimension is InterviewDimension.RESPONSIBILITY:
-            selection["responsibility_functions"] = [label]
-            selection["primary_responsibility_function"] = label
+        elif question.dimension is InterviewDimension.ROLE_RELATION:
+            selection["role_relation_types"] = [label]
+            selection["primary_role_relation_type"] = label
     selection["confidence"] = min(confidences) if confidences else None
     selection["rationale"] = " | ".join(rationales) or None
     if last_result is None:
@@ -653,8 +651,8 @@ def _run_adaptive_interview(
                 "primary_process_function",
                 "applicability_functions",
                 "primary_applicability_function",
-                "responsibility_functions",
-                "primary_responsibility_function",
+                "role_relation_types",
+                "primary_role_relation_type",
             ),
         )
     return (
@@ -780,8 +778,8 @@ def _normalize_selection_payload(
         "primary_process_function": None,
         "applicability_functions": [],
         "primary_applicability_function": None,
-        "responsibility_functions": [],
-        "primary_responsibility_function": None,
+        "role_relation_types": [],
+        "primary_role_relation_type": None,
     }
     for field in required_fields:
         if field in defaults:
@@ -796,7 +794,7 @@ def _normalize_selection_payload(
     for field, primary in (
         ("process_functions", "primary_process_function"),
         ("applicability_functions", "primary_applicability_function"),
-        ("responsibility_functions", "primary_responsibility_function"),
+        ("role_relation_types", "primary_role_relation_type"),
     ):
         values = normalized.get(field)
         if isinstance(values, (list, tuple)):

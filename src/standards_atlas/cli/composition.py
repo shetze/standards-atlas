@@ -144,7 +144,7 @@ def build_ontology_classification_service(
     config = LlmConfig.load(llm_config_path)
     classifier = LlmOntologyClassifier(OpenAICompatibleLlmGateway(config), model=config.model)
     profile = OntologyProfile(
-        id="semantic-profile-2.1.0",
+        id="semantic-profile-2.2.0",
         dimensions={
             "statement_functions": OntologyReference(id="statement-functions", version="2.0.0"),
             "knowledge_kinds": OntologyReference(id="knowledge-kinds", version="2.1.0"),
@@ -152,9 +152,7 @@ def build_ontology_classification_service(
             "applicability_functions": OntologyReference(
                 id="applicability-functions", version="1.1.0"
             ),
-            "responsibility_functions": OntologyReference(
-                id="responsibility-functions", version="1.0.0"
-            ),
+            "role_relation_types": OntologyReference(id="role-relation-types", version="1.0.0"),
         },
     )
     engine = OntologyEngine(

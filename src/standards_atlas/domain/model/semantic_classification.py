@@ -68,12 +68,34 @@ class ApplicabilityFunction(StrEnum):
     EXCEPTION = "exception"
 
 
-class ResponsibilityFunction(StrEnum):
-    """How a statement allocates responsibility to roles or actors."""
+class RoleRelationType(StrEnum):
+    """Controlled relation types between an actor/role and a target."""
 
-    RESPONSIBILITY_ASSIGNMENT = "responsibility_assignment"
-    RESPONSIBILITY_EXCLUSION = "responsibility_exclusion"
-    ROLE_CONDITION = "role_condition"
+    RESPONSIBLE_FOR = "responsible_for"
+    PERFORMS = "performs"
+    APPROVES = "approves"
+    VERIFIES = "verifies"
+    VALIDATES = "validates"
+    CONSULTED_FOR = "consulted_for"
+    INFORMED_ABOUT = "informed_about"
+    INDEPENDENT_OF = "independent_of"
+    EXCLUDED_FROM = "excluded_from"
+    ASSIGNED_TO = "assigned_to"
+    ASSUMES_ROLE = "assumes_role"
+    PARTICIPATES_IN = "participates_in"
+
+
+class RoleRelation(BaseModel):
+    """Evidence-grounded relation between a role/actor and an activity, artifact, or role."""
+
+    model_config = ConfigDict(frozen=True)
+
+    role: str = Field(min_length=1)
+    relation: RoleRelationType
+    target: str = Field(min_length=1)
+    condition: str | None = None
+    evidence: str | None = None
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class DocumentStructure(StrEnum):
@@ -183,7 +205,8 @@ class SemanticClassification(BaseModel):
     knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
-    responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
+    role_relation_types: tuple[RoleRelationType, ...] = ()
+    role_relations: tuple[RoleRelation, ...] = ()
     document_structure: DocumentStructureClassification | None = None
     normative_status: NormativeStatus = NormativeStatus.UNSPECIFIED
     domain_functions: tuple[DomainFunctionClassification, ...] = ()
@@ -199,8 +222,13 @@ class SemanticClassification(BaseModel):
             raise ValueError("process_functions must not contain duplicates")
         if len(self.applicability_functions) != len(set(self.applicability_functions)):
             raise ValueError("applicability_functions must not contain duplicates")
-        if len(self.responsibility_functions) != len(set(self.responsibility_functions)):
-            raise ValueError("responsibility_functions must not contain duplicates")
+        if len(self.role_relation_types) != len(set(self.role_relation_types)):
+            raise ValueError("role_relation_types must not contain duplicates")
+        relation_keys = [
+            (item.role, item.relation, item.target, item.condition) for item in self.role_relations
+        ]
+        if len(relation_keys) != len(set(relation_keys)):
+            raise ValueError("role_relations must not contain duplicates")
         domains = [item.knowledge_domain for item in self.domain_functions]
         if len(domains) != len(set(domains)):
             raise ValueError("each knowledge domain may occur only once")

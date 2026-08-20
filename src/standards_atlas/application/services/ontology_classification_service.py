@@ -12,7 +12,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     KnowledgeKind,
     ProcessFunction,
-    ResponsibilityFunction,
+    RoleRelationType,
     StatementFunction,
 )
 
@@ -96,9 +96,8 @@ class OntologyClassificationService:
                         ApplicabilityFunction(item)
                         for item in values.get("applicability_functions", ())
                     ),
-                    "responsibility_functions": tuple(
-                        ResponsibilityFunction(item)
-                        for item in values.get("responsibility_functions", ())
+                    "role_relation_types": tuple(
+                        RoleRelationType(item) for item in values.get("role_relation_types", ())
                     ),
                 }
             )

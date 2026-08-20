@@ -16,7 +16,8 @@ from standards_atlas.domain.model import (
     ApplicabilityFunction,
     KnowledgeKind,
     ProcessFunction,
-    ResponsibilityFunction,
+    RoleRelation,
+    RoleRelationType,
     StatementFunction,
 )
 
@@ -75,8 +76,9 @@ class StatementFunctionSelection(BaseModel):
     primary_process_function: ProcessFunction | None = None
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     primary_applicability_function: ApplicabilityFunction | None = None
-    responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
-    primary_responsibility_function: ResponsibilityFunction | None = None
+    role_relation_types: tuple[RoleRelationType, ...] = ()
+    primary_role_relation_type: RoleRelationType | None = None
+    role_relations: tuple[RoleRelation, ...] = ()
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     rationale: str | None = None
 
@@ -113,14 +115,12 @@ class StatementFunctionSelection(BaseModel):
         if len(set(self.applicability_functions)) != len(self.applicability_functions):
             raise ValueError("applicability_functions must not contain duplicates")
         if (
-            self.primary_responsibility_function is not None
-            and self.primary_responsibility_function not in self.responsibility_functions
+            self.primary_role_relation_type is not None
+            and self.primary_role_relation_type not in self.role_relation_types
         ):
-            raise ValueError(
-                "primary_responsibility_function must be included in responsibility_functions"
-            )
-        if len(set(self.responsibility_functions)) != len(self.responsibility_functions):
-            raise ValueError("responsibility_functions must not contain duplicates")
+            raise ValueError("primary_role_relation_type must be included in role_relation_types")
+        if len(set(self.role_relation_types)) != len(self.role_relation_types):
+            raise ValueError("role_relation_types must not contain duplicates")
         return self
 
 

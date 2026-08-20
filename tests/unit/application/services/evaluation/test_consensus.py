@@ -55,8 +55,8 @@ def _run(
                 "primary_function": roles[0] if roles else None,
                 "applicability_functions": applicability or [],
                 "primary_applicability_function": (applicability[0] if applicability else None),
-                "responsibility_functions": responsibility or [],
-                "primary_responsibility_function": (responsibility[0] if responsibility else None),
+                "role_relation_types": responsibility or [],
+                "primary_role_relation_type": (responsibility[0] if responsibility else None),
                 "confidence": 0.9,
                 "rationale": rationale,
             },
@@ -235,7 +235,7 @@ def test_responsibility_requires_actor_and_action_evidence(tmp_path: Path) -> No
             model,
             1,
             ["description"],
-            responsibility=["responsibility_assignment"],
+            responsibility=["responsible_for"],
             rationale="The interval is specified as part of the requirements.",
         )
         report_path = tmp_path / f"{model}.json"
@@ -261,8 +261,8 @@ def test_responsibility_requires_actor_and_action_evidence(tmp_path: Path) -> No
     )
 
     clause = report.clauses[0]
-    assert clause.responsibility_present is False
-    assert clause.proposed_responsibility_functions == ()
+    assert clause.role_relation_present is False
+    assert clause.proposed_role_relation_types == ()
 
 
 def test_review_sorts_disputed_clauses_before_other_review_categories() -> None:
@@ -372,8 +372,8 @@ def test_model_votes_are_rendered_as_space_padded_table() -> None:
         ModelVote(
             model_id="gemma-long-model-name",
             primary_function="description",
-            responsibility_present=True,
-            responsibility_function="responsibility_assignment",
+            role_relation_present=True,
+            role_relation_type="responsible_for",
             repetitions=3,
             stability=0.667,
         ),
@@ -383,13 +383,13 @@ def test_model_votes_are_rendered_as_space_padded_table() -> None:
 
     assert lines == [
         "| Voter                 | Primary statement | Secondary statements | Knowledge kinds | "
-        "Applicability    | Responsibility            | Stability |",
+        "Applicability    | Role relation   | Stability |",
         "| --------------------- | ----------------- | -------------------- | --------------- | "
-        "---------------- | ------------------------- | --------- |",
+        "---------------- | --------------- | --------- |",
         "| granite               | requirement       | none                 | technique       | "
-        "scope_definition | none                      | 1.000     |",
+        "scope_definition | none            | 1.000     |",
         "| gemma-long-model-name | description       | none                 | none            | "
-        "none             | responsibility_assignment | 0.667     |",
+        "none             | responsible_for | 0.667     |",
     ]
     assert all(len(line) == len(lines[0]) for line in lines)
 
@@ -397,10 +397,10 @@ def test_model_votes_are_rendered_as_space_padded_table() -> None:
 def test_responsibility_accepts_development_function_as_actor(tmp_path: Path) -> None:
     observations = []
     selections = {
-        "model-a": ["responsibility_assignment"],
-        "model-b": ["responsibility_assignment"],
-        "model-c": ["responsibility_assignment"],
-        "model-d": ["responsibility_assignment"],
+        "model-a": ["responsible_for"],
+        "model-b": ["responsible_for"],
+        "model-c": ["responsible_for"],
+        "model-d": ["responsible_for"],
         "model-e": [],
     }
     for model, responsibility in selections.items():
@@ -439,13 +439,11 @@ def test_responsibility_accepts_development_function_as_actor(tmp_path: Path) ->
     )
 
     clause = report.clauses[0]
-    assert clause.responsibility_present is True
-    assert [value.value for value in clause.proposed_responsibility_functions] == [
-        "responsibility_assignment"
-    ]
-    assert clause.responsibility_support == {
+    assert clause.role_relation_present is True
+    assert [value.value for value in clause.proposed_role_relation_types] == ["responsible_for"]
+    assert clause.role_relation_support == {
         "present": 0.8,
-        "responsibility_assignment": 0.8,
+        "responsible_for": 0.8,
     }
 
 
@@ -481,8 +479,8 @@ def test_structural_title_example_overrides_model_majority(tmp_path: Path) -> No
             "accept_majority_min_confidence": 0.67,
             "accept_majority_min_models": 3,
             "applicability_min_confidence": 0.75,
-            "responsibility_min_confidence": 0.8,
-            "require_responsibility_evidence": True,
+            "role_relation_min_confidence": 0.8,
+            "require_role_relation_evidence": True,
         },
     )
     assert result["primary_function"] is StatementFunction.EXAMPLE
@@ -639,8 +637,8 @@ def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
             applicability_function="exclusion",
-            responsibility_present=True,
-            responsibility_function="responsibility_assignment",
+            role_relation_present=True,
+            role_relation_type="responsible_for",
             evidence="The supplier shall ensure verification.",
             repetitions=1,
             stability=1.0,
@@ -650,8 +648,8 @@ def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
             applicability_function="exclusion",
-            responsibility_present=True,
-            responsibility_function="responsibility_assignment",
+            role_relation_present=True,
+            role_relation_type="responsible_for",
             evidence="The supplier shall ensure verification.",
             repetitions=1,
             stability=1.0,
@@ -677,8 +675,8 @@ def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None
             "accept_majority_min_confidence": 0.67,
             "accept_majority_min_models": 3,
             "applicability_min_confidence": 0.75,
-            "responsibility_min_confidence": 0.8,
-            "require_responsibility_evidence": True,
+            "role_relation_min_confidence": 0.8,
+            "require_role_relation_evidence": True,
         },
     )
 
@@ -688,9 +686,9 @@ def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None
     assert result["knowledge_kind_decision_confidence"] == 1.0
     assert result["applicability_confidence"] == pytest.approx(2 / 3)
     assert result["applicability_decision_confidence"] == pytest.approx(2 / 3)
-    assert result["responsibility_confidence"] == pytest.approx(2 / 3)
+    assert result["role_relation_confidence"] == pytest.approx(2 / 3)
     assert result["applicability_unanimous"] is False
-    assert result["responsibility_unanimous"] is False
+    assert result["role_relation_unanimous"] is False
     assert (
         "majority consensus does not meet automatic-acceptance policy" in result["review_reasons"]
     )
@@ -813,15 +811,15 @@ def test_disputed_knowledge_kind_remains_disputed() -> None:
     assert result["knowledge_kind_category"] is ConsensusCategory.DISPUTED
 
 
-def test_high_responsibility_confidence_does_not_mask_missing_statement_function() -> None:
+def test_high_role_relation_confidence_does_not_mask_missing_statement_function() -> None:
     from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
 
     votes = tuple(
         ModelVote(
             model_id=f"model-{index}",
             primary_function=(None if index < 3 else StatementFunction.DESCRIPTION),
-            responsibility_present=True,
-            responsibility_function="responsibility_assignment",
+            role_relation_present=True,
+            role_relation_type="responsible_for",
             evidence="The supplier shall ensure verification.",
             repetitions=1,
             stability=1.0,
@@ -842,8 +840,8 @@ def test_high_responsibility_confidence_does_not_mask_missing_statement_function
             "accept_majority_min_confidence": 0.67,
             "accept_majority_min_models": 3,
             "applicability_min_confidence": 0.75,
-            "responsibility_min_confidence": 0.8,
-            "require_responsibility_evidence": True,
+            "role_relation_min_confidence": 0.8,
+            "require_role_relation_evidence": True,
         },
     )
 
@@ -851,7 +849,7 @@ def test_high_responsibility_confidence_does_not_mask_missing_statement_function
     assert result["primary_function"] is None
     assert result["statement_function_confidence"] == pytest.approx(3 / 5)
     assert result["statement_function_decision_confidence"] == pytest.approx(3 / 5)
-    assert result["responsibility_confidence"] == 1.0
+    assert result["role_relation_confidence"] == 1.0
     assert result["confidence"] == pytest.approx(3 / 5)
     assert result["requires_review"] is True
 
@@ -869,7 +867,7 @@ def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> No
             "accept_majority_min_confidence": 0.67,
             "accept_majority_min_models": 3,
             "applicability_min_confidence": 0.75,
-            "responsibility_min_confidence": 0.80,
+            "role_relation_min_confidence": 0.80,
         },
         clause_count=1,
         categories={"strong_consensus": 1},
@@ -886,18 +884,18 @@ def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> No
                 proposed_knowledge_kinds=("process",),
                 applicability_present=True,
                 proposed_applicability_functions=("exception",),
-                responsibility_present=True,
-                proposed_responsibility_functions=("responsibility_assignment",),
+                role_relation_present=True,
+                proposed_role_relation_types=("responsible_for",),
                 confidence=0.8,
                 statement_function_confidence=0.8,
                 knowledge_kind_confidence=0.8,
                 applicability_confidence=0.8,
-                responsibility_confidence=0.6,
+                role_relation_confidence=0.6,
                 applicability_unanimous=False,
-                responsibility_unanimous=False,
+                role_relation_unanimous=False,
                 participating_models=5,
                 requires_review=True,
-                review_reasons=("responsibility evidence is below its confidence threshold",),
+                review_reasons=("role-relation evidence is below its confidence threshold",),
                 votes=(
                     ModelVote(
                         model_id="model-a",
@@ -906,8 +904,8 @@ def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> No
                         primary_knowledge_kind="process",
                         applicability_present=True,
                         applicability_function="exception",
-                        responsibility_present=True,
-                        responsibility_function="responsibility_assignment",
+                        role_relation_present=True,
+                        role_relation_type="responsible_for",
                         repetitions=1,
                         stability=1.0,
                     ),
@@ -918,12 +916,12 @@ def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> No
 
     review = _render_review(report)
 
-    assert "- HITL required for: responsibility" in review
+    assert "- HITL required for: role_relation" in review
     assert "- Primary statement function: requirement" in review
     assert "- Secondary statement functions: prerequisite" in review
     assert "- Knowledge kinds: process" in review
     assert "- Applicability present/function: true / exception" in review
-    assert "- Responsibility present/function: \n" in review
+    assert "- Role relation present/function: \n" in review
     assert "| Primary statement | Secondary statements |" in review
     assert "| requirement" in review and "| prerequisite" in review
 
@@ -947,7 +945,7 @@ def test_review_prefills_unanimous_absent_secondary_dimensions() -> None:
                 confidence=0.33,
                 statement_function_confidence=0.33,
                 applicability_unanimous=True,
-                responsibility_unanimous=True,
+                role_relation_unanimous=True,
                 participating_models=3,
                 requires_review=True,
                 review_reasons=("consensus category is disputed",),
@@ -958,7 +956,7 @@ def test_review_prefills_unanimous_absent_secondary_dimensions() -> None:
     review = _render_review(report)
 
     assert "- Applicability present/function: false / none" in review
-    assert "- Responsibility present/function: false / none" in review
+    assert "- Role relation present/function: false / none" in review
     assert "- HITL required for: statement functions, knowledge kinds" in review
 
 
@@ -1172,8 +1170,8 @@ def test_resolved_structural_conflict_is_audited_but_not_reviewed() -> None:
             "accept_majority_min_confidence": 0.67,
             "accept_majority_min_models": 3,
             "applicability_min_confidence": 0.75,
-            "responsibility_min_confidence": 0.8,
-            "require_responsibility_evidence": True,
+            "role_relation_min_confidence": 0.8,
+            "require_role_relation_evidence": True,
         },
         resolution_override={
             "applicability": {
