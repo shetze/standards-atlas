@@ -956,3 +956,24 @@ def test_cached_or_reused_wall_time_does_not_satisfy_duration_threshold(tmp_path
     assert candidate.performance_measurement_source == "not_measured"
     assert not candidate.passed
     assert "fresh inference performance not measured" in candidate.regressions
+
+
+def test_model_dimension_eligibility_defaults_true_and_is_exposed(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["models"][0]["dimension_eligibility"] = {
+        "applicability_presence": True,
+        "applicability_subtype": False,
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    manifest = QualificationMatrixManifest.load(path)
+
+    assert manifest.model_dimension_eligibility["fast"] == {
+        "applicability_presence": True,
+        "applicability_subtype": False,
+    }
+    assert manifest.model_dimension_eligibility["accurate"] == {
+        "applicability_presence": True,
+        "applicability_subtype": True,
+    }

@@ -1,5 +1,5 @@
 manifest_type: qualification_matrix
-schema_version: "1.4"
+schema_version: "1.5"
 matrix_id: multidimensional-semantic-qualification-v3
 corpus_id: semantic-profile-v1
 task_version: 2.1.0
@@ -12,7 +12,7 @@ execution:
     - id: efficient-local
       models:
         - granite-3.3-8b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
         - llama-3.1-8b-instruct-q4-k-m
         - smollm3-3b-q4-k-m
       prompts:
@@ -27,7 +27,7 @@ execution:
         escalate_on_responsibility_disagreement: true
     - id: intermediate-escalation
       models:
-        - ministral-3-8b-instruct-2512-q4-k-m
+        - gemma-3-12b-it-q4-k-m
         - mistral-small-3.2-24b-instruct-q4-k-m
         - glm-4-9b-chat-q4-k-m
       prompts:
@@ -223,6 +223,9 @@ models:
     accelerator: gpu
     parameters_billion: 3
     declared_memory_gb: 4
+    dimension_eligibility:
+      applicability_presence: true
+      applicability_subtype: false
     generation:
       max_output_tokens: 384
       adaptive_question_max_tokens: 256

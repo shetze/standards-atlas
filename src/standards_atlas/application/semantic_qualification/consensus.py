@@ -193,6 +193,7 @@ class ModelConsensusService:
         structural_priors: dict[str, Any] | None = None,
         example_ids: tuple[str, ...] | None = None,
         resolution_overrides: dict[str, dict[str, dict[str, Any]]] | None = None,
+        model_dimension_eligibility: dict[str, dict[str, bool]] | None = None,
     ) -> tuple[ConsensusReport, Path, Path, Path]:
         prompts = {
             "statement_function": prompt_id,
@@ -291,6 +292,7 @@ class ModelConsensusService:
                 policy=policy,
                 resolution_override=(resolution_overrides or {}).get(clause_id, {}),
                 scope_context=bool(prior.get("scope_context", False)),
+                model_dimension_eligibility=model_dimension_eligibility or {},
             )
             clauses.append(
                 ClauseConsensus(
@@ -468,6 +470,7 @@ def _resolve_clause(
     policy: dict[str, Any],
     resolution_override: dict[str, dict[str, Any]] | None = None,
     scope_context: bool = False,
+    model_dimension_eligibility: dict[str, dict[str, bool]] | None = None,
 ) -> dict[str, Any]:
     policy = _review_policy(policy)
     model_count = len(votes)
@@ -542,14 +545,25 @@ def _resolve_clause(
             **knowledge_kind_support,
         }
 
+    eligibility = model_dimension_eligibility or {}
+
+    def eligible(vote: ModelVote, dimension: str) -> bool:
+        return bool(eligibility.get(vote.model_id, {}).get(dimension, True))
+
+    app_presence_votes = tuple(vote for vote in votes if eligible(vote, "applicability_presence"))
+    app_subtype_votes = tuple(vote for vote in votes if eligible(vote, "applicability_subtype"))
+    app_presence_model_count = len(app_presence_votes)
+    app_subtype_model_count = len(app_subtype_votes)
     app_present_support = (
-        sum(vote.applicability_present for vote in votes) / model_count if model_count else 0.0
+        sum(vote.applicability_present for vote in app_presence_votes) / app_presence_model_count
+        if app_presence_model_count
+        else 0.0
     )
     app_counts = Counter(
-        vote.applicability_function for vote in votes if vote.applicability_present
+        vote.applicability_function for vote in app_subtype_votes if vote.applicability_present
     )
     app_label, app_count = app_counts.most_common(1)[0] if app_counts else (None, 0)
-    app_label_support = app_count / model_count if model_count else 0.0
+    app_label_support = app_count / app_subtype_model_count if app_subtype_model_count else 0.0
     prior_app = structural_prior.get("applicability_subtype")
     applicability_structural_conflict = bool(
         prior_app
@@ -573,15 +587,19 @@ def _resolve_clause(
     resp_label_support = resp_count / model_count if model_count else 0.0
     resp_accepted = resp_present_support >= majority_threshold and resp_label is not None
 
-    applicability_unanimous = _dimension_votes_are_unanimous(
+    applicability_presence_unanimous = _dimension_votes_are_unanimous(
+        tuple(vote.applicability_present for vote in app_presence_votes)
+    )
+    applicability_subtype_unanimous = _dimension_votes_are_unanimous(
         tuple(
             (
                 vote.applicability_present,
                 vote.applicability_function if vote.applicability_present else None,
             )
-            for vote in votes
+            for vote in app_subtype_votes
         )
     )
+    applicability_unanimous = applicability_presence_unanimous and applicability_subtype_unanimous
     responsibility_unanimous = _dimension_votes_are_unanimous(
         tuple(
             (
@@ -631,9 +649,12 @@ def _resolve_clause(
         strong_threshold,
         majority_threshold,
     )
+    applicability_model_count = (
+        app_subtype_model_count if app_accepted else app_presence_model_count
+    )
     applicability_category = _category_for_confidence(
         applicability_decision_confidence,
-        model_count,
+        applicability_model_count,
         minimum_models,
         strong_threshold,
         majority_threshold,

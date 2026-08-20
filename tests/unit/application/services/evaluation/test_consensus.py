@@ -1195,3 +1195,127 @@ def test_resolved_structural_conflict_is_audited_but_not_reviewed() -> None:
         "applicability structural prior conflicts with model consensus"
         not in result["review_reasons"]
     )
+
+
+def test_applicability_subtype_eligibility_excludes_model_from_denominator() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+    from standards_atlas.domain.model import ApplicabilityFunction
+
+    votes = (
+        ModelVote(
+            model_id="granite",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function=ApplicabilityFunction.INCLUSION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="ministral",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function=ApplicabilityFunction.INCLUSION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="llama",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function=ApplicabilityFunction.APPLICABILITY_CONDITION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="smollm",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function=ApplicabilityFunction.EXCEPTION,
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+        model_dimension_eligibility={
+            "smollm": {
+                "applicability_presence": True,
+                "applicability_subtype": False,
+            }
+        },
+    )
+
+    assert result["applicability_present"] is True
+    assert result["applicability_presence_confidence"] == pytest.approx(1.0)
+    assert result["applicability_subtype_confidence"] == pytest.approx(2 / 3)
+    assert result["applicability_support"]["inclusion"] == pytest.approx(2 / 3)
+    assert result["proposed_applicability_functions"] == (ApplicabilityFunction.INCLUSION,)
+
+
+def test_applicability_presence_eligibility_excludes_model_from_presence_vote() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+    from standards_atlas.domain.model import ApplicabilityFunction
+
+    votes = (
+        ModelVote(
+            model_id="a",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function=ApplicabilityFunction.INCLUSION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="b",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function=ApplicabilityFunction.INCLUSION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="c",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=True,
+            applicability_function=ApplicabilityFunction.INCLUSION,
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="presence-outlier",
+            primary_function=StatementFunction.REQUIREMENT,
+            applicability_present=False,
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+        model_dimension_eligibility={
+            "presence-outlier": {
+                "applicability_presence": False,
+                "applicability_subtype": True,
+            }
+        },
+    )
+
+    assert result["applicability_presence_confidence"] == pytest.approx(1.0)
+    assert result["applicability_support"]["present"] == pytest.approx(1.0)

@@ -92,11 +92,11 @@ execution:
   mode: cascade
   stages:
     - id: efficient-local
-      models: [granite-8b, gemma-12b, llama-8b, smollm3-3b]
+      models: [granite-8b, ministral-8b, llama-8b, smollm3-3b]
       prompts: [content-only, structure-aware]
       apply_to: all
     - id: intermediate-escalation
-      models: [ministral-8b, mistral-small-24b, glm-4-9b]
+      models: [gemma-12b, mistral-small-24b, glm-4-9b]
       prompts: [content-only, structure-aware]
       apply_to: unresolved
     - id: escalation
@@ -114,6 +114,26 @@ structure-aware variant. More expensive or specialised prompts are evaluated onl
 unresolved clauses in later stages. Qualification reports contain only combinations that
 were configured for the respective model; intentionally omitted combinations are not
 reported as missing runs.
+
+Models may also declare dimension-specific voting eligibility. This keeps the complete model
+prediction in the qualification artifacts while excluding a model from a semantic subtask for
+which qualification showed systematic weakness. Eligibility affects only consensus arithmetic;
+it does not suppress inference or diagnostics.
+
+```yaml
+models:
+  - id: smollm3-3b
+    provider: ramalama
+    dimension_eligibility:
+      applicability_presence: true
+      applicability_subtype: false
+```
+
+An ineligible vote is removed from both numerator and denominator. For example, if SmolLM3 is
+ineligible for `applicability_subtype`, three remaining subtype voters with two `inclusion`
+votes and one `applicability_condition` vote yield `2/3`, not `2/4`. Applicability presence is
+calculated independently, so SmolLM3 can still contribute to the presence decision. Omitted
+eligibility settings default to `true` for backward compatibility.
 
 
 ### Taxonomy distinctions
@@ -222,7 +242,10 @@ models whose cascade roles they challenge. A normal `qualification-matrix` run i
 challenger-only models.
 
 The applicability hard-case qualification promoted SmolLM3 3B, GLM-4 9B, and EXAONE
-3.5 32B into the production cascade. The displaced Qwen3 8B, Phi-4 14B, and Qwen3 32B
+3.5 32B into the production cascade. The representative 500-clause follow-up then moved
+Ministral 3 8B into `efficient-local` and Gemma 3 12B into `intermediate-escalation` to reduce
+Mistral-family correlation in the resolver stage. SmolLM3 remains eligible for applicability
+presence but is excluded from applicability-subtype consensus. The displaced Qwen3 8B, Phi-4 14B, and Qwen3 32B
 models remain in `challenger_qualification.models` as regression baselines. This keeps the
 head-to-head workflow useful without duplicating a model between the production and challenger
 pools. Challenger comparison aggregates only `qualification_eligible` candidates; unsupported

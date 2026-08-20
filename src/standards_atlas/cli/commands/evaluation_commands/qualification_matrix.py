@@ -734,6 +734,7 @@ def qualify_model_prompt_matrix(
                         adjudication=manifest.consensus.adjudication.model_dump(),
                         structural_priors=(manifest.consensus.structural_priors.model_dump()),
                         example_ids=stage_clause_ids,
+                        model_dimension_eligibility=(interim_manifest.model_dimension_eligibility),
                     )
                     if stage_index == 0:
                         unresolved_clause_ids, escalation_reasons = cascade_unresolved_clause_ids(
@@ -782,6 +783,9 @@ def qualify_model_prompt_matrix(
                             adjudication=manifest.consensus.adjudication.model_dump(),
                             structural_priors=(manifest.consensus.structural_priors.model_dump()),
                             example_ids=stage_clause_ids,
+                            model_dimension_eligibility=(
+                                interim_manifest.model_dimension_eligibility
+                            ),
                         )
                         unresolved_clause_ids, escalation_reasons = (
                             cascade_stage_unresolved_clause_ids(
@@ -902,6 +906,7 @@ def qualify_model_prompt_matrix(
                         if manifest.execution.mode == "cascade" and not aggregate_only
                         else None
                     ),
+                    model_dimension_eligibility=manifest.model_dimension_eligibility,
                 )
             )
             consensus_paths = (consensus_json, proposal_yaml, review_markdown)

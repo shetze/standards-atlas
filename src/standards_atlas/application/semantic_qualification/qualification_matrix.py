@@ -443,6 +443,15 @@ class MatrixExecutionConfig(BaseModel):
     resolution: CascadeResolutionConfig = CascadeResolutionConfig()
 
 
+class ModelDimensionEligibility(BaseModel):
+    """Dimension-level voting eligibility for one model candidate."""
+
+    model_config = ConfigDict(frozen=True)
+
+    applicability_presence: bool = True
+    applicability_subtype: bool = True
+
+
 class ModelCandidate(BaseModel):
     """One model/provider combination and its declared resource profile."""
 
@@ -458,6 +467,7 @@ class ModelCandidate(BaseModel):
     declared_memory_gb: float | None = Field(default=None, gt=0.0)
     repetitions: int | None = Field(default=None, ge=0)
     supported_reasoning_modes: tuple[str, ...] = ("disabled",)
+    dimension_eligibility: ModelDimensionEligibility = ModelDimensionEligibility()
     generation: ModelGenerationConfig = ModelGenerationConfig()
 
 
@@ -655,6 +665,11 @@ class QualificationMatrixManifest(BaseModel):
             return self.prompts
         selected = set(stage.prompts)
         return tuple(prompt for prompt in self.prompts if prompt.id in selected)
+
+    @property
+    def model_dimension_eligibility(self) -> dict[str, dict[str, bool]]:
+        """Return dimension-level voting eligibility keyed by model id."""
+        return {model.id: model.dimension_eligibility.model_dump() for model in self.models}
 
     def prompts_for_model(self, model_id: str) -> tuple[PromptCandidate, ...]:
         """Return the prompts configured for one model."""
