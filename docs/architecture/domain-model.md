@@ -1,10 +1,18 @@
 # Domain model
 
-![Current architecture class diagram](diagrams/svg/current-architecture-class-diagram.svg)
+## Canonical domain model
 
-The multi-view UML diagram contains the canonical domain model and a second view of principal application services, ports, and infrastructure adapters. The first view is the detailed companion to this document. It deliberately focuses on stable architectural types and representative relationships; helper models, all enum values, serialization schemas, validation internals, and every specialized application artifact are documented in code and in the topic-specific documents rather than duplicated in the class diagram.
+![Canonical domain model](diagrams/svg/canonical-domain-model-class-diagram.svg)
+
+This UML class diagram is the detailed companion to the domain model described on this page. It focuses on stable architectural types and representative ownership relationships. Helper models, complete enum vocabularies, serialization schemas, validation internals, and specialized evaluation artifacts remain authoritative in code and in the topic-specific documents rather than being duplicated here.
 
 A simplified domain-only orientation diagram remains available as `domain-model.svg` in the [diagram catalog](diagrams/README.md).
+
+## Application boundary around the domain
+
+![Application services, ports, and adapters](diagrams/svg/application-architecture-class-diagram.svg)
+
+The application architecture is intentionally shown in a separate UML diagram. It identifies the principal application services, their outbound ports, and representative infrastructure adapters without mixing those dependencies into the canonical domain model. This separation mirrors the hexagonal architecture: domain types remain independent from storage, external SDKs, model providers, and runtime protocols.
 
 ## Canonical aggregate
 
@@ -38,6 +46,21 @@ original cells and source evidence and may carry a conservative semantic interpr
 
 A clause can therefore be located in a verification-oriented branch, inherit lifecycle context from headings, and occupy the last position of a sibling sequence without interpreting its statement-level meaning.
 
+### StructuralContext and scope reach
+
+![StructuralContext and scope reach](diagrams/svg/structural-context-scope-reach.svg)
+
+`StructuralContext` is a materialized, structure-only graph view around one clause. Ancestors,
+sibling position, child ids, contextual ancestor content, references, scope mentions, and
+scope edges are all derived deterministically. `StructuralScopeMention` preserves the surface
+signal and optional direction/cardinality hints; `StructuralScopeEdge` records the resolved or
+deferred structural reach to target clauses.
+
+Scope reach must not be confused with semantic applicability. A structural edge can tell the
+ontology classifier that a statement structurally reaches the next sibling, a subtree, or the
+current clause, but whether that statement expresses an applicability condition remains an
+ontology decision.
+
 ## Semantic classification
 
 `SemanticClassification` stores ontology results and semantic relations separately from document structure. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and responsibility functions is owned exclusively by the `ONTOLOGY` stage. Structural evidence is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for ontology classification, not semantic truth. Some legacy structural compatibility fields remain in the persisted model until a later schema migration, but no active classifier derives ontology values outside `ONTOLOGY`.
@@ -68,7 +91,7 @@ See [Table semantics](table-semantics.md) for the projection and evaluation boun
 
 ## Relationship to application architecture
 
-The second page of the UML class diagram shows representative application services consuming ports implemented by infrastructure adapters. It is included to make the boundary around the canonical model explicit. It is not a complete service inventory: evaluation, semantic qualification, MCP transport, LLM runtime management, AtlasData lifecycle services, and several specialized workflow helpers are covered by their own architecture documents and diagrams.
+The separate application-architecture class diagram shows representative application services consuming ports implemented by infrastructure adapters. It makes the boundary around the canonical model explicit without coupling the domain view to infrastructure details. It is not a complete service inventory: evaluation, semantic qualification, MCP transport, LLM runtime management, AtlasData lifecycle services, and specialized workflow helpers are covered by their own architecture documents and diagrams.
 
 ## Model rules
 

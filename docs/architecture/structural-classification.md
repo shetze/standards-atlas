@@ -1,85 +1,53 @@
-# Structural taxonomy and semantic ontology
+# Structural classification
 
-Standards Atlas separates deterministic document structure from model-assisted engineering meaning. The production path is intentionally one-way:
+Standards Atlas separates document structure from statement semantics.
 
-```text
-EngineeringDocument
-        │
-        ▼
-     TAXONOMY
-  deterministic
-        │
-        ▼
-StructuralProfile + StructuralContext
-        │
-        ▼
-     ONTOLOGY
- qualified LLM
-        │
-        ▼
-   SemanticProfile
-```
+## Structural profile
 
-This page is the canonical current-state overview for ADRs 0050, 0051, and 0061 through 0069. Historical ADR terminology remains useful for understanding the evolution, but production ownership follows the model below.
+`StructuralProfile` is attached to each clause and contains independent taxonomy dimensions. Current dimensions include canonical document section, domain category, and annex status, with room for taxonomy identifiers and confidence or provenance metadata. The dimensions may be inferred from headings, hierarchy, document metadata, annex declarations, and domain-specific taxonomies.
 
-## Structural taxonomy
+This model implements ADR 0050 and replaces the former `Clause.semantic_roles` representation removed by ADR 0051. No compatibility field exists in the clause model.
 
-The `TAXONOMY` workflow stage answers *where a clause belongs and what deterministic structural evidence surrounds it*. It is LLM-free. Versioned structural taxonomy definitions live below `resources/structure-taxonomies/`; Python classifier implementations provide the algorithms and are resolved by taxonomy id and version. YAML defines the category contract rather than a general-purpose rule language.
+## Taxonomy to ontology classification flow
 
-`StructuralProfile` stores independent taxonomy dimensions such as document section, domain category, annex status, node/leaf role, and other selected taxonomy categories. A clause may therefore be classified along several structural axes without collapsing those axes into a single role.
+![Taxonomy to ontology classification flow](diagrams/svg/taxonomy-ontology-classification-flow.svg)
 
-## Materialized structural context
+The deterministic taxonomy stage enriches the normalized `EngineeringDocument` with
+`StructuralProfile`, `StructuralContext`, reference edges, and structural scope reach. These
+values form explicit evidence for the subsequent ontology stage. They never directly assign
+semantic statement, knowledge, process, applicability, or responsibility functions. The
+ontology classifier consumes normalized content together with the materialized structural
+evidence. `OntologyEngine` validates the emitted dimensions and values against the versioned
+ontology profile before `OntologyClassificationService` persists them as
+`SemanticClassification`.
 
-The taxonomy stage also materializes `StructuralContext`. Semantic classifiers consume this object rather than reconstructing hierarchy from clause prose. Context can include:
+The stage boundary is deliberate: taxonomy answers where a clause is located and how
+structural statements reach other clauses; ontology answers what the clause means in the
+engineering knowledge model.
 
-- ancestor headings and inherited heading semantics;
-- sibling and sequence position;
-- contextual-node content;
-- structural reference edges;
-- explicit scope mentions;
-- resolved or deferred structural scope reach.
+## Why dimensions are independent
 
-Ancestor-heading inheritance is structural evidence, not semantic inference. It allows a leaf clause to retain the context established by its containing sections while preserving the leaf's own content and identity.
+A one-dimensional role cannot faithfully represent that a clause is simultaneously:
 
-## Structural scope reach is not semantic applicability
+- located in a scope or requirements section;
+- normative or informative through document/annex context;
+- associated with verification, management, development, or another domain category;
+- a note, example, definition, requirement, or permission at statement level.
 
-A scope statement can structurally govern another clause without telling us the semantic applicability subtype of that governed clause. Standards Atlas therefore keeps these concepts separate:
+Structural classification therefore answers *where the clause belongs in the document and domain framework*. Semantic classification answers *what its statements do*.
 
-```text
-structural scope context  !=  semantic applicability
-```
+## Taxonomy resources and deterministic engine
 
-Structural scope reach records deterministic relationships such as `this clause`, following siblings, or a scope-heading subtree. The `ONTOLOGY` stage may use that evidence when interpreting applicability, but it must not turn the existence of a scope edge into an automatic applicability label. Observed structural applicability conflicts remain useful qualification evidence.
+Versioned structure taxonomies live below `resources/structure-taxonomies/`, separated into document-level and domain-level definitions. Functional-safety taxonomies may specialize general ISO/IEC document structure without being imposed on railway TSI, Polarion, cybersecurity, or other knowledge domains.
 
-## Semantic ontology
+The YAML file is the versioned category contract; classification behaviour is supplied by a `StructuralTaxonomyClassifier` implementation. `StructuralTaxonomyRegistry` resolves those implementations by taxonomy id and version, and `StructuralTaxonomyEngine` composes explicitly selected document/domain classifiers with the generic `StructuralProfileClassifier`. Emitted categories are checked against the corresponding YAML definition.
 
-The `ONTOLOGY` workflow stage answers *what the clause means in the engineering ontology*. The production classifier is selected through qualification and receives clause content plus the already materialized structural context. The current multidimensional semantic profile includes:
+This layer is deterministic and LLM-free. Complex tree algorithms remain normal Python code rather than being encoded in a general-purpose YAML rule language. Semantic LLM tasks are a separate concern. The current built-in implementation moves ISO/IEC Directives Part 2 classification out of the AtlasData adapter; Railway TSI, Polarion, Functional Safety, and Cybersecurity can provide independent classifiers through the same interface.
 
-- statement functions;
-- knowledge kinds;
-- process functions;
-- applicability functions;
-- responsibility functions.
+## Inheritance
 
-These dimensions are ontology resources versioned independently from the semantic task that composes them. Automatic modal-verb or keyword heuristics outside the ontology stage are intentionally forbidden; reviewed/imported annotations are allowed because they are explicit evidence rather than automatic inference.
+Defaults and inheritance are explicit normalization rules. Core normative sections may inherit normative status; annex declarations determine annex status; notes, examples, and guidance remain informative even inside a normative parent where the governing standard requires that distinction. Whole informative parts can define a document-level default.
 
-## Ownership and inheritance
+## Evaluation
 
-`ENRICH` constructs canonical content and evidence but does not classify structure or semantics. `TAXONOMY` owns deterministic structural classification and context materialization. `ONTOLOGY` owns automatic semantic interpretation. Publication consumes these results but does not reclassify them.
-
-Defaults and inheritance remain explicit deterministic rules. Core normative sections may inherit normative status; annex declarations determine annex status; notes, examples, and guidance remain informative where the governing standard requires that distinction. Whole informative parts may define a document-level default.
-
-## Qualification boundary
-
-Evaluation and qualification are separate from production classification. Corpora may contain materialized structural context so structure-aware prompts can evaluate the same evidence contract used by production `ONTOLOGY`. Content-only prompts intentionally omit that context and remain useful as a baseline. Qualification selects and validates classifiers; it does not become a hidden production stage.
-
-## Related decisions
-
-- [ADR 0050](adr/0050-model-structural-profiles-as-independent-taxonomy-dimensions.md) introduces independent structural dimensions.
-- [ADR 0051](adr/0051-multidimensional-semantic-classification.md) replaces the former one-dimensional semantic-role model.
-- [ADR 0061](adr/0061-modular-deterministic-structural-taxonomy-engine.md) defines the modular deterministic engine.
-- [ADR 0065](adr/0065-separate-structural-taxonomy-from-semantic-ontology.md) makes the taxonomy/ontology boundary explicit.
-- [ADR 0066](adr/0066-structural-context-taxonomy-stage.md) materializes structural context.
-- [ADR 0067](adr/0067-production-ontology-workflow-stage.md) establishes production ontology classification.
-- [ADR 0068](adr/0068-finalize-taxonomy-ontology-stage-ownership.md) finalizes stage ownership.
-- [ADR 0069](adr/0069-materialize-structural-scope-reach.md) materializes structural scope reach.
+Qualification corpora must evaluate each dimension independently and report coverage and confusion per dimension. Proposal interfaces should include insufficient-evidence outcomes instead of forcing a category. Structural evidence may be supplied to a structure-aware prompt, while content-only candidates provide a useful baseline.
