@@ -48,8 +48,8 @@ class QualificationWorkflowPlanner:
         regenerate_docling: bool = False,
         overwrite: bool = False,
         keep_stages: tuple[WorkflowStage, ...] = (),
-        qualification_output: Path = Path("local/evaluation/qualification"),
-        corpus_output: Path = Path("local/evaluation/corpora"),
+        qualification_output: Path = Path(".atlas/data/evaluation/qualification"),
+        corpus_output: Path = Path(".atlas/data/evaluation/corpora"),
     ) -> QualificationWorkflowPlan:
         manifest = QualificationMatrixManifest.load(manifest_path)
         document_plan = self._document_planner.plan(

@@ -59,18 +59,19 @@ def build_alignment_service(workspace: Path):
     )
 
 
-def build_alignment_review_service(workspace: Path):
+def build_alignment_review_service(workspace: Path, review_root: Path | None = None):
     from standards_atlas.adapters.alignment import AlignmentArtifactRepository
     from standards_atlas.adapters.alignment_review import AlignmentReviewRepository
     from standards_atlas.adapters.reference_detection import ReferenceCandidateRepository
     from standards_atlas.application.services import AlignmentReviewService
 
+    review_root = review_root or _review_root_for_workspace(workspace)
     return AlignmentReviewService(
         documents=FileSystemEngineeringDocumentRepository(workspace),
         normalized=NormalizationArtifactRepository(workspace),
         candidates=ReferenceCandidateRepository(workspace),
         automatic=AlignmentArtifactRepository(workspace),
-        review=AlignmentReviewRepository(workspace),
+        review=AlignmentReviewRepository(review_root),
     )
 
 
@@ -100,7 +101,7 @@ def build_reference_candidate_service(workspace: Path):
     )
 
 
-def build_content_enrichment_service(workspace: Path):
+def build_content_enrichment_service(workspace: Path, review_root: Path | None = None):
     from standards_atlas.adapters.alignment import AlignmentArtifactRepository
     from standards_atlas.adapters.alignment_review import AlignmentReviewRepository
     from standards_atlas.adapters.engineering_construction import (
@@ -108,11 +109,12 @@ def build_content_enrichment_service(workspace: Path):
     )
     from standards_atlas.application.services import ContentEnrichmentService
 
+    review_root = review_root or _review_root_for_workspace(workspace)
     return ContentEnrichmentService(
         documents=FileSystemEngineeringDocumentRepository(workspace),
         normalized=NormalizationArtifactRepository(workspace),
         alignments=AlignmentArtifactRepository(workspace),
-        reviews=AlignmentReviewRepository(workspace),
+        reviews=AlignmentReviewRepository(review_root),
         contracts=EngineeringConstructionContractRepository(workspace),
     )
 
@@ -138,3 +140,16 @@ def build_clause_reference_extraction_service(workspace: Path):
     )
 
     return ClauseReferenceExtractionService(FileSystemEngineeringDocumentRepository(workspace))
+
+
+def _review_root_for_workspace(workspace: Path) -> Path:
+    """Derive the project-local HITL root from an engineering-data workspace."""
+    resolved = workspace.resolve()
+    if resolved.name == "data" and resolved.parent.name == ".atlas":
+        project_root = resolved.parent.parent
+    elif resolved.name == ".atlas":
+        # Compatibility for explicitly supplied legacy/generic test workspaces.
+        project_root = resolved.parent
+    else:
+        project_root = Path.cwd().resolve()
+    return project_root / "local" / "review" / "alignment"

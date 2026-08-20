@@ -189,7 +189,7 @@ def _count_reasons(reasons: dict[str, tuple[str, ...]]) -> dict[str, int]:
 def qualify_model_prompt_matrix(
     manifest_path: Annotated[Path, typer.Option("--manifest", exists=True, readable=True)],
     output_directory: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
-        "local/evaluation/qualification"
+        ".atlas/data/evaluation/qualification"
     ),
     config: Annotated[
         Path, typer.Option("--config", exists=True, readable=True)
@@ -222,17 +222,25 @@ def qualify_model_prompt_matrix(
         Path, typer.Option("--resources", file_okay=False)
     ] = cli_defaults.DEFAULT_EVALUATION_RESOURCES,
     corpus_root: Annotated[Path, typer.Option("--corpus-root", file_okay=False)] = Path(
-        "local/evaluation/corpora"
+        ".atlas/data/evaluation/corpora"
     ),
     published_corpus_root: Annotated[
         Path, typer.Option("--published-corpus-root", file_okay=False)
     ] = Path("data/evaluation/corpora"),
     runs_output: Annotated[Path, typer.Option("--runs-output", file_okay=False)] = Path(
-        "local/evaluation"
+        ".atlas/data/evaluation/runs"
     ),
     metrics_output: Annotated[Path, typer.Option("--metrics-output", file_okay=False)] = Path(
         "local/evaluation/metrics"
     ),
+    archive_output: Annotated[
+        Path,
+        typer.Option(
+            "--archive-output",
+            file_okay=False,
+            help="Human-facing immutable qualification archive directory.",
+        ),
+    ] = Path("local/evaluation"),
     aggregate_only: Annotated[
         bool,
         typer.Option(
@@ -961,6 +969,7 @@ def qualify_model_prompt_matrix(
                 analysis_metrics=analysis_metrics,
                 matrix_passed=report.passed,
                 execution_policy=execution_policy,
+                archive_directory=archive_output,
             )
     except (
         McpServerProcessError,

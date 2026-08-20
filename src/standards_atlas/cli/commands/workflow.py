@@ -20,6 +20,7 @@ from standards_atlas.application.workflow import (
     WorkflowTask,
     parse_manifest_options,
 )
+from standards_atlas.application.workspace import WorkspaceLayout
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import catalog_app, workflow_app
 from standards_atlas.cli.composition import build_workflow_service
@@ -107,7 +108,7 @@ def plan_workflow(
     ] = cli_defaults.DEFAULT_EVALUATION_CORPUS_ROOT,
     qualification_output: Annotated[
         Path, typer.Option("--qualification-output", file_okay=False)
-    ] = Path("local/evaluation/qualification"),
+    ] = Path(".atlas/data/evaluation/qualification"),
 ) -> None:
     """Plan either document publication or the full qualification workflow."""
     plan = _build_task_plan(
@@ -209,7 +210,7 @@ def run_workflow(
     ] = cli_defaults.DEFAULT_EVALUATION_CORPUS_ROOT,
     qualification_output: Annotated[
         Path, typer.Option("--qualification-output", file_okay=False)
-    ] = Path("local/evaluation/qualification"),
+    ] = Path(".atlas/data/evaluation/qualification"),
 ) -> None:
     """Execute either document publication or the full qualification workflow."""
     plan = _build_task_plan(
@@ -230,6 +231,9 @@ def run_workflow(
         corpus_output=corpus_output,
         qualification_output=qualification_output,
     )
+    # Scratch artifacts are retained after a run for debugging but never reused
+    # implicitly by a subsequent workflow execution.
+    WorkspaceLayout(Path.cwd()).clear_work()
     service = build_workflow_service(Path.cwd())
     result = service.execute(
         plan,

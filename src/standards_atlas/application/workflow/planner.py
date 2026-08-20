@@ -127,8 +127,8 @@ class WorkflowPlanner:
                     ),
                     ArtifactPolicy.SOURCE,
                     output_paths=(
-                        f".atlas/docling/{key}/document.json",
-                        f".atlas/docling/{key}/conversion.json",
+                        f".atlas/data/docling/{key}/document.json",
+                        f".atlas/data/docling/{key}/conversion.json",
                     ),
                 )
             )
@@ -143,7 +143,7 @@ class WorkflowPlanner:
                     "standards-atlas",
                     "atlasdata",
                     "onboard-docling",
-                    f".atlas/docling/{family.key}/document.json",
+                    f".atlas/data/docling/{family.key}/document.json",
                     output,
                     "--name",
                     family.name,
@@ -163,7 +163,7 @@ class WorkflowPlanner:
                     )
                     for value in (
                         "--part",
-                        f"{identifier}=.atlas/docling/{document_key}/document.json",
+                        f"{identifier}=.atlas/data/docling/{document_key}/document.json",
                     )
                 )
                 command = (
@@ -205,7 +205,7 @@ class WorkflowPlanner:
                 WorkflowStage.IMPORT,
                 ("uv", "run", "standards-atlas", "document", "import", atlas_path),
                 ArtifactPolicy.DERIVED,
-                output_paths=(f".atlas/documents/{family.key}.json",),
+                output_paths=(f".atlas/data/documents/{family.key}.json",),
             )
         )
 
@@ -229,7 +229,7 @@ class WorkflowPlanner:
                             *(("--title", part.title) if part.title else ()),
                         ),
                         ArtifactPolicy.DERIVED,
-                        output_paths=(f".atlas/documents/{part.key}.json",),
+                        output_paths=(f".atlas/data/documents/{part.key}.json",),
                     )
                 )
                 for supplement in part.supplements:
@@ -249,7 +249,7 @@ class WorkflowPlanner:
                                     supplement_atlas_path,
                                 ),
                                 ArtifactPolicy.DERIVED,
-                                output_paths=(f".atlas/documents/{supplement.key}.json",),
+                                output_paths=(f".atlas/data/documents/{supplement.key}.json",),
                             )
                         )
                     else:
@@ -271,7 +271,7 @@ class WorkflowPlanner:
                                     *(("--title", supplement.title) if supplement.title else ()),
                                 ),
                                 ArtifactPolicy.DERIVED,
-                                output_paths=(f".atlas/documents/{supplement.key}.json",),
+                                output_paths=(f".atlas/data/documents/{supplement.key}.json",),
                             )
                         )
 
@@ -298,8 +298,8 @@ class WorkflowPlanner:
                         ),
                         ArtifactPolicy.DERIVED,
                         output_paths=(
-                            f".atlas/normalized/{key}/document.json",
-                            f".atlas/normalized/{key}/run.json",
+                            f".atlas/data/normalized/{key}/document.json",
+                            f".atlas/data/normalized/{key}/run.json",
                         ),
                     ),
                     WorkflowStep(
@@ -308,7 +308,7 @@ class WorkflowPlanner:
                         WorkflowStage.REFERENCES,
                         ("uv", "run", "standards-atlas", "references", "detect", key),
                         ArtifactPolicy.DERIVED,
-                        output_paths=(f".atlas/reference-candidates/{key}/document.json",),
+                        output_paths=(f".atlas/data/reference-candidates/{key}/document.json",),
                     ),
                     WorkflowStep(
                         family.key,
@@ -321,7 +321,7 @@ class WorkflowPlanner:
                             option="--overwrite",
                         ),
                         ArtifactPolicy.DERIVED,
-                        output_paths=(f".atlas/alignments/{key}/alignment.json",),
+                        output_paths=(f".atlas/data/alignments/{key}/alignment.json",),
                     ),
                     WorkflowStep(
                         family.key,
@@ -339,8 +339,8 @@ class WorkflowPlanner:
                         ArtifactPolicy.REVIEW,
                         True,
                         output_paths=(
-                            f".atlas/alignments/{key}/review.generated.md",
-                            f".atlas/alignments/{key}/review.edited.md",
+                            f"local/review/alignment/{key}/review.generated.md",
+                            f"local/review/alignment/{key}/review.edited.md",
                         ),
                     ),
                     WorkflowStep(
@@ -349,7 +349,7 @@ class WorkflowPlanner:
                         WorkflowStage.ENRICH,
                         ("uv", "run", "standards-atlas", "document", "enrich-content", key),
                         ArtifactPolicy.DERIVED,
-                        output_paths=(f".atlas/workflow/enrich/{key}.complete",),
+                        output_paths=(f".atlas/work/workflow/enrich/{key}.complete",),
                     ),
                 ]
             )
@@ -370,7 +370,7 @@ class WorkflowPlanner:
                         *(value for key in part_keys for value in ("--part", key)),
                     ),
                     ArtifactPolicy.DERIVED,
-                    output_paths=(f".atlas/workflow/compose/{family.key}.complete",),
+                    output_paths=(f".atlas/work/workflow/compose/{family.key}.complete",),
                 )
             )
         if family.exports.markdown:
@@ -415,11 +415,13 @@ class WorkflowPlanner:
                         str(family.exports.doorstop.identifier.width),
                         *(("--parent", doorstop_parent) if doorstop_parent else ()),
                         "--target",
-                        f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",
+                        f".atlas/work/doorstop/{hierarchy_key or family.key}/{family.key}",
                         "--no-init-git",
                     ),
                     ArtifactPolicy.DERIVED,
-                    output_paths=(f".atlas/doorstop/{hierarchy_key or family.key}/{family.key}",),
+                    output_paths=(
+                        f".atlas/work/doorstop/{hierarchy_key or family.key}/{family.key}",
+                    ),
                 )
             )
         return steps

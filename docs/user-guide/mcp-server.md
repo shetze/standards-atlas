@@ -34,7 +34,7 @@ uv run standards-atlas mcp serve --config cfg/mcp.yaml
 
 Set `transport: streamable-http` and configure the listener in `cfg/mcp.yaml`.
 Remote bindings require bearer-token authentication. The CLI manages the server
-as a detached process with PID and log files below `.atlas/runtime/mcp`.
+as a detached process with PID and log files below `.atlas/work/mcp`.
 
 ```bash
 export STANDARDS_ATLAS_MCP_TOKEN="$(openssl rand -hex 32)"

@@ -195,7 +195,7 @@ def test_prefers_reviewed_alignment_when_present(tmp_path):
     reviewed_second = automatic.clauses[1].model_copy(update={"status": AlignmentStatus.MANUAL})
     reviewed = automatic.model_copy(update={"clauses": automatic.clauses[:1] + (reviewed_second,)})
     AlignmentArtifactRepository(workspace).save("SAMPLE", automatic)
-    review_repository = AlignmentReviewRepository(workspace)
+    review_repository = AlignmentReviewRepository(tmp_path / "local" / "review" / "alignment")
     review_repository.save_reviewed(
         "SAMPLE",
         reviewed,

@@ -27,7 +27,7 @@ class FileSystemWorkflowArtifactStore:
             return None
         if not source.is_absolute():
             source = project_root / source
-        repository = DoclingArtifactRepository(project_root / ".atlas")
+        repository = DoclingArtifactRepository(project_root / ".atlas" / "data")
         return repository.extraction_state(document_key, source)
 
     def outputs_exist(self, step: WorkflowStep, project_root: Path) -> bool:
@@ -39,7 +39,7 @@ class FileSystemWorkflowArtifactStore:
 
     def record_completion(self, step: WorkflowStep, project_root: Path) -> None:
         for relative_path in step.output_paths:
-            if not relative_path.startswith(".atlas/workflow/"):
+            if not relative_path.startswith(".atlas/work/workflow/"):
                 continue
             marker = project_root / relative_path
             marker.parent.mkdir(parents=True, exist_ok=True)
@@ -56,7 +56,7 @@ class FileSystemWorkflowArtifactStore:
                 target.unlink(missing_ok=True)
 
     def alignment_requires_review(self, project_root: Path, document_key: str) -> bool:
-        path = project_root / ".atlas" / "alignments" / document_key / "alignment.json"
+        path = project_root / ".atlas" / "data" / "alignments" / document_key / "alignment.json"
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
             statistics = payload["metadata"]["statistics"]

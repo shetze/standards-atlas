@@ -26,7 +26,7 @@ class NormalizationState(StrEnum):
 class NormalizationArtifactRepository:
     """Store deterministic payloads and separate run metadata below the workspace."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._workspace = workspace.resolve()
         self._root = self._workspace / "normalized"
 

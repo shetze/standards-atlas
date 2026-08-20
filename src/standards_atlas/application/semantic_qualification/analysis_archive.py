@@ -148,9 +148,10 @@ def create_analysis_archive(
     analysis_metrics: dict[str, Any] | None = None,
     matrix_passed: bool | None = None,
     execution_policy: dict[str, bool] | None = None,
+    archive_directory: Path | None = None,
 ) -> Path:
     """Create an immutable, sequentially numbered qualification-run ZIP."""
-    archive_dir = output_directory.parent
+    archive_dir = archive_directory or output_directory.parent
     archive_dir.mkdir(parents=True, exist_ok=True)
     sequence_number = _next_sequence_number(archive_dir)
     archive_id = f"qualification-run-{sequence_number:03d}"

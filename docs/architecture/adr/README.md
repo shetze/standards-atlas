@@ -93,6 +93,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0052](0052-build-golden-corpus-proposals-from-model-consensus.md) | Build Golden Corpus proposals from model consensus |
 | [0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md) | Model engineering knowledge as an orthogonal ontology |
 | [0059](0059-archive-qualification-runs-as-immutable-sequential-evidence.md) | Archive qualification runs as immutable sequential evidence |
+| [0060](0060-classify-workspace-artifacts-by-audience-and-lifecycle.md) | Classify generated artifacts by audience and lifecycle |
 
 ## Application structure
 

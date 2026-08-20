@@ -17,7 +17,7 @@ from standards_atlas.domain.model.knowledge_table import KnowledgeRecord, Knowle
 class FileSystemKnowledgeTableRepository:
     """Expose deterministic table projections without duplicating persisted content."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._documents = FileSystemEngineeringDocumentRepository(workspace)
         self._projection = KnowledgeTableProjectionService()
 

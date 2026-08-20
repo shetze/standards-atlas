@@ -293,11 +293,13 @@ def extract_clause_references(
     workspace: Annotated[
         Path,
         typer.Option("--workspace", file_okay=False, help="EngineeringDocument workspace."),
-    ] = Path(".atlas"),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
     output_root: Annotated[
         Path,
-        typer.Option("--output", file_okay=False, help="Local reference-analysis root."),
-    ] = Path("local/evaluation/references"),
+        typer.Option(
+            "--output", file_okay=False, help="Persistent machine reference-analysis root."
+        ),
+    ] = Path(".atlas/data/evaluation/references"),
     document: Annotated[
         list[str] | None,
         typer.Option("--document", help="Limit extraction to one or more document keys."),
@@ -347,7 +349,7 @@ def export_annotation_reviews(
             file_okay=False,
             help="Local clause-reference analyses included in HITL context.",
         ),
-    ] = Path("local/evaluation/references"),
+    ] = Path(".atlas/data/evaluation/references"),
 ) -> None:
     """Export proposal candidates as editable local Markdown reviews."""
     try:
@@ -383,7 +385,7 @@ def import_annotation_reviews(
             file_okay=False,
             help="Root for local reviewed corpus annotations.",
         ),
-    ] = Path("local/evaluation/corpora"),
+    ] = Path(".atlas/data/evaluation/corpora"),
     overwrite: Annotated[
         bool,
         typer.Option("--overwrite", help="Replace differing local reviewed annotations."),
@@ -413,7 +415,7 @@ def publish_annotation_reviews(
     local_corpus_root: Annotated[
         Path,
         typer.Option("--local-corpus-root", file_okay=False),
-    ] = Path("local/evaluation/corpora"),
+    ] = Path(".atlas/data/evaluation/corpora"),
     published_corpus_root: Annotated[
         Path,
         typer.Option("--published-corpus-root", file_okay=False),
@@ -446,7 +448,7 @@ def evaluate_annotation_metrics(
         Path, typer.Option("--run", exists=True, file_okay=False, readable=True)
     ],
     local_corpus_root: Annotated[Path, typer.Option("--local-corpus-root", file_okay=False)] = Path(
-        "local/evaluation/corpora"
+        ".atlas/data/evaluation/corpora"
     ),
     published_corpus_root: Annotated[
         Path, typer.Option("--published-corpus-root", file_okay=False)

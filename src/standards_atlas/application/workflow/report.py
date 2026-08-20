@@ -52,10 +52,10 @@ class WorkflowRunReporter:
         plan_hash = self._json_hash(plan_payload)
         timestamp = (now or (lambda: datetime.now(UTC)))().astimezone(UTC)
         run_id = f"{timestamp:%Y%m%dT%H%M%SZ}-{plan_hash[:8]}"
-        run_dir = root / ".atlas" / "workflow" / "runs" / run_id
+        run_dir = root / ".atlas" / "work" / "workflow" / "runs" / run_id
         suffix = 2
         while run_dir.exists():
-            run_dir = root / ".atlas" / "workflow" / "runs" / f"{run_id}-{suffix}"
+            run_dir = root / ".atlas" / "work" / "workflow" / "runs" / f"{run_id}-{suffix}"
             suffix += 1
         run_dir.mkdir(parents=True)
         run_id = run_dir.name

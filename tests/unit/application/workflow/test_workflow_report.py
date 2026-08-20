@@ -20,7 +20,7 @@ def test_completed_run_report_records_plan_and_artifact_hashes(tmp_path: Path) -
     manifest = tmp_path / "manifests" / "standards.yaml"
     manifest.parent.mkdir()
     manifest.write_text("manifest_type: standards\nschema_version: 1\n", encoding="utf-8")
-    artifact = tmp_path / ".atlas" / "normalized" / "DOC" / "document.json"
+    artifact = tmp_path / ".atlas" / "data" / "normalized" / "DOC" / "document.json"
     artifact.parent.mkdir(parents=True)
     artifact.write_text('{"value":1}\n', encoding="utf-8")
     step = WorkflowStep(
@@ -29,7 +29,7 @@ def test_completed_run_report_records_plan_and_artifact_hashes(tmp_path: Path) -
         WorkflowStage.NORMALIZE,
         ("standards-atlas", "normalize", "run", "DOC"),
         ArtifactPolicy.DERIVED,
-        output_paths=(".atlas/normalized/DOC/document.json",),
+        output_paths=(".atlas/data/normalized/DOC/document.json",),
     )
     plan = WorkflowPlan(("FAMILY",), (step,))
     result = WorkflowExecutionResult((step,), (), ())
@@ -49,7 +49,9 @@ def test_completed_run_report_records_plan_and_artifact_hashes(tmp_path: Path) -
     assert payload["manifests"] == ["manifests/standards.yaml"]
     assert payload["run_id"].startswith("20260724T120000Z-")
     assert payload["steps"][0]["disposition"] == "executed"
-    assert payload["steps"][0]["artifacts"][0]["path"] == (".atlas/normalized/DOC/document.json")
+    assert payload["steps"][0]["artifacts"][0]["path"] == (
+        ".atlas/data/normalized/DOC/document.json"
+    )
     assert len(payload["steps"][0]["artifacts"][0]["sha256"]) == 64
     assert "Deterministic derivation" in report_md.read_text(encoding="utf-8")
 

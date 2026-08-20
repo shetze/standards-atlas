@@ -9,7 +9,7 @@ from standards_atlas.application.model.reference_candidates import ReferenceCand
 
 
 class ReferenceCandidateRepository:
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._workspace = workspace.resolve()
         self._root = self._workspace / "reference-candidates"
 

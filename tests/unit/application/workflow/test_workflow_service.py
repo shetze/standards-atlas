@@ -46,8 +46,8 @@ def test_multipart_family_without_atlasdata_uses_docling_onboarding() -> None:
         "atlasdata",
         "onboard-docling-parts",
     )
-    assert "1=.atlas/docling/IEC11889-1/document.json" in onboarding.command
-    assert "2=.atlas/docling/IEC11889-2/document.json" in onboarding.command
+    assert "1=.atlas/data/docling/IEC11889-1/document.json" in onboarding.command
+    assert "2=.atlas/data/docling/IEC11889-2/document.json" in onboarding.command
     assert onboarding.command[5] == "local/proposed/IEC11889"
     assert onboarding.manual_gate is True
     assert plan.steps[-1] == onboarding
@@ -429,7 +429,7 @@ def _write_alignment_statistics(
     missing: int = 0,
     conflicting: int = 0,
 ) -> None:
-    path = root / ".atlas" / "alignments" / document / "alignment.json"
+    path = root / ".atlas" / "data" / "alignments" / document / "alignment.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         '{"metadata":{"statistics":{"missing":'
@@ -456,8 +456,8 @@ def test_clean_alignment_exports_review_and_continues_automatically(tmp_path: Pa
                 ArtifactPolicy.REVIEW,
                 True,
                 output_paths=(
-                    ".atlas/alignments/CLEAN/review.generated.md",
-                    ".atlas/alignments/CLEAN/review.edited.md",
+                    "local/review/alignment/CLEAN/review.generated.md",
+                    "local/review/alignment/CLEAN/review.edited.md",
                 ),
             ),
             WorkflowStep(
@@ -524,7 +524,7 @@ def test_only_missing_or_conflicting_documents_block_their_pipeline(tmp_path: Pa
 def test_existing_step_outputs_are_not_generated_again(tmp_path: Path) -> None:
     from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
 
-    output = tmp_path / ".atlas" / "normalized" / "DOC" / "document.json"
+    output = tmp_path / ".atlas" / "data" / "normalized" / "DOC" / "document.json"
     output.parent.mkdir(parents=True)
     output.write_text("existing\n", encoding="utf-8")
     step = WorkflowStep(
@@ -533,7 +533,7 @@ def test_existing_step_outputs_are_not_generated_again(tmp_path: Path) -> None:
         WorkflowStage.NORMALIZE,
         ("normalize", "DOC"),
         ArtifactPolicy.DERIVED,
-        output_paths=(".atlas/normalized/DOC/document.json",),
+        output_paths=(".atlas/data/normalized/DOC/document.json",),
     )
     runner = RecordingRunner()
 
@@ -554,7 +554,7 @@ def test_existing_step_outputs_are_not_generated_again(tmp_path: Path) -> None:
 def test_force_removes_existing_outputs_before_regeneration(tmp_path: Path) -> None:
     from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
 
-    output = tmp_path / ".atlas" / "normalized" / "DOC" / "document.json"
+    output = tmp_path / ".atlas" / "data" / "normalized" / "DOC" / "document.json"
     output.parent.mkdir(parents=True)
     output.write_text("old\n", encoding="utf-8")
 
@@ -574,7 +574,7 @@ def test_force_removes_existing_outputs_before_regeneration(tmp_path: Path) -> N
         WorkflowStage.NORMALIZE,
         ("normalize", "DOC"),
         ArtifactPolicy.DERIVED,
-        output_paths=(".atlas/normalized/DOC/document.json",),
+        output_paths=(".atlas/data/normalized/DOC/document.json",),
     )
     runner = ReplacingRunner()
 
@@ -594,7 +594,7 @@ def test_force_removes_existing_outputs_before_regeneration(tmp_path: Path) -> N
 def test_overwrite_can_keep_existing_docling_output(tmp_path: Path) -> None:
     from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
 
-    docling_output = tmp_path / ".atlas" / "docling" / "DOC" / "document.json"
+    docling_output = tmp_path / ".atlas" / "data" / "docling" / "DOC" / "document.json"
     docling_output.parent.mkdir(parents=True)
     docling_output.write_text("existing docling\n", encoding="utf-8")
     source = tmp_path / "DOC.pdf"
@@ -608,7 +608,7 @@ def test_overwrite_can_keep_existing_docling_output(tmp_path: Path) -> None:
         WorkflowStage.DOCLING,
         ("noop",),
         ArtifactPolicy.DERIVED,
-        output_paths=(".atlas/docling/DOC/document.json",),
+        output_paths=(".atlas/data/docling/DOC/document.json",),
     )
     runner = RecordingRunner()
 
@@ -643,8 +643,8 @@ def test_force_resets_editable_review_exports() -> None:
 
     assert review.command[-1] == "--reset-edited"
     assert review.output_paths == (
-        ".atlas/alignments/EN50716/review.generated.md",
-        ".atlas/alignments/EN50716/review.edited.md",
+        "local/review/alignment/EN50716/review.generated.md",
+        "local/review/alignment/EN50716/review.edited.md",
     )
 
 
@@ -668,7 +668,7 @@ def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> N
     doorstop_steps = [step for step in plan.steps if step.stage == WorkflowStage.DOORSTOP]
     assert doorstop_steps
     assert all(
-        step.output_paths[0].startswith(".atlas/doorstop/functional-safety/")
+        step.output_paths[0].startswith(".atlas/work/doorstop/functional-safety/")
         for step in doorstop_steps
     )
     markdown_steps = [step for step in plan.steps if step.stage == WorkflowStage.MARKDOWN]
@@ -682,7 +682,7 @@ def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> N
 def test_incomplete_docling_extraction_is_repaired_with_overwrite(tmp_path: Path) -> None:
     source = tmp_path / "source.pdf"
     source.write_bytes(b"%PDF-1.4\n")
-    metadata = tmp_path / ".atlas" / "docling" / "TEST" / "conversion.json"
+    metadata = tmp_path / ".atlas" / "data" / "docling" / "TEST" / "conversion.json"
     metadata.parent.mkdir(parents=True)
     metadata.write_text("{}\n", encoding="utf-8")
     step = WorkflowStep(
@@ -701,8 +701,8 @@ def test_incomplete_docling_extraction_is_repaired_with_overwrite(tmp_path: Path
         ),
         artifact_policy=ArtifactPolicy.SOURCE,
         output_paths=(
-            ".atlas/docling/TEST/document.json",
-            ".atlas/docling/TEST/conversion.json",
+            ".atlas/data/docling/TEST/document.json",
+            ".atlas/data/docling/TEST/conversion.json",
         ),
     )
     runner = RecordingRunner()
@@ -726,7 +726,7 @@ def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
 
     source = tmp_path / "source.pdf"
     source.write_bytes(b"%PDF-1.4\n")
-    root = tmp_path / ".atlas" / "docling" / "TEST"
+    root = tmp_path / ".atlas" / "data" / "docling" / "TEST"
     root.mkdir(parents=True)
     (root / "document.json").write_text("{}\n", encoding="utf-8")
     (root / "conversion.json").write_text(
@@ -749,8 +749,8 @@ def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
         ),
         artifact_policy=ArtifactPolicy.SOURCE,
         output_paths=(
-            ".atlas/docling/TEST/document.json",
-            ".atlas/docling/TEST/conversion.json",
+            ".atlas/data/docling/TEST/document.json",
+            ".atlas/data/docling/TEST/conversion.json",
         ),
     )
     runner = RecordingRunner()

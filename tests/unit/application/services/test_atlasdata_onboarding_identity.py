@@ -13,7 +13,7 @@ def test_detects_supplement_identifier_from_metadata() -> None:
 
 
 def test_part_source_accepts_supplement_identifier() -> None:
-    source = DoclingPartSource.parse("3-1=.atlas/docling/IEC61508-3-1/document.json")
+    source = DoclingPartSource.parse("3-1=.atlas/data/docling/IEC61508-3-1/document.json")
     assert source.part == "3-1"
 
 

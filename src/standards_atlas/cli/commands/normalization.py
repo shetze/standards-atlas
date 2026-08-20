@@ -53,7 +53,7 @@ def convert_pdf_with_docling(
     ],
     document_key: Annotated[
         str,
-        typer.Option("--document", "-d", help="Key used below .atlas/docling/."),
+        typer.Option("--document", "-d", help="Key used below .atlas/data/docling/."),
     ],
     workspace: Annotated[
         Path,

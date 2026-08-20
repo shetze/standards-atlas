@@ -32,7 +32,7 @@ uv run standards-atlas evaluation annotations-review-import \
 
 The importer validates proposal identity, content hashes, decision consistency, role names, primary
 role membership, duplicates, and conflicts with existing reviewed annotations. Canonical reviewed
-annotations are written below `local/evaluation/corpora/<corpus>/annotations`.
+annotations are written below `local/review/semantic-annotations/<corpus>`.
 
 ## Publish reviewed data
 

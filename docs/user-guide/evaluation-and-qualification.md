@@ -49,7 +49,7 @@ rather than being treated as model abstentions or failed predictions.
 ## Execute a qualification matrix
 
 ```bash
-uv run standards-atlas evaluation qualification-matrix   --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml   --output local/evaluation/qualification
+uv run standards-atlas evaluation qualification-matrix   --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml   --output .atlas/data/evaluation/qualification
 ```
 
 Useful execution modes include:
@@ -272,7 +272,7 @@ uv run standards-atlas evaluation challenger-qualification \
   --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
   --output local/evaluation/challenger \
   --sample applicability-conflicts \
-  --sample-from local/evaluation/qualification/qualification-run-005.zip
+  --sample-from local/evaluation/qualification-run-005.zip
 ```
 
 `applicability-conflicts` selects clauses whose final archived model votes disagree either on

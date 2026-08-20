@@ -33,7 +33,7 @@ class QualificationRunReporter:
         timestamp = (now or (lambda: datetime.now(UTC)))().astimezone(UTC)
         corpus_hash = self._directory_hash(corpus)
         run_id = f"{timestamp:%Y%m%dT%H%M%SZ}-{corpus_hash[:8]}"
-        base = (output_root or root / ".atlas" / "qualification" / "runs").resolve()
+        base = (output_root or root / ".atlas" / "data" / "qualification" / "runs").resolve()
         run_dir = base / run_id
         suffix = 2
         while run_dir.exists():

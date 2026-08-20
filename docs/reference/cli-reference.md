@@ -41,7 +41,6 @@ uv run standards-atlas workflow run --help
 
 - `evaluation corpus-build`: build a representative reusable clause corpus
 - `evaluation qualification-matrix`: execute multidimensional semantic model qualification
-- `evaluation challenger-qualification`: compare challenger models against configured incumbents without changing the production cascade
 - `evaluation normalization-quality`: run read-only linguistic-integrity qualification over an
   existing `dataset.json`; semantic labels are ignored
 
@@ -50,7 +49,7 @@ manifest:
 
 ```bash
 uv run standards-atlas evaluation normalization-quality \
-  --corpus local/evaluation/corpora/semantic-profile/2.1.0/dataset.json \
+  --corpus .atlas/data/evaluation/corpora/semantic-profile/2.1.0/dataset.json \
   --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
   --output local/evaluation/normalization-quality
 ```
@@ -69,3 +68,15 @@ small trial runs and `--no-cache` forces fresh inference. Outputs are `qualifica
 - `align validate-overrides`, `align review-apply`
 
 Use the catalog-driven workflow for routine processing and individual commands for diagnostics or controlled partial execution.
+
+## `clean`
+
+```bash
+uv run standards-atlas clean
+uv run standards-atlas clean --cache
+uv run standards-atlas clean --data --force
+```
+
+The default command removes only `.atlas/work`. `--cache` additionally removes
+`.atlas/cache`. Persistent `.atlas/data` requires the explicit destructive
+combination `--data --force`. Human-facing `local/` artifacts are never removed.

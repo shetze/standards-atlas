@@ -8,7 +8,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class DoorstopExportConfig:
-    workspace: Path = Path(".atlas/doorstop")
+    workspace: Path = Path(".atlas/work/doorstop")
 
     prefix: str | None = None
     digits: int = 8

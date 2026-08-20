@@ -29,7 +29,7 @@ from standards_atlas.domain.model.content import render_block_as_plain_text
 class EngineeringDocumentClauseProvider:
     """Expose persisted EngineeringDocument clauses through the evaluation port."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._repository = FileSystemEngineeringDocumentRepository(workspace)
 
     def list_documents(self) -> tuple[DocumentDescriptor, ...]:

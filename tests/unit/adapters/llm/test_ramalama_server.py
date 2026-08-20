@@ -15,7 +15,7 @@ from standards_atlas.adapters.llm import (
 )
 
 
-def _config(tmp_path: Path = Path(".atlas/llm/runtime")) -> LlmConfig:
+def _config(tmp_path: Path = Path(".atlas/work/llm/runtime")) -> LlmConfig:
     return LlmConfig(
         base_url="http://127.0.0.1:8080/v1",
         server=RamaLamaServerConfig(

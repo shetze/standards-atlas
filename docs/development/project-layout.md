@@ -73,3 +73,17 @@ src/standards_atlas/
 Dependencies point inward: adapters and CLI may depend on application and domain code;
 the application layer may depend on the domain; the domain must not import outward. New
 code must use canonical capability packages rather than compatibility re-exports.
+
+## Generated storage classes
+
+Generated runtime artifacts are not grouped by feature alone. ADR 0060 defines
+four storage classes:
+
+- `.atlas/data/` — persistent machine-facing state;
+- `.atlas/cache/` — disposable reproducible caches;
+- `.atlas/work/` — retained scratch state from the latest workflow run;
+- `local/` — persistent human-facing publications, reports, and reviews.
+
+All HITL material must be placed below `local/review/`. New code should use the
+central `WorkspaceLayout` vocabulary instead of introducing another top-level
+generated-data location.

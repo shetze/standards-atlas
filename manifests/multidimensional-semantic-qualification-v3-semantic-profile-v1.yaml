@@ -322,9 +322,9 @@ models:
       retry_on_truncation: true
 
 review_imports:
-  - run_directory: ../../runs/semantic-roles-v1/structure-aware-v2/codex/gpt-5.6-luna
-    review_directory: ../../runs/semantic-roles-v1/structure-aware-v2/codex/gpt-5.6-luna
-    local_corpus_root: ../../corpora
+  - run_directory: ../.atlas/data/evaluation/runs/semantic-roles-v1/structure-aware-v2/codex/gpt-5.6-luna
+    review_directory: ../local/review/qualification/semantic-roles-v1/structure-aware-v2/codex/gpt-5.6-luna
+    local_corpus_root: ../.atlas/data/evaluation/corpora
     overwrite: false
     required: false
 
@@ -355,7 +355,7 @@ consensus:
   structural_priors:
     enabled: true
     confidence: 0.95
-  output_directory: ../../consensus
+  output_directory: ../local/review/qualification/consensus
 
 observations: []
 

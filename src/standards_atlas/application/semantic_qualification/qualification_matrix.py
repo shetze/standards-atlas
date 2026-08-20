@@ -534,7 +534,7 @@ class ReviewImportConfig(BaseModel):
 
     run_directory: Path
     review_directory: Path
-    local_corpus_root: Path = Path("local/evaluation/corpora")
+    local_corpus_root: Path = Path(".atlas/data/evaluation/corpora")
     overwrite: bool = False
     required: bool = True
 
@@ -600,7 +600,7 @@ class ConsensusConfig(BaseModel):
     review_policy: ReviewPolicyConfig = ReviewPolicyConfig()
     adjudication: AdjudicationConfig = AdjudicationConfig()
     structural_priors: StructuralPriorConfig = StructuralPriorConfig()
-    output_directory: Path = Path("local/evaluation/consensus")
+    output_directory: Path = Path("local/review/qualification/consensus")
 
 
 class ChallengerGroup(BaseModel):

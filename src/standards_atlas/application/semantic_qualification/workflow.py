@@ -68,7 +68,7 @@ class BenchmarkManifest(BaseModel):
     prompt_versions: tuple[str, ...] = Field(min_length=1)
     models: tuple[str, ...] = Field(min_length=1)
     resources: Path = Path("src/standards_atlas/resources/semantic")
-    output: Path = Path(".atlas/evaluation/runs")
+    output: Path = Path(".atlas/data/evaluation/runs")
     include_case_details: bool = False
     metadata: dict[str, Any] = Field(default_factory=dict)
 

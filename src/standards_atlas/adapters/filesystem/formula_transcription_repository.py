@@ -12,7 +12,7 @@ from standards_atlas.application.model.formula_transcription import FormulaTrans
 class FileSystemFormulaTranscriptionRepository:
     """Store formula transcriptions separately from canonical documents."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._root = workspace / "enrichments" / "formula-transcriptions"
         self._root.mkdir(parents=True, exist_ok=True)
 

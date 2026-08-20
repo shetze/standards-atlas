@@ -32,7 +32,7 @@ class RamaLamaServerConfig:
     executable: str = "ramalama"
     backend: str = "auto"
     selinux: bool = False
-    state_directory: Path = Path(".atlas/llm/runtime")
+    state_directory: Path = Path(".atlas/work/llm/runtime")
 
     def __post_init__(self) -> None:
         if not self.name.strip():
@@ -67,7 +67,7 @@ class LlmConfig:
     model: str = "granite"
     timeout_seconds: float = 120.0
     api_key: str | None = None
-    cache_directory: Path | None = Path(".atlas/llm/cache")
+    cache_directory: Path | None = Path(".atlas/cache/llm")
     server: RamaLamaServerConfig = RamaLamaServerConfig()
 
     def __post_init__(self) -> None:
@@ -103,7 +103,7 @@ class LlmConfig:
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, Any]) -> LlmConfig:
-        cache_value = payload.get("cache_directory", ".atlas/llm/cache")
+        cache_value = payload.get("cache_directory", ".atlas/cache/llm")
         model = str(payload.get("model", cls.model))
         server_payload = _mapping(payload.get("server", {}))
         server = RamaLamaServerConfig(
@@ -116,7 +116,9 @@ class LlmConfig:
             executable=str(server_payload.get("executable", "ramalama")),
             backend=str(server_payload.get("backend", "auto")),
             selinux=bool(server_payload.get("selinux", False)),
-            state_directory=Path(str(server_payload.get("state_directory", ".atlas/llm/runtime"))),
+            state_directory=Path(
+                str(server_payload.get("state_directory", ".atlas/work/llm/runtime"))
+            ),
         )
         return cls(
             base_url=str(payload.get("base_url", cls.base_url)),

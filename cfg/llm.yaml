@@ -2,7 +2,7 @@ llm:
   base_url: http://127.0.0.1:8080/v1
   model: granite
   timeout_seconds: 120
-  cache_directory: .atlas/llm/cache
+  cache_directory: .atlas/cache/llm
   server:
     enabled: true
     name: standards-atlas-llm
@@ -10,6 +10,6 @@ llm:
     runtime: llama.cpp
     backend: auto
     selinux: false
-    state_directory: .atlas/llm/runtime
+    state_directory: .atlas/work/llm/runtime
     startup_timeout_seconds: 120
     shutdown_timeout_seconds: 30

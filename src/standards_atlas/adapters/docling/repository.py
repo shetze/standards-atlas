@@ -15,7 +15,7 @@ from standards_atlas.application.ports.workflow_artifacts import ExtractionState
 class DoclingArtifactRepository:
     """Store native Docling documents and metadata below a private workspace."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._workspace = workspace.resolve()
         self._root = self._workspace / "docling"
 

@@ -9,7 +9,7 @@ Each normalized document contains `method_technique_candidates`. The normalizati
 repository also writes a separate deterministic artifact:
 
 ```text
-.atlas/normalized/<document-key>/methods-and-techniques.json
+.atlas/data/normalized/<document-key>/methods-and-techniques.json
 ```
 
 A candidate records its display name, normalized name, category (`method`, `technique`, or

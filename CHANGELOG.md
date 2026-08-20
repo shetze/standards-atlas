@@ -1,28 +1,3 @@
-## Unreleased
-
-## 0.8.2 - 2026-08-20
-
-### Added
-
-- Add optional read-only LLM normalization-quality qualification with reusable corpus input, model comparison, and JSON/JSONL/Markdown reports.
-- Preserve Docling-identified `visual_only` formulas as source-derived PNG assets using a dedicated PyMuPDF adapter and existing page/bounding-box evidence.
-- Add formula transcription enrichment with MCP discovery/read/submit tools, provenance-bearing LaTeX artifacts, explicit write capability gating, and deterministic application to preserved `FormulaBlock` values.
-- Generate `qualification-analysis-metrics.json`, cascade provenance, and immutable sequential `qualification-run-NNN.zip` evidence with embedded metadata, hashes, and a compact `qualification-run-index.json`.
-- Add typed workflow manifest envelopes and consolidate workflow inputs under repeatable/comma-separated `--manifests`.
-
-### Changed
-
-- Unify workflow orchestration under `workflow plan` and `workflow run` with `--task documents|qualification`; qualification composes Markdown publication, corpus build, and matrix evaluation while excluding Doorstop publication.
-- Use `manifests/standards.yaml` and `manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml` as the canonical typed workflow inputs.
-- Make semantic consensus dimension-aware: unanimous `none` decisions carry decision confidence, cascade resolver decisions remain authoritative, scope context is governed by applicability, and structural conflicts are surfaced explicitly.
-- Persist negative Knowledge Kind decisions with decision confidence and align effective statement-function finalization with the downstream review threshold.
-- Distinguish observed from unresolved structural-applicability conflicts and record clause-level cascade entry/exit provenance plus per-stage dimension-resolution deltas.
-- Remove Docling pseudo-expressions for visual-only formulas from EngineeringDocuments and Markdown while retaining the preserved PNG and `semantic transcription unavailable` caption as the deterministic fallback.
-
-### Fixed
-
-- Treat a completed qualification matrix with a failing qualification result as a valid workflow outcome while preserving exit status 1 for direct matrix invocations used as a CI quality gate.
-
 ## 0.8.1
 
 ### Changed
@@ -32,6 +7,60 @@
 
 ### Notes
 - This release is intended to preserve functional behaviour while significantly improving maintainability and extensibility.
+
+- Add formula transcription enrichment with MCP discovery/read/submit tools, provenance-bearing LaTeX artifacts, explicit write capability gating, and deterministic application to preserved `FormulaBlock` values.
+
+## Unreleased
+
+- Introduce lifecycle-based generated storage: persistent machine state in `.atlas/data`, disposable caches in `.atlas/cache`, retained workflow scratch state in `.atlas/work`, and all HITL artifacts below `local/review`.
+- Add `standards-atlas clean`; workflow scratch state is cleared before a new workflow run while human-facing `local/` artifacts are never removed.
+- Move LLM and MCP runtime state into `.atlas/work`, LLM response caches into `.atlas/cache`, and add a migration script for legacy workspace layouts.
+
+- Add optional read-only LLM normalization-quality qualification with reusable corpus input, model comparison, and JSON/JSONL/Markdown reports.
+
+- Visual-only formulas no longer propagate Docling pseudo-expressions into EngineeringDocuments or Markdown; the preserved PNG and `semantic transcription unavailable` caption remain the authoritative fallback.
+
+- Archive completed qualification executions as immutable `qualification-run-NNN.zip` evidence under `local/evaluation/`, with embedded run metadata and a compact `qualification-run-index.json` instead of encoding matrix/tool versions in long archive filenames.
+
+- Fix qualification workflow execution so a completed matrix with a failing
+  qualification result remains a valid workflow outcome while direct matrix
+  invocations can still use exit status 1 as a CI quality gate.
+
+- Add a typed workflow manifest envelope and consolidate workflow inputs under repeatable/comma-separated `--manifests`.
+
+- Unify workflow orchestration under `workflow plan` and `workflow run` with `--task documents|qualification`; qualification composes Markdown publication, corpus build, and matrix evaluation while excluding Doorstop publication.
+- Replace the workflow `--catalog` option with `--manifest` and move the canonical standards definition to `manifests/standards.yaml`.
+- Move the canonical qualification matrix manifest to `manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml` and expose it as `--qualification-manifest`.
+
+### Changed
+
+- Persist negative Knowledge Kind decisions with decision confidence instead of positive-label confidence.
+- Align effective cascade statement-function finalization with the downstream review acceptance threshold.
+- Distinguish observed from unresolved structural-applicability conflicts so resolved conflicts remain auditable without forcing stale HITL review.
+- Record clause-level cascade entry/exit provenance and per-stage dimension-resolution deltas.
+
+### Added
+
+- Generate `qualification-analysis-metrics.json` and a versioned qualification-analysis ZIP with report, configuration, cascade, provenance, and SHA-256 manifest data at the end of consensus-enabled matrix runs.
+- ADR 0056 documents qualification cascade provenance and policy coherence.
+
+### Changed
+
+- Make semantic consensus dimension-aware: unanimous `none` decisions now carry decision
+  confidence, cascade resolver decisions remain authoritative in final aggregation, scope
+  context is governed by applicability, and structural-prior/applicability conflicts are
+  surfaced for escalation or HITL review.
+- Report per-dimension consensus categories, decision confidence, overall resolution status,
+  and cascade resolution sources.
+
+### Added
+
+- Preserve Docling-identified `visual_only` formulas as source-derived PNG assets using a
+  dedicated PyMuPDF adapter and existing page/bounding-box evidence.
+- Propagate formula visual assets through normalized documents, `FormulaBlock`, and
+  Markdown publication.
+- ADR 0055 defines the separation between deterministic visual preservation and later
+  semantic formula transcription.
 
 ## 0.8.0 - 2026-08-05
 

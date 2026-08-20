@@ -35,12 +35,16 @@ DEFAULT_MCP_TOKEN_ENVIRONMENT_VARIABLE = "STANDARDS_ATLAS_MCP_TOKEN"
 DEFAULT_MCP_TIMEOUT_SECONDS = 10.0
 DEFAULT_MCP_SERVER_NAME = "standards-atlas"
 
-DEFAULT_WORKSPACE = Path(".atlas")
+DEFAULT_ATLAS_ROOT = Path(".atlas")
+DEFAULT_WORKSPACE = Path(".atlas/data")
+DEFAULT_CACHE_ROOT = Path(".atlas/cache")
+DEFAULT_WORK_ROOT = Path(".atlas/work")
 DEFAULT_LOCAL_ROOT = Path("local")
-DEFAULT_EVALUATION_CORPUS_ROOT = Path("local/evaluation/corpora")
-DEFAULT_EVALUATION_OUTPUT = Path("local/evaluation")
+DEFAULT_REVIEW_ROOT = Path("local/review")
+DEFAULT_EVALUATION_CORPUS_ROOT = Path(".atlas/data/evaluation/corpora")
+DEFAULT_EVALUATION_OUTPUT = Path(".atlas/data/evaluation")
 DEFAULT_EVALUATION_RESOURCES = Path("src/standards_atlas/resources/semantic")
-DEFAULT_SEMANTIC_EVALUATION_OUTPUT = Path(".atlas/semantic/evaluations")
+DEFAULT_SEMANTIC_EVALUATION_OUTPUT = Path(".atlas/data/semantic/evaluations")
 DEFAULT_GOLDEN_CORPUS = Path("tests/golden_corpus")
 
 DEFAULT_CORPUS_STRATEGY = SamplingStrategy.BALANCED_BY_DOCUMENT

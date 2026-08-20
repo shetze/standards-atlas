@@ -136,7 +136,7 @@ def qualify_golden_corpus(
         typer.Option(
             "--output",
             file_okay=False,
-            help="Report root; defaults to .atlas/qualification/runs.",
+            help="Report root; defaults to .atlas/data/qualification/runs.",
         ),
     ] = cli_defaults.DEFAULT_NONE,
 ) -> None:

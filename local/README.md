@@ -1,9 +1,17 @@
 # Local workspace
 
-This directory separates non-versioned source material and consumable generated outputs from Standards Atlas internal artifacts.
+`local/` is the persistent **human-facing** workspace and is intentionally not
+published through Git.
 
-- `sources/` contains copyrighted standards, TSI documents, Polarion exports, ReqIF packages and other local source documents.
-- `exports/markdown/<hierarchy>/` contains readable Markdown exports.
-- `exports/doorstop/<hierarchy>/` contains the result of `doorstop publish`.
+Use it for artifacts that a human reads, edits, reviews, archives, or consumes
+directly:
 
-Internal processing, debugging and Doorstop YAML artifacts remain below `.atlas/`. Except for this guide and placeholder files, `local/` is ignored by Git. Catalog metadata supplies the multidimensional Knowledge Domain classification; the physical source tree only provides a stable local storage boundary.
+- `local/exports/` for published Markdown and Doorstop documents;
+- `local/review/` for all HITL and editable review material;
+- `local/evaluation/` for human-readable evaluation reports and immutable
+  evidence archives;
+- `local/sources/` for copyrighted or otherwise local-only source material.
+
+Machine-facing persistent state belongs in `.atlas/data`, disposable caches in
+`.atlas/cache`, and retained workflow scratch artifacts in `.atlas/work`.
+`standards-atlas clean` never removes files from `local/`.

@@ -69,7 +69,7 @@ def qualify_normalization_quality(
         "src/standards_atlas/resources/normalization"
     ),
     output: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
-        "local/evaluation/normalization-quality"
+        "local/review/normalization-quality"
     ),
     limit: Annotated[
         int | None, typer.Option("--limit", min=1, help="Limit clauses for a trial run.")

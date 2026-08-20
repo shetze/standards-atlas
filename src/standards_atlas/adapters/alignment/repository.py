@@ -17,7 +17,7 @@ class AlignmentArtifactState(StrEnum):
 
 
 class AlignmentArtifactRepository:
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._workspace = workspace.resolve()
         self._root = self._workspace / "alignments"
 

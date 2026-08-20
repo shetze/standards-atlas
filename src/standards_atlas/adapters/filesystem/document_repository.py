@@ -30,7 +30,7 @@ _DOCUMENT_MODELS: dict[
 class FileSystemEngineeringDocumentRepository:
     """Persist EngineeringDocument objects as versioned JSON files."""
 
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._documents_dir = workspace / "documents"
         self._documents_dir.mkdir(parents=True, exist_ok=True)
 

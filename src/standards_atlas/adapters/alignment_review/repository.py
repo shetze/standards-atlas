@@ -14,9 +14,9 @@ from standards_atlas.application.model.alignment_review import AlignmentOverride
 
 
 class AlignmentReviewRepository:
-    def __init__(self, workspace: Path = Path(".atlas")) -> None:
+    def __init__(self, workspace: Path = Path("local/review/alignment")) -> None:
         self._workspace = workspace.resolve()
-        self._root = self._workspace / "alignments"
+        self._root = self._workspace
 
     def review_path(self, document_key: str) -> Path:
         return self._private_path(document_key, "review.md")

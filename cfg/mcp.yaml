@@ -1,7 +1,7 @@
 mcp:
   name: standards-atlas
   transport: streamable-http
-  workspace: .atlas
+  workspace: .atlas/data
   allowed_document_keys: []
   limits:
     max_results: 20
@@ -32,4 +32,4 @@ mcp:
     token_environment_variable: STANDARDS_ATLAS_MCP_TOKEN
   audit:
     enabled: true
-    path: local/logs/mcp-audit.jsonl
+    path: .atlas/data/logs/mcp-audit.jsonl

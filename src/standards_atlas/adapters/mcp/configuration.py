@@ -76,7 +76,7 @@ class McpProcessConfig(BaseModel):
     """Files and timeouts used to manage the background MCP process."""
 
     model_config = ConfigDict(frozen=True)
-    state_directory: Path = Path(".atlas/runtime/mcp")
+    state_directory: Path = Path(".atlas/work/mcp")
     startup_timeout_seconds: float = Field(default=15.0, gt=0)
     shutdown_timeout_seconds: float = Field(default=10.0, gt=0)
     health_timeout_seconds: float = Field(default=0.5, gt=0)
@@ -96,7 +96,7 @@ class McpServerConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: str = Field(default="standards-atlas", min_length=1)
     transport: Literal["stdio", "streamable-http"] = "stdio"
-    workspace: Path = Path(".atlas")
+    workspace: Path = Path(".atlas/data")
     allowed_document_keys: tuple[str, ...] = ()
     limits: McpLimitConfig = McpLimitConfig()
     expose: McpExposureConfig = McpExposureConfig()
