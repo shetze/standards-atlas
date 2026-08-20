@@ -34,6 +34,41 @@ Corpora, proposal runs, reviewed annotations, consensus reports, and qualificati
 
 A matrix candidate is a reproducible combination of model, prompt, context mode, reasoning configuration, repetition, and runtime settings. Execution persists observations incrementally so `--resume` can continue incomplete work. `--overwrite` replaces selected outputs; `--recompute` intentionally reruns completed observations. Metrics distinguish availability, parse success, prediction success, agreement, calibration, and task quality.
 
+## Qualification cascade and resolver
+
+Multidimensional qualification is not a single majority vote. A matrix run persists model observations first, then resolves each semantic dimension independently. The productive cascade is conceptually:
+
+```text
+observations
+    │
+    ▼
+dimension-specific consensus
+    │
+    ▼
+resolution state + escalation reasons
+    │
+    ▼
+next configured stage
+    │
+    ▼
+stage/final resolver
+    │
+    ▼
+final decision + provenance + HITL reasons
+```
+
+Thresholds and resolver behavior are manifest-driven and may differ by dimension. Statement-function resolution, applicability confidence, responsibility confidence, and structural applicability conflicts therefore do not have to share one acceptance rule. `cascade-provenance.json` records stage entry/exit reasons, configured versus effective policy, and before/after resolution counts so the final result can be explained without reconstructing execution from raw votes.
+
+## Qualification evidence bundle
+
+Every consensus-enabled qualification run is archived as an immutable sequential `local/evaluation/qualification-run-NNN.zip`. The ZIP is more than a convenience archive: it is the evidence envelope needed to interpret and reproduce the run. It contains the exact corpus and corpus manifest, qualification manifest, task and schema resources, referenced prompts, ontology definitions, relevant runtime configuration, observations and cascade reports, consensus/HITL artifacts, analysis metrics, metadata, and file hashes.
+
+`qualification-run-metadata.json` is the canonical machine-readable identity of the bundle; `qualification-run-index.json` is a derived locator for comparing runs without opening each ZIP. Sequential run numbers are never reused by `--overwrite`.
+
+## Challenger qualification
+
+Challenger qualification is an isolated comparison workflow configured in the same qualification-matrix manifest. Challenger-only models are excluded from the productive matrix unless explicitly promoted into its production model set. The comparison can reuse difficult clause selections such as archived applicability conflicts and emits explicit selection provenance plus challenger comparison artifacts. Its metrics are observational: they support model-selection decisions but never mutate cascade roles automatically.
+
 ## Normalization quality qualification
 
 `application.normalization_quality` is an optional, read-only evaluation capability for
@@ -41,8 +76,10 @@ linguistic integrity checks over already normalized clause text. It reuses exist
 corpora as clause samples but ignores their semantic gold labels. The LLM classifies only
 probable extraction or normalization artifacts and never rewrites EngineeringDocuments.
 
-Slice 1 intentionally separates this observational model qualification from the deterministic
-normalization pipeline and from any future HITL correction workflow. Reports persist complete
+This capability intentionally separates observational model qualification from the deterministic
+normalization pipeline and from any future HITL correction workflow. The LLM is a downstream
+review instrument, not a normalization engine: findings may guide human review and future
+deterministic rule changes, but the qualification command never edits canonical documents. Reports persist complete
 per-model observations, suspicious findings, agreement/disagreement counts, cache information,
 and a Markdown view optimized for manual inspection.
 

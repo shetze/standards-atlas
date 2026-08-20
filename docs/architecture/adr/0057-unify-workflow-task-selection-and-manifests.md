@@ -2,7 +2,11 @@
 
 ## Status
 
-Accepted
+Accepted, partially superseded by ADR 0058.
+
+The `plan`/`run` operation model and `documents|qualification` task selection remain active.
+ADR 0058 supersedes this record's separate `--manifest` and `--qualification-manifest`
+interface with the typed, repeatable `--manifests` workflow envelope.
 
 ## Context
 

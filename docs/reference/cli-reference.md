@@ -13,7 +13,28 @@ uv run standards-atlas workflow run --help
 - `validate`, `trace`: repository validation and traceability helpers
 - `inspect data`: inspect legacy data artefacts
 - `catalog validate`: validate catalog structure and references
-- `workflow plan --task documents|qualification`, `workflow run`: plan or execute catalog-driven processing
+- `workflow plan`, `workflow run`: plan or execute a typed-manifest workflow. The supported workflow tasks are `documents` and `qualification`; `documents` is the default.
+
+
+### Workflow manifest contract
+
+`workflow plan` and `workflow run` accept workflow configuration through `--manifests`. The option may be repeated and each occurrence may also contain comma-separated paths. The workflow loader selects inputs by each file's `manifest_type`, not by filename or argument order.
+
+```bash
+uv run standards-atlas workflow plan \
+  --task documents \
+  --manifests manifests/standards.yaml \
+  --all
+
+uv run standards-atlas workflow plan \
+  --task qualification \
+  --manifests \
+    manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
+  --hierarchy functional-safety \
+  --knowledge-domain functional-safety
+```
+
+The unified `--manifests` interface belongs to the workflow envelope. Direct low-level commands remain intentionally specific: for example `evaluation qualification-matrix`, `evaluation challenger-qualification`, and `llm preload-qualification-models` use their own singular `--manifest` option because they consume one qualification-matrix manifest rather than a heterogeneous workflow manifest set.
 
 ## AtlasData
 
@@ -43,6 +64,7 @@ uv run standards-atlas workflow run --help
 
 - `evaluation corpus-build`: build a representative reusable clause corpus
 - `evaluation qualification-matrix`: execute multidimensional semantic model qualification
+- `evaluation challenger-qualification`: compare configured challenger and incumbent models without changing the production cascade
 - `evaluation normalization-quality`: run read-only linguistic-integrity qualification over an
   existing `dataset.json`; semantic labels are ignored
 

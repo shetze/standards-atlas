@@ -6,17 +6,22 @@ The evaluation subsystem separates datasets, proposal runs, human review, metric
 
 ```bash
 uv run standards-atlas evaluation corpus-build \
-  --task statement-function-classification \
-  --version 2.0.0 \
-  --corpus-id statement-functions-v2 \
+  --task semantic-profile-classification \
+  --version 2.1.0 \
+  --corpus-id semantic-profile-v1 \
   --knowledge-domain functional-safety \
   --count 500 \
   --strategy representative_stratified \
   --seed 20260804
 ```
 
-The command remains the standard entry point for statement-function qualification. The
-task metadata and central eligibility policy exclude `table_dominant` clauses by default.
+The canonical multidimensional task is `semantic-profile-classification`. It composes the
+independently versioned statement-function, knowledge-kind, process-function, applicability,
+and responsibility ontologies used by the current qualification matrix.
+`statement-function-classification` 2.x remains a compatibility alias for existing scripts and
+artifacts; new qualification work should use the canonical task name.
+
+The task metadata and central eligibility policy exclude `table_dominant` clauses by default.
 The corpus manifest records the affected references, counts, content profiles, exclusion
 reason, and the alternative task `structured-table-interpretation`.
 
