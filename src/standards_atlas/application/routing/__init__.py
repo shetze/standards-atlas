@@ -1,6 +1,11 @@
 """Deterministic taxonomy-aware semantic routing contracts."""
 
 from standards_atlas.application.routing.engine import DeterministicRoutingEngine
+from standards_atlas.application.routing.manifest import (
+    RoutingContractManifest,
+    RoutingContractReference,
+    load_routing_contract_manifest,
+)
 from standards_atlas.application.routing.matcher import matches
 from standards_atlas.application.routing.model import (
     AllMatcher,
@@ -12,6 +17,8 @@ from standards_atlas.application.routing.model import (
     RoutingDecision,
     RoutingDisposition,
     RoutingRule,
+    RoutingTaskReference,
+    RoutingTaxonomyRequirement,
     SemanticRoutingPlan,
     SignalEqualsMatcher,
     TaxonomyCategoryMatcher,
@@ -20,6 +27,7 @@ from standards_atlas.application.routing.model import (
     TaxonomySignalField,
     TaxonomySignalProfile,
 )
+from standards_atlas.application.routing.repository import RoutingContractRepository
 from standards_atlas.application.routing.signals import taxonomy_signal_profile
 
 __all__ = [
@@ -30,9 +38,14 @@ __all__ = [
     "HeadingContainsMatcher",
     "NotMatcher",
     "RoutingContract",
+    "RoutingContractManifest",
+    "RoutingContractReference",
+    "RoutingContractRepository",
     "RoutingDecision",
     "RoutingDisposition",
     "RoutingRule",
+    "RoutingTaskReference",
+    "RoutingTaxonomyRequirement",
     "SemanticRoutingPlan",
     "SignalEqualsMatcher",
     "TaxonomyCategoryMatcher",
@@ -40,6 +53,7 @@ __all__ = [
     "TaxonomyCategorySignal",
     "TaxonomySignalField",
     "TaxonomySignalProfile",
+    "load_routing_contract_manifest",
     "matches",
     "taxonomy_signal_profile",
 ]

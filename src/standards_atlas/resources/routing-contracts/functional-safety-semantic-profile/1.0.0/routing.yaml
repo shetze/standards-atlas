@@ -1,0 +1,18 @@
+schema_version: 1
+id: functional-safety-semantic-profile
+version: 1.0.0
+taxonomy_requirements:
+  - scope: domain
+    taxonomy: domain.functional-safety
+    version: 1.0.0
+tasks:
+  - id: semantic-profile-classification
+    version: 2.2.0
+rules:
+  - id: semantic-profile-required
+    task: semantic-profile-classification
+    effect: required
+    when:
+      kind: always
+    context_hints:
+      routing_contract: functional-safety-semantic-profile

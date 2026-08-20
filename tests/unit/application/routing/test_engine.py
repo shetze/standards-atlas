@@ -6,6 +6,7 @@ from standards_atlas.application.routing import (
     RoutingContract,
     RoutingDisposition,
     RoutingRule,
+    RoutingTaskReference,
     SignalEqualsMatcher,
     TaxonomySignalField,
     TaxonomySignalProfile,
@@ -161,4 +162,14 @@ def test_contract_rejects_duplicate_rule_ids() -> None:
                 _rule("duplicate", "task-a", RoutingDisposition.REQUIRED),
                 _rule("duplicate", "task-b", RoutingDisposition.REQUIRED),
             ),
+        )
+
+
+def test_contract_rejects_rules_for_undeclared_tasks() -> None:
+    with pytest.raises(ValueError, match="undeclared tasks: task-b"):
+        RoutingContract(
+            id="contract",
+            version="1",
+            tasks=(RoutingTaskReference(id="task-a", version="1"),),
+            rules=(_rule("rule", "task-b", RoutingDisposition.REQUIRED),),
         )

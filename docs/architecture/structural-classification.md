@@ -54,8 +54,11 @@ in-memory `RoutingContract`. The result is a `SemanticRoutingPlan` whose task di
 
 Routing is an integration policy only. A taxonomy category may make an ontology task more
 relevant, but it cannot assign an ontology value. This preserves independent evolution of
-taxonomies and ontologies. Slice 1 provides the domain model, matcher vocabulary, and engine;
-resource persistence, manifest binding, and workflow integration are intentionally deferred.
+taxonomies and ontologies. Routing contracts are versioned independently below
+`resources/routing-contracts/` and selected through a `routing_contract` workflow manifest.
+The resource declares the taxonomy and semantic-task versions it binds while the manifest only
+selects a concrete contract version. Workflow execution of routing decisions remains a separate
+stage.
 
 ## Inheritance
 

@@ -36,6 +36,11 @@ uv run standards-atlas workflow plan \
 
 The unified `--manifests` interface belongs to the workflow envelope. Direct low-level commands remain intentionally specific: for example `evaluation qualification-matrix`, `evaluation challenger-qualification`, and `llm preload-qualification-models` use their own singular `--manifest` option because they consume one qualification-matrix manifest rather than a heterogeneous workflow manifest set.
 
+The workflow envelope also recognizes `routing_contract` manifests. These manifests select an
+independently versioned resource under `resources/routing-contracts/`; routing rules are not
+duplicated in the manifest. Contract execution is introduced by the semantic-routing workflow
+stage, so manifest recognition and resource validation remain independently testable.
+
 ## AtlasData
 
 - `atlasdata onboard-docling`

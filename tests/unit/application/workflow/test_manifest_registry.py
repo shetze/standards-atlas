@@ -25,11 +25,17 @@ def test_loader_resolves_manifest_types_independent_of_order(tmp_path: Path) -> 
         "manifest_type: qualification_matrix\nschema_version: '1.5'\n",
         encoding="utf-8",
     )
+    routing = tmp_path / "routing.yaml"
+    routing.write_text(
+        "manifest_type: routing_contract\nschema_version: 1\n",
+        encoding="utf-8",
+    )
 
-    result = WorkflowManifestLoader().load((qualification, standards))
+    result = WorkflowManifestLoader().load((qualification, routing, standards))
 
     assert result.require(WorkflowManifestType.STANDARDS) == standards
     assert result.require(WorkflowManifestType.QUALIFICATION_MATRIX) == qualification
+    assert result.require(WorkflowManifestType.ROUTING_CONTRACT) == routing
 
 
 def test_loader_rejects_duplicate_manifest_type(tmp_path: Path) -> None:

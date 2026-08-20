@@ -155,6 +155,25 @@ RoutingMatcher = Annotated[
 ]
 
 
+class RoutingTaxonomyRequirement(BaseModel):
+    """One taxonomy identity required by a persisted routing contract."""
+
+    model_config = ConfigDict(frozen=True)
+
+    scope: TaxonomyCategoryScope
+    taxonomy: str = Field(min_length=1)
+    version: str = Field(min_length=1)
+
+
+class RoutingTaskReference(BaseModel):
+    """One semantic task identity addressable by a routing contract."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(min_length=1)
+    version: str = Field(min_length=1)
+
+
 class RoutingRule(BaseModel):
     """One deterministic rule connecting taxonomy evidence to a semantic task."""
 
@@ -179,13 +198,30 @@ class RoutingContract(BaseModel):
 
     id: str = Field(min_length=1)
     version: str = Field(min_length=1)
+    taxonomy_requirements: tuple[RoutingTaxonomyRequirement, ...] = ()
+    tasks: tuple[RoutingTaskReference, ...] = ()
     rules: tuple[RoutingRule, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def validate_rule_ids(self) -> RoutingContract:
+    def validate_contract(self) -> RoutingContract:
         rule_ids = [rule.id for rule in self.rules]
         if len(rule_ids) != len(set(rule_ids)):
             raise ValueError("routing contract rule ids must be unique")
+
+        task_ids = [task.id for task in self.tasks]
+        if len(task_ids) != len(set(task_ids)):
+            raise ValueError("routing contract task ids must be unique")
+        declared_tasks = set(task_ids)
+        if declared_tasks:
+            undeclared = sorted({rule.task for rule in self.rules} - declared_tasks)
+            if undeclared:
+                raise ValueError(
+                    "routing contract rules reference undeclared tasks: " + ", ".join(undeclared)
+                )
+
+        taxonomy_keys = [(item.scope.value, item.taxonomy) for item in self.taxonomy_requirements]
+        if len(taxonomy_keys) != len(set(taxonomy_keys)):
+            raise ValueError("routing contract taxonomy requirements must be unique")
         return self
 
 

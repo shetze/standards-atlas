@@ -20,7 +20,8 @@ manifest_type: <stable type>
 schema_version: <schema version>
 ```
 
-The currently supported types are `standards` and `qualification_matrix`. Manifest order and
+The envelope initially supported `standards` and `qualification_matrix`; ADR 0073 extends it
+with `routing_contract`. Manifest order and
 file names have no semantic meaning. A task declares which manifest types it requires and the
 loader rejects missing, duplicate, or unsupported types before planning starts.
 

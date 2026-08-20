@@ -109,6 +109,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0068](0068-finalize-taxonomy-ontology-stage-ownership.md) | Remove legacy mixed classification and enforce taxonomy/ontology stage ownership |
 | [0069](0069-materialize-structural-scope-reach.md) | Materialize structural scope reach in taxonomy |
 | [0072](0072-deterministic-taxonomy-aware-semantic-routing-domain.md) | Introduce a deterministic taxonomy-aware semantic routing domain |
+| [0073](0073-version-routing-contract-resources-and-manifests.md) | Version routing contracts as resources selected by typed workflow manifests |
 
 ## Application structure
 

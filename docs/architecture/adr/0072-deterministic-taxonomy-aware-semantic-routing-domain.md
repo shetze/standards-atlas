@@ -29,8 +29,9 @@ Taxonomy evidence may select or prioritize a semantic task, but routing must nev
 one taxonomy category into an ontology value. For example, a verification category may make
 role-relation extraction preferred; it must not imply a `verifies` relation.
 
-Contract persistence, resource loading, manifest integration, and workflow execution are not
-part of this slice. They will build on the in-memory domain contract in later slices.
+Contract persistence and manifest selection are added by ADR 0073. Workflow execution remains
+a later concern and builds on this in-memory domain contract without changing its matcher
+semantics.
 
 ## Consequences
 

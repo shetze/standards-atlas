@@ -26,6 +26,18 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         "resources/structure-taxonomies/**/taxonomy.yaml",
     ),
+    "routing-contract-resource": SchemaPolicy(
+        "routing-contract-resource",
+        1,
+        (1,),
+        "resources/routing-contracts/**/routing.yaml",
+    ),
+    "routing-contract-manifest": SchemaPolicy(
+        "routing-contract-manifest",
+        1,
+        (1,),
+        "manifests/*.yaml",
+    ),
 }
 
 # Compatibility alias for code/docs created by the baseline slice.
