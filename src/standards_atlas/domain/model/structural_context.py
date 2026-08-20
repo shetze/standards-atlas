@@ -21,6 +21,28 @@ class StructuralReferenceEdge(BaseModel):
     surface_text: str = Field(min_length=1)
 
 
+class StructuralScopeMention(BaseModel):
+    """Structure-derived scope signal preserved for ontology interpretation."""
+
+    model_config = ConfigDict(frozen=True)
+    source: str = Field(min_length=1)
+    surface_text: str = Field(min_length=1)
+    direction_hint: str | None = None
+    cardinality: int | None = Field(default=None, ge=1)
+    status: str = Field(min_length=1)
+
+
+class StructuralScopeEdge(BaseModel):
+    """Resolved or deferred structural reach of a scope statement."""
+
+    model_config = ConfigDict(frozen=True)
+    source_clause_id: str = Field(min_length=1)
+    target_clause_id: str | None = None
+    direction: str | None = None
+    status: str = Field(min_length=1)
+    surface_text: str = Field(min_length=1)
+
+
 class StructuralSiblingContext(BaseModel):
     model_config = ConfigDict(frozen=True)
     index: int = Field(ge=0)
@@ -48,3 +70,5 @@ class StructuralContext(BaseModel):
     child_clause_ids: tuple[str, ...] = ()
     contextual_content_clause_ids: tuple[str, ...] = ()
     references: tuple[StructuralReferenceEdge, ...] = ()
+    scope_mentions: tuple[StructuralScopeMention, ...] = ()
+    scopes: tuple[StructuralScopeEdge, ...] = ()

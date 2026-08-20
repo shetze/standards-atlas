@@ -9,6 +9,7 @@ from standards_atlas.application.services.structural_profile_classifier import (
     StructuralProfileClassifier,
     StructuralProfileContext,
 )
+from standards_atlas.application.structure.scope_mentions import extract_structural_scope_mentions
 from standards_atlas.domain.model import (
     Clause,
     DocumentKey,
@@ -17,6 +18,7 @@ from standards_atlas.domain.model import (
     StructuralContext,
     StructuralNodeKind,
     StructuralReferenceEdge,
+    StructuralScopeEdge,
     StructuralSiblingContext,
 )
 
@@ -103,6 +105,47 @@ class StructuralTaxonomyService:
                 for ancestor in ancestors
                 if by_id[ancestor.clause_id].plain_text.strip()
             )
+            scope_mentions = extract_structural_scope_mentions(
+                clause.plain_text, heading=clause.title
+            )
+            scope_edges: list[StructuralScopeEdge] = []
+            for mention in scope_mentions:
+                targets: list[Clause] = []
+                if mention.direction_hint == "self":
+                    targets = [clause]
+                elif mention.direction_hint in {"forward", "backward"}:
+                    if mention.direction_hint == "forward":
+                        candidates = siblings[index + 1 :]
+                    else:
+                        candidates = list(reversed(siblings[:index]))
+                    if mention.cardinality is not None:
+                        targets = list(candidates[: mention.cardinality])
+                elif mention.direction_hint == "subtree":
+                    pending = list(child_items)
+                    while pending:
+                        item = pending.pop(0)
+                        targets.append(item)
+                        pending[0:0] = children.get(item.id.value, [])
+                if targets:
+                    for target in targets:
+                        scope_edges.append(
+                            StructuralScopeEdge(
+                                source_clause_id=clause.id.value,
+                                target_clause_id=target.id.value,
+                                direction=mention.direction_hint,
+                                status="resolved",
+                                surface_text=mention.surface_text,
+                            )
+                        )
+                else:
+                    scope_edges.append(
+                        StructuralScopeEdge(
+                            source_clause_id=clause.id.value,
+                            direction=mention.direction_hint,
+                            status=mention.status,
+                            surface_text=mention.surface_text,
+                        )
+                    )
             structural_context = StructuralContext(
                 node_kind=node_kind,
                 ancestors=tuple(ancestors),
@@ -119,6 +162,8 @@ class StructuralTaxonomyService:
                 child_clause_ids=tuple(item.id.value for item in child_items),
                 contextual_content_clause_ids=context_clause_ids,
                 references=tuple(reference_edges),
+                scope_mentions=scope_mentions,
+                scopes=tuple(scope_edges),
             )
             detected = self._classifier.classify(
                 StructuralProfileContext(

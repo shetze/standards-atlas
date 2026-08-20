@@ -89,6 +89,8 @@ from standards_atlas.domain.model.structural_context import (
     StructuralContext,
     StructuralNodeKind,
     StructuralReferenceEdge,
+    StructuralScopeEdge,
+    StructuralScopeMention,
     StructuralSiblingContext,
 )
 from standards_atlas.domain.model.structural_profile import (
@@ -111,6 +113,8 @@ __all__ = [
     "StructuralContext",
     "StructuralNodeKind",
     "StructuralReferenceEdge",
+    "StructuralScopeEdge",
+    "StructuralScopeMention",
     "StructuralSiblingContext",
     "ArtifactKind",
     "ArtifactLineage",

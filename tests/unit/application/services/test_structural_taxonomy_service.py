@@ -96,3 +96,39 @@ def test_materializes_reference_mentions_as_structural_edges():
     assert edge.target_clause_id == "c7"
     assert edge.target_reference == "7"
     assert edge.status == "resolved"
+
+
+def test_materializes_scope_reach_for_following_siblings():
+    source = _clause(
+        "c70", "7.0", "Applicability", text="The scope of the following two clauses is limited."
+    )
+    first = _clause("c71", "7.1", "First")
+    second = _clause("c72", "7.2", "Second")
+    third = _clause("c73", "7.3", "Third")
+    doc = EngineeringDocument(
+        key=DocumentKey(value="test"),
+        title="Test",
+        document_type=DocumentType.STANDARD,
+        clauses=(source, first, second, third),
+    )
+    result = StructuralTaxonomyService(_Repo(doc)).classify("test").document
+    ctx = result.clauses[0].structural_context
+    assert ctx.scope_mentions[0].direction_hint == "forward"
+    assert ctx.scope_mentions[0].cardinality == 2
+    assert [edge.target_clause_id for edge in ctx.scopes] == ["c71", "c72"]
+
+
+def test_materializes_scope_heading_as_subtree_edges():
+    root = _clause("c7", "7", "Scope of verification")
+    child = _clause("c71", "7.1", "Planning", parent="c7")
+    grandchild = _clause("c711", "7.1.1", "Details", parent="c71")
+    doc = EngineeringDocument(
+        key=DocumentKey(value="test"),
+        title="Test",
+        document_type=DocumentType.STANDARD,
+        clauses=(root, child, grandchild),
+    )
+    result = StructuralTaxonomyService(_Repo(doc)).classify("test").document
+    ctx = result.clauses[0].structural_context
+    assert ctx.scope_mentions[0].direction_hint == "subtree"
+    assert [edge.target_clause_id for edge in ctx.scopes] == ["c71", "c711"]
