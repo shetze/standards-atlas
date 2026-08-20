@@ -24,6 +24,7 @@ from standards_atlas.adapters.mcp import (
     McpServerProcessError,
 )
 from standards_atlas.adapters.routing import FileSystemSemanticRoutingArtifactRepository
+from standards_atlas.application.routing.manifest import load_routing_contract_manifest
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     build_analysis_metrics,
     collect_qualification_input_members,
@@ -50,7 +51,10 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     effective_cascade_resolution,
     resolve_prompt_version,
 )
-from standards_atlas.application.semantic_qualification.routing import routed_example_ids
+from standards_atlas.application.semantic_qualification.routing import (
+    build_routing_qualification_summary,
+    routed_example_ids,
+)
 from standards_atlas.application.services.evaluation import (
     AnnotationQualificationService,
     BaselineProposalGenerator,
@@ -344,6 +348,18 @@ def qualify_model_prompt_matrix(
         Path | None,
         typer.Option("--challenger-sample-path", hidden=True),
     ] = None,
+    suite_run_id: Annotated[
+        str | None,
+        typer.Option("--suite-run-id", hidden=True),
+    ] = None,
+    suite_manifest: Annotated[
+        Path | None,
+        typer.Option("--suite-manifest", exists=True, readable=True, hidden=True),
+    ] = None,
+    routing_manifest: Annotated[
+        Path | None,
+        typer.Option("--routing-manifest", exists=True, readable=True, hidden=True),
+    ] = None,
 ) -> None:
     """Execute and qualify the complete model/prompt matrix.
 
@@ -361,6 +377,9 @@ def qualify_model_prompt_matrix(
     provenance_path: Path | None = None
     analysis_metrics_path: Path | None = None
     analysis_archive_path: Path | None = None
+    routing_archive_metadata: dict[str, object] | None = None
+    routing_input_members: tuple[tuple[Path, str], ...] = ()
+    resolved_routing_manifest: Path | None = None
     try:
         selected_modes = sum((resume, overwrite, recompute))
         if selected_modes > 1:
@@ -382,6 +401,49 @@ def qualify_model_prompt_matrix(
             f"llm_cache={'enabled' if llm_cache_enabled else 'disabled'}"
         )
         manifest = QualificationMatrixManifest.load(manifest_path)
+        dataset = EvaluationDatasetRepository(corpus_root).load(
+            manifest.task,
+            manifest.dataset_version,
+        )
+        if manifest.routing is not None:
+            routing_repository = FileSystemSemanticRoutingArtifactRepository(routing_workspace)
+            resolved_routing_manifest = _resolve_routing_manifest(
+                explicit=routing_manifest,
+                contract_id=manifest.routing.contract_id,
+                contract_version=manifest.routing.contract_version,
+            )
+            routing_manifest_model = load_routing_contract_manifest(resolved_routing_manifest)
+            if (
+                routing_manifest_model.contract.id != manifest.routing.contract_id
+                or routing_manifest_model.contract.version != manifest.routing.contract_version
+            ):
+                raise ValueError(
+                    "routing manifest does not match qualification routing policy: "
+                    f"{routing_manifest_model.contract.id}@"
+                    f"{routing_manifest_model.contract.version}"
+                )
+            routing_summary = build_routing_qualification_summary(
+                dataset.examples,
+                task=manifest.task,
+                config=manifest.routing,
+                repository=routing_repository,
+            )
+            routing_archive_metadata = {
+                "task": manifest.task,
+                "contract_id": manifest.routing.contract_id,
+                "contract_version": manifest.routing.contract_version,
+                "minimum_disposition": manifest.routing.minimum_disposition.value,
+                "include_unrouted": manifest.routing.include_unrouted,
+                "manifest_path": str(resolved_routing_manifest),
+                "aggregate": routing_summary,
+            }
+            routing_input_members = _routing_archive_members(
+                dataset.examples,
+                repository=routing_repository,
+                contract_id=manifest.routing.contract_id,
+                contract_version=manifest.routing.contract_version,
+                routing_manifest_path=resolved_routing_manifest,
+            )
         for review_import in manifest.review_imports:
             proposal_candidates = tuple(
                 review_import.run_directory.glob("*/evaluation.yaml")
@@ -423,10 +485,6 @@ def qualify_model_prompt_matrix(
                     ): item
                     for item in manifest.observations
                 }
-            )
-            dataset = EvaluationDatasetRepository(corpus_root).load(
-                manifest.task,
-                manifest.dataset_version,
             )
             dataset_example_ids = tuple(example.id for example in dataset.examples)
             if manifest.routing is not None:
@@ -990,6 +1048,7 @@ def qualify_model_prompt_matrix(
             qualification_input_members += (
                 (config, "inputs/runtime/llm-config.yaml"),
                 (mcp_config, "inputs/runtime/mcp-config.yaml"),
+                *routing_input_members,
             )
             analysis_archive_path = create_analysis_archive(
                 output_directory=output_directory,
@@ -1013,6 +1072,9 @@ def qualify_model_prompt_matrix(
                 execution_policy=execution_policy,
                 archive_directory=archive_output,
                 input_members=qualification_input_members,
+                suite_run_id=suite_run_id,
+                suite_manifest_path=suite_manifest,
+                routing_metadata=routing_archive_metadata,
             )
     except (
         McpServerProcessError,
@@ -1045,3 +1107,67 @@ def qualify_model_prompt_matrix(
         typer.echo(f"Analysis archive         : {analysis_archive_path}")
     if not report.passed and fail_on_matrix_failure:
         raise typer.Exit(code=1)
+
+
+def _resolve_routing_manifest(
+    *,
+    explicit: Path | None,
+    contract_id: str,
+    contract_version: str,
+) -> Path:
+    if explicit is not None:
+        return explicit.resolve()
+    matches: list[Path] = []
+    for path in sorted(Path("manifests").glob("*.yaml")):
+        try:
+            payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            continue
+        if payload.get("manifest_type") != "routing_contract":
+            continue
+        contract = payload.get("contract") or {}
+        if contract.get("id") == contract_id and str(contract.get("version")) == contract_version:
+            matches.append(path.resolve())
+    if len(matches) != 1:
+        raise ValueError(
+            "routing-enabled qualification requires exactly one routing manifest for "
+            f"{contract_id}@{contract_version}; pass --routing-manifest explicitly"
+        )
+    return matches[0]
+
+
+def _routing_archive_members(
+    examples,
+    *,
+    repository: FileSystemSemanticRoutingArtifactRepository,
+    contract_id: str,
+    contract_version: str,
+    routing_manifest_path: Path,
+) -> tuple[tuple[Path, str], ...]:
+    document_keys = sorted(
+        {
+            str(dict(example.input.get("context", {})).get("document_key") or "").strip()
+            for example in examples
+        }
+        - {""}
+    )
+    members: list[tuple[Path, str]] = [
+        (routing_manifest_path, "configuration/routing-manifest.yaml"),
+    ]
+    contract_path = (
+        Path("src/standards_atlas/resources/routing-contracts")
+        / contract_id
+        / contract_version
+        / "routing.yaml"
+    )
+    if not contract_path.is_file():
+        raise ValueError(
+            f"routing contract resource not found for archival: {contract_id}@{contract_version}"
+        )
+    members.append((contract_path, "inputs/routing/contract/routing.yaml"))
+    for document_key in document_keys:
+        path = repository.artifact_path(document_key, contract_id, contract_version)
+        if not path.is_file():
+            raise ValueError(f"routing artifact required for archive is missing: {path}")
+        members.append((path, f"inputs/routing/artifacts/{document_key}/routing.json"))
+    return tuple(members)

@@ -9,6 +9,7 @@ from enum import StrEnum
 class WorkflowTask(StrEnum):
     DOCUMENTS = "documents"
     QUALIFICATION = "qualification"
+    ROUTED_QUALIFICATION = "routed-qualification"
 
 
 class ArtifactPolicy(StrEnum):

@@ -12,7 +12,64 @@ routing:
   minimum_disposition: required
   include_unrouted: false
 execution:
-  mode: full_matrix
+  mode: cascade
+  stages:
+  - id: efficient-local
+    models:
+    - granite-3.3-8b-instruct-q4-k-m
+    - ministral-3-8b-instruct-2512-q4-k-m
+    - llama-3.1-8b-instruct-q4-k-m
+    - smollm3-3b-q4-k-m
+    prompts:
+    - content-only
+    - structure-aware
+    apply_to: all
+    resolution:
+      minimum_successful_models: 3
+      accepted_categories:
+      - unanimous
+      - strong_consensus
+      - majority_consensus
+      minimum_confidence: 0.6
+      escalate_on_applicability_disagreement: false
+      escalate_on_role_relation_disagreement: false
+  - id: intermediate-escalation
+    models:
+    - gemma-3-12b-it-q4-k-m
+    - mistral-small-3.2-24b-instruct-q4-k-m
+    - glm-4-9b-chat-q4-k-m
+    prompts:
+    - content-only
+    - structure-aware
+    apply_to: unresolved
+    resolution:
+      minimum_successful_models: 3
+      accepted_categories:
+      - unanimous
+      - strong_consensus
+      - majority_consensus
+      minimum_confidence: 0.6
+      escalate_on_applicability_disagreement: false
+      escalate_on_role_relation_disagreement: false
+  - id: escalation
+    models:
+    - qwen3-14b-q4-k-m
+    - exaone-3.5-32b-instruct-q4-k-m
+    prompts:
+    - content-only
+    - structure-aware
+    - reference-aware
+    - bounded-reasoning
+    apply_to: unresolved
+  resolution:
+    minimum_successful_models: 3
+    accepted_categories:
+    - unanimous
+    - strong_consensus
+    - majority_consensus
+    minimum_confidence: 0.6
+    escalate_on_applicability_disagreement: false
+    escalate_on_role_relation_disagreement: false
 prompts:
 - id: content-only
   prompt_version: content-only-split-v1
@@ -93,8 +150,7 @@ models:
   provider: ramalama
   model_ref: hf.co/ggml-org/SmolLM3-3B-GGUF:Q4_K_M
   quantization: Q4_K_M
-  description: Fast Hugging Face family voter promoted after applicability hard-case
-    qualification.
+  description: Fast Hugging Face family voter promoted after applicability hard-case qualification.
   accelerator: gpu
   parameters_billion: 3
   declared_memory_gb: 4

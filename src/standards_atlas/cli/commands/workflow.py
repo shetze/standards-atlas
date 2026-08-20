@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
 
@@ -9,15 +10,22 @@ import typer
 
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
+from standards_atlas.application.semantic_qualification.qualification_suite_archive import (
+    create_qualification_suite_archive,
+    next_qualification_suite_run_id,
+    qualification_archives_for_suite,
+)
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
     QualificationWorkflowPlanner,
+    RoutedQualificationWorkflowPlanner,
     WorkflowManifestLoader,
     WorkflowManifestType,
     WorkflowPlan,
     WorkflowRunReporter,
     WorkflowStage,
     WorkflowTask,
+    load_qualification_suite_manifest,
     parse_manifest_options,
 )
 from standards_atlas.application.workspace import WorkspaceLayout
@@ -231,6 +239,19 @@ def run_workflow(
         corpus_output=corpus_output,
         qualification_output=qualification_output,
     )
+    suite_run_id: str | None = None
+    suite_manifest_path: Path | None = None
+    routing_manifest_path: Path | None = None
+    if task is WorkflowTask.ROUTED_QUALIFICATION:
+        resolved = WorkflowManifestLoader().load(parse_manifest_options(tuple(manifests)))
+        suite_manifest_path = resolved.optional(WorkflowManifestType.QUALIFICATION_SUITE)
+        assert suite_manifest_path is not None
+        suite = load_qualification_suite_manifest(suite_manifest_path)
+        routing_manifest_path, _ = suite.resolve(suite_manifest_path, Path.cwd())
+        archive_directory = Path("local/evaluation")
+        suite_run_id = next_qualification_suite_run_id(archive_directory)
+        plan = _with_suite_run_id(plan, suite_run_id)
+
     # Scratch artifacts are retained after a run for debugging but never reused
     # implicitly by a subsequent workflow execution.
     WorkspaceLayout(Path.cwd()).clear_work()
@@ -252,6 +273,20 @@ def run_workflow(
         typer.echo(f"Workflow completed      : {len(result.executed_steps)} steps")
         typer.echo(f"Run report JSON         : {report_json}")
         typer.echo(f"Run report Markdown     : {report_md}")
+        if suite_run_id is not None:
+            assert suite_manifest_path is not None
+            assert routing_manifest_path is not None
+            archive_directory = Path("local/evaluation")
+            suite_archive = create_qualification_suite_archive(
+                archive_directory=archive_directory,
+                suite_run_id=suite_run_id,
+                suite_manifest_path=suite_manifest_path,
+                routing_manifest_path=routing_manifest_path,
+                qualification_archives=qualification_archives_for_suite(
+                    archive_directory, suite_run_id
+                ),
+            )
+            typer.echo(f"Suite analysis archive  : {suite_archive}")
         return
 
     typer.echo(f"Workflow paused         : {len(result.executed_steps)} steps executed")
@@ -260,6 +295,18 @@ def run_workflow(
     if result.blocked_families:
         typer.echo("AtlasData review for    : " + ", ".join(result.blocked_families))
     typer.echo("Continue after completing the reviews with --continue-after-review.")
+
+
+def _with_suite_run_id(plan: WorkflowPlan, suite_run_id: str) -> WorkflowPlan:
+    """Correlate all qualification matrix subprocesses in one suite invocation."""
+
+    steps = tuple(
+        replace(step, command=(*step.command, "--suite-run-id", suite_run_id))
+        if step.stage is WorkflowStage.QUALIFICATION_MATRIX
+        else step
+        for step in plan.steps
+    )
+    return replace(plan, steps=steps)
 
 
 def _build_task_plan(
@@ -287,7 +334,7 @@ def _build_task_plan(
         raise typer.BadParameter("--keep requires --overwrite")
     if task is WorkflowTask.DOCUMENTS and regenerate_docling:
         raise typer.BadParameter("--regenerate-docling is only valid for --task qualification")
-    if task is WorkflowTask.QUALIFICATION and force:
+    if task in {WorkflowTask.QUALIFICATION, WorkflowTask.ROUTED_QUALIFICATION} and force:
         raise typer.BadParameter(
             "--force is only valid for --task documents; use --regenerate-docling or --overwrite"
         )
@@ -299,9 +346,14 @@ def _build_task_plan(
         raise typer.BadParameter(str(exc)) from exc
     qualification_manifest = resolved.optional(WorkflowManifestType.QUALIFICATION_MATRIX)
     routing_manifest = resolved.optional(WorkflowManifestType.ROUTING_CONTRACT)
+    qualification_suite = resolved.optional(WorkflowManifestType.QUALIFICATION_SUITE)
     if task is WorkflowTask.QUALIFICATION and qualification_manifest is None:
         raise typer.BadParameter(
             "--task qualification requires a manifest of type 'qualification_matrix'"
+        )
+    if task is WorkflowTask.ROUTED_QUALIFICATION and qualification_suite is None:
+        raise typer.BadParameter(
+            "--task routed-qualification requires a manifest of type 'qualification_suite'"
         )
     model = YamlStandardCatalogReader().read(standards_manifest)
     keys = (
@@ -318,6 +370,34 @@ def _build_task_plan(
             keep_stages=keep,
             hierarchy_key=hierarchy,
             routing_manifest_path=routing_manifest,
+        )
+
+    if task is WorkflowTask.ROUTED_QUALIFICATION:
+        assert qualification_suite is not None
+        try:
+            routed = RoutedQualificationWorkflowPlanner().plan(
+                model,
+                family_keys=keys,
+                catalog_root=Path.cwd(),
+                suite_manifest_path=qualification_suite,
+                corpus_count=corpus_count,
+                corpus_strategy=corpus_strategy,
+                corpus_seed=corpus_seed,
+                knowledge_domain=knowledge_domain,
+                hierarchy_key=hierarchy,
+                regenerate_docling=regenerate_docling,
+                overwrite=overwrite or regenerate_docling,
+                keep_stages=keep,
+                corpus_output=corpus_output,
+                qualification_output=qualification_output,
+            )
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc)) from exc
+        return WorkflowPlan(
+            families=routed.document_plan.families,
+            steps=routed.steps,
+            force=routed.document_plan.force,
+            kept_stages=routed.document_plan.kept_stages,
         )
 
     assert qualification_manifest is not None

@@ -112,3 +112,32 @@ def test_qualification_plan_includes_routing_manifest_stage() -> None:
     assert result.exit_code == 0, result.output
     assert "route-semantics" in result.output
     assert "functional-safety-semantic-routing-v1.yaml" in result.output
+
+
+def test_routed_qualification_suite_plans_all_split_matrices_after_routing() -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "plan",
+            "--task",
+            "routed-qualification",
+            "--manifests",
+            (
+                "manifests/standards.yaml,"
+                "manifests/multidimensional-semantic-qualification-v4-routed-suite-v1.yaml"
+            ),
+            "--hierarchy",
+            "functional-safety",
+            "--knowledge-domain",
+            "functional-safety",
+            "--overwrite",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "route-semantics" in result.output
+    assert result.output.count("evaluation           qualification-matrix") == 5
+    assert "multidimensional-semantic-qualification-v4-statement-function-v1.yaml" in result.output
+    assert "multidimensional-semantic-qualification-v4-role-relation-v1.yaml" in result.output
+    assert "classify-ontology" not in result.output

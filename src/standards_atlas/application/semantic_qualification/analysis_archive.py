@@ -22,8 +22,8 @@ from standards_atlas.application.semantic_qualification.diagnostics import (
 )
 from standards_atlas.shared.hashing import sha256_file
 
-ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.2"
-QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.2"
+ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.3"
+QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.3"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
 
@@ -218,6 +218,9 @@ def create_analysis_archive(
     execution_policy: dict[str, bool] | None = None,
     archive_directory: Path | None = None,
     input_members: Iterable[tuple[Path, str]] = (),
+    suite_run_id: str | None = None,
+    suite_manifest_path: Path | None = None,
+    routing_metadata: dict[str, Any] | None = None,
 ) -> Path:
     """Create an immutable, sequentially numbered qualification-run ZIP."""
     archive_dir = archive_directory or output_directory.parent
@@ -239,6 +242,9 @@ def create_analysis_archive(
         analysis_metrics=analysis_metrics,
         matrix_passed=matrix_passed,
         execution_policy=execution_policy,
+        suite_run_id=suite_run_id,
+        suite_manifest_path=suite_manifest_path,
+        routing_metadata=routing_metadata,
     )
     metadata_bytes = _json_bytes(metadata)
 
@@ -248,6 +254,8 @@ def create_analysis_archive(
             members.append((path, _member_name(path, output_directory, manifest_path)))
     if manifest_path.exists():
         members.append((manifest_path, "configuration/qualification-manifest.yaml"))
+    if suite_manifest_path is not None and suite_manifest_path.exists():
+        members.append((suite_manifest_path, "configuration/qualification-suite-manifest.yaml"))
     for path, member in input_members:
         if path.exists() and path.is_file():
             members.append((path, member))
@@ -325,6 +333,9 @@ def _build_run_metadata(
     analysis_metrics: dict[str, Any] | None,
     matrix_passed: bool | None,
     execution_policy: dict[str, bool] | None,
+    suite_run_id: str | None,
+    suite_manifest_path: Path | None,
+    routing_metadata: dict[str, Any] | None,
 ) -> dict[str, Any]:
     prompts = [
         {
@@ -375,11 +386,23 @@ def _build_run_metadata(
         "prompts": prompts,
         "models": models,
         "execution_policy": execution_policy,
+        "suite_run_id": suite_run_id,
+        "routing": routing_metadata,
         "inputs": {
             "qualification_manifest": {
                 "path": str(manifest_path),
                 "sha256": sha256_file(manifest_path),
-            }
+            },
+            **(
+                {
+                    "qualification_suite_manifest": {
+                        "path": str(suite_manifest_path),
+                        "sha256": sha256_file(suite_manifest_path),
+                    }
+                }
+                if suite_manifest_path is not None and suite_manifest_path.exists()
+                else {}
+            ),
         },
         "result": result,
     }
@@ -419,6 +442,7 @@ def _update_run_index(
             "clause_count": result.get("clause_count"),
             "review_count": result.get("review_count"),
             "passed": result.get("passed"),
+            "suite_run_id": metadata.get("suite_run_id"),
         }
     )
     archives.sort(key=lambda item: int(item["sequence_number"]))

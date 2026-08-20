@@ -112,6 +112,8 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0073](0073-version-routing-contract-resources-and-manifests.md) | Version routing contracts as resources selected by typed workflow manifests |
 | [0074](0074-materialize-semantic-routing-as-workflow-artifacts.md) | Materialize deterministic semantic routing as separate workflow artifacts |
 | [0075](0075-split-semantic-profile-into-routed-specialized-tasks.md) | Split semantic profile qualification into routed specialized tasks |
+| [0076](0076-orchestrate-routed-semantic-qualification-as-a-suite.md) | Orchestrate routed semantic qualification as a suite |
+| [0077](0077-archive-routed-qualification-provenance-as-suite-evidence.md) | Archive routed qualification provenance as suite evidence |
 
 ## Application structure
 
@@ -133,6 +135,7 @@ both active and obsolete provisions.
 - For the canonical contracts, continue with [ADR 0006](0006-engineeringdocument-as-canonical-repesenation.md), [ADR 0026](0026-normalized-document-contract.md), and [ADR 0033](0033-engineering-document-construction-contract.md).
 - For workflow and publication, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md), and [ADR 0036](0036-local-workspace-and-hierarchy-publication.md).
 - For the current taxonomy-to-ontology production path, read [ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), [ADR 0051](0051-multidimensional-semantic-classification.md), and [ADR 0061](0061-modular-deterministic-structural-taxonomy-engine.md) through [ADR 0069](0069-materialize-structural-scope-reach.md); use [Structural taxonomy and semantic ontology](../structural-classification.md) as the consolidated current-state view.
+- For routed split-task qualification, read [ADR 0076](0076-orchestrate-routed-semantic-qualification-as-a-suite.md) and [ADR 0077](0077-archive-routed-qualification-provenance-as-suite-evidence.md).
 - For semantic qualification and external model access, continue with [ADR 0039](0039-verification-and-qualification-framework.md), [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md), [ADR 0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md), [ADR 0059](0059-archive-qualification-runs-as-immutable-sequential-evidence.md), and [ADR 0070](0070-preserve-cascade-resolution-provenance.md).
 - For lossless formula handling, read [ADR 0055](0055-preserve-visual-formulas-before-semantic-transcription.md).
 - For the current application package structure, read [ADR 0053](0053-structural-application-refactoring.md).

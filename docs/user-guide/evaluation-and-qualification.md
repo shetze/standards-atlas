@@ -195,6 +195,18 @@ matrix and corpus IDs, task and dataset versions, prompt versions, model referen
 manifest hash, and result metrics. `local/evaluation/qualification-run-index.json` is a
 compact derived index for locating and comparing archived runs without opening every ZIP.
 
+For routing-enabled split tasks the archive additionally snapshots the selected routing manifest,
+the exact versioned routing contract, and every `routing.json` artifact used by corpus documents.
+Their hashes are part of `archive-manifest.json`. The run metadata records the routing contract
+ID/version, minimum admitted disposition, task-level admitted/skipped counts, the disposition
+distribution, and the common `suite_run_id` when invoked by `routed-qualification`.
+
+A completed routed qualification also creates `qualification-suite-run-NNN.zip`. This suite-level
+archive contains the qualification-suite and routing manifests and references the five immutable
+task archives by archive ID and SHA-256. Its metadata collects routing aggregates per task, so
+router reduction can be analyzed separately from the LLM qualification metrics without requiring
+the original `.atlas` workspace.
+
 The cascade keeps the manifest's configured thresholds as provenance. Its effective
 statement-function confidence floor is raised when necessary to match the downstream
 majority auto-acceptance threshold. This prevents a `2/3` majority from being frozen as a
@@ -246,6 +258,33 @@ manifest is
 qualification-matrix run. `--keep` may be repeated to preserve selected document stages and
 requires `--overwrite`. Use `workflow plan` first when you want to inspect the exact command
 sequence without side effects.
+
+### Routed qualification for the split semantic tasks
+
+The split semantic tasks are orchestrated by a dedicated suite workflow. Do not run each v4
+`qualification_matrix` manually when the goal is the complete routed qualification. Use:
+
+```bash
+uv run standards-atlas workflow run \
+  --task routed-qualification \
+  --manifests \
+    manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v4-routed-suite-v1.yaml \
+  --hierarchy functional-safety \
+  --knowledge-domain functional-safety \
+  --overwrite
+```
+
+The suite references `functional-safety-semantic-routing-v1.yaml` and the five v4 manifests for
+Statement Function, Knowledge Kind, Process Function, Applicability, and Role Relation. The
+workflow first materializes structural taxonomy and routing artifacts for the selected
+hierarchy, then builds each task corpus and runs its qualification matrix. Production ontology
+and Doorstop publication remain outside the qualification path.
+
+The three core classification tasks are routed as `required`. Applicability and Role Relation
+qualification require at least `preferred`, so clauses that only receive the deterministic
+`optional` baseline are skipped. The v4 matrices use the local-first cascade rather than
+`full_matrix`; expensive escalation candidates therefore run only for unresolved routed
+clauses.
 
 ## Challenger qualification
 

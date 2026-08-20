@@ -1,0 +1,11 @@
+manifest_type: qualification_suite
+schema_version: 1
+suite_id: multidimensional-semantic-qualification-v4-routed
+version: 1.0.0
+routing_manifest: functional-safety-semantic-routing-v1.yaml
+qualification_manifests:
+  - multidimensional-semantic-qualification-v4-statement-function-v1.yaml
+  - multidimensional-semantic-qualification-v4-knowledge-kind-v1.yaml
+  - multidimensional-semantic-qualification-v4-process-function-v1.yaml
+  - multidimensional-semantic-qualification-v4-applicability-v1.yaml
+  - multidimensional-semantic-qualification-v4-role-relation-v1.yaml

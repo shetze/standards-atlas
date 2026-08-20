@@ -13,7 +13,7 @@ uv run standards-atlas workflow run --help
 - `validate`, `trace`: repository validation and traceability helpers
 - `inspect data`: inspect legacy data artefacts
 - `catalog validate`: validate catalog structure and references
-- `workflow plan`, `workflow run`: plan or execute a typed-manifest workflow. The supported workflow tasks are `documents` and `qualification`; `documents` is the default.
+- `workflow plan`, `workflow run`: plan or execute a typed-manifest workflow. The supported workflow tasks are `documents`, `qualification`, and `routed-qualification`; `documents` is the default.
 
 
 ### Workflow manifest contract
@@ -33,6 +33,21 @@ uv run standards-atlas workflow plan \
   --hierarchy functional-safety \
   --knowledge-domain functional-safety
 ```
+
+For the split taxonomy-routed semantic qualification, use the suite workflow:
+
+```bash
+uv run standards-atlas workflow plan \
+  --task routed-qualification \
+  --manifests \
+    manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v4-routed-suite-v1.yaml \
+  --hierarchy functional-safety \
+  --knowledge-domain functional-safety
+```
+
+The `qualification_suite` manifest references the routing-contract manifest and all five
+specialized qualification-matrix manifests. `routed-qualification` materializes taxonomy and
+routing first, then executes the five task-specific corpus/matrix pairs in suite order.
 
 The unified `--manifests` interface belongs to the workflow envelope. Direct low-level commands remain intentionally specific: for example `evaluation qualification-matrix`, `evaluation challenger-qualification`, and `llm preload-qualification-models` use their own singular `--manifest` option because they consume one qualification-matrix manifest rather than a heterogeneous workflow manifest set.
 

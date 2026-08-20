@@ -38,6 +38,12 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         "manifests/*.yaml",
     ),
+    "qualification-suite-manifest": SchemaPolicy(
+        "qualification-suite-manifest",
+        1,
+        (1,),
+        "manifests/*.yaml",
+    ),
     "semantic-routing-artifact": SchemaPolicy(
         "semantic-routing-artifact",
         1,

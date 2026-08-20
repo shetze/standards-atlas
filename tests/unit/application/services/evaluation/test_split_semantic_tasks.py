@@ -105,7 +105,14 @@ def test_split_qualification_manifests_are_routing_enabled(manifest_name: str) -
     assert manifest.schema_version == "1.6"
     assert manifest.routing is not None
     assert manifest.routing.contract_version == "1.1.0"
-    assert manifest.execution.mode == "full_matrix"
+    assert manifest.execution.mode == "cascade"
+    assert len(manifest.execution.stages) == 3
+    expected_disposition = (
+        "preferred"
+        if manifest.task in {"applicability-extraction", "role-relation-extraction"}
+        else "required"
+    )
+    assert manifest.routing.minimum_disposition == expected_disposition
     assert not manifest.consensus.enabled
 
 

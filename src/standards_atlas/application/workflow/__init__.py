@@ -24,8 +24,16 @@ from standards_atlas.application.workflow.qualification_plan import (
     QualificationWorkflowPlan,
     QualificationWorkflowPlanner,
 )
+from standards_atlas.application.workflow.qualification_suite import (
+    QualificationSuiteManifest,
+    load_qualification_suite_manifest,
+)
 from standards_atlas.application.workflow.recovery import WorkflowRecovery
 from standards_atlas.application.workflow.report import WorkflowRunReporter
+from standards_atlas.application.workflow.routed_qualification_plan import (
+    RoutedQualificationWorkflowPlan,
+    RoutedQualificationWorkflowPlanner,
+)
 from standards_atlas.application.workflow.service import EndToEndWorkflowService
 
 __all__ = [
@@ -34,6 +42,9 @@ __all__ = [
     "EndToEndWorkflowService",
     "QualificationWorkflowPlan",
     "QualificationWorkflowPlanner",
+    "QualificationSuiteManifest",
+    "RoutedQualificationWorkflowPlan",
+    "RoutedQualificationWorkflowPlanner",
     "SubprocessCommandRunner",
     "WorkflowExecutionResult",
     "WorkflowManifestLoader",
@@ -47,5 +58,6 @@ __all__ = [
     "WorkflowStage",
     "WorkflowStep",
     "WorkflowTask",
+    "load_qualification_suite_manifest",
     "parse_manifest_options",
 ]

@@ -54,3 +54,17 @@ def test_loader_requires_common_headers(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="manifest_type"):
         WorkflowManifestLoader().load((manifest,))
+
+
+def test_loader_resolves_qualification_suite_manifest(tmp_path: Path) -> None:
+    standards = tmp_path / "standards.yaml"
+    standards.write_text("manifest_type: standards\nschema_version: 2\n", encoding="utf-8")
+    suite = tmp_path / "suite.yaml"
+    suite.write_text(
+        "manifest_type: qualification_suite\nschema_version: 1\n",
+        encoding="utf-8",
+    )
+
+    result = WorkflowManifestLoader().load((standards, suite))
+
+    assert result.require(WorkflowManifestType.QUALIFICATION_SUITE) == suite

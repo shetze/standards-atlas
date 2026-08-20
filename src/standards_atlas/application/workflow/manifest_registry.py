@@ -15,6 +15,7 @@ class WorkflowManifestType(StrEnum):
     STANDARDS = "standards"
     QUALIFICATION_MATRIX = "qualification_matrix"
     ROUTING_CONTRACT = "routing_contract"
+    QUALIFICATION_SUITE = "qualification_suite"
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,7 @@ class WorkflowManifestLoader:
                 WorkflowManifestType.STANDARDS: "standards-manifest",
                 WorkflowManifestType.QUALIFICATION_MATRIX: "qualification-matrix-manifest",
                 WorkflowManifestType.ROUTING_CONTRACT: "routing-contract-manifest",
+                WorkflowManifestType.QUALIFICATION_SUITE: "qualification-suite-manifest",
             }[manifest_type]
             require_supported_schema(schema_family, payload["schema_version"])
             if manifest_type in by_type:

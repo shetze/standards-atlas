@@ -16,6 +16,7 @@ from standards_atlas.application.semantic_qualification.consensus import (
     ConsensusReport,
     OverallConsensusStatus,
 )
+from standards_atlas.shared.hashing import sha256_file
 
 
 def _write_manifest(path: Path) -> None:
@@ -80,7 +81,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         assert "qualification-run-metadata.json" in names
         assert "configuration/qualification-manifest.yaml" in names
         metadata = json.loads(payload.read("qualification-run-metadata.json"))
-        assert metadata["schema_version"] == "1.2"
+        assert metadata["schema_version"] == "1.3"
         assert metadata["archive_id"] == "qualification-run-001"
         assert metadata["sequence_number"] == 1
         assert metadata["qualification_matrix"] == {
@@ -101,7 +102,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         }
         archive_manifest = json.loads(payload.read("archive-manifest.json"))
         assert archive_manifest["archive_id"] == "qualification-run-001"
-        assert archive_manifest["schema_version"] == "1.2"
+        assert archive_manifest["schema_version"] == "1.3"
         assert any(
             item["path"] == "qualification-run-metadata.json" for item in archive_manifest["files"]
         )
@@ -324,3 +325,56 @@ def test_collects_reproducible_qualification_inputs(tmp_path: Path) -> None:
     assert "inputs/task/task.yaml" in members
     assert "inputs/prompts/structure-aware-v3/user.txt" in members
     assert "inputs/ontologies/statement_functions/ontology.yaml" in members
+
+
+def test_analysis_archive_records_suite_and_routing_provenance(tmp_path: Path) -> None:
+    manifest = tmp_path / "matrix.yaml"
+    _write_manifest(manifest)
+    suite = tmp_path / "suite.yaml"
+    suite.write_text("manifest_type: qualification_suite\nschema_version: 1\n", encoding="utf-8")
+    routing_manifest = tmp_path / "routing.yaml"
+    routing_manifest.write_text(
+        "manifest_type: routing_contract\nschema_version: 1\n",
+        encoding="utf-8",
+    )
+    routing_artifact = tmp_path / "routing.json"
+    routing_artifact.write_text('{"schema_version": 1}\n', encoding="utf-8")
+    output_directory = tmp_path / "local" / "evaluation" / "qualification"
+    report_path = output_directory / "matrix-v1" / "report.json"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("{}\n", encoding="utf-8")
+
+    archive = create_analysis_archive(
+        output_directory=output_directory,
+        matrix_id="matrix-v1",
+        manifest_path=manifest,
+        core_paths=(report_path,),
+        suite_run_id="qualification-suite-run-007",
+        suite_manifest_path=suite,
+        routing_metadata={
+            "task": "role-relation-extraction",
+            "contract_id": "functional-safety-semantic-profile",
+            "contract_version": "1.1.0",
+            "aggregate": {"admitted": 10, "skipped": 490},
+        },
+        input_members=(
+            (routing_manifest, "configuration/routing-manifest.yaml"),
+            (routing_artifact, "inputs/routing/artifacts/ISO26262/routing.json"),
+        ),
+    )
+
+    with zipfile.ZipFile(archive) as payload:
+        metadata = json.loads(payload.read("qualification-run-metadata.json"))
+        archive_manifest = json.loads(payload.read("archive-manifest.json"))
+        assert metadata["suite_run_id"] == "qualification-suite-run-007"
+        assert metadata["routing"]["contract_id"] == "functional-safety-semantic-profile"
+        assert metadata["routing"]["contract_version"] == "1.1.0"
+        assert "configuration/qualification-suite-manifest.yaml" in payload.namelist()
+        assert "configuration/routing-manifest.yaml" in payload.namelist()
+        assert "inputs/routing/artifacts/ISO26262/routing.json" in payload.namelist()
+        routing_entry = next(
+            item
+            for item in archive_manifest["files"]
+            if item["path"] == "inputs/routing/artifacts/ISO26262/routing.json"
+        )
+        assert routing_entry["sha256"] == sha256_file(routing_artifact)
