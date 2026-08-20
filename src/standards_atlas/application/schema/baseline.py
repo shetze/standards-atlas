@@ -1,46 +1,43 @@
-"""Current schema baselines before bounded compatibility is introduced."""
+"""Current bounded schema compatibility policies."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
+from .policy import SchemaPolicy
 
-@dataclass(frozen=True)
-class SchemaBaseline:
-    """One current schema contract and its persistence semantics."""
-
-    family: str
-    current: int | str
-    compatibility_required: bool
-    location: str
-
-
-SCHEMA_BASELINES: dict[str, SchemaBaseline] = {
-    "engineering-document": SchemaBaseline(
-        "engineering-document", 3, True, ".atlas/data/documents/*.json"
+SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "engineering-document": SchemaPolicy(
+        "engineering-document", 3, (3,), ".atlas/data/documents/*.json"
     ),
-    "standards-manifest": SchemaBaseline("standards-manifest", 2, True, "manifests/*.yaml"),
-    "qualification-matrix-manifest": SchemaBaseline(
-        "qualification-matrix-manifest", "1.5", True, "manifests/*.yaml"
+    "standards-manifest": SchemaPolicy("standards-manifest", 2, (2,), "manifests/*.yaml"),
+    "qualification-matrix-manifest": SchemaPolicy(
+        "qualification-matrix-manifest", "1.5", ("1.5",), "manifests/*.yaml"
     ),
-    "semantic-task-resource": SchemaBaseline(
-        "semantic-task-resource", 1, True, "resources/semantic/tasks/**/task.yaml"
+    "semantic-task-resource": SchemaPolicy(
+        "semantic-task-resource", 1, (1,), "resources/semantic/tasks/**/task.yaml"
     ),
-    "semantic-taxonomy-resource": SchemaBaseline(
-        "semantic-taxonomy-resource", 1, True, "resources/semantic/taxonomies/**/taxonomy.yaml"
+    "semantic-taxonomy-resource": SchemaPolicy(
+        "semantic-taxonomy-resource", 1, (1,), "resources/semantic/taxonomies/**/taxonomy.yaml"
     ),
-    "structural-taxonomy-resource": SchemaBaseline(
-        "structural-taxonomy-resource", 1, True, "resources/structure-taxonomies/**/taxonomy.yaml"
+    "structural-taxonomy-resource": SchemaPolicy(
+        "structural-taxonomy-resource",
+        1,
+        (1,),
+        "resources/structure-taxonomies/**/taxonomy.yaml",
     ),
 }
 
+# Compatibility alias for code/docs created by the baseline slice.
+SCHEMA_BASELINES = SCHEMA_POLICIES
+SchemaBaseline = SchemaPolicy
+
+
+def require_supported_schema(family: str, value: Any) -> None:
+    """Validate that ``value`` is inside the bounded reader support window."""
+    SCHEMA_POLICIES[family].require_readable(value)
+
 
 def require_current_schema(family: str, value: Any) -> None:
-    """Reject anything except the clean current baseline for ``family``."""
-    baseline = SCHEMA_BASELINES[family]
-    if value != baseline.current:
-        raise ValueError(
-            f"Unsupported {family.replace('-', ' ')} schema version: {value!r}; "
-            f"current baseline is {baseline.current!r}"
-        )
+    """Validate writer-side current schema output."""
+    SCHEMA_POLICIES[family].require_current_for_write(value)

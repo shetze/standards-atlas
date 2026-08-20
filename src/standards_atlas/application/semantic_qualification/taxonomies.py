@@ -8,6 +8,8 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.application.schema import require_supported_schema
+
 
 class SemanticTaxonomyDefinition(BaseModel):
     """One independently versioned semantic label space."""
@@ -42,6 +44,7 @@ class SemanticTaxonomyRepository:
     def load(self, taxonomy_id: str, version: str) -> SemanticTaxonomyDefinition:
         path = self._root / taxonomy_id / version / "taxonomy.yaml"
         payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        require_supported_schema("semantic-taxonomy-resource", payload.get("schema_version"))
         definition = SemanticTaxonomyDefinition.model_validate(payload)
         if definition.id != taxonomy_id or definition.version != version:
             raise ValueError(

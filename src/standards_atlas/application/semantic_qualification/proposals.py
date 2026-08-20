@@ -26,6 +26,7 @@ from standards_atlas.application.ports.llm_gateway import (
     LlmUnavailableError,
     StructuredGenerationRequest,
 )
+from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.semantic_qualification.adaptive_interview import (
     AdaptiveInterviewPlanner,
     InterviewDimension,
@@ -105,6 +106,7 @@ class SemanticTaskRepository:
     def load(self, task: str, version: str) -> tuple[SemanticTaskDefinition, dict[str, Any]]:
         root = self._root / task / version
         metadata = yaml.safe_load((root / "task.yaml").read_text(encoding="utf-8")) or {}
+        require_supported_schema("semantic-task-resource", metadata.get("schema_version"))
         references = {
             dimension: SemanticTaxonomyReference.model_validate(reference)
             for dimension, reference in dict(metadata.get("taxonomies", {})).items()

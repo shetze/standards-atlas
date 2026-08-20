@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.domain.model import (
     DocumentKey,
     DocumentType,
@@ -88,7 +88,7 @@ def _extract_document_data(payload: Any) -> dict[str, Any]:
 
     if "schema_version" not in payload:
         raise ValueError("Persisted engineering document is missing 'schema_version'")
-    require_current_schema("engineering-document", payload["schema_version"])
+    require_supported_schema("engineering-document", payload["schema_version"])
 
     document = payload.get("document")
     if not isinstance(document, dict):

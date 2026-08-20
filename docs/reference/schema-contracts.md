@@ -5,11 +5,17 @@ content carried by those schemas. `schema_version` identifies a JSON/YAML contra
 Fields such as `version`, `task_version`, `taxonomy_version`, `prompt_version`, and
 `dataset_version` identify domain content and evolve independently.
 
-## Compatibility baseline
+## Bounded compatibility policy
 
-Version 0.8.2 establishes a clean baseline before bounded backward-compatible readers
-are introduced. During this cleanup phase, readers accept only the current schema.
-Historical fallbacks are deliberately not preserved.
+Version 0.8.2 establishes a clean baseline and a bounded reader policy. Each schema
+family has one current version and may read at most the two immediately preceding
+versions. A major Standards Atlas transition may temporarily permit a fourth readable
+version. Writers emit only the current version. Supported non-current versions emit a
+visible deprecation warning; older versions fail explicitly.
+
+Because ADR 0063 deliberately removed historical compatibility, the current concrete
+policies initially contain only their current version. Older versions are added only
+when a future schema revision creates a real predecessor contract.
 
 | Schema family / artifact | Current | Storage / resource | Future reader compatibility |
 | --- | ---: | --- | --- |
@@ -38,9 +44,9 @@ Historical fallbacks are deliberately not preserved.
 | Semantic taxonomy resource | 1 | `resources/semantic/taxonomies/**/taxonomy.yaml` | yes |
 | Structural taxonomy resource | 1 | `resources/structure-taxonomies/**/taxonomy.yaml` | yes |
 
-The table is the compatibility inventory; not every family is yet routed through a
-central policy object. Slice 2 will add the bounded reader policy on top of these
-baselines without reintroducing old accidental behavior.
+The table is the compatibility inventory. Schema families that cross active reader
+boundaries are routed through the central policy as those readers are maintained.
+The policy window is an upper bound, not a requirement to retain obsolete versions.
 
 ## Storage classes
 
@@ -58,7 +64,7 @@ Standards Atlas does not promise in-place migration of generated artifacts. Futu
 compatibility is a reader concern: a supported old payload may deserialize directly
 into the current Python/domain model. Writers emit only the current schema.
 
-## Baseline enforcement introduced in this slice
+## Baseline and policy enforcement
 
 The Engineering Document repository now rejects unversioned and pre-v3 payloads.
 Standards and Qualification Matrix manifests are checked against their current

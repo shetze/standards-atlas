@@ -12,6 +12,8 @@
 
 ## Unreleased
 
+- Add bounded schema-reader compatibility with visible deprecation warnings, current-only writers, and an explicit temporary four-version major-transition window.
+
 - Establish a clean schema compatibility baseline: persistent contracts declare current schema versions explicitly, legacy EngineeringDocument readers are removed, and cache/work formats are excluded from compatibility guarantees.
 
 - Separate semantic taxonomies from semantic tasks; introduce independently versioned statement, knowledge, process, applicability, and responsibility taxonomies and make `semantic-profile-classification` the canonical multidimensional 2.x task while retaining the previous name as a compatibility alias.

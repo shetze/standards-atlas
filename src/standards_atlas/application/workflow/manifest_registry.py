@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.schema import require_supported_schema
 
 
 class WorkflowManifestType(StrEnum):
@@ -65,7 +65,7 @@ class WorkflowManifestLoader:
                 WorkflowManifestType.STANDARDS: "standards-manifest",
                 WorkflowManifestType.QUALIFICATION_MATRIX: "qualification-matrix-manifest",
             }[manifest_type]
-            require_current_schema(schema_family, payload["schema_version"])
+            require_supported_schema(schema_family, payload["schema_version"])
             if manifest_type in by_type:
                 raise ValueError(
                     f"workflow accepts exactly one manifest of type {manifest_type.value!r}; "

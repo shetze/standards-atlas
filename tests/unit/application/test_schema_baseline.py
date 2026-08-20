@@ -27,6 +27,6 @@ def test_current_baseline_rejects_previous_versions_during_cleanup_phase() -> No
     try:
         require_current_schema("engineering-document", 2)
     except ValueError as exc:
-        assert "current baseline is 3" in str(exc)
+        assert "writers may only emit current schema 3" in str(exc)
     else:
         raise AssertionError("old schema version unexpectedly accepted")
