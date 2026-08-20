@@ -42,7 +42,7 @@ def resolve_prompt_version(
     prompt: PromptCandidate,
     *,
     resources: Path,
-    task: str = "statement-function-classification",
+    task: str = "semantic-profile-classification",
 ) -> str:
     """Resolve a matrix prompt id to an installed prompt resource version."""
     candidates = [prompt.prompt_version, _PROMPT_VERSION_ALIASES.get(prompt.id), prompt.id]
@@ -51,10 +51,14 @@ def resolve_prompt_version(
         if not candidate or candidate in checked:
             continue
         checked.append(candidate)
-        definition = resources / "prompts" / task / candidate / "prompt.json"
-        if definition.is_file():
+        task_roots = [resources / "prompts" / task]
+        if task == "semantic-profile-classification":
+            task_roots.append(resources / "prompts" / "statement-function-classification")
+        if any((root / candidate / "prompt.json").is_file() for root in task_roots):
             return candidate
     available_root = resources / "prompts" / task
+    if not available_root.is_dir() and task == "semantic-profile-classification":
+        available_root = resources / "prompts" / "statement-function-classification"
     available = (
         sorted(path.name for path in available_root.iterdir() if path.is_dir())
         if available_root.is_dir()
@@ -642,7 +646,8 @@ class QualificationMatrixManifest(BaseModel):
     schema_version: str = "1.0"
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)
-    task_version: str = Field(default="1.0.0", min_length=1)
+    task: str = Field(default="semantic-profile-classification", min_length=1)
+    task_version: str = Field(default="2.1.0", min_length=1)
     dataset_version: str = Field(default="1.0.0", min_length=1)
     repetitions: int = Field(default=3, ge=1)
     prompts: tuple[PromptCandidate, ...]

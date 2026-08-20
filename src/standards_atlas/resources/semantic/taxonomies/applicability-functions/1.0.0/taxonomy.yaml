@@ -1,0 +1,9 @@
+id: applicability-functions
+version: 1.0.0
+dimension: applicability_functions
+description: Applicability semantics used by semantic profile 2.0.0.
+values:
+- applicability_condition
+- inclusion
+- exclusion
+- exception

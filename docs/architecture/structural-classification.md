@@ -19,9 +19,13 @@ A one-dimensional role cannot faithfully represent that a clause is simultaneous
 
 Structural classification therefore answers *where the clause belongs in the document and domain framework*. Semantic classification answers *what its statements do*.
 
-## Taxonomy resources
+## Taxonomy resources and deterministic engine
 
 Versioned structure taxonomies live below `resources/structure-taxonomies/`, separated into document-level and domain-level definitions. Functional-safety taxonomies may specialize general ISO/IEC document structure without being imposed on railway TSI, Polarion, cybersecurity, or other knowledge domains.
+
+The YAML file is the versioned category contract; classification behaviour is supplied by a `StructuralTaxonomyClassifier` implementation. `StructuralTaxonomyRegistry` resolves those implementations by taxonomy id and version, and `StructuralTaxonomyEngine` composes explicitly selected document/domain classifiers with the generic `StructuralProfileClassifier`. Emitted categories are checked against the corresponding YAML definition.
+
+This layer is deterministic and LLM-free. Complex tree algorithms remain normal Python code rather than being encoded in a general-purpose YAML rule language. Semantic LLM tasks are a separate concern. The current built-in implementation moves ISO/IEC Directives Part 2 classification out of the AtlasData adapter; Railway TSI, Polarion, Functional Safety, and Cybersecurity can provide independent classifiers through the same interface.
 
 ## Inheritance
 

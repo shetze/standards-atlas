@@ -1,0 +1,40 @@
+id: statement-functions
+version: 2.0.0
+dimension: statement_functions
+description: Clause-level linguistic statement functions.
+values:
+- requirement
+- recommendation
+- condemnation
+- warning
+- guideline
+- permission
+- prohibition
+- definition
+- description
+- explanation
+- rationale
+- example
+- note
+- conformance_statement
+- objective
+- prerequisite
+- assumption
+codes:
+  requirement: REQ
+  recommendation: REC
+  condemnation: CND
+  warning: WRN
+  guideline: GDL
+  permission: PER
+  prohibition: PRH
+  definition: DEF
+  description: DES
+  explanation: EXP
+  rationale: RAT
+  example: EXA
+  note: NOT
+  conformance_statement: CNF
+  objective: OBJ
+  prerequisite: PRE
+  assumption: ASM

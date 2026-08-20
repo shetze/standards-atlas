@@ -77,7 +77,7 @@ class QualificationWorkflowPlanner:
                 "evaluation",
                 "corpus-build",
                 "--task",
-                "statement-function-classification",
+                manifest.task,
                 "--version",
                 manifest.task_version,
                 "--corpus-id",
@@ -95,12 +95,7 @@ class QualificationWorkflowPlanner:
             ),
             artifact_policy=ArtifactPolicy.DERIVED,
             output_paths=(
-                str(
-                    corpus_output
-                    / "statement-function-classification"
-                    / manifest.task_version
-                    / "dataset.json"
-                ),
+                str(corpus_output / manifest.task / manifest.task_version / "dataset.json"),
                 str(corpus_output / manifest.corpus_id / "corpus.yaml"),
             ),
         )

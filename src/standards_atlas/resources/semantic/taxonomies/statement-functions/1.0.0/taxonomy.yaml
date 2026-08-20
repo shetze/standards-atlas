@@ -1,0 +1,16 @@
+id: statement-functions
+version: 1.0.0
+dimension: statement_functions
+description: Statement-function label space used by task 1.0.0.
+values:
+- requirement
+- recommendation
+- permission
+- prohibition
+- definition
+- description
+- explanation
+- rationale
+- example
+- note
+- conformance_statement

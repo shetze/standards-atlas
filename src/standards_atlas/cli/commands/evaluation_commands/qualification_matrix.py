@@ -413,7 +413,7 @@ def qualify_model_prompt_matrix(
                 }
             )
             dataset = EvaluationDatasetRepository(corpus_root).load(
-                "statement-function-classification",
+                manifest.task,
                 manifest.dataset_version,
             )
             dataset_example_ids = tuple(example.id for example in dataset.examples)
@@ -527,7 +527,9 @@ def qualify_model_prompt_matrix(
                             f"got {model.provider!r} for {model.id}"
                         )
                     for prompt in manifest.prompts_for_stage(stage):
-                        prompt_version = resolve_prompt_version(prompt, resources=resources)
+                        prompt_version = resolve_prompt_version(
+                            prompt, resources=resources, task=manifest.task
+                        )
                         for reasoning in active_reasoning_modes:
                             for repetition in range(1, model_repetitions + 1):
                                 candidate_index += 1
@@ -554,7 +556,7 @@ def qualify_model_prompt_matrix(
                                 started = time.monotonic()
                                 proposal_config = ProposalRunConfig(
                                     corpus_id=manifest.corpus_id,
-                                    task="statement-function-classification",
+                                    task=manifest.task,
                                     task_version=manifest.task_version,
                                     dataset_version=manifest.dataset_version,
                                     prompt_version=prompt_version,

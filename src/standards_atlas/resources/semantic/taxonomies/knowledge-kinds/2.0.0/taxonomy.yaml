@@ -1,0 +1,12 @@
+id: knowledge-kinds
+version: 2.0.0
+dimension: knowledge_kinds
+description: Engineering knowledge-kind ontology used by semantic profile 2.0.0.
+values:
+- technique
+- method_or_measure
+- process
+- artifact
+- role
+- evidence
+- concept

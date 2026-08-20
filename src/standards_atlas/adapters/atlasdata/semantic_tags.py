@@ -3,25 +3,56 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
-import yaml
-
+from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
+from standards_atlas.application.semantic_qualification.taxonomies import SemanticTaxonomyRepository
 from standards_atlas.domain.model import NormativeStatus, SemanticClassification
 
-PROFILE_PREFIX = "statement-function-classification:"
+PROFILE_PREFIX = "semantic-profile-classification:"
+LEGACY_PROFILE_PREFIX = "statement-function-classification:"
+_SUPPORTED_PROFILE_TASKS = {
+    "semantic-profile-classification",
+    "statement-function-classification",
+}
+_DOCUMENT_STRUCTURE_CODES = {
+    "front_matter": "FMT",
+    "foreword": "FRW",
+    "introduction": "INT",
+    "scope": "SCP",
+    "references": "REF",
+    "terminology": "TRM",
+    "body": "BDY",
+    "annex": "ANX",
+    "bibliography": "BIB",
+    "back_matter": "BMT",
+}
+_NORMATIVE_STATUS_CODES = {
+    "normative": "NRM",
+    "informative": "INF",
+    "mixed": "MIX",
+    "unspecified": "UNS",
+    "not_applicable": "NAP",
+}
 
 
-def _taxonomy(version: str) -> dict[str, Any]:
-    root = (
-        Path(__file__).parents[2]
-        / "resources"
-        / "semantic"
-        / "tasks"
-        / "statement-function-classification"
-        / version
+def is_supported_semantic_profile(task: str) -> bool:
+    """Return whether an AtlasData semantic profile task is supported."""
+    return task in _SUPPORTED_PROFILE_TASKS
+
+
+def _semantic_codes(version: str) -> dict[str, dict[str, str]]:
+    semantic_root = Path(__file__).parents[2] / "resources" / "semantic"
+    task, _ = SemanticTaskRepository(semantic_root / "tasks").load(
+        "semantic-profile-classification", version
     )
-    return yaml.safe_load((root / "taxonomy.yaml").read_text(encoding="utf-8")) or {}
+    repository = SemanticTaxonomyRepository(semantic_root / "taxonomies")
+    result = {
+        dimension: repository.load(reference.id, reference.version).codes
+        for dimension, reference in task.taxonomies.items()
+    }
+    result["document_structure"] = _DOCUMENT_STRUCTURE_CODES
+    result["normative_status"] = _NORMATIVE_STATUS_CODES
+    return result
 
 
 def encode_semantic_tags(
@@ -30,7 +61,7 @@ def encode_semantic_tags(
     version: str,
 ) -> tuple[str, ...]:
     """Encode one accepted classification into stable public taxonomy tags."""
-    codes = _taxonomy(version)["semantic_codes"]
+    codes = _semantic_codes(version)
     tags: list[str] = []
 
     if classification.statement_functions:
@@ -77,7 +108,7 @@ def decode_semantic_tags(
     version: str,
 ) -> dict[str, tuple[str, ...]]:
     """Decode public taxonomy tags using the declared semantic profile."""
-    codes = _taxonomy(version)["semantic_codes"]
+    codes = _semantic_codes(version)
     reverse = {
         dimension: {code: value for value, code in values.items()}
         for dimension, values in codes.items()

@@ -64,6 +64,10 @@ from standards_atlas.application.semantic_qualification.request_builder import (
     serialize_generation_request,
 )
 from standards_atlas.application.semantic_qualification.retry import generate_with_retry
+from standards_atlas.application.semantic_qualification.taxonomies import (
+    SemanticTaxonomyReference,
+    SemanticTaxonomyRepository,
+)
 
 
 class SemanticTaskDefinition(BaseModel):
@@ -74,8 +78,12 @@ class SemanticTaskDefinition(BaseModel):
     task: str = Field(min_length=1)
     version: str = Field(min_length=1)
     description: str = ""
+    canonical_task: str | None = None
+    aliases: tuple[str, ...] = ()
+    taxonomies: dict[str, SemanticTaxonomyReference] = Field(default_factory=dict)
     taxonomy: tuple[str, ...] = ()
     knowledge_taxonomy: tuple[str, ...] = ()
+    process_taxonomy: tuple[str, ...] = ()
     applicability_taxonomy: tuple[str, ...] = ()
     responsibility_taxonomy: tuple[str, ...] = ()
     multi_label: bool = True
@@ -86,19 +94,54 @@ class SemanticTaskDefinition(BaseModel):
 
 
 class SemanticTaskRepository:
-    """Load task metadata, taxonomy, and the canonical output schema."""
+    """Load task metadata plus independently versioned semantic taxonomies."""
 
     def __init__(self, root: Path) -> None:
         self._root = root
+        semantic_root = root.parent if root.name == "tasks" else root
+        self._taxonomy_repository = SemanticTaxonomyRepository(semantic_root / "taxonomies")
 
     def load(self, task: str, version: str) -> tuple[SemanticTaskDefinition, dict[str, Any]]:
         root = self._root / task / version
         metadata = yaml.safe_load((root / "task.yaml").read_text(encoding="utf-8")) or {}
-        taxonomy = yaml.safe_load((root / "taxonomy.yaml").read_text(encoding="utf-8")) or {}
-        metadata["taxonomy"] = tuple(taxonomy.get("statement_functions", taxonomy.get("roles", ())))
-        metadata["knowledge_taxonomy"] = tuple(taxonomy.get("knowledge_kinds", ()))
-        metadata["applicability_taxonomy"] = tuple(taxonomy.get("applicability_functions", ()))
-        metadata["responsibility_taxonomy"] = tuple(taxonomy.get("responsibility_functions", ()))
+        references = {
+            dimension: SemanticTaxonomyReference.model_validate(reference)
+            for dimension, reference in dict(metadata.get("taxonomies", {})).items()
+        }
+        loaded = {
+            dimension: self._taxonomy_repository.load(reference.id, reference.version)
+            for dimension, reference in references.items()
+        }
+        expected_dimensions = {
+            dimension: taxonomy.dimension for dimension, taxonomy in loaded.items()
+        }
+        mismatches = [
+            f"{dimension}->{actual}"
+            for dimension, actual in expected_dimensions.items()
+            if dimension != actual
+        ]
+        if mismatches:
+            raise ValueError("semantic task taxonomy dimension mismatch: " + ", ".join(mismatches))
+        metadata["taxonomies"] = references
+        metadata["taxonomy"] = tuple(
+            loaded.get("statement_functions").values if "statement_functions" in loaded else ()
+        )
+        metadata["knowledge_taxonomy"] = tuple(
+            loaded.get("knowledge_kinds").values if "knowledge_kinds" in loaded else ()
+        )
+        metadata["process_taxonomy"] = tuple(
+            loaded.get("process_functions").values if "process_functions" in loaded else ()
+        )
+        metadata["applicability_taxonomy"] = tuple(
+            loaded.get("applicability_functions").values
+            if "applicability_functions" in loaded
+            else ()
+        )
+        metadata["responsibility_taxonomy"] = tuple(
+            loaded.get("responsibility_functions").values
+            if "responsibility_functions" in loaded
+            else ()
+        )
         schema = json.loads((root / "schema.json").read_text(encoding="utf-8"))
         return SemanticTaskDefinition.model_validate(metadata), schema
 

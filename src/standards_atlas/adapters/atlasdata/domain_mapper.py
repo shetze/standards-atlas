@@ -172,10 +172,13 @@ def _merge_semantic_tags(
     if not semantic_profile or ":" not in semantic_profile:
         raise ValueError("AtlasData semantic tags require semanticProfile metadata")
     task, version = semantic_profile.rsplit(":", 1)
-    if task != "statement-function-classification":
-        raise ValueError(f"Unsupported AtlasData semantic profile: {semantic_profile!r}")
+    from standards_atlas.adapters.atlasdata.semantic_tags import (
+        decode_semantic_tags,
+        is_supported_semantic_profile,
+    )
 
-    from standards_atlas.adapters.atlasdata.semantic_tags import decode_semantic_tags
+    if not is_supported_semantic_profile(task):
+        raise ValueError(f"Unsupported AtlasData semantic profile: {semantic_profile!r}")
     from standards_atlas.domain.model import (
         ApplicabilityFunction,
         DocumentStructure,
@@ -414,32 +417,22 @@ def _infer_structural_profile(
     visible_reference: str,
     title: str | None,
 ):
-    from standards_atlas.application.services.structural_profile_classifier import (
-        StructuralProfileClassifier,
-        StructuralProfileContext,
+    from standards_atlas.adapters.structure_taxonomies import (
+        ResourceStructuralTaxonomyDefinitionRepository,
+    )
+    from standards_atlas.application.structure import (
+        StructuralTaxonomyContext,
+        StructuralTaxonomyEngine,
+        builtin_structural_taxonomy_registry,
     )
 
-    return StructuralProfileClassifier().classify(
-        StructuralProfileContext(
+    return StructuralTaxonomyEngine(
+        builtin_structural_taxonomy_registry(),
+        definitions=ResourceStructuralTaxonomyDefinitionRepository(),
+    ).classify(
+        StructuralTaxonomyContext(
             reference=visible_reference,
             heading=title or "",
-            document_taxonomy="document.iec-directives-2",
-            document_category=_iec_document_category(visible_reference, title or ""),
-            document_taxonomy_version="1.0.0",
-        )
+        ),
+        document_taxonomy=("document.iec-directives-2", "1.0.0"),
     )
-
-
-def _iec_document_category(reference: str, title: str) -> str | None:
-    normalized = title.casefold().strip()
-    if reference.isalpha() or normalized.startswith("annex "):
-        return "supplementary_elements"
-    if normalized in {"foreword", "introduction"}:
-        return "preliminary_elements"
-    if normalized in {"scope", "normative references", "terms and definitions"}:
-        return "normative_general_elements"
-    if normalized == "bibliography":
-        return "bibliography"
-    if reference and reference[0].isdigit():
-        return "normative_technical_elements"
-    return None

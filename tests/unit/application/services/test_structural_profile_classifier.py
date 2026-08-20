@@ -17,21 +17,14 @@ def test_classifier_preserves_explicit_normative_annex_status() -> None:
     assert profile.annex_status == AnnexStatus.NORMATIVE
 
 
-def test_classifier_does_not_assume_iec_main_body_for_unknown_document_heading() -> None:
+def test_classifier_does_not_assume_document_or_domain_taxonomy() -> None:
     profile = StructuralProfileClassifier().classify(
-        StructuralProfileContext(
-            reference="WI-42",
-            heading="Software safety requirement",
-            document_taxonomy="document.polarion-export",
-            document_category="requirement",
-            domain_taxonomy="domain.functional-safety",
-            domain_category="software_development",
-        )
+        StructuralProfileContext(reference="WI-42", heading="Software safety requirement")
     )
 
     assert profile.canonical_section is None
-    assert profile.document_categories[0].category == "requirement"
-    assert profile.domain_categories[0].category == "software_development"
+    assert profile.document_categories == ()
+    assert profile.domain_categories == ()
 
 
 def test_numeric_clause_is_classified_as_body() -> None:

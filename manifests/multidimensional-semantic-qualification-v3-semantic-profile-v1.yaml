@@ -2,6 +2,7 @@ manifest_type: qualification_matrix
 schema_version: "1.5"
 matrix_id: multidimensional-semantic-qualification-v3
 corpus_id: semantic-profile-v1
+task: semantic-profile-classification
 task_version: 2.1.0
 dataset_version: 2.1.0
 repetitions: 1

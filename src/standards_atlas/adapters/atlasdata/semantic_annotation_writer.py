@@ -13,7 +13,10 @@ from standards_atlas.adapters.atlasdata.parser import (
     InitializationRecord,
     parse_initialization_records,
 )
-from standards_atlas.adapters.atlasdata.semantic_tags import encode_semantic_tags
+from standards_atlas.adapters.atlasdata.semantic_tags import (
+    encode_semantic_tags,
+    is_supported_semantic_profile,
+)
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     DocumentStructure,
@@ -95,8 +98,11 @@ class AtlasDataSemanticAnnotationService:
         payload = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
         manifest = PublicSemanticAnnotationManifest.model_validate(payload)
         task, sep, version = manifest.semantic_profile.rpartition(":")
-        if not sep or task != "statement-function-classification":
-            raise ValueError("semantic_profile must be statement-function-classification:<version>")
+        if not sep or not is_supported_semantic_profile(task):
+            raise ValueError(
+                "semantic_profile must be semantic-profile-classification:<version> "
+                "(legacy statement-function-classification is also accepted)"
+            )
 
         original = source.read_text(encoding="utf-8")
         records = parse_initialization_records(original)

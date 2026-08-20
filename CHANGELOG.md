@@ -12,6 +12,8 @@
 
 ## Unreleased
 
+- Separate semantic taxonomies from semantic tasks; introduce independently versioned statement, knowledge, process, applicability, and responsibility taxonomies and make `semantic-profile-classification` the canonical multidimensional 2.x task while retaining the previous name as a compatibility alias.
+- Add a modular deterministic structural-taxonomy engine with versioned classifier registry and YAML contract validation; move ISO/IEC document categorization out of the AtlasData adapter.
 - Introduce lifecycle-based generated storage: persistent machine state in `.atlas/data`, disposable caches in `.atlas/cache`, retained workflow scratch state in `.atlas/work`, and all HITL artifacts below `local/review`.
 - Add `standards-atlas clean`; workflow scratch state is cleared before a new workflow run while human-facing `local/` artifacts are never removed.
 - Move LLM and MCP runtime state into `.atlas/work`, LLM response caches into `.atlas/cache`, and add a migration script for legacy workspace layouts.

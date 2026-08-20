@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from standards_atlas.domain.model.structural_profile import (
     AnnexStatus,
     CanonicalDocumentSection,
-    DomainCategory,
     SemanticSection,
     SemanticSectionRole,
     StructuralProfile,
@@ -22,12 +21,6 @@ class StructuralProfileContext:
     reference: str
     heading: str
     text: str = ""
-    document_taxonomy: str | None = None
-    document_category: str | None = None
-    document_taxonomy_version: str | None = None
-    domain_taxonomy: str | None = None
-    domain_category: str | None = None
-    domain_taxonomy_version: str | None = None
 
 
 class StructuralProfileClassifier:
@@ -40,33 +33,11 @@ class StructuralProfileClassifier:
             _annex_status(heading) if canonical_section == CanonicalDocumentSection.ANNEX else None
         )
 
-        document_categories = _qualified_category(
-            context.document_taxonomy,
-            context.document_category,
-            context.document_taxonomy_version,
-        )
-        domain_categories = _qualified_category(
-            context.domain_taxonomy,
-            context.domain_category,
-            context.domain_taxonomy_version,
-        )
         return StructuralProfile(
             canonical_section=canonical_section,
-            document_categories=document_categories,
-            domain_categories=domain_categories,
             annex_status=annex_status,
             semantic_sections=_semantic_sections(context.text),
         )
-
-
-def _qualified_category(
-    taxonomy: str | None,
-    category: str | None,
-    version: str | None,
-) -> tuple[DomainCategory, ...]:
-    if taxonomy is None or category is None:
-        return ()
-    return (DomainCategory(taxonomy=taxonomy, category=category, version=version),)
 
 
 def _canonical_section(reference: str, heading: str) -> CanonicalDocumentSection | None:

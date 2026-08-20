@@ -51,6 +51,8 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0033](0033-engineering-document-construction-contract.md) | Establish the engineering-document construction contract |
 | [0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md) | Model structural profiles as independent taxonomy dimensions |
 | [0051](0051-multidimensional-semantic-classification.md) | Use multidimensional semantic classification |
+| [0061](0061-modular-deterministic-structural-taxonomy-engine.md) | Execute structural taxonomies through modular deterministic classifiers |
+| [0062](0062-separate-semantic-taxonomies-from-semantic-tasks.md) | Version semantic taxonomies independently from semantic tasks |
 
 ## AtlasData, multi-part standards, and baseline governance
 
@@ -114,7 +116,7 @@ both active and obsolete provisions.
 - For the architecture's overall shape, begin with [ADR 0002](0002-adopt-traceability-centric-architecture.md), [ADR 0003](0003-adopt-hexagonal-architecture.md), and [ADR 0004](0004-adopt-transformation-pipeline.md).
 - For the canonical contracts, continue with [ADR 0006](0006-engineeringdocument-as-canonical-repesenation.md), [ADR 0026](0026-normalized-document-contract.md), and [ADR 0033](0033-engineering-document-construction-contract.md).
 - For workflow and publication, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md), and [ADR 0036](0036-local-workspace-and-hierarchy-publication.md).
-- For semantic qualification and external model access, continue with [ADR 0039](0039-verification-and-qualification-framework.md), [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md), [ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), and [ADR 0051](0051-multidimensional-semantic-classification.md), followed by [ADR 0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md).
+- For semantic qualification and external model access, continue with [ADR 0039](0039-verification-and-qualification-framework.md), [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md), [ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), and [ADR 0051](0051-multidimensional-semantic-classification.md), followed by [ADR 0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md) and [ADR 0062](0062-separate-semantic-taxonomies-from-semantic-tasks.md).
 - For lossless formula handling, read [ADR 0055](0055-preserve-visual-formulas-before-semantic-transcription.md).
 - For the current application package structure, read [ADR 0053](0053-structural-application-refactoring.md).
 

@@ -1,5 +1,5 @@
-task: statement-function-classification
-version: 2.1.0
+task: semantic-profile-classification
+version: 2.0.0
 description: Classify independent statement, knowledge-kind, process, applicability,
   and responsibility dimensions of normalized standards clauses.
 multi_label: true
@@ -16,14 +16,15 @@ taxonomies:
     version: 2.0.0
   knowledge_kinds:
     id: knowledge-kinds
-    version: 2.1.0
+    version: 2.0.0
   process_functions:
     id: process-functions
     version: 1.0.0
   applicability_functions:
     id: applicability-functions
-    version: 1.1.0
+    version: 1.0.0
   responsibility_functions:
     id: responsibility-functions
     version: 1.0.0
-canonical_task: semantic-profile-classification
+aliases:
+- statement-function-classification

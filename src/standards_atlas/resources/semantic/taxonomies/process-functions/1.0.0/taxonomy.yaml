@@ -1,0 +1,28 @@
+id: process-functions
+version: 1.0.0
+dimension: process_functions
+description: Process-model functions expressed by clauses.
+values:
+- objective
+- prerequisite
+- input
+- activity
+- decision
+- branch
+- sequence
+- output
+- completion_criterion
+- option
+- assumption
+codes:
+  objective: OBJ
+  prerequisite: PRE
+  input: INP
+  activity: ACT
+  decision: DEC
+  branch: BRN
+  sequence: SEQ
+  output: OUT
+  completion_criterion: CMP
+  option: OPT
+  assumption: ASM

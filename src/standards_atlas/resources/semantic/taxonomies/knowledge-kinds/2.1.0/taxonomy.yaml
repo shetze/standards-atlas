@@ -1,0 +1,19 @@
+id: knowledge-kinds
+version: 2.1.0
+dimension: knowledge_kinds
+description: Engineering knowledge-kind ontology with unified technique-or-measure
+  kind.
+values:
+- technique_or_measure
+- process
+- artifact
+- role
+- evidence
+- concept
+codes:
+  technique_or_measure: TOM
+  process: PRC
+  artifact: ART
+  role: ROL
+  evidence: EVD
+  concept: CNC
