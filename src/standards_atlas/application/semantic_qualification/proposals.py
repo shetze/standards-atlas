@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import partial
@@ -319,7 +320,11 @@ class BaselineProposalGenerator:
                     )
 
                 interview_payload = None
-                if config.adaptive_interview:
+                use_adaptive_interview = (
+                    config.adaptive_interview
+                    and _adaptive_interview_supports_schema(canonical_schema)
+                )
+                if use_adaptive_interview:
                     result, normalized_value, interview_payload = _run_adaptive_interview(
                         self._gateway,
                         config=config,
@@ -503,6 +508,20 @@ class BaselineProposalGenerator:
                 batch.fresh_inference_duration_seconds if batch.fresh_predictions else None
             ),
         )
+
+
+def _adaptive_interview_supports_schema(schema: Mapping[str, Any]) -> bool:
+    """Return whether the interview aggregator can satisfy the task schema.
+
+    The current adaptive interview only classifies scalar/multi-label ontology
+    dimensions. It does not extract structured role relation objects (role,
+    relation, target, condition, evidence). When ``role_relations`` is required
+    by the canonical task schema, using the interview would therefore construct
+    a response that can never satisfy that contract. Fall back to the direct
+    structured-generation path until the interview has a dedicated extraction
+    step for role relations.
+    """
+    return "role_relations" not in set(schema.get("required", ()))
 
 
 def _run_adaptive_interview(
@@ -771,6 +790,7 @@ def _normalize_selection_payload(
     if not isinstance(value, dict):
         return dict(value)
     normalized = dict(value)
+    supplied_fields = set(normalized)
     defaults = {
         "knowledge_kinds": [],
         "primary_knowledge_kind": None,
@@ -784,6 +804,27 @@ def _normalize_selection_payload(
     for field in required_fields:
         if field in defaults:
             normalized.setdefault(field, defaults[field])
+
+    # ``role_relations`` was added after the scalar role-relation classification
+    # fields. Older/smaller providers may omit the complete new dimension when
+    # abstaining. Preserve the existing compatibility behaviour for missing
+    # ontology dimensions by materializing an empty extraction only when the
+    # provider either omitted the complete role-relation block or explicitly
+    # returned an empty/null classification. Do not repair a positive or partial
+    # classification that is missing its structured extraction.
+    if "role_relations" in required_fields and "role_relations" not in normalized:
+        role_types_supplied = "role_relation_types" in supplied_fields
+        primary_role_supplied = "primary_role_relation_type" in supplied_fields
+        complete_block_omitted = not role_types_supplied and not primary_role_supplied
+        explicit_abstention = (
+            role_types_supplied
+            and primary_role_supplied
+            and normalized.get("role_relation_types") in ([], ())
+            and normalized.get("primary_role_relation_type") is None
+        )
+        if complete_block_omitted or explicit_abstention:
+            normalized["role_relations"] = []
+
     roles = normalized.get("statement_functions")
     if isinstance(roles, (list, tuple)):
         normalized_roles = list(dict.fromkeys(roles))
