@@ -15,10 +15,12 @@ The document pipeline converts controlled publications into canonical engineerin
 5. **Alignment** proposes mappings from normalized ranges to reference clauses.
 6. **Human review** records alignment corrections and baseline decisions as separate artifacts.
 7. **Construction contract** freezes the reviewed inputs and verifies coverage before aggregate construction.
-8. **Engineering document construction** creates canonical clauses, content, evidence, profiles, and lineage.
-9. **Reference resolution** links clause references that can be resolved within available documents or knowledge domains.
-10. **Publication** creates Markdown, composed Markdown, and Doorstop projections.
-11. **Evaluation and enrichment** samples canonical clauses, generates model proposals, performs review, and may publish accepted annotations or relations.
+8. **Engineering document construction (`ENRICH`)** creates canonical clause content, evidence, reference mentions, and lineage. It does not classify structure or semantic meaning.
+9. **Structural taxonomy (`TAXONOMY`)** deterministically materializes `StructuralProfile` and `StructuralContext`, including hierarchy, node/leaf role, ancestor context, sibling sequence position, contextual node content, and structural reference edges.
+10. **Semantic ontology (`ONTOLOGY`)** applies the qualified production classifier to clause content plus the complete structural context and assigns statement functions, knowledge kinds, process functions, applicability functions, and responsibility functions.
+11. **Reference resolution and relationship enrichment** resolves available internal and cross-document targets while preserving unresolved evidence for later interpretation.
+12. **Publication** creates Markdown, composed Markdown, and Doorstop projections without changing classification ownership.
+13. **Evaluation and qualification** operate as separate workflows for datasets, model qualification, regression evidence, and HITL review; they do not replace the production `ONTOLOGY` stage.
 
 ## Normalization contract
 
@@ -39,16 +41,14 @@ When Docling identifies a formula but cannot provide a semantic transcription, t
 Semantic transcription is intentionally outside this stage. A future enrichment step may derive LaTeX, MathML, OpenMath, or another representation while retaining the original visual asset and source evidence.
 
 
-## Taxonomy and ontology enrichment
+## Taxonomy and ontology ownership
 
-After content enrichment, the document workflow runs two deliberately separate stages:
+The production path has one mandatory direction: `ENRICH → TAXONOMY → ONTOLOGY`.
+`ENRICH` preserves content and evidence, `TAXONOMY` derives deterministic structural
+context, and `ONTOLOGY` interprets semantic meaning. The ontology stage receives the
+materialized structural context and therefore never has to reconstruct hierarchy from
+prose. Automatic modal-verb heuristics are not permitted outside `ONTOLOGY`.
 
-1. `TAXONOMY` deterministically materializes structural context, including hierarchy,
-   sibling position, contextual ancestor content, and structural reference edges.
-2. `ONTOLOGY` uses the clause content plus that structural context as evidence for a
-   qualified LLM classifier. It assigns statement functions, knowledge kinds, process
-   functions, applicability functions, and responsibility functions.
-
-The ontology stage never has to reconstruct document structure from prose. Semantic
-qualification remains a separate evaluation workflow used to select and validate the
-production classifier.
+Semantic qualification remains a separate evaluation workflow used to select and validate
+the production classifier. Imported reviewed/public semantic annotations may populate
+ontology fields directly because they are explicit evidence, not automatic inference.

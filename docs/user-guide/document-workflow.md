@@ -61,9 +61,25 @@ uv run standards-atlas align inspect EN50716 --show-conflicts
 
 Continue with [Alignment review](alignment-review.md) when the result is uncertain.
 
-### Construct and enrich
+### Construct, classify taxonomy, and classify ontology
 
-The workflow imports the reviewed structure, enriches clauses from aligned normalized ranges, derives parts where required and composes families. Persisted canonical documents are placed below `.atlas/data/documents/`. Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; semantic transcription is a separate enrichment concern. MCP clients can now transcribe those preserved assets to LaTeX through the auditable formula-transcription enrichment stage; normalization itself remains deterministic.
+The workflow imports the reviewed structure and enriches clauses from aligned normalized ranges. `ENRICH` only constructs content, evidence, reference mentions, and lineage; it no longer performs structural or semantic classification. Persisted canonical documents are placed below `.atlas/data/documents/`.
+
+The next stage is deterministic structural taxonomy:
+
+```bash
+uv run standards-atlas document classify-taxonomy EN50716
+```
+
+It materializes `StructuralProfile` and `StructuralContext`, including ancestor context, node/leaf role, sibling sequence position, contextual node content, and structural reference edges.
+
+Only after taxonomy does the production ontology classifier run:
+
+```bash
+uv run standards-atlas document classify-ontology EN50716 --llm-config cfg/llm.yaml
+```
+
+The ontology stage consumes clause content plus the materialized structural context and assigns the configured ontology dimensions. Model qualification remains a separate evaluation workflow. Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; formula transcription remains a separate enrichment concern.
 
 ## Review-aware continuation
 

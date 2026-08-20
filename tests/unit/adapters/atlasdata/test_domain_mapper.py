@@ -189,7 +189,7 @@ def test_part_zero_titles_are_resolved_per_volume() -> None:
     ]
 
 
-def test_domain_mapper_defaults_main_body_to_normative() -> None:
+def test_domain_mapper_does_not_infer_main_body_normative_status() -> None:
     atlas_data = AtlasStandardData(
         metadata=AtlasMetadata(name="ISO 26262-11", digits=8, official_year=2018),
         structure_items=[
@@ -212,7 +212,7 @@ def test_domain_mapper_defaults_main_body_to_normative() -> None:
 
     standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-11")
 
-    assert standard.clauses[0].semantic_classification.normative_status.value == "normative"
+    assert standard.clauses[0].semantic_classification.normative_status.value == "unspecified"
 
 
 def test_domain_mapper_preserves_informative_annex_status() -> None:

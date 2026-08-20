@@ -12,6 +12,8 @@
 
 ## Unreleased
 
+- Finalize the taxonomy/ontology split: remove the legacy deterministic `SemanticClassifier`, keep `ENRICH` classification-free, make AtlasData onboarding structure-only, and enforce `TAXONOMY -> ONTOLOGY` ownership with architecture tests and updated UML diagrams.
+
 - Add bounded schema-reader compatibility with visible deprecation warnings, current-only writers, and an explicit temporary four-version major-transition window.
 
 - Establish a clean schema compatibility baseline: persistent contracts declare current schema versions explicitly, legacy EngineeringDocument readers are removed, and cache/work formats are excluded from compatibility guarantees.

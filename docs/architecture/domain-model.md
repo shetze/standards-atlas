@@ -16,8 +16,8 @@ A `Clause` contains:
 - structured `ContentBlock` values instead of a single text field;
 - parent/child structure and clause type;
 - source evidence such as page anchors and bounding boxes;
-- a multi-dimensional `StructuralProfile`;
-- optional `SemanticClassification` results;
+- a multi-dimensional `StructuralProfile` and materialized `StructuralContext`;
+- ontology-owned `SemanticClassification` results and semantic relations;
 - annotations and relations;
 - optional Doorstop projection attributes.
 
@@ -32,13 +32,15 @@ Tables can additionally be projected into addressable `KnowledgeTable` and
 `TableBlock`; they are not a second persisted source of truth. A record preserves its
 original cells and source evidence and may carry a conservative semantic interpretation.
 
-## Structural profile
+## Structural profile and context
 
-`StructuralProfile` describes independently determined structural dimensions, including canonical document section, domain category, annex status, and taxonomy provenance. It replaced the former one-dimensional `Clause.semantic_roles` model. A clause can therefore be, for example, part of a normative annex, a verification-oriented domain category, and a canonical requirements section without forcing those meanings into one enum.
+`StructuralProfile` describes independently determined structural dimensions, including canonical document section, domain category, annex status, and taxonomy provenance. `StructuralContext` materializes the surrounding graph evidence required by later processing: node/leaf role, ancestors, children, sibling position, predecessor/successor links, contextual ancestor content, and structural reference edges. Both are owned by the deterministic `TAXONOMY` stage.
+
+A clause can therefore be located in a verification-oriented branch, inherit lifecycle context from headings, and occupy the last position of a sibling sequence without interpreting its statement-level meaning.
 
 ## Semantic classification
 
-`SemanticClassification` models statement-level interpretation separately from document structure. Its dimensions include normative status, statement function, applicability, responsibility, process function, and semantic relations. Structural evidence and semantic interpretation are related but not interchangeable.
+`SemanticClassification` stores ontology results and semantic relations separately from document structure. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and responsibility functions is owned exclusively by the `ONTOLOGY` stage. Structural evidence is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for ontology classification, not semantic truth. Some legacy structural compatibility fields remain in the persisted model until a later schema migration, but no active classifier derives ontology values outside `ONTOLOGY`.
 
 ## Evidence and provenance
 
@@ -74,7 +76,8 @@ The second page of the UML class diagram shows representative application servic
 - Domain models are immutable Pydantic models where practical.
 - Export-specific metadata is isolated and optional.
 - Internal references resolve against known clauses before Markdown publication.
-- Normative status and structural dimensions may inherit from document structure only through explicit normalization rules.
+- Structural dimensions and inherited context are materialized only by the deterministic taxonomy stage.
+- Automatic ontology dimensions are assigned only by the ontology stage or imported as explicit reviewed/public annotations.
 - No domain model depends on storage paths or external SDK types.
 
 ## Engineering knowledge ontology

@@ -20,6 +20,8 @@ The command-line interface is the main composition root and exposes document, wo
 | Workflow | Plan side-effect-free execution, execute stages, recover incomplete runs, and report derivations. |
 | Extraction and normalization | Convert source publications, normalize structural evidence, and persist deterministic transformations. |
 | Alignment and construction | Align extracted ranges with reference structures and construct canonical engineering documents. |
+| Structural taxonomy | Deterministically materialize structural profiles, hierarchy context, sibling sequences, contextual node content, and structural reference edges. |
+| Semantic ontology | Apply the qualified production classifier to content plus structural context and persist modular ontology dimensions. |
 | Publication | Project engineering documents into Markdown and Doorstop without changing the canonical aggregate. |
 | Generic evaluation | Run versioned datasets, prompts, models, metrics, regression checks, and reports. |
 | Semantic qualification | Build eligible clause corpora, generate proposals, review annotations, resolve references, and qualify model/prompt candidates. |
@@ -43,10 +45,10 @@ The domain layer contains immutable value objects and aggregates for standards, 
 
 ## Cross-cutting component relationships
 
-The application layer is not a single monolith. Workflow orchestration coordinates extraction, normalization, alignment, construction, and publication through focused services and ports. Generic evaluation is provider-neutral; semantic qualification depends on it and adds clause access, standards-specific corpora, review, consensus, and qualification workflows. Runtime management for RamaLama and MCP belongs to the executable and adapter boundaries, not to the domain model.
+The application layer is not a single monolith. Workflow orchestration coordinates extraction, normalization, alignment, construction, structural taxonomy, semantic ontology, and publication through focused services and ports. Generic evaluation is provider-neutral; semantic qualification depends on it and adds clause access, standards-specific corpora, review, consensus, and qualification workflows. Runtime management for RamaLama and MCP belongs to the executable and adapter boundaries, not to the domain model.
 
 The diagram does not enumerate every specialized service, such as AtlasData lifecycle operations, extraction inspection, document selection, reference resolution, methods-and-techniques extraction, or individual review renderers. These are represented by their owning application capability and documented in the corresponding topic pages.
 
 ## Composition
 
-Concrete adapters are selected at the executable boundary. Application services should be constructible in tests with in-memory or temporary-filesystem implementations. Compatibility facades below `application/services/` may re-export canonical implementations for existing imports, but they are not architectural ownership boundaries and must not be used by new code.
+Concrete adapters are selected at the executable boundary. Application services should be constructible in tests with in-memory or temporary-filesystem implementations. The application boundary deliberately separates structural taxonomy (`application.structure` plus `StructuralTaxonomyService`) from semantic ontology (`application.ontology` plus `OntologyClassificationService`). No application service may own both classification responsibilities.

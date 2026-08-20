@@ -103,6 +103,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0065](0065-separate-structural-taxonomy-from-semantic-ontology.md) | Separate structural taxonomy from semantic ontology |
 | [0066](0066-structural-context-taxonomy-stage.md) | Materialize deterministic structural context in an explicit taxonomy workflow stage |
 | [0067](0067-production-ontology-workflow-stage.md) | Run LLM-assisted semantic ontology classification after structural taxonomy |
+| [0068](0068-finalize-taxonomy-ontology-stage-ownership.md) | Remove legacy mixed classification and enforce taxonomy/ontology stage ownership |
 
 ## Application structure
 

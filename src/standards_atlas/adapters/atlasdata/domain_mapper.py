@@ -24,7 +24,6 @@ from standards_atlas.domain.model import (
     Standard,
     StandardKey,
     StandardReference,
-    StatementFunction,
 )
 
 _ITEM_TYPE_MAPPING: dict[AtlasItemType, ClauseType] = {
@@ -65,7 +64,6 @@ def map_atlas_data_to_standard(
             standard_name=atlas_data.metadata.name,
             year=atlas_data.metadata.official_year,
             title=title_lookup.get((item.volume, item.visible_reference)),
-            document_title=atlas_data.metadata.name,
             semantic_tags=semantic_tag_lookup.get((item.volume, item.visible_reference), ()),
             semantic_profile=semantic_profile,
             annex_status=annex_statuses.get(
@@ -262,11 +260,14 @@ def _map_structure_item_to_clause(
     standard_name: str,
     year: int | None,
     title: str | None,
-    document_title: str,
     annex_status: NormativeStatus,
     semantic_tags: tuple[str, ...] = (),
     semantic_profile: str | None = None,
 ) -> Clause:
+    structural_profile = _infer_structural_profile(
+        visible_reference=item.visible_reference,
+        title=title,
+    )
     return Clause(
         id=_build_clause_id(
             standard_name=standard_name,
@@ -281,20 +282,15 @@ def _map_structure_item_to_clause(
         ),
         clause_type=_ITEM_TYPE_MAPPING[item.item_type],
         semantic_classification=_merge_semantic_tags(
-            _infer_semantic_classification(
+            _structural_compatibility_classification(
+                structural_profile=structural_profile,
                 clause_type=_ITEM_TYPE_MAPPING[item.item_type],
-                visible_reference=item.visible_reference,
-                title=title,
-                document_title=document_title,
                 annex_status=annex_status,
             ),
             semantic_tags=semantic_tags,
             semantic_profile=semantic_profile,
         ),
-        structural_profile=_infer_structural_profile(
-            visible_reference=item.visible_reference,
-            title=title,
-        ),
+        structural_profile=structural_profile,
         title=title,
         source_token=item.source_token,
         volume=item.volume,
@@ -303,50 +299,44 @@ def _map_structure_item_to_clause(
     )
 
 
-def _infer_semantic_classification(
+def _structural_compatibility_classification(
     *,
+    structural_profile,
     clause_type: ClauseType,
-    visible_reference: str,
-    title: str | None,
-    document_title: str,
     annex_status: NormativeStatus,
 ) -> SemanticClassification:
-    from standards_atlas.application.services.semantic_classifier import (
-        SemanticClassificationContext,
-        SemanticClassifier,
-    )
+    """Mirror structural facts into legacy fields without semantic inference.
 
-    classification = (
-        SemanticClassifier()
-        .classify_deterministically(
-            SemanticClassificationContext(
-                reference=visible_reference,
-                heading=title or "",
-                text="",
-                annex_status=annex_status,
-                document_title=document_title,
-            )
-        )
-        .classification
+    ``SemanticClassification`` remains part of the persisted schema for relations and
+    imported public annotations. Taxonomy owns structure; this adapter only mirrors
+    structural facts needed by older consumers and never infers ontology dimensions.
+    """
+    from standards_atlas.domain.model.structural_profile import CanonicalDocumentSection
+
+    section_map = {
+        CanonicalDocumentSection.FRONT_MATTER: DocumentStructure.FRONT_MATTER,
+        CanonicalDocumentSection.INTRODUCTION: DocumentStructure.INTRODUCTION,
+        CanonicalDocumentSection.SCOPE: DocumentStructure.SCOPE,
+        CanonicalDocumentSection.REFERENCES: DocumentStructure.REFERENCES,
+        CanonicalDocumentSection.TERMINOLOGY: DocumentStructure.TERMINOLOGY,
+        CanonicalDocumentSection.BODY: DocumentStructure.BODY,
+        CanonicalDocumentSection.ANNEX: DocumentStructure.ANNEX,
+        CanonicalDocumentSection.BIBLIOGRAPHY: DocumentStructure.BIBLIOGRAPHY,
+        CanonicalDocumentSection.BACK_MATTER: DocumentStructure.BACK_MATTER,
+    }
+    category = section_map.get(structural_profile.canonical_section)
+    if clause_type is ClauseType.SCOPE:
+        category = DocumentStructure.SCOPE
+    elif clause_type is ClauseType.TERM:
+        category = DocumentStructure.TERMINOLOGY
+    structure = (
+        DocumentStructureClassification(family="structural_taxonomy", category=category)
+        if category is not None
+        else None
     )
-    functions = list(classification.statement_functions)
-    structure = classification.document_structure
-    if clause_type == ClauseType.SCOPE:
-        structure = DocumentStructureClassification(
-            family="iso_iec_standard", category=DocumentStructure.SCOPE
-        )
-    if clause_type == ClauseType.TERM:
-        functions.append(StatementFunction.DEFINITION)
-        structure = DocumentStructureClassification(
-            family="iso_iec_standard", category=DocumentStructure.TERMINOLOGY
-        )
-    if clause_type == ClauseType.REQUIREMENT:
-        functions.append(StatementFunction.REQUIREMENT)
-    return classification.model_copy(
-        update={
-            "statement_functions": tuple(dict.fromkeys(functions)),
-            "document_structure": structure,
-        }
+    return SemanticClassification(
+        document_structure=structure,
+        normative_status=annex_status,
     )
 
 

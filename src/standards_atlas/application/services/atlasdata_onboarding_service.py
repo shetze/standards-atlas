@@ -14,15 +14,12 @@ from standards_atlas.application.model.atlasdata_metadata import (
     AtlasDataLifecycleStatus,
     parse_metadata,
 )
-from standards_atlas.application.services.semantic_classifier import (
-    SemanticClassificationContext,
-    SemanticClassifier,
+from standards_atlas.application.services.structural_profile_classifier import (
+    StructuralProfileClassifier,
+    StructuralProfileContext,
 )
-from standards_atlas.domain.model.semantic_classification import (
-    DocumentStructure,
-    NormativeStatus,
-    StatementFunction,
-)
+from standards_atlas.domain.model.semantic_classification import NormativeStatus
+from standards_atlas.domain.model.structural_profile import CanonicalDocumentSection
 
 _NUMERIC_HEADING = re.compile(
     r"^(?P<reference>0\.\d+(?:\.\d+)*|[1-9]\d*(?:\.\d+)*)"
@@ -141,8 +138,8 @@ def _detect_part_from_metadata(value: str, publication_year: int) -> str | None:
 class AtlasDataOnboardingService:
     """Create a public AtlasData structure from Docling section headings."""
 
-    def __init__(self, role_classifier: SemanticClassifier | None = None) -> None:
-        self._role_classifier = role_classifier or SemanticClassifier()
+    def __init__(self, structural_classifier: StructuralProfileClassifier | None = None) -> None:
+        self._structural_classifier = structural_classifier or StructuralProfileClassifier()
 
     def generate(
         self,
@@ -308,29 +305,26 @@ class AtlasDataOnboardingService:
             for clause in ordered
             if clause.reference.isalpha() and clause.annex_status is not None
         }
-        document_title = _document_title(document)
         classified: list[DiscoveredClause] = []
         for clause in ordered:
             annex_identifier = clause.reference.split(".", 1)[0]
             inherited_annex_status = annex_statuses.get(
                 annex_identifier, NormativeStatus.UNSPECIFIED
             )
-            classification = self._role_classifier.classify(
-                SemanticClassificationContext(
+            ancestor_sections = _ancestor_sections(
+                clause.reference, classified, self._structural_classifier
+            )
+            profile = self._structural_classifier.classify(
+                StructuralProfileContext(
                     reference=clause.reference,
                     heading=clause.title,
-                    ancestor_structures=_ancestor_structures(
-                        clause.reference, classified, self._role_classifier
-                    ),
-                    annex_status=inherited_annex_status,
-                    document_title=document_title,
                 )
-            ).classification
+            )
             classified.append(
                 DiscoveredClause(
                     reference=clause.reference,
                     title=clause.title,
-                    type_marker=_atlasdata_marker(classification, clause.title),
+                    type_marker=_atlasdata_marker(profile, clause.title, ancestor_sections),
                     source_item_ids=clause.source_item_ids,
                     annex_status=(
                         inherited_annex_status.value
@@ -470,23 +464,19 @@ def _default_heading(reference: str, annex_status: str | None = None) -> str:
     return "Heading"
 
 
-def _atlasdata_marker(classification, heading: str) -> str:
-    structure = classification.document_structure
-    if structure is not None:
-        if structure.category is DocumentStructure.SCOPE:
-            return "s"
-        if structure.category is DocumentStructure.TERMINOLOGY:
-            return "t"
-    normalized_heading = heading.strip().lower()
+def _atlasdata_marker(profile, heading: str, ancestor_sections) -> str:
+    section = profile.canonical_section
+    if section is CanonicalDocumentSection.SCOPE:
+        return "s"
+    if (
+        section is CanonicalDocumentSection.TERMINOLOGY
+        or CanonicalDocumentSection.TERMINOLOGY in ancestor_sections
+    ):
+        return "t"
+    normalized_heading = heading.strip().casefold()
     if "objective" in normalized_heading:
         return "o"
     if "requirement" in normalized_heading:
-        return "r"
-    if StatementFunction.DEFINITION in classification.statement_functions:
-        return "t"
-    if StatementFunction.DESCRIPTION in classification.statement_functions:
-        return "o"
-    if StatementFunction.REQUIREMENT in classification.statement_functions:
         return "r"
     return "u"
 
@@ -497,22 +487,21 @@ def _ancestor_headings(reference: str, discovered: list[DiscoveredClause]) -> tu
     )
 
 
-def _ancestor_structures(
+def _ancestor_sections(
     reference: str,
     discovered: list[DiscoveredClause],
-    classifier: SemanticClassifier,
-) -> tuple[DocumentStructure, ...]:
-    structures: list[DocumentStructure] = []
+    classifier: StructuralProfileClassifier,
+) -> tuple[CanonicalDocumentSection, ...]:
+    sections: list[CanonicalDocumentSection] = []
     for clause in discovered:
         if not _is_descendant(reference, clause.reference):
             continue
-        classification = classifier.classify_deterministically(
-            SemanticClassificationContext(reference=clause.reference, heading=clause.title)
+        profile = classifier.classify(
+            StructuralProfileContext(reference=clause.reference, heading=clause.title)
         )
-        structure = classification.classification.document_structure
-        if structure is not None:
-            structures.append(structure.category)
-    return tuple(dict.fromkeys(structures))
+        if profile.canonical_section is not None:
+            sections.append(profile.canonical_section)
+    return tuple(dict.fromkeys(sections))
 
 
 def _is_descendant(reference: str, parent: str) -> bool:
@@ -592,11 +581,3 @@ def _parse_compressible_token(token: str) -> tuple[str, str, int] | None:
 
 def _sanitize_field(value: str) -> str:
     return value.replace(";", ",").replace("\n", " ").strip()
-
-
-def _document_title(document: dict[str, Any]) -> str:
-    candidates = [str(document.get("name", ""))]
-    for item in document.get("texts", [])[:20]:
-        if item.get("label") in {"title", "section_header"}:
-            candidates.append(str(item.get("text", "")))
-    return " — ".join(value.strip() for value in candidates if value.strip())

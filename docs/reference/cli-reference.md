@@ -29,6 +29,8 @@ uv run standards-atlas workflow run --help
 - `document derive-part`
 - `document compose-family`
 - `document enrich-content`
+- `document classify-taxonomy`
+- `document classify-ontology`
 - `document export markdown`
 - `document export doorstop`
 

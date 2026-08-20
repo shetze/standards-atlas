@@ -40,26 +40,16 @@ from standards_atlas.application.references import (
 from standards_atlas.application.services.engineering_construction_contract import (
     EngineeringConstructionContractValidator,
 )
-from standards_atlas.application.services.semantic_classifier import (
-    SemanticClassificationContext,
-    SemanticClassifier,
-)
-from standards_atlas.application.services.structural_profile_classifier import (
-    StructuralProfileClassifier,
-    StructuralProfileContext,
-)
 from standards_atlas.domain.model import (
     ArtifactLineage,
     Clause,
     CodeBlock,
     ContentBlock,
     DocumentKey,
-    DocumentStructure,
     EngineeringDocument,
     FormulaBlock,
     ListBlock,
     ListItem,
-    NormativeStatus,
     PictureBlock,
     TableBlock,
     TextBlock,
@@ -104,17 +94,11 @@ class ContentEnrichmentService:
         alignments: AlignmentStore,
         reviews: AlignmentReviewStore,
         contracts: EngineeringConstructionContractStore,
-        semantic_classifier: SemanticClassifier | None = None,
-        structural_profile_classifier: StructuralProfileClassifier | None = None,
         contract_validator: EngineeringConstructionContractValidator | None = None,
     ) -> None:
         self._documents = documents
         self._normalized = normalized
         self._alignments = alignments
-        self._semantic_classifier = semantic_classifier or SemanticClassifier()
-        self._structural_profile_classifier = (
-            structural_profile_classifier or StructuralProfileClassifier()
-        )
         self._reviews = reviews
         self._contracts = contracts
         self._contract_validator = contract_validator or EngineeringConstructionContractValidator()
@@ -201,68 +185,7 @@ class ContentEnrichmentService:
                     "reference_mentions": extract_reference_mentions(enriched_clause.plain_text)
                 }
             )
-            current = enriched_clause.semantic_classification
-            structure = current.document_structure
-            annex_status = (
-                current.normative_status
-                if structure is not None and structure.category is DocumentStructure.ANNEX
-                else NormativeStatus.UNSPECIFIED
-            )
-            detected = self._semantic_classifier.classify_deterministically(
-                SemanticClassificationContext(
-                    reference=enriched_clause.reference.clause,
-                    heading=enriched_clause.title or "",
-                    text=enriched_clause.plain_text,
-                    annex_status=annex_status,
-                    document_title=document.title,
-                )
-            ).classification
-            structural_profile = self._structural_profile_classifier.classify(
-                StructuralProfileContext(
-                    reference=enriched_clause.reference.clause,
-                    heading=enriched_clause.title or "",
-                    text=enriched_clause.plain_text,
-                )
-            )
-            if enriched_clause.structural_profile is not None:
-                existing_profile = enriched_clause.structural_profile
-                structural_profile = structural_profile.model_copy(
-                    update={
-                        "canonical_section": (
-                            structural_profile.canonical_section
-                            or existing_profile.canonical_section
-                        ),
-                        "document_categories": existing_profile.document_categories,
-                        "domain_categories": existing_profile.domain_categories,
-                        "annex_status": (
-                            structural_profile.annex_status or existing_profile.annex_status
-                        ),
-                        "semantic_sections": (
-                            structural_profile.semantic_sections
-                            or existing_profile.semantic_sections
-                        ),
-                    }
-                )
-            enriched_clauses.append(
-                enriched_clause.model_copy(
-                    update={
-                        "structural_profile": structural_profile,
-                        "semantic_classification": current.model_copy(
-                            update={
-                                "statement_functions": tuple(
-                                    dict.fromkeys(
-                                        (
-                                            *current.statement_functions,
-                                            *detected.statement_functions,
-                                        )
-                                    )
-                                ),
-                                "normative_status": detected.normative_status,
-                            }
-                        ),
-                    }
-                )
-            )
+            enriched_clauses.append(enriched_clause)
 
         traceability_errors = _content_traceability_errors(tuple(enriched_clauses), normalized)
         if traceability_errors:

@@ -22,6 +22,8 @@ Standards Atlas turns licensed source documents and open structural baselines in
 | **Document extraction and normalization** | Docling-based PDF extraction followed by deterministic structural normalization into stable domain contracts, including source-derived visual preservation for formulas that cannot yet be transcribed semantically. |
 | **Reference detection and alignment** | Candidate detection, automatic matching against AtlasData baselines, confidence information, and a human review gate. |
 | **Traceable engineering documents** | Canonical documents, content blocks, transformation evidence, source lineage, and durable workspace artefacts. |
+| **Structural taxonomy** | Deterministic hierarchy, topic, lifecycle, sequence, contextual-node, and structural-reference evidence materialized before semantic interpretation. |
+| **Semantic ontology** | Qualified LLM classification of modular ontology dimensions using clause content plus explicit structural context. |
 | **Semantic evaluation** | Reproducible local corpora, versioned prompt/model matrices, protected-content-safe reports, and regression evidence. |
 | **MCP access** | Read-only clause tools and resources over stdio or secured Streamable HTTP, with an automated compatibility probe. |
 | **Reusable publications** | Markdown and Doorstop outputs generated from canonical models rather than treated as internal source formats. |
@@ -67,6 +69,7 @@ The workflow intentionally stops at review boundaries when human confirmation is
 - **Keep source content private** — licensed document text remains local unless publication is explicitly permitted.
 - **Use canonical domain models** — PDF, AtlasData, Markdown, Doorstop, and MCP are adapters or exchange surfaces.
 - **Prefer deterministic transformations** — reproducibility is a prerequisite for qualification and regression testing.
+- **Separate structure from meaning** — deterministic taxonomy materializes structural context before LLM-assisted ontology classification.
 - **Separate application behavior from protocols** — evaluation services remain reusable independently of MCP.
 
 ## Project status
