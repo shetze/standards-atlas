@@ -359,6 +359,23 @@ class WorkflowPlanner:
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/work/workflow/taxonomy/{key}.complete",),
                     ),
+                    WorkflowStep(
+                        family.key,
+                        key,
+                        WorkflowStage.ONTOLOGY,
+                        (
+                            "uv",
+                            "run",
+                            "standards-atlas",
+                            "document",
+                            "classify-ontology",
+                            key,
+                            "--llm-config",
+                            "cfg/llm.yaml",
+                        ),
+                        ArtifactPolicy.DERIVED,
+                        output_paths=(f".atlas/work/workflow/ontology/{key}.complete",),
+                    ),
                 ]
             )
         if family.source is None:

@@ -37,3 +37,18 @@ A changed source selection invalidates extraction and all descendants. A changed
 When Docling identifies a formula but cannot provide a semantic transcription, the extracted item retains its page and bounding box. The PDF formula-visual adapter clips that exact region, applies bounded padding, renders it as PNG, and attaches the result as a `VisualAsset`. The asset is propagated through normalization and engineering-document construction as part of the `FormulaBlock`. Missing source files or incomplete geometric evidence do not trigger guessed crops.
 
 Semantic transcription is intentionally outside this stage. A future enrichment step may derive LaTeX, MathML, OpenMath, or another representation while retaining the original visual asset and source evidence.
+
+
+## Taxonomy and ontology enrichment
+
+After content enrichment, the document workflow runs two deliberately separate stages:
+
+1. `TAXONOMY` deterministically materializes structural context, including hierarchy,
+   sibling position, contextual ancestor content, and structural reference edges.
+2. `ONTOLOGY` uses the clause content plus that structural context as evidence for a
+   qualified LLM classifier. It assigns statement functions, knowledge kinds, process
+   functions, applicability functions, and responsibility functions.
+
+The ontology stage never has to reconstruct document structure from prose. Semantic
+qualification remains a separate evaluation workflow used to select and validate the
+production classifier.

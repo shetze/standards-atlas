@@ -13,6 +13,7 @@ from .engine import (
     OntologyEngine,
     OntologyRegistry,
 )
+from .llm_classifier import LlmOntologyClassifier
 from .resource_repository import ResourceOntologyDefinitionRepository
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "OntologyReference",
     "OntologyRegistry",
     "ResourceOntologyDefinitionRepository",
+    "LlmOntologyClassifier",
 ]

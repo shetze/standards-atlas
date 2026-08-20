@@ -125,6 +125,49 @@ def build_structural_taxonomy_service(workspace: Path):
     return StructuralTaxonomyService(FileSystemEngineeringDocumentRepository(workspace))
 
 
+def build_ontology_classification_service(
+    workspace: Path,
+    *,
+    llm_config_path: Path | None = None,
+):
+    from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
+    from standards_atlas.application.ontology import (
+        LlmOntologyClassifier,
+        OntologyEngine,
+        OntologyProfile,
+        OntologyReference,
+        OntologyRegistry,
+        ResourceOntologyDefinitionRepository,
+    )
+    from standards_atlas.application.services import OntologyClassificationService
+
+    config = LlmConfig.load(llm_config_path)
+    classifier = LlmOntologyClassifier(OpenAICompatibleLlmGateway(config), model=config.model)
+    profile = OntologyProfile(
+        id="semantic-profile-2.1.0",
+        dimensions={
+            "statement_functions": OntologyReference(id="statement-functions", version="2.0.0"),
+            "knowledge_kinds": OntologyReference(id="knowledge-kinds", version="2.1.0"),
+            "process_functions": OntologyReference(id="process-functions", version="1.0.0"),
+            "applicability_functions": OntologyReference(
+                id="applicability-functions", version="1.1.0"
+            ),
+            "responsibility_functions": OntologyReference(
+                id="responsibility-functions", version="1.0.0"
+            ),
+        },
+    )
+    engine = OntologyEngine(
+        definitions=ResourceOntologyDefinitionRepository(),
+        registry=OntologyRegistry((classifier,)),
+    )
+    return OntologyClassificationService(
+        documents=FileSystemEngineeringDocumentRepository(workspace),
+        engine=engine,
+        profile=profile,
+    )
+
+
 def build_atlasdata_toc_service():
     from standards_atlas.adapters.atlasdata import AtlasDataImporter
     from standards_atlas.adapters.atlasdata.roundtrip_writer import AtlasDataRoundTripWriter

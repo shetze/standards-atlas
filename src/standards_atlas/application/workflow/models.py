@@ -28,6 +28,7 @@ class WorkflowStage(StrEnum):
     REVIEW = "review"
     ENRICH = "enrich"
     TAXONOMY = "taxonomy"
+    ONTOLOGY = "ontology"
     COMPOSE = "compose"
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"

@@ -25,6 +25,7 @@ from standards_atlas.cli.composition import (
     build_content_enrichment_service,
     build_document_composition_service,
     build_document_selection_service,
+    build_ontology_classification_service,
     build_structural_taxonomy_service,
 )
 
@@ -216,3 +217,29 @@ def classify_document_taxonomy(
     typer.echo(f"Clauses               : {len(result.document.clauses)}")
     typer.echo(f"Structural nodes      : {nodes}")
     typer.echo(f"Structural leaves     : {len(result.document.clauses) - nodes}")
+
+
+@document_app.command("classify-ontology")
+def classify_document_ontology(
+    document_key: Annotated[str, typer.Argument(help="EngineeringDocument key to classify.")],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+    llm_config: Annotated[
+        Path | None,
+        typer.Option("--llm-config", help="LLM configuration file."),
+    ] = Path("cfg/llm.yaml"),
+) -> None:
+    """Classify semantic ontology dimensions using structural taxonomy context."""
+    try:
+        result = build_ontology_classification_service(
+            workspace, llm_config_path=llm_config
+        ).classify(document_key)
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Document              : {result.document.key.value}")
+    typer.echo(f"Clauses classified    : {result.clauses_classified}")
+    typer.echo("Ontology profile      : semantic-profile-2.1.0")

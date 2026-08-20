@@ -38,6 +38,9 @@ from standards_atlas.application.services.extraction_inspection_service import (
     ExtractionInspectionService,
 )
 from standards_atlas.application.services.markdown_export_service import MarkdownExportService
+from standards_atlas.application.services.ontology_classification_service import (
+    OntologyClassificationService,
+)
 from standards_atlas.application.services.reference_candidate_service import (
     ReferenceCandidateService,
 )
@@ -65,6 +68,7 @@ __all__ = [
     "EngineeringConstructionContractValidator",
     "ExtractionInspectionService",
     "MarkdownExportService",
+    "OntologyClassificationService",
     "ReferenceCandidateService",
     "SemanticClassifier",
     "StructuralTaxonomyService",

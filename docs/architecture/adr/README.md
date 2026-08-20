@@ -101,6 +101,8 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0063](0063-schema-compatibility-baseline.md) | Establish a clean schema compatibility baseline |
 | [0064](0064-bounded-schema-reader-compatibility.md) | Bound persisted-schema compatibility at the reader boundary |
 | [0065](0065-separate-structural-taxonomy-from-semantic-ontology.md) | Separate structural taxonomy from semantic ontology |
+| [0066](0066-structural-context-taxonomy-stage.md) | Materialize deterministic structural context in an explicit taxonomy workflow stage |
+| [0067](0067-production-ontology-workflow-stage.md) | Run LLM-assisted semantic ontology classification after structural taxonomy |
 
 ## Application structure
 
