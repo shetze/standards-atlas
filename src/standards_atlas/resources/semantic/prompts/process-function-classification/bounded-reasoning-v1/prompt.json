@@ -1,0 +1,5 @@
+{
+  "task": "process-function-classification",
+  "version": "bounded-reasoning-v1",
+  "description": "Classify process-model functions explicitly expressed by a standards clause."
+}

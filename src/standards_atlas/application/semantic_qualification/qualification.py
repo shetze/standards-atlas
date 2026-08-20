@@ -20,6 +20,10 @@ from standards_atlas.application.semantic_qualification.annotations import (
     CorpusManifestRepository,
     StatementFunctionSelection,
 )
+from standards_atlas.application.semantic_qualification.dimensions import (
+    QualificationDimension,
+    qualification_dimension,
+)
 from standards_atlas.application.semantic_qualification.reports.annotation import (
     render_annotation_qualification_markdown,
 )
@@ -130,6 +134,18 @@ class ReliabilityMetrics(BaseModel):
     top_failure_messages: tuple[FailureMessageCount, ...] = ()
 
 
+class RoleRelationExtractionMetrics(BaseModel):
+    """Exact grounded relation agreement for role-relation extraction."""
+
+    model_config = ConfigDict(frozen=True)
+
+    evaluated: int = Field(ge=0)
+    exact_match_rate: float = Field(ge=0.0, le=1.0)
+    precision: float = Field(ge=0.0, le=1.0)
+    recall: float = Field(ge=0.0, le=1.0)
+    f1: float = Field(ge=0.0, le=1.0)
+
+
 class AnnotationQualificationReport(BaseModel):
     """Machine-readable result of Slice 5.4.5 qualification."""
 
@@ -139,6 +155,7 @@ class AnnotationQualificationReport(BaseModel):
     corpus_id: str
     generated_at: datetime
     prediction_source: str
+    dimension: str = "statement_functions"
     coverage: CorpusCoverage
     reliability: ReliabilityMetrics = ReliabilityMetrics(
         attempted_clauses=0,
@@ -158,6 +175,7 @@ class AnnotationQualificationReport(BaseModel):
     primary_function_confusion: tuple[ConfusionEntry, ...] = ()
     slices: tuple[EvaluationSliceReport, ...] = ()
     diagnostics: tuple[str, ...] = ()
+    role_relation_extraction: RoleRelationExtractionMetrics | None = None
 
 
 class AnnotationQualificationService:
@@ -172,7 +190,9 @@ class AnnotationQualificationService:
         published_corpus_root: Path,
         output_directory: Path,
         example_ids: tuple[str, ...] | None = None,
+        task: str = "statement-function-classification",
     ) -> tuple[AnnotationQualificationReport, Path, Path]:
+        dimension = qualification_dimension(task)
         manifest = CorpusManifestRepository(local_corpus_root).load(corpus_id)
         resolver = ClauseAnnotationResolver(
             local_root=local_corpus_root,
@@ -223,13 +243,15 @@ class AnnotationQualificationService:
         for row in rows:
             if row.prediction is None:
                 continue
-            expected = _silver_expected(row)
+            expected = _silver_expected(row, dimension=dimension)
             if expected is not None:
                 silver_pairs.append((row.prediction, expected))
         structure_pairs = [
             (row.prediction, row.structure)
             for row in rows
-            if row.prediction is not None and row.structure is not None
+            if dimension.name == "statement_functions"
+            and row.prediction is not None
+            and row.structure is not None
         ]
 
         reliability = _reliability(
@@ -241,6 +263,7 @@ class AnnotationQualificationService:
             corpus_id=corpus_id,
             generated_at=datetime.now(UTC),
             prediction_source=str(run_directory),
+            dimension=dimension.name,
             coverage=CorpusCoverage(
                 corpus_clauses=len(rows),
                 predictions=sum(row.prediction is not None for row in rows),
@@ -254,6 +277,7 @@ class AnnotationQualificationService:
             reliability=reliability,
             gold_agreement=_agreement(
                 gold_pairs,
+                dimension=dimension,
                 eligible=sum(
                     row.resolved is not None
                     and row.resolved.lifecycle_status
@@ -263,15 +287,30 @@ class AnnotationQualificationService:
                 ),
             ),
             silver_agreement=_agreement(
-                silver_pairs, eligible=sum(_silver_expected(row) is not None for row in rows)
+                silver_pairs,
+                dimension=dimension,
+                eligible=sum(
+                    _silver_expected(row, dimension=dimension) is not None for row in rows
+                ),
             ),
             structure_agreement=_agreement(
-                structure_pairs, eligible=sum(row.structure is not None for row in rows)
+                structure_pairs,
+                dimension=dimension,
+                eligible=(
+                    sum(row.structure is not None for row in rows)
+                    if dimension.name == "statement_functions"
+                    else 0
+                ),
             ),
-            calibration=_calibration(gold_pairs),
-            primary_function_confusion=_confusion(gold_pairs),
-            slices=_slice_reports(rows),
+            calibration=_calibration(gold_pairs, dimension=dimension),
+            primary_function_confusion=_confusion(gold_pairs, dimension=dimension),
+            slices=_slice_reports(rows, dimension=dimension),
             diagnostics=tuple(diagnostics),
+            role_relation_extraction=(
+                _role_relation_extraction_metrics(gold_pairs)
+                if dimension.name == "role_relation_types"
+                else None
+            ),
         )
         output_directory.mkdir(parents=True, exist_ok=True)
         json_path = output_directory / "qualification.json"
@@ -388,29 +427,34 @@ def _structure_selection(strata: dict[str, str]) -> StatementFunctionSelection |
     return StatementFunctionSelection(statement_functions=roles, primary_function=roles[0])
 
 
-def _silver_expected(row: _Row) -> StatementFunctionSelection | None:
+def _silver_expected(
+    row: _Row, *, dimension: QualificationDimension
+) -> StatementFunctionSelection | None:
     if row.resolved is not None:
         if row.resolved.annotation is not None:
             return row.resolved.annotation
         return row.resolved.proposal
-    return row.structure
+    return row.structure if dimension.name == "statement_functions" else None
 
 
 def _agreement(
-    pairs: Iterable[tuple[StatementFunctionSelection, StatementFunctionSelection]], *, eligible: int
+    pairs: Iterable[tuple[StatementFunctionSelection, StatementFunctionSelection]],
+    *,
+    eligible: int,
+    dimension: QualificationDimension,
 ) -> AgreementMetrics:
     items = list(pairs)
     tp = fp = fn = exact = primary = 0
     role_scores: list[float] = []
     for predicted, expected in items:
-        p = set(predicted.statement_functions)
-        e = set(expected.statement_functions)
+        p = set(dimension.values(predicted))
+        e = set(dimension.values(expected))
         tp += len(p & e)
         fp += len(p - e)
         fn += len(e - p)
         exact += p == e
-        primary += predicted.primary_function == expected.primary_function
-        for role in StatementFunction:
+        primary += dimension.primary(predicted) == dimension.primary(expected)
+        for role in sorted(p | e, key=lambda item: item.value):
             rtp = int(role in p and role in e)
             rfp = int(role in p and role not in e)
             rfn = int(role not in p and role in e)
@@ -436,11 +480,15 @@ def _agreement(
 
 def _confusion(
     pairs: Iterable[tuple[StatementFunctionSelection, StatementFunctionSelection]],
+    *,
+    dimension: QualificationDimension,
 ) -> tuple[ConfusionEntry, ...]:
     counts: Counter[tuple[str, str]] = Counter()
     for predicted, expected in pairs:
-        exp = expected.primary_function.value if expected.primary_function else "<none>"
-        pred = predicted.primary_function.value if predicted.primary_function else "<none>"
+        expected_primary = dimension.primary(expected)
+        predicted_primary = dimension.primary(predicted)
+        exp = expected_primary.value if expected_primary else "<none>"
+        pred = predicted_primary.value if predicted_primary else "<none>"
         counts[(exp, pred)] += 1
     return tuple(
         ConfusionEntry(expected=e, predicted=p, count=count)
@@ -450,9 +498,11 @@ def _confusion(
 
 def _calibration(
     pairs: Iterable[tuple[StatementFunctionSelection, StatementFunctionSelection]],
+    *,
+    dimension: QualificationDimension,
 ) -> CalibrationMetrics:
     entries = [
-        (pred.confidence, int(set(pred.statement_functions) == set(exp.statement_functions)))
+        (pred.confidence, int(set(dimension.values(pred)) == set(dimension.values(exp))))
         for pred, exp in pairs
         if pred.confidence is not None
     ]
@@ -490,20 +540,22 @@ def _calibration(
     )
 
 
-def _slice_reports(rows: list[_Row]) -> tuple[EvaluationSliceReport, ...]:
+def _slice_reports(
+    rows: list[_Row], *, dimension: QualificationDimension
+) -> tuple[EvaluationSliceReport, ...]:
     grouped: dict[tuple[str, str], list[_Row]] = defaultdict(list)
     for row in rows:
         domain = row.key.split(":", 1)[0]
         grouped[("knowledge_domain", domain)].append(row)
-        for dimension, value in row.strata.items():
-            grouped[(dimension, value)].append(row)
+        for stratum_dimension, value in row.strata.items():
+            grouped[(stratum_dimension, value)].append(row)
 
     reports = []
     gold_states = {
         AnnotationLifecycleStatus.REVIEWED,
         AnnotationLifecycleStatus.PUBLISHED,
     }
-    for (dimension, value), group in sorted(grouped.items()):
+    for (stratum_dimension, value), group in sorted(grouped.items()):
         gold = [
             (row.prediction, row.resolved.annotation)
             for row in group
@@ -515,11 +567,13 @@ def _slice_reports(rows: list[_Row]) -> tuple[EvaluationSliceReport, ...]:
         silver = [
             (row.prediction, expected)
             for row in group
-            if row.prediction and (expected := _silver_expected(row))
+            if row.prediction and (expected := _silver_expected(row, dimension=dimension))
         ]
-        structure = [
-            (row.prediction, row.structure) for row in group if row.prediction and row.structure
-        ]
+        structure = (
+            [(row.prediction, row.structure) for row in group if row.prediction and row.structure]
+            if dimension.name == "statement_functions"
+            else []
+        )
         gold_eligible = sum(
             row.resolved is not None
             and row.resolved.annotation is not None
@@ -528,21 +582,63 @@ def _slice_reports(rows: list[_Row]) -> tuple[EvaluationSliceReport, ...]:
         )
         reports.append(
             EvaluationSliceReport(
-                dimension=dimension,
+                dimension=stratum_dimension,
                 value=value,
                 cases=len(group),
-                gold=_agreement(gold, eligible=gold_eligible),
+                gold=_agreement(gold, eligible=gold_eligible, dimension=dimension),
                 silver=_agreement(
                     silver,
-                    eligible=sum(_silver_expected(row) is not None for row in group),
+                    eligible=sum(
+                        _silver_expected(row, dimension=dimension) is not None for row in group
+                    ),
+                    dimension=dimension,
                 ),
                 structure=_agreement(
                     structure,
-                    eligible=sum(row.structure is not None for row in group),
+                    eligible=(
+                        sum(row.structure is not None for row in group)
+                        if dimension.name == "statement_functions"
+                        else 0
+                    ),
+                    dimension=dimension,
                 ),
             )
         )
     return tuple(reports)
+
+
+def _normalized_relation_key(relation: object) -> tuple[str, str, str, str]:
+    role = " ".join(str(getattr(relation, "role", "")).casefold().split())
+    relation_type = getattr(relation, "relation", "")
+    relation_value = getattr(relation_type, "value", str(relation_type))
+    target = " ".join(str(getattr(relation, "target", "")).casefold().split())
+    condition = " ".join(str(getattr(relation, "condition", "") or "").casefold().split())
+    return role, str(relation_value), target, condition
+
+
+def _role_relation_extraction_metrics(
+    pairs: Iterable[tuple[StatementFunctionSelection, StatementFunctionSelection]],
+) -> RoleRelationExtractionMetrics:
+    items = list(pairs)
+    tp = fp = fn = exact = 0
+    for predicted, expected in items:
+        predicted_relations = {_normalized_relation_key(item) for item in predicted.role_relations}
+        expected_relations = {_normalized_relation_key(item) for item in expected.role_relations}
+        tp += len(predicted_relations & expected_relations)
+        fp += len(predicted_relations - expected_relations)
+        fn += len(expected_relations - predicted_relations)
+        exact += predicted_relations == expected_relations
+    precision = tp / (tp + fp) if tp + fp else 1.0
+    recall = tp / (tp + fn) if tp + fn else 1.0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    count = len(items)
+    return RoleRelationExtractionMetrics(
+        evaluated=count,
+        exact_match_rate=exact / count if count else 0.0,
+        precision=precision if count else 0.0,
+        recall=recall if count else 0.0,
+        f1=f1 if count else 0.0,
+    )
 
 
 def _markdown(report: AnnotationQualificationReport) -> str:

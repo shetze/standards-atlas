@@ -1,0 +1,5 @@
+{
+  "task": "knowledge-kind-classification",
+  "version": "evidence-first-v1",
+  "description": "Classify the engineering knowledge kinds represented by a standards clause."
+}

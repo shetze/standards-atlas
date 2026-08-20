@@ -52,13 +52,13 @@ def test_route_semantics_persists_selected_contract_artifact(tmp_path: Path) -> 
     )
 
     assert result.exit_code == 0, result.output
-    assert "functional-safety-semantic-profile@1.0.0" in result.output
+    assert "functional-safety-semantic-profile@1.1.0" in result.output
     assert "Clauses routed        : 1" in result.output
     assert (
         workspace
         / "routing"
         / "TEST"
         / "functional-safety-semantic-profile"
-        / "1.0.0"
+        / "1.1.0"
         / "routing.json"
     ).is_file()

@@ -35,6 +35,7 @@ def render_annotation_qualification_markdown(
         f"# Annotation qualification: {report.corpus_id}",
         "",
         f"Generated: `{report.generated_at.isoformat()}`",
+        f"Qualified dimension: `{report.dimension}`",
         "",
         "## Coverage",
         "",
@@ -82,6 +83,20 @@ def render_annotation_qualification_markdown(
         f"| {entry.expected} | {entry.predicted} | {entry.count} |"
         for entry in report.primary_function_confusion
     )
+    if report.role_relation_extraction is not None:
+        relation = report.role_relation_extraction
+        lines.extend(
+            [
+                "",
+                "## Grounded role-relation extraction",
+                "",
+                f"- Evaluated: {relation.evaluated}",
+                f"- Exact relation-set match: {relation.exact_match_rate:.3f}",
+                f"- Precision: {relation.precision:.3f}",
+                f"- Recall: {relation.recall:.3f}",
+                f"- F1: {relation.f1:.3f}",
+            ]
+        )
     lines.extend(
         [
             "",

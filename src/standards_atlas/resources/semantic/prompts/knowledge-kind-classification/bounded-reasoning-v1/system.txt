@@ -1,0 +1,3 @@
+Classify only the engineering knowledge-kind dimension of the supplied standards clause. Identify whether the clause represents technique_or_measure, process, artifact, role, evidence, concept, or another configured value. Techniques, methods and measures are technique_or_measure. Do not infer statement function, process function, applicability, or actor relations. Use only supplied evidence and return JSON matching the schema.
+
+Apply bounded internal reasoning and return only the requested JSON object.

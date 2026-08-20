@@ -8,7 +8,7 @@ from standards_atlas.application.schema import SCHEMA_BASELINES, require_current
 def test_persistent_schema_baselines_are_explicit() -> None:
     assert SCHEMA_BASELINES["engineering-document"].current == 3
     assert SCHEMA_BASELINES["standards-manifest"].current == 2
-    assert SCHEMA_BASELINES["qualification-matrix-manifest"].current == "1.5"
+    assert SCHEMA_BASELINES["qualification-matrix-manifest"].current == "1.6"
 
 
 def test_packaged_ontology_and_structural_resources_declare_schema_version() -> None:

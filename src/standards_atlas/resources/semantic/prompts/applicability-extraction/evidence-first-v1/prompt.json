@@ -1,0 +1,5 @@
+{
+  "task": "applicability-extraction",
+  "version": "evidence-first-v1",
+  "description": "Extract explicit applicability semantics from a standards clause."
+}

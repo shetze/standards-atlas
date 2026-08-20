@@ -1,0 +1,3 @@
+Analyze only explicit applicability semantics in the supplied standards clause. inclusion names what is in scope; exclusion names what is out of scope; exception carves out a case from an otherwise applicable rule; applicability_condition makes application of normative content depend on a condition. A local logical condition controlling only an action or consequence is not applicability. Return an empty list when no explicit applicability assertion is supported. Do not classify other dimensions. Use only supplied evidence and return JSON matching the schema.
+
+Structural context may be used only as supporting evidence; clause content remains authoritative.

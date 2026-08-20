@@ -378,7 +378,10 @@ class BaselineProposalGenerator:
                 valid, error = validate_schema(normalized_value, canonical_schema)
                 if not valid:
                     raise ValueError(f"provider response violates task schema: {error}")
-                selection = StatementFunctionSelection.model_validate(normalized_value)
+                selection_payload = _selection_payload_for_annotation(
+                    normalized_value, task=config.task
+                )
+                selection = StatementFunctionSelection.model_validate(selection_payload)
                 annotation = ClauseEvaluationAnnotation(
                     task=config.task,
                     lifecycle_status=AnnotationLifecycleStatus.PROPOSED,
@@ -845,6 +848,30 @@ def _normalize_selection_payload(
                 normalized_values.insert(0, primary_value)
             normalized[field] = normalized_values
     return normalized
+
+
+def _selection_payload_for_annotation(value: dict[str, Any], *, task: str) -> dict[str, Any]:
+    """Add deterministic derived fields required by the shared annotation model.
+
+    Specialized task schemas intentionally contain only their source-of-truth
+    dimension. In particular role-relation extraction emits structured
+    ``role_relations`` only; scalar relation types are derived here after strict
+    task-schema validation so they cannot drift from the extracted relations.
+    """
+
+    payload = dict(value)
+    if task == "role-relation-extraction":
+        relations = payload.get("role_relations", ())
+        relation_types = list(
+            dict.fromkeys(
+                str(item.get("relation"))
+                for item in relations
+                if isinstance(item, dict) and item.get("relation")
+            )
+        )
+        payload["role_relation_types"] = relation_types
+        payload["primary_role_relation_type"] = relation_types[0] if relation_types else None
+    return payload
 
 
 def _write_json(path: Path, payload: Any) -> None:

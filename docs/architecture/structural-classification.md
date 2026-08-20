@@ -74,3 +74,15 @@ Defaults and inheritance are explicit normalization rules. Core normative sectio
 ## Evaluation
 
 Qualification corpora must evaluate each dimension independently and report coverage and confusion per dimension. Proposal interfaces should include insufficient-evidence outcomes instead of forcing a category. Structural evidence may be supplied to a structure-aware prompt, while content-only candidates provide a useful baseline.
+
+## Routed specialized semantic tasks
+
+The active routing contract `functional-safety-semantic-profile:1.1.0` addresses five independent
+semantic tasks: statement function, knowledge kind, process function, applicability extraction, and
+role-relation extraction. Core classification tasks are required. Applicability and role relations
+start with an optional baseline and can be boosted to preferred by deterministic structural evidence.
+The routing decision controls whether a task runs; it never supplies an ontology label.
+
+`role-relation-extraction:1.0.0` returns only grounded `role_relations`. Relation-type summary fields
+are derived after schema validation and therefore cannot disagree with the extracted relations.
+Legacy `semantic-profile-classification:2.2.0` remains available for reproducibility of existing runs.

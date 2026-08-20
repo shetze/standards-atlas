@@ -23,6 +23,7 @@ from standards_atlas.adapters.llm import (
 from standards_atlas.adapters.mcp import (
     McpServerProcessError,
 )
+from standards_atlas.adapters.routing import FileSystemSemanticRoutingArtifactRepository
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     build_analysis_metrics,
     collect_qualification_input_members,
@@ -49,6 +50,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     effective_cascade_resolution,
     resolve_prompt_version,
 )
+from standards_atlas.application.semantic_qualification.routing import routed_example_ids
 from standards_atlas.application.services.evaluation import (
     AnnotationQualificationService,
     BaselineProposalGenerator,
@@ -226,6 +228,14 @@ def qualify_model_prompt_matrix(
     corpus_root: Annotated[Path, typer.Option("--corpus-root", file_okay=False)] = Path(
         ".atlas/data/evaluation/corpora"
     ),
+    routing_workspace: Annotated[
+        Path,
+        typer.Option(
+            "--routing-workspace",
+            file_okay=False,
+            help="Private workspace containing persisted deterministic routing artifacts.",
+        ),
+    ] = Path(".atlas/data"),
     published_corpus_root: Annotated[
         Path, typer.Option("--published-corpus-root", file_okay=False)
     ] = Path("data/evaluation/corpora"),
@@ -419,6 +429,22 @@ def qualify_model_prompt_matrix(
                 manifest.dataset_version,
             )
             dataset_example_ids = tuple(example.id for example in dataset.examples)
+            if manifest.routing is not None:
+                routed_ids = routed_example_ids(
+                    dataset.examples,
+                    task=manifest.task,
+                    config=manifest.routing,
+                    repository=FileSystemSemanticRoutingArtifactRepository(routing_workspace),
+                )
+                routed_set = set(routed_ids)
+                dataset_example_ids = tuple(
+                    example_id for example_id in dataset_example_ids if example_id in routed_set
+                )
+                typer.echo(
+                    "Routing filter           : "
+                    f"{len(dataset_example_ids)}/{len(dataset.examples)} clauses "
+                    f"({manifest.routing.minimum_disposition.value}+)"
+                )
             if selected_example_ids_override is not None:
                 unknown = tuple(
                     clause_id
@@ -659,6 +685,7 @@ def qualify_model_prompt_matrix(
                                         published_corpus_root=published_corpus_root,
                                         output_directory=metric_dir,
                                         example_ids=stage_clause_ids,
+                                        task=manifest.task,
                                     )
                                 )
                                 elapsed_duration_seconds = time.monotonic() - started

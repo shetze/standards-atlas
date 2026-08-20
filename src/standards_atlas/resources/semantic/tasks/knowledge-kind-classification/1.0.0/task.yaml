@@ -1,0 +1,16 @@
+schema_version: 1
+task: knowledge-kind-classification
+version: 1.0.0
+description: Classify the engineering knowledge kinds represented by a standards clause.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds:
+- clause
+excluded_content_profiles:
+- table_dominant
+alternative_tasks:
+  table_dominant: structured-table-interpretation
+ontologies:
+  knowledge_kinds:
+    id: knowledge-kinds
+    version: 2.1.0

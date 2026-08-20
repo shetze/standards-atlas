@@ -1,0 +1,5 @@
+{
+  "task": "statement-function-classification",
+  "version": "bounded-reasoning-split-v1",
+  "description": "Focused statement-function qualification prompt."
+}

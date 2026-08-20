@@ -1,0 +1,5 @@
+{
+  "task": "statement-function-classification",
+  "version": "structure-aware-split-v1",
+  "description": "Focused statement-function qualification prompt."
+}

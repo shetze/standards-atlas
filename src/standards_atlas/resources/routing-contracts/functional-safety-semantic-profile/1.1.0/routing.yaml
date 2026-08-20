@@ -1,0 +1,81 @@
+schema_version: 1
+id: functional-safety-semantic-profile
+version: 1.1.0
+taxonomy_requirements:
+  - scope: domain
+    taxonomy: domain.functional-safety
+    version: 1.0.0
+tasks:
+  - id: statement-function-classification
+    version: 3.0.0
+  - id: knowledge-kind-classification
+    version: 1.0.0
+  - id: process-function-classification
+    version: 1.0.0
+  - id: applicability-extraction
+    version: 1.0.0
+  - id: role-relation-extraction
+    version: 1.0.0
+rules:
+  - id: statement-function-required
+    task: statement-function-classification
+    effect: required
+    when:
+      kind: always
+  - id: knowledge-kind-required
+    task: knowledge-kind-classification
+    effect: required
+    when:
+      kind: always
+  - id: process-function-required
+    task: process-function-classification
+    effect: required
+    when:
+      kind: always
+  - id: applicability-baseline
+    task: applicability-extraction
+    effect: optional
+    when:
+      kind: always
+  - id: applicability-scope-preferred
+    task: applicability-extraction
+    effect: preferred
+    when:
+      kind: equals
+      field: canonical_section
+      value: scope
+    context_hints:
+      structural_evidence: scope
+  - id: role-relation-baseline
+    task: role-relation-extraction
+    effect: optional
+    when:
+      kind: always
+  - id: role-relation-fusa-activity-preferred
+    task: role-relation-extraction
+    effect: preferred
+    when:
+      kind: any
+      matchers:
+        - kind: category
+          scope: domain
+          taxonomy: domain.functional-safety
+          version: 1.0.0
+          category: lifecycle_management
+        - kind: category
+          scope: domain
+          taxonomy: domain.functional-safety
+          version: 1.0.0
+          category: verification
+        - kind: category
+          scope: domain
+          taxonomy: domain.functional-safety
+          version: 1.0.0
+          category: validation
+        - kind: category
+          scope: domain
+          taxonomy: domain.functional-safety
+          version: 1.0.0
+          category: supporting_processes
+    context_hints:
+      structural_evidence: role-bearing-process-context

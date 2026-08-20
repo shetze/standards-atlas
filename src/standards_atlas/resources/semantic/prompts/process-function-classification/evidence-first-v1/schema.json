@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "process_functions",
+    "primary_process_function",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "process_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "objective",
+          "prerequisite",
+          "input",
+          "activity",
+          "decision",
+          "branch",
+          "sequence",
+          "output",
+          "completion_criterion",
+          "option",
+          "assumption"
+        ]
+      }
+    },
+    "primary_process_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "objective",
+        "prerequisite",
+        "input",
+        "activity",
+        "decision",
+        "branch",
+        "sequence",
+        "output",
+        "completion_criterion",
+        "option",
+        "assumption",
+        null
+      ]
+    },
+    "confidence": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

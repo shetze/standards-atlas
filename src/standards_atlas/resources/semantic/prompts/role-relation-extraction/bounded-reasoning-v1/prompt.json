@@ -1,0 +1,5 @@
+{
+  "task": "role-relation-extraction",
+  "version": "bounded-reasoning-v1",
+  "description": "Extract grounded relations between identifiable actors or roles and explicit targets."
+}

@@ -1,0 +1,5 @@
+Normalized clause content:
+{content}
+
+Context:
+{context_json}

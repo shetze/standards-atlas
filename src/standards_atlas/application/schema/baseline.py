@@ -12,7 +12,7 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     ),
     "standards-manifest": SchemaPolicy("standards-manifest", 2, (2,), "manifests/*.yaml"),
     "qualification-matrix-manifest": SchemaPolicy(
-        "qualification-matrix-manifest", "1.5", ("1.5",), "manifests/*.yaml"
+        "qualification-matrix-manifest", "1.6", ("1.5", "1.6"), "manifests/*.yaml"
     ),
     "semantic-task-resource": SchemaPolicy(
         "semantic-task-resource", 1, (1,), "resources/semantic/tasks/**/task.yaml"

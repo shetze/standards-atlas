@@ -1,0 +1,5 @@
+Normalized clause content:
+{content}
+
+Resolved structural/reference context:
+{context_json}

@@ -1,6 +1,7 @@
 """Deterministic taxonomy-aware semantic routing contracts."""
 
 from standards_atlas.application.routing.engine import DeterministicRoutingEngine
+from standards_atlas.application.routing.execution import RoutingExecutionPolicy
 from standards_atlas.application.routing.manifest import (
     RoutingContractManifest,
     RoutingContractReference,
@@ -45,6 +46,7 @@ __all__ = [
     "HeadingContainsMatcher",
     "NotMatcher",
     "RoutingContract",
+    "RoutingExecutionPolicy",
     "RoutingContractManifest",
     "RoutingContractReference",
     "RoutingContractRepository",

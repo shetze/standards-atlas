@@ -1,0 +1,5 @@
+{
+  "task": "statement-function-classification",
+  "version": "evidence-first-split-v1",
+  "description": "Focused statement-function qualification prompt."
+}

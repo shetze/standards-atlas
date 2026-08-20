@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "applicability_functions",
+    "primary_applicability_function",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "applicability_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "applicability_condition",
+          "inclusion",
+          "exclusion",
+          "exception"
+        ]
+      }
+    },
+    "primary_applicability_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "applicability_condition",
+        "inclusion",
+        "exclusion",
+        "exception",
+        null
+      ]
+    },
+    "confidence": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

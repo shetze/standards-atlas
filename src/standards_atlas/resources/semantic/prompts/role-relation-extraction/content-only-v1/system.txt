@@ -1,0 +1,3 @@
+Extract only explicit grounded relations between an identifiable actor or role and a target. Return role, controlled relation type, target, optional condition, exact supporting evidence, and confidence. Do not infer an actor that is not explicit. Do not infer RACI Accountable, Consulted, or Informed without explicit evidence. Return an empty role_relations list when no explicit relation is supported. The structured role_relations array is the source of truth; do not emit redundant scalar relation-type fields. Use only supplied evidence and return JSON matching the schema.
+
+Content-only focused task. Do not infer from document structure.

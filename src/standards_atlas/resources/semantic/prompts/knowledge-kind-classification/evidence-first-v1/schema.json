@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "knowledge_kinds",
+    "primary_knowledge_kind",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "knowledge_kinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "technique_or_measure",
+          "process",
+          "artifact",
+          "role",
+          "evidence",
+          "concept"
+        ]
+      }
+    },
+    "primary_knowledge_kind": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "technique_or_measure",
+        "process",
+        "artifact",
+        "role",
+        "evidence",
+        "concept",
+        null
+      ]
+    },
+    "confidence": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

@@ -789,5 +789,5 @@ def test_routing_manifest_inserts_deterministic_stage_after_taxonomy() -> None:
         "manifests/functional-safety-semantic-routing-v1.yaml",
     )
     assert routing.output_paths == (
-        ".atlas/data/routing/EN50716/functional-safety-semantic-profile/1.0.0/routing.json",
+        ".atlas/data/routing/EN50716/functional-safety-semantic-profile/1.1.0/routing.json",
     )

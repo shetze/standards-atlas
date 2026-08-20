@@ -110,3 +110,24 @@ uv run standards-atlas clean --data --force
 The default command removes only `.atlas/work`. `--cache` additionally removes
 `.atlas/cache`. Persistent `.atlas/data` requires the explicit destructive
 combination `--data --force`. Human-facing `local/` artifacts are never removed.
+
+
+### Split semantic qualification
+
+Semantic qualification is split into task-specific v4 manifests. Each matrix can consume persisted
+deterministic routing artifacts through its `routing` block. Run taxonomy and `document
+route-semantics` (or the workflow routing stage) before a routing-enabled matrix. Examples:
+
+```bash
+uv run standards-atlas evaluation qualification-matrix \
+  --manifest manifests/multidimensional-semantic-qualification-v4-statement-function-v1.yaml \
+  --output local/evaluation/qualification
+
+uv run standards-atlas evaluation qualification-matrix \
+  --manifest manifests/multidimensional-semantic-qualification-v4-role-relation-v1.yaml \
+  --output local/evaluation/qualification
+```
+
+The five task manifests qualify statement function, knowledge kind, process function, applicability,
+and grounded role relations independently. `--routing-workspace` selects the private workspace that
+contains `.atlas/data/routing`-style artifacts; its default is `.atlas/data`.

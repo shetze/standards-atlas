@@ -1,0 +1,207 @@
+manifest_type: qualification_matrix
+schema_version: '1.6'
+matrix_id: knowledge-kind-qualification-v1
+corpus_id: semantic-profile-v1
+task: knowledge-kind-classification
+task_version: 1.0.0
+dataset_version: 2.2.0
+repetitions: 1
+routing:
+  contract_id: functional-safety-semantic-profile
+  contract_version: 1.1.0
+  minimum_disposition: required
+  include_unrouted: false
+execution:
+  mode: full_matrix
+prompts:
+- id: content-only
+  prompt_version: content-only-v1
+  max_output_tokens: 384
+  description: Focused content-only task prompt.
+- id: structure-aware
+  prompt_version: structure-aware-v1
+  max_output_tokens: 448
+  description: Focused prompt with structural context.
+- id: reference-aware
+  prompt_version: evidence-first-v1
+  max_output_tokens: 512
+  description: Focused prompt with resolved context/evidence.
+- id: bounded-reasoning
+  prompt_version: bounded-reasoning-v1
+  max_output_tokens: 512
+  description: Focused bounded-reasoning prompt.
+reasoning_modes:
+- id: disabled
+  enabled: false
+  optional: false
+- id: enabled
+  enabled: true
+  optional: true
+models:
+- id: codex-gpt-5.6-luna
+  provider: codex
+  model_ref: gpt-5.6-luna
+  repetitions: 1
+  description: Codex reference candidate using the Standards Atlas MCP server.
+  accelerator: remote
+- id: llama-3.1-8b-instruct-q4-k-m
+  provider: ramalama
+  model_ref: hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  description: Independent 8B Llama-family candidate for intermediate cascade resolution.
+  accelerator: gpu
+  parameters_billion: 8
+  declared_memory_gb: 8
+  generation:
+    max_output_tokens: 384
+    adaptive_question_max_tokens: 256
+    truncation_retry_max_tokens: 512
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: ministral-3-8b-instruct-2512-q4-k-m
+  provider: ramalama
+  model_ref: hf.co/mistralai/Ministral-3-8B-Instruct-2512-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  description: Independent 8B Ministral candidate for intermediate cascade resolution.
+  accelerator: gpu
+  parameters_billion: 8
+  declared_memory_gb: 8
+  generation:
+    max_output_tokens: 384
+    adaptive_question_max_tokens: 256
+    truncation_retry_max_tokens: 512
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: qwen3-14b-q4-k-m
+  provider: ramalama
+  model_ref: hf.co/Qwen/Qwen3-14B-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  description: Dense multilingual candidate with switchable thinking support.
+  accelerator: gpu
+  parameters_billion: 14
+  declared_memory_gb: 10
+  supported_reasoning_modes:
+  - disabled
+  - enabled
+  generation:
+    max_output_tokens: 512
+    adaptive_question_max_tokens: 384
+    truncation_retry_max_tokens: 768
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: smollm3-3b-q4-k-m
+  provider: ramalama
+  model_ref: hf.co/ggml-org/SmolLM3-3B-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  description: Fast Hugging Face family voter promoted after applicability hard-case
+    qualification.
+  accelerator: gpu
+  parameters_billion: 3
+  declared_memory_gb: 4
+  dimension_eligibility:
+    applicability_presence: true
+    applicability_subtype: false
+  generation:
+    max_output_tokens: 384
+    adaptive_question_max_tokens: 256
+    truncation_retry_max_tokens: 512
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: glm-4-9b-chat-q4-k-m
+  provider: ramalama
+  model_ref: hf.co/bartowski/glm-4-9b-chat-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  description: GLM-family voter promoted after applicability hard-case qualification.
+  accelerator: gpu
+  parameters_billion: 9
+  declared_memory_gb: 8
+  generation:
+    max_output_tokens: 512
+    adaptive_question_max_tokens: 384
+    truncation_retry_max_tokens: 768
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: exaone-3.5-32b-instruct-q4-k-m
+  provider: ramalama
+  model_ref: hf.co/bartowski/EXAONE-3.5-32B-Instruct-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  description: EXAONE-family final voter promoted after applicability hard-case qualification.
+  accelerator: gpu
+  parameters_billion: 32
+  declared_memory_gb: 22
+  generation:
+    max_output_tokens: 768
+    adaptive_question_max_tokens: 512
+    truncation_retry_max_tokens: 1024
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: gemma-3-12b-it-q4-k-m
+  provider: ramalama
+  model_ref: hf.co/unsloth/gemma-3-12b-it-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  description: Compact multilingual Gemma 3 instruction candidate.
+  accelerator: gpu
+  parameters_billion: 12
+  declared_memory_gb: 10
+  generation:
+    max_output_tokens: 384
+    adaptive_question_max_tokens: 256
+    truncation_retry_max_tokens: 512
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: mistral-small-3.2-24b-instruct-q4-k-m
+  provider: ramalama
+  model_ref: hf.co://bartowski/mistralai_Mistral-Small-3.2-24B-Instruct-2506-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  accelerator: gpu
+  parameters_billion: 24
+  declared_memory_gb: 17
+  generation:
+    max_output_tokens: 384
+    adaptive_question_max_tokens: 256
+    truncation_retry_max_tokens: 512
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: mistral-small-3.2-24b-instruct-q6-k
+  provider: ramalama
+  model_ref: hf.co://bartowski/mistralai_Mistral-Small-3.2-24B-Instruct-2506-GGUF:Q6_K
+  quantization: Q6_K
+  accelerator: gpu
+  parameters_billion: 24
+  declared_memory_gb: 24
+  generation:
+    max_output_tokens: 384
+    adaptive_question_max_tokens: 256
+    truncation_retry_max_tokens: 512
+    reasoning_mode: disabled
+    retry_on_truncation: true
+- id: granite-3.3-8b-instruct-q4-k-m
+  provider: ramalama
+  model_ref: hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M
+  quantization: Q4_K_M
+  description: Compact Granite baseline used by the local evaluation environment.
+  accelerator: gpu
+  parameters_billion: 8
+  declared_memory_gb: 8
+  generation:
+    max_output_tokens: 384
+    adaptive_question_max_tokens: 256
+    truncation_retry_max_tokens: 512
+    reasoning_mode: disabled
+    retry_on_truncation: true
+consensus:
+  enabled: false
+observations: []
+thresholds:
+  min_gold_f1: 0.8
+  min_gold_coverage: 0.9
+  max_gold_f1_stddev: 0.03
+  min_prediction_success_rate: 0.98
+  min_json_validity_rate: 0.99
+  max_truncation_rate: 0.01
+  max_mean_duration_seconds: 60
+  max_peak_memory_gb: 24
+  baseline_prompt_id: structure-aware
+  baseline_model_id: qwen3-14b-q4-k-m
+  baseline_reasoning_mode_id: disabled
+  max_gold_f1_drop: 0.02

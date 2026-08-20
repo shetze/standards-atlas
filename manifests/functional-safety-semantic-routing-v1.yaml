@@ -2,4 +2,4 @@ manifest_type: routing_contract
 schema_version: 1
 contract:
   id: functional-safety-semantic-profile
-  version: 1.0.0
+  version: 1.1.0

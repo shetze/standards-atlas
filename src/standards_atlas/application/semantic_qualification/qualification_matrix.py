@@ -15,6 +15,7 @@ from standards_atlas.application.semantic_qualification.qualification import (
 from standards_atlas.application.semantic_qualification.reports.matrix import (
     render_qualification_matrix_markdown,
 )
+from standards_atlas.application.semantic_qualification.routing import QualificationRoutingConfig
 
 _PROMPT_VERSION_ALIASES = {
     "content-only": "content-only-v1",
@@ -643,7 +644,7 @@ class QualificationMatrixManifest(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     manifest_type: Literal["qualification_matrix"] = "qualification_matrix"
-    schema_version: Literal["1.5"] = "1.5"
+    schema_version: Literal["1.5", "1.6"] = "1.5"
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)
     task: str = Field(default="semantic-profile-classification", min_length=1)
@@ -659,6 +660,7 @@ class QualificationMatrixManifest(BaseModel):
     execution: MatrixExecutionConfig = MatrixExecutionConfig()
     thresholds: RegressionThresholds = RegressionThresholds()
     challenger_qualification: ChallengerQualificationConfig = ChallengerQualificationConfig()
+    routing: QualificationRoutingConfig | None = None
 
     def repetitions_for(self, model: ModelCandidate) -> int:
         """Return the model-specific repetition count or the global default."""
@@ -688,6 +690,8 @@ class QualificationMatrixManifest(BaseModel):
 
     @model_validator(mode="after")
     def validate_matrix(self) -> QualificationMatrixManifest:
+        if self.routing is not None and self.schema_version != "1.6":
+            raise ValueError("routing-enabled qualification manifests require schema_version 1.6")
         if len(self.prompts) != 4:
             raise ValueError("qualification matrix must declare exactly four prompt variants")
         prompt_ids = [item.id for item in self.prompts]

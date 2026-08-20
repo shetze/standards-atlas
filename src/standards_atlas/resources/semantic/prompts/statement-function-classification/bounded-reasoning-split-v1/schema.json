@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "statement_functions",
+    "primary_function",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "statement_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "requirement",
+          "recommendation",
+          "condemnation",
+          "warning",
+          "guideline",
+          "permission",
+          "prohibition",
+          "definition",
+          "description",
+          "explanation",
+          "rationale",
+          "example",
+          "note",
+          "conformance_statement",
+          "objective",
+          "prerequisite",
+          "assumption"
+        ]
+      }
+    },
+    "primary_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "requirement",
+        "recommendation",
+        "condemnation",
+        "warning",
+        "guideline",
+        "permission",
+        "prohibition",
+        "definition",
+        "description",
+        "explanation",
+        "rationale",
+        "example",
+        "note",
+        "conformance_statement",
+        "objective",
+        "prerequisite",
+        "assumption",
+        null
+      ]
+    },
+    "confidence": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

@@ -1,0 +1,17 @@
+schema_version: 1
+task: process-function-classification
+version: 1.0.0
+description: Classify process-model functions explicitly expressed by a standards
+  clause.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds:
+- clause
+excluded_content_profiles:
+- table_dominant
+alternative_tasks:
+  table_dominant: structured-table-interpretation
+ontologies:
+  process_functions:
+    id: process-functions
+    version: 1.0.0

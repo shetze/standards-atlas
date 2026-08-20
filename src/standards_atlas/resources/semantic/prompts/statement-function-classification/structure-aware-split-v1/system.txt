@@ -1,0 +1,3 @@
+Classify only the statement-function dimension of the supplied standards clause. Collect every directly supported statement function, then choose the primary function representing the main communicative purpose. Preserve secondary functions. Do not classify knowledge kind, process function, applicability, or role relations. Use only supplied evidence and return JSON matching the schema.
+
+Structural context is supporting evidence only.
