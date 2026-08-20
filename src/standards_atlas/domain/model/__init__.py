@@ -84,6 +84,13 @@ from standards_atlas.domain.model.source_evidence import (
     SourceEvidence,
 )
 from standards_atlas.domain.model.standard import Standard
+from standards_atlas.domain.model.structural_context import (
+    StructuralAncestor,
+    StructuralContext,
+    StructuralNodeKind,
+    StructuralReferenceEdge,
+    StructuralSiblingContext,
+)
 from standards_atlas.domain.model.structural_profile import (
     AnnexStatus,
     CanonicalDocumentSection,
@@ -100,6 +107,11 @@ __all__ = [
     "SemanticSection",
     "SemanticSectionRole",
     "StructuralProfile",
+    "StructuralAncestor",
+    "StructuralContext",
+    "StructuralNodeKind",
+    "StructuralReferenceEdge",
+    "StructuralSiblingContext",
     "ArtifactKind",
     "ArtifactLineage",
     "ArtifactReference",

@@ -42,6 +42,9 @@ from standards_atlas.application.services.reference_candidate_service import (
     ReferenceCandidateService,
 )
 from standards_atlas.application.services.semantic_classifier import SemanticClassifier
+from standards_atlas.application.services.structural_taxonomy_service import (
+    StructuralTaxonomyService,
+)
 from standards_atlas.application.workflow.service import EndToEndWorkflowService
 
 __all__ = [
@@ -64,4 +67,5 @@ __all__ = [
     "MarkdownExportService",
     "ReferenceCandidateService",
     "SemanticClassifier",
+    "StructuralTaxonomyService",
 ]

@@ -119,6 +119,12 @@ def build_content_enrichment_service(workspace: Path, review_root: Path | None =
     )
 
 
+def build_structural_taxonomy_service(workspace: Path):
+    from standards_atlas.application.services import StructuralTaxonomyService
+
+    return StructuralTaxonomyService(FileSystemEngineeringDocumentRepository(workspace))
+
+
 def build_atlasdata_toc_service():
     from standards_atlas.adapters.atlasdata import AtlasDataImporter
     from standards_atlas.adapters.atlasdata.roundtrip_writer import AtlasDataRoundTripWriter

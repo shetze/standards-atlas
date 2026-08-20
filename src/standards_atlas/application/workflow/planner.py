@@ -351,6 +351,14 @@ class WorkflowPlanner:
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/work/workflow/enrich/{key}.complete",),
                     ),
+                    WorkflowStep(
+                        family.key,
+                        key,
+                        WorkflowStage.TAXONOMY,
+                        ("uv", "run", "standards-atlas", "document", "classify-taxonomy", key),
+                        ArtifactPolicy.DERIVED,
+                        output_paths=(f".atlas/work/workflow/taxonomy/{key}.complete",),
+                    ),
                 ]
             )
         if family.source is None:

@@ -25,6 +25,7 @@ from standards_atlas.cli.composition import (
     build_content_enrichment_service,
     build_document_composition_service,
     build_document_selection_service,
+    build_structural_taxonomy_service,
 )
 
 
@@ -194,3 +195,24 @@ def enrich_document_content(
         + ("reviewed.json" if stats.used_reviewed_alignment else "alignment.json")
     )
     typer.echo(f"Persisted document    : {workspace / 'documents' / (document_key + '.json')}")
+
+
+@document_app.command("classify-taxonomy")
+def classify_document_taxonomy(
+    document_key: Annotated[str, typer.Argument(help="EngineeringDocument key to classify.")],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+) -> None:
+    """Materialize deterministic structural taxonomy context."""
+    result = build_structural_taxonomy_service(workspace).classify(document_key)
+    nodes = sum(
+        clause.structural_context is not None
+        and clause.structural_context.node_kind.value == "node"
+        for clause in result.document.clauses
+    )
+    typer.echo(f"Document              : {result.document.key.value}")
+    typer.echo(f"Clauses               : {len(result.document.clauses)}")
+    typer.echo(f"Structural nodes      : {nodes}")
+    typer.echo(f"Structural leaves     : {len(result.document.clauses) - nodes}")

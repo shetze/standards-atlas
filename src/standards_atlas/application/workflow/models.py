@@ -27,6 +27,7 @@ class WorkflowStage(StrEnum):
     ALIGN = "align"
     REVIEW = "review"
     ENRICH = "enrich"
+    TAXONOMY = "taxonomy"
     COMPOSE = "compose"
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"
