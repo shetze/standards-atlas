@@ -48,3 +48,17 @@ def test_taxonomy_and_ontology_have_separate_application_services() -> None:
     assert (
         "standards_atlas.application.services.structural_profile_classifier" not in ontology_imports
     )
+
+
+def test_routing_domain_does_not_import_ontology_or_qualification() -> None:
+    routing = APPLICATION / "routing"
+
+    for path in routing.glob("*.py"):
+        imports = _imports(path)
+        assert not any(
+            module.startswith("standards_atlas.application.ontology") for module in imports
+        ), path
+        assert not any(
+            module.startswith("standards_atlas.application.semantic_qualification")
+            for module in imports
+        ), path

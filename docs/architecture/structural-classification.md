@@ -44,6 +44,19 @@ The YAML file is the versioned category contract; classification behaviour is su
 
 This layer is deterministic and LLM-free. Complex tree algorithms remain normal Python code rather than being encoded in a general-purpose YAML rule language. Semantic LLM tasks are a separate concern. The current built-in implementation moves ISO/IEC Directives Part 2 classification out of the AtlasData adapter; Railway TSI, Polarion, Functional Safety, and Cybersecurity can provide independent classifiers through the same interface.
 
+## Deterministic semantic routing boundary
+
+Taxonomy evidence can be used before an LLM call without making the taxonomy responsible for
+semantic meaning. The routing domain in `application.routing` projects `StructuralProfile`
+into a `TaxonomySignalProfile` and evaluates a closed set of deterministic matchers against an
+in-memory `RoutingContract`. The result is a `SemanticRoutingPlan` whose task dispositions are
+`required`, `preferred`, `optional`, or `skip`.
+
+Routing is an integration policy only. A taxonomy category may make an ontology task more
+relevant, but it cannot assign an ontology value. This preserves independent evolution of
+taxonomies and ontologies. Slice 1 provides the domain model, matcher vocabulary, and engine;
+resource persistence, manifest binding, and workflow integration are intentionally deferred.
+
 ## Inheritance
 
 Defaults and inheritance are explicit normalization rules. Core normative sections may inherit normative status; annex declarations determine annex status; notes, examples, and guidance remain informative even inside a normative parent where the governing standard requires that distinction. Whole informative parts can define a document-level default.

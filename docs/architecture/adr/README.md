@@ -108,6 +108,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0067](0067-production-ontology-workflow-stage.md) | Run LLM-assisted semantic ontology classification after structural taxonomy |
 | [0068](0068-finalize-taxonomy-ontology-stage-ownership.md) | Remove legacy mixed classification and enforce taxonomy/ontology stage ownership |
 | [0069](0069-materialize-structural-scope-reach.md) | Materialize structural scope reach in taxonomy |
+| [0072](0072-deterministic-taxonomy-aware-semantic-routing-domain.md) | Introduce a deterministic taxonomy-aware semantic routing domain |
 
 ## Application structure
 
