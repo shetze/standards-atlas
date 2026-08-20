@@ -11,10 +11,10 @@ def test_persistent_schema_baselines_are_explicit() -> None:
     assert SCHEMA_BASELINES["qualification-matrix-manifest"].current == "1.5"
 
 
-def test_packaged_semantic_and_structural_resources_declare_schema_version() -> None:
+def test_packaged_ontology_and_structural_resources_declare_schema_version() -> None:
     roots = (
         Path("src/standards_atlas/resources/semantic/tasks"),
-        Path("src/standards_atlas/resources/semantic/taxonomies"),
+        Path("src/standards_atlas/resources/ontologies"),
         Path("src/standards_atlas/resources/structure-taxonomies"),
     )
     for root in roots:

@@ -502,7 +502,7 @@ The namespaces are:
 | `DS` | document structure |
 | `NS` | normative status |
 
-The three-letter category codes are owned by the versioned semantic taxonomy,
+The three-letter category codes are owned by the versioned ontology dimension,
 not by the AtlasData parser. A file containing semantic tags must declare the
 profile used to interpret them:
 

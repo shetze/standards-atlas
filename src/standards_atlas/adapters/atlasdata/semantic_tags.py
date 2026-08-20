@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from standards_atlas.application.ontology import ResourceOntologyDefinitionRepository
 from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
-from standards_atlas.application.semantic_qualification.taxonomies import SemanticTaxonomyRepository
 from standards_atlas.domain.model import NormativeStatus, SemanticClassification
 
 PROFILE_PREFIX = "semantic-profile-classification:"
@@ -45,10 +45,10 @@ def _semantic_codes(version: str) -> dict[str, dict[str, str]]:
     task, _ = SemanticTaskRepository(semantic_root / "tasks").load(
         "semantic-profile-classification", version
     )
-    repository = SemanticTaxonomyRepository(semantic_root / "taxonomies")
+    repository = ResourceOntologyDefinitionRepository()
     result = {
         dimension: repository.load(reference.id, reference.version).codes
-        for dimension, reference in task.taxonomies.items()
+        for dimension, reference in task.ontologies.items()
     }
     result["document_structure"] = _DOCUMENT_STRUCTURE_CODES
     result["normative_status"] = _NORMATIVE_STATUS_CODES

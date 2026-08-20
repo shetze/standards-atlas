@@ -19,6 +19,10 @@ from standards_atlas.application.evaluation.repository import (
     PromptRepository,
 )
 from standards_atlas.application.evaluation.schema import validate_schema
+from standards_atlas.application.ontology import (
+    OntologyReference,
+    ResourceOntologyDefinitionRepository,
+)
 from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
     LlmResponseError,
@@ -65,10 +69,6 @@ from standards_atlas.application.semantic_qualification.request_builder import (
     serialize_generation_request,
 )
 from standards_atlas.application.semantic_qualification.retry import generate_with_retry
-from standards_atlas.application.semantic_qualification.taxonomies import (
-    SemanticTaxonomyReference,
-    SemanticTaxonomyRepository,
-)
 
 
 class SemanticTaskDefinition(BaseModel):
@@ -82,7 +82,7 @@ class SemanticTaskDefinition(BaseModel):
     description: str = ""
     canonical_task: str | None = None
     aliases: tuple[str, ...] = ()
-    taxonomies: dict[str, SemanticTaxonomyReference] = Field(default_factory=dict)
+    ontologies: dict[str, OntologyReference] = Field(default_factory=dict)
     taxonomy: tuple[str, ...] = ()
     knowledge_taxonomy: tuple[str, ...] = ()
     process_taxonomy: tuple[str, ...] = ()
@@ -96,23 +96,22 @@ class SemanticTaskDefinition(BaseModel):
 
 
 class SemanticTaskRepository:
-    """Load task metadata plus independently versioned semantic taxonomies."""
+    """Load task metadata plus independently versioned ontology dimensions."""
 
     def __init__(self, root: Path) -> None:
         self._root = root
-        semantic_root = root.parent if root.name == "tasks" else root
-        self._taxonomy_repository = SemanticTaxonomyRepository(semantic_root / "taxonomies")
+        self._ontology_repository = ResourceOntologyDefinitionRepository()
 
     def load(self, task: str, version: str) -> tuple[SemanticTaskDefinition, dict[str, Any]]:
         root = self._root / task / version
         metadata = yaml.safe_load((root / "task.yaml").read_text(encoding="utf-8")) or {}
         require_supported_schema("semantic-task-resource", metadata.get("schema_version"))
         references = {
-            dimension: SemanticTaxonomyReference.model_validate(reference)
-            for dimension, reference in dict(metadata.get("taxonomies", {})).items()
+            dimension: OntologyReference.model_validate(reference)
+            for dimension, reference in dict(metadata.get("ontologies", {})).items()
         }
         loaded = {
-            dimension: self._taxonomy_repository.load(reference.id, reference.version)
+            dimension: self._ontology_repository.load(reference.id, reference.version)
             for dimension, reference in references.items()
         }
         expected_dimensions = {
@@ -124,8 +123,8 @@ class SemanticTaskRepository:
             if dimension != actual
         ]
         if mismatches:
-            raise ValueError("semantic task taxonomy dimension mismatch: " + ", ".join(mismatches))
-        metadata["taxonomies"] = references
+            raise ValueError("semantic task ontology dimension mismatch: " + ", ".join(mismatches))
+        metadata["ontologies"] = references
         metadata["taxonomy"] = tuple(
             loaded.get("statement_functions").values if "statement_functions" in loaded else ()
         )

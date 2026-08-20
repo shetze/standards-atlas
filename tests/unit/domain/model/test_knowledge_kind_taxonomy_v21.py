@@ -7,7 +7,7 @@ from standards_atlas.domain.model import KnowledgeKind
 
 def test_current_taxonomy_uses_one_combined_technique_measure_kind() -> None:
     taxonomy_path = Path(
-        "src/standards_atlas/resources/semantic/taxonomies/knowledge-kinds/2.1.0/taxonomy.yaml"
+        "src/standards_atlas/resources/ontologies/knowledge-kinds/2.1.0/ontology.yaml"
     )
     taxonomy = yaml.safe_load(taxonomy_path.read_text(encoding="utf-8"))
 

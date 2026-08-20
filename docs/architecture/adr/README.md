@@ -100,6 +100,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0062](0062-separate-semantic-taxonomies-from-semantic-tasks.md) | Separate semantic taxonomies from semantic tasks |
 | [0063](0063-schema-compatibility-baseline.md) | Establish a clean schema compatibility baseline |
 | [0064](0064-bounded-schema-reader-compatibility.md) | Bound persisted-schema compatibility at the reader boundary |
+| [0065](0065-separate-structural-taxonomy-from-semantic-ontology.md) | Separate structural taxonomy from semantic ontology |
 
 ## Application structure
 

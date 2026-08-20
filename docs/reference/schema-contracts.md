@@ -41,7 +41,7 @@ when a future schema revision creates a real predecessor contract.
 | Qualification run index | 1.0 | `local/evaluation/**` | only if machine-read later |
 | Workflow run report | 3 | workflow audit output | yes |
 | Semantic task resource | 1 | `resources/semantic/tasks/**/task.yaml` | yes |
-| Semantic taxonomy resource | 1 | `resources/semantic/taxonomies/**/taxonomy.yaml` | yes |
+| Ontology resource | 1 | `resources/ontologies/**/ontology.yaml` | yes |
 | Structural taxonomy resource | 1 | `resources/structure-taxonomies/**/taxonomy.yaml` | yes |
 
 The table is the compatibility inventory. Schema families that cross active reader
@@ -68,7 +68,7 @@ into the current Python/domain model. Writers emit only the current schema.
 
 The Engineering Document repository now rejects unversioned and pre-v3 payloads.
 Standards and Qualification Matrix manifests are checked against their current
-baselines at the workflow envelope. Semantic task, semantic taxonomy, and structural
+baselines at the workflow envelope. Semantic task, ontology, and structural
 taxonomy YAML resources now carry an explicit `schema_version: 1`, validated by their
 models/loaders. Persisted Pydantic contracts with existing fixed schema versions use
 literal schema fields so arbitrary versions no longer validate accidentally.

@@ -10,7 +10,7 @@ excluded_content_profiles:
 - table_dominant
 alternative_tasks:
   table_dominant: structured-table-interpretation
-taxonomies:
+ontologies:
   statement_functions:
     id: statement-functions
     version: 1.0.0

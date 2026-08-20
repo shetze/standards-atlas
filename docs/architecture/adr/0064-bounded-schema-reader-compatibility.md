@@ -37,7 +37,7 @@ After ADR 0063, all concrete policies initially contain only their current basel
 Historical schemas are not reintroduced merely to fill the compatibility window.
 Future schema revisions add predecessor readers deliberately when they are needed.
 
-Semantic task, semantic taxonomy, structural taxonomy, Engineering Document, and
+Semantic task, ontology, structural taxonomy, Engineering Document, and
 workflow-manifest loaders are routed through the shared reader policy where applicable.
 
 ## Consequences
