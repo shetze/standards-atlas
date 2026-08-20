@@ -57,8 +57,15 @@ relevant, but it cannot assign an ontology value. This preserves independent evo
 taxonomies and ontologies. Routing contracts are versioned independently below
 `resources/routing-contracts/` and selected through a `routing_contract` workflow manifest.
 The resource declares the taxonomy and semantic-task versions it binds while the manifest only
-selects a concrete contract version. Workflow execution of routing decisions remains a separate
-stage.
+selects a concrete contract version. When such a manifest is selected, the workflow executes a
+separate deterministic `routing` stage immediately after taxonomy. Per-clause signal profiles and
+routing decisions are persisted below `.atlas/data/routing/<document>/<contract>/<version>/`
+rather than being added to `EngineeringDocument`.
+
+The persisted routing artifact is provenance and execution metadata. It records the exact signals,
+matched rule ids, dispositions, reasons, and context hints used for each clause. Slice 3 materializes
+those decisions but does not yet condition LLM task execution on them; specialized task execution is
+introduced with the semantic-task split.
 
 ## Inheritance
 

@@ -38,8 +38,8 @@ The unified `--manifests` interface belongs to the workflow envelope. Direct low
 
 The workflow envelope also recognizes `routing_contract` manifests. These manifests select an
 independently versioned resource under `resources/routing-contracts/`; routing rules are not
-duplicated in the manifest. Contract execution is introduced by the semantic-routing workflow
-stage, so manifest recognition and resource validation remain independently testable.
+duplicated in the manifest. When selected, the workflow inserts deterministic semantic routing
+after structural taxonomy and persists the result under `.atlas/data/routing/`.
 
 ## AtlasData
 
@@ -56,6 +56,7 @@ stage, so manifest recognition and resource validation remain independently test
 - `document compose-family`
 - `document enrich-content`
 - `document classify-taxonomy`
+- `document route-semantics --manifest <routing-manifest>`
 - `document classify-ontology`
 - `document export markdown`
 - `document export doorstop`

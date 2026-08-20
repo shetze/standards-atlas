@@ -61,7 +61,7 @@ uv run standards-atlas align inspect EN50716 --show-conflicts
 
 Continue with [Alignment review](alignment-review.md) when the result is uncertain.
 
-### Construct, classify taxonomy, and classify ontology
+### Construct, classify taxonomy, route semantics, and classify ontology
 
 The workflow imports the reviewed structure and enriches clauses from aligned normalized ranges. `ENRICH` only constructs content, evidence, reference mentions, and lineage; it no longer performs structural or semantic classification. Persisted canonical documents are placed below `.atlas/data/documents/`.
 
@@ -73,7 +73,17 @@ uv run standards-atlas document classify-taxonomy EN50716
 
 It materializes `StructuralProfile` and `StructuralContext`, including ancestor context, node/leaf role, sibling sequence position, contextual node content, and structural reference edges.
 
-Only after taxonomy does the production ontology classifier run:
+When a routing contract is selected, deterministic semantic routing runs next:
+
+```bash
+uv run standards-atlas document route-semantics EN50716 \
+  --manifest manifests/functional-safety-semantic-routing-v1.yaml
+```
+
+Routing does not modify the canonical document and does not invoke an LLM. It persists per-clause
+taxonomy signals and task decisions below `.atlas/data/routing/`.
+
+Only after taxonomy and optional routing does the production ontology classifier run:
 
 ```bash
 uv run standards-atlas document classify-ontology EN50716 --llm-config cfg/llm.yaml
@@ -86,7 +96,10 @@ The ontology stage consumes clause content plus the materialized structural cont
 After completing requested reviews, rerun the same selection with:
 
 ```bash
-uv run standards-atlas workflow run   --manifests manifests/standards.yaml   --family EN50716   --continue-after-review
+uv run standards-atlas workflow run \
+  --manifests manifests/standards.yaml,manifests/functional-safety-semantic-routing-v1.yaml \
+  --family EN50716 \
+  --continue-after-review
 ```
 
 This flag does not approve proposals. It only permits execution when the expected reviewed artefacts already exist.

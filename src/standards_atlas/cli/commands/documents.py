@@ -18,6 +18,7 @@ from standards_atlas.cli.commands.document_commands.management import (
     derive_document_view,
     enrich_document_content,
     import_document,
+    route_document_semantics,
 )
 from standards_atlas.cli.commands.document_commands.publication import (
     publish_doorstop_hierarchy,
@@ -37,5 +38,6 @@ __all__ = [
     "onboard_docling",
     "onboard_docling_parts",
     "publish_doorstop_hierarchy",
+    "route_document_semantics",
     "set_atlasdata_status",
 ]

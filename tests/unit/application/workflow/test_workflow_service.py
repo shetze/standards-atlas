@@ -768,3 +768,26 @@ def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
     assert result.completed is True
     assert runner.commands == []
     assert result.executed_steps == ()
+
+
+def test_routing_manifest_inserts_deterministic_stage_after_taxonomy() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
+    plan = EndToEndWorkflowService().plan(
+        catalog,
+        family_keys=("EN50716",),
+        catalog_root=Path.cwd(),
+        routing_manifest_path=Path("manifests/functional-safety-semantic-routing-v1.yaml"),
+    )
+
+    stages = [step.stage for step in plan.steps]
+    taxonomy_index = stages.index(WorkflowStage.TAXONOMY)
+    assert stages[taxonomy_index + 1] is WorkflowStage.ROUTING
+    assert stages[taxonomy_index + 2] is WorkflowStage.ONTOLOGY
+    routing = plan.steps[taxonomy_index + 1]
+    assert routing.command[-2:] == (
+        "--manifest",
+        "manifests/functional-safety-semantic-routing-v1.yaml",
+    )
+    assert routing.output_paths == (
+        ".atlas/data/routing/EN50716/functional-safety-semantic-profile/1.0.0/routing.json",
+    )

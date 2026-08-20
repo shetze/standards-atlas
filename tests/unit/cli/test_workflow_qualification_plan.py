@@ -89,3 +89,26 @@ def test_qualification_plan_command_is_removed() -> None:
 
     assert result.exit_code != 0
     assert "No such command" in result.output
+
+
+def test_qualification_plan_includes_routing_manifest_stage() -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "plan",
+            "--task",
+            "qualification",
+            "--manifests",
+            (
+                f"manifests/standards.yaml,{QUALIFICATION_MANIFEST},"
+                "manifests/functional-safety-semantic-routing-v1.yaml"
+            ),
+            "--family",
+            "EN50716",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "route-semantics" in result.output
+    assert "functional-safety-semantic-routing-v1.yaml" in result.output

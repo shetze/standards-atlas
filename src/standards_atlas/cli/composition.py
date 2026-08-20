@@ -125,6 +125,18 @@ def build_structural_taxonomy_service(workspace: Path):
     return StructuralTaxonomyService(FileSystemEngineeringDocumentRepository(workspace))
 
 
+def build_semantic_routing_service(workspace: Path):
+    from standards_atlas.adapters.routing import FileSystemSemanticRoutingArtifactRepository
+    from standards_atlas.adapters.routing_contracts import ResourceRoutingContractRepository
+    from standards_atlas.application.services import SemanticRoutingService
+
+    return SemanticRoutingService(
+        documents=FileSystemEngineeringDocumentRepository(workspace),
+        contracts=ResourceRoutingContractRepository(),
+        artifacts=FileSystemSemanticRoutingArtifactRepository(workspace),
+    )
+
+
 def build_ontology_classification_service(
     workspace: Path,
     *,

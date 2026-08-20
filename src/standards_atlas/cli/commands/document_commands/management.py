@@ -9,6 +9,7 @@ import typer
 
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.application.routing import load_routing_contract_manifest
 from standards_atlas.application.services import DocumentImportService
 from standards_atlas.application.services.content_enrichment_service import (
     ContentEnrichmentError,
@@ -26,6 +27,7 @@ from standards_atlas.cli.composition import (
     build_document_composition_service,
     build_document_selection_service,
     build_ontology_classification_service,
+    build_semantic_routing_service,
     build_structural_taxonomy_service,
 )
 
@@ -217,6 +219,47 @@ def classify_document_taxonomy(
     typer.echo(f"Clauses               : {len(result.document.clauses)}")
     typer.echo(f"Structural nodes      : {nodes}")
     typer.echo(f"Structural leaves     : {len(result.document.clauses) - nodes}")
+
+
+@document_app.command("route-semantics")
+def route_document_semantics(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="EngineeringDocument key to route deterministically."),
+    ],
+    manifest: Annotated[
+        Path,
+        typer.Option(
+            "--manifest",
+            exists=True,
+            readable=True,
+            resolve_path=True,
+            help="Routing-contract manifest selecting the versioned contract.",
+        ),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+) -> None:
+    """Persist deterministic semantic-task routing from taxonomy evidence."""
+    try:
+        routing_manifest = load_routing_contract_manifest(manifest)
+        result = build_semantic_routing_service(workspace).route(
+            document_key,
+            contract_id=routing_manifest.contract.id,
+            contract_version=routing_manifest.contract.version,
+        )
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Document              : {result.artifact.document_key}")
+    typer.echo(
+        f"Routing contract      : {result.artifact.contract_id}@{result.artifact.contract_version}"
+    )
+    typer.echo(f"Clauses routed        : {result.clauses_routed}")
+    typer.echo(f"Task decisions        : {result.task_decisions}")
 
 
 @document_app.command("classify-ontology")

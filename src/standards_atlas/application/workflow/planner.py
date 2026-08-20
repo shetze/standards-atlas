@@ -9,6 +9,7 @@ from standards_atlas.application.catalog import (
     StandardCatalog,
     StandardFamilyDefinition,
 )
+from standards_atlas.application.routing import load_routing_contract_manifest
 from standards_atlas.application.workflow.models import (
     ArtifactPolicy,
     WorkflowPlan,
@@ -27,6 +28,7 @@ class WorkflowPlanner:
         force: bool = False,
         keep_stages: tuple[WorkflowStage, ...] = (),
         hierarchy_key: str | None = None,
+        routing_manifest_path: Path | None = None,
     ) -> WorkflowPlan:
         steps: list[WorkflowStep] = []
         hierarchy = catalog.doorstop_hierarchy(hierarchy_key) if hierarchy_key else None
@@ -44,6 +46,7 @@ class WorkflowPlanner:
                     force=force,
                     selected_families=selected_families,
                     hierarchy_key=hierarchy_key,
+                    routing_manifest_path=routing_manifest_path,
                 )
             )
         if hierarchy is not None:
@@ -81,6 +84,7 @@ class WorkflowPlanner:
         force: bool,
         selected_families: set[str],
         hierarchy_key: str | None,
+        routing_manifest_path: Path | None,
     ) -> list[WorkflowStep]:
         documents = (
             [(family.key, family.source.pdf, family.content_selection)]
@@ -359,6 +363,11 @@ class WorkflowPlanner:
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/work/workflow/taxonomy/{key}.complete",),
                     ),
+                    *(
+                        (self._routing_step(family.key, key, routing_manifest_path),)
+                        if routing_manifest_path is not None
+                        else ()
+                    ),
                     WorkflowStep(
                         family.key,
                         key,
@@ -472,6 +481,34 @@ class WorkflowPlanner:
                         character for character in relation.target.upper() if character.isalnum()
                     )
         return None
+
+    @staticmethod
+    def _routing_step(
+        family_key: str,
+        document_key: str,
+        manifest_path: Path,
+    ) -> WorkflowStep:
+        manifest = load_routing_contract_manifest(manifest_path)
+        return WorkflowStep(
+            family_key,
+            document_key,
+            WorkflowStage.ROUTING,
+            (
+                "uv",
+                "run",
+                "standards-atlas",
+                "document",
+                "route-semantics",
+                document_key,
+                "--manifest",
+                str(manifest_path),
+            ),
+            ArtifactPolicy.DERIVED,
+            output_paths=(
+                ".atlas/data/routing/"
+                f"{document_key}/{manifest.contract.id}/{manifest.contract.version}/routing.json",
+            ),
+        )
 
     @staticmethod
     def _content_selection_args(

@@ -44,6 +44,9 @@ from standards_atlas.application.services.ontology_classification_service import
 from standards_atlas.application.services.reference_candidate_service import (
     ReferenceCandidateService,
 )
+from standards_atlas.application.services.semantic_routing_service import (
+    SemanticRoutingService,
+)
 from standards_atlas.application.services.structural_taxonomy_service import (
     StructuralTaxonomyService,
 )
@@ -69,5 +72,6 @@ __all__ = [
     "MarkdownExportService",
     "OntologyClassificationService",
     "ReferenceCandidateService",
+    "SemanticRoutingService",
     "StructuralTaxonomyService",
 ]

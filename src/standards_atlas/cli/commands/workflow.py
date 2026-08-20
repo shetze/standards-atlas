@@ -298,6 +298,7 @@ def _build_task_plan(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     qualification_manifest = resolved.optional(WorkflowManifestType.QUALIFICATION_MATRIX)
+    routing_manifest = resolved.optional(WorkflowManifestType.ROUTING_CONTRACT)
     if task is WorkflowTask.QUALIFICATION and qualification_manifest is None:
         raise typer.BadParameter(
             "--task qualification requires a manifest of type 'qualification_matrix'"
@@ -316,6 +317,7 @@ def _build_task_plan(
             force=force or overwrite,
             keep_stages=keep,
             hierarchy_key=hierarchy,
+            routing_manifest_path=routing_manifest,
         )
 
     assert qualification_manifest is not None
@@ -334,6 +336,7 @@ def _build_task_plan(
         keep_stages=keep,
         corpus_output=corpus_output,
         qualification_output=qualification_output,
+        routing_manifest_path=routing_manifest,
     )
     return WorkflowPlan(
         families=qualification.document_plan.families,

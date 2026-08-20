@@ -50,6 +50,7 @@ class QualificationWorkflowPlanner:
         keep_stages: tuple[WorkflowStage, ...] = (),
         qualification_output: Path = Path(".atlas/data/evaluation/qualification"),
         corpus_output: Path = Path(".atlas/data/evaluation/corpora"),
+        routing_manifest_path: Path | None = None,
     ) -> QualificationWorkflowPlan:
         manifest = QualificationMatrixManifest.load(manifest_path)
         document_plan = self._document_planner.plan(
@@ -59,6 +60,7 @@ class QualificationWorkflowPlanner:
             force=overwrite,
             keep_stages=keep_stages,
             hierarchy_key=hierarchy_key,
+            routing_manifest_path=routing_manifest_path,
         )
         excluded_document_stages = {
             WorkflowStage.ONTOLOGY,

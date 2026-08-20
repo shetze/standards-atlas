@@ -250,3 +250,38 @@ class SemanticRoutingPlan(BaseModel):
         """Resolve one task decision without exposing engine internals."""
 
         return next((decision for decision in self.decisions if decision.task == task), None)
+
+
+class ClauseRoutingRecord(BaseModel):
+    """Persisted routing evidence and decisions for one document clause."""
+
+    model_config = ConfigDict(frozen=True)
+
+    clause_id: str = Field(min_length=1)
+    reference: str = Field(min_length=1)
+    title: str | None = None
+    signals: TaxonomySignalProfile
+    plan: SemanticRoutingPlan
+
+
+class DocumentRoutingArtifact(BaseModel):
+    """Persistent deterministic routing result for one document and contract."""
+
+    model_config = ConfigDict(frozen=True)
+
+    document_key: str = Field(min_length=1)
+    contract_id: str = Field(min_length=1)
+    contract_version: str = Field(min_length=1)
+    clauses: tuple[ClauseRoutingRecord, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_clause_plans(self) -> DocumentRoutingArtifact:
+        clause_ids = [item.clause_id for item in self.clauses]
+        if len(clause_ids) != len(set(clause_ids)):
+            raise ValueError("routing artifact clause ids must be unique")
+        for item in self.clauses:
+            if item.plan.contract_id != self.contract_id:
+                raise ValueError("routing artifact clause plan contract id mismatch")
+            if item.plan.contract_version != self.contract_version:
+                raise ValueError("routing artifact clause plan contract version mismatch")
+        return self

@@ -11,6 +11,8 @@ from standards_atlas.application.routing.model import (
     AllMatcher,
     AlwaysMatcher,
     AnyMatcher,
+    ClauseRoutingRecord,
+    DocumentRoutingArtifact,
     HeadingContainsMatcher,
     NotMatcher,
     RoutingContract,
@@ -27,14 +29,19 @@ from standards_atlas.application.routing.model import (
     TaxonomySignalField,
     TaxonomySignalProfile,
 )
-from standards_atlas.application.routing.repository import RoutingContractRepository
+from standards_atlas.application.routing.repository import (
+    RoutingContractRepository,
+    SemanticRoutingArtifactRepository,
+)
 from standards_atlas.application.routing.signals import taxonomy_signal_profile
 
 __all__ = [
     "AllMatcher",
     "AlwaysMatcher",
     "AnyMatcher",
+    "ClauseRoutingRecord",
     "DeterministicRoutingEngine",
+    "DocumentRoutingArtifact",
     "HeadingContainsMatcher",
     "NotMatcher",
     "RoutingContract",
@@ -46,6 +53,7 @@ __all__ = [
     "RoutingRule",
     "RoutingTaskReference",
     "RoutingTaxonomyRequirement",
+    "SemanticRoutingArtifactRepository",
     "SemanticRoutingPlan",
     "SignalEqualsMatcher",
     "TaxonomyCategoryMatcher",

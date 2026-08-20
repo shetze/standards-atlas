@@ -38,6 +38,12 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         "manifests/*.yaml",
     ),
+    "semantic-routing-artifact": SchemaPolicy(
+        "semantic-routing-artifact",
+        1,
+        (1,),
+        ".atlas/data/routing/**/routing.json",
+    ),
 }
 
 # Compatibility alias for code/docs created by the baseline slice.

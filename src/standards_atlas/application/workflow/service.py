@@ -39,6 +39,7 @@ class EndToEndWorkflowService:
         force: bool = False,
         keep_stages: tuple[WorkflowStage, ...] = (),
         hierarchy_key: str | None = None,
+        routing_manifest_path: Path | None = None,
     ) -> WorkflowPlan:
         return self.planner.plan(
             catalog,
@@ -47,6 +48,7 @@ class EndToEndWorkflowService:
             force=force,
             keep_stages=keep_stages,
             hierarchy_key=hierarchy_key,
+            routing_manifest_path=routing_manifest_path,
         )
 
     def execute(

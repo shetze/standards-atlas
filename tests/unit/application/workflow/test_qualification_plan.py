@@ -9,7 +9,12 @@ QUALIFICATION_MANIFEST = Path(
 )
 
 
-def _plan(*, regenerate_docling: bool = False, overwrite: bool = False):
+def _plan(
+    *,
+    regenerate_docling: bool = False,
+    overwrite: bool = False,
+    routing_manifest: Path | None = None,
+):
     catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     return QualificationWorkflowPlanner().plan(
         catalog,
@@ -22,6 +27,7 @@ def _plan(*, regenerate_docling: bool = False, overwrite: bool = False):
         knowledge_domain="functional-safety",
         regenerate_docling=regenerate_docling,
         overwrite=overwrite,
+        routing_manifest_path=routing_manifest,
     )
 
 
@@ -79,3 +85,12 @@ def test_overwrite_propagates_to_derived_document_and_matrix_steps() -> None:
         step.stage is WorkflowStage.NORMALIZE and "--overwrite" in step.command
         for step in plan.steps
     )
+
+
+def test_qualification_plan_includes_routing_when_manifest_is_selected() -> None:
+    plan = _plan(routing_manifest=Path("manifests/functional-safety-semantic-routing-v1.yaml"))
+    stages = tuple(step.stage for step in plan.steps)
+
+    assert WorkflowStage.ROUTING in stages
+    assert stages.index(WorkflowStage.TAXONOMY) < stages.index(WorkflowStage.ROUTING)
+    assert WorkflowStage.ONTOLOGY not in stages
