@@ -1,1 +1,379 @@
-<mxfile host="app.diagrams.net"><diagram name="Page-1"><mxGraphModel pageWidth="1320" pageHeight="620"><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="doc" value="EngineeringDocument&amp;#xa;+ clauses" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="50" y="80" width="220" height="80" as="geometry"/></mxCell><mxCell id="clause" value="Clause&amp;#xa;+ structural_profile&amp;#xa;+ structural_context&amp;#xa;+ semantic_classification" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="50" y="215" width="250" height="125" as="geometry"/></mxCell><mxCell id="profile" value="StructuralProfile" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="390" y="80" width="200" height="65" as="geometry"/></mxCell><mxCell id="ctx" value="StructuralContext&amp;#xa;+ ancestors&amp;#xa;+ sibling&amp;#xa;+ references" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="390" y="180" width="220" height="110" as="geometry"/></mxCell><mxCell id="sem" value="SemanticClassification&amp;#xa;+ ontology dimensions&amp;#xa;+ relations" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="390" y="330" width="220" height="95" as="geometry"/></mxCell><mxCell id="taxsvc" value="StructuralTaxonomyService" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="730" y="90" width="230" height="70" as="geometry"/></mxCell><mxCell id="ontsvc" value="OntologyClassificationService" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="730" y="245" width="250" height="70" as="geometry"/></mxCell><mxCell id="engine" value="OntologyEngine&amp;#xa;OntologyRegistry&amp;#xa;OntologyDefinitionRepository" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="730" y="360" width="270" height="120" as="geometry"/></mxCell><mxCell id="llm" value="LlmOntologyClassifier" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1"><mxGeometry x="1050" y="360" width="200" height="70" as="geometry"/></mxCell><mxCell id="a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="doc" target="clause"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="clause" target="profile"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="clause" target="ctx"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="clause" target="sem"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="taxsvc" target="profile"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="f" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="taxsvc" target="ctx"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="g" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="ontsvc" target="sem"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="h" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="ontsvc" target="engine"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="i" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;" edge="1" parent="1" source="engine" target="llm"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="j" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="ctx" target="ontsvc"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="k" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="profile" target="ontsvc"><mxGeometry relative="1" as="geometry"/></mxCell></root></mxGraphModel></diagram></mxfile>
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" modified="2026-07-30T16:00:00.000Z" agent="GPT-5.6 Thinking" version="24.7.17" type="device">
+  <diagram id="domain-model" name="1 - Canonical Domain Model">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p_doc" value="Canonical documents" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=#dae8fc;strokeColor=#666666;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="690" height="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="p_content" value="Content model" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=#d5e8d4;strokeColor=#666666;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="730" y="20" width="430" height="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="p_sem" value="Semantic and structural classification" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=#e1d5e7;strokeColor=#666666;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="20" width="440" height="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="EngineeringDocument" value="&lt;i&gt;&amp;lt;&amp;lt;aggregate root&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;EngineeringDocument&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ key: DocumentKey&lt;br&gt;+ title: str&lt;br&gt;+ document_type: DocumentType&lt;br&gt;+ clauses: tuple[Clause, ...]&lt;br&gt;+ annotations: tuple[ClauseAnnotation, ...]&lt;br&gt;+ lineage: ArtifactLineage | None&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ annotations_for_clause()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="80" width="300" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Standard" value="&lt;i&gt;&amp;lt;&amp;lt;domain entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Standard&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ name: str&lt;br&gt;+ parent_key: StandardKey | None&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ from_name()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="390" y="80" width="270" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="Clause" value="&lt;i&gt;&amp;lt;&amp;lt;entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Clause&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ id: ClauseId&lt;br&gt;+ reference: StandardReference&lt;br&gt;+ clause_type: ClauseType&lt;br&gt;+ title: str | None&lt;br&gt;+ parent_id: ClauseId | None&lt;br&gt;+ content: tuple[ContentBlock, ...]&lt;br&gt;+ semantic_classification: SemanticClassification&lt;br&gt;+ structural_profile: StructuralProfile | None&lt;br&gt;+ doorstop: DoorstopItemAttributes | None&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ plain_text()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="320" width="350" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="ClauseAnnotation" value="&lt;i&gt;&amp;lt;&amp;lt;entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ClauseAnnotation&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ id: AnnotationId&lt;br&gt;+ clause_id: ClauseId&lt;br&gt;+ annotation_type: AnnotationType&lt;br&gt;+ visibility: AnnotationVisibility&lt;br&gt;+ content: str&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="440" y="320" width="270" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="Relation" value="&lt;i&gt;&amp;lt;&amp;lt;entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Relation&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ source_id: ClauseId&lt;br&gt;+ target_id: ClauseId&lt;br&gt;+ relation_type: RelationType&lt;br&gt;+ scope: RelationScope&lt;br&gt;+ target_document_key: DocumentKey | None&lt;br&gt;+ confidence: float | None&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ validate_scope()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="680" width="320" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="ArtifactLineage" value="&lt;i&gt;&amp;lt;&amp;lt;value object&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ArtifactLineage&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ artifact: ArtifactReference&lt;br&gt;+ derived_from: tuple[ArtifactReference, ...]&lt;br&gt;+ transformation_ids: tuple[str, ...]&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="410" y="680" width="280" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="Identifiers" value="&lt;i&gt;&amp;lt;&amp;lt;value objects&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Identifiers&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;DocumentKey&lt;br&gt;StandardKey&lt;br&gt;ClauseId&lt;br&gt;AnnotationId&lt;br&gt;StandardReference&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="220" y="930" width="280" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="ContentBlock" value="&lt;i&gt;&amp;lt;&amp;lt;abstract / union&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ContentBlock&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ id: str&lt;br&gt;+ normalized_item_ids: tuple[str, ...]&lt;br&gt;+ source_evidence: tuple[SourceEvidence, ...]&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="770" y="80" width="350" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="TextBlock" value="&lt;i&gt;&amp;lt;&amp;lt;content block&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;TextBlock&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ text: str&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="800" y="270" width="290" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ListBlock" value="&lt;i&gt;&amp;lt;&amp;lt;content block&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ListBlock&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ ordered: bool&lt;br&gt;+ items: tuple[ListItem, ...]&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="800" y="390" width="290" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="TableBlock" value="&lt;i&gt;&amp;lt;&amp;lt;content block&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;TableBlock&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ rows: tuple[TableRow, ...]&lt;br&gt;+ caption: str | None&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="800" y="530" width="290" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="PictureBlock" value="&lt;i&gt;&amp;lt;&amp;lt;content block&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;PictureBlock&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ caption: str | None&lt;br&gt;+ image_path: str | None&lt;br&gt;+ content_hash: str | None&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="800" y="680" width="290" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="FormulaBlock" value="&lt;i&gt;&amp;lt;&amp;lt;content block&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;FormulaBlock&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ expression: str&lt;br&gt;+ representation: latex | mathml | text&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="800" y="845" width="290" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="NoteBlock" value="&lt;i&gt;&amp;lt;&amp;lt;content block&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;NoteBlock&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ note_kind: str | None&lt;br&gt;+ content: tuple[ContentBlock, ...]&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="800" y="985" width="290" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="SemanticClassification" value="&lt;i&gt;&amp;lt;&amp;lt;value object&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;SemanticClassification&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ statement_functions: tuple[...]&lt;br&gt;+ applicability_functions: tuple[...]&lt;br&gt;+ responsibility_functions: tuple[...]&lt;br&gt;+ document_structure: ... | None&lt;br&gt;+ normative_status: NormativeStatus&lt;br&gt;+ domain_functions: tuple[...]&lt;br&gt;+ relations: tuple[SemanticRelation, ...]&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ dimensions_are_unique()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="80" width="370" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="DocumentStructureClassification" value="&lt;i&gt;&amp;lt;&amp;lt;value object&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;DocumentStructureClassification&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ family: str&lt;br&gt;+ category: DocumentStructure&lt;br&gt;+ function: str | None&lt;br&gt;+ annex_identifier: str | None&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="360" width="370" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="DomainFunctionClassification" value="&lt;i&gt;&amp;lt;&amp;lt;value object&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;DomainFunctionClassification&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ knowledge_domain: str&lt;br&gt;+ taxonomy_version: str&lt;br&gt;+ functions: tuple[str, ...]&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="540" width="370" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="SemanticRelation" value="&lt;i&gt;&amp;lt;&amp;lt;value object&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;SemanticRelation&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ kind: SemanticRelationKind&lt;br&gt;+ scope: RelationScope&lt;br&gt;+ target_reference: str&lt;br&gt;+ target_clause_id: str | None&lt;br&gt;+ confidence: float | None&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="700" width="370" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="StructuralProfile" value="&lt;i&gt;&amp;lt;&amp;lt;value object&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;StructuralProfile&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ canonical_section: CanonicalDocumentSection | None&lt;br&gt;+ document_categories: tuple[DomainCategory, ...]&lt;br&gt;+ domain_categories: tuple[DomainCategory, ...]&lt;br&gt;+ annex_status: AnnexStatus | None&lt;/div&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ validate_annex_status()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1215" y="910" width="370" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="extends" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Standard" target="EngineeringDocument" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="1  contains  0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="EngineeringDocument" target="Clause" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="1  contains  0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="EngineeringDocument" target="ClauseAnnotation" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="0..1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="EngineeringDocument" target="ArtifactLineage" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="1  contains  0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Clause" target="ContentBlock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Clause" target="SemanticClassification" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="0..1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Clause" target="StructuralProfile" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentBlock" target="TextBlock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentBlock" target="ListBlock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentBlock" target="TableBlock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentBlock" target="PictureBlock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentBlock" target="FormulaBlock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentBlock" target="NoteBlock" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="0..1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="SemanticClassification" target="DocumentStructureClassification" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="SemanticClassification" target="DomainFunctionClassification" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" value="0..*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="SemanticClassification" target="SemanticRelation" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="source / target" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Relation" target="Clause" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n1" value="&lt;b&gt;Design intent&lt;/b&gt;&lt;br&gt;Clause is the semantic center of the canonical model. ADR 0050 adds an optional multi-dimensional StructuralProfile. ADR 0051 removes the former flat SemanticRole model; SemanticClassification is the only semantic classification API." style="shape=note;html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;verticalAlign=top;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="435" y="510" width="270" height="130" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="hexagonal" name="2 - Hexagonal Application Architecture">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="pkg_cli" value="CLI / Composition Root" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=#f8cecc;strokeColor=#666666;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="1580" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_services" value="Application services and workflow" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=#dae8fc;strokeColor=#666666;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="20" y="200" width="520" height="920" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_ports" value="Consumer-oriented ports" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=#fff2cc;strokeColor=#666666;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="570" y="200" width="470" height="920" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_adapters" value="Infrastructure adapters" style="swimlane;html=1;rounded=1;horizontal=1;startSize=30;fillColor=#d5e8d4;strokeColor=#666666;fontStyle=1;fontSize=14;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="200" width="530" height="920" as="geometry" />
+        </mxCell>
+        <mxCell id="Composition" value="&lt;i&gt;&amp;lt;&amp;lt;composition root&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;composition.py&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;build_*_service(workspace)&lt;br&gt;constructs concrete adapters&lt;br&gt;injects ports into use cases&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="70" y="60" width="1450" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="DocumentNormalizationService" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;DocumentNormalizationService&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;extracted_documents: ExtractedDocumentRepository&lt;br&gt;normalized_documents: NormalizedDocumentRepository&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="250" width="450" height="121" as="geometry" />
+        </mxCell>
+        <mxCell id="ReferenceCandidateService" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ReferenceCandidateService&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;documents: EngineeringDocumentRepository&lt;br&gt;normalized: NormalizationRepository&lt;br&gt;results: ReferenceCandidateStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="391" width="450" height="139" as="geometry" />
+        </mxCell>
+        <mxCell id="AlignmentService" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;AlignmentService&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;documents: EngineeringDocumentRepository&lt;br&gt;normalized: NormalizationRepository&lt;br&gt;candidates: ReferenceCandidateStore&lt;br&gt;results: AlignmentStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="550" width="450" height="157" as="geometry" />
+        </mxCell>
+        <mxCell id="AlignmentReviewService" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;AlignmentReviewService&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;documents / normalized / candidates&lt;br&gt;automatic: AlignmentStore&lt;br&gt;review: AlignmentReviewStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="727" width="450" height="139" as="geometry" />
+        </mxCell>
+        <mxCell id="ContentEnrichmentService" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ContentEnrichmentService&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;documents / normalized / alignments&lt;br&gt;reviews / contracts&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="886" width="450" height="121" as="geometry" />
+        </mxCell>
+        <mxCell id="MarkdownExportService" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;MarkdownExportService&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;documents: EngineeringDocumentReader&lt;br&gt;exporter: DocumentExporter&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="1027" width="450" height="121" as="geometry" />
+        </mxCell>
+        <mxCell id="EndToEndWorkflowService" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;EndToEndWorkflowService&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;executor: WorkflowExecutor&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="1168" width="450" height="103" as="geometry" />
+        </mxCell>
+        <mxCell id="WorkflowExecutor" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;WorkflowExecutor&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;recovery: WorkflowRecovery&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="1291" width="450" height="103" as="geometry" />
+        </mxCell>
+        <mxCell id="WorkflowRecovery" value="&lt;i&gt;&amp;lt;&amp;lt;application service&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;WorkflowRecovery&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;artifacts: WorkflowArtifactStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="1414" width="450" height="103" as="geometry" />
+        </mxCell>
+        <mxCell id="ExtractedDocumentRepository" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ExtractedDocumentRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ load(document_key)&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="245" width="410" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="NormalizedDocumentRepository" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;NormalizedDocumentRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ save()&lt;br&gt;+ load()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="363" width="410" height="114" as="geometry" />
+        </mxCell>
+        <mxCell id="EngineeringDocumentRepository" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;EngineeringDocumentRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ load()&lt;br&gt;+ save()&lt;br&gt;+ exists()&lt;br&gt;+ list()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="499" width="410" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="ReferenceCandidateStore" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ReferenceCandidateStore&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ load()&lt;br&gt;+ save()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="671" width="410" height="114" as="geometry" />
+        </mxCell>
+        <mxCell id="AlignmentStore" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;AlignmentStore&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ load()&lt;br&gt;+ save()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="807" width="410" height="114" as="geometry" />
+        </mxCell>
+        <mxCell id="AlignmentReviewStore" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;AlignmentReviewStore&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ save_review()&lt;br&gt;+ load_reviewed()&lt;br&gt;+ save_reviewed()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="943" width="410" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="EngineeringConstructionContractStore" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;EngineeringConstructionContractStore&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ save()&lt;br&gt;+ load()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="1097" width="410" height="114" as="geometry" />
+        </mxCell>
+        <mxCell id="DocumentExporter" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;DocumentExporter&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ export(document, target)&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="1233" width="410" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="WorkflowArtifactStore" value="&lt;i&gt;&amp;lt;&amp;lt;Protocol&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;WorkflowArtifactStore&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;+ outputs_exist()&lt;br&gt;+ record_completion()&lt;br&gt;+ remove_outputs()&lt;br&gt;+ alignment_requires_review()&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#fffaf0;strokeColor=#d6b656;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="600" y="1351" width="410" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="DoclingExtractedDocumentRepository" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;DoclingExtractedDocumentRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements ExtractedDocumentRepository&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="245" width="450" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="NormalizationArtifactRepository" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;NormalizationArtifactRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements NormalizedDocumentRepository&lt;br&gt;and NormalizationRepository&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="368" width="450" height="116" as="geometry" />
+        </mxCell>
+        <mxCell id="FileSystemEngineeringDocumentRepository" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;FileSystemEngineeringDocumentRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements EngineeringDocumentRepository&lt;br&gt;and EngineeringDocumentReader&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="509" width="450" height="116" as="geometry" />
+        </mxCell>
+        <mxCell id="ReferenceCandidateRepository" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;ReferenceCandidateRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements ReferenceCandidateStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="650" width="450" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="AlignmentArtifactRepository" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;AlignmentArtifactRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements AlignmentStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="773" width="450" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="AlignmentReviewRepository" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;AlignmentReviewRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements AlignmentReviewStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="896" width="450" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="EngineeringConstructionContractRepository" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;EngineeringConstructionContractRepository&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements EngineeringConstructionContractStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="1019" width="450" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="MarkdownExporter" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;MarkdownExporter&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements DocumentExporter&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="1142" width="450" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="FileSystemWorkflowArtifactStore" value="&lt;i&gt;&amp;lt;&amp;lt;adapter&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;FileSystemWorkflowArtifactStore&lt;/b&gt;&lt;hr&gt;&lt;div style=&quot;text-align:left&quot;&gt;implements WorkflowArtifactStore&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;shadow=0;fillColor=#ffffff;strokeColor=#666666;fontSize=12;align=center;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="1265" width="450" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="cw0" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="DocumentNormalizationService" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cw1" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="ReferenceCandidateService" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cw2" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="AlignmentService" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cw3" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="AlignmentReviewService" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cw4" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="ContentEnrichmentService" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cw5" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="MarkdownExportService" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cw6" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="EndToEndWorkflowService" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca0" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="DoclingExtractedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca1" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="NormalizationArtifactRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca2" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="FileSystemEngineeringDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca3" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="ReferenceCandidateRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca4" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="AlignmentArtifactRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca5" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="AlignmentReviewRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca6" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="EngineeringConstructionContractRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca7" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="MarkdownExporter" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ca8" value="constructs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="Composition" target="FileSystemWorkflowArtifactStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp0" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="DocumentNormalizationService" target="ExtractedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp1" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="DocumentNormalizationService" target="NormalizedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp2" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ReferenceCandidateService" target="EngineeringDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp3" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ReferenceCandidateService" target="NormalizedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp4" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ReferenceCandidateService" target="ReferenceCandidateStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp5" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentService" target="EngineeringDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp6" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentService" target="NormalizedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp7" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentService" target="ReferenceCandidateStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp8" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentService" target="AlignmentStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp9" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentReviewService" target="EngineeringDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp10" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentReviewService" target="NormalizedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp11" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentReviewService" target="ReferenceCandidateStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp12" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentReviewService" target="AlignmentStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp13" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentReviewService" target="AlignmentReviewStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp14" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentEnrichmentService" target="EngineeringDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp15" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentEnrichmentService" target="NormalizedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp16" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentEnrichmentService" target="AlignmentStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp17" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentEnrichmentService" target="AlignmentReviewStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp18" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ContentEnrichmentService" target="EngineeringConstructionContractStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp19" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="MarkdownExportService" target="EngineeringDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp20" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="MarkdownExportService" target="DocumentExporter" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sp21" value="uses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=open;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="WorkflowRecovery" target="WorkflowArtifactStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap0" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="DoclingExtractedDocumentRepository" target="ExtractedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap1" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="NormalizationArtifactRepository" target="NormalizedDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap2" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="FileSystemEngineeringDocumentRepository" target="EngineeringDocumentRepository" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap3" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="ReferenceCandidateRepository" target="ReferenceCandidateStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap4" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentArtifactRepository" target="AlignmentStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap5" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="AlignmentReviewRepository" target="AlignmentReviewStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap6" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="EngineeringConstructionContractRepository" target="EngineeringConstructionContractStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap7" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="MarkdownExporter" target="DocumentExporter" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ap8" value="implements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=0;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="FileSystemWorkflowArtifactStore" target="WorkflowArtifactStore" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" value="&lt;b&gt;Dependency rule (ADR 0003)&lt;/b&gt;&lt;br&gt;Application services depend only on consumer-oriented Protocols. Concrete adapters depend inward on those Protocols. Only the CLI composition root selects and wires implementations." style="shape=note;html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;verticalAlign=top;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="1010" width="430" height="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
