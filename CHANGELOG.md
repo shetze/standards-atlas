@@ -16,6 +16,7 @@
 - archive exact corpus, task, prompt, and ontology inputs in immutable qualification-run evidence packages
 - bump qualification-run archive and metadata schema to 1.2
 - improve qualification reproducibility before fresh matrix runs
+- materialize AtlasData clause hierarchy into canonical `Clause.parent_id` values so structural taxonomy emits real nodes, ancestors, and local sibling sequences
 
 
 ## Unreleased

@@ -275,3 +275,52 @@ def test_domain_mapper_reads_public_semantic_tags() -> None:
     assert [value.value for value in classification.responsibility_functions] == [
         "responsibility_assignment"
     ]
+
+
+def test_domain_mapper_materializes_parent_ids_from_clause_references() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(name="Example", digits=8, official_year=2023),
+        structure_items=[
+            StructureItem(visible_reference="0", item_type=AtlasItemType.TOC),
+            StructureItem(visible_reference="7", item_type=AtlasItemType.TOC),
+            StructureItem(visible_reference="7.4", item_type=AtlasItemType.TOC),
+            StructureItem(visible_reference="7.4.2", item_type=AtlasItemType.CLAUSE),
+            StructureItem(visible_reference="7.4.2.1", item_type=AtlasItemType.REQUIREMENT),
+            StructureItem(visible_reference="8.3.1", item_type=AtlasItemType.CLAUSE),
+        ],
+        initialization_records=[],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="EXAMPLE")
+    by_reference = {clause.reference.clause: clause for clause in standard.clauses}
+
+    assert by_reference["0"].parent_id is None
+    assert by_reference["7"].parent_id == by_reference["0"].id
+    assert by_reference["7.4"].parent_id == by_reference["7"].id
+    assert by_reference["7.4.2"].parent_id == by_reference["7.4"].id
+    assert by_reference["7.4.2.1"].parent_id == by_reference["7.4.2"].id
+    # Missing 8 and 8.3 are not invented; the nearest explicit root is retained.
+    assert by_reference["8.3.1"].parent_id == by_reference["0"].id
+
+
+def test_domain_mapper_keeps_volumes_as_separate_hierarchies() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(name="IEC 61508", digits=11, official_year=2010),
+        structure_items=[
+            StructureItem(visible_reference="0", item_type=AtlasItemType.TOC, volume="1"),
+            StructureItem(visible_reference="7", item_type=AtlasItemType.TOC, volume="1"),
+            StructureItem(visible_reference="7.1", item_type=AtlasItemType.CLAUSE, volume="1"),
+            StructureItem(visible_reference="0", item_type=AtlasItemType.TOC, volume="2"),
+            StructureItem(visible_reference="7", item_type=AtlasItemType.TOC, volume="2"),
+            StructureItem(visible_reference="7.1", item_type=AtlasItemType.CLAUSE, volume="2"),
+        ],
+        initialization_records=[],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="IEC61508")
+    by_identity = {(clause.volume, clause.reference.clause): clause for clause in standard.clauses}
+
+    assert by_identity[("1", "7")].parent_id == by_identity[("1", "0")].id
+    assert by_identity[("1", "7.1")].parent_id == by_identity[("1", "7")].id
+    assert by_identity[("2", "7")].parent_id == by_identity[("2", "0")].id
+    assert by_identity[("2", "7.1")].parent_id == by_identity[("2", "7")].id

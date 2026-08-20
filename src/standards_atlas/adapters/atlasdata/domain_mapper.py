@@ -73,6 +73,7 @@ def map_atlas_data_to_standard(
         )
         for item in atlas_data.structure_items
     )
+    clauses = _materialize_parent_ids(clauses)
 
     clauses_by_reference = {(clause.volume, clause.reference.clause): clause for clause in clauses}
 
@@ -92,6 +93,39 @@ def map_atlas_data_to_standard(
         clauses=clauses,
         annotations=annotations,
     )
+
+
+def _materialize_parent_ids(clauses: tuple[Clause, ...]) -> tuple[Clause, ...]:
+    """Materialize the hierarchy encoded by AtlasData clause references.
+
+    AtlasData stores the canonical document hierarchy implicitly in visible clause
+    references (for example ``7 -> 7.4 -> 7.4.2``).  ``Clause.parent_id`` is the
+    canonical relationship consumed by the structural taxonomy, so the adapter must
+    make that implicit structure explicit when the domain model is created.
+
+    The nearest existing dotted reference in the same volume is used as parent.
+    Part documents that expose a clause ``0`` root attach otherwise top-level
+    clauses to that root. Missing intermediate references are tolerated by walking
+    outward to the nearest existing ancestor instead of inventing synthetic nodes.
+    """
+    by_reference = {(clause.volume, clause.reference.clause): clause for clause in clauses}
+    roots = {clause.volume: clause for clause in clauses if clause.reference.clause.strip() == "0"}
+    updated: list[Clause] = []
+    for clause in clauses:
+        reference = clause.reference.clause.strip()
+        parent: Clause | None = None
+        candidate = reference
+        while "." in candidate:
+            candidate = candidate.rsplit(".", 1)[0]
+            parent = by_reference.get((clause.volume, candidate))
+            if parent is not None:
+                break
+        if parent is None and reference != "0":
+            parent = roots.get(clause.volume)
+        updated.append(
+            clause.model_copy(update={"parent_id": parent.id if parent is not None else None})
+        )
+    return tuple(updated)
 
 
 def _map_initialization_records_to_annotations(
