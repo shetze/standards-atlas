@@ -173,7 +173,16 @@ The command also creates an immutable qualification-run archive directly below
 are never reused by `--overwrite`. The archive contains the qualification manifest snapshot,
 qualification and consensus reports, Golden Corpus proposal, HITL queue, analysis metrics,
 cascade provenance, cascade JSON reports, and an `archive-manifest.json` with SHA-256 hashes
-and file sizes.
+and file sizes. It also snapshots the exact corpus dataset and corpus manifest, task contract
+and schema, all referenced prompt resources, all ontology definitions used by the task,
+local/published annotation evidence, and the LLM/MCP runtime configuration files.
+
+Corpus examples include the materialized structural taxonomy context when available. This
+means structure-aware qualification requests receive node/leaf kind, ancestor and sibling
+context, structural reference edges, scope mentions and resolved/deferred scope edges from
+the document taxonomy rather than reconstructing that evidence inside the LLM workflow. Prompt families remain
+isolated: only prompt templates that explicitly request `context_json` expose this structural
+context to the adaptive LLM interview; content-only and bounded-reasoning prompts do not.
 
 Each ZIP also contains `qualification-run-metadata.json`. This is the canonical description
 of the archived run and records the Standards Atlas version, qualification-manifest schema,

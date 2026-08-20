@@ -438,3 +438,56 @@ def test_corpus_records_nearest_first_ancestor_headings(tmp_path: Path) -> None:
     assert child["input"]["context"]["ancestor_headings"] == [
         {"clause_id": "DOC:1", "reference": "1", "title": "Scope"}
     ]
+
+
+def test_corpus_preserves_materialized_structural_context(tmp_path: Path) -> None:
+    class StructuralProvider:
+        def list_clauses(self, **kwargs):
+            return self.sample_clauses(**kwargs)
+
+        def sample_clauses(self, **kwargs):
+            return (
+                ClauseDescriptor(
+                    id="DOC:2",
+                    document_key="DOC",
+                    reference="DOC:2",
+                    clause_reference="2",
+                    content_hash="sha256:" + "b" * 64,
+                    clause_type=ClauseType.REQUIREMENT,
+                    text="Verification evidence shall be recorded.",
+                    structural_context={
+                        "node_kind": "leaf",
+                        "sibling": {
+                            "index": 1,
+                            "count": 3,
+                            "is_first": False,
+                            "is_last": False,
+                            "previous_clause_id": "DOC:1",
+                            "next_clause_id": "DOC:3",
+                        },
+                        "references": [],
+                        "scope_mentions": [
+                            {
+                                "source": "content",
+                                "surface_text": "following two clauses",
+                                "direction_hint": "forward",
+                                "cardinality": 2,
+                                "status": "resolved",
+                            }
+                        ],
+                        "scopes": [],
+                    },
+                    reference_mentions=(),
+                ),
+            )
+
+    result = EvaluationCorpusBuilder(StructuralProvider()).build(
+        CorpusBuildConfig(task="clause-summary", version="local-structural", count=1),
+        tmp_path,
+    )
+    payload = json.loads(result.dataset_path.read_text())
+    context = payload["examples"][0]["input"]["context"]
+
+    assert context["structural_context"]["node_kind"] == "leaf"
+    assert context["structural_context"]["sibling"]["index"] == 1
+    assert context["structural_context"]["scope_mentions"][0]["cardinality"] == 2

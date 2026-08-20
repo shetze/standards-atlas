@@ -22,8 +22,8 @@ from standards_atlas.application.semantic_qualification.diagnostics import (
 )
 from standards_atlas.shared.hashing import sha256_file
 
-ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.1"
-QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.1"
+ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.2"
+QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.2"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
 
@@ -138,6 +138,74 @@ def write_qualification_diagnostics(
     return path
 
 
+def collect_qualification_input_members(
+    *,
+    manifest_payload: dict[str, Any],
+    resources: Path,
+    corpus_root: Path,
+    published_corpus_root: Path | None = None,
+) -> tuple[tuple[Path, str], ...]:
+    """Return immutable input snapshots required to reproduce a qualification run."""
+    task = str(manifest_payload.get("task") or "statement-function-classification")
+    task_version = str(manifest_payload.get("task_version") or "")
+    dataset_version = str(manifest_payload.get("dataset_version") or "")
+    corpus_id = str(manifest_payload.get("corpus_id") or "")
+    members: list[tuple[Path, str]] = []
+
+    dataset_path = corpus_root / task / dataset_version / "dataset.json"
+    members.append((dataset_path, "inputs/corpus/dataset.json"))
+    if corpus_id:
+        members.append((corpus_root / corpus_id / "corpus.yaml", "inputs/corpus/corpus.yaml"))
+        for root, prefix in (
+            (corpus_root, "inputs/evidence/local"),
+            (published_corpus_root, "inputs/evidence/published"),
+        ):
+            if root is None:
+                continue
+            annotation_root = root / corpus_id / "annotations"
+            if annotation_root.is_dir():
+                for path in sorted(annotation_root.rglob("*.yaml")):
+                    members.append((path, f"{prefix}/{path.relative_to(annotation_root)}"))
+
+    task_root = resources / "tasks" / task / task_version
+    if task_root.is_dir():
+        for path in sorted(task_root.rglob("*")):
+            if path.is_file():
+                members.append((path, f"inputs/task/{path.relative_to(task_root)}"))
+
+    prompt_versions = {
+        str(item.get("prompt_version"))
+        for item in manifest_payload.get("prompts", [])
+        if isinstance(item, dict) and item.get("prompt_version")
+    }
+    for version in sorted(prompt_versions):
+        prompt_root = resources / "prompts" / task / version
+        if not prompt_root.is_dir() and task == "semantic-profile-classification":
+            prompt_root = resources / "prompts" / "statement-function-classification" / version
+        if prompt_root.is_dir():
+            for path in sorted(prompt_root.rglob("*")):
+                if path.is_file():
+                    members.append(
+                        (path, f"inputs/prompts/{version}/{path.relative_to(prompt_root)}")
+                    )
+
+    task_yaml = task_root / "task.yaml"
+    if task_yaml.exists():
+        payload = yaml.safe_load(task_yaml.read_text(encoding="utf-8")) or {}
+        ontology_root = resources.parent / "ontologies"
+        for dimension, reference in sorted(dict(payload.get("ontologies", {})).items()):
+            if not isinstance(reference, dict):
+                continue
+            ontology_id = reference.get("id")
+            ontology_version = reference.get("version")
+            if not ontology_id or not ontology_version:
+                continue
+            source = ontology_root / str(ontology_id) / str(ontology_version) / "ontology.yaml"
+            members.append((source, f"inputs/ontologies/{dimension}/ontology.yaml"))
+
+    return tuple(members)
+
+
 def create_analysis_archive(
     *,
     output_directory: Path,
@@ -149,6 +217,7 @@ def create_analysis_archive(
     matrix_passed: bool | None = None,
     execution_policy: dict[str, bool] | None = None,
     archive_directory: Path | None = None,
+    input_members: Iterable[tuple[Path, str]] = (),
 ) -> Path:
     """Create an immutable, sequentially numbered qualification-run ZIP."""
     archive_dir = archive_directory or output_directory.parent
@@ -179,6 +248,9 @@ def create_analysis_archive(
             members.append((path, _member_name(path, output_directory, manifest_path)))
     if manifest_path.exists():
         members.append((manifest_path, "configuration/qualification-manifest.yaml"))
+    for path, member in input_members:
+        if path.exists() and path.is_file():
+            members.append((path, member))
     if cascade_directory is not None and cascade_directory.is_dir():
         for path in sorted(cascade_directory.rglob("*.json")):
             if path.is_file():

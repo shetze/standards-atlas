@@ -519,9 +519,11 @@ def _run_adaptive_interview(
     retry_timeouts: bool,
     on_retry,
 ):
-    plan = AdaptiveInterviewPlanner().plan(item_input)
     content = dict(item_input.get("content", {}))
-    context = dict(item_input.get("context", {}))
+    full_context = dict(item_input.get("context", {}))
+    context = full_context if "{context_json}" in prompt.user_template else {}
+    interview_input = {**dict(item_input), "context": context}
+    plan = AdaptiveInterviewPlanner().plan(interview_input)
     answers: list[dict[str, Any]] = []
     last_result = None
     fresh_predictions = 0

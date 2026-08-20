@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Protocol
+from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -67,6 +67,8 @@ class ClauseDescriptor(BaseModel):
     table_block_count: int = Field(default=0, ge=0)
     table_text_length: int = Field(default=0, ge=0)
     non_table_text_length: int = Field(default=0, ge=0)
+    structural_context: dict[str, Any] | None = None
+    reference_mentions: tuple[dict[str, Any], ...] = ()
 
 
 class ClauseFilter(BaseModel):

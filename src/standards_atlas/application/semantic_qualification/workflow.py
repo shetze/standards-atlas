@@ -164,6 +164,8 @@ class EvaluationCorpusBuilder:
                     "semantic_sections": [
                         section.model_dump(mode="json") for section in clause.semantic_sections
                     ],
+                    "structural_context": clause.structural_context,
+                    "reference_mentions": list(clause.reference_mentions),
                     "content_profile": clause.content_profile.value,
                     "table_block_count": clause.table_block_count,
                     "eligibility": policy.evaluate_clause(clause).model_dump(mode="json"),

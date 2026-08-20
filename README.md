@@ -74,7 +74,7 @@ The workflow intentionally stops at review boundaries when human confirmation is
 
 ## Project status
 
-Standards Atlas 0.8.2 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
+Standards Atlas 0.8.3 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
 
 ## Development
 
@@ -101,7 +101,7 @@ See `docs/user-guide/codex-integration.md` for setup and verification.
 
 ## Current version
 
-This snapshot corresponds to **standards-atlas 0.8.2**. Version 0.8.2 builds on the completed architecture refactoring with auditable qualification-run archives, typed workflow manifests, dimension-aware cascade resolution, visual-formula preservation and transcription enrichment, and optional LLM-assisted normalization-quality qualification.
+This snapshot corresponds to **standards-atlas 0.8.3**. Version 0.8.3 builds on the completed architecture refactoring with auditable qualification-run archives, typed workflow manifests, dimension-aware cascade resolution, visual-formula preservation and transcription enrichment, and optional LLM-assisted normalization-quality qualification.
 
 ### Formula transcription enrichment
 

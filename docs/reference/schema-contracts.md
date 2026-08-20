@@ -7,7 +7,7 @@ Fields such as `version`, `task_version`, `taxonomy_version`, `prompt_version`, 
 
 ## Bounded compatibility policy
 
-Version 0.8.2 establishes a clean baseline and a bounded reader policy. Each schema
+Version 0.8.3 establishes a clean baseline and a bounded reader policy. Each schema
 family has one current version and may read at most the two immediately preceding
 versions. A major Standards Atlas transition may temporarily permit a fourth readable
 version. Writers emit only the current version. Supported non-current versions emit a

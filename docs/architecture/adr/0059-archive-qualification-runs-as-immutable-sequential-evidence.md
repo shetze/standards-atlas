@@ -26,11 +26,16 @@ archive naming brittle as further versions are introduced.
    sequence, Standards Atlas version, qualification-manifest schema, matrix and corpus IDs,
    task and dataset versions, prompt versions, model references, manifest hash, and stable
    result metrics.
-5. Keep `archive-manifest.json` as the file-integrity manifest for the ZIP and include the
+5. Archive the exact evaluation inputs needed to reproduce the run: corpus dataset and
+   corpus manifest, local and published evaluation annotations, task contract/schema, every
+   referenced prompt resource, every ontology definition referenced by the task, and the
+   effective LLM/MCP runtime configuration files. These files are integrity-hashed by
+   `archive-manifest.json`.
+6. Keep `archive-manifest.json` as the file-integrity manifest for the ZIP and include the
    metadata file in its SHA-256 inventory.
-6. Maintain `local/evaluation/qualification-run-index.json` as a derived navigation index
+7. Maintain `local/evaluation/qualification-run-index.json` as a derived navigation index
    with the latest sequence and compact metadata for all known archived runs.
-7. Keep active/replaceable qualification working outputs below
+8. Keep active/replaceable qualification working outputs below
    `local/evaluation/qualification/<matrix-id>/`; immutable archives are separate evidence.
 
 ## Consequences

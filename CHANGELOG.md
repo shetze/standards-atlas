@@ -10,6 +10,14 @@
 
 - Add formula transcription enrichment with MCP discovery/read/submit tools, provenance-bearing LaTeX artifacts, explicit write capability gating, and deterministic application to preserved `FormulaBlock` values.
 
+## 0.8.3 - 2026-08-20
+
+- carry materialized structural taxonomy context, reference mentions, and scope edges into qualification corpus items and LLM requests
+- archive exact corpus, task, prompt, and ontology inputs in immutable qualification-run evidence packages
+- bump qualification-run archive and metadata schema to 1.2
+- improve qualification reproducibility before fresh matrix runs
+
+
 ## Unreleased
 
 - Finalize the taxonomy/ontology split: remove the legacy deterministic `SemanticClassifier`, keep `ENRICH` classification-free, make AtlasData onboarding structure-only, and enforce `TAXONOMY -> ONTOLOGY` ownership with architecture tests and updated UML diagrams.

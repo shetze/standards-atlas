@@ -196,6 +196,14 @@ class EngineeringDocumentClauseProvider:
             table_block_count=table_count,
             table_text_length=table_length,
             non_table_text_length=non_table_length,
+            structural_context=(
+                clause.structural_context.model_dump(mode="json")
+                if clause.structural_context is not None
+                else None
+            ),
+            reference_mentions=tuple(
+                mention.model_dump(mode="json") for mention in clause.reference_mentions
+            ),
         )
 
     @staticmethod

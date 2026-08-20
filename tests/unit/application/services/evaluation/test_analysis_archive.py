@@ -7,6 +7,7 @@ from pathlib import Path
 
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     build_analysis_metrics,
+    collect_qualification_input_members,
     create_analysis_archive,
 )
 from standards_atlas.application.semantic_qualification.consensus import (
@@ -79,7 +80,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         assert "qualification-run-metadata.json" in names
         assert "configuration/qualification-manifest.yaml" in names
         metadata = json.loads(payload.read("qualification-run-metadata.json"))
-        assert metadata["schema_version"] == "1.1"
+        assert metadata["schema_version"] == "1.2"
         assert metadata["archive_id"] == "qualification-run-001"
         assert metadata["sequence_number"] == 1
         assert metadata["qualification_matrix"] == {
@@ -100,7 +101,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         }
         archive_manifest = json.loads(payload.read("archive-manifest.json"))
         assert archive_manifest["archive_id"] == "qualification-run-001"
-        assert archive_manifest["schema_version"] == "1.1"
+        assert archive_manifest["schema_version"] == "1.2"
         assert any(
             item["path"] == "qualification-run-metadata.json" for item in archive_manifest["files"]
         )
@@ -267,3 +268,59 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
     )
     assert model_c["conflict_none_rate"] == 1.0
     assert diagnostics["stage_contributions"][0]["stage_id"] == "efficient-local"
+
+
+def test_collects_reproducible_qualification_inputs(tmp_path: Path) -> None:
+    resources = tmp_path / "resources" / "semantic"
+    corpus_root = tmp_path / "corpora"
+    task_root = resources / "tasks" / "semantic-profile-classification" / "2.1.0"
+    task_root.mkdir(parents=True)
+    (task_root / "task.yaml").write_text(
+        "\n".join(
+            (
+                "schema_version: 1",
+                "task: semantic-profile-classification",
+                "version: 2.1.0",
+                "ontologies:",
+                "  statement_functions:",
+                "    id: statement-functions",
+                "    version: 2.0.0",
+            )
+        )
+        + "\n"
+    )
+    (task_root / "schema.json").write_text("{}\n")
+    prompt_root = resources / "prompts" / "statement-function-classification" / "structure-aware-v3"
+    prompt_root.mkdir(parents=True)
+    for name in ("prompt.json", "schema.json", "system.txt", "user.txt"):
+        (prompt_root / name).write_text("{}\n" if name.endswith(".json") else "test\n")
+    ontology = resources.parent / "ontologies" / "statement-functions" / "2.0.0" / "ontology.yaml"
+    ontology.parent.mkdir(parents=True)
+    ontology.write_text("id: statement-functions\nversion: 2.0.0\n")
+    dataset = corpus_root / "semantic-profile-classification" / "2.1.0" / "dataset.json"
+    dataset.parent.mkdir(parents=True)
+    dataset.write_text('{"examples": []}\n')
+    corpus = corpus_root / "semantic-profile-v1" / "corpus.yaml"
+    corpus.parent.mkdir(parents=True)
+    corpus.write_text("corpus_id: semantic-profile-v1\n")
+
+    members = dict(
+        (member, path)
+        for path, member in collect_qualification_input_members(
+            manifest_payload={
+                "task": "semantic-profile-classification",
+                "task_version": "2.1.0",
+                "dataset_version": "2.1.0",
+                "corpus_id": "semantic-profile-v1",
+                "prompts": [{"id": "structure-aware", "prompt_version": "structure-aware-v3"}],
+            },
+            resources=resources,
+            corpus_root=corpus_root,
+        )
+    )
+
+    assert members["inputs/corpus/dataset.json"] == dataset
+    assert members["inputs/corpus/corpus.yaml"] == corpus
+    assert "inputs/task/task.yaml" in members
+    assert "inputs/prompts/structure-aware-v3/user.txt" in members
+    assert "inputs/ontologies/statement_functions/ontology.yaml" in members

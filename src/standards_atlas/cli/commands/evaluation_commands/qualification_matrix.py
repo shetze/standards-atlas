@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+import yaml
 
 from standards_atlas.adapters.llm import (
     CodexCliConfig,
@@ -24,6 +25,7 @@ from standards_atlas.adapters.mcp import (
 )
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     build_analysis_metrics,
+    collect_qualification_input_members,
     create_analysis_archive,
     write_analysis_metrics,
     write_cascade_provenance,
@@ -951,6 +953,17 @@ def qualify_model_prompt_matrix(
                     source_manifest=source_manifest,
                     run_directory=output_directory / manifest.matrix_id,
                 )
+            manifest_payload = manifest_path.read_text(encoding="utf-8")
+            qualification_input_members = collect_qualification_input_members(
+                manifest_payload=yaml.safe_load(manifest_payload) or {},
+                resources=resources,
+                corpus_root=corpus_root,
+                published_corpus_root=published_corpus_root,
+            )
+            qualification_input_members += (
+                (config, "inputs/runtime/llm-config.yaml"),
+                (mcp_config, "inputs/runtime/mcp-config.yaml"),
+            )
             analysis_archive_path = create_analysis_archive(
                 output_directory=output_directory,
                 matrix_id=manifest.matrix_id,
@@ -972,6 +985,7 @@ def qualify_model_prompt_matrix(
                 matrix_passed=report.passed,
                 execution_policy=execution_policy,
                 archive_directory=archive_output,
+                input_members=qualification_input_members,
             )
     except (
         McpServerProcessError,
