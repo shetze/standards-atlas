@@ -41,6 +41,7 @@ uv run standards-atlas workflow run --help
 
 - `evaluation corpus-build`: build a representative reusable clause corpus
 - `evaluation qualification-matrix`: execute multidimensional semantic model qualification
+- `evaluation challenger-qualification`: compare challenger models against configured incumbents without changing the production cascade
 - `evaluation normalization-quality`: run read-only linguistic-integrity qualification over an
   existing `dataset.json`; semantic labels are ignored
 

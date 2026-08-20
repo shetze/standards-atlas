@@ -45,6 +45,6 @@ analysis, navigation, relationship exploration and engineering workflows.
 See `docs/roadmap/` for detailed implementation plans.
 
 
-## Status after 0.8.1
+## Status after 0.8.2
 
-The architectural refactoring planned for the 0.8.x series has been completed. Future work can focus on functionality rather than structural reorganization.
+The architectural refactoring planned for the 0.8.x series is complete. Version 0.8.2 also establishes typed workflow manifests, immutable qualification evidence, improved multidimensional cascade semantics, formula preservation/transcription, and optional LLM-assisted normalization-quality qualification. Near-term work can therefore focus on qualification quality, taxonomy coverage, and engineering functionality rather than structural reorganization.
