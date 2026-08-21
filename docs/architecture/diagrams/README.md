@@ -9,7 +9,10 @@ The diagrams are intentionally scoped views, not exhaustive inventories of every
 The two broad UML baselines are:
 
 - **Overall component architecture** for the major inbound adapters, application capabilities, domain core, outbound ports, infrastructure adapters, and external systems.
-- **Current architecture class diagram** for the canonical domain model and the principal application-service/port/adapter relationships. It is more detailed than the thematic diagrams, but still does not replace the source code or the textual contracts.
+- **Canonical domain model class diagram** for the stable aggregate and value-object relationships.
+- **Application architecture class diagram** for principal services, outbound ports, and infrastructure adapters.
+
+The former multi-view current-architecture class diagram has been split so domain evolution and application-boundary evolution can be maintained independently.
 
 ## Current architecture
 
@@ -21,7 +24,8 @@ The two broad UML baselines are:
 | System context | [SVG](svg/system-context.svg) | [draw.io](drawio/system-context.drawio) |
 | Ports and adapters | [SVG](svg/ports-and-adapters.svg) | [draw.io](drawio/ports-and-adapters.drawio) |
 | Domain model | [SVG](svg/domain-model.svg) | [draw.io](drawio/domain-model.drawio) |
-| Current architecture class diagram (UML, multi-view) | [SVG](svg/current-architecture-class-diagram.svg) | [draw.io](drawio/current-architecture-class-diagram.drawio) |
+| Canonical domain model class diagram (UML) | [SVG](svg/canonical-domain-model-class-diagram.svg) | [draw.io](drawio/canonical-domain-model-class-diagram.drawio) |
+| Application architecture class diagram (UML) | [SVG](svg/application-architecture-class-diagram.svg) | [draw.io](drawio/application-architecture-class-diagram.drawio) |
 | Processing pipeline | [SVG](svg/processing-pipeline.svg) | [draw.io](drawio/processing-pipeline.drawio) |
 | Workflow orchestration | [SVG](svg/workflow-orchestration.svg) | [draw.io](drawio/workflow-orchestration.drawio) |
 | Artifact lineage | [SVG](svg/artifact-lineage.svg) | [draw.io](drawio/artifact-lineage.drawio) |
