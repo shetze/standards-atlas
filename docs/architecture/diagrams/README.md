@@ -26,6 +26,9 @@ The former multi-view current-architecture class diagram has been split so domai
 | Domain model | [SVG](svg/domain-model.svg) | [draw.io](drawio/domain-model.drawio) |
 | Canonical domain model class diagram (UML) | [SVG](svg/canonical-domain-model-class-diagram.svg) | [draw.io](drawio/canonical-domain-model-class-diagram.drawio) |
 | Application architecture class diagram (UML) | [SVG](svg/application-architecture-class-diagram.svg) | [draw.io](drawio/application-architecture-class-diagram.drawio) |
+| Taxonomy to ontology classification flow | [SVG](svg/taxonomy-ontology-classification-flow.svg) | [draw.io](drawio/taxonomy-ontology-classification-flow.drawio) |
+| Qualification cascade | [SVG](svg/qualification-cascade.svg) | [draw.io](drawio/qualification-cascade.drawio) |
+| StructuralContext and scope reach | [SVG](svg/structural-context-scope-reach.svg) | [draw.io](drawio/structural-context-scope-reach.drawio) |
 | Processing pipeline | [SVG](svg/processing-pipeline.svg) | [draw.io](drawio/processing-pipeline.drawio) |
 | Workflow orchestration | [SVG](svg/workflow-orchestration.svg) | [draw.io](drawio/workflow-orchestration.drawio) |
 | Artifact lineage | [SVG](svg/artifact-lineage.svg) | [draw.io](drawio/artifact-lineage.drawio) |

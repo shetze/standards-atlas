@@ -46,6 +46,21 @@ original cells and source evidence and may carry a conservative semantic interpr
 
 A clause can therefore be located in a verification-oriented branch, inherit lifecycle context from headings, and occupy the last position of a sibling sequence without interpreting its statement-level meaning.
 
+### StructuralContext and scope reach
+
+![StructuralContext and scope reach](diagrams/svg/structural-context-scope-reach.svg)
+
+`StructuralContext` is a materialized, structure-only graph view around one clause. Ancestors,
+sibling position, child ids, contextual ancestor content, references, scope mentions, and
+scope edges are all derived deterministically. `StructuralScopeMention` preserves the surface
+signal and optional direction/cardinality hints; `StructuralScopeEdge` records the resolved or
+deferred structural reach to target clauses.
+
+Scope reach must not be confused with semantic applicability. A structural edge can tell the
+ontology classifier that a statement structurally reaches the next sibling, a subtree, or the
+current clause, but whether that statement expresses an applicability condition remains an
+ontology decision.
+
 ## Semantic classification
 
 `SemanticClassification` stores ontology results and semantic relations separately from document structure. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and responsibility functions is owned exclusively by the `ONTOLOGY` stage. Structural evidence is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for ontology classification, not semantic truth. Some legacy structural compatibility fields remain in the persisted model until a later schema migration, but no active classifier derives ontology values outside `ONTOLOGY`.
