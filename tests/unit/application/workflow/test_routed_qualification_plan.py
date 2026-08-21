@@ -73,3 +73,52 @@ def test_routed_qualification_suite_selects_current_routing_contract() -> None:
         "manifests/functional-safety-semantic-routing-v1.yaml" in " ".join(step.command)
         for step in routing_steps
     )
+
+
+def test_routed_qualification_corpus_versions_match_split_task_versions() -> None:
+    plan = _plan()
+    corpus_steps = [step for step in plan.steps if step.stage is WorkflowStage.CORPUS_BUILD]
+
+    assert [step.output_paths[0] for step in corpus_steps] == [
+        ".atlas/data/evaluation/corpora/statement-function-classification/3.0.0/dataset.json",
+        ".atlas/data/evaluation/corpora/knowledge-kind-classification/1.0.0/dataset.json",
+        ".atlas/data/evaluation/corpora/process-function-classification/1.0.0/dataset.json",
+        ".atlas/data/evaluation/corpora/applicability-extraction/1.0.0/dataset.json",
+        ".atlas/data/evaluation/corpora/role-relation-extraction/1.0.0/dataset.json",
+    ]
+
+
+def test_routed_qualification_rejects_dataset_task_version_drift() -> None:
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        QualificationMatrixManifest,
+    )
+
+    names = (
+        "statement-function",
+        "knowledge-kind",
+        "process-function",
+        "applicability",
+        "role-relation",
+    )
+    manifests = tuple(
+        QualificationMatrixManifest.load(
+            Path(f"manifests/multidimensional-semantic-qualification-v4-{name}-v1.yaml")
+        )
+        for name in names
+    )
+    drifted = (
+        manifests[0].model_copy(update={"dataset_version": "2.2.0"}),
+        *manifests[1:],
+    )
+
+    try:
+        RoutedQualificationWorkflowPlanner._validate_suite(
+            "functional-safety-semantic-profile",
+            "1.1.0",
+            drifted,
+        )
+    except ValueError as exc:
+        assert "dataset_version" in str(exc)
+        assert "task_version" in str(exc)
+    else:
+        raise AssertionError("expected routed qualification to reject version drift")

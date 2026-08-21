@@ -184,6 +184,12 @@ class RoutedQualificationWorkflowPlanner:
                 f"missing={missing}, extra={extra}"
             )
         for manifest in matrices:
+            if manifest.dataset_version != manifest.task_version:
+                raise ValueError(
+                    f"qualification manifest {manifest.matrix_id!r} has dataset_version "
+                    f"{manifest.dataset_version!r}, but routed qualification builds the corpus "
+                    f"for task_version {manifest.task_version!r}; these versions must match"
+                )
             routing = manifest.routing
             if routing is None:
                 raise ValueError(

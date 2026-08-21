@@ -4,7 +4,7 @@ matrix_id: applicability-qualification-v1
 corpus_id: semantic-profile-v1
 task: applicability-extraction
 task_version: 1.0.0
-dataset_version: 2.2.0
+dataset_version: 1.0.0
 repetitions: 1
 routing:
   contract_id: functional-safety-semantic-profile
