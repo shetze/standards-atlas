@@ -30,8 +30,35 @@ def test_qualification_task_plan_omits_doorstop_and_docling_by_default() -> None
     assert "markdown" in result.output
     assert "corpus-build" in result.output
     assert "qualification-matrix" in result.output
+    assert "classify-taxonomy" in result.output
+    assert "classify-ontology" not in result.output
     assert "doorstop" not in result.output
     assert "docling convert" not in result.output
+
+
+def test_qualification_hierarchy_plan_never_runs_production_ontology() -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "plan",
+            "--task",
+            "qualification",
+            "--manifests",
+            f"manifests/standards.yaml,{QUALIFICATION_MANIFEST}",
+            "--hierarchy",
+            "functional-safety",
+            "--knowledge-domain",
+            "functional-safety",
+            "--overwrite",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "classify-taxonomy" in result.output
+    assert "classify-ontology" not in result.output
+    assert "corpus-build" in result.output
+    assert "qualification-matrix" in result.output
 
 
 def test_qualification_task_plan_can_regenerate_docling() -> None:

@@ -17,6 +17,21 @@ Because ADR 0063 deliberately removed historical compatibility, the current conc
 policies initially contain only their current version. Older versions are added only
 when a future schema revision creates a real predecessor contract.
 
+The operational policy for a normal schema family is:
+
+| Relationship to current writer | Writer behavior | Reader behavior |
+| --- | --- | --- |
+| current (`N`) | emit | accept |
+| previous (`N-1`) | never emit | accept with deprecation warning when supported |
+| retirement edge (`N-2`) | never emit | accept with deprecation warning when supported |
+| older (`<= N-3`) | never emit | reject |
+
+The three-version window is a maximum support window, not an obligation to invent migrations
+or compatibility adapters. Generated EngineeringDocuments and other derived artifacts do not
+need to be rewritten merely because a new writer schema is introduced; while their schema
+remains inside the supported reader window they may be deserialized directly into the current
+domain model.
+
 | Schema family / artifact | Current | Storage / resource | Future reader compatibility |
 | --- | ---: | --- | --- |
 | Engineering Document envelope | 3 | `.atlas/data/documents/*.json` | yes |

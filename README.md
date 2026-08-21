@@ -38,8 +38,12 @@ uv run standards-atlas --help
 Inspect and execute a catalog-driven document workflow:
 
 ```bash
-uv run standards-atlas workflow plan --all
-uv run standards-atlas workflow run --all
+uv run standards-atlas workflow plan \
+  --manifests manifests/standards.yaml \
+  --all
+uv run standards-atlas workflow run \
+  --manifests manifests/standards.yaml \
+  --all
 ```
 
 Run the local semantic-evaluation and MCP entry points:
@@ -101,7 +105,7 @@ See `docs/user-guide/codex-integration.md` for setup and verification.
 
 ## Current version
 
-This snapshot corresponds to **standards-atlas 0.8.3**. Version 0.8.3 builds on the completed architecture refactoring with auditable qualification-run archives, typed workflow manifests, dimension-aware cascade resolution, visual-formula preservation and transcription enrichment, and optional LLM-assisted normalization-quality qualification.
+This snapshot corresponds to **standards-atlas 0.8.3**. Version 0.8.3 builds on the completed application-package refactoring with auditable qualification-run archives, typed workflow manifests, deterministic structural-taxonomy context, qualified production ontology classification, dimension-aware cascade resolution, visual-formula preservation and transcription enrichment, and optional LLM-assisted normalization-quality qualification.
 
 ### Formula transcription enrichment
 

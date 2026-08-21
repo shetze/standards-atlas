@@ -60,10 +60,15 @@ class QualificationWorkflowPlanner:
             keep_stages=keep_stages,
             hierarchy_key=hierarchy_key,
         )
+        excluded_document_stages = {
+            WorkflowStage.ONTOLOGY,
+            WorkflowStage.DOORSTOP,
+            WorkflowStage.DOORSTOP_PUBLISH,
+        }
         document_steps = tuple(
             self._docling_policy(step, regenerate_docling)
             for step in document_plan.steps
-            if step.stage not in {WorkflowStage.DOORSTOP, WorkflowStage.DOORSTOP_PUBLISH}
+            if step.stage not in excluded_document_stages
             and (regenerate_docling or step.stage is not WorkflowStage.DOCLING)
         )
         corpus_step = WorkflowStep(

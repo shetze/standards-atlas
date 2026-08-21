@@ -30,7 +30,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0029](0029-visual-content-contract-and-caption-ownership.md) | Define visual content and caption ownership |
 | [0030](0030-hierarchical-list-reconstruction.md) | Reconstruct hierarchical lists from layout evidence |
 | [0055](0055-preserve-visual-formulas-before-semantic-transcription.md) | Preserve visual formulas before semantic transcription |
-| [0056](0056-preserve-cascade-resolution-provenance.md) | Preserve cascade resolution provenance |
+| [0056](0056-enrich-visual-formulas-through-auditable-transcription-artifacts.md) | Enrich visual formulas through auditable transcription artifacts |
 
 ## Candidate detection, alignment, and review
 
@@ -76,7 +76,10 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0037](0037-workflow-run-derivation-reports.md) | Record workflow-run derivation reports |
 | [0038](0038-package-and-install-doorstop-publication-templates.md) | Package and install Doorstop publication templates |
 | [0039](0039-verification-and-qualification-framework.md) | Establish the verification and qualification framework |
-| [0057](0057-unify-workflow-task-selection-and-manifests.md) | Unify workflow task selection and manifest inputs |
+| [0057](0057-unify-workflow-task-selection-and-manifests.md) | Unify workflow task selection and manifest inputs; manifest-option details superseded by ADR 0058 |
+| [0058](0058-typed-workflow-manifest-envelope.md) | Use typed workflow manifests behind the unified `--manifests` option |
+| [0059](0059-archive-qualification-runs-as-immutable-sequential-evidence.md) | Archive qualification runs as immutable sequential evidence |
+| [0070](0070-preserve-cascade-resolution-provenance.md) | Preserve cascade resolution provenance; administratively renumbered from duplicate 0056 |
 
 ## Semantic evaluation, review, and MCP access
 
@@ -104,6 +107,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0066](0066-structural-context-taxonomy-stage.md) | Materialize deterministic structural context in an explicit taxonomy workflow stage |
 | [0067](0067-production-ontology-workflow-stage.md) | Run LLM-assisted semantic ontology classification after structural taxonomy |
 | [0068](0068-finalize-taxonomy-ontology-stage-ownership.md) | Remove legacy mixed classification and enforce taxonomy/ontology stage ownership |
+| [0069](0069-materialize-structural-scope-reach.md) | Materialize structural scope reach in taxonomy |
 
 ## Application structure
 
@@ -124,7 +128,8 @@ both active and obsolete provisions.
 - For the architecture's overall shape, begin with [ADR 0002](0002-adopt-traceability-centric-architecture.md), [ADR 0003](0003-adopt-hexagonal-architecture.md), and [ADR 0004](0004-adopt-transformation-pipeline.md).
 - For the canonical contracts, continue with [ADR 0006](0006-engineeringdocument-as-canonical-repesenation.md), [ADR 0026](0026-normalized-document-contract.md), and [ADR 0033](0033-engineering-document-construction-contract.md).
 - For workflow and publication, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md), and [ADR 0036](0036-local-workspace-and-hierarchy-publication.md).
-- For semantic qualification and external model access, continue with [ADR 0039](0039-verification-and-qualification-framework.md), [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md), [ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), and [ADR 0051](0051-multidimensional-semantic-classification.md), followed by [ADR 0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md) and [ADR 0062](0062-separate-semantic-taxonomies-from-semantic-tasks.md).
+- For the current taxonomy-to-ontology production path, read [ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), [ADR 0051](0051-multidimensional-semantic-classification.md), and [ADR 0061](0061-modular-deterministic-structural-taxonomy-engine.md) through [ADR 0069](0069-materialize-structural-scope-reach.md); use [Structural taxonomy and semantic ontology](../structural-classification.md) as the consolidated current-state view.
+- For semantic qualification and external model access, continue with [ADR 0039](0039-verification-and-qualification-framework.md), [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md), [ADR 0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md), [ADR 0059](0059-archive-qualification-runs-as-immutable-sequential-evidence.md), and [ADR 0070](0070-preserve-cascade-resolution-provenance.md).
 - For lossless formula handling, read [ADR 0055](0055-preserve-visual-formulas-before-semantic-transcription.md).
 - For the current application package structure, read [ADR 0053](0053-structural-application-refactoring.md).
 
@@ -136,5 +141,3 @@ both active and obsolete provisions.
 - [Diagram catalog](../diagrams/README.md)
 - [Documentation home](../../README.md)
 
-- [ADR 0056](0056-enrich-visual-formulas-through-auditable-transcription-artifacts.md) — Formula transcription enrichment through auditable LaTeX artifacts.
-- [ADR 0069](0069-materialize-structural-scope-reach.md): Materialize structural scope reach in taxonomy
