@@ -23,7 +23,7 @@ from standards_atlas.application.semantic_qualification.structural_evidence impo
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     KnowledgeKind,
-    ResponsibilityFunction,
+    RoleRelationType,
     StatementFunction,
 )
 
@@ -54,8 +54,8 @@ class ModelVote(BaseModel):
     secondary_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
     applicability_function: ApplicabilityFunction | None = None
-    responsibility_present: bool = False
-    responsibility_function: ResponsibilityFunction | None = None
+    role_relation_present: bool = False
+    role_relation_type: RoleRelationType | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     evidence: str | None = None
     repetitions: int = Field(ge=1)
@@ -81,10 +81,10 @@ class ModelVote(BaseModel):
         return (self.applicability_function,)
 
     @property
-    def responsibility_functions(self) -> tuple[ResponsibilityFunction, ...]:
-        if not self.responsibility_present or self.responsibility_function is None:
+    def role_relation_types(self) -> tuple[RoleRelationType, ...]:
+        if not self.role_relation_present or self.role_relation_type is None:
             return ()
-        return (self.responsibility_function,)
+        return (self.role_relation_type,)
 
 
 class ClauseConsensus(BaseModel):
@@ -99,7 +99,7 @@ class ClauseConsensus(BaseModel):
     statement_function_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     knowledge_kind_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     applicability_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    responsibility_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    role_relation_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     overall_status: OverallConsensusStatus = OverallConsensusStatus.REVIEW_REQUIRED
     primary_function: StatementFunction | None = None
     proposed_functions: tuple[StatementFunction, ...] = ()
@@ -107,8 +107,8 @@ class ClauseConsensus(BaseModel):
     proposed_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
     proposed_applicability_functions: tuple[ApplicabilityFunction, ...] = ()
-    responsibility_present: bool = False
-    proposed_responsibility_functions: tuple[ResponsibilityFunction, ...] = ()
+    role_relation_present: bool = False
+    proposed_role_relation_types: tuple[RoleRelationType, ...] = ()
     # Overall confidence follows the primary statement-function dimension.
     # Keep this field for report compatibility while exposing every semantic
     # dimension explicitly below.
@@ -121,13 +121,13 @@ class ClauseConsensus(BaseModel):
     applicability_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_presence_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_subtype_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    responsibility_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    role_relation_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     statement_function_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     knowledge_kind_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    responsibility_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    role_relation_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_unanimous: bool = True
-    responsibility_unanimous: bool = True
+    role_relation_unanimous: bool = True
     applicability_structural_conflict: bool = False
     applicability_structural_conflict_observed: bool = False
     applicability_structural_conflict_unresolved: bool = False
@@ -136,7 +136,7 @@ class ClauseConsensus(BaseModel):
     label_support: dict[str, float] = Field(default_factory=dict)
     knowledge_kind_support: dict[str, float] = Field(default_factory=dict)
     applicability_support: dict[str, float] = Field(default_factory=dict)
-    responsibility_support: dict[str, float] = Field(default_factory=dict)
+    role_relation_support: dict[str, float] = Field(default_factory=dict)
     structural_prior: dict[str, Any] = Field(default_factory=dict)
     scope_context: bool = False
     adjudicated: bool = False
@@ -199,7 +199,7 @@ class ModelConsensusService:
             "statement_function": prompt_id,
             "knowledge_kind": prompt_id,
             "applicability": prompt_id,
-            "responsibility": prompt_id,
+            "role_relation": prompt_id,
             **(prompt_selection or {}),
         }
         selected_prompt_ids = set(prompts.values())
@@ -340,7 +340,7 @@ class ModelConsensusService:
                     ("statement_function", "statement_function_category"),
                     ("knowledge_kind", "knowledge_kind_category"),
                     ("applicability", "applicability_category"),
-                    ("responsibility", "responsibility_category"),
+                    ("role_relation", "role_relation_category"),
                 )
             },
             overall_statuses=dict(
@@ -370,7 +370,7 @@ def _model_vote(
     statement = _modal_annotations(by_prompt.get(prompts["statement_function"], []))
     knowledge = _modal_annotations(by_prompt.get(prompts["knowledge_kind"], []))
     applicability = _modal_annotations(by_prompt.get(prompts["applicability"], []))
-    responsibility = _modal_annotations(by_prompt.get(prompts["responsibility"], []))
+    responsibility = _modal_annotations(by_prompt.get(prompts["role_relation"], []))
     available = [
         item for item in (statement, knowledge, applicability, responsibility) if item is not None
     ]
@@ -395,9 +395,9 @@ def _model_vote(
     app = applicability[0].proposal.primary_applicability_function
     if app is None and applicability[0].proposal.applicability_functions:
         app = applicability[0].proposal.applicability_functions[0]
-    resp = responsibility[0].proposal.primary_responsibility_function
-    if resp is None and responsibility[0].proposal.responsibility_functions:
-        resp = responsibility[0].proposal.responsibility_functions[0]
+    resp = responsibility[0].proposal.primary_role_relation_type
+    if resp is None and responsibility[0].proposal.role_relation_types:
+        resp = responsibility[0].proposal.role_relation_types[0]
     evidence = (
         " | ".join(
             value
@@ -424,8 +424,8 @@ def _model_vote(
         secondary_knowledge_kinds=secondary_knowledge,
         applicability_present=app is not None,
         applicability_function=app,
-        responsibility_present=resp is not None,
-        responsibility_function=resp,
+        role_relation_present=resp is not None,
+        role_relation_type=resp,
         confidence=min(confidences) if confidences else None,
         evidence=evidence,
         repetitions=max(item[1] for item in available),
@@ -447,8 +447,8 @@ def _modal_annotations(
             item.proposal.knowledge_kinds,
             item.proposal.primary_applicability_function,
             item.proposal.applicability_functions,
-            item.proposal.primary_responsibility_function,
-            item.proposal.responsibility_functions,
+            item.proposal.primary_role_relation_type,
+            item.proposal.role_relation_types,
         )
         for item in annotations
     ]
@@ -578,11 +578,11 @@ def _resolve_clause(
         app_label_support = max(app_label_support, prior_confidence)
     app_accepted = app_present_support >= majority_threshold and app_label is not None
 
-    valid_responsibility_votes = tuple(
-        vote for vote in votes if _responsibility_evidence_is_valid(vote)
+    valid_role_relation_votes = tuple(
+        vote for vote in votes if _role_relation_evidence_is_valid(vote)
     )
-    resp_present_support = len(valid_responsibility_votes) / model_count if model_count else 0.0
-    resp_counts = Counter(vote.responsibility_function for vote in valid_responsibility_votes)
+    resp_present_support = len(valid_role_relation_votes) / model_count if model_count else 0.0
+    resp_counts = Counter(vote.role_relation_type for vote in valid_role_relation_votes)
     resp_label, resp_count = resp_counts.most_common(1)[0] if resp_counts else (None, 0)
     resp_label_support = resp_count / model_count if model_count else 0.0
     resp_accepted = resp_present_support >= majority_threshold and resp_label is not None
@@ -600,11 +600,11 @@ def _resolve_clause(
         )
     )
     applicability_unanimous = applicability_presence_unanimous and applicability_subtype_unanimous
-    responsibility_unanimous = _dimension_votes_are_unanimous(
+    role_relation_unanimous = _dimension_votes_are_unanimous(
         tuple(
             (
-                vote.responsibility_present,
-                vote.responsibility_function if vote.responsibility_present else None,
+                vote.role_relation_present,
+                vote.role_relation_type if vote.role_relation_present else None,
             )
             for vote in votes
         )
@@ -633,13 +633,13 @@ def _resolve_clause(
         positive_confidence=applicability_subtype_confidence,
         support={"present": app_present_support},
     )
-    responsibility_decision_confidence = _dimension_decision_confidence(
+    role_relation_decision_confidence = _dimension_decision_confidence(
         present=resp_accepted,
         positive_confidence=resp_label_support,
         support={"present": resp_present_support},
     )
     applicability_confidence = applicability_subtype_confidence
-    responsibility_confidence = resp_label_support if resp_label is not None else 0.0
+    role_relation_confidence = resp_label_support if resp_label is not None else 0.0
 
     statement_category = category
     knowledge_category = _category_for_confidence(
@@ -659,8 +659,8 @@ def _resolve_clause(
         strong_threshold,
         majority_threshold,
     )
-    responsibility_category = _category_for_confidence(
-        responsibility_decision_confidence,
+    role_relation_category = _category_for_confidence(
+        role_relation_decision_confidence,
         model_count,
         minimum_models,
         strong_threshold,
@@ -714,16 +714,16 @@ def _resolve_clause(
         applicability_confidence = applicability_subtype_confidence
         applicability_category = ConsensusCategory(item["category"])
         resolution_sources["applicability"] = str(item.get("source", "cascade"))
-    if "responsibility" in override:
-        item = override["responsibility"]
-        resp_label = ResponsibilityFunction(item["value"]) if item.get("value") else None
+    if "role_relation" in override:
+        item = override["role_relation"]
+        resp_label = RoleRelationType(item["value"]) if item.get("value") else None
         resp_accepted = bool(item.get("present", resp_label is not None))
-        responsibility_decision_confidence = float(item["confidence"])
-        responsibility_confidence = (
-            responsibility_decision_confidence if resp_accepted and resp_label is not None else 0.0
+        role_relation_decision_confidence = float(item["confidence"])
+        role_relation_confidence = (
+            role_relation_decision_confidence if resp_accepted and resp_label is not None else 0.0
         )
-        responsibility_category = ConsensusCategory(item["category"])
-        resolution_sources["responsibility"] = str(item.get("source", "cascade"))
+        role_relation_category = ConsensusCategory(item["category"])
+        resolution_sources["role_relation"] = str(item.get("source", "cascade"))
 
     proposed_functions = (() if primary is None else (primary,)) + tuple(
         value for value in proposed_functions if value != primary
@@ -747,8 +747,8 @@ def _resolve_clause(
         model_count=model_count,
         applicability_present=app_accepted,
         applicability_confidence=applicability_confidence,
-        responsibility_present=resp_accepted,
-        responsibility_confidence=responsibility_confidence,
+        role_relation_present=resp_accepted,
+        role_relation_confidence=role_relation_confidence,
         applicability_structural_conflict=applicability_structural_conflict_unresolved,
         policy=policy,
     )
@@ -757,7 +757,7 @@ def _resolve_clause(
         "statement_function_category": statement_category,
         "knowledge_kind_category": knowledge_category,
         "applicability_category": applicability_category,
-        "responsibility_category": responsibility_category,
+        "role_relation_category": role_relation_category,
         "overall_status": (
             OverallConsensusStatus.REVIEW_REQUIRED
             if review_reasons
@@ -769,7 +769,7 @@ def _resolve_clause(
                         statement_category,
                         knowledge_category,
                         applicability_category,
-                        responsibility_category,
+                        role_relation_category,
                     )
                 )
                 else OverallConsensusStatus.RESOLVED
@@ -781,21 +781,21 @@ def _resolve_clause(
         "proposed_knowledge_kinds": proposed_knowledge_kinds,
         "applicability_present": app_accepted,
         "proposed_applicability_functions": ((app_label,) if app_accepted else ()),
-        "responsibility_present": resp_accepted,
-        "proposed_responsibility_functions": ((resp_label,) if resp_accepted else ()),
+        "role_relation_present": resp_accepted,
+        "proposed_role_relation_types": ((resp_label,) if resp_accepted else ()),
         "confidence": confidence,
         "statement_function_confidence": statement_function_confidence,
         "knowledge_kind_confidence": knowledge_kind_confidence,
         "applicability_confidence": applicability_confidence,
         "applicability_presence_confidence": applicability_presence_confidence,
         "applicability_subtype_confidence": applicability_subtype_confidence,
-        "responsibility_confidence": responsibility_confidence,
+        "role_relation_confidence": role_relation_confidence,
         "statement_function_decision_confidence": statement_function_decision_confidence,
         "knowledge_kind_decision_confidence": knowledge_kind_decision_confidence,
         "applicability_decision_confidence": applicability_decision_confidence,
-        "responsibility_decision_confidence": responsibility_decision_confidence,
+        "role_relation_decision_confidence": role_relation_decision_confidence,
         "applicability_unanimous": applicability_unanimous,
-        "responsibility_unanimous": responsibility_unanimous,
+        "role_relation_unanimous": role_relation_unanimous,
         "applicability_structural_conflict": applicability_structural_conflict_unresolved,
         "applicability_structural_conflict_observed": (applicability_structural_conflict_observed),
         "applicability_structural_conflict_unresolved": (
@@ -808,7 +808,7 @@ def _resolve_clause(
             "present": app_present_support,
             **({app_label.value: app_label_support} if app_label else {}),
         },
-        "responsibility_support": {
+        "role_relation_support": {
             "present": resp_present_support,
             **({resp_label.value: resp_label_support} if resp_label else {}),
         },
@@ -861,8 +861,8 @@ def _review_policy(payload: dict[str, Any] | None) -> dict[str, Any]:
         "accept_majority_min_confidence": 0.67,
         "accept_majority_min_models": 3,
         "applicability_min_confidence": 0.75,
-        "responsibility_min_confidence": 0.80,
-        "require_responsibility_evidence": True,
+        "role_relation_min_confidence": 0.80,
+        "require_role_relation_evidence": True,
         **(payload or {}),
     }
 
@@ -874,8 +874,8 @@ def _review_reasons(
     model_count: int,
     applicability_present: bool,
     applicability_confidence: float,
-    responsibility_present: bool,
-    responsibility_confidence: float,
+    role_relation_present: bool,
+    role_relation_confidence: float,
     applicability_structural_conflict: bool = False,
     policy: dict[str, Any],
 ) -> list[str]:
@@ -892,17 +892,17 @@ def _review_reasons(
         policy["applicability_min_confidence"]
     ):
         reasons.append("applicability subtype confidence is below its confidence threshold")
-    if responsibility_present and responsibility_confidence < float(
-        policy["responsibility_min_confidence"]
+    if role_relation_present and role_relation_confidence < float(
+        policy["role_relation_min_confidence"]
     ):
-        reasons.append("responsibility evidence is below its confidence threshold")
+        reasons.append("role-relation evidence is below its confidence threshold")
     if applicability_structural_conflict:
         reasons.append("applicability structural prior conflicts with model consensus")
     return reasons
 
 
-def _responsibility_evidence_is_valid(vote: ModelVote) -> bool:
-    if not vote.responsibility_present or not vote.evidence:
+def _role_relation_evidence_is_valid(vote: ModelVote) -> bool:
+    if not vote.role_relation_present or not vote.evidence:
         return False
     text = vote.evidence.lower()
     actor = re.search(
@@ -958,11 +958,11 @@ def _write_outputs(
                         else None
                     ),
                 },
-                "responsibility": {
-                    "present": item.responsibility_present,
+                "role_relation": {
+                    "present": item.role_relation_present,
                     "function": (
-                        item.proposed_responsibility_functions[0].value
-                        if item.proposed_responsibility_functions
+                        item.proposed_role_relation_types[0].value
+                        if item.proposed_role_relation_types
                         else None
                     ),
                 },
@@ -971,20 +971,20 @@ def _write_outputs(
                     "statement_function": item.statement_function_confidence,
                     "knowledge_kind": item.knowledge_kind_confidence,
                     "applicability": item.applicability_confidence,
-                    "responsibility": item.responsibility_confidence,
+                    "role_relation": item.role_relation_confidence,
                 },
                 "dimension_decision_confidence": {
                     "statement_function": item.statement_function_decision_confidence,
                     "knowledge_kind": item.knowledge_kind_decision_confidence,
                     "applicability": item.applicability_decision_confidence,
-                    "responsibility": item.responsibility_decision_confidence,
+                    "role_relation": item.role_relation_decision_confidence,
                 },
                 "consensus_category": item.category.value,
                 "dimension_categories": {
                     "statement_function": item.statement_function_category.value,
                     "knowledge_kind": item.knowledge_kind_category.value,
                     "applicability": item.applicability_category.value,
-                    "responsibility": item.responsibility_category.value,
+                    "role_relation": item.role_relation_category.value,
                 },
                 "overall_status": item.overall_status.value,
                 "resolution_sources": item.resolution_sources,
@@ -1067,7 +1067,7 @@ def _render_review(report: ConsensusReport) -> str:
             ", ".join(value.value for value in item.proposed_applicability_functions) or "none"
         )
         responsibility = (
-            ", ".join(value.value for value in item.proposed_responsibility_functions) or "none"
+            ", ".join(value.value for value in item.proposed_role_relation_types) or "none"
         )
         lines.extend(
             [
@@ -1089,23 +1089,23 @@ def _render_review(report: ConsensusReport) -> str:
                 f"statement_function=`{item.statement_function_category.value}`, "
                 f"knowledge_kind=`{item.knowledge_kind_category.value}`, "
                 f"applicability=`{item.applicability_category.value}`, "
-                f"responsibility=`{item.responsibility_category.value}`",
+                f"role_relation=`{item.role_relation_category.value}`",
                 f"- Resolution sources: `{item.resolution_sources or 'model_consensus'}`",
                 f"- Primary/secondary statement functions: `{proposed}`",
                 f"- Knowledge kinds: `{knowledge}`",
                 f"- Applicability proposal: `{applicability}`",
-                f"- Responsibility proposal: `{responsibility}`",
+                f"- Role relation proposal: `{responsibility}`",
                 f"- Statement-function confidence: `{item.statement_function_confidence:.3f}`",
                 f"- Knowledge-kind confidence: `{item.knowledge_kind_confidence:.3f}`",
                 "- Applicability confidence: "
                 f"presence=`{item.applicability_presence_confidence:.3f}`, "
                 f"subtype=`{item.applicability_subtype_confidence:.3f}`",
-                f"- Responsibility confidence: `{item.responsibility_confidence:.3f}`",
+                f"- Role relation confidence: `{item.role_relation_confidence:.3f}`",
                 "- Decision confidence: "
                 f"statement_function=`{item.statement_function_decision_confidence:.3f}`, "
                 f"knowledge_kind=`{item.knowledge_kind_decision_confidence:.3f}`, "
                 f"applicability=`{item.applicability_decision_confidence:.3f}`, "
-                f"responsibility=`{item.responsibility_decision_confidence:.3f}`",
+                f"role_relation=`{item.role_relation_decision_confidence:.3f}`",
                 f"- Participating models: `{item.participating_models}`",
                 f"- Adjudicated: `{str(item.adjudicated).lower()}`",
                 f"- Structural prior: `{item.structural_prior or 'none'}`",
@@ -1129,7 +1129,7 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Secondary statement functions: {hitl['secondary_functions']}",
                 f"- Knowledge kinds: {hitl['knowledge_kinds']}",
                 f"- Applicability present/function: {hitl['applicability']}",
-                f"- Responsibility present/function: {hitl['responsibility']}",
+                f"- Role relation present/function: {hitl['role_relation']}",
                 "- Rationale: ",
                 "",
             ]
@@ -1165,11 +1165,10 @@ def _hitl_prefill(item: ClauseConsensus, policy: dict[str, Any]) -> dict[str, st
         item.applicability_present
         and item.applicability_confidence >= float(effective_policy["applicability_min_confidence"])
     ) or (not item.applicability_present and item.applicability_unanimous)
-    responsibility_reliable = (
-        item.responsibility_present
-        and item.responsibility_confidence
-        >= float(effective_policy["responsibility_min_confidence"])
-    ) or (not item.responsibility_present and item.responsibility_unanimous)
+    role_relation_reliable = (
+        item.role_relation_present
+        and item.role_relation_confidence >= float(effective_policy["role_relation_min_confidence"])
+    ) or (not item.role_relation_present and item.role_relation_unanimous)
 
     secondary = tuple(value for value in item.proposed_functions if value != item.primary_function)
     required: list[str] = []
@@ -1179,8 +1178,8 @@ def _hitl_prefill(item: ClauseConsensus, policy: dict[str, Any]) -> dict[str, st
         required.append("knowledge kinds")
     if not applicability_reliable:
         required.append("applicability")
-    if not responsibility_reliable:
-        required.append("responsibility")
+    if not role_relation_reliable:
+        required.append("role_relation")
 
     return {
         "required_for": ", ".join(required) or "none",
@@ -1203,12 +1202,12 @@ def _hitl_prefill(item: ClauseConsensus, policy: dict[str, Any]) -> dict[str, st
             if applicability_reliable
             else ""
         ),
-        "responsibility": (
+        "role_relation": (
             _present_function_value(
-                item.responsibility_present,
-                item.proposed_responsibility_functions,
+                item.role_relation_present,
+                item.proposed_role_relation_types,
             )
-            if responsibility_reliable
+            if role_relation_reliable
             else ""
         ),
     }
@@ -1226,7 +1225,7 @@ def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
         "Secondary statements",
         "Knowledge kinds",
         "Applicability",
-        "Responsibility",
+        "Role relation",
         "Stability",
     )
     rows = [
@@ -1236,7 +1235,7 @@ def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
             _enum_values(vote.secondary_functions),
             _enum_values(vote.knowledge_kinds),
             _enum_values(vote.applicability_functions),
-            _enum_values(vote.responsibility_functions),
+            _enum_values(vote.role_relation_types),
             f"{vote.stability:.3f}",
         )
         for vote in votes

@@ -17,7 +17,7 @@ The document pipeline converts controlled publications into canonical engineerin
 7. **Construction contract** freezes the reviewed inputs and verifies coverage before aggregate construction.
 8. **Engineering document construction (`ENRICH`)** creates canonical clause content, evidence, reference mentions, and lineage. It does not classify structure or semantic meaning.
 9. **Structural taxonomy (`TAXONOMY`)** deterministically materializes `StructuralProfile` and `StructuralContext`, including hierarchy, node/leaf role, ancestor context, sibling sequence position, contextual node content, structural reference edges, and structural scope reach (for example `this clause`, following sibling clauses, or a scope-heading subtree).
-10. **Semantic ontology (`ONTOLOGY`)** applies the qualified production classifier to clause content plus the complete structural context and assigns statement functions, knowledge kinds, process functions, applicability functions, and responsibility functions.
+10. **Semantic ontology (`ONTOLOGY`)** applies the qualified production classifier to clause content plus the complete structural context and assigns statement functions, knowledge kinds, process functions, applicability functions, and role-relation types.
 11. **Reference resolution and relationship enrichment** resolves available internal and cross-document targets while preserving unresolved evidence for later interpretation.
 12. **Publication** creates Markdown, composed Markdown, and Doorstop projections without changing classification ownership.
 13. **Evaluation and qualification** operate as separate workflows for datasets, model qualification, regression evidence, and HITL review; they do not replace the production `ONTOLOGY` stage.

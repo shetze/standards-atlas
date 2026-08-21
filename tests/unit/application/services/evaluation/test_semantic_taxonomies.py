@@ -8,14 +8,14 @@ SEMANTIC_ROOT = Path("src/standards_atlas/resources/semantic")
 
 def test_semantic_profile_task_composes_independently_versioned_ontologies() -> None:
     task, _ = SemanticTaskRepository(SEMANTIC_ROOT / "tasks").load(
-        "semantic-profile-classification", "2.1.0"
+        "semantic-profile-classification", "2.2.0"
     )
 
     assert task.ontologies["statement_functions"].version == "2.0.0"
     assert task.ontologies["knowledge_kinds"].version == "2.1.0"
     assert task.ontologies["process_functions"].version == "1.0.0"
     assert task.ontologies["applicability_functions"].version == "1.1.0"
-    assert task.ontologies["responsibility_functions"].version == "1.0.0"
+    assert task.ontologies["role_relation_types"].version == "1.0.0"
     assert "warning" in task.taxonomy
     assert "technique_or_measure" in task.knowledge_taxonomy
 

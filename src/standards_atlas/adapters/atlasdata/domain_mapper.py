@@ -74,6 +74,7 @@ def map_atlas_data_to_standard(
         for item in atlas_data.structure_items
     )
 
+    clauses = _materialize_parent_hierarchy(clauses)
     clauses_by_reference = {(clause.volume, clause.reference.clause): clause for clause in clauses}
 
     annotations = _map_initialization_records_to_annotations(
@@ -92,6 +93,38 @@ def map_atlas_data_to_standard(
         clauses=clauses,
         annotations=annotations,
     )
+
+
+def _materialize_parent_hierarchy(clauses: tuple[Clause, ...]) -> tuple[Clause, ...]:
+    """Attach each clause to its nearest materialized structural parent.
+
+    AtlasData structure expansion yields a flat sequence.  The canonical domain
+    model carries the hierarchy explicitly through ``Clause.parent_id``.  Resolve
+    the nearest existing dotted reference within the same volume, falling back to
+    the synthetic ``0`` root when present.
+    """
+    by_identity = {(clause.volume, clause.reference.clause.strip()): clause for clause in clauses}
+    materialized: list[Clause] = []
+
+    for clause in clauses:
+        reference = clause.reference.clause.strip()
+        parent: Clause | None = None
+        candidate = reference
+
+        while "." in candidate:
+            candidate = candidate.rsplit(".", 1)[0]
+            parent = by_identity.get((clause.volume, candidate))
+            if parent is not None:
+                break
+
+        if parent is None and reference != "0":
+            parent = by_identity.get((clause.volume, "0"))
+
+        materialized.append(
+            clause.model_copy(update={"parent_id": parent.id if parent is not None else None})
+        )
+
+    return tuple(materialized)
 
 
 def _map_initialization_records_to_annotations(
@@ -183,7 +216,7 @@ def _merge_semantic_tags(
         DocumentStructureClassification,
         KnowledgeKind,
         ProcessFunction,
-        ResponsibilityFunction,
+        RoleRelationType,
         StatementFunction,
     )
 
@@ -207,9 +240,9 @@ def _merge_semantic_tags(
         update["applicability_functions"] = tuple(
             ApplicabilityFunction(value) for value in decoded["applicability_functions"]
         )
-    if decoded["responsibility_functions"]:
-        update["responsibility_functions"] = tuple(
-            ResponsibilityFunction(value) for value in decoded["responsibility_functions"]
+    if decoded["role_relation_types"]:
+        update["role_relation_types"] = tuple(
+            RoleRelationType(value) for value in decoded["role_relation_types"]
         )
     if decoded["document_structure"]:
         update["document_structure"] = DocumentStructureClassification(

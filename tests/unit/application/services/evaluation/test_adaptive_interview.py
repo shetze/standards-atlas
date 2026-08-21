@@ -18,7 +18,7 @@ def test_planner_uses_normalized_scope_information() -> None:
 
     dimensions = {question.dimension for question in plan.questions}
     assert InterviewDimension.APPLICABILITY in dimensions
-    assert InterviewDimension.RESPONSIBILITY not in dimensions
+    assert InterviewDimension.ROLE_RELATION not in dimensions
 
 
 def test_planner_prioritizes_detected_reference_semantics() -> None:

@@ -66,3 +66,30 @@ def _extract_clause_reference(reference: str, standard_name: str) -> str | None:
         return None
 
     return parts[1].strip()
+
+
+@pytest.mark.parametrize("data_file", STANDARD_FILES, ids=lambda path: path.name)
+def test_materialized_parent_hierarchy_matches_nearest_existing_reference(
+    data_file: Path,
+) -> None:
+    standard = parse_standard_domain_file(data_file)
+    by_identity = {(clause.volume, clause.reference.clause): clause for clause in standard.clauses}
+
+    for clause in standard.clauses:
+        reference = clause.reference.clause.strip()
+        expected_parent = None
+        candidate = reference
+        while "." in candidate:
+            candidate = candidate.rsplit(".", 1)[0]
+            expected_parent = by_identity.get((clause.volume, candidate))
+            if expected_parent is not None:
+                break
+        if expected_parent is None and reference != "0":
+            expected_parent = by_identity.get((clause.volume, "0"))
+
+        assert clause.parent_id == (expected_parent.id if expected_parent is not None else None), (
+            data_file.name,
+            clause.volume,
+            reference,
+            expected_parent.reference.clause if expected_parent is not None else None,
+        )

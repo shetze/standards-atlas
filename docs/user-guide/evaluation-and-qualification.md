@@ -17,7 +17,7 @@ uv run standards-atlas evaluation corpus-build \
 
 The canonical multidimensional task is `semantic-profile-classification`. It composes the
 independently versioned statement-function, knowledge-kind, process-function, applicability,
-and responsibility ontologies used by the current qualification matrix.
+and role-relation ontologies used by the current qualification matrix.
 `statement-function-classification` 2.x remains a compatibility alias for existing scripts and
 artifacts; new qualification work should use the canonical task name.
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import partial
@@ -87,7 +88,7 @@ class SemanticTaskDefinition(BaseModel):
     knowledge_taxonomy: tuple[str, ...] = ()
     process_taxonomy: tuple[str, ...] = ()
     applicability_taxonomy: tuple[str, ...] = ()
-    responsibility_taxonomy: tuple[str, ...] = ()
+    role_relation_taxonomy: tuple[str, ...] = ()
     multi_label: bool = True
     allow_unclassified: bool = True
     supported_item_kinds: tuple[str, ...] = ("clause",)
@@ -139,10 +140,8 @@ class SemanticTaskRepository:
             if "applicability_functions" in loaded
             else ()
         )
-        metadata["responsibility_taxonomy"] = tuple(
-            loaded.get("responsibility_functions").values
-            if "responsibility_functions" in loaded
-            else ()
+        metadata["role_relation_taxonomy"] = tuple(
+            loaded.get("role_relation_types").values if "role_relation_types" in loaded else ()
         )
         schema = json.loads((root / "schema.json").read_text(encoding="utf-8"))
         return SemanticTaskDefinition.model_validate(metadata), schema
@@ -321,7 +320,11 @@ class BaselineProposalGenerator:
                     )
 
                 interview_payload = None
-                if config.adaptive_interview:
+                use_adaptive_interview = (
+                    config.adaptive_interview
+                    and _adaptive_interview_supports_schema(canonical_schema)
+                )
+                if use_adaptive_interview:
                     result, normalized_value, interview_payload = _run_adaptive_interview(
                         self._gateway,
                         config=config,
@@ -507,6 +510,20 @@ class BaselineProposalGenerator:
         )
 
 
+def _adaptive_interview_supports_schema(schema: Mapping[str, Any]) -> bool:
+    """Return whether the interview aggregator can satisfy the task schema.
+
+    The current adaptive interview only classifies scalar/multi-label ontology
+    dimensions. It does not extract structured role relation objects (role,
+    relation, target, condition, evidence). When ``role_relations`` is required
+    by the canonical task schema, using the interview would therefore construct
+    a response that can never satisfy that contract. Fall back to the direct
+    structured-generation path until the interview has a dedicated extraction
+    step for role relations.
+    """
+    return "role_relations" not in set(schema.get("required", ()))
+
+
 def _run_adaptive_interview(
     gateway: LlmGateway,
     *,
@@ -538,8 +555,8 @@ def _run_adaptive_interview(
         "primary_process_function": None,
         "applicability_functions": [],
         "primary_applicability_function": None,
-        "responsibility_functions": [],
-        "primary_responsibility_function": None,
+        "role_relation_types": [],
+        "primary_role_relation_type": None,
         "confidence": None,
         "rationale": None,
     }
@@ -621,9 +638,9 @@ def _run_adaptive_interview(
         elif question.dimension is InterviewDimension.APPLICABILITY:
             selection["applicability_functions"] = [label]
             selection["primary_applicability_function"] = label
-        elif question.dimension is InterviewDimension.RESPONSIBILITY:
-            selection["responsibility_functions"] = [label]
-            selection["primary_responsibility_function"] = label
+        elif question.dimension is InterviewDimension.ROLE_RELATION:
+            selection["role_relation_types"] = [label]
+            selection["primary_role_relation_type"] = label
     selection["confidence"] = min(confidences) if confidences else None
     selection["rationale"] = " | ".join(rationales) or None
     if last_result is None:
@@ -653,8 +670,8 @@ def _run_adaptive_interview(
                 "primary_process_function",
                 "applicability_functions",
                 "primary_applicability_function",
-                "responsibility_functions",
-                "primary_responsibility_function",
+                "role_relation_types",
+                "primary_role_relation_type",
             ),
         )
     return (
@@ -773,6 +790,7 @@ def _normalize_selection_payload(
     if not isinstance(value, dict):
         return dict(value)
     normalized = dict(value)
+    supplied_fields = set(normalized)
     defaults = {
         "knowledge_kinds": [],
         "primary_knowledge_kind": None,
@@ -780,12 +798,33 @@ def _normalize_selection_payload(
         "primary_process_function": None,
         "applicability_functions": [],
         "primary_applicability_function": None,
-        "responsibility_functions": [],
-        "primary_responsibility_function": None,
+        "role_relation_types": [],
+        "primary_role_relation_type": None,
     }
     for field in required_fields:
         if field in defaults:
             normalized.setdefault(field, defaults[field])
+
+    # ``role_relations`` was added after the scalar role-relation classification
+    # fields. Older/smaller providers may omit the complete new dimension when
+    # abstaining. Preserve the existing compatibility behaviour for missing
+    # ontology dimensions by materializing an empty extraction only when the
+    # provider either omitted the complete role-relation block or explicitly
+    # returned an empty/null classification. Do not repair a positive or partial
+    # classification that is missing its structured extraction.
+    if "role_relations" in required_fields and "role_relations" not in normalized:
+        role_types_supplied = "role_relation_types" in supplied_fields
+        primary_role_supplied = "primary_role_relation_type" in supplied_fields
+        complete_block_omitted = not role_types_supplied and not primary_role_supplied
+        explicit_abstention = (
+            role_types_supplied
+            and primary_role_supplied
+            and normalized.get("role_relation_types") in ([], ())
+            and normalized.get("primary_role_relation_type") is None
+        )
+        if complete_block_omitted or explicit_abstention:
+            normalized["role_relations"] = []
+
     roles = normalized.get("statement_functions")
     if isinstance(roles, (list, tuple)):
         normalized_roles = list(dict.fromkeys(roles))
@@ -796,7 +835,7 @@ def _normalize_selection_payload(
     for field, primary in (
         ("process_functions", "primary_process_function"),
         ("applicability_functions", "primary_applicability_function"),
-        ("responsibility_functions", "primary_responsibility_function"),
+        ("role_relation_types", "primary_role_relation_type"),
     ):
         values = normalized.get(field)
         if isinstance(values, (list, tuple)):

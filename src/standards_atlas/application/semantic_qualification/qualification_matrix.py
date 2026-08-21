@@ -107,9 +107,9 @@ class CascadeResolutionConfig(BaseModel):
     )
     minimum_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
     escalate_on_applicability_disagreement: bool = True
-    escalate_on_responsibility_disagreement: bool = True
+    escalate_on_role_relation_disagreement: bool = True
     minimum_applicability_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    minimum_responsibility_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    minimum_role_relation_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     statement_function_resolution_mode: Literal["cumulative", "stage_resolver"] = "cumulative"
     statement_function_resolver_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
 
@@ -164,8 +164,8 @@ def cascade_escalation_reasons(
         reasons.append("applicability_disagreement")
     if getattr(clause, "applicability_structural_conflict", False):
         reasons.append("applicability_structural_conflict")
-    if resolution.escalate_on_responsibility_disagreement and not clause.responsibility_unanimous:
-        reasons.append("responsibility_disagreement")
+    if resolution.escalate_on_role_relation_disagreement and not clause.role_relation_unanimous:
+        reasons.append("role_relation_disagreement")
 
     applicability_threshold = resolution.minimum_applicability_confidence
     if applicability_threshold is not None:
@@ -177,15 +177,15 @@ def cascade_escalation_reasons(
         if applicability_confidence < applicability_threshold:
             reasons.append("applicability_confidence")
 
-    responsibility_threshold = resolution.minimum_responsibility_confidence
-    if responsibility_threshold is not None:
-        responsibility_confidence = _dimension_decision_confidence(
-            present=clause.responsibility_present,
-            positive_confidence=clause.responsibility_confidence,
-            support=clause.responsibility_support,
+    role_relation_threshold = resolution.minimum_role_relation_confidence
+    if role_relation_threshold is not None:
+        role_relation_confidence = _dimension_decision_confidence(
+            present=clause.role_relation_present,
+            positive_confidence=clause.role_relation_confidence,
+            support=clause.role_relation_support,
         )
-        if responsibility_confidence < responsibility_threshold:
-            reasons.append("responsibility_confidence")
+        if role_relation_confidence < role_relation_threshold:
+            reasons.append("role_relation_confidence")
     return tuple(reasons)
 
 
@@ -218,7 +218,7 @@ def cascade_stage_escalation_reasons(
     """Re-evaluate only dimensions that were unresolved before this stage.
 
     Statement function can use a stage-local resolver, while applicability and
-    responsibility continue to use cumulative evidence. Resolved dimensions
+    role relations continue to use cumulative evidence. Resolved dimensions
     never become unresolved again merely because later models disagree.
     """
     unresolved = set(previous_reasons)
@@ -273,24 +273,24 @@ def cascade_stage_escalation_reasons(
         ):
             reasons.append("applicability_disagreement")
 
-    responsibility_unresolved = bool(
-        unresolved & {"responsibility_disagreement", "responsibility_confidence"}
+    role_relation_unresolved = bool(
+        unresolved & {"role_relation_disagreement", "role_relation_confidence"}
     )
-    if responsibility_unresolved:
-        threshold = resolution.minimum_responsibility_confidence
+    if role_relation_unresolved:
+        threshold = resolution.minimum_role_relation_confidence
         if threshold is not None:
             confidence = _dimension_decision_confidence(
-                present=cumulative_clause.responsibility_present,
-                positive_confidence=cumulative_clause.responsibility_confidence,
-                support=cumulative_clause.responsibility_support,
+                present=cumulative_clause.role_relation_present,
+                positive_confidence=cumulative_clause.role_relation_confidence,
+                support=cumulative_clause.role_relation_support,
             )
             if confidence < threshold:
-                reasons.append("responsibility_confidence")
+                reasons.append("role_relation_confidence")
         elif (
-            resolution.escalate_on_responsibility_disagreement
-            and not cumulative_clause.responsibility_unanimous
+            resolution.escalate_on_role_relation_disagreement
+            and not cumulative_clause.role_relation_unanimous
         ):
-            reasons.append("responsibility_disagreement")
+            reasons.append("role_relation_disagreement")
 
     return tuple(reasons)
 
@@ -338,7 +338,7 @@ _APPLICABILITY_REASONS = {
     "applicability_confidence",
     "applicability_structural_conflict",
 }
-_RESPONSIBILITY_REASONS = {"responsibility_disagreement", "responsibility_confidence"}
+_ROLE_RELATION_REASONS = {"role_relation_disagreement", "role_relation_confidence"}
 
 
 def capture_resolved_dimensions(
@@ -422,16 +422,16 @@ def capture_resolved_dimensions(
             ),
             "structural_conflict_unresolved": ("applicability_structural_conflict" in remaining),
         }
-    if resolved(_RESPONSIBILITY_REASONS):
-        result["responsibility"] = {
-            "present": cumulative_clause.responsibility_present,
+    if resolved(_ROLE_RELATION_REASONS):
+        result["role_relation"] = {
+            "present": cumulative_clause.role_relation_present,
             "value": (
-                cumulative_clause.proposed_responsibility_functions[0].value
-                if cumulative_clause.proposed_responsibility_functions
+                cumulative_clause.proposed_role_relation_types[0].value
+                if cumulative_clause.proposed_role_relation_types
                 else None
             ),
-            "confidence": cumulative_clause.responsibility_decision_confidence,
-            "category": cumulative_clause.responsibility_category.value,
+            "confidence": cumulative_clause.role_relation_decision_confidence,
+            "category": cumulative_clause.role_relation_category.value,
             "source": source,
         }
     return result
@@ -555,8 +555,8 @@ class ReviewPolicyConfig(BaseModel):
     accept_majority_min_confidence: float = Field(default=0.67, ge=0.0, le=1.0)
     accept_majority_min_models: int = Field(default=3, ge=1)
     applicability_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
-    responsibility_min_confidence: float = Field(default=0.80, ge=0.0, le=1.0)
-    require_responsibility_evidence: bool = True
+    role_relation_min_confidence: float = Field(default=0.80, ge=0.0, le=1.0)
+    require_role_relation_evidence: bool = True
 
 
 class ConsensusPromptSelection(BaseModel):
@@ -566,7 +566,7 @@ class ConsensusPromptSelection(BaseModel):
 
     statement_function: str = "content-only"
     applicability: str = "content-only"
-    responsibility: str = "content-only"
+    role_relation: str = "content-only"
 
 
 class AdjudicationConfig(BaseModel):

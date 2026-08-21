@@ -156,7 +156,7 @@ def test_analysis_metrics_separate_observed_and_unresolved_structural_conflicts(
             statement_function_category=ConsensusCategory.UNANIMOUS,
             knowledge_kind_category=ConsensusCategory.UNANIMOUS,
             applicability_category=ConsensusCategory.UNANIMOUS,
-            responsibility_category=ConsensusCategory.UNANIMOUS,
+            role_relation_category=ConsensusCategory.UNANIMOUS,
             overall_status=OverallConsensusStatus.RESOLVED,
             confidence=1.0,
             participating_models=3,

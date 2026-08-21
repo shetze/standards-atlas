@@ -52,7 +52,7 @@ def test_qualification_plan_derives_corpus_contract_from_matrix_manifest() -> No
     corpus = plan.steps[-2]
 
     assert "--version" in corpus.command
-    assert corpus.command[corpus.command.index("--version") + 1] == "2.1.0"
+    assert corpus.command[corpus.command.index("--version") + 1] == "2.2.0"
     assert corpus.command[corpus.command.index("--corpus-id") + 1] == "semantic-profile-v1"
     assert corpus.command[corpus.command.index("--strategy") + 1] == "representative_stratified"
     assert corpus.command[corpus.command.index("--seed") + 1] == "20260818"

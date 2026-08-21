@@ -38,3 +38,16 @@ A **knowledge domain** groups standards and relationships for a field such as fu
 ## Review gate
 
 A **review gate** is an intentional workflow pause. Standards Atlas preserves uncertainty and requires a human decision rather than publishing weak extraction or alignment as authoritative data.
+
+## Role relations and RACI
+
+Role semantics are represented as relations rather than a clause-level responsibility
+label. A grounded relation identifies a `role`, a controlled `relation`, a `target`, and
+optionally a `condition` plus evidence. This preserves distinctions such as `performs`,
+`verifies`, `independent_of`, and `assumes_role` that cannot be represented safely by the
+former responsibility taxonomy.
+
+RACI is a projection over these relations, not a primary ontology. For example,
+`performs` can support a Responsible view when appropriate, while Accountable, Consulted,
+and Informed are emitted only from explicit evidence; they are never inferred merely
+because a role performs an activity.

@@ -44,7 +44,7 @@ class Classifier:
 def _profile() -> OntologyProfile:
     return OntologyProfile(
         id="functional-safety",
-        dimensions={"knowledge_kinds": OntologyReference(id="knowledge-kinds", version="2.1.0")},
+        dimensions={"knowledge_kinds": OntologyReference(id="knowledge-kinds", version="2.2.0")},
     )
 
 

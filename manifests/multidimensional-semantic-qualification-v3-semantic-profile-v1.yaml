@@ -3,8 +3,8 @@ schema_version: "1.5"
 matrix_id: multidimensional-semantic-qualification-v3
 corpus_id: semantic-profile-v1
 task: semantic-profile-classification
-task_version: 2.1.0
-dataset_version: 2.1.0
+task_version: 2.2.0
+dataset_version: 2.2.0
 repetitions: 1
 
 execution:
@@ -25,7 +25,7 @@ execution:
         accepted_categories: [unanimous, strong_consensus, majority_consensus]
         minimum_confidence: 0.60
         escalate_on_applicability_disagreement: true
-        escalate_on_responsibility_disagreement: true
+        escalate_on_role_relation_disagreement: true
     - id: intermediate-escalation
       models:
         - gemma-3-12b-it-q4-k-m
@@ -42,9 +42,9 @@ execution:
         statement_function_resolution_mode: stage_resolver
         statement_function_resolver_min_confidence: 0.75
         escalate_on_applicability_disagreement: false
-        escalate_on_responsibility_disagreement: false
+        escalate_on_role_relation_disagreement: false
         minimum_applicability_confidence: 0.75
-        minimum_responsibility_confidence: 0.80
+        minimum_role_relation_confidence: 0.80
     - id: escalation
       models:
         - qwen3-14b-q4-k-m
@@ -64,7 +64,7 @@ execution:
       - majority_consensus
     minimum_confidence: 0.60
     escalate_on_applicability_disagreement: true
-    escalate_on_responsibility_disagreement: true
+    escalate_on_role_relation_disagreement: true
 
 
 challenger_qualification:
@@ -129,25 +129,25 @@ challenger_qualification:
       challengers: [qwen3-32b-q4-k-m]
 prompts:
   - id: content-only
-    prompt_version: content-only-v3
+    prompt_version: content-only-v4
     max_output_tokens: 512
     adaptive_interview: true
     description: Clause text without structural context.
 
   - id: structure-aware
-    prompt_version: structure-aware-v3
+    prompt_version: structure-aware-v4
     max_output_tokens: 640
     adaptive_interview: true
     description: Clause text with reference, title, and hierarchy context.
 
   - id: reference-aware
-    prompt_version: evidence-first-v3
+    prompt_version: evidence-first-v4
     max_output_tokens: 768
     adaptive_interview: true
     description: Clause text with deterministically resolved internal references.
 
   - id: bounded-reasoning
-    prompt_version: bounded-reasoning-v3
+    prompt_version: bounded-reasoning-v4
     max_output_tokens: 768
     description: Bounded internal reasoning with concise schema-only output.
 
@@ -337,7 +337,7 @@ consensus:
     statement_function: structure-aware
     knowledge_kind: structure-aware
     applicability: structure-aware
-    responsibility: reference-aware
+    role_relation: reference-aware
   min_models: 3
   strong_threshold: 0.8
   majority_threshold: 0.6
@@ -347,8 +347,8 @@ consensus:
     accept_majority_min_confidence: 0.67
     accept_majority_min_models: 3
     applicability_min_confidence: 0.75
-    responsibility_min_confidence: 0.80
-    require_responsibility_evidence: true
+    role_relation_min_confidence: 0.80
+    require_role_relation_evidence: true
   adjudication:
     enabled: true
     model_id: codex-gpt-5.6-luna

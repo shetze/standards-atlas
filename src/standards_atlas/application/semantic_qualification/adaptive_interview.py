@@ -13,7 +13,7 @@ class InterviewDimension(StrEnum):
     KNOWLEDGE_KIND = "knowledge_kind"
     PROCESS_FUNCTION = "process_function"
     APPLICABILITY = "applicability"
-    RESPONSIBILITY = "responsibility"
+    ROLE_RELATION = "role_relation"
     REFERENCE_SEMANTICS = "reference_semantics"
 
 
@@ -221,31 +221,31 @@ class AdaptiveInterviewPlanner:
         else:
             skipped.append(InterviewDimension.APPLICABILITY)
 
-        responsibility_signal = any(
+        role_relation_signal = any(
             marker in content.lower()
             for marker in (
                 "responsible",
-                "responsibility",
+                "role_relation",
                 "shall ensure",
                 "shall be performed by",
                 "is assigned to",
             )
         )
-        if responsibility_signal:
+        if role_relation_signal:
             questions.append(
                 InterviewQuestion(
-                    id="responsibility-presence",
-                    dimension=InterviewDimension.RESPONSIBILITY,
+                    id="role-relation-presence",
+                    dimension=InterviewDimension.ROLE_RELATION,
                     question=(
                         "Does this clause explicitly connect an identifiable actor or role "
-                        "to a duty, exclusion, or responsibility condition?"
+                        "to an activity, artifact, decision, role, or independence constraint?"
                     ),
                     allowed_labels=("present", "none"),
-                    reason=("Clause wording indicates a responsibility allocation hypothesis."),
+                    reason=("Clause wording indicates a role-relation hypothesis."),
                 )
             )
         else:
-            skipped.append(InterviewDimension.RESPONSIBILITY)
+            skipped.append(InterviewDimension.ROLE_RELATION)
 
         if self._has_reference_evidence(context):
             questions.append(
@@ -327,20 +327,29 @@ def follow_up_question(question: InterviewQuestion) -> InterviewQuestion | None:
             ),
             reason="A positive applicability-presence decision requires one subtype.",
         )
-    if question.id == "responsibility-presence":
+    if question.id == "role-relation-presence":
         return InterviewQuestion(
-            id="responsibility-subtype",
-            dimension=InterviewDimension.RESPONSIBILITY,
+            id="role-relation-subtype",
+            dimension=InterviewDimension.ROLE_RELATION,
             question=(
-                "Which single responsibility subtype is explicitly expressed? Select none "
-                "unless the evidence names both an actor or role and its duty or exclusion."
+                "Which single role relation is explicitly expressed? Select none unless the "
+                "evidence names both an actor or role and a target."
             ),
             allowed_labels=(
-                "responsibility_assignment",
-                "responsibility_exclusion",
-                "role_condition",
+                "responsible_for",
+                "performs",
+                "approves",
+                "verifies",
+                "validates",
+                "consulted_for",
+                "informed_about",
+                "independent_of",
+                "excluded_from",
+                "assigned_to",
+                "assumes_role",
+                "participates_in",
                 "none",
             ),
-            reason="A positive responsibility-presence decision requires one subtype.",
+            reason="A positive role-relation-presence decision requires one subtype.",
         )
     return None

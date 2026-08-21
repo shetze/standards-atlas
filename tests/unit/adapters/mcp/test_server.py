@@ -61,7 +61,7 @@ class FakeProvider:
         return (self.clause,)
 
 
-def test_registers_read_only_tools_and_resources() -> None:
+def test_registers_tools_and_resources() -> None:
     server = create_mcp_server(McpServerConfig(), FakeProvider())
 
     tools = asyncio.run(server.list_tools())
@@ -78,6 +78,9 @@ def test_registers_read_only_tools_and_resources() -> None:
         "get_knowledge_table",
         "list_knowledge_records",
         "get_knowledge_record",
+        "list_untranscribed_formulas",
+        "get_formula",
+        "submit_formula_transcription",
     }
     assert {str(resource.uri) for resource in resources} == {"standards-atlas://documents"}
     assert {template.uriTemplate for template in templates} == {

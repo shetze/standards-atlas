@@ -247,7 +247,7 @@ def test_domain_mapper_reads_public_semantic_tags() -> None:
             name="EN 50716",
             digits=8,
             official_year=2023,
-            extra_fields={"semanticProfile": "statement-function-classification:2.1.0"},
+            extra_fields={"semanticProfile": "statement-function-classification:2.2.0"},
         ),
         structure_items=[
             StructureItem(
@@ -261,7 +261,7 @@ def test_domain_mapper_reads_public_semantic_tags() -> None:
                 reference="EN 50716:2023 5.1",
                 content="Requirement",
                 type_marker="r",
-                semantic_tags=("SP-REQ", "SS-PRE", "KK-PRC", "RF-RAS"),
+                semantic_tags=("SP-REQ", "SS-PRE", "KK-PRC", "RR-RSP"),
             )
         ],
     )
@@ -272,6 +272,4 @@ def test_domain_mapper_reads_public_semantic_tags() -> None:
         "prerequisite",
     ]
     assert [value.value for value in classification.knowledge_kinds] == ["process"]
-    assert [value.value for value in classification.responsibility_functions] == [
-        "responsibility_assignment"
-    ]
+    assert [value.value for value in classification.role_relation_types] == ["responsible_for"]

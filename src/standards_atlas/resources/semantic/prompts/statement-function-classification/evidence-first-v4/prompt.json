@@ -1,0 +1,5 @@
+{
+  "description": "Require an evidence-based rationale before assigning semantic dimensions and grounded role relations.",
+  "task": "statement-function-classification",
+  "version": "evidence-first-v4"
+}
