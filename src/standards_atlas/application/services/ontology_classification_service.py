@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from standards_atlas.application.ontology import OntologyContext, OntologyEngine, OntologyProfile
+from standards_atlas.application.ontology import (
+    OntologyContext,
+    OntologyEngine,
+    OntologyProfile,
+    RoleSemanticsClassifier,
+)
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
@@ -12,7 +17,6 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     KnowledgeKind,
     ProcessFunction,
-    RoleRelationType,
     StatementFunction,
 )
 
@@ -33,11 +37,13 @@ class OntologyClassificationService:
         engine: OntologyEngine,
         profile: OntologyProfile,
         classifier_id: str = "qualified-llm",
+        role_semantics: RoleSemanticsClassifier | None = None,
     ) -> None:
         self._documents = documents
         self._engine = engine
         self._profile = profile
         self._classifier_id = classifier_id
+        self._role_semantics = role_semantics
 
     def classify(self, document_key: str) -> OntologyClassificationResult:
         document = self._documents.load(DocumentKey(value=document_key))
@@ -81,6 +87,9 @@ class OntologyClassificationService:
             )
             values = {item.dimension: item.values for item in results}
             current = clause.semantic_classification
+            role_result = (
+                self._role_semantics.classify(context) if self._role_semantics is not None else None
+            )
             semantic = current.model_copy(
                 update={
                     "statement_functions": tuple(
@@ -96,11 +105,18 @@ class OntologyClassificationService:
                         ApplicabilityFunction(item)
                         for item in values.get("applicability_functions", ())
                     ),
-                    "role_relation_types": tuple(
-                        RoleRelationType(item) for item in values.get("role_relation_types", ())
-                    ),
                 }
             )
+            if role_result is not None:
+                semantic = semantic.model_copy(
+                    update={
+                        "role_semantics_present": role_result.present,
+                        "role_relations": role_result.relations,
+                        "role_relation_types": tuple(
+                            dict.fromkeys(item.relation for item in role_result.relations)
+                        ),
+                    }
+                )
             updated.append(clause.model_copy(update={"semantic_classification": semantic}))
             classified += 1
         result = document.model_copy(update={"clauses": tuple(updated)})

@@ -1,0 +1,5 @@
+Decide whether the clause contains explicit role semantics.
+
+Return role_semantics_present=true when the clause explicitly expresses a role or actor, responsibility/accountability, participation, assignment, approval, verification, validation, consultation/information, or organizational independence/exclusion. A complete actor-relation-target tuple is NOT required. Passive wording such as "shall be verified" is therefore positive role semantics even when the actor is omitted.
+
+Do not invent a missing actor or target. Do not project role semantics from a table into surrounding narrative. Use only the supplied clause and structural context. Return JSON matching the schema.

@@ -133,6 +133,7 @@ def build_ontology_classification_service(
     from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
     from standards_atlas.application.ontology import (
         LlmOntologyClassifier,
+        LlmRoleSemanticsClassifier,
         OntologyEngine,
         OntologyProfile,
         OntologyReference,
@@ -142,7 +143,8 @@ def build_ontology_classification_service(
     from standards_atlas.application.services import OntologyClassificationService
 
     config = LlmConfig.load(llm_config_path)
-    classifier = LlmOntologyClassifier(OpenAICompatibleLlmGateway(config), model=config.model)
+    gateway = OpenAICompatibleLlmGateway(config)
+    classifier = LlmOntologyClassifier(gateway, model=config.model)
     profile = OntologyProfile(
         id="semantic-profile-2.2.0",
         dimensions={
@@ -152,7 +154,6 @@ def build_ontology_classification_service(
             "applicability_functions": OntologyReference(
                 id="applicability-functions", version="1.1.0"
             ),
-            "role_relation_types": OntologyReference(id="role-relation-types", version="1.0.0"),
         },
     )
     engine = OntologyEngine(
@@ -163,6 +164,7 @@ def build_ontology_classification_service(
         documents=FileSystemEngineeringDocumentRepository(workspace),
         engine=engine,
         profile=profile,
+        role_semantics=LlmRoleSemanticsClassifier(gateway, model=config.model),
     )
 
 

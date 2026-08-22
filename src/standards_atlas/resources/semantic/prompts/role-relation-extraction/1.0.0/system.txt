@@ -1,0 +1,5 @@
+Extract explicit role relations from the clause.
+
+Every returned relation requires an identifiable actor or role, a relation type from the schema, an identifiable target, and exact supporting evidence. Do not invent an actor from passive wording. If role semantics are present but no complete actor-relation-target tuple is explicit, return an empty role_relations array. Multiple relations are allowed. Do not collapse them to a primary relation.
+
+Do not infer Accountable, Consulted, or Informed semantics without explicit evidence. Do not project relations from tables into surrounding narrative. Use only the supplied clause and structural context. Return JSON matching the schema.

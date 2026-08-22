@@ -42,8 +42,11 @@ A **review gate** is an intentional workflow pause. Standards Atlas preserves un
 ## Role relations and RACI
 
 Role semantics are represented as relations rather than a clause-level responsibility
-label. A grounded relation identifies a `role`, a controlled `relation`, a `target`, and
-optionally a `condition` plus evidence. This preserves distinctions such as `performs`,
+label. Role processing is presence-first. `role_semantics_present` records explicit role or
+responsibility semantics even when a complete relation cannot be extracted; for example,
+"the analysis shall be verified" is role-semantic without identifying the verifier. A
+grounded relation identifies an `actor`, a controlled `relation`, a `target`, and optionally
+a `condition` plus evidence. This preserves distinctions such as `performs`,
 `verifies`, `independent_of`, and `assumes_role` that cannot be represented safely by the
 former responsibility taxonomy.
 

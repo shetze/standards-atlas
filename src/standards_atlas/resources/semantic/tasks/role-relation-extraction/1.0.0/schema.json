@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["role_relations"],
+  "properties": {
+    "role_relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["actor", "relation", "target", "condition", "evidence", "confidence"],
+        "properties": {
+          "actor": {"type": "string", "minLength": 1},
+          "relation": {"type": "string", "enum": ["responsible_for", "performs", "approves", "verifies", "validates", "consulted_for", "informed_about", "independent_of", "excluded_from", "assigned_to", "assumes_role", "participates_in"]},
+          "target": {"type": "string", "minLength": 1},
+          "condition": {"type": ["string", "null"]},
+          "evidence": {"type": ["string", "null"]},
+          "confidence": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0}
+        }
+      }
+    }
+  }
+}

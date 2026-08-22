@@ -15,6 +15,7 @@ from .engine import (
 )
 from .llm_classifier import LlmOntologyClassifier
 from .resource_repository import ResourceOntologyDefinitionRepository
+from .role_semantics import LlmRoleSemanticsClassifier, RoleSemanticsClassifier, RoleSemanticsResult
 
 __all__ = [
     "OntologyClassifier",
@@ -28,4 +29,7 @@ __all__ = [
     "OntologyRegistry",
     "ResourceOntologyDefinitionRepository",
     "LlmOntologyClassifier",
+    "LlmRoleSemanticsClassifier",
+    "RoleSemanticsClassifier",
+    "RoleSemanticsResult",
 ]
