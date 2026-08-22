@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 
 class StatementFunction(StrEnum):
@@ -68,6 +69,16 @@ class ApplicabilityFunction(StrEnum):
     EXCEPTION = "exception"
 
 
+class RoleRelationFamily(StrEnum):
+    """High-level semantic family for role relations."""
+
+    RESPONSIBILITY = "responsibility"
+    ACTIVITY = "activity"
+    PARTICIPATION = "participation"
+    ORGANIZATION = "organization"
+    ASSIGNMENT = "assignment"
+
+
 class RoleRelationType(StrEnum):
     """Controlled relation types between an actor/role and a target."""
 
@@ -84,13 +95,38 @@ class RoleRelationType(StrEnum):
     ASSUMES_ROLE = "assumes_role"
     PARTICIPATES_IN = "participates_in"
 
+    @property
+    def family(self) -> RoleRelationFamily:
+        """Return the semantic family of this relation type."""
+        if self is RoleRelationType.RESPONSIBLE_FOR:
+            return RoleRelationFamily.RESPONSIBILITY
+        if self in {
+            RoleRelationType.PERFORMS,
+            RoleRelationType.APPROVES,
+            RoleRelationType.VERIFIES,
+            RoleRelationType.VALIDATES,
+        }:
+            return RoleRelationFamily.ACTIVITY
+        if self in {
+            RoleRelationType.CONSULTED_FOR,
+            RoleRelationType.INFORMED_ABOUT,
+            RoleRelationType.PARTICIPATES_IN,
+        }:
+            return RoleRelationFamily.PARTICIPATION
+        if self in {RoleRelationType.INDEPENDENT_OF, RoleRelationType.EXCLUDED_FROM}:
+            return RoleRelationFamily.ORGANIZATION
+        return RoleRelationFamily.ASSIGNMENT
+
 
 class RoleRelation(BaseModel):
     """Evidence-grounded relation between a role/actor and an activity, artifact, or role."""
 
     model_config = ConfigDict(frozen=True)
 
-    role: str = Field(min_length=1)
+    actor: str = Field(
+        min_length=1,
+        validation_alias=AliasChoices("actor", "role"),
+    )
     relation: RoleRelationType
     target: str = Field(min_length=1)
     condition: str | None = None
@@ -205,12 +241,23 @@ class SemanticClassification(BaseModel):
     knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    role_semantics_present: bool = False
     role_relation_types: tuple[RoleRelationType, ...] = ()
     role_relations: tuple[RoleRelation, ...] = ()
     document_structure: DocumentStructureClassification | None = None
     normative_status: NormativeStatus = NormativeStatus.UNSPECIFIED
     domain_functions: tuple[DomainFunctionClassification, ...] = ()
     relations: tuple[SemanticRelation, ...] = ()
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_role_semantics_for_legacy_payloads(cls, data: Any) -> Any:
+        """Infer presence when older payloads carry relation classifications only."""
+        if not isinstance(data, dict) or "role_semantics_present" in data:
+            return data
+        if data.get("role_relation_types") or data.get("role_relations"):
+            return {**data, "role_semantics_present": True}
+        return data
 
     @model_validator(mode="after")
     def dimensions_are_unique(self) -> SemanticClassification:
@@ -225,10 +272,12 @@ class SemanticClassification(BaseModel):
         if len(self.role_relation_types) != len(set(self.role_relation_types)):
             raise ValueError("role_relation_types must not contain duplicates")
         relation_keys = [
-            (item.role, item.relation, item.target, item.condition) for item in self.role_relations
+            (item.actor, item.relation, item.target, item.condition) for item in self.role_relations
         ]
         if len(relation_keys) != len(set(relation_keys)):
             raise ValueError("role_relations must not contain duplicates")
+        if (self.role_relation_types or self.role_relations) and not self.role_semantics_present:
+            raise ValueError("role relation classifications require role_semantics_present=true")
         domains = [item.knowledge_domain for item in self.domain_functions]
         if len(domains) != len(set(domains)):
             raise ValueError("each knowledge domain may occur only once")

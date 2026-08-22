@@ -241,6 +241,7 @@ def _merge_semantic_tags(
             ApplicabilityFunction(value) for value in decoded["applicability_functions"]
         )
     if decoded["role_relation_types"]:
+        update["role_semantics_present"] = True
         update["role_relation_types"] = tuple(
             RoleRelationType(value) for value in decoded["role_relation_types"]
         )

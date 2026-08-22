@@ -6,7 +6,7 @@ from standards_atlas.application.schema import SCHEMA_BASELINES, require_current
 
 
 def test_persistent_schema_baselines_are_explicit() -> None:
-    assert SCHEMA_BASELINES["engineering-document"].current == 3
+    assert SCHEMA_BASELINES["engineering-document"].current == 4
     assert SCHEMA_BASELINES["standards-manifest"].current == 2
     assert SCHEMA_BASELINES["qualification-matrix-manifest"].current == "1.5"
 
@@ -27,6 +27,6 @@ def test_current_baseline_rejects_previous_versions_during_cleanup_phase() -> No
     try:
         require_current_schema("engineering-document", 2)
     except ValueError as exc:
-        assert "writers may only emit current schema 3" in str(exc)
+        assert "writers may only emit current schema 4" in str(exc)
     else:
         raise AssertionError("old schema version unexpectedly accepted")

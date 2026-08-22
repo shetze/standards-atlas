@@ -88,3 +88,22 @@ def test_repository_rejects_unknown_schema_version(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Unsupported engineering document schema version"):
         repository.load(DocumentKey(value="DOC"))
+
+
+def test_repository_reads_schema_v3_with_deprecation_warning(tmp_path: Path) -> None:
+    from standards_atlas.application.schema import SchemaDeprecationWarning
+
+    workspace = tmp_path / ".atlas"
+    documents = workspace / "documents"
+    documents.mkdir(parents=True)
+    payload = {
+        "schema_version": 3,
+        "document": _document().model_dump(mode="json"),
+    }
+    (documents / "DOC.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
+    with pytest.warns(SchemaDeprecationWarning, match="schema version 3.*deprecated"):
+        loaded = repository.load(DocumentKey(value="DOC"))
+
+    assert loaded.key.value == "DOC"
