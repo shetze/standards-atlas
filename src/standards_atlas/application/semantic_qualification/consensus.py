@@ -1022,6 +1022,22 @@ def _write_outputs(
                         else None
                     ),
                 },
+                "role_semantics": {
+                    "present": item.role_semantics_present,
+                    "candidate": item.role_candidate,
+                    "candidate_markers": list(item.role_candidate_markers),
+                    "relations": [
+                        {
+                            "actor": relation.actor,
+                            "relation": relation.relation.value,
+                            "target": relation.target,
+                            "condition": relation.condition,
+                            "support": relation.support,
+                            "evidence": list(relation.evidence),
+                        }
+                        for relation in item.role_relation_consensus
+                    ],
+                },
                 "role_relation": {
                     "present": item.role_relation_present,
                     "function": (

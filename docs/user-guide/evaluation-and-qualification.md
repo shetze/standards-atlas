@@ -316,3 +316,36 @@ All v3 semantic prompts use the same confidence contract: confidence is a JSON n
 `0.0` through `1.0` (for example, `0.95`), never a percentage such as `95` or `95%`. Invalid
 confidence values remain validation failures; the evaluation pipeline does not silently
 normalize percentages because prediction success is part of model qualification.
+
+## Focused role golden corpus
+
+Role semantics are qualified against a focused corpus independently of the broad semantic-profile corpus.
+The repository provides `manifests/role-relation-golden-corpus-v1.yaml`, which targets 140 clauses across
+explicit relations, multiple relations, passive wording without an actor, organizational relations,
+role terminology without a relation, negative cases, and structured tables.
+
+Build the review corpus from existing EngineeringDocuments:
+
+```bash
+uv run standards-atlas evaluation role-corpus-build \
+  --manifest manifests/role-relation-golden-corpus-v1.yaml
+```
+
+The command writes `dataset.json`, `corpus-manifest.yaml`, and `role-golden-corpus.yaml` below the local
+corpus root. Sampling categories are selection strata only; they are not semantic labels. Every generated
+case starts as `proposed`. A reviewer sets `expected.role_semantics_present`, curates zero or more complete
+`actor`/`relation`/`target` relations with evidence, and changes `status` to `published` only after review.
+Unpublished cases never contribute to regression metrics.
+
+After a qualification run, compare its `consensus-report.json` with the published role gold:
+
+```bash
+uv run standards-atlas evaluation role-corpus-evaluate \
+  --golden .atlas/data/evaluation/corpora/role-relation-extraction/1.0.0/role-golden-corpus.yaml \
+  --consensus local/review/qualification/consensus/consensus-report.json \
+  --output local/evaluation/qualification/role-golden-regression.json
+```
+
+The regression report separates presence accuracy/precision/recall/F1 from exact normalized
+actor-relation-target tuple precision/recall/F1. This prevents a conservative all-negative presence
+consensus from appearing equivalent to correct relation extraction.

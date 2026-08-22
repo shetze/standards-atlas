@@ -142,3 +142,12 @@
 - Internal cross-clause references are resolved during Markdown export and rendered as links when target clauses are available.
 - Domain-aware structural taxonomy with normative/informative inheritance.
 - Background MCP/LLM lifecycle management improvements and qualification-matrix reliability fixes.
+
+### Role-model Slice 4
+
+- Added a focused, reproducible role golden-corpus builder with seven sampling strata.
+- Added a reviewable `role-golden-corpus.yaml` contract that separates proposed from published gold cases.
+- Added presence and complete actor-relation-target tuple regression metrics against published gold.
+- Added `evaluation role-corpus-build` and `evaluation role-corpus-evaluate` commands.
+- Added the `role-relation-golden-corpus-v1.yaml` 140-case sampling profile.
+- Extended consensus golden proposals with role-semantics presence, candidate markers, and tuple consensus.

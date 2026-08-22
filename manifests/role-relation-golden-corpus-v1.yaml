@@ -1,0 +1,16 @@
+schema_version: "1.0"
+corpus_id: role-relations-v1
+task: role-relation-extraction
+corpus_version: 1.0.0
+knowledge_domain: functional-safety
+seed: 20260822
+include_text: true
+strict_quotas: false
+quotas:
+  explicit_relation: 30
+  multiple_relations: 20
+  passive_without_actor: 20
+  organizational_relation: 15
+  role_term_without_relation: 20
+  negative: 20
+  structured_table: 15

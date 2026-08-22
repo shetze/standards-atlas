@@ -16,7 +16,11 @@ from standards_atlas.cli.commands.evaluation_commands.benchmark import (
     run_semantic_evaluation,
 )
 from standards_atlas.cli.commands.evaluation_commands.challenger import qualify_challengers
-from standards_atlas.cli.commands.evaluation_commands.corpus import build_evaluation_corpus
+from standards_atlas.cli.commands.evaluation_commands.corpus import (
+    build_evaluation_corpus,
+    build_role_golden_corpus,
+    evaluate_role_corpus,
+)
 from standards_atlas.cli.commands.evaluation_commands.qualification_matrix import (
     _format_duration,
     _MatrixProposalProgress,
@@ -28,8 +32,10 @@ __all__ = [
     "_MatrixProposalProgress",
     "_format_duration",
     "build_evaluation_corpus",
+    "build_role_golden_corpus",
     "build_golden_corpus_qualifier",
     "evaluate_annotation_metrics",
+    "evaluate_role_corpus",
     "export_annotation_reviews",
     "extract_clause_references",
     "import_annotation_reviews",

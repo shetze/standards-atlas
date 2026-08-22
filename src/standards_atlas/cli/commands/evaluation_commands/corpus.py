@@ -11,6 +11,12 @@ from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvide
 from standards_atlas.application.semantic_qualification.clause_access import (
     SamplingStrategy,
 )
+from standards_atlas.application.semantic_qualification.role_corpus import (
+    RoleCorpusBuildManifest,
+    RoleGoldenCorpus,
+    RoleGoldenCorpusBuilder,
+    evaluate_role_golden_corpus,
+)
 from standards_atlas.application.semantic_qualification.workflow import (
     CorpusBuildConfig,
 )
@@ -68,3 +74,54 @@ def build_evaluation_corpus(
     typer.echo(f"Corpus clauses          : {result.clause_count}")
     typer.echo(f"Dataset                 : {result.dataset_path}")
     typer.echo(f"Manifest                : {result.manifest_path}")
+
+
+@evaluation_app.command("role-corpus-build")
+def build_role_golden_corpus(
+    manifest: Annotated[Path, typer.Option("--manifest", exists=True, dir_okay=False)],
+    workspace: Annotated[
+        Path, typer.Option("--workspace", file_okay=False)
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+    output: Annotated[
+        Path, typer.Option("--output", file_okay=False)
+    ] = cli_defaults.DEFAULT_EVALUATION_CORPUS_ROOT,
+) -> None:
+    """Build a deterministic, annotation-ready role golden-corpus candidate set."""
+    try:
+        config = RoleCorpusBuildManifest.load(manifest)
+        result = RoleGoldenCorpusBuilder(EngineeringDocumentClauseProvider(workspace)).build(
+            config, output
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Role corpus clauses     : {result.selected_count}")
+    typer.echo(f"Dataset                 : {result.dataset_path}")
+    typer.echo(f"Golden review file      : {result.golden_path}")
+    typer.echo(f"Manifest                : {result.manifest_path}")
+    if result.shortfalls:
+        typer.echo(f"Quota shortfalls        : {result.shortfalls}")
+
+
+@evaluation_app.command("role-corpus-evaluate")
+def evaluate_role_corpus(
+    golden: Annotated[Path, typer.Option("--golden", exists=True, dir_okay=False)],
+    consensus: Annotated[Path, typer.Option("--consensus", exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Evaluate role presence and relation tuples against published golden cases."""
+    import json
+
+    try:
+        corpus = RoleGoldenCorpus.load(golden)
+        payload = json.loads(consensus.read_text(encoding="utf-8"))
+        report = evaluate_role_golden_corpus(corpus, payload)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Published gold cases    : {report.published_cases}")
+    typer.echo(f"Presence F1             : {report.presence_f1:.3f}")
+    typer.echo(f"Tuple F1                : {report.tuple_f1:.3f}")
+    typer.echo(f"Report                  : {output}")
