@@ -43,11 +43,12 @@ class LlmRoleSemanticsClassifier:
             StructuredGenerationRequest(
                 task="role-semantics-presence",
                 system_prompt=(
-                    "Decide whether the clause contains explicit role, actor, responsibility, "
-                    "accountability, participation, assignment, verification, validation, approval, "
-                    "or organizational-independence semantics. A complete actor-relation-target "
-                    "tuple is NOT required. Passive wording such as 'shall be verified' is positive "
-                    "role semantics even when the actor is not stated. Do not infer missing actors."
+                    "Decide whether the clause contains explicit role, actor, "
+                    "resposibility, accountability, participation, assignment, verification, "
+                    "validation, approval, or organizational-independence semantics. A complete "
+                    "actor-relation-target tuple is NOT required. Passive wording such as 'shall "
+                    "be verified' is positive  role semantics even when the actor is not stated. "
+                    "Do not infer missing actors."
                 ),
                 user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
                 output_schema=_presence_schema(),

@@ -76,11 +76,26 @@ class StatementFunctionSelection(BaseModel):
     primary_process_function: ProcessFunction | None = None
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     primary_applicability_function: ApplicabilityFunction | None = None
+    role_semantics_present: bool = False
     role_relation_types: tuple[RoleRelationType, ...] = ()
+    # Compatibility field for qualification payloads before tuple-set consensus.
     primary_role_relation_type: RoleRelationType | None = None
     role_relations: tuple[RoleRelation, ...] = ()
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     rationale: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_role_semantics_for_legacy_payloads(cls, data: Any) -> Any:
+        if not isinstance(data, dict) or "role_semantics_present" in data:
+            return data
+        if (
+            data.get("role_relation_types")
+            or data.get("role_relations")
+            or data.get("primary_role_relation_type")
+        ):
+            return {**data, "role_semantics_present": True}
+        return data
 
     @model_validator(mode="after")
     def primary_function_must_be_selected(self) -> StatementFunctionSelection:
@@ -121,6 +136,8 @@ class StatementFunctionSelection(BaseModel):
             raise ValueError("primary_role_relation_type must be included in role_relation_types")
         if len(set(self.role_relation_types)) != len(self.role_relation_types):
             raise ValueError("role_relation_types must not contain duplicates")
+        if (self.role_relation_types or self.role_relations) and not self.role_semantics_present:
+            raise ValueError("role relation classifications require role_semantics_present=true")
         return self
 
 

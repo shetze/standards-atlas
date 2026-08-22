@@ -1,5 +1,12 @@
 ## 0.8.1
 
+### Role qualification tuple consensus
+
+- split role qualification into explicit role-semantics presence and structured relation-tuple consensus
+- add deterministic role-candidate diagnostics for sparse-negative hard cases
+- add semantic-profile task 2.3.0 and v5 prompts without a required primary role-relation label
+
+
 ### Changed
 - Completed the modular refactoring of the core architecture.
 - Split CLI, qualification, proposal, normalization, alignment and Docling processing into cohesive modules.

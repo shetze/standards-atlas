@@ -17,12 +17,19 @@ from standards_atlas.application.evaluation.repository import EvaluationDatasetR
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
 )
+from standards_atlas.application.semantic_qualification.role_qualification import (
+    RoleTupleConsensus,
+    detect_role_candidate,
+    relation_tuple_consensus,
+    summarize_role_qualification,
+)
 from standards_atlas.application.semantic_qualification.structural_evidence import (
     derive_structural_evidence,
 )
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     KnowledgeKind,
+    RoleRelation,
     RoleRelationType,
     StatementFunction,
 )
@@ -54,6 +61,8 @@ class ModelVote(BaseModel):
     secondary_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
     applicability_function: ApplicabilityFunction | None = None
+    role_semantics_present: bool = False
+    role_relations: tuple[RoleRelation, ...] = ()
     role_relation_present: bool = False
     role_relation_type: RoleRelationType | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
@@ -100,6 +109,7 @@ class ClauseConsensus(BaseModel):
     knowledge_kind_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     applicability_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     role_relation_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    role_semantics_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     overall_status: OverallConsensusStatus = OverallConsensusStatus.REVIEW_REQUIRED
     primary_function: StatementFunction | None = None
     proposed_functions: tuple[StatementFunction, ...] = ()
@@ -107,6 +117,12 @@ class ClauseConsensus(BaseModel):
     proposed_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
     proposed_applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    role_semantics_present: bool = False
+    role_semantics_presence_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    role_candidate: bool = False
+    role_candidate_markers: tuple[str, ...] = ()
+    proposed_role_relations: tuple[RoleRelation, ...] = ()
+    role_relation_consensus: tuple[RoleTupleConsensus, ...] = ()
     role_relation_present: bool = False
     proposed_role_relation_types: tuple[RoleRelationType, ...] = ()
     # Overall confidence follows the primary statement-function dimension.
@@ -128,6 +144,7 @@ class ClauseConsensus(BaseModel):
     role_relation_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_unanimous: bool = True
     role_relation_unanimous: bool = True
+    role_semantics_unanimous: bool = True
     applicability_structural_conflict: bool = False
     applicability_structural_conflict_observed: bool = False
     applicability_structural_conflict_unresolved: bool = False
@@ -137,6 +154,7 @@ class ClauseConsensus(BaseModel):
     knowledge_kind_support: dict[str, float] = Field(default_factory=dict)
     applicability_support: dict[str, float] = Field(default_factory=dict)
     role_relation_support: dict[str, float] = Field(default_factory=dict)
+    role_semantics_support: dict[str, float] = Field(default_factory=dict)
     structural_prior: dict[str, Any] = Field(default_factory=dict)
     scope_context: bool = False
     adjudicated: bool = False
@@ -167,6 +185,7 @@ class ConsensusReport(BaseModel):
     dimension_categories: dict[str, dict[str, int]] = Field(default_factory=dict)
     overall_statuses: dict[str, int] = Field(default_factory=dict)
     resolution_sources: dict[str, int] = Field(default_factory=dict)
+    role_qualification_metrics: dict[str, Any] = Field(default_factory=dict)
     clauses: tuple[ClauseConsensus, ...]
 
 
@@ -294,6 +313,18 @@ class ModelConsensusService:
                 scope_context=bool(prior.get("scope_context", False)),
                 model_dimension_eligibility=model_dimension_eligibility or {},
             )
+            candidate = detect_role_candidate(_optional_text(context.get("text")))
+            presence_support = (
+                sum(vote.role_semantics_present for vote in votes) / len(votes) if votes else 0.0
+            )
+            role_semantics_present = presence_support >= majority_threshold
+            tuple_consensus = relation_tuple_consensus(
+                {vote.model_id: vote.role_relations for vote in votes},
+                minimum_support=majority_threshold,
+            )
+            proposed_role_relations = tuple(
+                relation for vote in votes for relation in vote.role_relations
+            )
             clauses.append(
                 ClauseConsensus(
                     clause_id=clause_id,
@@ -301,6 +332,28 @@ class ModelConsensusService:
                     reference=_optional_text(context.get("reference")),
                     title=_optional_text(context.get("title")),
                     clause_text=_optional_text(context.get("text")),
+                    role_semantics_present=role_semantics_present,
+                    role_semantics_presence_confidence=(
+                        presence_support if role_semantics_present else 1.0 - presence_support
+                    ),
+                    role_semantics_category=_category_for_confidence(
+                        presence_support if role_semantics_present else 1.0 - presence_support,
+                        len(votes),
+                        min_models,
+                        strong_threshold,
+                        majority_threshold,
+                    ),
+                    role_semantics_unanimous=_dimension_votes_are_unanimous(
+                        tuple(vote.role_semantics_present for vote in votes)
+                    ),
+                    role_semantics_support={
+                        "present": presence_support,
+                        "absent": 1.0 - presence_support,
+                    },
+                    role_candidate=candidate.candidate,
+                    role_candidate_markers=candidate.markers,
+                    proposed_role_relations=proposed_role_relations,
+                    role_relation_consensus=tuple_consensus,
                     votes=tuple(votes) + ((adjudicator_vote,) if adjudicator_vote else ()),
                     structural_prior=prior,
                     scope_context=bool(prior.get("scope_context", False)),
@@ -340,6 +393,7 @@ class ModelConsensusService:
                     ("statement_function", "statement_function_category"),
                     ("knowledge_kind", "knowledge_kind_category"),
                     ("applicability", "applicability_category"),
+                    ("role_semantics_presence", "role_semantics_category"),
                     ("role_relation", "role_relation_category"),
                 )
             },
@@ -354,6 +408,9 @@ class ModelConsensusService:
                         for dimension, source in item.resolution_sources.items()
                     ).items()
                 )
+            ),
+            role_qualification_metrics=summarize_role_qualification(clauses).model_dump(
+                mode="json"
             ),
             clauses=tuple(clauses),
         )
@@ -424,7 +481,9 @@ def _model_vote(
         secondary_knowledge_kinds=secondary_knowledge,
         applicability_present=app is not None,
         applicability_function=app,
-        role_relation_present=resp is not None,
+        role_semantics_present=responsibility[0].proposal.role_semantics_present,
+        role_relations=responsibility[0].proposal.role_relations,
+        role_relation_present=bool(responsibility[0].proposal.role_relations or resp is not None),
         role_relation_type=resp,
         confidence=min(confidences) if confidences else None,
         evidence=evidence,
@@ -447,8 +506,10 @@ def _modal_annotations(
             item.proposal.knowledge_kinds,
             item.proposal.primary_applicability_function,
             item.proposal.applicability_functions,
+            item.proposal.role_semantics_present,
             item.proposal.primary_role_relation_type,
             item.proposal.role_relation_types,
+            item.proposal.role_relations,
         )
         for item in annotations
     ]

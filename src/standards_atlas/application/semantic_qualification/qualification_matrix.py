@@ -164,7 +164,8 @@ def cascade_escalation_reasons(
         reasons.append("applicability_disagreement")
     if getattr(clause, "applicability_structural_conflict", False):
         reasons.append("applicability_structural_conflict")
-    if resolution.escalate_on_role_relation_disagreement and not clause.role_relation_unanimous:
+    role_unanimous = getattr(clause, "role_semantics_unanimous", clause.role_relation_unanimous)
+    if resolution.escalate_on_role_relation_disagreement and not role_unanimous:
         reasons.append("role_relation_disagreement")
 
     applicability_threshold = resolution.minimum_applicability_confidence
@@ -179,12 +180,20 @@ def cascade_escalation_reasons(
 
     role_relation_threshold = resolution.minimum_role_relation_confidence
     if role_relation_threshold is not None:
-        role_relation_confidence = _dimension_decision_confidence(
-            present=clause.role_relation_present,
-            positive_confidence=clause.role_relation_confidence,
-            support=clause.role_relation_support,
+        role_presence_confidence = getattr(
+            clause,
+            "role_semantics_presence_confidence",
+            getattr(
+                clause,
+                "role_relation_decision_confidence",
+                _dimension_decision_confidence(
+                    present=clause.role_relation_present,
+                    positive_confidence=clause.role_relation_confidence,
+                    support=clause.role_relation_support,
+                ),
+            ),
         )
-        if role_relation_confidence < role_relation_threshold:
+        if role_presence_confidence < role_relation_threshold:
             reasons.append("role_relation_confidence")
     return tuple(reasons)
 
@@ -274,21 +283,36 @@ def cascade_stage_escalation_reasons(
             reasons.append("applicability_disagreement")
 
     role_relation_unresolved = bool(
-        unresolved & {"role_relation_disagreement", "role_relation_confidence"}
+        unresolved
+        & {
+            "role_relation_disagreement",
+            "role_relation_confidence",
+            "role_semantics_disagreement",
+            "role_semantics_confidence",
+        }
     )
     if role_relation_unresolved:
         threshold = resolution.minimum_role_relation_confidence
         if threshold is not None:
-            confidence = _dimension_decision_confidence(
-                present=cumulative_clause.role_relation_present,
-                positive_confidence=cumulative_clause.role_relation_confidence,
-                support=cumulative_clause.role_relation_support,
+            confidence = getattr(
+                cumulative_clause,
+                "role_semantics_presence_confidence",
+                getattr(
+                    cumulative_clause,
+                    "role_relation_decision_confidence",
+                    _dimension_decision_confidence(
+                        present=cumulative_clause.role_relation_present,
+                        positive_confidence=cumulative_clause.role_relation_confidence,
+                        support=cumulative_clause.role_relation_support,
+                    ),
+                ),
             )
             if confidence < threshold:
                 reasons.append("role_relation_confidence")
-        elif (
-            resolution.escalate_on_role_relation_disagreement
-            and not cumulative_clause.role_relation_unanimous
+        elif resolution.escalate_on_role_relation_disagreement and not getattr(
+            cumulative_clause,
+            "role_semantics_unanimous",
+            cumulative_clause.role_relation_unanimous,
         ):
             reasons.append("role_relation_disagreement")
 
