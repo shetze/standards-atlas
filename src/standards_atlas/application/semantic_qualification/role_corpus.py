@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 import random
 import re
@@ -133,8 +134,10 @@ class RoleCorpusBuildResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     dataset_path: Path
+    review_path: Path
     golden_path: Path
     manifest_path: Path
+    review_created: bool
     selected_count: int
     category_counts: dict[str, int]
     shortfalls: dict[str, int]
@@ -168,7 +171,12 @@ class RoleGoldenCorpusBuilder:
     def __init__(self, provider: ClauseProvider) -> None:
         self._provider = provider
 
-    def build(self, manifest: RoleCorpusBuildManifest, output_root: Path) -> RoleCorpusBuildResult:
+    def build(
+        self,
+        manifest: RoleCorpusBuildManifest,
+        output_root: Path,
+        review_root: Path = Path("local/review"),
+    ) -> RoleCorpusBuildResult:
         population = tuple(
             clause for clause in self._provider.list_clauses() if clause.text.strip()
         )
@@ -208,17 +216,15 @@ class RoleGoldenCorpusBuilder:
             )
             for category, clause in selected
         )
-        golden = RoleGoldenCorpus(
-            corpus_id=manifest.corpus_id,
-            corpus_version=manifest.corpus_version,
-            knowledge_domain=manifest.knowledge_domain,
-            cases=cases,
+        review_path = (
+            review_root / manifest.task / manifest.corpus_version / "role-golden-review.csv"
         )
+        review_created = False
+        if not review_path.exists():
+            review_path.parent.mkdir(parents=True, exist_ok=True)
+            _write_role_review_csv(review_path, cases)
+            review_created = True
         golden_path = target / "role-golden-corpus.yaml"
-        golden_path.write_text(
-            yaml.safe_dump(golden.model_dump(mode="json"), sort_keys=False, allow_unicode=True),
-            encoding="utf-8",
-        )
 
         dataset = {
             "task": manifest.task,
@@ -266,8 +272,10 @@ class RoleGoldenCorpusBuilder:
         )
         return RoleCorpusBuildResult(
             dataset_path=dataset_path,
+            review_path=review_path,
             golden_path=golden_path,
             manifest_path=manifest_path,
+            review_created=review_created,
             selected_count=len(selected),
             category_counts=dict(sorted(counts.items())),
             shortfalls=dict(sorted(shortfalls.items())),
@@ -401,3 +409,173 @@ def _ratio(numerator: int, denominator: int, *, empty: float) -> float:
 
 def _f1(precision: float, recall: float) -> float:
     return 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+
+
+ROLE_REVIEW_FIELDS = (
+    "document_key",
+    "clause_id",
+    "reference",
+    "category",
+    "content_hash",
+    "text",
+    "review_status",
+    "role_semantics_present",
+    "actor",
+    "relation",
+    "target",
+    "condition",
+    "evidence",
+    "review_note",
+)
+
+
+def _write_role_review_csv(path: Path, cases: tuple[RoleGoldenCase, ...]) -> None:
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=ROLE_REVIEW_FIELDS)
+        writer.writeheader()
+        for case in cases:
+            writer.writerow(
+                {
+                    "document_key": case.document_key,
+                    "clause_id": case.clause_id,
+                    "reference": case.reference,
+                    "category": case.category.value,
+                    "content_hash": case.content_hash,
+                    "text": case.text or "",
+                    "review_status": "pending",
+                    "role_semantics_present": "",
+                    "actor": "",
+                    "relation": "",
+                    "target": "",
+                    "condition": "",
+                    "evidence": "",
+                    "review_note": "",
+                }
+            )
+
+
+def publish_role_golden_review(
+    review_path: Path,
+    manifest_path: Path,
+    output_path: Path,
+) -> RoleGoldenCorpus:
+    """Compile the flat HITL review CSV into the machine-readable golden corpus."""
+    build_manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+    with review_path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows:
+        raise ValueError("role golden review contains no rows")
+
+    grouped: dict[tuple[str, str], list[dict[str, str]]] = {}
+    for row in rows:
+        document_key = (row.get("document_key") or "").strip()
+        clause_id = (row.get("clause_id") or "").strip()
+        if not document_key or not clause_id:
+            raise ValueError("every review row requires document_key and clause_id")
+        grouped.setdefault((document_key, clause_id), []).append(row)
+
+    cases: list[RoleGoldenCase] = []
+    for key, case_rows in sorted(grouped.items()):
+        first = case_rows[0]
+        status_values = [
+            (row.get("review_status") or "").strip().casefold()
+            for row in case_rows
+            if (row.get("review_status") or "").strip()
+        ]
+        status = next((value for value in status_values if value != "pending"), "pending")
+        conflicting_statuses = {value for value in status_values if value != "pending"}
+        if len(conflicting_statuses) > 1:
+            raise ValueError(f"conflicting review_status values for {key[0]}:{key[1]}")
+        if status == "rejected":
+            continue
+        if status == "pending":
+            continue
+        if status != "published":
+            raise ValueError(f"unsupported review_status {status!r} for {key[0]}:{key[1]}")
+
+        presence_values = [
+            _parse_review_bool(row.get("role_semantics_present") or "")
+            for row in case_rows
+            if (row.get("role_semantics_present") or "").strip()
+        ]
+        if not presence_values:
+            raise ValueError(
+                f"published review requires role_semantics_present for {key[0]}:{key[1]}"
+            )
+        if len(set(presence_values)) > 1:
+            raise ValueError(
+                f"conflicting role_semantics_present values for {key[0]}:{key[1]}"
+            )
+        presence = presence_values[0]
+
+        relations: list[RoleRelation] = []
+        for row in case_rows:
+            actor = (row.get("actor") or "").strip()
+            relation = (row.get("relation") or "").strip()
+            target = (row.get("target") or "").strip()
+            condition = (row.get("condition") or "").strip() or None
+            evidence = (row.get("evidence") or "").strip() or None
+            relation_fields = (actor, relation, target)
+            if not any(relation_fields):
+                continue
+            if not all(relation_fields):
+                raise ValueError(
+                    f"relation rows require actor, relation and target for {key[0]}:{key[1]}"
+                )
+            relations.append(
+                RoleRelation(
+                    actor=actor,
+                    relation=relation,
+                    target=target,
+                    condition=condition,
+                    evidence=evidence,
+                )
+            )
+        if relations and not presence:
+            raise ValueError(f"relations require role_semantics_present=true for {key[0]}:{key[1]}")
+
+        notes = [
+            (row.get("review_note") or "").strip()
+            for row in case_rows
+            if (row.get("review_note") or "").strip()
+        ]
+        cases.append(
+            RoleGoldenCase(
+                clause_id=key[1],
+                document_key=key[0],
+                reference=(first.get("reference") or "").strip(),
+                content_hash=(first.get("content_hash") or "").strip(),
+                category=RoleCorpusCategory((first.get("category") or "").strip()),
+                text=first.get("text") or None,
+                status="published",
+                expected=RoleGoldenExpected(
+                    role_semantics_present=presence,
+                    relations=tuple(relations),
+                ),
+                review_note=notes[0] if notes else None,
+            )
+        )
+
+    if not cases:
+        raise ValueError("role golden review contains no published cases")
+    corpus = RoleGoldenCorpus(
+        corpus_id=str(build_manifest["corpus_id"]),
+        corpus_version=str(build_manifest["corpus_version"]),
+        knowledge_domain=str(build_manifest.get("knowledge_domain", "default")),
+        cases=tuple(cases),
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        yaml.safe_dump(corpus.model_dump(mode="json"), sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    return corpus
+
+
+def _parse_review_bool(value: str) -> bool:
+    normalized = value.strip().casefold()
+    if normalized in {"true", "yes", "1", "y"}:
+        return True
+    if normalized in {"false", "no", "0", "n"}:
+        return False
+    raise ValueError(f"invalid role_semantics_present value: {value!r}")

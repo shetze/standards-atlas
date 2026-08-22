@@ -331,13 +331,30 @@ uv run standards-atlas evaluation role-corpus-build \
   --manifest manifests/role-relation-golden-corpus-v1.yaml
 ```
 
-The command writes `dataset.json`, `corpus-manifest.yaml`, and `role-golden-corpus.yaml` below the local
-corpus root. Sampling categories are selection strata only; they are not semantic labels. Every generated
-case starts as `proposed`. A reviewer sets `expected.role_semantics_present`, curates zero or more complete
-`actor`/`relation`/`target` relations with evidence, and changes `status` to `published` only after review.
-Unpublished cases never contribute to regression metrics.
+The command writes machine artifacts (`dataset.json` and `corpus-manifest.yaml`) below `.atlas/` and a
+flat HITL file to
+`local/review/role-relation-extraction/1.0.0/role-golden-review.csv`. The CSV is the only file a reviewer
+should edit. It contains one prepared row per selected clause with the original text and these review fields:
+`review_status`, `role_semantics_present`, `actor`, `relation`, `target`, `condition`, `evidence`, and
+`review_note`. No YAML structures need to be created manually.
 
-After a qualification run, compare its `consensus-report.json` with the published role gold:
+Set `review_status` to `published` for reviewed cases or `rejected` for unsuitable samples. For a positive
+case without a complete explicit actor-relation-target tuple, set `role_semantics_present=true` and leave the
+relation columns empty. For multiple relations, duplicate the clause row and fill another relation; repeated
+status and presence fields may be left blank on additional rows. Re-running `role-corpus-build` preserves an
+existing review CSV instead of overwriting human edits.
+
+Compile the reviewed rows into the machine-readable golden corpus:
+
+```bash
+uv run standards-atlas evaluation role-corpus-publish \
+  --review local/review/role-relation-extraction/1.0.0/role-golden-review.csv \
+  --manifest .atlas/data/evaluation/corpora/role-relation-extraction/1.0.0/corpus-manifest.yaml
+```
+
+By default, the command writes `role-golden-corpus.yaml` next to the corpus manifest. Only `published` rows are compiled into the golden corpus; `pending` and `rejected` rows do not contribute
+to regression metrics. After a qualification run, compare its `consensus-report.json` with the published role
+gold:
 
 ```bash
 uv run standards-atlas evaluation role-corpus-evaluate \
@@ -349,3 +366,16 @@ uv run standards-atlas evaluation role-corpus-evaluate \
 The regression report separates presence accuracy/precision/recall/F1 from exact normalized
 actor-relation-target tuple precision/recall/F1. This prevents a conservative all-negative presence
 consensus from appearing equivalent to correct relation extraction.
+
+### Applicability semantic boundary
+
+Qualification task 2.4.0 treats applicability as a deliberately narrow semantic dimension.
+A clause is applicability-positive only when it explicitly states or changes which subject or
+normative content applies. Structural membership in a Scope section, prerequisites, assumptions,
+and local `if`/`when` conditions are not applicability by themselves.
+
+Use `manifests/multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml`
+to evaluate this boundary. The v4 role-semantics manifest remains available as the pre-change
+baseline. In particular, compare clauses where models previously disagreed between `inclusion`
+and `none`; generic conditional requirements should now converge toward `none`, while explicit
+`applies to`/`applicable to` statements remain positive.

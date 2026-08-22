@@ -16,6 +16,7 @@ from standards_atlas.application.semantic_qualification.role_corpus import (
     RoleGoldenCorpus,
     RoleGoldenCorpusBuilder,
     evaluate_role_golden_corpus,
+    publish_role_golden_review,
 )
 from standards_atlas.application.semantic_qualification.workflow import (
     CorpusBuildConfig,
@@ -85,22 +86,46 @@ def build_role_golden_corpus(
     output: Annotated[
         Path, typer.Option("--output", file_okay=False)
     ] = cli_defaults.DEFAULT_EVALUATION_CORPUS_ROOT,
+    review_output: Annotated[
+        Path, typer.Option("--review-output", file_okay=False)
+    ] = cli_defaults.DEFAULT_REVIEW_ROOT,
 ) -> None:
-    """Build a deterministic, annotation-ready role golden-corpus candidate set."""
+    """Build deterministic role candidates and a flat HITL review CSV."""
     try:
         config = RoleCorpusBuildManifest.load(manifest)
         result = RoleGoldenCorpusBuilder(EngineeringDocumentClauseProvider(workspace)).build(
-            config, output
+            config, output, review_output
         )
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
     typer.echo(f"Role corpus clauses     : {result.selected_count}")
     typer.echo(f"Dataset                 : {result.dataset_path}")
-    typer.echo(f"Golden review file      : {result.golden_path}")
+    typer.echo(f"HITL review file        : {result.review_path}")
+    if result.review_created:
+        typer.echo("                          EDIT THIS CSV FILE")
+    else:
+        typer.echo("                          existing review preserved")
     typer.echo(f"Manifest                : {result.manifest_path}")
     if result.shortfalls:
         typer.echo(f"Quota shortfalls        : {result.shortfalls}")
+
+
+@evaluation_app.command("role-corpus-publish")
+def publish_role_corpus(
+    review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False)],
+    manifest: Annotated[Path, typer.Option("--manifest", exists=True, dir_okay=False)],
+    output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
+) -> None:
+    """Compile reviewed CSV rows into a machine-readable golden corpus."""
+    resolved_output = output or manifest.parent / "role-golden-corpus.yaml"
+    try:
+        corpus = publish_role_golden_review(review, manifest, resolved_output)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Published gold cases    : {len(corpus.cases)}")
+    typer.echo(f"Golden corpus           : {resolved_output}")
 
 
 @evaluation_app.command("role-corpus-evaluate")

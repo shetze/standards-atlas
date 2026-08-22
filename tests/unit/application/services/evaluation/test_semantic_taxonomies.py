@@ -33,3 +33,15 @@ def test_ontology_identity_is_independent_from_task_version() -> None:
 
     assert ontology.dimension == "applicability_functions"
     assert "exception over exclusion" in ontology.semantics["tie_break_rules"][0]
+
+
+def test_applicability_semantics_task_uses_narrow_ontology_version() -> None:
+    task, _ = SemanticTaskRepository(SEMANTIC_ROOT / "tasks").load(
+        "semantic-profile-classification", "2.4.0"
+    )
+
+    assert task.ontologies["applicability_functions"].version == "1.2.0"
+    ontology = ResourceOntologyDefinitionRepository().load("applicability-functions", "1.2.0")
+    exclusions = ontology.semantics["exclusions_from_dimension"]
+    assert any("Prerequisites" in item for item in exclusions)
+    assert any("Local if/when" in item for item in exclusions)

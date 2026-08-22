@@ -7,6 +7,9 @@ from collections import Counter, defaultdict
 from difflib import SequenceMatcher
 from typing import Any
 
+from standards_atlas.application.semantic_qualification.applicability_semantics import (
+    detect_explicit_applicability_subtypes,
+)
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
     ConsensusCategory,
@@ -388,27 +391,7 @@ def _multi_assertion_candidates(clauses: tuple[ClauseConsensus, ...]) -> list[di
 
 
 def _detect_applicability_subtypes(text: str) -> set[str]:
-    detected: set[str] = set()
-    statements = re.split(r"(?<=[.!?;])\s+|\n+", text.casefold())
-    for statement in statements:
-        if re.search(r"\b(except|exception|unless)\b", statement):
-            detected.add("exception")
-        if re.search(
-            r"\b(does not apply|do not apply|not applicable|excluded|excludes|outside the scope)\b",
-            statement,
-        ):
-            detected.add("exclusion")
-        inclusion = bool(
-            re.search(r"\b(applies to|applicable to|includes|within the scope|covers)\b", statement)
-        )
-        condition = bool(
-            re.search(r"\b(if|when|where|provided that|subject to|only if)\b", statement)
-        )
-        if inclusion and condition:
-            detected.add("applicability_condition")
-        elif inclusion:
-            detected.add("inclusion")
-    return detected
+    return {item.value for item in detect_explicit_applicability_subtypes(text)}
 
 
 def _stage_contributions(cascade_stages: list[dict[str, Any]]) -> list[dict[str, Any]]:

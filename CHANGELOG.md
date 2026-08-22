@@ -151,3 +151,12 @@
 - Added `evaluation role-corpus-build` and `evaluation role-corpus-evaluate` commands.
 - Added the `role-relation-golden-corpus-v1.yaml` 140-case sampling profile.
 - Extended consensus golden proposals with role-semantics presence, candidate markers, and tuple consensus.
+
+### Slice 3b — applicability semantic boundary
+
+- narrow applicability qualification to explicit applicability assertions
+- separate applicability from structural scope, prerequisites, assumptions, and local conditions
+- add applicability-functions ontology 1.2.0 and semantic-profile task 2.4.0
+- add v6 qualification prompts with positive and negative applicability boundary examples
+- centralize deterministic applicability detection for structural priors and diagnostics
+- add a v5 applicability-semantics qualification manifest while retaining the v4 baseline

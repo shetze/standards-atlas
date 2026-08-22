@@ -1,0 +1,382 @@
+manifest_type: qualification_matrix
+schema_version: "1.5"
+matrix_id: multidimensional-semantic-qualification-v5-applicability-semantics
+corpus_id: semantic-profile-v1
+task: semantic-profile-classification
+task_version: 2.4.0
+dataset_version: 2.2.0
+repetitions: 1
+
+execution:
+  mode: cascade
+  stages:
+    - id: efficient-local
+      models:
+        - granite-3.3-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - smollm3-3b-q4-k-m
+      prompts:
+        - content-only
+        - structure-aware
+      apply_to: all
+      resolution:
+        minimum_successful_models: 3
+        accepted_categories: [unanimous, strong_consensus, majority_consensus]
+        minimum_confidence: 0.60
+        escalate_on_applicability_disagreement: false
+        escalate_on_applicability_presence_disagreement: true
+        escalate_on_applicability_subtype_disagreement: true
+        escalate_on_role_relation_disagreement: true
+    - id: intermediate-escalation
+      models:
+        - gemma-3-12b-it-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+      prompts:
+        - content-only
+        - structure-aware
+      apply_to: unresolved
+      resolution:
+        minimum_successful_models: 5
+        accepted_categories: [unanimous, strong_consensus, majority_consensus]
+        minimum_confidence: 0.60
+        statement_function_resolution_mode: stage_resolver
+        statement_function_resolver_min_confidence: 0.75
+        escalate_on_applicability_disagreement: false
+        escalate_on_applicability_presence_disagreement: false
+        escalate_on_applicability_subtype_disagreement: false
+        escalate_on_role_relation_disagreement: false
+        minimum_applicability_presence_confidence: 0.75
+        minimum_applicability_subtype_confidence: 0.75
+        minimum_role_relation_confidence: 0.80
+    - id: escalation
+      models:
+        - qwen3-14b-q4-k-m
+        - exaone-3.5-32b-instruct-q4-k-m
+        # - codex-gpt-5.6-luna
+      prompts:
+        - content-only
+        - structure-aware
+        - reference-aware
+        - bounded-reasoning
+      apply_to: unresolved
+  resolution:
+    minimum_successful_models: 3
+    accepted_categories:
+      - unanimous
+      - strong_consensus
+      - majority_consensus
+    minimum_confidence: 0.60
+    escalate_on_applicability_disagreement: false
+    escalate_on_applicability_presence_disagreement: true
+    escalate_on_applicability_subtype_disagreement: true
+    escalate_on_role_relation_disagreement: true
+
+
+challenger_qualification:
+  enabled: true
+  repetitions: 1
+  models:
+    - id: qwen3-8b-q4-k-m
+      provider: ramalama
+      model_ref: hf.co/Qwen/Qwen3-8B-GGUF:Q4_K_M
+      quantization: Q4_K_M
+      description: Former intermediate Qwen 3 baseline retained for challenger regression.
+      accelerator: gpu
+      parameters_billion: 8
+      declared_memory_gb: 8
+      supported_reasoning_modes: [disabled, enabled]
+      generation:
+        max_output_tokens: 384
+        adaptive_question_max_tokens: 256
+        truncation_retry_max_tokens: 512
+        reasoning_mode: disabled
+        retry_on_truncation: true
+
+    - id: phi-4-14b-q4-k-m
+      provider: ramalama
+      model_ref: hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      quantization: Q4_K_M
+      description: Former intermediate Phi-4 baseline retained for challenger regression.
+      accelerator: gpu
+      parameters_billion: 14
+      declared_memory_gb: 12
+      generation:
+        max_output_tokens: 512
+        adaptive_question_max_tokens: 384
+        truncation_retry_max_tokens: 768
+        reasoning_mode: disabled
+        retry_on_truncation: true
+
+    - id: qwen3-32b-q4-k-m
+      provider: ramalama
+      model_ref: hf.co/Qwen/Qwen3-32B-GGUF:Q4_K_M
+      quantization: Q4_K_M
+      description: Former final Qwen 3 baseline retained for challenger regression.
+      accelerator: gpu
+      parameters_billion: 32
+      declared_memory_gb: 22
+      supported_reasoning_modes: [disabled, enabled]
+      generation:
+        max_output_tokens: 768
+        adaptive_question_max_tokens: 512
+        truncation_retry_max_tokens: 1024
+        reasoning_mode: disabled
+        retry_on_truncation: true
+  groups:
+    - id: efficient-local
+      incumbents: [smollm3-3b-q4-k-m]
+      challengers: [qwen3-8b-q4-k-m]
+    - id: intermediate-escalation
+      incumbents: [glm-4-9b-chat-q4-k-m]
+      challengers: [phi-4-14b-q4-k-m]
+    - id: final-escalation
+      incumbents: [qwen3-14b-q4-k-m, exaone-3.5-32b-instruct-q4-k-m]
+      challengers: [qwen3-32b-q4-k-m]
+prompts:
+  - id: content-only
+    prompt_version: content-only-v6
+    max_output_tokens: 512
+    adaptive_interview: true
+    description: Clause text without structural context.
+
+  - id: structure-aware
+    prompt_version: structure-aware-v6
+    max_output_tokens: 640
+    adaptive_interview: true
+    description: Clause text with reference, title, and hierarchy context.
+
+  - id: reference-aware
+    prompt_version: evidence-first-v6
+    max_output_tokens: 768
+    adaptive_interview: true
+    description: Clause text with deterministically resolved internal references.
+
+  - id: bounded-reasoning
+    prompt_version: bounded-reasoning-v6
+    max_output_tokens: 768
+    description: Bounded internal reasoning with concise schema-only output.
+
+reasoning_modes:
+  - id: disabled
+    enabled: false
+    optional: false
+    description: Direct classification without model-native thinking.
+
+  - id: enabled
+    enabled: true
+    optional: true
+    description: Optional model-native thinking for selected comparison runs.
+
+models:
+  - id: codex-gpt-5.6-luna
+    provider: codex
+    model_ref: gpt-5.6-luna
+    repetitions: 1
+    description: Codex reference candidate using the Standards Atlas MCP server.
+    accelerator: remote
+
+  - id: llama-3.1-8b-instruct-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Independent 8B Llama-family candidate for intermediate cascade resolution.
+    accelerator: gpu
+    parameters_billion: 8
+    declared_memory_gb: 8
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: ministral-3-8b-instruct-2512-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/mistralai/Ministral-3-8B-Instruct-2512-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Independent 8B Ministral candidate for intermediate cascade resolution.
+    accelerator: gpu
+    parameters_billion: 8
+    declared_memory_gb: 8
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: qwen3-14b-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/Qwen/Qwen3-14B-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Dense multilingual candidate with switchable thinking support.
+    accelerator: gpu
+    parameters_billion: 14
+    declared_memory_gb: 10
+    supported_reasoning_modes: [disabled, enabled]
+    generation:
+      max_output_tokens: 512
+      adaptive_question_max_tokens: 384
+      truncation_retry_max_tokens: 768
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: smollm3-3b-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/ggml-org/SmolLM3-3B-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Fast Hugging Face family voter promoted after applicability hard-case qualification.
+    accelerator: gpu
+    parameters_billion: 3
+    declared_memory_gb: 4
+    dimension_eligibility:
+      applicability_presence: true
+      applicability_subtype: false
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: glm-4-9b-chat-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/bartowski/glm-4-9b-chat-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: GLM-family voter promoted after applicability hard-case qualification.
+    accelerator: gpu
+    parameters_billion: 9
+    declared_memory_gb: 8
+    generation:
+      max_output_tokens: 512
+      adaptive_question_max_tokens: 384
+      truncation_retry_max_tokens: 768
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: exaone-3.5-32b-instruct-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/bartowski/EXAONE-3.5-32B-Instruct-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: EXAONE-family final voter promoted after applicability hard-case qualification.
+    accelerator: gpu
+    parameters_billion: 32
+    declared_memory_gb: 22
+    generation:
+      max_output_tokens: 768
+      adaptive_question_max_tokens: 512
+      truncation_retry_max_tokens: 1024
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: gemma-3-12b-it-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/unsloth/gemma-3-12b-it-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Compact multilingual Gemma 3 instruction candidate.
+    accelerator: gpu
+    parameters_billion: 12
+    declared_memory_gb: 10
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: mistral-small-3.2-24b-instruct-q4-k-m
+    provider: ramalama
+    model_ref: hf.co://bartowski/mistralai_Mistral-Small-3.2-24B-Instruct-2506-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    accelerator: gpu
+    parameters_billion: 24
+    declared_memory_gb: 17
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: mistral-small-3.2-24b-instruct-q6-k
+    provider: ramalama
+    model_ref: hf.co://bartowski/mistralai_Mistral-Small-3.2-24B-Instruct-2506-GGUF:Q6_K
+    quantization: Q6_K
+    accelerator: gpu
+    parameters_billion: 24
+    declared_memory_gb: 24
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+  - id: granite-3.3-8b-instruct-q4-k-m
+    provider: ramalama
+    model_ref: hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M
+    quantization: Q4_K_M
+    description: Compact Granite baseline used by the local evaluation environment.
+    accelerator: gpu
+    parameters_billion: 8
+    declared_memory_gb: 8
+    generation:
+      max_output_tokens: 384
+      adaptive_question_max_tokens: 256
+      truncation_retry_max_tokens: 512
+      reasoning_mode: disabled
+      retry_on_truncation: true
+
+review_imports:
+  - run_directory: ../.atlas/data/evaluation/runs/semantic-roles-v1/structure-aware-v2/codex/gpt-5.6-luna
+    review_directory: ../local/review/qualification/semantic-roles-v1/structure-aware-v2/codex/gpt-5.6-luna
+    local_corpus_root: ../.atlas/data/evaluation/corpora
+    overwrite: false
+    required: false
+
+consensus:
+  enabled: true
+  prompt_id: structure-aware
+  reasoning_mode_id: disabled
+  prompt_selection:
+    statement_function: structure-aware
+    knowledge_kind: structure-aware
+    applicability: structure-aware
+    role_relation: reference-aware
+  min_models: 3
+  strong_threshold: 0.8
+  majority_threshold: 0.6
+  label_threshold: 0.6
+  review_policy:
+    review_categories: [disputed, insufficient_evidence]
+    accept_majority_min_confidence: 0.67
+    accept_majority_min_models: 3
+    applicability_min_confidence: 0.75
+    role_relation_min_confidence: 0.80
+    require_role_relation_evidence: true
+  adjudication:
+    enabled: true
+    model_id: codex-gpt-5.6-luna
+    minimum_confidence: 0.70
+  structural_priors:
+    enabled: true
+    confidence: 0.95
+  output_directory: ../local/review/qualification/consensus
+
+observations: []
+
+thresholds:
+  min_gold_f1: 0.80
+  min_gold_coverage: 0.90
+  max_gold_f1_stddev: 0.03
+  min_prediction_success_rate: 0.98
+  min_json_validity_rate: 0.99
+  max_truncation_rate: 0.01
+  max_mean_duration_seconds: 60
+  max_peak_memory_gb: 24
+  baseline_prompt_id: structure-aware
+  baseline_model_id: qwen3-14b-q4-k-m
+  baseline_reasoning_mode_id: disabled
+  max_gold_f1_drop: 0.02

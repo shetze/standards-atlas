@@ -531,7 +531,7 @@ def test_structural_applicability_subtypes_follow_explicit_semantics() -> None:
     cases = (
         ("This part applies to ASIL C and D.", "inclusion"),
         ("This part does not apply to medical equipment.", "exclusion"),
-        ("Each requirement shall be met, unless an exemption applies.", "exception"),
+        ("These requirements apply to all systems except prototypes.", "exception"),
         (
             "If the method is used, the verification requirement is applicable to the result.",
             "applicability_condition",
@@ -543,7 +543,7 @@ def test_structural_applicability_subtypes_follow_explicit_semantics() -> None:
         assert evidence.applicability_subtype.value == expected
 
 
-def test_structural_applicability_prior_is_omitted_for_compound_mixed_subtypes() -> None:
+def test_local_unless_condition_does_not_hide_explicit_exclusion_prior() -> None:
     from standards_atlas.application.semantic_qualification.structural_evidence import (
         derive_structural_evidence,
     )
@@ -559,7 +559,8 @@ def test_structural_applicability_prior_is_omitted_for_compound_mixed_subtypes()
     )
 
     assert evidence.scope_context is True
-    assert evidence.applicability_subtype is None
+    assert evidence.applicability_subtype is not None
+    assert evidence.applicability_subtype.value == "exclusion"
 
 
 def test_applicability_presence_and_subtype_confidence_are_separate() -> None:

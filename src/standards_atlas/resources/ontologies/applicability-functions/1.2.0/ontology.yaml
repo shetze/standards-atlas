@@ -1,0 +1,41 @@
+schema_version: 1
+id: applicability-functions
+version: 1.2.0
+dimension: applicability_functions
+description: >-
+  Explicit applicability semantics separated from structural scope, prerequisites,
+  assumptions, and local process conditions.
+values:
+- applicability_condition
+- inclusion
+- exclusion
+- exception
+semantics:
+  presence: >-
+    Applicability is present only when a statement explicitly defines or changes which
+    subject or normative content applies, does not apply, is excepted, or is applicable
+    under a condition.
+  inclusion: Directly names what belongs to the governed scope or population.
+  exclusion: Directly names what does not belong to the governed scope or population.
+  exception: >-
+    Explicitly carves a case out of an applicability or scope assertion; generic local
+    conditional logic is not an applicability exception.
+  applicability_condition: >-
+    Makes the applicability of normative content itself depend on a condition; a
+    condition that merely controls an action, consequence, prerequisite, or process
+    step is not applicability.
+  exclusions_from_dimension:
+  - Structural membership in a Scope section without an explicit applicability assertion.
+  - Prerequisites describing what must already hold before an activity can start.
+  - Assumptions describing facts taken as true for reasoning or design.
+  - Local if/when/provided-that logic that controls an action or consequence.
+  tie_break_rules:
+  - exception over exclusion when wording explicitly carves out a case from applicability
+  - applicability_condition over inclusion only when applicability itself is conditional
+  - local logical conditions do not imply applicability
+  - scope context alone does not imply applicability
+codes:
+  applicability_condition: APC
+  inclusion: INC
+  exclusion: EXC
+  exception: XCP

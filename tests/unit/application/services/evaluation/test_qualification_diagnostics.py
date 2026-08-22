@@ -97,7 +97,6 @@ def test_diagnostics_cluster_conflicts_duplicates_and_multi_assertions() -> None
     candidates = diagnostics["multi_applicability_assertion_candidates"]
     assert len(candidates) == 2
     assert set(candidates[0]["detected_subtypes"]) == {
-        "inclusion",
         "exclusion",
         "exception",
     }
