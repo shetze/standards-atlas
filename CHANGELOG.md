@@ -28,6 +28,8 @@
 
 ## Unreleased
 
+- Separate applicability-presence and applicability-subtype cascade resolution, skip subtype escalation when applicability is absent, preserve legacy manifest behavior, and report applicability escalations that remain unresolved after each stage.
+
 - Finalize the taxonomy/ontology split: remove the legacy deterministic `SemanticClassifier`, keep `ENRICH` classification-free, make AtlasData onboarding structure-only, and enforce `TAXONOMY -> ONTOLOGY` ownership with architecture tests and updated UML diagrams.
 
 - Add bounded schema-reader compatibility with visible deprecation warnings, current-only writers, and an explicit temporary four-version major-transition window.

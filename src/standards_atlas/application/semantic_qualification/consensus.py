@@ -142,6 +142,9 @@ class ClauseConsensus(BaseModel):
     knowledge_kind_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     role_relation_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    applicability_presence_unanimous: bool = True
+    applicability_subtype_unanimous: bool = True
+    # Compatibility aggregate: true only when both presence and subtype are unanimous.
     applicability_unanimous: bool = True
     role_relation_unanimous: bool = True
     role_semantics_unanimous: bool = True
@@ -653,11 +656,9 @@ def _resolve_clause(
     )
     applicability_subtype_unanimous = _dimension_votes_are_unanimous(
         tuple(
-            (
-                vote.applicability_present,
-                vote.applicability_function if vote.applicability_present else None,
-            )
+            vote.applicability_function
             for vote in app_subtype_votes
+            if vote.applicability_present and vote.applicability_function is not None
         )
     )
     applicability_unanimous = applicability_presence_unanimous and applicability_subtype_unanimous
@@ -855,6 +856,8 @@ def _resolve_clause(
         "knowledge_kind_decision_confidence": knowledge_kind_decision_confidence,
         "applicability_decision_confidence": applicability_decision_confidence,
         "role_relation_decision_confidence": role_relation_decision_confidence,
+        "applicability_presence_unanimous": applicability_presence_unanimous,
+        "applicability_subtype_unanimous": applicability_subtype_unanimous,
         "applicability_unanimous": applicability_unanimous,
         "role_relation_unanimous": role_relation_unanimous,
         "applicability_structural_conflict": applicability_structural_conflict_unresolved,

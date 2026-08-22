@@ -68,11 +68,12 @@ class LlmRoleSemanticsClassifier:
             StructuredGenerationRequest(
                 task="role-relation-extraction",
                 system_prompt=(
-                    "Extract only explicit, evidence-grounded role relations. Every relation requires "
-                    "an identifiable actor or role, a declared relation type, an identifiable target, "
-                    "and exact supporting evidence from the supplied clause. Do not invent an actor "
-                    "from passive wording. Return an empty relations list when role semantics are "
-                    "present but no complete actor-relation-target tuple is explicit."
+                    "Extract only explicit, evidence-grounded role relations. "
+                    "Every relation requires an identifiable actor or role, a declared "
+                    "relation type, an identifiable target, and exact supporting evidence "
+                    "from the supplied clause. Do not invent an actor from passive wording. "
+                    "Return an empty relations list when role semantics are present but no "
+                    "complete actor-relation-target tuple is explicit."
                 ),
                 user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
                 output_schema=_extraction_schema(),

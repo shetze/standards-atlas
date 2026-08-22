@@ -108,6 +108,20 @@ def render_qualification_diagnostics_markdown(
                 f"{resolved.get('applicability', 0)} | "
                 f"{resolved.get('role_relation', 0)} |"
             )
+        lines.extend(
+            [
+                "",
+                "Applicability escalation effectiveness:",
+                "",
+            ]
+        )
+        for item in stages:
+            lines.append(
+                f"- `{item['stage_id']}`: entered for applicability="
+                f"{item['applicability_entered_count']}, resolved="
+                f"{item['applicability_resolved_count']}, still unresolved="
+                f"{item['applicability_escalated_without_resolution_count']}"
+            )
     else:
         lines.append("No cascade stages were recorded.")
 
@@ -398,15 +412,46 @@ def _detect_applicability_subtypes(text: str) -> set[str]:
 
 
 def _stage_contributions(cascade_stages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [
-        {
-            "stage_id": stage["stage_id"],
-            "entered_clause_count": stage["entered_clause_count"],
-            "unresolved_clause_count": stage["unresolved_clause_count"],
-            "newly_resolved_counts": dict(stage["newly_resolved_counts"]),
+    result: list[dict[str, Any]] = []
+    applicability_reasons = {
+        "applicability_disagreement",
+        "applicability_confidence",
+        "applicability_presence_disagreement",
+        "applicability_subtype_disagreement",
+        "applicability_presence_confidence",
+        "applicability_subtype_confidence",
+        "applicability_structural_conflict",
+    }
+    for stage in cascade_stages:
+        entry_reasons = stage.get("entry_reasons", {})
+        exit_reasons = stage.get("exit_reasons", {})
+        applicability_entered = {
+            clause_id
+            for clause_id, reasons in entry_reasons.items()
+            if applicability_reasons.intersection(reasons)
         }
-        for stage in cascade_stages
-    ]
+        applicability_unresolved = {
+            clause_id
+            for clause_id, reasons in exit_reasons.items()
+            if applicability_reasons.intersection(reasons)
+        }
+        result.append(
+            {
+                "stage_id": stage["stage_id"],
+                "entered_clause_count": stage["entered_clause_count"],
+                "unresolved_clause_count": stage["unresolved_clause_count"],
+                "newly_resolved_counts": dict(stage["newly_resolved_counts"]),
+                "applicability_entered_count": len(applicability_entered),
+                "applicability_unresolved_count": len(applicability_unresolved),
+                "applicability_resolved_count": max(
+                    0, len(applicability_entered - applicability_unresolved)
+                ),
+                "applicability_escalated_without_resolution_count": len(
+                    applicability_entered & applicability_unresolved
+                ),
+            }
+        )
+    return result
 
 
 def _format_optional_rate(value: float | None) -> str:

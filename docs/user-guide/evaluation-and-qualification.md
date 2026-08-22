@@ -205,6 +205,14 @@ Structural applicability conflicts have separate observed and unresolved states.
 observed conflict remains available for audit after a later stage resolves it; only an
 unresolved structural conflict forces final review.
 
+Applicability cascade resolution treats **presence** and **subtype** as separate dimensions.
+Presence disagreement/confidence determines whether the clause is applicability-relevant at all;
+subtype disagreement/confidence is evaluated only after the cumulative decision is positive. A
+negative presence decision therefore cannot be escalated merely because a minority of positive
+voters disagree on `inclusion`, `exclusion`, `exception`, or `applicability_condition`. The
+diagnostics report also records how many applicability-driven entries each cascade stage resolves
+and how many leave the stage still unresolved.
+
 Use `--overwrite` after changing cascade resolution semantics when the goal is to measure
 execution behavior itself. `--recompute` can rebuild derived metrics from persisted
 observations, but it cannot retroactively change which clauses earlier runs sent to later

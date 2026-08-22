@@ -977,3 +977,86 @@ def test_model_dimension_eligibility_defaults_true_and_is_exposed(tmp_path: Path
         "applicability_presence": True,
         "applicability_subtype": True,
     }
+
+
+def test_split_applicability_does_not_escalate_subtype_when_presence_is_negative() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    clause = SimpleNamespace(
+        participating_models=7,
+        category=SimpleNamespace(value="strong_consensus"),
+        statement_function_confidence=0.9,
+        applicability_present=False,
+        applicability_presence_confidence=0.86,
+        applicability_subtype_confidence=0.40,
+        applicability_presence_unanimous=False,
+        applicability_subtype_unanimous=False,
+        applicability_unanimous=False,
+        applicability_structural_conflict=False,
+        applicability_confidence=0.40,
+        applicability_support={"present": 0.14},
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
+        role_relation_unanimous=True,
+        role_semantics_unanimous=True,
+    )
+    resolution = CascadeResolutionConfig(
+        escalate_on_applicability_disagreement=False,
+        escalate_on_applicability_presence_disagreement=False,
+        escalate_on_applicability_subtype_disagreement=True,
+        minimum_applicability_presence_confidence=0.75,
+        minimum_applicability_subtype_confidence=0.75,
+        escalate_on_role_relation_disagreement=False,
+    )
+
+    assert cascade_escalation_reasons(clause, resolution) == ()
+
+
+def test_split_applicability_reports_presence_and_subtype_reasons_separately() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    clause = SimpleNamespace(
+        participating_models=7,
+        category=SimpleNamespace(value="strong_consensus"),
+        statement_function_confidence=0.9,
+        applicability_present=True,
+        applicability_presence_confidence=0.70,
+        applicability_subtype_confidence=0.60,
+        applicability_presence_unanimous=False,
+        applicability_subtype_unanimous=False,
+        applicability_unanimous=False,
+        applicability_structural_conflict=False,
+        applicability_confidence=0.60,
+        applicability_support={"present": 0.70, "inclusion": 0.60},
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
+        role_relation_unanimous=True,
+        role_semantics_unanimous=True,
+    )
+    resolution = CascadeResolutionConfig(
+        escalate_on_applicability_disagreement=False,
+        escalate_on_applicability_presence_disagreement=True,
+        escalate_on_applicability_subtype_disagreement=True,
+        minimum_applicability_presence_confidence=0.75,
+        minimum_applicability_subtype_confidence=0.75,
+        escalate_on_role_relation_disagreement=False,
+    )
+
+    assert cascade_escalation_reasons(clause, resolution) == (
+        "applicability_presence_disagreement",
+        "applicability_subtype_disagreement",
+        "applicability_presence_confidence",
+        "applicability_subtype_confidence",
+    )

@@ -24,7 +24,9 @@ execution:
         minimum_successful_models: 3
         accepted_categories: [unanimous, strong_consensus, majority_consensus]
         minimum_confidence: 0.60
-        escalate_on_applicability_disagreement: true
+        escalate_on_applicability_disagreement: false
+        escalate_on_applicability_presence_disagreement: true
+        escalate_on_applicability_subtype_disagreement: true
         escalate_on_role_relation_disagreement: true
     - id: intermediate-escalation
       models:
@@ -42,8 +44,11 @@ execution:
         statement_function_resolution_mode: stage_resolver
         statement_function_resolver_min_confidence: 0.75
         escalate_on_applicability_disagreement: false
+        escalate_on_applicability_presence_disagreement: false
+        escalate_on_applicability_subtype_disagreement: false
         escalate_on_role_relation_disagreement: false
-        minimum_applicability_confidence: 0.75
+        minimum_applicability_presence_confidence: 0.75
+        minimum_applicability_subtype_confidence: 0.75
         minimum_role_relation_confidence: 0.80
     - id: escalation
       models:
@@ -63,7 +68,9 @@ execution:
       - strong_consensus
       - majority_consensus
     minimum_confidence: 0.60
-    escalate_on_applicability_disagreement: true
+    escalate_on_applicability_disagreement: false
+    escalate_on_applicability_presence_disagreement: true
+    escalate_on_applicability_subtype_disagreement: true
     escalate_on_role_relation_disagreement: true
 
 

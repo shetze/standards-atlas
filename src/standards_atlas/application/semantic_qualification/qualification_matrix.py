@@ -106,9 +106,15 @@ class CascadeResolutionConfig(BaseModel):
         "majority_consensus",
     )
     minimum_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
+    # Legacy aggregate controls remain readable for older manifests. New
+    # manifests should configure applicability presence and subtype separately.
     escalate_on_applicability_disagreement: bool = True
+    escalate_on_applicability_presence_disagreement: bool | None = None
+    escalate_on_applicability_subtype_disagreement: bool | None = None
     escalate_on_role_relation_disagreement: bool = True
     minimum_applicability_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    minimum_applicability_presence_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    minimum_applicability_subtype_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     minimum_role_relation_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     statement_function_resolution_mode: Literal["cumulative", "stage_resolver"] = "cumulative"
     statement_function_resolver_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
@@ -160,23 +166,60 @@ def cascade_escalation_reasons(
         reasons.append("consensus_category")
     if clause.statement_function_confidence < resolution.minimum_confidence:
         reasons.append("statement_function_confidence")
-    if resolution.escalate_on_applicability_disagreement and not clause.applicability_unanimous:
-        reasons.append("applicability_disagreement")
+    split_applicability = any(
+        value is not None
+        for value in (
+            resolution.escalate_on_applicability_presence_disagreement,
+            resolution.escalate_on_applicability_subtype_disagreement,
+            resolution.minimum_applicability_presence_confidence,
+            resolution.minimum_applicability_subtype_confidence,
+        )
+    )
+    if split_applicability:
+        presence_escalation = bool(resolution.escalate_on_applicability_presence_disagreement)
+        subtype_escalation = bool(resolution.escalate_on_applicability_subtype_disagreement)
+        presence_unanimous = getattr(
+            clause, "applicability_presence_unanimous", clause.applicability_unanimous
+        )
+        subtype_unanimous = getattr(
+            clause, "applicability_subtype_unanimous", clause.applicability_unanimous
+        )
+        if presence_escalation and not presence_unanimous:
+            reasons.append("applicability_presence_disagreement")
+        if clause.applicability_present and subtype_escalation and not subtype_unanimous:
+            reasons.append("applicability_subtype_disagreement")
+
+        presence_threshold = resolution.minimum_applicability_presence_confidence
+        if (
+            presence_threshold is not None
+            and clause.applicability_presence_confidence < presence_threshold
+        ):
+            reasons.append("applicability_presence_confidence")
+        subtype_threshold = resolution.minimum_applicability_subtype_confidence
+        if (
+            subtype_threshold is not None
+            and clause.applicability_present
+            and clause.applicability_subtype_confidence < subtype_threshold
+        ):
+            reasons.append("applicability_subtype_confidence")
+    else:
+        if resolution.escalate_on_applicability_disagreement and not clause.applicability_unanimous:
+            reasons.append("applicability_disagreement")
+        applicability_threshold = resolution.minimum_applicability_confidence
+        if applicability_threshold is not None:
+            applicability_confidence = _dimension_decision_confidence(
+                present=clause.applicability_present,
+                positive_confidence=clause.applicability_confidence,
+                support=clause.applicability_support,
+            )
+            if applicability_confidence < applicability_threshold:
+                reasons.append("applicability_confidence")
+
     if getattr(clause, "applicability_structural_conflict", False):
         reasons.append("applicability_structural_conflict")
     role_unanimous = getattr(clause, "role_semantics_unanimous", clause.role_relation_unanimous)
     if resolution.escalate_on_role_relation_disagreement and not role_unanimous:
         reasons.append("role_relation_disagreement")
-
-    applicability_threshold = resolution.minimum_applicability_confidence
-    if applicability_threshold is not None:
-        applicability_confidence = _dimension_decision_confidence(
-            present=clause.applicability_present,
-            positive_confidence=clause.applicability_confidence,
-            support=clause.applicability_support,
-        )
-        if applicability_confidence < applicability_threshold:
-            reasons.append("applicability_confidence")
 
     role_relation_threshold = resolution.minimum_role_relation_confidence
     if role_relation_threshold is not None:
@@ -254,33 +297,77 @@ def cascade_stage_escalation_reasons(
             if cumulative_clause.statement_function_confidence < resolution.minimum_confidence:
                 reasons.append("statement_function_confidence")
 
-    applicability_unresolved = bool(
-        unresolved
-        & {
-            "applicability_disagreement",
-            "applicability_confidence",
-            "applicability_structural_conflict",
-        }
-    )
+    applicability_unresolved = bool(unresolved & _APPLICABILITY_REASONS)
     if applicability_unresolved:
         if "applicability_structural_conflict" in unresolved and getattr(
             cumulative_clause, "applicability_structural_conflict", False
         ):
             reasons.append("applicability_structural_conflict")
-        threshold = resolution.minimum_applicability_confidence
-        if threshold is not None:
-            confidence = _dimension_decision_confidence(
-                present=cumulative_clause.applicability_present,
-                positive_confidence=cumulative_clause.applicability_confidence,
-                support=cumulative_clause.applicability_support,
+
+        split_applicability = any(
+            value is not None
+            for value in (
+                resolution.escalate_on_applicability_presence_disagreement,
+                resolution.escalate_on_applicability_subtype_disagreement,
+                resolution.minimum_applicability_presence_confidence,
+                resolution.minimum_applicability_subtype_confidence,
             )
-            if confidence < threshold:
-                reasons.append("applicability_confidence")
-        elif (
-            resolution.escalate_on_applicability_disagreement
-            and not cumulative_clause.applicability_unanimous
-        ):
-            reasons.append("applicability_disagreement")
+        )
+        if not split_applicability:
+            threshold = resolution.minimum_applicability_confidence
+            if threshold is not None:
+                confidence = _dimension_decision_confidence(
+                    present=cumulative_clause.applicability_present,
+                    positive_confidence=cumulative_clause.applicability_confidence,
+                    support=cumulative_clause.applicability_support,
+                )
+                if confidence < threshold:
+                    reasons.append("applicability_confidence")
+            elif (
+                resolution.escalate_on_applicability_disagreement
+                and not cumulative_clause.applicability_unanimous
+            ):
+                reasons.append("applicability_disagreement")
+        else:
+            presence_was_unresolved = bool(
+                unresolved
+                & {
+                    "applicability_disagreement",
+                    "applicability_confidence",
+                    "applicability_presence_disagreement",
+                    "applicability_presence_confidence",
+                }
+            )
+            subtype_was_unresolved = bool(
+                unresolved
+                & {
+                    "applicability_disagreement",
+                    "applicability_confidence",
+                    "applicability_subtype_disagreement",
+                    "applicability_subtype_confidence",
+                }
+            )
+            if presence_was_unresolved:
+                threshold = resolution.minimum_applicability_presence_confidence
+                if threshold is not None:
+                    if cumulative_clause.applicability_presence_confidence < threshold:
+                        reasons.append("applicability_presence_confidence")
+                elif (
+                    resolution.escalate_on_applicability_presence_disagreement
+                    and not cumulative_clause.applicability_presence_unanimous
+                ):
+                    reasons.append("applicability_presence_disagreement")
+
+            if subtype_was_unresolved and cumulative_clause.applicability_present:
+                threshold = resolution.minimum_applicability_subtype_confidence
+                if threshold is not None:
+                    if cumulative_clause.applicability_subtype_confidence < threshold:
+                        reasons.append("applicability_subtype_confidence")
+                elif (
+                    resolution.escalate_on_applicability_subtype_disagreement
+                    and not cumulative_clause.applicability_subtype_unanimous
+                ):
+                    reasons.append("applicability_subtype_disagreement")
 
     role_relation_unresolved = bool(
         unresolved
@@ -360,6 +447,10 @@ _STATEMENT_REASONS = {
 _APPLICABILITY_REASONS = {
     "applicability_disagreement",
     "applicability_confidence",
+    "applicability_presence_disagreement",
+    "applicability_subtype_disagreement",
+    "applicability_presence_confidence",
+    "applicability_subtype_confidence",
     "applicability_structural_conflict",
 }
 _ROLE_RELATION_REASONS = {"role_relation_disagreement", "role_relation_confidence"}
