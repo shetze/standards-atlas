@@ -3,7 +3,7 @@ task: semantic-profile-classification
 version: 2.4.0
 description: Classify semantic dimensions with explicit applicability separated from
   scope, prerequisites, assumptions, and local conditions; qualify role semantics
-  with open relation classes and evidence-grounded predicates.
+  with open relation classes and actor-class-target relations.
 multi_label: true
 allow_unclassified: true
 supported_item_kinds:

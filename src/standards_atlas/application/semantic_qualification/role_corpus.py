@@ -410,22 +410,16 @@ def evaluate_role_golden_corpus(
 def _prediction_relations(payload: dict[str, Any]) -> tuple[RoleRelation, ...]:
     relations = []
     for item in payload.get("role_relation_consensus", ()):
-        evidence = item.get("evidence")
-        if isinstance(evidence, list):
-            evidence = evidence[0] if evidence else None
-        payload = {
+        relation_payload = {
             "actor": item["actor"],
             "target": item["target"],
-            "condition": item.get("condition"),
-            "evidence": evidence,
             "confidence": item.get("support"),
         }
-        if item.get("relation_class") and item.get("predicate"):
-            payload["relation_class"] = item["relation_class"]
-            payload["predicate"] = item["predicate"]
+        if item.get("relation_class"):
+            relation_payload["relation_class"] = item["relation_class"]
         elif item.get("relation"):
-            payload["relation"] = item["relation"]
-        relations.append(RoleRelation.model_validate(payload))
+            relation_payload["relation"] = item["relation"]
+        relations.append(RoleRelation.model_validate(relation_payload))
     return tuple(relations)
 
 
@@ -446,10 +440,7 @@ ROLE_REVIEW_FIELDS = (
     "role_semantics_present",
     "actor",
     "relation_class",
-    "predicate",
     "target",
-    "condition",
-    "evidence",
     "review_note",
     "clause_id",
     "content_hash",
@@ -484,10 +475,7 @@ def _write_role_review_csv(path: Path, cases: tuple[RoleGoldenCase, ...]) -> Non
                     "role_semantics_present": "",
                     "actor": "",
                     "relation_class": "",
-                    "predicate": "",
                     "target": "",
-                    "condition": "",
-                    "evidence": "",
                     "review_note": "",
                 }
             )
@@ -505,14 +493,11 @@ def _write_role_review_guide(path: Path) -> None:
         "Set `review_status=published` when the clause is fully reviewed. "
         "`role_semantics_present` is `true` or `false`.\n\n"
         "For every explicit complete relation, use one CSV row and fill `actor`, "
-        "`relation_class`, `predicate`, and `target`. Additional rows for the same clause "
-        "may leave review_status and role_semantics_present empty.\n\n"
+        "`relation_class`, and `target`. Additional rows for the same clause may leave "
+        "review_status and role_semantics_present empty.\n\n"
         f"Recommended relation_class core: {core}. The field is intentionally open: "
-        "use another concise class if none of the core values fits. `predicate` is always "
-        "open and should preserve the evidence-grounded wording, e.g. `assess`, `record`, "
-        "`be independent of`, or `not be included in`.\n\n"
-        "`condition` contains only an explicit condition on that relation. `evidence` "
-        "contains the smallest original text span supporting actor, predicate and target.\n",
+        "use another concise class if none of the core values fits. The target identifies "
+        "what the actor relation is about or directed toward.\n",
         encoding="utf-8",
     )
 
@@ -583,30 +568,22 @@ def publish_role_golden_review(
         for row in case_rows:
             actor = (row.get("actor") or "").strip()
             relation_class = (row.get("relation_class") or "").strip()
-            predicate = (row.get("predicate") or "").strip()
             target = (row.get("target") or "").strip()
-            condition = (row.get("condition") or "").strip() or None
-            evidence = (row.get("evidence") or "").strip() or None
-            relation_fields = (actor, relation_class, predicate, target)
+            relation_fields = (actor, relation_class, target)
             if not any(relation_fields):
                 continue
             if not all(relation_fields):
                 raise ValueError(
-                    "relation rows require actor, relation_class, predicate and target "
-                    f"for {key[0]}:{key[1]}"
+                    f"relation rows require actor, relation_class and target for {key[0]}:{key[1]}"
                 )
             relations.append(
-                RoleRelation(
-                    actor=actor,
-                    relation_class=relation_class,
-                    predicate=predicate,
-                    target=target,
-                    condition=condition,
-                    evidence=evidence,
-                )
+                RoleRelation(actor=actor, relation_class=relation_class, target=target)
             )
         if relations and not presence:
             raise ValueError(f"relations require role_semantics_present=true for {key[0]}:{key[1]}")
+        relations = list(
+            {(item.actor, item.relation_class, item.target): item for item in relations}.values()
+        )
 
         notes = [
             (row.get("review_note") or "").strip()

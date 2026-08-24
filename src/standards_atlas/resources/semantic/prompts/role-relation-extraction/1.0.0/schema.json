@@ -14,11 +14,7 @@
         "required": [
           "actor",
           "relation_class",
-          "predicate",
-          "target",
-          "condition",
-          "evidence",
-          "confidence"
+          "target"
         ],
         "properties": {
           "actor": {
@@ -28,36 +24,11 @@
           "relation_class": {
             "type": "string",
             "minLength": 1,
-            "description": "Open semantic class; prefer performance, responsibility, assignment, dependency, consultation, information, participation, or membership when applicable."
-          },
-          "predicate": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Evidence-grounded predicate as expressed by the clause, e.g. assess, identify, be independent of."
+            "description": "Open semantic relation class; prefer the documented core vocabulary when it fits."
           },
           "target": {
             "type": "string",
             "minLength": 1
-          },
-          "condition": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "evidence": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "confidence": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "minimum": 0.0,
-            "maximum": 1.0
           }
         }
       }

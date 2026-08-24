@@ -1,7 +1,14 @@
-Extract explicit role relations from the clause.
+Extract explicit role relations from the supplied clause.
 
-Every returned relation requires an identifiable actor or role, an open semantic relation_class, the evidence-grounded predicate expressed by the clause, an identifiable target, and exact supporting evidence. Prefer the core classes performance, responsibility, assignment, dependency, consultation, information, participation, and membership when they fit. The relation_class vocabulary is open: use another concise semantic class rather than forcing a relation into the core vocabulary.
+Return one relation for each grounded actor-class-target relation. An actor is an explicitly identified human or organizational role, person, group, organization, organizational unit, committee/body, supplier, duty holder, authority, or stakeholder. A grammatical subject is not automatically an actor. Systems, software, hardware, requirements, documents, methods, processes, results, and other technical objects are not actors merely because they are sentence subjects.
 
-Keep predicate evidence-grounded and close to the source wording, for example assess, identify, record, verify, be independent of, or not be included in. Do not invent an actor from passive wording. If role semantics are present but no complete actor-predicate-target tuple is explicit, return an empty role_relations array. Multiple relations are allowed. Do not collapse them to a primary relation.
+Use an open relation_class. Prefer these core classes when they fit: performance, responsibility, assignment, dependency, consultation, information, participation, membership. Use another concise class only when the explicit relation cannot reasonably be represented by the core.
 
-Do not infer responsibility, consultation, information, or other relation classes without explicit evidence. Do not project relations from tables into surrounding narrative. Use only the supplied clause and structural context. Return JSON matching the schema.
+Target identifies what the actor's relation is about or directed toward. Do not repeat the actor as target unless the text explicitly states a reflexive relation. Do not infer a missing actor from passive wording, headings, lifecycle context, or domain knowledge. Passive role/action semantics may therefore produce an empty role_relations list. Do not turn applicability, scope, technical properties, or artifact relations into role relations.
+
+Examples:
+- "The Assessor shall evaluate the evidence." -> Assessor / performance / evidence.
+- "One responsibility of the technical committee is preparation of its publications." -> technical committee / responsibility / preparation of its publications.
+- "The assessor shall not be influenced by supervisors." -> assessor / dependency / supervisors.
+- "A hazard analysis shall be performed." -> no complete relation because no actor is explicit.
+- "The system shall satisfy the requirements." -> no role relation.

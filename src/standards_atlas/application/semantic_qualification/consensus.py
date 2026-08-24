@@ -684,7 +684,6 @@ def _resolve_clause(
                             (
                                 relation.actor.strip().lower(),
                                 relation.relation_class.strip().lower(),
-                                relation.predicate.strip().lower(),
                                 relation.target.strip().lower(),
                             )
                             for relation in vote.role_relations
@@ -994,11 +993,7 @@ def _role_relation_evidence_is_valid(vote: ModelVote) -> bool:
         return False
     if vote.role_relations:
         return all(
-            relation.actor.strip()
-            and relation.relation_class.strip()
-            and relation.predicate.strip()
-            and relation.target.strip()
-            and bool((relation.evidence or "").strip())
+            relation.actor.strip() and relation.relation_class.strip() and relation.target.strip()
             for relation in vote.role_relations
         )
     # Compatibility for archived qualification runs using scalar relation labels.
@@ -1066,11 +1061,8 @@ def _write_outputs(
                         {
                             "actor": relation.actor,
                             "relation_class": relation.relation_class,
-                            "predicate": relation.predicate,
                             "target": relation.target,
-                            "condition": relation.condition,
                             "support": relation.support,
-                            "evidence": list(relation.evidence),
                         }
                         for relation in item.role_relation_consensus
                     ],

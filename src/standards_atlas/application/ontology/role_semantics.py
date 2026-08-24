@@ -68,14 +68,14 @@ class LlmRoleSemanticsClassifier:
             StructuredGenerationRequest(
                 task="role-relation-extraction",
                 system_prompt=(
-                    "Extract only explicit, evidence-grounded role relations. "
-                    "Every relation requires an identifiable actor or role, an open semantic "
-                    "relation_class, the evidence-grounded predicate used by the clause, an "
-                    "identifiable target, and exact supporting evidence. Prefer the documented "
-                    "core relation classes when they fit, but do not force a relation into the "
-                    "core vocabulary. Do not invent an actor from passive wording. Return an "
-                    "empty relations list when no complete actor-predicate-target tuple is "
-                    "explicit."
+                    "Extract only explicit role relations as actor, relation_class, and target. "
+                    "An actor must be an explicitly identified human or organizational role, "
+                    "group, organization, authority, committee, supplier, duty holder, or "
+                    "stakeholder. Technical objects are not actors merely because they are "
+                    "grammatical subjects. Prefer the documented core relation classes when "
+                    "they fit, but do not force a relation into the core vocabulary. Do not "
+                    "invent an actor from passive wording. Return an empty relations list when "
+                    "no complete actor-class-target relation is explicit."
                 ),
                 user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
                 output_schema=_extraction_schema(),
@@ -126,15 +126,7 @@ def _extraction_schema() -> dict[str, object]:
                 "items": {
                     "type": "object",
                     "additionalProperties": False,
-                    "required": [
-                        "actor",
-                        "relation_class",
-                        "predicate",
-                        "target",
-                        "condition",
-                        "evidence",
-                        "confidence",
-                    ],
+                    "required": ["actor", "relation_class", "target"],
                     "properties": {
                         "actor": {"type": "string", "minLength": 1},
                         "relation_class": {
@@ -145,11 +137,7 @@ def _extraction_schema() -> dict[str, object]:
                                 + ", ".join(core_classes)
                             ),
                         },
-                        "predicate": {"type": "string", "minLength": 1},
                         "target": {"type": "string", "minLength": 1},
-                        "condition": {"type": ["string", "null"]},
-                        "evidence": {"type": ["string", "null"]},
-                        "confidence": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0},
                     },
                 },
             }

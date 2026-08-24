@@ -50,34 +50,29 @@ class RoleCandidateEvidence(BaseModel):
 
 
 class NormalizedRoleRelation(BaseModel):
-    """Comparison-friendly representation of one extracted role relation."""
+    """Comparison-friendly representation of one role relation."""
 
     model_config = ConfigDict(frozen=True)
 
     actor: str
     relation_class: str
-    predicate: str
     target: str
-    condition: str | None = None
 
     @property
-    def key(self) -> tuple[str, str, str, str, str | None]:
-        return (self.actor, self.relation_class, self.predicate, self.target, self.condition)
+    def key(self) -> tuple[str, str, str]:
+        return (self.actor, self.relation_class, self.target)
 
 
 class RoleTupleConsensus(BaseModel):
-    """Cross-model support for one normalized actor-relation-target tuple."""
+    """Cross-model support for one normalized actor-class-target tuple."""
 
     model_config = ConfigDict(frozen=True)
 
     actor: str
     relation_class: str
-    predicate: str
     target: str
-    condition: str | None = None
     support: float = Field(ge=0.0, le=1.0)
     supporting_models: tuple[str, ...] = ()
-    evidence: tuple[str, ...] = ()
 
 
 class RoleQualificationMetrics(BaseModel):
@@ -105,9 +100,7 @@ def normalize_relation(relation: RoleRelation) -> NormalizedRoleRelation:
     return NormalizedRoleRelation(
         actor=_normalize_text(relation.actor),
         relation_class=_normalize_text(relation.relation_class),
-        predicate=_normalize_text(relation.predicate),
         target=_normalize_text(relation.target),
-        condition=_normalize_text(relation.condition) if relation.condition else None,
     )
 
 
@@ -116,15 +109,14 @@ def relation_tuple_consensus(
     *,
     minimum_support: float = 0.6,
 ) -> tuple[RoleTupleConsensus, ...]:
-    """Build tuple-set consensus instead of collapsing relations to one primary label."""
+    """Build actor-class-target consensus across model relation sets."""
     if not model_relations:
         return ()
     total_models = len(model_relations)
-    voters: dict[tuple[str, str, str, str, str | None], set[str]] = {}
-    exemplars: dict[tuple[str, str, str, str, str | None], RoleRelation] = {}
-    evidence: dict[tuple[str, str, str, str, str | None], list[str]] = {}
+    voters: dict[tuple[str, str, str], set[str]] = {}
+    exemplars: dict[tuple[str, str, str], RoleRelation] = {}
     for model_id, relations in model_relations.items():
-        seen: set[tuple[str, str, str, str, str | None]] = set()
+        seen: set[tuple[str, str, str]] = set()
         for relation in relations:
             normalized = normalize_relation(relation)
             key = normalized.key
@@ -133,36 +125,25 @@ def relation_tuple_consensus(
                 continue
             seen.add(key)
             voters.setdefault(key, set()).add(model_id)
-            if relation.evidence:
-                evidence.setdefault(key, []).append(relation.evidence)
     result: list[RoleTupleConsensus] = []
     for key, model_ids in voters.items():
         support = len(model_ids) / total_models
         if support < minimum_support:
             continue
-        exemplar = exemplars[key]
-        normalized = normalize_relation(exemplar)
+        normalized = normalize_relation(exemplars[key])
         result.append(
             RoleTupleConsensus(
                 actor=normalized.actor,
                 relation_class=normalized.relation_class,
-                predicate=normalized.predicate,
                 target=normalized.target,
-                condition=normalized.condition,
                 support=support,
                 supporting_models=tuple(sorted(model_ids)),
-                evidence=tuple(dict.fromkeys(evidence.get(key, ()))),
             )
         )
     return tuple(
         sorted(
             result,
-            key=lambda item: (
-                -item.support,
-                item.key
-                if hasattr(item, "key")
-                else (item.actor, item.relation_class, item.predicate, item.target),
-            ),
+            key=lambda item: (-item.support, item.actor, item.relation_class, item.target),
         )
     )
 
@@ -185,15 +166,13 @@ def tuple_set_similarity(
 
 
 def field_match_metrics(expected: RoleRelation, actual: RoleRelation) -> dict[str, bool]:
-    """Expose actor/relation/target/evidence agreement independently for diagnostics."""
+    """Expose actor/class/target agreement independently for diagnostics."""
     return {
         "actor_match": _normalize_text(expected.actor) == _normalize_text(actual.actor),
         "relation_class_match": (
             _normalize_text(expected.relation_class) == _normalize_text(actual.relation_class)
         ),
-        "predicate_match": _normalize_text(expected.predicate) == _normalize_text(actual.predicate),
         "target_match": _normalize_text(expected.target) == _normalize_text(actual.target),
-        "evidence_match": _evidence_matches(expected.evidence, actual.evidence),
     }
 
 
@@ -223,13 +202,3 @@ def summarize_role_qualification(clauses: Iterable[Any]) -> RoleQualificationMet
 def _normalize_text(value: str | None) -> str:
     normalized = re.sub(r"\s+", " ", (value or "").strip().casefold())
     return normalized.strip(" .,:;()[]{}")
-
-
-def _evidence_matches(expected: str | None, actual: str | None) -> bool:
-    if not expected and not actual:
-        return True
-    if not expected or not actual:
-        return False
-    left = _normalize_text(expected)
-    right = _normalize_text(actual)
-    return left == right or left in right or right in left

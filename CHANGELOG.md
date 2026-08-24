@@ -1,4 +1,5 @@
 ## 0.8.1
+- Tightened current role qualification prompts with explicit actor/non-actor, passive-without-actor, target, relation-class priority, and applicability-leakage boundaries.
 
 ### Role qualification tuple consensus
 
@@ -180,3 +181,12 @@
 - update role tuple consensus and golden regression to compare actor, relation class, predicate, target, and condition
 - make review `category` editable and allow `none` as reviewed ground truth
 - generate a role-review guide beside the CSV and update the HITL publish workflow for the new columns
+
+### Simplified role relation qualification contract
+
+- reduce `RoleRelation` to `actor`, open `relation_class`, and `target` for ontology/RACI classification
+- remove predicate, condition, evidence, and per-relation confidence from the active role contract
+- present role presence and role relations as one role-semantics dimension in qualification prompts
+- replace confusing process-model role terminology with process-model functions
+- move role qualification rules before the final JSON output contract and place JSON output last
+- update role golden review and tuple consensus to the simplified actor-class-target structure

@@ -99,19 +99,11 @@ def test_v24_role_qualification_contract_uses_open_relation_classes() -> None:
     assert "role_relation_types" not in schema["properties"]
     assert "primary_role_relation_type" not in schema["properties"]
     relation = schema["properties"]["role_relations"]["items"]
-    assert relation["required"] == [
-        "actor",
-        "relation_class",
-        "predicate",
-        "target",
-        "condition",
-        "evidence",
-        "confidence",
-    ]
+    assert relation["required"] == ["actor", "relation_class", "target"]
     properties = relation["properties"]
+    assert set(properties) == {"actor", "relation_class", "target"}
     assert "relation" not in properties
     assert "enum" not in properties["relation_class"]
-    assert "predicate" in properties
 
 
 def test_v6_prompts_describe_open_role_relation_contract() -> None:
@@ -123,8 +115,8 @@ def test_v6_prompts_describe_open_role_relation_contract() -> None:
     assert prompt_paths
     for prompt_path in prompt_paths:
         prompt = prompt_path.read_text(encoding="utf-8")
-        assert "relation_class is intentionally open" in prompt
-        assert "predicate is always evidence-grounded and open" in prompt
+        assert "relation_class is open" in prompt
+        assert "Each role relation contains only actor, relation_class, and target" in prompt
         assert "Do not invent a missing actor" in prompt
         assert "role_relation_types" not in prompt
         assert "primary relation type" not in prompt

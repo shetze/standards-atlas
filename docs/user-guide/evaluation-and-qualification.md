@@ -370,7 +370,7 @@ uv run standards-atlas evaluation role-corpus-evaluate \
 ```
 
 The regression report separates presence accuracy/precision/recall/F1 from exact normalized
-actor-relation_class-predicate-target tuple precision/recall/F1. This prevents a conservative all-negative presence
+actor-relation_class-target tuple precision/recall/F1. This prevents a conservative all-negative presence
 consensus from appearing equivalent to correct relation extraction.
 
 ### Applicability semantic boundary
@@ -407,8 +407,7 @@ trusted to decide whether applicability semantics are present at all.
 
 The current semantic-profile qualification contract uses the same open role-relation model as
 production extraction and the role golden corpus. Each extracted relation contains `actor`,
-`relation_class`, `predicate`, `target`, optional `condition`, supporting `evidence`, and optional
-`confidence`. `relation_class` is open; the documented core classes are recommendations rather
+`relation_class`, and `target`. `relation_class` is open; the documented core classes are recommendations rather
 than a closed enum. `predicate` preserves the evidence-grounded verb or verb phrase.
 
 Passive role/action semantics may set `role_semantics_present=true` while returning an empty
@@ -416,3 +415,12 @@ Passive role/action semantics may set `role_semantics_present=true` while return
 the clause. Legacy scalar fields such as `role_relation_types` and
 `primary_role_relation_type` are not part of the current 2.4.0/v6 generation contract; they are
 retained only when reading archived qualification data.
+
+
+### Role actor boundaries
+
+The current role prompts distinguish an actor from a grammatical subject. A role actor must be an explicitly identified human or organizational role, person, group, organization, organizational unit, committee/body, supplier, duty holder, authority, or stakeholder. Technical objects such as systems, software, documents, requirements, test conditions, and safety integrity levels are not actors merely because they are sentence subjects.
+
+Passive role/action semantics remain positive for `role_semantics_present` when the action is role-like but the actor is omitted. For example, `A hazard analysis shall be performed` is role semantics with no extractable relation tuple. In contrast, `The system shall satisfy the requirements` is not role semantics. Relation extraction must never infer the missing actor.
+
+Targets must be the explicit object or subject matter toward which the predicate is directed and must not simply repeat the actor unless the clause explicitly states a reflexive relation. Applicability, scope, technical properties, and logical conditions must not leak into `role_relations`.

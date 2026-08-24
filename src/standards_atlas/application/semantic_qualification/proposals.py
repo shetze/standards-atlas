@@ -514,8 +514,8 @@ def _adaptive_interview_supports_schema(schema: Mapping[str, Any]) -> bool:
     """Return whether the interview aggregator can satisfy the task schema.
 
     The current adaptive interview only classifies scalar/multi-label ontology
-    dimensions. It does not extract structured role relation objects (role,
-    relation, target, condition, evidence). When ``role_relations`` is required
+    dimensions. It does not extract structured role relation objects (actor, relation_class,
+    target). When ``role_relations`` is required
     by the canonical task schema, using the interview would therefore construct
     a response that can never satisfy that contract. Fall back to the direct
     structured-generation path until the interview has a dedicated extraction

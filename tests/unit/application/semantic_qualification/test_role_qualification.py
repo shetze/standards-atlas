@@ -7,8 +7,8 @@ from standards_atlas.application.semantic_qualification.role_qualification impor
 from standards_atlas.domain.model import RoleRelation, RoleRelationType
 
 
-def relation(actor: str, kind: RoleRelationType, target: str, evidence: str = "e") -> RoleRelation:
-    return RoleRelation(actor=actor, relation=kind, target=target, evidence=evidence)
+def relation(actor: str, kind: RoleRelationType, target: str) -> RoleRelation:
+    return RoleRelation(actor=actor, relation=kind, target=target)
 
 
 def test_candidate_marker_detects_passive_role_semantics() -> None:
@@ -34,7 +34,6 @@ def test_tuple_consensus_requires_complete_tuple_agreement() -> None:
     assert len(result) == 1
     assert result[0].actor == "verifier"
     assert result[0].relation_class == "performance"
-    assert result[0].predicate == "verify"
     assert result[0].target == "analysis"
     assert result[0].support == 2 / 3
 
@@ -50,15 +49,11 @@ def test_tuple_set_similarity_scores_complete_relations() -> None:
 
 
 def test_field_metrics_explain_partial_tuple_mismatch() -> None:
-    expected = relation(
-        "Verifier", RoleRelationType.VERIFIES, "analysis", "Verifier checks analysis"
-    )
-    actual = relation("Verifier", RoleRelationType.VERIFIES, "report", "Verifier checks analysis")
+    expected = relation("Verifier", RoleRelationType.VERIFIES, "analysis")
+    actual = relation("Verifier", RoleRelationType.VERIFIES, "report")
     metrics = field_match_metrics(expected, actual)
     assert metrics == {
         "actor_match": True,
         "relation_class_match": True,
-        "predicate_match": True,
         "target_match": False,
-        "evidence_match": True,
     }

@@ -191,37 +191,9 @@
         "required": [
           "actor",
           "relation_class",
-          "predicate",
-          "target",
-          "condition",
-          "evidence",
-          "confidence"
+          "target"
         ],
         "properties": {
-          "target": {
-            "type": "string",
-            "minLength": 1
-          },
-          "condition": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "evidence": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "confidence": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "minimum": 0.0,
-            "maximum": 1.0
-          },
           "actor": {
             "type": "string",
             "minLength": 1
@@ -229,12 +201,11 @@
           "relation_class": {
             "type": "string",
             "minLength": 1,
-            "description": "Open semantic class for the relation. Prefer the documented core vocabulary when it fits, but use another concise class when the evidence requires it."
+            "description": "Open semantic relation class; prefer the documented core vocabulary when it fits."
           },
-          "predicate": {
+          "target": {
             "type": "string",
-            "minLength": 1,
-            "description": "Evidence-grounded predicate or verb phrase from the clause."
+            "minLength": 1
           }
         }
       }

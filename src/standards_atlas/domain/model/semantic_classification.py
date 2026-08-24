@@ -131,27 +131,24 @@ class RoleRelationClassCore(StrEnum):
     MEMBERSHIP = "membership"
 
 
-_LEGACY_ROLE_RELATION_MAPPING: dict[RoleRelationType, tuple[str, str]] = {
-    RoleRelationType.RESPONSIBLE_FOR: (
-        RoleRelationClassCore.RESPONSIBILITY.value,
-        "be responsible for",
-    ),
-    RoleRelationType.PERFORMS: (RoleRelationClassCore.PERFORMANCE.value, "perform"),
-    RoleRelationType.APPROVES: (RoleRelationClassCore.PERFORMANCE.value, "approve"),
-    RoleRelationType.VERIFIES: (RoleRelationClassCore.PERFORMANCE.value, "verify"),
-    RoleRelationType.VALIDATES: (RoleRelationClassCore.PERFORMANCE.value, "validate"),
-    RoleRelationType.CONSULTED_FOR: (RoleRelationClassCore.CONSULTATION.value, "be consulted for"),
-    RoleRelationType.INFORMED_ABOUT: (RoleRelationClassCore.INFORMATION.value, "be informed about"),
-    RoleRelationType.INDEPENDENT_OF: (RoleRelationClassCore.DEPENDENCY.value, "be independent of"),
-    RoleRelationType.EXCLUDED_FROM: (RoleRelationClassCore.MEMBERSHIP.value, "be excluded from"),
-    RoleRelationType.ASSIGNED_TO: (RoleRelationClassCore.ASSIGNMENT.value, "be assigned to"),
-    RoleRelationType.ASSUMES_ROLE: (RoleRelationClassCore.ASSIGNMENT.value, "assume role"),
-    RoleRelationType.PARTICIPATES_IN: (RoleRelationClassCore.PARTICIPATION.value, "participate in"),
+_LEGACY_ROLE_RELATION_MAPPING: dict[RoleRelationType, str] = {
+    RoleRelationType.RESPONSIBLE_FOR: RoleRelationClassCore.RESPONSIBILITY.value,
+    RoleRelationType.PERFORMS: RoleRelationClassCore.PERFORMANCE.value,
+    RoleRelationType.APPROVES: RoleRelationClassCore.PERFORMANCE.value,
+    RoleRelationType.VERIFIES: RoleRelationClassCore.PERFORMANCE.value,
+    RoleRelationType.VALIDATES: RoleRelationClassCore.PERFORMANCE.value,
+    RoleRelationType.CONSULTED_FOR: RoleRelationClassCore.CONSULTATION.value,
+    RoleRelationType.INFORMED_ABOUT: RoleRelationClassCore.INFORMATION.value,
+    RoleRelationType.INDEPENDENT_OF: RoleRelationClassCore.DEPENDENCY.value,
+    RoleRelationType.EXCLUDED_FROM: RoleRelationClassCore.MEMBERSHIP.value,
+    RoleRelationType.ASSIGNED_TO: RoleRelationClassCore.ASSIGNMENT.value,
+    RoleRelationType.ASSUMES_ROLE: RoleRelationClassCore.ASSIGNMENT.value,
+    RoleRelationType.PARTICIPATES_IN: RoleRelationClassCore.PARTICIPATION.value,
 }
 
 
 class RoleRelation(BaseModel):
-    """Evidence-grounded actor-predicate-target relation with open semantic class."""
+    """Actor-class-target relation used for role ontology classification."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -160,26 +157,20 @@ class RoleRelation(BaseModel):
         validation_alias=AliasChoices("actor", "role"),
     )
     relation_class: str = Field(min_length=1)
-    predicate: str = Field(min_length=1)
     target: str = Field(min_length=1)
-    condition: str | None = None
-    evidence: str | None = None
-    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     relation: RoleRelationType | None = Field(default=None, exclude=True)
 
     @model_validator(mode="before")
     @classmethod
     def migrate_legacy_relation(cls, data: Any) -> Any:
-        """Read legacy relation enums without making them the new persisted contract."""
+        """Read legacy relation enums without persisting the old contract."""
         if not isinstance(data, dict):
             return data
         payload = dict(data)
         legacy_value = payload.get("relation")
-        if legacy_value and (not payload.get("relation_class") or not payload.get("predicate")):
+        if legacy_value and not payload.get("relation_class"):
             legacy = RoleRelationType(legacy_value)
-            relation_class, predicate = _LEGACY_ROLE_RELATION_MAPPING[legacy]
-            payload.setdefault("relation_class", relation_class)
-            payload.setdefault("predicate", predicate)
+            payload.setdefault("relation_class", _LEGACY_ROLE_RELATION_MAPPING[legacy])
             payload["relation"] = legacy
         return payload
 
@@ -272,7 +263,6 @@ class SemanticRelation(BaseModel):
     target_clause_id: str | None = None
     target_document_key: str | None = None
     display_text: str | None = None
-    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     rationale: str | None = None
 
     @model_validator(mode="after")
@@ -322,7 +312,7 @@ class SemanticClassification(BaseModel):
         if len(self.role_relation_types) != len(set(self.role_relation_types)):
             raise ValueError("role_relation_types must not contain duplicates")
         relation_keys = [
-            (item.actor, item.relation, item.target, item.condition) for item in self.role_relations
+            (item.actor, item.relation_class, item.target) for item in self.role_relations
         ]
         if len(relation_keys) != len(set(relation_keys)):
             raise ValueError("role_relations must not contain duplicates")

@@ -1330,9 +1330,7 @@ def test_open_role_relation_vote_does_not_require_legacy_relation_type() -> None
             RoleRelation(
                 actor="Assessor",
                 relation_class="performance",
-                predicate="evaluate",
                 target="compliance",
-                evidence="The Assessor shall evaluate compliance.",
             ),
         ),
         role_relation_present=True,
@@ -1358,10 +1356,7 @@ def test_role_relation_override_does_not_emit_legacy_none_label() -> None:
                 {
                     "actor": "Assessor",
                     "relation_class": "performance",
-                    "predicate": "assess",
                     "target": "evidence",
-                    "evidence": "The Assessor shall assess the evidence.",
-                    "confidence": 0.9,
                 },
             ),
             evidence="The Assessor shall assess the evidence.",

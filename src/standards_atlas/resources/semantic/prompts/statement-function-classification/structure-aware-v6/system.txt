@@ -1,45 +1,35 @@
-Classify technical standards clauses along four independent semantic dimensions:
+Classify the clause along four independent semantic dimensions:
 1. statement_functions: linguistic or logical force;
-2. knowledge_kinds: the kind of engineering knowledge represented (technique_or_measure, process, artifact, role, evidence, or concept);
-3. applicability_functions: scope, applicability, inclusion, exclusion, or exception;
-4. role_semantics_present: whether explicit role, actor, responsibility, participation, assignment, approval, verification, validation, consultation/information, or organizational independence/exclusion semantics are present. A complete tuple is not required.
-5. role_relations: zero or more explicit actor-predicate-target tuples with an open relation_class. Extract only when actor, predicate, and target are grounded in the clause.
+2. knowledge_kinds: engineering knowledge represented;
+3. applicability_functions: explicit applicability, inclusion, exclusion, exception, or applicability condition;
+4. role_semantics: whether role semantics are present and, when explicit, the corresponding role_relations.
 
-A clause may have labels in more than one dimension. Assign a role relation only when the clause explicitly identifies an actor or role, a predicate, and a target. Extract actor, relation_class, predicate, target, optional condition, and exact supporting evidence. Do not infer RACI Accountable/Consulted/Informed without explicit evidence. Use only the supplied evidence and return JSON matching the schema. Empty lists are allowed for dimensions without evidence.
-Document structure is context evidence, but do not infer labels solely from a heading.
+A clause may have labels in more than one dimension. Empty lists are allowed when evidence is absent. Document structure is context evidence, but do not infer labels solely from a heading.
 
+Classify process-model functions separately from role semantics: objectives, prerequisites, inputs, activities, decisions, branches, sequences, outputs, completion criteria, options, and assumptions. Structural membership in a Scope section is context, not an applicability label. Never return scope_definition.
 
-Treat process-model roles as an independent dimension: objectives, prerequisites, inputs, activities, decisions, branches, sequences, outputs, completion criteria, options, and assumptions. Structural membership in a Scope section is context, not a semantic applicability label. Never return scope_definition.
+Applicability is narrow. Set applicability_functions only when the clause explicitly states or changes which subject or normative content applies. Generic conditions, prerequisites, assumptions, structural Scope context, and local process conditions are not applicability unless applicability itself changes. Use inclusion for explicit positive applicability, exclusion for explicit non-applicability, exception for a carved-out case, and applicability_condition only when applicability itself is conditional. Return at most one primary applicability subtype.
 
-Applicability is a narrow semantic dimension. Set applicability_functions only when the clause explicitly states or changes which subject or normative content applies. Do not classify generic conditions, prerequisites, assumptions, or structural Scope context as applicability.
+Classify techniques, methods, and measures as technique_or_measure. Statement function and knowledge kind are orthogonal. For statement functions, first collect every function directly supported by the complete clause, then choose primary_function as the main communicative purpose. Classify should as recommendation and should not as condemnation unless the wording is merely descriptive. Use warning for explicit risk, limitation, unsafe consequence, unreliable result, invalid assumption, or possible misuse. Preserve supported secondary functions.
 
-Apply these applicability boundaries consistently:
-- inclusion: explicitly states that a named subject, population, case, or content is governed, e.g. "this part applies to railway software" or "the requirements are applicable to ASIL C and D".
-- exclusion: explicitly states that a named subject, population, case, or content is not governed, e.g. "does not apply to X", "not applicable to X", or "outside the scope".
-- exception: explicitly carves a case out of an applicability/scope assertion. Do not use exception for a bare local "unless" condition that merely controls an action or consequence.
-- applicability_condition: the applicability of normative content itself is conditional. The statement must express an applicability predicate such as "applies", "applicable", "in scope", or equivalent together with the condition.
+Role qualification rules:
+- role_semantics_present and role_relations belong to the same role_semantics dimension; they are not independent dimensions.
+- Set role_semantics_present=true when the clause explicitly describes a human or organizational role, responsibility, participation, assignment, consultation/information relationship, dependency/independence, membership, or a passive role/action semantics where the actor is omitted.
+- An actor must be an explicitly identified human or organizational role, person, group, organization, organizational unit, committee/body, supplier, duty holder, authority, or stakeholder. Being the grammatical subject is not sufficient. Technical objects such as systems, software, hardware, documents, requirements, methods, processes, results, and safety integrity levels are not actors merely because they are grammatical subjects.
+- Do not invent a missing actor. Passive role/action semantics such as "A hazard analysis shall be performed" may set role_semantics_present=true while returning role_relations=[].
+- Each role relation contains only actor, relation_class, and target. relation_class is open; prefer the core classes performance, responsibility, assignment, dependency, consultation, information, participation, and membership when they fit.
+- Target identifies what the actor's relation is about or directed toward. Do not repeat the actor as target unless the text explicitly states a reflexive relation.
+- If the text explicitly frames an action as a responsibility or accountability, use responsibility rather than performance. Do not turn applicability, scope, technical properties, logical conditions, or artifact relations into RoleRelations.
+- Return every grounded relation separately for clauses containing multiple actors or relations.
 
-The following are explicitly NOT applicability unless the clause separately states that applicability itself changes:
-- structural scope: headings such as Scope, or descriptive statements of subject matter, without an explicit applies/applicable/in-scope assertion;
-- prerequisite: a fact or state that must hold before an activity or requirement can be performed;
-- assumption: a fact accepted as true for reasoning, analysis, or design;
-- local condition: "if/when/provided that X, perform Y" where X controls an action, branch, result, or consequence rather than whether the requirement or document applies.
+Boundary examples:
+- "The Assessor shall evaluate the evidence." -> role_semantics_present=true; Assessor / performance / evidence.
+- "A hazard analysis shall be performed." -> role_semantics_present=true; role_relations=[].
+- "The system shall satisfy the RAMS requirements." -> role_semantics_present=false; role_relations=[].
+- "These requirements apply to new systems." -> role_semantics_present=false; role_relations=[]; this is applicability.
+- "One responsibility of the technical committee is preparation of its publications." -> technical committee / responsibility / preparation of its publications.
 
-Positive boundary example: "If software is ASIL D, these requirements are applicable." -> applicability_condition.
-Negative boundary example: "If software is ASIL D, perform an independent review." -> no applicability label; this is local conditional/process semantics.
-Negative boundary example: "Before validation starts, the specification shall be complete." -> no applicability label; this is prerequisite/process semantics.
-Negative boundary example: "This clause is in the Scope section." -> no applicability label.
-Return at most one primary applicability subtype; use none when no explicit applicability assertion is supported.
-
-Classify techniques, methods, and measures uniformly as technique_or_measure, including combinations such as “techniques and measures”. Do not split these concepts into competing knowledge-kind labels or collapse them into description merely because the clause explains them. Statement function and knowledge kind are orthogonal.
-
-Determine statement functions in two explicit steps. First collect every function directly supported by any sentence or list item in the complete clause; do not stop after finding one dominant function. Then choose primary_function as the function that best represents the clause's main communicative purpose. Preserve all other directly supported functions in statement_functions as secondary functions.
-
-Classify “should” as recommendation and “should not” as condemnation; condemnation is a negative recommendation, not a prohibition. A clause containing “should not” must include condemnation unless the words merely distinguish terminology, deny identity, or report somebody else's wording rather than advise against an interpretation or action. For example, “The overview should not be regarded as complete or exhaustive” is condemnation, not warning or recommendation.
-
-Classify guideline when the clause provides a style guide, coding guideline, or general practice guidance that is not itself a requirement or recommendation. An explicit clause title such as “Style Guide” or “Guidelines” is strong structural evidence for guideline as the primary function unless the clause content clearly contradicts it.
-
-Classify a statement as warning when it draws attention to a risk, limitation, unsafe consequence, unreliable result, invalid assumption, or possible misuse. A warning may qualify an otherwise positive description and must then be retained as a secondary function. For example, a clause that first describes benefits and then says “However, be aware” followed by questionable validity, incorrect results, or an insufficient verification basis has statement_functions [description, warning]. Do not classify a neutral contrast introduced by “however” as warning without explicit adverse consequences or risk. Warning identifies the adverse condition or consequence; recommendation or condemnation prescribes what should or should not be done. When both are present, return both rather than replacing one with the other.
+The task applies to clause narrative, not table-derived concepts or relations. Do not project table semantics back onto the containing clause.
 
 Return exactly one JSON object with every field below. Do not omit empty dimensions:
 {
@@ -56,21 +46,4 @@ Return exactly one JSON object with every field below. Do not omit empty dimensi
   "confidence": null,
   "rationale": null
 }
-Use [] and null when the supplied evidence does not support a label.
-Confidence values MUST be JSON numbers from 0.0 through 1.0. Use 0.95 for ninety-five percent confidence; never use 95, 95.0, or "95%".
-
-The task applies to clause narrative, not to table-derived concepts or relations. For mixed clauses, classify only the linguistic function of the narrative text. Do not project a table's recommendation, role relations, applicability, traceability, or other relation back onto the containing clause. Structured table semantics are interpreted by a separate task.
-
-Treat explicit function-bearing titles as high-confidence structural evidence. Titles containing Example, Style Guide/Guideline, Definition, Objective, Rationale, Assumption, Prerequisite, Note, Warning, or Caution normally determine the primary statement function unless the clause text clearly contradicts the title. Preserve additional text-supported functions as secondary functions.
-
-Explicit semantic_sections in structural context (for example Aim, Description, or References) are high-confidence evidence about the labelled subsection structure. Use them to distinguish multiple functions within a compound clause, but classify only content actually present in the clause.
-
-
-Role qualification rules:
-- Set role_semantics_present=true for passive role/action semantics such as "shall be verified" even when no actor is stated.
-- Do not invent a missing actor. Passive wording without an explicit actor MUST return role_relations=[].
-- relation_class is intentionally open. Prefer this core vocabulary when it fits: performance, responsibility, assignment, dependency, consultation, information, participation, membership. Use another concise class when none of these represents the explicit relation.
-- predicate is always evidence-grounded and open. Preserve the clause's actual verb or verb phrase (for example assess, identify, record, verify, be responsible for, not be influenced by).
-- Do not map concrete action verbs to an arbitrary closed relation enum. For example assess, verify, validate, approve, identify, record, and evaluate are predicates and normally use relation_class=performance.
-- Do not treat negation as a separate relation class. Keep the semantic class stable and preserve the negation in predicate (for example relation_class=membership, predicate="not be included in").
-- Return every grounded tuple; never collapse multiple relations into one representative label.
+Use [] and null when the evidence does not support a label. Confidence values must be JSON numbers from 0.0 through 1.0.

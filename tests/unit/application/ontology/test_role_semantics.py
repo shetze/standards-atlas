@@ -54,11 +54,7 @@ def test_complete_tuple_is_extracted_with_actor_field() -> None:
                     {
                         "actor": "Verifier",
                         "relation_class": "performance",
-                        "predicate": "verify",
                         "target": "analysis",
-                        "condition": None,
-                        "evidence": "The Verifier verifies the analysis",
-                        "confidence": 0.96,
                     }
                 ]
             },
@@ -72,4 +68,4 @@ def test_complete_tuple_is_extracted_with_actor_field() -> None:
     assert len(result.relations) == 1
     assert result.relations[0].actor == "Verifier"
     assert result.relations[0].relation_class == "performance"
-    assert result.relations[0].predicate == "verify"
+    assert result.relations[0].target == "analysis"

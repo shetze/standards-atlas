@@ -92,18 +92,17 @@ def test_role_relations_support_multiple_grounded_tuples() -> None:
     assert classification.role_relations[1].relation.family is RoleRelationFamily.ORGANIZATION
 
 
-def test_role_relation_supports_open_class_and_predicate() -> None:
+def test_role_relation_supports_open_class_and_target() -> None:
     from standards_atlas.domain.model import RoleRelation
 
     relation = RoleRelation(
         actor="Assessor",
         relation_class="performance",
-        predicate="identify",
         target="deviations",
     )
 
     assert relation.relation_class == "performance"
-    assert relation.predicate == "identify"
+    assert relation.target == "deviations"
     assert relation.relation is None
 
 
@@ -116,7 +115,6 @@ def test_legacy_role_relation_maps_into_open_structure() -> None:
 
     assert relation.relation is RoleRelationType.VERIFIES
     assert relation.relation_class == "performance"
-    assert relation.predicate == "verify"
     assert "relation" not in relation.model_dump(mode="json")
 
 

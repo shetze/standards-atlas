@@ -27,4 +27,44 @@ def test_role_relation_extraction_task_and_prompt_share_schema() -> None:
     relation = schema["properties"]["role_relations"]["items"]["properties"]
     assert "relation_class" in relation
     assert "enum" not in relation["relation_class"]
-    assert "predicate" in relation
+    assert set(relation) == {"actor", "relation_class", "target"}
+
+
+def test_role_prompts_define_actor_and_target_boundaries() -> None:
+    extraction = PromptRepository(RESOURCES / "prompts").load("role-relation-extraction", "1.0.0")
+    presence = PromptRepository(RESOURCES / "prompts").load("role-semantics-presence", "1.0.0")
+
+    extraction_system = extraction.system_prompt
+    assert "grammatical subject is not automatically an actor" in extraction_system
+    assert "technical objects are not actors" in extraction_system
+    assert "Do not repeat the actor as target" in extraction_system
+    assert "responsibility" in extraction_system
+    assert "The system shall satisfy the requirements" in extraction_system
+
+    presence_system = presence.system_prompt
+    assert "Being the grammatical subject is not sufficient" in presence_system
+    assert "A hazard analysis shall be performed" in presence_system
+    assert "The system shall satisfy the requirements" in presence_system
+
+
+def test_v6_qualification_prompts_use_compact_four_dimension_contract() -> None:
+    for prompt_id in (
+        "content-only-v6",
+        "structure-aware-v6",
+        "evidence-first-v6",
+        "bounded-reasoning-v6",
+    ):
+        prompt = PromptRepository(RESOURCES / "prompts").load(
+            "statement-function-classification", prompt_id
+        )
+        system = prompt.system_prompt
+        assert "four independent semantic dimensions" in system
+        assert "4. role_semantics:" in system
+        assert "5. role_relations" not in system
+        assert "process-model functions" in system
+        assert "process-model roles" not in system
+        assert "Each role relation contains only actor, relation_class, and target" in system
+        assert system.index("Role qualification rules:") < system.index("Return exactly one JSON")
+        assert system.rstrip().endswith(
+            "Confidence values must be JSON numbers from 0.0 through 1.0."
+        )

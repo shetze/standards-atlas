@@ -273,10 +273,7 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
         "role_semantics_present",
         "actor",
         "relation_class",
-        "predicate",
         "target",
-        "condition",
-        "evidence",
         "review_note",
     ]
     with review_path.open("w", newline="", encoding="utf-8") as handle:
@@ -291,7 +288,6 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
             "text": "The verifier verifies and approves the analysis.",
             "review_status": "published",
             "role_semantics_present": "true",
-            "condition": "",
             "review_note": "reviewed",
         }
         writer.writerow(
@@ -299,9 +295,7 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
                 **base,
                 "actor": "Verifier",
                 "relation_class": "performance",
-                "predicate": "verify",
                 "target": "analysis",
-                "evidence": "verifier verifies",
             }
         )
         writer.writerow(
@@ -310,10 +304,8 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
                 "review_status": "",
                 "role_semantics_present": "",
                 "actor": "Verifier",
-                "relation_class": "performance",
-                "predicate": "approve",
+                "relation_class": "responsibility",
                 "target": "analysis",
-                "evidence": "approves the analysis",
             }
         )
     output_path = tmp_path / "role-golden-corpus.yaml"
@@ -324,9 +316,10 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
     assert corpus.cases[0].status == "published"
     assert corpus.cases[0].expected is not None
     assert corpus.cases[0].expected.role_semantics_present is True
-    assert {
-        (item.relation_class, item.predicate) for item in corpus.cases[0].expected.relations
-    } == {("performance", "verify"), ("performance", "approve")}
+    assert {(item.relation_class, item.target) for item in corpus.cases[0].expected.relations} == {
+        ("performance", "analysis"),
+        ("responsibility", "analysis"),
+    }
 
 
 def test_publish_ignores_pending_and_rejected_rows(tmp_path: Path) -> None:
@@ -338,11 +331,10 @@ def test_publish_ignores_pending_and_rejected_rows(tmp_path: Path) -> None:
     review_path = tmp_path / "role-golden-review.csv"
     review_path.write_text(
         "document_key,clause_id,reference,category,content_hash,text,review_status,"
-        "role_semantics_present,actor,relation_class,predicate,target,condition,evidence,"
-        "review_note\n"
-        "DOC,1,DOC:1,negative,sha256:" + "a" * 64 + ",text,pending,,,,,,,,\n"
-        "DOC,2,DOC:2,negative,sha256:" + "b" * 64 + ",text,rejected,false,,,,,,,\n"
-        "DOC,3,DOC:3,negative,sha256:" + "c" * 64 + ",text,published,false,,,,,,,\n",
+        "role_semantics_present,actor,relation_class,target,review_note\n"
+        "DOC,1,DOC:1,negative,sha256:" + "a" * 64 + ",text,pending,,,,,\n"
+        "DOC,2,DOC:2,negative,sha256:" + "b" * 64 + ",text,rejected,false,,,,\n"
+        "DOC,3,DOC:3,negative,sha256:" + "c" * 64 + ",text,published,false,,,,\n",
         encoding="utf-8",
     )
     corpus = publish_role_golden_review(
@@ -372,9 +364,7 @@ cases:
       relations:
         - actor: Verifier
           relation_class: performance
-          predicate: verify
           target: analysis
-          evidence: The verifier verifies the analysis.
   - clause_id: c2
     document_key: DOC
     reference: DOC:2
@@ -399,10 +389,8 @@ cases:
                         {
                             "actor": "verifier",
                             "relation_class": "performance",
-                            "predicate": "verify",
                             "target": "Analysis",
                             "support": 0.8,
-                            "evidence": ["The verifier verifies the analysis."],
                         }
                     ],
                 },

@@ -1,7 +1,7 @@
 schema_version: 1
 task: role-relation-extraction
 version: 1.0.0
-description: Extract explicit evidence-grounded actor-predicate-target tuples from clauses with role semantics.
+description: Extract explicit actor-class-target relations from clauses with role semantics.
 multi_label: true
 allow_unclassified: true
 supported_item_kinds:
