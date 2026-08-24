@@ -2,21 +2,63 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "additionalProperties": false,
-  "required": ["role_relations"],
+  "required": [
+    "role_relations"
+  ],
   "properties": {
     "role_relations": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["actor", "relation", "target", "condition", "evidence", "confidence"],
+        "required": [
+          "actor",
+          "relation_class",
+          "predicate",
+          "target",
+          "condition",
+          "evidence",
+          "confidence"
+        ],
         "properties": {
-          "actor": {"type": "string", "minLength": 1},
-          "relation": {"type": "string", "enum": ["responsible_for", "performs", "approves", "verifies", "validates", "consulted_for", "informed_about", "independent_of", "excluded_from", "assigned_to", "assumes_role", "participates_in"]},
-          "target": {"type": "string", "minLength": 1},
-          "condition": {"type": ["string", "null"]},
-          "evidence": {"type": ["string", "null"]},
-          "confidence": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0}
+          "actor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "relation_class": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Open semantic class; prefer performance, responsibility, assignment, dependency, consultation, information, participation, or membership when applicable."
+          },
+          "predicate": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Evidence-grounded predicate as expressed by the clause, e.g. assess, identify, be independent of."
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "condition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidence": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
         }
       }
     }

@@ -455,9 +455,13 @@ def _model_vote(
     app = applicability[0].proposal.primary_applicability_function
     if app is None and applicability[0].proposal.applicability_functions:
         app = applicability[0].proposal.applicability_functions[0]
-    resp = responsibility[0].proposal.primary_role_relation_type
-    if resp is None and responsibility[0].proposal.role_relation_types:
-        resp = responsibility[0].proposal.role_relation_types[0]
+    # The current qualification contract is tuple-based. Keep the scalar label
+    # only as a read bridge for archived annotations that have no tuple extraction.
+    resp = None
+    if not responsibility[0].proposal.role_relations:
+        resp = responsibility[0].proposal.primary_role_relation_type
+        if resp is None and responsibility[0].proposal.role_relation_types:
+            resp = responsibility[0].proposal.role_relation_types[0]
     evidence = (
         " | ".join(
             value
@@ -646,10 +650,18 @@ def _resolve_clause(
         vote for vote in votes if _role_relation_evidence_is_valid(vote)
     )
     resp_present_support = len(valid_role_relation_votes) / model_count if model_count else 0.0
-    resp_counts = Counter(vote.role_relation_type for vote in valid_role_relation_votes)
-    resp_label, resp_count = resp_counts.most_common(1)[0] if resp_counts else (None, 0)
-    resp_label_support = resp_count / model_count if model_count else 0.0
-    resp_accepted = resp_present_support >= majority_threshold and resp_label is not None
+    tuple_role_votes = tuple(vote for vote in valid_role_relation_votes if vote.role_relations)
+    legacy_role_votes = tuple(
+        vote
+        for vote in valid_role_relation_votes
+        if not vote.role_relations and vote.role_relation_type is not None
+    )
+    legacy_counts = Counter(vote.role_relation_type for vote in legacy_role_votes)
+    resp_label, _ = (
+        legacy_counts.most_common(1)[0] if legacy_counts and not tuple_role_votes else (None, 0)
+    )
+    resp_label_support = resp_present_support
+    resp_accepted = resp_present_support >= majority_threshold
 
     applicability_presence_unanimous = _dimension_votes_are_unanimous(
         tuple(vote.applicability_present for vote in app_presence_votes)
@@ -666,7 +678,21 @@ def _resolve_clause(
         tuple(
             (
                 vote.role_relation_present,
-                vote.role_relation_type if vote.role_relation_present else None,
+                (
+                    tuple(
+                        sorted(
+                            (
+                                relation.actor.strip().lower(),
+                                relation.relation_class.strip().lower(),
+                                relation.predicate.strip().lower(),
+                                relation.target.strip().lower(),
+                            )
+                            for relation in vote.role_relations
+                        )
+                    )
+                    if vote.role_relations
+                    else vote.role_relation_type
+                ),
             )
             for vote in votes
         )
@@ -701,7 +727,7 @@ def _resolve_clause(
         support={"present": resp_present_support},
     )
     applicability_confidence = applicability_subtype_confidence
-    role_relation_confidence = resp_label_support if resp_label is not None else 0.0
+    role_relation_confidence = resp_present_support if resp_accepted else 0.0
 
     statement_category = category
     knowledge_category = _category_for_confidence(
@@ -778,12 +804,10 @@ def _resolve_clause(
         resolution_sources["applicability"] = str(item.get("source", "cascade"))
     if "role_relation" in override:
         item = override["role_relation"]
-        resp_label = RoleRelationType(item["value"]) if item.get("value") else None
-        resp_accepted = bool(item.get("present", resp_label is not None))
+        resp_label = None
+        resp_accepted = bool(item.get("present", False))
         role_relation_decision_confidence = float(item["confidence"])
-        role_relation_confidence = (
-            role_relation_decision_confidence if resp_accepted and resp_label is not None else 0.0
-        )
+        role_relation_confidence = role_relation_decision_confidence if resp_accepted else 0.0
         role_relation_category = ConsensusCategory(item["category"])
         resolution_sources["role_relation"] = str(item.get("source", "cascade"))
 
@@ -844,7 +868,7 @@ def _resolve_clause(
         "applicability_present": app_accepted,
         "proposed_applicability_functions": ((app_label,) if app_accepted else ()),
         "role_relation_present": resp_accepted,
-        "proposed_role_relation_types": ((resp_label,) if resp_accepted else ()),
+        "proposed_role_relation_types": ((resp_label,) if resp_label is not None else ()),
         "confidence": confidence,
         "statement_function_confidence": statement_function_confidence,
         "knowledge_kind_confidence": knowledge_kind_confidence,
@@ -966,7 +990,19 @@ def _review_reasons(
 
 
 def _role_relation_evidence_is_valid(vote: ModelVote) -> bool:
-    if not vote.role_relation_present or not vote.evidence:
+    if not vote.role_relation_present:
+        return False
+    if vote.role_relations:
+        return all(
+            relation.actor.strip()
+            and relation.relation_class.strip()
+            and relation.predicate.strip()
+            and relation.target.strip()
+            and bool((relation.evidence or "").strip())
+            for relation in vote.role_relations
+        )
+    # Compatibility for archived qualification runs using scalar relation labels.
+    if vote.role_relation_type is None or not vote.evidence:
         return False
     text = vote.evidence.lower()
     actor = re.search(
@@ -1029,7 +1065,8 @@ def _write_outputs(
                     "relations": [
                         {
                             "actor": relation.actor,
-                            "relation": relation.relation.value,
+                            "relation_class": relation.relation_class,
+                            "predicate": relation.predicate,
                             "target": relation.target,
                             "condition": relation.condition,
                             "support": relation.support,

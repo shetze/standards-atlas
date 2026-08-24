@@ -33,7 +33,8 @@ def test_tuple_consensus_requires_complete_tuple_agreement() -> None:
     result = relation_tuple_consensus(votes, minimum_support=0.6)
     assert len(result) == 1
     assert result[0].actor == "verifier"
-    assert result[0].relation is RoleRelationType.VERIFIES
+    assert result[0].relation_class == "performance"
+    assert result[0].predicate == "verify"
     assert result[0].target == "analysis"
     assert result[0].support == 2 / 3
 
@@ -56,7 +57,8 @@ def test_field_metrics_explain_partial_tuple_mismatch() -> None:
     metrics = field_match_metrics(expected, actual)
     assert metrics == {
         "actor_match": True,
-        "relation_match": True,
+        "relation_class_match": True,
+        "predicate_match": True,
         "target_match": False,
         "evidence_match": True,
     }

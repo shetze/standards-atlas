@@ -13,7 +13,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from standards_atlas.domain.model import RoleRelation, RoleRelationType
+from standards_atlas.domain.model import RoleRelation
 
 _ROLE_CANDIDATE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
     (name, re.compile(pattern, re.IGNORECASE))
@@ -55,13 +55,14 @@ class NormalizedRoleRelation(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     actor: str
-    relation: RoleRelationType
+    relation_class: str
+    predicate: str
     target: str
     condition: str | None = None
 
     @property
-    def key(self) -> tuple[str, str, str, str | None]:
-        return (self.actor, self.relation.value, self.target, self.condition)
+    def key(self) -> tuple[str, str, str, str, str | None]:
+        return (self.actor, self.relation_class, self.predicate, self.target, self.condition)
 
 
 class RoleTupleConsensus(BaseModel):
@@ -70,7 +71,8 @@ class RoleTupleConsensus(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     actor: str
-    relation: RoleRelationType
+    relation_class: str
+    predicate: str
     target: str
     condition: str | None = None
     support: float = Field(ge=0.0, le=1.0)
@@ -102,7 +104,8 @@ def normalize_relation(relation: RoleRelation) -> NormalizedRoleRelation:
     """Normalize actor/target text for stable cross-model tuple matching."""
     return NormalizedRoleRelation(
         actor=_normalize_text(relation.actor),
-        relation=relation.relation,
+        relation_class=_normalize_text(relation.relation_class),
+        predicate=_normalize_text(relation.predicate),
         target=_normalize_text(relation.target),
         condition=_normalize_text(relation.condition) if relation.condition else None,
     )
@@ -117,11 +120,11 @@ def relation_tuple_consensus(
     if not model_relations:
         return ()
     total_models = len(model_relations)
-    voters: dict[tuple[str, str, str, str | None], set[str]] = {}
-    exemplars: dict[tuple[str, str, str, str | None], RoleRelation] = {}
-    evidence: dict[tuple[str, str, str, str | None], list[str]] = {}
+    voters: dict[tuple[str, str, str, str, str | None], set[str]] = {}
+    exemplars: dict[tuple[str, str, str, str, str | None], RoleRelation] = {}
+    evidence: dict[tuple[str, str, str, str, str | None], list[str]] = {}
     for model_id, relations in model_relations.items():
-        seen: set[tuple[str, str, str, str | None]] = set()
+        seen: set[tuple[str, str, str, str, str | None]] = set()
         for relation in relations:
             normalized = normalize_relation(relation)
             key = normalized.key
@@ -142,7 +145,8 @@ def relation_tuple_consensus(
         result.append(
             RoleTupleConsensus(
                 actor=normalized.actor,
-                relation=normalized.relation,
+                relation_class=normalized.relation_class,
+                predicate=normalized.predicate,
                 target=normalized.target,
                 condition=normalized.condition,
                 support=support,
@@ -157,7 +161,7 @@ def relation_tuple_consensus(
                 -item.support,
                 item.key
                 if hasattr(item, "key")
-                else (item.actor, item.relation.value, item.target),
+                else (item.actor, item.relation_class, item.predicate, item.target),
             ),
         )
     )
@@ -184,7 +188,10 @@ def field_match_metrics(expected: RoleRelation, actual: RoleRelation) -> dict[st
     """Expose actor/relation/target/evidence agreement independently for diagnostics."""
     return {
         "actor_match": _normalize_text(expected.actor) == _normalize_text(actual.actor),
-        "relation_match": expected.relation == actual.relation,
+        "relation_class_match": (
+            _normalize_text(expected.relation_class) == _normalize_text(actual.relation_class)
+        ),
+        "predicate_match": _normalize_text(expected.predicate) == _normalize_text(actual.predicate),
         "target_match": _normalize_text(expected.target) == _normalize_text(actual.target),
         "evidence_match": _evidence_matches(expected.evidence, actual.evidence),
     }

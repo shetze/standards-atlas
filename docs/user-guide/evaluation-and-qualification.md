@@ -266,9 +266,11 @@ challenger-only models.
 The applicability hard-case qualification promoted SmolLM3 3B, GLM-4 9B, and EXAONE
 3.5 32B into the production cascade. The representative 500-clause follow-up then moved
 Ministral 3 8B into `efficient-local` and Gemma 3 12B into `intermediate-escalation` to reduce
-Mistral-family correlation in the resolver stage. SmolLM3 remains eligible for applicability
-presence but is excluded from applicability-subtype consensus. The displaced Qwen3 8B, Phi-4 14B, and Qwen3 32B
-models remain in `challenger_qualification.models` as regression baselines. This keeps the
+Mistral-family correlation in the resolver stage. Slice 3c further narrows applicability-presence
+voting after the Slice 3b representative run exposed GLM-4 and SmolLM3 as opposite calibration
+extremes. Both remain production voters for other semantic dimensions, but neither contributes to
+`applicability_presence`; SmolLM3 also remains excluded from `applicability_subtype`. The displaced
+Qwen3 8B, Phi-4 14B, and Qwen3 32B models remain in `challenger_qualification.models` as regression baselines. This keeps the
 head-to-head workflow useful without duplicating a model between the production and challenger
 pools. Challenger comparison aggregates only `qualification_eligible` candidates; unsupported
 or non-executed candidate rows do not dilute model-level success or duration metrics.
@@ -334,9 +336,13 @@ uv run standards-atlas evaluation role-corpus-build \
 The command writes machine artifacts (`dataset.json` and `corpus-manifest.yaml`) below `.atlas/` and a
 flat HITL file to
 `local/review/role-relation-extraction/1.0.0/role-golden-review.csv`. The CSV is the only file a reviewer
-should edit. It contains one prepared row per selected clause with the original text and these review fields:
-`review_status`, `role_semantics_present`, `actor`, `relation`, `target`, `condition`, `evidence`, and
-`review_note`. No YAML structures need to be created manually.
+should edit. Family-level aggregate documents are excluded when persisted part documents exist, so a
+multipart standard contributes clauses from keys such as `EN50126-2`, not the aggregate `EN50126`. The
+human-facing `reference` is always fully qualified with that part key. The CSV contains one prepared row per
+selected clause with the original text and these review fields: `review_status`, `role_semantics_present`,
+`actor`, `relation`, `target`, `condition`, `evidence`, and `review_note`. Internal `clause_id` and
+`content_hash` columns are kept at the end of the CSV and normally need no reviewer attention. No YAML
+structures need to be created manually.
 
 Set `review_status` to `published` for reviewed cases or `rejected` for unsuitable samples. For a positive
 case without a complete explicit actor-relation-target tuple, set `role_semantics_present=true` and leave the
@@ -364,7 +370,7 @@ uv run standards-atlas evaluation role-corpus-evaluate \
 ```
 
 The regression report separates presence accuracy/precision/recall/F1 from exact normalized
-actor-relation-target tuple precision/recall/F1. This prevents a conservative all-negative presence
+actor-relation_class-predicate-target tuple precision/recall/F1. This prevents a conservative all-negative presence
 consensus from appearing equivalent to correct relation extraction.
 
 ### Applicability semantic boundary
@@ -379,3 +385,34 @@ to evaluate this boundary. The v4 role-semantics manifest remains available as t
 baseline. In particular, compare clauses where models previously disagreed between `inclusion`
 and `none`; generic conditional requirements should now converge toward `none`, while explicit
 `applies to`/`applicable to` statements remain positive.
+
+
+### Applicability presence model eligibility
+
+Slice 3c applies model eligibility independently from prompt and ontology semantics. The v5
+manifest excludes GLM-4 9B and SmolLM3 3B from `applicability_presence` voting because the
+Slice 3b representative run showed opposite calibration extremes (strongly permissive versus
+strongly conservative). Their predictions are still produced and remain available for diagnostics
+and for semantic dimensions where they are eligible.
+
+Eligibility is cumulative across cascade stages. The configured production cascade retains three
+eligible applicability-presence voters after `efficient-local`, five after
+`intermediate-escalation`, and seven after final escalation. Manifest validation rejects filtered
+cascade configurations that would leave fewer dimension-eligible voters than a stage's configured
+`minimum_successful_models`. Applicability-subtype eligibility is independent from presence
+eligibility; a model may therefore remain useful for subtype discrimination even when it is not
+trusted to decide whether applicability semantics are present at all.
+
+### Role qualification contract
+
+The current semantic-profile qualification contract uses the same open role-relation model as
+production extraction and the role golden corpus. Each extracted relation contains `actor`,
+`relation_class`, `predicate`, `target`, optional `condition`, supporting `evidence`, and optional
+`confidence`. `relation_class` is open; the documented core classes are recommendations rather
+than a closed enum. `predicate` preserves the evidence-grounded verb or verb phrase.
+
+Passive role/action semantics may set `role_semantics_present=true` while returning an empty
+`role_relations` list. The qualification prompt must not invent an actor that is not explicit in
+the clause. Legacy scalar fields such as `role_relation_types` and
+`primary_role_relation_type` are not part of the current 2.4.0/v6 generation contract; they are
+retained only when reading archived qualification data.

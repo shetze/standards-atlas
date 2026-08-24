@@ -1,7 +1,6 @@
 from types import SimpleNamespace
 
 from standards_atlas.application.ontology import LlmRoleSemanticsClassifier, OntologyContext
-from standards_atlas.domain.model import RoleRelationType
 
 
 class FakeGateway:
@@ -54,7 +53,8 @@ def test_complete_tuple_is_extracted_with_actor_field() -> None:
                 "role_relations": [
                     {
                         "actor": "Verifier",
-                        "relation": "verifies",
+                        "relation_class": "performance",
+                        "predicate": "verify",
                         "target": "analysis",
                         "condition": None,
                         "evidence": "The Verifier verifies the analysis",
@@ -71,4 +71,5 @@ def test_complete_tuple_is_extracted_with_actor_field() -> None:
     assert result.present is True
     assert len(result.relations) == 1
     assert result.relations[0].actor == "Verifier"
-    assert result.relations[0].relation is RoleRelationType.VERIFIES
+    assert result.relations[0].relation_class == "performance"
+    assert result.relations[0].predicate == "verify"

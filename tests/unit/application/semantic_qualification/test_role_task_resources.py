@@ -23,6 +23,8 @@ def test_role_relation_extraction_task_and_prompt_share_schema() -> None:
     prompt = PromptRepository(RESOURCES / "prompts").load("role-relation-extraction", "1.0.0")
     assert task.task == "role-relation-extraction"
     assert prompt.output_schema == schema
-    assert tuple(task.role_relation_taxonomy)
-    relation = schema["properties"]["role_relations"]["items"]["properties"]["relation"]
-    assert set(relation["enum"]) == set(task.role_relation_taxonomy)
+    assert tuple(task.role_relation_taxonomy) == ()
+    relation = schema["properties"]["role_relations"]["items"]["properties"]
+    assert "relation_class" in relation
+    assert "enum" not in relation["relation_class"]
+    assert "predicate" in relation

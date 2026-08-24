@@ -102,6 +102,7 @@ def build_role_golden_corpus(
     typer.echo(f"Role corpus clauses     : {result.selected_count}")
     typer.echo(f"Dataset                 : {result.dataset_path}")
     typer.echo(f"HITL review file        : {result.review_path}")
+    typer.echo(f"HITL review guide       : {result.review_guide_path}")
     if result.review_created:
         typer.echo("                          EDIT THIS CSV FILE")
     else:

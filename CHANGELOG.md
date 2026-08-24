@@ -28,6 +28,10 @@
 
 ## Unreleased
 
+- Align the semantic qualification contract with the open RoleRelation model: remove legacy scalar role-relation labels from task/prompt schemas, require `relation_class` plus evidence-grounded `predicate`, preserve archived-run read compatibility, and base new role-relation confidence on structured tuple evidence.
+
+- Refine role golden-corpus review sampling: exclude aggregate multipart-standard documents when part documents are available, emit fully qualified part references for HITL review, and move internal clause identifiers and hashes to the end of the review CSV.
+
 - Separate applicability-presence and applicability-subtype cascade resolution, skip subtype escalation when applicability is absent, preserve legacy manifest behavior, and report applicability escalations that remain unresolved after each stage.
 
 - Finalize the taxonomy/ontology split: remove the legacy deterministic `SemanticClassifier`, keep `ENRICH` classification-free, make AtlasData onboarding structure-only, and enforce `TAXONOMY -> ONTOLOGY` ownership with architecture tests and updated UML diagrams.
@@ -160,3 +164,19 @@
 - add v6 qualification prompts with positive and negative applicability boundary examples
 - centralize deterministic applicability detection for structural priors and diagnostics
 - add a v5 applicability-semantics qualification manifest while retaining the v4 baseline
+
+### Slice 3c — applicability presence model eligibility
+
+- exclude GLM-4 9B and SmolLM3 3B from applicability-presence consensus after Slice 3b calibration analysis
+- preserve their participation in other semantic dimensions and keep subtype eligibility independent
+- validate cumulative dimension-eligible voter counts for filtered cascade configurations
+- expose a manifest helper for inspecting model ids eligible for each applicability dimension
+
+### Role relation open-class review model
+
+- replace the closed role-relation enum in structured extraction with open `relation_class` plus evidence-grounded `predicate`
+- define the recommended core classes `performance`, `responsibility`, `assignment`, `dependency`, `consultation`, `information`, `participation`, and `membership`
+- keep legacy relation values readable by mapping them into the new structure
+- update role tuple consensus and golden regression to compare actor, relation class, predicate, target, and condition
+- make review `category` editable and allow `none` as reviewed ground truth
+- generate a role-review guide beside the CSV and update the HITL publish workflow for the new columns

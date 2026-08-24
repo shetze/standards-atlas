@@ -1,5 +1,7 @@
 Extract explicit role relations from the clause.
 
-Every returned relation requires an identifiable actor or role, a relation type from the schema, an identifiable target, and exact supporting evidence. Do not invent an actor from passive wording. If role semantics are present but no complete actor-relation-target tuple is explicit, return an empty role_relations array. Multiple relations are allowed. Do not collapse them to a primary relation.
+Every returned relation requires an identifiable actor or role, an open semantic relation_class, the evidence-grounded predicate expressed by the clause, an identifiable target, and exact supporting evidence. Prefer the core classes performance, responsibility, assignment, dependency, consultation, information, participation, and membership when they fit. The relation_class vocabulary is open: use another concise semantic class rather than forcing a relation into the core vocabulary.
 
-Do not infer Accountable, Consulted, or Informed semantics without explicit evidence. Do not project relations from tables into surrounding narrative. Use only the supplied clause and structural context. Return JSON matching the schema.
+Keep predicate evidence-grounded and close to the source wording, for example assess, identify, record, verify, be independent of, or not be included in. Do not invent an actor from passive wording. If role semantics are present but no complete actor-predicate-target tuple is explicit, return an empty role_relations array. Multiple relations are allowed. Do not collapse them to a primary relation.
+
+Do not infer responsibility, consultation, information, or other relation classes without explicit evidence. Do not project relations from tables into surrounding narrative. Use only the supplied clause and structural context. Return JSON matching the schema.

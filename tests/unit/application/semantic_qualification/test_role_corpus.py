@@ -6,7 +6,10 @@ from pathlib import Path
 
 import yaml
 
-from standards_atlas.application.semantic_qualification.clause_access import ClauseDescriptor
+from standards_atlas.application.semantic_qualification.clause_access import (
+    ClauseDescriptor,
+    DocumentDescriptor,
+)
 from standards_atlas.application.semantic_qualification.role_corpus import (
     RoleCorpusBuildManifest,
     RoleCorpusCategory,
@@ -16,7 +19,7 @@ from standards_atlas.application.semantic_qualification.role_corpus import (
     evaluate_role_golden_corpus,
     publish_role_golden_review,
 )
-from standards_atlas.domain.model import ClauseType
+from standards_atlas.domain.model import ClauseType, DocumentType
 
 
 def clause(
@@ -35,6 +38,20 @@ def clause(
         text=text,
         table_block_count=table_block_count,
     )
+
+
+def document(key: str, clause_count: int = 1) -> DocumentDescriptor:
+    return DocumentDescriptor(
+        key=key,
+        title=key,
+        document_type=DocumentType.STANDARD,
+        clause_count=clause_count,
+    )
+
+
+def documents_for(clauses: tuple[ClauseDescriptor, ...]) -> tuple[DocumentDescriptor, ...]:
+    keys = sorted({item.document_key for item in clauses})
+    return tuple(document(key, sum(item.document_key == key for item in clauses)) for key in keys)
 
 
 def test_role_corpus_categories_are_sampling_strata_not_gold_labels() -> None:
@@ -80,13 +97,20 @@ def test_builds_reproducible_role_golden_review_corpus(tmp_path: Path) -> None:
     )
 
     class Provider:
+        def list_documents(self):
+            return documents_for(clauses)
+
         def list_clauses(self, **kwargs):
             return clauses
 
     manifest = RoleCorpusBuildManifest(
         corpus_id="roles-v1",
         corpus_version="1.0.0",
-        quotas={category: 1 for category in RoleCorpusCategory},
+        quotas={
+            category: 1
+            for category in RoleCorpusCategory
+            if category is not RoleCorpusCategory.NONE
+        },
         seed=42,
     )
     review_root = tmp_path / "review"
@@ -105,9 +129,57 @@ def test_builds_reproducible_role_golden_review_corpus(tmp_path: Path) -> None:
     assert len(review_rows) == 7
     assert {row["review_status"] for row in review_rows} == {"pending"}
     assert {row["role_semantics_present"] for row in review_rows} == {""}
+    assert list(review_rows[0])[-2:] == ["clause_id", "content_hash"]
     assert build_manifest["category_counts"] == {
-        category.value: 1 for category in sorted(RoleCorpusCategory, key=lambda item: item.value)
+        category.value: 1
+        for category in sorted(RoleCorpusCategory, key=lambda item: item.value)
+        if category is not RoleCorpusCategory.NONE
     }
+
+
+def test_role_corpus_excludes_family_aggregate_and_qualifies_part_reference(
+    tmp_path: Path,
+) -> None:
+    aggregate = ClauseDescriptor(
+        **{
+            **clause("7", "The supplier is responsible for the aggregate plan.").model_dump(),
+            "document_key": "EN50126",
+            "reference": "EN50126:7",
+            "clause_reference": "7",
+        }
+    )
+    part = ClauseDescriptor(
+        **{
+            **clause("7", "The supplier is responsible for the part plan.").model_dump(),
+            "document_key": "EN50126-2",
+            "reference": "EN50126:7",
+            "clause_reference": "7",
+        }
+    )
+    clauses = (aggregate, part)
+
+    class Provider:
+        def list_documents(self):
+            return (document("EN50126"), document("EN50126-2"))
+
+        def list_clauses(self, **kwargs):
+            return clauses
+
+    manifest = RoleCorpusBuildManifest(
+        corpus_id="roles-v1",
+        corpus_version="1.0.0",
+        quotas={RoleCorpusCategory.EXPLICIT_RELATION: 1},
+        seed=42,
+    )
+    result = RoleGoldenCorpusBuilder(Provider()).build(
+        manifest, tmp_path / "data", tmp_path / "review"
+    )
+    with result.review_path.open(newline="", encoding="utf-8") as handle:
+        review_rows = list(csv.DictReader(handle))
+
+    assert len(review_rows) == 1
+    assert review_rows[0]["document_key"] == "EN50126-2"
+    assert review_rows[0]["reference"] == "EN50126-2:7"
 
 
 def test_role_corpus_allows_same_clause_id_in_different_documents(tmp_path: Path) -> None:
@@ -129,6 +201,9 @@ def test_role_corpus_allows_same_clause_id_in_different_documents(tmp_path: Path
     )
 
     class Provider:
+        def list_documents(self):
+            return documents_for(clauses)
+
         def list_clauses(self, **kwargs):
             return clauses
 
@@ -159,6 +234,9 @@ def test_role_corpus_build_preserves_existing_review(tmp_path: Path) -> None:
     clauses = (clause("1", "The supplier is responsible for the plan."),)
 
     class Provider:
+        def list_documents(self):
+            return documents_for(clauses)
+
         def list_clauses(self, **kwargs):
             return clauses
 
@@ -194,7 +272,8 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
         "review_status",
         "role_semantics_present",
         "actor",
-        "relation",
+        "relation_class",
+        "predicate",
         "target",
         "condition",
         "evidence",
@@ -219,7 +298,8 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
             {
                 **base,
                 "actor": "Verifier",
-                "relation": "verifies",
+                "relation_class": "performance",
+                "predicate": "verify",
                 "target": "analysis",
                 "evidence": "verifier verifies",
             }
@@ -230,7 +310,8 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
                 "review_status": "",
                 "role_semantics_present": "",
                 "actor": "Verifier",
-                "relation": "approves",
+                "relation_class": "performance",
+                "predicate": "approve",
                 "target": "analysis",
                 "evidence": "approves the analysis",
             }
@@ -243,10 +324,9 @@ def test_publish_compiles_flat_review_rows_and_multiple_relations(tmp_path: Path
     assert corpus.cases[0].status == "published"
     assert corpus.cases[0].expected is not None
     assert corpus.cases[0].expected.role_semantics_present is True
-    assert {item.relation.value for item in corpus.cases[0].expected.relations} == {
-        "verifies",
-        "approves",
-    }
+    assert {
+        (item.relation_class, item.predicate) for item in corpus.cases[0].expected.relations
+    } == {("performance", "verify"), ("performance", "approve")}
 
 
 def test_publish_ignores_pending_and_rejected_rows(tmp_path: Path) -> None:
@@ -258,10 +338,11 @@ def test_publish_ignores_pending_and_rejected_rows(tmp_path: Path) -> None:
     review_path = tmp_path / "role-golden-review.csv"
     review_path.write_text(
         "document_key,clause_id,reference,category,content_hash,text,review_status,"
-        "role_semantics_present,actor,relation,target,condition,evidence,review_note\n"
-        "DOC,1,DOC:1,negative,sha256:" + "a" * 64 + ",text,pending,,,,,,,\n"
-        "DOC,2,DOC:2,negative,sha256:" + "b" * 64 + ",text,rejected,false,,,,,,\n"
-        "DOC,3,DOC:3,negative,sha256:" + "c" * 64 + ",text,published,false,,,,,,\n",
+        "role_semantics_present,actor,relation_class,predicate,target,condition,evidence,"
+        "review_note\n"
+        "DOC,1,DOC:1,negative,sha256:" + "a" * 64 + ",text,pending,,,,,,,,\n"
+        "DOC,2,DOC:2,negative,sha256:" + "b" * 64 + ",text,rejected,false,,,,,,,\n"
+        "DOC,3,DOC:3,negative,sha256:" + "c" * 64 + ",text,published,false,,,,,,,\n",
         encoding="utf-8",
     )
     corpus = publish_role_golden_review(
@@ -290,7 +371,8 @@ cases:
       role_semantics_present: true
       relations:
         - actor: Verifier
-          relation: verifies
+          relation_class: performance
+          predicate: verify
           target: analysis
           evidence: The verifier verifies the analysis.
   - clause_id: c2
@@ -316,7 +398,8 @@ cases:
                     "role_relation_consensus": [
                         {
                             "actor": "verifier",
-                            "relation": "verifies",
+                            "relation_class": "performance",
+                            "predicate": "verify",
                             "target": "Analysis",
                             "support": 0.8,
                             "evidence": ["The verifier verifies the analysis."],

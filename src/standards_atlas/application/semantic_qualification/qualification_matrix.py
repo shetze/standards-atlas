@@ -540,11 +540,6 @@ def capture_resolved_dimensions(
     if resolved(_ROLE_RELATION_REASONS):
         result["role_relation"] = {
             "present": cumulative_clause.role_relation_present,
-            "value": (
-                cumulative_clause.proposed_role_relation_types[0].value
-                if cumulative_clause.proposed_role_relation_types
-                else None
-            ),
             "confidence": cumulative_clause.role_relation_decision_confidence,
             "category": cumulative_clause.role_relation_category.value,
             "source": source,
@@ -791,6 +786,14 @@ class QualificationMatrixManifest(BaseModel):
         """Return dimension-level voting eligibility keyed by model id."""
         return {model.id: model.dimension_eligibility.model_dump() for model in self.models}
 
+    def eligible_model_ids_for_dimension(self, dimension: str) -> tuple[str, ...]:
+        """Return production model ids allowed to vote on one semantic dimension."""
+        if dimension not in {"applicability_presence", "applicability_subtype"}:
+            raise ValueError(f"unsupported model-eligibility dimension: {dimension}")
+        return tuple(
+            model.id for model in self.models if getattr(model.dimension_eligibility, dimension)
+        )
+
     def prompts_for_model(self, model_id: str) -> tuple[PromptCandidate, ...]:
         """Return the prompts configured for one model."""
         if self.execution.mode != "cascade":
@@ -880,6 +883,29 @@ class QualificationMatrixManifest(BaseModel):
                 if overlap:
                     raise ValueError(f"models occur in multiple cascade stages: {sorted(overlap)}")
                 configured_models.update(stage.models)
+
+            model_by_id = {model.id: model for model in self.models}
+            cumulative_stage_models: list[str] = []
+            for stage in self.execution.stages:
+                cumulative_stage_models.extend(stage.models)
+                resolution = stage.resolution or self.execution.resolution
+                for dimension in ("applicability_presence", "applicability_subtype"):
+                    dimension_is_filtered = any(
+                        not bool(getattr(model.dimension_eligibility, dimension))
+                        for model in self.models
+                    )
+                    if not dimension_is_filtered:
+                        continue
+                    eligible_count = sum(
+                        bool(getattr(model_by_id[model_id].dimension_eligibility, dimension))
+                        for model_id in cumulative_stage_models
+                    )
+                    if eligible_count < resolution.minimum_successful_models:
+                        raise ValueError(
+                            f"cascade stage {stage.id} has only {eligible_count} cumulative "
+                            f"{dimension} voters, below minimum_successful_models "
+                            f"{resolution.minimum_successful_models}"
+                        )
         model_repetitions = {item.id: self.repetitions_for(item) for item in self.models}
         seen: set[tuple[str, str, str, int]] = set()
         for item in self.observations:

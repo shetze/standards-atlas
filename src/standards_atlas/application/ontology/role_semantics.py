@@ -8,7 +8,7 @@ from typing import Protocol
 
 from standards_atlas.application.ontology.engine import OntologyContext
 from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
-from standards_atlas.domain.model import RoleRelation, RoleRelationType
+from standards_atlas.domain.model import RoleRelation, RoleRelationClassCore
 
 
 @dataclass(frozen=True)
@@ -69,11 +69,13 @@ class LlmRoleSemanticsClassifier:
                 task="role-relation-extraction",
                 system_prompt=(
                     "Extract only explicit, evidence-grounded role relations. "
-                    "Every relation requires an identifiable actor or role, a declared "
-                    "relation type, an identifiable target, and exact supporting evidence "
-                    "from the supplied clause. Do not invent an actor from passive wording. "
-                    "Return an empty relations list when role semantics are present but no "
-                    "complete actor-relation-target tuple is explicit."
+                    "Every relation requires an identifiable actor or role, an open semantic "
+                    "relation_class, the evidence-grounded predicate used by the clause, an "
+                    "identifiable target, and exact supporting evidence. Prefer the documented "
+                    "core relation classes when they fit, but do not force a relation into the "
+                    "core vocabulary. Do not invent an actor from passive wording. Return an "
+                    "empty relations list when no complete actor-predicate-target tuple is "
+                    "explicit."
                 ),
                 user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
                 output_schema=_extraction_schema(),
@@ -113,7 +115,7 @@ def _presence_schema() -> dict[str, object]:
 
 
 def _extraction_schema() -> dict[str, object]:
-    relation_values = [item.value for item in RoleRelationType]
+    core_classes = [item.value for item in RoleRelationClassCore]
     return {
         "type": "object",
         "additionalProperties": False,
@@ -126,7 +128,8 @@ def _extraction_schema() -> dict[str, object]:
                     "additionalProperties": False,
                     "required": [
                         "actor",
-                        "relation",
+                        "relation_class",
+                        "predicate",
                         "target",
                         "condition",
                         "evidence",
@@ -134,7 +137,15 @@ def _extraction_schema() -> dict[str, object]:
                     ],
                     "properties": {
                         "actor": {"type": "string", "minLength": 1},
-                        "relation": {"type": "string", "enum": relation_values},
+                        "relation_class": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": (
+                                "Open semantic relation class. Recommended core values: "
+                                + ", ".join(core_classes)
+                            ),
+                        },
+                        "predicate": {"type": "string", "minLength": 1},
                         "target": {"type": "string", "minLength": 1},
                         "condition": {"type": ["string", "null"]},
                         "evidence": {"type": ["string", "null"]},

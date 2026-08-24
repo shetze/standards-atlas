@@ -118,8 +118,40 @@ class RoleRelationType(StrEnum):
         return RoleRelationFamily.ASSIGNMENT
 
 
+class RoleRelationClassCore(StrEnum):
+    """Recommended core vocabulary for open role-relation classification."""
+
+    PERFORMANCE = "performance"
+    RESPONSIBILITY = "responsibility"
+    ASSIGNMENT = "assignment"
+    DEPENDENCY = "dependency"
+    CONSULTATION = "consultation"
+    INFORMATION = "information"
+    PARTICIPATION = "participation"
+    MEMBERSHIP = "membership"
+
+
+_LEGACY_ROLE_RELATION_MAPPING: dict[RoleRelationType, tuple[str, str]] = {
+    RoleRelationType.RESPONSIBLE_FOR: (
+        RoleRelationClassCore.RESPONSIBILITY.value,
+        "be responsible for",
+    ),
+    RoleRelationType.PERFORMS: (RoleRelationClassCore.PERFORMANCE.value, "perform"),
+    RoleRelationType.APPROVES: (RoleRelationClassCore.PERFORMANCE.value, "approve"),
+    RoleRelationType.VERIFIES: (RoleRelationClassCore.PERFORMANCE.value, "verify"),
+    RoleRelationType.VALIDATES: (RoleRelationClassCore.PERFORMANCE.value, "validate"),
+    RoleRelationType.CONSULTED_FOR: (RoleRelationClassCore.CONSULTATION.value, "be consulted for"),
+    RoleRelationType.INFORMED_ABOUT: (RoleRelationClassCore.INFORMATION.value, "be informed about"),
+    RoleRelationType.INDEPENDENT_OF: (RoleRelationClassCore.DEPENDENCY.value, "be independent of"),
+    RoleRelationType.EXCLUDED_FROM: (RoleRelationClassCore.MEMBERSHIP.value, "be excluded from"),
+    RoleRelationType.ASSIGNED_TO: (RoleRelationClassCore.ASSIGNMENT.value, "be assigned to"),
+    RoleRelationType.ASSUMES_ROLE: (RoleRelationClassCore.ASSIGNMENT.value, "assume role"),
+    RoleRelationType.PARTICIPATES_IN: (RoleRelationClassCore.PARTICIPATION.value, "participate in"),
+}
+
+
 class RoleRelation(BaseModel):
-    """Evidence-grounded relation between a role/actor and an activity, artifact, or role."""
+    """Evidence-grounded actor-predicate-target relation with open semantic class."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -127,11 +159,29 @@ class RoleRelation(BaseModel):
         min_length=1,
         validation_alias=AliasChoices("actor", "role"),
     )
-    relation: RoleRelationType
+    relation_class: str = Field(min_length=1)
+    predicate: str = Field(min_length=1)
     target: str = Field(min_length=1)
     condition: str | None = None
     evidence: str | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    relation: RoleRelationType | None = Field(default=None, exclude=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def migrate_legacy_relation(cls, data: Any) -> Any:
+        """Read legacy relation enums without making them the new persisted contract."""
+        if not isinstance(data, dict):
+            return data
+        payload = dict(data)
+        legacy_value = payload.get("relation")
+        if legacy_value and (not payload.get("relation_class") or not payload.get("predicate")):
+            legacy = RoleRelationType(legacy_value)
+            relation_class, predicate = _LEGACY_ROLE_RELATION_MAPPING[legacy]
+            payload.setdefault("relation_class", relation_class)
+            payload.setdefault("predicate", predicate)
+            payload["relation"] = legacy
+        return payload
 
 
 class DocumentStructure(StrEnum):

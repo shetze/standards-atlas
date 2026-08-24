@@ -1,8 +1,9 @@
 schema_version: 1
 task: semantic-profile-classification
 version: 2.4.0
-description: Classify semantic dimensions with explicit applicability separated from scope,
-  prerequisites, assumptions, and local conditions; retain role-semantics tuple qualification.
+description: Classify semantic dimensions with explicit applicability separated from
+  scope, prerequisites, assumptions, and local conditions; qualify role semantics
+  with open relation classes and evidence-grounded predicates.
 multi_label: true
 allow_unclassified: true
 supported_item_kinds:
@@ -24,8 +25,5 @@ ontologies:
   applicability_functions:
     id: applicability-functions
     version: 1.2.0
-  role_relation_types:
-    id: role-relation-types
-    version: 1.0.0
 aliases:
 - statement-function-classification

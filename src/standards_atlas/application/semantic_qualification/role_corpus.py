@@ -26,8 +26,9 @@ from standards_atlas.domain.model import RoleRelation
 
 
 class RoleCorpusCategory(StrEnum):
-    """Sampling strata for a focused role-semantics corpus."""
+    """Reviewable role-case categories; sampling proposes one initial value."""
 
+    NONE = "none"
     EXPLICIT_RELATION = "explicit_relation"
     MULTIPLE_RELATIONS = "multiple_relations"
     PASSIVE_WITHOUT_ACTOR = "passive_without_actor"
@@ -135,6 +136,7 @@ class RoleCorpusBuildResult(BaseModel):
 
     dataset_path: Path
     review_path: Path
+    review_guide_path: Path
     golden_path: Path
     manifest_path: Path
     review_created: bool
@@ -144,7 +146,7 @@ class RoleCorpusBuildResult(BaseModel):
 
 
 class RoleGoldenRegressionReport(BaseModel):
-    """Presence and tuple extraction metrics against published role gold cases."""
+    """Presence and relation extraction metrics against published role gold cases."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -177,8 +179,11 @@ class RoleGoldenCorpusBuilder:
         output_root: Path,
         review_root: Path = Path("local/review"),
     ) -> RoleCorpusBuildResult:
+        aggregate_document_keys = _aggregate_document_keys(self._provider)
         population = tuple(
-            clause for clause in self._provider.list_clauses() if clause.text.strip()
+            clause
+            for clause in self._provider.list_clauses()
+            if clause.text.strip() and clause.document_key not in aggregate_document_keys
         )
         buckets: dict[RoleCorpusCategory, list[ClauseDescriptor]] = {
             category: [] for category in RoleCorpusCategory
@@ -209,7 +214,7 @@ class RoleGoldenCorpusBuilder:
             RoleGoldenCase(
                 clause_id=clause.id,
                 document_key=clause.document_key,
-                reference=clause.reference,
+                reference=_qualified_clause_reference(clause),
                 content_hash=clause.content_hash,
                 category=category,
                 text=clause.text if manifest.include_text else None,
@@ -224,6 +229,8 @@ class RoleGoldenCorpusBuilder:
             review_path.parent.mkdir(parents=True, exist_ok=True)
             _write_role_review_csv(review_path, cases)
             review_created = True
+        review_guide_path = review_path.parent / "README.md"
+        _write_role_review_guide(review_guide_path)
         golden_path = target / "role-golden-corpus.yaml"
 
         dataset = {
@@ -273,6 +280,7 @@ class RoleGoldenCorpusBuilder:
         return RoleCorpusBuildResult(
             dataset_path=dataset_path,
             review_path=review_path,
+            review_guide_path=review_guide_path,
             golden_path=golden_path,
             manifest_path=manifest_path,
             review_created=review_created,
@@ -280,6 +288,21 @@ class RoleGoldenCorpusBuilder:
             category_counts=dict(sorted(counts.items())),
             shortfalls=dict(sorted(shortfalls.items())),
         )
+
+
+def _aggregate_document_keys(provider: ClauseProvider) -> frozenset[str]:
+    """Return family-level document keys when persisted part documents also exist."""
+    keys = {document.key for document in provider.list_documents()}
+    return frozenset(
+        key
+        for key in keys
+        if any(candidate.startswith(f"{key}-") for candidate in keys if candidate != key)
+    )
+
+
+def _qualified_clause_reference(clause: ClauseDescriptor) -> str:
+    """Return an unambiguous human-facing reference including the document part."""
+    return f"{clause.document_key}:{clause.clause_reference}"
 
 
 def classify_role_corpus_category(clause: ClauseDescriptor) -> RoleCorpusCategory:
@@ -390,16 +413,19 @@ def _prediction_relations(payload: dict[str, Any]) -> tuple[RoleRelation, ...]:
         evidence = item.get("evidence")
         if isinstance(evidence, list):
             evidence = evidence[0] if evidence else None
-        relations.append(
-            RoleRelation(
-                actor=item["actor"],
-                relation=item["relation"],
-                target=item["target"],
-                condition=item.get("condition"),
-                evidence=evidence,
-                confidence=item.get("support"),
-            )
-        )
+        payload = {
+            "actor": item["actor"],
+            "target": item["target"],
+            "condition": item.get("condition"),
+            "evidence": evidence,
+            "confidence": item.get("support"),
+        }
+        if item.get("relation_class") and item.get("predicate"):
+            payload["relation_class"] = item["relation_class"]
+            payload["predicate"] = item["predicate"]
+        elif item.get("relation"):
+            payload["relation"] = item["relation"]
+        relations.append(RoleRelation.model_validate(payload))
     return tuple(relations)
 
 
@@ -413,19 +439,31 @@ def _f1(precision: float, recall: float) -> float:
 
 ROLE_REVIEW_FIELDS = (
     "document_key",
-    "clause_id",
     "reference",
     "category",
-    "content_hash",
     "text",
     "review_status",
     "role_semantics_present",
     "actor",
-    "relation",
+    "relation_class",
+    "predicate",
     "target",
     "condition",
     "evidence",
     "review_note",
+    "clause_id",
+    "content_hash",
+)
+
+ROLE_RELATION_CLASS_CORE = (
+    "performance",
+    "responsibility",
+    "assignment",
+    "dependency",
+    "consultation",
+    "information",
+    "participation",
+    "membership",
 )
 
 
@@ -445,13 +483,38 @@ def _write_role_review_csv(path: Path, cases: tuple[RoleGoldenCase, ...]) -> Non
                     "review_status": "pending",
                     "role_semantics_present": "",
                     "actor": "",
-                    "relation": "",
+                    "relation_class": "",
+                    "predicate": "",
                     "target": "",
                     "condition": "",
                     "evidence": "",
                     "review_note": "",
                 }
             )
+
+
+def _write_role_review_guide(path: Path) -> None:
+    core = ", ".join(f"`{item}`" for item in ROLE_RELATION_CLASS_CORE)
+    categories = ", ".join(f"`{item.value}`" for item in RoleCorpusCategory)
+    path.write_text(
+        "# Role Golden Corpus Review\n\n"
+        "Review `role-golden-review.csv`. The initial category is a sampling proposal, "
+        "not ground truth. Keep it, replace it with another allowed category, or set it "
+        "to `none`.\n\n"
+        f"Allowed categories: {categories}.\n\n"
+        "Set `review_status=published` when the clause is fully reviewed. "
+        "`role_semantics_present` is `true` or `false`.\n\n"
+        "For every explicit complete relation, use one CSV row and fill `actor`, "
+        "`relation_class`, `predicate`, and `target`. Additional rows for the same clause "
+        "may leave review_status and role_semantics_present empty.\n\n"
+        f"Recommended relation_class core: {core}. The field is intentionally open: "
+        "use another concise class if none of the core values fits. `predicate` is always "
+        "open and should preserve the evidence-grounded wording, e.g. `assess`, `record`, "
+        "`be independent of`, or `not be included in`.\n\n"
+        "`condition` contains only an explicit condition on that relation. `evidence` "
+        "contains the smallest original text span supporting actor, predicate and target.\n",
+        encoding="utf-8",
+    )
 
 
 def publish_role_golden_review(
@@ -477,6 +540,16 @@ def publish_role_golden_review(
     cases: list[RoleGoldenCase] = []
     for key, case_rows in sorted(grouped.items()):
         first = case_rows[0]
+        category_values = [
+            (row.get("category") or "").strip()
+            for row in case_rows
+            if (row.get("category") or "").strip()
+        ]
+        if not category_values:
+            raise ValueError(f"published review requires category for {key[0]}:{key[1]}")
+        if len(set(category_values)) > 1:
+            raise ValueError(f"conflicting category values for {key[0]}:{key[1]}")
+        reviewed_category = RoleCorpusCategory(category_values[0])
         status_values = [
             (row.get("review_status") or "").strip().casefold()
             for row in case_rows
@@ -503,29 +576,30 @@ def publish_role_golden_review(
                 f"published review requires role_semantics_present for {key[0]}:{key[1]}"
             )
         if len(set(presence_values)) > 1:
-            raise ValueError(
-                f"conflicting role_semantics_present values for {key[0]}:{key[1]}"
-            )
+            raise ValueError(f"conflicting role_semantics_present values for {key[0]}:{key[1]}")
         presence = presence_values[0]
 
         relations: list[RoleRelation] = []
         for row in case_rows:
             actor = (row.get("actor") or "").strip()
-            relation = (row.get("relation") or "").strip()
+            relation_class = (row.get("relation_class") or "").strip()
+            predicate = (row.get("predicate") or "").strip()
             target = (row.get("target") or "").strip()
             condition = (row.get("condition") or "").strip() or None
             evidence = (row.get("evidence") or "").strip() or None
-            relation_fields = (actor, relation, target)
+            relation_fields = (actor, relation_class, predicate, target)
             if not any(relation_fields):
                 continue
             if not all(relation_fields):
                 raise ValueError(
-                    f"relation rows require actor, relation and target for {key[0]}:{key[1]}"
+                    "relation rows require actor, relation_class, predicate and target "
+                    f"for {key[0]}:{key[1]}"
                 )
             relations.append(
                 RoleRelation(
                     actor=actor,
-                    relation=relation,
+                    relation_class=relation_class,
+                    predicate=predicate,
                     target=target,
                     condition=condition,
                     evidence=evidence,
@@ -545,7 +619,7 @@ def publish_role_golden_review(
                 document_key=key[0],
                 reference=(first.get("reference") or "").strip(),
                 content_hash=(first.get("content_hash") or "").strip(),
-                category=RoleCorpusCategory((first.get("category") or "").strip()),
+                category=reviewed_category,
                 text=first.get("text") or None,
                 status="published",
                 expected=RoleGoldenExpected(

@@ -1,7 +1,7 @@
 schema_version: 1
 task: role-relation-extraction
 version: 1.0.0
-description: Extract explicit evidence-grounded actor-relation-target tuples from clauses with role semantics.
+description: Extract explicit evidence-grounded actor-predicate-target tuples from clauses with role semantics.
 multi_label: true
 allow_unclassified: true
 supported_item_kinds:
@@ -10,7 +10,14 @@ excluded_content_profiles:
 - table_dominant
 alternative_tasks:
   table_dominant: structured-table-interpretation
-ontologies:
-  role_relation_types:
-    id: role-relation-types
-    version: 1.0.0
+relation_classes:
+  vocabulary: open
+  recommended_core:
+  - performance
+  - responsibility
+  - assignment
+  - dependency
+  - consultation
+  - information
+  - participation
+  - membership

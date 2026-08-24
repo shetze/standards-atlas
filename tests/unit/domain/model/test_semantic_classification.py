@@ -92,6 +92,34 @@ def test_role_relations_support_multiple_grounded_tuples() -> None:
     assert classification.role_relations[1].relation.family is RoleRelationFamily.ORGANIZATION
 
 
+def test_role_relation_supports_open_class_and_predicate() -> None:
+    from standards_atlas.domain.model import RoleRelation
+
+    relation = RoleRelation(
+        actor="Assessor",
+        relation_class="performance",
+        predicate="identify",
+        target="deviations",
+    )
+
+    assert relation.relation_class == "performance"
+    assert relation.predicate == "identify"
+    assert relation.relation is None
+
+
+def test_legacy_role_relation_maps_into_open_structure() -> None:
+    from standards_atlas.domain.model import RoleRelation, RoleRelationType
+
+    relation = RoleRelation.model_validate(
+        {"actor": "Verifier", "relation": "verifies", "target": "analysis"}
+    )
+
+    assert relation.relation is RoleRelationType.VERIFIES
+    assert relation.relation_class == "performance"
+    assert relation.predicate == "verify"
+    assert "relation" not in relation.model_dump(mode="json")
+
+
 def test_role_relation_accepts_legacy_role_field_but_serializes_actor() -> None:
     from standards_atlas.domain.model import RoleRelation
 

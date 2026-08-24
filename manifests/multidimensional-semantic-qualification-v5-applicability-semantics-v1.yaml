@@ -227,12 +227,12 @@ models:
     provider: ramalama
     model_ref: hf.co/ggml-org/SmolLM3-3B-GGUF:Q4_K_M
     quantization: Q4_K_M
-    description: Fast Hugging Face family voter promoted after applicability hard-case qualification.
+    description: Fast voter retained for non-applicability dimensions after presence recalibration.
     accelerator: gpu
     parameters_billion: 3
     declared_memory_gb: 4
     dimension_eligibility:
-      applicability_presence: true
+      applicability_presence: false
       applicability_subtype: false
     generation:
       max_output_tokens: 384
@@ -245,7 +245,10 @@ models:
     provider: ramalama
     model_ref: hf.co/bartowski/glm-4-9b-chat-GGUF:Q4_K_M
     quantization: Q4_K_M
-    description: GLM-family voter promoted after applicability hard-case qualification.
+    description: GLM-family voter retained for non-presence dimensions.
+    dimension_eligibility:
+      applicability_presence: false
+      applicability_subtype: true
     accelerator: gpu
     parameters_billion: 9
     declared_memory_gb: 8

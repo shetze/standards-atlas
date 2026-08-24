@@ -87,3 +87,44 @@ def test_v2_prompts_require_secondary_warning_and_condemnation_detection() -> No
         assert "should not be regarded as complete or exhaustive" in prompt
         assert "is condemnation" in prompt
         assert "return both rather than replacing one with the other" in prompt
+
+
+def test_v24_role_qualification_contract_uses_open_relation_classes() -> None:
+    resources = Path("src/standards_atlas/resources/semantic")
+    task, schema = SemanticTaskRepository(resources / "tasks").load(
+        "semantic-profile-classification", "2.4.0"
+    )
+
+    assert "role_relation_types" not in task.ontologies
+    assert "role_relation_types" not in schema["properties"]
+    assert "primary_role_relation_type" not in schema["properties"]
+    relation = schema["properties"]["role_relations"]["items"]
+    assert relation["required"] == [
+        "actor",
+        "relation_class",
+        "predicate",
+        "target",
+        "condition",
+        "evidence",
+        "confidence",
+    ]
+    properties = relation["properties"]
+    assert "relation" not in properties
+    assert "enum" not in properties["relation_class"]
+    assert "predicate" in properties
+
+
+def test_v6_prompts_describe_open_role_relation_contract() -> None:
+    resources = Path(
+        "src/standards_atlas/resources/semantic/prompts/statement-function-classification"
+    )
+    prompt_paths = sorted(resources.glob("*-v6/system.txt"))
+
+    assert prompt_paths
+    for prompt_path in prompt_paths:
+        prompt = prompt_path.read_text(encoding="utf-8")
+        assert "relation_class is intentionally open" in prompt
+        assert "predicate is always evidence-grounded and open" in prompt
+        assert "Do not invent a missing actor" in prompt
+        assert "role_relation_types" not in prompt
+        assert "primary relation type" not in prompt

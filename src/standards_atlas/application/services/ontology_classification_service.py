@@ -113,7 +113,11 @@ class OntologyClassificationService:
                         "role_semantics_present": role_result.present,
                         "role_relations": role_result.relations,
                         "role_relation_types": tuple(
-                            dict.fromkeys(item.relation for item in role_result.relations)
+                            dict.fromkeys(
+                                item.relation
+                                for item in role_result.relations
+                                if item.relation is not None
+                            )
                         ),
                     }
                 )

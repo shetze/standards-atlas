@@ -183,47 +183,6 @@
         }
       ]
     },
-    "role_relation_types": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "responsible_for",
-          "performs",
-          "approves",
-          "verifies",
-          "validates",
-          "consulted_for",
-          "informed_about",
-          "independent_of",
-          "excluded_from",
-          "assigned_to",
-          "assumes_role",
-          "participates_in"
-        ]
-      }
-    },
-    "primary_role_relation_type": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "responsible_for",
-        "performs",
-        "approves",
-        "verifies",
-        "validates",
-        "consulted_for",
-        "informed_about",
-        "independent_of",
-        "excluded_from",
-        "assigned_to",
-        "assumes_role",
-        "participates_in",
-        null
-      ]
-    },
     "role_relations": {
       "type": "array",
       "items": {
@@ -231,30 +190,14 @@
         "additionalProperties": false,
         "required": [
           "actor",
-          "relation",
+          "relation_class",
+          "predicate",
           "target",
           "condition",
           "evidence",
           "confidence"
         ],
         "properties": {
-          "relation": {
-            "type": "string",
-            "enum": [
-              "responsible_for",
-              "performs",
-              "approves",
-              "verifies",
-              "validates",
-              "consulted_for",
-              "informed_about",
-              "independent_of",
-              "excluded_from",
-              "assigned_to",
-              "assumes_role",
-              "participates_in"
-            ]
-          },
           "target": {
             "type": "string",
             "minLength": 1
@@ -282,6 +225,16 @@
           "actor": {
             "type": "string",
             "minLength": 1
+          },
+          "relation_class": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Open semantic class for the relation. Prefer the documented core vocabulary when it fits, but use another concise class when the evidence requires it."
+          },
+          "predicate": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Evidence-grounded predicate or verb phrase from the clause."
           }
         }
       }

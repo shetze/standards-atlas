@@ -1318,3 +1318,77 @@ def test_applicability_presence_eligibility_excludes_model_from_presence_vote() 
 
     assert result["applicability_presence_confidence"] == pytest.approx(1.0)
     assert result["applicability_support"]["present"] == pytest.approx(1.0)
+
+
+def test_open_role_relation_vote_does_not_require_legacy_relation_type() -> None:
+    from standards_atlas.domain.model import RoleRelation
+
+    vote = ModelVote(
+        model_id="model-a",
+        role_semantics_present=True,
+        role_relations=(
+            RoleRelation(
+                actor="Assessor",
+                relation_class="performance",
+                predicate="evaluate",
+                target="compliance",
+                evidence="The Assessor shall evaluate compliance.",
+            ),
+        ),
+        role_relation_present=True,
+        confidence=0.9,
+        repetitions=1,
+        stability=1.0,
+    )
+
+    assert vote.role_relation_present is True
+    assert vote.role_relation_type is None
+    assert vote.role_relation_types == ()
+
+
+def test_role_relation_override_does_not_emit_legacy_none_label() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = (
+        ModelVote(
+            model_id="model-a",
+            primary_function=StatementFunction.DESCRIPTION,
+            role_relation_present=True,
+            role_relations=(
+                {
+                    "actor": "Assessor",
+                    "relation_class": "performance",
+                    "predicate": "assess",
+                    "target": "evidence",
+                    "evidence": "The Assessor shall assess the evidence.",
+                    "confidence": 0.9,
+                },
+            ),
+            evidence="The Assessor shall assess the evidence.",
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=1,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+        resolution_override={
+            "role_relation": {
+                "present": True,
+                "confidence": 0.9,
+                "category": "strong_consensus",
+                "source": "cascade",
+            }
+        },
+    )
+
+    assert result["role_relation_present"] is True
+    assert result["proposed_role_relation_types"] == ()

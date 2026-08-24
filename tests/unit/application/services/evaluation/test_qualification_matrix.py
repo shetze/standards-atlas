@@ -1060,3 +1060,60 @@ def test_split_applicability_reports_presence_and_subtype_reasons_separately() -
         "applicability_presence_confidence",
         "applicability_subtype_confidence",
     )
+
+
+def test_dimension_eligibility_reports_filtered_model_ids(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["models"][0]["dimension_eligibility"] = {
+        "applicability_presence": False,
+        "applicability_subtype": True,
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    manifest = QualificationMatrixManifest.load(path)
+
+    assert manifest.eligible_model_ids_for_dimension("applicability_presence") == ("accurate",)
+    assert manifest.eligible_model_ids_for_dimension("applicability_subtype") == (
+        "fast",
+        "accurate",
+    )
+
+
+def test_cascade_requires_enough_cumulative_dimension_eligible_models(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["models"] = [
+        {
+            "id": "a",
+            "provider": "local",
+            "dimension_eligibility": {"applicability_presence": True},
+        },
+        {
+            "id": "b",
+            "provider": "local",
+            "dimension_eligibility": {"applicability_presence": False},
+        },
+        {
+            "id": "c",
+            "provider": "local",
+            "dimension_eligibility": {"applicability_presence": False},
+        },
+    ]
+    payload["observations"] = []
+    payload["execution"] = {
+        "mode": "cascade",
+        "stages": [
+            {
+                "id": "first",
+                "models": ["a", "b"],
+                "apply_to": "all",
+                "resolution": {"minimum_successful_models": 2},
+            },
+            {"id": "second", "models": ["c"], "apply_to": "unresolved"},
+        ],
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="only 1 cumulative applicability_presence voters"):
+        QualificationMatrixManifest.load(path)
