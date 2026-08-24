@@ -747,6 +747,9 @@ def qualify_model_prompt_matrix(
                         structural_priors=(manifest.consensus.structural_priors.model_dump()),
                         example_ids=stage_clause_ids,
                         model_dimension_eligibility=(interim_manifest.model_dimension_eligibility),
+                        min_applicability_presence_models=(
+                            stage_resolution.minimum_applicability_presence_models
+                        ),
                     )
                     if stage_index == 0:
                         unresolved_clause_ids, escalation_reasons = cascade_unresolved_clause_ids(

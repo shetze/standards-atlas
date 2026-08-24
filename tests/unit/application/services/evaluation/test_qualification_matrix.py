@@ -1117,3 +1117,52 @@ def test_cascade_requires_enough_cumulative_dimension_eligible_models(tmp_path: 
 
     with pytest.raises(ValueError, match="only 1 cumulative applicability_presence voters"):
         QualificationMatrixManifest.load(path)
+
+
+def test_cascade_allows_dimension_specific_presence_minimum(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["models"] = [
+        {
+            "id": "a",
+            "provider": "local",
+            "dimension_eligibility": {"applicability_presence": True},
+        },
+        {
+            "id": "b",
+            "provider": "local",
+            "dimension_eligibility": {"applicability_presence": True},
+        },
+        {
+            "id": "c",
+            "provider": "local",
+            "dimension_eligibility": {"applicability_presence": False},
+        },
+    ]
+    payload["observations"] = []
+    payload["execution"] = {
+        "mode": "cascade",
+        "stages": [
+            {
+                "id": "first",
+                "models": ["a", "b", "c"],
+                "apply_to": "all",
+                "resolution": {
+                    "minimum_successful_models": 3,
+                    "minimum_applicability_presence_models": 2,
+                },
+            },
+            {"id": "second", "models": [], "apply_to": "unresolved"},
+        ],
+    }
+    # Empty stages are invalid independently, so use one additional model in stage two.
+    payload["models"].append({"id": "d", "provider": "local"})
+    payload["execution"]["stages"][1]["models"] = ["d"]
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    manifest = QualificationMatrixManifest.load(path)
+
+    first = manifest.execution.stages[0].resolution
+    assert first is not None
+    assert first.minimum_successful_models == 3
+    assert first.minimum_applicability_presence_models == 2

@@ -8,6 +8,12 @@ from typing import Annotated
 import typer
 
 from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvider
+from standards_atlas.application.semantic_qualification.applicability_corpus import (
+    ApplicabilityGoldenCorpus,
+    build_applicability_golden_review,
+    evaluate_applicability_golden_corpus,
+    publish_applicability_golden_review,
+)
 from standards_atlas.application.semantic_qualification.clause_access import (
     SamplingStrategy,
 )
@@ -150,4 +156,65 @@ def evaluate_role_corpus(
     typer.echo(f"Published gold cases    : {report.published_cases}")
     typer.echo(f"Presence F1             : {report.presence_f1:.3f}")
     typer.echo(f"Tuple F1                : {report.tuple_f1:.3f}")
+    typer.echo(f"Report                  : {output}")
+
+
+@evaluation_app.command("applicability-corpus-build")
+def build_applicability_golden_corpus(
+    run_archive: Annotated[Path, typer.Option("--run", exists=True, dir_okay=False)],
+    review_output: Annotated[
+        Path, typer.Option("--review-output", file_okay=False)
+    ] = cli_defaults.DEFAULT_REVIEW_ROOT,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 30,
+) -> None:
+    """Build a small HITL set from applicability-presence disagreements."""
+    try:
+        result = build_applicability_golden_review(run_archive, review_output, limit=limit)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Applicability hard cases: {result.selected_count}")
+    typer.echo(f"HITL review file        : {result.review_path}")
+    typer.echo(f"HITL review guide       : {result.review_guide_path}")
+    if result.review_created:
+        typer.echo("                          EDIT THIS CSV FILE")
+    else:
+        typer.echo("                          existing review preserved")
+
+
+@evaluation_app.command("applicability-corpus-publish")
+def publish_applicability_corpus(
+    review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False)],
+    run_archive: Annotated[Path, typer.Option("--run", exists=True, dir_okay=False)],
+    output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
+) -> None:
+    """Publish reviewed applicability cases as golden ground truth."""
+    resolved_output = output or review.parent / "applicability-golden-corpus.yaml"
+    try:
+        corpus = publish_applicability_golden_review(review, run_archive, resolved_output)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Published gold cases    : {len(corpus.cases)}")
+    typer.echo(f"Golden corpus           : {resolved_output}")
+
+
+@evaluation_app.command("applicability-corpus-evaluate")
+def evaluate_applicability_corpus(
+    golden: Annotated[Path, typer.Option("--golden", exists=True, dir_okay=False)],
+    run_archive: Annotated[Path, typer.Option("--run", exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Evaluate applicability consensus and individual models against HITL gold."""
+    try:
+        corpus = ApplicabilityGoldenCorpus.load(golden)
+        report = evaluate_applicability_golden_corpus(corpus, run_archive)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Published gold cases    : {report.published_cases}")
+    typer.echo(f"Consensus presence F1   : {report.consensus.presence_f1:.3f}")
+    typer.echo(f"Model metrics           : {len(report.models)}")
     typer.echo(f"Report                  : {output}")

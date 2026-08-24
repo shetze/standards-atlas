@@ -375,10 +375,15 @@ consensus from appearing equivalent to correct relation extraction.
 
 ### Applicability semantic boundary
 
-Qualification task 2.4.0 treats applicability as a deliberately narrow semantic dimension.
-A clause is applicability-positive only when it explicitly states or changes which subject or
-normative content applies. Structural membership in a Scope section, prerequisites, assumptions,
-and local `if`/`when` conditions are not applicability by themselves.
+Qualification task 2.4.0 treats applicability as one semantic dimension with two explicit
+outputs. `applicability_present` first records whether explicit applicability semantics are present;
+`applicability_functions` then records at most one supported subtype. Presence may be true while the
+subtype remains empty when applicability is explicit but the subtype is not sufficiently supported.
+When presence is false, subtype fields must be empty. Older task payloads that predate the explicit
+presence field remain readable by inferring presence from an existing subtype.
+
+Applicability remains deliberately narrow: structural membership in a Scope section, prerequisites,
+assumptions, and local activity conditions are not applicability by themselves.
 
 Use `manifests/multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml`
 to evaluate this boundary. The v4 role-semantics manifest remains available as the pre-change
@@ -424,3 +429,29 @@ The current role prompts distinguish an actor from a grammatical subject. A role
 Passive role/action semantics remain positive for `role_semantics_present` when the action is role-like but the actor is omitted. For example, `A hazard analysis shall be performed` is role semantics with no extractable relation tuple. In contrast, `The system shall satisfy the requirements` is not role semantics. Relation extraction must never infer the missing actor.
 
 Targets must be the explicit object or subject matter toward which the predicate is directed and must not simply repeat the actor unless the clause explicitly states a reflexive relation. Applicability, scope, technical properties, and logical conditions must not leak into `role_relations`.
+
+### Applicability presence golden set
+
+Applicability presence model eligibility can be checked against a small HITL-reviewed set built directly from the presence disagreements of an archived qualification run. This avoids selecting presence voters from their positive/negative rate alone.
+
+Build the review set from a qualification archive:
+
+```bash
+uv run standards-atlas evaluation applicability-corpus-build \
+  --run local/evaluation/qualification/qualification-run-040.zip
+```
+
+The command writes `local/review/applicability-presence/1.0.0/applicability-golden-review.csv`. Set `review_status=published`, review `applicability_present`, and optionally set `applicability_function` when the subtype is clear. Publish and evaluate it with:
+
+```bash
+uv run standards-atlas evaluation applicability-corpus-publish \
+  --review local/review/applicability-presence/1.0.0/applicability-golden-review.csv \
+  --run local/evaluation/qualification/qualification-run-040.zip
+
+uv run standards-atlas evaluation applicability-corpus-evaluate \
+  --golden local/review/applicability-presence/1.0.0/applicability-golden-corpus.yaml \
+  --run local/evaluation/qualification/qualification-run-040.zip \
+  --output local/evaluation/qualification/applicability-golden-regression.json
+```
+
+The regression report contains consensus metrics and presence precision/recall/F1 for every model represented in the archived run. Use these reviewed metrics, rather than raw `none_rate`, when changing future `applicability_presence` eligibility.

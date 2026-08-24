@@ -174,3 +174,18 @@ def test_publisher_accepts_only_reviewed_annotations(tmp_path: Path) -> None:
 
     published = ClauseAnnotationRepository(data_root).load_path(target)
     assert published.lifecycle_status is AnnotationLifecycleStatus.PUBLISHED
+
+
+def test_applicability_presence_is_explicit_and_can_have_no_subtype() -> None:
+    selection = StatementFunctionSelection(applicability_present=True)
+
+    assert selection.applicability_present is True
+    assert selection.applicability_functions == ()
+
+
+def test_legacy_applicability_selection_infers_presence() -> None:
+    selection = StatementFunctionSelection.model_validate(
+        {"applicability_functions": ["inclusion"], "primary_applicability_function": "inclusion"}
+    )
+
+    assert selection.applicability_present is True

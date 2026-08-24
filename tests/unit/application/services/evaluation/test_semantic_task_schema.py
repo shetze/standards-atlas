@@ -98,6 +98,8 @@ def test_v24_role_qualification_contract_uses_open_relation_classes() -> None:
     assert "role_relation_types" not in task.ontologies
     assert "role_relation_types" not in schema["properties"]
     assert "primary_role_relation_type" not in schema["properties"]
+    assert "applicability_present" in schema["required"]
+    assert schema["properties"]["applicability_present"] == {"type": "boolean"}
     relation = schema["properties"]["role_relations"]["items"]
     assert relation["required"] == ["actor", "relation_class", "target"]
     properties = relation["properties"]
@@ -118,5 +120,15 @@ def test_v6_prompts_describe_open_role_relation_contract() -> None:
         assert "relation_class is open" in prompt
         assert "Each role relation contains only actor, relation_class, and target" in prompt
         assert "Do not invent a missing actor" in prompt
+        assert "Treat label arrays as sets" in prompt
+        assert prompt.count("Applicability qualification rules:") == 1
+        assert "First decide applicability_present independently from the subtype" in prompt
+        assert "If applicability_present=false" in prompt
+        assert "If applicability_present=true" in prompt
+        assert "merely change how an activity, method, analysis, design" in prompt
+        assert "rather than whether normative content is in force" in prompt
+        assert "applicability of normative content itself is conditional" in prompt
+        assert "Do not infer applicability merely from Scope context" in prompt
+        assert '"applicability_present": false' in prompt
         assert "role_relation_types" not in prompt
         assert "primary relation type" not in prompt

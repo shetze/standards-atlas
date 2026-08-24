@@ -129,3 +129,23 @@ def test_adaptive_interview_remains_available_for_classification_only_schema() -
     assert _adaptive_interview_supports_schema(
         {"required": ["statement_functions", "role_relation_types"]}
     )
+
+
+def test_duplicate_set_like_labels_are_deduplicated_before_domain_validation() -> None:
+    normalized = _normalize_selection_payload(
+        {
+            "statement_functions": ["requirement", "requirement"],
+            "primary_function": "requirement",
+            "knowledge_kinds": ["process", "process", "artifact"],
+            "primary_knowledge_kind": "process",
+            "process_functions": ["activity", "activity"],
+            "primary_process_function": "activity",
+            "applicability_functions": ["inclusion", "inclusion"],
+            "primary_applicability_function": "inclusion",
+        }
+    )
+
+    assert normalized["statement_functions"] == ["requirement"]
+    assert normalized["knowledge_kinds"] == ["process", "artifact"]
+    assert normalized["process_functions"] == ["activity"]
+    assert normalized["applicability_functions"] == ["inclusion"]

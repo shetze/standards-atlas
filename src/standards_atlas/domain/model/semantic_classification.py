@@ -280,6 +280,7 @@ class SemanticClassification(BaseModel):
     statement_functions: tuple[StatementFunction, ...] = ()
     knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
+    applicability_present: bool = False
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     role_semantics_present: bool = False
     role_relation_types: tuple[RoleRelationType, ...] = ()
@@ -288,6 +289,16 @@ class SemanticClassification(BaseModel):
     normative_status: NormativeStatus = NormativeStatus.UNSPECIFIED
     domain_functions: tuple[DomainFunctionClassification, ...] = ()
     relations: tuple[SemanticRelation, ...] = ()
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_applicability_presence_for_legacy_payloads(cls, data: Any) -> Any:
+        """Infer explicit applicability presence for payloads written before this field existed."""
+        if not isinstance(data, dict) or "applicability_present" in data:
+            return data
+        if data.get("applicability_functions"):
+            return {**data, "applicability_present": True}
+        return data
 
     @model_validator(mode="before")
     @classmethod
@@ -309,6 +320,8 @@ class SemanticClassification(BaseModel):
             raise ValueError("process_functions must not contain duplicates")
         if len(self.applicability_functions) != len(set(self.applicability_functions)):
             raise ValueError("applicability_functions must not contain duplicates")
+        if self.applicability_functions and not self.applicability_present:
+            raise ValueError("applicability functions require applicability_present=true")
         if len(self.role_relation_types) != len(set(self.role_relation_types)):
             raise ValueError("role_relation_types must not contain duplicates")
         relation_keys = [

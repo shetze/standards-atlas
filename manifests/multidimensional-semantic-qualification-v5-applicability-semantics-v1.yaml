@@ -22,6 +22,7 @@ execution:
       apply_to: all
       resolution:
         minimum_successful_models: 3
+        minimum_applicability_presence_models: 2
         accepted_categories: [unanimous, strong_consensus, majority_consensus]
         minimum_confidence: 0.60
         escalate_on_applicability_disagreement: false
@@ -39,6 +40,7 @@ execution:
       apply_to: unresolved
       resolution:
         minimum_successful_models: 5
+        minimum_applicability_presence_models: 4
         accepted_categories: [unanimous, strong_consensus, majority_consensus]
         minimum_confidence: 0.60
         statement_function_resolution_mode: stage_resolver
@@ -63,6 +65,7 @@ execution:
       apply_to: unresolved
   resolution:
     minimum_successful_models: 3
+    minimum_applicability_presence_models: 3
     accepted_categories:
       - unanimous
       - strong_consensus
@@ -321,7 +324,10 @@ models:
     provider: ramalama
     model_ref: hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M
     quantization: Q4_K_M
-    description: Compact Granite baseline used by the local evaluation environment.
+    description: Compact Granite voter retained for non-presence dimensions.
+    dimension_eligibility:
+      applicability_presence: false
+      applicability_subtype: true
     accelerator: gpu
     parameters_billion: 8
     declared_memory_gb: 8

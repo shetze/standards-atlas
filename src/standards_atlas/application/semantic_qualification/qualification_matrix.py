@@ -100,6 +100,7 @@ class CascadeResolutionConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     minimum_successful_models: int = Field(default=3, ge=1)
+    minimum_applicability_presence_models: int | None = Field(default=None, ge=1)
     accepted_categories: tuple[str, ...] = (
         "unanimous",
         "strong_consensus",
@@ -900,11 +901,17 @@ class QualificationMatrixManifest(BaseModel):
                         bool(getattr(model_by_id[model_id].dimension_eligibility, dimension))
                         for model_id in cumulative_stage_models
                     )
-                    if eligible_count < resolution.minimum_successful_models:
+                    minimum_dimension_models = (
+                        resolution.minimum_applicability_presence_models
+                        if dimension == "applicability_presence"
+                        and resolution.minimum_applicability_presence_models is not None
+                        else resolution.minimum_successful_models
+                    )
+                    if eligible_count < minimum_dimension_models:
                         raise ValueError(
                             f"cascade stage {stage.id} has only {eligible_count} cumulative "
-                            f"{dimension} voters, below minimum_successful_models "
-                            f"{resolution.minimum_successful_models}"
+                            f"{dimension} voters, below required minimum "
+                            f"{minimum_dimension_models}"
                         )
         model_repetitions = {item.id: self.repetitions_for(item) for item in self.models}
         seen: set[tuple[str, str, str, int]] = set()

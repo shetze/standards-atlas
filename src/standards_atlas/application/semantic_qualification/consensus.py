@@ -216,6 +216,7 @@ class ModelConsensusService:
         example_ids: tuple[str, ...] | None = None,
         resolution_overrides: dict[str, dict[str, dict[str, Any]]] | None = None,
         model_dimension_eligibility: dict[str, dict[str, bool]] | None = None,
+        min_applicability_presence_models: int | None = None,
     ) -> tuple[ConsensusReport, Path, Path, Path]:
         prompts = {
             "statement_function": prompt_id,
@@ -315,6 +316,7 @@ class ModelConsensusService:
                 resolution_override=(resolution_overrides or {}).get(clause_id, {}),
                 scope_context=bool(prior.get("scope_context", False)),
                 model_dimension_eligibility=model_dimension_eligibility or {},
+                min_applicability_presence_models=min_applicability_presence_models,
             )
             candidate = detect_role_candidate(_optional_text(context.get("text")))
             presence_support = (
@@ -486,7 +488,7 @@ def _model_vote(
         secondary_functions=secondary,
         primary_knowledge_kind=primary_knowledge,
         secondary_knowledge_kinds=secondary_knowledge,
-        applicability_present=app is not None,
+        applicability_present=applicability[0].proposal.applicability_present,
         applicability_function=app,
         role_semantics_present=responsibility[0].proposal.role_semantics_present,
         role_relations=responsibility[0].proposal.role_relations,
@@ -511,6 +513,7 @@ def _modal_annotations(
             item.proposal.statement_functions,
             item.proposal.primary_knowledge_kind,
             item.proposal.knowledge_kinds,
+            item.proposal.applicability_present,
             item.proposal.primary_applicability_function,
             item.proposal.applicability_functions,
             item.proposal.role_semantics_present,
@@ -539,6 +542,7 @@ def _resolve_clause(
     resolution_override: dict[str, dict[str, Any]] | None = None,
     scope_context: bool = False,
     model_dimension_eligibility: dict[str, dict[str, bool]] | None = None,
+    min_applicability_presence_models: int | None = None,
 ) -> dict[str, Any]:
     policy = _review_policy(policy)
     model_count = len(votes)
@@ -739,10 +743,15 @@ def _resolve_clause(
     applicability_model_count = (
         app_subtype_model_count if app_accepted else app_presence_model_count
     )
+    applicability_min_models = (
+        min_applicability_presence_models
+        if not app_accepted and min_applicability_presence_models is not None
+        else minimum_models
+    )
     applicability_category = _category_for_confidence(
         applicability_decision_confidence,
         applicability_model_count,
-        minimum_models,
+        applicability_min_models,
         strong_threshold,
         majority_threshold,
     )

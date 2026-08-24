@@ -553,6 +553,7 @@ def _run_adaptive_interview(
         "primary_knowledge_kind": None,
         "process_functions": [],
         "primary_process_function": None,
+        "applicability_present": False,
         "applicability_functions": [],
         "primary_applicability_function": None,
         "role_relation_types": [],
@@ -636,6 +637,7 @@ def _run_adaptive_interview(
             selection["process_functions"] = [label]
             selection["primary_process_function"] = label
         elif question.dimension is InterviewDimension.APPLICABILITY:
+            selection["applicability_present"] = True
             selection["applicability_functions"] = [label]
             selection["primary_applicability_function"] = label
         elif question.dimension is InterviewDimension.ROLE_RELATION:
@@ -668,6 +670,7 @@ def _run_adaptive_interview(
                 "primary_knowledge_kind",
                 "process_functions",
                 "primary_process_function",
+                "applicability_present",
                 "applicability_functions",
                 "primary_applicability_function",
                 "role_relation_types",
@@ -796,6 +799,7 @@ def _normalize_selection_payload(
         "primary_knowledge_kind": None,
         "process_functions": [],
         "primary_process_function": None,
+        "applicability_present": False,
         "applicability_functions": [],
         "primary_applicability_function": None,
         "role_relation_types": [],
@@ -804,6 +808,15 @@ def _normalize_selection_payload(
     for field in required_fields:
         if field in defaults:
             normalized.setdefault(field, defaults[field])
+
+    if (
+        "applicability_present" in required_fields
+        and "applicability_present" not in supplied_fields
+    ):
+        normalized["applicability_present"] = bool(
+            normalized.get("applicability_functions")
+            or normalized.get("primary_applicability_function")
+        )
 
     # ``role_relations`` was added after the scalar role-relation classification
     # fields. Older/smaller providers may omit the complete new dimension when
@@ -833,6 +846,7 @@ def _normalize_selection_payload(
             normalized_roles.insert(0, primary_function)
         normalized["statement_functions"] = normalized_roles
     for field, primary in (
+        ("knowledge_kinds", "primary_knowledge_kind"),
         ("process_functions", "primary_process_function"),
         ("applicability_functions", "primary_applicability_function"),
         ("role_relation_types", "primary_role_relation_type"),

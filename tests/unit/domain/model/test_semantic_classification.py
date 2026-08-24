@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from standards_atlas.domain.model import (
+    ApplicabilityFunction,
     DocumentStructure,
     DocumentStructureClassification,
     DomainFunctionClassification,
@@ -158,3 +159,25 @@ def test_legacy_role_relation_types_infer_role_semantics_presence() -> None:
     )
 
     assert classification.role_semantics_present is True
+
+
+def test_applicability_presence_can_be_true_without_subtype() -> None:
+    classification = SemanticClassification(applicability_present=True)
+
+    assert classification.applicability_present is True
+    assert classification.applicability_functions == ()
+
+
+def test_legacy_applicability_functions_infer_presence() -> None:
+    classification = SemanticClassification.model_validate(
+        {"applicability_functions": ["inclusion"]}
+    )
+
+    assert classification.applicability_present is True
+
+
+def test_applicability_subtype_requires_presence() -> None:
+    with pytest.raises(ValueError, match="applicability functions require"):
+        SemanticClassification(
+            applicability_present=False, applicability_functions=(ApplicabilityFunction.INCLUSION,)
+        )

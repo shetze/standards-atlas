@@ -1,4 +1,6 @@
 ## 0.8.1
+- Split applicability qualification into explicit `applicability_present` presence and optional subtype classification while preserving legacy inference for older task payloads.
+- Refine applicability qualification prompts around an explicit applicability-question test and distinguish activity conditions from conditions on normative applicability.
 - Tightened current role qualification prompts with explicit actor/non-actor, passive-without-actor, target, relation-class priority, and applicability-leakage boundaries.
 
 ### Role qualification tuple consensus
@@ -28,6 +30,8 @@
 
 
 ## Unreleased
+
+- Harden multidimensional qualification against duplicate set-like labels: compact prompts require unique values and proposal normalization deduplicates statement, knowledge, process, and applicability labels before strict validation.
 
 - Align the semantic qualification contract with the open RoleRelation model: remove legacy scalar role-relation labels from task/prompt schemas, require `relation_class` plus evidence-grounded `predicate`, preserve archived-run read compatibility, and base new role-relation confidence on structured tuple evidence.
 
@@ -190,3 +194,11 @@
 - replace confusing process-model role terminology with process-model functions
 - move role qualification rules before the final JSON output contract and place JSON output last
 - update role golden review and tuple consensus to the simplified actor-class-target structure
+
+- Refine applicability presence guidance to distinguish normative applicability from operational conditions and method-selection conditions.
+
+### Applicability presence golden qualification
+
+- Exclude Granite from `applicability_presence` voting while retaining it for other dimensions.
+- Add a dimension-specific minimum presence-voter count so filtered presence voting does not weaken other qualification dimensions.
+- Add a small run-derived applicability golden-review workflow for presence hard cases, including per-model accuracy metrics to support evidence-based model eligibility.

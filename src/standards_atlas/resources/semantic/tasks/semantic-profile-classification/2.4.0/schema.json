@@ -9,6 +9,7 @@
     "primary_knowledge_kind",
     "process_functions",
     "primary_process_function",
+    "applicability_present",
     "applicability_functions",
     "primary_applicability_function",
     "role_semantics_present",
@@ -89,6 +90,9 @@
           "assumption"
         ]
       }
+    },
+    "applicability_present": {
+      "type": "boolean"
     },
     "applicability_functions": {
       "type": "array",

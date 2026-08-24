@@ -1,8 +1,8 @@
 schema_version: 1
 task: semantic-profile-classification
 version: 2.4.0
-description: Classify semantic dimensions with explicit applicability separated from
-  scope, prerequisites, assumptions, and local conditions; qualify role semantics
+description: Classify semantic dimensions with explicit applicability presence separated
+  from subtype, scope, prerequisites, assumptions, and local conditions; qualify role semantics
   with open relation classes and actor-class-target relations.
 multi_label: true
 allow_unclassified: true

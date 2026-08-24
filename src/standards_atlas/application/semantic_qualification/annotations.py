@@ -74,6 +74,7 @@ class StatementFunctionSelection(BaseModel):
     primary_knowledge_kind: KnowledgeKind | None = None
     process_functions: tuple[ProcessFunction, ...] = ()
     primary_process_function: ProcessFunction | None = None
+    applicability_present: bool = False
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     primary_applicability_function: ApplicabilityFunction | None = None
     role_semantics_present: bool = False
@@ -83,6 +84,15 @@ class StatementFunctionSelection(BaseModel):
     role_relations: tuple[RoleRelation, ...] = ()
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     rationale: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_applicability_presence_for_legacy_payloads(cls, data: Any) -> Any:
+        if not isinstance(data, dict) or "applicability_present" in data:
+            return data
+        if data.get("applicability_functions") or data.get("primary_applicability_function"):
+            return {**data, "applicability_present": True}
+        return data
 
     @model_validator(mode="before")
     @classmethod
@@ -129,6 +139,10 @@ class StatementFunctionSelection(BaseModel):
             )
         if len(set(self.applicability_functions)) != len(self.applicability_functions):
             raise ValueError("applicability_functions must not contain duplicates")
+        if (
+            self.applicability_functions or self.primary_applicability_function
+        ) and not self.applicability_present:
+            raise ValueError("applicability classifications require applicability_present=true")
         if (
             self.primary_role_relation_type is not None
             and self.primary_role_relation_type not in self.role_relation_types
