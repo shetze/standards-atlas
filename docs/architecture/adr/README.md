@@ -112,6 +112,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0074](0074-formal-semantic-and-context-model.md) | Introduce a provider-neutral TBox/RBox/ABox/CBox formal semantic and context model |
 | [0075](0075-versioned-core-and-functional-safety-ontologies.md) | Introduce versioned Standards Atlas core and Functional Safety OWL ontologies |
 | [0076](0076-deterministic-abox-cbox-projection.md) | Project EngineeringDocument deterministically into ABox/CBox and expose RDF through an adapter |
+| [0077](0077-ontology-guided-concept-and-relation-extraction.md) | Extract ontology-grounded concepts and relations into rebuildable semantic artifacts |
 
 ## Application structure
 

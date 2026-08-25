@@ -44,6 +44,17 @@
 
 ## Unreleased
 
+### Formal Semantic & Context Model — Slice 4
+
+- add ontology-guided engineering concept and local relation extraction behind a provider-neutral application port
+- use existing Knowledge Domain and semantic taxonomy results as deterministic extraction eligibility signals
+- persist rebuildable semantic extraction artifacts separately from canonical EngineeringDocuments
+- constrain LLM extraction to classes and properties declared by selected formal OWL ontologies
+- reject cross-domain equivalence/mapping assertions during extraction
+- augment ABox/CBox projections with inferred entities, relations, confidence, and extraction provenance
+- extend the current core ontology vocabulary in place for Slice-4 epistemic context facets
+
+
 - Harden multidimensional qualification against duplicate set-like labels: compact prompts require unique values and proposal normalization deduplicates statement, knowledge, process, and applicability labels before strict validation.
 
 - Align the semantic qualification contract with the open RoleRelation model: remove legacy scalar role-relation labels from task/prompt schemas, require `relation_class` plus evidence-grounded `predicate`, preserve archived-run read compatibility, and base new role-relation confidence on structured tuple evidence.

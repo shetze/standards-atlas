@@ -124,6 +124,8 @@ Likely outbound adapters include local embedding runtimes, vector stores, plain 
 
 Formal semantic projections are first-class derived representations, while concrete graph stores and retrieval frameworks remain replaceable adapters. GraphRAG is one possible implementation strategy behind a graph or hybrid candidate-retrieval port, not an architectural dependency.
 
+Slice 4 adds a separate ontology-guided semantic extraction artifact ahead of relationship retrieval. It can enrich the ABox with engineering entities and local semantic relations while preserving confidence and extraction provenance in the CBox. These inferred assertions are retrieval evidence, not accepted cross-domain relationships. Cross-domain equivalence and mapping remain responsibilities of candidate retrieval, assessment, and review.
+
 ## Evaluation strategy
 
 Candidate retrieval and relationship assessment have different failure modes and must be measured separately.

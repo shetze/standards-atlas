@@ -30,6 +30,10 @@ from standards_atlas.application.ports.formula_transcriptions import (
     FormulaTranscriptionRepository,
 )
 from standards_atlas.application.ports.formula_visuals import FormulaVisualEnricher
+from standards_atlas.application.ports.semantic_extraction import (
+    SemanticExtractionRepository,
+    SemanticKnowledgeExtractor,
+)
 from standards_atlas.application.ports.workflow_artifacts import (
     ExtractionState,
     WorkflowArtifactStore,
@@ -39,6 +43,8 @@ __all__ = [
     "FormalSemanticProjectionRepository",
     "FormalSemanticProjector",
     "FormalSemanticSerializer",
+    "SemanticExtractionRepository",
+    "SemanticKnowledgeExtractor",
     "AlignmentReviewStore",
     "AlignmentStore",
     "AtlasDataDocumentReader",

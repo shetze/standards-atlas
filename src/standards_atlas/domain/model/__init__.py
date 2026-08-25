@@ -93,6 +93,13 @@ from standards_atlas.domain.model.semantic_classification import (
     SemanticRelationKind,
     StatementFunction,
 )
+from standards_atlas.domain.model.semantic_extraction import (
+    ClauseSemanticExtraction,
+    DocumentSemanticExtraction,
+    ExtractedEntity,
+    ExtractedRelation,
+    ExtractionProvenance,
+)
 from standards_atlas.domain.model.source_evidence import (
     BoundingBox,
     CoordinateOrigin,
@@ -119,6 +126,11 @@ from standards_atlas.domain.model.structural_profile import (
 
 __all__ = [
     "FORMAL_SEMANTIC_NAMESPACE",
+    "ClauseSemanticExtraction",
+    "DocumentSemanticExtraction",
+    "ExtractedEntity",
+    "ExtractedRelation",
+    "ExtractionProvenance",
     "FORMAL_SEMANTIC_PREFIX",
     "ContextFacet",
     "ContextFrame",

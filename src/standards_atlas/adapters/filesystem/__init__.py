@@ -15,6 +15,8 @@ __all__ = [
     "FileSystemFormulaTranscriptionRepository",
     "FileSystemKnowledgeTableRepository",
     "FileSystemFormalSemanticProjectionRepository",
+    "FileSystemSemanticExtractionRepository",
 ]
 
 from .formal_semantic_projection_repository import FileSystemFormalSemanticProjectionRepository
+from .semantic_extraction_repository import FileSystemSemanticExtractionRepository

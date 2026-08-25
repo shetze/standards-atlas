@@ -98,3 +98,14 @@ stat:conflictsWith a owl:ObjectProperty .
 stat:equivalentTo a owl:ObjectProperty .
 stat:verifies a owl:ObjectProperty .
 stat:validates a owl:ObjectProperty .
+
+# Slice 4 ontology-guided semantic extraction vocabulary.
+stat:confidence a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:extractionRationale a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:extractor a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:extractorVersion a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:modelIdentifier a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:providerIdentifier a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:promptVersion a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:inputHash a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:rawResponseHash a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
