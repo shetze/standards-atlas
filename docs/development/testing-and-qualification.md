@@ -186,3 +186,5 @@ corpus foundations. The next improvements should be risk-driven:
 ## Formal semantic extraction qualification
 
 Qualification manifests can enable `semantic_extraction_qualification`. In that case `workflow run --task qualification` appends an ontology-guided extraction qualification step after the semantic matrix. The step evaluates persisted semantic extraction artifacts for ontology conformance and confidence. Entity/relation precision, recall, and F1 remain `null` until a published extraction gold corpus is configured; missing ground truth is therefore explicitly unscored rather than inferred from existing semantic labels.
+
+When `generate_missing` is enabled, `semantic_extraction_qualification.model` names a model candidate from the qualification manifest. The extraction stage owns that model's local RamaLama lifecycle independently of the matrix stage: it resolves the candidate's `model_ref`, starts the endpoint before extraction, and stops it after the stage. The extraction report records both the stable candidate id and provider. This prevents the stage from depending on whichever matrix model happened to run last.

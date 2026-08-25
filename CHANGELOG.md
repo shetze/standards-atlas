@@ -44,6 +44,14 @@
 
 ## Unreleased
 
+### Semantic extraction qualification context fix
+
+- derive Slice-4b extraction eligibility from the latest qualification cascade consensus instead of requiring semantic classifications to be persisted back into `EngineeringDocument`
+- project qualification semantics transiently into extraction prompts without mutating canonical documents
+- report the extraction model and selected/contextualized/eligible/extracted/skipped clause counts
+- share nested evaluation-dataset coordinate resolution between qualification and archive finalization
+- fail qualification when selected clauses are missing their expected consensus context
+
 ### Formal Semantic & Context Model — Slice 4
 
 - add ontology-guided engineering concept and local relation extraction behind a provider-neutral application port
@@ -228,3 +236,5 @@
 - Add a small run-derived applicability golden-review workflow for presence hard cases, including per-model accuracy metrics to support evidence-based model eligibility.
 
 - Integrated ontology-guided semantic extraction as an explicit qualification-run step with ontology-conformance, confidence, and optional gold metrics.
+- Finalize workflow qualification archives only after semantic-extraction qualification, and archive its report, run-scoped extraction snapshots, formal OWL inputs, and metadata alongside the matrix evidence.
+- Give semantic-extraction qualification an independent RamaLama model lifecycle and persist its configured model/provider identity in qualification evidence.

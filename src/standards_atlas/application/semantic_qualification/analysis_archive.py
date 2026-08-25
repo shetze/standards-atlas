@@ -23,7 +23,7 @@ from standards_atlas.application.semantic_qualification.diagnostics import (
 from standards_atlas.shared.hashing import sha256_file
 
 ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.2"
-QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.2"
+QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.3"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
 
@@ -216,6 +216,7 @@ def create_analysis_archive(
     analysis_metrics: dict[str, Any] | None = None,
     matrix_passed: bool | None = None,
     execution_policy: dict[str, bool] | None = None,
+    semantic_extraction_qualification: dict[str, Any] | None = None,
     archive_directory: Path | None = None,
     input_members: Iterable[tuple[Path, str]] = (),
 ) -> Path:
@@ -239,6 +240,7 @@ def create_analysis_archive(
         analysis_metrics=analysis_metrics,
         matrix_passed=matrix_passed,
         execution_policy=execution_policy,
+        semantic_extraction_qualification=semantic_extraction_qualification,
     )
     metadata_bytes = _json_bytes(metadata)
 
@@ -325,6 +327,7 @@ def _build_run_metadata(
     analysis_metrics: dict[str, Any] | None,
     matrix_passed: bool | None,
     execution_policy: dict[str, bool] | None,
+    semantic_extraction_qualification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     prompts = [
         {
@@ -382,6 +385,7 @@ def _build_run_metadata(
             }
         },
         "result": result,
+        "semantic_extraction_qualification": semantic_extraction_qualification,
     }
 
 

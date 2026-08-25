@@ -21,6 +21,9 @@ from standards_atlas.cli.commands.evaluation_commands.corpus import (
     build_role_golden_corpus,
     evaluate_role_corpus,
 )
+from standards_atlas.cli.commands.evaluation_commands.qualification_archive import (
+    finalize_qualification_archive,
+)
 from standards_atlas.cli.commands.evaluation_commands.qualification_matrix import (
     _format_duration,
     _MatrixProposalProgress,
@@ -47,6 +50,7 @@ __all__ = [
     "qualify_challengers",
     "qualify_golden_corpus",
     "qualify_model_prompt_matrix",
+    "finalize_qualification_archive",
     "qualify_semantic_extraction",
     "run_evaluation_matrix",
     "run_semantic_evaluation",

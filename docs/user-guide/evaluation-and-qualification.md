@@ -250,10 +250,13 @@ semantic task version used by corpus construction. The canonical checked-in qual
 manifest is
 `manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml`.
 
-`--overwrite` applies replacement policy to derived artifacts and requests a fresh
-qualification-matrix run. `--keep` may be repeated to preserve selected document stages and
-requires `--overwrite`. Use `workflow plan` first when you want to inspect the exact command
-sequence without side effects.
+`--overwrite` applies replacement policy to derived artifacts and regenerates qualification
+proposals, but it does not bypass the shared LLM response cache. Add `--fresh` when the
+qualification run must perform new provider inference: the matrix disables proposal reuse and
+the LLM response cache, and semantic extraction regenerates the selected clauses with the cache
+disabled. `--keep` may be repeated to preserve selected document stages and requires
+`--overwrite`. Use `workflow plan` first when you want to inspect the exact command sequence
+without side effects.
 
 ## Challenger qualification
 
@@ -462,4 +465,4 @@ Knowledge qualification distinguishes the primary knowledge kind from the comple
 
 ### Ontology-guided semantic extraction
 
-A qualification-matrix manifest can enable `semantic_extraction_qualification`. The end-to-end `workflow run --task qualification` then appends a `semantic-extraction-qualification` step after the normal semantic matrix and writes `semantic-extraction-qualification.json` into the matrix output directory. Ontology conformance and confidence gates are always reported. Gold precision, recall, and F1 remain unset until a published extraction gold file is configured in the manifest.
+A qualification-matrix manifest can enable `semantic_extraction_qualification`. The end-to-end `workflow run --task qualification` appends a `semantic-extraction-qualification` step after the normal semantic matrix and defers immutable run-archive creation until both stages have completed. For qualification runs, extraction eligibility is derived from the latest available cascade consensus for each selected clause; those semantics are supplied as transient extraction context and are not written back into the canonical `EngineeringDocument`. The extraction report records the resolved model plus selected, contextualized, eligible, extracted, and skipped clause counts. The final `qualification-run-NNN.zip` contains `semantic-extraction-qualification.json`, run-scoped semantic-extraction snapshots, and the exact formal OWL ontology resources used for qualification. `qualification-run-metadata.json` records the semantic-extraction metrics in a dedicated section. Limited runs archive only the extraction clauses selected by the same dataset slice used by the matrix. Ontology conformance and confidence gates are always reported. Gold precision, recall, and F1 remain unset until a published extraction gold file is configured in the manifest.

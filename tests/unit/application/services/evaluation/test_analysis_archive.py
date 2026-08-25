@@ -80,7 +80,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         assert "qualification-run-metadata.json" in names
         assert "configuration/qualification-manifest.yaml" in names
         metadata = json.loads(payload.read("qualification-run-metadata.json"))
-        assert metadata["schema_version"] == "1.2"
+        assert metadata["schema_version"] == "1.3"
         assert metadata["archive_id"] == "qualification-run-001"
         assert metadata["sequence_number"] == 1
         assert metadata["qualification_matrix"] == {
@@ -99,6 +99,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
             "llm_cache": False,
             "proposal_reuse": False,
         }
+        assert metadata["semantic_extraction_qualification"] is None
         archive_manifest = json.loads(payload.read("archive-manifest.json"))
         assert archive_manifest["archive_id"] == "qualification-run-001"
         assert archive_manifest["schema_version"] == "1.2"
@@ -324,3 +325,29 @@ def test_collects_reproducible_qualification_inputs(tmp_path: Path) -> None:
     assert "inputs/task/task.yaml" in members
     assert "inputs/prompts/structure-aware-v3/user.txt" in members
     assert "inputs/ontologies/statement_functions/ontology.yaml" in members
+
+
+def test_analysis_archive_embeds_semantic_extraction_qualification_metadata(tmp_path: Path) -> None:
+    manifest = tmp_path / "matrix.yaml"
+    _write_manifest(manifest)
+    output_directory = tmp_path / "local" / "evaluation" / "qualification"
+    report_path = output_directory / "matrix-v1" / "report.json"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("{}\n", encoding="utf-8")
+    semantic = {
+        "clauses": 50,
+        "entities": 27,
+        "relations": 11,
+        "ontology_conformance": 1.0,
+        "passed": True,
+    }
+    archive = create_analysis_archive(
+        output_directory=output_directory,
+        matrix_id="matrix-v1",
+        manifest_path=manifest,
+        core_paths=(report_path,),
+        semantic_extraction_qualification=semantic,
+    )
+    with zipfile.ZipFile(archive) as payload:
+        metadata = json.loads(payload.read("qualification-run-metadata.json"))
+        assert metadata["semantic_extraction_qualification"] == semantic

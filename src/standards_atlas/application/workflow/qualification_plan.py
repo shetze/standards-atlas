@@ -48,6 +48,7 @@ class QualificationWorkflowPlanner:
         hierarchy_key: str | None = None,
         regenerate_docling: bool = False,
         overwrite: bool = False,
+        fresh: bool = False,
         keep_stages: tuple[WorkflowStage, ...] = (),
         qualification_output: Path = Path(".atlas/data/evaluation/qualification"),
         corpus_output: Path = Path(".atlas/data/evaluation/corpora"),
@@ -119,8 +120,11 @@ class QualificationWorkflowPlanner:
         ]
         if limit is not None:
             matrix_command.extend(("--limit", str(limit)))
+        matrix_command.append("--no-create-archive")
         if overwrite:
             matrix_command.append("--overwrite")
+        if fresh:
+            matrix_command.append("--fresh")
         matrix_step = WorkflowStep(
             family="evaluation",
             document=manifest.matrix_id,
@@ -142,9 +146,12 @@ class QualificationWorkflowPlanner:
                 str(manifest_path),
                 "--output",
                 str(qualification_output / manifest.matrix_id),
+                "--no-fail-on-qualification-failure",
             ]
             if limit is not None:
                 extraction_command.extend(("--limit", str(limit)))
+            if fresh:
+                extraction_command.append("--fresh")
             extraction_step = WorkflowStep(
                 family="evaluation",
                 document=f"{manifest.matrix_id}-semantic-extraction",
@@ -160,6 +167,28 @@ class QualificationWorkflowPlanner:
                 ),
             )
             steps = (*steps, extraction_step)
+        archive_command = [
+            "uv",
+            "run",
+            "standards-atlas",
+            "evaluation",
+            "qualification-archive",
+            "--manifest",
+            str(manifest_path),
+            "--output",
+            str(qualification_output),
+        ]
+        if limit is not None:
+            archive_command.extend(("--limit", str(limit)))
+        archive_step = WorkflowStep(
+            family="evaluation",
+            document=f"{manifest.matrix_id}-archive",
+            stage=WorkflowStage.QUALIFICATION_ARCHIVE,
+            command=tuple(archive_command),
+            artifact_policy=ArtifactPolicy.REVIEW,
+            output_paths=("local/evaluation/qualification-run-*.zip",),
+        )
+        steps = (*steps, archive_step)
         return QualificationWorkflowPlan(
             document_plan=document_plan,
             steps=steps,

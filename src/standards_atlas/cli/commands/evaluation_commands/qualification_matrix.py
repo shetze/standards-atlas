@@ -243,6 +243,13 @@ def qualify_model_prompt_matrix(
             help="Human-facing immutable qualification archive directory.",
         ),
     ] = Path("local/evaluation"),
+    create_archive: Annotated[
+        bool,
+        typer.Option(
+            "--create-archive/--no-create-archive",
+            help="Create the immutable qualification-run archive after matrix evaluation.",
+        ),
+    ] = True,
     aggregate_only: Annotated[
         bool,
         typer.Option(
@@ -967,29 +974,30 @@ def qualify_model_prompt_matrix(
                 (config, "inputs/runtime/llm-config.yaml"),
                 (mcp_config, "inputs/runtime/mcp-config.yaml"),
             )
-            analysis_archive_path = create_analysis_archive(
-                output_directory=output_directory,
-                matrix_id=manifest.matrix_id,
-                manifest_path=manifest_path,
-                core_paths=(
-                    json_path,
-                    markdown_path,
-                    consensus_json,
-                    proposal_yaml,
-                    review_markdown,
-                    provenance_path,
-                    analysis_metrics_path,
-                    diagnostics_path,
-                    *challenger_paths,
-                    *((challenger_sample_path,) if challenger_sample_path is not None else ()),
-                ),
-                cascade_directory=(output_directory / manifest.matrix_id / "cascade"),
-                analysis_metrics=analysis_metrics,
-                matrix_passed=report.passed,
-                execution_policy=execution_policy,
-                archive_directory=archive_output,
-                input_members=qualification_input_members,
-            )
+            if create_archive:
+                analysis_archive_path = create_analysis_archive(
+                    output_directory=output_directory,
+                    matrix_id=manifest.matrix_id,
+                    manifest_path=manifest_path,
+                    core_paths=(
+                        json_path,
+                        markdown_path,
+                        consensus_json,
+                        proposal_yaml,
+                        review_markdown,
+                        provenance_path,
+                        analysis_metrics_path,
+                        diagnostics_path,
+                        *challenger_paths,
+                        *((challenger_sample_path,) if challenger_sample_path is not None else ()),
+                    ),
+                    cascade_directory=(output_directory / manifest.matrix_id / "cascade"),
+                    analysis_metrics=analysis_metrics,
+                    matrix_passed=report.passed,
+                    execution_policy=execution_policy,
+                    archive_directory=archive_output,
+                    input_members=qualification_input_members,
+                )
     except (
         McpServerProcessError,
         OSError,

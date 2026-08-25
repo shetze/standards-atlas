@@ -36,6 +36,7 @@ class WorkflowStage(StrEnum):
     CORPUS_BUILD = "corpus-build"
     QUALIFICATION_MATRIX = "qualification-matrix"
     SEMANTIC_EXTRACTION_QUALIFICATION = "semantic-extraction-qualification"
+    QUALIFICATION_ARCHIVE = "qualification-archive"
 
 
 @dataclass(frozen=True)

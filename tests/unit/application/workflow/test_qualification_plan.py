@@ -33,9 +33,10 @@ def test_qualification_plan_stops_document_pipeline_at_markdown() -> None:
     assert WorkflowStage.MARKDOWN in stages
     assert WorkflowStage.DOORSTOP not in stages
     assert WorkflowStage.DOORSTOP_PUBLISH not in stages
-    assert stages[-2:] == (
+    assert stages[-3:] == (
         WorkflowStage.CORPUS_BUILD,
         WorkflowStage.QUALIFICATION_MATRIX,
+        WorkflowStage.QUALIFICATION_ARCHIVE,
     )
 
 
@@ -50,7 +51,7 @@ def test_qualification_plan_requires_taxonomy_but_never_production_ontology() ->
 
 def test_qualification_plan_derives_corpus_contract_from_matrix_manifest() -> None:
     plan = _plan()
-    corpus = plan.steps[-2]
+    corpus = next(step for step in plan.steps if step.stage is WorkflowStage.CORPUS_BUILD)
 
     assert "--version" in corpus.command
     assert corpus.command[corpus.command.index("--version") + 1] == "2.2.0"
@@ -72,7 +73,7 @@ def test_docling_is_reused_unless_regeneration_is_requested() -> None:
 
 def test_overwrite_propagates_to_derived_document_and_matrix_steps() -> None:
     plan = _plan(overwrite=True)
-    matrix = plan.steps[-1]
+    matrix = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_MATRIX)
 
     assert "--no-fail-on-matrix-failure" in matrix.command
     assert matrix.command[-1] == "--overwrite"
@@ -93,3 +94,6 @@ def test_limit_is_forwarded_to_all_qualification_stages() -> None:
     )
     for extraction in extraction_steps:
         assert extraction.command[extraction.command.index("--limit") + 1] == "50"
+
+    archive = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE)
+    assert archive.command[archive.command.index("--limit") + 1] == "50"

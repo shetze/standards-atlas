@@ -84,6 +84,13 @@ def plan_workflow(
             help="Regenerate derived artifacts; qualification also recomputes its matrix.",
         ),
     ] = cli_defaults.DEFAULT_FALSE,
+    fresh: Annotated[
+        bool,
+        typer.Option(
+            "--fresh",
+            help="Run qualification LLM inference without proposal reuse or response cache.",
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
     keep: Annotated[
         list[WorkflowStage] | None,
         typer.Option(
@@ -125,6 +132,7 @@ def plan_workflow(
         force=force,
         regenerate_docling=regenerate_docling,
         overwrite=overwrite,
+        fresh=fresh,
         keep=tuple(keep or ()),
         corpus_count=corpus_count,
         limit=limit,
@@ -191,6 +199,13 @@ def run_workflow(
             help="Regenerate derived artifacts; qualification also recomputes its matrix.",
         ),
     ] = cli_defaults.DEFAULT_FALSE,
+    fresh: Annotated[
+        bool,
+        typer.Option(
+            "--fresh",
+            help="Run qualification LLM inference without proposal reuse or response cache.",
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
     keep: Annotated[
         list[WorkflowStage] | None,
         typer.Option(
@@ -232,6 +247,7 @@ def run_workflow(
         force=force,
         regenerate_docling=regenerate_docling,
         overwrite=overwrite,
+        fresh=fresh,
         keep=tuple(keep or ()),
         corpus_count=corpus_count,
         limit=limit,
@@ -283,6 +299,7 @@ def _build_task_plan(
     force: bool,
     regenerate_docling: bool,
     overwrite: bool,
+    fresh: bool,
     keep: tuple[WorkflowStage, ...],
     corpus_count: int,
     limit: int | None,
@@ -300,6 +317,8 @@ def _build_task_plan(
         raise typer.BadParameter("--regenerate-docling is only valid for --task qualification")
     if task is WorkflowTask.DOCUMENTS and limit is not None:
         raise typer.BadParameter("--limit is only valid for --task qualification")
+    if task is WorkflowTask.DOCUMENTS and fresh:
+        raise typer.BadParameter("--fresh is only valid for --task qualification")
     if task is WorkflowTask.QUALIFICATION and force:
         raise typer.BadParameter(
             "--force is only valid for --task documents; use --regenerate-docling or --overwrite"
@@ -345,6 +364,7 @@ def _build_task_plan(
         hierarchy_key=hierarchy,
         regenerate_docling=regenerate_docling,
         overwrite=overwrite or regenerate_docling,
+        fresh=fresh,
         keep_stages=keep,
         corpus_output=corpus_output,
         qualification_output=qualification_output,

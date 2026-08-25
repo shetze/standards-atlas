@@ -60,3 +60,67 @@ def test_semantic_extraction_qualification_scores_ontology_conformance() -> None
     assert report.ontology_conformance == 1.0
     assert report.gold_available is False
     assert report.entity_f1 is None
+
+
+def test_semantic_extraction_qualification_fails_when_selected_input_produces_nothing() -> None:
+    report = qualify_semantic_extractions(
+        (),
+        SemanticExtractionQualificationConfig(
+            ontology_versions=(
+                "standards-atlas-core@1.1.0",
+                "functional-safety@1.1.0",
+            )
+        ),
+        expected_clause_count=50,
+    )
+
+    assert report.passed is False
+    assert report.clauses == 0
+    assert report.selected_clause_count == 50
+    assert report.eligible_clause_count == 50
+    assert report.failures == (
+        "no semantic extractions were produced for 50 eligible qualification clauses",
+    )
+
+
+def test_semantic_extraction_qualification_reports_eligibility_counts_and_model() -> None:
+    report = qualify_semantic_extractions(
+        (),
+        SemanticExtractionQualificationConfig(
+            ontology_versions=(
+                "standards-atlas-core@1.1.0",
+                "functional-safety@1.1.0",
+            )
+        ),
+        selected_clause_count=50,
+        eligibility_context_clause_count=50,
+        eligible_clause_count=32,
+        extraction_model="mistral-small-3.2-24b-instruct-q4-k-m",
+    )
+
+    assert report.schema_version == "1.1"
+    assert report.extraction_model == "mistral-small-3.2-24b-instruct-q4-k-m"
+    assert report.selected_clause_count == 50
+    assert report.eligibility_context_clause_count == 50
+    assert report.eligible_clause_count == 32
+    assert report.extracted_clause_count == 0
+    assert report.skipped_clause_count == 18
+    assert report.passed is False
+    assert report.failures == (
+        "no semantic extractions were produced for 32 eligible qualification clauses",
+    )
+
+
+def test_semantic_extraction_qualification_fails_on_missing_consensus_context() -> None:
+    report = qualify_semantic_extractions(
+        (),
+        SemanticExtractionQualificationConfig(ontology_versions=("standards-atlas-core@1.1.0",)),
+        selected_clause_count=50,
+        eligibility_context_clause_count=49,
+        eligible_clause_count=0,
+    )
+
+    assert report.passed is False
+    assert report.failures == (
+        "qualification eligibility context missing for 1 of 50 selected clauses",
+    )

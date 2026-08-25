@@ -13,7 +13,7 @@ uv run standards-atlas workflow run --help
 - `validate`, `trace`: repository validation and traceability helpers
 - `inspect data`: inspect legacy data artefacts
 - `catalog validate`: validate catalog structure and references
-- `workflow plan`, `workflow run`: plan or execute a typed-manifest workflow. The supported workflow tasks are `documents` and `qualification`; `documents` is the default.
+- `workflow plan`, `workflow run`: plan or execute a typed-manifest workflow. The supported workflow tasks are `documents` and `qualification`; `documents` is the default. Qualification workflows accept `--limit` for a shared execution slice and `--fresh` to bypass proposal reuse and LLM response caches across matrix and semantic-extraction inference.
 
 
 ### Workflow manifest contract

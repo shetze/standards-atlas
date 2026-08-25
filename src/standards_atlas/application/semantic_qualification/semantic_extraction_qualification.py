@@ -36,9 +36,16 @@ class SemanticExtractionQualificationReport(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
     task: str = "formal-semantic-knowledge-extraction"
     ontology_versions: tuple[str, ...]
+    extraction_model: str | None = None
+    extraction_provider: str | None = None
+    selected_clause_count: int = Field(default=0, ge=0)
+    eligibility_context_clause_count: int = Field(default=0, ge=0)
+    eligible_clause_count: int = Field(default=0, ge=0)
+    extracted_clause_count: int = Field(default=0, ge=0)
+    skipped_clause_count: int = Field(default=0, ge=0)
     documents: int = Field(ge=0)
     clauses: int = Field(ge=0)
     entities: int = Field(ge=0)
@@ -74,6 +81,13 @@ class _Counts:
 def qualify_semantic_extractions(
     extractions: tuple[DocumentSemanticExtraction, ...],
     config: SemanticExtractionQualificationConfig,
+    *,
+    expected_clause_count: int | None = None,
+    selected_clause_count: int | None = None,
+    eligibility_context_clause_count: int | None = None,
+    eligible_clause_count: int | None = None,
+    extraction_model: str | None = None,
+    extraction_provider: str | None = None,
 ) -> SemanticExtractionQualificationReport:
     """Measure ontology conformance, confidence gates, and optional gold agreement."""
     vocabulary = FormalOntologyVocabulary.load(config.ontology_versions)
@@ -101,7 +115,29 @@ def qualify_semantic_extractions(
     ontology_conformance = conforming / total_terms if total_terms else 1.0
     entity_pass = entity_confident / entity_total if entity_total else 1.0
     relation_pass = relation_confident / relation_total if relation_total else 1.0
+    selected_count = (
+        selected_clause_count
+        if selected_clause_count is not None
+        else expected_clause_count if expected_clause_count is not None else clauses
+    )
+    context_count = (
+        eligibility_context_clause_count
+        if eligibility_context_clause_count is not None
+        else selected_count
+    )
+    eligible_count = eligible_clause_count if eligible_clause_count is not None else selected_count
+    skipped_count = max(selected_count - eligible_count, 0)
     failures: list[str] = []
+    if selected_count > 0 and context_count < selected_count:
+        failures.append(
+            "qualification eligibility context missing for "
+            f"{selected_count - context_count} of {selected_count} selected clauses"
+        )
+    if eligible_count > 0 and clauses == 0:
+        failures.append(
+            "no semantic extractions were produced for "
+            f"{eligible_count} eligible qualification clauses"
+        )
     if ontology_conformance < config.minimum_ontology_conformance:
         failures.append(
             f"ontology conformance {ontology_conformance:.4f} < "
@@ -121,6 +157,13 @@ def qualify_semantic_extractions(
 
     return SemanticExtractionQualificationReport(
         ontology_versions=config.ontology_versions,
+        extraction_model=extraction_model,
+        extraction_provider=extraction_provider,
+        selected_clause_count=selected_count,
+        eligibility_context_clause_count=context_count,
+        eligible_clause_count=eligible_count,
+        extracted_clause_count=clauses,
+        skipped_clause_count=skipped_count,
         documents=len(extractions),
         clauses=clauses,
         entities=entity_total,
