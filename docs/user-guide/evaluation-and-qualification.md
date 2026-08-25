@@ -455,3 +455,7 @@ uv run standards-atlas evaluation applicability-corpus-evaluate \
 ```
 
 The regression report contains consensus metrics and presence precision/recall/F1 for every model represented in the archived run. Use these reviewed metrics, rather than raw `none_rate`, when changing future `applicability_presence` eligibility.
+
+### Knowledge qualification
+
+Knowledge qualification distinguishes the primary knowledge kind from the complete multi-label knowledge set. The cascade escalates only when the primary knowledge decision is disputed or below its configured confidence threshold. Differences in secondary knowledge kinds are reported separately through `knowledge_set_category` and `knowledge_set_confidence`; they do not by themselves trigger an escalation. `knowledge_kind_category` remains a compatibility alias for the primary decision.

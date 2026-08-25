@@ -1387,3 +1387,51 @@ def test_role_relation_override_does_not_emit_legacy_none_label() -> None:
 
     assert result["role_relation_present"] is True
     assert result["proposed_role_relation_types"] == ()
+
+
+def test_knowledge_primary_and_set_consensus_are_reported_separately() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = (
+        ModelVote(
+            model_id="a",
+            primary_function=StatementFunction.DESCRIPTION,
+            primary_knowledge_kind=KnowledgeKind.PROCESS,
+            secondary_knowledge_kinds=(KnowledgeKind.ARTIFACT,),
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="b",
+            primary_function=StatementFunction.DESCRIPTION,
+            primary_knowledge_kind=KnowledgeKind.PROCESS,
+            secondary_knowledge_kinds=(KnowledgeKind.EVIDENCE,),
+            repetitions=1,
+            stability=1.0,
+        ),
+        ModelVote(
+            model_id="c",
+            primary_function=StatementFunction.DESCRIPTION,
+            primary_knowledge_kind=KnowledgeKind.PROCESS,
+            repetitions=1,
+            stability=1.0,
+        ),
+    )
+
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+    )
+
+    assert result["knowledge_primary_category"] is ConsensusCategory.UNANIMOUS
+    assert result["knowledge_set_category"] is ConsensusCategory.DISPUTED
+    assert result["knowledge_kind_category"] is ConsensusCategory.UNANIMOUS
+    assert result["knowledge_primary_unanimous"] is True
+    assert result["knowledge_set_unanimous"] is False

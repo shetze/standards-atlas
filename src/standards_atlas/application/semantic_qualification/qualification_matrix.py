@@ -109,6 +109,8 @@ class CascadeResolutionConfig(BaseModel):
     minimum_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
     # Legacy aggregate controls remain readable for older manifests. New
     # manifests should configure applicability presence and subtype separately.
+    escalate_on_knowledge_kind_disagreement: bool = True
+    minimum_knowledge_kind_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     escalate_on_applicability_disagreement: bool = True
     escalate_on_applicability_presence_disagreement: bool | None = None
     escalate_on_applicability_subtype_disagreement: bool | None = None
@@ -167,6 +169,14 @@ def cascade_escalation_reasons(
         reasons.append("consensus_category")
     if clause.statement_function_confidence < resolution.minimum_confidence:
         reasons.append("statement_function_confidence")
+    knowledge_threshold = resolution.minimum_knowledge_kind_confidence
+    if knowledge_threshold is not None:
+        if getattr(clause, "knowledge_kind_decision_confidence", 1.0) < knowledge_threshold:
+            reasons.append("knowledge_kind_confidence")
+    elif resolution.escalate_on_knowledge_kind_disagreement and not getattr(
+        clause, "knowledge_primary_unanimous", True
+    ):
+        reasons.append("knowledge_kind_disagreement")
     split_applicability = any(
         value is not None
         for value in (
@@ -297,6 +307,17 @@ def cascade_stage_escalation_reasons(
                 reasons.append("consensus_category")
             if cumulative_clause.statement_function_confidence < resolution.minimum_confidence:
                 reasons.append("statement_function_confidence")
+
+    knowledge_unresolved = bool(unresolved & _KNOWLEDGE_REASONS)
+    if knowledge_unresolved:
+        threshold = resolution.minimum_knowledge_kind_confidence
+        if threshold is not None:
+            if getattr(cumulative_clause, "knowledge_kind_decision_confidence", 1.0) < threshold:
+                reasons.append("knowledge_kind_confidence")
+        elif resolution.escalate_on_knowledge_kind_disagreement and not getattr(
+            cumulative_clause, "knowledge_primary_unanimous", True
+        ):
+            reasons.append("knowledge_kind_disagreement")
 
     applicability_unresolved = bool(unresolved & _APPLICABILITY_REASONS)
     if applicability_unresolved:
@@ -445,6 +466,7 @@ _STATEMENT_REASONS = {
     "statement_function_confidence",
     "statement_function_resolver_confidence",
 }
+_KNOWLEDGE_REASONS = {"knowledge_kind_disagreement", "knowledge_kind_confidence"}
 _APPLICABILITY_REASONS = {
     "applicability_disagreement",
     "applicability_confidence",
@@ -491,9 +513,7 @@ def capture_resolved_dimensions(
             "category": clause.statement_function_category.value,
             "source": source,
         }
-    if initial_stage:
-        # Knowledge kind has no cascade escalation rule today, so its first-stage
-        # decision is final by construction.
+    if resolved(_KNOWLEDGE_REASONS):
         result["knowledge_kind"] = {
             "value": (
                 cumulative_clause.primary_knowledge_kind.value
@@ -501,7 +521,11 @@ def capture_resolved_dimensions(
                 else None
             ),
             "confidence": cumulative_clause.knowledge_kind_decision_confidence,
-            "category": cumulative_clause.knowledge_kind_category.value,
+            "category": getattr(
+                cumulative_clause,
+                "knowledge_primary_category",
+                cumulative_clause.knowledge_kind_category,
+            ).value,
             "source": source,
         }
     if resolved(_APPLICABILITY_REASONS):

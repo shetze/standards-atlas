@@ -25,6 +25,7 @@ execution:
         minimum_applicability_presence_models: 2
         accepted_categories: [unanimous, strong_consensus, majority_consensus]
         minimum_confidence: 0.60
+        escalate_on_knowledge_kind_disagreement: true
         escalate_on_applicability_disagreement: false
         escalate_on_applicability_presence_disagreement: true
         escalate_on_applicability_subtype_disagreement: true
@@ -45,6 +46,8 @@ execution:
         minimum_confidence: 0.60
         statement_function_resolution_mode: stage_resolver
         statement_function_resolver_min_confidence: 0.75
+        escalate_on_knowledge_kind_disagreement: false
+        minimum_knowledge_kind_confidence: 0.75
         escalate_on_applicability_disagreement: false
         escalate_on_applicability_presence_disagreement: false
         escalate_on_applicability_subtype_disagreement: false
@@ -71,6 +74,7 @@ execution:
       - strong_consensus
       - majority_consensus
     minimum_confidence: 0.60
+    escalate_on_knowledge_kind_disagreement: true
     escalate_on_applicability_disagreement: false
     escalate_on_applicability_presence_disagreement: true
     escalate_on_applicability_subtype_disagreement: true

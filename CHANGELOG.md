@@ -1,4 +1,5 @@
 ## 0.8.1
+- Qualification now treats primary knowledge-kind agreement separately from full multi-label knowledge-set agreement. Primary disagreement/confidence can drive cascade escalation, while secondary-set disagreement remains diagnostic-only.
 - Split applicability qualification into explicit `applicability_present` presence and optional subtype classification while preserving legacy inference for older task payloads.
 - Refine applicability qualification prompts around an explicit applicability-question test and distinguish activity conditions from conditions on normative applicability.
 - Tightened current role qualification prompts with explicit actor/non-actor, passive-without-actor, target, relation-class priority, and applicability-leakage boundaries.

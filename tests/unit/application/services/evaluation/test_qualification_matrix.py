@@ -1166,3 +1166,71 @@ def test_cascade_allows_dimension_specific_presence_minimum(tmp_path: Path) -> N
     assert first is not None
     assert first.minimum_successful_models == 3
     assert first.minimum_applicability_presence_models == 2
+
+
+def test_cascade_escalates_primary_knowledge_disagreement() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    clause = SimpleNamespace(
+        participating_models=4,
+        category=SimpleNamespace(value="unanimous"),
+        statement_function_confidence=1.0,
+        knowledge_kind_decision_confidence=0.5,
+        knowledge_primary_unanimous=False,
+        knowledge_set_unanimous=False,
+        applicability_unanimous=True,
+        applicability_structural_conflict=False,
+        applicability_present=False,
+        applicability_confidence=0.0,
+        applicability_support={"present": 0.0},
+        role_relation_unanimous=True,
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
+    )
+
+    reasons = cascade_escalation_reasons(
+        clause,
+        CascadeResolutionConfig(escalate_on_knowledge_kind_disagreement=True),
+    )
+
+    assert "knowledge_kind_disagreement" in reasons
+
+
+def test_cascade_does_not_escalate_secondary_knowledge_set_disagreement() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    clause = SimpleNamespace(
+        participating_models=4,
+        category=SimpleNamespace(value="unanimous"),
+        statement_function_confidence=1.0,
+        knowledge_kind_decision_confidence=1.0,
+        knowledge_primary_unanimous=True,
+        knowledge_set_unanimous=False,
+        applicability_unanimous=True,
+        applicability_structural_conflict=False,
+        applicability_present=False,
+        applicability_confidence=0.0,
+        applicability_support={"present": 0.0},
+        role_relation_unanimous=True,
+        role_relation_present=False,
+        role_relation_confidence=0.0,
+        role_relation_support={"present": 0.0},
+    )
+
+    reasons = cascade_escalation_reasons(
+        clause,
+        CascadeResolutionConfig(escalate_on_knowledge_kind_disagreement=True),
+    )
+
+    assert "knowledge_kind_disagreement" not in reasons

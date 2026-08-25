@@ -107,6 +107,8 @@ class ClauseConsensus(BaseModel):
     category: ConsensusCategory
     statement_function_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     knowledge_kind_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    knowledge_primary_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    knowledge_set_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     applicability_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     role_relation_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     role_semantics_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
@@ -140,6 +142,9 @@ class ClauseConsensus(BaseModel):
     role_relation_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     statement_function_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     knowledge_kind_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    knowledge_set_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    knowledge_primary_unanimous: bool = True
+    knowledge_set_unanimous: bool = True
     applicability_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     role_relation_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_presence_unanimous: bool = True
@@ -598,6 +603,18 @@ def _resolve_clause(
         knowledge_counts.most_common(1)[0] if knowledge_counts else (None, 0)
     )
     knowledge_agreement = knowledge_count / model_count if model_count else 0.0
+    knowledge_sets = tuple(
+        tuple(sorted(vote.knowledge_kinds, key=lambda item: item.value)) for vote in votes
+    )
+    knowledge_set_counts = Counter(knowledge_sets)
+    _, knowledge_set_count = (
+        knowledge_set_counts.most_common(1)[0] if knowledge_set_counts else ((), 0)
+    )
+    knowledge_set_agreement = knowledge_set_count / model_count if model_count else 0.0
+    knowledge_primary_unanimous = _dimension_votes_are_unanimous(
+        tuple(vote.primary_knowledge_kind for vote in votes)
+    )
+    knowledge_set_unanimous = _dimension_votes_are_unanimous(knowledge_sets)
     secondary_knowledge = sorted(
         {label for vote in votes for label in vote.secondary_knowledge_kinds},
         key=lambda item: item.value,
@@ -733,13 +750,22 @@ def _resolve_clause(
     role_relation_confidence = resp_present_support if resp_accepted else 0.0
 
     statement_category = category
-    knowledge_category = _category_for_confidence(
+    knowledge_primary_category = _category_for_confidence(
         knowledge_kind_decision_confidence,
         model_count,
         minimum_models,
         strong_threshold,
         majority_threshold,
     )
+    knowledge_set_category = _category_for_confidence(
+        knowledge_set_agreement,
+        model_count,
+        minimum_models,
+        strong_threshold,
+        majority_threshold,
+    )
+    # Compatibility: knowledge_kind_category continues to represent the primary decision.
+    knowledge_category = knowledge_primary_category
     applicability_model_count = (
         app_subtype_model_count if app_accepted else app_presence_model_count
     )
@@ -783,7 +809,8 @@ def _resolve_clause(
         knowledge_kind_confidence = (
             knowledge_kind_decision_confidence if primary_knowledge is not None else 0.0
         )
-        knowledge_category = ConsensusCategory(item["category"])
+        knowledge_primary_category = ConsensusCategory(item["category"])
+        knowledge_category = knowledge_primary_category
         resolution_sources["knowledge_kind"] = str(item.get("source", "cascade"))
     if "applicability" in override:
         item = override["applicability"]
@@ -850,6 +877,8 @@ def _resolve_clause(
         "category": category,
         "statement_function_category": statement_category,
         "knowledge_kind_category": knowledge_category,
+        "knowledge_primary_category": knowledge_primary_category,
+        "knowledge_set_category": knowledge_set_category,
         "applicability_category": applicability_category,
         "role_relation_category": role_relation_category,
         "overall_status": (
@@ -886,6 +915,9 @@ def _resolve_clause(
         "role_relation_confidence": role_relation_confidence,
         "statement_function_decision_confidence": statement_function_decision_confidence,
         "knowledge_kind_decision_confidence": knowledge_kind_decision_confidence,
+        "knowledge_set_confidence": knowledge_set_agreement,
+        "knowledge_primary_unanimous": knowledge_primary_unanimous,
+        "knowledge_set_unanimous": knowledge_set_unanimous,
         "applicability_decision_confidence": applicability_decision_confidence,
         "role_relation_decision_confidence": role_relation_decision_confidence,
         "applicability_presence_unanimous": applicability_presence_unanimous,
