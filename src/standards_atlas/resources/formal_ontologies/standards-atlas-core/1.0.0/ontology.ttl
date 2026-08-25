@@ -1,0 +1,49 @@
+@prefix stat: <http://lunetix.org/standards-atlas#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://lunetix.org/standards-atlas/core> a owl:Ontology ;
+    owl:versionIRI <http://lunetix.org/standards-atlas/core/1.0.0> ;
+    owl:versionInfo "1.0.0" .
+
+stat:StandardsEntity a owl:Class .
+stat:Standard a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:StandardPart a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:Clause a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:Annex a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:SemanticAssertion a owl:Class .
+stat:ContextFrame a owl:Class .
+stat:SemanticContext a owl:Class ; rdfs:subClassOf stat:ContextFrame .
+stat:StructuralContext a owl:Class ; rdfs:subClassOf stat:ContextFrame .
+stat:EpistemicContext a owl:Class ; rdfs:subClassOf stat:ContextFrame .
+stat:KnowledgeDomain a owl:Class .
+stat:EngineeringEntity a owl:Class .
+stat:EngineeringConcept a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:Process a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:Activity a owl:Class ; rdfs:subClassOf stat:Process .
+stat:Artifact a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:EvidenceArtifact a owl:Class ; rdfs:subClassOf stat:Artifact .
+stat:Role a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:TechniqueOrMeasure a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:SystemEntity a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:IntegrityLevel a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+
+stat:containsClause a owl:ObjectProperty ; rdfs:domain stat:StandardsEntity ; rdfs:range stat:Clause .
+stat:hasParentClause a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:Clause .
+stat:precedesClause a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:Clause .
+stat:expresses a owl:ObjectProperty ; rdfs:domain stat:Clause .
+stat:describes a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:EngineeringEntity .
+stat:requires a owl:ObjectProperty ; rdfs:domain stat:EngineeringEntity ; rdfs:range stat:EngineeringEntity .
+stat:produces a owl:ObjectProperty ; rdfs:domain stat:Process ; rdfs:range stat:Artifact .
+stat:performedBy a owl:ObjectProperty ; rdfs:domain stat:Activity ; rdfs:range stat:Role .
+stat:appliesTo a owl:ObjectProperty .
+stat:inKnowledgeDomain a owl:ObjectProperty ; rdfs:range stat:KnowledgeDomain .
+stat:qualifiedByContext a owl:ObjectProperty ; rdfs:range stat:ContextFrame .
+stat:derivedFrom a owl:ObjectProperty .
+stat:references a owl:ObjectProperty .
+stat:refines a owl:ObjectProperty .
+stat:implements a owl:ObjectProperty .
+stat:providesEvidenceFor a owl:ObjectProperty .
+stat:dependsOn a owl:ObjectProperty .

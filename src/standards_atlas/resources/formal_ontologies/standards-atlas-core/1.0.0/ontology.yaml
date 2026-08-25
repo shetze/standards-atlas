@@ -1,0 +1,9 @@
+schema_version: 1
+id: standards-atlas-core
+version: 1.0.0
+ontology_iri: http://lunetix.org/standards-atlas/core
+version_iri: http://lunetix.org/standards-atlas/core/1.0.0
+namespace: http://lunetix.org/standards-atlas#
+prefix: stat
+resource: ontology.ttl
+imports: []

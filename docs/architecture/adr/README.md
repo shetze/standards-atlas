@@ -110,6 +110,7 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0069](0069-materialize-structural-scope-reach.md) | Materialize structural scope reach in taxonomy |
 
 | [0074](0074-formal-semantic-and-context-model.md) | Introduce a provider-neutral TBox/RBox/ABox/CBox formal semantic and context model |
+| [0075](0075-versioned-core-and-functional-safety-ontologies.md) | Introduce versioned Standards Atlas core and Functional Safety OWL ontologies |
 
 ## Application structure
 

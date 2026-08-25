@@ -97,19 +97,30 @@ Knowledge Domains are both addressable knowledge objects and interpretation cont
 
 The CBox allows candidate retrieval and assessment to distinguish assertions that are structurally or lexically similar but differ in domain, scope, integrity level, lifecycle phase, normative status, or epistemic quality.
 
+## Versioned formal ontologies
+
+Slice 2 adds two packaged OWL/Turtle resources under `resources/formal_ontologies/`:
+
+- `standards-atlas-core/1.0.0` provides the reusable standards, engineering, assertion and context vocabulary;
+- `functional-safety/1.0.0` imports the core ontology and provides the small Functional Safety upper ontology.
+
+The formal ontology resource family is deliberately separate from `resources/ontologies/`, which continues to hold controlled semantic-classification vocabularies. A versioned YAML descriptor identifies each formal ontology resource without making an RDF framework a production dependency.
+
+The vocabulary namespace remains stable while ontology IRIs are versioned. Concrete standards and clauses are not embedded in these TBox/RBox resources.
+
 ## Slice boundaries
 
-Slice 1 establishes only the formal contracts and architecture boundary. It does **not** introduce:
+Slices 1 and 2 establish the contracts and the initial formal vocabulary. They still do **not** introduce:
 
-- a full Functional Safety OWL ontology;
-- RDF serialization or a triple store;
+- deterministic ABox/CBox projection from `EngineeringDocument`;
+- RDF serialization adapters or a triple store;
 - SHACL shapes;
 - graph indexing;
 - GraphRAG;
 - automatic concept/entity extraction;
 - relationship candidate generation.
 
-Those capabilities can be added incrementally after the core semantic/context model is qualified.
+Those capabilities can be added incrementally after the core semantic/context vocabulary is qualified.
 
 ## Related documentation
 
@@ -119,3 +130,4 @@ Those capabilities can be added incrementally after the core semantic/context mo
 - [Domain model](domain-model.md)
 - [Ports and adapters](ports-and-adapters.md)
 - [ADR 0074](adr/0074-formal-semantic-and-context-model.md)
+- [ADR 0075](adr/0075-versioned-core-and-functional-safety-ontologies.md)

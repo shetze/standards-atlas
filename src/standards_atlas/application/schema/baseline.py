@@ -20,6 +20,9 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "ontology-resource": SchemaPolicy(
         "ontology-resource", 1, (1,), "resources/ontologies/**/ontology.yaml"
     ),
+    "formal-ontology-resource": SchemaPolicy(
+        "formal-ontology-resource", 1, (1,), "resources/formal_ontologies/**/ontology.yaml"
+    ),
     "structural-taxonomy-resource": SchemaPolicy(
         "structural-taxonomy-resource",
         1,
