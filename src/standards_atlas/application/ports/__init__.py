@@ -23,6 +23,7 @@ from standards_atlas.application.ports.extracted_document_reader import Extracte
 from standards_atlas.application.ports.formal_semantics import (
     FormalSemanticProjectionRepository,
     FormalSemanticProjector,
+    FormalSemanticSerializer,
 )
 from standards_atlas.application.ports.formula_transcriptions import (
     FormulaTranscriptionDocumentRepository,
@@ -37,6 +38,7 @@ from standards_atlas.application.ports.workflow_artifacts import (
 __all__ = [
     "FormalSemanticProjectionRepository",
     "FormalSemanticProjector",
+    "FormalSemanticSerializer",
     "AlignmentReviewStore",
     "AlignmentStore",
     "AtlasDataDocumentReader",

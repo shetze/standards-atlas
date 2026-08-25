@@ -37,7 +37,7 @@ The application layer defines repositories and capabilities for, among other con
 - LLM completion;
 - command execution and runtime health.
 
-The formal-semantic boundary follows the same rule. `FormalSemanticProjector` and `FormalSemanticProjectionRepository` expose provider-neutral application needs; RDF serializers, SPARQL engines, graph stores, and GraphRAG-style retrieval implementations belong in adapters and must not leak their APIs into the domain model.
+The formal-semantic boundary follows the same rule. `FormalSemanticProjector`, `FormalSemanticProjectionRepository`, and `FormalSemanticSerializer` expose provider-neutral application needs. Slice 3 provides a deterministic application projector, a versioned filesystem projection repository, and a Turtle serializer in `adapters/rdf`; SPARQL engines, graph stores, and GraphRAG-style retrieval implementations remain optional adapters and must not leak their APIs into the domain model.
 
 Ports should express application needs rather than mirror third-party APIs. The formula-visual adapter is deliberately narrow: it consumes adapter-neutral page/bounding-box evidence and does not perform formula discovery or semantic recognition.
 

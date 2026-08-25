@@ -10,6 +10,8 @@ def test_formal_ontologies_are_versioned_packaged_resources() -> None:
     expected = {
         ROOT / "standards-atlas-core" / "1.0.0" / "ontology.ttl",
         ROOT / "functional-safety" / "1.0.0" / "ontology.ttl",
+        ROOT / "standards-atlas-core" / "1.1.0" / "ontology.ttl",
+        ROOT / "functional-safety" / "1.1.0" / "ontology.ttl",
     }
     assert all(path.is_file() for path in expected)
 

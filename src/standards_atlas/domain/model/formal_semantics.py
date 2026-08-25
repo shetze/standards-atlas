@@ -115,6 +115,8 @@ class FormalSemanticProjection(BaseModel):
     namespace: str = FORMAL_SEMANTIC_NAMESPACE
     prefix: str = FORMAL_SEMANTIC_PREFIX
     source_document_key: str = Field(min_length=1)
+    projection_version: str = Field(default="1.0.0", min_length=1)
+    ontology_versions: tuple[str, ...] = ()
     assertions: tuple[FormalAssertion, ...] = ()
     contexts: tuple[ContextFrame, ...] = ()
 

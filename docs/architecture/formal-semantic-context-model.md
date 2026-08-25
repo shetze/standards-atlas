@@ -110,17 +110,20 @@ The vocabulary namespace remains stable while ontology IRIs are versioned. Concr
 
 ## Slice boundaries
 
-Slices 1 and 2 establish the contracts and the initial formal vocabulary. They still do **not** introduce:
+Slice 3 adds deterministic ABox/CBox projection from `EngineeringDocument`. The projection materializes only facts already present in the canonical document, semantic classification, structural context and lineage; it does not infer new engineering concepts and does not duplicate protected clause body text.
 
-- deterministic ABox/CBox projection from `EngineeringDocument`;
-- RDF serialization adapters or a triple store;
-- SHACL shapes;
+The current projection uses `standards-atlas-core@1.1.0` and, when Functional Safety context is present, `functional-safety@1.1.0`. A Turtle adapter emits direct RDF triples plus reified `stat:SemanticAssertion` and explicit context-facet resources. The provider-neutral projection can also be persisted as versioned JSON under `.atlas/data/formal-semantic-projections/`.
+
+Slice 3 still does **not** introduce:
+
+- SHACL validation;
+- a triple store or SPARQL service;
 - graph indexing;
 - GraphRAG;
-- automatic concept/entity extraction;
+- automatic concept/entity extraction beyond existing classifications;
 - relationship candidate generation.
 
-Those capabilities can be added incrementally after the core semantic/context vocabulary is qualified.
+Those capabilities remain incremental follow-up work behind the existing ports.
 
 ## Related documentation
 
@@ -131,3 +134,4 @@ Those capabilities can be added incrementally after the core semantic/context vo
 - [Ports and adapters](ports-and-adapters.md)
 - [ADR 0074](adr/0074-formal-semantic-and-context-model.md)
 - [ADR 0075](adr/0075-versioned-core-and-functional-safety-ontologies.md)
+- [ADR 0076](adr/0076-deterministic-abox-cbox-projection.md)

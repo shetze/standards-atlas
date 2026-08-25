@@ -23,6 +23,9 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "formal-ontology-resource": SchemaPolicy(
         "formal-ontology-resource", 1, (1,), "resources/formal_ontologies/**/ontology.yaml"
     ),
+    "formal-semantic-projection": SchemaPolicy(
+        "formal-semantic-projection", 1, (1,), ".atlas/data/formal-semantic-projections/*.json"
+    ),
     "structural-taxonomy-resource": SchemaPolicy(
         "structural-taxonomy-resource",
         1,

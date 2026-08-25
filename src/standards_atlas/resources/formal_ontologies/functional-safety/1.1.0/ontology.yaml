@@ -1,0 +1,10 @@
+schema_version: 1
+id: functional-safety
+version: 1.1.0
+ontology_iri: http://lunetix.org/standards-atlas/functional-safety
+version_iri: http://lunetix.org/standards-atlas/functional-safety/1.1.0
+namespace: http://lunetix.org/standards-atlas#
+prefix: stat
+resource: ontology.ttl
+imports:
+  - http://lunetix.org/standards-atlas/core/1.1.0

@@ -58,3 +58,21 @@ def test_repository_rejects_missing_payload(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="does not exist"):
         ResourceFormalOntologyRepository(tmp_path).load("broken", "1.0.0")
+
+
+def test_slice3_core_projection_vocabulary_is_versioned(
+    repository: ResourceFormalOntologyRepository,
+) -> None:
+    definition = repository.load("standards-atlas-core", "1.1.0")
+    assert definition.version_iri == "http://lunetix.org/standards-atlas/core/1.1.0"
+    text = repository.read_text("standards-atlas-core", "1.1.0")
+    assert "stat:ContextFacet a owl:Class" in text
+    assert "stat:assertionSubject a owl:ObjectProperty" in text
+    assert "stat:projectionRuleVersion a owl:DatatypeProperty" in text
+
+
+def test_slice3_functional_safety_ontology_imports_core_1_1(
+    repository: ResourceFormalOntologyRepository,
+) -> None:
+    definition = repository.load("functional-safety", "1.1.0")
+    assert definition.imports == ("http://lunetix.org/standards-atlas/core/1.1.0",)

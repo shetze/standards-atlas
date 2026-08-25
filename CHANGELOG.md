@@ -5,6 +5,17 @@
 - Refine applicability qualification prompts around an explicit applicability-question test and distinguish activity conditions from conditions on normative applicability.
 - Tightened current role qualification prompts with explicit actor/non-actor, passive-without-actor, target, relation-class priority, and applicability-leakage boundaries.
 
+
+### Formal Semantic & Context Model — Slice 3
+
+- add deterministic ABox/CBox projection from canonical `EngineeringDocument` data
+- project Knowledge Domain, semantic taxonomy, applicability, normative, structural and lineage context into clause CBox frames
+- preserve document containment, parent/sibling structure and resolved semantic relations as ABox assertions
+- add Standards Atlas Core and Functional Safety ontology 1.1.0 resources for projection/reification vocabulary
+- add provider-neutral semantic serialization port and deterministic Turtle RDF adapter
+- add versioned filesystem persistence for rebuildable formal-semantic projections
+- keep protected clause body text and RDF/graph-provider dependencies outside the formal projection domain contract
+
 ### Role qualification tuple consensus
 
 - split role qualification into explicit role-semantics presence and structured relation-tuple consensus

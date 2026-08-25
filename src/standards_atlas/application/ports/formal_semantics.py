@@ -24,3 +24,11 @@ class FormalSemanticProjectionRepository(Protocol):
     def save(self, projection: FormalSemanticProjection) -> None: ...
 
     def load(self, document_key: str) -> FormalSemanticProjection | None: ...
+
+
+class FormalSemanticSerializer(Protocol):
+    """Serialize a provider-neutral projection into an external graph representation."""
+
+    media_type: str
+
+    def serialize(self, projection: FormalSemanticProjection) -> str: ...

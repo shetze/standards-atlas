@@ -106,7 +106,7 @@ The separate application-architecture class diagram shows representative applica
 
 ## Formal semantic and context projection
 
-`EngineeringDocument` remains canonical. Formal semantics are represented as a rebuildable `FormalSemanticProjection` containing provider-neutral TBox, RBox, ABox, and CBox assertions. The CBox carries semantic, structural, and epistemic context sourced from Knowledge Domains, taxonomies, structural context, and lineage rather than folding those concerns into the formal ontology itself.
+`EngineeringDocument` remains canonical. Formal semantics are represented as a rebuildable `FormalSemanticProjection` containing provider-neutral TBox, RBox, ABox, and CBox assertions. The projection records its projection-rule version and formal-ontology versions. The CBox carries semantic, structural, and epistemic context sourced from Knowledge Domains, taxonomies, structural context, and lineage rather than folding those concerns into the formal ontology itself. Slice 3 deterministically materializes these projections without copying protected clause body text.
 
 The stable Standards Atlas namespace is `http://lunetix.org/standards-atlas#` with prefix `stat`. No RDF framework, graph database, or GraphRAG implementation is part of the domain model. See [Formal Semantic & Context Model](formal-semantic-context-model.md).
 
