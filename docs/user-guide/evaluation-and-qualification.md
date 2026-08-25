@@ -458,4 +458,4 @@ The regression report contains consensus metrics and presence precision/recall/F
 
 ### Knowledge qualification
 
-Knowledge qualification distinguishes the primary knowledge kind from the complete multi-label knowledge set. The cascade escalates only when the primary knowledge decision is disputed or below its configured confidence threshold. Differences in secondary knowledge kinds are reported separately through `knowledge_set_category` and `knowledge_set_confidence`; they do not by themselves trigger an escalation. `knowledge_kind_category` remains a compatibility alias for the primary decision.
+Knowledge qualification distinguishes the primary knowledge kind from the complete multi-label knowledge set. The active cascade accepts a primary knowledge decision once its support reaches the configured 0.60 majority threshold; mere non-unanimity is not an escalation reason. Differences in secondary knowledge kinds are reported separately through `knowledge_set_category` and `knowledge_set_confidence`; they do not by themselves trigger an escalation. `knowledge_kind_category` remains a compatibility alias for the primary decision.
