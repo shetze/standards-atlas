@@ -35,6 +35,7 @@ class WorkflowStage(StrEnum):
     DOORSTOP_PUBLISH = "doorstop-publish"
     CORPUS_BUILD = "corpus-build"
     QUALIFICATION_MATRIX = "qualification-matrix"
+    SEMANTIC_EXTRACTION_QUALIFICATION = "semantic-extraction-qualification"
 
 
 @dataclass(frozen=True)

@@ -182,3 +182,7 @@ corpus foundations. The next improvements should be risk-driven:
 4. create synthetic end-to-end fixtures for each workflow stop/resume path;
 5. establish and ratchet a measured changed-code branch-coverage baseline;
 6. make Docling and Doorstop runtime jobs mandatory on controlled release infrastructure.
+
+## Formal semantic extraction qualification
+
+Qualification manifests can enable `semantic_extraction_qualification`. In that case `workflow run --task qualification` appends an ontology-guided extraction qualification step after the semantic matrix. The step evaluates persisted semantic extraction artifacts for ontology conformance and confidence. Entity/relation precision, recall, and F1 remain `null` until a published extraction gold corpus is configured; missing ground truth is therefore explicitly unscored rather than inferred from existing semantic labels.

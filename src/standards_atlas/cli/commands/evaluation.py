@@ -26,6 +26,9 @@ from standards_atlas.cli.commands.evaluation_commands.qualification_matrix impor
     _MatrixProposalProgress,
     qualify_model_prompt_matrix,
 )
+from standards_atlas.cli.commands.evaluation_commands.semantic_extraction_qualification import (
+    qualify_semantic_extraction,
+)
 from standards_atlas.cli.composition import build_golden_corpus_qualifier
 
 __all__ = [
@@ -44,6 +47,7 @@ __all__ = [
     "qualify_challengers",
     "qualify_golden_corpus",
     "qualify_model_prompt_matrix",
+    "qualify_semantic_extraction",
     "run_evaluation_matrix",
     "run_semantic_evaluation",
     "typer",

@@ -146,3 +146,4 @@ both active and obsolete provisions.
 - [Diagram catalog](../diagrams/README.md)
 - [Documentation home](../../README.md)
 
+| [0078](0078-qualify-ontology-guided-semantic-extraction.md) | Qualify ontology-guided semantic extraction in qualification runs |

@@ -395,3 +395,13 @@ thresholds:
   baseline_model_id: qwen3-14b-q4-k-m
   baseline_reasoning_mode_id: disabled
   max_gold_f1_drop: 0.02
+
+semantic_extraction_qualification:
+  enabled: true
+  ontology_versions:
+    - standards-atlas-core@1.1.0
+    - functional-safety@1.1.0
+  minimum_entity_confidence: 0.60
+  minimum_relation_confidence: 0.60
+  minimum_ontology_conformance: 1.0
+  generate_missing: true

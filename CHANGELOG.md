@@ -226,3 +226,5 @@
 - Exclude Granite from `applicability_presence` voting while retaining it for other dimensions.
 - Add a dimension-specific minimum presence-voter count so filtered presence voting does not weaken other qualification dimensions.
 - Add a small run-derived applicability golden-review workflow for presence hard cases, including per-model accuracy metrics to support evidence-based model eligibility.
+
+- Integrated ontology-guided semantic extraction as an explicit qualification-run step with ontology-conformance, confidence, and optional gold metrics.

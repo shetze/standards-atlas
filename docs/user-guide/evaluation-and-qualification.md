@@ -459,3 +459,7 @@ The regression report contains consensus metrics and presence precision/recall/F
 ### Knowledge qualification
 
 Knowledge qualification distinguishes the primary knowledge kind from the complete multi-label knowledge set. The active cascade accepts a primary knowledge decision once its support reaches the configured 0.60 majority threshold; mere non-unanimity is not an escalation reason. Differences in secondary knowledge kinds are reported separately through `knowledge_set_category` and `knowledge_set_confidence`; they do not by themselves trigger an escalation. `knowledge_kind_category` remains a compatibility alias for the primary decision.
+
+### Ontology-guided semantic extraction
+
+A qualification-matrix manifest can enable `semantic_extraction_qualification`. The end-to-end `workflow run --task qualification` then appends a `semantic-extraction-qualification` step after the normal semantic matrix and writes `semantic-extraction-qualification.json` into the matrix output directory. Ontology conformance and confidence gates are always reported. Gold precision, recall, and F1 remain unset until a published extraction gold file is configured in the manifest.

@@ -15,6 +15,9 @@ from standards_atlas.application.semantic_qualification.qualification import (
 from standards_atlas.application.semantic_qualification.reports.matrix import (
     render_qualification_matrix_markdown,
 )
+from standards_atlas.application.semantic_qualification.semantic_extraction_qualification import (
+    SemanticExtractionQualificationConfig,
+)
 
 _PROMPT_VERSION_ALIASES = {
     "content-only": "content-only-v1",
@@ -794,6 +797,9 @@ class QualificationMatrixManifest(BaseModel):
     execution: MatrixExecutionConfig = MatrixExecutionConfig()
     thresholds: RegressionThresholds = RegressionThresholds()
     challenger_qualification: ChallengerQualificationConfig = ChallengerQualificationConfig()
+    semantic_extraction_qualification: SemanticExtractionQualificationConfig = (
+        SemanticExtractionQualificationConfig(enabled=False)
+    )
 
     def repetitions_for(self, model: ModelCandidate) -> int:
         """Return the model-specific repetition count or the global default."""

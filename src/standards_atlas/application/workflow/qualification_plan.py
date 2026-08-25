@@ -126,9 +126,38 @@ class QualificationWorkflowPlanner:
             artifact_policy=ArtifactPolicy.DERIVED,
             output_paths=(str(qualification_output / manifest.matrix_id),),
         )
+        steps: tuple[WorkflowStep, ...] = (*document_steps, corpus_step, matrix_step)
+        extraction_config = manifest.semantic_extraction_qualification
+        if extraction_config.enabled:
+            extraction_command = [
+                "uv",
+                "run",
+                "standards-atlas",
+                "evaluation",
+                "semantic-extraction-qualification",
+                "--manifest",
+                str(manifest_path),
+                "--output",
+                str(qualification_output / manifest.matrix_id),
+            ]
+            extraction_step = WorkflowStep(
+                family="evaluation",
+                document=f"{manifest.matrix_id}-semantic-extraction",
+                stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
+                command=tuple(extraction_command),
+                artifact_policy=ArtifactPolicy.DERIVED,
+                output_paths=(
+                    str(
+                        qualification_output
+                        / manifest.matrix_id
+                        / "semantic-extraction-qualification.json"
+                    ),
+                ),
+            )
+            steps = (*steps, extraction_step)
         return QualificationWorkflowPlan(
             document_plan=document_plan,
-            steps=(*document_steps, corpus_step, matrix_step),
+            steps=steps,
         )
 
     @staticmethod

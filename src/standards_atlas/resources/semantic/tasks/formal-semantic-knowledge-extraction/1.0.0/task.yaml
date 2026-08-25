@@ -1,0 +1,7 @@
+schema_version: 1
+task: formal-semantic-knowledge-extraction
+version: 1.0.0
+description: Ontology-guided extraction of engineering entities and local semantic relations.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds: [clause]
