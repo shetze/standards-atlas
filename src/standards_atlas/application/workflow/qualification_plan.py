@@ -41,6 +41,7 @@ class QualificationWorkflowPlanner:
         catalog_root: Path,
         manifest_path: Path,
         corpus_count: int,
+        limit: int | None = None,
         corpus_strategy: SamplingStrategy,
         corpus_seed: int,
         knowledge_domain: str,
@@ -116,6 +117,8 @@ class QualificationWorkflowPlanner:
             str(qualification_output),
             "--no-fail-on-matrix-failure",
         ]
+        if limit is not None:
+            matrix_command.extend(("--limit", str(limit)))
         if overwrite:
             matrix_command.append("--overwrite")
         matrix_step = WorkflowStep(
@@ -140,6 +143,8 @@ class QualificationWorkflowPlanner:
                 "--output",
                 str(qualification_output / manifest.matrix_id),
             ]
+            if limit is not None:
+                extraction_command.extend(("--limit", str(limit)))
             extraction_step = WorkflowStep(
                 family="evaluation",
                 document=f"{manifest.matrix_id}-semantic-extraction",

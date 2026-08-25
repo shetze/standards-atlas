@@ -14,6 +14,7 @@ from standards_atlas.adapters.filesystem import (
 )
 from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
 from standards_atlas.adapters.llm.formal_semantic_extractor import OntologyGuidedLlmExtractor
+from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
 from standards_atlas.application.semantic_extraction import SemanticExtractionService
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
@@ -22,6 +23,7 @@ from standards_atlas.application.semantic_qualification.semantic_extraction_qual
     qualify_semantic_extractions,
 )
 from standards_atlas.cli.apps import evaluation_app
+from standards_atlas.domain.model import DocumentSemanticExtraction
 
 
 @evaluation_app.command("semantic-extraction-qualification")
@@ -29,12 +31,27 @@ def qualify_semantic_extraction(
     manifest_path: Annotated[Path, typer.Option("--manifest", exists=True, readable=True)],
     output: Annotated[Path, typer.Option("--output", file_okay=False)],
     workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = Path(".atlas/data"),
+    corpus_root: Annotated[Path, typer.Option("--corpus-root", file_okay=False)] = Path(
+        ".atlas/data/evaluation/corpora"
+    ),
+    limit: Annotated[
+        int | None, typer.Option("--limit", min=1, help="Limit clauses for this qualification run.")
+    ] = None,
 ) -> None:
     """Qualify persisted ontology-guided extraction artifacts for one matrix run."""
     manifest = QualificationMatrixManifest.load(manifest_path)
     config = manifest.semantic_extraction_qualification
     if not config.enabled:
         raise typer.BadParameter("semantic extraction qualification is disabled in the manifest")
+
+    dataset = EvaluationDatasetRepository(corpus_root).load(manifest.task, manifest.dataset_version)
+    selected_examples = dataset.examples[:limit] if limit is not None else dataset.examples
+    selected_clause_ids_by_document: dict[str, set[str]] = {}
+    for example in selected_examples:
+        document_key = example.input.get("document_key")
+        clause_id = example.input.get("clause_id")
+        if isinstance(document_key, str) and isinstance(clause_id, str):
+            selected_clause_ids_by_document.setdefault(document_key, set()).add(clause_id)
 
     root = workspace / "semantic-extractions"
     repository = FileSystemSemanticExtractionRepository(workspace)
@@ -48,22 +65,38 @@ def qualify_semantic_extraction(
         service = SemanticExtractionService(extractor)
         documents = FileSystemEngineeringDocumentRepository(workspace).list()
         for document in documents:
-            if repository.load(document.key.value) is None:
+            selected_ids = selected_clause_ids_by_document.get(document.key.value)
+            if not selected_ids:
+                continue
+            existing = repository.load(document.key.value)
+            existing_by_id = (
+                {item.clause_id: item for item in existing.clauses} if existing is not None else {}
+            )
+            missing_ids = frozenset(selected_ids.difference(existing_by_id))
+            if missing_ids:
+                generated = service.extract_document(
+                    document,
+                    ontology_versions=config.ontology_versions,
+                    clause_ids=missing_ids,
+                )
+                merged = {**existing_by_id, **{item.clause_id: item for item in generated.clauses}}
                 repository.save(
-                    service.extract_document(document, ontology_versions=config.ontology_versions)
+                    DocumentSemanticExtraction(
+                        source_document_key=document.key.value,
+                        clauses=tuple(merged[key] for key in sorted(merged)),
+                    )
                 )
 
     extractions = []
     if root.is_dir():
-        for path in sorted(root.glob("*.json")):
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            extraction = payload.get("extraction")
-            if isinstance(extraction, dict):
-                document_key = extraction.get("source_document_key")
-                if isinstance(document_key, str):
-                    loaded = repository.load(document_key)
-                    if loaded is not None:
-                        extractions.append(loaded)
+        for document_key, selected_ids in sorted(selected_clause_ids_by_document.items()):
+            loaded = repository.load(document_key)
+            if loaded is None:
+                continue
+            selected_clauses = tuple(
+                item for item in loaded.clauses if item.clause_id in selected_ids
+            )
+            extractions.append(loaded.model_copy(update={"clauses": selected_clauses}))
 
     report = qualify_semantic_extractions(tuple(extractions), config)
     output.mkdir(parents=True, exist_ok=True)

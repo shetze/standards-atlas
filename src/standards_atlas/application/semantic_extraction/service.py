@@ -66,9 +66,12 @@ class SemanticExtractionService:
         document: EngineeringDocument,
         *,
         ontology_versions: tuple[str, ...],
+        clause_ids: frozenset[str] | None = None,
     ) -> DocumentSemanticExtraction:
         clauses = []
         for clause in document.clauses:
+            if clause_ids is not None and clause.id.value not in clause_ids:
+                continue
             if not extraction_eligibility(clause).eligible:
                 continue
             clauses.append(

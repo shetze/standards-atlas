@@ -9,7 +9,7 @@ QUALIFICATION_MANIFEST = Path(
 )
 
 
-def _plan(*, regenerate_docling: bool = False, overwrite: bool = False):
+def _plan(*, regenerate_docling: bool = False, overwrite: bool = False, limit: int | None = None):
     catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     return QualificationWorkflowPlanner().plan(
         catalog,
@@ -17,6 +17,7 @@ def _plan(*, regenerate_docling: bool = False, overwrite: bool = False):
         catalog_root=Path.cwd(),
         manifest_path=QUALIFICATION_MANIFEST,
         corpus_count=500,
+        limit=limit,
         corpus_strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
         corpus_seed=20260818,
         knowledge_domain="functional-safety",
@@ -79,3 +80,16 @@ def test_overwrite_propagates_to_derived_document_and_matrix_steps() -> None:
         step.stage is WorkflowStage.NORMALIZE and "--overwrite" in step.command
         for step in plan.steps
     )
+
+
+def test_limit_is_forwarded_to_all_qualification_stages() -> None:
+    plan = _plan(limit=50)
+
+    matrix = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_MATRIX)
+    assert matrix.command[matrix.command.index("--limit") + 1] == "50"
+
+    extraction_steps = tuple(
+        step for step in plan.steps if step.stage is WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION
+    )
+    for extraction in extraction_steps:
+        assert extraction.command[extraction.command.index("--limit") + 1] == "50"

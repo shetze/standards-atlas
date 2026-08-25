@@ -94,6 +94,10 @@ def plan_workflow(
     corpus_count: Annotated[
         int, typer.Option("--corpus-count", min=1, help="Qualification corpus size.")
     ] = 500,
+    limit: Annotated[
+        int | None,
+        typer.Option("--limit", min=1, help="Limit clauses across qualification stages."),
+    ] = None,
     corpus_strategy: Annotated[
         SamplingStrategy, typer.Option("--corpus-strategy")
     ] = SamplingStrategy.REPRESENTATIVE_STRATIFIED,
@@ -123,6 +127,7 @@ def plan_workflow(
         overwrite=overwrite,
         keep=tuple(keep or ()),
         corpus_count=corpus_count,
+        limit=limit,
         corpus_strategy=corpus_strategy,
         corpus_seed=corpus_seed,
         knowledge_domain=knowledge_domain,
@@ -196,6 +201,10 @@ def run_workflow(
     corpus_count: Annotated[
         int, typer.Option("--corpus-count", min=1, help="Qualification corpus size.")
     ] = 500,
+    limit: Annotated[
+        int | None,
+        typer.Option("--limit", min=1, help="Limit clauses across qualification stages."),
+    ] = None,
     corpus_strategy: Annotated[
         SamplingStrategy, typer.Option("--corpus-strategy")
     ] = SamplingStrategy.REPRESENTATIVE_STRATIFIED,
@@ -225,6 +234,7 @@ def run_workflow(
         overwrite=overwrite,
         keep=tuple(keep or ()),
         corpus_count=corpus_count,
+        limit=limit,
         corpus_strategy=corpus_strategy,
         corpus_seed=corpus_seed,
         knowledge_domain=knowledge_domain,
@@ -275,6 +285,7 @@ def _build_task_plan(
     overwrite: bool,
     keep: tuple[WorkflowStage, ...],
     corpus_count: int,
+    limit: int | None,
     corpus_strategy: SamplingStrategy,
     corpus_seed: int,
     knowledge_domain: str,
@@ -287,6 +298,8 @@ def _build_task_plan(
         raise typer.BadParameter("--keep requires --overwrite")
     if task is WorkflowTask.DOCUMENTS and regenerate_docling:
         raise typer.BadParameter("--regenerate-docling is only valid for --task qualification")
+    if task is WorkflowTask.DOCUMENTS and limit is not None:
+        raise typer.BadParameter("--limit is only valid for --task qualification")
     if task is WorkflowTask.QUALIFICATION and force:
         raise typer.BadParameter(
             "--force is only valid for --task documents; use --regenerate-docling or --overwrite"
@@ -325,6 +338,7 @@ def _build_task_plan(
         catalog_root=Path.cwd(),
         manifest_path=qualification_manifest,
         corpus_count=corpus_count,
+        limit=limit,
         corpus_strategy=corpus_strategy,
         corpus_seed=corpus_seed,
         knowledge_domain=knowledge_domain,
