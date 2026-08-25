@@ -103,6 +103,13 @@ The separate application-architecture class diagram shows representative applica
 - Automatic ontology dimensions are assigned only by the ontology stage or imported as explicit reviewed/public annotations.
 - No domain model depends on storage paths or external SDK types.
 
+
+## Formal semantic and context projection
+
+`EngineeringDocument` remains canonical. Formal semantics are represented as a rebuildable `FormalSemanticProjection` containing provider-neutral TBox, RBox, ABox, and CBox assertions. The CBox carries semantic, structural, and epistemic context sourced from Knowledge Domains, taxonomies, structural context, and lineage rather than folding those concerns into the formal ontology itself.
+
+The stable Standards Atlas namespace is `http://lunetix.org/standards-atlas#` with prefix `stat`. No RDF framework, graph database, or GraphRAG implementation is part of the domain model. See [Formal Semantic & Context Model](formal-semantic-context-model.md).
+
 ## Engineering knowledge ontology
 
 `SemanticClassification.knowledge_kinds` identifies what engineering knowledge a clause

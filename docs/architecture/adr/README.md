@@ -109,6 +109,8 @@ Architecture Decision Records (ADRs) document important design choices, their co
 | [0068](0068-finalize-taxonomy-ontology-stage-ownership.md) | Remove legacy mixed classification and enforce taxonomy/ontology stage ownership |
 | [0069](0069-materialize-structural-scope-reach.md) | Materialize structural scope reach in taxonomy |
 
+| [0074](0074-formal-semantic-and-context-model.md) | Introduce a provider-neutral TBox/RBox/ABox/CBox formal semantic and context model |
+
 ## Application structure
 
 | ADR | Decision |

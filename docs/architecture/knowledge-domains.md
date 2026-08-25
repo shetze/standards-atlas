@@ -71,7 +71,7 @@ The canonical model is independent from publication technology. Implemented proj
 - Markdown export;
 - Doorstop document export and hierarchy publication.
 
-Graph-oriented tooling, BASIL integration, and additional document classes remain roadmap concerns. An adapter may omit information that its target format cannot represent, but it must not redefine the canonical model.
+The Formal Semantic & Context Model projects Knowledge Domains into explicit CBox context while preserving `EngineeringDocument` as the canonical document representation. Graph-oriented storage/query tooling, BASIL integration, and additional document classes remain adapter or roadmap concerns. An adapter may omit information that its target format cannot represent, but it must not redefine the canonical model.
 
 ## Travelogues and curated relationships
 
@@ -87,3 +87,6 @@ Document-level relationships and lineages can be curated in the catalog. Clause-
 - MCP capabilities can grow around the knowledge represented in domains without coupling the domain model to a particular client or transport.
 
 Related decisions: [ADR 0050](adr/0050-model-structural-profiles-as-independent-taxonomy-dimensions.md) and [ADR 0051](adr/0051-multidimensional-semantic-classification.md).
+
+
+See also [Formal Semantic & Context Model](formal-semantic-context-model.md) and [ADR 0074](adr/0074-formal-semantic-and-context-model.md).

@@ -32,6 +32,18 @@ from standards_atlas.domain.model.doorstop_attributes import (
     DoorstopItemAttributes,
     DoorstopReference,
 )
+from standards_atlas.domain.model.formal_semantics import (
+    FORMAL_SEMANTIC_NAMESPACE,
+    FORMAL_SEMANTIC_PREFIX,
+    ContextFacet,
+    ContextFrame,
+    ContextKind,
+    FormalAssertion,
+    FormalSemanticProjection,
+    SemanticBox,
+    SemanticLiteral,
+    SemanticResource,
+)
 from standards_atlas.domain.model.identifiers import (
     AnnotationId,
     ClauseId,
@@ -106,6 +118,16 @@ from standards_atlas.domain.model.structural_profile import (
 )
 
 __all__ = [
+    "FORMAL_SEMANTIC_NAMESPACE",
+    "FORMAL_SEMANTIC_PREFIX",
+    "ContextFacet",
+    "ContextFrame",
+    "ContextKind",
+    "FormalAssertion",
+    "FormalSemanticProjection",
+    "SemanticBox",
+    "SemanticLiteral",
+    "SemanticResource",
     "AnnexStatus",
     "CanonicalDocumentSection",
     "DomainCategory",

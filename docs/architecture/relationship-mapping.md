@@ -16,7 +16,7 @@ The target design must:
 - keep candidate generation separate from canonical acceptance;
 - support cross-document and cross-domain relations;
 - evaluate retrievers and assessors independently and end to end;
-- expose accepted relations through Markdown, MCP, and future graph projections.
+- expose accepted relations through Markdown, MCP, and formal semantic graph projections.
 
 ## Lifecycle
 
@@ -38,7 +38,7 @@ candidate retrieval ---- deterministic reference evidence
                       |
             +---------+---------+
             v                   v
-      Markdown / MCP       graph projection
+      Markdown / MCP       formal semantic projection
 ```
 
 The diagram is deliberately service-oriented. It does not enumerate every repository, evaluation report, model configuration, review file, or publication adapter. Those contracts are defined below and in the linked architecture documents.
@@ -120,9 +120,9 @@ Assessment must not write accepted relations.
 
 ## Adapter boundaries
 
-Likely outbound adapters include local embedding runtimes, vector stores, plain lexical indexes, filesystem repositories, and LLM providers. These are replaceable implementations behind ports. No adapter-specific identifier may become the canonical relation identity.
+Likely outbound adapters include local embedding runtimes, vector stores, plain lexical indexes, graph traversal/query engines, GraphRAG-style retrievers, filesystem repositories, and LLM providers. These are replaceable implementations behind ports. No adapter-specific identifier may become the canonical relation identity.
 
-The initial implementation should prefer a small deterministic local baseline over an early dependency on a graph database or retrieval framework. A graph store becomes justified when query, scale, or traversal requirements exceed the canonical repository and derived-index approach.
+Formal semantic projections are first-class derived representations, while concrete graph stores and retrieval frameworks remain replaceable adapters. GraphRAG is one possible implementation strategy behind a graph or hybrid candidate-retrieval port, not an architectural dependency.
 
 ## Evaluation strategy
 
@@ -156,12 +156,13 @@ Public relation exports must not leak protected clause text through evidence sni
 5. Qualify structure-aware and embedding-based retrieval variants.
 6. Add constrained LLM assessment behind the existing LLM gateway.
 7. Add MCP and Markdown relation navigation.
-8. Add graph projections only when concrete query requirements justify them.
+8. Qualify graph-assisted and hybrid retrieval implementations against the deterministic and embedding baselines.
 
 ## Related documentation
 
 - [IntelliDoc refactoring roadmap](../roadmap/intellidoc-refactoring.md)
 - [Legacy relationship-mapping prototype](../history/legacy-relationship-mapping.md)
+- [Formal Semantic & Context Model](formal-semantic-context-model.md)
 - [Domain model](domain-model.md)
 - [Structural classification](structural-classification.md)
 - [Evaluation services](evaluation-services.md)
