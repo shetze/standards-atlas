@@ -6,13 +6,21 @@ from standards_atlas.application.ontology import (
 from standards_atlas.application.ports.llm_gateway import LlmResponseError
 from standards_atlas.application.services import OntologyClassificationService
 from standards_atlas.domain.model import (
+    ApplicabilityFunction,
     Clause,
     ClauseId,
     ClauseType,
     DocumentKey,
     DocumentType,
     EngineeringDocument,
+    KnowledgeKind,
+    NormativeStatus,
+    ProcessFunction,
+    RoleRelation,
+    RoleRelationType,
+    SemanticClassification,
     StandardReference,
+    StatementFunction,
     StructuralContext,
     StructuralNodeKind,
     TextBlock,
@@ -122,3 +130,268 @@ def test_ontology_response_failure_isolated_to_clause_and_reported() -> None:
     assert [event.state for event in progress] == ["started", "partial"]
     assert progress[-1].clause_reference == "1"
     assert documents.saved == result.document
+
+
+class _ApplicabilityEngine:
+    def __init__(self, values: tuple[str, ...]) -> None:
+        self._values = values
+
+    def classify(self, **_kwargs):
+        return (
+            OntologyDimensionResult(
+                dimension="applicability_functions",
+                values=self._values,
+            ),
+        )
+
+
+def _document_with_semantic(semantic: SemanticClassification) -> EngineeringDocument:
+    document = _document()
+    clause = document.clauses[0].model_copy(update={"semantic_classification": semantic})
+    return document.model_copy(update={"clauses": (clause,)})
+
+
+def test_applicability_dimension_is_replaced_atomically_when_present() -> None:
+    document = _document_with_semantic(SemanticClassification())
+    documents = _Documents(document)
+    service = OntologyClassificationService(
+        documents=documents,
+        engine=_ApplicabilityEngine(("inclusion",)),
+        profile=OntologyProfile(
+            id="test",
+            dimensions={
+                "applicability_functions": OntologyReference(
+                    id="applicability-functions", version="2.0.0"
+                )
+            },
+        ),
+    )
+
+    result = service.classify(document.key.value)
+    semantic = result.document.clauses[0].semantic_classification
+
+    assert semantic.applicability_present is True
+    assert semantic.applicability_functions == (ApplicabilityFunction.INCLUSION,)
+
+
+def test_applicability_dimension_is_replaced_atomically_when_absent() -> None:
+    document = _document_with_semantic(
+        SemanticClassification(
+            applicability_present=True,
+            applicability_functions=(ApplicabilityFunction.INCLUSION,),
+        )
+    )
+    documents = _Documents(document)
+    service = OntologyClassificationService(
+        documents=documents,
+        engine=_ApplicabilityEngine(()),
+        profile=OntologyProfile(
+            id="test",
+            dimensions={
+                "applicability_functions": OntologyReference(
+                    id="applicability-functions", version="2.0.0"
+                )
+            },
+        ),
+    )
+
+    result = service.classify(document.key.value)
+    semantic = result.document.clauses[0].semantic_classification
+
+    assert semantic.applicability_present is False
+    assert semantic.applicability_functions == ()
+
+
+def test_fail_soft_ontology_failure_preserves_complete_applicability_dimension() -> None:
+    initial = SemanticClassification(
+        applicability_present=True,
+        applicability_functions=(ApplicabilityFunction.INCLUSION,),
+    )
+    document = _document_with_semantic(initial)
+    documents = _Documents(document)
+    service = OntologyClassificationService(
+        documents=documents,
+        engine=_FailingEngine(),
+        profile=OntologyProfile(
+            id="test",
+            dimensions={
+                "applicability_functions": OntologyReference(
+                    id="applicability-functions", version="2.0.0"
+                )
+            },
+        ),
+    )
+
+    result = service.classify(document.key.value)
+
+    assert result.document.clauses[0].semantic_classification == initial
+
+
+class _AbsentRoleSemantics:
+    def classify(self, _context):
+        from standards_atlas.application.ontology import RoleSemanticsResult
+
+        return RoleSemanticsResult(present=False)
+
+
+def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> None:
+    relation = RoleRelation(
+        actor="Verifier",
+        relation_class="performance",
+        target="verification",
+        relation=RoleRelationType.VERIFIES,
+    )
+    initial = SemanticClassification(
+        role_semantics_present=True,
+        role_relation_types=(RoleRelationType.VERIFIES,),
+        role_relations=(relation,),
+    )
+    document = _document_with_semantic(initial)
+    documents = _Documents(document)
+    service = OntologyClassificationService(
+        documents=documents,
+        engine=_Engine(),
+        profile=OntologyProfile(
+            id="test",
+            dimensions={
+                "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
+            },
+        ),
+        role_semantics=_AbsentRoleSemantics(),
+    )
+
+    result = service.classify(document.key.value)
+    semantic = result.document.clauses[0].semantic_classification
+
+    assert semantic.role_semantics_present is False
+    assert semantic.role_relation_types == ()
+    assert semantic.role_relations == ()
+
+
+class _DuplicateDimensionsEngine:
+    def classify(self, **_kwargs):
+        return (
+            OntologyDimensionResult(
+                dimension="statement_functions",
+                values=("requirement", "requirement"),
+            ),
+            OntologyDimensionResult(
+                dimension="knowledge_kinds",
+                values=("process", "process"),
+            ),
+            OntologyDimensionResult(
+                dimension="process_functions",
+                values=("activity", "activity", "decision"),
+            ),
+            OntologyDimensionResult(
+                dimension="applicability_functions",
+                values=("inclusion", "inclusion"),
+            ),
+        )
+
+
+def test_set_like_semantic_dimensions_are_deduplicated_before_validation() -> None:
+    document = _document()
+    documents = _Documents(document)
+    service = OntologyClassificationService(
+        documents=documents,
+        engine=_DuplicateDimensionsEngine(),
+        profile=OntologyProfile(
+            id="test",
+            dimensions={
+                "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
+            },
+        ),
+    )
+
+    result = service.classify(document.key.value)
+    semantic = result.document.clauses[0].semantic_classification
+
+    assert semantic.statement_functions == (StatementFunction.REQUIREMENT,)
+    assert semantic.knowledge_kinds == (KnowledgeKind.PROCESS,)
+    assert semantic.process_functions == (
+        ProcessFunction.ACTIVITY,
+        ProcessFunction.DECISION,
+    )
+    assert semantic.applicability_functions == (ApplicabilityFunction.INCLUSION,)
+    assert semantic.applicability_present is True
+
+
+def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> None:
+    legacy = SemanticClassification.model_construct(
+        statement_functions=(StatementFunction.REQUIREMENT, StatementFunction.REQUIREMENT),
+        knowledge_kinds=(),
+        process_functions=(ProcessFunction.ACTIVITY, ProcessFunction.ACTIVITY),
+        applicability_present=False,
+        applicability_functions=(),
+        role_semantics_present=False,
+        role_relation_types=(),
+        role_relations=(),
+        document_structure=None,
+        normative_status=NormativeStatus.UNSPECIFIED,
+        domain_functions=(),
+        relations=(),
+    )
+    document = _document_with_semantic(legacy)
+    documents = _Documents(document)
+    service = OntologyClassificationService(
+        documents=documents,
+        engine=_FailingEngine(),
+        profile=OntologyProfile(
+            id="test",
+            dimensions={
+                "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
+            },
+        ),
+    )
+
+    result = service.classify(document.key.value)
+    semantic = result.document.clauses[0].semantic_classification
+
+    assert result.ontology_classification_failures == 1
+    assert semantic.statement_functions == (StatementFunction.REQUIREMENT,)
+    assert semantic.process_functions == (ProcessFunction.ACTIVITY,)
+
+
+def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> None:
+    relation = RoleRelation(
+        actor="Verifier",
+        relation_class="performance",
+        target="verification",
+        relation=RoleRelationType.VERIFIES,
+    )
+    legacy = SemanticClassification.model_construct(
+        statement_functions=(),
+        knowledge_kinds=(),
+        process_functions=(),
+        applicability_present=False,
+        applicability_functions=(),
+        role_semantics_present=True,
+        role_relation_types=(RoleRelationType.VERIFIES, RoleRelationType.VERIFIES),
+        role_relations=(relation, relation),
+        document_structure=None,
+        normative_status=NormativeStatus.UNSPECIFIED,
+        domain_functions=(),
+        relations=(),
+    )
+    document = _document_with_semantic(legacy)
+    documents = _Documents(document)
+    service = OntologyClassificationService(
+        documents=documents,
+        engine=_FailingEngine(),
+        profile=OntologyProfile(
+            id="test",
+            dimensions={
+                "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
+            },
+        ),
+    )
+
+    result = service.classify(document.key.value)
+    semantic = result.document.clauses[0].semantic_classification
+
+    assert semantic.role_relation_types == (RoleRelationType.VERIFIES,)
+    assert len(semantic.role_relations) == 1
+    assert semantic.role_relations[0].actor == relation.actor
+    assert semantic.role_relations[0].relation_class == relation.relation_class
+    assert semantic.role_relations[0].target == relation.target

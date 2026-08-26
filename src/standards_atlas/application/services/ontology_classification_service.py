@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict
@@ -22,6 +22,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     KnowledgeKind,
     ProcessFunction,
+    SemanticClassification,
     StatementFunction,
 )
 
@@ -41,6 +42,56 @@ class OntologyClassificationProgress:
 
 
 OntologyProgressCallback = Callable[[OntologyClassificationProgress], None]
+
+
+def _unique(values: Iterable[object]) -> tuple[object, ...]:
+    """Return values once while preserving their semantic input order."""
+
+    return tuple(dict.fromkeys(values))
+
+
+def _unique_role_relations(values: Iterable[object]) -> tuple[object, ...]:
+    """Deduplicate role relations by the same semantic key enforced by the domain model."""
+
+    unique: list[object] = []
+    seen: set[tuple[object, object, object]] = set()
+    for item in values:
+        if isinstance(item, Mapping):
+            key = (item.get("actor"), item.get("relation_class"), item.get("target"))
+        else:
+            key = (item.actor, item.relation_class, item.target)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(item)
+    return tuple(unique)
+
+
+def _canonicalize_semantic_payload(payload: dict[str, object]) -> dict[str, object]:
+    """Canonicalize set-like semantic dimensions before strict model validation."""
+
+    result = dict(payload)
+    for field in (
+        "statement_functions",
+        "knowledge_kinds",
+        "process_functions",
+        "applicability_functions",
+        "role_relation_types",
+    ):
+        result[field] = _unique(result.get(field, ()))
+    result["role_relations"] = _unique_role_relations(result.get("role_relations", ()))
+    return result
+
+
+def _validated_semantic_merge(
+    current: SemanticClassification,
+    update: dict[str, object],
+) -> SemanticClassification:
+    """Apply one semantic-dimension update atomically and revalidate all invariants."""
+
+    payload = current.model_dump(mode="python")
+    payload.update(update)
+    return SemanticClassification.model_validate(_canonicalize_semantic_payload(payload))
 
 
 class OntologyClassificationResult(BaseModel):
@@ -148,8 +199,13 @@ class OntologyClassificationService:
                     role_semantics_failures += 1
             semantic = current
             if not ontology_failed:
-                semantic = current.model_copy(
-                    update={
+                applicability_functions = tuple(
+                    ApplicabilityFunction(item)
+                    for item in values.get("applicability_functions", ())
+                )
+                semantic = _validated_semantic_merge(
+                    current,
+                    {
                         "statement_functions": tuple(
                             StatementFunction(item)
                             for item in values.get("statement_functions", ())
@@ -160,26 +216,33 @@ class OntologyClassificationService:
                         "process_functions": tuple(
                             ProcessFunction(item) for item in values.get("process_functions", ())
                         ),
-                        "applicability_functions": tuple(
-                            ApplicabilityFunction(item)
-                            for item in values.get("applicability_functions", ())
-                        ),
-                    }
+                        # Applicability is one coupled semantic dimension. Presence and subtype
+                        # must be replaced atomically so a stale presence bit cannot survive a
+                        # successful subtype classification (or vice versa).
+                        "applicability_present": bool(applicability_functions),
+                        "applicability_functions": applicability_functions,
+                    },
                 )
             if role_result is not None:
-                semantic = semantic.model_copy(
-                    update={
-                        "role_semantics_present": role_result.present,
-                        "role_relations": role_result.relations,
-                        "role_relation_types": tuple(
-                            dict.fromkeys(
-                                item.relation
-                                for item in role_result.relations
-                                if item.relation is not None
-                            )
-                        ),
-                    }
+                role_relations = role_result.relations if role_result.present else ()
+                role_relation_types = tuple(
+                    dict.fromkeys(
+                        item.relation for item in role_relations if item.relation is not None
+                    )
                 )
+                semantic = _validated_semantic_merge(
+                    semantic,
+                    {
+                        # Role presence, relation types, and resolved relations are another
+                        # coupled dimension and therefore move together.
+                        "role_semantics_present": role_result.present,
+                        "role_relations": role_relations,
+                        "role_relation_types": role_relation_types,
+                    },
+                )
+            # Revalidate the complete classification before it crosses the persistence
+            # boundary. This catches any future coupled-dimension merge bug at its source.
+            semantic = _validated_semantic_merge(semantic, {})
             updated.append(clause.model_copy(update={"semantic_classification": semantic}))
             if not ontology_failed:
                 classified += 1
