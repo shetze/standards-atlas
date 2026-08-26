@@ -21,6 +21,8 @@ LLM-backed extraction remains behind `SemanticKnowledgeExtractor` and the existi
 
 `SemanticExtractionProjectionAugmenter` may combine the rebuildable extraction artifact with the deterministic Slice-3 projection. Each inferred assertion receives its own epistemic CBox context containing confidence and extraction provenance. This augmentation does not mutate `EngineeringDocument`.
 
+Qualification findings are allowed to drive small, reviewed vocabulary refinements. Generic engineering composition uses `stat:hasPart` / `stat:partOf`; `stat:containsClause` remains reserved for standards-document containment. The extractor prompt must prefer the most specific allowed class/property and treat `EngineeringEntity`, `EngineeringConcept`, and `describes` as fallbacks rather than defaults. Ontology class names or schema placeholders must not be materialized as source entities unless the clause explicitly refers to them.
+
 The existing formal ontology version resources may be updated destructively during the current refactoring window. Slice 4 therefore extends the current core vocabulary in place rather than introducing another compatibility version solely for additive extraction-provenance properties.
 
 ## Consequences

@@ -71,8 +71,8 @@ class OntologyGuidedLlmExtractor:
         gateway: LlmGateway,
         *,
         model: str | None = None,
-        prompt_version: str = "ontology-guided-v2",
-        extractor_version: str = "1.1.0",
+        prompt_version: str = "ontology-guided-v3",
+        extractor_version: str = "1.2.0",
     ) -> None:
         self._gateway = gateway
         self._model = model
@@ -99,10 +99,21 @@ class OntologyGuidedLlmExtractor:
                 "and allowed_properties arrays are closed vocabularies: copy class_iri and "
                 "predicate values exactly from those arrays and never invent, shorten, expand, "
                 "or normalize a term. Omit an entity or relation if no allowed term fits. Do not "
-                "infer cross-standard equivalence or mapping. The entities array is ordered; "
-                "relations MUST reference entities only by zero-based subject_index and "
-                "object_index into that array. Evidence must be a short rationale, not a "
-                "quotation from the source."
+                "infer cross-standard equivalence or mapping. Prefer the most specific allowed "
+                "class and property entailed by the clause. EngineeringEntity and "
+                "EngineeringConcept are last-resort fallback classes; use them only when no more "
+                "specific allowed class fits. Prefer System, Subsystem, Element, "
+                "HardwareComponent, SoftwareElement, Requirement, Specification, "
+                "InterfaceSpecification, EngineeringQuantity, Metric, Parameter, Rate, "
+                "TimeInterval, TechniqueOrMeasure, Fault, Error, Failure, SafetyMechanism, or "
+                "SafetyState when applicable. Use containsClause only for document structure "
+                "where a StandardsEntity contains a Clause; use hasPart/partOf for engineering "
+                "composition. Use describes only as a final relation fallback when no more "
+                "specific allowed property is entailed. Never materialize ontology class names "
+                "or schema placeholders as source entities unless the clause itself explicitly "
+                "refers to that concept. The entities array is ordered; relations MUST reference "
+                "entities only by zero-based subject_index and object_index into that array. "
+                "Evidence must be a short rationale, not a quotation from the source."
             ),
             user_prompt=json.dumps(
                 {

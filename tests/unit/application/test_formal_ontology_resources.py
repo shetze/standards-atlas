@@ -76,3 +76,41 @@ def test_slice3_functional_safety_ontology_imports_core_1_1(
 ) -> None:
     definition = repository.load("functional-safety", "1.1.0")
     assert definition.imports == ("http://lunetix.org/standards-atlas/core/1.1.0",)
+
+
+def test_core_1_1_contains_refined_engineering_vocabulary(
+    repository: ResourceFormalOntologyRepository,
+) -> None:
+    text = repository.read_text("standards-atlas-core", "1.1.0")
+    for term in (
+        "stat:Requirement a owl:Class",
+        "stat:InterfaceSpecification a owl:Class",
+        "stat:Subsystem a owl:Class",
+        "stat:HardwareComponent a owl:Class",
+        "stat:SoftwareElement a owl:Class",
+        "stat:Metric a owl:Class",
+        "stat:Parameter a owl:Class",
+        "stat:TimeInterval a owl:Class",
+        "stat:hasPart a owl:ObjectProperty",
+        "stat:partOf a owl:ObjectProperty",
+    ):
+        assert term in text
+    assert "rdfs:subPropertyOf stat:hasPart" in text
+    assert "rdfs:domain stat:StandardsEntity" in text
+    assert "rdfs:range stat:Clause" in text
+
+
+def test_functional_safety_1_1_contains_refined_safety_concepts(
+    repository: ResourceFormalOntologyRepository,
+) -> None:
+    text = repository.read_text("functional-safety", "1.1.0")
+    for term in (
+        "stat:SafetyRequirement a owl:Class ; rdfs:subClassOf stat:Requirement",
+        "stat:Fault a owl:Class",
+        "stat:Error a owl:Class",
+        "stat:Failure a owl:Class",
+        "stat:SafetyMechanism a owl:Class",
+        "stat:SafetyState a owl:Class",
+        "stat:HazardousEvent a owl:Class",
+    ):
+        assert term in text

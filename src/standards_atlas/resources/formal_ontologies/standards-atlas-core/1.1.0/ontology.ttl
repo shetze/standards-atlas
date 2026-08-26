@@ -21,6 +21,14 @@ stat:EpistemicContext a owl:Class ; rdfs:subClassOf stat:ContextFrame .
 stat:KnowledgeDomain a owl:Class .
 stat:EngineeringEntity a owl:Class .
 stat:EngineeringConcept a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:Requirement a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:Specification a owl:Class ; rdfs:subClassOf stat:Artifact .
+stat:InterfaceSpecification a owl:Class ; rdfs:subClassOf stat:Specification .
+stat:EngineeringQuantity a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:Metric a owl:Class ; rdfs:subClassOf stat:EngineeringQuantity .
+stat:Parameter a owl:Class ; rdfs:subClassOf stat:EngineeringQuantity .
+stat:Rate a owl:Class ; rdfs:subClassOf stat:EngineeringQuantity .
+stat:TimeInterval a owl:Class ; rdfs:subClassOf stat:EngineeringQuantity .
 stat:Process a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
 stat:Activity a owl:Class ; rdfs:subClassOf stat:Process .
 stat:Artifact a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
@@ -28,9 +36,19 @@ stat:EvidenceArtifact a owl:Class ; rdfs:subClassOf stat:Artifact .
 stat:Role a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
 stat:TechniqueOrMeasure a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
 stat:SystemEntity a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:System a owl:Class ; rdfs:subClassOf stat:SystemEntity .
+stat:Subsystem a owl:Class ; rdfs:subClassOf stat:SystemEntity .
+stat:Element a owl:Class ; rdfs:subClassOf stat:SystemEntity .
+stat:HardwareComponent a owl:Class ; rdfs:subClassOf stat:Element .
+stat:SoftwareElement a owl:Class ; rdfs:subClassOf stat:Element .
 stat:IntegrityLevel a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
 
-stat:containsClause a owl:ObjectProperty ; rdfs:domain stat:StandardsEntity ; rdfs:range stat:Clause .
+stat:hasPart a owl:ObjectProperty .
+stat:partOf a owl:ObjectProperty ; owl:inverseOf stat:hasPart .
+stat:containsClause a owl:ObjectProperty ;
+    rdfs:subPropertyOf stat:hasPart ;
+    rdfs:domain stat:StandardsEntity ;
+    rdfs:range stat:Clause .
 stat:hasParentClause a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:Clause .
 stat:precedesClause a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:Clause .
 stat:expresses a owl:ObjectProperty ; rdfs:domain stat:Clause .

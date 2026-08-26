@@ -28,7 +28,7 @@ class _Gateway:
                 "relations": [
                     {
                         "subject_index": 0,
-                        "predicate": "http://lunetix.org/standards-atlas#partOf",
+                        "predicate": "http://lunetix.org/standards-atlas#inventedProperty",
                         "object_index": 0,
                         "confidence": 0.8,
                         "evidence": "unsupported relation",
@@ -72,12 +72,15 @@ def test_undeclared_terms_are_rejected_without_aborting_extraction() -> None:
     assert result.relations == ()
     assert [(item.kind, item.term) for item in result.violations] == [
         ("undeclared_class", "http://lunetix.org/standards-atlas#InventedClass"),
-        ("undeclared_property", "http://lunetix.org/standards-atlas#partOf"),
+        ("undeclared_property", "http://lunetix.org/standards-atlas#inventedProperty"),
         ("invalid_relation", "http://lunetix.org/standards-atlas#requires"),
     ]
     assert "closed vocabularies" in gateway.request.system_prompt
     assert "allowed_classes" in gateway.request.user_prompt
     assert "allowed_properties" in gateway.request.user_prompt
+    assert "EngineeringConcept are last-resort fallback classes" in gateway.request.system_prompt
+    assert "use hasPart/partOf for engineering composition" in gateway.request.system_prompt
+    assert "Use describes only as a final relation fallback" in gateway.request.system_prompt
 
 
 class _IndexedRelationGateway:

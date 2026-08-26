@@ -44,6 +44,7 @@
 
 ## Unreleased
 
+- Refine the formal ontology from semantic-extraction qualification feedback: add `hasPart`/`partOf`, intermediate system/requirement/specification/quantity classes, and explicit Functional Safety fault/error/failure concepts; constrain `containsClause` to document structure and make generic classes/`describes` extraction fallbacks.
 - Make semantic extraction qualification resilient to per-clause LLM timeouts, response errors, and temporary endpoint failures; persist failures and continue remaining clauses.
 - Add clause-level semantic extraction progress output and a manifest-owned per-request timeout.
 - Treat undeclared semantic-extraction ontology terms as non-fatal qualification violations and report rejected terms.
