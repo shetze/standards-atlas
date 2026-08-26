@@ -164,9 +164,12 @@ def qualify_semantic_extraction(
 
             def report_progress(event: ExtractionProgress) -> None:
                 current = progress_state["completed"] + 1
+                human_clause = event.clause_reference
+                if event.clause_title:
+                    human_clause += f" — {event.clause_title}"
                 prefix = (
                     f"[Semantic extraction {current:02d}/{total_attempts:02d}] "
-                    f"{event.document_key}/{event.clause_id}"
+                    f"{human_clause} ({event.document_key}/{event.clause_id})"
                 )
                 if event.phase == "started":
                     typer.echo(f"{prefix} started")
@@ -294,6 +297,17 @@ def qualify_semantic_extraction(
     typer.echo(f"Ontology violations      : {report.ontology_violation_count}")
     typer.echo(f"Extraction failures      : {report.extraction_failure_count}")
     typer.echo(f"Timeouts                 : {report.timeout_count}")
+    for failure in report.extraction_failures:
+        human_reference = failure.get("clause_reference") or (
+            f"{failure['document_key']}/{failure['clause_id']}"
+        )
+        title = failure.get("clause_title")
+        if title:
+            human_reference += f" — {title}"
+        typer.echo(
+            f"  - {human_reference} [{failure['clause_id']}]: "
+            f"{failure['kind']} ({failure['error_type']})"
+        )
     if report.ontology_violations:
         for violation in report.ontology_violations:
             typer.echo(f"  - {violation.kind}: {violation.term} ({violation.count})")

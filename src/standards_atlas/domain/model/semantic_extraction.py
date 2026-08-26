@@ -75,7 +75,12 @@ class ExtractionViolation(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    kind: Literal["undeclared_class", "undeclared_property", "invalid_relation"]
+    kind: Literal[
+        "undeclared_class",
+        "undeclared_property",
+        "duplicate_entity_id",
+        "invalid_relation",
+    ]
     term: str = Field(min_length=1)
     reason: str = Field(min_length=1)
 
@@ -86,6 +91,8 @@ class ClauseSemanticExtraction(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     clause_id: str = Field(min_length=1)
+    clause_reference: str | None = None
+    clause_title: str | None = None
     ontology_versions: tuple[str, ...]
     entities: tuple[ExtractedEntity, ...] = ()
     relations: tuple[ExtractedRelation, ...] = ()
@@ -112,6 +119,8 @@ class ExtractionFailure(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     clause_id: str = Field(min_length=1)
+    clause_reference: str | None = None
+    clause_title: str | None = None
     kind: Literal["timeout", "response_error", "unavailable"]
     error_type: str = Field(min_length=1)
     message: str = Field(min_length=1)

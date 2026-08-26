@@ -97,6 +97,8 @@ class ExtractionProgress:
 
     document_key: str
     clause_id: str
+    clause_reference: str
+    clause_title: str | None
     phase: str
     status: str | None = None
     duration_seconds: float | None = None
@@ -139,6 +141,8 @@ class SemanticExtractionService:
                     ExtractionProgress(
                         document_key=document.key.value,
                         clause_id=clause_id,
+                        clause_reference=clause.reference.as_text(),
+                        clause_title=clause.title,
                         phase="started",
                     )
                 )
@@ -162,6 +166,8 @@ class SemanticExtractionService:
                 failures.append(
                     ExtractionFailure(
                         clause_id=clause_id,
+                        clause_reference=clause.reference.as_text(),
+                        clause_title=clause.title,
                         kind=kind,
                         error_type=type(error).__name__,
                         message=str(error),
@@ -172,6 +178,8 @@ class SemanticExtractionService:
                         ExtractionProgress(
                             document_key=document.key.value,
                             clause_id=clause_id,
+                            clause_reference=clause.reference.as_text(),
+                            clause_title=clause.title,
                             phase="finished",
                             status=kind,
                             duration_seconds=duration,
@@ -185,6 +193,8 @@ class SemanticExtractionService:
                     ExtractionProgress(
                         document_key=document.key.value,
                         clause_id=clause_id,
+                        clause_reference=clause.reference.as_text(),
+                        clause_title=clause.title,
                         phase="finished",
                         status="ok",
                         duration_seconds=time.monotonic() - started,

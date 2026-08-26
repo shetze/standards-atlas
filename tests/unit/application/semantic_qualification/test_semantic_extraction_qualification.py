@@ -98,7 +98,7 @@ def test_semantic_extraction_qualification_reports_eligibility_counts_and_model(
         extraction_model="mistral-small-3.2-24b-instruct-q4-k-m",
     )
 
-    assert report.schema_version == "1.3"
+    assert report.schema_version == "1.4"
     assert report.extraction_model == "mistral-small-3.2-24b-instruct-q4-k-m"
     assert report.selected_clause_count == 50
     assert report.eligibility_context_clause_count == 50
@@ -176,7 +176,7 @@ def test_semantic_extraction_qualification_counts_rejected_ontology_terms() -> N
         ),
     )
 
-    assert report.schema_version == "1.3"
+    assert report.schema_version == "1.4"
     assert report.ontology_conformance == 1 / 3
     assert report.ontology_violation_count == 3
     assert report.undeclared_class_count == 1
@@ -194,6 +194,8 @@ def test_semantic_extraction_qualification_reports_non_fatal_llm_failures() -> N
         failures=(
             ExtractionFailure(
                 clause_id="c1",
+                clause_reference="IEC 61508-2:2010 7.4.1",
+                clause_title="Verification",
                 kind="timeout",
                 error_type="LlmTimeoutError",
                 message="timed out after 240s",
@@ -218,12 +220,14 @@ def test_semantic_extraction_qualification_reports_non_fatal_llm_failures() -> N
         eligible_clause_count=2,
     )
 
-    assert report.schema_version == "1.3"
+    assert report.schema_version == "1.4"
     assert report.attempted_clause_count == 2
     assert report.extracted_clause_count == 0
     assert report.extraction_failure_count == 2
     assert report.timeout_count == 1
     assert report.response_error_count == 1
+    assert report.extraction_failures[0]["clause_reference"] == "IEC 61508-2:2010 7.4.1"
+    assert report.extraction_failures[0]["clause_title"] == "Verification"
     assert report.unavailable_count == 0
     assert report.extraction_timeout_seconds == 240
     assert report.passed is False

@@ -47,7 +47,7 @@ class SemanticExtractionQualificationReport(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.3"
+    schema_version: str = "1.4"
     task: str = "formal-semantic-knowledge-extraction"
     ontology_versions: tuple[str, ...]
     extraction_model: str | None = None
@@ -125,6 +125,8 @@ def qualify_semantic_extractions(
             {
                 "document_key": document.source_document_key,
                 "clause_id": failure.clause_id,
+                "clause_reference": failure.clause_reference or "",
+                "clause_title": failure.clause_title or "",
                 "kind": failure.kind,
                 "error_type": failure.error_type,
                 "message": failure.message,

@@ -116,6 +116,8 @@ The current projection uses `standards-atlas-core@1.1.0` and, when Functional Sa
 
 Slice 4 adds ontology-guided concept and relation extraction as a separate, rebuildable artifact. Existing Knowledge Domain and semantic-taxonomy results act as deterministic eligibility signals. Extractors are constrained to classes and properties declared by the selected formal ontologies, while each inferred assertion carries an epistemic CBox context with confidence and extraction provenance. `EngineeringDocument` remains unchanged. Unknown classes or properties returned by an extractor are rejected non-fatally and retained as extraction violations for qualification; rejected terms never enter the ABox. The extraction prompt receives the selected ontology classes and properties as closed vocabularies, but runtime validation remains authoritative.
 
+Entity identity and response-local relation references are deliberately separated. The LLM returns an ordered entity array and relations refer to zero-based entity indexes; it does not generate persistent or response-local entity identifiers. The adapter derives stable `stat:` entity IRIs from document key, internal clause ID, normalized label, and ontology class. Extraction artifacts and qualification diagnostics retain both the stable internal clause ID and the human-readable standard clause reference (plus title when available).
+
 Slice 4 still does **not** introduce:
 
 - SHACL validation;

@@ -73,8 +73,9 @@ def test_llm_timeout_is_recorded_and_next_clause_continues() -> None:
     clauses = tuple(
         Clause(
             id=ClauseId(value=f"clause-{index}"),
-            reference=StandardReference(standard="TEST", clause=str(index)),
+            reference=StandardReference(standard="TEST", year=2026, clause=str(index)),
             clause_type=ClauseType.CLAUSE,
+            title=f"Clause {index}",
         )
         for index in (1, 2)
     )
@@ -119,9 +120,12 @@ def test_llm_timeout_is_recorded_and_next_clause_continues() -> None:
     assert len(extraction.failures) == 1
     assert extraction.failures[0].clause_id == "clause-1"
     assert extraction.failures[0].kind == "timeout"
+    assert extraction.failures[0].clause_reference == "TEST:2026 1"
+    assert extraction.failures[0].clause_title == "Clause 1"
     assert [(item.clause_id, item.phase, item.status) for item in events] == [
         ("clause-1", "started", None),
         ("clause-1", "finished", "timeout"),
         ("clause-2", "started", None),
         ("clause-2", "finished", "ok"),
     ]
+    assert {item.clause_reference for item in events} == {"TEST:2026 1", "TEST:2026 2"}

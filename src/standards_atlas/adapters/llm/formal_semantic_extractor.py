@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import unicodedata
 
 from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
 from standards_atlas.application.semantic_extraction import FormalOntologyVocabulary
@@ -27,9 +29,8 @@ _SCHEMA = {
             "items": {
                 "type": "object",
                 "additionalProperties": False,
-                "required": ["id", "class_iri", "label", "confidence", "evidence"],
+                "required": ["class_iri", "label", "confidence", "evidence"],
                 "properties": {
-                    "id": {"type": "string"},
                     "class_iri": {"type": "string"},
                     "label": {"type": "string"},
                     "confidence": {"type": "number", "minimum": 0, "maximum": 1},
@@ -42,11 +43,17 @@ _SCHEMA = {
             "items": {
                 "type": "object",
                 "additionalProperties": False,
-                "required": ["subject_id", "predicate", "object_id", "confidence", "evidence"],
+                "required": [
+                    "subject_index",
+                    "predicate",
+                    "object_index",
+                    "confidence",
+                    "evidence",
+                ],
                 "properties": {
-                    "subject_id": {"type": "string"},
+                    "subject_index": {"type": "integer", "minimum": 0},
                     "predicate": {"type": "string"},
-                    "object_id": {"type": "string"},
+                    "object_index": {"type": "integer", "minimum": 0},
                     "confidence": {"type": "number", "minimum": 0, "maximum": 1},
                     "evidence": {"type": "string"},
                 },
@@ -64,8 +71,8 @@ class OntologyGuidedLlmExtractor:
         gateway: LlmGateway,
         *,
         model: str | None = None,
-        prompt_version: str = "ontology-guided-v1",
-        extractor_version: str = "1.0.0",
+        prompt_version: str = "ontology-guided-v2",
+        extractor_version: str = "1.1.0",
     ) -> None:
         self._gateway = gateway
         self._model = model
@@ -92,12 +99,16 @@ class OntologyGuidedLlmExtractor:
                 "and allowed_properties arrays are closed vocabularies: copy class_iri and "
                 "predicate values exactly from those arrays and never invent, shorten, expand, "
                 "or normalize a term. Omit an entity or relation if no allowed term fits. Do not "
-                "infer cross-standard equivalence or mapping. Evidence must be a short rationale, "
-                "not a quotation from the source."
+                "infer cross-standard equivalence or mapping. The entities array is ordered; "
+                "relations MUST reference entities only by zero-based subject_index and "
+                "object_index into that array. Evidence must be a short rationale, not a "
+                "quotation from the source."
             ),
             user_prompt=json.dumps(
                 {
                     "document_key": document_key,
+                    "clause_reference": clause.reference.as_text(),
+                    "clause_title": clause.title,
                     "clause_id": clause.id.value,
                     "clause_text": clause.plain_text,
                     "semantic_context": context,
@@ -111,11 +122,10 @@ class OntologyGuidedLlmExtractor:
         result = self._gateway.generate_structured(request)
         payload = dict(result.value)
         raw_entities = payload.get("entities", [])
-        entity_ids: dict[str, SemanticResource] = {}
-        entities = []
+        entity_resources_by_index: list[SemanticResource | None] = []
+        entities_by_resource: dict[str, ExtractedEntity] = {}
         violations: list[ExtractionViolation] = []
         for raw in raw_entities:
-            local_id = str(raw["id"]).strip()
             class_iri = str(raw["class_iri"]).strip()
             if class_iri not in vocabulary.classes:
                 violations.append(
@@ -125,26 +135,32 @@ class OntologyGuidedLlmExtractor:
                         reason="class is not declared by the selected formal ontologies",
                     )
                 )
+                entity_resources_by_index.append(None)
                 continue
-            digest = hashlib.sha256(
-                f"{document_key}|{clause.id.value}|{local_id}|{class_iri}".encode()
-            ).hexdigest()[:20]
-            resource = SemanticResource.stat(f"entity/{document_key}/{clause.id.value}/{digest}")
-            entity_ids[local_id] = resource
-            entities.append(
+            label = str(raw["label"]).strip()
+            resource = _entity_resource(
+                document_key=document_key,
+                clause_id=clause.id.value,
+                label=label,
+                class_iri=class_iri,
+            )
+            entities_by_resource.setdefault(
+                resource.iri,
                 ExtractedEntity(
                     id=resource,
                     class_iri=SemanticResource(iri=class_iri),
-                    label=str(raw["label"]),
+                    label=label,
                     confidence=float(raw["confidence"]),
                     evidence=str(raw["evidence"]),
-                )
+                ),
             )
+            entity_resources_by_index.append(resource)
+        entities = list(entities_by_resource.values())
         relations = []
         for raw in payload.get("relations", []):
             predicate = str(raw["predicate"]).strip()
-            subject_id = str(raw["subject_id"]).strip()
-            object_id = str(raw["object_id"]).strip()
+            subject_index = int(raw["subject_index"])
+            object_index = int(raw["object_index"])
             if predicate not in vocabulary.properties:
                 violations.append(
                     ExtractionViolation(
@@ -154,20 +170,29 @@ class OntologyGuidedLlmExtractor:
                     )
                 )
                 continue
-            if subject_id not in entity_ids or object_id not in entity_ids:
+            if not _valid_entity_index(subject_index, entity_resources_by_index) or not (
+                _valid_entity_index(object_index, entity_resources_by_index)
+            ):
                 violations.append(
                     ExtractionViolation(
                         kind="invalid_relation",
                         term=predicate,
-                        reason="relation references an entity rejected or missing in the response",
+                        reason=(
+                            "relation references an entity index that is out of range "
+                            "or points to a rejected entity"
+                        ),
                     )
                 )
                 continue
+            subject = entity_resources_by_index[subject_index]
+            object_ = entity_resources_by_index[object_index]
+            assert subject is not None
+            assert object_ is not None
             try:
                 relation = ExtractedRelation(
-                    subject_id=entity_ids[subject_id],
+                    subject_id=subject,
                     predicate=SemanticResource(iri=predicate),
-                    object_id=entity_ids[object_id],
+                    object_id=object_,
                     confidence=float(raw["confidence"]),
                     evidence=str(raw["evidence"]),
                 )
@@ -183,6 +208,8 @@ class OntologyGuidedLlmExtractor:
             relations.append(relation)
         return ClauseSemanticExtraction(
             clause_id=clause.id.value,
+            clause_reference=clause.reference.as_text(),
+            clause_title=clause.title,
             ontology_versions=ontology_versions,
             entities=tuple(entities),
             relations=tuple(relations),
@@ -197,3 +224,22 @@ class OntologyGuidedLlmExtractor:
                 raw_response_hash=result.raw_response_hash,
             ),
         )
+
+
+def _entity_resource(
+    *, document_key: str, clause_id: str, label: str, class_iri: str
+) -> SemanticResource:
+    normalized_label = _normalize_entity_label(label)
+    digest = hashlib.sha256(
+        f"{document_key}|{clause_id}|{normalized_label}|{class_iri}".encode()
+    ).hexdigest()[:20]
+    return SemanticResource.stat(f"entity/{document_key}/{clause_id}/{digest}")
+
+
+def _normalize_entity_label(label: str) -> str:
+    normalized = unicodedata.normalize("NFKC", label).strip().casefold()
+    return re.sub(r"\s+", " ", normalized)
+
+
+def _valid_entity_index(index: int, resources: list[SemanticResource | None]) -> bool:
+    return 0 <= index < len(resources) and resources[index] is not None
