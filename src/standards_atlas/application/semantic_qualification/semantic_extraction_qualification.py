@@ -29,6 +29,17 @@ class SemanticExtractionQualificationConfig(BaseModel):
     gold_path: Path | None = None
     generate_missing: bool = True
     model: str | None = None
+    timeout_seconds: float = Field(default=240.0, gt=0.0)
+
+
+class OntologyViolationSummary(BaseModel):
+    """Aggregate count for one rejected ontology term."""
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: str = Field(min_length=1)
+    term: str = Field(min_length=1)
+    count: int = Field(ge=1)
 
 
 class SemanticExtractionQualificationReport(BaseModel):
@@ -36,14 +47,16 @@ class SemanticExtractionQualificationReport(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.1"
+    schema_version: str = "1.3"
     task: str = "formal-semantic-knowledge-extraction"
     ontology_versions: tuple[str, ...]
     extraction_model: str | None = None
     extraction_provider: str | None = None
+    extraction_timeout_seconds: float = Field(default=240.0, gt=0.0)
     selected_clause_count: int = Field(default=0, ge=0)
     eligibility_context_clause_count: int = Field(default=0, ge=0)
     eligible_clause_count: int = Field(default=0, ge=0)
+    attempted_clause_count: int = Field(default=0, ge=0)
     extracted_clause_count: int = Field(default=0, ge=0)
     skipped_clause_count: int = Field(default=0, ge=0)
     documents: int = Field(ge=0)
@@ -51,6 +64,16 @@ class SemanticExtractionQualificationReport(BaseModel):
     entities: int = Field(ge=0)
     relations: int = Field(ge=0)
     ontology_conformance: float = Field(ge=0.0, le=1.0)
+    ontology_violation_count: int = Field(default=0, ge=0)
+    undeclared_class_count: int = Field(default=0, ge=0)
+    undeclared_property_count: int = Field(default=0, ge=0)
+    invalid_relation_count: int = Field(default=0, ge=0)
+    ontology_violations: tuple[OntologyViolationSummary, ...] = ()
+    extraction_failure_count: int = Field(default=0, ge=0)
+    timeout_count: int = Field(default=0, ge=0)
+    response_error_count: int = Field(default=0, ge=0)
+    unavailable_count: int = Field(default=0, ge=0)
+    extraction_failures: tuple[dict[str, str], ...] = ()
     entity_confidence_pass_rate: float = Field(ge=0.0, le=1.0)
     relation_confidence_pass_rate: float = Field(ge=0.0, le=1.0)
     gold_available: bool = False
@@ -93,8 +116,21 @@ def qualify_semantic_extractions(
     vocabulary = FormalOntologyVocabulary.load(config.ontology_versions)
     entity_total = relation_total = conforming = total_terms = 0
     entity_confident = relation_confident = 0
+    violation_counts: dict[tuple[str, str], int] = {}
+    invalid_relation_count = 0
+    extraction_failures: list[dict[str, str]] = []
     clauses = 0
     for document in extractions:
+        extraction_failures.extend(
+            {
+                "document_key": document.source_document_key,
+                "clause_id": failure.clause_id,
+                "kind": failure.kind,
+                "error_type": failure.error_type,
+                "message": failure.message,
+            }
+            for failure in document.failures
+        )
         for clause in document.clauses:
             clauses += 1
             for entity in clause.entities:
@@ -111,6 +147,13 @@ def qualify_semantic_extractions(
                     conforming += 1
                 if relation.confidence >= config.minimum_relation_confidence:
                     relation_confident += 1
+            for violation in clause.violations:
+                key = (violation.kind, violation.term)
+                violation_counts[key] = violation_counts.get(key, 0) + 1
+                if violation.kind in {"undeclared_class", "undeclared_property"}:
+                    total_terms += 1
+                elif violation.kind == "invalid_relation":
+                    invalid_relation_count += 1
 
     ontology_conformance = conforming / total_terms if total_terms else 1.0
     entity_pass = entity_confident / entity_total if entity_total else 1.0
@@ -118,7 +161,9 @@ def qualify_semantic_extractions(
     selected_count = (
         selected_clause_count
         if selected_clause_count is not None
-        else expected_clause_count if expected_clause_count is not None else clauses
+        else expected_clause_count
+        if expected_clause_count is not None
+        else clauses
     )
     context_count = (
         eligibility_context_clause_count
@@ -133,9 +178,16 @@ def qualify_semantic_extractions(
             "qualification eligibility context missing for "
             f"{selected_count - context_count} of {selected_count} selected clauses"
         )
-    if eligible_count > 0 and clauses == 0:
+    failed_clause_count = len(extraction_failures)
+    attempted_clause_count = clauses + failed_clause_count
+    if eligible_count > 0 and attempted_clause_count == 0:
         failures.append(
             "no semantic extractions were produced for "
+            f"{eligible_count} eligible qualification clauses"
+        )
+    if failed_clause_count:
+        failures.append(
+            f"semantic extraction failed for {failed_clause_count} of "
             f"{eligible_count} eligible qualification clauses"
         )
     if ontology_conformance < config.minimum_ontology_conformance:
@@ -155,13 +207,26 @@ def qualify_semantic_extractions(
         entity_metrics = entity_counts.metrics()
         relation_metrics = relation_counts.metrics()
 
+    violation_summaries = tuple(
+        OntologyViolationSummary(kind=kind, term=term, count=count)
+        for (kind, term), count in sorted(violation_counts.items())
+    )
+    undeclared_class_count = sum(
+        item.count for item in violation_summaries if item.kind == "undeclared_class"
+    )
+    undeclared_property_count = sum(
+        item.count for item in violation_summaries if item.kind == "undeclared_property"
+    )
+
     return SemanticExtractionQualificationReport(
         ontology_versions=config.ontology_versions,
         extraction_model=extraction_model,
         extraction_provider=extraction_provider,
+        extraction_timeout_seconds=config.timeout_seconds,
         selected_clause_count=selected_count,
         eligibility_context_clause_count=context_count,
         eligible_clause_count=eligible_count,
+        attempted_clause_count=attempted_clause_count,
         extracted_clause_count=clauses,
         skipped_clause_count=skipped_count,
         documents=len(extractions),
@@ -169,6 +234,16 @@ def qualify_semantic_extractions(
         entities=entity_total,
         relations=relation_total,
         ontology_conformance=ontology_conformance,
+        ontology_violation_count=sum(item.count for item in violation_summaries),
+        undeclared_class_count=undeclared_class_count,
+        undeclared_property_count=undeclared_property_count,
+        invalid_relation_count=invalid_relation_count,
+        ontology_violations=violation_summaries,
+        extraction_failure_count=failed_clause_count,
+        timeout_count=sum(item["kind"] == "timeout" for item in extraction_failures),
+        response_error_count=sum(item["kind"] == "response_error" for item in extraction_failures),
+        unavailable_count=sum(item["kind"] == "unavailable" for item in extraction_failures),
+        extraction_failures=tuple(extraction_failures),
         entity_confidence_pass_rate=entity_pass,
         relation_confidence_pass_rate=relation_pass,
         gold_available=gold_available,

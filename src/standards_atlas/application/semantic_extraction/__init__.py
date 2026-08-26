@@ -3,6 +3,7 @@
 from .service import (
     ExtractionEligibility,
     ExtractionEligibilityContext,
+    ExtractionProgress,
     SemanticExtractionService,
     extraction_eligibility,
 )
@@ -11,6 +12,7 @@ from .vocabulary import FormalOntologyVocabulary
 __all__ = [
     "ExtractionEligibility",
     "ExtractionEligibilityContext",
+    "ExtractionProgress",
     "FormalOntologyVocabulary",
     "SemanticExtractionService",
     "extraction_eligibility",

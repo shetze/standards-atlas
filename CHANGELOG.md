@@ -44,6 +44,10 @@
 
 ## Unreleased
 
+- Make semantic extraction qualification resilient to per-clause LLM timeouts, response errors, and temporary endpoint failures; persist failures and continue remaining clauses.
+- Add clause-level semantic extraction progress output and a manifest-owned per-request timeout.
+- Treat undeclared semantic-extraction ontology terms as non-fatal qualification violations and report rejected terms.
+
 ### Semantic extraction qualification context fix
 
 - derive Slice-4b extraction eligibility from the latest qualification cascade consensus instead of requiring semantic classifications to be persisted back into `EngineeringDocument`

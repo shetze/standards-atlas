@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .formal_semantics import FORMAL_SEMANTIC_NAMESPACE, SemanticResource
@@ -68,6 +70,16 @@ class ExtractedRelation(BaseModel):
         return self
 
 
+class ExtractionViolation(BaseModel):
+    """Non-fatal rejected output from ontology-guided extraction."""
+
+    model_config = ConfigDict(frozen=True)
+
+    kind: Literal["undeclared_class", "undeclared_property", "invalid_relation"]
+    term: str = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+
 class ClauseSemanticExtraction(BaseModel):
     """Auditable semantic extraction for one source clause."""
 
@@ -77,6 +89,7 @@ class ClauseSemanticExtraction(BaseModel):
     ontology_versions: tuple[str, ...]
     entities: tuple[ExtractedEntity, ...] = ()
     relations: tuple[ExtractedRelation, ...] = ()
+    violations: tuple[ExtractionViolation, ...] = ()
     provenance: ExtractionProvenance
 
     @model_validator(mode="after")
@@ -93,6 +106,17 @@ class ClauseSemanticExtraction(BaseModel):
         return self
 
 
+class ExtractionFailure(BaseModel):
+    """Non-fatal LLM failure for one source clause."""
+
+    model_config = ConfigDict(frozen=True)
+
+    clause_id: str = Field(min_length=1)
+    kind: Literal["timeout", "response_error", "unavailable"]
+    error_type: str = Field(min_length=1)
+    message: str = Field(min_length=1)
+
+
 class DocumentSemanticExtraction(BaseModel):
     """Rebuildable extraction artifact kept separate from EngineeringDocument."""
 
@@ -102,10 +126,20 @@ class DocumentSemanticExtraction(BaseModel):
     source_document_key: str = Field(min_length=1)
     extraction_version: str = Field(default="1.0.0", min_length=1)
     clauses: tuple[ClauseSemanticExtraction, ...] = ()
+    failures: tuple[ExtractionFailure, ...] = ()
 
     @model_validator(mode="after")
     def clause_ids_are_unique(self) -> DocumentSemanticExtraction:
         ids = [item.clause_id for item in self.clauses]
         if len(ids) != len(set(ids)):
             raise ValueError("semantic extraction may contain each clause only once")
+        failure_ids = [item.clause_id for item in self.failures]
+        if len(failure_ids) != len(set(failure_ids)):
+            raise ValueError("semantic extraction may contain each failed clause only once")
+        overlap = set(ids) & set(failure_ids)
+        if overlap:
+            overlap_ids = sorted(overlap)
+            raise ValueError(
+                f"semantic extraction clause cannot be both successful and failed: {overlap_ids!r}"
+            )
         return self

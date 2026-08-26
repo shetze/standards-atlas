@@ -44,9 +44,7 @@ def test_selected_clause_ids_keep_legacy_flat_input_compatibility() -> None:
         ),
     )
 
-    assert _selected_clause_ids_by_document(examples) == {
-        "ISO26262-11": {"clause-a"}
-    }
+    assert _selected_clause_ids_by_document(examples) == {"ISO26262-11": {"clause-a"}}
 
 
 def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -> None:
@@ -115,9 +113,7 @@ def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -
 
     assert contexts[("DOC", "c1")].knowledge_kinds == (KnowledgeKind.TECHNIQUE_OR_MEASURE,)
     assert contexts[("DOC", "c1")].applicability_present is True
-    assert contexts[("DOC", "c1")].applicability_functions == (
-        ApplicabilityFunction.INCLUSION,
-    )
+    assert contexts[("DOC", "c1")].applicability_functions == (ApplicabilityFunction.INCLUSION,)
     assert contexts[("DOC", "c1")].role_semantics_present is True
     assert contexts[("DOC", "c2")].knowledge_kinds == (KnowledgeKind.PROCESS,)
 

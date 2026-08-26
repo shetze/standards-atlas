@@ -114,7 +114,7 @@ Slice 3 adds deterministic ABox/CBox projection from `EngineeringDocument`. The 
 
 The current projection uses `standards-atlas-core@1.1.0` and, when Functional Safety context is present, `functional-safety@1.1.0`. A Turtle adapter emits direct RDF triples plus reified `stat:SemanticAssertion` and explicit context-facet resources. The provider-neutral projection can also be persisted as versioned JSON under `.atlas/data/formal-semantic-projections/`.
 
-Slice 4 adds ontology-guided concept and relation extraction as a separate, rebuildable artifact. Existing Knowledge Domain and semantic-taxonomy results act as deterministic eligibility signals. Extractors are constrained to classes and properties declared by the selected formal ontologies, while each inferred assertion carries an epistemic CBox context with confidence and extraction provenance. `EngineeringDocument` remains unchanged.
+Slice 4 adds ontology-guided concept and relation extraction as a separate, rebuildable artifact. Existing Knowledge Domain and semantic-taxonomy results act as deterministic eligibility signals. Extractors are constrained to classes and properties declared by the selected formal ontologies, while each inferred assertion carries an epistemic CBox context with confidence and extraction provenance. `EngineeringDocument` remains unchanged. Unknown classes or properties returned by an extractor are rejected non-fatally and retained as extraction violations for qualification; rejected terms never enter the ABox. The extraction prompt receives the selected ontology classes and properties as closed vocabularies, but runtime validation remains authoritative.
 
 Slice 4 still does **not** introduce:
 

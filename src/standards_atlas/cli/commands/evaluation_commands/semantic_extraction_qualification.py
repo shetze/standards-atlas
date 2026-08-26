@@ -22,6 +22,7 @@ from standards_atlas.adapters.llm.formal_semantic_extractor import OntologyGuide
 from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
 from standards_atlas.application.semantic_extraction import (
     ExtractionEligibilityContext,
+    ExtractionProgress,
     SemanticExtractionService,
     extraction_eligibility,
 )
@@ -107,10 +108,21 @@ def qualify_semantic_extraction(
         }
         eligible_ids_by_document[document.key.value] = eligible_ids
 
+    pending_ids_by_document: dict[str, frozenset[str]] = {}
+    for document_key, selected_ids in eligible_ids_by_document.items():
+        existing = repository.load(document_key)
+        existing_ids = (
+            {item.clause_id for item in existing.clauses} if existing is not None else set()
+        )
+        pending_ids_by_document[document_key] = (
+            frozenset(selected_ids) if fresh else frozenset(selected_ids.difference(existing_ids))
+        )
+
     resolved_model: str | None = config.model
     resolved_provider: str | None = None
     if config.generate_missing:
         llm_config = LlmConfig.load(None)
+        llm_config = replace(llm_config, timeout_seconds=config.timeout_seconds)
         if fresh:
             llm_config = replace(llm_config, cache_directory=None)
         model_candidate = _resolve_extraction_model(manifest, config.model)
@@ -147,6 +159,32 @@ def qualify_semantic_extraction(
                 model=gateway_model,
             )
             service = SemanticExtractionService(extractor)
+            progress_state = {"completed": 0, "ok": 0, "failed": 0, "timeout": 0}
+            total_attempts = sum(len(ids) for ids in pending_ids_by_document.values())
+
+            def report_progress(event: ExtractionProgress) -> None:
+                current = progress_state["completed"] + 1
+                prefix = (
+                    f"[Semantic extraction {current:02d}/{total_attempts:02d}] "
+                    f"{event.document_key}/{event.clause_id}"
+                )
+                if event.phase == "started":
+                    typer.echo(f"{prefix} started")
+                    return
+                progress_state["completed"] += 1
+                duration = event.duration_seconds or 0.0
+                if event.status == "ok":
+                    progress_state["ok"] += 1
+                    typer.echo(
+                        f"{prefix} ok entities={event.entity_count} "
+                        f"relations={event.relation_count} elapsed={duration:.1f}s"
+                    )
+                    return
+                progress_state["failed"] += 1
+                if event.status == "timeout":
+                    progress_state["timeout"] += 1
+                typer.echo(f"{prefix} {event.status} elapsed={duration:.1f}s")
+
             for document in documents:
                 selected_ids = eligible_ids_by_document.get(document.key.value)
                 if not selected_ids:
@@ -157,28 +195,45 @@ def qualify_semantic_extraction(
                     if existing is not None
                     else {}
                 )
-                extraction_ids = (
-                    frozenset(selected_ids)
-                    if fresh
-                    else frozenset(selected_ids.difference(existing_by_id))
-                )
+                extraction_ids = pending_ids_by_document.get(document.key.value, frozenset())
                 if extraction_ids:
                     generated = service.extract_document(
                         document,
                         ontology_versions=config.ontology_versions,
                         clause_ids=extraction_ids,
                         eligibility_by_clause=contexts_by_document.get(document.key.value, {}),
+                        progress=report_progress,
                     )
                     merged = {
                         **existing_by_id,
                         **{item.clause_id: item for item in generated.clauses},
                     }
+                    existing_failures = (
+                        {item.clause_id: item for item in existing.failures}
+                        if existing is not None
+                        else {}
+                    )
+                    if fresh:
+                        for clause_id in extraction_ids:
+                            existing_failures.pop(clause_id, None)
+                    merged_failures = {
+                        **existing_failures,
+                        **{item.clause_id: item for item in generated.failures},
+                    }
+                    for clause_id in generated.clauses:
+                        merged_failures.pop(clause_id.clause_id, None)
                     repository.save(
                         DocumentSemanticExtraction(
                             source_document_key=document.key.value,
                             clauses=tuple(merged[key] for key in sorted(merged)),
+                            failures=tuple(merged_failures[key] for key in sorted(merged_failures)),
                         )
                     )
+            typer.echo(
+                "Semantic extraction     : "
+                f"ok={progress_state['ok']} failed={progress_state['failed']} "
+                f"timeouts={progress_state['timeout']}"
+            )
         finally:
             if llm_config.server.enabled:
                 server.stop()
@@ -192,8 +247,15 @@ def qualify_semantic_extraction(
             selected_clauses = tuple(
                 item for item in loaded.clauses if item.clause_id in selected_ids
             )
-            if selected_clauses:
-                extractions.append(loaded.model_copy(update={"clauses": selected_clauses}))
+            selected_failures = tuple(
+                item for item in loaded.failures if item.clause_id in selected_ids
+            )
+            if selected_clauses or selected_failures:
+                extractions.append(
+                    loaded.model_copy(
+                        update={"clauses": selected_clauses, "failures": selected_failures}
+                    )
+                )
 
     selected_clause_count = len(selected_examples)
     eligibility_context_clause_count = sum(
@@ -224,10 +286,17 @@ def qualify_semantic_extraction(
     typer.echo(f"Selected clauses         : {report.selected_clause_count}")
     typer.echo(f"Eligibility contexts     : {report.eligibility_context_clause_count}")
     typer.echo(f"Eligible clauses         : {report.eligible_clause_count}")
+    typer.echo(f"Attempted clauses        : {report.attempted_clause_count}")
     typer.echo(f"Extracted clauses        : {report.extracted_clause_count}")
     typer.echo(f"Skipped clauses          : {report.skipped_clause_count}")
     typer.echo(f"Semantic extraction docs : {report.documents}")
     typer.echo(f"Ontology conformance     : {report.ontology_conformance:.3f}")
+    typer.echo(f"Ontology violations      : {report.ontology_violation_count}")
+    typer.echo(f"Extraction failures      : {report.extraction_failure_count}")
+    typer.echo(f"Timeouts                 : {report.timeout_count}")
+    if report.ontology_violations:
+        for violation in report.ontology_violations:
+            typer.echo(f"  - {violation.kind}: {violation.term} ({violation.count})")
     typer.echo(
         "Gold scoring             : "
         + (f"{report.gold_scored_items} cases" if report.gold_available else "unscored")

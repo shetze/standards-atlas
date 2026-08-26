@@ -13,6 +13,7 @@ from standards_atlas.domain.model import (
     ExtractedEntity,
     ExtractedRelation,
     ExtractionProvenance,
+    ExtractionViolation,
     SemanticResource,
 )
 
@@ -87,10 +88,12 @@ class OntologyGuidedLlmExtractor:
             temperature=0.0,
             output_schema=_SCHEMA,
             system_prompt=(
-                "Extract engineering entities and relations from the clause. Use only the "
-                "supplied ontology classes and properties. Do not infer cross-standard "
-                "equivalence or mapping. Evidence must be a short rationale, not a quotation "
-                "from the source."
+                "Extract engineering entities and relations from the clause. The allowed_classes "
+                "and allowed_properties arrays are closed vocabularies: copy class_iri and "
+                "predicate values exactly from those arrays and never invent, shorten, expand, "
+                "or normalize a term. Omit an entity or relation if no allowed term fits. Do not "
+                "infer cross-standard equivalence or mapping. Evidence must be a short rationale, "
+                "not a quotation from the source."
             ),
             user_prompt=json.dumps(
                 {
@@ -110,10 +113,19 @@ class OntologyGuidedLlmExtractor:
         raw_entities = payload.get("entities", [])
         entity_ids: dict[str, SemanticResource] = {}
         entities = []
+        violations: list[ExtractionViolation] = []
         for raw in raw_entities:
             local_id = str(raw["id"]).strip()
             class_iri = str(raw["class_iri"]).strip()
-            vocabulary.require_class(class_iri)
+            if class_iri not in vocabulary.classes:
+                violations.append(
+                    ExtractionViolation(
+                        kind="undeclared_class",
+                        term=class_iri,
+                        reason="class is not declared by the selected formal ontologies",
+                    )
+                )
+                continue
             digest = hashlib.sha256(
                 f"{document_key}|{clause.id.value}|{local_id}|{class_iri}".encode()
             ).hexdigest()[:20]
@@ -131,27 +143,50 @@ class OntologyGuidedLlmExtractor:
         relations = []
         for raw in payload.get("relations", []):
             predicate = str(raw["predicate"]).strip()
-            vocabulary.require_property(predicate)
             subject_id = str(raw["subject_id"]).strip()
             object_id = str(raw["object_id"]).strip()
-            if subject_id not in entity_ids or object_id not in entity_ids:
-                raise ValueError(
-                    "LLM relation references an entity not declared in the same response"
+            if predicate not in vocabulary.properties:
+                violations.append(
+                    ExtractionViolation(
+                        kind="undeclared_property",
+                        term=predicate,
+                        reason="property is not declared by the selected formal ontologies",
+                    )
                 )
-            relations.append(
-                ExtractedRelation(
+                continue
+            if subject_id not in entity_ids or object_id not in entity_ids:
+                violations.append(
+                    ExtractionViolation(
+                        kind="invalid_relation",
+                        term=predicate,
+                        reason="relation references an entity rejected or missing in the response",
+                    )
+                )
+                continue
+            try:
+                relation = ExtractedRelation(
                     subject_id=entity_ids[subject_id],
                     predicate=SemanticResource(iri=predicate),
                     object_id=entity_ids[object_id],
                     confidence=float(raw["confidence"]),
                     evidence=str(raw["evidence"]),
                 )
-            )
+            except ValueError as error:
+                violations.append(
+                    ExtractionViolation(
+                        kind="invalid_relation",
+                        term=predicate,
+                        reason=str(error),
+                    )
+                )
+                continue
+            relations.append(relation)
         return ClauseSemanticExtraction(
             clause_id=clause.id.value,
             ontology_versions=ontology_versions,
             entities=tuple(entities),
             relations=tuple(relations),
+            violations=tuple(violations),
             provenance=ExtractionProvenance(
                 extractor="ontology-guided-llm",
                 extractor_version=self._extractor_version,

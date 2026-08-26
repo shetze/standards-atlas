@@ -14,8 +14,7 @@ def test_v5_manifest_enables_semantic_extraction_qualification() -> None:
     )
     assert manifest.semantic_extraction_qualification.enabled is True
     assert (
-        manifest.semantic_extraction_qualification.model
-        == "mistral-small-3.2-24b-instruct-q4-k-m"
+        manifest.semantic_extraction_qualification.model == "mistral-small-3.2-24b-instruct-q4-k-m"
     )
     assert (
         "standards-atlas-core@1.1.0" in manifest.semantic_extraction_qualification.ontology_versions

@@ -98,7 +98,9 @@ from standards_atlas.domain.model.semantic_extraction import (
     DocumentSemanticExtraction,
     ExtractedEntity,
     ExtractedRelation,
+    ExtractionFailure,
     ExtractionProvenance,
+    ExtractionViolation,
 )
 from standards_atlas.domain.model.source_evidence import (
     BoundingBox,
@@ -130,7 +132,9 @@ __all__ = [
     "DocumentSemanticExtraction",
     "ExtractedEntity",
     "ExtractedRelation",
+    "ExtractionFailure",
     "ExtractionProvenance",
+    "ExtractionViolation",
     "FORMAL_SEMANTIC_PREFIX",
     "ContextFacet",
     "ContextFrame",

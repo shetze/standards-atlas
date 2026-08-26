@@ -2,15 +2,23 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
+from standards_atlas.application.ports.llm_gateway import (
+    LlmGatewayError,
+    LlmResponseError,
+    LlmTimeoutError,
+    LlmUnavailableError,
+)
 from standards_atlas.application.ports.semantic_extraction import SemanticKnowledgeExtractor
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     Clause,
     DocumentSemanticExtraction,
     EngineeringDocument,
+    ExtractionFailure,
     KnowledgeKind,
     ProcessFunction,
 )
@@ -83,6 +91,20 @@ def extraction_eligibility(
     return ExtractionEligibility(bool(unique), unique)
 
 
+@dataclass(frozen=True)
+class ExtractionProgress:
+    """Progress event emitted around one clause extraction attempt."""
+
+    document_key: str
+    clause_id: str
+    phase: str
+    status: str | None = None
+    duration_seconds: float | None = None
+    entity_count: int = 0
+    relation_count: int = 0
+    message: str | None = None
+
+
 class SemanticExtractionService:
     """Extract only from clauses admitted by deterministic or qualification semantics."""
 
@@ -96,8 +118,10 @@ class SemanticExtractionService:
         ontology_versions: tuple[str, ...],
         clause_ids: frozenset[str] | None = None,
         eligibility_by_clause: Mapping[str, ExtractionEligibilityContext] | None = None,
+        progress: Callable[[ExtractionProgress], None] | None = None,
     ) -> DocumentSemanticExtraction:
         clauses = []
+        failures: list[ExtractionFailure] = []
         for clause in document.clauses:
             clause_id = clause.id.value
             if clause_ids is not None and clause_id not in clause_ids:
@@ -110,16 +134,68 @@ class SemanticExtractionService:
             if not extraction_eligibility(clause, context=context).eligible:
                 continue
             effective_clause = _clause_with_context(clause, context)
-            clauses.append(
-                self._extractor.extract(
+            if progress is not None:
+                progress(
+                    ExtractionProgress(
+                        document_key=document.key.value,
+                        clause_id=clause_id,
+                        phase="started",
+                    )
+                )
+            started = time.monotonic()
+            try:
+                extracted = self._extractor.extract(
                     effective_clause,
                     document_key=document.key.value,
                     ontology_versions=ontology_versions,
                 )
-            )
+            except LlmGatewayError as error:
+                duration = time.monotonic() - started
+                if isinstance(error, LlmTimeoutError):
+                    kind = "timeout"
+                elif isinstance(error, LlmResponseError):
+                    kind = "response_error"
+                elif isinstance(error, LlmUnavailableError):
+                    kind = "unavailable"
+                else:
+                    kind = "response_error"
+                failures.append(
+                    ExtractionFailure(
+                        clause_id=clause_id,
+                        kind=kind,
+                        error_type=type(error).__name__,
+                        message=str(error),
+                    )
+                )
+                if progress is not None:
+                    progress(
+                        ExtractionProgress(
+                            document_key=document.key.value,
+                            clause_id=clause_id,
+                            phase="finished",
+                            status=kind,
+                            duration_seconds=duration,
+                            message=str(error),
+                        )
+                    )
+                continue
+            clauses.append(extracted)
+            if progress is not None:
+                progress(
+                    ExtractionProgress(
+                        document_key=document.key.value,
+                        clause_id=clause_id,
+                        phase="finished",
+                        status="ok",
+                        duration_seconds=time.monotonic() - started,
+                        entity_count=len(extracted.entities),
+                        relation_count=len(extracted.relations),
+                    )
+                )
         return DocumentSemanticExtraction(
             source_document_key=document.key.value,
             clauses=tuple(clauses),
+            failures=tuple(failures),
         )
 
 

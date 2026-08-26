@@ -145,10 +145,13 @@ def finalize_qualification_archive(
                 update={
                     "clauses": tuple(
                         item for item in extraction.clauses if item.clause_id in clause_ids
-                    )
+                    ),
+                    "failures": tuple(
+                        item for item in extraction.failures if item.clause_id in clause_ids
+                    ),
                 }
             )
-            if not filtered.clauses:
+            if not filtered.clauses and not filtered.failures:
                 continue
             safe = (
                 document_key.strip()
