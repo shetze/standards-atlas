@@ -66,6 +66,10 @@ class FileSystemEngineeringDocumentRepository:
         """Return whether a document exists."""
         return self._path_for_key(key).exists()
 
+    def delete(self, key: DocumentKey) -> None:
+        """Remove one persisted document when it exists."""
+        self._path_for_key(key).unlink(missing_ok=True)
+
     def list(self) -> tuple[EngineeringDocument, ...]:
         """Return all persisted documents in stable key order."""
         documents = []

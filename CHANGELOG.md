@@ -44,6 +44,8 @@
 
 ## Unreleased
 
+- Refactor multi-part family composition into rebuildable `.atlas/work/composed-documents` publication views; canonical `.atlas/data/documents` now contains physical documents only.
+
 - Make `--task documents` fully deterministic by removing LLM-backed semantic-profile classification from the document/publication plan; `--task qualification` now explicitly owns that classification before corpus construction while keeping Doorstop publication excluded.
 
 - Add bounded retry and clause-level fail-soft handling for truncated ontology-classification responses, with per-clause progress reporting.

@@ -52,7 +52,7 @@ def _part_document(key: str, *clauses: Clause, volume: str = "1") -> Engineering
 
 def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path) -> None:
     repository = FileSystemEngineeringDocumentRepository(tmp_path)
-    repository.save(_document("FAMILY", _clause("A"), _clause("B")))
+    repository.save(_document("FAMILY", _clause("legacy")))
     repository.save(_part_document("PART-1", _clause("A", "Content A")))
     repository.save(
         _part_document(
@@ -67,7 +67,7 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
         "FAMILY", ("PART-1", "SUPPLEMENT", "PART-2")
     )
 
-    assert [clause.reference.clause for clause in composed.clauses] == [
+    assert [clause.reference.clause for clause in composed.document.clauses] == [
         "0",
         "A",
         "0",
@@ -75,26 +75,29 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
         "0",
         "B",
     ]
-    assert [clause.title for clause in composed.clauses[::2]] == ["Part 1", "Part 3-1", "Part 2"]
-    assert [clause.content[0].text for clause in composed.clauses[1::2]] == [
+    assert [clause.title for clause in composed.document.clauses[::2]] == [
+        "Part 1",
+        "Part 3-1",
+        "Part 2",
+    ]
+    assert [clause.content[0].text for clause in composed.document.clauses[1::2]] == [
         "Content A",
         "Supplement content",
         "Content B",
     ]
-    persisted = repository.load(DocumentKey(value="FAMILY"))
-    assert persisted.clauses == composed.clauses
+    assert not repository.exists(DocumentKey(value="FAMILY"))
+    assert (tmp_path / "work" / "composed-documents" / "FAMILY.json").exists()
 
 
 def test_compose_creates_root_for_legacy_supplement_without_clause_zero(
     tmp_path: Path,
 ) -> None:
     repository = FileSystemEngineeringDocumentRepository(tmp_path)
-    repository.save(_document("FAMILY", _clause("S", volume="3§1")))
     repository.save(_document("IEC61508-3-1", _clause("S", "Supplement", volume="3§1")))
 
     composed = build_document_composition_service(tmp_path).compose("FAMILY", ("IEC61508-3-1",))
 
-    root, clause = composed.clauses
+    root, clause = composed.document.clauses
     assert root.reference == StandardReference(standard="TEST", year=2026, clause="0")
     assert root.volume == "3§1"
     assert root.title == "Part 3-1"
@@ -104,7 +107,6 @@ def test_compose_creates_root_for_legacy_supplement_without_clause_zero(
 
 def test_compose_rejects_duplicate_clause_ids_across_parts(tmp_path: Path) -> None:
     repository = FileSystemEngineeringDocumentRepository(tmp_path)
-    repository.save(_document("FAMILY", _clause("A")))
     repository.save(_part_document("PART-1", _clause("A", "First")))
     repository.save(_part_document("PART-2", _clause("A", "Second"), volume="2"))
 
@@ -114,7 +116,6 @@ def test_compose_rejects_duplicate_clause_ids_across_parts(tmp_path: Path) -> No
 
 def test_compose_rejects_multiple_clause_zero_roots(tmp_path: Path) -> None:
     repository = FileSystemEngineeringDocumentRepository(tmp_path)
-    repository.save(_document("FAMILY", _clause("A")))
     root_a = _part_document("PART-1").clauses[0]
     root_b = root_a.model_copy(update={"id": ClauseId(value="second-root")})
     repository.save(_document("PART-1", root_a, root_b, _clause("A", "Content")))

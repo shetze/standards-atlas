@@ -201,14 +201,23 @@ class WorkflowPlanner:
             return steps
 
         atlas_path = str((root / family.atlasdata.path).resolve())
+        import_command = ("uv", "run", "standards-atlas", "document", "import", atlas_path)
+        import_output = f".atlas/data/documents/{family.key}.json"
+        if family.source is None:
+            import_command = (
+                *import_command,
+                "--workspace",
+                ".atlas/work/family-sources",
+            )
+            import_output = f".atlas/work/family-sources/documents/{family.key}.json"
         steps.append(
             WorkflowStep(
                 family.key,
                 family.key,
                 WorkflowStage.IMPORT,
-                ("uv", "run", "standards-atlas", "document", "import", atlas_path),
+                import_command,
                 ArtifactPolicy.DERIVED,
-                output_paths=(f".atlas/data/documents/{family.key}.json",),
+                output_paths=(import_output,),
             )
         )
 
@@ -229,6 +238,8 @@ class WorkflowPlanner:
                             part.part,
                             "--key",
                             part.key,
+                            "--source-workspace",
+                            ".atlas/work/family-sources",
                             *(("--title", part.title) if part.title else ()),
                         ),
                         ArtifactPolicy.DERIVED,
@@ -271,6 +282,8 @@ class WorkflowPlanner:
                                     f"{part.part}-{supplement.supplement}",
                                     "--key",
                                     supplement.key,
+                                    "--source-workspace",
+                                    ".atlas/work/family-sources",
                                     *(("--title", supplement.title) if supplement.title else ()),
                                 ),
                                 ArtifactPolicy.DERIVED,
@@ -399,9 +412,11 @@ class WorkflowPlanner:
                         "compose-family",
                         family.key,
                         *(value for key in part_keys for value in ("--part", key)),
+                        "--title",
+                        family.name,
                     ),
                     ArtifactPolicy.DERIVED,
-                    output_paths=(f".atlas/work/workflow/compose/{family.key}.complete",),
+                    output_paths=(f".atlas/work/composed-documents/{family.key}.json",),
                 )
             )
         if family.exports.markdown:

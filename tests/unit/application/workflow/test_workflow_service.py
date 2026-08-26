@@ -420,6 +420,20 @@ def test_multi_part_family_is_composed_before_exports() -> None:
         "compose-family",
         "IEC61508",
     )
+    assert compose[0].output_paths == (".atlas/work/composed-documents/IEC61508.json",)
+    family_import = next(
+        step
+        for step in plan.steps
+        if step.document == "IEC61508" and step.stage == WorkflowStage.IMPORT
+    )
+    assert family_import.output_paths == (".atlas/work/family-sources/documents/IEC61508.json",)
+    assert "--workspace" in family_import.command
+    assert ".atlas/work/family-sources" in family_import.command
+    assert all(
+        ".atlas/data/documents/IEC61508.json" not in path
+        for step in plan.steps
+        for path in step.output_paths
+    )
     export_indices = [
         index
         for index, step in enumerate(plan.steps)

@@ -111,9 +111,16 @@ def derive_document_part(
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
     ] = cli_defaults.DEFAULT_WORKSPACE,
+    source_workspace: Annotated[
+        Path | None,
+        typer.Option(
+            "--source-workspace",
+            help="Optional workspace containing the temporary family source document.",
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
     """Create a persisted document view for one AtlasData volume or standard part."""
-    service = build_document_selection_service(workspace)
+    service = build_document_selection_service(workspace, source_workspace=source_workspace)
     try:
         document = service.derive_by_volume(source_key, target_key, part, title)
     except DocumentSelectionError as error:
@@ -128,29 +135,37 @@ def derive_document_part(
 
 @document_app.command("compose-family")
 def compose_family_document(
-    family_key: Annotated[str, typer.Argument(help="Key of the persisted family document.")],
+    family_key: Annotated[str, typer.Argument(help="Logical family key to compose.")],
     part: Annotated[
         list[str] | None,
-        typer.Option("--part", help="Enriched part key; repeat for every part."),
+        typer.Option("--part", help="Enriched physical part key; repeat for every part."),
     ] = cli_defaults.DEFAULT_NONE,
     workspace: Annotated[
         Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
     ] = cli_defaults.DEFAULT_WORKSPACE,
+    family_title: Annotated[
+        str | None,
+        typer.Option("--title", help="Title of the logical family publication view."),
+    ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
-    """Merge enriched part documents back into their logical family document."""
+    """Compose physical parts into a rebuildable publication view."""
     part_keys = tuple(part or ())
     if not part_keys:
         raise typer.BadParameter("At least one --part document key is required.")
     try:
-        document = build_document_composition_service(workspace).compose(family_key, part_keys)
+        view = build_document_composition_service(workspace).compose(
+            family_key, part_keys, family_title=family_title
+        )
     except (DocumentCompositionError, FileNotFoundError) as error:
         raise typer.BadParameter(str(error)) from error
 
+    document = view.document
     enriched = sum(bool(clause.content) for clause in document.clauses)
-    typer.echo(f"Family document       : {document.key.value}")
+    typer.echo(f"Family view           : {view.family_key}")
     typer.echo(f"Part documents        : {', '.join(part_keys)}")
     typer.echo(f"Clauses               : {len(document.clauses)}")
     typer.echo(f"Clauses with content  : {enriched}")
+    typer.echo(f"Persistence           : .atlas/work/composed-documents/{family_key}.json")
 
 
 @document_app.command("enrich-content")

@@ -133,7 +133,7 @@ both active and obsolete provisions.
 
 - For the architecture's overall shape, begin with [ADR 0002](0002-adopt-traceability-centric-architecture.md), [ADR 0003](0003-adopt-hexagonal-architecture.md), and [ADR 0004](0004-adopt-transformation-pipeline.md).
 - For the canonical contracts, continue with [ADR 0006](0006-engineeringdocument-as-canonical-repesenation.md), [ADR 0026](0026-normalized-document-contract.md), and [ADR 0033](0033-engineering-document-construction-contract.md).
-- For workflow and publication, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md), [ADR 0036](0036-local-workspace-and-hierarchy-publication.md), and [ADR 0083](0083-separate-deterministic-document-workflow-from-semantic-qualification.md).
+- For workflow and publication, read [ADR 0024](0024-catalog-driven-end-to-end-workflows.md), [ADR 0032](0032-end-to-end-artifact-lineage.md), [ADR 0035](0035-atlasdata-lifecycle-and-baseline-governance.md), [ADR 0036](0036-local-workspace-and-hierarchy-publication.md), and [ADR 0083](0083-separate-deterministic-document-workflow-from-semantic-qualification.md), and [ADR 0084](0084-model-family-composition-as-publication-view.md).
 - For the current taxonomy-to-ontology production path, read [ADR 0050](0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), [ADR 0051](0051-multidimensional-semantic-classification.md), and [ADR 0061](0061-modular-deterministic-structural-taxonomy-engine.md) through [ADR 0069](0069-materialize-structural-scope-reach.md); use [Structural taxonomy and semantic ontology](../structural-classification.md) as the consolidated current-state view.
 - For semantic qualification and external model access, continue with [ADR 0039](0039-verification-and-qualification-framework.md), [ADR 0040](0040-expose-evaluation-services-through-an-mcp-adapter.md), [ADR 0042](0042-secure-and-qualify-streamable-http-mcp-deployments.md), [ADR 0054](0054-model-engineering-knowledge-as-an-orthogonal-ontology.md), [ADR 0059](0059-archive-qualification-runs-as-immutable-sequential-evidence.md), and [ADR 0070](0070-preserve-cascade-resolution-provenance.md).
 - For lossless formula handling, read [ADR 0055](0055-preserve-visual-formulas-before-semantic-transcription.md).
@@ -153,3 +153,5 @@ both active and obsolete provisions.
 | [0080](0080-canonical-table-normalization.md) | Normalize protected tables before semantic interpretation |
 | [0081](0081-map-normalized-tables-to-structured-knowledge.md) | Map normalized tables deterministically into structured knowledge |
 | [0082](0082-project-structured-tables-for-retrieval.md) | Project structured table knowledge into replaceable retrieval representations |
+
+| [0084](0084-model-family-composition-as-publication-view.md) | Keep multipart family composition as a rebuildable publication view |

@@ -8,7 +8,11 @@ from typing import Annotated
 import typer
 
 from standards_atlas.adapters.doorstop import DoorstopExportConfig, DoorstopExporter
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.adapters.filesystem import (
+    FileSystemComposedDocumentViewRepository,
+    FileSystemEngineeringDocumentRepository,
+    FileSystemPublicationDocumentReader,
+)
 from standards_atlas.application.services import DocumentExportService
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import document_export_app
@@ -147,28 +151,22 @@ def export_document_to_doorstop(
     ] = cli_defaults.DEFAULT_TRUE,
 ) -> None:
     """Export a persisted EngineeringDocument as a Doorstop document."""
-    repository = FileSystemEngineeringDocumentRepository(
-        workspace=workspace,
+    repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
+    views = FileSystemComposedDocumentViewRepository(
+        workspace.parent / "work" if workspace.name == "data" else workspace / "work"
     )
+    publications = FileSystemPublicationDocumentReader(repository, views)
 
     key = DocumentKey(value=document_key)
-
-    if not repository.exists(key):
+    try:
+        document = publications.load(key)
+    except FileNotFoundError:
         typer.echo(
-            f"No persisted document found for key: {document_key}",
+            f"No persisted document found for key: {document_key}; "
+            "no composed publication view exists",
             err=True,
         )
-        typer.echo(
-            "Import the document first with:",
-            err=True,
-        )
-        typer.echo(
-            f"  standards-atlas document import <source> --workspace {workspace}",
-            err=True,
-        )
-        raise typer.Exit(code=1)
-
-    document = repository.load(key)
+        raise typer.Exit(code=1) from None
 
     export_target = (
         target

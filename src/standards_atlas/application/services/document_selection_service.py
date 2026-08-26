@@ -11,8 +11,13 @@ class DocumentSelectionError(ValueError):
 class DocumentSelectionService:
     """Derive a physical-source-sized document from a logical master document."""
 
-    def __init__(self, documents: EngineeringDocumentRepository) -> None:
+    def __init__(
+        self,
+        documents: EngineeringDocumentRepository,
+        target_documents: EngineeringDocumentRepository | None = None,
+    ) -> None:
         self._documents = documents
+        self._target_documents = target_documents or documents
 
     def derive_by_standard_name(
         self,
@@ -85,5 +90,5 @@ class DocumentSelectionService:
                     "annotations": annotations,
                 }
             )
-        self._documents.save(derived)
+        self._target_documents.save(derived)
         return derived

@@ -6,7 +6,11 @@ from standards_atlas.adapters.docling import (
     DoclingArtifactRepository,
     DoclingExtractedDocumentRepository,
 )
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.adapters.filesystem import (
+    FileSystemComposedDocumentViewRepository,
+    FileSystemEngineeringDocumentRepository,
+    FileSystemPublicationDocumentReader,
+)
 from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.adapters.pdf import FormulaVisualExtractor
@@ -38,9 +42,11 @@ def build_document_normalization_service(
 
 
 def build_markdown_export_service(workspace: Path) -> MarkdownExportService:
+    documents = FileSystemEngineeringDocumentRepository(workspace)
+    views = FileSystemComposedDocumentViewRepository(_work_root_for_workspace(workspace))
     return MarkdownExportService(
         exporter=MarkdownExporter(),
-        documents=FileSystemEngineeringDocumentRepository(workspace),
+        documents=FileSystemPublicationDocumentReader(documents, views),
     )
 
 
@@ -78,16 +84,29 @@ def build_alignment_review_service(workspace: Path, review_root: Path | None = N
     )
 
 
-def build_document_selection_service(workspace: Path):
+def build_document_selection_service(
+    workspace: Path,
+    *,
+    source_workspace: Path | None = None,
+):
     from standards_atlas.application.services import DocumentSelectionService
 
-    return DocumentSelectionService(FileSystemEngineeringDocumentRepository(workspace))
+    target = FileSystemEngineeringDocumentRepository(workspace)
+    source = (
+        FileSystemEngineeringDocumentRepository(source_workspace)
+        if source_workspace is not None
+        else target
+    )
+    return DocumentSelectionService(source, target)
 
 
 def build_document_composition_service(workspace: Path):
     from standards_atlas.application.services import DocumentCompositionService
 
-    return DocumentCompositionService(FileSystemEngineeringDocumentRepository(workspace))
+    return DocumentCompositionService(
+        FileSystemEngineeringDocumentRepository(workspace),
+        FileSystemComposedDocumentViewRepository(_work_root_for_workspace(workspace)),
+    )
 
 
 def build_reference_candidate_service(workspace: Path):
@@ -207,3 +226,10 @@ def _review_root_for_workspace(workspace: Path) -> Path:
     else:
         project_root = Path.cwd().resolve()
     return project_root / "local" / "review" / "alignment"
+
+
+def _work_root_for_workspace(workspace: Path) -> Path:
+    """Resolve work storage without assuming callers always use .atlas/data."""
+    if workspace.name == "data":
+        return workspace.parent / "work"
+    return workspace / "work"

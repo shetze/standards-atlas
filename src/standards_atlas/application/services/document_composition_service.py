@@ -1,18 +1,23 @@
-"""Compose enriched physical document views into their logical family document."""
+"""Compose physical part documents into rebuildable publication views."""
 
 from __future__ import annotations
 
 import hashlib
 
-from standards_atlas.application.ports import EngineeringDocumentRepository
+from standards_atlas.application.model import ComposedDocumentView
+from standards_atlas.application.ports import (
+    ComposedDocumentViewStore,
+    EngineeringDocumentRepository,
+)
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
     DocumentKey,
     EngineeringDocument,
-    StandardReference,
 )
+from standards_atlas.domain.model.identifiers import StandardKey, StandardReference
+from standards_atlas.domain.model.standard import Standard
 
 
 class DocumentCompositionError(ValueError):
@@ -20,16 +25,28 @@ class DocumentCompositionError(ValueError):
 
 
 class DocumentCompositionService:
-    """Merge enriched child views into a persisted family document."""
+    """Build a publication-only family view from canonical physical parts."""
 
-    def __init__(self, documents: EngineeringDocumentRepository) -> None:
+    def __init__(
+        self,
+        documents: EngineeringDocumentRepository,
+        views: ComposedDocumentViewStore,
+    ) -> None:
         self._documents = documents
+        self._views = views
 
-    def compose(self, family_key: str, part_keys: tuple[str, ...]) -> EngineeringDocument:
-        family = self._documents.load(DocumentKey(value=family_key))
+    def compose(
+        self,
+        family_key: str,
+        part_keys: tuple[str, ...],
+        *,
+        family_title: str | None = None,
+    ) -> ComposedDocumentView:
         parts = [self._documents.load(DocumentKey(value=key)) for key in part_keys]
+        if not parts:
+            raise DocumentCompositionError(f"Part documents for {family_key!r} contain no parts.")
 
-        composed_clauses = []
+        composed_clauses: list[Clause] = []
         seen: set[ClauseId] = set()
         for part in parts:
             root = _part_root_clause(part)
@@ -45,9 +62,61 @@ class DocumentCompositionService:
         if not composed_clauses:
             raise DocumentCompositionError(f"Part documents for {family_key!r} contain no clauses.")
 
-        composed = family.model_copy(update={"clauses": tuple(composed_clauses)})
-        self._documents.save(composed)
-        return composed
+        document = _publication_document(
+            family_key,
+            tuple(parts),
+            tuple(composed_clauses),
+            family_title=family_title,
+        )
+        view = ComposedDocumentView(
+            family_key=family_key,
+            part_keys=part_keys,
+            document=document,
+        )
+        self._views.save(view)
+        family_document_key = DocumentKey(value=family_key)
+        if self._documents.exists(family_document_key):
+            self._documents.delete(family_document_key)
+        return view
+
+
+def _publication_document(
+    family_key: str,
+    parts: tuple[EngineeringDocument, ...],
+    clauses: tuple[Clause, ...],
+    *,
+    family_title: str | None,
+) -> EngineeringDocument:
+    first = parts[0]
+    title = family_title or _family_title(first, family_key)
+    annotations = tuple(annotation for part in parts for annotation in part.annotations)
+    tables = tuple(table for part in parts for table in part.tables)
+    table_index = tuple(entry for part in parts for entry in part.table_index)
+    common = {
+        "title": title,
+        "clauses": clauses,
+        "annotations": annotations,
+        "tables": tables,
+        "table_index": table_index,
+    }
+    if isinstance(first, Standard):
+        return first.model_copy(
+            update={
+                **common,
+                "key": StandardKey(value=family_key),
+                "name": title,
+                "parent_key": None,
+            }
+        )
+    return first.model_copy(update={**common, "key": DocumentKey(value=family_key)})
+
+
+def _family_title(document: EngineeringDocument, family_key: str) -> str:
+    title = document.title.strip()
+    for separator in (" - Part ", "-Part ", " Part "):
+        if separator in title:
+            return title.split(separator, 1)[0].strip()
+    return family_key
 
 
 def _part_root_clause(part: EngineeringDocument) -> Clause:

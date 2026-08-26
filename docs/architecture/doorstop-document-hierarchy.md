@@ -20,12 +20,11 @@ Doorstop parent. A parent is emitted only when both documents are part of the
 same workflow plan, preventing dangling parent references for isolated exports.
 
 For multi-part standards, physical part documents are enriched independently.
-Before export, `document compose-family` rebuilds the logical family document
-from the enriched physical documents in catalog order. This includes clauses
-from separately imported supplements that are not present in the family's
-AtlasData master document. Duplicate clause IDs across physical documents are
-rejected as ambiguous. Markdown and Doorstop exports consume this composed
-family document.
+Before export, `document compose-family` rebuilds a publication-only
+`ComposedDocumentView` from the enriched physical documents in catalog order. The view lives below
+`.atlas/work/composed-documents` and is never persisted in the canonical EngineeringDocument
+repository. It includes separately imported supplements, rejects duplicate clause IDs, and is
+consumed by Markdown and Doorstop publication.
 
 ## Supplement part identifiers
 
@@ -40,7 +39,7 @@ volume value.
 
 ## Multi-part roots
 
-A composed multi-part EngineeringDocument contains one synthetic structural root clause for
+A composed multi-part publication view contains one synthetic structural root clause for
  every physical part. The root uses visible reference `0`, carries the part title, and appears
  immediately before the clauses of that part.
 
@@ -87,7 +86,7 @@ IEC61508
 Multi-part families use the AtlasData clause ``0`` entry of each physical part as the
 publishable Doorstop root. The root is retained when deriving the part document, is
 excluded from alignment, survives content enrichment, and is composed back into the
-family document before export. ``compose-family`` does not invent replacement roots.
+publication view before export. ``compose-family`` does not invent replacement roots.
 
 Docling onboarding emits both the structural ``<part>-0`` token and a public TOC record
 with the heading ``Part <part>``. Existing AtlasData roots are normalized to that heading

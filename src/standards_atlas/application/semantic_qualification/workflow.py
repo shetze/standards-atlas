@@ -434,13 +434,12 @@ def _statistics(
 def _canonical_clause_occurrences(
     clauses: tuple[ClauseDescriptor, ...],
 ) -> tuple[ClauseDescriptor, ...]:
-    """Remove copies contributed by composed family documents.
+    """Legacy safeguard against obsolete persisted family-document copies.
 
-    A composed family document reuses the clause identifiers and normalized
-    contents of its physical part documents. For every exact occurrence key we
-    retain the clause from the smallest containing document. This consistently
-    prefers the physical part over its larger composed family view while
-    preserving genuinely repeated content with different clause identifiers.
+    Current workflows keep composed publication views below ``.atlas/work`` and
+    corpus providers therefore see only canonical physical documents. The
+    deduplication remains temporarily to protect workspaces created by older
+    versions that still contain ``.atlas/data/documents/<family>.json``.
     """
     document_sizes = Counter(clause.document_key for clause in clauses)
     canonical: dict[tuple[str, str], ClauseDescriptor] = {}

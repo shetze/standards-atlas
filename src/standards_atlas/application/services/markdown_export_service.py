@@ -12,7 +12,7 @@ from standards_atlas.application.analysis import (
 )
 from standards_atlas.application.ports import (
     EngineeringDocumentExporter,
-    EngineeringDocumentReader,
+    PublicationDocumentReader,
 )
 from standards_atlas.domain.model import DocumentKey, EngineeringDocument
 
@@ -30,7 +30,7 @@ class MarkdownExportService:
     def __init__(
         self,
         exporter: EngineeringDocumentExporter,
-        documents: EngineeringDocumentReader,
+        documents: PublicationDocumentReader,
     ) -> None:
         self._exporter = exporter
         self._documents = documents

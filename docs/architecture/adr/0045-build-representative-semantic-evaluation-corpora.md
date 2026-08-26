@@ -87,4 +87,4 @@ same reproducible corpus without conflating the two identity levels.
 
 ## Multipart family views
 
-Before sampling, exact clause occurrences repeated in a composed family document are collapsed. The occurrence in the physical part document is retained; the larger composed family view is excluded. This does not collapse genuinely repeated content with different clause identifiers. Duplicate-content groups use human-readable clause references and titles for HITL review.
+Current workflows build corpora exclusively from canonical physical EngineeringDocuments; composed family views live below `.atlas/work` and are not enumerated by the corpus provider. Exact-occurrence collapsing remains as a legacy safeguard for older workspaces that still contain persisted family-document copies. This does not collapse genuinely repeated content with different clause identifiers.

@@ -26,6 +26,7 @@ from standards_atlas.application.model.alignment_review import (
     SetObservedHeadingOverride,
     SetRemainderKindOverride,
 )
+from standards_atlas.application.model.composed_document import ComposedDocumentView
 from standards_atlas.application.model.engineering_construction import (
     ConstructionCoverage,
     ConstructionDiagnostic,
@@ -120,6 +121,7 @@ __all__ = [
     "SetObservedHeadingOverride",
     "SetRemainderKindOverride",
     "CandidateRemainderKind",
+    "ComposedDocumentView",
     "ClauseAlignment",
     "EngineeringConstructionContract",
     "ConstructionDiagnostic",
