@@ -84,6 +84,12 @@ from standards_atlas.domain.model.reference_mention import (
     ReferenceTarget,
 )
 from standards_atlas.domain.model.relation import Relation, RelationType
+from standards_atlas.domain.model.retrieval_projection import (
+    RetrievalDocument,
+    RetrievalDocumentKind,
+    RetrievalProjection,
+    RetrievalTokenizationProfile,
+)
 from standards_atlas.domain.model.semantic_classification import (
     ApplicabilityFunction,
     DocumentStructure,
@@ -196,6 +202,10 @@ __all__ = [
     "NoteBlock",
     "PictureBlock",
     "Relation",
+    "RetrievalDocument",
+    "RetrievalDocumentKind",
+    "RetrievalProjection",
+    "RetrievalTokenizationProfile",
     "RelationType",
     "ApplicabilityFunction",
     "DocumentStructure",

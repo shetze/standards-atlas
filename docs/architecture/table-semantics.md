@@ -86,18 +86,21 @@ to classify only their narrative content.
 
 ## Retrieval and IntelliDoc
 
-The MCP adapter exposes tables and records directly. Future IntelliDoc RAG indexes should
-use reproducible text projections at several granularities—table, record, and relation—while
-retaining stable IDs back to the structured artefacts. Embedding chunks are disposable
-index projections; the Knowledge Base and its source evidence remain authoritative.
+The MCP adapter exposes tables and records directly. IntelliDoc-style retrieval now has an explicit T4 projection boundary. `RetrievalDocument`
+values are generated reproducibly at table, row, concept, and relation granularity while
+retaining stable source IDs back to T3 knowledge artifacts. Table projections request the
+`structured-table-v1` tokenization profile so adapters can use a tokenizer different from
+narrative clause indexing. Embedding chunks remain disposable index projections; the Knowledge
+Base and its source evidence remain authoritative.
 
 ## Slice boundary
 
 T1 captures identity and document structure only. T2 provides deterministic header
 normalization, merged-cell reconstruction, row/column header paths, footnotes, units, reference
 tokens, and canonical table normalization. T3 now maps `NormalizedTable` deterministically into
-`KnowledgeTable`, `KnowledgeRecord`, and `StructuredKnowledgeRecord` artifacts. Table-specific
-retrieval serialization/tokenization and embedding projections belong to T4.
+`KnowledgeTable`, `KnowledgeRecord`, and `StructuredKnowledgeRecord` artifacts. T4 now derives disposable retrieval documents at table, row, concept, and relation granularity.
+Each projection declares a `structured-table-v1` tokenization profile; concrete tokenizers,
+embedding models, vector stores, and GraphRAG implementations remain replaceable adapters.
 
 ## Current limitation
 

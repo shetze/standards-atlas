@@ -59,3 +59,11 @@ Ports should express application needs rather than mirror third-party APIs. The 
 ADR 0053 established the current structural refactoring direction. Canonical implementations now live in focused packages such as `application/workflow`, `application/normalization`, `application/evaluation`, and `application/semantic_qualification`. Compatibility exports below `application/services` may remain for existing imports, but they are noncanonical. New code must import canonical packages and must not add concrete-adapter dependencies to reusable application services. Their eventual removal requires an explicit compatibility decision rather than being implied by the package refactoring.
 
 Architecture tests should guard the dependency direction. Unit tests construct application services with test doubles; integration tests verify real adapter contracts and composition roots.
+
+### Structured table retrieval
+
+T4 exposes `RetrievalTokenizer` and `RetrievalProjectionWriter` as provider-neutral outbound
+ports. `TableRetrievalProjectionService` creates deterministic table, row, concept, and relation
+retrieval documents with the `structured-table-v1` tokenization profile. Concrete tokenizer,
+embedding, vector-store, graph, or GraphRAG implementations remain adapters and must not become
+part of the table domain model or T1-T3 knowledge contracts.

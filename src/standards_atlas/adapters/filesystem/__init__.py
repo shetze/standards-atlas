@@ -12,12 +12,16 @@ from standards_atlas.adapters.filesystem.knowledge_table_repository import (
 from standards_atlas.adapters.filesystem.normalized_table_repository import (
     FileSystemNormalizedTableRepository,
 )
+from standards_atlas.adapters.filesystem.retrieval_projection_repository import (
+    FileSystemTableRetrievalProjectionRepository,
+)
 
 __all__ = [
     "FileSystemEngineeringDocumentRepository",
     "FileSystemFormulaTranscriptionRepository",
     "FileSystemKnowledgeTableRepository",
     "FileSystemNormalizedTableRepository",
+    "FileSystemTableRetrievalProjectionRepository",
     "FileSystemFormalSemanticProjectionRepository",
     "FileSystemSemanticExtractionRepository",
 ]

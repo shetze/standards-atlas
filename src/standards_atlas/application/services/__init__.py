@@ -50,6 +50,9 @@ from standards_atlas.application.services.structural_taxonomy_service import (
 from standards_atlas.application.services.structured_knowledge_mapping_service import (
     StructuredKnowledgeMappingService,
 )
+from standards_atlas.application.services.table_retrieval_projection_service import (
+    TableRetrievalProjectionService,
+)
 from standards_atlas.application.workflow.service import EndToEndWorkflowService
 
 __all__ = [
@@ -74,4 +77,5 @@ __all__ = [
     "ReferenceCandidateService",
     "StructuralTaxonomyService",
     "StructuredKnowledgeMappingService",
+    "TableRetrievalProjectionService",
 ]
