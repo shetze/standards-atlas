@@ -8,9 +8,11 @@ standards-atlas. Detailed implementation plans are maintained under
 
 ### Qualify structured table knowledge
 
-Introduce typed table corpora and dedicated qualification for schema recognition, record
-extraction, relationships, references, and recommendation matrices without weakening the
-existing clause-classification boundary.
+T1-T3 now provide first-class table structure, deterministic normalization, and structured
+knowledge mapping. Introduce typed table corpora and dedicated qualification for schema
+recognition, record mapping, relationships, references, and recommendation matrices without
+weakening the existing clause-classification boundary. T4 will add retrieval-specific table
+serialization and embedding projections behind replaceable ports.
 
 ### Classify existing standards
 

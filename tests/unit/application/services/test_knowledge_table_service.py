@@ -215,3 +215,61 @@ def test_keeps_unknown_table_generic_without_invented_relations() -> None:
 
     assert table.kind == "generic"
     assert table.records[1].structured_knowledge is None
+
+
+def test_iec61508_recommendation_row_exposes_structured_knowledge() -> None:
+    evidence = SourceEvidence(
+        source_id="source.pdf",
+        source_type="pdf",
+        locator="/private/source.pdf",
+        page_number=8,
+    )
+    table = TableBlock(
+        id="table-a3",
+        caption="Table A.3 — Techniques and measures (see 7.4.4)",
+        source_evidence=(evidence,),
+        rows=(
+            TableRow(
+                cells=(
+                    TableCell(text="Technique/measure", is_header=True),
+                    TableCell(text="SIL 1", is_header=True),
+                    TableCell(text="SIL 2", is_header=True),
+                )
+            ),
+            TableRow(
+                cells=(
+                    TableCell(text="Defensive programming"),
+                    TableCell(text="R"),
+                    TableCell(text="HR"),
+                )
+            ),
+        ),
+    )
+    clause = Clause(
+        id=ClauseId(value="iec61508-3-a3"),
+        reference=StandardReference(standard="IEC61508-3", clause="A"),
+        clause_type=ClauseType.CLAUSE,
+        content=(table,),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="IEC61508-3"),
+        title="IEC 61508-3",
+        document_type=DocumentType.STANDARD,
+        clauses=(clause,),
+    )
+
+    projected = KnowledgeTableProjectionService().project_document(document)[0]
+    semantic = projected.records[1].structured_knowledge
+
+    assert projected.normalized_table_id is not None
+    assert projected.mapping_version == "1.0.0"
+    assert semantic is not None
+    assert [(item.kind.value, item.label) for item in semantic.concepts] == [
+        ("technique_or_measure", "Defensive programming"),
+        ("integrity_level", "SIL 1"),
+        ("integrity_level", "SIL 2"),
+    ]
+    assert [(item.kind.value, item.qualifier) for item in semantic.relations] == [
+        ("recommended_for", "recommended"),
+        ("recommended_for", "highly_recommended"),
+    ]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.domain.model.source_evidence import SourceEvidence
 
@@ -32,6 +32,8 @@ class KnowledgeConceptKind(StrEnum):
     SOURCE = "source"
     TARGET = "target"
     CONTEXT = "context"
+    TECHNIQUE_OR_MEASURE = "technique_or_measure"
+    INTEGRITY_LEVEL = "integrity_level"
 
 
 class KnowledgeRelationKind(StrEnum):
@@ -42,6 +44,7 @@ class KnowledgeRelationKind(StrEnum):
     VERIFIED_BY = "verified_by"
     TRACES_TO = "traces_to"
     APPLICABLE_TO = "applicable_to"
+    RECOMMENDED_FOR = "recommended_for"
 
 
 class KnowledgeConcept(BaseModel):
@@ -62,6 +65,7 @@ class KnowledgeRelation(BaseModel):
     kind: KnowledgeRelationKind
     source_concept_id: str = Field(min_length=1)
     target_concept_id: str = Field(min_length=1)
+    qualifier: str | None = None
 
 
 class StructuredKnowledgeRecord(BaseModel):
@@ -70,6 +74,17 @@ class StructuredKnowledgeRecord(BaseModel):
     model_config = ConfigDict(frozen=True)
     concepts: tuple[KnowledgeConcept, ...] = ()
     relations: tuple[KnowledgeRelation, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_relation_endpoints(self) -> StructuredKnowledgeRecord:
+        concept_ids = [concept.id for concept in self.concepts]
+        if len(concept_ids) != len(set(concept_ids)):
+            raise ValueError("structured knowledge concept ids must be unique")
+        known = set(concept_ids)
+        for relation in self.relations:
+            if relation.source_concept_id not in known or relation.target_concept_id not in known:
+                raise ValueError("structured knowledge relation references an unknown concept")
+        return self
 
 
 class RecommendationLevel(StrEnum):
@@ -176,6 +191,8 @@ class KnowledgeTable(BaseModel):
     source_evidence: tuple[SourceEvidence, ...] = ()
     kind: KnowledgeTableKind = KnowledgeTableKind.GENERIC
     context_references: tuple[str, ...] = ()
+    normalized_table_id: str | None = None
+    mapping_version: str = "1.0.0"
 
     @property
     def plain_text(self) -> str:

@@ -1,4 +1,4 @@
-"""Read-only knowledge-table repository backed by engineering documents."""
+"""Read-only structured-knowledge repository backed by T2 normalized tables."""
 
 from __future__ import annotations
 
@@ -7,28 +7,26 @@ from pathlib import Path
 from standards_atlas.adapters.filesystem.document_repository import (
     FileSystemEngineeringDocumentRepository,
 )
-from standards_atlas.application.services.knowledge_table_service import (
-    KnowledgeTableProjectionService,
+from standards_atlas.adapters.filesystem.normalized_table_repository import (
+    FileSystemNormalizedTableRepository,
+)
+from standards_atlas.application.services.structured_knowledge_mapping_service import (
+    StructuredKnowledgeMappingService,
 )
 from standards_atlas.domain.model import DocumentKey
 from standards_atlas.domain.model.knowledge_table import KnowledgeRecord, KnowledgeTable
 
 
 class FileSystemKnowledgeTableRepository:
-    """Expose deterministic table projections without duplicating persisted content."""
+    """Expose deterministic T3 mappings without duplicating persisted table content."""
 
     def __init__(self, workspace: Path = Path(".atlas/data")) -> None:
         self._documents = FileSystemEngineeringDocumentRepository(workspace)
-        self._projection = KnowledgeTableProjectionService()
+        self._normalized = FileSystemNormalizedTableRepository(workspace)
+        self._mapping = StructuredKnowledgeMappingService()
 
     def list_tables(self, document_keys: tuple[str, ...] = ()) -> tuple[KnowledgeTable, ...]:
-        allowed = set(document_keys)
-        tables = (
-            table
-            for document in self._documents.list()
-            if not allowed or document.key.value in allowed
-            for table in self._projection.project_document(document)
-        )
+        tables = self._mapping.map_tables(self._normalized.list_tables(document_keys))
         return tuple(
             sorted(
                 tables,

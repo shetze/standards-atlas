@@ -150,3 +150,4 @@ both active and obsolete provisions.
 
 | [0079](0079-first-class-table-structural-capture.md) | Capture tables and Lists of Tables as first-class document structure |
 | [0080](0080-canonical-table-normalization.md) | Normalize protected tables before semantic interpretation |
+| [0081](0081-map-normalized-tables-to-structured-knowledge.md) | Map normalized tables deterministically into structured knowledge |

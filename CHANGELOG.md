@@ -57,6 +57,15 @@
 - extract structural units, footnotes, and unresolved table reference tokens without semantic inference
 - expose rebuildable normalized tables through a read-only filesystem adapter
 
+### Structured table knowledge mapping
+
+- add deterministic T3 mapping from `NormalizedTable` to `KnowledgeTable` and row-level structured knowledge
+- route the historical knowledge-table projection API through the canonical T2 → T3 path
+- map IEC 61508-3 technique/measure recommendation matrices into explicit technique and SIL concepts
+- preserve recommendation levels as qualifiers on `recommended_for` relations
+- consume normalized multi-level headers and span reconstruction for portable matrix mappings
+- reject malformed structured relations whose endpoints are absent from the same knowledge record
+
 
 
 - Refine the formal ontology from semantic-extraction qualification feedback: add `hasPart`/`partOf`, intermediate system/requirement/specification/quantity classes, and explicit Functional Safety fault/error/failure concepts; constrain `containsClause` to document structure and make generic classes/`describes` extraction fallbacks.

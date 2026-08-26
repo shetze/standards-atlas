@@ -17,8 +17,9 @@ EngineeringDocument
         └── NormalizedTable        T2 structural normalization
             ├── logical columns/header paths
             ├── rows/cells/spans/footnotes/references
-            └── KnowledgeTable     existing semantic projection (T3 migration target)
-                └── KnowledgeRecord
+            └── StructuredKnowledgeMappingService   T3 deterministic semantic mapping
+                └── KnowledgeTable / KnowledgeRecord
+                    └── StructuredKnowledgeRecord
 ```
 
 `DocumentTable` owns document-level table identity, numbering, caption metadata, parent
@@ -27,7 +28,8 @@ Tables. Protected rows and cells remain canonical in `TableBlock`; `DocumentTabl
 that block by identifier instead of duplicating its content. T2 derives a semantics-free
 `NormalizedTable` that reconstructs logical coordinates and header structure while preserving
 all protected text and spans. `KnowledgeTable` and `KnowledgeRecord` remain reproducible
-semantic projections, not independently edited copies.
+semantic projections, not independently edited copies. T3 consumes only `NormalizedTable`; the
+historical projection service is a compatibility facade over the T2 → T3 path.
 
 AtlasData publishes table structure through `TABLE` and `TABLEINDEX` records only. It never
 publishes table cells. This allows onboarding and review to compare declared and detected
@@ -48,10 +50,12 @@ without treating an embedding chunk as authoritative.
 
 ### IEC 61508 recommendation matrices
 
-IEC 61508-3 Annex A matrices are recognized conservatively. The projection normalizes
-`HR`, `R`, `—`, and `NR`, retains the source marker, associates recommendations with SIL
-levels, resolves IEC 61508-7 description references, resolves table-context clauses, and
-recognizes alternative groups such as `1a` and `1b`.
+IEC 61508-3 Annex A matrices are recognized conservatively from normalized header paths. T3
+normalizes `HR`, `R`, `—`, and `NR`, retains the source marker, associates recommendations with SIL
+levels, tokenizes IEC 61508-7 description references and table-context clauses, and recognizes
+alternative groups such as `1a` and `1b`. Each technique and integrity level is also exposed as a
+`KnowledgeConcept`; `recommended_for` relations carry the normalized recommendation level as a
+qualifier. This avoids treating an Annex full of tables as one narrative LLM extraction unit.
 
 ### Portable table ontology
 
@@ -63,9 +67,10 @@ Header-driven schema recognition supports:
 - traceability matrices: source `traces_to` target;
 - applicability matrices: subject `applicable_to` context.
 
-Schemas are applied only when required headers and non-empty row values are present. An
-ambiguous table remains `generic`; the implementation does not infer relations merely
-because cell values look plausible.
+Schemas are applied only when required normalized headers and non-empty row values are present.
+Multi-level headers and row-spanning values are consumed from the T2 logical grid. An ambiguous
+table remains `generic`; the implementation does not infer relations merely because cell values
+look plausible.
 
 ## Separation from clause semantics
 
@@ -88,11 +93,11 @@ index projections; the Knowledge Base and its source evidence remain authoritati
 
 ## Slice boundary
 
-T1 captures identity and document structure only. T2 now provides deterministic header
+T1 captures identity and document structure only. T2 provides deterministic header
 normalization, merged-cell reconstruction, row/column header paths, footnotes, units, reference
-tokens, and canonical table normalization. Mapping `NormalizedTable` into
-`StructuredKnowledgeRecord` belongs to T3. Table-specific retrieval
-serialization/tokenization and embedding projections belong to T4.
+tokens, and canonical table normalization. T3 now maps `NormalizedTable` deterministically into
+`KnowledgeTable`, `KnowledgeRecord`, and `StructuredKnowledgeRecord` artifacts. Table-specific
+retrieval serialization/tokenization and embedding projections belong to T4.
 
 ## Current limitation
 
