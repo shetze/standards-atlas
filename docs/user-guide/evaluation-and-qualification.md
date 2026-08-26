@@ -51,6 +51,19 @@ Proposal generation re-evaluates eligibility, so older or manually assembled cor
 cannot silently bypass the policy. Ineligible items are recorded in `eligibility.json`
 rather than being treated as model abstentions or failed predictions.
 
+## Qualification workflow ownership
+
+The unified `workflow run --task qualification` plan reuses deterministic document preparation and
+structural taxonomy, then explicitly runs the LLM-backed multidimensional semantic-profile
+classification before corpus construction. This semantic stage is intentionally absent from
+`--task documents`. Qualification keeps Markdown reference publication but does not execute
+Doorstop export or Doorstop hierarchy publication.
+
+`--limit N` limits the qualification matrix and semantic-extraction qualification sample. It does
+not limit semantic-profile classification, because persisted EngineeringDocuments must never
+contain a qualification-specific partial semantic profile. `--fresh` controls qualification model
+reuse/cache behavior rather than changing this document-wide semantic boundary.
+
 ## Execute a qualification matrix
 
 ```bash

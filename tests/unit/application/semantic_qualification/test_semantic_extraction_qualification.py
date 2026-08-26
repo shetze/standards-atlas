@@ -232,3 +232,102 @@ def test_semantic_extraction_qualification_reports_non_fatal_llm_failures() -> N
     assert report.extraction_timeout_seconds == 240
     assert report.passed is False
     assert any("semantic extraction failed for 2 of 2" in item for item in report.failures)
+
+
+def _clause_extraction(clause_id: str, *, version: str = "1.0.0") -> ClauseSemanticExtraction:
+    return ClauseSemanticExtraction(
+        clause_id=clause_id,
+        ontology_versions=("standards-atlas-core@1.1.0",),
+        provenance=ExtractionProvenance(extractor="test", extractor_version=version),
+    )
+
+
+def _failure(clause_id: str, message: str):
+    from standards_atlas.domain.model import ExtractionFailure
+
+    return ExtractionFailure(
+        clause_id=clause_id,
+        kind="timeout",
+        error_type="LlmTimeoutError",
+        message=message,
+    )
+
+
+def test_semantic_extraction_merge_promotes_failure_to_success() -> None:
+    from standards_atlas.application.semantic_qualification import (
+        merge_document_semantic_extractions,
+    )
+
+    existing = DocumentSemanticExtraction(
+        source_document_key="doc",
+        failures=(_failure("c1", "old failure"),),
+    )
+    generated = DocumentSemanticExtraction(
+        source_document_key="doc",
+        clauses=(_clause_extraction("c1", version="2.0.0"),),
+    )
+
+    merged = merge_document_semantic_extractions(existing, generated)
+
+    assert [item.clause_id for item in merged.clauses] == ["c1"]
+    assert merged.failures == ()
+
+
+def test_semantic_extraction_merge_does_not_degrade_success_to_failure() -> None:
+    from standards_atlas.application.semantic_qualification import (
+        merge_document_semantic_extractions,
+    )
+
+    existing = DocumentSemanticExtraction(
+        source_document_key="doc",
+        clauses=(_clause_extraction("c1", version="1.0.0"),),
+    )
+    generated = DocumentSemanticExtraction(
+        source_document_key="doc",
+        failures=(_failure("c1", "new timeout"),),
+    )
+
+    merged = merge_document_semantic_extractions(existing, generated)
+
+    assert merged.clauses[0].provenance.extractor_version == "1.0.0"
+    assert merged.failures == ()
+
+
+def test_semantic_extraction_merge_replaces_failure_with_latest_failure() -> None:
+    from standards_atlas.application.semantic_qualification import (
+        merge_document_semantic_extractions,
+    )
+
+    existing = DocumentSemanticExtraction(
+        source_document_key="doc",
+        failures=(_failure("c1", "old timeout"),),
+    )
+    generated = DocumentSemanticExtraction(
+        source_document_key="doc",
+        failures=(_failure("c1", "new timeout"),),
+    )
+
+    merged = merge_document_semantic_extractions(existing, generated)
+
+    assert merged.clauses == ()
+    assert merged.failures[0].message == "new timeout"
+
+
+def test_semantic_extraction_merge_replaces_success_with_latest_success() -> None:
+    from standards_atlas.application.semantic_qualification import (
+        merge_document_semantic_extractions,
+    )
+
+    existing = DocumentSemanticExtraction(
+        source_document_key="doc",
+        clauses=(_clause_extraction("c1", version="1.0.0"),),
+    )
+    generated = DocumentSemanticExtraction(
+        source_document_key="doc",
+        clauses=(_clause_extraction("c1", version="2.0.0"),),
+    )
+
+    merged = merge_document_semantic_extractions(existing, generated)
+
+    assert merged.clauses[0].provenance.extractor_version == "2.0.0"
+    assert merged.failures == ()

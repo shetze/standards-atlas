@@ -31,12 +31,12 @@ def test_qualification_task_plan_omits_doorstop_and_docling_by_default() -> None
     assert "corpus-build" in result.output
     assert "qualification-matrix" in result.output
     assert "classify-taxonomy" in result.output
-    assert "classify-ontology" not in result.output
+    assert "classify-ontology" in result.output
     assert "doorstop" not in result.output
     assert "docling convert" not in result.output
 
 
-def test_qualification_hierarchy_plan_never_runs_production_ontology() -> None:
+def test_qualification_hierarchy_plan_runs_semantic_profile_classification() -> None:
     result = CliRunner().invoke(
         app,
         [
@@ -56,7 +56,7 @@ def test_qualification_hierarchy_plan_never_runs_production_ontology() -> None:
 
     assert result.exit_code == 0, result.output
     assert "classify-taxonomy" in result.output
-    assert "classify-ontology" not in result.output
+    assert "classify-ontology" in result.output
     assert "corpus-build" in result.output
     assert "qualification-matrix" in result.output
 

@@ -21,8 +21,13 @@ from standards_atlas.cli.apps import doorstop_app
 def publish_doorstop_hierarchy(
     hierarchy_key: Annotated[str, typer.Argument(help="Doorstop hierarchy key.")],
     workspace: Annotated[
-        Path, typer.Option("--workspace", "-w", help="Internal Standards Atlas workspace.")
-    ] = cli_defaults.DEFAULT_WORKSPACE,
+        Path,
+        typer.Option(
+            "--workspace",
+            "-w",
+            help="Doorstop work root containing hierarchy exports.",
+        ),
+    ] = cli_defaults.DEFAULT_WORK_ROOT,
     local_root: Annotated[
         Path, typer.Option("--local-root", help="Root for local consumable outputs.")
     ] = cli_defaults.DEFAULT_LOCAL_ROOT,

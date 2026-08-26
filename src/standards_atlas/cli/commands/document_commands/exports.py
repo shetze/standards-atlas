@@ -88,7 +88,7 @@ def export_document_to_doorstop(
             "-t",
             help=(
                 "Target directory for the Doorstop document. "
-                "Defaults to <workspace>/doorstop/<document-key>."
+                "Defaults to .atlas/work/doorstop/<document-key>."
             ),
             file_okay=False,
             dir_okay=True,
@@ -170,10 +170,15 @@ def export_document_to_doorstop(
 
     document = repository.load(key)
 
-    export_target = target if target is not None else workspace / "doorstop" / document.key.value
+    export_target = (
+        target
+        if target is not None
+        else cli_defaults.DEFAULT_WORK_ROOT / "doorstop" / document.key.value
+    )
+    doorstop_workspace = export_target.parent
 
     config = DoorstopExportConfig(
-        workspace=workspace / "doorstop",
+        workspace=doorstop_workspace,
         prefix=prefix,
         digits=digits,
         separator=separator,

@@ -16,7 +16,7 @@ Standards Atlas previously wrote Markdown and Doorstop export artifacts below `.
 
 `.atlas/` is reserved for internal, machine-readable processing and debugging artifacts. Local source material and human-consumable outputs are stored below `local/`, which is ignored by Git.
 
-Doorstop YAML projects are generated per declared `doorstop_hierarchy` below `.atlas/doorstop/<hierarchy-key>/`. The corresponding published representation is generated below `local/exports/doorstop/<hierarchy-key>/`. Markdown exports use `local/exports/markdown/<hierarchy-key>/`.
+Doorstop YAML projects are generated per declared `doorstop_hierarchy` below `.atlas/work/doorstop/<hierarchy-key>/`. The corresponding published representation is generated below `local/exports/doorstop/<hierarchy-key>/`. Markdown exports use `local/exports/markdown/<hierarchy-key>/`.
 
 A Doorstop hierarchy is a deterministic tree projection of the richer Knowledge Domain graph. Export and publish each operate on exactly one hierarchy. The initial `functional-safety` hierarchy contains IEC 61508 as its root and includes ISO 26262 plus the CENELEC functional-safety standards.
 

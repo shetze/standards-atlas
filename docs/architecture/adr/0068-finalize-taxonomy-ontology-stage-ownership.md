@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted; workflow-placement provisions superseded by ADR 0083.
 
 ## Context
 

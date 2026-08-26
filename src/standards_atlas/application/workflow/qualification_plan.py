@@ -61,9 +61,9 @@ class QualificationWorkflowPlanner:
             force=overwrite,
             keep_stages=keep_stages,
             hierarchy_key=hierarchy_key,
+            include_semantic_profile=True,
         )
         excluded_document_stages = {
-            WorkflowStage.ONTOLOGY,
             WorkflowStage.DOORSTOP,
             WorkflowStage.DOORSTOP_PUBLISH,
         }

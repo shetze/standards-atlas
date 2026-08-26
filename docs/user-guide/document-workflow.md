@@ -61,9 +61,9 @@ uv run standards-atlas align inspect EN50716 --show-conflicts
 
 Continue with [Alignment review](alignment-review.md) when the result is uncertain.
 
-### Construct, classify taxonomy, and classify ontology
+### Construct and classify structural taxonomy
 
-The workflow imports the reviewed structure and enriches clauses from aligned normalized ranges. `ENRICH` only constructs content, evidence, reference mentions, and lineage; it no longer performs structural or semantic classification. Persisted canonical documents are placed below `.atlas/data/documents/`.
+The documents workflow imports the reviewed structure and enriches clauses from aligned normalized ranges. `ENRICH` only constructs content, evidence, reference mentions, and lineage; it does not perform structural or semantic classification. Persisted canonical documents are placed below `.atlas/data/documents/`.
 
 The next stage is deterministic structural taxonomy:
 
@@ -73,13 +73,11 @@ uv run standards-atlas document classify-taxonomy EN50716
 
 It materializes `StructuralProfile` and `StructuralContext`, including ancestor context, node/leaf role, sibling sequence position, contextual node content, and structural reference edges.
 
-Only after taxonomy does the production ontology classifier run:
+`--task documents` stops semantic processing at this deterministic boundary. It does not run `document classify-ontology`, does not require `cfg/llm.yaml`, and does not start a managed LLM endpoint. Family composition plus Markdown and configured Doorstop publication therefore operate on the canonical deterministic document representation.
 
-```bash
-uv run standards-atlas document classify-ontology EN50716 --llm-config cfg/llm.yaml
-```
+`document classify-ontology` remains available as a diagnostic command, but normal workflow ownership moves to `--task qualification`, which runs the semantic-profile classifier after structural taxonomy. The historical command name refers to multidimensional semantic-profile classification and is distinct from the formal OWL TBox/RBox/ABox/CBox model.
 
-The ontology stage consumes clause content plus the materialized structural context and assigns the configured ontology dimensions. `classify-ontology` ensures that the managed LLM endpoint configured by `--llm-config` is running before classification. This is important for overwrite workflows because Docling deliberately stops the managed LLM while it owns the accelerator; the first subsequent ontology-classification step restarts the endpoint idempotently and leaves it available for following documents. The command reports the selected model and clause-level progress. Truncated generic ontology responses (`finish_reason=length`) receive one bounded retry with a larger output budget. If that retry still fails, the affected clause keeps its existing ontology classification, the failure is counted, and the remaining clauses continue. Role-semantics failures use the same fail-soft document-level policy after their own bounded retry. Model qualification remains a separate evaluation workflow. Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; formula transcription remains a separate enrichment concern.
+Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; formula transcription remains a separate enrichment concern.
 
 ## Review-aware continuation
 

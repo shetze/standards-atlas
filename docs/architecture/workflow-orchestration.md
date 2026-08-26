@@ -30,3 +30,21 @@ Derivation reports make decisions observable: why a stage ran, why it was reused
 - future relationship adjudication.
 
 `--continue-after-review` is valid only when the expected reviewed artifact exists and passes its contract.
+## Task boundaries
+
+The planner has two explicit task-level semantic boundaries. `--task documents` is the canonical
+deterministic document pipeline. It may invoke Docling and deterministic structural-taxonomy
+services and may publish Markdown and Doorstop output, but it never schedules an LLM-backed
+semantic-profile classifier.
+
+`--task qualification` reuses the required deterministic document stages, then explicitly opts
+into `document classify-ontology` as the multidimensional semantic-profile classification stage.
+Qualification retains Markdown reference publication but removes Doorstop export/publication from
+its derived document plan. Corpus construction, matrix qualification, semantic extraction
+qualification, and immutable run archival follow afterwards.
+
+`--limit` applies only to qualification execution. Semantic-profile classification remains
+document-wide so qualification cannot leave persisted EngineeringDocuments partially classified.
+The historical `ONTOLOGY` stage name is a compatibility label for semantic-profile classification;
+it is distinct from the formal OWL TBox/RBox/ABox/CBox model.
+

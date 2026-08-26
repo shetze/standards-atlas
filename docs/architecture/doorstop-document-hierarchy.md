@@ -1,7 +1,7 @@
 # Doorstop document hierarchy
 
 Standards Atlas exports all Doorstop documents below one workspace, by default
-`.atlas/doorstop`. Each standard family is rendered into its own child directory.
+`.atlas/work/doorstop`. Each standard family is rendered into its own child directory.
 The workspace itself is the Git working copy so that Doorstop can resolve parent
 references across sibling document directories.
 

@@ -13,16 +13,16 @@ Use `--replace` to replace existing files. Multi-part families produce a navigab
 ## Doorstop workspace
 
 ```bash
-uv run standards-atlas document export doorstop EN50716   --hierarchy functional-safety   --workspace .atlas
+uv run standards-atlas document export doorstop EN50716   --hierarchy functional-safety
 ```
 
-The export creates the internal hierarchy-oriented Doorstop representation. Publication into consumable local output is a separate step:
+The export reads canonical EngineeringDocument data from `.atlas/data` and writes the rebuildable Doorstop project below `.atlas/work/doorstop`. Publication into consumable local output is a separate step:
 
 ```bash
-uv run standards-atlas doorstop publish functional-safety   --workspace .atlas   --local-root local
+uv run standards-atlas doorstop publish functional-safety   --local-root local
 ```
 
-Use replacement options deliberately. Published output is derived; private source content and local review material must not leak into public artifacts.
+`doorstop publish` reads `.atlas/work/doorstop/<hierarchy-key>` by default. Doorstop projects are retained workflow scratch artifacts, not persistent Standards Atlas data. Use replacement options deliberately. Published output is derived; private source content and local review material must not leak into public artifacts.
 
 ## Export readiness
 

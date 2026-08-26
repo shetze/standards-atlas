@@ -101,6 +101,39 @@ class _Counts:
         return precision, recall, f1
 
 
+def merge_document_semantic_extractions(
+    existing: DocumentSemanticExtraction | None,
+    generated: DocumentSemanticExtraction,
+) -> DocumentSemanticExtraction:
+    """Merge extraction state monotonically by canonical clause identity.
+
+    Successful clause extractions always supersede failures. A transient failure from a
+    later attempt therefore cannot degrade an already successful extraction, while a
+    later success repairs an earlier failure. For like-for-like states, the generated
+    result is authoritative.
+    """
+    if existing is not None and existing.source_document_key != generated.source_document_key:
+        raise ValueError("semantic extraction merge requires the same source document")
+
+    clauses = {item.clause_id: item for item in existing.clauses} if existing is not None else {}
+    clauses.update({item.clause_id: item for item in generated.clauses})
+
+    failures = {item.clause_id: item for item in existing.failures} if existing is not None else {}
+    failures.update({item.clause_id: item for item in generated.failures})
+
+    # Success is monotonic: once a clause has a usable extraction, a later transient
+    # failure must not make the persisted document invalid or lose useful knowledge.
+    for clause_id in clauses:
+        failures.pop(clause_id, None)
+
+    return DocumentSemanticExtraction(
+        source_document_key=generated.source_document_key,
+        extraction_version=generated.extraction_version,
+        clauses=tuple(clauses[key] for key in sorted(clauses)),
+        failures=tuple(failures[key] for key in sorted(failures)),
+    )
+
+
 def qualify_semantic_extractions(
     extractions: tuple[DocumentSemanticExtraction, ...],
     config: SemanticExtractionQualificationConfig,

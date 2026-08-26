@@ -30,6 +30,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     QualificationMatrixManifest,
 )
 from standards_atlas.application.semantic_qualification.semantic_extraction_qualification import (
+    merge_document_semantic_extractions,
     qualify_semantic_extractions,
 )
 from standards_atlas.application.semantic_qualification.semantic_extraction_selection import (
@@ -38,7 +39,6 @@ from standards_atlas.application.semantic_qualification.semantic_extraction_sele
 from standards_atlas.cli.apps import evaluation_app
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
-    DocumentSemanticExtraction,
     KnowledgeKind,
 )
 
@@ -193,11 +193,6 @@ def qualify_semantic_extraction(
                 if not selected_ids:
                     continue
                 existing = repository.load(document.key.value)
-                existing_by_id = (
-                    {item.clause_id: item for item in existing.clauses}
-                    if existing is not None
-                    else {}
-                )
                 extraction_ids = pending_ids_by_document.get(document.key.value, frozenset())
                 if extraction_ids:
                     generated = service.extract_document(
@@ -207,31 +202,7 @@ def qualify_semantic_extraction(
                         eligibility_by_clause=contexts_by_document.get(document.key.value, {}),
                         progress=report_progress,
                     )
-                    merged = {
-                        **existing_by_id,
-                        **{item.clause_id: item for item in generated.clauses},
-                    }
-                    existing_failures = (
-                        {item.clause_id: item for item in existing.failures}
-                        if existing is not None
-                        else {}
-                    )
-                    if fresh:
-                        for clause_id in extraction_ids:
-                            existing_failures.pop(clause_id, None)
-                    merged_failures = {
-                        **existing_failures,
-                        **{item.clause_id: item for item in generated.failures},
-                    }
-                    for clause_id in generated.clauses:
-                        merged_failures.pop(clause_id.clause_id, None)
-                    repository.save(
-                        DocumentSemanticExtraction(
-                            source_document_key=document.key.value,
-                            clauses=tuple(merged[key] for key in sorted(merged)),
-                            failures=tuple(merged_failures[key] for key in sorted(merged_failures)),
-                        )
-                    )
+                    repository.save(merge_document_semantic_extractions(existing, generated))
             typer.echo(
                 "Semantic extraction     : "
                 f"ok={progress_state['ok']} failed={progress_state['failed']} "

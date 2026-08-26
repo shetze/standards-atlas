@@ -40,13 +40,13 @@ def test_qualification_plan_stops_document_pipeline_at_markdown() -> None:
     )
 
 
-def test_qualification_plan_requires_taxonomy_but_never_production_ontology() -> None:
+def test_qualification_plan_requires_taxonomy_and_semantic_profile_classification() -> None:
     plan = _plan()
     stages = tuple(step.stage for step in plan.steps)
 
     assert WorkflowStage.TAXONOMY in stages
-    assert WorkflowStage.ONTOLOGY not in stages
-    assert all("classify-ontology" not in step.command for step in plan.steps)
+    assert WorkflowStage.ONTOLOGY in stages
+    assert any("classify-ontology" in step.command for step in plan.steps)
 
 
 def test_qualification_plan_derives_corpus_contract_from_matrix_manifest() -> None:

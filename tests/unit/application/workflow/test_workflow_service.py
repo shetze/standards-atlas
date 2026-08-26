@@ -24,6 +24,36 @@ def test_plans_multipart_family_with_one_family_export() -> None:
     assert any(step.manual_gate for step in plan.steps)
 
 
+def test_documents_plan_is_deterministic_and_contains_no_llm_classification() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
+    plan = EndToEndWorkflowService().plan(
+        catalog, family_keys=("EN50716",), catalog_root=Path.cwd()
+    )
+
+    assert WorkflowStage.TAXONOMY in {step.stage for step in plan.steps}
+    assert WorkflowStage.ONTOLOGY not in {step.stage for step in plan.steps}
+    assert all("classify-ontology" not in step.command for step in plan.steps)
+    assert all("--llm-config" not in step.command for step in plan.steps)
+
+
+def test_semantic_profile_classification_is_explicit_planner_opt_in() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
+    plan = EndToEndWorkflowService().plan(
+        catalog,
+        family_keys=("EN50716",),
+        catalog_root=Path.cwd(),
+        include_semantic_profile=True,
+    )
+
+    ontology = next(step for step in plan.steps if step.stage is WorkflowStage.ONTOLOGY)
+    assert ontology.command[-4:] == (
+        "classify-ontology",
+        "EN50716",
+        "--llm-config",
+        "cfg/llm.yaml",
+    )
+
+
 def test_multipart_family_without_atlasdata_uses_docling_onboarding() -> None:
     catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(

@@ -44,6 +44,15 @@ class WorkspaceLayout:
         return self.local / "review"
 
     @property
+    def doorstop_work(self) -> Path:
+        """Return the rebuildable Doorstop adapter workspace."""
+        return self.work / "doorstop"
+
+    def doorstop_hierarchy(self, hierarchy_key: str) -> Path:
+        """Return one hierarchy root below the Doorstop work area."""
+        return self.doorstop_work / hierarchy_key
+
+    @property
     def evaluation_data(self) -> Path:
         return self.data / "evaluation"
 
