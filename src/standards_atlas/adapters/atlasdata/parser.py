@@ -15,7 +15,7 @@ from standards_atlas.adapters.atlasdata.structure_expander import (
 
 @dataclass(frozen=True)
 class InitializationRecord:
-    """One TOC or TEXT initialization record from an Atlas data file."""
+    """One public initialization record from an Atlas data file."""
 
     kind: str
     hash_value: str
@@ -46,6 +46,8 @@ _INITIALIZATION_RECORD_KINDS = {
     "PublicTXT",
     "LocalTXT",
     "TEXT",
+    "TABLE",
+    "TABLEINDEX",
 }
 
 

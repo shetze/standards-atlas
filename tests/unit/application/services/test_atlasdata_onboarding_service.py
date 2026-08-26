@@ -332,3 +332,78 @@ def test_refuses_to_overwrite_reviewed_atlasdata(tmp_path: Path) -> None:
             year=2018,
             overwrite=True,
         )
+
+
+def test_discovers_tables_and_list_of_tables_as_public_structure(tmp_path: Path) -> None:
+    source = tmp_path / "tables.json"
+    output = tmp_path / "IEC61508"
+    source.write_text(
+        json.dumps(
+            {
+                "name": "IEC-61508-3_2010",
+                "texts": [
+                    {
+                        "self_ref": "#/texts/0",
+                        "label": "section_header",
+                        "text": "List of tables",
+                    },
+                    {
+                        "self_ref": "#/texts/1",
+                        "label": "text",
+                        "text": "Table A.1 — Techniques and measures",
+                    },
+                    {
+                        "self_ref": "#/texts/2",
+                        "label": "section_header",
+                        "text": "Annex A (normative) Techniques and measures",
+                    },
+                    {
+                        "self_ref": "#/texts/3",
+                        "label": "caption",
+                        "text": "Table A.1 — Techniques and measures",
+                    },
+                ],
+                "tables": [
+                    {
+                        "self_ref": "#/tables/0",
+                        "label": "table",
+                        "captions": [{"$ref": "#/texts/3"}],
+                        "data": {"table_cells": []},
+                    }
+                ],
+                "body": {
+                    "children": [
+                        {"$ref": "#/texts/0"},
+                        {"$ref": "#/texts/1"},
+                        {"$ref": "#/texts/2"},
+                        {"$ref": "#/tables/0"},
+                    ]
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = AtlasDataOnboardingService().generate_parts(
+        (DoclingPartSource(part="3", path=source),),
+        output,
+        standard_name="IEC61508",
+        year=2010,
+    )
+
+    assert result.parts[0].tables[0].reference == "A.1"
+    assert result.parts[0].tables[0].parent_clause_reference == "A"
+    assert result.parts[0].table_index[0].reference == "A.1"
+
+    text = output.read_text(encoding="utf-8")
+    assert "TABLE;" in text
+    assert "TABLEINDEX;" in text
+    assert "IEC61508-3:2010 Table A.1" in text
+
+    imported = AtlasDataImporter().import_document(output)
+    assert len(imported.tables) == 1
+    assert imported.tables[0].reference == "A.1"
+    assert imported.tables[0].parent_clause_reference == "A"
+    assert imported.tables[0].listed_in_table_index is True
+    assert imported.table_index[0].reference == "A.1"
+    assert imported.table_index[0].table_id == imported.tables[0].id

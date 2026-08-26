@@ -10,6 +10,7 @@ from standards_atlas.domain.model.annotation import ClauseAnnotation
 from standards_atlas.domain.model.artifact_lineage import ArtifactLineage
 from standards_atlas.domain.model.clause import Clause
 from standards_atlas.domain.model.identifiers import ClauseId, DocumentKey
+from standards_atlas.domain.model.table_structure import DocumentTable, TableIndexEntry
 
 
 class DocumentType(StrEnum):
@@ -45,6 +46,8 @@ class EngineeringDocument(BaseModel):
     source: str | None = None
 
     clauses: tuple[Clause, ...] = ()
+    tables: tuple[DocumentTable, ...] = ()
+    table_index: tuple[TableIndexEntry, ...] = ()
     annotations: tuple[ClauseAnnotation, ...] = ()
     lineage: ArtifactLineage | None = None
 

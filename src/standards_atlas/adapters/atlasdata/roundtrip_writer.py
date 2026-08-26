@@ -156,7 +156,8 @@ class AtlasDataRoundTripWriter:
 def _validate_public_records(
     records: list[InitializationRecord],
 ) -> None:
-    forbidden = [record.kind for record in records if record.kind not in {"TOC", "PublicTXT"}]
+    allowed = {"TOC", "TABLE", "TABLEINDEX", "PublicTXT"}
+    forbidden = [record.kind for record in records if record.kind not in allowed]
 
     if forbidden:
         raise ValueError(f"Round-trip writer received non-public record kinds: {forbidden}")

@@ -19,11 +19,14 @@ from standards_atlas.domain.model import (
     ClauseType,
     DocumentStructure,
     DocumentStructureClassification,
+    DocumentTable,
+    DocumentTableId,
     NormativeStatus,
     SemanticClassification,
     Standard,
     StandardKey,
     StandardReference,
+    TableIndexEntry,
 )
 
 _ITEM_TYPE_MAPPING: dict[AtlasItemType, ClauseType] = {
@@ -81,6 +84,10 @@ def map_atlas_data_to_standard(
         atlas_data=atlas_data,
         clauses_by_reference=clauses_by_reference,
     )
+    tables, table_index = _map_table_records(
+        atlas_data=atlas_data,
+        clauses_by_reference=clauses_by_reference,
+    )
 
     return Standard(
         key=StandardKey(value=key),
@@ -91,6 +98,8 @@ def map_atlas_data_to_standard(
             StandardKey(value=atlas_data.metadata.parent) if atlas_data.metadata.parent else None
         ),
         clauses=clauses,
+        tables=tables,
+        table_index=table_index,
         annotations=annotations,
     )
 
@@ -460,3 +469,83 @@ def _infer_structural_profile(
         ),
         document_taxonomy=("document.iec-directives-2", "1.0.0"),
     )
+
+
+_TABLE_REFERENCE_PATTERN = re.compile(r"^Table\s+(?P<reference>\S+)$", re.IGNORECASE)
+
+
+def _map_table_records(
+    *,
+    atlas_data: AtlasStandardData,
+    clauses_by_reference: dict[tuple[str | None, str], Clause],
+) -> tuple[tuple[DocumentTable, ...], tuple[TableIndexEntry, ...]]:
+    declared: dict[tuple[str | None, str], DocumentTable] = {}
+    listed: dict[tuple[str | None, str], str | None] = {}
+
+    for record in atlas_data.initialization_records:
+        if record.kind not in {"TABLE", "TABLEINDEX"}:
+            continue
+        identity = _extract_table_identity(record.reference, atlas_data.metadata.name)
+        if identity is None:
+            continue
+        volume, table_reference = identity
+        key = (volume, table_reference)
+        if record.kind == "TABLEINDEX":
+            listed[key] = record.content.strip() or None
+            continue
+        parent_reference = record.type_marker.strip() or None
+        parent = clauses_by_reference.get((volume, parent_reference)) if parent_reference else None
+        declared[key] = DocumentTable(
+            id=_build_table_id(
+                standard_name=atlas_data.metadata.name,
+                year=atlas_data.metadata.official_year,
+                volume=volume,
+                table_reference=table_reference,
+            ),
+            reference=table_reference,
+            title=record.content.strip() or None,
+            parent_clause_id=parent.id if parent is not None else None,
+            parent_clause_reference=parent_reference,
+            sequence_index=len(declared),
+            listed_in_table_index=key in listed,
+        )
+
+    # TABLEINDEX may precede TABLE in hand-maintained AtlasData.
+    tables = tuple(
+        table.model_copy(update={"listed_in_table_index": key in listed})
+        for key, table in declared.items()
+    )
+    table_by_key = {key: table for key, table in zip(declared, tables, strict=True)}
+    index_entries = tuple(
+        TableIndexEntry(
+            reference=reference,
+            title=title,
+            table_id=table_by_key[key].id if key in table_by_key else None,
+        )
+        for key, title in listed.items()
+        for _, reference in (key,)
+    )
+    return tables, index_entries
+
+
+def _extract_table_identity(reference: str, standard_name: str) -> tuple[str | None, str] | None:
+    if not reference.startswith(standard_name):
+        return None
+    remainder = reference[len(standard_name) :].strip()
+    match = re.search(r"(?:^|\s)Table\s+(?P<table>\S+)\s*$", remainder, re.IGNORECASE)
+    if match is None:
+        return None
+    document_reference = remainder[: match.start()].strip()
+    volume: str | None = None
+    before_year = document_reference.split(":", maxsplit=1)[0]
+    if before_year.startswith("-") and len(before_year) > 1:
+        volume = before_year[1:].replace("-", "§", 1) if "-" in before_year[1:] else before_year[1:]
+    return volume, match.group("table")
+
+
+def _build_table_id(
+    *, standard_name: str, year: int | None, volume: str | None, table_reference: str
+) -> DocumentTableId:
+    raw = "|".join((standard_name, str(year or ""), volume or "", "table", table_reference))
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
+    return DocumentTableId(value=f"table-{digest}")

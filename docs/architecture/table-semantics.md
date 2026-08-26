@@ -10,18 +10,25 @@ classification.
 
 ```text
 EngineeringDocument
+├── tables: DocumentTable          first-class structural identity
+├── table_index: TableIndexEntry   List-of-Tables declarations
 └── Clause
-    └── TableBlock                 canonical source
+    └── TableBlock                 canonical protected cells
         └── KnowledgeTable         deterministic projection
             └── KnowledgeRecord    addressable logical row
                 ├── original cells and evidence
                 └── optional interpreted knowledge
 ```
 
-`TableBlock` remains part of the canonical `EngineeringDocument`. `KnowledgeTable` and
-`KnowledgeRecord` are reproducible projections, not independently edited copies. This
-keeps normalization and provenance authoritative while allowing MCP, graph, and future RAG
-consumers to retrieve table knowledge at useful granularity.
+`DocumentTable` owns document-level table identity, numbering, caption metadata, parent
+structure, and sequence. `TableIndexEntry` captures the independently declared List of
+Tables. Protected rows and cells remain canonical in `TableBlock`; `DocumentTable` links to
+that block by identifier instead of duplicating its content. `KnowledgeTable` and
+`KnowledgeRecord` remain reproducible projections, not independently edited copies.
+
+AtlasData publishes table structure through `TABLE` and `TABLEINDEX` records only. It never
+publishes table cells. This allows onboarding and review to compare declared and detected
+tables before private content enrichment.
 
 ## Stable identity and evidence
 
@@ -75,6 +82,13 @@ The MCP adapter exposes tables and records directly. Future IntelliDoc RAG index
 use reproducible text projections at several granularities—table, record, and relation—while
 retaining stable IDs back to the structured artefacts. Embedding chunks are disposable
 index projections; the Knowledge Base and its source evidence remain authoritative.
+
+## Slice boundary
+
+T1 captures identity and structure only. Header normalization, merged-cell reconstruction,
+row/column hierarchies, footnotes, units, and canonical table normalization belong to T2.
+Mapping normalized tables into `StructuredKnowledgeRecord` belongs to T3. Table-specific
+retrieval serialization/tokenization and embedding projections belong to T4.
 
 ## Current limitation
 

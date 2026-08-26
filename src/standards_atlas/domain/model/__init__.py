@@ -125,6 +125,11 @@ from standards_atlas.domain.model.structural_profile import (
     SemanticSectionRole,
     StructuralProfile,
 )
+from standards_atlas.domain.model.table_structure import (
+    DocumentTable,
+    DocumentTableId,
+    TableIndexEntry,
+)
 
 __all__ = [
     "FORMAL_SEMANTIC_NAMESPACE",
@@ -222,6 +227,9 @@ __all__ = [
     "StandardKey",
     "StandardReference",
     "SourceEvidence",
+    "DocumentTable",
+    "DocumentTableId",
+    "TableIndexEntry",
     "TableBlock",
     "TableCell",
     "TableRow",

@@ -147,3 +147,5 @@ both active and obsolete provisions.
 - [Documentation home](../../README.md)
 
 | [0078](0078-qualify-ontology-guided-semantic-extraction.md) | Qualify ontology-guided semantic extraction in qualification runs |
+
+| [0079](0079-first-class-table-structural-capture.md) | Capture tables and Lists of Tables as first-class document structure |

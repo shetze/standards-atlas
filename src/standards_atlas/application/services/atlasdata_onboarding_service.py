@@ -34,6 +34,10 @@ _ANNEX_HEADING = re.compile(
 )
 _ANNEX_CLAUSE_HEADING = re.compile(r"^(?P<reference>[A-Z](?:\.\d+)+)(?:[\t ]+(?P<title>.+))?$")
 _REFERENCE_ONLY = re.compile(r"^(?:0\.\d+(?:\.\d+)*|[1-9]\d*(?:\.\d+)*|[A-Z](?:\.\d+)*)$")
+_TABLE_CAPTION = re.compile(
+    r"^Table\s+(?P<reference>(?:[A-Z](?:\.\d+)+|\d+(?:\.\d+)*))\s*(?:[—–-]\s*)?(?P<title>.*)$",
+    re.IGNORECASE,
+)
 _PART_SPEC = re.compile(r"^(?P<part>[1-9]\d*(?:-[1-9]\d*)?)=(?P<path>.+)$")
 
 
@@ -74,12 +78,33 @@ class DiscoveredClause:
 
 
 @dataclass(frozen=True)
+class DiscoveredTable:
+    """One first-class table discovered in Docling structure."""
+
+    reference: str
+    title: str | None
+    parent_clause_reference: str | None
+    source_item_id: str
+    sequence_index: int
+
+
+@dataclass(frozen=True)
+class DiscoveredTableIndexEntry:
+    """One entry from a document's List of Tables."""
+
+    reference: str
+    title: str | None
+
+
+@dataclass(frozen=True)
 class DiscoveredPart:
     """All clauses discovered for one explicitly identified standard part."""
 
     part: str
     source: Path
     clauses: tuple[DiscoveredClause, ...]
+    tables: tuple[DiscoveredTable, ...] = ()
+    table_index: tuple[DiscoveredTableIndexEntry, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -210,11 +235,12 @@ class AtlasDataOnboardingService:
             if include_part_context:
                 self._validate_part_metadata(document, source, publication_year=year)
             clauses = self.discover_clauses(document)
+            tables, table_index = self.discover_tables(document)
             if not clauses:
                 raise AtlasDataOnboardingError(
                     f"No numbered clause or annex headings found in Docling document: {source.path}"
                 )
-            parts.append(DiscoveredPart(source.part, source.path, clauses))
+            parts.append(DiscoveredPart(source.part, source.path, clauses, tables, table_index))
 
         result_parts = tuple(parts)
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -335,6 +361,73 @@ class AtlasDataOnboardingService:
             )
         return tuple(classified)
 
+    def discover_tables(
+        self,
+        document: dict[str, Any],
+    ) -> tuple[tuple[DiscoveredTable, ...], tuple[DiscoveredTableIndexEntry, ...]]:
+        """Discover table captions, structural parents and List-of-Tables entries."""
+        texts = document.get("texts")
+        tables = document.get("tables")
+        if not isinstance(texts, list) or not isinstance(tables, list):
+            return (), ()
+
+        text_by_ref = {str(item.get("self_ref", "")): item for item in texts}
+        table_by_ref = {str(item.get("self_ref", "")): item for item in tables}
+        body = document.get("body", {})
+        children = body.get("children", []) if isinstance(body, dict) else []
+
+        current_clause: str | None = None
+        in_table_index = False
+        discovered: list[DiscoveredTable] = []
+        indexed: dict[str, DiscoveredTableIndexEntry] = {}
+
+        for child in children:
+            ref = str(child.get("$ref", "")) if isinstance(child, dict) else ""
+            if ref in text_by_ref:
+                item = text_by_ref[ref]
+                text = _normalize_heading(item.get("text", ""))
+                if item.get("label") == "section_header":
+                    if "list of tables" in text.casefold():
+                        in_table_index = True
+                        current_clause = None
+                        continue
+                    in_table_index = False
+                    parsed = _parse_heading(text)
+                    if parsed is not None:
+                        current_clause = parsed[0]
+                    continue
+                if in_table_index:
+                    parsed_table = _parse_table_caption(text)
+                    if parsed_table is not None:
+                        reference, title = parsed_table
+                        indexed.setdefault(
+                            reference,
+                            DiscoveredTableIndexEntry(reference=reference, title=title),
+                        )
+                continue
+
+            table = table_by_ref.get(ref)
+            if table is None:
+                continue
+            caption = _table_caption(table, text_by_ref)
+            parsed_table = _parse_table_caption(caption) if caption else None
+            if parsed_table is None:
+                reference = f"unnumbered-{len(discovered) + 1}"
+                title = caption or None
+            else:
+                reference, title = parsed_table
+            discovered.append(
+                DiscoveredTable(
+                    reference=reference,
+                    title=title,
+                    parent_clause_reference=current_clause,
+                    source_item_id=ref,
+                    sequence_index=len(discovered),
+                )
+            )
+
+        return tuple(discovered), tuple(indexed.values())
+
     def render(
         self,
         *,
@@ -409,6 +502,34 @@ class AtlasDataOnboardingService:
                             full_reference,
                             _sanitize_field(clause.title),
                             clause.type_marker,
+                        ]
+                    )
+                )
+            for table in part.tables:
+                table_reference = f"{standard_ref} Table {table.reference}"
+                digest = hashlib.md5(f"table|{table_reference}".encode()).hexdigest()
+                metadata.append(
+                    ";".join(
+                        [
+                            "TABLE",
+                            digest,
+                            table_reference,
+                            _sanitize_field(table.title or ""),
+                            table.parent_clause_reference or "",
+                        ]
+                    )
+                )
+            for entry in part.table_index:
+                table_reference = f"{standard_ref} Table {entry.reference}"
+                digest = hashlib.md5(f"tableindex|{table_reference}".encode()).hexdigest()
+                metadata.append(
+                    ";".join(
+                        [
+                            "TABLEINDEX",
+                            digest,
+                            table_reference,
+                            _sanitize_field(entry.title or ""),
+                            "i",
                         ]
                     )
                 )
@@ -581,3 +702,27 @@ def _parse_compressible_token(token: str) -> tuple[str, str, int] | None:
 
 def _sanitize_field(value: str) -> str:
     return value.replace(";", ",").replace("\n", " ").strip()
+
+
+def _parse_table_caption(value: str) -> tuple[str, str | None] | None:
+    match = _TABLE_CAPTION.fullmatch(_normalize_heading(value))
+    if match is None:
+        return None
+    title = match.group("title").strip() or None
+    return match.group("reference"), title
+
+
+def _table_caption(table: dict[str, Any], text_by_ref: dict[str, dict[str, Any]]) -> str:
+    captions = table.get("captions", [])
+    if not isinstance(captions, list):
+        return ""
+    parts: list[str] = []
+    for caption in captions:
+        if not isinstance(caption, dict):
+            continue
+        item = text_by_ref.get(str(caption.get("$ref", "")))
+        if item is not None:
+            text = _normalize_heading(item.get("text", ""))
+            if text:
+                parts.append(text)
+    return " ".join(parts)

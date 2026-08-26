@@ -87,6 +87,7 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
             sequence_number=4,
             source_item_ids=("t1",),
             rows=(TableRow(cells=(TableCell(text="A"),)),),
+            caption="Table 2.1 — Example values",
             source_evidence=evidence,
         ),
         NormalizedCode(
@@ -116,6 +117,11 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
     assert result.statistics.clauses_enriched == 2
     assert result.statistics.content_blocks == 5
     assert result.statistics.normalized_items_consumed == 6
+    assert len(persisted.tables) == 1
+    assert persisted.tables[0].reference == "2.1"
+    assert persisted.tables[0].title == "Example values"
+    assert persisted.tables[0].parent_clause_id == second.id
+    assert persisted.tables[0].table_block_id == second.content[1].id
 
 
 def test_visual_only_formula_discards_docling_pseudo_expression(tmp_path):

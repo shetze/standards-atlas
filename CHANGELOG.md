@@ -44,6 +44,13 @@
 
 ## Unreleased
 
+### Table structural capture
+
+- promote document tables and List-of-Tables entries to first-class EngineeringDocument structure
+- discover public table identity, captions, and parents during AtlasData Docling onboarding
+- preserve TABLE/TABLEINDEX metadata through AtlasData round trips without exporting cells
+
+
 - Refine the formal ontology from semantic-extraction qualification feedback: add `hasPart`/`partOf`, intermediate system/requirement/specification/quantity classes, and explicit Functional Safety fault/error/failure concepts; constrain `containsClause` to document structure and make generic classes/`describes` extraction fallbacks.
 - Make semantic extraction qualification resilient to per-clause LLM timeouts, response errors, and temporary endpoint failures; persist failures and continue remaining clauses.
 - Add clause-level semantic extraction progress output and a manifest-owned per-request timeout.

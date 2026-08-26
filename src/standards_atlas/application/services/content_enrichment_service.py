@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import re
+
 from pydantic import BaseModel, ConfigDict
 
 from standards_atlas.application.analysis import resolve_internal_reference_relations
@@ -46,6 +49,8 @@ from standards_atlas.domain.model import (
     CodeBlock,
     ContentBlock,
     DocumentKey,
+    DocumentTable,
+    DocumentTableId,
     EngineeringDocument,
     FormulaBlock,
     ListBlock,
@@ -194,7 +199,16 @@ class ContentEnrichmentService:
                 + "; ".join(traceability_errors[:10])
             )
 
-        draft = document.model_copy(update={"clauses": tuple(enriched_clauses)})
+        enriched_tables, enriched_table_index = _lift_document_tables(
+            document, tuple(enriched_clauses)
+        )
+        draft = document.model_copy(
+            update={
+                "clauses": tuple(enriched_clauses),
+                "tables": enriched_tables,
+                "table_index": enriched_table_index,
+            }
+        )
         draft = resolve_document_reference_mentions(draft)
         resolved_relations = resolve_internal_reference_relations(draft)
         clauses_with_relations = []
@@ -483,3 +497,98 @@ def _content_traceability_errors(
             if not block.source_evidence:
                 errors.append(f"{block.id} has no SourceEvidence")
     return tuple(errors)
+
+
+_TABLE_CAPTION = re.compile(
+    r"^Table\s+(?P<reference>(?:[A-Z](?:\.\d+)+|\d+(?:\.\d+)*))"
+    r"\s*(?:[—–-]\s*)?(?P<title>.*)$",
+    re.IGNORECASE,
+)
+
+
+def _lift_document_tables(
+    document: EngineeringDocument,
+    clauses: tuple[Clause, ...],
+):
+    """Attach clause-local TableBlocks to first-class structural table metadata."""
+    declared = {table.reference.casefold(): table for table in document.tables}
+    tables: list[DocumentTable] = []
+    seen: set[str] = set()
+    sequence = 0
+
+    for clause in clauses:
+        ordinal = 0
+        for block in clause.content:
+            if not isinstance(block, TableBlock):
+                continue
+            ordinal += 1
+            parsed = _parse_table_caption(block.caption)
+            reference = parsed[0] if parsed is not None else f"{clause.reference.clause}.{ordinal}"
+            title = parsed[1] if parsed is not None else block.caption
+            key = reference.casefold()
+            existing = declared.get(key)
+            if existing is not None:
+                table = existing.model_copy(
+                    update={
+                        "title": existing.title or title,
+                        "parent_clause_id": existing.parent_clause_id or clause.id,
+                        "parent_clause_reference": (
+                            existing.parent_clause_reference or clause.reference.clause
+                        ),
+                        "sequence_index": sequence,
+                        "table_block_id": block.id,
+                        "source_evidence": block.source_evidence,
+                    }
+                )
+            else:
+                table = DocumentTable(
+                    id=_build_document_table_id(document, reference),
+                    reference=reference,
+                    title=title,
+                    parent_clause_id=clause.id,
+                    parent_clause_reference=clause.reference.clause,
+                    sequence_index=sequence,
+                    table_block_id=block.id,
+                    listed_in_table_index=any(
+                        entry.reference.casefold() == key for entry in document.table_index
+                    ),
+                    source_evidence=block.source_evidence,
+                )
+            tables.append(table)
+            seen.add(key)
+            sequence += 1
+
+    for existing in document.tables:
+        if existing.reference.casefold() not in seen:
+            tables.append(existing.model_copy(update={"sequence_index": sequence}))
+            sequence += 1
+
+    table_by_reference = {table.reference.casefold(): table for table in tables}
+    table_index = tuple(
+        entry.model_copy(
+            update={
+                "table_id": (
+                    table_by_reference[entry.reference.casefold()].id
+                    if entry.reference.casefold() in table_by_reference
+                    else entry.table_id
+                )
+            }
+        )
+        for entry in document.table_index
+    )
+    return tuple(tables), table_index
+
+
+def _parse_table_caption(caption: str | None) -> tuple[str, str | None] | None:
+    if not caption:
+        return None
+    match = _TABLE_CAPTION.fullmatch(re.sub(r"\s+", " ", caption).strip())
+    if match is None:
+        return None
+    return match.group("reference"), match.group("title").strip() or None
+
+
+def _build_document_table_id(document: EngineeringDocument, reference: str) -> DocumentTableId:
+    raw = f"{document.key.value}|{document.year or ''}|table|{reference.casefold()}"
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
+    return DocumentTableId(value=f"table-{digest}")

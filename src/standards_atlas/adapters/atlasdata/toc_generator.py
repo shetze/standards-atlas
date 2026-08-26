@@ -84,12 +84,51 @@ def generate_public_text_records(
     return records
 
 
+def generate_table_structure_records(
+    document: EngineeringDocument,
+) -> list[InitializationRecord]:
+    """Generate public table identity and List-of-Tables records without cell content."""
+    clauses_by_id = {clause.id: clause for clause in document.clauses}
+    records: list[InitializationRecord] = []
+    for table in document.tables:
+        parent = clauses_by_id.get(table.parent_clause_id) if table.parent_clause_id else None
+        reference = _atlasdata_table_reference(document, table.reference, parent)
+        records.append(
+            InitializationRecord(
+                kind="TABLE",
+                hash_value=_hash_value(f"table|{reference}"),
+                reference=reference,
+                content=table.title or "",
+                type_marker=table.parent_clause_reference or "",
+            )
+        )
+    for entry in document.table_index:
+        table = next((value for value in document.tables if value.id == entry.table_id), None)
+        parent = (
+            clauses_by_id.get(table.parent_clause_id)
+            if table is not None and table.parent_clause_id is not None
+            else None
+        )
+        reference = _atlasdata_table_reference(document, entry.reference, parent)
+        records.append(
+            InitializationRecord(
+                kind="TABLEINDEX",
+                hash_value=_hash_value(f"tableindex|{reference}"),
+                reference=reference,
+                content=entry.title or "",
+                type_marker="i",
+            )
+        )
+    return records
+
+
 def generate_public_initialization_records(
     document: EngineeringDocument,
 ) -> list[InitializationRecord]:
     """Generate every record allowed in public AtlasData files."""
     return [
         *generate_toc_records(document),
+        *generate_table_structure_records(document),
         *generate_public_text_records(document),
     ]
 
@@ -177,3 +216,18 @@ def _type_marker(clause: Clause) -> str:
 
 def _hash_value(value: str) -> str:
     return hashlib.md5(value.encode("utf-8")).hexdigest()
+
+
+def _atlasdata_table_reference(
+    document: EngineeringDocument,
+    reference: str,
+    parent: Clause | None,
+) -> str:
+    standard = document.title
+    if parent is not None:
+        standard = parent.reference.standard
+        if parent.volume:
+            standard = f"{standard}-{parent.volume.replace('§', '-')}"
+    year = parent.reference.year if parent is not None else document.year
+    document_reference = f"{standard}:{year}" if year is not None else standard
+    return f"{document_reference} Table {reference}"

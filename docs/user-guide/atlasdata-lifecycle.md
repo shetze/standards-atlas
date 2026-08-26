@@ -23,3 +23,12 @@ uv run standards-atlas atlasdata onboard-docling EN50716 data/EN50716
 ```
 
 For multi-part families use `onboard-docling-parts`. Generated headings and types must be reviewed; copyright-protected clause text must not be copied into public AtlasData fields.
+
+
+## Table structure
+
+Docling onboarding also records table captions and List-of-Tables declarations as public
+AtlasData structure. `TABLE` records identify detected tables and their structural parent;
+`TABLEINDEX` records represent entries declared by the List of Tables. These records contain
+numbering and captions only. Protected rows and cells remain in private normalized and
+EngineeringDocument artifacts.
