@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 
 from standards_atlas.adapters.atlasdata.metadata import AtlasDataLifecycleStatus
+from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.atlasdata.semantic_annotation_writer import (
     AtlasDataSemanticAnnotationService,
 )
@@ -147,6 +148,92 @@ def onboard_docling_parts(
     typer.echo(f"Clauses discovered    : {len(result.clauses)}")
     typer.echo(f"Terms discovered      : {term_count}")
     typer.echo(f"Annexes discovered    : {annex_count}")
+    typer.echo(f"AtlasData file        : {result.output}")
+
+
+@atlasdata_app.command("onboard-family")
+def onboard_family(
+    family_key: Annotated[
+        str, typer.Argument(help="Standard family key declared in the standards manifest."),
+    ],
+    manifest: Annotated[
+        Path,
+        typer.Option(
+            "--manifest",
+            exists=True,
+            readable=True,
+            resolve_path=True,
+            help="Standards manifest declaring the family and its physical parts.",
+        ),
+    ] = Path("manifests/standards.yaml"),
+    docling_root: Annotated[
+        Path,
+        typer.Option(
+            "--docling-root",
+            help="Root containing <document-key>/document.json Docling artifacts.",
+        ),
+    ] = Path(".atlas/data/docling"),
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            help="AtlasData file to create; defaults to local/proposed/<family>.",
+        ),
+    ] = None,
+    digits: Annotated[
+        int, typer.Option("--digits", help="AtlasData numeric identifier width.")
+    ] = cli_defaults.DEFAULT_ATLASDATA_DIGITS,
+    parent: Annotated[
+        str | None, typer.Option("--parent", help="Optional AtlasData parent key.")
+    ] = cli_defaults.DEFAULT_NONE,
+    include_supplements: Annotated[
+        bool,
+        typer.Option(
+            "--include-supplements",
+            help="Include manifest-declared supplements as part-supplement sources.",
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
+    overwrite: Annotated[
+        bool, typer.Option("--overwrite", help="Replace an existing proposed output file.")
+    ] = cli_defaults.DEFAULT_FALSE,
+) -> None:
+    """Create one AtlasData family file from manifest-declared Docling artifacts."""
+    try:
+        catalog = YamlStandardCatalogReader().read(manifest)
+        family = catalog.family(family_key)
+        target = output or Path("local/proposed") / family.key
+        result = AtlasDataOnboardingService().generate_family(
+            family,
+            target,
+            docling_root=docling_root,
+            digits=digits,
+            parent=parent,
+            overwrite=overwrite,
+            include_supplements=include_supplements,
+        )
+    except (
+        AtlasDataOnboardingError,
+        KeyError,
+        OSError,
+        ValueError,
+        json.JSONDecodeError,
+    ) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    term_count = sum(clause.type_marker == "t" for clause in result.clauses)
+    table_count = sum(len(part.tables) for part in result.parts)
+    typer.echo(f"Family                : {family.key}")
+    typer.echo(f"Standard              : {result.standard_name}")
+    typer.echo(f"Parts discovered      : {len(result.parts)}")
+    for part in result.parts:
+        typer.echo(
+            f"Part {part.part:<17}: {part.source} "
+            f"({part.publication_year}; {len(part.clauses)} clauses; {len(part.tables)} tables)"
+        )
+    typer.echo(f"Clauses discovered    : {len(result.clauses)}")
+    typer.echo(f"Terms discovered      : {term_count}")
+    typer.echo(f"Tables discovered     : {table_count}")
     typer.echo(f"AtlasData file        : {result.output}")
 
 

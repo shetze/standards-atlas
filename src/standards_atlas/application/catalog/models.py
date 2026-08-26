@@ -193,6 +193,7 @@ class StandardSupplementDefinition(BaseModel):
     supplement: str
     key: str
     title: str | None = None
+    publication_year: int | None = None
     document_type: DocumentType = DocumentType.TECHNICAL_SPECIFICATION
     source: SourceDefinition
     classification: Classification = Field(default_factory=Classification)
@@ -206,6 +207,7 @@ class StandardPartDefinition(BaseModel):
     part: str
     key: str
     title: str | None = None
+    publication_year: int | None = None
     source: SourceDefinition
     classification: Classification = Field(default_factory=Classification)
     content_selection: ContentSelection | None = None

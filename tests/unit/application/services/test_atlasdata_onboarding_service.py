@@ -407,3 +407,119 @@ def test_discovers_tables_and_list_of_tables_as_public_structure(tmp_path: Path)
     assert imported.tables[0].listed_in_table_index is True
     assert imported.table_index[0].reference == "A.1"
     assert imported.table_index[0].table_id == imported.tables[0].id
+
+
+def test_generate_family_resolves_manifest_declared_parts_and_years(tmp_path: Path) -> None:
+    from standards_atlas.application.catalog import StandardFamilyDefinition
+
+    docling_root = tmp_path / "docling"
+    for key, name in (("IEC61508-0", "IEC-61508-0_2005"), ("IEC61508-3", "IEC-61508-3_2010")):
+        target = docling_root / key / "document.json"
+        target.parent.mkdir(parents=True)
+        target.write_text(
+            json.dumps(
+                {
+                    "name": name,
+                    "texts": [
+                        {
+                            "self_ref": "#/texts/0",
+                            "label": "section_header",
+                            "text": "1 Scope",
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    family = StandardFamilyDefinition.model_validate(
+        {
+            "key": "IEC61508",
+            "name": "IEC 61508",
+            "organization": "IEC",
+            "publication_year": 2005,
+            "parts": [
+                {
+                    "part": "0",
+                    "key": "IEC61508-0",
+                    "publication_year": 2005,
+                    "source": {"pdf": "part0.pdf"},
+                },
+                {
+                    "part": "3",
+                    "key": "IEC61508-3",
+                    "publication_year": 2010,
+                    "source": {"pdf": "part3.pdf"},
+                },
+            ],
+        }
+    )
+    output = tmp_path / "IEC61508"
+
+    result = AtlasDataOnboardingService().generate_family(
+        family,
+        output,
+        docling_root=docling_root,
+    )
+
+    assert [(part.part, part.publication_year) for part in result.parts] == [
+        ("0", 2005),
+        ("3", 2010),
+    ]
+    rendered = output.read_text(encoding="utf-8")
+    assert '"2005 0-0 0-s1"' in rendered
+    assert '"2010 3-0 3-s1"' in rendered
+    assert "IEC 61508-0:2005 1" in rendered
+    assert "IEC 61508-3:2010 1" in rendered
+
+
+def test_generate_family_does_not_include_supplements_by_default(tmp_path: Path) -> None:
+    from standards_atlas.application.catalog import StandardFamilyDefinition
+
+    docling_root = tmp_path / "docling"
+    part_path = docling_root / "FAMILY-1" / "document.json"
+    part_path.parent.mkdir(parents=True)
+    part_path.write_text(
+        json.dumps(
+            {
+                "name": "FAMILY-1_2026",
+                "texts": [
+                    {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    family = StandardFamilyDefinition.model_validate(
+        {
+            "key": "FAMILY",
+            "name": "Family",
+            "organization": "Example",
+            "publication_year": 2026,
+            "parts": [
+                {
+                    "part": "1",
+                    "key": "FAMILY-1",
+                    "source": {"pdf": "part1.pdf"},
+                    "supplements": [
+                        {
+                            "supplement": "1",
+                            "key": "FAMILY-1-1",
+                            "source": {"pdf": "supplement.pdf"},
+                            "relations": [
+                                {"type": "supplements", "target": "FAMILY-1"}
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    result = AtlasDataOnboardingService().generate_family(
+        family,
+        tmp_path / "FAMILY",
+        docling_root=docling_root,
+    )
+
+    assert [part.part for part in result.parts] == ["1"]

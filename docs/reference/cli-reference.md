@@ -40,6 +40,7 @@ The unified `--manifests` interface belongs to the workflow envelope. Direct low
 
 - `atlasdata onboard-docling`
 - `atlasdata onboard-docling-parts`
+- `atlasdata onboard-family`: manifest-driven multipart family onboarding
 - `atlasdata set-status`
 - `atlasdata generate-toc`
 

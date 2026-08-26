@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from standards_atlas.application.catalog import StandardFamilyDefinition
+
 from standards_atlas.application.model.atlasdata_metadata import (
     AtlasDataLifecycleStatus,
     parse_metadata,
@@ -51,6 +53,7 @@ class DoclingPartSource:
 
     part: str
     path: Path
+    publication_year: int | None = None
 
     def __post_init__(self) -> None:
         # Keep compatibility with callers that still construct the source with an int.
@@ -102,6 +105,7 @@ class DiscoveredPart:
 
     part: str
     source: Path
+    publication_year: int
     clauses: tuple[DiscoveredClause, ...]
     tables: tuple[DiscoveredTable, ...] = ()
     table_index: tuple[DiscoveredTableIndexEntry, ...] = ()
@@ -228,19 +232,30 @@ class AtlasDataOnboardingService:
             )
 
         parts: list[DiscoveredPart] = []
-        for source in sorted(sources, key=lambda value: value.part):
+        for source in sorted(sources, key=lambda value: _part_sort_key(value.part)):
             if not source.path.is_file():
                 raise AtlasDataOnboardingError(f"Docling source does not exist: {source.path}")
             document = json.loads(source.path.read_text(encoding="utf-8"))
             if include_part_context:
-                self._validate_part_metadata(document, source, publication_year=year)
+                self._validate_part_metadata(
+                    document, source, publication_year=source.publication_year or year
+                )
             clauses = self.discover_clauses(document)
             tables, table_index = self.discover_tables(document)
             if not clauses:
                 raise AtlasDataOnboardingError(
                     f"No numbered clause or annex headings found in Docling document: {source.path}"
                 )
-            parts.append(DiscoveredPart(source.part, source.path, clauses, tables, table_index))
+            parts.append(
+                DiscoveredPart(
+                    source.part,
+                    source.path,
+                    source.publication_year or year,
+                    clauses,
+                    tables,
+                    table_index,
+                )
+            )
 
         result_parts = tuple(parts)
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -256,6 +271,75 @@ class AtlasDataOnboardingService:
             encoding="utf-8",
         )
         return AtlasDataOnboardingResult(output, standard_name, year, result_parts)
+
+    def generate_family(
+        self,
+        family: StandardFamilyDefinition,
+        output: Path,
+        *,
+        docling_root: Path = Path(".atlas/data/docling"),
+        digits: int = 8,
+        parent: str | None = None,
+        overwrite: bool = False,
+        include_supplements: bool = False,
+    ) -> AtlasDataOnboardingResult:
+        """Generate one family AtlasData file from manifest-declared Docling parts."""
+        if family.source is not None:
+            if family.publication_year is None:
+                raise AtlasDataOnboardingError(
+                    f"Family {family.key} has no publication_year in the standards manifest."
+                )
+            return self.generate(
+                docling_root / family.key / "document.json",
+                output,
+                standard_name=family.name,
+                year=family.publication_year,
+                digits=digits,
+                parent=parent,
+                overwrite=overwrite,
+            )
+
+        sources: list[DoclingPartSource] = []
+        for part in family.parts:
+            part_year = part.publication_year or family.publication_year
+            if part_year is None:
+                raise AtlasDataOnboardingError(
+                    f"Part {part.key} has no publication year and family {family.key} "
+                    "defines no publication_year fallback."
+                )
+            sources.append(
+                DoclingPartSource(
+                    part=part.part,
+                    path=docling_root / part.key / "document.json",
+                    publication_year=part_year,
+                )
+            )
+            if not include_supplements:
+                continue
+            for supplement in part.supplements:
+                supplement_year = supplement.publication_year or part_year
+                sources.append(
+                    DoclingPartSource(
+                        part=f"{part.part}-{supplement.supplement}",
+                        path=docling_root / supplement.key / "document.json",
+                        publication_year=supplement_year,
+                    )
+                )
+
+        family_year = family.publication_year
+        if family_year is None:
+            family_year = min(
+                source.publication_year for source in sources if source.publication_year
+            )
+        return self.generate_parts(
+            tuple(sources),
+            output,
+            standard_name=family.name,
+            year=family_year,
+            digits=digits,
+            parent=parent,
+            overwrite=overwrite,
+        )
 
     def _validate_part_metadata(
         self,
@@ -441,7 +525,9 @@ class AtlasDataOnboardingService:
         metadata = ["# SPDX-License-Identifier: LGPL-3.0-only"]
         if parent:
             metadata.append(f'parent="{parent}"')
-        part_digits = len(str(max(part.part for part in parts))) if include_part_context else 0
+        part_digits = (
+            max(len(part.part.replace('-', '')) for part in parts) if include_part_context else 0
+        )
         metadata.extend(
             [
                 f"digits={digits}",
@@ -460,7 +546,7 @@ class AtlasDataOnboardingService:
             )
             if include_part_context:
                 tokens = [f"{part.part}-0", *tokens]
-            metadata.append(' "' + " ".join([str(year), *tokens]) + '"')
+            metadata.append(' "' + " ".join([str(part.publication_year), *tokens]) + '"')
         metadata.extend(
             [
                 ")",
@@ -476,7 +562,7 @@ class AtlasDataOnboardingService:
 
         for part in parts:
             standard_ref = (
-                f"{standard_name}-{part.part}:{year}"
+                f"{standard_name}-{part.part}:{part.publication_year}"
                 if include_part_context
                 else f"{standard_name}:{year}"
             )
@@ -488,7 +574,7 @@ class AtlasDataOnboardingService:
                 )
             for clause in part.clauses:
                 standard_ref = (
-                    f"{standard_name}-{part.part}:{year}"
+                    f"{standard_name}-{part.part}:{part.publication_year}"
                     if include_part_context
                     else f"{standard_name}:{year}"
                 )
@@ -534,6 +620,10 @@ class AtlasDataOnboardingService:
                     )
                 )
         return "\n".join(metadata) + "\n"
+
+
+def _part_sort_key(part: str) -> tuple[int, ...]:
+    return tuple(int(token) for token in part.split("-"))
 
 
 def _parse_heading(text: str) -> tuple[str, str, str | None] | None:

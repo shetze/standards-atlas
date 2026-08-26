@@ -22,7 +22,14 @@ Docling headings can create a skeleton for a new baseline:
 uv run standards-atlas atlasdata onboard-docling EN50716 data/EN50716
 ```
 
-For multi-part families use `onboard-docling-parts`. Generated headings and types must be reviewed; copyright-protected clause text must not be copied into public AtlasData fields.
+For routine multi-part onboarding prefer the manifest-driven family command:
+
+```bash
+uv run standards-atlas atlasdata onboard-family IEC61508 \
+  --manifest manifests/standards.yaml
+```
+
+The command resolves `.atlas/data/docling/<part-key>/document.json` for every manifest-declared physical part and writes `local/proposed/<family>` by default. `onboard-docling-parts` remains available for diagnostics and explicit `PART=PATH` composition. Supplements are excluded unless `--include-supplements` is requested. Generated headings and types must be reviewed; copyright-protected clause text must not be copied into public AtlasData fields.
 
 
 ## Table structure

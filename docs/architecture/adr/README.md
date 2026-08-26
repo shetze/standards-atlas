@@ -155,3 +155,4 @@ both active and obsolete provisions.
 | [0082](0082-project-structured-tables-for-retrieval.md) | Project structured table knowledge into replaceable retrieval representations |
 
 | [0084](0084-model-family-composition-as-publication-view.md) | Keep multipart family composition as a rebuildable publication view |
+| [0085](0085-manifest-driven-family-atlasdata-onboarding.md) | Resolve multipart AtlasData onboarding from the standards manifest |
