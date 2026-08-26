@@ -14,17 +14,20 @@ EngineeringDocument
 ├── table_index: TableIndexEntry   List-of-Tables declarations
 └── Clause
     └── TableBlock                 canonical protected cells
-        └── KnowledgeTable         deterministic projection
-            └── KnowledgeRecord    addressable logical row
-                ├── original cells and evidence
-                └── optional interpreted knowledge
+        └── NormalizedTable        T2 structural normalization
+            ├── logical columns/header paths
+            ├── rows/cells/spans/footnotes/references
+            └── KnowledgeTable     existing semantic projection (T3 migration target)
+                └── KnowledgeRecord
 ```
 
 `DocumentTable` owns document-level table identity, numbering, caption metadata, parent
 structure, and sequence. `TableIndexEntry` captures the independently declared List of
 Tables. Protected rows and cells remain canonical in `TableBlock`; `DocumentTable` links to
-that block by identifier instead of duplicating its content. `KnowledgeTable` and
-`KnowledgeRecord` remain reproducible projections, not independently edited copies.
+that block by identifier instead of duplicating its content. T2 derives a semantics-free
+`NormalizedTable` that reconstructs logical coordinates and header structure while preserving
+all protected text and spans. `KnowledgeTable` and `KnowledgeRecord` remain reproducible
+semantic projections, not independently edited copies.
 
 AtlasData publishes table structure through `TABLE` and `TABLEINDEX` records only. It never
 publishes table cells. This allows onboarding and review to compare declared and detected
@@ -85,10 +88,11 @@ index projections; the Knowledge Base and its source evidence remain authoritati
 
 ## Slice boundary
 
-T1 captures identity and structure only. Header normalization, merged-cell reconstruction,
-row/column hierarchies, footnotes, units, and canonical table normalization belong to T2.
-Mapping normalized tables into `StructuredKnowledgeRecord` belongs to T3. Table-specific
-retrieval serialization/tokenization and embedding projections belong to T4.
+T1 captures identity and document structure only. T2 now provides deterministic header
+normalization, merged-cell reconstruction, row/column header paths, footnotes, units, reference
+tokens, and canonical table normalization. Mapping `NormalizedTable` into
+`StructuredKnowledgeRecord` belongs to T3. Table-specific retrieval
+serialization/tokenization and embedding projections belong to T4.
 
 ## Current limitation
 

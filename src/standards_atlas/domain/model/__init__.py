@@ -68,6 +68,15 @@ from standards_atlas.domain.model.knowledge_table import (
     StructuredKnowledgeRecord,
     TechniqueRecommendation,
 )
+from standards_atlas.domain.model.normalized_table import (
+    NormalizedTable,
+    NormalizedTableCell,
+    NormalizedTableColumn,
+    NormalizedTableFootnote,
+    NormalizedTableReference,
+    NormalizedTableRow,
+    NormalizedTableRowKind,
+)
 from standards_atlas.domain.model.reference_mention import (
     ReferenceMention,
     ReferenceMentionKind,
@@ -208,6 +217,13 @@ __all__ = [
     "KnowledgeRecordId",
     "KnowledgeRecord",
     "KnowledgeCell",
+    "NormalizedTable",
+    "NormalizedTableCell",
+    "NormalizedTableColumn",
+    "NormalizedTableFootnote",
+    "NormalizedTableReference",
+    "NormalizedTableRow",
+    "NormalizedTableRowKind",
     "NormativeStatus",
     "ProcessFunction",
     "RelationScope",

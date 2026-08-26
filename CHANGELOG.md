@@ -50,6 +50,14 @@
 - discover public table identity, captions, and parents during AtlasData Docling onboarding
 - preserve TABLE/TABLEINDEX metadata through AtlasData round trips without exporting cells
 
+### Table normalization
+
+- add deterministic T2 `NormalizedTable` projections over protected `TableBlock` content
+- reconstruct span-aware logical grids and multi-level column/row header paths
+- extract structural units, footnotes, and unresolved table reference tokens without semantic inference
+- expose rebuildable normalized tables through a read-only filesystem adapter
+
+
 
 - Refine the formal ontology from semantic-extraction qualification feedback: add `hasPart`/`partOf`, intermediate system/requirement/specification/quantity classes, and explicit Functional Safety fault/error/failure concepts; constrain `containsClause` to document structure and make generic classes/`describes` extraction fallbacks.
 - Make semantic extraction qualification resilient to per-clause LLM timeouts, response errors, and temporary endpoint failures; persist failures and continue remaining clauses.

@@ -9,11 +9,15 @@ from standards_atlas.adapters.filesystem.formula_transcription_repository import
 from standards_atlas.adapters.filesystem.knowledge_table_repository import (
     FileSystemKnowledgeTableRepository,
 )
+from standards_atlas.adapters.filesystem.normalized_table_repository import (
+    FileSystemNormalizedTableRepository,
+)
 
 __all__ = [
     "FileSystemEngineeringDocumentRepository",
     "FileSystemFormulaTranscriptionRepository",
     "FileSystemKnowledgeTableRepository",
+    "FileSystemNormalizedTableRepository",
     "FileSystemFormalSemanticProjectionRepository",
     "FileSystemSemanticExtractionRepository",
 ]
