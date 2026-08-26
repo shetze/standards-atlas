@@ -44,6 +44,10 @@
 
 ## Unreleased
 
+- Add bounded retry and clause-level fail-soft handling for truncated ontology-classification responses, with per-clause progress reporting.
+
+- Harden document ontology classification against truncated role-semantics responses: use a compact presence contract, retry malformed structured responses once with a bounded token increase, and preserve other semantic dimensions when role classification still fails.
+
 ### Table structural capture
 
 - promote document tables and List-of-Tables entries to first-class EngineeringDocument structure

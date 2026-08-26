@@ -15,6 +15,9 @@ from standards_atlas.application.services import (
     DocumentNormalizationService,
     MarkdownExportService,
 )
+from standards_atlas.application.services.ontology_classification_service import (
+    OntologyProgressCallback,
+)
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
     WorkflowExecutor,
@@ -129,6 +132,7 @@ def build_ontology_classification_service(
     workspace: Path,
     *,
     llm_config_path: Path | None = None,
+    progress: OntologyProgressCallback | None = None,
 ):
     from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
     from standards_atlas.application.ontology import (
@@ -165,6 +169,7 @@ def build_ontology_classification_service(
         engine=engine,
         profile=profile,
         role_semantics=LlmRoleSemanticsClassifier(gateway, model=config.model),
+        progress=progress,
     )
 
 

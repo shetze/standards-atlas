@@ -2,10 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "additionalProperties": false,
-  "required": ["role_semantics_present", "confidence", "rationale"],
+  "required": ["role_semantics_present", "confidence"],
   "properties": {
     "role_semantics_present": {"type": "boolean"},
-    "confidence": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0},
-    "rationale": {"type": ["string", "null"]}
+    "confidence": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0}
   }
 }

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from typing import Any
 
 from standards_atlas.application.ontology.definition import OntologyDefinition
@@ -10,7 +11,11 @@ from standards_atlas.application.ontology.engine import (
     OntologyContext,
     OntologyDimensionResult,
 )
-from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
+from standards_atlas.application.ports.llm_gateway import (
+    LlmGateway,
+    LlmResponseError,
+    StructuredGenerationRequest,
+)
 
 
 class LlmOntologyClassifier:
@@ -63,14 +68,28 @@ class LlmOntologyClassifier:
             ),
             user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
             output_schema=schema,
-            prompt_version="1.0.0",
+            prompt_version="1.1.0",
             model=self._model,
             temperature=0.0,
             seed=0,
             max_tokens=512,
             reasoning_enabled=False,
         )
-        result = self._gateway.generate_structured(request)
+        try:
+            result = self._gateway.generate_structured(request)
+        except LlmResponseError as error:
+            if error.finish_reason != "length":
+                raise
+            retry = replace(
+                request,
+                system_prompt=(
+                    request.system_prompt
+                    + " The previous response was truncated. Return only the compact JSON "
+                    "object required by the schema, with no explanations or extra fields."
+                ),
+                max_tokens=1024,
+            )
+            result = self._gateway.generate_structured(retry)
         return tuple(
             OntologyDimensionResult(
                 dimension=dimension,

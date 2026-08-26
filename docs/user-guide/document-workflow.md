@@ -79,7 +79,7 @@ Only after taxonomy does the production ontology classifier run:
 uv run standards-atlas document classify-ontology EN50716 --llm-config cfg/llm.yaml
 ```
 
-The ontology stage consumes clause content plus the materialized structural context and assigns the configured ontology dimensions. Model qualification remains a separate evaluation workflow. Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; formula transcription remains a separate enrichment concern.
+The ontology stage consumes clause content plus the materialized structural context and assigns the configured ontology dimensions. `classify-ontology` ensures that the managed LLM endpoint configured by `--llm-config` is running before classification. This is important for overwrite workflows because Docling deliberately stops the managed LLM while it owns the accelerator; the first subsequent ontology-classification step restarts the endpoint idempotently and leaves it available for following documents. The command reports the selected model and clause-level progress. Truncated generic ontology responses (`finish_reason=length`) receive one bounded retry with a larger output budget. If that retry still fails, the affected clause keeps its existing ontology classification, the failure is counted, and the remaining clauses continue. Role-semantics failures use the same fail-soft document-level policy after their own bounded retry. Model qualification remains a separate evaluation workflow. Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; formula transcription remains a separate enrichment concern.
 
 ## Review-aware continuation
 

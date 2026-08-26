@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Protocol
 
 from standards_atlas.application.ontology.engine import OntologyContext
-from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
+from standards_atlas.application.ports.llm_gateway import (
+    LlmGateway,
+    LlmResponseError,
+    StructuredGenerationRequest,
+)
 from standards_atlas.domain.model import RoleRelation, RoleRelationClassCore
 
 
@@ -39,53 +43,60 @@ class LlmRoleSemanticsClassifier:
 
     def classify(self, context: OntologyContext) -> RoleSemanticsResult:
         payload = _context_payload(context)
-        presence = self._gateway.generate_structured(
-            StructuredGenerationRequest(
-                task="role-semantics-presence",
-                system_prompt=(
-                    "Decide whether the clause contains explicit role, actor, "
-                    "resposibility, accountability, participation, assignment, verification, "
-                    "validation, approval, or organizational-independence semantics. A complete "
-                    "actor-relation-target tuple is NOT required. Passive wording such as 'shall "
-                    "be verified' is positive  role semantics even when the actor is not stated. "
-                    "Do not infer missing actors."
-                ),
-                user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
-                output_schema=_presence_schema(),
-                prompt_version="1.0.0",
-                model=self._model,
-                temperature=0.0,
-                seed=0,
-                max_tokens=256,
-                reasoning_enabled=False,
-            )
+        presence_request = StructuredGenerationRequest(
+            task="role-semantics-presence",
+            system_prompt=(
+                "Return only the two schema fields role_semantics_present and confidence. "
+                "Decide whether the clause contains explicit role, actor, responsibility, "
+                "accountability, participation, assignment, verification, validation, approval, "
+                "or organizational-independence semantics. A complete actor-relation-target tuple "
+                "is NOT required. Passive wording such as 'shall be verified' is positive role "
+                "semantics even when the actor is not stated. Do not infer missing actors. Do not "
+                "include rationale, explanation, prose, markdown, or additional fields."
+            ),
+            user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
+            output_schema=_presence_schema(),
+            prompt_version="1.1.0",
+            model=self._model,
+            temperature=0.0,
+            seed=0,
+            max_tokens=64,
+            reasoning_enabled=False,
+        )
+        presence = _generate_with_bounded_retry(
+            self._gateway,
+            presence_request,
+            retry_max_tokens=128,
         )
         present = bool(presence.value.get("role_semantics_present", False))
         if not present:
             return RoleSemanticsResult(present=False)
 
-        extraction = self._gateway.generate_structured(
-            StructuredGenerationRequest(
-                task="role-relation-extraction",
-                system_prompt=(
-                    "Extract only explicit role relations as actor, relation_class, and target. "
-                    "An actor must be an explicitly identified human or organizational role, "
-                    "group, organization, authority, committee, supplier, duty holder, or "
-                    "stakeholder. Technical objects are not actors merely because they are "
-                    "grammatical subjects. Prefer the documented core relation classes when "
-                    "they fit, but do not force a relation into the core vocabulary. Do not "
-                    "invent an actor from passive wording. Return an empty relations list when "
-                    "no complete actor-class-target relation is explicit."
-                ),
-                user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
-                output_schema=_extraction_schema(),
-                prompt_version="1.0.0",
-                model=self._model,
-                temperature=0.0,
-                seed=0,
-                max_tokens=768,
-                reasoning_enabled=False,
-            )
+        extraction_request = StructuredGenerationRequest(
+            task="role-relation-extraction",
+            system_prompt=(
+                "Extract only explicit role relations as actor, relation_class, and target. "
+                "An actor must be an explicitly identified human or organizational role, group, "
+                "organization, authority, committee, supplier, duty holder, or stakeholder. "
+                "Technical objects are not actors merely because they are grammatical subjects. "
+                "Prefer the documented core relation classes when they fit, but do not force a "
+                "relation into the core vocabulary. Do not invent an actor from passive wording. "
+                "Return an empty relations list when no complete actor-class-target relation is "
+                "explicit. Return JSON only, with no explanation or additional fields."
+            ),
+            user_prompt=json.dumps(payload, ensure_ascii=False, sort_keys=True),
+            output_schema=_extraction_schema(),
+            prompt_version="1.1.0",
+            model=self._model,
+            temperature=0.0,
+            seed=0,
+            max_tokens=512,
+            reasoning_enabled=False,
+        )
+        extraction = _generate_with_bounded_retry(
+            self._gateway,
+            extraction_request,
+            retry_max_tokens=1024,
         )
         relations = tuple(
             RoleRelation.model_validate(item) for item in extraction.value.get("role_relations", ())
@@ -105,13 +116,30 @@ def _presence_schema() -> dict[str, object]:
     return {
         "type": "object",
         "additionalProperties": False,
-        "required": ["role_semantics_present", "confidence", "rationale"],
+        "required": ["role_semantics_present", "confidence"],
         "properties": {
             "role_semantics_present": {"type": "boolean"},
             "confidence": {"type": ["number", "null"], "minimum": 0.0, "maximum": 1.0},
-            "rationale": {"type": ["string", "null"]},
         },
     }
+
+
+def _generate_with_bounded_retry(
+    gateway: LlmGateway,
+    request: StructuredGenerationRequest,
+    *,
+    retry_max_tokens: int,
+):
+    """Retry one malformed structured response with a larger bounded output budget."""
+    try:
+        return gateway.generate_structured(request)
+    except LlmResponseError:
+        retry_request = replace(
+            request,
+            max_tokens=max(request.max_tokens or 0, retry_max_tokens),
+            reasoning_enabled=False,
+        )
+        return gateway.generate_structured(retry_request)
 
 
 def _extraction_schema() -> dict[str, object]:

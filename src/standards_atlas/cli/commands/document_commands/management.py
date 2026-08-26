@@ -9,6 +9,7 @@ import typer
 
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.adapters.llm import LlmConfig, RamaLamaServerError
 from standards_atlas.application.services import DocumentImportService
 from standards_atlas.application.services.content_enrichment_service import (
     ContentEnrichmentError,
@@ -19,6 +20,9 @@ from standards_atlas.application.services.document_composition_service import (
 from standards_atlas.application.services.document_selection_service import (
     DocumentSelectionError,
 )
+from standards_atlas.application.services.ontology_classification_service import (
+    OntologyClassificationProgress,
+)
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import document_app
 from standards_atlas.cli.composition import (
@@ -28,6 +32,7 @@ from standards_atlas.cli.composition import (
     build_ontology_classification_service,
     build_structural_taxonomy_service,
 )
+from standards_atlas.cli.runtime_managers import managed_llm_server
 
 
 @document_app.command("import")
@@ -232,14 +237,34 @@ def classify_document_ontology(
     ] = Path("cfg/llm.yaml"),
 ) -> None:
     """Classify semantic ontology dimensions using structural taxonomy context."""
+
+    def report_progress(progress: OntologyClassificationProgress) -> None:
+        reference = progress.clause_reference or progress.clause_id
+        title = f" — {progress.clause_title}" if progress.clause_title else ""
+        prefix = f"[Ontology {progress.current:03d}/{progress.total:03d}]"
+        if progress.state == "started":
+            typer.echo(f"{prefix} {reference}{title} started")
+            return
+        elapsed = progress.elapsed_seconds or 0.0
+        typer.echo(f"{prefix} {reference}{title} {progress.state} elapsed={elapsed:.1f}s")
+
     try:
+        typer.echo(f"Ontology classification: starting for {document_key}")
+        if llm_config is not None:
+            config = LlmConfig.load(llm_config)
+            typer.echo(f"LLM model             : {config.model}")
+            managed_llm_server(llm_config).start()
         result = build_ontology_classification_service(
-            workspace, llm_config_path=llm_config
+            workspace,
+            llm_config_path=llm_config,
+            progress=report_progress,
         ).classify(document_key)
-    except (OSError, ValueError, KeyError) as exc:
+    except (OSError, ValueError, KeyError, RamaLamaServerError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
 
     typer.echo(f"Document              : {result.document.key.value}")
     typer.echo(f"Clauses classified    : {result.clauses_classified}")
-    typer.echo("Ontology profile      : semantic-profile-2.1.0")
+    typer.echo(f"Ontology failures     : {result.ontology_classification_failures}")
+    typer.echo(f"Role semantic failures: {result.role_semantics_failures}")
+    typer.echo("Ontology profile      : semantic-profile-2.2.0")

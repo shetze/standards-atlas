@@ -1,0 +1,120 @@
+"""Regression tests for document ontology classification LLM lifecycle."""
+
+from dataclasses import dataclass
+from pathlib import Path
+from types import SimpleNamespace
+
+from standards_atlas.cli.commands.document_commands import management
+
+
+class _FakeServer:
+    def __init__(self) -> None:
+        self.start_calls = 0
+
+    def start(self) -> None:
+        self.start_calls += 1
+
+
+@dataclass
+class _FakeClassificationResult:
+    document: object
+    clauses_classified: int
+    role_semantics_failures: int = 0
+    ontology_classification_failures: int = 0
+
+
+class _FakeClassificationService:
+    def __init__(self, server: _FakeServer) -> None:
+        self._server = server
+        self.classify_calls: list[str] = []
+
+    def classify(self, document_key: str) -> _FakeClassificationResult:
+        assert self._server.start_calls == 1
+        self.classify_calls.append(document_key)
+        document = SimpleNamespace(key=SimpleNamespace(value=document_key))
+        return _FakeClassificationResult(document=document, clauses_classified=3)
+
+
+def test_classify_ontology_ensures_managed_llm_is_running(monkeypatch) -> None:
+    server = _FakeServer()
+    service = _FakeClassificationService(server)
+    config = Path("cfg/llm.yaml")
+
+    monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
+    monkeypatch.setattr(
+        management,
+        "build_ontology_classification_service",
+        lambda workspace, llm_config_path, progress=None: service,
+    )
+
+    management.classify_document_ontology(
+        "IEC61508-0",
+        workspace=Path(".atlas"),
+        llm_config=config,
+    )
+
+    assert server.start_calls == 1
+    assert service.classify_calls == ["IEC61508-0"]
+
+
+def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
+    from standards_atlas.application.services.ontology_classification_service import (
+        OntologyClassificationProgress,
+    )
+
+    server = _FakeServer()
+    config = Path("cfg/llm.yaml")
+
+    class _ProgressService:
+        def __init__(self, progress) -> None:
+            self._progress = progress
+
+        def classify(self, document_key: str) -> _FakeClassificationResult:
+            self._progress(
+                OntologyClassificationProgress(
+                    current=1,
+                    total=1,
+                    document_key=document_key,
+                    clause_id="clause-1",
+                    clause_reference="7.4.1",
+                    clause_title="Verification",
+                    state="started",
+                )
+            )
+            self._progress(
+                OntologyClassificationProgress(
+                    current=1,
+                    total=1,
+                    document_key=document_key,
+                    clause_id="clause-1",
+                    clause_reference="7.4.1",
+                    clause_title="Verification",
+                    state="partial",
+                    elapsed_seconds=2.5,
+                )
+            )
+            document = SimpleNamespace(key=SimpleNamespace(value=document_key))
+            return _FakeClassificationResult(
+                document=document,
+                clauses_classified=0,
+                ontology_classification_failures=1,
+            )
+
+    monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
+    monkeypatch.setattr(
+        management,
+        "build_ontology_classification_service",
+        lambda workspace, llm_config_path, progress=None: _ProgressService(progress),
+    )
+
+    management.classify_document_ontology(
+        "IEC61508-2",
+        workspace=Path(".atlas"),
+        llm_config=config,
+    )
+
+    output = capsys.readouterr().out
+    assert "Ontology classification: starting for IEC61508-2" in output
+    assert "[Ontology 001/001] 7.4.1 — Verification started" in output
+    assert "[Ontology 001/001] 7.4.1 — Verification partial elapsed=2.5s" in output
+    assert "Ontology failures     : 1" in output
