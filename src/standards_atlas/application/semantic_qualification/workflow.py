@@ -151,7 +151,7 @@ class EvaluationCorpusBuilder:
                     "document_key": clause.document_key,
                     "clause_id": clause.id,
                     "reference": clause.clause_reference,
-                    "title": clause.title,
+                    "heading": clause.heading,
                     "parent_id": clause.parent_id,
                     "ancestor_headings": _ancestor_headings(clause, clause_index),
                     "structural_roles": [role.value for role in clause.statement_functions],
@@ -289,12 +289,12 @@ def _ancestor_headings(
         parent = clause_index.get(parent_id)
         if parent is None or parent.document_key != clause.document_key:
             break
-        if parent.title and parent.title.strip():
+        if parent.heading and parent.heading.strip():
             headings.append(
                 {
                     "clause_id": parent.id,
                     "reference": parent.clause_reference,
-                    "title": parent.title.strip(),
+                    "heading": parent.heading.strip(),
                 }
             )
         parent_id = parent.parent_id
@@ -320,7 +320,7 @@ def _strata_for(clause: ClauseDescriptor) -> dict[str, str]:
         "structural_role": roles,
         "hierarchy_depth": str(_reference_depth(clause.clause_reference)),
         "length_class": _length_class(len(clause.text)),
-        "title_presence": "titled" if clause.title else "untitled",
+        "title_presence": "titled" if clause.heading else "untitled",
     }
 
 
@@ -463,7 +463,7 @@ def _canonical_clause_occurrences(
 
 def _readable_clause_occurrence(clause: ClauseDescriptor) -> str:
     reference = clause.clause_reference.strip() or clause.reference.strip()
-    title = clause.title.strip() if clause.title else ""
+    title = clause.heading.strip() if clause.heading else ""
     label = f"{clause.document_key}:{reference}"
     if title:
         label += f" — {title}"

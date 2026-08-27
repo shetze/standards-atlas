@@ -250,7 +250,7 @@ def test_proposal_generation_reports_progress(tmp_path: Path):
     assert all(item.total == 1 for item in progress)
     assert all(item.document_key == "IEC61508-3" for item in progress)
     assert all(item.reference == "7.4.2" for item in progress)
-    assert all(item.title == "Verification" for item in progress)
+    assert all(item.heading == "Verification" for item in progress)
 
 
 def test_proposals_are_isolated_by_provider_and_model(tmp_path: Path):
@@ -438,7 +438,7 @@ def test_progress_identifies_clause_and_reports_failure_detail(tmp_path: Path):
     assert [item.status for item in progress] == ["processing", "retrying", "failed"]
     assert all(item.document_key == "IEC61508-3" for item in progress)
     assert all(item.reference == "7.4.2" for item in progress)
-    assert all(item.title == "Verification" for item in progress)
+    assert all(item.heading == "Verification" for item in progress)
     assert progress[1].attempt == 1
     assert progress[1].max_attempts == 2
     assert progress[1].detail == "LlmUnavailableError: timed out"

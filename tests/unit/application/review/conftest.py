@@ -49,13 +49,13 @@ def review_documents() -> tuple[
                 id=ClauseId(value="c1"),
                 reference=StandardReference(standard="DOC", clause="1"),
                 clause_type=ClauseType.CLAUSE,
-                title="One",
+                heading="One",
             ),
             Clause(
                 id=ClauseId(value="c2"),
                 reference=StandardReference(standard="DOC", clause="2"),
                 clause_type=ClauseType.CLAUSE,
-                title="Two",
+                heading="Two",
             ),
         ),
     )

@@ -76,15 +76,13 @@ def test_service_derives_missing_part_view_from_master_document(tmp_path):
             clauses=(
                 Clause(
                     id=ClauseId(value="part-7"),
-                    reference=StandardReference(standard="ISO 26262", clause="1"),
+                    reference=StandardReference(standard="ISO 26262", clause="1", part="7"),
                     clause_type=ClauseType.CLAUSE,
-                    volume="7",
                 ),
                 Clause(
                     id=ClauseId(value="part-8"),
-                    reference=StandardReference(standard="ISO 26262", clause="1"),
+                    reference=StandardReference(standard="ISO 26262", clause="1", part="8"),
                     clause_type=ClauseType.CLAUSE,
-                    volume="8",
                 ),
             ),
         )

@@ -47,12 +47,12 @@ def candidate_score(candidate: ReferenceCandidate, clause: Clause) -> float:
     if (
         candidate.remainder_kind is CandidateRemainderKind.TITLE
         and candidate.title_remainder
-        and clause.title
+        and clause.heading
     ):
         title_score = SequenceMatcher(
             None,
             candidate.title_remainder.casefold(),
-            clause.title.casefold(),
+            clause.heading.casefold(),
         ).ratio()
     kind_bonus = {
         ReferenceMatchKind.EXACT: 0.05,
@@ -181,12 +181,12 @@ def initial_alignments(
         if (
             candidate.remainder_kind is CandidateRemainderKind.TITLE
             and candidate.title_remainder
-            and clause.title
+            and clause.heading
         ):
             similarity = SequenceMatcher(
                 None,
                 candidate.title_remainder.casefold(),
-                clause.title.casefold(),
+                clause.heading.casefold(),
             ).ratio()
             if similarity < options.title_similarity_threshold:
                 issues.append(

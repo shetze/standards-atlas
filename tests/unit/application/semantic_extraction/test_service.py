@@ -75,7 +75,7 @@ def test_llm_timeout_is_recorded_and_next_clause_continues() -> None:
             id=ClauseId(value=f"clause-{index}"),
             reference=StandardReference(standard="TEST", year=2026, clause=str(index)),
             clause_type=ClauseType.CLAUSE,
-            title=f"Clause {index}",
+            heading=f"Clause {index}",
         )
         for index in (1, 2)
     )

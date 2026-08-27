@@ -71,7 +71,7 @@ class DoorstopItemMapper:
     ) -> DoorstopItemModel:
         numeric_id = generate_doorstop_id(
             visible_reference=clause.reference.clause,
-            volume=clause.volume,
+            volume=clause.reference.part,
             enum_prefix=clause.enum_prefix,
             identifier_width=clause.identifier_width,
             context=context,
@@ -147,8 +147,8 @@ class DoorstopItemMapper:
         if title_annotations:
             return title_annotations[-1]
 
-        if clause.title:
-            return clause.title
+        if clause.heading:
+            return clause.heading
 
         return ""
 
@@ -209,7 +209,7 @@ def _ensure_identifier_width(
     required = max(
         required_doorstop_id_width(
             visible_reference=clause.reference.clause,
-            volume=clause.volume,
+            volume=clause.reference.part,
             enum_prefix=clause.enum_prefix,
             identifier_width=clause.identifier_width,
             context=context,
@@ -230,7 +230,9 @@ def _document_id_context(
     context: DoorstopIdContext,
 ) -> DoorstopIdContext:
     """Reserve a fixed-width namespace for the document volume hierarchy."""
-    volumes = tuple(clause.volume for clause in clauses if clause.volume is not None)
+    volumes = tuple(
+        clause.reference.part for clause in clauses if clause.reference.part is not None
+    )
     if not volumes:
         return context
 
@@ -241,8 +243,8 @@ def _document_id_context(
 def _qualified_reference(clause: Clause) -> str:
     """Return a clause reference qualified by its physical part."""
     standard = clause.reference.standard
-    if clause.volume is not None:
-        part = clause.volume.replace("§", "-")
+    if clause.reference.part is not None:
+        part = clause.reference.part.replace("§", "-")
         standard = f"{standard}-{part}"
     if clause.reference.year is None:
         return f"{standard} {clause.reference.clause}"
@@ -260,9 +262,9 @@ def _doorstop_level(clause: Clause, context: DoorstopIdContext) -> str:
         visible_reference=clause.reference.clause,
         enum_prefix=clause.enum_prefix,
     )
-    if clause.volume is None:
+    if clause.reference.part is None:
         return level
-    root_level = _volume_root_level(clause.volume, context)
+    root_level = _volume_root_level(clause.reference.part, context)
     if clause.reference.clause == "0":
         return root_level
     return f"{root_level}.{level}"

@@ -228,8 +228,8 @@ def propose_evaluation_annotations(
             location = item.document_key
             if item.reference:
                 location += f":{item.reference}"
-            if item.title:
-                location += f" — {item.title}"
+            if item.heading:
+                location += f" — {item.heading}"
             elapsed = f" ({item.elapsed_seconds:.1f}s)" if item.elapsed_seconds is not None else ""
             retry = (
                 f" attempt {item.attempt}/{item.max_attempts}"

@@ -180,7 +180,7 @@ class ContentEnrichmentService:
                 empty_count += 1
             enriched_clause = clause.model_copy(
                 update={
-                    "title": _enriched_title(clause, clause_alignment),
+                    "heading": _enriched_title(clause, clause_alignment),
                     "content": blocks,
                     "text": None,
                 }
@@ -478,7 +478,7 @@ def _enriched_title(clause: Clause, alignment: ClauseAlignment) -> str | None:
         and alignment.observed_remainder.strip()
     ):
         return alignment.observed_remainder.strip()
-    return clause.title
+    return clause.heading
 
 
 def _content_traceability_errors(

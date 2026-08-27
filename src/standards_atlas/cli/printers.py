@@ -42,8 +42,8 @@ def print_document_summary(
 
 def print_clause(clause: Clause) -> None:
     """Print a single clause in compact CLI form."""
-    title = clause.title or ""
-    volume = f" volume={clause.volume}" if clause.volume else ""
+    title = clause.heading or ""
+    volume = f" volume={clause.reference.part}" if clause.reference.part else ""
     roles = ",".join(role.value for role in clause.semantic_classification.statement_functions)
     roles_text = f" [{roles}]" if roles else ""
 

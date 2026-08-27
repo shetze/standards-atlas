@@ -81,9 +81,10 @@ def resolve_document_reference_mentions(document):
     """Resolve explicit same-document mentions while retaining every mention."""
     from standards_atlas.domain.model.reference_mention import ReferenceTarget
 
-    by_ref = {}
+    by_ref: dict[tuple[str | None, str], list] = {}
     for clause in document.clauses:
-        by_ref.setdefault(clause.reference.clause.strip().casefold(), []).append(clause)
+        key = (clause.reference.part, clause.reference.clause.strip().casefold())
+        by_ref.setdefault(key, []).append(clause)
     clauses = []
     for clause in document.clauses:
         resolved = []
@@ -91,9 +92,8 @@ def resolve_document_reference_mentions(document):
             if not mention.reference:
                 resolved.append(mention)
                 continue
-            candidates = [
-                c for c in by_ref.get(mention.reference.strip().casefold(), ()) if c.id != clause.id
-            ]
+            key = (clause.reference.part, mention.reference.strip().casefold())
+            candidates = [c for c in by_ref.get(key, ()) if c.id != clause.id]
             if len(candidates) == 1:
                 target = candidates[0]
                 resolved.append(
@@ -105,7 +105,7 @@ def resolve_document_reference_mentions(document):
                                     document_key=document.key.value,
                                     clause_id=target.id.value,
                                     reference=target.reference.clause,
-                                    title=target.title,
+                                    title=target.heading,
                                 ),
                             ),
                         }
@@ -121,7 +121,7 @@ def resolve_document_reference_mentions(document):
                                     document_key=document.key.value,
                                     clause_id=c.id.value,
                                     reference=c.reference.clause,
-                                    title=c.title,
+                                    title=c.heading,
                                 )
                                 for c in candidates
                             ),

@@ -725,7 +725,7 @@ def _progress_context(item_input: Any) -> dict[str, Any]:
     return {
         "document_key": str(context.get("document_key", "unknown-document")),
         "reference": context.get("reference"),
-        "title": context.get("title"),
+        "heading": context.get("heading") or context.get("title"),
     }
 
 

@@ -34,7 +34,7 @@ def _clause(reference: str, title: str, *, roles=(), text: str | None = None) ->
             if roles
             else SemanticClassification()
         ),
-        title=title,
+        heading=title,
         content=(TextBlock(id=f"p-{reference}", text=text),) if text else (),
     )
 
@@ -48,14 +48,14 @@ def test_renders_structured_document_as_markdown():
                     id=ClauseId(value="scope"),
                     reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
                     clause_type=ClauseType.SCOPE,
-                    title="Scope",
+                    heading="Scope",
                     content=(TextBlock(id="p1", text="Applies here."),),
                 ),
                 Clause(
                     id=ClauseId(value="req"),
                     reference=StandardReference(standard="SAMPLE", year=2026, clause="4.1"),
                     clause_type=ClauseType.REQUIREMENT,
-                    title="Requirements",
+                    heading="Requirements",
                     content=(
                         ListBlock(id="l1", ordered=False, items=(ListItem(text="First"),)),
                         TableBlock(
@@ -172,7 +172,7 @@ def test_export_materializes_embedded_picture_asset(tmp_path):
                     id=ClauseId(value="figure"),
                     reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
                     clause_type=ClauseType.CLAUSE,
-                    title="Figure",
+                    heading="Figure",
                     content=(
                         PictureBlock(
                             id="p1",
@@ -204,7 +204,7 @@ def test_visual_only_formula_is_not_presented_as_verified_semantics():
                     id=ClauseId(value="formula"),
                     reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
                     clause_type=ClauseType.CLAUSE,
-                    title="Formula",
+                    heading="Formula",
                     content=(
                         FormulaBlock(
                             id="f1",
@@ -238,7 +238,7 @@ def test_nested_lists_use_each_child_marker_kind() -> None:
                     id=ClauseId(value="list-clause"),
                     reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
                     clause_type=ClauseType.CLAUSE,
-                    title="List",
+                    heading="List",
                     content=(
                         ListBlock(
                             id="list",
@@ -331,7 +331,7 @@ def test_visual_only_formula_asset_is_materialized_and_rendered(tmp_path):
                     id=ClauseId(value="formula-visual"),
                     reference=StandardReference(standard="SAMPLE", year=2026, clause="1"),
                     clause_type=ClauseType.CLAUSE,
-                    title="Formula",
+                    heading="Formula",
                     content=(
                         FormulaBlock(
                             id="f1",

@@ -62,7 +62,7 @@ class MarkdownExporter:
             lines.extend(("## Contents", "", toc, ""))
         for clause in clauses:
             reference = clause.reference.clause.strip()
-            heading = " ".join(part for part in (reference, clause.title) if part).strip()
+            heading = " ".join(part for part in (reference, clause.heading) if part).strip()
             if not heading:
                 continue
             lines.extend(
@@ -97,7 +97,7 @@ def _render_toc(clauses: tuple[object, ...]) -> str:
         depth = _reference_depth(reference)
         if depth > _MAX_TOC_DEPTH:
             continue
-        label = " ".join(part for part in (reference, clause.title) if part).strip()
+        label = " ".join(part for part in (reference, clause.heading) if part).strip()
         indent = "  " * (depth - 1)
         lines.append(f"{indent}- [{label}](#{_anchor(reference)})")
     return "\n".join(lines)

@@ -35,13 +35,15 @@ class StandardReference(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     standard: str = Field(min_length=1)
+    part: str | None = None
     year: int | None = None
     clause: str = Field(min_length=1)
 
     def as_text(self) -> str:
+        standard = f"{self.standard}-{self.part}" if self.part else self.standard
         if self.year is None:
-            return f"{self.standard} {self.clause}"
-        return f"{self.standard}:{self.year} {self.clause}"
+            return f"{standard} {self.clause}"
+        return f"{standard}:{self.year} {self.clause}"
 
 
 class AnnotationId(BaseModel):

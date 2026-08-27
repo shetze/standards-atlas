@@ -32,7 +32,7 @@ def test_generate_toc_records_from_document_clauses() -> None:
                     clause="1",
                 ),
                 clause_type=ClauseType.TOC,
-                title="Scope",
+                heading="Scope",
             ),
         ),
     )
@@ -83,7 +83,7 @@ def test_generate_toc_records_preserves_existing_clause_title() -> None:
                     clause="1",
                 ),
                 clause_type=ClauseType.SCOPE,
-                title="Actual scope title",
+                heading="Actual scope title",
             ),
         ),
     )
@@ -106,10 +106,10 @@ def test_generate_toc_records_preserves_simple_volume_in_reference() -> None:
                     standard="IEC 61508",
                     year=2005,
                     clause="1",
+                    part="0",
                 ),
                 clause_type=ClauseType.TOC,
-                title="Scope",
-                volume="0",
+                heading="Scope",
             ),
         ),
     )
@@ -132,10 +132,10 @@ def test_generate_toc_records_serializes_nested_volume_with_hyphens() -> None:
                     standard="IEC 61508",
                     year=2010,
                     clause="1",
+                    part="3§1",
                 ),
                 clause_type=ClauseType.TOC,
-                title="Scope",
-                volume="3§1",
+                heading="Scope",
             ),
         ),
     )
@@ -152,9 +152,9 @@ def test_generate_public_text_records_preserves_volume_in_reference() -> None:
             standard="IEC 61508",
             year=2010,
             clause="7.4.4",
+            part="3§1",
         ),
         clause_type=ClauseType.REQUIREMENT,
-        volume="3§1",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="IEC61508-3-1"),
@@ -212,7 +212,7 @@ def test_generate_public_records_materializes_table_structure_item_as_table() ->
                     clause="A.1",
                 ),
                 clause_type=ClauseType.TABLE,
-                title="Failure measures",
+                heading="Failure measures",
             ),
         ),
     )

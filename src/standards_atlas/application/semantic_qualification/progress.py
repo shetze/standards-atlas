@@ -16,7 +16,7 @@ class ProposalProgress:
     status: str
     document_key: str
     reference: str | None
-    title: str | None
+    heading: str | None
     detail: str | None = None
     elapsed_seconds: float | None = None
     attempt: int | None = None

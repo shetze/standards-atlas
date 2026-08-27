@@ -65,6 +65,32 @@ def _clause(identifier: str, standard: str, reference: str, text: str) -> Clause
         id=ClauseId(value=identifier),
         reference=StandardReference(standard=standard, year=2018, clause=reference),
         clause_type=ClauseType.CLAUSE,
-        title="Clause",
+        heading="Clause",
         content=(TextBlock(id=f"{identifier}-text", text=text),),
     )
+
+
+def test_part_qualified_alias_selects_matching_part_in_family_document() -> None:
+    source = _document(
+        "SOURCE",
+        "Source",
+        (_clause("source", "SOURCE", "1.1", "See IEC 61508-3:2010, 7.4.5."),),
+    )
+    target_p2 = Clause(
+        id=ClauseId(value="p2"),
+        reference=StandardReference(standard="IEC 61508", part="2", year=2010, clause="7.4.5"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Part 2",
+    )
+    target_p3 = Clause(
+        id=ClauseId(value="p3"),
+        reference=StandardReference(standard="IEC 61508", part="3", year=2010, clause="7.4.5"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Part 3",
+    )
+    family = _document("IEC61508", "IEC 61508", (target_p2, target_p3))
+
+    resolved = resolve_cross_document_reference_relations(source, (source, family))
+
+    relation = resolved.clauses[0].semantic_classification.relations[0]
+    assert relation.target_clause_id == "p3"

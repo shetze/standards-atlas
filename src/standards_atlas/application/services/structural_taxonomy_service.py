@@ -71,7 +71,7 @@ class StructuralTaxonomyService:
                     StructuralAncestor(
                         clause_id=parent.id.value,
                         reference=parent.reference.clause,
-                        heading=parent.title,
+                        heading=parent.heading,
                     )
                 )
                 current = parent
@@ -106,7 +106,7 @@ class StructuralTaxonomyService:
                 if by_id[ancestor.clause_id].plain_text.strip()
             )
             scope_mentions = extract_structural_scope_mentions(
-                clause.plain_text, heading=clause.title
+                clause.plain_text, heading=clause.heading
             )
             scope_edges: list[StructuralScopeEdge] = []
             for mention in scope_mentions:
@@ -168,7 +168,7 @@ class StructuralTaxonomyService:
             detected = self._classifier.classify(
                 StructuralProfileContext(
                     reference=clause.reference.clause,
-                    heading=clause.title or "",
+                    heading=clause.heading or "",
                     text=clause.plain_text,
                 )
             )

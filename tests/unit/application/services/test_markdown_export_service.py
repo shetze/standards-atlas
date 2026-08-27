@@ -53,10 +53,9 @@ def test_exports_single_part_document_to_one_file(tmp_path):
 def _clause(identifier: str, volume: str | None, reference: str, text: str) -> Clause:
     return Clause(
         id=ClauseId(value=identifier),
-        reference=StandardReference(standard="IEC 11889", year=2015, clause=reference),
+        reference=StandardReference(standard="IEC 11889", year=2015, clause=reference, part=volume),
         clause_type=ClauseType.CLAUSE,
-        title="Scope",
-        volume=volume,
+        heading="Scope",
         content=(TextBlock(id=f"{identifier}-text", text=text),),
     )
 
@@ -75,7 +74,7 @@ def test_links_clause_in_another_exported_document(tmp_path):
                     id=ClauseId(value="source"),
                     reference=StandardReference(standard="ISO 26262-5", year=2018, clause="7.1"),
                     clause_type=ClauseType.CLAUSE,
-                    title="Source",
+                    heading="Source",
                     content=(
                         TextBlock(
                             id="source-text",
@@ -97,7 +96,7 @@ def test_links_clause_in_another_exported_document(tmp_path):
                     id=ClauseId(value="target"),
                     reference=StandardReference(standard="ISO 26262-6", year=2018, clause="7.4.5"),
                     clause_type=ClauseType.CLAUSE,
-                    title="Target",
+                    heading="Target",
                     content=(TextBlock(id="target-text", text="Target."),),
                 ),
             )
@@ -127,10 +126,11 @@ def test_links_clause_in_another_part_file(tmp_path):
             "clauses": (
                 Clause(
                     id=ClauseId(value="source"),
-                    reference=StandardReference(standard="ISO 26262-5", year=2018, clause="7.1"),
+                    reference=StandardReference(
+                        standard="ISO 26262", year=2018, clause="7.1", part="5"
+                    ),
                     clause_type=ClauseType.CLAUSE,
-                    title="Source",
-                    volume="5",
+                    heading="Source",
                     content=(
                         TextBlock(
                             id="source-text",
@@ -140,10 +140,11 @@ def test_links_clause_in_another_part_file(tmp_path):
                 ),
                 Clause(
                     id=ClauseId(value="target"),
-                    reference=StandardReference(standard="ISO 26262-6", year=2018, clause="7.4.5"),
+                    reference=StandardReference(
+                        standard="ISO 26262", year=2018, clause="7.4.5", part="6"
+                    ),
                     clause_type=ClauseType.CLAUSE,
-                    title="Target",
-                    volume="6",
+                    heading="Target",
                     content=(TextBlock(id="target-text", text="Target."),),
                 ),
             )

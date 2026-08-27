@@ -74,7 +74,7 @@ class EngineeringDocumentClauseProvider:
         terms = tuple(term.casefold() for term in query.split() if term.strip())
         matches: list[tuple[int, ClauseDescriptor]] = []
         for clause in self._matching_clauses(filters or ClauseFilter()):
-            title = (clause.title or "").casefold()
+            title = (clause.heading or "").casefold()
             text = clause.text.casefold()
             reference = clause.reference.casefold()
             score = sum(3 for term in terms if term in title)
@@ -164,7 +164,7 @@ class EngineeringDocumentClauseProvider:
             clause_reference=clause.reference.clause,
             content_hash=normalized_content_hash(clause.plain_text),
             clause_type=clause.clause_type,
-            title=clause.title,
+            heading=clause.heading,
             text=clause.plain_text,
             parent_id=clause.parent_id.value if clause.parent_id else None,
             statement_functions=clause.semantic_classification.statement_functions,

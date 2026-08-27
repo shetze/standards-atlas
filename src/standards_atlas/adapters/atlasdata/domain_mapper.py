@@ -84,7 +84,9 @@ def map_atlas_data_to_standard(
     )
 
     clauses = _materialize_parent_hierarchy(clauses)
-    clauses_by_reference = {(clause.volume, clause.reference.clause): clause for clause in clauses}
+    clauses_by_reference = {
+        (clause.reference.part, clause.reference.clause): clause for clause in clauses
+    }
 
     annotations = _map_initialization_records_to_annotations(
         atlas_data=atlas_data,
@@ -118,7 +120,9 @@ def _materialize_parent_hierarchy(clauses: tuple[Clause, ...]) -> tuple[Clause, 
     the nearest existing dotted reference within the same volume, falling back to
     the synthetic ``0`` root when present.
     """
-    by_identity = {(clause.volume, clause.reference.clause.strip()): clause for clause in clauses}
+    by_identity = {
+        (clause.reference.part, clause.reference.clause.strip()): clause for clause in clauses
+    }
     materialized: list[Clause] = []
 
     for clause in clauses:
@@ -128,12 +132,12 @@ def _materialize_parent_hierarchy(clauses: tuple[Clause, ...]) -> tuple[Clause, 
 
         while "." in candidate:
             candidate = candidate.rsplit(".", 1)[0]
-            parent = by_identity.get((clause.volume, candidate))
+            parent = by_identity.get((clause.reference.part, candidate))
             if parent is not None:
                 break
 
         if parent is None and reference != "0":
-            parent = by_identity.get((clause.volume, "0"))
+            parent = by_identity.get((clause.reference.part, "0"))
 
         materialized.append(
             clause.model_copy(update={"parent_id": parent.id if parent is not None else None})
@@ -326,6 +330,7 @@ def _map_structure_item_to_clause(
         ),
         reference=StandardReference(
             standard=standard_name,
+            part=item.volume,
             year=item.publication_year or year,
             clause=item.visible_reference,
         ),
@@ -340,9 +345,8 @@ def _map_structure_item_to_clause(
             semantic_profile=semantic_profile,
         ),
         structural_profile=structural_profile,
-        title=title,
+        heading=title,
         source_token=item.source_token,
-        volume=item.volume,
         enum_prefix=item.enum_prefix,
         identifier_width=item.identifier_width,
     )

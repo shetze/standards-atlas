@@ -73,10 +73,10 @@ def test_discovers_inline_and_split_clause_headings(tmp_path: Path) -> None:
     clauses = AtlasDataOnboardingService().discover_clauses(document)
 
     assert [clause.reference for clause in clauses] == ["1", "3", "3.1", "3.2", "4", "5"]
-    assert clauses[2].title == "access control"
+    assert clauses[2].heading == "access control"
     assert clauses[2].source_item_ids == ("#/texts/2", "#/texts/3")
     assert clauses[2].type_marker == "t"
-    assert clauses[3].title == "attack"
+    assert clauses[3].heading == "attack"
     assert [clause.type_marker for clause in clauses] == ["s", "t", "t", "t", "o", "r"]
 
 
@@ -96,7 +96,7 @@ def test_generates_importable_public_atlasdata_file(tmp_path: Path) -> None:
     assert result.output == output
     assert len(imported.clauses) == 6
     assert imported.clauses[2].reference.clause == "3.1"
-    assert imported.clauses[2].title == "access control"
+    assert imported.clauses[2].heading == "access control"
     text = output.read_text(encoding="utf-8")
     assert "s1" in text
     assert "t3 t3.{1..2}" in text
@@ -267,7 +267,7 @@ def test_annex_heading_can_follow_annex_subclause_in_docling_order() -> None:
     clauses = AtlasDataOnboardingService().discover_clauses(document)
 
     assert [clause.reference for clause in clauses] == ["1", "A", "A.1", "A.2"]
-    assert clauses[1].title == "Annex A (informative)"
+    assert clauses[1].heading == "Annex A (informative)"
     assert clauses[1].annex_status == "informative"
 
 
@@ -281,19 +281,19 @@ def test_generates_canonical_typed_annex_tokens() -> None:
         (
             DiscoveredClause(
                 reference="1",
-                title="Scope",
+                heading="Scope",
                 type_marker="s",
                 source_item_ids=("#/texts/0",),
             ),
             DiscoveredClause(
                 reference="C",
-                title="Annex C",
+                heading="Annex C",
                 type_marker="u",
                 source_item_ids=("#/texts/1",),
             ),
             DiscoveredClause(
                 reference="C.1",
-                title="Requirement",
+                heading="Requirement",
                 type_marker="r",
                 source_item_ids=("#/texts/2",),
             ),

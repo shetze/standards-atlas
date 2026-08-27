@@ -248,13 +248,13 @@ class DeterministicFormalSemanticProjector:
                     ),
                 )
             )
-            if clause.title:
+            if clause.heading:
                 assertions.append(
                     _assertion(
                         SemanticBox.ABOX,
                         clause_resource,
                         SemanticResource.stat("title"),
-                        _literal(clause.title),
+                        _literal(clause.heading),
                         contexts=context_ids,
                         evidence_ids=lineage_evidence,
                     )

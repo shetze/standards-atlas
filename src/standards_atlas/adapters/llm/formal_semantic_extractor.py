@@ -125,7 +125,7 @@ class OntologyGuidedLlmExtractor:
                 {
                     "document_key": document_key,
                     "clause_reference": clause_reference,
-                    "clause_title": clause.title,
+                    "clause_title": clause.heading,
                     "clause_id": clause.id.value,
                     "clause_text": projection.text,
                     "semantic_context": context,
@@ -226,7 +226,7 @@ class OntologyGuidedLlmExtractor:
         return ClauseSemanticExtraction(
             clause_id=clause.id.value,
             clause_reference=clause_reference,
-            clause_title=clause.title,
+            clause_title=clause.heading,
             ontology_versions=ontology_versions,
             entities=tuple(entities),
             relations=tuple(relations),

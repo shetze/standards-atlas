@@ -55,7 +55,7 @@ class AlignmentReviewRenderer:
                     f"## {alignment.status.value}: {alignment.expected_reference}",
                     "",
                     f"- Clause ID: `{alignment.clause_id}`",
-                    f"- AtlasData title: {clause.title or '(none)'}",
+                    f"- AtlasData title: {clause.heading or '(none)'}",
                     "",
                     "### Candidate alternatives",
                     "",

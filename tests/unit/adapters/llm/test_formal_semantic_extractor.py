@@ -125,7 +125,7 @@ def test_relation_indexes_resolve_distinct_entities_without_llm_ids() -> None:
         id=ClauseId(value="clause-indexed"),
         reference=StandardReference(standard="TEST", year=2026, clause="2"),
         clause_type=ClauseType.CLAUSE,
-        title="Indexed relation",
+        heading="Indexed relation",
     )
 
     result = OntologyGuidedLlmExtractor(_IndexedRelationGateway()).extract(
@@ -206,7 +206,7 @@ def test_semantic_prompt_omits_table_payload_and_keeps_part_reference() -> None:
     gateway = _Gateway()
     clause = Clause(
         id=ClauseId(value="clause-table"),
-        reference=StandardReference(standard="EN 50126", year=2017, clause="6.2"),
+        reference=StandardReference(standard="EN 50126", part="1", year=2017, clause="6.2"),
         clause_type=ClauseType.CLAUSE,
         content=(
             TextBlock(id="text-1", text="Life-cycle requirements."),

@@ -20,7 +20,7 @@ def test_mapper_converts_annex_reference_to_numeric_level() -> None:
             clause="A.1",
         ),
         clause_type=ClauseType.CLAUSE,
-        title="Annex clause",
+        heading="Annex clause",
     )
 
     document = EngineeringDocument(
@@ -45,17 +45,15 @@ def test_mapper_converts_annex_reference_to_numeric_level() -> None:
 def test_mapper_nests_part_clauses_below_part_root() -> None:
     root = Clause(
         id=ClauseId(value="part-root"),
-        reference=StandardReference(standard="IEC 61508", clause="0"),
+        reference=StandardReference(standard="IEC 61508", clause="0", part="1"),
         clause_type=ClauseType.TOC,
-        title="IEC 61508-1",
-        volume="1",
+        heading="IEC 61508-1",
     )
     scope = Clause(
         id=ClauseId(value="scope"),
-        reference=StandardReference(standard="IEC 61508", clause="1"),
+        reference=StandardReference(standard="IEC 61508", clause="1", part="1"),
         clause_type=ClauseType.SCOPE,
-        title="Scope",
-        volume="1",
+        heading="Scope",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="IEC61508"),
@@ -79,16 +77,14 @@ def test_mapper_nests_part_clauses_below_part_root() -> None:
 def test_mapper_gives_supplement_a_distinct_root_level() -> None:
     supplement = Clause(
         id=ClauseId(value="supplement-root"),
-        reference=StandardReference(standard="IEC 61508", clause="0"),
+        reference=StandardReference(standard="IEC 61508", clause="0", part="3§1"),
         clause_type=ClauseType.TOC,
-        title="IEC 61508-3-1",
-        volume="3§1",
+        heading="IEC 61508-3-1",
     )
     clause = Clause(
         id=ClauseId(value="supplement-scope"),
-        reference=StandardReference(standard="IEC 61508", clause="1"),
+        reference=StandardReference(standard="IEC 61508", clause="1", part="3§1"),
         clause_type=ClauseType.SCOPE,
-        volume="3§1",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="IEC61508"),
@@ -115,9 +111,9 @@ def test_mapper_qualifies_clause_identifiers_with_part() -> None:
             standard="IEC 61508",
             year=2010,
             clause="7.4.2",
+            part="3§1",
         ),
         clause_type=ClauseType.REQUIREMENT,
-        volume="3§1",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="IEC61508"),
@@ -148,7 +144,7 @@ def test_mapper_skips_table_structure_clauses() -> None:
             clause="A.1",
         ),
         clause_type=ClauseType.TABLE,
-        title="Example table",
+        heading="Example table",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="IEC61508"),
@@ -170,13 +166,13 @@ def test_mapper_rejects_duplicate_doorstop_uids() -> None:
         id=ClauseId(value="first"),
         reference=StandardReference(standard="IEC 61508", clause="F.1"),
         clause_type=ClauseType.MISC,
-        title="First",
+        heading="First",
     )
     second = Clause(
         id=ClauseId(value="second"),
         reference=StandardReference(standard="IEC 61508", clause="F.1"),
         clause_type=ClauseType.MISC,
-        title="Second",
+        heading="Second",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="IEC61508"),
@@ -202,21 +198,18 @@ def test_mapper_rejects_duplicate_doorstop_uids() -> None:
 def test_mapper_reserves_document_wide_volume_namespace() -> None:
     part_clause = Clause(
         id=ClauseId(value="part-3-clause-1"),
-        reference=StandardReference(standard="IEC 61508", clause="1"),
+        reference=StandardReference(standard="IEC 61508", clause="1", part="3"),
         clause_type=ClauseType.SCOPE,
-        volume="3",
     )
     supplement_root = Clause(
         id=ClauseId(value="part-3-1-root"),
-        reference=StandardReference(standard="IEC 61508", clause="0"),
+        reference=StandardReference(standard="IEC 61508", clause="0", part="3§1"),
         clause_type=ClauseType.TOC,
-        volume="3§1",
     )
     supplement_clause = Clause(
         id=ClauseId(value="part-3-1-clause-1"),
-        reference=StandardReference(standard="IEC 61508", clause="1"),
+        reference=StandardReference(standard="IEC 61508", clause="1", part="3§1"),
         clause_type=ClauseType.SCOPE,
-        volume="3§1",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="IEC61508"),
@@ -241,15 +234,13 @@ def test_mapper_reserves_document_wide_volume_namespace() -> None:
 def test_mapper_reports_document_minimum_identifier_width_before_mapping() -> None:
     clause = Clause(
         id=ClauseId(value="deep-clause"),
-        reference=StandardReference(standard="IEC 61508", clause="7.4.4.1.1"),
+        reference=StandardReference(standard="IEC 61508", clause="7.4.4.1.1", part="2"),
         clause_type=ClauseType.REQUIREMENT,
-        volume="2",
     )
     supplement = Clause(
         id=ClauseId(value="supplement-root-for-depth"),
-        reference=StandardReference(standard="IEC 61508", clause="0"),
+        reference=StandardReference(standard="IEC 61508", clause="0", part="3§1"),
         clause_type=ClauseType.TOC,
-        volume="3§1",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="IEC61508"),

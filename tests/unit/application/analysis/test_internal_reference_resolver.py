@@ -17,7 +17,7 @@ def _clause(reference: str, text: str = "") -> Clause:
         id=ClauseId(value=f"clause-{reference.replace('.', '-')}"),
         reference=StandardReference(standard="SAMPLE", year=2026, clause=reference),
         clause_type=ClauseType.CLAUSE,
-        title=f"Clause {reference}",
+        heading=f"Clause {reference}",
         content=(TextBlock(id=f"text-{reference}", text=text),) if text else (),
     )
 
@@ -55,3 +55,32 @@ def test_resolves_range_endpoints_without_linking_non_literal_targets() -> None:
     relations = resolve_internal_reference_relations(document)[source.id.value]
 
     assert [relation.display_text for relation in relations] == ["5.2", "5.4"]
+
+
+def test_resolves_same_clause_number_within_source_part() -> None:
+    source = Clause(
+        id=ClauseId(value="source-p3"),
+        reference=StandardReference(standard="IEC 61508", part="3", year=2010, clause="5.1"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Source",
+        content=(TextBlock(id="source-text", text="The procedure in 5.2 shall be applied."),),
+    )
+    target_p3 = Clause(
+        id=ClauseId(value="target-p3"),
+        reference=StandardReference(standard="IEC 61508", part="3", year=2010, clause="5.2"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Part 3 target",
+    )
+    target_p2 = Clause(
+        id=ClauseId(value="target-p2"),
+        reference=StandardReference(standard="IEC 61508", part="2", year=2010, clause="5.2"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Part 2 target",
+    )
+    document = Standard.from_name(key=StandardKey(value="IEC61508"), name="IEC 61508", year=2010)
+    document = document.model_copy(update={"clauses": (source, target_p2, target_p3)})
+
+    relations = resolve_internal_reference_relations(document)[source.id.value]
+
+    assert len(relations) == 1
+    assert relations[0].target_clause_id == target_p3.id.value

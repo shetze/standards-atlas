@@ -49,12 +49,11 @@ class Clause(BaseModel):
     structural_context: StructuralContext | None = None
     reference_mentions: tuple[ReferenceMention, ...] = ()
 
-    title: str | None = None
+    heading: str | None = None
     content: tuple[ContentBlock, ...] = ()
     parent_id: ClauseId | None = None
     source_token: str | None = None
 
-    volume: str | None = None
     enum_prefix: str | None = None
     identifier_width: int | None = None
 

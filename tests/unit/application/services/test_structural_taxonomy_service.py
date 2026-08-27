@@ -36,7 +36,7 @@ def _clause(identifier, reference, title, parent=None, text=""):
         id=ClauseId(value=identifier),
         reference=StandardReference(standard="TEST", clause=reference),
         clause_type=ClauseType.CLAUSE,
-        title=title,
+        heading=title,
         parent_id=ClauseId(value=parent) if parent else None,
         content=(TextBlock(id=f"{identifier}-text", text=text),) if text else (),
     )

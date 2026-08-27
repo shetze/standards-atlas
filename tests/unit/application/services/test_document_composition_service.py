@@ -23,10 +23,9 @@ def _clause(identifier: str, text: str | None = None, *, volume: str = "1") -> C
     content = (TextBlock(id=f"{identifier}-text", text=text),) if text is not None else ()
     return Clause(
         id=ClauseId(value=identifier),
-        reference=StandardReference(standard="TEST", year=2026, clause=identifier),
+        reference=StandardReference(standard="TEST", year=2026, clause=identifier, part=volume),
         clause_type=ClauseType.CLAUSE,
         content=content,
-        volume=volume,
     )
 
 
@@ -42,10 +41,9 @@ def _document(key: str, *clauses: Clause) -> EngineeringDocument:
 def _part_document(key: str, *clauses: Clause, volume: str = "1") -> EngineeringDocument:
     root = Clause(
         id=ClauseId(value=f"{key}-root"),
-        reference=StandardReference(standard="TEST", year=2026, clause="0"),
+        reference=StandardReference(standard="TEST", year=2026, clause="0", part=volume),
         clause_type=ClauseType.TOC,
-        title=f"Part {volume.replace('§', '-')}",
-        volume=volume,
+        heading=f"Part {volume.replace('§', '-')}",
     )
     return _document(key, root, *clauses)
 
@@ -75,7 +73,7 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
         "0",
         "B",
     ]
-    assert [clause.title for clause in composed.document.clauses[::2]] == [
+    assert [clause.heading for clause in composed.document.clauses[::2]] == [
         "Part 1",
         "Part 3-1",
         "Part 2",
@@ -98,9 +96,9 @@ def test_compose_creates_root_for_legacy_supplement_without_clause_zero(
     composed = build_document_composition_service(tmp_path).compose("FAMILY", ("IEC61508-3-1",))
 
     root, clause = composed.document.clauses
-    assert root.reference == StandardReference(standard="TEST", year=2026, clause="0")
-    assert root.volume == "3§1"
-    assert root.title == "Part 3-1"
+    assert root.reference == StandardReference(standard="TEST", part="3§1", year=2026, clause="0")
+    assert root.reference.part == "3§1"
+    assert root.heading == "Part 3-1"
     assert root.clause_type is ClauseType.TOC
     assert clause.reference.clause == "S"
 

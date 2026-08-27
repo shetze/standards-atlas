@@ -10,7 +10,7 @@ def _progress(*, current: int, total: int, status: str) -> ProposalProgress:
         status=status,
         document_key="ISO26262-11",
         reference="4.6.2.1.1.2",
-        title="Temperature de-rating",
+        heading="Temperature de-rating",
     )
 
 

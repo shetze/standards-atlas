@@ -16,15 +16,13 @@ def test_derives_part_scoped_standard_and_related_annotations(tmp_path):
     workspace = tmp_path / ".atlas"
     part7 = Clause(
         id=ClauseId(value="part-7"),
-        reference=StandardReference(standard="ISO 26262", clause="1"),
+        reference=StandardReference(standard="ISO 26262", clause="1", part="7"),
         clause_type=ClauseType.CLAUSE,
-        volume="7",
     )
     part8 = Clause(
         id=ClauseId(value="part-8"),
-        reference=StandardReference(standard="ISO 26262", clause="1"),
+        reference=StandardReference(standard="ISO 26262", clause="1", part="8"),
         clause_type=ClauseType.CLAUSE,
-        volume="8",
     )
     repository = FileSystemEngineeringDocumentRepository(workspace)
     repository.save(
@@ -67,15 +65,13 @@ def test_derive_by_volume_preserves_clause_zero_part_root(tmp_path):
     workspace = tmp_path / ".atlas"
     anchor = Clause(
         id=ClauseId(value="part-8-anchor"),
-        reference=StandardReference(standard="ISO 26262", clause="0"),
+        reference=StandardReference(standard="ISO 26262", clause="0", part="8"),
         clause_type=ClauseType.CLAUSE,
-        volume="8",
     )
     clause = Clause(
         id=ClauseId(value="part-8-clause"),
-        reference=StandardReference(standard="ISO 26262", clause="1"),
+        reference=StandardReference(standard="ISO 26262", clause="1", part="8"),
         clause_type=ClauseType.CLAUSE,
-        volume="8",
     )
     repository = FileSystemEngineeringDocumentRepository(workspace)
     repository.save(
@@ -92,4 +88,4 @@ def test_derive_by_volume_preserves_clause_zero_part_root(tmp_path):
     )
 
     assert [item.reference.clause for item in derived.clauses] == ["0", "1"]
-    assert derived.clauses[0].title == "Part 8"
+    assert derived.clauses[0].heading == "Part 8"

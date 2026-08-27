@@ -34,9 +34,10 @@ def resolve_internal_reference_relations(
     Existing semantic relation typing is deliberately not inferred beyond the generic
     ``references`` relation kind.
     """
-    by_reference: dict[str, list[Clause]] = {}
+    by_reference: dict[tuple[str | None, str], list[Clause]] = {}
     for clause in document.clauses:
-        by_reference.setdefault(_normalize_reference(clause.reference.clause), []).append(clause)
+        key = (clause.reference.part, _normalize_reference(clause.reference.clause))
+        by_reference.setdefault(key, []).append(clause)
 
     return {
         clause.id.value: _relations_for_clause(clause, by_reference) for clause in document.clauses
@@ -45,7 +46,7 @@ def resolve_internal_reference_relations(
 
 def _relations_for_clause(
     clause: Clause,
-    by_reference: dict[str, list[Clause]],
+    by_reference: dict[tuple[str | None, str], list[Clause]],
 ) -> tuple[SemanticRelation, ...]:
     text = clause.plain_text
     occupied: list[tuple[int, int]] = []
@@ -55,7 +56,7 @@ def _relations_for_clause(
         occupied.append(match.span())
         for group in ("start", "end"):
             reference = match.group(group)
-            relation = _resolved_relation(reference, clause.id.value, by_reference)
+            relation = _resolved_relation(reference, clause, by_reference)
             if relation is not None:
                 relations.append(relation)
 
@@ -64,9 +65,12 @@ def _relations_for_clause(
             continue
         reference = match.group("reference")
         normalized = _normalize_reference(reference)
-        if match.group("prefix") is None and normalized not in by_reference:
+        if (
+            match.group("prefix") is None
+            and (clause.reference.part, normalized) not in by_reference
+        ):
             continue
-        relation = _resolved_relation(reference, clause.id.value, by_reference)
+        relation = _resolved_relation(reference, clause, by_reference)
         if relation is not None:
             relations.append(relation)
 
@@ -78,13 +82,12 @@ def _relations_for_clause(
 
 def _resolved_relation(
     reference: str,
-    source_clause_id: str,
-    by_reference: dict[str, list[Clause]],
+    source_clause: Clause,
+    by_reference: dict[tuple[str | None, str], list[Clause]],
 ) -> SemanticRelation | None:
+    key = (source_clause.reference.part, _normalize_reference(reference))
     candidates = [
-        candidate
-        for candidate in by_reference.get(_normalize_reference(reference), ())
-        if candidate.id.value != source_clause_id
+        candidate for candidate in by_reference.get(key, ()) if candidate.id != source_clause.id
     ]
     if len(candidates) != 1:
         return None

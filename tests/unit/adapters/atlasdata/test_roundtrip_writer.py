@@ -103,7 +103,7 @@ def _example_document() -> EngineeringDocument:
                     clause="1",
                 ),
                 clause_type=ClauseType.TOC,
-                title="Generated title",
+                heading="Generated title",
             ),
         ),
     )

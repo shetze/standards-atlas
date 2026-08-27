@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.domain.model import Clause, EngineeringDocument
@@ -50,7 +50,7 @@ class ResolvedReferenceTarget(BaseModel):
 
     clause_id: str = Field(min_length=1)
     reference: str = Field(min_length=1)
-    title: str | None = None
+    heading: str | None = Field(default=None, validation_alias=AliasChoices("heading", "title"))
 
 
 class ClauseReferenceOccurrence(BaseModel):
@@ -187,47 +187,51 @@ class ClauseReferenceExtractionService:
 class _DocumentReferenceResolver:
     def __init__(self, document: EngineeringDocument) -> None:
         self._document = document
-        self._by_reference: dict[str, list[Clause]] = {}
+        self._by_reference: dict[tuple[str | None, str], list[Clause]] = {}
         for clause in document.clauses:
-            self._by_reference.setdefault(_normalize_reference(clause.reference.clause), []).append(
-                clause
-            )
+            key = (clause.reference.part, _normalize_reference(clause.reference.clause))
+            self._by_reference.setdefault(key, []).append(clause)
         self._ordered = tuple(document.clauses)
         self._position = {clause.id.value: index for index, clause in enumerate(self._ordered)}
 
     def analyse(self, knowledge_domain: str, clause: Clause) -> ClauseReferenceAnalysis:
-        occurrences = tuple(self._extract(clause.plain_text, clause.id.value))
+        occurrences = tuple(self._extract(clause.plain_text, clause))
         return ClauseReferenceAnalysis(
             knowledge_domain=knowledge_domain,
             document_key=self._document.key.value,
             clause_id=clause.id.value,
             clause_reference=clause.reference.clause,
-            clause_title=clause.title,
+            clause_title=clause.heading,
             references=occurrences,
         )
 
-    def _extract(self, text: str, source_clause_id: str):
+    def _extract(self, text: str, source_clause: Clause):
         occupied: list[tuple[int, int]] = []
         for match in _RANGE_RE.finditer(text):
             occupied.append(match.span())
-            yield self._resolve_range(match, source_clause_id)
+            yield self._resolve_range(match, source_clause)
         for match in _SINGLE_RE.finditer(text):
             if any(start <= match.start() < end for start, end in occupied):
                 continue
             # Bare decimal numbers are only references when they match a real clause.
             normalized = _normalize_reference(match.group("reference"))
-            if match.group("prefix") is None and normalized not in self._by_reference:
+            if (
+                match.group("prefix") is None
+                and (source_clause.reference.part, normalized) not in self._by_reference
+            ):
                 continue
-            yield self._resolve_single(match, source_clause_id)
+            yield self._resolve_single(match, source_clause)
 
     def _resolve_single(
-        self, match: re.Match[str], source_clause_id: str
+        self, match: re.Match[str], source_clause: Clause
     ) -> ClauseReferenceOccurrence:
         reference = match.group("reference")
         candidates = [
             c
-            for c in self._by_reference.get(_normalize_reference(reference), ())
-            if c.id.value != source_clause_id
+            for c in self._by_reference.get(
+                (source_clause.reference.part, _normalize_reference(reference)), ()
+            )
+            if c.id != source_clause.id
         ]
         if len(candidates) == 1:
             status = ReferenceResolutionStatus.RESOLVED
@@ -250,18 +254,22 @@ class _DocumentReferenceResolver:
         )
 
     def _resolve_range(
-        self, match: re.Match[str], source_clause_id: str
+        self, match: re.Match[str], source_clause: Clause
     ) -> ClauseReferenceOccurrence:
         start_ref, end_ref = match.group("start"), match.group("end")
         starts = [
             c
-            for c in self._by_reference.get(_normalize_reference(start_ref), ())
-            if c.id.value != source_clause_id
+            for c in self._by_reference.get(
+                (source_clause.reference.part, _normalize_reference(start_ref)), ()
+            )
+            if c.id != source_clause.id
         ]
         ends = [
             c
-            for c in self._by_reference.get(_normalize_reference(end_ref), ())
-            if c.id.value != source_clause_id
+            for c in self._by_reference.get(
+                (source_clause.reference.part, _normalize_reference(end_ref)), ()
+            )
+            if c.id != source_clause.id
         ]
         targets: list[Clause] = []
         unresolved: list[str] = []
@@ -304,7 +312,7 @@ def _target(clause: Clause) -> ResolvedReferenceTarget:
     return ResolvedReferenceTarget(
         clause_id=clause.id.value,
         reference=clause.reference.clause,
-        title=clause.title,
+        heading=clause.heading,
     )
 
 

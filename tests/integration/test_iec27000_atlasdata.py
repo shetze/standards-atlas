@@ -17,5 +17,5 @@ def test_iec27000_atlasdata_contains_complete_public_structure() -> None:
     term_entries = [clause for clause in terms if clause.reference.clause.startswith("3.")]
     assert len(terms) == 78
     assert len(term_entries) == 77
-    assert term_entries[0].title == "access control"
+    assert term_entries[0].heading == "access control"
     assert term_entries[-1].reference.clause == "3.77"

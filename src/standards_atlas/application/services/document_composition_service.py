@@ -130,7 +130,9 @@ def _part_root_clause(part: EngineeringDocument) -> Clause:
     if roots:
         return roots[0]
 
-    volumes = {clause.volume for clause in part.clauses if clause.volume is not None}
+    volumes = {
+        clause.reference.part for clause in part.clauses if clause.reference.part is not None
+    }
     if len(volumes) != 1:
         raise DocumentCompositionError(
             f"Part document {part.key.value!r} without a clause 0 root must contain "
@@ -148,8 +150,7 @@ def _part_root_clause(part: EngineeringDocument) -> Clause:
     digest = hashlib.sha1(f"{standard}|{year or ''}|{volume}|root".encode()).hexdigest()[:12]
     return Clause(
         id=ClauseId(value=f"clause-{digest}"),
-        reference=StandardReference(standard=standard, year=year, clause="0"),
+        reference=StandardReference(standard=standard, year=year, clause="0", part=volume),
         clause_type=ClauseType.TOC,
-        title=f"Part {volume.replace('§', '-')}",
-        volume=volume,
+        heading=f"Part {volume.replace('§', '-')}",
     )

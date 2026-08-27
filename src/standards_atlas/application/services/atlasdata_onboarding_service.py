@@ -73,7 +73,7 @@ class DiscoveredClause:
     """One public clause reference and heading discovered in Docling JSON."""
 
     reference: str
-    title: str
+    heading: str
     type_marker: str
     source_item_ids: tuple[str, ...]
     annex_status: str | None = None
@@ -396,7 +396,7 @@ class AtlasDataOnboardingService:
             title = title or _default_heading(reference, annex_status)
             candidate = DiscoveredClause(
                 reference=reference,
-                title=title,
+                heading=title,
                 type_marker="u",
                 source_item_ids=tuple(source_ids),
                 annex_status=annex_status,
@@ -426,14 +426,14 @@ class AtlasDataOnboardingService:
             profile = self._structural_classifier.classify(
                 StructuralProfileContext(
                     reference=clause.reference,
-                    heading=clause.title,
+                    heading=clause.heading,
                 )
             )
             classified.append(
                 DiscoveredClause(
                     reference=clause.reference,
-                    title=clause.title,
-                    type_marker=_atlasdata_marker(profile, clause.title, ancestor_sections),
+                    heading=clause.heading,
+                    type_marker=_atlasdata_marker(profile, clause.heading, ancestor_sections),
                     source_item_ids=clause.source_item_ids,
                     annex_status=(
                         inherited_annex_status.value
@@ -585,7 +585,7 @@ class AtlasDataOnboardingService:
                             "TOC",
                             digest,
                             full_reference,
-                            _sanitize_field(clause.title),
+                            _sanitize_field(clause.heading),
                             clause.type_marker,
                         ]
                     )
@@ -652,8 +652,8 @@ def _parse_heading(text: str) -> tuple[str, str, str | None] | None:
 def _candidate_quality(clause: DiscoveredClause) -> tuple[int, int, int]:
     return (
         int(clause.annex_status is not None),
-        int(clause.title not in {"Heading", f"Annex {clause.reference}"}),
-        len(clause.title),
+        int(clause.heading not in {"Heading", f"Annex {clause.reference}"}),
+        len(clause.heading),
     )
 
 
@@ -693,7 +693,7 @@ def _atlasdata_marker(profile, heading: str, ancestor_sections) -> str:
 
 def _ancestor_headings(reference: str, discovered: list[DiscoveredClause]) -> tuple[str, ...]:
     return tuple(
-        clause.title for clause in discovered if _is_descendant(reference, clause.reference)
+        clause.heading for clause in discovered if _is_descendant(reference, clause.reference)
     )
 
 
@@ -707,7 +707,7 @@ def _ancestor_sections(
         if not _is_descendant(reference, clause.reference):
             continue
         profile = classifier.classify(
-            StructuralProfileContext(reference=clause.reference, heading=clause.title)
+            StructuralProfileContext(reference=clause.reference, heading=clause.heading)
         )
         if profile.canonical_section is not None:
             sections.append(profile.canonical_section)

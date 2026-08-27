@@ -55,7 +55,7 @@ class ClauseDescriptor(BaseModel):
     clause_reference: str = Field(min_length=1)
     content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     clause_type: ClauseType
-    title: str | None = None
+    heading: str | None = None
     text: str = ""
     parent_id: str | None = None
     statement_functions: tuple[StatementFunction, ...] = ()
@@ -117,7 +117,7 @@ class ClauseProvider(Protocol):
         filters: ClauseFilter | None = None,
         limit: int = 20,
     ) -> tuple[ClauseDescriptor, ...]:
-        """Search clauses by title and plain text."""
+        """Search clauses by heading and plain text."""
         ...
 
     def sample_clauses(

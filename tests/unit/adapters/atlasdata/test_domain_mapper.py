@@ -67,7 +67,7 @@ def test_map_atlas_data_to_standard() -> None:
     scope_clause = standard.clauses[0]
 
     assert scope_clause.reference.clause == "1"
-    assert scope_clause.title == "Scope"
+    assert scope_clause.heading == "Scope"
     assert scope_clause.clause_type == ClauseType.TOC
 
     requirement_clause = standard.clauses[1]
@@ -183,7 +183,7 @@ def test_part_zero_titles_are_resolved_per_volume() -> None:
 
     standard = map_atlas_data_to_standard(atlas_data, key="IEC61508")
 
-    assert [(clause.volume, clause.title) for clause in standard.clauses] == [
+    assert [(clause.reference.part, clause.heading) for clause in standard.clauses] == [
         ("1", "Part 1"),
         ("2", "Part 2"),
     ]

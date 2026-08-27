@@ -148,7 +148,7 @@ class OntologyClassificationService:
                         document_key=document.key.value,
                         clause_id=clause.id.value,
                         clause_reference=clause.reference.clause,
-                        clause_title=clause.title,
+                        clause_title=clause.heading,
                         state="started",
                     )
                 )
@@ -161,7 +161,7 @@ class OntologyClassificationService:
                     "document_title": document.title,
                     "clause_id": clause.id.value,
                     "reference": clause.reference.clause,
-                    "title": clause.title,
+                    "title": clause.heading,
                     "structural_profile": (
                         clause.structural_profile.model_dump(mode="json")
                         if clause.structural_profile is not None
@@ -255,7 +255,7 @@ class OntologyClassificationService:
                         document_key=document.key.value,
                         clause_id=clause.id.value,
                         clause_reference=clause.reference.clause,
-                        clause_title=clause.title,
+                        clause_title=clause.heading,
                         state=state,
                         elapsed_seconds=time.monotonic() - started,
                     )

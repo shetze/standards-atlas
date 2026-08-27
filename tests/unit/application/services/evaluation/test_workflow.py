@@ -194,7 +194,7 @@ def test_excludes_empty_content_and_separates_content_from_context(tmp_path: Pat
             clause_reference="1",
             content_hash="sha256:" + "0" * 64,
             clause_type=ClauseType.CLAUSE,
-            title="Heading only",
+            heading="Heading only",
             text="   ",
         ),
         ClauseDescriptor(
@@ -204,7 +204,7 @@ def test_excludes_empty_content_and_separates_content_from_context(tmp_path: Pat
             clause_reference="1.1",
             content_hash=shared_hash,
             clause_type=ClauseType.REQUIREMENT,
-            title="First context",
+            heading="First context",
             text="Same content",
         ),
         ClauseDescriptor(
@@ -214,7 +214,7 @@ def test_excludes_empty_content_and_separates_content_from_context(tmp_path: Pat
             clause_reference="2.1",
             content_hash=shared_hash,
             clause_type=ClauseType.REQUIREMENT,
-            title="Second context",
+            heading="Second context",
             text="Same content",
         ),
     )
@@ -239,7 +239,7 @@ def test_excludes_empty_content_and_separates_content_from_context(tmp_path: Pat
     assert all(
         example["input"]["content"]["text"] == "Same content" for example in dataset["examples"]
     )
-    assert {example["input"]["context"]["title"] for example in dataset["examples"]} == {
+    assert {example["input"]["context"]["heading"] for example in dataset["examples"]} == {
         "First context",
         "Second context",
     }
@@ -262,7 +262,7 @@ def test_excludes_composed_family_copies_and_uses_readable_duplicate_labels(
         clause_reference="7.4.2",
         content_hash=shared_hash,
         clause_type=ClauseType.REQUIREMENT,
-        title="Requirements",
+        heading="Requirements",
         text="The requirement shall be documented.",
     )
     family_copy = first.model_copy(update={"document_key": "IEC61508"})
@@ -273,7 +273,7 @@ def test_excludes_composed_family_copies_and_uses_readable_duplicate_labels(
         clause_reference="7.4.2",
         content_hash=shared_hash,
         clause_type=ClauseType.REQUIREMENT,
-        title="Software requirements",
+        heading="Software requirements",
         text="The requirement shall be documented.",
     )
     family_second_copy = second.model_copy(update={"document_key": "IEC61508"})
@@ -325,7 +325,7 @@ def test_excludes_table_dominant_clauses_and_reports_reason(tmp_path: Path) -> N
         clause_reference="A",
         content_hash="sha256:" + "2" * 64,
         clause_type=ClauseType.CLAUSE,
-        title="Technique selection matrix",
+        heading="Technique selection matrix",
         text="Technique | SIL 1 | SIL 2\nFormal methods | R | HR",
         content_profile=ClauseContentProfile.TABLE_DOMINANT,
         table_block_count=1,
@@ -405,7 +405,7 @@ def test_corpus_records_nearest_first_ancestor_headings(tmp_path: Path) -> None:
             clause_reference="1",
             content_hash="sha256:" + "1" * 64,
             clause_type=ClauseType.CLAUSE,
-            title="Scope",
+            heading="Scope",
             text="Scope introduction.",
         ),
         ClauseDescriptor(
@@ -436,7 +436,7 @@ def test_corpus_records_nearest_first_ancestor_headings(tmp_path: Path) -> None:
     dataset = json.loads(result.dataset_path.read_text())
     child = next(item for item in dataset["examples"] if item["id"] == "DOC:1.1")
     assert child["input"]["context"]["ancestor_headings"] == [
-        {"clause_id": "DOC:1", "reference": "1", "title": "Scope"}
+        {"clause_id": "DOC:1", "reference": "1", "heading": "Scope"}
     ]
 
 

@@ -34,7 +34,7 @@ def _clause(
         id=ClauseId(value=clause_id),
         reference=StandardReference(standard=document, year=2024, clause=reference),
         clause_type=ClauseType.REQUIREMENT,
-        title=f"Clause {reference}",
+        heading=f"Clause {reference}",
         content=(TextBlock(id=f"{clause_id}-text", text=text),),
         semantic_classification=SemanticClassification(statement_functions=(function,)),
     )

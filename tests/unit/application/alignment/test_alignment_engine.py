@@ -61,7 +61,7 @@ def engineering(*references):
                     clause=reference,
                 ),
                 clause_type=ClauseType.CLAUSE,
-                title=f"Title {reference}",
+                heading=f"Title {reference}",
             )
             for reference in references
         ),
@@ -343,13 +343,13 @@ def test_table_clauses_are_not_alignment_expectations() -> None:
         id=ClauseId(value="SAMPLE-1"),
         reference=StandardReference(standard="SAMPLE", clause="1"),
         clause_type=ClauseType.CLAUSE,
-        title="Scope",
+        heading="Scope",
     )
     legacy_table_clause = Clause(
         id=ClauseId(value="SAMPLE-A.1-table"),
         reference=StandardReference(standard="SAMPLE", clause="A.1"),
         clause_type=ClauseType.TABLE,
-        title="Example table",
+        heading="Example table",
     )
     document = EngineeringDocument(
         key=DocumentKey(value="SAMPLE"),

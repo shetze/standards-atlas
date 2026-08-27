@@ -102,7 +102,7 @@ class ClauseConsensus(BaseModel):
     clause_id: str
     document_key: str
     reference: str | None = None
-    title: str | None = None
+    heading: str | None = None
     clause_text: str | None = None
     category: ConsensusCategory
     statement_function_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
@@ -340,7 +340,7 @@ class ModelConsensusService:
                     clause_id=clause_id,
                     document_key=clause_reference.document_key,
                     reference=_optional_text(context.get("reference")),
-                    title=_optional_text(context.get("title")),
+                    heading=_optional_text(context.get("heading") or context.get("title")),
                     clause_text=_optional_text(context.get("text")),
                     role_semantics_present=role_semantics_present,
                     role_semantics_presence_confidence=(
@@ -1072,7 +1072,7 @@ def _write_outputs(
                 "clause_id": item.clause_id,
                 "document_key": item.document_key,
                 "reference": item.reference,
-                "title": item.title,
+                "heading": item.heading,
                 "clause_text": item.clause_text,
                 "primary_function": (
                     item.primary_function.value if item.primary_function else None
@@ -1225,7 +1225,7 @@ def _render_review(report: ConsensusReport) -> str:
                 "",
                 f"- Stable clause ID: `{item.clause_id}`",
                 f"- Clause reference: `{item.reference or 'unavailable'}`",
-                *([f"- Clause title: {item.title}"] if item.title else []),
+                *([f"- Clause heading: {item.heading}"] if item.heading else []),
                 "",
                 "### Clause text",
                 "",
@@ -1459,6 +1459,6 @@ def _optional_text(value: object) -> str | None:
 def _review_heading(item: ClauseConsensus) -> str:
     readable = item.reference or item.clause_id
     heading = f"## {item.document_key}:{readable}"
-    if item.title:
-        heading += f" — {item.title}"
+    if item.heading:
+        heading += f" — {item.heading}"
     return heading

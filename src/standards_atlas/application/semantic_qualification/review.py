@@ -340,8 +340,8 @@ def _render_references(analysis: ClauseReferenceAnalysis | None) -> str:
             lines.append("- Targets:")
             for target in occurrence.targets:
                 readable = target.reference
-                if target.title:
-                    readable += f" — {target.title}"
+                if target.heading:
+                    readable += f" — {target.heading}"
                 lines.append(f"  - `{target.clause_id}`: {readable}")
         if occurrence.unresolved_references:
             unresolved = ", ".join(occurrence.unresolved_references)

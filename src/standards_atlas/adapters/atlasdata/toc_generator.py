@@ -121,7 +121,7 @@ def generate_table_structure_records(
                 kind="TABLE",
                 hash_value=_hash_value(f"table|{reference}"),
                 reference=reference,
-                content=clause.title.strip() if clause.title else "Table",
+                content=clause.heading.strip() if clause.heading else "Table",
                 type_marker="",
             )
         )
@@ -192,8 +192,8 @@ def _atlasdata_reference(clause: Clause) -> str:
     """Serialize a clause reference using AtlasData part notation."""
     standard = clause.reference.standard
 
-    if clause.volume:
-        part = clause.volume.replace("§", "-")
+    if clause.reference.part:
+        part = clause.reference.part.replace("§", "-")
         standard = f"{standard}-{part}"
 
     if clause.reference.year is None:
@@ -217,8 +217,8 @@ def _public_heading(
     if public_title_annotations:
         return public_title_annotations[-1].content.strip()
 
-    if clause.title and clause.title.strip():
-        return clause.title.strip()
+    if clause.heading and clause.heading.strip():
+        return clause.heading.strip()
 
     return _DEFAULT_HEADINGS.get(clause.clause_type, "Heading")
 
@@ -244,8 +244,8 @@ def _hash_value(value: str) -> str:
 
 def _atlasdata_table_reference_from_clause(clause: Clause) -> str:
     standard = clause.reference.standard
-    if clause.volume:
-        standard = f"{standard}-{clause.volume.replace('§', '-')}"
+    if clause.reference.part:
+        standard = f"{standard}-{clause.reference.part.replace('§', '-')}"
     year = clause.reference.year
     document_reference = f"{standard}:{year}" if year is not None else standard
     return f"{document_reference} Table {clause.reference.clause}"
@@ -259,8 +259,8 @@ def _atlasdata_table_reference(
     standard = document.title
     if parent is not None:
         standard = parent.reference.standard
-        if parent.volume:
-            standard = f"{standard}-{parent.volume.replace('§', '-')}"
+        if parent.reference.part:
+            standard = f"{standard}-{parent.reference.part.replace('§', '-')}"
     year = parent.reference.year if parent is not None else document.year
     document_reference = f"{standard}:{year}" if year is not None else standard
     return f"{document_reference} Table {reference}"

@@ -129,7 +129,7 @@ def _split_document(
     document: EngineeringDocument,
 ) -> tuple[tuple[str | None, EngineeringDocument], ...]:
     volumes = sorted(
-        {clause.volume for clause in document.clauses if clause.volume},
+        {clause.reference.part for clause in document.clauses if clause.reference.part},
         key=_natural_key,
     )
     if not volumes:
@@ -139,7 +139,7 @@ def _split_document(
         clauses = tuple(
             clause
             for clause in document.clauses
-            if clause.volume == volume and clause.reference.clause.strip() != "0"
+            if clause.reference.part == volume and clause.reference.clause.strip() != "0"
         )
         clause_ids = {c.id for c in clauses}
         annotations = tuple(a for a in document.annotations if a.clause_id in clause_ids)

@@ -147,7 +147,7 @@ class SemanticExtractionService:
                         document_key=document.key.value,
                         clause_id=clause_id,
                         clause_reference=clause_reference,
-                        clause_title=clause.title,
+                        clause_title=clause.heading,
                         phase="started",
                     )
                 )
@@ -181,7 +181,7 @@ class SemanticExtractionService:
                     ExtractionFailure(
                         clause_id=clause_id,
                         clause_reference=clause_reference,
-                        clause_title=clause.title,
+                        clause_title=clause.heading,
                         kind=kind,
                         error_type=type(error).__name__,
                         message=str(error),
@@ -193,7 +193,7 @@ class SemanticExtractionService:
                             document_key=document.key.value,
                             clause_id=clause_id,
                             clause_reference=clause_reference,
-                            clause_title=clause.title,
+                            clause_title=clause.heading,
                             phase="finished",
                             status=kind,
                             duration_seconds=duration,
@@ -216,7 +216,7 @@ class SemanticExtractionService:
                         document_key=document.key.value,
                         clause_id=clause_id,
                         clause_reference=clause_reference,
-                        clause_title=clause.title,
+                        clause_title=clause.heading,
                         phase="finished",
                         status="ok",
                         duration_seconds=duration,

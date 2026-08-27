@@ -71,7 +71,7 @@ def _document_aliases(
     for document in documents:
         values = {document.key.value, document.title}
         values.update(
-            clause.reference.standard.strip()
+            _reference_designation(clause)
             for clause in document.clauses
             if clause.reference.standard.strip()
         )
@@ -84,6 +84,27 @@ def _document_aliases(
 
     aliases = [(alias, tuple(targets.values())) for alias, targets in candidates.values()]
     return tuple(sorted(aliases, key=lambda item: len(item[0]), reverse=True))
+
+
+def _reference_designation(clause: Clause) -> str:
+    standard = clause.reference.standard.strip()
+    return f"{standard}-{clause.reference.part}" if clause.reference.part else standard
+
+
+def _alias_matches_clause(alias: str, clause: Clause) -> bool:
+    """Constrain part-qualified aliases to clauses from that same part."""
+    normalized_alias = re.sub(r"[^a-z0-9]", "", alias.casefold())
+    standard = re.sub(r"[^a-z0-9]", "", clause.reference.standard.casefold())
+    part = clause.reference.part
+    if not part:
+        return True
+    normalized_part = re.sub(r"[^a-z0-9]", "", part.casefold())
+    qualified = f"{standard}{normalized_part}"
+    if normalized_alias == qualified:
+        return True
+    # Unqualified standard aliases remain valid, but ambiguity across parts is
+    # deliberately preserved by the candidate cardinality check below.
+    return normalized_alias == standard or not normalized_alias.startswith(standard)
 
 
 def _alias_variants(value: str) -> tuple[str, ...]:
@@ -112,6 +133,7 @@ def _resolve_match(
         for target_document in target_documents
         for candidate in target_document.clauses
         if _normalize_reference(candidate.reference.clause) == normalized
+        and _alias_matches_clause(matched_alias, candidate)
         and not (target_document.key == source_document.key and candidate.id == source_clause.id)
     ]
     by_clause_id: dict[str, list[tuple[EngineeringDocument, Clause]]] = {}

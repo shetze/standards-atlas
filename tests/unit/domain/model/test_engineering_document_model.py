@@ -19,7 +19,7 @@ def test_create_generic_engineering_document_with_virtual_clause() -> None:
             clause="2.3.1",
         ),
         clause_type=ClauseType.CLAUSE,
-        title="System Element ODS",
+        heading="System Element ODS",
         content=(
             TextBlock(
                 id="AT-ARCH-2.3.1-text",
@@ -42,7 +42,7 @@ def test_create_generic_engineering_document_with_virtual_clause() -> None:
 
     assert document.title == "AT System Architecture Specification"
     assert document.document_type == DocumentType.SPECIFICATION
-    assert document.clauses[0].title == "System Element ODS"
+    assert document.clauses[0].heading == "System Element ODS"
 
 
 def test_engineering_document_is_json_serializable() -> None:

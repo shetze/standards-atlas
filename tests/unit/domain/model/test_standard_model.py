@@ -19,7 +19,7 @@ def test_create_standard_with_clause() -> None:
             clause="5.1",
         ),
         clause_type=ClauseType.CLAUSE,
-        title="Software safety integrity",
+        heading="Software safety integrity",
     )
 
     standard = Standard.from_name(
@@ -62,7 +62,7 @@ def test_clause_can_have_semantic_classification() -> None:
         semantic_classification=SemanticClassification(
             statement_functions=(StatementFunction.DESCRIPTION,)
         ),
-        title="Work products",
+        heading="Work products",
     )
 
     assert clause.semantic_classification.statement_functions == (StatementFunction.DESCRIPTION,)

@@ -171,7 +171,7 @@ def test_review_includes_readable_reference_title_and_clause_text(tmp_path: Path
 
     clause = report.clauses[0]
     assert clause.reference == "8.4.5"
-    assert clause.title == "Software unit verification"
+    assert clause.heading == "Software unit verification"
     assert clause.clause_text == "The supplier shall verify the software unit."
 
     review = review_path.read_text(encoding="utf-8")
