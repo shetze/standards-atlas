@@ -1305,11 +1305,9 @@ TOC;a4891c092e2308cf991c9ecec191ac48;IEC 61508-7:2010 F;Definitions of propertie
 TOC;6c45989957c31bd73b618df6d83a7d9b;IEC 61508-7:2010 G;Guidance for the development of safety-related object oriented software;u
 TABLE;1740e38288599fd75364ab8de36d4fa8;IEC 61508-3:2010 Table A.1;Software safety requirements specification;
 TABLE;15e1eee79fb05e044e6657d653163730;IEC 61508-3:2010 Table A.2;Software design and development – software architecture design;
-TABLE;a7c6ae6a2d386c07f785edde8df8a6bf;IEC 61508-3:2010 Table A.3;Software design and development – support tools and programming
-language;
+TABLE;a7c6ae6a2d386c07f785edde8df8a6bf;IEC 61508-3:2010 Table A.3;Software design and development – support tools and programming language;
 TABLE;3c829c4dfe4c344cae2a20c9341b3382;IEC 61508-3:2010 Table A.4;Software design and development – detailed design;
-TABLE;b718121bf72cfc688c2ec7eec2558cdc;IEC 61508-3:2010 Table A.5;Software design and development – software module testing and
-integration;
+TABLE;b718121bf72cfc688c2ec7eec2558cdc;IEC 61508-3:2010 Table A.5;Software design and development – software module testing and integration;
 TABLE;e6a4cdaf91228e47ad22cfe82d7360fb;IEC 61508-3:2010 Table A.6;Programmable electronics integration (hardware and software);
 TABLE;35a62a681867041cf289ebd63c89f896;IEC 61508-3:2010 Table A.7;Software aspects of system safety validation;
 TABLE;492875fe60af5a7aa2439167a57e0007;IEC 61508-3:2010 Table A.8;Modification;
@@ -1325,19 +1323,12 @@ TABLE;6d5b6cee1a4d2a55df9cfbddef6836e9;IEC 61508-3:2010 Table B.7;Semi-formal me
 TABLE;2278ad7f62b9d30d73b6281b9a220e80;IEC 61508-3:2010 Table B.8;Static analysis;
 TABLE;8dd72033dbb7a97451ca9630f0861deb;IEC 61508-3:2010 Table B.9;Modular approach;
 TABLE;599cf063bb6c8444d817c4dc57237780;IEC 61508-3:2010 Table C.1;Properties for systematic safety integrity – Software safety requirements specification;
-TABLE;fe22d9bae4ec4ea607bfba95ef6ceb47;IEC 61508-3:2010 Table C.2;Properties for systematic safety integrity – Software design and
-development – software Architecture Design;
-TABLE;d06fd2ee3faedd91619a81c6c6b96143;IEC 61508-3:2010 Table C.3;Properties for systematic safety integrity – Software design and
-development – support tools and programming language;
-TABLE;2935a8542e9ecca008d244ba00e9df41;IEC 61508-3:2010 Table C.4;Properties for systematic safety integrity – Software design and
-development – detailed design (includes software system design, software module
-design and coding);
-TABLE;a4485802511f7cd1a869c5eb51e06585;IEC 61508-3:2010 Table C.5;Properties for systematic safety integrity – Software design and
-development – software module testing and integration;
-TABLE;adfe0eff87a408c8bb60a3afdfe2d326;IEC 61508-3:2010 Table C.6;Properties for systematic safety integrity – Programmable electronics
-integration (hardware and software);
-TABLE;b4dd4c3bc1180a396f61fb66e9ae952b;IEC 61508-3:2010 Table C.7;Properties for systematic safety integrity – Software aspects of system
-safety validation;
+TABLE;fe22d9bae4ec4ea607bfba95ef6ceb47;IEC 61508-3:2010 Table C.2;Properties for systematic safety integrity – Software design and development – software Architecture Design;
+TABLE;d06fd2ee3faedd91619a81c6c6b96143;IEC 61508-3:2010 Table C.3;Properties for systematic safety integrity – Software design and development – support tools and programming language;
+TABLE;2935a8542e9ecca008d244ba00e9df41;IEC 61508-3:2010 Table C.4;Properties for systematic safety integrity – Software design and development – detailed design (includes software system design, software module design and coding);
+TABLE;a4485802511f7cd1a869c5eb51e06585;IEC 61508-3:2010 Table C.5;Properties for systematic safety integrity – Software design and development – software module testing and integration;
+TABLE;adfe0eff87a408c8bb60a3afdfe2d326;IEC 61508-3:2010 Table C.6;Properties for systematic safety integrity – Programmable electronics integration (hardware and software);
+TABLE;b4dd4c3bc1180a396f61fb66e9ae952b;IEC 61508-3:2010 Table C.7;Properties for systematic safety integrity – Software aspects of system safety validation;
 TABLE;cca1f8f3da727cdb7bfb238b12fec9d0;IEC 61508-3:2010 Table C.8;Properties for systematic safety integrity – Software modification;
 TABLE;64ea63c177dd306a1357c1b99259deef;IEC 61508-3:2010 Table C.9;Properties for systematic safety integrity – Software verification;
 TABLE;0100f517fda1ca286bc0e1cc2b5ed63e;IEC 61508-3:2010 Table C.10;Properties for systematic safety integrity – Functional safety assessment;
@@ -1351,7 +1342,6 @@ TABLE;d75ff6aa80a6e4db98b2830bbce48317;IEC 61508-3:2010 Table C.17;Detailed prop
 TABLE;516d874833cace6bfa477278ba482cca;IEC 61508-3:2010 Table C.18;Properties for systematic safety integrity – Static analysis;
 TABLE;13777d45d33fdace27d6f4ab88d2eb75;IEC 61508-3:2010 Table C.19;Detailed properties – Modular approach;
 TABLE;c638ebf95f9b0b663d36c5787f0b2bf1;IEC 61508-3:2010 Table E.1;Categories of IEC 61508-2 requirements;
-TABLE;44501f03eb4c9ce3c5824f36fa9fd54a;IEC 61508-3:2010 Table E.2;Requirements of IEC 61508-2 for software and their typical relevance to
-certain types of software;
+TABLE;44501f03eb4c9ce3c5824f36fa9fd54a;IEC 61508-3:2010 Table E.2;Requirements of IEC 61508-2 for software and their typical relevance to certain types of software;
 TABLE;300e8e3b56165525ad821123bbd72f39;IEC 61508-3:2010 Table F.1;Module coupling – definition of terms;
 TABLE;fca02ec2b4a494b88d5c917c52abecd1;IEC 61508-3:2010 Table F.2;Types of module coupling;
