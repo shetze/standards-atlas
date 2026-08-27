@@ -1,4 +1,4 @@
-"""Apply a qualified ontology classifier to persisted engineering documents."""
+"""Apply qualified semantic classification to persisted engineering documents."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict
 
-from standards_atlas.application.ontology import (
-    OntologyContext,
-    OntologyEngine,
-    OntologyProfile,
-    RoleSemanticsClassifier,
-)
+from standards_atlas.application.ontology import RoleSemanticsClassifier
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.application.ports.llm_gateway import LlmResponseError
+from standards_atlas.application.semantic_classification import (
+    SemanticClassificationContext,
+    SemanticClassificationEngine,
+    SemanticProfile,
+)
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     DocumentKey,
@@ -28,8 +28,8 @@ from standards_atlas.domain.model import (
 
 
 @dataclass(frozen=True)
-class OntologyClassificationProgress:
-    """Observable progress for one clause in document ontology classification."""
+class SemanticClassificationProgress:
+    """Observable progress for one clause in document semantic classification."""
 
     current: int
     total: int
@@ -41,7 +41,7 @@ class OntologyClassificationProgress:
     elapsed_seconds: float | None = None
 
 
-OntologyProgressCallback = Callable[[OntologyClassificationProgress], None]
+SemanticClassificationProgressCallback = Callable[[SemanticClassificationProgress], None]
 
 
 def _unique(values: Iterable[object]) -> tuple[object, ...]:
@@ -94,26 +94,26 @@ def _validated_semantic_merge(
     return SemanticClassification.model_validate(_canonicalize_semantic_payload(payload))
 
 
-class OntologyClassificationResult(BaseModel):
+class SemanticClassificationResult(BaseModel):
     model_config = ConfigDict(frozen=True)
     document: EngineeringDocument
     clauses_classified: int
     role_semantics_failures: int = 0
-    ontology_classification_failures: int = 0
+    semantic_classification_failures: int = 0
 
 
-class OntologyClassificationService:
-    """Materialize semantic ontology dimensions after structural taxonomy."""
+class SemanticClassificationService:
+    """Materialize semantic profile dimensions after structural taxonomy."""
 
     def __init__(
         self,
         *,
         documents: EngineeringDocumentRepository,
-        engine: OntologyEngine,
-        profile: OntologyProfile,
+        engine: SemanticClassificationEngine,
+        profile: SemanticProfile,
         classifier_id: str = "qualified-llm",
         role_semantics: RoleSemanticsClassifier | None = None,
-        progress: OntologyProgressCallback | None = None,
+        progress: SemanticClassificationProgressCallback | None = None,
     ) -> None:
         self._documents = documents
         self._engine = engine
@@ -122,13 +122,13 @@ class OntologyClassificationService:
         self._role_semantics = role_semantics
         self._progress = progress
 
-    def classify(self, document_key: str) -> OntologyClassificationResult:
+    def classify(self, document_key: str) -> SemanticClassificationResult:
         document = self._documents.load(DocumentKey(value=document_key))
         clauses_by_id = {item.id.value: item for item in document.clauses}
         updated = []
         classified = 0
         role_semantics_failures = 0
-        ontology_classification_failures = 0
+        semantic_classification_failures = 0
         total = len(document.clauses)
         for index, clause in enumerate(document.clauses, start=1):
             if clause.structural_context is None:
@@ -142,7 +142,7 @@ class OntologyClassificationService:
             ]
             if self._progress is not None:
                 self._progress(
-                    OntologyClassificationProgress(
+                    SemanticClassificationProgress(
                         current=index,
                         total=total,
                         document_key=document.key.value,
@@ -153,7 +153,7 @@ class OntologyClassificationService:
                     )
                 )
             started = time.monotonic()
-            context = OntologyContext(
+            context = SemanticClassificationContext(
                 content=clause.plain_text,
                 structural_context=clause.structural_context.model_dump(mode="json"),
                 metadata={
@@ -181,7 +181,7 @@ class OntologyClassificationService:
                     context=context,
                 )
             except LlmResponseError:
-                ontology_classification_failures += 1
+                semantic_classification_failures += 1
                 ontology_failed = True
                 results = ()
             values = {item.dimension: item.values for item in results}
@@ -249,7 +249,7 @@ class OntologyClassificationService:
             if self._progress is not None:
                 state = "partial" if ontology_failed or role_failed else "ok"
                 self._progress(
-                    OntologyClassificationProgress(
+                    SemanticClassificationProgress(
                         current=index,
                         total=total,
                         document_key=document.key.value,
@@ -262,9 +262,9 @@ class OntologyClassificationService:
                 )
         result = document.model_copy(update={"clauses": tuple(updated)})
         self._documents.save(result)
-        return OntologyClassificationResult(
+        return SemanticClassificationResult(
             document=result,
             clauses_classified=classified,
             role_semantics_failures=role_semantics_failures,
-            ontology_classification_failures=ontology_classification_failures,
+            semantic_classification_failures=semantic_classification_failures,
         )

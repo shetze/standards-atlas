@@ -6,12 +6,12 @@ import json
 from dataclasses import dataclass, replace
 from typing import Protocol
 
-from standards_atlas.application.ontology.engine import OntologyContext
 from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
     LlmResponseError,
     StructuredGenerationRequest,
 )
+from standards_atlas.application.semantic_classification import SemanticClassificationContext
 from standards_atlas.domain.model import RoleRelation, RoleRelationClassCore
 
 
@@ -26,7 +26,7 @@ class RoleSemanticsResult:
 class RoleSemanticsClassifier(Protocol):
     """Classify role semantics using a presence-first, extraction-second composition."""
 
-    def classify(self, context: OntologyContext) -> RoleSemanticsResult: ...
+    def classify(self, context: SemanticClassificationContext) -> RoleSemanticsResult: ...
 
 
 class LlmRoleSemanticsClassifier:
@@ -41,7 +41,7 @@ class LlmRoleSemanticsClassifier:
         self._gateway = gateway
         self._model = model
 
-    def classify(self, context: OntologyContext) -> RoleSemanticsResult:
+    def classify(self, context: SemanticClassificationContext) -> RoleSemanticsResult:
         payload = _context_payload(context)
         presence_request = StructuredGenerationRequest(
             task="role-semantics-presence",
@@ -104,7 +104,7 @@ class LlmRoleSemanticsClassifier:
         return RoleSemanticsResult(present=True, relations=relations)
 
 
-def _context_payload(context: OntologyContext) -> dict[str, object]:
+def _context_payload(context: SemanticClassificationContext) -> dict[str, object]:
     return {
         "content": context.content,
         "structural_context": context.structural_context,

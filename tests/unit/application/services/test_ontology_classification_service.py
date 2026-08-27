@@ -1,10 +1,10 @@
-from standards_atlas.application.ontology import (
-    OntologyDimensionResult,
-    OntologyProfile,
-    OntologyReference,
-)
+from standards_atlas.application.ontology import OntologyReference
 from standards_atlas.application.ports.llm_gateway import LlmResponseError
-from standards_atlas.application.services import OntologyClassificationService
+from standards_atlas.application.semantic_classification import (
+    SemanticDimensionResult,
+    SemanticProfile,
+)
+from standards_atlas.application.services import SemanticClassificationService
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     Clause,
@@ -42,7 +42,7 @@ class _Documents:
 
 class _Engine:
     def classify(self, **_kwargs):
-        return (OntologyDimensionResult(dimension="statement_functions", values=("requirement",)),)
+        return (SemanticDimensionResult(dimension="statement_functions", values=("requirement",)),)
 
 
 class _FailingRoleSemantics:
@@ -69,10 +69,10 @@ def _document() -> EngineeringDocument:
 def test_role_response_failure_does_not_abort_other_ontology_dimensions() -> None:
     document = _document()
     documents = _Documents(document)
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_Engine(),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
@@ -108,10 +108,10 @@ def test_ontology_response_failure_isolated_to_clause_and_reported() -> None:
     document = _document()
     documents = _Documents(document)
     progress = []
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_FailingEngine(),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
@@ -124,7 +124,7 @@ def test_ontology_response_failure_isolated_to_clause_and_reported() -> None:
     result = service.classify(document.key.value)
 
     assert result.clauses_classified == 0
-    assert result.ontology_classification_failures == 1
+    assert result.semantic_classification_failures == 1
     assert result.role_semantics_failures == 0
     assert result.document.clauses[0].semantic_classification.statement_functions == ()
     assert [event.state for event in progress] == ["started", "partial"]
@@ -138,7 +138,7 @@ class _ApplicabilityEngine:
 
     def classify(self, **_kwargs):
         return (
-            OntologyDimensionResult(
+            SemanticDimensionResult(
                 dimension="applicability_functions",
                 values=self._values,
             ),
@@ -154,10 +154,10 @@ def _document_with_semantic(semantic: SemanticClassification) -> EngineeringDocu
 def test_applicability_dimension_is_replaced_atomically_when_present() -> None:
     document = _document_with_semantic(SemanticClassification())
     documents = _Documents(document)
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_ApplicabilityEngine(("inclusion",)),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "applicability_functions": OntologyReference(
@@ -182,10 +182,10 @@ def test_applicability_dimension_is_replaced_atomically_when_absent() -> None:
         )
     )
     documents = _Documents(document)
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_ApplicabilityEngine(()),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "applicability_functions": OntologyReference(
@@ -209,10 +209,10 @@ def test_fail_soft_ontology_failure_preserves_complete_applicability_dimension()
     )
     document = _document_with_semantic(initial)
     documents = _Documents(document)
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_FailingEngine(),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "applicability_functions": OntologyReference(
@@ -248,10 +248,10 @@ def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> No
     )
     document = _document_with_semantic(initial)
     documents = _Documents(document)
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_Engine(),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
@@ -271,19 +271,19 @@ def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> No
 class _DuplicateDimensionsEngine:
     def classify(self, **_kwargs):
         return (
-            OntologyDimensionResult(
+            SemanticDimensionResult(
                 dimension="statement_functions",
                 values=("requirement", "requirement"),
             ),
-            OntologyDimensionResult(
+            SemanticDimensionResult(
                 dimension="knowledge_kinds",
                 values=("process", "process"),
             ),
-            OntologyDimensionResult(
+            SemanticDimensionResult(
                 dimension="process_functions",
                 values=("activity", "activity", "decision"),
             ),
-            OntologyDimensionResult(
+            SemanticDimensionResult(
                 dimension="applicability_functions",
                 values=("inclusion", "inclusion"),
             ),
@@ -293,10 +293,10 @@ class _DuplicateDimensionsEngine:
 def test_set_like_semantic_dimensions_are_deduplicated_before_validation() -> None:
     document = _document()
     documents = _Documents(document)
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_DuplicateDimensionsEngine(),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
@@ -334,10 +334,10 @@ def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> 
     )
     document = _document_with_semantic(legacy)
     documents = _Documents(document)
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_FailingEngine(),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
@@ -348,7 +348,7 @@ def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> 
     result = service.classify(document.key.value)
     semantic = result.document.clauses[0].semantic_classification
 
-    assert result.ontology_classification_failures == 1
+    assert result.semantic_classification_failures == 1
     assert semantic.statement_functions == (StatementFunction.REQUIREMENT,)
     assert semantic.process_functions == (ProcessFunction.ACTIVITY,)
 
@@ -376,10 +376,10 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
     )
     document = _document_with_semantic(legacy)
     documents = _Documents(document)
-    service = OntologyClassificationService(
+    service = SemanticClassificationService(
         documents=documents,
         engine=_FailingEngine(),
-        profile=OntologyProfile(
+        profile=SemanticProfile(
             id="test",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")

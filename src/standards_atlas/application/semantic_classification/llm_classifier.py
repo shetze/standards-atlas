@@ -1,4 +1,4 @@
-"""Production LLM classifier for composed ontology profiles."""
+"""Production LLM classifier for composed semantic profiles."""
 
 from __future__ import annotations
 
@@ -7,19 +7,19 @@ from dataclasses import replace
 from typing import Any
 
 from standards_atlas.application.ontology.definition import OntologyDefinition
-from standards_atlas.application.ontology.engine import (
-    OntologyContext,
-    OntologyDimensionResult,
-)
 from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
     LlmResponseError,
     StructuredGenerationRequest,
 )
+from standards_atlas.application.semantic_classification.engine import (
+    SemanticClassificationContext,
+    SemanticDimensionResult,
+)
 
 
-class LlmOntologyClassifier:
-    """Classify ontology dimensions through one schema-constrained LLM request."""
+class LlmSemanticClassifier:
+    """Classify semantic profile dimensions through one schema-constrained LLM request."""
 
     classifier_id = "qualified-llm"
 
@@ -29,9 +29,9 @@ class LlmOntologyClassifier:
 
     def classify(
         self,
-        context: OntologyContext,
+        context: SemanticClassificationContext,
         definitions: dict[str, OntologyDefinition],
-    ) -> tuple[OntologyDimensionResult, ...]:
+    ) -> tuple[SemanticDimensionResult, ...]:
         properties: dict[str, Any] = {}
         for dimension, definition in definitions.items():
             properties[dimension] = {
@@ -91,7 +91,7 @@ class LlmOntologyClassifier:
             )
             result = self._gateway.generate_structured(retry)
         return tuple(
-            OntologyDimensionResult(
+            SemanticDimensionResult(
                 dimension=dimension,
                 values=tuple(str(item) for item in result.value.get(dimension, ())),
             )

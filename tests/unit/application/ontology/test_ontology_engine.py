@@ -2,14 +2,13 @@ from dataclasses import dataclass
 
 import pytest
 
-from standards_atlas.application.ontology import (
-    OntologyContext,
-    OntologyDefinition,
-    OntologyDimensionResult,
-    OntologyEngine,
-    OntologyProfile,
-    OntologyReference,
-    OntologyRegistry,
+from standards_atlas.application.ontology import OntologyDefinition, OntologyReference
+from standards_atlas.application.semantic_classification import (
+    SemanticClassificationContext,
+    SemanticClassificationEngine,
+    SemanticClassifierRegistry,
+    SemanticDimensionResult,
+    SemanticProfile,
 )
 
 
@@ -33,45 +32,45 @@ class Classifier:
 
     def classify(
         self,
-        context: OntologyContext,
+        context: SemanticClassificationContext,
         definitions: dict[str, OntologyDefinition],
-    ) -> tuple[OntologyDimensionResult, ...]:
+    ) -> tuple[SemanticDimensionResult, ...]:
         assert context.content == "verification process"
         assert definitions["knowledge_kinds"].id == "knowledge-kinds"
-        return (OntologyDimensionResult("knowledge_kinds", self.values),)
+        return (SemanticDimensionResult("knowledge_kinds", self.values),)
 
 
-def _profile() -> OntologyProfile:
-    return OntologyProfile(
+def _profile() -> SemanticProfile:
+    return SemanticProfile(
         id="functional-safety",
         dimensions={"knowledge_kinds": OntologyReference(id="knowledge-kinds", version="2.2.0")},
     )
 
 
 def test_engine_composes_profile_and_classifier() -> None:
-    engine = OntologyEngine(
+    engine = SemanticClassificationEngine(
         definitions=Definitions(),
-        registry=OntologyRegistry((Classifier(),)),
+        registry=SemanticClassifierRegistry((Classifier(),)),
     )
 
     result = engine.classify(
         profile=_profile(),
         classifier_id="qualified-test",
-        context=OntologyContext(content="verification process"),
+        context=SemanticClassificationContext(content="verification process"),
     )
 
-    assert result == (OntologyDimensionResult("knowledge_kinds", ("process",)),)
+    assert result == (SemanticDimensionResult("knowledge_kinds", ("process",)),)
 
 
 def test_engine_rejects_values_outside_versioned_ontology() -> None:
-    engine = OntologyEngine(
+    engine = SemanticClassificationEngine(
         definitions=Definitions(),
-        registry=OntologyRegistry((Classifier(("unknown",)),)),
+        registry=SemanticClassifierRegistry((Classifier(("unknown",)),)),
     )
 
     with pytest.raises(ValueError, match="undeclared values"):
         engine.classify(
             profile=_profile(),
             classifier_id="qualified-test",
-            context=OntologyContext(content="verification process"),
+            context=SemanticClassificationContext(content="verification process"),
         )

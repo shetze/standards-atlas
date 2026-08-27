@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OntologyDefinition(BaseModel):
@@ -29,21 +29,6 @@ class OntologyReference(BaseModel):
 
     id: str = Field(min_length=1)
     version: str = Field(min_length=1)
-
-
-class OntologyProfile(BaseModel):
-    """Composition of ontology dimensions used by one domain or semantic task."""
-
-    model_config = ConfigDict(frozen=True)
-
-    id: str = Field(min_length=1)
-    dimensions: dict[str, OntologyReference] = Field(min_length=1)
-
-    @model_validator(mode="after")
-    def _dimension_names_are_non_empty(self) -> OntologyProfile:
-        if any(not dimension.strip() for dimension in self.dimensions):
-            raise ValueError("ontology profile dimension names must be non-empty")
-        return self
 
 
 class OntologyDefinitionRepository(Protocol):

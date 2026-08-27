@@ -19,8 +19,8 @@ from standards_atlas.application.services import (
     DocumentNormalizationService,
     MarkdownExportService,
 )
-from standards_atlas.application.services.ontology_classification_service import (
-    OntologyProgressCallback,
+from standards_atlas.application.services.semantic_classification_service import (
+    SemanticClassificationProgressCallback,
 )
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
@@ -151,24 +151,26 @@ def build_ontology_classification_service(
     workspace: Path,
     *,
     llm_config_path: Path | None = None,
-    progress: OntologyProgressCallback | None = None,
+    progress: SemanticClassificationProgressCallback | None = None,
 ):
     from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
     from standards_atlas.application.ontology import (
-        LlmOntologyClassifier,
         LlmRoleSemanticsClassifier,
-        OntologyEngine,
-        OntologyProfile,
         OntologyReference,
-        OntologyRegistry,
         ResourceOntologyDefinitionRepository,
     )
-    from standards_atlas.application.services import OntologyClassificationService
+    from standards_atlas.application.semantic_classification import (
+        LlmSemanticClassifier,
+        SemanticClassificationEngine,
+        SemanticClassifierRegistry,
+        SemanticProfile,
+    )
+    from standards_atlas.application.services import SemanticClassificationService
 
     config = LlmConfig.load(llm_config_path)
     gateway = OpenAICompatibleLlmGateway(config)
-    classifier = LlmOntologyClassifier(gateway, model=config.model)
-    profile = OntologyProfile(
+    classifier = LlmSemanticClassifier(gateway, model=config.model)
+    profile = SemanticProfile(
         id="semantic-profile-2.2.0",
         dimensions={
             "statement_functions": OntologyReference(id="statement-functions", version="2.0.0"),
@@ -179,11 +181,11 @@ def build_ontology_classification_service(
             ),
         },
     )
-    engine = OntologyEngine(
+    engine = SemanticClassificationEngine(
         definitions=ResourceOntologyDefinitionRepository(),
-        registry=OntologyRegistry((classifier,)),
+        registry=SemanticClassifierRegistry((classifier,)),
     )
-    return OntologyClassificationService(
+    return SemanticClassificationService(
         documents=FileSystemEngineeringDocumentRepository(workspace),
         engine=engine,
         profile=profile,

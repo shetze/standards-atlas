@@ -20,8 +20,8 @@ from standards_atlas.application.services.document_composition_service import (
 from standards_atlas.application.services.document_selection_service import (
     DocumentSelectionError,
 )
-from standards_atlas.application.services.ontology_classification_service import (
-    OntologyClassificationProgress,
+from standards_atlas.application.services.semantic_classification_service import (
+    SemanticClassificationProgress,
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import document_app
@@ -253,7 +253,7 @@ def classify_document_ontology(
 ) -> None:
     """Classify semantic ontology dimensions using structural taxonomy context."""
 
-    def report_progress(progress: OntologyClassificationProgress) -> None:
+    def report_progress(progress: SemanticClassificationProgress) -> None:
         reference = progress.clause_reference or progress.clause_id
         title = f" — {progress.clause_title}" if progress.clause_title else ""
         prefix = f"[Ontology {progress.current:03d}/{progress.total:03d}]"
@@ -280,6 +280,6 @@ def classify_document_ontology(
 
     typer.echo(f"Document              : {result.document.key.value}")
     typer.echo(f"Clauses classified    : {result.clauses_classified}")
-    typer.echo(f"Ontology failures     : {result.ontology_classification_failures}")
+    typer.echo(f"Ontology failures     : {result.semantic_classification_failures}")
     typer.echo(f"Role semantic failures: {result.role_semantics_failures}")
     typer.echo("Ontology profile      : semantic-profile-2.2.0")

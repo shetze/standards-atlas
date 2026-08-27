@@ -1,7 +1,8 @@
 from types import SimpleNamespace
 
-from standards_atlas.application.ontology import LlmRoleSemanticsClassifier, OntologyContext
+from standards_atlas.application.ontology import LlmRoleSemanticsClassifier
 from standards_atlas.application.ports.llm_gateway import LlmResponseError
+from standards_atlas.application.semantic_classification import SemanticClassificationContext
 
 
 class FakeGateway:
@@ -23,7 +24,9 @@ def test_presence_false_skips_relation_extraction() -> None:
     )
     classifier = LlmRoleSemanticsClassifier(gateway, model="test")
 
-    result = classifier.classify(OntologyContext(content="This clause defines a concept."))
+    result = classifier.classify(
+        SemanticClassificationContext(content="This clause defines a concept.")
+    )
 
     assert result.present is False
     assert result.relations == ()
@@ -39,7 +42,9 @@ def test_presence_true_without_complete_tuple_returns_no_relation() -> None:
     )
     classifier = LlmRoleSemanticsClassifier(gateway)
 
-    result = classifier.classify(OntologyContext(content="The analysis shall be verified."))
+    result = classifier.classify(
+        SemanticClassificationContext(content="The analysis shall be verified.")
+    )
 
     assert result.present is True
     assert result.relations == ()
@@ -66,7 +71,9 @@ def test_complete_tuple_is_extracted_with_actor_field() -> None:
     )
     classifier = LlmRoleSemanticsClassifier(gateway)
 
-    result = classifier.classify(OntologyContext(content="The Verifier verifies the analysis."))
+    result = classifier.classify(
+        SemanticClassificationContext(content="The Verifier verifies the analysis.")
+    )
 
     assert result.present is True
     assert len(result.relations) == 1
@@ -84,7 +91,9 @@ def test_presence_retries_malformed_response_with_bounded_budget() -> None:
     )
     classifier = LlmRoleSemanticsClassifier(gateway, model="test")
 
-    result = classifier.classify(OntologyContext(content="This clause defines a concept."))
+    result = classifier.classify(
+        SemanticClassificationContext(content="This clause defines a concept.")
+    )
 
     assert result.present is False
     assert len(gateway.requests) == 2
@@ -106,7 +115,7 @@ def test_presence_propagates_second_malformed_response_for_clause_level_handling
     classifier = LlmRoleSemanticsClassifier(gateway)
 
     try:
-        classifier.classify(OntologyContext(content="The design shall be verified."))
+        classifier.classify(SemanticClassificationContext(content="The design shall be verified."))
     except LlmResponseError as error:
         assert str(error) == "second"
     else:

@@ -1,11 +1,11 @@
-from standards_atlas.application.ontology import (
-    LlmOntologyClassifier,
-    OntologyContext,
-    OntologyDefinition,
-)
+from standards_atlas.application.ontology import OntologyDefinition
 from standards_atlas.application.ports.llm_gateway import (
     LlmResponseError,
     StructuredGenerationResult,
+)
+from standards_atlas.application.semantic_classification import (
+    LlmSemanticClassifier,
+    SemanticClassificationContext,
 )
 
 
@@ -47,10 +47,10 @@ def _definition() -> OntologyDefinition:
 
 def test_classifier_supplies_structural_context_to_llm() -> None:
     gateway = Gateway()
-    classifier = LlmOntologyClassifier(gateway)
+    classifier = LlmSemanticClassifier(gateway)
 
     result = classifier.classify(
-        OntologyContext(
+        SemanticClassificationContext(
             content="The item shall be verified.",
             structural_context={"node_kind": "leaf", "sibling": {"is_last": True}},
             metadata={"title": "Verification"},
@@ -76,10 +76,10 @@ def test_classifier_retries_truncated_structured_response_with_larger_budget() -
         duration_ms=1,
     )
     gateway = Gateway([failure, success])
-    classifier = LlmOntologyClassifier(gateway)
+    classifier = LlmSemanticClassifier(gateway)
 
     result = classifier.classify(
-        OntologyContext(content="The item shall be verified."),
+        SemanticClassificationContext(content="The item shall be verified."),
         {"statement_functions": _definition()},
     )
 
@@ -91,11 +91,11 @@ def test_classifier_retries_truncated_structured_response_with_larger_budget() -
 def test_classifier_does_not_retry_non_length_response_error() -> None:
     failure = LlmResponseError("invalid json", finish_reason="stop")
     gateway = Gateway([failure])
-    classifier = LlmOntologyClassifier(gateway)
+    classifier = LlmSemanticClassifier(gateway)
 
     try:
         classifier.classify(
-            OntologyContext(content="The item shall be verified."),
+            SemanticClassificationContext(content="The item shall be verified."),
             {"statement_functions": _definition()},
         )
     except LlmResponseError as error:

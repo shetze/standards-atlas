@@ -20,7 +20,7 @@ class _FakeClassificationResult:
     document: object
     clauses_classified: int
     role_semantics_failures: int = 0
-    ontology_classification_failures: int = 0
+    semantic_classification_failures: int = 0
 
 
 class _FakeClassificationService:
@@ -58,8 +58,8 @@ def test_classify_ontology_ensures_managed_llm_is_running(monkeypatch) -> None:
 
 
 def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
-    from standards_atlas.application.services.ontology_classification_service import (
-        OntologyClassificationProgress,
+    from standards_atlas.application.services.semantic_classification_service import (
+        SemanticClassificationProgress,
     )
 
     server = _FakeServer()
@@ -71,7 +71,7 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
 
         def classify(self, document_key: str) -> _FakeClassificationResult:
             self._progress(
-                OntologyClassificationProgress(
+                SemanticClassificationProgress(
                     current=1,
                     total=1,
                     document_key=document_key,
@@ -82,7 +82,7 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
                 )
             )
             self._progress(
-                OntologyClassificationProgress(
+                SemanticClassificationProgress(
                     current=1,
                     total=1,
                     document_key=document_key,
@@ -97,7 +97,7 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
             return _FakeClassificationResult(
                 document=document,
                 clauses_classified=0,
-                ontology_classification_failures=1,
+                semantic_classification_failures=1,
             )
 
     monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
