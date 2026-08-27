@@ -11,7 +11,7 @@ structure=(
  "2005 0-0 0-1 0-2 0-3 0-3.{1..4} 0-4 0-4.{1..9} 0-5:A"
  "2010 1-0 1-1 1-s1.{1..5} 1-2 1-3 1-4 1-r4.{1..3} 1-5 1-5.{1..2} 1-o5.1.{1..2} 1-r5.2.{1..11} 1-6 1-6.{1..2} 1-o6.1.{1..2} 1-r6.2.{1..18} 1-7 1-7.1 1-7.1.{1..4} 1-s7.1.1.{1..5} 1-o7.1.2.{1..2} 1-o7.1.3.{1..2} 1-r7.1.4.{1..8} 1-7.2 1-7.2.{1..2} 1-r7.2.2.{1..6} 1-7.3 1-7.3.{1..2} 1-o7.3.1.{1..2} 1-r7.3.2.{1..6} 1-7.4 1-7.4.{1..2} 1-o7.4.1.{1..3} 1-r7.4.2.{1..12} 1-7.5 1-7.5.{1..2} 1-r7.5.2.{1..7} 1-7.6 1-7.6.{1..2} 1-o7.6.1.{1..2} 1-r7.6.2.{1..13} 1-7.7 1-7.7.{1..2} 1-r7.7.2.{1..4} 1-7.8 1-7.8.{1..2} 1-r7.8.2.{1..2} 1-7.9 1-7.9.{1..2} 1-o7.9.1.{1..2} 1-r7.9.2.{1..3} 1-7.10 1-7.10.{1..2} 1-r7.10.2.{1..7} 1-7.11 1-o7.11.1 1-r7.11.2 1-7.12 1-7.12.{1..2} 1-7.13 1-7.13.{1..2} 1-o7.13.1.{1..2} 1-r7.13.2.{1..4} 1-7.14 1-7.14.{1..2} 1-r7.14.2.{1..4} 1-7.15 1-7.15.{1..2} 1-o7.15.1.{1..2} 1-r7.15.2.{1..4} 1-7.16 1-7.16.{1..2} 1-r7.16.2.{1..7} 1-7.17 1-7.17.{1..2} 1-r7.17.2.{1..7} 1-7.18 1-7.18.{1..2} 1-r7.18.2.{1..4} 1-8 1-8.{1..2} 1-r8.2.{1..18} 1-9:A 1-9:A.{1..4}"
  "2010 2-0 2-1 2-s1.{1..4} 2-2 2-3 2-4 2-5 2-6 2-7 2-7.1 2-7.1.{1..3} 2-o7.1.1.{1..2} 2-o7.1.2.{1..2} 2-r7.1.3.{1..5} 2-7.2 2-7.2.{1..3} 2-r7.2.2.{1..2} 2-r7.2.3.{1..6} 2-7.3 2-7.3.{1..2} 2-r7.3.2.{1..2} 2-7.4 2-7.4.{1..3} 2-r7.4.2.{1..14} 2-r7.4.3.{1..4} 2-7.4.4 2-7.4.4.1 2-r7.4.4.1.{1..5} 2-7.4.4.2 2-r7.4.4.2.{1..4} 2-7.4.4.3 2-r7.4.4.3.{1..4} 2-7.4.5 2-r7.4.5.{1..5} 2-7.4.6 2-r7.4.6.{1..7} 2-7.4.7 2-r7.4.7.{1..3} 2-7.4.8 2-r7.4.8.{1..3} 2-7.4.9 2-r7.4.9.{1..7} 2-7.4.10 2-r7.4.10.{1..7} 2-7.4.11 2-r7.4.11.{1..2} 2-7.5 2-7.5.{1..2} 2-r7.5.2.{1..7} 2-7.6 2-7.6.{1..2} 2-r7.6.2.{1..5} 2-7.7 2-7.7.{1..2} 2-r7.7.2.{1..7} 2-7.8 2-7.8.{1..2} 2-r7.8.2.{1..4} 2-7.9 2-7.9.{1..2} 2-r7.9.2.{1..10} 2-8 2-9:mA 2-9:mA.1 2-9:rA.2 2-9:mA.3 2-10:B 2-11:C 2-r11:C.{1..2} 2-12:D 2-12:D.{1..2} 2-r12:D.2.{1..4} 2-13:E 2-r13:E.{1..3} 2-m14:F 2-m14:F.{1..2}"
- "2010 3-0 3-1 3-1.{1..4} 3-2 3-3 3-4 3-5 3-6 3-6.{1..2} 3-r6.2.{1..3} 3-7 3-7.1 3-7.1.{1..2} 3-r7.1.2.{1..9} 3-7.2 3-7.2.{1..2} 3-r7.2.1.{1..3} 3-r7.2.2.{1..13} 3-7.3 3-7.3.{1..2} 3-r7.3.2.{1..5} 3-7.4 3-o7.4.1 3-o7.4.1.{1..6} 3-r7.4.{2..8} 3-r7.4.2.{1..14} 3-r7.4.3.{1..3} 3-r7.4.4.{1..19} 3-r7.4.5.{1..5} 3-r7.4.6.1 3-r7.4.7.{1..4} 3-r7.4.8.{1..5} 3-7.5 3-o7.5.1 3-o7.5.1.{1..2} 3-r7.5.2 3-r7.5.2.{1..8} 3-7.6 3-o7.6.1 3-r7.6.2 3-7.7 3-o7.7.1 3-r7.7.2 3-r7.7.2.{1..9} 3-7.8 3-o7.8.1 3-r7.8.2 3-r7.8.2.{1..10} 3-7.9 3-o7.9.1 3-r7.9.2 3-r7.9.2.{1..14} 3-8 3-8.{1..3} 3-9:A 3-b9:A.{1..10} 3-10:B 3-b10:B.{1..9} 3-11:C 3-b11:C.{1..19} 3-r12:D 3-r12:D.{1..3} 3-r12:D.3.{1..3} 3-13:E 3-b13:E.{1..2} 3-m14:F 3-m14:F.{1..7} 3-b14:F.{1..2} 3-15:G 3-15:G.{1..7}"
+ "2010 3-0 3-1 3-1.{1..4} 3-2 3-3 3-4 3-5 3-6 3-6.{1..2} 3-r6.2.{1..3} 3-7 3-7.1 3-7.1.{1..2} 3-r7.1.2.{1..9} 3-7.2 3-7.2.{1..2} 3-r7.2.1.{1..3} 3-r7.2.2.{1..13} 3-7.3 3-7.3.{1..2} 3-r7.3.2.{1..5} 3-7.4 3-o7.4.1 3-o7.4.1.{1..6} 3-r7.4.{2..8} 3-r7.4.2.{1..14} 3-r7.4.3.{1..3} 3-r7.4.4.{1..19} 3-r7.4.5.{1..5} 3-r7.4.6.1 3-r7.4.7.{1..4} 3-r7.4.8.{1..5} 3-7.5 3-o7.5.1 3-o7.5.1.{1..2} 3-r7.5.2 3-r7.5.2.{1..8} 3-7.6 3-o7.6.1 3-r7.6.2 3-7.7 3-o7.7.1 3-r7.7.2 3-r7.7.2.{1..9} 3-7.8 3-o7.8.1 3-r7.8.2 3-r7.8.2.{1..10} 3-7.9 3-o7.9.1 3-r7.9.2 3-r7.9.2.{1..14} 3-8 3-8.{1..3} 3-9:A 3-b9:A.{1..10} 3-10:B 3-b10:B.{1..9} 3-11:C 3-11:C.1 3-11:C.1.{1..3} 3-11:C.{2..3} 3-b11:C.{1..19} 3-r12:D 3-r12:D.{1..3} 3-r12:D.3.{1..3} 3-13:E 3-b13:E.{1..2} 3-m14:F 3-m14:F.{1..7} 3-b14:F.{1..2} 3-15:G 3-15:G.{1..7}"
  "2010 4-0 4-1 4-1.{1..5} 4-2 4-3 4-3.1 4-t3.1.{1..14} 4-3.2 4-t3.2.{1..15} 4-3.3 4-t3.3.{1..7} 4-3.4 4-t3.4.{1..6} 4-3.5 4-t3.5.{1..18} 4-3.6 4-t3.6.{1..22} 4-3.7 4-t3.7.{1..5} 4-3.8 4-t3.8.{1..18}"
  "2010 5-0 5-1 5-s1.{1..4} 5-2 5-3 5-4:A 5-4:A.{1..2} 5-4:A.2.{1..4} 5-4:A.{3..5} 5-4:A.5.{1..5} 5-4:A.{6..9} 5-5:B 5-5:B.{1..6} 5-6:C 5-6:C.{1..2} 5-6:C.2.{1..2} 5-7:D 5-7:D.{1..3} 5-8:E 5-8:E.{1..6} 5-9:F 5-9:F.1 5-9:F.1.{1..3} 5-9:F.{2..6} 5-9:F.6.{1..3} 5-9:F.{7..11} 5-10:G 5-10:G.{1..2}"
  "2010 6-0 6-1 6-s1.{1..4} 6-2 6-3 6-4:A 6-4:A.{1..3} 6-5:B 6-5:B.{1..2} 6-5:B.2.{1..3} 6-5:B.2.3.{1..4} 6-5:B.3 6-5:B.3.{1..2} 6-5:B.3.2.{1..2} 6-5:B.3.2.2.{1..6} 6-5:B.3.2.{3..5} 6-5:B.3.3 6-5:B.3.3.{1..2} 6-5:B.3.3.2.{1..6} 6-5:B.3.3.{3..4} 6-5:B.4 6-5:B.4.{1..4} 6-5:B.4.4.{1..2} 6-5:B.5 6-5:B.5.{1..2} 6-5:B.5.2.{1..2} 6-5:B.5.3 6-5:B.5.3.{1..4} 6-5:B.5.4 6-5:B.6 6-5:B.7 6-6:C 6-7:D 6-7:D.1 6-7:D.1.{1..4} 6-7:D.{2..8} 6-8:E 6-8:E.{1..3}"
@@ -682,6 +682,12 @@ TOC;c7663a3e9cb3e0da960e629d5590c3d2;IEC 61508-3:2010 8.3;TOC;u
 TOC;f95cfdde040f1ba3e36986b4c518e10a;IEC 61508-3:2010 A;Guide to the selection of techniques and measures;u
 TOC;be2a4753562ea7bb0bd9dac5ea2727e6;IEC 61508-3:2010 B;Detailed tables;u
 TOC;f59ec64ffc80b1a0ce3d61af18954e98;IEC 61508-3:2010 C;Properties for software systematic capability;u
+TOC;136fe03996758ae1a93807fa18dd8346;IEC 61508-3:2010 C.1;Introduction;u
+TOC;7de957b645668638d970453ba2ccd9f4;IEC 61508-3:2010 C.1.1;Structure of Annex C, relating to Annexes A and B;u
+TOC;a9d23fa243a76b226f94c2a3166487ad;IEC 61508-3:2010 C.1.2;Method of use – 1;u
+TOC;b2c969340a8e51d16b10b4be602710f8;IEC 61508-3:2010 C.1.3;Method of use – 2;u
+TOC;4155fc0b3c88aff1022541fc977a89b9;IEC 61508-3:2010 C.2;Properties for systematic safety integrity;u
+TOC;e2a75661c71d578ea899f5a63e60a022;IEC 61508-3:2010 C.3;Properties for systematic safety integrity - Detailed tables;u
 TOC;a67fe1dd51da368428b3f473e419542b;IEC 61508-3:2010 D;Safety manual for compliant items – additional requirements for software elements;r
 TOC;99d9be17e213a00d4bb766f93dfc8f57;IEC 61508-3:2010 D.1;Purpose of the safety manual;r
 TOC;bb018142fa9ced2d1ca90a25ee51e5bb;IEC 61508-3:2010 D.2;Contents of the safety manual for a software element;r
@@ -1303,45 +1309,129 @@ TOC;a4a48ec831ab9827e845cec7df7f958e;IEC 61508-7:2010 E.45;Functional quality pa
 TOC;3f1829e2465a27cb28a3b201efe9a88a;IEC 61508-7:2010 E.46;Quality standards;m
 TOC;a4891c092e2308cf991c9ecec191ac48;IEC 61508-7:2010 F;Definitions of properties of software lifecycle phases;u
 TOC;6c45989957c31bd73b618df6d83a7d9b;IEC 61508-7:2010 G;Guidance for the development of safety-related object oriented software;u
-TABLE;1740e38288599fd75364ab8de36d4fa8;IEC 61508-3:2010 Table A.1;Software safety requirements specification;
-TABLE;15e1eee79fb05e044e6657d653163730;IEC 61508-3:2010 Table A.2;Software design and development – software architecture design;
-TABLE;a7c6ae6a2d386c07f785edde8df8a6bf;IEC 61508-3:2010 Table A.3;Software design and development – support tools and programming language;
-TABLE;3c829c4dfe4c344cae2a20c9341b3382;IEC 61508-3:2010 Table A.4;Software design and development – detailed design;
-TABLE;b718121bf72cfc688c2ec7eec2558cdc;IEC 61508-3:2010 Table A.5;Software design and development – software module testing and integration;
-TABLE;e6a4cdaf91228e47ad22cfe82d7360fb;IEC 61508-3:2010 Table A.6;Programmable electronics integration (hardware and software);
-TABLE;35a62a681867041cf289ebd63c89f896;IEC 61508-3:2010 Table A.7;Software aspects of system safety validation;
-TABLE;492875fe60af5a7aa2439167a57e0007;IEC 61508-3:2010 Table A.8;Modification;
-TABLE;02369460e75af31483d0176b5d0cb00d;IEC 61508-3:2010 Table A.9;Software verification;
-TABLE;e9bda00bee904ecdfb9b64b1f9761a71;IEC 61508-3:2010 Table A.10;Functional safety assessment;
-TABLE;94d02c007eb65a079b358f2749ddadb6;IEC 61508-3:2010 Table B.1;Design and coding standards;
-TABLE;3b8fc879829a3d5c5fea61d8a6b4f40b;IEC 61508-3:2010 Table B.2;Dynamic analysis and testing;
-TABLE;1f1df9d47b1aa007dc099e98a1215adf;IEC 61508-3:2010 Table B.3;Functional and black-box testing;
-TABLE;3ce68ff5f2bc8011df4f65c7ed16d51b;IEC 61508-3:2010 Table B.4;Failure analysis;
-TABLE;e0236417480e3a35b70c2629a5acba46;IEC 61508-3:2010 Table B.5;Modelling;
-TABLE;fcd0ff7d64704353c6a09441b374f801;IEC 61508-3:2010 Table B.6;Performance testing;
-TABLE;6d5b6cee1a4d2a55df9cfbddef6836e9;IEC 61508-3:2010 Table B.7;Semi-formal methods;
-TABLE;2278ad7f62b9d30d73b6281b9a220e80;IEC 61508-3:2010 Table B.8;Static analysis;
-TABLE;8dd72033dbb7a97451ca9630f0861deb;IEC 61508-3:2010 Table B.9;Modular approach;
-TABLE;599cf063bb6c8444d817c4dc57237780;IEC 61508-3:2010 Table C.1;Properties for systematic safety integrity – Software safety requirements specification;
-TABLE;fe22d9bae4ec4ea607bfba95ef6ceb47;IEC 61508-3:2010 Table C.2;Properties for systematic safety integrity – Software design and development – software Architecture Design;
-TABLE;d06fd2ee3faedd91619a81c6c6b96143;IEC 61508-3:2010 Table C.3;Properties for systematic safety integrity – Software design and development – support tools and programming language;
-TABLE;2935a8542e9ecca008d244ba00e9df41;IEC 61508-3:2010 Table C.4;Properties for systematic safety integrity – Software design and development – detailed design (includes software system design, software module design and coding);
-TABLE;a4485802511f7cd1a869c5eb51e06585;IEC 61508-3:2010 Table C.5;Properties for systematic safety integrity – Software design and development – software module testing and integration;
-TABLE;adfe0eff87a408c8bb60a3afdfe2d326;IEC 61508-3:2010 Table C.6;Properties for systematic safety integrity – Programmable electronics integration (hardware and software);
-TABLE;b4dd4c3bc1180a396f61fb66e9ae952b;IEC 61508-3:2010 Table C.7;Properties for systematic safety integrity – Software aspects of system safety validation;
-TABLE;cca1f8f3da727cdb7bfb238b12fec9d0;IEC 61508-3:2010 Table C.8;Properties for systematic safety integrity – Software modification;
-TABLE;64ea63c177dd306a1357c1b99259deef;IEC 61508-3:2010 Table C.9;Properties for systematic safety integrity – Software verification;
-TABLE;0100f517fda1ca286bc0e1cc2b5ed63e;IEC 61508-3:2010 Table C.10;Properties for systematic safety integrity – Functional safety assessment;
-TABLE;9286460b6d1ba94df73e3c383033b34e;IEC 61508-3:2010 Table C.11;Detailed properties – Design and coding standards;
-TABLE;28a52e250af1bd3f4305d88b1bd33459;IEC 61508-3:2010 Table C.12;Detailed properties – Dynamic analysis and testing;
-TABLE;305ab3b6838b4d6288a9ed4a8160e90f;IEC 61508-3:2010 Table C.13;Detailed properties – Functional and black-box testing;
-TABLE;0e2ed2d7a7f141a89d082263a6d13b8b;IEC 61508-3:2010 Table C.14;Detailed properties – Failure analysis;
-TABLE;96f399c4f32a015b7c4e70ffb961e773;IEC 61508-3:2010 Table C.15;Detailed properties – Modelling;
-TABLE;2e618c1e746e10ff1fa10c8a65cba7c0;IEC 61508-3:2010 Table C.16;Detailed properties – Performance testing;
-TABLE;d75ff6aa80a6e4db98b2830bbce48317;IEC 61508-3:2010 Table C.17;Detailed properties – Semi-formal methods;
-TABLE;516d874833cace6bfa477278ba482cca;IEC 61508-3:2010 Table C.18;Properties for systematic safety integrity – Static analysis;
-TABLE;13777d45d33fdace27d6f4ab88d2eb75;IEC 61508-3:2010 Table C.19;Detailed properties – Modular approach;
-TABLE;c638ebf95f9b0b663d36c5787f0b2bf1;IEC 61508-3:2010 Table E.1;Categories of IEC 61508-2 requirements;
-TABLE;44501f03eb4c9ce3c5824f36fa9fd54a;IEC 61508-3:2010 Table E.2;Requirements of IEC 61508-2 for software and their typical relevance to certain types of software;
-TABLE;300e8e3b56165525ad821123bbd72f39;IEC 61508-3:2010 Table F.1;Module coupling – definition of terms;
-TABLE;fca02ec2b4a494b88d5c917c52abecd1;IEC 61508-3:2010 Table F.2;Types of module coupling;
+TABLE;c21e0c657d13fd0706dbc58eac96847c;IEC 61508:2005 Table A.1;Software safety requirements specification;
+TABLE;5f62ccfe77a85c29e2407883af3ab790;IEC 61508:2005 Table A.2;Software design and development – software architecture design;
+TABLE;85e02220f2ce5ebd93e21e077c43f499;IEC 61508:2005 Table A.3;Software design and development – support tools and programming language;
+TABLE;6f2d75ea7aa558303080fb06e14dead6;IEC 61508:2005 Table A.4;Software design and development – detailed design;
+TABLE;753244887906958bf4d4abcb4ef6122f;IEC 61508:2005 Table A.5;Software design and development – software module testing and integration;
+TABLE;34316faadff9a40b29d8ade806edda3d;IEC 61508:2005 Table A.6;Programmable electronics integration (hardware and software);
+TABLE;1ad9c8865e96c415e84537b580b35527;IEC 61508:2005 Table A.7;Software aspects of system safety validation;
+TABLE;44cabfadb5f6d86962c5bd4bc08dc836;IEC 61508:2005 Table A.8;Modification;
+TABLE;d0b81d434b04fba561556b1d909449f4;IEC 61508:2005 Table A.9;Software verification;
+TABLE;c999a799965114750b51685672877d4c;IEC 61508:2005 Table A.10;Functional safety assessment;
+TABLE;ce6273bce8dce80caabb50390cb23818;IEC 61508:2005 Table B.1;Design and coding standards;
+TABLE;abbd02b4420d331ad873b07b33086359;IEC 61508:2005 Table B.2;Dynamic analysis and testing;
+TABLE;b086598773f84ef701d968efa9d8ffbb;IEC 61508:2005 Table B.3;Functional and black-box testing;
+TABLE;92a89124706fc1f29aea0281e0ee9637;IEC 61508:2005 Table B.4;Failure analysis;
+TABLE;11f7b84649b8b595409bbea554183706;IEC 61508:2005 Table B.5;Modelling;
+TABLE;1fa902d9c4331d37557872f041df744f;IEC 61508:2005 Table B.6;Performance testing;
+TABLE;fda948a6613731434c123f31b70d3360;IEC 61508:2005 Table B.7;Semi-formal methods;
+TABLE;1d483ee9da010f443ec079f016555954;IEC 61508:2005 Table B.8;Static analysis;
+TABLE;c39f782f3574f29e52bd0c984f88837d;IEC 61508:2005 Table B.9;Modular approach;
+TABLE;013a1c7b69040949b36a9f943c242bf0;IEC 61508:2005 Table C.1;Properties for systematic safety integrity – Software safety requirements specification;
+TABLE;80f1e7ead7ed82352d9b72d162dcad78;IEC 61508:2005 Table C.2;Properties for systematic safety integrity – Software design and development – software Architecture Design;
+TABLE;251631dde1c67c246614c37db5fee081;IEC 61508:2005 Table C.3;Properties for systematic safety integrity – Software design and development – support tools and programming language;
+TABLE;93ea7ec6b7715336f8f1640529a5d00e;IEC 61508:2005 Table C.4;Properties for systematic safety integrity – Software design and development – detailed design (includes software system design, software module design and coding);
+TABLE;cdfbbbef8c00d20519712cd573c753d5;IEC 61508:2005 Table C.5;Properties for systematic safety integrity – Software design and development – software module testing and integration;
+TABLE;cdc6906b98a1a176b7a57feb78357bff;IEC 61508:2005 Table C.6;Properties for systematic safety integrity – Programmable electronics integration (hardware and software);
+TABLE;23c1a35524c844c8d89e37395d5c1543;IEC 61508:2005 Table C.7;Properties for systematic safety integrity – Software aspects of system safety validation;
+TABLE;23b2acd0cb52de8886983ecdb75dc6b0;IEC 61508:2005 Table C.8;Properties for systematic safety integrity – Software modification;
+TABLE;cf830617dc29fe8ed3290c1135bc2b3a;IEC 61508:2005 Table C.9;Properties for systematic safety integrity – Software verification;
+TABLE;6cd0f1193a362fa59e6b5ebe3852ca68;IEC 61508:2005 Table C.10;Properties for systematic safety integrity – Functional safety assessment;
+TABLE;a8c03f13bc9fc5c71d19bb4bce37e082;IEC 61508:2005 Table C.11;Detailed properties – Design and coding standards;
+TABLE;8d04db0207ebb2471215b60d1ed58084;IEC 61508:2005 Table C.12;Detailed properties – Dynamic analysis and testing;
+TABLE;139bc79644521b43bf1c3a3f96fac900;IEC 61508:2005 Table C.13;Detailed properties – Functional and black-box testing;
+TABLE;a2e7813dd49e4eade2c96fd1e74d1612;IEC 61508:2005 Table C.14;Detailed properties – Failure analysis;
+TABLE;043495d71aa1834ac1cc37fa4d75527d;IEC 61508:2005 Table C.15;Detailed properties – Modelling;
+TABLE;47f1f97d32afbb2b2bd7bb80bfa9222c;IEC 61508:2005 Table C.16;Detailed properties – Performance testing;
+TABLE;c91f3aa66fc21f340c3bb9e623c2c395;IEC 61508:2005 Table C.17;Detailed properties – Semi-formal methods;
+TABLE;76af0db70b3958ff83dd1a777810eaa5;IEC 61508:2005 Table C.18;Properties for systematic safety integrity – Static analysis;
+TABLE;779b9bc7207877c5941f6c463afcf14a;IEC 61508:2005 Table C.19;Detailed properties – Modular approach;
+TABLE;536c9f76eb36e1b9a514b26d471ebc3f;IEC 61508:2005 Table E.1;Categories of IEC 61508-2 requirements;
+TABLE;d044206d1e378eed8ba8f1e939419e20;IEC 61508:2005 Table E.2;Requirements of IEC 61508-2 for software and their typical relevance to certain types of software;
+TABLE;98ec950c55e03c3475666cd2ab8409d5;IEC 61508:2005 Table F.1;Module coupling – definition of terms;
+TABLE;40c7a56ffab2181f2377d139158c69ae;IEC 61508:2005 Table F.2;Types of module coupling;
+TABLE;c21e0c657d13fd0706dbc58eac96847c;IEC 61508:2005 Table A.1;Table;
+TABLE;5f62ccfe77a85c29e2407883af3ab790;IEC 61508:2005 Table A.2;Table;
+TABLE;85e02220f2ce5ebd93e21e077c43f499;IEC 61508:2005 Table A.3;Table;
+TABLE;6f2d75ea7aa558303080fb06e14dead6;IEC 61508:2005 Table A.4;Table;
+TABLE;753244887906958bf4d4abcb4ef6122f;IEC 61508:2005 Table A.5;Table;
+TABLE;34316faadff9a40b29d8ade806edda3d;IEC 61508:2005 Table A.6;Table;
+TABLE;1ad9c8865e96c415e84537b580b35527;IEC 61508:2005 Table A.7;Table;
+TABLE;44cabfadb5f6d86962c5bd4bc08dc836;IEC 61508:2005 Table A.8;Table;
+TABLE;d0b81d434b04fba561556b1d909449f4;IEC 61508:2005 Table A.9;Table;
+TABLE;c999a799965114750b51685672877d4c;IEC 61508:2005 Table A.10;Table;
+TABLE;ce6273bce8dce80caabb50390cb23818;IEC 61508:2005 Table B.1;Table;
+TABLE;abbd02b4420d331ad873b07b33086359;IEC 61508:2005 Table B.2;Table;
+TABLE;b086598773f84ef701d968efa9d8ffbb;IEC 61508:2005 Table B.3;Table;
+TABLE;92a89124706fc1f29aea0281e0ee9637;IEC 61508:2005 Table B.4;Table;
+TABLE;11f7b84649b8b595409bbea554183706;IEC 61508:2005 Table B.5;Table;
+TABLE;1fa902d9c4331d37557872f041df744f;IEC 61508:2005 Table B.6;Table;
+TABLE;fda948a6613731434c123f31b70d3360;IEC 61508:2005 Table B.7;Table;
+TABLE;1d483ee9da010f443ec079f016555954;IEC 61508:2005 Table B.8;Table;
+TABLE;c39f782f3574f29e52bd0c984f88837d;IEC 61508:2005 Table B.9;Table;
+TABLE;013a1c7b69040949b36a9f943c242bf0;IEC 61508:2005 Table C.1;Table;
+TABLE;80f1e7ead7ed82352d9b72d162dcad78;IEC 61508:2005 Table C.2;Table;
+TABLE;251631dde1c67c246614c37db5fee081;IEC 61508:2005 Table C.3;Table;
+TABLE;93ea7ec6b7715336f8f1640529a5d00e;IEC 61508:2005 Table C.4;Table;
+TABLE;cdfbbbef8c00d20519712cd573c753d5;IEC 61508:2005 Table C.5;Table;
+TABLE;cdc6906b98a1a176b7a57feb78357bff;IEC 61508:2005 Table C.6;Table;
+TABLE;23c1a35524c844c8d89e37395d5c1543;IEC 61508:2005 Table C.7;Table;
+TABLE;23b2acd0cb52de8886983ecdb75dc6b0;IEC 61508:2005 Table C.8;Table;
+TABLE;cf830617dc29fe8ed3290c1135bc2b3a;IEC 61508:2005 Table C.9;Table;
+TABLE;6cd0f1193a362fa59e6b5ebe3852ca68;IEC 61508:2005 Table C.10;Table;
+TABLE;a8c03f13bc9fc5c71d19bb4bce37e082;IEC 61508:2005 Table C.11;Table;
+TABLE;8d04db0207ebb2471215b60d1ed58084;IEC 61508:2005 Table C.12;Table;
+TABLE;139bc79644521b43bf1c3a3f96fac900;IEC 61508:2005 Table C.13;Table;
+TABLE;a2e7813dd49e4eade2c96fd1e74d1612;IEC 61508:2005 Table C.14;Table;
+TABLE;043495d71aa1834ac1cc37fa4d75527d;IEC 61508:2005 Table C.15;Table;
+TABLE;47f1f97d32afbb2b2bd7bb80bfa9222c;IEC 61508:2005 Table C.16;Table;
+TABLE;c91f3aa66fc21f340c3bb9e623c2c395;IEC 61508:2005 Table C.17;Table;
+TABLE;76af0db70b3958ff83dd1a777810eaa5;IEC 61508:2005 Table C.18;Table;
+TABLE;779b9bc7207877c5941f6c463afcf14a;IEC 61508:2005 Table C.19;Table;
+TABLE;536c9f76eb36e1b9a514b26d471ebc3f;IEC 61508:2005 Table E.1;Table;
+TABLE;d044206d1e378eed8ba8f1e939419e20;IEC 61508:2005 Table E.2;Table;
+TABLE;98ec950c55e03c3475666cd2ab8409d5;IEC 61508:2005 Table F.1;Introduction;
+TABLE;40c7a56ffab2181f2377d139158c69ae;IEC 61508:2005 Table F.2;Domains of behaviour;
+TABLE;1740e38288599fd75364ab8de36d4fa8;IEC 61508-3:2010 Table A.1;Table;
+TABLE;15e1eee79fb05e044e6657d653163730;IEC 61508-3:2010 Table A.2;Table;
+TABLE;a7c6ae6a2d386c07f785edde8df8a6bf;IEC 61508-3:2010 Table A.3;Table;
+TABLE;3c829c4dfe4c344cae2a20c9341b3382;IEC 61508-3:2010 Table A.4;Table;
+TABLE;b718121bf72cfc688c2ec7eec2558cdc;IEC 61508-3:2010 Table A.5;Table;
+TABLE;e6a4cdaf91228e47ad22cfe82d7360fb;IEC 61508-3:2010 Table A.6;Table;
+TABLE;35a62a681867041cf289ebd63c89f896;IEC 61508-3:2010 Table A.7;Table;
+TABLE;492875fe60af5a7aa2439167a57e0007;IEC 61508-3:2010 Table A.8;Table;
+TABLE;02369460e75af31483d0176b5d0cb00d;IEC 61508-3:2010 Table A.9;Table;
+TABLE;e9bda00bee904ecdfb9b64b1f9761a71;IEC 61508-3:2010 Table A.10;Table;
+TABLE;94d02c007eb65a079b358f2749ddadb6;IEC 61508-3:2010 Table B.1;Table;
+TABLE;3b8fc879829a3d5c5fea61d8a6b4f40b;IEC 61508-3:2010 Table B.2;Table;
+TABLE;1f1df9d47b1aa007dc099e98a1215adf;IEC 61508-3:2010 Table B.3;Table;
+TABLE;3ce68ff5f2bc8011df4f65c7ed16d51b;IEC 61508-3:2010 Table B.4;Table;
+TABLE;e0236417480e3a35b70c2629a5acba46;IEC 61508-3:2010 Table B.5;Table;
+TABLE;fcd0ff7d64704353c6a09441b374f801;IEC 61508-3:2010 Table B.6;Table;
+TABLE;6d5b6cee1a4d2a55df9cfbddef6836e9;IEC 61508-3:2010 Table B.7;Table;
+TABLE;2278ad7f62b9d30d73b6281b9a220e80;IEC 61508-3:2010 Table B.8;Table;
+TABLE;8dd72033dbb7a97451ca9630f0861deb;IEC 61508-3:2010 Table B.9;Table;
+TABLE;599cf063bb6c8444d817c4dc57237780;IEC 61508-3:2010 Table C.1;Introduction;
+TABLE;fe22d9bae4ec4ea607bfba95ef6ceb47;IEC 61508-3:2010 Table C.2;Properties for systematic safety integrity;
+TABLE;d06fd2ee3faedd91619a81c6c6b96143;IEC 61508-3:2010 Table C.3;Properties for systematic safety integrity - Detailed tables;
+TABLE;2935a8542e9ecca008d244ba00e9df41;IEC 61508-3:2010 Table C.4;Table;
+TABLE;a4485802511f7cd1a869c5eb51e06585;IEC 61508-3:2010 Table C.5;Table;
+TABLE;adfe0eff87a408c8bb60a3afdfe2d326;IEC 61508-3:2010 Table C.6;Table;
+TABLE;b4dd4c3bc1180a396f61fb66e9ae952b;IEC 61508-3:2010 Table C.7;Table;
+TABLE;cca1f8f3da727cdb7bfb238b12fec9d0;IEC 61508-3:2010 Table C.8;Table;
+TABLE;64ea63c177dd306a1357c1b99259deef;IEC 61508-3:2010 Table C.9;Table;
+TABLE;0100f517fda1ca286bc0e1cc2b5ed63e;IEC 61508-3:2010 Table C.10;Table;
+TABLE;9286460b6d1ba94df73e3c383033b34e;IEC 61508-3:2010 Table C.11;Table;
+TABLE;28a52e250af1bd3f4305d88b1bd33459;IEC 61508-3:2010 Table C.12;Table;
+TABLE;305ab3b6838b4d6288a9ed4a8160e90f;IEC 61508-3:2010 Table C.13;Table;
+TABLE;0e2ed2d7a7f141a89d082263a6d13b8b;IEC 61508-3:2010 Table C.14;Table;
+TABLE;96f399c4f32a015b7c4e70ffb961e773;IEC 61508-3:2010 Table C.15;Table;
+TABLE;2e618c1e746e10ff1fa10c8a65cba7c0;IEC 61508-3:2010 Table C.16;Table;
+TABLE;d75ff6aa80a6e4db98b2830bbce48317;IEC 61508-3:2010 Table C.17;Table;
+TABLE;516d874833cace6bfa477278ba482cca;IEC 61508-3:2010 Table C.18;Table;
+TABLE;13777d45d33fdace27d6f4ab88d2eb75;IEC 61508-3:2010 Table C.19;Table;
+TABLE;c638ebf95f9b0b663d36c5787f0b2bf1;IEC 61508-3:2010 Table E.1;Table;
+TABLE;44501f03eb4c9ce3c5824f36fa9fd54a;IEC 61508-3:2010 Table E.2;Table;
+TABLE;300e8e3b56165525ad821123bbd72f39;IEC 61508-3:2010 Table F.1;Introduction;
+TABLE;fca02ec2b4a494b88d5c917c52abecd1;IEC 61508-3:2010 Table F.2;Domains of behaviour;
