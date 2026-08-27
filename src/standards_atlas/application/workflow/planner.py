@@ -463,6 +463,7 @@ class WorkflowPlanner:
                         "--target",
                         f".atlas/work/doorstop/{hierarchy_key or family.key}/{family.key}",
                         "--no-init-git",
+                        *(("--no-validate",) if hierarchy_key else ()),
                     ),
                     ArtifactPolicy.DERIVED,
                     output_paths=(

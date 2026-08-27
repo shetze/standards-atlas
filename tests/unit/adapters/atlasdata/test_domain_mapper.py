@@ -273,3 +273,83 @@ def test_domain_mapper_reads_public_semantic_tags() -> None:
     ]
     assert [value.value for value in classification.knowledge_kinds] == ["process"]
     assert [value.value for value in classification.role_relation_types] == ["responsible_for"]
+
+
+def test_table_structure_items_are_first_class_tables_not_clauses() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(
+            name="IEC 61508",
+            digits=8,
+            official_year=2010,
+        ),
+        structure_items=[
+            StructureItem(
+                visible_reference="A",
+                item_type=AtlasItemType.MISC,
+                source_token="mA",
+            ),
+            StructureItem(
+                visible_reference="A.3",
+                item_type=AtlasItemType.TABLE,
+                source_token="b9:A.3",
+                enum_prefix="9",
+            ),
+        ],
+        initialization_records=[
+            InitializationRecord(
+                kind="TOC",
+                hash_value="annex",
+                reference="IEC 61508:2010 A",
+                content="Annex A",
+                type_marker="m",
+            ),
+            InitializationRecord(
+                kind="TABLE",
+                hash_value="table",
+                reference="IEC 61508:2010 Table A.3",
+                content="Software design and development",
+                type_marker="A",
+            ),
+        ],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="IEC61508")
+
+    assert [clause.reference.clause for clause in standard.clauses] == ["A"]
+    assert all(clause.clause_type is not ClauseType.TABLE for clause in standard.clauses)
+    assert len(standard.tables) == 1
+    table = standard.tables[0]
+    assert table.reference == "A.3"
+    assert table.title == "Software design and development"
+    assert table.parent_clause_reference == "A"
+    assert table.parent_clause_id == standard.clauses[0].id
+
+
+def test_table_structure_item_without_table_record_is_still_materialized() -> None:
+    atlas_data = AtlasStandardData(
+        metadata=AtlasMetadata(
+            name="Example",
+            digits=8,
+            official_year=2025,
+        ),
+        structure_items=[
+            StructureItem(
+                visible_reference="A",
+                item_type=AtlasItemType.MISC,
+                source_token="mA",
+            ),
+            StructureItem(
+                visible_reference="A.1",
+                item_type=AtlasItemType.TABLE,
+                source_token="b9:A.1",
+                enum_prefix="9",
+            ),
+        ],
+        initialization_records=[],
+    )
+
+    standard = map_atlas_data_to_standard(atlas_data, key="EXAMPLE")
+
+    assert [clause.reference.clause for clause in standard.clauses] == ["A"]
+    assert [table.reference for table in standard.tables] == ["A.1"]
+    assert standard.tables[0].parent_clause_reference == "A"

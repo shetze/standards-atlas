@@ -17,13 +17,20 @@ class DoorstopIdContext:
             Numeric offset added to a volume or standard part number.
 
         part_digits:
-            Number of digits reserved for the volume or part number.
+            Number of digits reserved for the primary volume or part number.
             If zero, two digits are used when a volume is present.
+
+        volume_depth:
+            Optional document-wide number of volume hierarchy components.
+            When set, every volume is encoded to exactly this depth, padding
+            missing supplement components with zeroes. This prevents a part
+            clause from colliding with a supplement clause.
     """
 
     digits: int
     part_shift: int = 0
     part_digits: int = 0
+    volume_depth: int | None = None
 
     def __post_init__(self) -> None:
         if self.digits < 1:
@@ -31,6 +38,9 @@ class DoorstopIdContext:
 
         if self.part_digits < 0:
             raise ValueError("part_digits must not be negative.")
+
+        if self.volume_depth is not None and self.volume_depth < 1:
+            raise ValueError("volume_depth must be greater than zero when configured.")
 
 
 def generate_doorstop_id(
@@ -41,50 +51,53 @@ def generate_doorstop_id(
     enum_prefix: str | None = None,
     identifier_width: int | None = None,
 ) -> str:
-    """Generate the numeric part of a Doorstop item identifier.
+    """Generate the numeric part of a Doorstop item identifier."""
+    raw_identifier = _raw_doorstop_identifier(
+        visible_reference=visible_reference,
+        context=context,
+        volume=volume,
+        enum_prefix=enum_prefix,
+        identifier_width=identifier_width,
+    )
 
-    The generated identifier contains only digits. The Doorstop document
-    prefix and separator are added by the Doorstop exporter.
+    if len(raw_identifier) > context.digits:
+        raise ValueError(
+            f"Generated Doorstop identifier {raw_identifier!r} exceeds "
+            f"configured width of {context.digits} digits."
+        )
 
-    Examples:
-        5.1.2 with digits=8:
-            05010200
+    return raw_identifier.ljust(context.digits, "0")
 
-        11.4.7.1 with volume=8 and digits=10:
-            0811040701
 
-        C.2.4.1 with enum_prefix=12 and digits=8:
-            12020401
+def required_doorstop_id_width(
+    *,
+    visible_reference: str,
+    context: DoorstopIdContext,
+    volume: str | None = None,
+    enum_prefix: str | None = None,
+    identifier_width: int | None = None,
+) -> int:
+    """Return the minimum width required for one Doorstop identifier."""
+    return len(
+        _raw_doorstop_identifier(
+            visible_reference=visible_reference,
+            context=context,
+            volume=volume,
+            enum_prefix=enum_prefix,
+            identifier_width=identifier_width,
+        )
+    )
 
-    Args:
-        visible_reference:
-            Human-readable clause reference, such as ``5.1.2`` or
-            ``C.2.4.1``.
 
-        context:
-            Document-wide identifier generation configuration.
-
-        volume:
-            Optional volume or standard part identifier. Supplement parts may
-            use the AtlasData separator ``§``, for example ``3§1``.
-
-        enum_prefix:
-            Numeric replacement for a non-numeric first reference segment,
-            typically used for annexes.
-
-        identifier_width:
-            Optional width for the final reference segment. This supports
-            AtlasData structures using the ``.+`` marker for three-digit
-            sequence numbers.
-
-    Returns:
-        A zero-padded numeric Doorstop identifier.
-
-    Raises:
-        ValueError:
-            If the reference cannot be converted into numeric segments or
-            the resulting identifier exceeds the configured width.
-    """
+def _raw_doorstop_identifier(
+    *,
+    visible_reference: str,
+    context: DoorstopIdContext,
+    volume: str | None,
+    enum_prefix: str | None,
+    identifier_width: int | None,
+) -> str:
+    """Build an unpadded numeric Doorstop identifier."""
     if not visible_reference or not visible_reference.strip():
         raise ValueError("visible_reference must not be empty.")
 
@@ -95,38 +108,17 @@ def generate_doorstop_id(
         visible_reference=visible_reference.strip(),
         enum_prefix=enum_prefix,
     )
-
     numeric_parts: list[str] = []
 
     if volume is not None:
-        numeric_parts.append(
-            _format_volume(
-                volume=volume,
-                context=context,
-            )
-        )
+        numeric_parts.append(_format_volume(volume=volume, context=context))
 
     for index, segment in enumerate(segments):
         is_last_segment = index == len(segments) - 1
-
         width = identifier_width if is_last_segment and identifier_width is not None else 2
+        numeric_parts.append(_format_numeric_segment(segment=segment, width=width))
 
-        numeric_parts.append(
-            _format_numeric_segment(
-                segment=segment,
-                width=width,
-            )
-        )
-
-    raw_identifier = "".join(numeric_parts)
-
-    if len(raw_identifier) > context.digits:
-        raise ValueError(
-            f"Generated Doorstop identifier {raw_identifier!r} exceeds "
-            f"configured width of {context.digits} digits."
-        )
-
-    return raw_identifier.ljust(context.digits, "0")
+    return "".join(numeric_parts)
 
 
 def _reference_segments(
@@ -263,7 +255,7 @@ def _format_volume(
         shift=context.part_shift,
         label="Volume",
     )
-    supplements = tuple(
+    supplements = [
         _format_volume_component(
             component=component,
             width=2,
@@ -271,7 +263,15 @@ def _format_volume(
             label="Supplement",
         )
         for component in components[1:]
-    )
+    ]
+
+    if context.volume_depth is not None:
+        if len(components) > context.volume_depth:
+            raise ValueError(
+                f"Volume hierarchy {volume!r} exceeds configured depth of {context.volume_depth}."
+            )
+        supplements.extend("00" for _ in range(context.volume_depth - len(components)))
+
     return "".join((primary, *supplements))
 
 

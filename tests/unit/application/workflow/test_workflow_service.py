@@ -715,6 +715,7 @@ def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> N
         step.output_paths[0].startswith(".atlas/work/doorstop/functional-safety/")
         for step in doorstop_steps
     )
+    assert all("--no-validate" in step.command for step in doorstop_steps)
     markdown_steps = [step for step in plan.steps if step.stage == WorkflowStage.MARKDOWN]
     assert markdown_steps
     assert all(

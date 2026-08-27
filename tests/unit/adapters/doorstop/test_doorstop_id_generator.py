@@ -226,3 +226,43 @@ def test_explicit_enum_prefix_overrides_annex_level_mapping() -> None:
         )
         == "20.1"
     )
+
+
+def test_fixed_volume_depth_pads_primary_part_namespace() -> None:
+    context = DoorstopIdContext(digits=12, volume_depth=2)
+
+    primary_id = generate_doorstop_id(
+        visible_reference="1",
+        volume="3",
+        context=context,
+    )
+    supplement_id = generate_doorstop_id(
+        visible_reference="0",
+        volume="3§1",
+        context=context,
+    )
+
+    assert primary_id == "030001000000"
+    assert supplement_id == "030100000000"
+    assert primary_id != supplement_id
+
+
+def test_reject_volume_deeper_than_reserved_namespace() -> None:
+    with raises(ValueError, match="exceeds configured depth"):
+        generate_doorstop_id(
+            visible_reference="1",
+            volume="3§1§2",
+            context=DoorstopIdContext(digits=14, volume_depth=2),
+        )
+
+
+def test_required_width_includes_reserved_volume_hierarchy() -> None:
+    from standards_atlas.adapters.doorstop.id_generator import required_doorstop_id_width
+
+    width = required_doorstop_id_width(
+        visible_reference="7.4.4.1.1",
+        volume="2",
+        context=DoorstopIdContext(digits=12, volume_depth=2),
+    )
+
+    assert width == 14

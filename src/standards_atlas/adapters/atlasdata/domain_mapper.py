@@ -6,7 +6,11 @@ import hashlib
 import re
 from pathlib import Path
 
-from standards_atlas.adapters.atlasdata.parser import AtlasStandardData, parse_standard_file
+from standards_atlas.adapters.atlasdata.parser import (
+    AtlasStandardData,
+    InitializationRecord,
+    parse_standard_file,
+)
 from standards_atlas.adapters.atlasdata.structure_expander import StructureItem
 from standards_atlas.adapters.atlasdata.structure_types import AtlasItemType
 from standards_atlas.domain.model import (
@@ -76,6 +80,7 @@ def map_atlas_data_to_standard(
             ),
         )
         for item in atlas_data.structure_items
+        if item.item_type is not AtlasItemType.TABLE
     )
 
     clauses = _materialize_parent_hierarchy(clauses)
@@ -483,19 +488,67 @@ def _map_table_records(
     declared: dict[tuple[str | None, str], DocumentTable] = {}
     listed: dict[tuple[str | None, str], str | None] = {}
 
+    table_records: dict[tuple[str | None, str], InitializationRecord] = {}
     for record in atlas_data.initialization_records:
         if record.kind not in {"TABLE", "TABLEINDEX"}:
             continue
         identity = _extract_table_identity(record.reference, atlas_data.metadata.name)
         if identity is None:
             continue
-        volume, table_reference = identity
-        key = (volume, table_reference)
         if record.kind == "TABLEINDEX":
-            listed[key] = record.content.strip() or None
+            listed[identity] = record.content.strip() or None
+        else:
+            table_records[identity] = record
+
+    for item in atlas_data.structure_items:
+        if item.item_type is not AtlasItemType.TABLE:
             continue
+        key = (item.volume, item.visible_reference)
+        record = table_records.pop(key, None)
+        title = record.content.strip() or None if record is not None else None
+        parent_reference = record.type_marker.strip() or None if record is not None else None
+        if parent_reference is None:
+            parent_reference = _nearest_parent_clause_reference(
+                volume=item.volume,
+                reference=item.visible_reference,
+                clauses_by_reference=clauses_by_reference,
+            )
+        parent = (
+            clauses_by_reference.get((item.volume, parent_reference))
+            if parent_reference is not None
+            else None
+        )
+        declared[key] = DocumentTable(
+            id=_build_table_id(
+                standard_name=atlas_data.metadata.name,
+                year=item.publication_year or atlas_data.metadata.official_year,
+                volume=item.volume,
+                table_reference=item.visible_reference,
+            ),
+            reference=item.visible_reference,
+            title=title,
+            parent_clause_id=parent.id if parent is not None else None,
+            parent_clause_reference=parent_reference,
+            sequence_index=len(declared),
+            listed_in_table_index=key in listed,
+        )
+
+    # Preserve explicit TABLE records even when a hand-maintained file does not
+    # yet declare the table through a ``b`` structure token.
+    for key, record in table_records.items():
+        volume, table_reference = key
         parent_reference = record.type_marker.strip() or None
-        parent = clauses_by_reference.get((volume, parent_reference)) if parent_reference else None
+        if parent_reference is None:
+            parent_reference = _nearest_parent_clause_reference(
+                volume=volume,
+                reference=table_reference,
+                clauses_by_reference=clauses_by_reference,
+            )
+        parent = (
+            clauses_by_reference.get((volume, parent_reference))
+            if parent_reference is not None
+            else None
+        )
         declared[key] = DocumentTable(
             id=_build_table_id(
                 standard_name=atlas_data.metadata.name,
@@ -511,12 +564,8 @@ def _map_table_records(
             listed_in_table_index=key in listed,
         )
 
-    # TABLEINDEX may precede TABLE in hand-maintained AtlasData.
-    tables = tuple(
-        table.model_copy(update={"listed_in_table_index": key in listed})
-        for key, table in declared.items()
-    )
-    table_by_key = {key: table for key, table in zip(declared, tables, strict=True)}
+    tables = tuple(declared.values())
+    table_by_key = dict(zip(declared, tables, strict=True))
     index_entries = tuple(
         TableIndexEntry(
             reference=reference,
@@ -527,6 +576,20 @@ def _map_table_records(
         for _, reference in (key,)
     )
     return tables, index_entries
+
+
+def _nearest_parent_clause_reference(
+    *,
+    volume: str | None,
+    reference: str,
+    clauses_by_reference: dict[tuple[str | None, str], Clause],
+) -> str | None:
+    candidate = reference
+    while "." in candidate:
+        candidate = candidate.rsplit(".", 1)[0]
+        if (volume, candidate) in clauses_by_reference:
+            return candidate
+    return "0" if (volume, "0") in clauses_by_reference else None
 
 
 def _extract_table_identity(reference: str, standard_name: str) -> tuple[str | None, str] | None:

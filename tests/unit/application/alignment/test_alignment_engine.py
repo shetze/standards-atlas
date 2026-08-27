@@ -336,3 +336,33 @@ def test_derived_standard_ignores_legacy_clause_zero_anchor():
     assert [clause.expected_reference for clause in result.clauses] == ["1", "2"]
     assert result.metadata.statistics.expected_clauses == 2
     assert result.metadata.statistics.missing == 0
+
+
+def test_table_clauses_are_not_alignment_expectations() -> None:
+    normal_clause = Clause(
+        id=ClauseId(value="SAMPLE-1"),
+        reference=StandardReference(standard="SAMPLE", clause="1"),
+        clause_type=ClauseType.CLAUSE,
+        title="Scope",
+    )
+    legacy_table_clause = Clause(
+        id=ClauseId(value="SAMPLE-A.1-table"),
+        reference=StandardReference(standard="SAMPLE", clause="A.1"),
+        clause_type=ClauseType.TABLE,
+        title="Example table",
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="SAMPLE"),
+        title="Sample",
+        document_type=DocumentType.STANDARD,
+        clauses=(normal_clause, legacy_table_clause),
+    )
+
+    result = AlignmentEngine().align(
+        normalized(heading(0, "1 Scope")),
+        candidates(candidate("1", 0)),
+        document,
+    )
+
+    assert [entry.clause_id.value for entry in result.clauses] == ["SAMPLE-1"]
+    assert result.metadata.statistics.missing == 0

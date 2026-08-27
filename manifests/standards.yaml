@@ -73,7 +73,7 @@ families:
     doorstop:
       enabled: true
       identifier:
-        width: 12
+        width: 14
   parts:
   - part: '0'
     key: IEC61508-0

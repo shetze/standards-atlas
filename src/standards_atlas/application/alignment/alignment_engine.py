@@ -34,7 +34,7 @@ from standards_atlas.application.model.normalized_document import NormalizedExtr
 from standards_atlas.application.model.reference_candidates import (
     ReferenceCandidateDocument,
 )
-from standards_atlas.domain.model import Clause, EngineeringDocument
+from standards_atlas.domain.model import Clause, ClauseType, EngineeringDocument
 
 
 @dataclass(frozen=True)
@@ -57,7 +57,8 @@ class AlignmentEngine:
         alignable_clauses = tuple(
             clause
             for clause in engineering.clauses
-            if not is_legacy_part_anchor(clause, engineering)
+            if clause.clause_type is not ClauseType.TABLE
+            and not is_legacy_part_anchor(clause, engineering)
         )
         ordered_clauses = sorted(
             alignable_clauses,

@@ -52,23 +52,65 @@ def publish_doorstop_hierarchy(
         choices = ", ".join(AVAILABLE_DOORSTOP_TEMPLATES)
         typer.echo(f"Unknown Doorstop template {template!r}; choose one of: {choices}", err=True)
         raise typer.Exit(code=2)
-    if target.exists():
-        if not replace_existing:
-            typer.echo(f"Published output already exists: {target}", err=True)
-            raise typer.Exit(code=2)
-        shutil.rmtree(target)
-    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists() and not replace_existing:
+        typer.echo(f"Published output already exists: {target}", err=True)
+        raise typer.Exit(code=2)
     try:
+        _ensure_doorstop_hierarchy_repository(source)
+        _validate_doorstop_hierarchy(source, hierarchy_key)
+        if target.exists():
+            shutil.rmtree(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
         installed_template = DoorstopTemplateInstaller().install(source, template)
         subprocess.run(
             ("doorstop", "publish", "--template", "doorstop", "all", str(target.resolve())),
             cwd=source,
             check=True,
         )
-    except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+    except (OSError, ValueError, subprocess.CalledProcessError, RuntimeError) as exc:
         typer.echo(f"Doorstop publish failed: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(f"Doorstop hierarchy     : {hierarchy_key}")
     typer.echo(f"Published output      : {target}")
     typer.echo(f"Template              : {template}")
     typer.echo(f"Installed template    : {installed_template}")
+
+
+def _ensure_doorstop_hierarchy_repository(source: Path) -> None:
+    """Ensure the shared Doorstop hierarchy root is a Git working copy."""
+    if (source / ".git").exists():
+        return
+
+    result = subprocess.run(
+        ("git", "init", "--quiet", "."),
+        cwd=source,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        return
+
+    output = "\n".join(part.strip() for part in (result.stdout, result.stderr) if part.strip())
+    message = "Could not initialize Git repository for Doorstop hierarchy"
+    if output:
+        message = f"{message}\n{output}"
+    raise RuntimeError(message)
+
+
+def _validate_doorstop_hierarchy(source: Path, hierarchy_key: str) -> None:
+    result = subprocess.run(
+        ("doorstop",),
+        cwd=source,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        return
+
+    output = "\n".join(part.strip() for part in (result.stdout, result.stderr) if part.strip())
+    message = f"Doorstop hierarchy validation failed: {hierarchy_key}"
+    if output:
+        message = f"{message}\n{output}"
+    raise RuntimeError(message)
