@@ -196,3 +196,44 @@ def test_entity_identity_is_stable_across_label_formatting() -> None:
     )
 
     assert first.entities[0].id == second.entities[0].id
+
+
+def test_semantic_prompt_omits_table_payload_and_keeps_part_reference() -> None:
+    import json
+
+    from standards_atlas.domain.model import TableBlock, TableCell, TableRow, TextBlock
+
+    gateway = _Gateway()
+    clause = Clause(
+        id=ClauseId(value="clause-table"),
+        reference=StandardReference(standard="EN 50126", year=2017, clause="6.2"),
+        clause_type=ClauseType.CLAUSE,
+        content=(
+            TextBlock(id="text-1", text="Life-cycle requirements."),
+            TableBlock(
+                id="table-1",
+                caption="Life-cycle phases",
+                rows=(TableRow(cells=(TableCell(text="very large table payload"),)),),
+            ),
+        ),
+    )
+
+    result = OntologyGuidedLlmExtractor(gateway).extract(
+        clause,
+        document_key="EN50126-1",
+        ontology_versions=(
+            "standards-atlas-core@1.1.0",
+            "functional-safety@1.1.0",
+        ),
+    )
+
+    payload = json.loads(gateway.request.user_prompt)
+    assert payload["clause_reference"] == "EN 50126-1:2017 6.2"
+    assert "very large table payload" not in payload["clause_text"]
+    assert "[Table omitted: Life-cycle phases]" in payload["clause_text"]
+    assert result.clause_reference == "EN 50126-1:2017 6.2"
+    assert result.provenance.omitted_table_block_count == 1
+    assert result.provenance.omitted_table_character_count > 0
+    assert (
+        result.provenance.semantic_input_character_count < result.provenance.source_character_count
+    )

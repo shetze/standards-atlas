@@ -364,5 +364,5 @@ def test_table_clauses_are_not_alignment_expectations() -> None:
         document,
     )
 
-    assert [entry.clause_id.value for entry in result.clauses] == ["SAMPLE-1"]
+    assert [entry.clause_id for entry in result.clauses] == ["SAMPLE-1"]
     assert result.metadata.statistics.missing == 0

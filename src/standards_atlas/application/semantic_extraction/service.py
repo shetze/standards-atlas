@@ -18,10 +18,13 @@ from standards_atlas.domain.model import (
     Clause,
     DocumentSemanticExtraction,
     EngineeringDocument,
+    ExtractionAttempt,
     ExtractionFailure,
     KnowledgeKind,
     ProcessFunction,
 )
+
+from .references import display_clause_reference
 
 
 @dataclass(frozen=True)
@@ -124,6 +127,7 @@ class SemanticExtractionService:
     ) -> DocumentSemanticExtraction:
         clauses = []
         failures: list[ExtractionFailure] = []
+        attempts: list[ExtractionAttempt] = []
         for clause in document.clauses:
             clause_id = clause.id.value
             if clause_ids is not None and clause_id not in clause_ids:
@@ -136,12 +140,13 @@ class SemanticExtractionService:
             if not extraction_eligibility(clause, context=context).eligible:
                 continue
             effective_clause = _clause_with_context(clause, context)
+            clause_reference = display_clause_reference(document.key.value, clause.reference)
             if progress is not None:
                 progress(
                     ExtractionProgress(
                         document_key=document.key.value,
                         clause_id=clause_id,
-                        clause_reference=clause.reference.as_text(),
+                        clause_reference=clause_reference,
                         clause_title=clause.title,
                         phase="started",
                     )
@@ -163,10 +168,19 @@ class SemanticExtractionService:
                     kind = "unavailable"
                 else:
                     kind = "response_error"
+                attempts.append(
+                    ExtractionAttempt(
+                        clause_id=clause_id,
+                        status=kind,
+                        duration_seconds=duration,
+                        error_type=type(error).__name__,
+                        message=str(error),
+                    )
+                )
                 failures.append(
                     ExtractionFailure(
                         clause_id=clause_id,
-                        clause_reference=clause.reference.as_text(),
+                        clause_reference=clause_reference,
                         clause_title=clause.title,
                         kind=kind,
                         error_type=type(error).__name__,
@@ -178,7 +192,7 @@ class SemanticExtractionService:
                         ExtractionProgress(
                             document_key=document.key.value,
                             clause_id=clause_id,
-                            clause_reference=clause.reference.as_text(),
+                            clause_reference=clause_reference,
                             clause_title=clause.title,
                             phase="finished",
                             status=kind,
@@ -187,17 +201,25 @@ class SemanticExtractionService:
                         )
                     )
                 continue
+            duration = time.monotonic() - started
+            attempts.append(
+                ExtractionAttempt(
+                    clause_id=clause_id,
+                    status="ok",
+                    duration_seconds=duration,
+                )
+            )
             clauses.append(extracted)
             if progress is not None:
                 progress(
                     ExtractionProgress(
                         document_key=document.key.value,
                         clause_id=clause_id,
-                        clause_reference=clause.reference.as_text(),
+                        clause_reference=clause_reference,
                         clause_title=clause.title,
                         phase="finished",
                         status="ok",
-                        duration_seconds=time.monotonic() - started,
+                        duration_seconds=duration,
                         entity_count=len(extracted.entities),
                         relation_count=len(extracted.relations),
                     )
@@ -206,6 +228,7 @@ class SemanticExtractionService:
             source_document_key=document.key.value,
             clauses=tuple(clauses),
             failures=tuple(failures),
+            attempts=tuple(attempts),
         )
 
 

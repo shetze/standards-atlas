@@ -331,3 +331,46 @@ def test_semantic_extraction_merge_replaces_success_with_latest_success() -> Non
 
     assert merged.clauses[0].provenance.extractor_version == "2.0.0"
     assert merged.failures == ()
+
+
+def test_semantic_extraction_merge_preserves_transient_timeout_attempt() -> None:
+    from standards_atlas.application.semantic_qualification import (
+        merge_document_semantic_extractions,
+    )
+    from standards_atlas.domain.model import ExtractionAttempt
+
+    existing = DocumentSemanticExtraction(
+        source_document_key="doc",
+        failures=(_failure("c1", "timeout"),),
+        attempts=(
+            ExtractionAttempt(
+                clause_id="c1",
+                status="timeout",
+                duration_seconds=240.0,
+                error_type="LlmTimeoutError",
+                message="timeout",
+            ),
+        ),
+    )
+    generated = DocumentSemanticExtraction(
+        source_document_key="doc",
+        clauses=(_clause_extraction("c1"),),
+        attempts=(ExtractionAttempt(clause_id="c1", status="ok", duration_seconds=12.0),),
+    )
+
+    merged = merge_document_semantic_extractions(existing, generated)
+    report = qualify_semantic_extractions(
+        (merged,),
+        SemanticExtractionQualificationConfig(
+            ontology_versions=("standards-atlas-core@1.1.0",),
+        ),
+        selected_clause_count=1,
+        eligibility_context_clause_count=1,
+        eligible_clause_count=1,
+    )
+
+    assert merged.failures == ()
+    assert [attempt.status for attempt in merged.attempts] == ["timeout", "ok"]
+    assert report.timeout_count == 0
+    assert report.timeout_attempt_count == 1
+    assert report.extraction_attempt_count == 2

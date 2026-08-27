@@ -20,6 +20,9 @@ from standards_atlas.application.semantic_qualification.diagnostics import (
     build_qualification_diagnostics,
     render_qualification_diagnostics_markdown,
 )
+from standards_atlas.application.semantic_qualification.qualification_coverage import (
+    QualificationCoverage,
+)
 from standards_atlas.shared.hashing import sha256_file
 
 ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.2"
@@ -59,6 +62,7 @@ def build_analysis_metrics(
     *,
     report: ConsensusReport,
     cascade_stages: list[dict[str, Any]],
+    coverage: QualificationCoverage | None = None,
 ) -> dict[str, Any]:
     """Build stable aggregate metrics used for qualification-result analysis."""
     review_reasons = Counter(
@@ -78,6 +82,18 @@ def build_analysis_metrics(
         "standards_atlas_version": __version__,
         "generated_at": datetime.now(UTC).isoformat(),
         "clause_count": report.clause_count,
+        "selected_clause_count": (
+            coverage.selected_clause_count if coverage is not None else report.clause_count
+        ),
+        "qualified_clause_count": (
+            coverage.qualified_clause_count if coverage is not None else report.clause_count
+        ),
+        "unqualified_clause_count": (
+            coverage.unqualified_clause_count if coverage is not None else 0
+        ),
+        "accounted_clause_count": (
+            coverage.accounted_clause_count if coverage is not None else report.clause_count
+        ),
         "review_count": report.review_count,
         "categories": report.categories,
         "dimension_categories": report.dimension_categories,

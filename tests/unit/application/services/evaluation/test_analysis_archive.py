@@ -351,3 +351,64 @@ def test_analysis_archive_embeds_semantic_extraction_qualification_metadata(tmp_
     with zipfile.ZipFile(archive) as payload:
         metadata = json.loads(payload.read("qualification-run-metadata.json"))
         assert metadata["semantic_extraction_qualification"] == semantic
+
+
+def test_analysis_metrics_report_selection_coverage_counts() -> None:
+    from standards_atlas.application.semantic_qualification.qualification_coverage import (
+        QualificationCoverage,
+        QualificationCoverageClause,
+    )
+
+    clause = ClauseConsensus(
+        clause_id="one",
+        document_key="DOC",
+        category=ConsensusCategory.UNANIMOUS,
+        overall_status=OverallConsensusStatus.RESOLVED,
+        confidence=1.0,
+        participating_models=3,
+        requires_review=False,
+    )
+    report = ConsensusReport(
+        matrix_id="matrix-v1",
+        corpus_id="corpus-v1",
+        prompt_id="content-only",
+        reasoning_mode_id="disabled",
+        generated_at=datetime.now(UTC),
+        model_count=3,
+        clause_count=1,
+        categories={"unanimous": 1},
+        review_count=0,
+        clauses=(clause,),
+    )
+    coverage = QualificationCoverage(
+        selected_clause_count=2,
+        qualified_clause_count=1,
+        unqualified_clause_count=1,
+        accounted_clause_count=2,
+        clauses=(
+            QualificationCoverageClause(
+                example_id="example-one",
+                document_key="DOC",
+                clause_id="one",
+                status="qualified",
+            ),
+            QualificationCoverageClause(
+                example_id="example-two",
+                document_key="DOC",
+                clause_id="two",
+                status="unqualified",
+                reason="no_consensus_result",
+            ),
+        ),
+    )
+
+    metrics = build_analysis_metrics(
+        report=report,
+        cascade_stages=[],
+        coverage=coverage,
+    )
+
+    assert metrics["selected_clause_count"] == 2
+    assert metrics["qualified_clause_count"] == 1
+    assert metrics["unqualified_clause_count"] == 1
+    assert metrics["accounted_clause_count"] == 2

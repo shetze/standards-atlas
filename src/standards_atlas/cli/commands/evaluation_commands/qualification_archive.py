@@ -17,6 +17,10 @@ from standards_atlas.application.semantic_qualification.analysis_archive import 
     collect_qualification_input_members,
     create_analysis_archive,
 )
+from standards_atlas.application.semantic_qualification.qualification_coverage import (
+    QUALIFICATION_COVERAGE_FILENAME,
+    load_qualification_coverage,
+)
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
 )
@@ -84,12 +88,54 @@ def finalize_qualification_archive(
             f"--limit {limit} does not match persisted qualification selection "
             f"({run_selection.requested_limit})"
         )
-    qualified_clause_count = analysis_metrics.get("clause_count")
-    if qualified_clause_count != run_selection.selected_clause_count:
+    coverage_path = run_directory / QUALIFICATION_COVERAGE_FILENAME
+    if not coverage_path.is_file():
+        raise typer.BadParameter(f"qualification coverage not found: {coverage_path}")
+    coverage = load_qualification_coverage(coverage_path)
+    selected_coordinates = {(item.document_key, item.clause_id) for item in run_selection.clauses}
+    coverage_coordinates = {(item.document_key, item.clause_id) for item in coverage.clauses}
+    if coverage_coordinates != selected_coordinates:
+        missing = selected_coordinates - coverage_coordinates
+        unexpected = coverage_coordinates - selected_coordinates
+        details: list[str] = []
+        if missing:
+            details.append(f"missing={len(missing)}")
+        if unexpected:
+            details.append(f"unexpected={len(unexpected)}")
         raise typer.BadParameter(
-            "qualification result does not cover the persisted run selection: "
-            f"{qualified_clause_count} qualified vs "
-            f"{run_selection.selected_clause_count} selected clauses"
+            "qualification coverage does not match the persisted run selection"
+            + (f" ({', '.join(details)})" if details else "")
+        )
+    qualified_coordinates = {
+        (item.document_key, item.clause_id)
+        for item in coverage.clauses
+        if item.status == "qualified"
+    }
+    unqualified_coordinates = {
+        (item.document_key, item.clause_id)
+        for item in coverage.clauses
+        if item.status == "unqualified"
+    }
+    if qualified_coordinates & unqualified_coordinates:
+        raise typer.BadParameter(
+            "qualification coverage contains clauses with conflicting qualification status"
+        )
+    if qualified_coordinates | unqualified_coordinates != selected_coordinates:
+        raise typer.BadParameter(
+            "qualification coverage does not account for the persisted run selection"
+        )
+    qualified_clause_count = analysis_metrics.get(
+        "qualified_clause_count", analysis_metrics.get("clause_count")
+    )
+    if qualified_clause_count != coverage.qualified_clause_count:
+        raise typer.BadParameter(
+            "qualification metrics disagree with persisted qualification coverage: "
+            f"{qualified_clause_count} vs {coverage.qualified_clause_count} qualified clauses"
+        )
+    if coverage.accounted_clause_count != run_selection.selected_clause_count:
+        raise typer.BadParameter(
+            "qualification coverage does not account for the persisted run selection: "
+            f"{coverage.accounted_clause_count}/{run_selection.selected_clause_count} clauses"
         )
     matrix_report_path = run_directory / "qualification-matrix.json"
     matrix_passed = None

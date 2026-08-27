@@ -40,6 +40,11 @@ from standards_atlas.application.semantic_qualification.proposals import (
     historical_inference_duration,
     proposal_run_directory,
 )
+from standards_atlas.application.semantic_qualification.qualification_coverage import (
+    QUALIFICATION_COVERAGE_FILENAME,
+    build_qualification_coverage,
+    persist_qualification_coverage,
+)
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     MatrixObservation,
     QualificationMatrixManifest,
@@ -52,6 +57,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
 from standards_atlas.application.semantic_qualification.run_selection import (
     QUALIFICATION_SELECTION_FILENAME,
     build_qualification_run_selection,
+    load_qualification_run_selection,
     persist_qualification_run_selection,
 )
 from standards_atlas.application.services.evaluation import (
@@ -411,6 +417,17 @@ def qualify_model_prompt_matrix(
                 corpus_id=manifest.corpus_id,
                 overwrite=review_import.overwrite,
             )
+        if aggregate_only:
+            selection_path = (
+                output_directory / manifest.matrix_id / QUALIFICATION_SELECTION_FILENAME
+            )
+            if not selection_path.is_file():
+                raise ValueError(
+                    "--aggregate-only requires a persisted qualification selection: "
+                    f"{selection_path}"
+                )
+            run_selection = load_qualification_run_selection(selection_path)
+
         if not aggregate_only:
             observation_map = (
                 {}
@@ -939,9 +956,18 @@ def qualify_model_prompt_matrix(
                     execution_policy=execution_policy,
                     stages=cascade_stage_metrics,
                 )
+            coverage = build_qualification_coverage(
+                selection=run_selection,
+                report=consensus_report,
+            )
+            coverage_path = persist_qualification_coverage(
+                coverage,
+                output_directory / manifest.matrix_id / QUALIFICATION_COVERAGE_FILENAME,
+            )
             analysis_metrics = build_analysis_metrics(
                 report=consensus_report,
                 cascade_stages=cascade_stage_metrics,
+                coverage=coverage,
             )
             analysis_metrics_path = write_analysis_metrics(
                 output_directory=output_directory,
@@ -985,6 +1011,7 @@ def qualify_model_prompt_matrix(
                         review_markdown,
                         provenance_path,
                         analysis_metrics_path,
+                        coverage_path,
                         diagnostics_path,
                         *challenger_paths,
                         *((challenger_sample_path,) if challenger_sample_path is not None else ()),

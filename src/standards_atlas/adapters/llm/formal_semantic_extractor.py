@@ -8,7 +8,11 @@ import re
 import unicodedata
 
 from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
-from standards_atlas.application.semantic_extraction import FormalOntologyVocabulary
+from standards_atlas.application.semantic_extraction import (
+    FormalOntologyVocabulary,
+    display_clause_reference,
+    project_clause_content,
+)
 from standards_atlas.domain.model import (
     Clause,
     ClauseSemanticExtraction,
@@ -88,6 +92,8 @@ class OntologyGuidedLlmExtractor:
     ) -> ClauseSemanticExtraction:
         vocabulary = FormalOntologyVocabulary.load(ontology_versions)
         context = clause.semantic_classification.model_dump(mode="json")
+        projection = project_clause_content(clause.content)
+        clause_reference = display_clause_reference(document_key, clause.reference)
         request = StructuredGenerationRequest(
             task="formal-semantic-knowledge-extraction",
             prompt_version=self._prompt_version,
@@ -118,10 +124,10 @@ class OntologyGuidedLlmExtractor:
             user_prompt=json.dumps(
                 {
                     "document_key": document_key,
-                    "clause_reference": clause.reference.as_text(),
+                    "clause_reference": clause_reference,
                     "clause_title": clause.title,
                     "clause_id": clause.id.value,
-                    "clause_text": clause.plain_text,
+                    "clause_text": projection.text,
                     "semantic_context": context,
                     "allowed_classes": sorted(vocabulary.classes),
                     "allowed_properties": sorted(vocabulary.properties),
@@ -219,7 +225,7 @@ class OntologyGuidedLlmExtractor:
             relations.append(relation)
         return ClauseSemanticExtraction(
             clause_id=clause.id.value,
-            clause_reference=clause.reference.as_text(),
+            clause_reference=clause_reference,
             clause_title=clause.title,
             ontology_versions=ontology_versions,
             entities=tuple(entities),
@@ -233,6 +239,10 @@ class OntologyGuidedLlmExtractor:
                 prompt_version=result.prompt_version,
                 input_hash=result.input_hash,
                 raw_response_hash=result.raw_response_hash,
+                source_character_count=projection.source_character_count,
+                semantic_input_character_count=projection.semantic_input_character_count,
+                omitted_table_block_count=projection.omitted_table_block_count,
+                omitted_table_character_count=projection.omitted_table_character_count,
             ),
         )
 

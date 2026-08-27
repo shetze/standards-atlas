@@ -30,6 +30,10 @@ class ExtractionProvenance(BaseModel):
     prompt_version: str | None = None
     input_hash: str | None = None
     raw_response_hash: str | None = None
+    source_character_count: int | None = Field(default=None, ge=0)
+    semantic_input_character_count: int | None = Field(default=None, ge=0)
+    omitted_table_block_count: int = Field(default=0, ge=0)
+    omitted_table_character_count: int = Field(default=0, ge=0)
 
 
 class ExtractedEntity(BaseModel):
@@ -126,6 +130,18 @@ class ExtractionFailure(BaseModel):
     message: str = Field(min_length=1)
 
 
+class ExtractionAttempt(BaseModel):
+    """One persisted extraction attempt, including transient failures."""
+
+    model_config = ConfigDict(frozen=True)
+
+    clause_id: str = Field(min_length=1)
+    status: Literal["ok", "timeout", "response_error", "unavailable"]
+    duration_seconds: float = Field(ge=0.0)
+    error_type: str | None = None
+    message: str | None = None
+
+
 class DocumentSemanticExtraction(BaseModel):
     """Rebuildable extraction artifact kept separate from EngineeringDocument."""
 
@@ -136,6 +152,7 @@ class DocumentSemanticExtraction(BaseModel):
     extraction_version: str = Field(default="1.0.0", min_length=1)
     clauses: tuple[ClauseSemanticExtraction, ...] = ()
     failures: tuple[ExtractionFailure, ...] = ()
+    attempts: tuple[ExtractionAttempt, ...] = ()
 
     @model_validator(mode="after")
     def clause_ids_are_unique(self) -> DocumentSemanticExtraction:

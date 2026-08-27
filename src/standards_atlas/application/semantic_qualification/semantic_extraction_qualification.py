@@ -70,6 +70,12 @@ class SemanticExtractionQualificationReport(BaseModel):
     invalid_relation_count: int = Field(default=0, ge=0)
     ontology_violations: tuple[OntologyViolationSummary, ...] = ()
     extraction_failure_count: int = Field(default=0, ge=0)
+    extraction_attempt_count: int = Field(default=0, ge=0)
+    timeout_attempt_count: int = Field(default=0, ge=0)
+    source_character_count: int = Field(default=0, ge=0)
+    semantic_input_character_count: int = Field(default=0, ge=0)
+    omitted_table_block_count: int = Field(default=0, ge=0)
+    omitted_table_character_count: int = Field(default=0, ge=0)
     timeout_count: int = Field(default=0, ge=0)
     response_error_count: int = Field(default=0, ge=0)
     unavailable_count: int = Field(default=0, ge=0)
@@ -126,11 +132,15 @@ def merge_document_semantic_extractions(
     for clause_id in clauses:
         failures.pop(clause_id, None)
 
+    attempts = tuple(existing.attempts) if existing is not None else ()
+    attempts += tuple(generated.attempts)
+
     return DocumentSemanticExtraction(
         source_document_key=generated.source_document_key,
         extraction_version=generated.extraction_version,
         clauses=tuple(clauses[key] for key in sorted(clauses)),
         failures=tuple(failures[key] for key in sorted(failures)),
+        attempts=attempts,
     )
 
 
@@ -252,6 +262,8 @@ def qualify_semantic_extractions(
     undeclared_property_count = sum(
         item.count for item in violation_summaries if item.kind == "undeclared_property"
     )
+    attempts = [attempt for document in extractions for attempt in document.attempts]
+    provenances = [clause.provenance for document in extractions for clause in document.clauses]
 
     return SemanticExtractionQualificationReport(
         ontology_versions=config.ontology_versions,
@@ -275,6 +287,20 @@ def qualify_semantic_extractions(
         invalid_relation_count=invalid_relation_count,
         ontology_violations=violation_summaries,
         extraction_failure_count=failed_clause_count,
+        extraction_attempt_count=len(attempts),
+        timeout_attempt_count=sum(attempt.status == "timeout" for attempt in attempts),
+        source_character_count=sum(
+            provenance.source_character_count or 0 for provenance in provenances
+        ),
+        semantic_input_character_count=sum(
+            provenance.semantic_input_character_count or 0 for provenance in provenances
+        ),
+        omitted_table_block_count=sum(
+            provenance.omitted_table_block_count for provenance in provenances
+        ),
+        omitted_table_character_count=sum(
+            provenance.omitted_table_character_count for provenance in provenances
+        ),
         timeout_count=sum(item["kind"] == "timeout" for item in extraction_failures),
         response_error_count=sum(item["kind"] == "response_error" for item in extraction_failures),
         unavailable_count=sum(item["kind"] == "unavailable" for item in extraction_failures),

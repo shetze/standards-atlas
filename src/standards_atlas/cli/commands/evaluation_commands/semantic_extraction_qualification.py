@@ -293,6 +293,10 @@ def qualify_semantic_extraction(
     typer.echo(f"Ontology violations      : {report.ontology_violation_count}")
     typer.echo(f"Extraction failures      : {report.extraction_failure_count}")
     typer.echo(f"Timeouts                 : {report.timeout_count}")
+    typer.echo(f"Timeout attempts         : {report.timeout_attempt_count}")
+    typer.echo(f"Extraction attempts      : {report.extraction_attempt_count}")
+    typer.echo(f"Tables omitted           : {report.omitted_table_block_count}")
+    typer.echo(f"Table characters omitted: {report.omitted_table_character_count}")
     for failure in report.extraction_failures:
         human_reference = failure.get("clause_reference") or (
             f"{failure['document_key']}/{failure['clause_id']}"
