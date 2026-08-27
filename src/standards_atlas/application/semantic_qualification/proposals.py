@@ -32,6 +32,10 @@ from standards_atlas.application.ports.llm_gateway import (
     StructuredGenerationRequest,
 )
 from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.semantic_classification import (
+    ResourceSemanticProfileRepository,
+    SemanticProfileReference,
+)
 from standards_atlas.application.semantic_qualification.adaptive_interview import (
     AdaptiveInterviewPlanner,
     InterviewDimension,
@@ -83,6 +87,8 @@ class SemanticTaskDefinition(BaseModel):
     description: str = ""
     canonical_task: str | None = None
     aliases: tuple[str, ...] = ()
+    semantic_profile: SemanticProfileReference | None = None
+    profile_dimensions: tuple[str, ...] = ()
     ontologies: dict[str, OntologyReference] = Field(default_factory=dict)
     taxonomy: tuple[str, ...] = ()
     knowledge_taxonomy: tuple[str, ...] = ()
@@ -102,15 +108,28 @@ class SemanticTaskRepository:
     def __init__(self, root: Path) -> None:
         self._root = root
         self._ontology_repository = ResourceOntologyDefinitionRepository()
+        self._profile_repository = ResourceSemanticProfileRepository()
 
     def load(self, task: str, version: str) -> tuple[SemanticTaskDefinition, dict[str, Any]]:
         root = self._root / task / version
         metadata = yaml.safe_load((root / "task.yaml").read_text(encoding="utf-8")) or {}
         require_supported_schema("semantic-task-resource", metadata.get("schema_version"))
-        references = {
-            dimension: OntologyReference.model_validate(reference)
-            for dimension, reference in dict(metadata.get("ontologies", {})).items()
-        }
+        profile_reference = metadata.get("semantic_profile")
+        if profile_reference is not None:
+            semantic_profile = SemanticProfileReference.model_validate(profile_reference)
+            profile = self._profile_repository.load(semantic_profile.id, semantic_profile.version)
+            selected_dimensions = tuple(metadata.get("profile_dimensions", ()))
+            if not selected_dimensions:
+                selected_dimensions = tuple(profile.dimensions)
+            profile = profile.select_dimensions(selected_dimensions)
+            references = dict(profile.dimensions)
+            metadata["semantic_profile"] = semantic_profile
+            metadata["profile_dimensions"] = selected_dimensions
+        else:
+            references = {
+                dimension: OntologyReference.model_validate(reference)
+                for dimension, reference in dict(metadata.get("ontologies", {})).items()
+            }
         loaded = {
             dimension: self._ontology_repository.load(reference.id, reference.version)
             for dimension, reference in references.items()

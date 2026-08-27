@@ -14,8 +14,8 @@ from standards_atlas.adapters.atlasdata.parser import (
     parse_initialization_records,
 )
 from standards_atlas.adapters.atlasdata.semantic_tags import (
+    canonical_semantic_profile,
     encode_semantic_tags,
-    is_supported_semantic_profile,
 )
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
@@ -97,12 +97,7 @@ class AtlasDataSemanticAnnotationService:
     ) -> AtlasDataSemanticAnnotationResult:
         payload = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
         manifest = PublicSemanticAnnotationManifest.model_validate(payload)
-        task, sep, version = manifest.semantic_profile.rpartition(":")
-        if not sep or not is_supported_semantic_profile(task):
-            raise ValueError(
-                "semantic_profile must be semantic-profile-classification:<version> "
-                "(legacy statement-function-classification is also accepted)"
-            )
+        semantic_profile = canonical_semantic_profile(manifest.semantic_profile)
 
         original = source.read_text(encoding="utf-8")
         records = parse_initialization_records(original)
@@ -122,7 +117,9 @@ class AtlasDataSemanticAnnotationService:
             if annotation is None:
                 merged.append(record)
                 continue
-            tags = encode_semantic_tags(annotation.classification(), version=version)
+            tags = encode_semantic_tags(
+                annotation.classification(), semantic_profile=semantic_profile
+            )
             replacement = InitializationRecord(
                 kind=record.kind,
                 hash_value=record.hash_value,
@@ -138,7 +135,7 @@ class AtlasDataSemanticAnnotationService:
                 updated += 1
 
         rendered = _replace_data_section(
-            _set_metadata_field(original, "semanticProfile", manifest.semantic_profile), merged
+            _set_metadata_field(original, "semanticProfile", semantic_profile), merged
         )
         changed = rendered != original
         backup = None
@@ -148,7 +145,7 @@ class AtlasDataSemanticAnnotationService:
         return AtlasDataSemanticAnnotationResult(
             source=source,
             backup=backup,
-            semantic_profile=manifest.semantic_profile,
+            semantic_profile=semantic_profile,
             updated_records=updated,
             unchanged_records=unchanged,
             changed=changed,

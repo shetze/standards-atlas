@@ -247,7 +247,7 @@ def test_domain_mapper_reads_public_semantic_tags() -> None:
             name="EN 50716",
             digits=8,
             official_year=2023,
-            extra_fields={"semanticProfile": "statement-function-classification:2.2.0"},
+            extra_fields={"semanticProfile": "functional-safety:1.0.0"},
         ),
         structure_items=[
             StructureItem(

@@ -43,6 +43,7 @@ class Classifier:
 def _profile() -> SemanticProfile:
     return SemanticProfile(
         id="functional-safety",
+        version="1.0.0",
         dimensions={"knowledge_kinds": OntologyReference(id="knowledge-kinds", version="2.2.0")},
     )
 

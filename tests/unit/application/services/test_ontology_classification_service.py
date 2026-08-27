@@ -74,6 +74,7 @@ def test_role_response_failure_does_not_abort_other_ontology_dimensions() -> Non
         engine=_Engine(),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
             },
@@ -113,6 +114,7 @@ def test_ontology_response_failure_isolated_to_clause_and_reported() -> None:
         engine=_FailingEngine(),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
             },
@@ -159,6 +161,7 @@ def test_applicability_dimension_is_replaced_atomically_when_present() -> None:
         engine=_ApplicabilityEngine(("inclusion",)),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "applicability_functions": OntologyReference(
                     id="applicability-functions", version="2.0.0"
@@ -187,6 +190,7 @@ def test_applicability_dimension_is_replaced_atomically_when_absent() -> None:
         engine=_ApplicabilityEngine(()),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "applicability_functions": OntologyReference(
                     id="applicability-functions", version="2.0.0"
@@ -214,6 +218,7 @@ def test_fail_soft_ontology_failure_preserves_complete_applicability_dimension()
         engine=_FailingEngine(),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "applicability_functions": OntologyReference(
                     id="applicability-functions", version="2.0.0"
@@ -253,6 +258,7 @@ def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> No
         engine=_Engine(),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
             },
@@ -298,6 +304,7 @@ def test_set_like_semantic_dimensions_are_deduplicated_before_validation() -> No
         engine=_DuplicateDimensionsEngine(),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
             },
@@ -339,6 +346,7 @@ def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> 
         engine=_FailingEngine(),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
             },
@@ -381,6 +389,7 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
         engine=_FailingEngine(),
         profile=SemanticProfile(
             id="test",
+            version="1.0.0",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
             },

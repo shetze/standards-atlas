@@ -6,14 +6,29 @@ from .definition import (
     OntologyReference,
 )
 from .resource_repository import ResourceOntologyDefinitionRepository
-from .role_semantics import LlmRoleSemanticsClassifier, RoleSemanticsClassifier, RoleSemanticsResult
 
 __all__ = [
+    "LlmRoleSemanticsClassifier",
     "OntologyDefinition",
     "OntologyDefinitionRepository",
     "OntologyReference",
     "ResourceOntologyDefinitionRepository",
-    "LlmRoleSemanticsClassifier",
     "RoleSemanticsClassifier",
     "RoleSemanticsResult",
 ]
+
+
+def __getattr__(name: str):
+    if name in {"LlmRoleSemanticsClassifier", "RoleSemanticsClassifier", "RoleSemanticsResult"}:
+        from .role_semantics import (
+            LlmRoleSemanticsClassifier,
+            RoleSemanticsClassifier,
+            RoleSemanticsResult,
+        )
+
+        return {
+            "LlmRoleSemanticsClassifier": LlmRoleSemanticsClassifier,
+            "RoleSemanticsClassifier": RoleSemanticsClassifier,
+            "RoleSemanticsResult": RoleSemanticsResult,
+        }[name]
+    raise AttributeError(name)

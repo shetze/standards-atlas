@@ -42,7 +42,7 @@ def test_semantic_profile_classification_is_explicit_planner_opt_in() -> None:
         catalog,
         family_keys=("EN50716",),
         catalog_root=Path.cwd(),
-        include_semantic_profile=True,
+        include_semantic_classification=True,
     )
 
     semantic = next(

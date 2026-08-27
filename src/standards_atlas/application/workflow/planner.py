@@ -27,7 +27,7 @@ class WorkflowPlanner:
         force: bool = False,
         keep_stages: tuple[WorkflowStage, ...] = (),
         hierarchy_key: str | None = None,
-        include_semantic_profile: bool = False,
+        include_semantic_classification: bool = False,
     ) -> WorkflowPlan:
         steps: list[WorkflowStep] = []
         hierarchy = catalog.doorstop_hierarchy(hierarchy_key) if hierarchy_key else None
@@ -45,7 +45,7 @@ class WorkflowPlanner:
                     force=force,
                     selected_families=selected_families,
                     hierarchy_key=hierarchy_key,
-                    include_semantic_profile=include_semantic_profile,
+                    include_semantic_classification=include_semantic_classification,
                 )
             )
         if hierarchy is not None:
@@ -83,7 +83,7 @@ class WorkflowPlanner:
         force: bool,
         selected_families: set[str],
         hierarchy_key: str | None,
-        include_semantic_profile: bool,
+        include_semantic_classification: bool,
     ) -> list[WorkflowStep]:
         documents = (
             [(family.key, family.source.pdf, family.content_selection)]
@@ -377,7 +377,7 @@ class WorkflowPlanner:
                     ),
                 ]
             )
-            if include_semantic_profile:
+            if include_semantic_classification:
                 steps.append(
                     WorkflowStep(
                         family.key,

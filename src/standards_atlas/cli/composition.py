@@ -156,30 +156,27 @@ def build_semantic_classification_service(
     from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
     from standards_atlas.application.ontology import (
         LlmRoleSemanticsClassifier,
-        OntologyReference,
         ResourceOntologyDefinitionRepository,
     )
     from standards_atlas.application.semantic_classification import (
         LlmSemanticClassifier,
+        ResourceSemanticProfileRepository,
         SemanticClassificationEngine,
         SemanticClassifierRegistry,
-        SemanticProfile,
     )
     from standards_atlas.application.services import SemanticClassificationService
 
     config = LlmConfig.load(llm_config_path)
     gateway = OpenAICompatibleLlmGateway(config)
     classifier = LlmSemanticClassifier(gateway, model=config.model)
-    profile = SemanticProfile(
-        id="semantic-profile-2.2.0",
-        dimensions={
-            "statement_functions": OntologyReference(id="statement-functions", version="2.0.0"),
-            "knowledge_kinds": OntologyReference(id="knowledge-kinds", version="2.1.0"),
-            "process_functions": OntologyReference(id="process-functions", version="1.0.0"),
-            "applicability_functions": OntologyReference(
-                id="applicability-functions", version="1.1.0"
-            ),
-        },
+    profile = ResourceSemanticProfileRepository().load("functional-safety", "1.0.0")
+    profile = profile.select_dimensions(
+        (
+            "statement_functions",
+            "knowledge_kinds",
+            "process_functions",
+            "applicability_functions",
+        )
     )
     engine = SemanticClassificationEngine(
         definitions=ResourceOntologyDefinitionRepository(),

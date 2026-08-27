@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from standards_atlas.application.ontology import ResourceOntologyDefinitionRepository
-from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
+from standards_atlas.application.semantic_classification import (
+    ResourceSemanticProfileRepository,
+    SemanticProfile,
+)
 from standards_atlas.domain.model import NormativeStatus, SemanticClassification
 
-PROFILE_PREFIX = "semantic-profile-classification:"
-LEGACY_PROFILE_PREFIX = "statement-function-classification:"
-_SUPPORTED_PROFILE_TASKS = {
-    "semantic-profile-classification",
-    "statement-function-classification",
-}
+CURRENT_SEMANTIC_PROFILE = "functional-safety:1.0.0"
 _DOCUMENT_STRUCTURE_CODES = {
     "front_matter": "FMT",
     "foreword": "FRW",
@@ -35,20 +31,39 @@ _NORMATIVE_STATUS_CODES = {
 }
 
 
-def is_supported_semantic_profile(task: str) -> bool:
-    """Return whether an AtlasData semantic profile task is supported."""
-    return task in _SUPPORTED_PROFILE_TASKS
+def canonical_semantic_profile(reference: str) -> str:
+    """Validate and return one canonical semantic-profile reference."""
+    profile_id, separator, version = reference.rpartition(":")
+    if not separator or not profile_id or not version:
+        raise ValueError(f"Invalid semantic profile reference: {reference!r}")
+    try:
+        ResourceSemanticProfileRepository().load(profile_id, version)
+    except FileNotFoundError as exc:
+        raise ValueError(f"Unsupported semantic profile: {reference!r}") from exc
+    return reference
 
 
-def _semantic_codes(version: str) -> dict[str, dict[str, str]]:
-    semantic_root = Path(__file__).parents[2] / "resources" / "semantic"
-    task, _ = SemanticTaskRepository(semantic_root / "tasks").load(
-        "semantic-profile-classification", version
-    )
+def load_semantic_profile(reference: str) -> SemanticProfile:
+    """Load the profile declared by AtlasData."""
+    canonical = canonical_semantic_profile(reference)
+    profile_id, version = canonical.rsplit(":", 1)
+    return ResourceSemanticProfileRepository().load(profile_id, version)
+
+
+def is_supported_semantic_profile(reference: str) -> bool:
+    """Return whether an AtlasData semantic profile reference is supported."""
+    try:
+        canonical_semantic_profile(reference)
+    except (FileNotFoundError, ValueError):
+        return False
+    return True
+
+
+def _semantic_codes(profile: SemanticProfile) -> dict[str, dict[str, str]]:
     repository = ResourceOntologyDefinitionRepository()
     result = {
         dimension: repository.load(reference.id, reference.version).codes
-        for dimension, reference in task.ontologies.items()
+        for dimension, reference in profile.dimensions.items()
     }
     result["document_structure"] = _DOCUMENT_STRUCTURE_CODES
     result["normative_status"] = _NORMATIVE_STATUS_CODES
@@ -58,10 +73,10 @@ def _semantic_codes(version: str) -> dict[str, dict[str, str]]:
 def encode_semantic_tags(
     classification: SemanticClassification,
     *,
-    version: str,
+    semantic_profile: str = CURRENT_SEMANTIC_PROFILE,
 ) -> tuple[str, ...]:
-    """Encode one accepted classification into stable public taxonomy tags."""
-    codes = _semantic_codes(version)
+    """Encode one accepted classification using the declared semantic profile."""
+    codes = _semantic_codes(load_semantic_profile(semantic_profile))
     tags: list[str] = []
 
     if classification.statement_functions:
@@ -86,6 +101,7 @@ def encode_semantic_tags(
     tags.extend(
         f"RR-{codes['role_relation_types'][value.value]}"
         for value in classification.role_relation_types
+        if "role_relation_types" in codes
     )
 
     if classification.document_structure is not None:
@@ -105,10 +121,10 @@ def encode_semantic_tags(
 def decode_semantic_tags(
     tags: tuple[str, ...],
     *,
-    version: str,
+    semantic_profile: str,
 ) -> dict[str, tuple[str, ...]]:
     """Decode public taxonomy tags using the declared semantic profile."""
-    codes = _semantic_codes(version)
+    codes = _semantic_codes(load_semantic_profile(semantic_profile))
     reverse = {
         dimension: {code: value for value, code in values.items()}
         for dimension, values in codes.items()
@@ -138,11 +154,10 @@ def decode_semantic_tags(
     for tag in tags:
         namespace, separator, code = tag.partition("-")
         if not separator or namespace not in namespaces:
-            raise ValueError(f"Unknown semantic tag namespace: {tag!r}")
+            continue
         dimension, target = namespaces[namespace]
         value = reverse.get(dimension, {}).get(code)
-        if value is None:
-            raise ValueError(f"Unknown semantic tag for {version}: {tag!r}")
-        result[target].append(value)
+        if value is not None:
+            result[target].append(value)
 
     return {key: tuple(values) for key, values in result.items()}

@@ -282,4 +282,4 @@ def classify_document_semantics(
     typer.echo(f"Clauses classified    : {result.clauses_classified}")
     typer.echo(f"Semantic classification failures     : {result.semantic_classification_failures}")
     typer.echo(f"Role semantic failures: {result.role_semantics_failures}")
-    typer.echo("Semantic profile      : semantic-profile-2.2.0")
+    typer.echo("Semantic profile      : functional-safety:1.0.0")

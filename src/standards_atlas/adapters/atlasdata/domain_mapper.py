@@ -219,15 +219,14 @@ def _merge_semantic_tags(
 ) -> SemanticClassification:
     if not semantic_tags:
         return classification
-    if not semantic_profile or ":" not in semantic_profile:
+    if not semantic_profile:
         raise ValueError("AtlasData semantic tags require semanticProfile metadata")
-    task, version = semantic_profile.rsplit(":", 1)
     from standards_atlas.adapters.atlasdata.semantic_tags import (
         decode_semantic_tags,
         is_supported_semantic_profile,
     )
 
-    if not is_supported_semantic_profile(task):
+    if not is_supported_semantic_profile(semantic_profile):
         raise ValueError(f"Unsupported AtlasData semantic profile: {semantic_profile!r}")
     from standards_atlas.domain.model import (
         ApplicabilityFunction,
@@ -239,7 +238,7 @@ def _merge_semantic_tags(
         StatementFunction,
     )
 
-    decoded = decode_semantic_tags(semantic_tags, version=version)
+    decoded = decode_semantic_tags(semantic_tags, semantic_profile=semantic_profile)
     statements = (
         *decoded["primary_statement_function"],
         *decoded["secondary_statement_functions"],

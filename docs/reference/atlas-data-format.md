@@ -88,7 +88,7 @@ parent="<parent standard key>"
 partShift=<integer>
 partDigits=<integer>
 oyr=<year>
-semanticProfile="<task>:<version>"
+semanticProfile="<profile-id>:<profile-version>"
 ```
 
 ### Field Semantics
@@ -101,7 +101,7 @@ semanticProfile="<task>:<version>"
 | `partShift`  | Numeric offset applied to part or volume numbers            |
 | `partDigits` | Number of digits reserved for part or volume numbers        |
 | `oyr`        | Official publication year of the standard                   |
-| `semanticProfile` | Optional taxonomy profile for public semantic TOC tags |
+| `semanticProfile` | Optional versioned semantic profile for public semantic TOC tags |
 
 The parser must treat metadata as declarative data. It must not execute the file as shell code.
 
@@ -500,7 +500,7 @@ The namespaces are:
 | `KK` | knowledge kind |
 | `PF` | process function |
 | `AF` | applicability function |
-| `RF` | responsibility function |
+| `RR` | role relation type |
 | `DS` | document structure |
 | `NS` | normative status |
 
@@ -509,11 +509,11 @@ not by the AtlasData parser. A file containing semantic tags must declare the
 profile used to interpret them:
 
 ```text
-semanticProfile="statement-function-classification:2.1.0"
+semanticProfile="functional-safety:1.0.0"
 ```
 
-Absence of an `AF-*` or `RF-*` tag represents no accepted positive
-applicability or responsibility category. `unspecified` normative status is not
+Absence of an `AF-*` or `RR-*` tag represents no accepted positive
+applicability or role-relation category. `unspecified` normative status is not
 serialized as a semantic tag.
 
 ### Applying Reviewed Annotations
@@ -522,8 +522,8 @@ Reviewed annotations are persisted through a separate text-free manifest so
 that protected clause content never has to be committed with the gold labels:
 
 ```yaml
-schema_version: "1.0"
-semantic_profile: statement-function-classification:2.1.0
+schema_version: "2.0"
+semantic_profile: functional-safety:1.0.0
 annotations:
   - reference: IEC 61508-2:2010 7.4.2
     primary_statement_function: requirement
@@ -531,8 +531,8 @@ annotations:
       - prerequisite
     knowledge_kinds:
       - process
-    responsibility_functions:
-      - responsibility_assignment
+    role_relation_types:
+      - responsible_for
 ```
 
 Apply the manifest with a dry run first:

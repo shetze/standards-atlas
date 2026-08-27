@@ -12,18 +12,13 @@ excluded_content_profiles:
 - table_dominant
 alternative_tasks:
   table_dominant: structured-table-interpretation
-ontologies:
-  statement_functions:
-    id: statement-functions
-    version: 2.0.0
-  knowledge_kinds:
-    id: knowledge-kinds
-    version: 2.1.0
-  process_functions:
-    id: process-functions
-    version: 1.0.0
-  applicability_functions:
-    id: applicability-functions
-    version: 1.2.0
+semantic_profile:
+  id: functional-safety
+  version: 1.0.0
+profile_dimensions:
+- statement_functions
+- knowledge_kinds
+- process_functions
+- applicability_functions
 aliases:
 - statement-function-classification

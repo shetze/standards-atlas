@@ -17,6 +17,9 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "semantic-task-resource": SchemaPolicy(
         "semantic-task-resource", 1, (1,), "resources/semantic/tasks/**/task.yaml"
     ),
+    "semantic-profile-resource": SchemaPolicy(
+        "semantic-profile-resource", 1, (1,), "resources/semantic/profiles/**/profile.yaml"
+    ),
     "ontology-resource": SchemaPolicy(
         "ontology-resource", 1, (1,), "resources/ontologies/**/ontology.yaml"
     ),

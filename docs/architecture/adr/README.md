@@ -156,3 +156,5 @@ both active and obsolete provisions.
 
 | [0084](0084-model-family-composition-as-publication-view.md) | Keep multipart family composition as a rebuildable publication view |
 | [0085](0085-manifest-driven-family-atlasdata-onboarding.md) | Resolve multipart AtlasData onboarding from the standards manifest |
+
+| [0086](0086-version-semantic-profiles-independently-from-classification-tasks.md) | Version semantic profiles independently from classification tasks |

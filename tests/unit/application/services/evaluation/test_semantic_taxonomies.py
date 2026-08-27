@@ -45,3 +45,19 @@ def test_applicability_semantics_task_uses_narrow_ontology_version() -> None:
     exclusions = ontology.semantics["exclusions_from_dimension"]
     assert any("Prerequisites" in item for item in exclusions)
     assert any("Local if/when" in item for item in exclusions)
+
+
+def test_current_semantic_classification_task_references_versioned_profile() -> None:
+    task, _ = SemanticTaskRepository(SEMANTIC_ROOT / "tasks").load(
+        "semantic-profile-classification", "2.4.0"
+    )
+
+    assert task.semantic_profile is not None
+    assert task.semantic_profile.id == "functional-safety"
+    assert task.semantic_profile.version == "1.0.0"
+    assert tuple(task.ontologies) == (
+        "statement_functions",
+        "knowledge_kinds",
+        "process_functions",
+        "applicability_functions",
+    )
