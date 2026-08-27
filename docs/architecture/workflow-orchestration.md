@@ -38,13 +38,12 @@ services and may publish Markdown and Doorstop output, but it never schedules an
 semantic-profile classifier.
 
 `--task qualification` reuses the required deterministic document stages, then explicitly opts
-into `document classify-ontology` as the multidimensional semantic-profile classification stage.
+into `document classify-semantics` as the multidimensional semantic-profile classification stage.
 Qualification retains Markdown reference publication but removes Doorstop export/publication from
 its derived document plan. Corpus construction, matrix qualification, semantic extraction
 qualification, and immutable run archival follow afterwards.
 
 `--limit` applies only to qualification execution. Semantic-profile classification remains
 document-wide so qualification cannot leave persisted EngineeringDocuments partially classified.
-The historical `ONTOLOGY` stage name is a compatibility label for semantic-profile classification;
-it is distinct from the formal OWL TBox/RBox/ABox/CBox model.
+`SEMANTIC_CLASSIFICATION` is the production semantic-profile classification stage; it is distinct from the formal OWL TBox/RBox/ABox/CBox model.
 

@@ -382,19 +382,21 @@ class WorkflowPlanner:
                     WorkflowStep(
                         family.key,
                         key,
-                        WorkflowStage.ONTOLOGY,
+                        WorkflowStage.SEMANTIC_CLASSIFICATION,
                         (
                             "uv",
                             "run",
                             "standards-atlas",
                             "document",
-                            "classify-ontology",
+                            "classify-semantics",
                             key,
                             "--llm-config",
                             "cfg/llm.yaml",
                         ),
                         ArtifactPolicy.DERIVED,
-                        output_paths=(f".atlas/work/workflow/ontology/{key}.complete",),
+                        output_paths=(
+                            f".atlas/work/workflow/semantic-classification/{key}.complete",
+                        ),
                     )
                 )
         if family.source is None:

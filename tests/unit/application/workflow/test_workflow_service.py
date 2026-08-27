@@ -31,8 +31,8 @@ def test_documents_plan_is_deterministic_and_contains_no_llm_classification() ->
     )
 
     assert WorkflowStage.TAXONOMY in {step.stage for step in plan.steps}
-    assert WorkflowStage.ONTOLOGY not in {step.stage for step in plan.steps}
-    assert all("classify-ontology" not in step.command for step in plan.steps)
+    assert WorkflowStage.SEMANTIC_CLASSIFICATION not in {step.stage for step in plan.steps}
+    assert all("classify-semantics" not in step.command for step in plan.steps)
     assert all("--llm-config" not in step.command for step in plan.steps)
 
 
@@ -45,9 +45,11 @@ def test_semantic_profile_classification_is_explicit_planner_opt_in() -> None:
         include_semantic_profile=True,
     )
 
-    ontology = next(step for step in plan.steps if step.stage is WorkflowStage.ONTOLOGY)
-    assert ontology.command[-4:] == (
-        "classify-ontology",
+    semantic = next(
+        step for step in plan.steps if step.stage is WorkflowStage.SEMANTIC_CLASSIFICATION
+    )
+    assert semantic.command[-4:] == (
+        "classify-semantics",
         "EN50716",
         "--llm-config",
         "cfg/llm.yaml",

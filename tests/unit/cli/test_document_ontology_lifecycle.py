@@ -43,11 +43,11 @@ def test_classify_ontology_ensures_managed_llm_is_running(monkeypatch) -> None:
     monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
     monkeypatch.setattr(
         management,
-        "build_ontology_classification_service",
+        "build_semantic_classification_service",
         lambda workspace, llm_config_path, progress=None: service,
     )
 
-    management.classify_document_ontology(
+    management.classify_document_semantics(
         "IEC61508-0",
         workspace=Path(".atlas"),
         llm_config=config,
@@ -103,18 +103,18 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
     monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
     monkeypatch.setattr(
         management,
-        "build_ontology_classification_service",
+        "build_semantic_classification_service",
         lambda workspace, llm_config_path, progress=None: _ProgressService(progress),
     )
 
-    management.classify_document_ontology(
+    management.classify_document_semantics(
         "IEC61508-2",
         workspace=Path(".atlas"),
         llm_config=config,
     )
 
     output = capsys.readouterr().out
-    assert "Ontology classification: starting for IEC61508-2" in output
-    assert "[Ontology 001/001] 7.4.1 — Verification started" in output
-    assert "[Ontology 001/001] 7.4.1 — Verification partial elapsed=2.5s" in output
-    assert "Ontology failures     : 1" in output
+    assert "Semantic classification: starting for IEC61508-2" in output
+    assert "[Semantics 001/001] 7.4.1 — Verification started" in output
+    assert "[Semantics 001/001] 7.4.1 — Verification partial elapsed=2.5s" in output
+    assert "Semantic classification failures     : 1" in output

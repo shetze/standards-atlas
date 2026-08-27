@@ -29,7 +29,7 @@ from standards_atlas.cli.composition import (
     build_content_enrichment_service,
     build_document_composition_service,
     build_document_selection_service,
-    build_ontology_classification_service,
+    build_semantic_classification_service,
     build_structural_taxonomy_service,
 )
 from standards_atlas.cli.runtime_managers import managed_llm_server
@@ -239,8 +239,8 @@ def classify_document_taxonomy(
     typer.echo(f"Structural leaves     : {len(result.document.clauses) - nodes}")
 
 
-@document_app.command("classify-ontology")
-def classify_document_ontology(
+@document_app.command("classify-semantics")
+def classify_document_semantics(
     document_key: Annotated[str, typer.Argument(help="EngineeringDocument key to classify.")],
     workspace: Annotated[
         Path,
@@ -251,12 +251,12 @@ def classify_document_ontology(
         typer.Option("--llm-config", help="LLM configuration file."),
     ] = Path("cfg/llm.yaml"),
 ) -> None:
-    """Classify semantic ontology dimensions using structural taxonomy context."""
+    """Classify semantic profile dimensions using structural taxonomy context."""
 
     def report_progress(progress: SemanticClassificationProgress) -> None:
         reference = progress.clause_reference or progress.clause_id
         title = f" — {progress.clause_title}" if progress.clause_title else ""
-        prefix = f"[Ontology {progress.current:03d}/{progress.total:03d}]"
+        prefix = f"[Semantics {progress.current:03d}/{progress.total:03d}]"
         if progress.state == "started":
             typer.echo(f"{prefix} {reference}{title} started")
             return
@@ -264,12 +264,12 @@ def classify_document_ontology(
         typer.echo(f"{prefix} {reference}{title} {progress.state} elapsed={elapsed:.1f}s")
 
     try:
-        typer.echo(f"Ontology classification: starting for {document_key}")
+        typer.echo(f"Semantic classification: starting for {document_key}")
         if llm_config is not None:
             config = LlmConfig.load(llm_config)
             typer.echo(f"LLM model             : {config.model}")
             managed_llm_server(llm_config).start()
-        result = build_ontology_classification_service(
+        result = build_semantic_classification_service(
             workspace,
             llm_config_path=llm_config,
             progress=report_progress,
@@ -280,6 +280,6 @@ def classify_document_ontology(
 
     typer.echo(f"Document              : {result.document.key.value}")
     typer.echo(f"Clauses classified    : {result.clauses_classified}")
-    typer.echo(f"Ontology failures     : {result.semantic_classification_failures}")
+    typer.echo(f"Semantic classification failures     : {result.semantic_classification_failures}")
     typer.echo(f"Role semantic failures: {result.role_semantics_failures}")
-    typer.echo("Ontology profile      : semantic-profile-2.2.0")
+    typer.echo("Semantic profile      : semantic-profile-2.2.0")

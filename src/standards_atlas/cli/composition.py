@@ -147,7 +147,7 @@ def build_structural_taxonomy_service(workspace: Path):
     return StructuralTaxonomyService(FileSystemEngineeringDocumentRepository(workspace))
 
 
-def build_ontology_classification_service(
+def build_semantic_classification_service(
     workspace: Path,
     *,
     llm_config_path: Path | None = None,

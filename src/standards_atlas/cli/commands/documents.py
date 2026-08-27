@@ -12,7 +12,7 @@ from standards_atlas.cli.commands.document_commands.exports import (
 )
 from standards_atlas.cli.commands.document_commands.inspection import inspect_data
 from standards_atlas.cli.commands.document_commands.management import (
-    classify_document_ontology,
+    classify_document_semantics,
     compose_family_document,
     derive_document_part,
     derive_document_view,
@@ -24,7 +24,7 @@ from standards_atlas.cli.commands.document_commands.publication import (
 )
 
 __all__ = [
-    "classify_document_ontology",
+    "classify_document_semantics",
     "compose_family_document",
     "derive_document_part",
     "derive_document_view",

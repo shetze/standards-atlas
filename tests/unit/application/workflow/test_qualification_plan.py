@@ -45,8 +45,8 @@ def test_qualification_plan_requires_taxonomy_and_semantic_profile_classificatio
     stages = tuple(step.stage for step in plan.steps)
 
     assert WorkflowStage.TAXONOMY in stages
-    assert WorkflowStage.ONTOLOGY in stages
-    assert any("classify-ontology" in step.command for step in plan.steps)
+    assert WorkflowStage.SEMANTIC_CLASSIFICATION in stages
+    assert any("classify-semantics" in step.command for step in plan.steps)
 
 
 def test_qualification_plan_derives_corpus_contract_from_matrix_manifest() -> None:

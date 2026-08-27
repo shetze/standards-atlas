@@ -6,7 +6,7 @@ Accepted.
 
 ## Context
 
-The shared workflow planner historically placed LLM-assisted `classify-ontology` directly in
+The shared workflow planner historically placed LLM-assisted `classify-semantics` directly in
 `--task documents`. This made canonical document generation depend on an available LLM runtime and
 caused the deterministic document pipeline to inherit model lifecycle, response-validity, and
 retry concerns. At the same time the qualification planner explicitly removed the ontology stage,
@@ -32,7 +32,7 @@ document stage.
 - Markdown export;
 - Doorstop export and hierarchy publication when configured.
 
-It does not schedule `document classify-ontology`, does not pass `--llm-config`, and does not
+It does not schedule `document classify-semantics`, does not pass `--llm-config`, and does not
 require an LLM runtime.
 
 `--task qualification` opts into semantic-profile classification after taxonomy and before family
@@ -40,9 +40,7 @@ composition/corpus construction. The stage still classifies complete selected do
 than only the `--limit` sample, so persisted documents are never left with a qualification-specific
 partial semantic profile. `--limit` continues to constrain only qualification execution stages.
 
-The existing `ONTOLOGY` stage name and `classify-ontology` command remain compatibility names for
-the multidimensional semantic-profile classifier. They do not refer to TBox/RBox/ABox/CBox
-construction.
+`SEMANTIC_CLASSIFICATION` and `classify-semantics` name the multidimensional semantic-profile classifier explicitly. They do not refer to TBox/RBox/ABox/CBox construction.
 
 ## Consequences
 

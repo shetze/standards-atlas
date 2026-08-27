@@ -14,7 +14,7 @@ This model implements ADR 0050 and replaces the former `Clause.semantic_roles` r
 
 The deterministic taxonomy stage enriches the normalized `EngineeringDocument` with
 `StructuralProfile`, `StructuralContext`, reference edges, and structural scope reach. These
-values form explicit evidence for the subsequent ontology stage. They never directly assign
+values form explicit evidence for the subsequent semantic classification stage. They never directly assign
 semantic statement, knowledge, process, applicability, or responsibility functions. The
 ontology classifier consumes normalized content together with the materialized structural
 evidence. `OntologyEngine` validates the emitted dimensions and values against the versioned

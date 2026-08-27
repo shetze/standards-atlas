@@ -63,7 +63,7 @@ ontology decision.
 
 ## Semantic classification
 
-`SemanticClassification` stores ontology results and semantic relations separately from document structure. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and role-relation types is owned exclusively by the `ONTOLOGY` stage. Structural evidence is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for ontology classification, not semantic truth. Some legacy structural compatibility fields remain in the persisted model until a later schema migration, but no active classifier derives ontology values outside `ONTOLOGY`.
+`SemanticClassification` stores semantic classification results and semantic relations separately from document structure. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and role-relation types is owned exclusively by the `SEMANTIC_CLASSIFICATION` stage. Structural evidence is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for semantic classification, not semantic truth. Some legacy structural compatibility fields remain in the persisted model until a later schema migration, but no active classifier derives ontology values outside `SEMANTIC_CLASSIFICATION`.
 
 ## Evidence and provenance
 
@@ -100,7 +100,7 @@ The separate application-architecture class diagram shows representative applica
 - Export-specific metadata is isolated and optional.
 - Internal references resolve against known clauses before Markdown publication.
 - Structural dimensions and inherited context are materialized only by the deterministic taxonomy stage.
-- Automatic ontology dimensions are assigned only by the ontology stage or imported as explicit reviewed/public annotations.
+- Automatic ontology dimensions are assigned only by the semantic classification stage or imported as explicit reviewed/public annotations.
 - No domain model depends on storage paths or external SDK types.
 
 
