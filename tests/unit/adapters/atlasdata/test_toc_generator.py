@@ -1,4 +1,5 @@
 from standards_atlas.adapters.atlasdata.toc_generator import (
+    generate_public_initialization_records,
     generate_public_text_records,
     generate_toc_records,
 )
@@ -174,3 +175,52 @@ def test_generate_public_text_records_preserves_volume_in_reference() -> None:
     records = generate_public_text_records(document)
 
     assert records[0].reference == "IEC 61508-3-1:2010 7.4.4"
+
+
+def test_generate_toc_records_excludes_table_structure_items() -> None:
+    document = EngineeringDocument(
+        key=DocumentKey(value="EXAMPLE"),
+        title="Example",
+        document_type=DocumentType.OTHER,
+        clauses=(
+            Clause(
+                id=ClauseId(value="clause-table-a-1"),
+                reference=StandardReference(
+                    standard="Example",
+                    year=2025,
+                    clause="A.1",
+                ),
+                clause_type=ClauseType.TABLE,
+            ),
+        ),
+    )
+
+    assert generate_toc_records(document) == []
+
+
+def test_generate_public_records_materializes_table_structure_item_as_table() -> None:
+    document = EngineeringDocument(
+        key=DocumentKey(value="EXAMPLE"),
+        title="Example",
+        document_type=DocumentType.OTHER,
+        clauses=(
+            Clause(
+                id=ClauseId(value="clause-table-a-1"),
+                reference=StandardReference(
+                    standard="Example",
+                    year=2025,
+                    clause="A.1",
+                ),
+                clause_type=ClauseType.TABLE,
+                title="Failure measures",
+            ),
+        ),
+    )
+
+    records = generate_public_initialization_records(document)
+
+    assert len(records) == 1
+    assert records[0].kind == "TABLE"
+    assert records[0].reference == "Example:2025 Table A.1"
+    assert records[0].content == "Failure measures"
+    assert records[0].type_marker == ""

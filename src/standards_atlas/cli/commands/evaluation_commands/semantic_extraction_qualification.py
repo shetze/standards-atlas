@@ -19,7 +19,6 @@ from standards_atlas.adapters.llm import (
     RamaLamaServerManager,
 )
 from standards_atlas.adapters.llm.formal_semantic_extractor import OntologyGuidedLlmExtractor
-from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
 from standards_atlas.application.semantic_extraction import (
     ExtractionEligibilityContext,
     ExtractionProgress,
@@ -28,6 +27,11 @@ from standards_atlas.application.semantic_extraction import (
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
+)
+from standards_atlas.application.semantic_qualification.run_selection import (
+    QUALIFICATION_SELECTION_FILENAME,
+    examples_for_persisted_selection,
+    load_qualification_run_selection,
 )
 from standards_atlas.application.semantic_qualification.semantic_extraction_qualification import (
     merge_document_semantic_extractions,
@@ -79,8 +83,29 @@ def qualify_semantic_extraction(
     if not config.enabled:
         raise typer.BadParameter("semantic extraction qualification is disabled in the manifest")
 
-    dataset = EvaluationDatasetRepository(corpus_root).load(manifest.task, manifest.dataset_version)
-    selected_examples = dataset.examples[:limit] if limit is not None else dataset.examples
+    selection_path = output / QUALIFICATION_SELECTION_FILENAME
+    if not selection_path.is_file():
+        raise typer.BadParameter(
+            "qualification clause selection not found; run qualification-matrix first: "
+            f"{selection_path}"
+        )
+    run_selection = load_qualification_run_selection(selection_path)
+    if (
+        run_selection.task != manifest.task
+        or run_selection.dataset_version != manifest.dataset_version
+    ):
+        raise typer.BadParameter(
+            "persisted qualification selection does not match the qualification manifest"
+        )
+    if limit is not None and run_selection.requested_limit != limit:
+        raise typer.BadParameter(
+            f"--limit {limit} does not match persisted qualification selection "
+            f"({run_selection.requested_limit})"
+        )
+    selected_examples = examples_for_persisted_selection(
+        corpus_root=corpus_root,
+        selection=run_selection,
+    )
     selected_ids_by_document = selected_clause_ids_by_document(selected_examples)
     eligibility_contexts = _load_qualification_eligibility_contexts(output)
 

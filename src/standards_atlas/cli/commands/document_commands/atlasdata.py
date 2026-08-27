@@ -9,10 +9,10 @@ from typing import Annotated
 import typer
 
 from standards_atlas.adapters.atlasdata.metadata import AtlasDataLifecycleStatus
-from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.atlasdata.semantic_annotation_writer import (
     AtlasDataSemanticAnnotationService,
 )
+from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.application.services import (
     AtlasDataLifecycleService,
     AtlasDataOnboardingService,
@@ -154,7 +154,8 @@ def onboard_docling_parts(
 @atlasdata_app.command("onboard-family")
 def onboard_family(
     family_key: Annotated[
-        str, typer.Argument(help="Standard family key declared in the standards manifest."),
+        str,
+        typer.Argument(help="Standard family key declared in the standards manifest."),
     ],
     manifest: Annotated[
         Path,

@@ -10,7 +10,6 @@ import typer
 import yaml
 
 from standards_atlas.adapters.filesystem import FileSystemSemanticExtractionRepository
-from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
 from standards_atlas.application.formal_semantics.resource_repository import (
     ResourceFormalOntologyRepository,
 )
@@ -20,6 +19,11 @@ from standards_atlas.application.semantic_qualification.analysis_archive import 
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
+)
+from standards_atlas.application.semantic_qualification.run_selection import (
+    QUALIFICATION_SELECTION_FILENAME,
+    examples_for_persisted_selection,
+    load_qualification_run_selection,
 )
 from standards_atlas.application.semantic_qualification.semantic_extraction_selection import (
     selected_clause_ids_by_document,
@@ -60,6 +64,33 @@ def finalize_qualification_archive(
     if not metrics_path.is_file():
         raise typer.BadParameter(f"qualification analysis metrics not found: {metrics_path}")
     analysis_metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    selection_path = run_directory / QUALIFICATION_SELECTION_FILENAME
+    if not selection_path.is_file():
+        raise typer.BadParameter(f"qualification clause selection not found: {selection_path}")
+    run_selection = load_qualification_run_selection(selection_path)
+    selected_examples = examples_for_persisted_selection(
+        corpus_root=corpus_root,
+        selection=run_selection,
+    )
+    if (
+        run_selection.task != manifest.task
+        or run_selection.dataset_version != manifest.dataset_version
+    ):
+        raise typer.BadParameter(
+            "persisted qualification selection does not match the qualification manifest"
+        )
+    if limit is not None and run_selection.requested_limit != limit:
+        raise typer.BadParameter(
+            f"--limit {limit} does not match persisted qualification selection "
+            f"({run_selection.requested_limit})"
+        )
+    qualified_clause_count = analysis_metrics.get("clause_count")
+    if qualified_clause_count != run_selection.selected_clause_count:
+        raise typer.BadParameter(
+            "qualification result does not cover the persisted run selection: "
+            f"{qualified_clause_count} qualified vs "
+            f"{run_selection.selected_clause_count} selected clauses"
+        )
     matrix_report_path = run_directory / "qualification-matrix.json"
     matrix_passed = None
     if matrix_report_path.is_file():
@@ -74,6 +105,18 @@ def finalize_qualification_archive(
                 f"semantic extraction qualification report not found: {semantic_report_path}"
             )
         semantic_report = json.loads(semantic_report_path.read_text(encoding="utf-8"))
+        selected_count = semantic_report.get("selected_clause_count")
+        context_count = semantic_report.get("eligibility_context_clause_count")
+        if selected_count != run_selection.selected_clause_count:
+            raise typer.BadParameter(
+                "semantic extraction qualification selection differs from matrix selection: "
+                f"{selected_count} vs {run_selection.selected_clause_count} clauses"
+            )
+        if context_count != run_selection.selected_clause_count:
+            raise typer.BadParameter(
+                "semantic extraction eligibility context is incomplete for the persisted run "
+                f"selection: {context_count}/{run_selection.selected_clause_count} clauses"
+            )
 
     core_paths = tuple(
         path
@@ -129,10 +172,6 @@ def finalize_qualification_archive(
                 )
             )
 
-        dataset = EvaluationDatasetRepository(corpus_root).load(
-            manifest.task, manifest.dataset_version
-        )
-        selected_examples = dataset.examples[:limit] if limit is not None else dataset.examples
         selected_by_document = selected_clause_ids_by_document(selected_examples)
         repository = FileSystemSemanticExtractionRepository(workspace)
         snapshot_root = run_directory / "archive-inputs" / "semantic-extractions"

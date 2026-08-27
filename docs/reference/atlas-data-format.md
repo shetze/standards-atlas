@@ -145,6 +145,7 @@ t3.1.{1..44}
 r5.1.2.{1..12}
 10:A
 r12:C.2.4.{1..4}
+b9:A.{1..10}
 0-4.+{1..133}
 8-r11.4.7.{1..4}
 ```
@@ -182,6 +183,7 @@ Currently recognized type prefixes are:
 | `t`    | Term or definition                  |
 | `o`    | Objective                           |
 | `c`    | Clause                              |
+| `b`    | Table                               |
 | `m`    | Mapping or miscellaneous annex item |
 
 If no type prefix is present, the item is treated as a generic table-of-contents item.

@@ -49,10 +49,14 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     effective_cascade_resolution,
     resolve_prompt_version,
 )
+from standards_atlas.application.semantic_qualification.run_selection import (
+    QUALIFICATION_SELECTION_FILENAME,
+    build_qualification_run_selection,
+    persist_qualification_run_selection,
+)
 from standards_atlas.application.services.evaluation import (
     AnnotationQualificationService,
     BaselineProposalGenerator,
-    EvaluationDatasetRepository,
     ModelConsensusService,
     ModelPromptQualificationService,
     SemanticAnnotationReviewService,
@@ -421,30 +425,24 @@ def qualify_model_prompt_matrix(
                     for item in manifest.observations
                 }
             )
-            dataset = EvaluationDatasetRepository(corpus_root).load(
-                manifest.task,
-                manifest.dataset_version,
+            dataset, selected_examples, run_selection = build_qualification_run_selection(
+                corpus_root=corpus_root,
+                task=manifest.task,
+                dataset_version=manifest.dataset_version,
+                corpus_id=manifest.corpus_id,
+                limit=limit,
+                selected_example_ids=selected_example_ids_override,
             )
-            dataset_example_ids = tuple(example.id for example in dataset.examples)
-            if selected_example_ids_override is not None:
-                unknown = tuple(
-                    clause_id
-                    for clause_id in selected_example_ids_override
-                    if clause_id not in dataset_example_ids
-                )
-                if unknown:
-                    raise ValueError(
-                        "selected challenger clauses are not present in the dataset: "
-                        + ", ".join(unknown[:5])
-                    )
-                selected_set = set(selected_example_ids_override)
-                selected_example_ids = tuple(
-                    clause_id for clause_id in dataset_example_ids if clause_id in selected_set
-                )
-            else:
-                selected_example_ids = tuple(
-                    dataset_example_ids[:limit] if limit is not None else dataset_example_ids
-                )
+            selected_example_ids = tuple(example.id for example in selected_examples)
+            selection_path = persist_qualification_run_selection(
+                run_selection,
+                output_directory / manifest.matrix_id / QUALIFICATION_SELECTION_FILENAME,
+            )
+            typer.echo(
+                "Clause selection         : "
+                f"{run_selection.selected_clause_count}/{run_selection.dataset_clause_count} "
+                f"clauses ({selection_path})"
+            )
             base_config = LlmConfig.load(config)
             if not llm_cache_enabled:
                 base_config = replace(base_config, cache_directory=None)

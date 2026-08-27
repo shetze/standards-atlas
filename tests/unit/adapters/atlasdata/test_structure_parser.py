@@ -87,3 +87,17 @@ def test_reject_descending_range() -> None:
                 body="r5.{3..1}",
             )
         )
+
+
+def test_parse_canonical_table_enum_range_token() -> None:
+    parsed = parse_lexed_structure_token(
+        LexedStructureToken(
+            source="b9:A.{1..10}",
+            body="b9:A.{1..10}",
+        )
+    )
+
+    assert parsed.enum_prefix == "9"
+    assert parsed.reference_template == "A.{1..10}"
+    assert parsed.ranges == (StructureRange(start=1, end=10),)
+    assert parsed.item_type == AtlasItemType.TABLE

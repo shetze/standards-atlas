@@ -27,6 +27,7 @@ class ClauseType(StrEnum):
     SCOPE = "scope"
     TERM = "term"
     OBJECTIVE = "objective"
+    TABLE = "table"
     MISC = "misc"
 
 

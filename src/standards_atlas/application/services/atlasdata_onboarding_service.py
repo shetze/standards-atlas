@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any
 
 from standards_atlas.application.catalog import StandardFamilyDefinition
-
 from standards_atlas.application.model.atlasdata_metadata import (
     AtlasDataLifecycleStatus,
     parse_metadata,
@@ -526,7 +525,7 @@ class AtlasDataOnboardingService:
         if parent:
             metadata.append(f'parent="{parent}"')
         part_digits = (
-            max(len(part.part.replace('-', '')) for part in parts) if include_part_context else 0
+            max(len(part.part.replace("-", "")) for part in parts) if include_part_context else 0
         )
         metadata.extend(
             [

@@ -97,3 +97,22 @@ def test_limit_is_forwarded_to_all_qualification_stages() -> None:
 
     archive = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE)
     assert archive.command[archive.command.index("--limit") + 1] == "50"
+
+
+def test_corpus_build_uses_dataset_version_when_task_version_differs() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
+    plan = QualificationWorkflowPlanner().plan(
+        catalog,
+        family_keys=("EN50716",),
+        catalog_root=Path.cwd(),
+        manifest_path=Path(
+            "manifests/multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml"
+        ),
+        corpus_count=500,
+        corpus_strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
+        corpus_seed=20260818,
+        knowledge_domain="functional-safety",
+    )
+    corpus = next(step for step in plan.steps if step.stage is WorkflowStage.CORPUS_BUILD)
+
+    assert corpus.command[corpus.command.index("--version") + 1] == "2.2.0"

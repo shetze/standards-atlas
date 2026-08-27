@@ -21,6 +21,7 @@ _TYPE_MARKERS: dict[ClauseType, str] = {
     ClauseType.SCOPE: "s",
     ClauseType.TERM: "t",
     ClauseType.OBJECTIVE: "o",
+    ClauseType.TABLE: "b",
     ClauseType.MISC: "m",
 }
 
@@ -32,6 +33,7 @@ _DEFAULT_HEADINGS: dict[ClauseType, str] = {
     ClauseType.SCOPE: "Scope",
     ClauseType.TERM: "Term",
     ClauseType.OBJECTIVE: "Objective",
+    ClauseType.TABLE: "Table",
     ClauseType.MISC: "Misc",
 }
 
@@ -48,6 +50,7 @@ def generate_toc_records(
             annotations_by_clause.get(clause.id.value, ()),
         )
         for clause in document.clauses
+        if clause.clause_type != ClauseType.TABLE
     ]
 
 
@@ -90,9 +93,12 @@ def generate_table_structure_records(
     """Generate public table identity and List-of-Tables records without cell content."""
     clauses_by_id = {clause.id: clause for clause in document.clauses}
     records: list[InitializationRecord] = []
+    declared_references: set[str] = set()
+
     for table in document.tables:
         parent = clauses_by_id.get(table.parent_clause_id) if table.parent_clause_id else None
         reference = _atlasdata_table_reference(document, table.reference, parent)
+        declared_references.add(reference)
         records.append(
             InitializationRecord(
                 kind="TABLE",
@@ -102,6 +108,24 @@ def generate_table_structure_records(
                 type_marker=table.parent_clause_reference or "",
             )
         )
+
+    for clause in document.clauses:
+        if clause.clause_type != ClauseType.TABLE:
+            continue
+        reference = _atlasdata_table_reference_from_clause(clause)
+        if reference in declared_references:
+            continue
+        declared_references.add(reference)
+        records.append(
+            InitializationRecord(
+                kind="TABLE",
+                hash_value=_hash_value(f"table|{reference}"),
+                reference=reference,
+                content=clause.title.strip() if clause.title else "Table",
+                type_marker="",
+            )
+        )
+
     for entry in document.table_index:
         table = next((value for value in document.tables if value.id == entry.table_id), None)
         parent = (
@@ -216,6 +240,15 @@ def _type_marker(clause: Clause) -> str:
 
 def _hash_value(value: str) -> str:
     return hashlib.md5(value.encode("utf-8")).hexdigest()
+
+
+def _atlasdata_table_reference_from_clause(clause: Clause) -> str:
+    standard = clause.reference.standard
+    if clause.volume:
+        standard = f"{standard}-{clause.volume.replace('§', '-')}"
+    year = clause.reference.year
+    document_reference = f"{standard}:{year}" if year is not None else standard
+    return f"{document_reference} Table {clause.reference.clause}"
 
 
 def _atlasdata_table_reference(

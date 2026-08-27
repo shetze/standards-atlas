@@ -12,6 +12,7 @@ class AtlasItemType(StrEnum):
     TERM = "term"
     OBJECTIVE = "objective"
     CLAUSE = "clause"
+    TABLE = "table"
     MISC = "misc"
 
 
@@ -21,5 +22,6 @@ TYPE_PREFIXES: dict[str, AtlasItemType] = {
     "t": AtlasItemType.TERM,
     "o": AtlasItemType.OBJECTIVE,
     "c": AtlasItemType.CLAUSE,
+    "b": AtlasItemType.TABLE,
     "m": AtlasItemType.MISC,
 }

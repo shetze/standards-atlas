@@ -86,7 +86,7 @@ class QualificationWorkflowPlanner:
                 "--task",
                 manifest.task,
                 "--version",
-                manifest.task_version,
+                manifest.dataset_version,
                 "--corpus-id",
                 manifest.corpus_id,
                 "--knowledge-domain",

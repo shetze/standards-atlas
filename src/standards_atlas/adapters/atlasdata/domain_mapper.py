@@ -36,6 +36,7 @@ _ITEM_TYPE_MAPPING: dict[AtlasItemType, ClauseType] = {
     AtlasItemType.SCOPE: ClauseType.SCOPE,
     AtlasItemType.TERM: ClauseType.TERM,
     AtlasItemType.OBJECTIVE: ClauseType.OBJECTIVE,
+    AtlasItemType.TABLE: ClauseType.TABLE,
     AtlasItemType.MISC: ClauseType.MISC,
 }
 

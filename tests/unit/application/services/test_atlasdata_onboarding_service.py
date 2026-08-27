@@ -483,9 +483,7 @@ def test_generate_family_does_not_include_supplements_by_default(tmp_path: Path)
         json.dumps(
             {
                 "name": "FAMILY-1_2026",
-                "texts": [
-                    {"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"}
-                ],
+                "texts": [{"self_ref": "#/texts/0", "label": "section_header", "text": "1 Scope"}],
             }
         ),
         encoding="utf-8",
@@ -506,9 +504,7 @@ def test_generate_family_does_not_include_supplements_by_default(tmp_path: Path)
                             "supplement": "1",
                             "key": "FAMILY-1-1",
                             "source": {"pdf": "supplement.pdf"},
-                            "relations": [
-                                {"type": "supplements", "target": "FAMILY-1"}
-                            ],
+                            "relations": [{"type": "supplements", "target": "FAMILY-1"}],
                         }
                     ],
                 }

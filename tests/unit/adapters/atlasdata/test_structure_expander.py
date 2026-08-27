@@ -159,3 +159,12 @@ def test_leading_year_token_is_not_expanded_as_structure_item() -> None:
         "2",
         "3",
     ]
+
+
+def test_expand_table_enum_range() -> None:
+    items = expand_structure_line("2010 b9:A.{1..10}")
+
+    assert len(items) == 10
+    assert [item.visible_reference for item in items] == [f"A.{index}" for index in range(1, 11)]
+    assert all(item.enum_prefix == "9" for item in items)
+    assert all(item.item_type == AtlasItemType.TABLE for item in items)
