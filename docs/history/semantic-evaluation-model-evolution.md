@@ -1,6 +1,6 @@
 # Evolution of the semantic evaluation model
 
-> **Document status:** Historical rationale. This document records the findings that led to ADR 0050 and ADR 0051. It is not an active implementation plan.
+> **Document status:** Historical rationale. This document records the findings that led to ADR 0007 and ADR 0008. It is not an active implementation plan.
 
 ## Background
 
@@ -31,8 +31,8 @@ A domain-independent document structure and domain-specific lifecycle structures
 
 The findings were implemented through:
 
-- [ADR 0050](../architecture/adr/0050-model-structural-profiles-as-independent-taxonomy-dimensions.md), which introduced the multidimensional `StructuralProfile`;
-- [ADR 0051](../architecture/adr/0051-multidimensional-semantic-classification.md), which removed `Clause.semantic_roles` and `SemanticRole` without a compatibility layer and introduced independent semantic dimensions.
+- [ADR 0007](../architecture/adr/0007-structural-taxonomy-and-context-model.md), which introduced the multidimensional `StructuralProfile`;
+- [ADR 0008](../architecture/adr/0008-semantic-ontology-profile-and-classification-model.md), which removed `Clause.semantic_roles` and `SemanticRole` without a compatibility layer and introduced independent semantic dimensions.
 
 The current architecture is described in:
 

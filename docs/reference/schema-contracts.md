@@ -13,7 +13,7 @@ versions. A major Standards Atlas transition may temporarily permit a fourth rea
 version. Writers emit only the current version. Supported non-current versions emit a
 visible deprecation warning; older versions fail explicitly.
 
-Because ADR 0063 deliberately removed historical compatibility, the current concrete
+Because ADR 0014 deliberately removed historical compatibility, the current concrete
 policies initially contain only their current version. Older versions are added only
 when a future schema revision creates a real predecessor contract.
 

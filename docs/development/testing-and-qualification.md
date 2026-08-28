@@ -6,9 +6,8 @@ count. The objective is a controlled argument that transformations are determini
 evidence is preserved, persisted artifacts remain readable, adapters are substitutable, and a
 complete workflow fails safely.
 
-The governing decisions are
-[ADR-0039](../architecture/adr/0039-verification-and-qualification-framework.md) and
-[ADR-0034](../architecture/adr/0034-golden-corpus-and-regression-qualification.md).
+The governing qualification decision is
+[ADR 0012](../architecture/adr/0012-semantic-qualification-and-evidence-model.md).
 
 ## Quality risks
 

@@ -137,13 +137,10 @@ Those capabilities remain incremental follow-up work behind the existing ports.
 - [Relationship mapping](relationship-mapping.md)
 - [Domain model](domain-model.md)
 - [Ports and adapters](ports-and-adapters.md)
-- [ADR 0074](adr/0074-formal-semantic-and-context-model.md)
-- [ADR 0075](adr/0075-versioned-core-and-functional-safety-ontologies.md)
-- [ADR 0076](adr/0076-deterministic-abox-cbox-projection.md)
-- [ADR 0077](adr/0077-ontology-guided-concept-and-relation-extraction.md)
+- [ADR 0009](adr/0009-formal-semantic-model-and-owl-projection.md)
 
 ## Qualification boundary
 
 Ontology-guided concept and local-relation extraction is qualified as its own semantic task before relationship retrieval is evaluated. Qualification always measures conformance against the selected formal ontology vocabulary and confidence gates. Gold precision/recall/F1 is emitted only when a published extraction gold corpus is configured; otherwise these metrics remain explicitly unscored.
 
-See [ADR 0078](adr/0078-qualify-ontology-guided-semantic-extraction.md).
+See [ADR 0012](adr/0012-semantic-qualification-and-evidence-model.md).

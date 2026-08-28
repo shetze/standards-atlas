@@ -10,7 +10,7 @@
 <title>G</title>
 <polygon fill="white" stroke="transparent" points="-18,18 -18,-700 2362,-700 2362,18 -18,18"/>
 <text text-anchor="middle" x="1172" y="-666.8" font-family="DejaVu Sans" font-size="14.00">Standards Atlas — Overall Component Architecture</text>
-<text text-anchor="middle" x="1172" y="-651.8" font-family="DejaVu Sans" font-size="14.00">Current architecture after ADR 0065–0069</text>
+<text text-anchor="middle" x="1172" y="-651.8" font-family="DejaVu Sans" font-size="14.00">Current architecture after ADR 0008–0069</text>
 <g id="clust1" class="cluster">
 <title>cluster_in</title>
 <path fill="white" stroke="#888888" d="M167,-119C167,-119 372,-119 372,-119 378,-119 384,-125 384,-131 384,-131 384,-243 384,-243 384,-249 378,-255 372,-255 372,-255 167,-255 167,-255 161,-255 155,-249 155,-243 155,-243 155,-131 155,-131 155,-125 161,-119 167,-119"/>

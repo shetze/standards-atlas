@@ -86,7 +86,7 @@ Document-level relationships and lineages can be curated in the catalog. Clause-
 - Workflow profiles and Doorstop hierarchies remain explicit projections rather than alternate sources of truth.
 - MCP capabilities can grow around the knowledge represented in domains without coupling the domain model to a particular client or transport.
 
-Related decisions: [ADR 0050](adr/0050-model-structural-profiles-as-independent-taxonomy-dimensions.md) and [ADR 0051](adr/0051-multidimensional-semantic-classification.md).
+Related decisions: [ADR 0007](adr/0007-structural-taxonomy-and-context-model.md) and [ADR 0008](adr/0008-semantic-ontology-profile-and-classification-model.md).
 
 
-See also [Formal Semantic & Context Model](formal-semantic-context-model.md) and [ADR 0074](adr/0074-formal-semantic-and-context-model.md).
+See also [Formal Semantic & Context Model](formal-semantic-context-model.md) and [ADR 0009](adr/0009-formal-semantic-model-and-owl-projection.md).

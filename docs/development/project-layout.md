@@ -76,7 +76,7 @@ code must use canonical capability packages rather than compatibility re-exports
 
 ## Generated storage classes
 
-Generated runtime artifacts are not grouped by feature alone. ADR 0060 defines
+Generated runtime artifacts are not grouped by feature alone. ADR 0013 defines
 four storage classes:
 
 - `.atlas/data/` — persistent machine-facing state;

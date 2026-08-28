@@ -76,7 +76,7 @@ A domain-model change must identify:
 - whether existing review data can still be attached unambiguously;
 - which tests and documentation establish the new baseline.
 
-Removed fields are not retained automatically as aliases. Compatibility properties or constructor shims require a specific use case, an owner, a removal condition, and test coverage. ADR 0051 is an example of an intentional removal without a compatibility layer.
+Removed fields are not retained automatically as aliases. Compatibility properties or constructor shims require a specific use case, an owner, a removal condition, and test coverage. ADR 0008 is an example of an intentional removal without a compatibility layer.
 
 ## Catalog evolution
 
