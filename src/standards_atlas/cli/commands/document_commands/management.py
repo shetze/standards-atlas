@@ -217,7 +217,7 @@ def enrich_document_semantics(
     def report_progress(progress: SemanticEnrichmentProgress) -> None:
         reference = progress.clause_reference or progress.clause_id
         title = f" — {progress.clause_title}" if progress.clause_title else ""
-        prefix = f"[Semantics {progress.current:03d}/{progress.total:03d}]"
+        prefix = f"[Enrich Document Semantics {progress.current:03d}/{progress.total:03d}]"
         if progress.state == "started":
             typer.echo(f"{prefix} {reference}{title} started")
             return

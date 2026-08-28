@@ -24,6 +24,7 @@ from standards_atlas.domain.model import (
     GenerationMethod,
     KnowledgeKind,
     ProcessFunction,
+    RoleRelationType,
     SemanticClassification,
     StatementFunction,
 )
@@ -67,6 +68,15 @@ def _unique_role_relations(values: Iterable[object]) -> tuple[object, ...]:
         seen.add(key)
         unique.append(item)
     return tuple(unique)
+
+
+def _role_relation_type(relation_class: str) -> RoleRelationType | None:
+    """Return a controlled role-relation type when an open relation class matches one."""
+
+    try:
+        return RoleRelationType(relation_class)
+    except ValueError:
+        return None
 
 
 def _canonicalize_semantic_payload(payload: dict[str, object]) -> dict[str, object]:
@@ -238,7 +248,9 @@ class SemanticEnrichmentService:
                 role_relations = role_result.relations if role_result.present else ()
                 role_relation_types = tuple(
                     dict.fromkeys(
-                        item.relation for item in role_relations if item.relation is not None
+                        relation_type
+                        for item in role_relations
+                        if (relation_type := _role_relation_type(item.relation_class)) is not None
                     )
                 )
                 semantic = _validated_semantic_merge(

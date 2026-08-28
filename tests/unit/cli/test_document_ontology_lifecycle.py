@@ -115,6 +115,6 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
 
     output = capsys.readouterr().out
     assert "Semantic enrichment    : starting for IEC61508-2" in output
-    assert "[Semantics 001/001] 7.4.1 — Verification started" in output
-    assert "[Semantics 001/001] 7.4.1 — Verification partial elapsed=2.5s" in output
+    assert "[Enrich Document Semantics 001/001] 7.4.1 — Verification started" in output
+    assert "[Enrich Document Semantics 001/001] 7.4.1 — Verification partial elapsed=2.5s" in output
     assert "Semantic classification failures     : 1" in output
