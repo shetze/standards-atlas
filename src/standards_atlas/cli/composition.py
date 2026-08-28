@@ -7,9 +7,8 @@ from standards_atlas.adapters.docling import (
     DoclingExtractedDocumentRepository,
 )
 from standards_atlas.adapters.filesystem import (
-    FileSystemComposedDocumentViewRepository,
     FileSystemEngineeringDocumentRepository,
-    FileSystemPublicationDocumentReader,
+    FileSystemPublicationDocumentProvider,
 )
 from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
@@ -43,10 +42,9 @@ def build_document_normalization_service(
 
 def build_markdown_export_service(workspace: Path) -> MarkdownExportService:
     documents = FileSystemEngineeringDocumentRepository(workspace)
-    views = FileSystemComposedDocumentViewRepository(_work_root_for_workspace(workspace))
     return MarkdownExportService(
         exporter=MarkdownExporter(),
-        documents=FileSystemPublicationDocumentReader(documents, views),
+        documents=FileSystemPublicationDocumentProvider(documents),
     )
 
 
@@ -103,10 +101,7 @@ def build_document_selection_service(
 def build_document_composition_service(workspace: Path):
     from standards_atlas.application.services import DocumentCompositionService
 
-    return DocumentCompositionService(
-        FileSystemEngineeringDocumentRepository(workspace),
-        FileSystemComposedDocumentViewRepository(_work_root_for_workspace(workspace)),
-    )
+    return DocumentCompositionService(FileSystemEngineeringDocumentRepository(workspace))
 
 
 def build_reference_candidate_service(workspace: Path):

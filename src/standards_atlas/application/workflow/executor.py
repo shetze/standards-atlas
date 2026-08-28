@@ -54,7 +54,6 @@ class WorkflowExecutor:
                 if step.document in blocked_documents:
                     continue
                 if step.stage in {
-                    WorkflowStage.COMPOSE,
                     WorkflowStage.MARKDOWN,
                     WorkflowStage.DOORSTOP,
                     WorkflowStage.DOORSTOP_PUBLISH,

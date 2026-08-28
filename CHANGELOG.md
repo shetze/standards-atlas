@@ -25,7 +25,7 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 
 ### Document, family, table, and publication model
 
-- Separated canonical **physical documents** from rebuildable **family publication views**. Multipart standards are composed in `.atlas/work/composed-documents`; `.atlas/data/documents` contains only physical parts.
+- Separated canonical **physical documents** from rebuildable **family publication views**. Multipart standards are composed on demand into runtime-only publication projections; `.atlas/data/documents` contains only physical parts.
 - Added manifest-driven family-aware Docling onboarding with per-part publication metadata and part-aware clause identity.
 - Promoted tables to first-class document structure and implemented the table pipeline: structural capture → deterministic `NormalizedTable` → structured `KnowledgeTable` mapping → provider-neutral retrieval projection.
 - Added table-aware semantic extraction and provenance handling for large standards tables such as IEC 61508 technique/measure matrices.

@@ -1,4 +1,5 @@
 from standards_atlas.adapters.markdown import MarkdownExporter
+from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -188,7 +189,9 @@ def test_export_materializes_embedded_picture_asset(tmp_path):
     )
     target = tmp_path / "sample.md"
 
-    MarkdownExporter().export_document(document, target)
+    MarkdownExporter().export_document(
+        PublicationDocument.from_engineering_document(document), target
+    )
 
     asset = tmp_path / "assets" / f"{digest}.png"
     assert asset.read_bytes() == payload
@@ -279,7 +282,9 @@ def test_export_writes_lineage_manifest(tmp_path):
     )
     target = tmp_path / "sample.md"
 
-    MarkdownExporter().export_document(document, target)
+    MarkdownExporter().export_document(
+        PublicationDocument.from_engineering_document(document), target
+    )
 
     assert target.with_suffix(".md.lineage.json").exists()
 
@@ -343,7 +348,9 @@ def test_visual_only_formula_asset_is_materialized_and_rendered(tmp_path):
     )
     target = tmp_path / "sample.md"
 
-    MarkdownExporter().export_document(document, target)
+    MarkdownExporter().export_document(
+        PublicationDocument.from_engineering_document(document), target
+    )
 
     asset = tmp_path / "assets" / f"{digest}.png"
     assert asset.read_bytes() == payload

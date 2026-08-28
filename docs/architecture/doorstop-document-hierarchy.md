@@ -19,12 +19,10 @@ Relations such as `complements`, `related-to`, `supersedes`, and
 Doorstop parent. A parent is emitted only when both documents are part of the
 same workflow plan, preventing dangling parent references for isolated exports.
 
-For multi-part standards, physical part documents are enriched independently.
-Before export, `document compose-family` rebuilds a publication-only
-`ComposedDocumentView` from the enriched physical documents in catalog order. The view lives below
-`.atlas/work/composed-documents` and is never persisted in the canonical EngineeringDocument
-repository. It includes separately imported supplements, rejects duplicate clause IDs, and is
-consumed by Markdown and Doorstop publication.
+For multi-part standards, physical part documents are enriched independently. Markdown and
+Doorstop export build a runtime-only `PublicationDocument` from the enriched physical documents in
+catalog order. The projection is never persisted. It includes separately imported supplements,
+rejects duplicate clause IDs, and retains lineage to the contributing physical documents.
 
 ## Supplement part identifiers
 
@@ -84,9 +82,10 @@ IEC61508
 ## Persisted part roots
 
 Multi-part families use the AtlasData clause ``0`` entry of each physical part as the
-publishable Doorstop root. The root is retained when deriving the part document, is
-excluded from alignment, survives content enrichment, and is composed back into the
-publication view before export. ``compose-family`` does not invent replacement roots.
+publishable Doorstop root. The root is retained when deriving the part document, is excluded from alignment, survives
+content enrichment, and is projected into the runtime publication model during export. A
+publication-only root is derived only for legacy/supplement inputs that have no persisted clause
+`0` root.
 
 Docling onboarding emits both the structural ``<part>-0`` token and a public TOC record
 with the heading ``Part <part>``. Existing AtlasData roots are normalized to that heading

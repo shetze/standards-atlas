@@ -12,6 +12,7 @@ from standards_atlas.adapters.doorstop import (
 from standards_atlas.adapters.filesystem import (
     FileSystemEngineeringDocumentRepository,
 )
+from standards_atlas.application.model import PublicationDocument
 from standards_atlas.application.services import (
     DocumentExportService,
     DocumentImportService,
@@ -63,7 +64,7 @@ def test_atlasdata_to_repository_to_doorstop_round_trip(
     )
 
     generated_target = export_service.export_document(
-        document=persisted_document,
+        document=PublicationDocument.from_engineering_document(persisted_document),
         target=doorstop_target,
     )
 

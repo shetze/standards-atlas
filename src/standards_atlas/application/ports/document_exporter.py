@@ -1,4 +1,4 @@
-"""Exporter port for engineering documents."""
+"""Exporter port for runtime publication documents."""
 
 from __future__ import annotations
 
@@ -6,18 +6,18 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol
 
-from standards_atlas.domain.model import EngineeringDocument
+from standards_atlas.application.model import PublicationDocument
 
 
-class EngineeringDocumentExporter(Protocol):
-    """Port for adapters that export engineering documents."""
+class PublicationDocumentExporter(Protocol):
+    """Port for adapters that export publication read models."""
 
     def export_document(
         self,
-        document: EngineeringDocument,
+        document: PublicationDocument,
         target: Path,
         *,
         link_targets: Mapping[tuple[str, str], str] | None = None,
     ) -> Path:
-        """Export a document and return the generated target path."""
+        """Export a publication document and return the generated target path."""
         ...

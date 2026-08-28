@@ -4,22 +4,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from standards_atlas.application.ports import EngineeringDocumentExporter
-from standards_atlas.domain.model import EngineeringDocument
+from standards_atlas.application.model import PublicationDocument
+from standards_atlas.application.ports import PublicationDocumentExporter
 
 
 class DocumentExportService:
-    """Export an EngineeringDocument through an exporter port."""
+    """Export a publication document through an exporter port."""
 
     def __init__(
         self,
-        exporter: EngineeringDocumentExporter,
+        exporter: PublicationDocumentExporter,
     ) -> None:
         self._exporter = exporter
 
     def export_document(
         self,
-        document: EngineeringDocument,
+        document: PublicationDocument,
         target: Path,
     ) -> Path:
         """Export a document and return the generated target path."""

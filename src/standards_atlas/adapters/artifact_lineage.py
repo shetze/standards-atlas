@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
     ArtifactKind,
     ArtifactLineage,
     ArtifactReference,
-    EngineeringDocument,
     artifact_reference,
 )
 from standards_atlas.shared.artifacts import write_json
@@ -17,7 +17,7 @@ from standards_atlas.shared.hashing import sha256_file
 
 def write_file_lineage_manifest(
     output: Path,
-    document: EngineeringDocument,
+    document: PublicationDocument,
     *,
     kind: ArtifactKind,
     media_type: str,
@@ -40,7 +40,7 @@ def write_file_lineage_manifest(
 
 def write_directory_lineage_manifest(
     output: Path,
-    document: EngineeringDocument,
+    document: PublicationDocument,
     *,
     kind: ArtifactKind,
 ) -> Path:
@@ -64,7 +64,10 @@ def write_directory_lineage_manifest(
     return manifest
 
 
-def _document_parent(document: EngineeringDocument) -> tuple[ArtifactReference, ...]:
+def _document_parent(document: PublicationDocument) -> tuple[ArtifactReference, ...]:
+    source_artifacts = getattr(document, "source_artifacts", ())
+    if source_artifacts:
+        return source_artifacts
     return (document.lineage.artifact,) if document.lineage is not None else ()
 
 

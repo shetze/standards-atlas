@@ -1,4 +1,4 @@
-"""Map EngineeringDocument objects to Doorstop export items."""
+"""Map PublicationDocument objects to Doorstop export items."""
 
 from __future__ import annotations
 
@@ -13,12 +13,12 @@ from standards_atlas.adapters.doorstop.id_generator import (
     required_doorstop_id_width,
 )
 from standards_atlas.adapters.doorstop.models import DoorstopItemModel
+from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
     AnnotationType,
     Clause,
     ClauseAnnotation,
     ClauseType,
-    EngineeringDocument,
 )
 from standards_atlas.domain.model.doorstop_attributes import (
     DoorstopReference,
@@ -26,7 +26,7 @@ from standards_atlas.domain.model.doorstop_attributes import (
 
 
 class DoorstopItemMapper:
-    """Maps EngineeringDocument clauses to Doorstop items."""
+    """Maps PublicationDocument clauses to Doorstop items."""
 
     def __init__(
         self,
@@ -41,7 +41,7 @@ class DoorstopItemMapper:
 
     def map_document(
         self,
-        document: EngineeringDocument,
+        document: PublicationDocument,
     ) -> tuple[DoorstopItemModel, ...]:
         """Map all clauses of a document."""
 
@@ -187,7 +187,7 @@ class DoorstopItemMapper:
 
     @staticmethod
     def _group_annotations(
-        document: EngineeringDocument,
+        document: PublicationDocument,
     ) -> dict[str, tuple[ClauseAnnotation, ...]]:
         grouped: dict[str, list[ClauseAnnotation]] = defaultdict(list)
 
@@ -198,7 +198,7 @@ class DoorstopItemMapper:
 
 
 def _ensure_identifier_width(
-    document: EngineeringDocument,
+    document: PublicationDocument,
     clauses: tuple[Clause, ...],
     context: DoorstopIdContext,
 ) -> None:

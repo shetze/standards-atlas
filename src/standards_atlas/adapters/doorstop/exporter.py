@@ -15,11 +15,11 @@ from standards_atlas.adapters.doorstop.id_generator import DoorstopIdContext
 from standards_atlas.adapters.doorstop.item_mapper import DoorstopItemMapper
 from standards_atlas.adapters.doorstop.item_renderer import DoorstopItemRenderer
 from standards_atlas.adapters.doorstop.models import DoorstopDocumentModel
-from standards_atlas.domain.model import EngineeringDocument
+from standards_atlas.application.model import PublicationDocument
 
 
 class DoorstopExporter:
-    """Export EngineeringDocument objects to a Doorstop workspace."""
+    """Export PublicationDocument objects to a Doorstop workspace."""
 
     def __init__(
         self,
@@ -31,7 +31,7 @@ class DoorstopExporter:
 
     def export_document(
         self,
-        document: EngineeringDocument,
+        document: PublicationDocument,
         target: Path | None = None,
     ) -> Path:
         prefix = self._config.prefix or _normalize_prefix(document.key.value)

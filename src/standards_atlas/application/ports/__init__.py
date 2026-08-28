@@ -12,7 +12,7 @@ from standards_atlas.application.ports.artifact_repositories import (
     ReferenceCandidateStore,
 )
 from standards_atlas.application.ports.document_converter import DocumentConverter
-from standards_atlas.application.ports.document_exporter import EngineeringDocumentExporter
+from standards_atlas.application.ports.document_exporter import PublicationDocumentExporter
 from standards_atlas.application.ports.document_importer import EngineeringDocumentImporter
 from standards_atlas.application.ports.document_repositories import (
     EngineeringDocumentReader,
@@ -31,8 +31,7 @@ from standards_atlas.application.ports.formula_transcriptions import (
 )
 from standards_atlas.application.ports.formula_visuals import FormulaVisualEnricher
 from standards_atlas.application.ports.publication import (
-    ComposedDocumentViewStore,
-    PublicationDocumentReader,
+    PublicationDocumentProvider,
 )
 from standards_atlas.application.ports.retrieval import (
     RetrievalProjectionWriter,
@@ -48,8 +47,7 @@ from standards_atlas.application.ports.workflow_artifacts import (
 )
 
 __all__ = [
-    "PublicationDocumentReader",
-    "ComposedDocumentViewStore",
+    "PublicationDocumentProvider",
     "FormalSemanticProjectionRepository",
     "FormalSemanticProjector",
     "FormalSemanticSerializer",
@@ -64,7 +62,7 @@ __all__ = [
     "DoclingDocumentReader",
     "DocumentConverter",
     "EngineeringConstructionContractStore",
-    "EngineeringDocumentExporter",
+    "PublicationDocumentExporter",
     "EngineeringDocumentImporter",
     "EngineeringDocumentReader",
     "EngineeringDocumentRepository",

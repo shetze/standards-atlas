@@ -14,9 +14,6 @@ from standards_atlas.application.services import DocumentImportService
 from standards_atlas.application.services.content_enrichment_service import (
     ContentEnrichmentError,
 )
-from standards_atlas.application.services.document_composition_service import (
-    DocumentCompositionError,
-)
 from standards_atlas.application.services.document_selection_service import (
     DocumentSelectionError,
 )
@@ -27,7 +24,6 @@ from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import document_app
 from standards_atlas.cli.composition import (
     build_content_enrichment_service,
-    build_document_composition_service,
     build_document_selection_service,
     build_semantic_classification_service,
     build_structural_taxonomy_service,
@@ -131,41 +127,6 @@ def derive_document_part(
     typer.echo(f"Derived key           : {document.key.value}")
     typer.echo(f"Clauses               : {len(document.clauses)}")
     typer.echo(f"Persisted document    : {workspace / 'documents' / (target_key + '.json')}")
-
-
-@document_app.command("compose-family")
-def compose_family_document(
-    family_key: Annotated[str, typer.Argument(help="Logical family key to compose.")],
-    part: Annotated[
-        list[str] | None,
-        typer.Option("--part", help="Enriched physical part key; repeat for every part."),
-    ] = cli_defaults.DEFAULT_NONE,
-    workspace: Annotated[
-        Path, typer.Option("--workspace", "-w", help="Standards Atlas workspace directory.")
-    ] = cli_defaults.DEFAULT_WORKSPACE,
-    family_title: Annotated[
-        str | None,
-        typer.Option("--title", help="Title of the logical family publication view."),
-    ] = cli_defaults.DEFAULT_NONE,
-) -> None:
-    """Compose physical parts into a rebuildable publication view."""
-    part_keys = tuple(part or ())
-    if not part_keys:
-        raise typer.BadParameter("At least one --part document key is required.")
-    try:
-        view = build_document_composition_service(workspace).compose(
-            family_key, part_keys, family_title=family_title
-        )
-    except (DocumentCompositionError, FileNotFoundError) as error:
-        raise typer.BadParameter(str(error)) from error
-
-    document = view.document
-    enriched = sum(bool(clause.content) for clause in document.clauses)
-    typer.echo(f"Family view           : {view.family_key}")
-    typer.echo(f"Part documents        : {', '.join(part_keys)}")
-    typer.echo(f"Clauses               : {len(document.clauses)}")
-    typer.echo(f"Clauses with content  : {enriched}")
-    typer.echo(f"Persistence           : .atlas/work/composed-documents/{family_key}.json")
 
 
 @document_app.command("enrich-content")

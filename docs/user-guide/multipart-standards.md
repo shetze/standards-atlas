@@ -1,6 +1,6 @@
 # Multi-part standards
 
-A standard family may be extracted from several PDFs while keeping each physical part as the only canonical EngineeringDocument. Publication uses a rebuildable composed family view.
+A standard family may be extracted from several PDFs while keeping each physical part as the only canonical EngineeringDocument. Publication builds a runtime-only family projection on demand.
 
 ![Multi-part composition](../architecture/diagrams/svg/multipart-composition.svg)
 
@@ -10,11 +10,10 @@ Useful commands include:
 
 ```bash
 uv run standards-atlas document derive-part FAMILY PART
-uv run standards-atlas document compose-family FAMILY
 uv run standards-atlas atlasdata onboard-family FAMILY --manifest manifests/standards.yaml
 ```
 
-Composition validates part identity, root structure, and key uniqueness. It writes `.atlas/work/composed-documents/<family>.json`, never `.atlas/data/documents/<family>.json`. Markdown export can emit separate files for all parts in one invocation; Doorstop export creates a root item for each part.
+Composition validates part identity, root structure, and key uniqueness at export time. No composed family artifact is persisted. The workflow passes the ordered physical part keys to Markdown and Doorstop export; Markdown can emit separate files for all parts in one invocation and Doorstop creates a root item for each part.
 
 
 ## Family AtlasData onboarding

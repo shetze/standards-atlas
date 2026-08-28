@@ -49,7 +49,6 @@ The unified `--manifests` interface belongs to the workflow envelope. Direct low
 - `document import`
 - `document derive`
 - `document derive-part`
-- `document compose-family`
 - `document enrich-content`
 - `document classify-taxonomy`
 - `document classify-semantics`

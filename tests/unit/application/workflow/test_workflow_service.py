@@ -405,24 +405,13 @@ def test_supplement_is_imported_before_reference_detection() -> None:
     assert import_index < references_index
 
 
-def test_multi_part_family_is_composed_before_exports() -> None:
+def test_multi_part_family_is_composed_on_demand_by_exports() -> None:
     catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = EndToEndWorkflowService().plan(
         catalog, family_keys=("IEC61508",), catalog_root=Path.cwd()
     )
 
-    compose = [step for step in plan.steps if step.stage == WorkflowStage.COMPOSE]
-    assert len(compose) == 1
-    assert compose[0].document == "IEC61508"
-    assert compose[0].command[:6] == (
-        "uv",
-        "run",
-        "standards-atlas",
-        "document",
-        "compose-family",
-        "IEC61508",
-    )
-    assert compose[0].output_paths == (".atlas/work/composed-documents/IEC61508.json",)
+    assert all(step.stage.value != "compose" for step in plan.steps)
     family_import = next(
         step
         for step in plan.steps
@@ -436,13 +425,17 @@ def test_multi_part_family_is_composed_before_exports() -> None:
         for step in plan.steps
         for path in step.output_paths
     )
-    export_indices = [
-        index
-        for index, step in enumerate(plan.steps)
+
+    exports = [
+        step
+        for step in plan.steps
         if step.stage in {WorkflowStage.MARKDOWN, WorkflowStage.DOORSTOP}
     ]
-    assert export_indices
-    assert plan.steps.index(compose[0]) < min(export_indices)
+    assert exports
+    for export in exports:
+        assert export.command.count("--part") >= 2
+        assert "--title" in export.command
+        assert "IEC 61508" in export.command
 
 
 def test_doorstop_parent_prefers_specific_catalog_relationships() -> None:

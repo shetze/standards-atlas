@@ -16,12 +16,10 @@ from standards_atlas.adapters.filesystem.retrieval_projection_repository import 
     FileSystemTableRetrievalProjectionRepository,
 )
 
-from .composed_document_view_repository import FileSystemComposedDocumentViewRepository
-from .publication_document_reader import FileSystemPublicationDocumentReader
+from .publication_document_provider import FileSystemPublicationDocumentProvider
 
 __all__ = [
-    "FileSystemPublicationDocumentReader",
-    "FileSystemComposedDocumentViewRepository",
+    "FileSystemPublicationDocumentProvider",
     "FileSystemEngineeringDocumentRepository",
     "FileSystemFormulaTranscriptionRepository",
     "FileSystemKnowledgeTableRepository",

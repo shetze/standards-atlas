@@ -65,7 +65,7 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
         "FAMILY", ("PART-1", "SUPPLEMENT", "PART-2")
     )
 
-    assert [clause.reference.clause for clause in composed.document.clauses] == [
+    assert [clause.reference.clause for clause in composed.clauses] == [
         "0",
         "A",
         "0",
@@ -73,18 +73,19 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
         "0",
         "B",
     ]
-    assert [clause.heading for clause in composed.document.clauses[::2]] == [
+    assert [clause.heading for clause in composed.clauses[::2]] == [
         "Part 1",
         "Part 3-1",
         "Part 2",
     ]
-    assert [clause.content[0].text for clause in composed.document.clauses[1::2]] == [
+    assert [clause.content[0].text for clause in composed.clauses[1::2]] == [
         "Content A",
         "Supplement content",
         "Content B",
     ]
-    assert not repository.exists(DocumentKey(value="FAMILY"))
-    assert (tmp_path / "work" / "composed-documents" / "FAMILY.json").exists()
+    assert repository.exists(DocumentKey(value="FAMILY"))
+    assert composed.key == DocumentKey(value="FAMILY")
+    assert composed.part_keys == ("PART-1", "SUPPLEMENT", "PART-2")
 
 
 def test_compose_creates_root_for_legacy_supplement_without_clause_zero(
@@ -95,7 +96,7 @@ def test_compose_creates_root_for_legacy_supplement_without_clause_zero(
 
     composed = build_document_composition_service(tmp_path).compose("FAMILY", ("IEC61508-3-1",))
 
-    root, clause = composed.document.clauses
+    root, clause = composed.clauses
     assert root.reference == StandardReference(standard="TEST", part="3§1", year=2026, clause="0")
     assert root.reference.part == "3§1"
     assert root.heading == "Part 3-1"

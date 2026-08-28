@@ -9,15 +9,13 @@ import typer
 
 from standards_atlas.adapters.doorstop import DoorstopExportConfig, DoorstopExporter
 from standards_atlas.adapters.filesystem import (
-    FileSystemComposedDocumentViewRepository,
     FileSystemEngineeringDocumentRepository,
-    FileSystemPublicationDocumentReader,
+    FileSystemPublicationDocumentProvider,
 )
 from standards_atlas.application.services import DocumentExportService
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import document_export_app
 from standards_atlas.cli.composition import build_markdown_export_service
-from standards_atlas.domain.model import DocumentKey
 
 
 @document_export_app.command("markdown")
@@ -41,6 +39,14 @@ def export_document_to_markdown(
             resolve_path=True,
         ),
     ] = cli_defaults.DEFAULT_NONE,
+    part: Annotated[
+        list[str] | None,
+        typer.Option("--part", help="Physical part key; repeat for a family publication."),
+    ] = cli_defaults.DEFAULT_NONE,
+    family_title: Annotated[
+        str | None,
+        typer.Option("--title", help="Logical family title used for runtime composition."),
+    ] = cli_defaults.DEFAULT_NONE,
     replace_existing: Annotated[
         bool,
         typer.Option("--replace/--no-replace", help="Replace existing Markdown files."),
@@ -54,6 +60,8 @@ def export_document_to_markdown(
             document_key=document_key,
             target_directory=export_target,
             replace_existing=replace_existing,
+            part_keys=tuple(part or ()),
+            family_title=family_title,
         )
     except (FileNotFoundError, FileExistsError, ValueError) as exc:
         typer.echo(str(exc), err=True)
@@ -98,6 +106,14 @@ def export_document_to_doorstop(
             dir_okay=True,
             resolve_path=True,
         ),
+    ] = cli_defaults.DEFAULT_NONE,
+    part: Annotated[
+        list[str] | None,
+        typer.Option("--part", help="Physical part key; repeat for a family publication."),
+    ] = cli_defaults.DEFAULT_NONE,
+    family_title: Annotated[
+        str | None,
+        typer.Option("--title", help="Logical family title used for runtime composition."),
     ] = cli_defaults.DEFAULT_NONE,
     prefix: Annotated[
         str | None,
@@ -152,20 +168,16 @@ def export_document_to_doorstop(
 ) -> None:
     """Export a persisted EngineeringDocument as a Doorstop document."""
     repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
-    views = FileSystemComposedDocumentViewRepository(
-        workspace.parent / "work" if workspace.name == "data" else workspace / "work"
-    )
-    publications = FileSystemPublicationDocumentReader(repository, views)
+    publications = FileSystemPublicationDocumentProvider(repository)
 
-    key = DocumentKey(value=document_key)
     try:
-        document = publications.load(key)
-    except FileNotFoundError:
-        typer.echo(
-            f"No persisted document found for key: {document_key}; "
-            "no composed publication view exists",
-            err=True,
+        document = publications.load(
+            document_key,
+            part_keys=tuple(part or ()),
+            family_title=family_title,
         )
+    except FileNotFoundError:
+        typer.echo(f"No persisted document found for key: {document_key}", err=True)
         raise typer.Exit(code=1) from None
 
     export_target = (

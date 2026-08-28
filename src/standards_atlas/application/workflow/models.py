@@ -29,7 +29,6 @@ class WorkflowStage(StrEnum):
     ENRICH = "enrich"
     TAXONOMY = "taxonomy"
     SEMANTIC_CLASSIFICATION = "semantic-classification"
-    COMPOSE = "compose"
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"
     DOORSTOP_PUBLISH = "doorstop-publish"

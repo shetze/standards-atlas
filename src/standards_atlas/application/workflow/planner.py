@@ -399,28 +399,7 @@ class WorkflowPlanner:
                         ),
                     )
                 )
-        if family.source is None:
-            part_keys = tuple(key for key, _, _ in documents)
-            steps.append(
-                WorkflowStep(
-                    family.key,
-                    family.key,
-                    WorkflowStage.COMPOSE,
-                    (
-                        "uv",
-                        "run",
-                        "standards-atlas",
-                        "document",
-                        "compose-family",
-                        family.key,
-                        *(value for key in part_keys for value in ("--part", key)),
-                        "--title",
-                        family.name,
-                    ),
-                    ArtifactPolicy.DERIVED,
-                    output_paths=(f".atlas/work/composed-documents/{family.key}.json",),
-                )
-            )
+        part_keys = tuple(key for key, _, _ in documents) if family.source is None else ()
         if family.exports.markdown:
             steps.append(
                 WorkflowStep(
@@ -437,6 +416,8 @@ class WorkflowPlanner:
                         family.key,
                         "--target",
                         f"local/exports/markdown/{hierarchy_key or family.key}",
+                        *(value for key in part_keys for value in ("--part", key)),
+                        *(("--title", family.name) if part_keys else ()),
                     ),
                     ArtifactPolicy.DERIVED,
                     output_globs=(
@@ -464,6 +445,8 @@ class WorkflowPlanner:
                         *(("--parent", doorstop_parent) if doorstop_parent else ()),
                         "--target",
                         f".atlas/work/doorstop/{hierarchy_key or family.key}/{family.key}",
+                        *(value for key in part_keys for value in ("--part", key)),
+                        *(("--title", family.name) if part_keys else ()),
                         "--no-init-git",
                         *(("--no-validate",) if hierarchy_key else ()),
                     ),

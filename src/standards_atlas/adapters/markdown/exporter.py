@@ -1,4 +1,4 @@
-"""Markdown export adapter for EngineeringDocument objects."""
+"""Markdown export adapter for PublicationDocument objects."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from standards_atlas.adapters.artifact_lineage import write_file_lineage_manifest
+from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
     CodeBlock,
     DocumentStructure,
-    EngineeringDocument,
     FormulaBlock,
     ListBlock,
     NoteBlock,
@@ -26,11 +26,11 @@ _OMITTED_STRUCTURES = {DocumentStructure.FOREWORD, DocumentStructure.INTRODUCTIO
 
 
 class MarkdownExporter:
-    """Render one EngineeringDocument as a standalone Markdown file."""
+    """Render one PublicationDocument as a standalone Markdown file."""
 
     def export_document(
         self,
-        document: EngineeringDocument,
+        document: PublicationDocument,
         target: Path,
         *,
         link_targets: Mapping[tuple[str, str], str] | None = None,
@@ -51,7 +51,7 @@ class MarkdownExporter:
 
     def render(
         self,
-        document: EngineeringDocument,
+        document: PublicationDocument,
         *,
         link_targets: Mapping[tuple[str, str], str] | None = None,
     ) -> str:
@@ -79,7 +79,7 @@ class MarkdownExporter:
         return "\n".join(lines).rstrip() + "\n"
 
 
-def _exportable_clauses(document: EngineeringDocument):
+def _exportable_clauses(document: PublicationDocument):
     for clause in document.clauses:
         reference = clause.reference.clause.strip()
         if not reference or reference == "0":
@@ -142,7 +142,7 @@ def _anchor(reference: str) -> str:
 def _render_block(
     block: object,
     clause: object,
-    document: EngineeringDocument,
+    document: PublicationDocument,
     *,
     link_targets: Mapping[tuple[str, str], str] | None = None,
 ) -> str:
@@ -212,7 +212,7 @@ def _render_list_item(
     depth: int = 0,
     *,
     clause: object,
-    document: EngineeringDocument,
+    document: PublicationDocument,
     link_targets: Mapping[tuple[str, str], str] | None = None,
 ) -> str:
     marker = f"{index}." if ordered else "-"
@@ -236,7 +236,7 @@ def _render_list_item(
 def _link_references(
     text: str,
     clause: object,
-    document: EngineeringDocument,
+    document: PublicationDocument,
     *,
     link_targets: Mapping[tuple[str, str], str] | None = None,
 ) -> str:
@@ -280,9 +280,9 @@ def _link_references(
 
 
 def _materialize_visual_assets(
-    document: EngineeringDocument,
+    document: PublicationDocument,
     target_directory: Path,
-) -> EngineeringDocument:
+) -> PublicationDocument:
     """Write embedded visual payloads beside Markdown and rewrite their references."""
     assets_directory = target_directory / "assets"
     changed = False

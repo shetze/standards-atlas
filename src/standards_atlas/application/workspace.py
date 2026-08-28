@@ -49,11 +49,6 @@ class WorkspaceLayout:
         return self.work / "doorstop"
 
     @property
-    def composed_documents(self) -> Path:
-        """Return rebuildable multi-part publication views."""
-        return self.work / "composed-documents"
-
-    @property
     def family_sources(self) -> Path:
         """Return temporary imported masters used only to derive physical parts."""
         return self.work / "family-sources"

@@ -7,9 +7,6 @@ import shutil
 from pathlib import Path
 
 from standards_atlas.adapters.docling import DoclingArtifactRepository
-from standards_atlas.adapters.filesystem.composed_document_view_repository import (
-    CURRENT_COMPOSED_DOCUMENT_VIEW_SCHEMA_VERSION,
-)
 from standards_atlas.adapters.filesystem.document_repository import (
     CURRENT_DOCUMENT_SCHEMA_VERSION,
 )
@@ -55,10 +52,6 @@ class FileSystemWorkflowArtifactStore:
             or normalized.startswith(".atlas/work/family-sources/documents/")
         ) and normalized.endswith(".json"):
             return _json_schema_version(path) == CURRENT_DOCUMENT_SCHEMA_VERSION
-        if normalized.startswith(".atlas/work/composed-documents/") and normalized.endswith(
-            ".json"
-        ):
-            return _json_schema_version(path) == CURRENT_COMPOSED_DOCUMENT_VIEW_SCHEMA_VERSION
         return True
 
     def record_completion(self, step: WorkflowStep, project_root: Path) -> None:

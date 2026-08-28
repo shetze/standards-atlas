@@ -10,11 +10,11 @@ from pathlib import Path
 from standards_atlas.application.analysis import (
     resolve_cross_document_reference_relations,
 )
+from standards_atlas.application.model import PublicationDocument
 from standards_atlas.application.ports import (
-    EngineeringDocumentExporter,
-    PublicationDocumentReader,
+    PublicationDocumentExporter,
+    PublicationDocumentProvider,
 )
-from standards_atlas.domain.model import DocumentKey, EngineeringDocument
 
 
 @dataclass(frozen=True)
@@ -29,8 +29,8 @@ class MarkdownExportService:
 
     def __init__(
         self,
-        exporter: EngineeringDocumentExporter,
-        documents: PublicationDocumentReader,
+        exporter: PublicationDocumentExporter,
+        documents: PublicationDocumentProvider,
     ) -> None:
         self._exporter = exporter
         self._documents = documents
@@ -41,9 +41,15 @@ class MarkdownExportService:
         target_directory: Path,
         *,
         replace_existing: bool = True,
+        part_keys: tuple[str, ...] = (),
+        family_title: str | None = None,
     ) -> MarkdownExportResult:
-        document = self._documents.load(DocumentKey(value=document_key))
+        document = self._documents.load(
+            document_key, part_keys=part_keys, family_title=family_title
+        )
         available_documents = self._documents.list()
+        if all(candidate.key != document.key for candidate in available_documents):
+            available_documents = (*available_documents, document)
         document = resolve_cross_document_reference_relations(
             document,
             available_documents,
@@ -79,9 +85,9 @@ class MarkdownExportService:
 
 def _build_clause_target_index(
     *,
-    current_document: EngineeringDocument,
+    current_document: PublicationDocument,
     current_target_directory: Path,
-    available_documents: tuple[EngineeringDocument, ...],
+    available_documents: tuple[PublicationDocument, ...],
 ) -> dict[tuple[str, str], tuple[Path, str]]:
     export_root = current_target_directory.parent
     index: dict[tuple[str, str], tuple[Path, str]] = {}
@@ -114,8 +120,8 @@ def _relative_link_targets(
 
 
 def _target_paths_for_parts(
-    document: EngineeringDocument,
-    parts: tuple[tuple[str | None, EngineeringDocument], ...],
+    document: PublicationDocument,
+    parts: tuple[tuple[str | None, PublicationDocument], ...],
     target_directory: Path,
 ) -> tuple[Path, ...]:
     targets = []
@@ -126,15 +132,15 @@ def _target_paths_for_parts(
 
 
 def _split_document(
-    document: EngineeringDocument,
-) -> tuple[tuple[str | None, EngineeringDocument], ...]:
+    document: PublicationDocument,
+) -> tuple[tuple[str | None, PublicationDocument], ...]:
     volumes = sorted(
         {clause.reference.part for clause in document.clauses if clause.reference.part},
         key=_natural_key,
     )
     if not volumes:
         return ((None, document),)
-    parts: list[tuple[str | None, EngineeringDocument]] = []
+    parts: list[tuple[str | None, PublicationDocument]] = []
     for volume in volumes:
         clauses = tuple(
             clause

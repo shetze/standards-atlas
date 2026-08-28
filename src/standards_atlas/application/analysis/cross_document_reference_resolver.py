@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
+from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
     Clause,
     EngineeringDocument,
@@ -20,9 +21,9 @@ _REFERENCE_PREFIX = r"(?:clauses?|subclauses?|paragraphs?)"
 
 
 def resolve_cross_document_reference_relations(
-    document: EngineeringDocument,
-    available_documents: Iterable[EngineeringDocument],
-) -> EngineeringDocument:
+    document: EngineeringDocument | PublicationDocument,
+    available_documents: Iterable[EngineeringDocument | PublicationDocument],
+) -> EngineeringDocument | PublicationDocument:
     """Materialize unambiguous explicit references to clauses in available documents.
 
     Resolution is deliberately conservative: the referenced document must be named in
@@ -67,9 +68,9 @@ def resolve_cross_document_reference_relations(
 
 
 def _document_aliases(
-    documents: tuple[EngineeringDocument, ...],
-) -> tuple[tuple[str, tuple[EngineeringDocument, ...]], ...]:
-    candidates: dict[str, tuple[str, dict[str, EngineeringDocument]]] = {}
+    documents: tuple[EngineeringDocument | PublicationDocument, ...],
+) -> tuple[tuple[str, tuple[EngineeringDocument | PublicationDocument, ...]], ...]:
+    candidates: dict[str, tuple[str, dict[str, EngineeringDocument | PublicationDocument]]] = {}
     for document in documents:
         values = {document.key.value, document.title}
         values.update(
@@ -122,9 +123,9 @@ def _alias_variants(value: str) -> tuple[str, ...]:
 
 def _resolve_match(
     *,
-    source_document: EngineeringDocument,
+    source_document: EngineeringDocument | PublicationDocument,
     source_clause: Clause,
-    target_documents: tuple[EngineeringDocument, ...],
+    target_documents: tuple[EngineeringDocument | PublicationDocument, ...],
     matched_alias: str,
     reference: str,
     display_text: str,
@@ -138,7 +139,7 @@ def _resolve_match(
         and _alias_matches_clause(matched_alias, candidate)
         and not (target_document.key == source_document.key and candidate.id == source_clause.id)
     ]
-    by_clause_id: dict[str, list[tuple[EngineeringDocument, Clause]]] = {}
+    by_clause_id: dict[str, list[tuple[EngineeringDocument | PublicationDocument, Clause]]] = {}
     for candidate in candidates:
         by_clause_id.setdefault(candidate[1].id.value, []).append(candidate)
     if len(by_clause_id) != 1:
@@ -169,8 +170,8 @@ def _resolve_match(
 
 
 def _target_preference(
-    target: EngineeringDocument,
-    source: EngineeringDocument,
+    target: EngineeringDocument | PublicationDocument,
+    source: EngineeringDocument | PublicationDocument,
     matched_alias: str,
 ) -> tuple[int, int, int, str]:
     normalized_alias = re.sub(r"[^a-z0-9]", "", matched_alias.casefold())

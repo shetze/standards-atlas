@@ -1,14 +1,11 @@
-"""Compose physical part documents into rebuildable publication views."""
+"""Compose canonical physical parts into runtime publication projections."""
 
 from __future__ import annotations
 
 import hashlib
 
-from standards_atlas.application.model import ComposedDocumentView
-from standards_atlas.application.ports import (
-    ComposedDocumentViewStore,
-    EngineeringDocumentRepository,
-)
+from standards_atlas.application.model import PublicationDocument
+from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -16,8 +13,7 @@ from standards_atlas.domain.model import (
     DocumentKey,
     EngineeringDocument,
 )
-from standards_atlas.domain.model.identifiers import StandardKey, StandardReference
-from standards_atlas.domain.model.standard import Standard
+from standards_atlas.domain.model.identifiers import StandardReference
 
 
 class DocumentCompositionError(ValueError):
@@ -25,15 +21,10 @@ class DocumentCompositionError(ValueError):
 
 
 class DocumentCompositionService:
-    """Build a publication-only family view from canonical physical parts."""
+    """Build a runtime-only family publication from canonical physical parts."""
 
-    def __init__(
-        self,
-        documents: EngineeringDocumentRepository,
-        views: ComposedDocumentViewStore,
-    ) -> None:
+    def __init__(self, documents: EngineeringDocumentRepository) -> None:
         self._documents = documents
-        self._views = views
 
     def compose(
         self,
@@ -41,8 +32,8 @@ class DocumentCompositionService:
         part_keys: tuple[str, ...],
         *,
         family_title: str | None = None,
-    ) -> ComposedDocumentView:
-        parts = [self._documents.load(DocumentKey(value=key)) for key in part_keys]
+    ) -> PublicationDocument:
+        parts = tuple(self._documents.load(DocumentKey(value=key)) for key in part_keys)
         if not parts:
             raise DocumentCompositionError(f"Part documents for {family_key!r} contain no parts.")
 
@@ -62,53 +53,32 @@ class DocumentCompositionService:
         if not composed_clauses:
             raise DocumentCompositionError(f"Part documents for {family_key!r} contain no clauses.")
 
-        document = _publication_document(
-            family_key,
-            tuple(parts),
-            tuple(composed_clauses),
-            family_title=family_title,
-        )
-        view = ComposedDocumentView(
-            family_key=family_key,
+        first = parts[0]
+        return PublicationDocument(
+            key=DocumentKey(value=family_key),
+            title=family_title or _family_title(first, family_key),
+            clauses=tuple(composed_clauses),
+            annotations=tuple(annotation for part in parts for annotation in part.annotations),
+            tables=tuple(table for part in parts for table in part.tables),
+            table_index=tuple(entry for part in parts for entry in part.table_index),
+            source_artifacts=tuple(
+                part.lineage.artifact for part in parts if part.lineage is not None
+            ),
             part_keys=part_keys,
-            document=document,
         )
-        self._views.save(view)
-        family_document_key = DocumentKey(value=family_key)
-        if self._documents.exists(family_document_key):
-            self._documents.delete(family_document_key)
-        return view
 
-
-def _publication_document(
-    family_key: str,
-    parts: tuple[EngineeringDocument, ...],
-    clauses: tuple[Clause, ...],
-    *,
-    family_title: str | None,
-) -> EngineeringDocument:
-    first = parts[0]
-    title = family_title or _family_title(first, family_key)
-    annotations = tuple(annotation for part in parts for annotation in part.annotations)
-    tables = tuple(table for part in parts for table in part.tables)
-    table_index = tuple(entry for part in parts for entry in part.table_index)
-    common = {
-        "title": title,
-        "clauses": clauses,
-        "annotations": annotations,
-        "tables": tables,
-        "table_index": table_index,
-    }
-    if isinstance(first, Standard):
-        return first.model_copy(
-            update={
-                **common,
-                "key": StandardKey(value=family_key),
-                "name": title,
-                "parent_key": None,
-            }
+    def project(self, document_key: str) -> PublicationDocument:
+        """Project one canonical physical document into the publication model."""
+        return PublicationDocument.from_engineering_document(
+            self._documents.load(DocumentKey(value=document_key))
         )
-    return first.model_copy(update={**common, "key": DocumentKey(value=family_key)})
+
+    def list_physical(self) -> tuple[PublicationDocument, ...]:
+        """Return runtime projections of all readable canonical physical documents."""
+        return tuple(
+            PublicationDocument.from_engineering_document(document)
+            for document in self._documents.list_readable()
+        )
 
 
 def _family_title(document: EngineeringDocument, family_key: str) -> str:
@@ -120,7 +90,7 @@ def _family_title(document: EngineeringDocument, family_key: str) -> str:
 
 
 def _part_root_clause(part: EngineeringDocument) -> Clause:
-    """Return a persisted part root or create one for legacy supplements."""
+    """Return the persisted part root or derive a publication-only root."""
     roots = [clause for clause in part.clauses if clause.reference.clause.strip() == "0"]
     if len(roots) > 1:
         raise DocumentCompositionError(

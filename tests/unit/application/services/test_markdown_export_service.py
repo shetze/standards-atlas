@@ -1,4 +1,7 @@
-from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.adapters.filesystem import (
+    FileSystemEngineeringDocumentRepository,
+    FileSystemPublicationDocumentProvider,
+)
 from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.application.services import MarkdownExportService
 from standards_atlas.domain.model import (
@@ -26,9 +29,9 @@ def test_exports_multi_part_standard_to_separate_files(tmp_path):
     )
     repository.save(document)
 
-    result = MarkdownExportService(MarkdownExporter(), repository).export(
-        "IEC11889", tmp_path / "markdown"
-    )
+    result = MarkdownExportService(
+        MarkdownExporter(), FileSystemPublicationDocumentProvider(repository)
+    ).export("IEC11889", tmp_path / "markdown")
 
     assert [path.name for path in result.generated_files] == ["IEC11889-1.md", "IEC11889-2.md"]
     assert "Part one" in result.generated_files[0].read_text()
@@ -43,9 +46,9 @@ def test_exports_single_part_document_to_one_file(tmp_path):
     document = document.model_copy(update={"clauses": (_clause("c1", None, "1", "Scope"),)})
     repository.save(document)
 
-    result = MarkdownExportService(MarkdownExporter(), repository).export(
-        "EN50716", tmp_path / "markdown"
-    )
+    result = MarkdownExportService(
+        MarkdownExporter(), FileSystemPublicationDocumentProvider(repository)
+    ).export("EN50716", tmp_path / "markdown")
 
     assert [path.name for path in result.generated_files] == ["EN50716.md"]
 
@@ -105,7 +108,9 @@ def test_links_clause_in_another_exported_document(tmp_path):
     repository.save(source)
     repository.save(target)
 
-    result = MarkdownExportService(MarkdownExporter(), repository).export(
+    result = MarkdownExportService(
+        MarkdownExporter(), FileSystemPublicationDocumentProvider(repository)
+    ).export(
         "ISO26262-5",
         tmp_path / "markdown" / "ISO26262-5",
     )
@@ -152,7 +157,9 @@ def test_links_clause_in_another_part_file(tmp_path):
     )
     repository.save(document)
 
-    result = MarkdownExportService(MarkdownExporter(), repository).export(
+    result = MarkdownExportService(
+        MarkdownExporter(), FileSystemPublicationDocumentProvider(repository)
+    ).export(
         "ISO26262",
         tmp_path / "markdown" / "ISO26262",
     )
