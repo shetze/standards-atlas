@@ -244,7 +244,6 @@ def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> No
         actor="Verifier",
         relation_class="performance",
         target="verification",
-        relation=RoleRelationType.VERIFIES,
     )
     initial = SemanticClassification(
         role_semantics_present=True,
@@ -360,7 +359,7 @@ def test_set_like_semantic_dimensions_are_deduplicated_before_validation() -> No
 
 
 def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> None:
-    legacy = SemanticClassification.model_construct(
+    existing = SemanticClassification.model_construct(
         statement_functions=(StatementFunction.REQUIREMENT, StatementFunction.REQUIREMENT),
         knowledge_kinds=(),
         process_functions=(ProcessFunction.ACTIVITY, ProcessFunction.ACTIVITY),
@@ -374,7 +373,7 @@ def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> 
         domain_functions=(),
         relations=(),
     )
-    document = _document_with_semantic(legacy)
+    document = _document_with_semantic(existing)
     documents = _Documents(document)
     service = SemanticClassificationService(
         documents=documents,
@@ -401,9 +400,8 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
         actor="Verifier",
         relation_class="performance",
         target="verification",
-        relation=RoleRelationType.VERIFIES,
     )
-    legacy = SemanticClassification.model_construct(
+    existing = SemanticClassification.model_construct(
         statement_functions=(),
         knowledge_kinds=(),
         process_functions=(),
@@ -417,7 +415,7 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
         domain_functions=(),
         relations=(),
     )
-    document = _document_with_semantic(legacy)
+    document = _document_with_semantic(existing)
     documents = _Documents(document)
     service = SemanticClassificationService(
         documents=documents,

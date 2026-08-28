@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class StatementFunction(StrEnum):
@@ -131,48 +130,14 @@ class RoleRelationClassCore(StrEnum):
     MEMBERSHIP = "membership"
 
 
-_LEGACY_ROLE_RELATION_MAPPING: dict[RoleRelationType, str] = {
-    RoleRelationType.RESPONSIBLE_FOR: RoleRelationClassCore.RESPONSIBILITY.value,
-    RoleRelationType.PERFORMS: RoleRelationClassCore.PERFORMANCE.value,
-    RoleRelationType.APPROVES: RoleRelationClassCore.PERFORMANCE.value,
-    RoleRelationType.VERIFIES: RoleRelationClassCore.PERFORMANCE.value,
-    RoleRelationType.VALIDATES: RoleRelationClassCore.PERFORMANCE.value,
-    RoleRelationType.CONSULTED_FOR: RoleRelationClassCore.CONSULTATION.value,
-    RoleRelationType.INFORMED_ABOUT: RoleRelationClassCore.INFORMATION.value,
-    RoleRelationType.INDEPENDENT_OF: RoleRelationClassCore.DEPENDENCY.value,
-    RoleRelationType.EXCLUDED_FROM: RoleRelationClassCore.MEMBERSHIP.value,
-    RoleRelationType.ASSIGNED_TO: RoleRelationClassCore.ASSIGNMENT.value,
-    RoleRelationType.ASSUMES_ROLE: RoleRelationClassCore.ASSIGNMENT.value,
-    RoleRelationType.PARTICIPATES_IN: RoleRelationClassCore.PARTICIPATION.value,
-}
-
-
 class RoleRelation(BaseModel):
     """Actor-class-target relation used for role ontology classification."""
 
     model_config = ConfigDict(frozen=True)
 
-    actor: str = Field(
-        min_length=1,
-        validation_alias=AliasChoices("actor", "role"),
-    )
+    actor: str = Field(min_length=1)
     relation_class: str = Field(min_length=1)
     target: str = Field(min_length=1)
-    relation: RoleRelationType | None = Field(default=None, exclude=True)
-
-    @model_validator(mode="before")
-    @classmethod
-    def migrate_legacy_relation(cls, data: Any) -> Any:
-        """Read legacy relation enums without persisting the old contract."""
-        if not isinstance(data, dict):
-            return data
-        payload = dict(data)
-        legacy_value = payload.get("relation")
-        if legacy_value and not payload.get("relation_class"):
-            legacy = RoleRelationType(legacy_value)
-            payload.setdefault("relation_class", _LEGACY_ROLE_RELATION_MAPPING[legacy])
-            payload["relation"] = legacy
-        return payload
 
 
 class DocumentStructure(StrEnum):
@@ -290,26 +255,6 @@ class SemanticClassification(BaseModel):
     document_structure: DocumentStructureClassification | None = None
     normative_status: NormativeStatus = NormativeStatus.UNSPECIFIED
     domain_functions: tuple[DomainFunctionClassification, ...] = ()
-
-    @model_validator(mode="before")
-    @classmethod
-    def infer_applicability_presence_for_legacy_payloads(cls, data: Any) -> Any:
-        """Infer explicit applicability presence for payloads written before this field existed."""
-        if not isinstance(data, dict) or "applicability_present" in data:
-            return data
-        if data.get("applicability_functions"):
-            return {**data, "applicability_present": True}
-        return data
-
-    @model_validator(mode="before")
-    @classmethod
-    def infer_role_semantics_for_legacy_payloads(cls, data: Any) -> Any:
-        """Infer presence when older payloads carry relation classifications only."""
-        if not isinstance(data, dict) or "role_semantics_present" in data:
-            return data
-        if data.get("role_relation_types") or data.get("role_relations"):
-            return {**data, "role_semantics_present": True}
-        return data
 
     @model_validator(mode="after")
     def dimensions_are_unique(self) -> SemanticClassification:

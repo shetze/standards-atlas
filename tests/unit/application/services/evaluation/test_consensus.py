@@ -53,8 +53,10 @@ def _run(
             "proposal": {
                 "statement_functions": roles,
                 "primary_function": roles[0] if roles else None,
+                "applicability_present": bool(applicability),
                 "applicability_functions": applicability or [],
                 "primary_applicability_function": (applicability[0] if applicability else None),
+                "role_semantics_present": bool(responsibility),
                 "role_relation_types": responsibility or [],
                 "primary_role_relation_type": (responsibility[0] if responsibility else None),
                 "confidence": 0.9,

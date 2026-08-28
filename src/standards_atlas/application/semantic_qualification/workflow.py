@@ -124,14 +124,14 @@ class EvaluationCorpusBuilder:
             if config.exclude_table_dominant
             else non_empty_population
         )
-        population = _canonical_clause_occurrences(qualification_population)
+        population = qualification_population
         if config.count > len(population):
-            exclusions = "empty clauses and duplicate occurrences"
+            exclusions = "empty clauses"
             if config.exclude_table_dominant:
-                exclusions = "empty clauses, table-dominant clauses, and duplicate occurrences"
+                exclusions = "empty clauses and table-dominant clauses"
             raise ValueError(
                 f"sample count {config.count} exceeds eligible population {len(population)} "
-                f"after excluding {exclusions} from composed family documents"
+                f"after excluding {exclusions}"
             )
         clauses = _sample_eligible_population(
             population, config.count, config.strategy, config.seed
@@ -428,36 +428,6 @@ def _statistics(
         selected_unique_contents=len({clause.content_hash for clause in selected}),
         dimensions=counts(eligible_population),
         selected_dimensions=counts(selected),
-    )
-
-
-def _canonical_clause_occurrences(
-    clauses: tuple[ClauseDescriptor, ...],
-) -> tuple[ClauseDescriptor, ...]:
-    """Legacy safeguard against obsolete persisted family-document copies.
-
-    Current workflows keep composed publication views below ``.atlas/work`` and
-    corpus providers therefore see only canonical physical documents. The
-    deduplication remains temporarily to protect workspaces created by older
-    versions that still contain ``.atlas/data/documents/<family>.json``.
-    """
-    document_sizes = Counter(clause.document_key for clause in clauses)
-    canonical: dict[tuple[str, str], ClauseDescriptor] = {}
-    for clause in clauses:
-        occurrence_key = (clause.id, clause.content_hash)
-        current = canonical.get(occurrence_key)
-        if current is None:
-            canonical[occurrence_key] = clause
-            continue
-        candidate_rank = (document_sizes[clause.document_key], clause.document_key)
-        current_rank = (document_sizes[current.document_key], current.document_key)
-        if candidate_rank < current_rank:
-            canonical[occurrence_key] = clause
-    return tuple(
-        sorted(
-            canonical.values(),
-            key=lambda clause: (clause.document_key, clause.clause_reference, clause.id),
-        )
     )
 
 

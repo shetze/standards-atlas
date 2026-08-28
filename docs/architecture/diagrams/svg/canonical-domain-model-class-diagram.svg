@@ -115,7 +115,7 @@
 <text text-anchor="start" x="328" y="-178.3" font-family="DejaVu Sans" font-size="9.00">knowledge_kinds</text>
 <text text-anchor="start" x="328" y="-168.3" font-family="DejaVu Sans" font-size="9.00">process_functions</text>
 <text text-anchor="start" x="328" y="-158.3" font-family="DejaVu Sans" font-size="9.00">applicability_functions</text>
-<text text-anchor="start" x="328" y="-148.3" font-family="DejaVu Sans" font-size="9.00">responsibility_functions</text>
+<text text-anchor="start" x="328" y="-148.3" font-family="DejaVu Sans" font-size="9.00">role_semantics</text>
 <text text-anchor="start" x="328" y="-138.3" font-family="DejaVu Sans" font-size="9.00">domain_functions</text>
 <text text-anchor="start" x="328" y="-128.3" font-family="DejaVu Sans" font-size="9.00">relations</text>
 </g>

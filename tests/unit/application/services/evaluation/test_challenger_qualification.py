@@ -44,15 +44,15 @@ def test_challenger_manifest_validates_unknown_model() -> None:
         QualificationMatrixManifest.model_validate(payload)
 
 
-def test_v3_prompts_define_normalized_confidence_contract() -> None:
+def test_v4_prompts_define_normalized_confidence_contract() -> None:
     prompt_root = Path(
         "src/standards_atlas/resources/semantic/prompts/statement-function-classification"
     )
     prompt_names = (
-        "content-only-v3",
-        "structure-aware-v3",
-        "evidence-first-v3",
-        "bounded-reasoning-v3",
+        "content-only-v4",
+        "structure-aware-v4",
+        "evidence-first-v4",
+        "bounded-reasoning-v4",
     )
 
     for prompt_name in prompt_names:

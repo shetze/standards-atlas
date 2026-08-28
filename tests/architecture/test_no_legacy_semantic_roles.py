@@ -1,4 +1,4 @@
-"""Architecture guard for ADR 0051."""
+"""Architecture guard for ADR 0008 and the refactoring compatibility exception."""
 
 from __future__ import annotations
 
@@ -10,6 +10,9 @@ FORBIDDEN_TOKENS = (
     "SemanticRole",
     "semantic_roles",
     "semantic-role-classification",
+    "responsibility_functions",
+    "primary_responsibility_function",
+    "responsibility-functions",
 )
 
 
@@ -32,5 +35,30 @@ def test_legacy_semantic_role_modules_are_removed() -> None:
         SOURCE_ROOT / "application" / "ports" / "semantic_role_classifier.py",
         SOURCE_ROOT / "resources" / "semantic" / "tasks" / "semantic-role-classification",
         SOURCE_ROOT / "resources" / "semantic" / "prompts" / "semantic-role-classification",
+        SOURCE_ROOT / "resources" / "ontologies" / "responsibility-functions",
+        SOURCE_ROOT
+        / "resources"
+        / "semantic"
+        / "tasks"
+        / "semantic-profile-classification"
+        / "2.0.0",
+        SOURCE_ROOT
+        / "resources"
+        / "semantic"
+        / "tasks"
+        / "semantic-profile-classification"
+        / "2.1.0",
+        SOURCE_ROOT
+        / "resources"
+        / "semantic"
+        / "tasks"
+        / "statement-function-classification"
+        / "2.0.0",
+        SOURCE_ROOT
+        / "resources"
+        / "semantic"
+        / "tasks"
+        / "statement-function-classification"
+        / "2.1.0",
     )
     assert [str(path.relative_to(PROJECT_ROOT)) for path in removed_paths if path.exists()] == []

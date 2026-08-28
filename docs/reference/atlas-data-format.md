@@ -484,7 +484,7 @@ TOC;<hash>;<reference>;<heading>;<type-marker>;<semantic-tags>
 Example:
 
 ```text
-TOC;...;IEC 61508-2:2010 7.4.2;Software requirements;r;SP-REQ,SS-PRE,KK-PRC,RF-RAS
+TOC;...;IEC 61508-2:2010 7.4.2;Software requirements;r;SP-REQ,SS-PRE,KK-PRC,RR-ASR
 ```
 
 The five-field legacy form remains valid. Semantic tags do not contain clause

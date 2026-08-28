@@ -146,7 +146,6 @@ def decode_semantic_tags(
         "PF": ("process_functions", "process_functions"),
         "AF": ("applicability_functions", "applicability_functions"),
         "RR": ("role_relation_types", "role_relation_types"),
-        "RF": ("responsibility_functions", "role_relation_types"),
         "DS": ("document_structure", "document_structure"),
         "NS": ("normative_status", "normative_status"),
     }

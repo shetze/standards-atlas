@@ -8,7 +8,11 @@ from standards_atlas.domain.model import RoleRelation, RoleRelationType
 
 
 def relation(actor: str, kind: RoleRelationType, target: str) -> RoleRelation:
-    return RoleRelation(actor=actor, relation=kind, target=target)
+    relation_class = {
+        RoleRelationType.VERIFIES: "performance",
+        RoleRelationType.VALIDATES: "performance",
+    }.get(kind, kind.family.value)
+    return RoleRelation(actor=actor, relation_class=relation_class, target=target)
 
 
 def test_candidate_marker_detects_passive_role_semantics() -> None:

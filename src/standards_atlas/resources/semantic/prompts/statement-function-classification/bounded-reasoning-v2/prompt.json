@@ -1,5 +1,0 @@
-{
-  "description": "Bounded internal reasoning with concise schema-only output.",
-  "task": "statement-function-classification",
-  "version": "bounded-reasoning-v2"
-}

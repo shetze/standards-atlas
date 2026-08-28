@@ -54,7 +54,9 @@ class PublicSemanticAnnotation(BaseModel):
             statement_functions=statements,
             knowledge_kinds=self.knowledge_kinds,
             process_functions=self.process_functions,
+            applicability_present=bool(self.applicability_functions),
             applicability_functions=self.applicability_functions,
+            role_semantics_present=bool(self.role_relation_types),
             role_relation_types=self.role_relation_types,
             document_structure=(
                 DocumentStructureClassification(

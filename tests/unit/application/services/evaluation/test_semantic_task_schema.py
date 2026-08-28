@@ -56,8 +56,10 @@ def test_multidimensional_selection_accepts_applicability_and_responsibility() -
         {
             "statement_functions": ["description"],
             "primary_function": "description",
+            "applicability_present": True,
             "applicability_functions": ["applicability_condition"],
             "primary_applicability_function": "applicability_condition",
+            "role_semantics_present": True,
             "role_relation_types": [
                 "excluded_from",
                 "assumes_role",
@@ -72,11 +74,11 @@ def test_multidimensional_selection_accepts_applicability_and_responsibility() -
     assert selection.role_relation_types[0].value == "excluded_from"
 
 
-def test_v2_prompts_require_secondary_warning_and_condemnation_detection() -> None:
+def test_v4_prompts_require_secondary_warning_and_condemnation_detection() -> None:
     resources = Path(
         "src/standards_atlas/resources/semantic/prompts/statement-function-classification"
     )
-    prompt_paths = sorted(resources.glob("*-v2/system.txt"))
+    prompt_paths = sorted(resources.glob("*-v4/system.txt"))
 
     assert prompt_paths
     for prompt_path in prompt_paths:

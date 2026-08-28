@@ -183,9 +183,11 @@ def test_applicability_presence_is_explicit_and_can_have_no_subtype() -> None:
     assert selection.applicability_functions == ()
 
 
-def test_legacy_applicability_selection_infers_presence() -> None:
-    selection = StatementFunctionSelection.model_validate(
-        {"applicability_functions": ["inclusion"], "primary_applicability_function": "inclusion"}
-    )
-
-    assert selection.applicability_present is True
+def test_applicability_selection_requires_explicit_presence() -> None:
+    with pytest.raises(ValueError, match="applicability classifications require"):
+        StatementFunctionSelection.model_validate(
+            {
+                "applicability_functions": ["inclusion"],
+                "primary_applicability_function": "inclusion",
+            }
+        )

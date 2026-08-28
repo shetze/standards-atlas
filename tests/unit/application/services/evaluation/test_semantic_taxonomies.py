@@ -20,14 +20,6 @@ def test_semantic_profile_task_composes_independently_versioned_ontologies() -> 
     assert "technique_or_measure" in task.knowledge_taxonomy
 
 
-def test_legacy_multidimensional_task_is_explicit_alias_of_semantic_profile() -> None:
-    task, _ = SemanticTaskRepository(SEMANTIC_ROOT / "tasks").load(
-        "statement-function-classification", "2.1.0"
-    )
-
-    assert task.canonical_task == "semantic-profile-classification"
-
-
 def test_ontology_identity_is_independent_from_task_version() -> None:
     ontology = ResourceOntologyDefinitionRepository().load("applicability-functions", "1.1.0")
 

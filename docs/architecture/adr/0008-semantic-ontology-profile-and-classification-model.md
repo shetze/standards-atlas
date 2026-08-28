@@ -19,5 +19,10 @@ Semantic classification uses canonical content plus deterministic structural con
 
 The term *semantic ontology* here means a controlled classification vocabulary. Formal OWL TBox/RBox ontologies are defined separately by ADR 0009.
 
+## Refactoring transition
+During the current architectural refactoring, intermediate semantic ontology, profile, task, prompt, and payload versions have no backward-compatibility guarantee. Obsolete transition contracts may be removed instead of being carried as permanent migration code. In particular, removed `SemanticRole` and `responsibility_functions` representations are not readable contracts.
+
+This exception is temporary. Before the refactoring is declared complete, the stable compatibility policy in ADR 0014 must be activated for independently consumed semantic interfaces.
+
 ## Consequences
-Dimensions, profiles, and inference implementations can evolve independently. The active semantic model has no compatibility obligation to removed `SemanticRole` or responsibility-function representations.
+Dimensions, profiles, and inference implementations can evolve independently. Semantic profile versions, ontology/resource versions, and task/schema versions remain explicit and are not coupled to each other. During refactoring only the intentionally retained contracts need to be supported; stable releases will follow ADR 0014's bounded compatibility policy.

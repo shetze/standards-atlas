@@ -251,7 +251,7 @@ def test_excludes_empty_content_and_separates_content_from_context(tmp_path: Pat
     assert list(manifest["duplicate_content_groups"]) == [shared_hash]
 
 
-def test_excludes_composed_family_copies_and_uses_readable_duplicate_labels(
+def test_corpus_builder_does_not_deduplicate_obsolete_family_document_copies(
     tmp_path: Path,
 ) -> None:
     shared_hash = "sha256:" + "d" * 64
@@ -294,14 +294,10 @@ def test_excludes_composed_family_copies_and_uses_readable_duplicate_labels(
     )
     manifest = yaml.safe_load(result.manifest_path.read_text())
 
-    assert manifest["statistics"]["duplicate_document_occurrences"] == 2
-    assert manifest["statistics"]["eligible_occurrences"] == 2
+    assert manifest["statistics"]["duplicate_document_occurrences"] == 0
+    assert manifest["statistics"]["eligible_occurrences"] == 4
     labels = manifest["duplicate_content_groups"][shared_hash]
-    assert labels == [
-        "IEC61508-1:7.4.2 — Requirements [clause-a]",
-        "IEC61508-2:7.4.2 — Software requirements [clause-b]",
-    ]
-    assert all(not label.startswith("IEC61508:") for label in labels)
+    assert len(labels) == 2
 
 
 def test_excludes_table_dominant_clauses_and_reports_reason(tmp_path: Path) -> None:

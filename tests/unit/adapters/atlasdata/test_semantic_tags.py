@@ -18,7 +18,9 @@ def test_semantic_tags_round_trip_versioned_taxonomy_codes() -> None:
             StatementFunction.PREREQUISITE,
         ),
         knowledge_kinds=(KnowledgeKind.TECHNIQUE_OR_MEASURE,),
+        applicability_present=True,
         applicability_functions=(ApplicabilityFunction.EXCEPTION,),
+        role_semantics_present=True,
         role_relation_types=(RoleRelationType.RESPONSIBLE_FOR,),
     )
     tags = encode_semantic_tags(classification, semantic_profile="functional-safety:1.0.0")

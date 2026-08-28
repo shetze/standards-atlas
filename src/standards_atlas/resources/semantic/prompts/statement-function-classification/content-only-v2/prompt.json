@@ -1,5 +1,0 @@
-{
-  "description": "Classify only the normalized clause content; ignore structural context.",
-  "task": "statement-function-classification",
-  "version": "content-only-v2"
-}

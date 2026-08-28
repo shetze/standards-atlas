@@ -67,30 +67,28 @@ def test_role_semantics_can_be_present_without_extractable_relation() -> None:
 
 
 def test_role_relations_support_multiple_grounded_tuples() -> None:
-    from standards_atlas.domain.model import RoleRelation, RoleRelationFamily, RoleRelationType
+    from standards_atlas.domain.model import RoleRelation
 
     classification = SemanticClassification(
         role_semantics_present=True,
         role_relations=(
             RoleRelation(
                 actor="Validator",
-                relation=RoleRelationType.VALIDATES,
+                relation_class="performance",
                 target="system",
-                evidence="The Validator validates the system.",
             ),
             RoleRelation(
                 actor="Validator",
-                relation=RoleRelationType.INDEPENDENT_OF,
+                relation_class="dependency",
                 target="Designer",
-                evidence="The Validator is independent of the Designer.",
             ),
         ),
     )
 
     assert len(classification.role_relations) == 2
     assert classification.role_relations[0].actor == "Validator"
-    assert classification.role_relations[0].relation.family is RoleRelationFamily.ACTIVITY
-    assert classification.role_relations[1].relation.family is RoleRelationFamily.ORGANIZATION
+    assert classification.role_relations[0].relation_class == "performance"
+    assert classification.role_relations[1].relation_class == "dependency"
 
 
 def test_role_relation_supports_open_class_and_target() -> None:
@@ -104,35 +102,6 @@ def test_role_relation_supports_open_class_and_target() -> None:
 
     assert relation.relation_class == "performance"
     assert relation.target == "deviations"
-    assert relation.relation is None
-
-
-def test_legacy_role_relation_maps_into_open_structure() -> None:
-    from standards_atlas.domain.model import RoleRelation, RoleRelationType
-
-    relation = RoleRelation.model_validate(
-        {"actor": "Verifier", "relation": "verifies", "target": "analysis"}
-    )
-
-    assert relation.relation is RoleRelationType.VERIFIES
-    assert relation.relation_class == "performance"
-    assert "relation" not in relation.model_dump(mode="json")
-
-
-def test_role_relation_accepts_legacy_role_field_but_serializes_actor() -> None:
-    from standards_atlas.domain.model import RoleRelation
-
-    relation = RoleRelation.model_validate(
-        {
-            "role": "Verifier",
-            "relation": "verifies",
-            "target": "verification evidence",
-        }
-    )
-
-    assert relation.actor == "Verifier"
-    assert relation.model_dump(mode="json")["actor"] == "Verifier"
-    assert "role" not in relation.model_dump(mode="json")
 
 
 def test_role_relations_require_explicit_role_semantics_when_presence_is_supplied() -> None:
@@ -144,21 +113,11 @@ def test_role_relations_require_explicit_role_semantics_when_presence_is_supplie
             role_relations=(
                 RoleRelation(
                     actor="Verifier",
-                    relation="verifies",
+                    relation_class="performance",
                     target="verification evidence",
                 ),
             ),
         )
-
-
-def test_legacy_role_relation_types_infer_role_semantics_presence() -> None:
-    from standards_atlas.domain.model import RoleRelationType
-
-    classification = SemanticClassification(
-        role_relation_types=(RoleRelationType.RESPONSIBLE_FOR,),
-    )
-
-    assert classification.role_semantics_present is True
 
 
 def test_applicability_presence_can_be_true_without_subtype() -> None:
@@ -166,14 +125,6 @@ def test_applicability_presence_can_be_true_without_subtype() -> None:
 
     assert classification.applicability_present is True
     assert classification.applicability_functions == ()
-
-
-def test_legacy_applicability_functions_infer_presence() -> None:
-    classification = SemanticClassification.model_validate(
-        {"applicability_functions": ["inclusion"]}
-    )
-
-    assert classification.applicability_present is True
 
 
 def test_applicability_subtype_requires_presence() -> None:

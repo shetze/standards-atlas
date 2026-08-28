@@ -85,28 +85,6 @@ class StatementFunctionSelection(BaseModel):
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     rationale: str | None = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def infer_applicability_presence_for_legacy_payloads(cls, data: Any) -> Any:
-        if not isinstance(data, dict) or "applicability_present" in data:
-            return data
-        if data.get("applicability_functions") or data.get("primary_applicability_function"):
-            return {**data, "applicability_present": True}
-        return data
-
-    @model_validator(mode="before")
-    @classmethod
-    def infer_role_semantics_for_legacy_payloads(cls, data: Any) -> Any:
-        if not isinstance(data, dict) or "role_semantics_present" in data:
-            return data
-        if (
-            data.get("role_relation_types")
-            or data.get("role_relations")
-            or data.get("primary_role_relation_type")
-        ):
-            return {**data, "role_semantics_present": True}
-        return data
-
     @model_validator(mode="after")
     def primary_function_must_be_selected(self) -> StatementFunctionSelection:
         if (
