@@ -1,3 +1,4 @@
+from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.ontology import OntologyDefinition
 from standards_atlas.application.ports.llm_gateway import (
     LlmResponseError,
@@ -36,6 +37,23 @@ class Gateway:
         )
 
 
+def _prompt() -> PromptDefinition:
+    return PromptDefinition(
+        task="semantic-profile-classification",
+        version="structure-aware-v6",
+        description="test",
+        system_prompt="Qualified semantic classification rules.",
+        user_template=(
+            "Normalized clause content:\n{content}\n\nStructural context:\n{context_json}"
+        ),
+        output_schema={"type": "object"},
+    )
+
+
+def _classifier(gateway: Gateway) -> LlmSemanticClassifier:
+    return LlmSemanticClassifier(gateway, prompt=_prompt(), task_version="2.4.0")
+
+
 def _definition() -> OntologyDefinition:
     return OntologyDefinition(
         id="statement-functions",
@@ -47,7 +65,7 @@ def _definition() -> OntologyDefinition:
 
 def test_classifier_supplies_structural_context_to_llm() -> None:
     gateway = Gateway()
-    classifier = LlmSemanticClassifier(gateway)
+    classifier = _classifier(gateway)
 
     result = classifier.classify(
         SemanticClassificationContext(
@@ -70,13 +88,13 @@ def test_classifier_retries_truncated_structured_response_with_larger_budget() -
         value={"statement_functions": ["requirement"]},
         model="test",
         provider="test",
-        prompt_version="1.1.0",
+        prompt_version="structure-aware-v6",
         input_hash="input",
         raw_response_hash="response",
         duration_ms=1,
     )
     gateway = Gateway([failure, success])
-    classifier = LlmSemanticClassifier(gateway)
+    classifier = _classifier(gateway)
 
     result = classifier.classify(
         SemanticClassificationContext(content="The item shall be verified."),
@@ -84,14 +102,17 @@ def test_classifier_retries_truncated_structured_response_with_larger_budget() -
     )
 
     assert result[0].values == ("requirement",)
-    assert [request.max_tokens for request in gateway.requests] == [512, 1024]
+    assert [request.max_tokens for request in gateway.requests] == [1024, 2048]
     assert "previous response was truncated" in gateway.requests[1].system_prompt
+    assert gateway.requests[0].task == "semantic-profile-classification"
+    assert gateway.requests[0].prompt_version == "structure-aware-v6"
+    assert gateway.requests[0].metadata["task_version"] == "2.4.0"
 
 
 def test_classifier_does_not_retry_non_length_response_error() -> None:
     failure = LlmResponseError("invalid json", finish_reason="stop")
     gateway = Gateway([failure])
-    classifier = LlmSemanticClassifier(gateway)
+    classifier = _classifier(gateway)
 
     try:
         classifier.classify(

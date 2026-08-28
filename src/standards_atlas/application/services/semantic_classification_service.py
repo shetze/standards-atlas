@@ -185,6 +185,9 @@ class SemanticClassificationService:
                 ontology_failed = True
                 results = ()
             values = {item.dimension: item.values for item in results}
+            presence = {
+                item.dimension: item.presence for item in results if item.presence is not None
+            }
             current = clause.semantic_classification
             role_result = None
             role_failed = False
@@ -219,7 +222,9 @@ class SemanticClassificationService:
                         # Applicability is one coupled semantic dimension. Presence and subtype
                         # must be replaced atomically so a stale presence bit cannot survive a
                         # successful subtype classification (or vice versa).
-                        "applicability_present": bool(applicability_functions),
+                        "applicability_present": presence.get(
+                            "applicability_functions", bool(applicability_functions)
+                        ),
                         "applicability_functions": applicability_functions,
                     },
                 )

@@ -27,10 +27,17 @@ class SemanticClassificationContext:
 
 @dataclass(frozen=True)
 class SemanticDimensionResult:
-    """Classification result for one semantic profile dimension."""
+    """Classification result for one semantic profile dimension.
+
+    ``presence`` is used for dimensions whose existence is decided independently
+    from their subtype labels (currently applicability). Keeping it on the
+    dimension result lets production classification preserve the qualified task
+    contract instead of inferring presence from a non-empty subtype list.
+    """
 
     dimension: str
     values: tuple[str, ...]
+    presence: bool | None = None
 
 
 class SemanticClassifier(Protocol):

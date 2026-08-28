@@ -274,6 +274,41 @@ def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> No
     assert semantic.role_relations == ()
 
 
+class _PresenceOnlyApplicabilityEngine:
+    def classify(self, **_kwargs):
+        return (
+            SemanticDimensionResult(
+                dimension="applicability_functions",
+                values=(),
+                presence=True,
+            ),
+        )
+
+
+def test_applicability_presence_is_persisted_independently_from_subtype() -> None:
+    document = _document()
+    documents = _Documents(document)
+    service = SemanticClassificationService(
+        documents=documents,
+        engine=_PresenceOnlyApplicabilityEngine(),
+        profile=SemanticProfile(
+            id="test",
+            version="1.0.0",
+            dimensions={
+                "applicability_functions": OntologyReference(
+                    id="applicability-functions", version="1.2.0"
+                )
+            },
+        ),
+    )
+
+    result = service.classify(document.key.value)
+    semantic = result.document.clauses[0].semantic_classification
+
+    assert semantic.applicability_present is True
+    assert semantic.applicability_functions == ()
+
+
 class _DuplicateDimensionsEngine:
     def classify(self, **_kwargs):
         return (

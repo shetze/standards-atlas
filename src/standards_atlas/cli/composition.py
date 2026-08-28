@@ -154,6 +154,7 @@ def build_semantic_classification_service(
     progress: SemanticClassificationProgressCallback | None = None,
 ):
     from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
+    from standards_atlas.application.evaluation.repository import PromptRepository
     from standards_atlas.application.ontology import (
         LlmRoleSemanticsClassifier,
         ResourceOntologyDefinitionRepository,
@@ -164,20 +165,32 @@ def build_semantic_classification_service(
         SemanticClassificationEngine,
         SemanticClassifierRegistry,
     )
+    from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
     from standards_atlas.application.services import SemanticClassificationService
+
+    task_id = "semantic-profile-classification"
+    task_version = "2.4.0"
+    prompt_version = "structure-aware-v6"
+    resources = Path(__file__).resolve().parents[1] / "resources" / "semantic"
+    task, canonical_schema = SemanticTaskRepository(resources / "tasks").load(task_id, task_version)
+    prompt = PromptRepository(resources / "prompts").load(task_id, prompt_version)
+    if dict(prompt.output_schema) != canonical_schema:
+        raise ValueError("production semantic prompt schema differs from task contract")
+    if task.semantic_profile is None:
+        raise ValueError("production semantic classification task has no semantic profile")
 
     config = LlmConfig.load(llm_config_path)
     gateway = OpenAICompatibleLlmGateway(config)
-    classifier = LlmSemanticClassifier(gateway, model=config.model)
-    profile = ResourceSemanticProfileRepository().load("functional-safety", "1.0.0")
-    profile = profile.select_dimensions(
-        (
-            "statement_functions",
-            "knowledge_kinds",
-            "process_functions",
-            "applicability_functions",
-        )
+    classifier = LlmSemanticClassifier(
+        gateway,
+        prompt=prompt,
+        task_version=task.version,
+        model=config.model,
     )
+    profile = ResourceSemanticProfileRepository().load(
+        task.semantic_profile.id, task.semantic_profile.version
+    )
+    profile = profile.select_dimensions(task.profile_dimensions or tuple(profile.dimensions))
     engine = SemanticClassificationEngine(
         definitions=ResourceOntologyDefinitionRepository(),
         registry=SemanticClassifierRegistry((classifier,)),
