@@ -75,15 +75,41 @@ class FileSystemEngineeringDocumentRepository:
         documents = []
         for path in sorted(self._documents_dir.glob("*.json")):
             payload = json.loads(path.read_text(encoding="utf-8"))
-            data = _extract_document_data(payload)
-            document_type = DocumentType(data["document_type"])
-            model = _DOCUMENT_MODELS[document_type]
-            documents.append(model.model_validate(data))
+            documents.append(_document_from_payload(payload))
+        return tuple(sorted(documents, key=lambda document: document.key.value))
+
+    def list_readable(self) -> tuple[EngineeringDocument, ...]:
+        """Return documents whose persisted schema is currently readable.
+
+        Unsupported schema versions are ignored so optional repository-wide
+        consumers such as publication cross-reference indexing do not fail on
+        unrelated stale artifacts. Malformed payloads and invalid documents
+        remain hard errors.
+        """
+        documents = []
+        for path in sorted(self._documents_dir.glob("*.json")):
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(payload, dict):
+                raise ValueError("Persisted engineering document must be a JSON object")
+            if "schema_version" not in payload:
+                raise ValueError("Persisted engineering document is missing 'schema_version'")
+            try:
+                require_supported_schema("engineering-document", payload["schema_version"])
+            except ValueError:
+                continue
+            documents.append(_document_from_payload(payload))
         return tuple(sorted(documents, key=lambda document: document.key.value))
 
     def _path_for_key(self, key: DocumentKey) -> Path:
         safe_key = _safe_filename(key.value)
         return self._documents_dir / f"{safe_key}.json"
+
+
+def _document_from_payload(payload: Any) -> EngineeringDocument:
+    data = _extract_document_data(payload)
+    document_type = DocumentType(data["document_type"])
+    model = _DOCUMENT_MODELS[document_type]
+    return model.model_validate(data)
 
 
 def _extract_document_data(payload: Any) -> dict[str, Any]:

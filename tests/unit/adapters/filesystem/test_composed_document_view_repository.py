@@ -1,6 +1,9 @@
 import json
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from standards_atlas.adapters.filesystem import (
     FileSystemComposedDocumentViewRepository,
     FileSystemEngineeringDocumentRepository,
@@ -40,3 +43,48 @@ def test_publication_reader_prefers_work_view_without_canonical_family_file(
     assert reader.load(DocumentKey(value="FAMILY")).key.value == "FAMILY"
     assert [document.key.value for document in reader.list()] == ["PART-1"]
     assert not documents.exists(DocumentKey(value="FAMILY"))
+
+
+def test_publication_reader_skips_unreadable_stale_documents_for_cross_references(
+    tmp_path: Path,
+) -> None:
+    documents = FileSystemEngineeringDocumentRepository(tmp_path / "data")
+    documents.save(_document("CURRENT"))
+    stale_path = tmp_path / "data" / "documents" / "STALE.json"
+    stale_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 5,
+                "document": _document("STALE").model_dump(mode="json"),
+            }
+        ),
+        encoding="utf-8",
+    )
+    views = FileSystemComposedDocumentViewRepository(tmp_path / "work")
+    reader = FileSystemPublicationDocumentReader(documents, views)
+
+    assert [document.key.value for document in reader.list()] == ["CURRENT"]
+
+
+def test_publication_reader_does_not_hide_invalid_current_documents(
+    tmp_path: Path,
+) -> None:
+    documents = FileSystemEngineeringDocumentRepository(tmp_path / "data")
+    invalid_path = tmp_path / "data" / "documents" / "BROKEN.json"
+    invalid_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 6,
+                "document": {
+                    "key": {"value": "BROKEN"},
+                    "document_type": "other",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    views = FileSystemComposedDocumentViewRepository(tmp_path / "work")
+    reader = FileSystemPublicationDocumentReader(documents, views)
+
+    with pytest.raises(ValidationError):
+        reader.list()

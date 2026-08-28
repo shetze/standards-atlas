@@ -28,4 +28,4 @@ class FileSystemPublicationDocumentReader:
         return self._documents.load(key)
 
     def list(self) -> tuple[EngineeringDocument, ...]:
-        return self._documents.list()
+        return self._documents.list_readable()
