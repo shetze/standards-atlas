@@ -1270,3 +1270,38 @@ def test_cascade_does_not_escalate_secondary_knowledge_set_disagreement() -> Non
     )
 
     assert "knowledge_kind_disagreement" not in reasons
+
+
+def test_cascade_escalates_structured_role_presence_conflict() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import (
+        ClauseConsensus,
+        ConsensusCategory,
+    )
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    clause = ClauseConsensus(
+        clause_id="role-conflict",
+        document_key="DOC",
+        category=ConsensusCategory.UNANIMOUS,
+        statement_function_category=ConsensusCategory.UNANIMOUS,
+        knowledge_kind_category=ConsensusCategory.UNANIMOUS,
+        applicability_category=ConsensusCategory.UNANIMOUS,
+        role_relation_category=ConsensusCategory.UNANIMOUS,
+        role_semantics_category=ConsensusCategory.UNANIMOUS,
+        confidence=1.0,
+        statement_function_confidence=1.0,
+        role_semantics_present=False,
+        role_semantics_presence_confidence=1.0,
+        role_semantics_evidence_conflict=True,
+        participating_models=3,
+        requires_review=True,
+    )
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=3,
+        escalate_on_role_relation_disagreement=False,
+    )
+
+    assert "role_semantics_evidence_conflict" in cascade_escalation_reasons(clause, resolution)

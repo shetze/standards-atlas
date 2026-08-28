@@ -149,7 +149,7 @@ def _cascade_reason_dimensions(reasons: tuple[str, ...]) -> set[str]:
             dimensions.add("statement_function")
         elif reason.startswith("applicability_"):
             dimensions.add("applicability")
-        elif reason.startswith("responsibility_"):
+        elif reason.startswith(("responsibility_", "role_relation_", "role_semantics_")):
             dimensions.add("responsibility")
     return dimensions
 

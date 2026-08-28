@@ -138,7 +138,11 @@ def derive_structural_evidence(
     if own_scope:
         evidence.append("structure:scope")
 
-    applicability_subtype = _derive_applicability_subtype(text) if scope_context else None
+    # Explicit applicability wording is semantically meaningful anywhere in the
+    # document, not only inside a structural Scope section. Scope remains an
+    # additional structural signal, while lexical applicability evidence is
+    # evaluated independently.
+    applicability_subtype = _derive_applicability_subtype(text)
     if applicability_subtype is not None:
         evidence.append(f"text:{applicability_subtype.value}")
 

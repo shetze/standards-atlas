@@ -234,25 +234,31 @@ def _applicability_model_fitness(clauses: tuple[ClauseConsensus, ...]) -> list[d
         )
         for vote in clause.votes:
             item = stats[vote.model_id]
-            item["vote_count"] += 1
-            if vote.applicability_present:
-                item["present_count"] += 1
-            else:
-                item["none_count"] += 1
-            if conflict:
-                item["conflict_vote_count"] += 1
-                if not vote.applicability_present:
-                    item["conflict_none_count"] += 1
-            if is_reference:
-                reference_presence[vote.model_id].append(
-                    vote.applicability_present == clause.applicability_present
-                )
-                if clause.applicability_present and accepted_subtype is not None:
-                    reference_subtype[vote.model_id].append(
-                        vote.applicability_present
-                        and vote.applicability_function is not None
-                        and vote.applicability_function.value == accepted_subtype
+            if vote.applicability_presence_eligible:
+                item["vote_count"] += 1
+                if vote.applicability_present:
+                    item["present_count"] += 1
+                else:
+                    item["none_count"] += 1
+                if conflict:
+                    item["conflict_vote_count"] += 1
+                    if not vote.applicability_present:
+                        item["conflict_none_count"] += 1
+                if is_reference:
+                    reference_presence[vote.model_id].append(
+                        vote.applicability_present == clause.applicability_present
                     )
+            if (
+                vote.applicability_subtype_eligible
+                and is_reference
+                and clause.applicability_present
+                and accepted_subtype is not None
+            ):
+                reference_subtype[vote.model_id].append(
+                    vote.applicability_present
+                    and vote.applicability_function is not None
+                    and vote.applicability_function.value == accepted_subtype
+                )
 
     result = []
     for model_id in sorted(stats):

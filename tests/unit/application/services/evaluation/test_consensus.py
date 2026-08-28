@@ -17,7 +17,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     MatrixObservation,
 )
 from standards_atlas.application.services.evaluation import ModelConsensusService
-from standards_atlas.domain.model import KnowledgeKind, StatementFunction
+from standards_atlas.domain.model import ApplicabilityFunction, KnowledgeKind, StatementFunction
 
 
 def _run(
@@ -1437,3 +1437,79 @@ def test_knowledge_primary_and_set_consensus_are_reported_separately() -> None:
     assert result["knowledge_kind_category"] is ConsensusCategory.UNANIMOUS
     assert result["knowledge_primary_unanimous"] is True
     assert result["knowledge_set_unanimous"] is False
+
+
+def test_explicit_applicability_outside_scope_is_structural_evidence() -> None:
+    from standards_atlas.application.semantic_qualification.structural_evidence import (
+        derive_structural_evidence,
+    )
+
+    evidence = derive_structural_evidence(
+        {
+            "clause_type": "annex_clause",
+            "title": "Achieving temporal independence",
+            "text": (
+                "Such an approach may only be applicable where there are no hard real "
+                "time requirements."
+            ),
+        }
+    )
+
+    assert evidence.scope_context is False
+    assert evidence.applicability_subtype is ApplicabilityFunction.APPLICABILITY_CONDITION
+    assert "text:applicability_condition" in evidence.evidence
+
+
+def test_generic_condition_outside_scope_is_not_applicability_evidence() -> None:
+    from standards_atlas.application.semantic_qualification.structural_evidence import (
+        derive_structural_evidence,
+    )
+
+    evidence = derive_structural_evidence(
+        {
+            "clause_type": "requirement",
+            "text": "If the watchdog expires, the system shall enter the safe state.",
+        }
+    )
+
+    assert evidence.scope_context is False
+    assert evidence.applicability_subtype is None
+
+
+def test_explicit_applicability_presence_prior_conflicts_with_negative_consensus() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    votes = tuple(
+        ModelVote(
+            model_id=f"model-{index}",
+            primary_function=StatementFunction.DESCRIPTION,
+            applicability_present=False,
+            repetitions=1,
+            stability=1.0,
+        )
+        for index in range(3)
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={
+            "applicability_subtype": "applicability_condition",
+            "confidence": 0.95,
+            "evidence": ["text:applicability_condition"],
+        },
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+        scope_context=False,
+    )
+
+    assert result["applicability_present"] is True
+    assert result["proposed_applicability_functions"] == (
+        ApplicabilityFunction.APPLICABILITY_CONDITION,
+    )
+    assert result["applicability_structural_conflict_observed"] is True
+    assert result["applicability_structural_conflict_unresolved"] is True
+    assert result["requires_review"] is True

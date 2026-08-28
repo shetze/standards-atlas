@@ -20,7 +20,8 @@ _EXCLUSION = re.compile(
     re.IGNORECASE,
 )
 _INCLUSION = re.compile(
-    r"\b(applies to|apply to|applicable to|is applicable|are applicable|within the scope|"
+    r"\b(applies to|apply to|applicable to|be applicable|is applicable|are applicable|"
+    r"within the scope|"
     r"in scope|covers|is covered by|are covered by)\b",
     re.IGNORECASE,
 )

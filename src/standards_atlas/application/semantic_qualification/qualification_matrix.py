@@ -231,6 +231,8 @@ def cascade_escalation_reasons(
 
     if getattr(clause, "applicability_structural_conflict", False):
         reasons.append("applicability_structural_conflict")
+    if getattr(clause, "role_semantics_evidence_conflict", False):
+        reasons.append("role_semantics_evidence_conflict")
     role_unanimous = getattr(clause, "role_semantics_unanimous", clause.role_relation_unanimous)
     if resolution.escalate_on_role_relation_disagreement and not role_unanimous:
         reasons.append("role_relation_disagreement")
@@ -401,9 +403,14 @@ def cascade_stage_escalation_reasons(
             "role_relation_confidence",
             "role_semantics_disagreement",
             "role_semantics_confidence",
+            "role_semantics_evidence_conflict",
         }
     )
     if role_relation_unresolved:
+        if "role_semantics_evidence_conflict" in unresolved and getattr(
+            cumulative_clause, "role_semantics_evidence_conflict", False
+        ):
+            reasons.append("role_semantics_evidence_conflict")
         threshold = resolution.minimum_role_relation_confidence
         if threshold is not None:
             confidence = getattr(
@@ -479,7 +486,11 @@ _APPLICABILITY_REASONS = {
     "applicability_subtype_confidence",
     "applicability_structural_conflict",
 }
-_ROLE_RELATION_REASONS = {"role_relation_disagreement", "role_relation_confidence"}
+_ROLE_RELATION_REASONS = {
+    "role_relation_disagreement",
+    "role_relation_confidence",
+    "role_semantics_evidence_conflict",
+}
 
 
 def capture_resolved_dimensions(

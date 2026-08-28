@@ -61,6 +61,8 @@ class ModelVote(BaseModel):
     secondary_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
     applicability_function: ApplicabilityFunction | None = None
+    applicability_presence_eligible: bool = True
+    applicability_subtype_eligible: bool = True
     role_semantics_present: bool = False
     role_relations: tuple[RoleRelation, ...] = ()
     role_relation_present: bool = False
@@ -123,6 +125,8 @@ class ClauseConsensus(BaseModel):
     role_semantics_presence_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     role_candidate: bool = False
     role_candidate_markers: tuple[str, ...] = ()
+    role_candidate_consensus_negative: bool = False
+    role_semantics_evidence_conflict: bool = False
     proposed_role_relations: tuple[RoleRelation, ...] = ()
     role_relation_consensus: tuple[RoleTupleConsensus, ...] = ()
     role_relation_present: bool = False
@@ -288,7 +292,20 @@ class ModelConsensusService:
             ]
             clause_reference = all_annotations[0].clause
             votes = [
-                _model_vote(model_id, by_prompt, prompts, role="voter")
+                _model_vote(model_id, by_prompt, prompts, role="voter").model_copy(
+                    update={
+                        "applicability_presence_eligible": bool(
+                            (model_dimension_eligibility or {})
+                            .get(model_id, {})
+                            .get("applicability_presence", True)
+                        ),
+                        "applicability_subtype_eligible": bool(
+                            (model_dimension_eligibility or {})
+                            .get(model_id, {})
+                            .get("applicability_subtype", True)
+                        ),
+                    }
+                )
                 for model_id, by_prompt in sorted(model_predictions.items())
                 if model_id != adjudicator_id
             ]
@@ -299,6 +316,19 @@ class ModelConsensusService:
                     model_predictions[adjudicator_id],
                     prompts,
                     role="adjudicator",
+                ).model_copy(
+                    update={
+                        "applicability_presence_eligible": bool(
+                            (model_dimension_eligibility or {})
+                            .get(adjudicator_id, {})
+                            .get("applicability_presence", True)
+                        ),
+                        "applicability_subtype_eligible": bool(
+                            (model_dimension_eligibility or {})
+                            .get(adjudicator_id, {})
+                            .get("applicability_subtype", True)
+                        ),
+                    }
                 )
 
             prior = (
@@ -335,6 +365,19 @@ class ModelConsensusService:
             proposed_role_relations = tuple(
                 relation for vote in votes for relation in vote.role_relations
             )
+            role_candidate_consensus_negative = candidate.candidate and not role_semantics_present
+            role_semantics_evidence_conflict = bool(
+                proposed_role_relations and not role_semantics_present
+            )
+            if role_semantics_evidence_conflict:
+                role_review_reason = (
+                    "structured role-relation evidence conflicts with role-semantics presence"
+                )
+                result["review_reasons"] = tuple(
+                    dict.fromkeys((*result["review_reasons"], role_review_reason))
+                )
+                result["requires_review"] = True
+                result["overall_status"] = OverallConsensusStatus.REVIEW_REQUIRED
             clauses.append(
                 ClauseConsensus(
                     clause_id=clause_id,
@@ -362,6 +405,8 @@ class ModelConsensusService:
                     },
                     role_candidate=candidate.candidate,
                     role_candidate_markers=candidate.markers,
+                    role_candidate_consensus_negative=role_candidate_consensus_negative,
+                    role_semantics_evidence_conflict=role_semantics_evidence_conflict,
                     proposed_role_relations=proposed_role_relations,
                     role_relation_consensus=tuple_consensus,
                     votes=tuple(votes) + ((adjudicator_vote,) if adjudicator_vote else ()),
@@ -654,12 +699,20 @@ def _resolve_clause(
     app_label, app_count = app_counts.most_common(1)[0] if app_counts else (None, 0)
     app_label_support = app_count / app_subtype_model_count if app_subtype_model_count else 0.0
     prior_app = structural_prior.get("applicability_subtype")
-    applicability_structural_conflict = bool(
+    applicability_presence_conflict = bool(
+        prior_app
+        and app_present_support < majority_threshold
+        and prior_confidence >= majority_threshold
+    )
+    applicability_subtype_conflict = bool(
         prior_app
         and app_label is not None
         and app_label.value != prior_app
         and app_label_support >= majority_threshold
         and prior_confidence >= majority_threshold
+    )
+    applicability_structural_conflict = (
+        applicability_presence_conflict or applicability_subtype_conflict
     )
     if prior_app and app_label_support < majority_threshold:
         app_label = ApplicabilityFunction(prior_app)
@@ -1098,6 +1151,8 @@ def _write_outputs(
                     "present": item.role_semantics_present,
                     "candidate": item.role_candidate,
                     "candidate_markers": list(item.role_candidate_markers),
+                    "candidate_consensus_negative": item.role_candidate_consensus_negative,
+                    "evidence_conflict": item.role_semantics_evidence_conflict,
                     "relations": [
                         {
                             "actor": relation.actor,
