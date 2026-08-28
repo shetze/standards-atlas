@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 
-from standards_atlas.application.ontology import LlmRoleSemanticsClassifier
 from standards_atlas.application.ports.llm_gateway import LlmResponseError
 from standards_atlas.application.semantic_classification import SemanticClassificationContext
+from standards_atlas.application.semantic_ontology import LlmRoleSemanticsClassifier
 
 
 class FakeGateway:

@@ -61,7 +61,7 @@ class QualificationWorkflowPlanner:
             force=overwrite,
             keep_stages=keep_stages,
             hierarchy_key=hierarchy_key,
-            include_semantic_classification=True,
+            include_semantic_enrichment=True,
         )
         excluded_document_stages = {
             WorkflowStage.DOORSTOP,

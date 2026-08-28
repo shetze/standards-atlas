@@ -1,4 +1,4 @@
-"""Apply qualified semantic classification to persisted engineering documents."""
+"""Materialize accepted semantic enrichment in persisted engineering documents."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict
 
-from standards_atlas.application.ontology import RoleSemanticsClassifier
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.application.ports.llm_gateway import LlmResponseError
 from standards_atlas.application.semantic_classification import (
@@ -16,6 +15,7 @@ from standards_atlas.application.semantic_classification import (
     SemanticClassificationEngine,
     SemanticProfile,
 )
+from standards_atlas.application.semantic_ontology import RoleSemanticsClassifier
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     DocumentKey,
@@ -30,8 +30,8 @@ from standards_atlas.domain.model import (
 
 
 @dataclass(frozen=True)
-class SemanticClassificationProgress:
-    """Observable progress for one clause in document semantic classification."""
+class SemanticEnrichmentProgress:
+    """Observable progress while accepted semantics are materialized for one clause."""
 
     current: int
     total: int
@@ -43,7 +43,7 @@ class SemanticClassificationProgress:
     elapsed_seconds: float | None = None
 
 
-SemanticClassificationProgressCallback = Callable[[SemanticClassificationProgress], None]
+SemanticEnrichmentProgressCallback = Callable[[SemanticEnrichmentProgress], None]
 
 
 def _unique(values: Iterable[object]) -> tuple[object, ...]:
@@ -96,16 +96,20 @@ def _validated_semantic_merge(
     return SemanticClassification.model_validate(_canonicalize_semantic_payload(payload))
 
 
-class SemanticClassificationResult(BaseModel):
+class SemanticEnrichmentResult(BaseModel):
     model_config = ConfigDict(frozen=True)
     document: EngineeringDocument
-    clauses_classified: int
+    clauses_enriched: int
     role_semantics_failures: int = 0
     semantic_classification_failures: int = 0
 
 
-class SemanticClassificationService:
-    """Materialize semantic profile dimensions after structural taxonomy."""
+class SemanticEnrichmentService:
+    """Materialize accepted semantic profile results after structural taxonomy.
+
+    This service updates the canonical EngineeringDocument knowledge state. Qualification
+    candidates use separate proposal artifacts and must not be persisted through this service.
+    """
 
     def __init__(
         self,
@@ -115,7 +119,7 @@ class SemanticClassificationService:
         profile: SemanticProfile,
         classifier_id: str = "qualified-llm",
         role_semantics: RoleSemanticsClassifier | None = None,
-        progress: SemanticClassificationProgressCallback | None = None,
+        progress: SemanticEnrichmentProgressCallback | None = None,
     ) -> None:
         self._documents = documents
         self._engine = engine
@@ -124,7 +128,7 @@ class SemanticClassificationService:
         self._role_semantics = role_semantics
         self._progress = progress
 
-    def classify(self, document_key: str) -> SemanticClassificationResult:
+    def enrich(self, document_key: str) -> SemanticEnrichmentResult:
         document = self._documents.load(DocumentKey(value=document_key))
         clauses_by_id = {item.id.value: item for item in document.clauses}
         updated = []
@@ -144,7 +148,7 @@ class SemanticClassificationService:
             ]
             if self._progress is not None:
                 self._progress(
-                    SemanticClassificationProgress(
+                    SemanticEnrichmentProgress(
                         current=index,
                         total=total,
                         document_key=document.key.value,
@@ -288,7 +292,7 @@ class SemanticClassificationService:
             if self._progress is not None:
                 state = "partial" if ontology_failed or role_failed else "ok"
                 self._progress(
-                    SemanticClassificationProgress(
+                    SemanticEnrichmentProgress(
                         current=index,
                         total=total,
                         document_key=document.key.value,
@@ -301,9 +305,9 @@ class SemanticClassificationService:
                 )
         result = document.model_copy(update={"clauses": tuple(updated)})
         self._documents.save(result)
-        return SemanticClassificationResult(
+        return SemanticEnrichmentResult(
             document=result,
-            clauses_classified=classified,
+            clauses_enriched=classified,
             role_semantics_failures=role_semantics_failures,
             semantic_classification_failures=semantic_classification_failures,
         )

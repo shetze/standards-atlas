@@ -18,8 +18,8 @@ from standards_atlas.application.services import (
     DocumentNormalizationService,
     MarkdownExportService,
 )
-from standards_atlas.application.services.semantic_classification_service import (
-    SemanticClassificationProgressCallback,
+from standards_atlas.application.services.semantic_enrichment_service import (
+    SemanticEnrichmentProgressCallback,
 )
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
@@ -142,26 +142,26 @@ def build_structural_taxonomy_service(workspace: Path):
     return StructuralTaxonomyService(FileSystemEngineeringDocumentRepository(workspace))
 
 
-def build_semantic_classification_service(
+def build_semantic_enrichment_service(
     workspace: Path,
     *,
     llm_config_path: Path | None = None,
-    progress: SemanticClassificationProgressCallback | None = None,
+    progress: SemanticEnrichmentProgressCallback | None = None,
 ):
     from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
     from standards_atlas.application.evaluation.repository import PromptRepository
-    from standards_atlas.application.ontology import (
-        LlmRoleSemanticsClassifier,
-        ResourceOntologyDefinitionRepository,
-    )
     from standards_atlas.application.semantic_classification import (
         LlmSemanticClassifier,
         ResourceSemanticProfileRepository,
         SemanticClassificationEngine,
         SemanticClassifierRegistry,
     )
+    from standards_atlas.application.semantic_ontology import (
+        LlmRoleSemanticsClassifier,
+        ResourceOntologyDefinitionRepository,
+    )
     from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
-    from standards_atlas.application.services import SemanticClassificationService
+    from standards_atlas.application.services import SemanticEnrichmentService
 
     task_id = "semantic-profile-classification"
     task_version = "2.4.0"
@@ -190,7 +190,7 @@ def build_semantic_classification_service(
         definitions=ResourceOntologyDefinitionRepository(),
         registry=SemanticClassifierRegistry((classifier,)),
     )
-    return SemanticClassificationService(
+    return SemanticEnrichmentService(
         documents=FileSystemEngineeringDocumentRepository(workspace),
         engine=engine,
         profile=profile,

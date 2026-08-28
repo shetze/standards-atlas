@@ -38,12 +38,15 @@ services and may publish Markdown and Doorstop output, but it never schedules an
 semantic-profile classifier.
 
 `--task qualification` reuses the required deterministic document stages, then explicitly opts
-into `document classify-semantics` as the multidimensional semantic-profile classification stage.
+into `document enrich-semantics`. `SEMANTIC_ENRICHMENT` materializes the accepted production
+semantic profile in the canonical EngineeringDocument; it is not a qualification candidate run.
 Qualification retains Markdown reference publication but removes Doorstop export/publication from
 its derived document plan. Corpus construction, matrix qualification, semantic extraction
-qualification, and immutable run archival follow afterwards.
+qualification, and immutable run archival follow afterwards. Candidate proposals remain in
+evaluation artifacts and never write through the semantic enrichment service.
 
-`--limit` applies only to qualification execution. Semantic-profile classification remains
-document-wide so qualification cannot leave persisted EngineeringDocuments partially classified.
-`SEMANTIC_CLASSIFICATION` is the production semantic-profile classification stage; it is distinct from the formal OWL TBox/RBox/ABox/CBox model.
+`--limit` applies only to qualification execution. Accepted semantic enrichment remains
+document-wide so qualification cannot leave persisted EngineeringDocuments partially enriched.
+The enrichment stage uses semantic classification internally and is distinct from the formal OWL
+TBox/RBox/ABox/CBox model.
 

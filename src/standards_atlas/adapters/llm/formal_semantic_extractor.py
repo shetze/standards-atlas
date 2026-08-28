@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import unicodedata
+from collections.abc import Mapping
 
 from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
 from standards_atlas.application.semantic_extraction import (
@@ -89,9 +90,14 @@ class OntologyGuidedLlmExtractor:
         *,
         document_key: str,
         ontology_versions: tuple[str, ...],
+        semantic_context: Mapping[str, object] | None = None,
     ) -> ClauseSemanticExtraction:
         vocabulary = FormalOntologyVocabulary.load(ontology_versions)
-        context = clause.semantic_classification.model_dump(mode="json")
+        context = (
+            dict(semantic_context)
+            if semantic_context is not None
+            else clause.semantic_classification.model_dump(mode="json")
+        )
         projection = project_clause_content(clause.content)
         clause_reference = display_clause_reference(document_key, clause.reference)
         request = StructuredGenerationRequest(

@@ -152,7 +152,7 @@ def test_structural_taxonomy_does_not_depend_on_semantic_classification() -> Non
     _assert_no_imports(
         structural_paths,
         (
-            "standards_atlas.application.ontology",
+            "standards_atlas.application.semantic_ontology",
             "standards_atlas.application.semantic_classification",
             "standards_atlas.application.semantic_extraction",
             "standards_atlas.resources.ontologies",

@@ -73,9 +73,9 @@ uv run standards-atlas document classify-taxonomy EN50716
 
 It materializes `StructuralProfile` and `StructuralContext`, including ancestor context, node/leaf role, sibling sequence position, contextual node content, and structural reference edges.
 
-`--task documents` stops semantic processing at this deterministic boundary. It does not run `document classify-semantics`, does not require `cfg/llm.yaml`, and does not start a managed LLM endpoint. Family composition plus Markdown and configured Doorstop publication therefore operate on the canonical deterministic document representation.
+`--task documents` stops semantic processing at this deterministic boundary. It does not run `document enrich-semantics`, does not require `cfg/llm.yaml`, and does not start a managed LLM endpoint. Family composition plus Markdown and configured Doorstop publication therefore operate on the canonical deterministic document representation.
 
-`document classify-semantics` remains available as a diagnostic command, but normal workflow ownership moves to `--task qualification`, which runs the semantic-profile classifier after structural taxonomy. The historical command name refers to multidimensional semantic-profile classification and is distinct from the formal OWL TBox/RBox/ABox/CBox model.
+`document enrich-semantics` explicitly materializes accepted semantic-profile results in the canonical EngineeringDocument. It is therefore a mutating enrichment command, not a qualification probe. Normal workflow ownership is `--task qualification`, which performs this accepted enrichment after structural taxonomy before constructing qualification corpora. Candidate model/prompt results produced by qualification remain separate evaluation artifacts and never update EngineeringDocument directly. The underlying classifier is distinct from the formal OWL TBox/RBox/ABox/CBox model.
 
 Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; formula transcription remains a separate enrichment concern.
 

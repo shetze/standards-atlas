@@ -139,7 +139,7 @@ class SemanticExtractionService:
                 continue
             if not extraction_eligibility(clause, context=context).eligible:
                 continue
-            effective_clause = _clause_with_context(clause, context)
+            semantic_context = _semantic_context(clause, context)
             clause_reference = display_clause_reference(document.key.value, clause.reference)
             if progress is not None:
                 progress(
@@ -154,9 +154,10 @@ class SemanticExtractionService:
             started = time.monotonic()
             try:
                 extracted = self._extractor.extract(
-                    effective_clause,
+                    clause,
                     document_key=document.key.value,
                     ontology_versions=ontology_versions,
+                    semantic_context=semantic_context,
                 )
             except LlmGatewayError as error:
                 duration = time.monotonic() - started
@@ -232,19 +233,22 @@ class SemanticExtractionService:
         )
 
 
-def _clause_with_context(
+def _semantic_context(
     clause: Clause,
     context: ExtractionEligibilityContext | None,
-) -> Clause:
+) -> dict[str, object]:
+    """Build extractor context without fabricating a modified Clause instance."""
+
+    payload = clause.semantic_classification.model_dump(mode="json")
     if context is None:
-        return clause
-    semantic = clause.semantic_classification.model_copy(
-        update={
-            "knowledge_kinds": context.knowledge_kinds,
-            "process_functions": context.process_functions,
+        return payload
+    payload.update(
+        {
+            "knowledge_kinds": [item.value for item in context.knowledge_kinds],
+            "process_functions": [item.value for item in context.process_functions],
             "applicability_present": context.applicability_present,
-            "applicability_functions": context.applicability_functions,
+            "applicability_functions": [item.value for item in context.applicability_functions],
             "role_semantics_present": context.role_semantics_present,
         }
     )
-    return clause.with_semantic_classification(semantic)
+    return payload

@@ -20,10 +20,6 @@ from standards_atlas.application.evaluation.repository import (
     PromptRepository,
 )
 from standards_atlas.application.evaluation.schema import validate_schema
-from standards_atlas.application.ontology import (
-    OntologyReference,
-    ResourceOntologyDefinitionRepository,
-)
 from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
     LlmResponseError,
@@ -35,6 +31,10 @@ from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.semantic_classification import (
     ResourceSemanticProfileRepository,
     SemanticProfileReference,
+)
+from standards_atlas.application.semantic_ontology import (
+    OntologyReference,
+    ResourceOntologyDefinitionRepository,
 )
 from standards_atlas.application.semantic_qualification.adaptive_interview import (
     AdaptiveInterviewPlanner,

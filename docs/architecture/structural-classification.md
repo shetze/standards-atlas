@@ -18,8 +18,8 @@ values form explicit evidence for the subsequent semantic classification stage. 
 semantic statement, knowledge, process, applicability, or role-relation semantics. The
 ontology classifier consumes normalized content together with the materialized structural
 evidence. `OntologyEngine` validates the emitted dimensions and values against the versioned
-ontology profile before `OntologyClassificationService` persists them as
-`SemanticClassification`.
+semantic profile before `SemanticEnrichmentService` persists accepted results as
+`SemanticClassification` enrichment.
 
 The stage boundary is deliberate: taxonomy answers where a clause is located and how
 structural statements reach other clauses; ontology answers what the clause means in the

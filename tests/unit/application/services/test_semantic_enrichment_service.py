@@ -1,10 +1,10 @@
-from standards_atlas.application.ontology import OntologyReference
 from standards_atlas.application.ports.llm_gateway import LlmResponseError
 from standards_atlas.application.semantic_classification import (
     SemanticDimensionResult,
     SemanticProfile,
 )
-from standards_atlas.application.services import SemanticClassificationService
+from standards_atlas.application.semantic_ontology import OntologyReference
+from standards_atlas.application.services import SemanticEnrichmentService
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     Clause,
@@ -69,7 +69,7 @@ def _document() -> EngineeringDocument:
 def test_role_response_failure_does_not_abort_other_ontology_dimensions() -> None:
     document = _document()
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_Engine(),
         profile=SemanticProfile(
@@ -82,9 +82,9 @@ def test_role_response_failure_does_not_abort_other_ontology_dimensions() -> Non
         role_semantics=_FailingRoleSemantics(),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
 
-    assert result.clauses_classified == 1
+    assert result.clauses_enriched == 1
     assert result.role_semantics_failures == 1
     assert result.document.clauses[0].semantic_classification.statement_functions[0].value == (
         "requirement"
@@ -100,7 +100,7 @@ class _FailingEngine:
 
 class _SuccessfulRoleSemantics:
     def classify(self, _context):
-        from standards_atlas.application.ontology import RoleSemanticsResult
+        from standards_atlas.application.semantic_ontology import RoleSemanticsResult
 
         return RoleSemanticsResult(present=False)
 
@@ -109,7 +109,7 @@ def test_ontology_response_failure_isolated_to_clause_and_reported() -> None:
     document = _document()
     documents = _Documents(document)
     progress = []
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_FailingEngine(),
         profile=SemanticProfile(
@@ -123,9 +123,9 @@ def test_ontology_response_failure_isolated_to_clause_and_reported() -> None:
         progress=progress.append,
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
 
-    assert result.clauses_classified == 0
+    assert result.clauses_enriched == 0
     assert result.semantic_classification_failures == 1
     assert result.role_semantics_failures == 0
     assert result.document.clauses[0].semantic_classification.statement_functions == ()
@@ -156,7 +156,7 @@ def _document_with_semantic(semantic: SemanticClassification) -> EngineeringDocu
 def test_applicability_dimension_is_replaced_atomically_when_present() -> None:
     document = _document_with_semantic(SemanticClassification())
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_ApplicabilityEngine(("inclusion",)),
         profile=SemanticProfile(
@@ -170,7 +170,7 @@ def test_applicability_dimension_is_replaced_atomically_when_present() -> None:
         ),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
     semantic = result.document.clauses[0].semantic_classification
 
     assert semantic.applicability_present is True
@@ -185,7 +185,7 @@ def test_applicability_dimension_is_replaced_atomically_when_absent() -> None:
         )
     )
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_ApplicabilityEngine(()),
         profile=SemanticProfile(
@@ -199,7 +199,7 @@ def test_applicability_dimension_is_replaced_atomically_when_absent() -> None:
         ),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
     semantic = result.document.clauses[0].semantic_classification
 
     assert semantic.applicability_present is False
@@ -213,7 +213,7 @@ def test_fail_soft_ontology_failure_preserves_complete_applicability_dimension()
     )
     document = _document_with_semantic(initial)
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_FailingEngine(),
         profile=SemanticProfile(
@@ -227,14 +227,14 @@ def test_fail_soft_ontology_failure_preserves_complete_applicability_dimension()
         ),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
 
     assert result.document.clauses[0].semantic_classification == initial
 
 
 class _AbsentRoleSemantics:
     def classify(self, _context):
-        from standards_atlas.application.ontology import RoleSemanticsResult
+        from standards_atlas.application.semantic_ontology import RoleSemanticsResult
 
         return RoleSemanticsResult(present=False)
 
@@ -252,7 +252,7 @@ def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> No
     )
     document = _document_with_semantic(initial)
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_Engine(),
         profile=SemanticProfile(
@@ -265,7 +265,7 @@ def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> No
         role_semantics=_AbsentRoleSemantics(),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
     semantic = result.document.clauses[0].semantic_classification
 
     assert semantic.role_semantics_present is False
@@ -287,7 +287,7 @@ class _PresenceOnlyApplicabilityEngine:
 def test_applicability_presence_is_persisted_independently_from_subtype() -> None:
     document = _document()
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_PresenceOnlyApplicabilityEngine(),
         profile=SemanticProfile(
@@ -301,7 +301,7 @@ def test_applicability_presence_is_persisted_independently_from_subtype() -> Non
         ),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
     semantic = result.document.clauses[0].semantic_classification
 
     assert semantic.applicability_present is True
@@ -333,7 +333,7 @@ class _DuplicateDimensionsEngine:
 def test_set_like_semantic_dimensions_are_deduplicated_before_validation() -> None:
     document = _document()
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_DuplicateDimensionsEngine(),
         profile=SemanticProfile(
@@ -345,7 +345,7 @@ def test_set_like_semantic_dimensions_are_deduplicated_before_validation() -> No
         ),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
     semantic = result.document.clauses[0].semantic_classification
 
     assert semantic.statement_functions == (StatementFunction.REQUIREMENT,)
@@ -375,7 +375,7 @@ def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> 
     )
     document = _document_with_semantic(existing)
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_FailingEngine(),
         profile=SemanticProfile(
@@ -387,7 +387,7 @@ def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> 
         ),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
     semantic = result.document.clauses[0].semantic_classification
 
     assert result.semantic_classification_failures == 1
@@ -417,7 +417,7 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
     )
     document = _document_with_semantic(existing)
     documents = _Documents(document)
-    service = SemanticClassificationService(
+    service = SemanticEnrichmentService(
         documents=documents,
         engine=_FailingEngine(),
         profile=SemanticProfile(
@@ -429,7 +429,7 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
         ),
     )
 
-    result = service.classify(document.key.value)
+    result = service.enrich(document.key.value)
     semantic = result.document.clauses[0].semantic_classification
 
     assert semantic.role_relation_types == (RoleRelationType.VERIFIES,)

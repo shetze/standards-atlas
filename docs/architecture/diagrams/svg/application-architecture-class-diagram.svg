@@ -70,7 +70,7 @@
 <g id="node4" class="node">
 <title>ont</title>
 <path fill="white" stroke="black" d="M407,-17C407,-17 681,-17 681,-17 687,-17 693,-23 693,-29 693,-29 693,-41 693,-41 693,-47 687,-53 681,-53 681,-53 407,-53 407,-53 401,-53 395,-47 395,-41 395,-41 395,-29 395,-29 395,-23 401,-17 407,-17"/>
-<text text-anchor="middle" x="469.5" y="-32.8" font-family="DejaVu Sans" font-size="9.00">OntologyClassificationService</text>
+<text text-anchor="middle" x="469.5" y="-32.8" font-family="DejaVu Sans" font-size="9.00">SemanticEnrichmentService</text>
 <polyline fill="none" stroke="black" points="544,-17 544,-53 "/>
 <text text-anchor="start" x="552" y="-37.8" font-family="DejaVu Sans" font-size="9.00">classify semantic dimensions</text>
 <text text-anchor="start" x="552" y="-27.8" font-family="DejaVu Sans" font-size="9.00">consume structural evidence</text>

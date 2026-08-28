@@ -41,8 +41,8 @@ from standards_atlas.application.services.markdown_export_service import Markdow
 from standards_atlas.application.services.reference_candidate_service import (
     ReferenceCandidateService,
 )
-from standards_atlas.application.services.semantic_classification_service import (
-    SemanticClassificationService,
+from standards_atlas.application.services.semantic_enrichment_service import (
+    SemanticEnrichmentService,
 )
 from standards_atlas.application.services.structural_taxonomy_service import (
     StructuralTaxonomyService,
@@ -73,7 +73,7 @@ __all__ = [
     "EngineeringConstructionContractValidator",
     "ExtractionInspectionService",
     "MarkdownExportService",
-    "SemanticClassificationService",
+    "SemanticEnrichmentService",
     "ReferenceCandidateService",
     "StructuralTaxonomyService",
     "StructuredKnowledgeMappingService",

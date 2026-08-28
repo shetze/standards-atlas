@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 import pytest
 
-from standards_atlas.application.ontology import OntologyDefinition, OntologyReference
 from standards_atlas.application.semantic_classification import (
     SemanticClassificationContext,
     SemanticClassificationEngine,
@@ -10,6 +9,7 @@ from standards_atlas.application.semantic_classification import (
     SemanticDimensionResult,
     SemanticProfile,
 )
+from standards_atlas.application.semantic_ontology import OntologyDefinition, OntologyReference
 
 
 class Definitions:

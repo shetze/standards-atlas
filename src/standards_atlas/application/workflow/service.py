@@ -39,7 +39,7 @@ class EndToEndWorkflowService:
         force: bool = False,
         keep_stages: tuple[WorkflowStage, ...] = (),
         hierarchy_key: str | None = None,
-        include_semantic_classification: bool = False,
+        include_semantic_enrichment: bool = False,
     ) -> WorkflowPlan:
         return self.planner.plan(
             catalog,
@@ -48,7 +48,7 @@ class EndToEndWorkflowService:
             force=force,
             keep_stages=keep_stages,
             hierarchy_key=hierarchy_key,
-            include_semantic_classification=include_semantic_classification,
+            include_semantic_enrichment=include_semantic_enrichment,
         )
 
     def execute(

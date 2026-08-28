@@ -141,7 +141,7 @@
 <polyline fill="none" stroke="black" points="1257,-240.5 1261,-240.5 1261,-236.5 1257,-236.5 "/>
 <polyline fill="none" stroke="black" points="1257,-207.5 1261,-207.5 1261,-203.5 1257,-203.5 "/>
 <text text-anchor="middle" x="1340" y="-230.5" font-family="DejaVu Sans" font-size="10.00">ONTOLOGY</text>
-<text text-anchor="middle" x="1340" y="-219.5" font-family="DejaVu Sans" font-size="10.00">OntologyClassificationService</text>
+<text text-anchor="middle" x="1340" y="-219.5" font-family="DejaVu Sans" font-size="10.00">SemanticEnrichmentService</text>
 <text text-anchor="middle" x="1340" y="-208.5" font-family="DejaVu Sans" font-size="10.00">semantic profile</text>
 </g>
 <!-- workflow&#45;&gt;ontology -->

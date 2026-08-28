@@ -58,7 +58,7 @@ ontology decision.
 
 ## Semantic classification
 
-`SemanticClassification` is the semantic enrichment block of a clause. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and role-relation types is owned exclusively by the `SEMANTIC_CLASSIFICATION` stage. Structural evidence remains in `ClauseBaseline` and is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for semantic classification, not semantic truth. Deterministically resolved document references likewise remain in the baseline rather than being mixed with inferred semantic relations.
+`SemanticClassification` is the semantic enrichment block of a clause. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and role-relation types is owned exclusively by the `SEMANTIC_ENRICHMENT` stage. Structural evidence remains in `ClauseBaseline` and is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for semantic classification, not semantic truth. Deterministically resolved document references likewise remain in the baseline rather than being mixed with inferred semantic relations.
 
 ## Evidence and provenance
 

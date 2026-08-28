@@ -17,10 +17,10 @@ The document pipeline converts controlled publications into canonical engineerin
 7. **Construction contract** freezes the reviewed inputs and verifies coverage before aggregate construction.
 8. **Engineering document construction (`ENRICH`)** creates canonical clause content, evidence, reference mentions, and lineage. It does not classify structure or semantic meaning.
 9. **Structural taxonomy (`TAXONOMY`)** deterministically materializes `StructuralProfile` and `StructuralContext`, including hierarchy, node/leaf role, ancestor context, sibling sequence position, contextual node content, structural reference edges, and structural scope reach (for example `this clause`, following sibling clauses, or a scope-heading subtree).
-10. **Semantic classification (`SEMANTIC_CLASSIFICATION`)** applies the qualified production classifier to clause content plus the complete structural context and assigns statement functions, knowledge kinds, process functions, applicability functions, and role-relation types.
+10. **Semantic classification (`SEMANTIC_ENRICHMENT`)** applies the qualified production classifier to clause content plus the complete structural context and assigns statement functions, knowledge kinds, process functions, applicability functions, and role-relation types.
 11. **Reference resolution and relationship enrichment** resolves available internal and cross-document targets while preserving unresolved evidence for later interpretation.
 12. **Publication** creates Markdown, composed Markdown, and Doorstop projections without changing classification ownership.
-13. **Evaluation and qualification** operate as separate workflows for datasets, model qualification, regression evidence, and HITL review; they do not replace the production `SEMANTIC_CLASSIFICATION` stage.
+13. **Evaluation and qualification** operate as separate workflows for datasets, model qualification, regression evidence, and HITL review; they do not replace the production `SEMANTIC_ENRICHMENT` stage.
 
 ## Normalization contract
 
@@ -43,11 +43,11 @@ Semantic transcription is intentionally outside this stage. A future enrichment 
 
 ## Taxonomy and ontology ownership
 
-The production path has one mandatory direction: `ENRICH → TAXONOMY → SEMANTIC_CLASSIFICATION`.
+The production path has one mandatory direction: `ENRICH → TAXONOMY → SEMANTIC_ENRICHMENT`.
 `ENRICH` preserves content and evidence, `TAXONOMY` derives deterministic structural
-context, and `SEMANTIC_CLASSIFICATION` interprets semantic meaning. The semantic classification stage receives the
+context, and `SEMANTIC_ENRICHMENT` interprets semantic meaning. The semantic classification stage receives the
 materialized structural context and therefore never has to reconstruct hierarchy from
-prose. Automatic modal-verb heuristics are not permitted outside `SEMANTIC_CLASSIFICATION`.
+prose. Automatic modal-verb heuristics are not permitted outside `SEMANTIC_ENRICHMENT`.
 
 Semantic qualification remains a separate evaluation workflow used to select and validate
 the production classifier. Imported reviewed/public semantic annotations may populate

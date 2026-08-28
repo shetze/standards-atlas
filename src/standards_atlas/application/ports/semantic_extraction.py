@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Protocol
 
 from standards_atlas.domain.model import (
@@ -20,6 +21,7 @@ class SemanticKnowledgeExtractor(Protocol):
         *,
         document_key: str,
         ontology_versions: tuple[str, ...],
+        semantic_context: Mapping[str, object] | None = None,
     ) -> ClauseSemanticExtraction: ...
 
 

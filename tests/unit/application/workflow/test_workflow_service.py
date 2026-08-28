@@ -31,8 +31,8 @@ def test_documents_plan_is_deterministic_and_contains_no_llm_classification() ->
     )
 
     assert WorkflowStage.TAXONOMY in {step.stage for step in plan.steps}
-    assert WorkflowStage.SEMANTIC_CLASSIFICATION not in {step.stage for step in plan.steps}
-    assert all("classify-semantics" not in step.command for step in plan.steps)
+    assert WorkflowStage.SEMANTIC_ENRICHMENT not in {step.stage for step in plan.steps}
+    assert all("enrich-semantics" not in step.command for step in plan.steps)
     assert all("--llm-config" not in step.command for step in plan.steps)
 
 
@@ -42,14 +42,12 @@ def test_semantic_profile_classification_is_explicit_planner_opt_in() -> None:
         catalog,
         family_keys=("EN50716",),
         catalog_root=Path.cwd(),
-        include_semantic_classification=True,
+        include_semantic_enrichment=True,
     )
 
-    semantic = next(
-        step for step in plan.steps if step.stage is WorkflowStage.SEMANTIC_CLASSIFICATION
-    )
+    semantic = next(step for step in plan.steps if step.stage is WorkflowStage.SEMANTIC_ENRICHMENT)
     assert semantic.command[-4:] == (
-        "classify-semantics",
+        "enrich-semantics",
         "EN50716",
         "--llm-config",
         "cfg/llm.yaml",

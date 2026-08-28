@@ -51,4 +51,4 @@ The diagram does not enumerate every specialized service, such as AtlasData life
 
 ## Composition
 
-Concrete adapters are selected at the executable boundary. Application services should be constructible in tests with in-memory or temporary-filesystem implementations. The application boundary deliberately separates structural taxonomy (`application.structure` plus `StructuralTaxonomyService`) from semantic ontology (`application.ontology` plus `OntologyClassificationService`). No application service may own both classification responsibilities.
+Concrete adapters are selected at the executable boundary. Application services should be constructible in tests with in-memory or temporary-filesystem implementations. The application boundary deliberately separates structural taxonomy (`application.structure` plus `StructuralTaxonomyService`) from semantic ontology (`application.semantic_ontology` plus semantic classification services). No application service may own both classification responsibilities.

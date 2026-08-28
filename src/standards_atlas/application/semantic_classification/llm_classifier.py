@@ -6,7 +6,6 @@ import json
 from dataclasses import replace
 
 from standards_atlas.application.evaluation.models import PromptDefinition
-from standards_atlas.application.ontology.definition import OntologyDefinition
 from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
     LlmResponseError,
@@ -16,6 +15,7 @@ from standards_atlas.application.semantic_classification.engine import (
     SemanticClassificationContext,
     SemanticDimensionResult,
 )
+from standards_atlas.application.semantic_ontology.definition import OntologyDefinition
 
 
 class LlmSemanticClassifier:

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from standards_atlas.application.ontology import ResourceOntologyDefinitionRepository
 from standards_atlas.application.semantic_classification import (
     ResourceSemanticProfileRepository,
     SemanticProfile,
 )
+from standards_atlas.application.semantic_ontology import ResourceOntologyDefinitionRepository
 from standards_atlas.domain.model import NormativeStatus, SemanticClassification
 
 CURRENT_SEMANTIC_PROFILE = "functional-safety:1.0.0"

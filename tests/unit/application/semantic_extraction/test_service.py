@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 from standards_atlas.application.semantic_extraction import (
     ExtractionEligibilityContext,
     SemanticExtractionService,
@@ -19,6 +21,7 @@ from standards_atlas.domain.model import (
 class _CapturingExtractor:
     def __init__(self) -> None:
         self.seen_clause: Clause | None = None
+        self.semantic_context: Mapping[str, object] | None = None
 
     def extract(
         self,
@@ -26,8 +29,10 @@ class _CapturingExtractor:
         *,
         document_key: str,
         ontology_versions: tuple[str, ...],
+        semantic_context: Mapping[str, object] | None = None,
     ) -> ClauseSemanticExtraction:
         self.seen_clause = clause
+        self.semantic_context = semantic_context
         return ClauseSemanticExtraction(
             clause_id=clause.id.value,
             ontology_versions=ontology_versions,
@@ -63,7 +68,9 @@ def test_qualification_context_can_admit_unclassified_engineering_clause() -> No
     assert [item.clause_id for item in extraction.clauses] == ["clause-1"]
     assert clause.semantic_classification.knowledge_kinds == ()
     assert extractor.seen_clause is not None
-    assert extractor.seen_clause.semantic_classification.knowledge_kinds == (KnowledgeKind.PROCESS,)
+    assert extractor.seen_clause is clause
+    assert extractor.semantic_context is not None
+    assert extractor.semantic_context["knowledge_kinds"] == [KnowledgeKind.PROCESS.value]
 
 
 def test_llm_timeout_is_recorded_and_next_clause_continues() -> None:
@@ -93,6 +100,7 @@ def test_llm_timeout_is_recorded_and_next_clause_continues() -> None:
             *,
             document_key: str,
             ontology_versions: tuple[str, ...],
+            semantic_context: Mapping[str, object] | None = None,
         ) -> ClauseSemanticExtraction:
             if clause.id.value == "clause-1":
                 raise LlmTimeoutError("timed out")

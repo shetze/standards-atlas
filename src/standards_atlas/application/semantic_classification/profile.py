@@ -6,7 +6,7 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from standards_atlas.application.ontology.definition import OntologyReference
+from standards_atlas.application.semantic_ontology.definition import OntologyReference
 
 
 class SemanticProfileReference(BaseModel):

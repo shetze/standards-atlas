@@ -27,7 +27,7 @@ class WorkflowPlanner:
         force: bool = False,
         keep_stages: tuple[WorkflowStage, ...] = (),
         hierarchy_key: str | None = None,
-        include_semantic_classification: bool = False,
+        include_semantic_enrichment: bool = False,
     ) -> WorkflowPlan:
         steps: list[WorkflowStep] = []
         hierarchy = catalog.doorstop_hierarchy(hierarchy_key) if hierarchy_key else None
@@ -45,7 +45,7 @@ class WorkflowPlanner:
                     force=force,
                     selected_families=selected_families,
                     hierarchy_key=hierarchy_key,
-                    include_semantic_classification=include_semantic_classification,
+                    include_semantic_enrichment=include_semantic_enrichment,
                 )
             )
         if hierarchy is not None:
@@ -83,7 +83,7 @@ class WorkflowPlanner:
         force: bool,
         selected_families: set[str],
         hierarchy_key: str | None,
-        include_semantic_classification: bool,
+        include_semantic_enrichment: bool,
     ) -> list[WorkflowStep]:
         documents = (
             [(family.key, family.source.pdf, family.content_selection)]
@@ -377,26 +377,24 @@ class WorkflowPlanner:
                     ),
                 ]
             )
-            if include_semantic_classification:
+            if include_semantic_enrichment:
                 steps.append(
                     WorkflowStep(
                         family.key,
                         key,
-                        WorkflowStage.SEMANTIC_CLASSIFICATION,
+                        WorkflowStage.SEMANTIC_ENRICHMENT,
                         (
                             "uv",
                             "run",
                             "standards-atlas",
                             "document",
-                            "classify-semantics",
+                            "enrich-semantics",
                             key,
                             "--llm-config",
                             "cfg/llm.yaml",
                         ),
                         ArtifactPolicy.DERIVED,
-                        output_paths=(
-                            f".atlas/work/workflow/semantic-classification/{key}.complete",
-                        ),
+                        output_paths=(f".atlas/work/workflow/semantic-enrichment/{key}.complete",),
                     )
                 )
         part_keys = tuple(key for key, _, _ in documents) if family.source is None else ()

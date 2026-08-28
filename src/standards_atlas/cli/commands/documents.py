@@ -12,10 +12,10 @@ from standards_atlas.cli.commands.document_commands.exports import (
 )
 from standards_atlas.cli.commands.document_commands.inspection import inspect_data
 from standards_atlas.cli.commands.document_commands.management import (
-    classify_document_semantics,
     derive_document_part,
     derive_document_view,
     enrich_document_content,
+    enrich_document_semantics,
     import_document,
 )
 from standards_atlas.cli.commands.document_commands.publication import (
@@ -23,7 +23,7 @@ from standards_atlas.cli.commands.document_commands.publication import (
 )
 
 __all__ = [
-    "classify_document_semantics",
+    "enrich_document_semantics",
     "derive_document_part",
     "derive_document_view",
     "enrich_document_content",

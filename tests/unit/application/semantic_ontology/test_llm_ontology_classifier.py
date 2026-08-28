@@ -1,5 +1,4 @@
 from standards_atlas.application.evaluation.models import PromptDefinition
-from standards_atlas.application.ontology import OntologyDefinition
 from standards_atlas.application.ports.llm_gateway import (
     LlmResponseError,
     StructuredGenerationResult,
@@ -8,6 +7,7 @@ from standards_atlas.application.semantic_classification import (
     LlmSemanticClassifier,
     SemanticClassificationContext,
 )
+from standards_atlas.application.semantic_ontology import OntologyDefinition
 
 
 class Gateway:

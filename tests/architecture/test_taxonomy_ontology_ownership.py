@@ -1,4 +1,4 @@
-"""Guard the production taxonomy/semantic-classification ownership boundary."""
+"""Guard taxonomy, accepted enrichment, and qualification ownership boundaries."""
 
 from __future__ import annotations
 
@@ -27,19 +27,22 @@ def test_content_enrichment_does_not_classify_taxonomy_or_ontology() -> None:
     path = APPLICATION / "services" / "content_enrichment_service.py"
     imports = _imports(path)
 
-    assert not any(module.startswith("standards_atlas.application.ontology") for module in imports)
+    assert not any(
+        module.startswith("standards_atlas.application.semantic_ontology") for module in imports
+    )
     assert "standards_atlas.application.services.structural_profile_classifier" not in imports
 
 
 def test_taxonomy_and_semantic_classification_have_separate_application_services() -> None:
     taxonomy = APPLICATION / "services" / "structural_taxonomy_service.py"
-    semantic_classification = APPLICATION / "services" / "semantic_classification_service.py"
+    semantic_classification = APPLICATION / "services" / "semantic_enrichment_service.py"
 
     taxonomy_imports = _imports(taxonomy)
     semantic_imports = _imports(semantic_classification)
 
     assert not any(
-        module.startswith("standards_atlas.application.ontology") for module in taxonomy_imports
+        module.startswith("standards_atlas.application.semantic_ontology")
+        for module in taxonomy_imports
     )
     assert "standards_atlas.application.services.structural_profile_classifier" in taxonomy_imports
     assert any(
@@ -47,8 +50,21 @@ def test_taxonomy_and_semantic_classification_have_separate_application_services
         for module in semantic_imports
     )
     assert any(
-        module.startswith("standards_atlas.application.ontology") for module in semantic_imports
+        module.startswith("standards_atlas.application.semantic_ontology")
+        for module in semantic_imports
     )
     assert (
         "standards_atlas.application.services.structural_profile_classifier" not in semantic_imports
     )
+
+
+def test_qualification_does_not_materialize_semantic_enrichment() -> None:
+    """Candidate qualification code must not write accepted document enrichment."""
+
+    qualification_files = (APPLICATION / "semantic_qualification").rglob("*.py")
+    for path in qualification_files:
+        imports = _imports(path)
+        assert not any(
+            module.startswith("standards_atlas.application.services.semantic_enrichment_service")
+            for module in imports
+        ), path

@@ -5,11 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from standards_atlas.application.ontology.definition import (
+from standards_atlas.application.semantic_classification.profile import SemanticProfile
+from standards_atlas.application.semantic_ontology.definition import (
     OntologyDefinition,
     OntologyDefinitionRepository,
 )
-from standards_atlas.application.semantic_classification.profile import SemanticProfile
 
 
 @dataclass(frozen=True)

@@ -18,7 +18,7 @@ _COMMAND_DEPTHS = {
     ("align", "review-export"): 2,
     ("document", "enrich-content"): 2,
     ("document", "classify-taxonomy"): 2,
-    ("document", "classify-semantics"): 2,
+    ("document", "enrich-semantics"): 2,
     ("document", "export", "markdown"): 3,
     ("document", "export", "doorstop"): 3,
     ("document", "derive-part"): 2,

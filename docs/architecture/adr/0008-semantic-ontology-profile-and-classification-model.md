@@ -15,7 +15,7 @@ Semantic inference is modeled through three separate concepts:
 
 Role semantics use grounded role relations rather than a `responsibility_functions` dimension. Role relevance/presence and relation tuple extraction are separate tasks.
 
-Semantic classification uses canonical content plus deterministic structural context, and its inferred output remains separate from canonical document structure.
+Semantic classification uses canonical content plus deterministic structural context. Accepted production results are materialized as semantic enrichments in the canonical EngineeringDocument knowledge state, while qualification candidates remain separate evaluation artifacts until explicitly accepted. Semantic enrichments remain distinct from the deterministic baseline and canonical document structure.
 
 The term *semantic ontology* here means a controlled classification vocabulary. Formal OWL TBox/RBox ontologies are defined separately by ADR 0009.
 
