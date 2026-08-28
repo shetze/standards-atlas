@@ -7,14 +7,35 @@ from .baseline import (
     require_current_schema,
     require_supported_schema,
 )
-from .policy import SchemaDeprecationWarning, SchemaPolicy
+from .inventory import (
+    VERSIONED_INTERFACES,
+    LifecycleBoundary,
+    VersionAxis,
+    VersionedInterface,
+    schema_managed_interfaces,
+)
+from .policy import (
+    CURRENT_COMPATIBILITY_PHASE,
+    STABLE_READER_WINDOW,
+    CompatibilityPhase,
+    SchemaDeprecationWarning,
+    SchemaPolicy,
+)
 
 __all__ = [
+    "CURRENT_COMPATIBILITY_PHASE",
     "SCHEMA_BASELINES",
     "SCHEMA_POLICIES",
+    "STABLE_READER_WINDOW",
+    "VERSIONED_INTERFACES",
+    "CompatibilityPhase",
+    "LifecycleBoundary",
     "SchemaBaseline",
     "SchemaDeprecationWarning",
     "SchemaPolicy",
+    "VersionAxis",
+    "VersionedInterface",
     "require_current_schema",
     "require_supported_schema",
+    "schema_managed_interfaces",
 ]

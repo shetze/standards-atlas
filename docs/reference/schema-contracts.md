@@ -1,89 +1,70 @@
 # Schema contracts
 
-Standards Atlas distinguishes **serialization schema versions** from versions of the
-content carried by those schemas. `schema_version` identifies a JSON/YAML contract.
-Fields such as `version`, `task_version`, `taxonomy_version`, `prompt_version`, and
-`dataset_version` identify domain content and evolve independently.
+Standards Atlas distinguishes **serialization schema versions** from **resource versions**. The executable inventory is defined in `standards_atlas.application.schema.inventory`; central reader/writer rules are defined by `SCHEMA_POLICIES`.
 
-## Bounded compatibility policy
+A serialization `schema_version` answers: **can this payload be deserialized safely?** A resource version answers: **which definition or behavior does this payload represent or reference?** Fields such as profile, ontology, taxonomy, task, prompt, model, and dataset versions therefore evolve independently from serialization schemas.
 
-Version 0.8.3 establishes a clean baseline and a bounded reader policy. Each schema
-family has one current version and may read at most the two immediately preceding
-versions. A major Standards Atlas transition may temporarily permit a fourth readable
-version. Writers emit only the current version. Supported non-current versions emit a
-visible deprecation warning; older versions fail explicitly.
+## Current compatibility phase
 
-Because ADR 0014 deliberately removed historical compatibility, the current concrete
-policies initially contain only their current version. Older versions are added only
-when a future schema revision creates a real predecessor contract.
+The project is currently in the explicit `REFACTORING` compatibility phase. Concrete policies may read only their current schema because obsolete intermediate refactoring contracts are intentionally unsupported. Writers always emit only the current schema.
 
-The operational policy for a normal schema family is:
+The stable policy is already encoded as a bounded maximum reader window of three versions. Once the refactoring is declared complete and the project enters `STABLE`, each subsequent real schema revision retains up to the two immediately preceding real predecessor contracts:
 
-| Relationship to current writer | Writer behavior | Reader behavior |
+| Relationship to current writer | Writer behavior | Stable reader behavior |
 | --- | --- | --- |
 | current (`N`) | emit | accept |
-| previous (`N-1`) | never emit | accept with deprecation warning when supported |
-| retirement edge (`N-2`) | never emit | accept with deprecation warning when supported |
-| older (`<= N-3`) | never emit | reject |
+| previous (`N-1`) | never emit | accept with deprecation warning |
+| oldest supported (`N-2`) | never emit | accept with deprecation warning |
+| older | never emit | reject |
 
-The three-version window is a maximum support window, not an obligation to invent migrations
-or compatibility adapters. Generated EngineeringDocuments and other derived artifacts do not
-need to be rewritten merely because a new writer schema is introduced; while their schema
-remains inside the supported reader window they may be deserialized directly into the current
-domain model.
+Removed refactoring schemas are not recreated merely to fill the stable support window.
 
-| Schema family / artifact | Current | Storage / resource | Future reader compatibility |
-| --- | ---: | --- | --- |
-| Engineering Document envelope | 3 | `.atlas/data/documents/*.json` | yes |
-| Normalization metadata | 10 | `.atlas/data/normalized/**/document.json` | yes |
-| Normalization transformation ledger | 1 | normalized document | yes |
-| Normalization run metadata | 1 | `.atlas/data/normalized/**/run.json` | yes |
-| Reference detection metadata | 2 | `.atlas/data/**` | yes |
-| Alignment metadata | 2 | `.atlas/data/**` | yes |
-| Alignment override / review metadata | 1 | `local/review/**` | yes, when re-imported |
-| Engineering construction validation | 1 | `.atlas/data/**` | yes |
-| Formula transcription | 1 | `.atlas/data/**` / review pipeline | yes |
-| Standards manifest | 2 | `manifests/*.yaml` | yes |
-| Qualification Matrix manifest | 1.5 | `manifests/*.yaml` | yes |
-| Evaluation corpus manifest | 1.0 | `.atlas/data/evaluation/**` | yes |
-| Semantic annotation | 1.0 | `.atlas/data/evaluation/**` | yes |
-| Semantic consensus report | 2.1 | `.atlas/data/evaluation/**` | yes |
-| Semantic review decision | 1.0 | `local/review/**` | yes |
-| Qualification report | 1.0 | evaluation artifacts | yes |
-| Qualification matrix report | 1.0 | evaluation artifacts | yes |
-| Analysis archive | 1.1 | `local/evaluation/**` | only if machine-read later |
-| Qualification run metadata | 1.1 | `local/evaluation/**` | only if machine-read later |
-| Qualification run index | 1.0 | `local/evaluation/**` | only if machine-read later |
-| Workflow run report | 3 | workflow audit output | yes |
-| Semantic task resource | 1 | `resources/semantic/tasks/**/task.yaml` | yes |
-| Ontology resource | 1 | `resources/ontologies/**/ontology.yaml` | yes |
-| Structural taxonomy resource | 1 | `resources/structure-taxonomies/**/taxonomy.yaml` | yes |
+## Lifecycle-crossing interface inventory
 
-The table is the compatibility inventory. Schema families that cross active reader
-boundaries are routed through the central policy as those readers are maintained.
-The policy window is an upper bound, not a requirement to retain obsolete versions.
+| Interface | Boundary | Schema axis | Resource axis | Location |
+| --- | --- | --- | --- | --- |
+| Engineering Document | persistence | `engineering-document` | — | `.atlas/data/documents/*.json` |
+| Standards manifest | process | `standards-manifest` | — | `manifests/standards*.yaml` |
+| Qualification Matrix manifest | process | `qualification-matrix-manifest` | — | `manifests/*qualification*.yaml` |
+| Semantic task | packaged resource | `semantic-task-resource` | task version | `resources/semantic/tasks/<id>/<version>/task.yaml` |
+| Semantic profile | packaged resource | `semantic-profile-resource` | profile version | `resources/semantic/profiles/<id>/<version>/profile.yaml` |
+| Semantic ontology/vocabulary | packaged resource | `ontology-resource` | ontology version | `resources/ontologies/<id>/<version>/ontology.yaml` |
+| Structural taxonomy | packaged resource | `structural-taxonomy-resource` | taxonomy version | `resources/structure-taxonomies/<id>/<version>/taxonomy.yaml` |
+| Formal ontology | packaged resource | `formal-ontology-resource` | ontology version | `resources/formal_ontologies/<id>/<version>/ontology.yaml` |
+| Semantic prompt | packaged resource | task-owned output schema | prompt version | `resources/semantic/prompts/<task>/<version>/` |
+| Formal semantic projection | persistence | `formal-semantic-projection` | referenced ontology identities | `.atlas/data/formal-semantic-projections/*.json` |
+| Semantic extraction | persistence | `semantic-extraction` | task/prompt/model provenance | `.atlas/data/semantic-extractions/*.json` |
 
-## Storage classes
+`PublicationDocument` is intentionally absent. It is a runtime-only read model and has no independent persistence or compatibility lifecycle.
 
-Durable machine state under `.atlas/data`, versioned packaged resources, workflow
-manifests, and machine-consumed review contracts are compatibility-relevant.
+## Embedded version markers
 
-`.atlas/cache` and `.atlas/work` are **not** compatibility contracts. They can be
-invalidated or deleted whenever implementation or schema details change. Human-only
-publications under `local/` also carry no machine-reader guarantee unless Standards
-Atlas explicitly imports them again (for example HITL review decisions).
+Several persisted structures contain embedded/local markers such as normalization metadata, transformation ledgers, reference detection records, alignment records, workflow reports, and qualification archive records. A local marker is useful for auditability but does not automatically create a separate central schema family. It becomes one when that record acquires an independent reader/lifecycle boundary.
+
+This avoids versioning every internal DTO while still making independently consumed contracts explicit.
+
+## AtlasData
+
+AtlasData is authored, Git-published, community-curated input and therefore has stronger preservation requirements than disposable derived artifacts. Its semantic profile reference is already explicitly resource-versioned. The AtlasData text grammar itself does not currently carry a standalone serialization `schema_version`; changes to that grammar must therefore remain backward-readable or be introduced with an explicit format-version mechanism before the project enters stable compatibility mode. AtlasData must not be treated as a disposable intermediate artifact.
+
+## Packaged resource rule
+
+For resources with both axes, directory/resource identity and `schema_version` have separate responsibilities. For example:
+
+```text
+resources/semantic/profiles/functional-safety/1.0.0/profile.yaml
+                                      ^^^^^
+                                      resource version
+
+schema_version: 1
+                ^
+                serialization schema
+```
+
+A new profile such as `1.1.0` can still use schema `1`; conversely a future profile serialization schema `2` does not force the functional-safety profile itself to change meaning.
 
 ## Generated data
 
-Standards Atlas does not promise in-place migration of generated artifacts. Future
-compatibility is a reader concern: a supported old payload may deserialize directly
-into the current Python/domain model. Writers emit only the current schema.
+Standards Atlas does not promise in-place migration of generated artifacts. Compatibility is a reader concern: a supported old payload may deserialize into the current model, while writers emit only the current schema. Derived `.atlas/cache` and `.atlas/work` data are not compatibility contracts and may be invalidated freely.
 
-## Baseline and policy enforcement
-
-The Engineering Document repository now rejects unversioned and pre-v3 payloads.
-Standards and Qualification Matrix manifests are checked against their current
-baselines at the workflow envelope. Semantic task, ontology, and structural
-taxonomy YAML resources now carry an explicit `schema_version: 1`, validated by their
-models/loaders. Persisted Pydantic contracts with existing fixed schema versions use
-literal schema fields so arbitrary versions no longer validate accidentally.
+See [ADR 0014](../architecture/adr/0014-schema-and-artifact-versioning-policy.md) for the normative policy.

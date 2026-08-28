@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any
 
 
@@ -11,16 +12,31 @@ class SchemaDeprecationWarning(UserWarning):
     """Visible warning emitted when a deprecated persisted schema is read."""
 
 
+class CompatibilityPhase(StrEnum):
+    """Project-wide compatibility phase for schema evolution."""
+
+    REFACTORING = "refactoring"
+    STABLE = "stable"
+
+
+CURRENT_COMPATIBILITY_PHASE = CompatibilityPhase.REFACTORING
+STABLE_READER_WINDOW = 3
+
+
 @dataclass(frozen=True)
 class SchemaPolicy:
-    """Reader/writer policy for one persisted schema family."""
+    """Reader/writer policy for one serialization schema family.
+
+    ``readable`` is the concrete set supported by the current implementation. During
+    refactoring it may contain only the current writer schema. Once the project enters
+    the stable compatibility phase, schema revisions retain the current version and
+    the two immediately preceding *real* predecessor contracts.
+    """
 
     family: str
     current: int | str
     readable: tuple[int | str, ...]
     location: str
-    compatibility_required: bool = True
-    major_transition: bool = False
 
     def __post_init__(self) -> None:
         if not self.readable:
@@ -29,14 +45,10 @@ class SchemaPolicy:
             raise ValueError(
                 f"schema policy {self.family!r} must include current version in readable versions"
             )
-        maximum = 4 if self.major_transition else 3
-        if len(self.readable) > maximum:
-            window = (
-                "temporary four-version major-transition window"
-                if self.major_transition
-                else "regular three-version window"
+        if len(self.readable) > STABLE_READER_WINDOW:
+            raise ValueError(
+                f"schema policy {self.family!r} exceeds the three-version reader window"
             )
-            raise ValueError(f"schema policy {self.family!r} exceeds the {window}")
         if self.readable[-1] != self.current:
             raise ValueError(f"schema policy {self.family!r} must list the current version last")
 
@@ -53,7 +65,7 @@ class SchemaPolicy:
             )
         if value != self.current:
             position = self.readable.index(value)
-            oldest = position == 0 and len(self.readable) == 3
+            oldest = position == 0 and len(self.readable) == STABLE_READER_WINDOW
             suffix = (
                 " It is the oldest supported version and will leave the support window "
                 "with the next schema revision."

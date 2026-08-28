@@ -22,7 +22,7 @@ The term *semantic ontology* here means a controlled classification vocabulary. 
 ## Refactoring transition
 During the current architectural refactoring, intermediate semantic ontology, profile, task, prompt, and payload versions have no backward-compatibility guarantee. Obsolete transition contracts may be removed instead of being carried as permanent migration code. In particular, removed `SemanticRole` and `responsibility_functions` representations are not readable contracts.
 
-This exception is temporary. Before the refactoring is declared complete, the stable compatibility policy in ADR 0014 must be activated for independently consumed semantic interfaces.
+This exception is temporary. Before the refactoring is declared complete, the project compatibility phase in ADR 0014 must be changed from `REFACTORING` to `STABLE`. Subsequent real schema revisions then retain the current schema and up to two real predecessor contracts. Resource versions remain independent of that serialization window.
 
 ## Consequences
-Dimensions, profiles, and inference implementations can evolve independently. Semantic profile versions, ontology/resource versions, and task/schema versions remain explicit and are not coupled to each other. During refactoring only the intentionally retained contracts need to be supported; stable releases will follow ADR 0014's bounded compatibility policy.
+Dimensions, profiles, prompts, and inference implementations can evolve independently. Semantic profile, ontology, task, and prompt resource versions are distinct from their serialization schemas and must not be coupled to them. During refactoring only intentionally retained contracts need to be supported; stable releases follow ADR 0014's bounded compatibility policy.
