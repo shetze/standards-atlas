@@ -7,6 +7,12 @@ import shutil
 from pathlib import Path
 
 from standards_atlas.adapters.docling import DoclingArtifactRepository
+from standards_atlas.adapters.filesystem.composed_document_view_repository import (
+    CURRENT_COMPOSED_DOCUMENT_VIEW_SCHEMA_VERSION,
+)
+from standards_atlas.adapters.filesystem.document_repository import (
+    CURRENT_DOCUMENT_SCHEMA_VERSION,
+)
 from standards_atlas.application.ports import ExtractionState
 from standards_atlas.application.workflow.models import WorkflowStage, WorkflowStep
 
@@ -33,9 +39,27 @@ class FileSystemWorkflowArtifactStore:
     def outputs_exist(self, step: WorkflowStep, project_root: Path) -> bool:
         if not step.output_paths and not step.output_globs:
             return False
-        paths_exist = all((project_root / path).exists() for path in step.output_paths)
+        paths_exist = all(
+            self._output_is_current(project_root / path, path) for path in step.output_paths
+        )
         globs_exist = all(any(project_root.glob(pattern)) for pattern in step.output_globs)
         return paths_exist and globs_exist
+
+    @staticmethod
+    def _output_is_current(path: Path, relative_path: str) -> bool:
+        if not path.exists():
+            return False
+        normalized = relative_path.replace("\\", "/")
+        if (
+            normalized.startswith(".atlas/data/documents/")
+            or normalized.startswith(".atlas/work/family-sources/documents/")
+        ) and normalized.endswith(".json"):
+            return _json_schema_version(path) == CURRENT_DOCUMENT_SCHEMA_VERSION
+        if normalized.startswith(".atlas/work/composed-documents/") and normalized.endswith(
+            ".json"
+        ):
+            return _json_schema_version(path) == CURRENT_COMPOSED_DOCUMENT_VIEW_SCHEMA_VERSION
+        return True
 
     def record_completion(self, step: WorkflowStep, project_root: Path) -> None:
         for relative_path in step.output_paths:
@@ -63,3 +87,13 @@ class FileSystemWorkflowArtifactStore:
             return bool(statistics.get("missing", 0) or statistics.get("conflicting", 0))
         except (OSError, ValueError, KeyError, TypeError):
             return True
+
+
+def _json_schema_version(path: Path) -> object | None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    return payload.get("schema_version")

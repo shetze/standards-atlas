@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from standards_atlas.adapters.filesystem import (
@@ -30,6 +31,9 @@ def test_publication_reader_prefers_work_view_without_canonical_family_file(
             document=_document("FAMILY"),
         )
     )
+
+    payload = json.loads((tmp_path / "work" / "composed-documents" / "FAMILY.json").read_text())
+    assert payload["schema_version"] == 2
 
     reader = FileSystemPublicationDocumentReader(documents, views)
 

@@ -815,3 +815,36 @@ def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
     assert result.completed is True
     assert runner.commands == []
     assert result.executed_steps == ()
+
+
+def test_stale_engineering_document_output_is_rebuilt(tmp_path: Path) -> None:
+    from standards_atlas.application.workflow import WorkflowPlan, WorkflowStep
+
+    output = tmp_path / ".atlas" / "data" / "documents" / "DOC.json"
+    output.parent.mkdir(parents=True)
+    output.write_text('{"schema_version": 5, "document": {}}\n', encoding="utf-8")
+
+    step = WorkflowStep(
+        "FAMILY",
+        "DOC",
+        WorkflowStage.IMPORT,
+        ("replace-document",),
+        ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/data/documents/DOC.json",),
+    )
+
+    class SchemaReplacingRunner:
+        def run(self, command: tuple[str, ...], cwd: Path) -> None:
+            assert command == ("replace-document",)
+            output.write_text('{"schema_version": 6, "document": {}}\n', encoding="utf-8")
+
+    result = EndToEndWorkflowService(
+        executor=WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    ).execute(
+        WorkflowPlan(families=("FAMILY",), steps=(step,)),
+        project_root=tmp_path,
+        runner=SchemaReplacingRunner(),
+    )
+
+    assert result.executed_steps == (step,)
+    assert '"schema_version": 6' in output.read_text(encoding="utf-8")

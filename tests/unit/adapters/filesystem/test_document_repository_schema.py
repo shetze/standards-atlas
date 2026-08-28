@@ -33,8 +33,10 @@ def _document() -> EngineeringDocument:
                     standard="Example",
                     year=2026,
                     clause="1",
+                    part="3",
                 ),
                 clause_type=ClauseType.CLAUSE,
+                heading="Scope",
                 structural_profile=StructuralProfile(
                     canonical_section=CanonicalDocumentSection.BODY
                 ),
@@ -55,6 +57,11 @@ def test_repository_writes_versioned_document_envelope(tmp_path: Path) -> None:
     assert payload["document"]["clauses"][0]["content"][0]["type"] == "text"
     assert "text" not in payload["document"]["clauses"][0]
     assert payload["document"]["clauses"][0]["structural_profile"]["canonical_section"] == "body"
+    clause_payload = payload["document"]["clauses"][0]
+    assert clause_payload["heading"] == "Scope"
+    assert clause_payload["reference"]["part"] == "3"
+    assert "title" not in clause_payload
+    assert "volume" not in clause_payload
     loaded = repository.load(DocumentKey(value="DOC"))
     assert loaded.clauses[0].structural_profile is not None
     assert loaded.clauses[0].structural_profile.canonical_section is CanonicalDocumentSection.BODY
@@ -90,20 +97,16 @@ def test_repository_rejects_unknown_schema_version(tmp_path: Path) -> None:
         repository.load(DocumentKey(value="DOC"))
 
 
-def test_repository_reads_schema_v3_with_deprecation_warning(tmp_path: Path) -> None:
-    from standards_atlas.application.schema import SchemaDeprecationWarning
-
+def test_repository_rejects_previous_schema_version(tmp_path: Path) -> None:
     workspace = tmp_path / ".atlas"
     documents = workspace / "documents"
     documents.mkdir(parents=True)
     payload = {
-        "schema_version": 3,
+        "schema_version": CURRENT_DOCUMENT_SCHEMA_VERSION - 1,
         "document": _document().model_dump(mode="json"),
     }
     (documents / "DOC.json").write_text(json.dumps(payload), encoding="utf-8")
 
     repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
-    with pytest.warns(SchemaDeprecationWarning, match="schema version 3.*deprecated"):
-        loaded = repository.load(DocumentKey(value="DOC"))
-
-    assert loaded.key.value == "DOC"
+    with pytest.raises(ValueError, match="Unsupported engineering document schema version"):
+        repository.load(DocumentKey(value="DOC"))

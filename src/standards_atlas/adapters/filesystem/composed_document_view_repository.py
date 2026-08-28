@@ -7,6 +7,8 @@ from pathlib import Path
 
 from standards_atlas.application.model import ComposedDocumentView
 
+CURRENT_COMPOSED_DOCUMENT_VIEW_SCHEMA_VERSION = 2
+
 
 class FileSystemComposedDocumentViewRepository:
     """Persist publication-only family compositions below ``.atlas/work``."""
@@ -17,7 +19,10 @@ class FileSystemComposedDocumentViewRepository:
 
     def save(self, view: ComposedDocumentView) -> Path:
         path = self._path(view.family_key)
-        payload = {"schema_version": 1, "view": view.model_dump(mode="json")}
+        payload = {
+            "schema_version": CURRENT_COMPOSED_DOCUMENT_VIEW_SCHEMA_VERSION,
+            "view": view.model_dump(mode="json"),
+        }
         path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         return path
 
@@ -26,7 +31,11 @@ class FileSystemComposedDocumentViewRepository:
         if not path.exists():
             raise FileNotFoundError(f"No composed document view found for key: {family_key}")
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if payload.get("schema_version") != 1 or not isinstance(payload.get("view"), dict):
+        if payload.get(
+            "schema_version"
+        ) != CURRENT_COMPOSED_DOCUMENT_VIEW_SCHEMA_VERSION or not isinstance(
+            payload.get("view"), dict
+        ):
             raise ValueError(f"Unsupported composed document view payload: {path}")
         return ComposedDocumentView.model_validate(payload["view"])
 

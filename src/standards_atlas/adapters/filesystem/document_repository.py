@@ -14,7 +14,7 @@ from standards_atlas.domain.model import (
     Standard,
 )
 
-CURRENT_DOCUMENT_SCHEMA_VERSION = 5
+CURRENT_DOCUMENT_SCHEMA_VERSION = 6
 
 _DOCUMENT_MODELS: dict[
     DocumentType,
