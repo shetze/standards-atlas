@@ -102,7 +102,7 @@ class QualificationWorkflowPlanner:
             ),
             artifact_policy=ArtifactPolicy.DERIVED,
             output_paths=(
-                str(corpus_output / manifest.task / manifest.task_version / "dataset.json"),
+                str(corpus_output / manifest.task / manifest.dataset_version / "dataset.json"),
                 str(corpus_output / manifest.corpus_id / "corpus.yaml"),
             ),
         )

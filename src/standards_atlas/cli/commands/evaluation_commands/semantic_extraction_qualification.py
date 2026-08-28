@@ -103,7 +103,7 @@ def qualify_semantic_extraction(
             f"({run_selection.requested_limit})"
         )
     selected_examples = examples_for_persisted_selection(
-        corpus_root=corpus_root,
+        selection_root=output,
         selection=run_selection,
     )
     selected_ids_by_document = selected_clause_ids_by_document(selected_examples)

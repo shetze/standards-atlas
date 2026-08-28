@@ -12,6 +12,7 @@ from standards_atlas.application.semantic_qualification.run_selection import (
     examples_for_persisted_selection,
     load_qualification_run_selection,
     persist_qualification_run_selection,
+    qualification_snapshot_members,
 )
 
 
@@ -103,9 +104,11 @@ def test_selection_persists_limit_and_reuses_exact_clause_set(tmp_path: Path) ->
         corpus_id="corpus-v1",
         limit=2,
     )
-    path = persist_qualification_run_selection(selection, tmp_path / "run" / "selection.json")
+    path = persist_qualification_run_selection(
+        selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
+    )
     loaded = load_qualification_run_selection(path)
-    reloaded = examples_for_persisted_selection(corpus_root=tmp_path, selection=loaded)
+    reloaded = examples_for_persisted_selection(selection_root=path.parent, selection=loaded)
 
     assert tuple(item.id for item in selected) == ("one", "two")
     assert tuple(item.id for item in reloaded) == ("one", "two")
@@ -117,7 +120,9 @@ def test_selection_persists_limit_and_reuses_exact_clause_set(tmp_path: Path) ->
     ]
 
 
-def test_persisted_selection_rejects_corpus_change(tmp_path: Path) -> None:
+def test_persisted_selection_is_independent_of_later_shared_corpus_rewrites(
+    tmp_path: Path,
+) -> None:
     _write_inputs(tmp_path, dataset_clauses=("one",), corpus_clauses=("one",))
     _, _, selection = build_qualification_run_selection(
         corpus_root=tmp_path,
@@ -125,10 +130,110 @@ def test_persisted_selection_rejects_corpus_change(tmp_path: Path) -> None:
         dataset_version="2.2.0",
         corpus_id="corpus-v1",
     )
-    corpus_path = tmp_path / "corpus-v1" / "corpus.yaml"
-    corpus_path.write_text(
-        corpus_path.read_text(encoding="utf-8") + "# changed\n", encoding="utf-8"
+    selection_path = persist_qualification_run_selection(
+        selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
     )
 
-    with pytest.raises(QualificationCorpusIntegrityError, match="corpus manifest changed"):
-        examples_for_persisted_selection(corpus_root=tmp_path, selection=selection)
+    dataset_path = tmp_path / "statement-function-classification" / "2.2.0" / "dataset.json"
+    dataset_payload = json.loads(dataset_path.read_text(encoding="utf-8"))
+    dataset_payload["examples"][0]["input"]["content"] = "rebuilt shared content"
+    dataset_path.write_text(json.dumps(dataset_payload, indent=2) + "\n", encoding="utf-8")
+    corpus_path = tmp_path / "corpus-v1" / "corpus.yaml"
+    corpus_payload = yaml.safe_load(corpus_path.read_text(encoding="utf-8"))
+    corpus_payload["seed"] = 2
+    corpus_path.write_text(yaml.safe_dump(corpus_payload, sort_keys=False), encoding="utf-8")
+
+    reloaded = examples_for_persisted_selection(
+        selection_root=selection_path.parent, selection=selection
+    )
+
+    assert tuple(item.id for item in reloaded) == ("one",)
+    assert reloaded[0].input["content"] == "content one"
+
+
+def test_selection_persistence_rejects_source_change_before_snapshot(tmp_path: Path) -> None:
+    _write_inputs(tmp_path, dataset_clauses=("one",), corpus_clauses=("one",))
+    _, _, selection = build_qualification_run_selection(
+        corpus_root=tmp_path,
+        task="statement-function-classification",
+        dataset_version="2.2.0",
+        corpus_id="corpus-v1",
+    )
+    dataset_path = tmp_path / "statement-function-classification" / "2.2.0" / "dataset.json"
+    payload = json.loads(dataset_path.read_text(encoding="utf-8"))
+    payload["examples"][0]["input"]["content"] = "changed before snapshot"
+    dataset_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(QualificationCorpusIntegrityError, match="before run selection"):
+        persist_qualification_run_selection(
+            selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
+        )
+
+    assert not (tmp_path / "run" / "selection.json").exists()
+
+
+def test_persisted_selection_rejects_dataset_snapshot_change(tmp_path: Path) -> None:
+    _write_inputs(tmp_path, dataset_clauses=("one",), corpus_clauses=("one",))
+    _, _, selection = build_qualification_run_selection(
+        corpus_root=tmp_path,
+        task="statement-function-classification",
+        dataset_version="2.2.0",
+        corpus_id="corpus-v1",
+    )
+    selection_path = persist_qualification_run_selection(
+        selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
+    )
+    snapshot_path = selection_path.parent / selection.dataset_snapshot
+    payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    payload["examples"][0]["input"]["content"] = "tampered snapshot"
+    snapshot_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(QualificationCorpusIntegrityError, match="dataset snapshot content changed"):
+        examples_for_persisted_selection(selection_root=selection_path.parent, selection=selection)
+
+
+def test_persisted_selection_rejects_corpus_snapshot_change(tmp_path: Path) -> None:
+    _write_inputs(tmp_path, dataset_clauses=("one",), corpus_clauses=("one",))
+    _, _, selection = build_qualification_run_selection(
+        corpus_root=tmp_path,
+        task="statement-function-classification",
+        dataset_version="2.2.0",
+        corpus_id="corpus-v1",
+    )
+    selection_path = persist_qualification_run_selection(
+        selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
+    )
+    snapshot_path = selection_path.parent / selection.corpus_snapshot
+    payload = yaml.safe_load(snapshot_path.read_text(encoding="utf-8"))
+    payload["seed"] = 2
+    snapshot_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(QualificationCorpusIntegrityError, match="corpus snapshot content changed"):
+        examples_for_persisted_selection(selection_root=selection_path.parent, selection=selection)
+
+
+def test_archive_members_use_run_local_input_snapshots(tmp_path: Path) -> None:
+    _write_inputs(tmp_path, dataset_clauses=("one",), corpus_clauses=("one",))
+    _, _, selection = build_qualification_run_selection(
+        corpus_root=tmp_path,
+        task="statement-function-classification",
+        dataset_version="2.2.0",
+        corpus_id="corpus-v1",
+    )
+    selection_path = persist_qualification_run_selection(
+        selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
+    )
+
+    members = qualification_snapshot_members(selection_path.parent, selection)
+
+    assert members == (
+        (
+            selection_path.parent / selection.dataset_snapshot,
+            "inputs/corpus/dataset.json",
+        ),
+        (
+            selection_path.parent / selection.corpus_snapshot,
+            "inputs/corpus/corpus.yaml",
+        ),
+    )
+    assert all(path.is_file() for path, _ in members)

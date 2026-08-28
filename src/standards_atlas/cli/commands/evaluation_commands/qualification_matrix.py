@@ -454,6 +454,7 @@ def qualify_model_prompt_matrix(
             selection_path = persist_qualification_run_selection(
                 run_selection,
                 output_directory / manifest.matrix_id / QUALIFICATION_SELECTION_FILENAME,
+                corpus_root=corpus_root,
             )
             typer.echo(
                 "Clause selection         : "

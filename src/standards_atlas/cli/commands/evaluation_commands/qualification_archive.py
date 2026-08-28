@@ -28,6 +28,7 @@ from standards_atlas.application.semantic_qualification.run_selection import (
     QUALIFICATION_SELECTION_FILENAME,
     examples_for_persisted_selection,
     load_qualification_run_selection,
+    qualification_snapshot_members,
 )
 from standards_atlas.application.semantic_qualification.semantic_extraction_selection import (
     selected_clause_ids_by_document,
@@ -73,7 +74,7 @@ def finalize_qualification_archive(
         raise typer.BadParameter(f"qualification clause selection not found: {selection_path}")
     run_selection = load_qualification_run_selection(selection_path)
     selected_examples = examples_for_persisted_selection(
-        corpus_root=corpus_root,
+        selection_root=run_directory,
         selection=run_selection,
     )
     if (
@@ -170,14 +171,17 @@ def finalize_qualification_archive(
         if path.is_file() and "cascade" not in path.relative_to(run_directory).parts
     )
     manifest_payload = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
-    input_members = list(
-        collect_qualification_input_members(
+    input_members = [
+        member
+        for member in collect_qualification_input_members(
             manifest_payload=manifest_payload,
             resources=resources,
             corpus_root=corpus_root,
             published_corpus_root=published_corpus_root,
         )
-    )
+        if member[1] not in {"inputs/corpus/dataset.json", "inputs/corpus/corpus.yaml"}
+    ]
+    input_members.extend(qualification_snapshot_members(run_directory, run_selection))
     input_members.extend(
         (
             (config, "inputs/runtime/llm-config.yaml"),

@@ -116,3 +116,31 @@ def test_v5_fresh_is_propagated_to_matrix_and_semantic_extraction() -> None:
     assert "--overwrite" in matrix.command
     assert "--fresh" in matrix.command
     assert "--fresh" in extraction.command
+
+
+def test_corpus_step_tracks_dataset_version_output() -> None:
+    catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
+    manifest_path = Path(
+        "manifests/multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml"
+    )
+    manifest = QualificationMatrixManifest.load(manifest_path)
+    plan = QualificationWorkflowPlanner().plan(
+        catalog,
+        family_keys=("EN50716",),
+        catalog_root=Path.cwd(),
+        manifest_path=manifest_path,
+        corpus_count=500,
+        corpus_strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
+        corpus_seed=20260818,
+        knowledge_domain="functional-safety",
+    )
+    corpus = next(step for step in plan.steps if step.stage is WorkflowStage.CORPUS_BUILD)
+
+    assert any(
+        f"/{manifest.task}/{manifest.dataset_version}/dataset.json" in path
+        for path in corpus.output_paths
+    )
+    assert all(
+        f"/{manifest.task}/{manifest.task_version}/dataset.json" not in path
+        for path in corpus.output_paths
+    )

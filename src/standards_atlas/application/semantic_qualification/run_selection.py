@@ -2,22 +2,29 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Iterable
+from dataclasses import asdict
 from pathlib import Path
 
+import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.evaluation.models import EvaluationDataset, EvaluationExample
 from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
-from standards_atlas.application.semantic_qualification.annotations import CorpusManifestRepository
+from standards_atlas.application.semantic_qualification.annotations import (
+    CorpusManifestRepository,
+    EvaluationCorpusManifest,
+)
 from standards_atlas.application.semantic_qualification.semantic_extraction_selection import (
     selected_clause_ids_by_document,
 )
-from standards_atlas.shared.hashing import sha256_file
 
-QUALIFICATION_SELECTION_SCHEMA_VERSION = "1.0"
+QUALIFICATION_SELECTION_SCHEMA_VERSION = "1.2"
 QUALIFICATION_SELECTION_FILENAME = "qualification-selection.json"
+QUALIFICATION_DATASET_SNAPSHOT_FILENAME = "qualification-dataset-snapshot.json"
+QUALIFICATION_CORPUS_SNAPSHOT_FILENAME = "qualification-corpus-snapshot.yaml"
 
 
 class QualificationSelectionClause(BaseModel):
@@ -44,6 +51,8 @@ class QualificationRunSelection(BaseModel):
     corpus_clause_count: int = Field(ge=0)
     selected_clause_count: int = Field(ge=0)
     clauses: tuple[QualificationSelectionClause, ...]
+    dataset_snapshot: str = QUALIFICATION_DATASET_SNAPSHOT_FILENAME
+    corpus_snapshot: str = QUALIFICATION_CORPUS_SNAPSHOT_FILENAME
 
 
 class QualificationCorpusIntegrityError(ValueError):
@@ -60,8 +69,6 @@ def build_qualification_run_selection(
     selected_example_ids: Iterable[str] | None = None,
 ) -> tuple[EvaluationDataset, tuple[EvaluationExample, ...], QualificationRunSelection]:
     """Validate corpus/dataset identity and create one deterministic run selection."""
-    dataset_path = _dataset_path(corpus_root, task, dataset_version)
-    corpus_path = CorpusManifestRepository(corpus_root).path_for(corpus_id)
     dataset = EvaluationDatasetRepository(corpus_root).load(task, dataset_version)
     corpus = CorpusManifestRepository(corpus_root).load(corpus_id)
 
@@ -107,8 +114,8 @@ def build_qualification_run_selection(
         dataset_version=dataset_version,
         corpus_id=corpus_id,
         requested_limit=limit,
-        dataset_sha256=sha256_file(dataset_path),
-        corpus_sha256=sha256_file(corpus_path),
+        dataset_sha256=_dataset_fingerprint(dataset),
+        corpus_sha256=_corpus_fingerprint(corpus),
         dataset_clause_count=len(dataset_coordinates),
         corpus_clause_count=len(corpus_coordinates),
         selected_clause_count=len(selection_clauses),
@@ -117,8 +124,43 @@ def build_qualification_run_selection(
     return dataset, selected, selection
 
 
-def persist_qualification_run_selection(selection: QualificationRunSelection, path: Path) -> Path:
+def persist_qualification_run_selection(
+    selection: QualificationRunSelection,
+    path: Path,
+    *,
+    corpus_root: Path,
+) -> Path:
+    """Persist one immutable run selection and its exact source input snapshots.
+
+    The shared corpus repository is validated at snapshot time. Downstream stages
+    must use the run-local snapshots so later corpus rebuilds cannot invalidate an
+    already-started qualification run.
+    """
+    dataset = EvaluationDatasetRepository(corpus_root).load(
+        selection.task, selection.dataset_version
+    )
+    corpus = CorpusManifestRepository(corpus_root).load(selection.corpus_id)
+    if _dataset_fingerprint(dataset) != selection.dataset_sha256:
+        raise QualificationCorpusIntegrityError(
+            "qualification dataset content changed before run selection was persisted"
+        )
+    if _corpus_fingerprint(corpus) != selection.corpus_sha256:
+        raise QualificationCorpusIntegrityError(
+            "qualification corpus content changed before run selection was persisted"
+        )
+
     path.parent.mkdir(parents=True, exist_ok=True)
+    dataset_snapshot = path.parent / selection.dataset_snapshot
+    corpus_snapshot = path.parent / selection.corpus_snapshot
+    dataset_snapshot.write_text(
+        json.dumps(asdict(dataset), indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    corpus_snapshot.write_text(
+        _serialize_corpus_snapshot(corpus),
+        encoding="utf-8",
+    )
+    # Write the selection last: its presence declares that both snapshots exist.
     path.write_text(
         json.dumps(selection.model_dump(mode="json"), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -132,30 +174,28 @@ def load_qualification_run_selection(path: Path) -> QualificationRunSelection:
 
 def examples_for_persisted_selection(
     *,
-    corpus_root: Path,
+    selection_root: Path,
     selection: QualificationRunSelection,
 ) -> tuple[EvaluationExample, ...]:
-    """Reload selected examples while proving the persisted input snapshots are unchanged."""
-    dataset_path = _dataset_path(corpus_root, selection.task, selection.dataset_version)
-    corpus_path = CorpusManifestRepository(corpus_root).path_for(selection.corpus_id)
-    if sha256_file(dataset_path) != selection.dataset_sha256:
+    """Reload selected examples from immutable run-local input snapshots."""
+    dataset = _load_dataset_snapshot(selection_root / selection.dataset_snapshot)
+    corpus = _load_corpus_snapshot(selection_root / selection.corpus_snapshot)
+    if _dataset_fingerprint(dataset) != selection.dataset_sha256:
         raise QualificationCorpusIntegrityError(
-            "qualification dataset changed after clause selection was persisted"
+            "qualification dataset snapshot content changed after selection was persisted"
         )
-    if sha256_file(corpus_path) != selection.corpus_sha256:
+    if _corpus_fingerprint(corpus) != selection.corpus_sha256:
         raise QualificationCorpusIntegrityError(
-            "qualification corpus manifest changed after clause selection was persisted"
+            "qualification corpus snapshot content changed after selection was persisted"
         )
-    dataset = EvaluationDatasetRepository(corpus_root).load(
-        selection.task, selection.dataset_version
-    )
     by_id = {example.id: example for example in dataset.examples}
     selected: list[EvaluationExample] = []
     for clause in selection.clauses:
         example = by_id.get(clause.example_id)
         if example is None:
             raise QualificationCorpusIntegrityError(
-                f"persisted qualification example is missing from dataset: {clause.example_id}"
+                "persisted qualification example is missing from dataset snapshot: "
+                f"{clause.example_id}"
             )
         coordinates = selected_clause_ids_by_document((example,))
         if coordinates != {clause.document_key: {clause.clause_id}}:
@@ -166,13 +206,63 @@ def examples_for_persisted_selection(
     return tuple(selected)
 
 
-def _dataset_path(corpus_root: Path, task: str, version: str) -> Path:
-    direct = corpus_root / task / version / "dataset.json"
-    if direct.is_file():
-        return direct
-    if task == "semantic-profile-classification":
-        return corpus_root / "statement-function-classification" / version / "dataset.json"
-    return direct
+def qualification_snapshot_members(
+    selection_root: Path,
+    selection: QualificationRunSelection,
+) -> tuple[tuple[Path, str], ...]:
+    """Return run-local corpus snapshots for immutable qualification archives."""
+    return (
+        (selection_root / selection.dataset_snapshot, "inputs/corpus/dataset.json"),
+        (selection_root / selection.corpus_snapshot, "inputs/corpus/corpus.yaml"),
+    )
+
+
+def _load_dataset_snapshot(path: Path) -> EvaluationDataset:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return EvaluationDataset(
+        task=str(payload["task"]),
+        version=str(payload["version"]),
+        examples=tuple(
+            EvaluationExample(
+                id=str(item["id"]),
+                input=item["input"],
+                expected=item["expected"],
+                tags=tuple(item.get("tags", ())),
+            )
+            for item in payload.get("examples", ())
+        ),
+    )
+
+
+def _serialize_corpus_snapshot(corpus: EvaluationCorpusManifest) -> str:
+    return yaml.safe_dump(
+        corpus.model_dump(mode="json"),
+        sort_keys=False,
+        allow_unicode=True,
+    )
+
+
+def _load_corpus_snapshot(path: Path) -> EvaluationCorpusManifest:
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return EvaluationCorpusManifest.model_validate(payload)
+
+
+def _canonical_sha256(payload: object) -> str:
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _dataset_fingerprint(dataset: EvaluationDataset) -> str:
+    return _canonical_sha256(asdict(dataset))
+
+
+def _corpus_fingerprint(corpus: EvaluationCorpusManifest) -> str:
+    return _canonical_sha256(corpus.model_dump(mode="json"))
 
 
 def _dataset_coordinates(examples: Iterable[EvaluationExample]) -> tuple[tuple[str, str], ...]:
