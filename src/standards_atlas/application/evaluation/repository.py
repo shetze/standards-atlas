@@ -57,6 +57,3 @@ class EvaluationDatasetRepository:
             for item in payload["examples"]
         )
         return EvaluationDataset(task=task, version=version, examples=examples)
-
-
-GoldenDatasetRepository = EvaluationDatasetRepository

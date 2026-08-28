@@ -163,6 +163,3 @@ def _aggregate(cases: tuple[EvaluationCaseResult, ...]) -> AggregateMetrics:
         max_confidence=max(confidences) if confidences else None,
         mean_duration_ms=sum(case.duration_ms for case in cases) / count,
     )
-
-
-SemanticEvaluationRunner = EvaluationRunner

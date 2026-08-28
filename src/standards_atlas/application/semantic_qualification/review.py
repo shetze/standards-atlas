@@ -236,24 +236,10 @@ def _load_clause_context(candidate_path: Path) -> dict[str, Any]:
         if isinstance(clause_context, dict):
             context.update(clause_context)
 
-    # Proposal runs persist StructuredGenerationRequest fields directly. Keep
-    # compatibility with older Chat Completions-shaped request artifacts too.
     user_prompt = payload.get("user_prompt")
     if isinstance(user_prompt, str) and user_prompt.strip():
         context["rendered_prompt"] = user_prompt
         context.update(_structural_context_from_prompt(user_prompt))
-        return context
-
-    messages = payload.get("messages", ())
-    if isinstance(messages, list):
-        for message in reversed(messages):
-            if not isinstance(message, dict) or message.get("role") != "user":
-                continue
-            content = message.get("content")
-            if isinstance(content, str) and content.strip():
-                context["rendered_prompt"] = content
-                context.update(_structural_context_from_prompt(content))
-                return context
     return context
 
 

@@ -45,3 +45,48 @@ def test_generated_attribute_can_be_confirmed_authoritative() -> None:
     confirmed = clause.confirm_authoritative("baseline.structural_context")
 
     assert confirmed.provenance.generated_attributes == ()
+
+
+def test_mark_generated_upserts_same_path_with_latest_provenance() -> None:
+    clause = _clause().mark_generated(
+        GeneratedAttribute(
+            path="baseline.structural_context",
+            generator="old-generator",
+            method=GenerationMethod.DETERMINISTIC,
+        )
+    )
+
+    updated = clause.mark_generated(
+        GeneratedAttribute(
+            path="baseline.structural_context",
+            generator="new-generator",
+            method=GenerationMethod.DETERMINISTIC,
+            evidence=("clause:c1",),
+        )
+    )
+
+    assert len(updated.provenance.generated_attributes) == 1
+    generated = updated.provenance.generated_attributes[0]
+    assert generated.generator == "new-generator"
+    assert generated.evidence == ("clause:c1",)
+
+
+def test_confirm_authoritative_only_removes_confirmed_generated_path() -> None:
+    clause = _clause().mark_generated(
+        GeneratedAttribute(
+            path="baseline.structural_context",
+            generator="structural-taxonomy",
+            method=GenerationMethod.DETERMINISTIC,
+        ),
+        GeneratedAttribute(
+            path="enrichments.semantic.statement_functions",
+            generator="semantic-profile-classification/2.4.0",
+            method=GenerationMethod.LLM,
+        ),
+    )
+
+    confirmed = clause.confirm_authoritative("baseline.structural_context")
+
+    assert [item.path for item in confirmed.provenance.generated_attributes] == [
+        "enrichments.semantic.statement_functions"
+    ]

@@ -71,7 +71,7 @@ def test_expand_canonical_typed_enum_prefix() -> None:
     ]
 
 
-def test_expand_compatibility_typed_enum_prefix() -> None:
+def test_expand_supported_alternate_typed_enum_prefix() -> None:
     assert expand_structure_token("11:rC.1") == [
         StructureItem(
             visible_reference="C.1",

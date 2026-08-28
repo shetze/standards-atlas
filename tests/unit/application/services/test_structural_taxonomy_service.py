@@ -66,6 +66,10 @@ def test_materializes_hierarchy_siblings_and_context_content():
     assert first_ctx.sibling.next_clause_id == "c72"
     assert second_ctx.sibling.is_last is True
     assert second_ctx.sibling.previous_clause_id == "c71"
+    generated = {item.path: item for item in result.clauses[1].provenance.generated_attributes}
+    assert generated["baseline.structural_context"].generator == "structural-taxonomy"
+    assert generated["baseline.structural_context"].method.value == "deterministic"
+    assert generated["baseline.structural_profile"].generator == "structural-taxonomy"
 
 
 def test_materializes_reference_mentions_as_structural_edges():

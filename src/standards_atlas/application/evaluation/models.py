@@ -92,8 +92,3 @@ class EvaluationRun:
 class RegressionResult:
     passed: bool
     regressions: tuple[str, ...]
-
-
-# Backwards-compatible terminology for existing semantic evaluation clients.
-GoldenExample = EvaluationExample
-GoldenDataset = EvaluationDataset

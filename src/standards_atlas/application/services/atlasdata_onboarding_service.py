@@ -55,8 +55,8 @@ class DoclingPartSource:
     publication_year: int | None = None
 
     def __post_init__(self) -> None:
-        # Keep compatibility with callers that still construct the source with an int.
-        object.__setattr__(self, "part", str(self.part))
+        if not isinstance(self.part, str):
+            raise TypeError("DoclingPartSource.part must be a string")
 
     @classmethod
     def parse(cls, value: str) -> DoclingPartSource:

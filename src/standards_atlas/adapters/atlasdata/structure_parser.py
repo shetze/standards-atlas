@@ -14,8 +14,8 @@ _RANGE_PATTERN = re.compile(r"\{(?P<start>\d+)\.\.(?P<end>\d+)\}")
 def parse_lexed_structure_token(token: LexedStructureToken) -> StructureToken:
     """Parse a lexed structure token.
 
-    The canonical legacy spelling is ``[type][enum]:reference``. For
-    compatibility, ``enum:[type]reference`` is accepted as well.
+    Typed enumerated references accept both spellings used by committed AtlasData:
+    ``[type][enum]:reference`` and ``enum:[type]reference``.
     """
     item_type, enum_prefix, body = _parse_type_and_enum_prefix(token.body)
     identifier_width, body = _parse_identifier_width_marker(body)
@@ -55,8 +55,7 @@ def _parse_type_and_enum_prefix(body: str) -> tuple[AtlasItemType, str | None, s
     if not prefix.isdigit():
         raise ValueError(f"Invalid enum prefix in structure token: {body!r}")
 
-    # Compatibility form emitted by an intermediate implementation:
-    # 11:rC.1, 5:cA.2, 13:mD.
+    # Alternate typed spelling present in committed AtlasData: 11:rC.1.
     if reference[0] in TYPE_PREFIXES:
         item_type = TYPE_PREFIXES[reference[0]]
         reference = reference[1:]

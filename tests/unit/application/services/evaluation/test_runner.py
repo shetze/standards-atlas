@@ -1,10 +1,10 @@
 from standards_atlas.application.evaluation.models import (
-    GoldenDataset,
-    GoldenExample,
+    EvaluationDataset,
+    EvaluationExample,
     PromptDefinition,
 )
 from standards_atlas.application.evaluation.runner import (
-    SemanticEvaluationRunner,
+    EvaluationRunner,
     compare_runs,
 )
 from standards_atlas.application.ports.llm_gateway import (
@@ -48,19 +48,23 @@ def prompt() -> PromptDefinition:
     )
 
 
-def dataset() -> GoldenDataset:
-    return GoldenDataset(
+def dataset() -> EvaluationDataset:
+    return EvaluationDataset(
         task="classification",
         version="1.0.0",
         examples=(
-            GoldenExample("one", {"text": "shall"}, {"labels": ["requirement"], "confidence": 1.0}),
-            GoldenExample("two", {"text": "note"}, {"labels": ["note"], "confidence": 1.0}),
+            EvaluationExample(
+                "one",
+                {"text": "shall"},
+                {"labels": ["requirement"], "confidence": 1.0},
+            ),
+            EvaluationExample("two", {"text": "note"}, {"labels": ["note"], "confidence": 1.0}),
         ),
     )
 
 
-def test_runs_gold_dataset_and_aggregates_metrics() -> None:
-    runner = SemanticEvaluationRunner(
+def test_runs_evaluation_dataset_and_aggregates_metrics() -> None:
+    runner = EvaluationRunner(
         FakeGateway(
             [
                 {"labels": ["requirement"], "confidence": 1.0},
@@ -77,7 +81,7 @@ def test_runs_gold_dataset_and_aggregates_metrics() -> None:
 
 
 def test_benchmarks_multiple_models() -> None:
-    runner = SemanticEvaluationRunner(
+    runner = EvaluationRunner(
         FakeGateway(
             [
                 {"labels": ["requirement"], "confidence": 1.0},
@@ -93,7 +97,7 @@ def test_benchmarks_multiple_models() -> None:
 
 
 def test_detects_metric_and_case_regressions() -> None:
-    baseline = SemanticEvaluationRunner(
+    baseline = EvaluationRunner(
         FakeGateway(
             [
                 {"labels": ["requirement"], "confidence": 1.0},
@@ -101,7 +105,7 @@ def test_detects_metric_and_case_regressions() -> None:
             ]
         )
     ).run(prompt(), dataset())
-    candidate = SemanticEvaluationRunner(
+    candidate = EvaluationRunner(
         FakeGateway(
             [
                 {"labels": ["requirement"], "confidence": 1.0},

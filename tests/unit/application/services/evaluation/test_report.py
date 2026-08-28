@@ -4,7 +4,7 @@ from standards_atlas.application.evaluation.models import (
     AggregateMetrics,
     EvaluationRun,
 )
-from standards_atlas.application.evaluation.report import SemanticEvaluationReporter
+from standards_atlas.application.evaluation.report import EvaluationReporter
 
 
 def test_writes_model_comparison_with_ranking(tmp_path) -> None:
@@ -14,6 +14,6 @@ def test_writes_model_comparison_with_ranking(tmp_path) -> None:
         EvaluationRun("task", "1", "1", "a", "fake", metrics_a, ()),
         EvaluationRun("task", "1", "1", "b", "fake", metrics_b, ()),
     )
-    output = SemanticEvaluationReporter().write_comparison(runs, tmp_path / "comparison.json")
+    output = EvaluationReporter().write_comparison(runs, tmp_path / "comparison.json")
     payload = json.loads(output.read_text())
     assert payload["ranking"] == ["a", "b"]

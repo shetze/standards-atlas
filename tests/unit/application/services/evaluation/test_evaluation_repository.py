@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from standards_atlas.application.services.evaluation import (
-    GoldenDatasetRepository,
+    EvaluationDatasetRepository,
     PromptRepository,
 )
 
@@ -15,8 +15,8 @@ def test_loads_versioned_prompt() -> None:
     assert prompt.output_schema["required"] == ["summary", "confidence"]
 
 
-def test_loads_versioned_gold_dataset() -> None:
-    dataset = GoldenDatasetRepository(ROOT / "corpora").load("clause-summary", "1.0.0")
+def test_loads_versioned_evaluation_dataset() -> None:
+    dataset = EvaluationDatasetRepository(ROOT / "corpora").load("clause-summary", "1.0.0")
     assert dataset.version == "1.0.0"
     assert len(dataset.examples) == 3
     assert dataset.examples[0].tags == ("requirement", "shall")

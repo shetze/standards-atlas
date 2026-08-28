@@ -61,7 +61,7 @@ def test_parse_canonical_untyped_enum_token() -> None:
     assert parsed.item_type == AtlasItemType.TOC
 
 
-def test_parse_compatibility_typed_enum_token() -> None:
+def test_parse_supported_alternate_typed_enum_token() -> None:
     parsed = parse_lexed_structure_token(
         LexedStructureToken(
             source="12:rC.2.4.{1..4}",

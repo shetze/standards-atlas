@@ -50,7 +50,6 @@ def _part_document(key: str, *clauses: Clause, volume: str = "1") -> Engineering
 
 def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path) -> None:
     repository = FileSystemEngineeringDocumentRepository(tmp_path)
-    repository.save(_document("FAMILY", _clause("legacy")))
     repository.save(_part_document("PART-1", _clause("A", "Content A")))
     repository.save(
         _part_document(
@@ -83,25 +82,9 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
         "Supplement content",
         "Content B",
     ]
-    assert repository.exists(DocumentKey(value="FAMILY"))
+    assert not repository.exists(DocumentKey(value="FAMILY"))
     assert composed.key == DocumentKey(value="FAMILY")
     assert composed.part_keys == ("PART-1", "SUPPLEMENT", "PART-2")
-
-
-def test_compose_creates_root_for_legacy_supplement_without_clause_zero(
-    tmp_path: Path,
-) -> None:
-    repository = FileSystemEngineeringDocumentRepository(tmp_path)
-    repository.save(_document("IEC61508-3-1", _clause("S", "Supplement", volume="3§1")))
-
-    composed = build_document_composition_service(tmp_path).compose("FAMILY", ("IEC61508-3-1",))
-
-    root, clause = composed.clauses
-    assert root.reference == StandardReference(standard="TEST", part="3§1", year=2026, clause="0")
-    assert root.reference.part == "3§1"
-    assert root.heading == "Part 3-1"
-    assert root.clause_type is ClauseType.TOC
-    assert clause.reference.clause == "S"
 
 
 def test_compose_rejects_duplicate_clause_ids_across_parts(tmp_path: Path) -> None:
@@ -119,5 +102,13 @@ def test_compose_rejects_multiple_clause_zero_roots(tmp_path: Path) -> None:
     root_b = root_a.model_copy(update={"id": ClauseId(value="second-root")})
     repository.save(_document("PART-1", root_a, root_b, _clause("A", "Content")))
 
-    with pytest.raises(DocumentCompositionError, match="at most one clause 0"):
+    with pytest.raises(DocumentCompositionError, match="exactly one clause 0"):
+        build_document_composition_service(tmp_path).compose("FAMILY", ("PART-1",))
+
+
+def test_compose_rejects_part_without_persisted_root(tmp_path: Path) -> None:
+    repository = FileSystemEngineeringDocumentRepository(tmp_path)
+    repository.save(_document("PART-1", _clause("A", "Content")))
+
+    with pytest.raises(DocumentCompositionError, match="exactly one clause 0"):
         build_document_composition_service(tmp_path).compose("FAMILY", ("PART-1",))

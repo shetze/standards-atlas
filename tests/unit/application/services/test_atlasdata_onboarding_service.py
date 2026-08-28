@@ -219,8 +219,8 @@ def test_generates_multi_part_atlasdata_with_explicit_part_context(tmp_path: Pat
 
     result = AtlasDataOnboardingService().generate_parts(
         (
-            DoclingPartSource(2, part_2),
-            DoclingPartSource(1, part_1),
+            DoclingPartSource("2", part_2),
+            DoclingPartSource("1", part_1),
         ),
         output,
         standard_name="IEC 11889",
@@ -247,7 +247,7 @@ def test_rejects_duplicate_part_assignments(tmp_path: Path) -> None:
     _write_docling(source)
     with pytest.raises(AtlasDataOnboardingError, match="Duplicate part assignments"):
         AtlasDataOnboardingService().generate_parts(
-            (DoclingPartSource(1, source), DoclingPartSource(1, source)),
+            (DoclingPartSource("1", source), DoclingPartSource("1", source)),
             tmp_path / "out",
             standard_name="Example",
             year=2026,

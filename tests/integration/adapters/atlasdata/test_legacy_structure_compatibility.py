@@ -26,10 +26,12 @@ def test_iec61508_canonical_typed_annex_tokens_keep_type_and_enum_prefix() -> No
     assert clause.source_token == "2-r11:C.{1..2}"
 
 
-def test_transitional_typed_annex_tokens_remain_readable(tmp_path: Path) -> None:
-    source = tmp_path / "TRANSITIONAL"
+def test_alternate_typed_annex_spelling_used_by_atlasdata_remains_readable(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "ALTERNATE"
     source.write_text(
-        'name="Transitional"\ndigits=8\n\nstructure=(\n "2026 11:rC.1"\n)\n',
+        'name="Alternate"\ndigits=8\n\nstructure=(\n "2026 11:rC.1"\n)\n',
         encoding="utf-8",
     )
 

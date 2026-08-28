@@ -33,6 +33,10 @@ def test_resolves_explicit_reference_to_available_document() -> None:
     assert relation.target_clause_id == "target"
     assert relation.target_reference == "7.4.5"
     assert relation.display_text == "ISO 26262-6:2018, 7.4.5"
+    generated = {item.path: item for item in resolved.clauses[0].provenance.generated_attributes}
+    provenance = generated["baseline.reference_relations"]
+    assert provenance.generator == "cross-document-reference-resolver"
+    assert provenance.method.value == "deterministic"
 
 
 def test_does_not_resolve_ambiguous_target_reference() -> None:

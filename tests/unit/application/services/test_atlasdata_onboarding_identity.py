@@ -83,13 +83,3 @@ def test_detect_part_ignores_trailing_publication_year() -> None:
     assert _detect_part_from_metadata("ISO+26262-8-2018.pdf", 2018) == "8"
     assert _detect_part_from_metadata("ISO+SAE+21434-2021.pdf", 2021) is None
     assert _detect_part_from_metadata("IEC61508-3-1.pdf", 2010) == "3-1"
-
-
-def test_docling_part_source_normalizes_legacy_integer_part(tmp_path: Path) -> None:
-    from standards_atlas.application.services.atlasdata_onboarding_service import (
-        DoclingPartSource,
-    )
-
-    source = DoclingPartSource(part=8, path=tmp_path / "document.json")  # type: ignore[arg-type]
-
-    assert source.part == "8"

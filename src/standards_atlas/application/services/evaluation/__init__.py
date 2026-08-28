@@ -3,20 +3,16 @@
 from standards_atlas.application.evaluation.models import (
     EvaluationDataset,
     EvaluationExample,
-    GoldenDataset,
 )
 from standards_atlas.application.evaluation.report import (
     EvaluationReporter,
-    SemanticEvaluationReporter,
 )
 from standards_atlas.application.evaluation.repository import (
     EvaluationDatasetRepository,
-    GoldenDatasetRepository,
     PromptRepository,
 )
 from standards_atlas.application.evaluation.runner import (
     EvaluationRunner,
-    SemanticEvaluationRunner,
 )
 from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
 from standards_atlas.application.semantic_qualification.consensus import ModelConsensusService
@@ -50,12 +46,8 @@ __all__ = [
     "EvaluationMatrixRunner",
     "EvaluationReporter",
     "EvaluationRunner",
-    "GoldenDataset",
-    "GoldenDatasetRepository",
     "ModelConsensusService",
     "ModelPromptQualificationService",
     "PromptRepository",
     "SemanticAnnotationReviewService",
-    "SemanticEvaluationReporter",
-    "SemanticEvaluationRunner",
 ]

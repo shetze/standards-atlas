@@ -122,6 +122,11 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
     assert persisted.tables[0].title == "Example values"
     assert persisted.tables[0].parent_clause_id == second.id
     assert persisted.tables[0].table_block_id == second.content[1].id
+    first_generated = {item.path: item for item in first.provenance.generated_attributes}
+    assert first_generated["baseline.content"].generator == "normalized-content-enrichment"
+    assert first_generated["baseline.content"].method.value == "source_extraction"
+    assert first_generated["baseline.reference_mentions"].generator == "reference-mention-extractor"
+    assert first_generated["baseline.reference_mentions"].method.value == "deterministic"
 
 
 def test_visual_only_formula_discards_docling_pseudo_expression(tmp_path):

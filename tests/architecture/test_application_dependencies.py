@@ -64,6 +64,11 @@ def _imports(paths: Iterable[Path]) -> tuple[ImportRef, ...]:
                 module = _resolve_from_import(path, node)
                 if module:
                     imports.append(ImportRef(path, node.lineno, module))
+                    imports.extend(
+                        ImportRef(path, node.lineno, f"{module}.{alias.name}")
+                        for alias in node.names
+                        if alias.name != "*"
+                    )
             elif isinstance(node, ast.Import):
                 imports.extend(ImportRef(path, node.lineno, alias.name) for alias in node.names)
     return tuple(imports)
@@ -77,10 +82,19 @@ def _matches(module: str, forbidden: str) -> bool:
     return module == forbidden or module.startswith(f"{forbidden}.")
 
 
+def _display_path(path: Path) -> Path:
+    try:
+        return path.relative_to(PROJECT_ROOT)
+    except ValueError:
+        return path
+
+
 def _assert_no_imports(paths: Iterable[Path], forbidden: tuple[str, ...]) -> None:
+    checked = tuple(paths)
+    assert checked, "architecture guard matched no Python files"
     violations = [
-        f"{ref.path.relative_to(PROJECT_ROOT)}:{ref.line} imports {ref.module}"
-        for ref in _imports(paths)
+        f"{_display_path(ref.path)}:{ref.line} imports {ref.module}"
+        for ref in _imports(checked)
         if any(_matches(ref.module, prefix) for prefix in forbidden)
     ]
     assert violations == []
@@ -159,3 +173,46 @@ def test_structural_taxonomy_does_not_depend_on_semantic_classification() -> Non
             "standards_atlas.resources.semantic",
         ),
     )
+
+
+def _write_guard_fixture(tmp_path: Path, source: str) -> Path:
+    path = tmp_path / "sample.py"
+    path.write_text(source, encoding="utf-8")
+    return path
+
+
+def test_dependency_guard_resolves_imported_submodule_name(tmp_path: Path) -> None:
+    path = _write_guard_fixture(tmp_path, "from standards_atlas import adapters\n")
+
+    modules = {item.module for item in _imports((path,))}
+
+    assert "standards_atlas.adapters" in modules
+
+
+def test_dependency_guard_resolves_nested_imported_resource_name(tmp_path: Path) -> None:
+    path = _write_guard_fixture(
+        tmp_path,
+        "from standards_atlas.resources import semantic\n",
+    )
+
+    modules = {item.module for item in _imports((path,))}
+
+    assert "standards_atlas.resources.semantic" in modules
+
+
+def test_dependency_guard_fails_when_scope_is_empty() -> None:
+    import pytest
+
+    with pytest.raises(AssertionError, match="matched no Python files"):
+        _assert_no_imports((), ("standards_atlas.adapters",))
+
+
+def test_dependency_guard_rejects_from_package_import_forbidden_submodule(
+    tmp_path: Path,
+) -> None:
+    import pytest
+
+    path = _write_guard_fixture(tmp_path, "from standards_atlas import adapters\n")
+
+    with pytest.raises(AssertionError):
+        _assert_no_imports((path,), ("standards_atlas.adapters",))

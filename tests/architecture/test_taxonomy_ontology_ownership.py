@@ -61,7 +61,8 @@ def test_taxonomy_and_semantic_classification_have_separate_application_services
 def test_qualification_does_not_materialize_semantic_enrichment() -> None:
     """Candidate qualification code must not write accepted document enrichment."""
 
-    qualification_files = (APPLICATION / "semantic_qualification").rglob("*.py")
+    qualification_files = tuple((APPLICATION / "semantic_qualification").rglob("*.py"))
+    assert qualification_files, "semantic qualification package not found"
     for path in qualification_files:
         imports = _imports(path)
         assert not any(

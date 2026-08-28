@@ -89,7 +89,12 @@ def test_role_response_failure_does_not_abort_other_ontology_dimensions() -> Non
     assert result.document.clauses[0].semantic_classification.statement_functions[0].value == (
         "requirement"
     )
-    assert result.document.clauses[0].semantic_classification.role_semantics_present is False
+    clause = result.document.clauses[0]
+    assert clause.semantic_classification.role_semantics_present is False
+    generated = {item.path: item for item in clause.provenance.generated_attributes}
+    statement = generated["enrichments.semantic.statement_functions"]
+    assert statement.method.value == "llm"
+    assert statement.generator
     assert documents.saved == result.document
 
 
@@ -437,49 +442,3 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
     assert semantic.role_relations[0].actor == relation.actor
     assert semantic.role_relations[0].relation_class == relation.relation_class
     assert semantic.role_relations[0].target == relation.target
-
-
-class _PresentOpenRoleSemantics:
-    def classify(self, _context):
-        from standards_atlas.application.semantic_ontology import RoleSemanticsResult
-
-        return RoleSemanticsResult(
-            present=True,
-            relations=(
-                RoleRelation(
-                    actor="Verifier",
-                    relation_class="performance",
-                    target="verification",
-                ),
-            ),
-        )
-
-
-def test_open_role_relation_class_is_persisted_without_legacy_relation_attribute() -> None:
-    document = _document()
-    documents = _Documents(document)
-    service = SemanticEnrichmentService(
-        documents=documents,
-        engine=_Engine(),
-        profile=SemanticProfile(
-            id="test",
-            version="1.0.0",
-            dimensions={
-                "statement_functions": OntologyReference(id="statement-functions", version="2.0.0")
-            },
-        ),
-        role_semantics=_PresentOpenRoleSemantics(),
-    )
-
-    result = service.enrich(document.key.value)
-    semantic = result.document.clauses[0].semantic_classification
-
-    assert semantic.role_semantics_present is True
-    assert semantic.role_relation_types == ()
-    assert semantic.role_relations == (
-        RoleRelation(
-            actor="Verifier",
-            relation_class="performance",
-            target="verification",
-        ),
-    )

@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-import hashlib
-
 from standards_atlas.application.model import PublicationDocument
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
-    ClauseType,
     DocumentKey,
     EngineeringDocument,
 )
-from standards_atlas.domain.model.identifiers import StandardReference
 
 
 class DocumentCompositionError(ValueError):
@@ -90,37 +86,11 @@ def _family_title(document: EngineeringDocument, family_key: str) -> str:
 
 
 def _part_root_clause(part: EngineeringDocument) -> Clause:
-    """Return the persisted part root or derive a publication-only root."""
+    """Return the single persisted part root required by canonical onboarding."""
     roots = [clause for clause in part.clauses if clause.reference.clause.strip() == "0"]
-    if len(roots) > 1:
+    if len(roots) != 1:
         raise DocumentCompositionError(
-            f"Part document {part.key.value!r} must contain at most one clause 0 "
-            f"root, got {len(roots)}."
+            f"Part document {part.key.value!r} must contain exactly one clause 0 root, "
+            f"got {len(roots)}."
         )
-    if roots:
-        return roots[0]
-
-    volumes = {
-        clause.reference.part for clause in part.clauses if clause.reference.part is not None
-    }
-    if len(volumes) != 1:
-        raise DocumentCompositionError(
-            f"Part document {part.key.value!r} without a clause 0 root must contain "
-            f"exactly one volume, got {sorted(volumes)!r}."
-        )
-    volume = next(iter(volumes))
-
-    references = {(clause.reference.standard, clause.reference.year) for clause in part.clauses}
-    if len(references) != 1:
-        raise DocumentCompositionError(
-            f"Part document {part.key.value!r} without a clause 0 root contains "
-            "multiple standard references."
-        )
-    standard, year = next(iter(references))
-    digest = hashlib.sha1(f"{standard}|{year or ''}|{volume}|root".encode()).hexdigest()[:12]
-    return Clause(
-        id=ClauseId(value=f"clause-{digest}"),
-        reference=StandardReference(standard=standard, year=year, clause="0", part=volume),
-        clause_type=ClauseType.TOC,
-        heading=f"Part {volume.replace('§', '-')}",
-    )
+    return roots[0]

@@ -104,25 +104,6 @@ def test_export_and_import_accepted_review(tmp_path: Path) -> None:
     assert annotation.review.decision is ReviewDecision.ACCEPTED
 
 
-def test_export_supports_legacy_messages_request_format(tmp_path: Path) -> None:
-    run = _proposal_run(tmp_path / "run")
-    request_path = run / "clause-1" / "request.json"
-    request_path.write_text(
-        json.dumps({"messages": [{"role": "user", "content": "Legacy clause text."}]}),
-        encoding="utf-8",
-    )
-    reviews = tmp_path / "reviews"
-
-    SemanticAnnotationReviewService().export_run(
-        run_directory=run,
-        review_directory=reviews,
-    )
-
-    text = (reviews / "clause-1.md").read_text(encoding="utf-8")
-    assert "Legacy clause text." in text
-    assert "Clause text unavailable" not in text
-
-
 def test_export_prefers_explicit_clause_context_metadata(tmp_path: Path) -> None:
     run = _proposal_run(tmp_path / "run")
     request_path = run / "clause-1" / "request.json"

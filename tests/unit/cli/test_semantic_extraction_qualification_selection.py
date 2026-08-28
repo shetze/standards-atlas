@@ -35,18 +35,6 @@ def test_selected_clause_ids_resolve_current_nested_context() -> None:
     }
 
 
-def test_selected_clause_ids_keep_legacy_flat_input_compatibility() -> None:
-    examples = (
-        EvaluationExample(
-            id="clause-a",
-            input={"document_key": "ISO26262-11", "clause_id": "clause-a"},
-            expected={},
-        ),
-    )
-
-    assert _selected_clause_ids_by_document(examples) == {"ISO26262-11": {"clause-a"}}
-
-
 def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -> None:
     import json
 

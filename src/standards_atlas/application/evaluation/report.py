@@ -93,6 +93,3 @@ class EvaluationReporter:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return output
-
-
-SemanticEvaluationReporter = EvaluationReporter
