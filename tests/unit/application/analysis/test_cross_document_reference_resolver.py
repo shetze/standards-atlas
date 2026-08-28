@@ -27,7 +27,7 @@ def test_resolves_explicit_reference_to_available_document() -> None:
 
     resolved = resolve_cross_document_reference_relations(source, (source, target))
 
-    relation = resolved.clauses[0].semantic_classification.relations[0]
+    relation = resolved.clauses[0].reference_relations[0]
     assert relation.scope is RelationScope.EXTERNAL
     assert relation.target_document_key == "ISO26262-6"
     assert relation.target_clause_id == "target"
@@ -52,7 +52,7 @@ def test_does_not_resolve_ambiguous_target_reference() -> None:
 
     resolved = resolve_cross_document_reference_relations(source, (source, target))
 
-    assert resolved.clauses[0].semantic_classification.relations == ()
+    assert resolved.clauses[0].reference_relations == ()
 
 
 def _document(key: str, name: str, clauses: tuple[Clause, ...]) -> Standard:
@@ -92,5 +92,5 @@ def test_part_qualified_alias_selects_matching_part_in_family_document() -> None
 
     resolved = resolve_cross_document_reference_relations(source, (source, family))
 
-    relation = resolved.clauses[0].semantic_classification.relations[0]
+    relation = resolved.clauses[0].reference_relations[0]
     assert relation.target_clause_id == "p3"

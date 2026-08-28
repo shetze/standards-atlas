@@ -41,13 +41,13 @@ def _document() -> EngineeringDocument:
                     functions=("verification",),
                 ),
             ),
-            relations=(
-                SemanticRelation(
-                    kind=SemanticRelationKind.REFINES,
-                    scope=RelationScope.INTERNAL,
-                    target_reference="2",
-                    target_clause_id="clause:2",
-                ),
+        ),
+        reference_relations=(
+            SemanticRelation(
+                kind=SemanticRelationKind.REFINES,
+                scope=RelationScope.INTERNAL,
+                target_reference="2",
+                target_clause_id="clause:2",
             ),
         ),
         structural_context=StructuralContext(

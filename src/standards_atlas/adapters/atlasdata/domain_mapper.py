@@ -140,7 +140,7 @@ def _materialize_parent_hierarchy(clauses: tuple[Clause, ...]) -> tuple[Clause, 
             parent = by_identity.get((clause.reference.part, "0"))
 
         materialized.append(
-            clause.model_copy(update={"parent_id": parent.id if parent is not None else None})
+            clause.with_baseline_updates(parent_id=parent.id if parent is not None else None)
         )
 
     return tuple(materialized)

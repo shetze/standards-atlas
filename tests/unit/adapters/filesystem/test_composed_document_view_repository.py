@@ -74,7 +74,7 @@ def test_publication_reader_does_not_hide_invalid_current_documents(
     invalid_path.write_text(
         json.dumps(
             {
-                "schema_version": 6,
+                "schema_version": 7,
                 "document": {
                     "key": {"value": "BROKEN"},
                     "document_type": "other",

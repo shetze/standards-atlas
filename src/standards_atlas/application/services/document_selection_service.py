@@ -52,7 +52,7 @@ class DocumentSelectionService:
         part_title = title or f"Part {volume.replace('§', '-')}"
         root_title = f"Part {volume.replace('§', '-')}"
         clauses = tuple(
-            clause.model_copy(update={"heading": root_title})
+            clause.with_baseline_updates(heading=root_title)
             if clause.reference.clause.strip() == "0"
             else clause
             for clause in clauses

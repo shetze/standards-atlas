@@ -130,5 +130,5 @@ def resolve_document_reference_mentions(document):
                 )
             else:
                 resolved.append(mention)
-        clauses.append(clause.model_copy(update={"reference_mentions": tuple(resolved)}))
+        clauses.append(clause.with_baseline_updates(reference_mentions=tuple(resolved)))
     return document.model_copy(update={"clauses": tuple(clauses)})

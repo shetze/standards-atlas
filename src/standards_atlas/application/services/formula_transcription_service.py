@@ -95,7 +95,7 @@ class FormulaTranscriptionService:
         )
         content = list(clause.content)
         content[index] = enriched_block
-        enriched_clause = clause.model_copy(update={"content": tuple(content)})
+        enriched_clause = clause.with_baseline_updates(content=tuple(content))
         clauses = list(document.clauses)
         clause_index = next(i for i, item in enumerate(clauses) if item.id == clause.id)
         clauses[clause_index] = enriched_clause

@@ -8,6 +8,8 @@ from collections.abc import Iterable
 from standards_atlas.domain.model import (
     Clause,
     EngineeringDocument,
+    GeneratedAttribute,
+    GenerationMethod,
     RelationScope,
     SemanticRelation,
     SemanticRelationKind,
@@ -182,7 +184,6 @@ def _target_preference(
 
 
 def _merge_relations(clause: Clause, detected: list[SemanticRelation]) -> Clause:
-    current = clause.semantic_classification
     keys = {
         (
             relation.kind,
@@ -192,9 +193,9 @@ def _merge_relations(clause: Clause, detected: list[SemanticRelation]) -> Clause
             relation.target_document_key,
             relation.display_text,
         )
-        for relation in current.relations
+        for relation in clause.reference_relations
     }
-    merged = list(current.relations)
+    merged = list(clause.reference_relations)
     for relation in detected:
         key = (
             relation.kind,
@@ -207,10 +208,14 @@ def _merge_relations(clause: Clause, detected: list[SemanticRelation]) -> Clause
         if key not in keys:
             merged.append(relation)
             keys.add(key)
-    if len(merged) == len(current.relations):
+    if len(merged) == len(clause.reference_relations):
         return clause
-    return clause.model_copy(
-        update={"semantic_classification": current.model_copy(update={"relations": tuple(merged)})}
+    return clause.with_baseline_updates(reference_relations=tuple(merged)).mark_generated(
+        GeneratedAttribute(
+            path="baseline.reference_relations",
+            generator="cross-document-reference-resolver",
+            method=GenerationMethod.DETERMINISTIC,
+        )
     )
 
 

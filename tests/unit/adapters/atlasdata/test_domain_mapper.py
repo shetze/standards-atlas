@@ -140,10 +140,7 @@ def test_domain_mapper_infers_document_structure_from_title() -> None:
 
     standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-8")
 
-    assert (
-        standard.clauses[0].semantic_classification.document_structure.category
-        is DocumentStructure.BODY
-    )
+    assert standard.clauses[0].document_structure.category is DocumentStructure.BODY
 
 
 def test_part_zero_titles_are_resolved_per_volume() -> None:
@@ -212,7 +209,7 @@ def test_domain_mapper_does_not_infer_main_body_normative_status() -> None:
 
     standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-11")
 
-    assert standard.clauses[0].semantic_classification.normative_status.value == "unspecified"
+    assert standard.clauses[0].normative_status.value == "unspecified"
 
 
 def test_domain_mapper_preserves_informative_annex_status() -> None:
@@ -238,7 +235,7 @@ def test_domain_mapper_preserves_informative_annex_status() -> None:
 
     standard = map_atlas_data_to_standard(atlas_data, key="ISO26262-11")
 
-    assert standard.clauses[0].semantic_classification.normative_status.value == "informative"
+    assert standard.clauses[0].normative_status.value == "informative"
 
 
 def test_domain_mapper_reads_public_semantic_tags() -> None:

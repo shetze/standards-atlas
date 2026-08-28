@@ -20,6 +20,8 @@ from standards_atlas.domain.model import (
     ApplicabilityFunction,
     DocumentKey,
     EngineeringDocument,
+    GeneratedAttribute,
+    GenerationMethod,
     KnowledgeKind,
     ProcessFunction,
     SemanticClassification,
@@ -248,7 +250,39 @@ class SemanticClassificationService:
             # Revalidate the complete classification before it crosses the persistence
             # boundary. This catches any future coupled-dimension merge bug at its source.
             semantic = _validated_semantic_merge(semantic, {})
-            updated.append(clause.model_copy(update={"semantic_classification": semantic}))
+            enriched_clause = clause.with_semantic_classification(semantic)
+            generated: list[GeneratedAttribute] = []
+            if not ontology_failed:
+                generated.extend(
+                    GeneratedAttribute(
+                        path=f"enrichments.semantic.{dimension}",
+                        generator=self._classifier_id,
+                        method=GenerationMethod.LLM,
+                    )
+                    for dimension in (
+                        "statement_functions",
+                        "knowledge_kinds",
+                        "process_functions",
+                        "applicability_present",
+                        "applicability_functions",
+                    )
+                )
+            if role_result is not None:
+                generated.extend(
+                    GeneratedAttribute(
+                        path=f"enrichments.semantic.{dimension}",
+                        generator=self._classifier_id,
+                        method=GenerationMethod.LLM,
+                    )
+                    for dimension in (
+                        "role_semantics_present",
+                        "role_relation_types",
+                        "role_relations",
+                    )
+                )
+            if generated:
+                enriched_clause = enriched_clause.mark_generated(*generated)
+            updated.append(enriched_clause)
             if not ontology_failed:
                 classified += 1
             if self._progress is not None:

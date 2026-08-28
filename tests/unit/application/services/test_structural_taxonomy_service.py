@@ -70,20 +70,18 @@ def test_materializes_hierarchy_siblings_and_context_content():
 
 def test_materializes_reference_mentions_as_structural_edges():
     target = _clause("c7", "7", "Target")
-    source = _clause("c8", "8", "Source").model_copy(
-        update={
-            "reference_mentions": (
-                ReferenceMention(
-                    kind=ReferenceMentionKind.CLAUSE,
-                    surface_text="Clause 7",
-                    start_offset=0,
-                    end_offset=8,
-                    reference="7",
-                    status=ReferenceResolutionStatus.RESOLVED,
-                    targets=(ReferenceTarget(clause_id="c7", reference="7"),),
-                ),
-            )
-        }
+    source = _clause("c8", "8", "Source").with_baseline_updates(
+        reference_mentions=(
+            ReferenceMention(
+                kind=ReferenceMentionKind.CLAUSE,
+                surface_text="Clause 7",
+                start_offset=0,
+                end_offset=8,
+                reference="7",
+                status=ReferenceResolutionStatus.RESOLVED,
+                targets=(ReferenceTarget(clause_id="c7", reference="7"),),
+            ),
+        )
     )
     doc = EngineeringDocument(
         key=DocumentKey(value="test"),

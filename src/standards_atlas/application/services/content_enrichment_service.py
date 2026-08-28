@@ -53,6 +53,8 @@ from standards_atlas.domain.model import (
     DocumentTableId,
     EngineeringDocument,
     FormulaBlock,
+    GeneratedAttribute,
+    GenerationMethod,
     ListBlock,
     ListItem,
     PictureBlock,
@@ -178,19 +180,34 @@ class ContentEnrichmentService:
                 enriched_count += 1
             else:
                 empty_count += 1
-            enriched_clause = clause.model_copy(
-                update={
-                    "heading": _enriched_title(clause, clause_alignment),
-                    "content": blocks,
-                    "text": None,
-                }
+            enriched_clause = clause.with_baseline_updates(
+                heading=_enriched_title(clause, clause_alignment),
+                content=blocks,
             )
-            enriched_clause = enriched_clause.model_copy(
-                update={
-                    "reference_mentions": extract_reference_mentions(enriched_clause.plain_text)
-                }
+            enriched_clause = enriched_clause.with_baseline_updates(
+                reference_mentions=extract_reference_mentions(enriched_clause.plain_text)
             )
-            enriched_clauses.append(enriched_clause)
+            generated = [
+                GeneratedAttribute(
+                    path="baseline.content",
+                    generator="normalized-content-enrichment",
+                    method=GenerationMethod.SOURCE_EXTRACTION,
+                ),
+                GeneratedAttribute(
+                    path="baseline.reference_mentions",
+                    generator="reference-mention-extractor",
+                    method=GenerationMethod.DETERMINISTIC,
+                ),
+            ]
+            if clause.heading is None and enriched_clause.heading is not None:
+                generated.append(
+                    GeneratedAttribute(
+                        path="baseline.heading",
+                        generator="normalized-content-enrichment",
+                        method=GenerationMethod.SOURCE_EXTRACTION,
+                    )
+                )
+            enriched_clauses.append(enriched_clause.mark_generated(*generated))
 
         traceability_errors = _content_traceability_errors(tuple(enriched_clauses), normalized)
         if traceability_errors:
@@ -213,7 +230,6 @@ class ContentEnrichmentService:
         resolved_relations = resolve_internal_reference_relations(draft)
         clauses_with_relations = []
         for clause in draft.clauses:
-            current = clause.semantic_classification
             detected_relations = resolved_relations.get(clause.id.value, ())
             relation_keys = {
                 (
@@ -223,9 +239,9 @@ class ContentEnrichmentService:
                     relation.target_document_key,
                     relation.display_text,
                 )
-                for relation in current.relations
+                for relation in clause.reference_relations
             }
-            merged_relations = list(current.relations)
+            merged_relations = list(clause.reference_relations)
             for relation in detected_relations:
                 key = (
                     relation.kind,
@@ -237,15 +253,18 @@ class ContentEnrichmentService:
                 if key not in relation_keys:
                     merged_relations.append(relation)
                     relation_keys.add(key)
-            clauses_with_relations.append(
-                clause.model_copy(
-                    update={
-                        "semantic_classification": current.model_copy(
-                            update={"relations": tuple(merged_relations)}
-                        )
-                    }
-                )
+            updated_clause = clause.with_baseline_updates(
+                reference_relations=tuple(merged_relations)
             )
+            if tuple(merged_relations) != clause.reference_relations:
+                updated_clause = updated_clause.mark_generated(
+                    GeneratedAttribute(
+                        path="baseline.reference_relations",
+                        generator="internal-reference-resolver",
+                        method=GenerationMethod.DETERMINISTIC,
+                    )
+                )
+            clauses_with_relations.append(updated_clause)
         draft = draft.model_copy(update={"clauses": tuple(clauses_with_relations)})
         parent_artifacts = []
         if document.lineage is not None:

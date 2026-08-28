@@ -12,7 +12,12 @@ from standards_atlas.domain.model.artifact_lineage import (
     artifact_reference,
     canonical_content_hash,
 )
-from standards_atlas.domain.model.clause import Clause, ClauseType
+from standards_atlas.domain.model.clause import (
+    Clause,
+    ClauseBaseline,
+    ClauseEnrichments,
+    ClauseType,
+)
 from standards_atlas.domain.model.content import (
     CodeBlock,
     ContentBlock,
@@ -50,6 +55,11 @@ from standards_atlas.domain.model.identifiers import (
     DocumentKey,
     StandardKey,
     StandardReference,
+)
+from standards_atlas.domain.model.knowledge_state import (
+    GeneratedAttribute,
+    GenerationMethod,
+    KnowledgeStateProvenance,
 )
 from standards_atlas.domain.model.knowledge_table import (
     IntegrityLevelRecommendation,
@@ -148,6 +158,11 @@ from standards_atlas.domain.model.table_structure import (
 )
 
 __all__ = [
+    "ClauseBaseline",
+    "ClauseEnrichments",
+    "GeneratedAttribute",
+    "GenerationMethod",
+    "KnowledgeStateProvenance",
     "FORMAL_SEMANTIC_NAMESPACE",
     "ClauseSemanticExtraction",
     "DocumentSemanticExtraction",

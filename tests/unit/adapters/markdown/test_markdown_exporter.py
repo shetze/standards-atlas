@@ -287,25 +287,20 @@ def test_export_writes_lineage_manifest(tmp_path):
 def test_internal_reference_relations_are_rendered_as_links():
     from standards_atlas.domain.model import (
         RelationScope,
-        SemanticClassification,
         SemanticRelation,
         SemanticRelationKind,
     )
 
     document = Standard.from_name(key=StandardKey(value="SAMPLE"), name="Sample", year=2026)
     source = _clause("4.1", "Source", text="The procedure in 5.2 shall be applied.")
-    source = source.model_copy(
-        update={
-            "semantic_classification": SemanticClassification(
-                relations=(
-                    SemanticRelation(
-                        kind=SemanticRelationKind.NORMATIVE_REFERENCE,
-                        scope=RelationScope.INTERNAL,
-                        target_reference="5.2",
-                    ),
-                )
-            )
-        }
+    source = source.with_baseline_updates(
+        reference_relations=(
+            SemanticRelation(
+                kind=SemanticRelationKind.NORMATIVE_REFERENCE,
+                scope=RelationScope.INTERNAL,
+                target_reference="5.2",
+            ),
+        )
     )
     document = document.model_copy(
         update={"clauses": (source, _clause("5.2", "Target", text="Target text."))}

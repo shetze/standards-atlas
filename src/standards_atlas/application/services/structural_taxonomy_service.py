@@ -14,6 +14,8 @@ from standards_atlas.domain.model import (
     Clause,
     DocumentKey,
     EngineeringDocument,
+    GeneratedAttribute,
+    GenerationMethod,
     StructuralAncestor,
     StructuralContext,
     StructuralNodeKind,
@@ -185,14 +187,43 @@ class StructuralTaxonomyService:
                         or existing.semantic_sections,
                     }
                 )
-            updated.append(
-                clause.model_copy(
-                    update={
-                        "structural_profile": detected,
-                        "structural_context": structural_context,
-                    }
-                )
+            updated_clause = clause.with_baseline_updates(
+                structural_profile=detected,
+                structural_context=structural_context,
             )
+            generated = [
+                GeneratedAttribute(
+                    path="baseline.structural_context",
+                    generator="structural-taxonomy",
+                    method=GenerationMethod.DETERMINISTIC,
+                )
+            ]
+            if existing is None:
+                generated.append(
+                    GeneratedAttribute(
+                        path="baseline.structural_profile",
+                        generator="structural-taxonomy",
+                        method=GenerationMethod.DETERMINISTIC,
+                    )
+                )
+            else:
+                if existing.canonical_section is None and detected.canonical_section is not None:
+                    generated.append(
+                        GeneratedAttribute(
+                            path="baseline.structural_profile.canonical_section",
+                            generator="structural-taxonomy",
+                            method=GenerationMethod.DETERMINISTIC,
+                        )
+                    )
+                if existing.annex_status is None and detected.annex_status is not None:
+                    generated.append(
+                        GeneratedAttribute(
+                            path="baseline.structural_profile.annex_status",
+                            generator="structural-taxonomy",
+                            method=GenerationMethod.DETERMINISTIC,
+                        )
+                    )
+            updated.append(updated_clause.mark_generated(*generated))
         result = document.model_copy(update={"clauses": tuple(updated)})
         self._documents.save(result)
         return StructuralTaxonomyResult(document=result)

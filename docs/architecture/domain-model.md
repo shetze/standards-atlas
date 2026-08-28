@@ -18,18 +18,13 @@ The application architecture is intentionally shown in a separate UML diagram. I
 
 `EngineeringDocument` is the canonical representation of one normalized standard, standard part, regulatory publication, or engineering document. It identifies the source document and owns an ordered clause hierarchy. Multi-part outputs are composed explicitly rather than by treating an export format as the aggregate.
 
-A `Clause` contains:
+A `Clause` contains a stable `ClauseId` and human-readable reference plus three explicit knowledge-state blocks:
 
-- a stable `ClauseId` and human-readable reference;
-- structured `ContentBlock` values instead of a single text field;
-- parent/child structure and clause type;
-- source evidence such as page anchors and bounding boxes;
-- a multi-dimensional `StructuralProfile` and materialized `StructuralContext`;
-- ontology-owned `SemanticClassification` results and semantic relations;
-- annotations and relations;
-- optional Doorstop projection attributes.
+- `ClauseBaseline` owns source-derived and deterministic facts: structured `ContentBlock` values, hierarchy, source token, structural profile/context, reference mentions and resolved reference relations, normative/structural classification, and optional publication attributes;
+- `ClauseEnrichments` owns interpretative derived knowledge, currently the ontology-owned `SemanticClassification`;
+- `KnowledgeStateProvenance` records every attribute that is still generated rather than authoritatively confirmed, including the responsible generator and generation method.
 
-Plain text is derived from structured content through `render_content_as_plain_text`; it is not a second authoritative representation.
+`baseline` describes the kind of processing, not certainty. A deterministic structural or reference result can remain `generated` until community-curated AtlasData confirms it. Plain text is derived from `baseline.content` through `render_content_as_plain_text`; it is not a second authoritative representation.
 
 ## Structured content
 
@@ -63,11 +58,11 @@ ontology decision.
 
 ## Semantic classification
 
-`SemanticClassification` stores semantic classification results and semantic relations separately from document structure. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and role-relation types is owned exclusively by the `SEMANTIC_CLASSIFICATION` stage. Structural evidence is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for semantic classification, not semantic truth. Some legacy structural compatibility fields remain in the persisted model until a later schema migration, but no active classifier derives ontology values outside `SEMANTIC_CLASSIFICATION`.
+`SemanticClassification` is the semantic enrichment block of a clause. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and role-relation types is owned exclusively by the `SEMANTIC_CLASSIFICATION` stage. Structural evidence remains in `ClauseBaseline` and is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for semantic classification, not semantic truth. Deterministically resolved document references likewise remain in the baseline rather than being mixed with inferred semantic relations.
 
 ## Evidence and provenance
 
-`SourceEvidence` links knowledge back to physical source material through page and geometric anchors. Formula visual preservation consumes those anchors without changing their meaning. `ArtifactLineage` records how persisted artifacts derive from prior artifacts and deterministic transformations. Evidence belongs in the domain contract; adapter-specific parser objects do not.
+`SourceEvidence` links knowledge back to physical source material through page and geometric anchors. Formula visual preservation consumes those anchors without changing their meaning. `ArtifactLineage` records how persisted artifacts derive from prior artifacts and deterministic transformations. `KnowledgeStateProvenance.generated_attributes` adds attribute-level authority tracking with a stable path, generator identity, generation method, and optional evidence references. Evidence belongs in the domain contract; adapter-specific parser objects do not.
 
 ## Table-derived knowledge
 
@@ -87,7 +82,7 @@ See [Table semantics](table-semantics.md) for the projection and evaluation boun
 
 ## Knowledge extension points
 
-`ClauseAnnotation` adds reviewed or generated explanatory knowledge with explicit visibility. `Relation` and semantic relation objects connect clauses and documents. These types are the basis for the planned cross-standard relationship graph. Model-generated proposals remain external evaluation artifacts until accepted and published into canonical data.
+`ClauseAnnotation` adds reviewed or generated explanatory knowledge with explicit visibility. `Relation` and semantic relation objects connect clauses and documents. These types are the basis for the planned cross-standard relationship graph. Candidate model runs and qualification proposals remain external evaluation artifacts; once accepted, their semantic knowledge may be incorporated into `ClauseEnrichments` with explicit authority/provenance.
 
 ## Relationship to application architecture
 

@@ -149,7 +149,7 @@ class _ApplicabilityEngine:
 
 def _document_with_semantic(semantic: SemanticClassification) -> EngineeringDocument:
     document = _document()
-    clause = document.clauses[0].model_copy(update={"semantic_classification": semantic})
+    clause = document.clauses[0].with_semantic_classification(semantic)
     return document.model_copy(update={"clauses": (clause,)})
 
 

@@ -283,7 +283,7 @@ class DeterministicFormalSemanticProjector:
                     )
                 )
 
-            for relation in clause.semantic_classification.relations:
+            for relation in clause.reference_relations:
                 assertions.append(
                     _assertion(
                         SemanticBox.ABOX,
@@ -418,7 +418,7 @@ class DeterministicFormalSemanticProjector:
             _facet(
                 ContextKind.SEMANTIC,
                 "normativeStatus",
-                semantic.normative_status.value,
+                clause.normative_status.value,
                 "semantic-classification",
             )
         )
@@ -441,8 +441,8 @@ class DeterministicFormalSemanticProjector:
                     )
                 )
 
-        if semantic.document_structure:
-            structure = semantic.document_structure
+        if clause.document_structure:
+            structure = clause.document_structure
             facets.append(
                 _facet(
                     ContextKind.STRUCTURAL,

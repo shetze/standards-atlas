@@ -69,4 +69,4 @@ def test_clause_can_have_semantic_classification() -> None:
 
     data = clause.model_dump(mode="json")
 
-    assert data["semantic_classification"]["statement_functions"] == ["description"]
+    assert data["enrichments"]["semantic"]["statement_functions"] == ["description"]

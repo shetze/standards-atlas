@@ -84,7 +84,7 @@ def _exportable_clauses(document: EngineeringDocument):
         reference = clause.reference.clause.strip()
         if not reference or reference == "0":
             continue
-        structure = clause.semantic_classification.document_structure
+        structure = clause.document_structure
         if structure is not None and structure.category in _OMITTED_STRUCTURES:
             continue
         yield clause
@@ -252,7 +252,7 @@ def _link_references(
             pattern = re.compile(re.escape(label), re.IGNORECASE)
             text = pattern.sub(f"[{label}](#{_anchor(target)})", text, count=1)
 
-    relations = clause.semantic_classification.relations
+    relations = clause.reference_relations
     for relation in sorted(
         relations,
         key=lambda item: len(item.display_text or item.target_reference),
@@ -311,7 +311,7 @@ def _materialize_visual_assets(
             content.append(block.model_copy(update={"image_path": f"assets/{asset_path.name}"}))
             clause_changed = True
         clauses.append(
-            clause.model_copy(update={"content": tuple(content)}) if clause_changed else clause
+            clause.with_baseline_updates(content=tuple(content)) if clause_changed else clause
         )
         changed = changed or clause_changed
     return document.model_copy(update={"clauses": tuple(clauses)}) if changed else document

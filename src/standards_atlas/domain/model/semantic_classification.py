@@ -285,10 +285,11 @@ class SemanticClassification(BaseModel):
     role_semantics_present: bool = False
     role_relation_types: tuple[RoleRelationType, ...] = ()
     role_relations: tuple[RoleRelation, ...] = ()
+    # Transitional construction fields: Clause normalizes these deterministic
+    # dimensions into ClauseBaseline before persistence.
     document_structure: DocumentStructureClassification | None = None
     normative_status: NormativeStatus = NormativeStatus.UNSPECIFIED
     domain_functions: tuple[DomainFunctionClassification, ...] = ()
-    relations: tuple[SemanticRelation, ...] = ()
 
     @model_validator(mode="before")
     @classmethod

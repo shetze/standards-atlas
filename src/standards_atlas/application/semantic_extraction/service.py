@@ -247,4 +247,4 @@ def _clause_with_context(
             "role_semantics_present": context.role_semantics_present,
         }
     )
-    return clause.model_copy(update={"semantic_classification": semantic})
+    return clause.with_semantic_classification(semantic)

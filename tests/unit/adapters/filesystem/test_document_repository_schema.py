@@ -54,11 +54,14 @@ def test_repository_writes_versioned_document_envelope(tmp_path: Path) -> None:
 
     payload = json.loads((workspace / "documents" / "DOC.json").read_text())
     assert payload["schema_version"] == CURRENT_DOCUMENT_SCHEMA_VERSION
-    assert payload["document"]["clauses"][0]["content"][0]["type"] == "text"
+    assert payload["document"]["clauses"][0]["baseline"]["content"][0]["type"] == "text"
     assert "text" not in payload["document"]["clauses"][0]
-    assert payload["document"]["clauses"][0]["structural_profile"]["canonical_section"] == "body"
+    assert (
+        payload["document"]["clauses"][0]["baseline"]["structural_profile"]["canonical_section"]
+        == "body"
+    )
     clause_payload = payload["document"]["clauses"][0]
-    assert clause_payload["heading"] == "Scope"
+    assert clause_payload["baseline"]["heading"] == "Scope"
     assert clause_payload["reference"]["part"] == "3"
     assert "title" not in clause_payload
     assert "volume" not in clause_payload
