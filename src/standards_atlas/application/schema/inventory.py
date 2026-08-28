@@ -38,7 +38,8 @@ class VersionedInterface:
             raise ValueError(f"versioned interface {self.id!r} must declare at least one axis")
         if VersionAxis.SCHEMA in self.axes and self.schema_family is None:
             raise ValueError(
-                f"versioned interface {self.id!r} declares schema versioning without a schema family"
+                f"versioned interface {self.id!r} declares schema versioning "
+                "without a schema family"
             )
         if VersionAxis.SCHEMA not in self.axes and self.schema_family is not None:
             raise ValueError(
@@ -116,7 +117,10 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         "resources/semantic/prompts/<task>/<version>/",
         LifecycleBoundary.PACKAGED_RESOURCE,
         (VersionAxis.RESOURCE,),
-        notes="Prompt versions are independently selectable inference inputs; their output schema is task-owned.",
+        notes=(
+            "Prompt versions are independently selectable inference inputs; "
+            "their output schema is task-owned."
+        ),
     ),
     VersionedInterface(
         "formal-semantic-projection",
@@ -132,7 +136,10 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "semantic-extraction",
-        "Persisted extraction carries task/prompt/model provenance independently of schema version.",
+        (
+            "Persisted extraction carries task/prompt/model provenance independently "
+            "of schema version."
+        ),
     ),
 )
 

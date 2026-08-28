@@ -58,7 +58,15 @@ Ports should express application needs rather than mirror third-party APIs. The 
 
 ADR 0001 establishes the current architectural dependency direction. Canonical implementations live in focused packages such as `application/workflow`, `application/normalization`, `application/evaluation`, and `application/semantic_qualification`. During the active refactoring there is no requirement to retain compatibility exports below `application/services`; obsolete exports should be removed when their callers are migrated. New code must import canonical packages and must not add concrete-adapter dependencies to reusable application services.
 
-Architecture tests should guard the dependency direction. Unit tests construct application services with test doubles; integration tests verify real adapter contracts and composition roots.
+Architecture tests enforce the dependency direction across the complete active package tree. They parse imports statically, including relative imports, and reject:
+
+- `domain/**` dependencies on application, adapters, or CLI;
+- `application/**` dependencies on concrete adapters or CLI;
+- direct domain/application imports of concrete graph, document, publication, and AI frameworks that belong behind adapters;
+- generic `application/evaluation` dependencies on standards-specific semantic qualification; and
+- structural-taxonomy dependencies on semantic-classification resources or services.
+
+Unit tests construct application services with test doubles; integration tests verify real adapter contracts and composition roots. A new capability boundary that must remain independently replaceable should normally gain an architecture guard when it is introduced.
 
 ### Structured table retrieval
 

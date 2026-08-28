@@ -71,8 +71,9 @@ src/standards_atlas/
 - `legacy/`: retained historical implementation that is outside the active package
 
 Dependencies point inward: adapters and CLI may depend on application and domain code;
-the application layer may depend on the domain; the domain must not import outward. New
-code must use canonical capability packages rather than compatibility re-exports.
+the application layer may depend on the domain; the domain must not import outward. These
+rules are checked package-wide by `tests/architecture/test_application_dependencies.py`.
+New code must use canonical capability packages rather than compatibility re-exports.
 
 ## Generated storage classes
 
