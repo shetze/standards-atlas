@@ -12,13 +12,15 @@
 
 ![Standards Atlas processing pipeline](docs/architecture/diagrams/svg/processing-pipeline.svg)
 
-Standards Atlas captures standards, technical specifications, and other highly structured technical texts and makes their content available for traceable machine-assisted use in automated engineering processes. The resulting canonical representations are called **EngineeringDocuments**.
+Standards Atlas transforms standards, technical specifications, and other highly structured technical texts into a **traceable, machine-processable engineering knowledge base**. Source documents are preserved as canonical **EngineeringDocuments** and enriched through deterministic structural processing and qualified semantic analysis.
 
-The project is deliberately use-case open. EngineeringDocuments can, for example, be exported as Doorstop items to seed traceability in software quality assurance, compared across standards and domains to derive relationship heatmaps, or exposed as a knowledge base for open-ended LLM-assisted questions.
+The project is deliberately use-case open. Doorstop traceability, cross-standard relationship heatmaps, conversational exploration, and MCP integrations are applications of the knowledge base rather than hard-coded purposes of Standards Atlas.
 
-Beyond deterministic extraction and pattern matching, Standards Atlas uses qualified modern LLMs for semantic analysis. Each EngineeringDocument is first enriched with a deterministic structural taxonomy and abstract semantic functions. Together with Knowledge Domain and provenance information these form a **context layer (CBox)**. A domain-specific **OWL TBox** then provides the vocabulary and constraints used to derive an **ABox** for each clause. The enriched documents can subsequently be embedded into RAG and GraphRAG structures and exposed through interactive chat and MCP interfaces.
+Structure and domain knowledge are modeled separately. Deterministically derived taxonomy, abstract semantic functions, Knowledge Domain, source identity, provenance, and qualification evidence form an explicit **context layer (CBox)**. Domain-specific **OWL TBoxes** define the concepts and relations used to derive clause-level **ABox** assertions. Every derived semantic assertion must remain traceable through its extraction and qualification evidence to the originating clause and source document.
 
-Licensed source content remains protected throughout this process, and every derived result retains provenance and qualification evidence.
+LLMs are qualified analysis components for semantic tasks that cannot be derived reliably by deterministic processing or pattern matching; they are not the canonical model or the architectural center of the system. Other analysis techniques may implement the same semantic contracts. OWL projections are likewise derived knowledge representations: `EngineeringDocument` remains the canonical document model.
+
+The resulting knowledge base can be indexed through lexical, vector, RAG, or GraphRAG mechanisms and exposed through chat, MCP, graph queries, or future interfaces. Retrieval indexes and application projections remain rebuildable consumers of the canonical documents and formal knowledge. Licensed source content remains protected throughout this process.
 
 ## Why Standards Atlas?
 
@@ -79,7 +81,10 @@ The workflow intentionally stops at review boundaries when human confirmation is
 - **Keep source content private** — licensed document text remains local unless publication is explicitly permitted.
 - **Use canonical domain models** — PDF, AtlasData, Markdown, Doorstop, and MCP are adapters or exchange surfaces.
 - **Prefer deterministic transformations** — reproducibility is a prerequisite for qualification and regression testing.
-- **Separate structure from meaning** — deterministic taxonomy materializes structural context before LLM-assisted ontology classification.
+- **Separate context from domain knowledge** — document structure and semantic function form explicit interpretation context; domain assertions remain a separate formal projection.
+- **Qualify semantic inference** — LLMs and other probabilistic analyzers implement qualified semantic contracts rather than defining the canonical model.
+- **Keep knowledge evidence-backed** — every formal assertion must remain traceable to source content, extraction provenance, and qualification evidence.
+- **Treat retrieval as a serving layer** — RAG, GraphRAG, graph queries, chat, and MCP consume rebuildable projections rather than becoming canonical storage.
 - **Separate application behavior from protocols** — evaluation services remain reusable independently of MCP.
 
 ## Project status

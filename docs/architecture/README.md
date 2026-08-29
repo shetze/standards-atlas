@@ -1,6 +1,6 @@
 # Architecture
 
-Standards Atlas is a traceability-centered platform for turning standards, technical specifications, and other strongly structured technical texts into canonical **EngineeringDocuments** and machine-readable engineering knowledge. Deterministic taxonomy and qualified LLM-assisted semantic analysis establish a context layer (CBox); domain-specific OWL TBoxes then support clause-level ABox projections. The resulting knowledge can feed RAG, GraphRAG, chat, MCP, Doorstop, relationship analysis, and other downstream applications without making any of those surfaces the canonical model. The implementation follows a hexagonal architecture and preserves evidence and lineage across persisted artifacts.
+Standards Atlas is a traceability-centered knowledge-engineering platform for transforming standards, technical specifications, and other strongly structured technical texts into canonical **EngineeringDocuments** and an evidence-backed, machine-processable engineering knowledge base. Deterministic taxonomy and qualified semantic analysis establish an interpretation context (CBox); domain-specific OWL TBoxes then support clause-level ABox projections. LLMs may implement qualified semantic analysis where deterministic methods are insufficient, but neither LLMs nor retrieval technologies define the architecture. RAG, GraphRAG, graph queries, chat, MCP, Doorstop, relationship analysis, and other downstream applications consume rebuildable projections of the canonical documents and formal knowledge.
 
 ![Architecture overview](diagrams/svg/architecture-overview.svg)
 
@@ -58,7 +58,12 @@ outbound adapters implement application ports
 - Human review is a first-class gate, not an implicit correction inside adapters.
 - Protected standards and evaluation corpora remain below `local/` or another explicitly configured private root.
 - LLM output is proposal data until it passes qualification or human review.
-- Relationship extraction extends the canonical model; it does not replace source evidence.
+- Relationship extraction extends the formal knowledge projection; it does not replace source evidence.
+- Context and domain knowledge remain distinct: CBox describes interpretation context, while ABox represents domain assertions.
+- Every formal assertion remains traceable through extraction and qualification evidence to its originating clause and source.
+- LLMs are replaceable qualified analyzers behind semantic contracts, not owners of the canonical model.
+- Retrieval indexes and serving technologies are rebuildable projections, not canonical persistence.
+- Cross-document and cross-domain integration preserves source identity while relating knowledge through shared or mapped semantics.
 
 ## Diagram scope
 

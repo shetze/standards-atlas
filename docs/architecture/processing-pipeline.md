@@ -19,11 +19,12 @@ The document pipeline converts controlled publications into canonical Engineerin
 9. **Structural taxonomy (`TAXONOMY`)** deterministically materializes `StructuralProfile` and `StructuralContext`, including hierarchy, node/leaf role, ancestor context, sibling sequence position, contextual node content, structural reference edges, and structural scope reach (for example `this clause`, following sibling clauses, or a scope-heading subtree).
 10. **Semantic classification (`SEMANTIC_ENRICHMENT`)** applies the qualified production classifier to clause content plus the complete structural context and assigns statement functions, knowledge kinds, process functions, applicability functions, and role-relation types.
 11. **Context projection (CBox)** combines Knowledge Domain, deterministic taxonomy, semantic functions, structural position, provenance, and qualification evidence into explicit context for formal interpretation.
-12. **Formal semantic projection** applies the selected domain-specific OWL TBox/RBox vocabulary to derive clause-level ABox assertions while preserving their CBox context and source identity.
-13. **Reference resolution and relationship enrichment** resolves available internal and cross-document targets while preserving unresolved evidence for later interpretation.
-14. **Retrieval and access projections** may build RAG or GraphRAG structures and expose knowledge through chat or MCP without making those indexes canonical storage.
-15. **Publication** creates Markdown, composed Markdown, and Doorstop projections without changing classification ownership.
-16. **Evaluation and qualification** operate as separate workflows for datasets, model qualification, regression evidence, and HITL review; they do not replace the production `SEMANTIC_ENRICHMENT` stage.
+12. **Formal semantic projection** applies the selected domain-specific OWL TBox/RBox vocabulary to derive clause-level ABox assertions while preserving CBox context, source identity, extraction provenance, and qualification evidence. Context describes interpretation; ABox assertions represent domain knowledge.
+13. **Knowledge integration and relationship enrichment** resolves internal and cross-document targets and relates knowledge across documents and domains through shared or mapped semantics while preserving unresolved evidence and source identity.
+14. **Retrieval and serving projections** may build lexical, vector, RAG, or GraphRAG indexes or graph-query services. These are rebuildable access mechanisms, not canonical storage.
+15. **Interfaces and applications** expose the knowledge through chat, MCP, APIs, Doorstop traceability, relationship analysis, heatmaps, and future consumers without making any one application a pipeline purpose.
+16. **Publication** creates Markdown, composed Markdown, and Doorstop projections without changing classification ownership.
+17. **Evaluation and qualification** operate as separate workflows for datasets, analyzer qualification, regression evidence, and HITL review; they establish whether probabilistic semantic components are suitable for production use but do not replace the production `SEMANTIC_ENRICHMENT` stage.
 
 ## Normalization contract
 
@@ -55,3 +56,30 @@ prose. Automatic modal-verb heuristics are not permitted outside `SEMANTIC_ENRIC
 Semantic qualification remains a separate evaluation workflow used to select and validate
 the production classifier. Imported reviewed/public semantic annotations may populate
 ontology fields directly because they are explicit evidence, not automatic inference.
+
+## Architectural layers
+
+The pipeline can be understood as a set of responsibilities rather than as one fixed technology stack:
+
+```text
+Acquisition
+    -> controlled source publications
+Canonical representation
+    -> EngineeringDocuments
+Context enrichment
+    -> deterministic taxonomy + qualified semantic functions + CBox
+Knowledge representation and integration
+    -> domain TBox/RBox + clause ABoxes + provenance
+Retrieval and serving
+    -> lexical/vector retrieval + RAG + GraphRAG + graph queries
+Interfaces
+    -> chat + MCP + APIs
+Applications
+    -> traceability + cross-standard analysis + heatmaps + QA + future use cases
+```
+
+Only the upper layers through canonical representation define document identity. Formal knowledge, retrieval structures, interfaces, and applications are derived from or consume that identity and can evolve independently.
+
+## Semantic trust contract
+
+Semantic inference is not accepted merely because an analyzer can produce syntactically valid output. Production semantic components must operate under explicit contracts and qualification evidence. Each accepted assertion must preserve a traceable path of the form `assertion -> extraction/provenance -> clause -> EngineeringDocument -> source publication`. This requirement applies whether the analyzer is an LLM, another statistical model, or a future non-LLM technique.

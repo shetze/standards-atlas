@@ -33,15 +33,25 @@ A structural profile classifies independent dimensions instead of forcing a clau
 
 ## CBox, TBox, and ABox
 
-Standards Atlas uses OWL as the formal representation of engineering knowledge while keeping `EngineeringDocument` canonical. A domain-specific **TBox** defines concepts and relations. The **CBox** is the Standards Atlas context layer that combines Knowledge Domain, deterministic taxonomy, semantic functions, structural position, provenance, and qualification evidence. Using clause content plus that context, the semantic projection derives an **ABox** containing assertions about concrete clauses, activities, artifacts, roles, and other domain individuals.
+Standards Atlas uses OWL for formal engineering knowledge while keeping `EngineeringDocument` canonical. A domain-specific **TBox** defines domain concepts, relations, and constraints. The **CBox** is the Standards Atlas interpretation context for a document fragment: it combines Knowledge Domain, deterministic taxonomy, semantic functions, structural position, source identity, provenance, and qualification evidence. It describes how a clause is to be interpreted rather than asserting the clause's engineering-domain knowledge itself.
+
+Using clause content plus that context, formal semantic extraction derives an **ABox** containing assertions about concrete activities, artifacts, roles, hazards, techniques, and other domain individuals. Context and domain knowledge therefore remain separate even when they originate from the same clause. Every ABox assertion must retain enough provenance to be traced back through its extraction and qualification evidence to that clause and its source.
 
 ## Knowledge domain and hierarchy
 
 A **knowledge domain** groups standards and relationships for a field such as functional safety and selects the semantic context in which clauses are interpreted. A configured hierarchy determines composed publication views such as Doorstop, while the filesystem remains an implementation detail.
 
+## Engineering knowledge base
+
+Clause-level formal projections accumulate into a knowledge-centric view across EngineeringDocuments. Shared or mapped domain semantics allow concepts and assertions from independently authored standards and different engineering domains to be related without collapsing their source identity. The knowledge base complements the document-centric `EngineeringDocument` view; it does not replace it.
+
 ## Retrieval and access
 
-Enriched EngineeringDocuments and their formal semantic projections can feed RAG and GraphRAG indexes. These retrieval structures are derived access mechanisms rather than canonical storage. They can support interactive LLM-assisted questions, MCP consumers, relationship analysis, and other future applications.
+Enriched EngineeringDocuments and formal semantic projections can feed lexical, vector, RAG, and GraphRAG indexes or graph-query services. These structures form a derived retrieval and serving layer rather than canonical storage. Interactive chat, MCP clients, Doorstop traces, relationship analysis, heatmaps, and future applications consume this layer and can be changed without redefining the knowledge model.
+
+## Qualified semantic analysis
+
+LLMs are one implementation technique for semantic tasks that cannot be derived reliably by deterministic processing. Their outputs are accepted only through explicit, qualified semantic contracts and remain subject to provenance and review rules. The architecture permits other analyzers to implement the same contracts, so the project is not coupled conceptually to a particular LLM or inference technique.
 
 ## Review gate
 
