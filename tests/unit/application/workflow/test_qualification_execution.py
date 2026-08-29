@@ -101,3 +101,66 @@ def test_resume_retries_failed_export_without_repeating_completed_step(tmp_path:
 
     assert resumed_runner.commands == [("export-markdown",)]
     assert result.executed_steps == (export,)
+
+
+def test_resume_survives_normal_work_cleanup(tmp_path: Path) -> None:
+    prepared = WorkflowStep(
+        family="FAMILY",
+        document="DOC",
+        stage=WorkflowStage.SEMANTIC_ENRICHMENT,
+        command=("prepare", "--mode", "current"),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/semantic-enrichment/DOC.complete",),
+    )
+    failed = WorkflowStep(
+        family="evaluation",
+        document="matrix-semantic-extraction",
+        stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
+        command=("qualify",),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/extraction.complete",),
+    )
+    plan = WorkflowPlan(("FAMILY",), (prepared, failed))
+    executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    first = FailingOnceRunner(("qualify",))
+
+    with pytest.raises(RuntimeError):
+        executor.execute(plan, project_root=tmp_path, runner=first)
+
+    from standards_atlas.application.workspace import WorkspaceLayout
+
+    WorkspaceLayout(tmp_path).clear_work(preserve_workflow=True)
+    resumed = RecordingRunner()
+    executor.execute(plan, project_root=tmp_path, runner=resumed)
+
+    assert resumed.commands == [("qualify",)]
+
+
+def test_changed_step_command_invalidates_workflow_checkpoint(tmp_path: Path) -> None:
+    old = WorkflowStep(
+        family="evaluation",
+        document="matrix",
+        stage=WorkflowStage.QUALIFICATION_MATRIX,
+        command=("matrix",),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/matrix.complete",),
+    )
+    fresh = WorkflowStep(
+        family="evaluation",
+        document="matrix",
+        stage=WorkflowStage.QUALIFICATION_MATRIX,
+        command=("matrix", "--fresh"),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=old.output_paths,
+    )
+    executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    executor.execute(
+        WorkflowPlan(("evaluation",), (old,)),
+        project_root=tmp_path,
+        runner=RecordingRunner(),
+    )
+
+    runner = RecordingRunner()
+    executor.execute(WorkflowPlan(("evaluation",), (fresh,)), project_root=tmp_path, runner=runner)
+
+    assert runner.commands == [("matrix", "--fresh")]

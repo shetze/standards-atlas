@@ -257,9 +257,9 @@ def run_workflow(
         corpus_output=corpus_output,
         qualification_output=qualification_output,
     )
-    # Scratch artifacts are retained after a run for debugging but never reused
-    # implicitly by a subsequent workflow execution.
-    WorkspaceLayout(Path.cwd()).clear_work()
+    # Keep cross-invocation workflow checkpoints so an interrupted workflow can
+    # resume from the first incomplete step. Other scratch state is disposable.
+    WorkspaceLayout(Path.cwd()).clear_work(preserve_workflow=True)
     service = build_workflow_service(Path.cwd())
     result = service.execute(
         plan,

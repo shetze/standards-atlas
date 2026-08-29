@@ -29,3 +29,17 @@ def test_clear_work_never_removes_data_cache_or_local(tmp_path: Path) -> None:
     assert data.exists()
     assert cache.exists()
     assert review.exists()
+
+
+def test_clear_work_can_preserve_workflow_checkpoints(tmp_path: Path) -> None:
+    layout = WorkspaceLayout(tmp_path)
+    checkpoint = layout.work / "workflow" / "semantic" / "DOC.complete"
+    scratch = layout.work / "doorstop" / "tmp.txt"
+    for path in (checkpoint, scratch):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("state\n", encoding="utf-8")
+
+    layout.clear_work(preserve_workflow=True)
+
+    assert checkpoint.exists()
+    assert not scratch.exists()

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -37,16 +38,18 @@ class FileSystemWorkflowArtifactStore:
         if not step.output_paths and not step.output_globs:
             return False
         paths_exist = all(
-            self._output_is_current(project_root / path, path) for path in step.output_paths
+            self._output_is_current(project_root / path, path, step) for path in step.output_paths
         )
         globs_exist = all(any(project_root.glob(pattern)) for pattern in step.output_globs)
         return paths_exist and globs_exist
 
     @staticmethod
-    def _output_is_current(path: Path, relative_path: str) -> bool:
+    def _output_is_current(path: Path, relative_path: str, step: WorkflowStep) -> bool:
         if not path.exists():
             return False
         normalized = relative_path.replace("\\", "/")
+        if normalized.startswith(".atlas/work/workflow/"):
+            return _workflow_marker_is_current(path, step)
         if (
             normalized.startswith(".atlas/data/documents/")
             or normalized.startswith(".atlas/work/family-sources/documents/")
@@ -60,7 +63,17 @@ class FileSystemWorkflowArtifactStore:
                 continue
             marker = project_root / relative_path
             marker.parent.mkdir(parents=True, exist_ok=True)
-            marker.write_text("completed\n", encoding="utf-8")
+            marker.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "step_fingerprint": _workflow_step_fingerprint(step),
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
 
     def remove_outputs(self, step: WorkflowStep, project_root: Path) -> None:
         targets = [project_root / path for path in step.output_paths]
@@ -90,3 +103,30 @@ def _json_schema_version(path: Path) -> object | None:
     if not isinstance(payload, dict):
         return None
     return payload.get("schema_version")
+
+
+def _workflow_step_fingerprint(step: WorkflowStep) -> str:
+    payload = {
+        "family": step.family,
+        "document": step.document,
+        "stage": step.stage.value,
+        "command": list(step.command),
+        "artifact_policy": step.artifact_policy.value,
+        "manual_gate": step.manual_gate,
+        "output_paths": list(step.output_paths),
+        "output_globs": list(step.output_globs),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _workflow_marker_is_current(path: Path, step: WorkflowStep) -> bool:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return False
+    return (
+        isinstance(payload, dict)
+        and payload.get("schema_version") == 1
+        and payload.get("step_fingerprint") == _workflow_step_fingerprint(step)
+    )

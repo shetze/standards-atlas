@@ -149,6 +149,7 @@ class QualificationWorkflowPlanner:
                     / manifest.matrix_id
                     / QUALIFICATION_CORPUS_SNAPSHOT_FILENAME
                 ),
+                f".atlas/work/workflow/qualification/{manifest.matrix_id}/matrix.complete",
             ),
         )
         steps: tuple[WorkflowStep, ...] = (*document_steps, corpus_step, matrix_step)
@@ -181,6 +182,10 @@ class QualificationWorkflowPlanner:
                         qualification_output
                         / manifest.matrix_id
                         / "semantic-extraction-qualification.json"
+                    ),
+                    (
+                        ".atlas/work/workflow/qualification/"
+                        f"{manifest.matrix_id}/semantic-extraction.complete"
                     ),
                 ),
             )

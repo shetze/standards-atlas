@@ -31,6 +31,9 @@ from standards_atlas.application.semantic_qualification.run_selection import (
     load_qualification_run_selection,
     qualification_snapshot_members,
 )
+from standards_atlas.application.semantic_qualification.semantic_extraction_run_provenance import (
+    validate_semantic_extraction_qualification_provenance,
+)
 from standards_atlas.application.semantic_qualification.semantic_extraction_selection import (
     selected_clause_ids_by_document,
 )
@@ -158,6 +161,15 @@ def finalize_qualification_archive(
                 f"semantic extraction qualification report not found: {semantic_report_path}"
             )
         semantic_report = json.loads(semantic_report_path.read_text(encoding="utf-8"))
+        try:
+            validate_semantic_extraction_qualification_provenance(
+                semantic_report,
+                run_directory=run_directory,
+                selection=run_selection,
+                config=manifest.semantic_extraction_qualification,
+            )
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc)) from exc
         selected_count = semantic_report.get("selected_clause_count")
         context_count = semantic_report.get("eligibility_context_clause_count")
         if selected_count != run_selection.selected_clause_count:

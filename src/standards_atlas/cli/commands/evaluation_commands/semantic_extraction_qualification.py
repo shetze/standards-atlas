@@ -38,6 +38,9 @@ from standards_atlas.application.semantic_qualification.semantic_extraction_qual
     merge_document_semantic_extractions,
     qualify_semantic_extractions,
 )
+from standards_atlas.application.semantic_qualification.semantic_extraction_run_provenance import (
+    semantic_extraction_qualification_provenance,
+)
 from standards_atlas.application.semantic_qualification.semantic_extraction_selection import (
     selected_clause_ids_by_document,
 )
@@ -282,8 +285,14 @@ def qualify_semantic_extraction(
     )
     output.mkdir(parents=True, exist_ok=True)
     report_path = output / "semantic-extraction-qualification.json"
+    report_payload = report.model_dump(mode="json")
+    report_payload["qualification_input"] = semantic_extraction_qualification_provenance(
+        run_directory=output,
+        selection=run_selection,
+        config=config,
+    )
     report_path.write_text(
-        json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True) + "\n",
+        json.dumps(report_payload, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     typer.echo(f"Semantic extraction model: {report.extraction_model or 'unknown'}")

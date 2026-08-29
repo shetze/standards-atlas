@@ -77,9 +77,26 @@ class WorkspaceLayout:
     def llm_cache(self) -> Path:
         return self.cache / "llm"
 
-    def clear_work(self) -> None:
-        """Remove retained scratch artifacts from previous workflow execution."""
-        shutil.rmtree(self.work, ignore_errors=True)
+    def clear_work(self, *, preserve_workflow: bool = False) -> None:
+        """Remove retained scratch artifacts from previous workflow execution.
+
+        ``.atlas/work/workflow`` contains cross-invocation workflow checkpoints.
+        A normal workflow restart preserves those checkpoints while clearing other
+        scratch state; explicit workspace cleanup still removes the whole work tree.
+        """
+        if not preserve_workflow:
+            shutil.rmtree(self.work, ignore_errors=True)
+            return
+        if not self.work.is_dir():
+            return
+        workflow = self.work / "workflow"
+        for child in self.work.iterdir():
+            if child == workflow:
+                continue
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink(missing_ok=True)
 
     def clear_cache(self) -> None:
         """Remove all reproducible cache artifacts."""

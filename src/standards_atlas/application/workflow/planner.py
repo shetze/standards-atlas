@@ -418,6 +418,7 @@ class WorkflowPlanner:
                         *(("--title", family.name) if part_keys else ()),
                     ),
                     ArtifactPolicy.DERIVED,
+                    output_paths=(f".atlas/work/workflow/markdown/{family.key}.complete",),
                     output_globs=(
                         f"local/exports/markdown/{hierarchy_key or family.key}/{family.key}*.md",
                     ),
