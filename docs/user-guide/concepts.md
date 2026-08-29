@@ -31,9 +31,17 @@ surrounding clause into a `responsibility_assignment`.
 
 A structural profile classifies independent dimensions instead of forcing a clause into one role. Dimensions can describe, for example, normative status, statement function, lifecycle context, evidence relevance or document region. Taxonomies are knowledge-domain specific and must not be inferred from keywords alone when evidence is insufficient.
 
+## CBox, TBox, and ABox
+
+Standards Atlas uses OWL as the formal representation of engineering knowledge while keeping `EngineeringDocument` canonical. A domain-specific **TBox** defines concepts and relations. The **CBox** is the Standards Atlas context layer that combines Knowledge Domain, deterministic taxonomy, semantic functions, structural position, provenance, and qualification evidence. Using clause content plus that context, the semantic projection derives an **ABox** containing assertions about concrete clauses, activities, artifacts, roles, and other domain individuals.
+
 ## Knowledge domain and hierarchy
 
-A **knowledge domain** groups standards and relationships for a field such as functional safety. A configured hierarchy determines composed Doorstop publication, while the filesystem remains an implementation detail.
+A **knowledge domain** groups standards and relationships for a field such as functional safety and selects the semantic context in which clauses are interpreted. A configured hierarchy determines composed publication views such as Doorstop, while the filesystem remains an implementation detail.
+
+## Retrieval and access
+
+Enriched EngineeringDocuments and their formal semantic projections can feed RAG and GraphRAG indexes. These retrieval structures are derived access mechanisms rather than canonical storage. They can support interactive LLM-assisted questions, MCP consumers, relationship analysis, and other future applications.
 
 ## Review gate
 

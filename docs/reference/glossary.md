@@ -14,4 +14,8 @@
 **Physical source** — one actual publication file with provenance and selection metadata.  
 **Profile** — named catalog selection of families.  
 **Review gate** — workflow pause requiring a human-approved artefact.  
-**Semantic role** — purpose assigned to a clause, for example scope, term, objective, or requirement.
+**CBox** — Standards Atlas context layer combining Knowledge Domain, taxonomy, semantic, structural, provenance, and qualification context for formal assertions; an architectural convention, not a native OWL box.  
+**TBox** — OWL terminology defining domain concepts, classes, and their semantic constraints.  
+**ABox** — OWL assertions about concrete individuals derived from EngineeringDocument clauses and their context.  
+**RAG** — retrieval-augmented generation over derived indexes of EngineeringDocument knowledge.  
+**GraphRAG** — graph-oriented retrieval-augmented generation over formal entities and relationships derived from EngineeringDocuments.  

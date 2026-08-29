@@ -1,6 +1,6 @@
 # Architecture
 
-Standards Atlas is a traceability-centered platform for transforming controlled source publications into canonical, reviewable engineering knowledge. The implementation follows a hexagonal architecture, uses deterministic transformation stages, and preserves evidence and lineage across persisted artifacts.
+Standards Atlas is a traceability-centered platform for turning standards, technical specifications, and other strongly structured technical texts into canonical **EngineeringDocuments** and machine-readable engineering knowledge. Deterministic taxonomy and qualified LLM-assisted semantic analysis establish a context layer (CBox); domain-specific OWL TBoxes then support clause-level ABox projections. The resulting knowledge can feed RAG, GraphRAG, chat, MCP, Doorstop, relationship analysis, and other downstream applications without making any of those surfaces the canonical model. The implementation follows a hexagonal architecture and preserves evidence and lineage across persisted artifacts.
 
 ![Architecture overview](diagrams/svg/architecture-overview.svg)
 

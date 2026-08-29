@@ -12,7 +12,13 @@
 
 ![Standards Atlas processing pipeline](docs/architecture/diagrams/svg/processing-pipeline.svg)
 
-Standards Atlas turns licensed source documents and open structural baselines into reviewable engineering artefacts. It keeps private source content separate from publishable structure, preserves provenance across every transformation, and makes uncertain decisions explicit rather than hiding them in generated output.
+Standards Atlas captures standards, technical specifications, and other highly structured technical texts and makes their content available for traceable machine-assisted use in automated engineering processes. The resulting canonical representations are called **EngineeringDocuments**.
+
+The project is deliberately use-case open. EngineeringDocuments can, for example, be exported as Doorstop items to seed traceability in software quality assurance, compared across standards and domains to derive relationship heatmaps, or exposed as a knowledge base for open-ended LLM-assisted questions.
+
+Beyond deterministic extraction and pattern matching, Standards Atlas uses qualified modern LLMs for semantic analysis. Each EngineeringDocument is first enriched with a deterministic structural taxonomy and abstract semantic functions. Together with Knowledge Domain and provenance information these form a **context layer (CBox)**. A domain-specific **OWL TBox** then provides the vocabulary and constraints used to derive an **ABox** for each clause. The enriched documents can subsequently be embedded into RAG and GraphRAG structures and exposed through interactive chat and MCP interfaces.
+
+Licensed source content remains protected throughout this process, and every derived result retains provenance and qualification evidence.
 
 ## Why Standards Atlas?
 
