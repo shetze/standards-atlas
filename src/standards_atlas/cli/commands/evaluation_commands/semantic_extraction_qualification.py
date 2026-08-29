@@ -30,6 +30,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
 )
 from standards_atlas.application.semantic_qualification.run_selection import (
     QUALIFICATION_SELECTION_FILENAME,
+    ensure_qualification_run_snapshots,
     examples_for_persisted_selection,
     load_qualification_run_selection,
 )
@@ -90,6 +91,11 @@ def qualify_semantic_extraction(
             f"{selection_path}"
         )
     run_selection = load_qualification_run_selection(selection_path)
+    ensure_qualification_run_snapshots(
+        selection_root=output,
+        selection=run_selection,
+        corpus_root=corpus_root,
+    )
     if (
         run_selection.task != manifest.task
         or run_selection.dataset_version != manifest.dataset_version

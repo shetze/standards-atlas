@@ -172,6 +172,69 @@ def load_qualification_run_selection(path: Path) -> QualificationRunSelection:
     return QualificationRunSelection.model_validate_json(path.read_text(encoding="utf-8"))
 
 
+def ensure_qualification_run_snapshots(
+    *,
+    selection_root: Path,
+    selection: QualificationRunSelection,
+    corpus_root: Path,
+) -> None:
+    """Ensure the immutable run-local input snapshots exist and are trustworthy.
+
+    Existing snapshots are never repaired when their content is invalid. If one or
+    both snapshots are missing, both are reconstructed only when every surviving
+    snapshot and the current shared sources still match the fingerprints captured
+    by the persisted selection. This makes a partially cleaned run recoverable
+    without weakening the qualification input integrity contract.
+    """
+    dataset_snapshot = selection_root / selection.dataset_snapshot
+    corpus_snapshot = selection_root / selection.corpus_snapshot
+    dataset_exists = dataset_snapshot.is_file()
+    corpus_exists = corpus_snapshot.is_file()
+    if dataset_exists and corpus_exists:
+        return
+
+    if dataset_exists:
+        existing_dataset = _load_dataset_snapshot(dataset_snapshot)
+        if _dataset_fingerprint(existing_dataset) != selection.dataset_sha256:
+            raise QualificationCorpusIntegrityError(
+                "qualification dataset snapshot content changed after selection was persisted"
+            )
+    if corpus_exists:
+        existing_corpus = _load_corpus_snapshot(corpus_snapshot)
+        if _corpus_fingerprint(existing_corpus) != selection.corpus_sha256:
+            raise QualificationCorpusIntegrityError(
+                "qualification corpus snapshot content changed after selection was persisted"
+            )
+
+    dataset = EvaluationDatasetRepository(corpus_root).load(
+        selection.task, selection.dataset_version
+    )
+    corpus = CorpusManifestRepository(corpus_root).load(selection.corpus_id)
+    if _dataset_fingerprint(dataset) != selection.dataset_sha256:
+        raise QualificationCorpusIntegrityError(
+            "qualification dataset source changed; missing run snapshot cannot be recovered"
+        )
+    if _corpus_fingerprint(corpus) != selection.corpus_sha256:
+        raise QualificationCorpusIntegrityError(
+            "qualification corpus source changed; missing run snapshot cannot be recovered"
+        )
+
+    selection_root.mkdir(parents=True, exist_ok=True)
+    dataset_tmp = dataset_snapshot.with_name(dataset_snapshot.name + ".tmp")
+    corpus_tmp = corpus_snapshot.with_name(corpus_snapshot.name + ".tmp")
+    try:
+        dataset_tmp.write_text(
+            json.dumps(asdict(dataset), indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        corpus_tmp.write_text(_serialize_corpus_snapshot(corpus), encoding="utf-8")
+        dataset_tmp.replace(dataset_snapshot)
+        corpus_tmp.replace(corpus_snapshot)
+    finally:
+        dataset_tmp.unlink(missing_ok=True)
+        corpus_tmp.unlink(missing_ok=True)
+
+
 def examples_for_persisted_selection(
     *,
     selection_root: Path,

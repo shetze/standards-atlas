@@ -26,6 +26,7 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
 )
 from standards_atlas.application.semantic_qualification.run_selection import (
     QUALIFICATION_SELECTION_FILENAME,
+    ensure_qualification_run_snapshots,
     examples_for_persisted_selection,
     load_qualification_run_selection,
     qualification_snapshot_members,
@@ -73,6 +74,11 @@ def finalize_qualification_archive(
     if not selection_path.is_file():
         raise typer.BadParameter(f"qualification clause selection not found: {selection_path}")
     run_selection = load_qualification_run_selection(selection_path)
+    ensure_qualification_run_snapshots(
+        selection_root=run_directory,
+        selection=run_selection,
+        corpus_root=corpus_root,
+    )
     selected_examples = examples_for_persisted_selection(
         selection_root=run_directory,
         selection=run_selection,

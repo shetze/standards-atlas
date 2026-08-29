@@ -10,6 +10,11 @@ from standards_atlas.application.semantic_qualification.clause_access import Sam
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
 )
+from standards_atlas.application.semantic_qualification.run_selection import (
+    QUALIFICATION_CORPUS_SNAPSHOT_FILENAME,
+    QUALIFICATION_DATASET_SNAPSHOT_FILENAME,
+    QUALIFICATION_SELECTION_FILENAME,
+)
 from standards_atlas.application.workflow.models import (
     ArtifactPolicy,
     WorkflowPlan,
@@ -131,7 +136,20 @@ class QualificationWorkflowPlanner:
             stage=WorkflowStage.QUALIFICATION_MATRIX,
             command=tuple(matrix_command),
             artifact_policy=ArtifactPolicy.DERIVED,
-            output_paths=(str(qualification_output / manifest.matrix_id),),
+            output_paths=(
+                str(qualification_output / manifest.matrix_id),
+                str(qualification_output / manifest.matrix_id / QUALIFICATION_SELECTION_FILENAME),
+                str(
+                    qualification_output
+                    / manifest.matrix_id
+                    / QUALIFICATION_DATASET_SNAPSHOT_FILENAME
+                ),
+                str(
+                    qualification_output
+                    / manifest.matrix_id
+                    / QUALIFICATION_CORPUS_SNAPSHOT_FILENAME
+                ),
+            ),
         )
         steps: tuple[WorkflowStep, ...] = (*document_steps, corpus_step, matrix_step)
         extraction_config = manifest.semantic_extraction_qualification

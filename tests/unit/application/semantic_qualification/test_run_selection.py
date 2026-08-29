@@ -9,6 +9,7 @@ import yaml
 from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationCorpusIntegrityError,
     build_qualification_run_selection,
+    ensure_qualification_run_snapshots,
     examples_for_persisted_selection,
     load_qualification_run_selection,
     persist_qualification_run_selection,
@@ -237,3 +238,87 @@ def test_archive_members_use_run_local_input_snapshots(tmp_path: Path) -> None:
         ),
     )
     assert all(path.is_file() for path, _ in members)
+
+
+def test_missing_run_snapshots_are_recovered_from_matching_shared_inputs(
+    tmp_path: Path,
+) -> None:
+    _write_inputs(tmp_path, dataset_clauses=("one",), corpus_clauses=("one",))
+    _, _, selection = build_qualification_run_selection(
+        corpus_root=tmp_path,
+        task="statement-function-classification",
+        dataset_version="2.2.0",
+        corpus_id="corpus-v1",
+    )
+    selection_path = persist_qualification_run_selection(
+        selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
+    )
+    dataset_snapshot = selection_path.parent / selection.dataset_snapshot
+    corpus_snapshot = selection_path.parent / selection.corpus_snapshot
+    dataset_snapshot.unlink()
+    corpus_snapshot.unlink()
+
+    ensure_qualification_run_snapshots(
+        selection_root=selection_path.parent,
+        selection=selection,
+        corpus_root=tmp_path,
+    )
+
+    assert dataset_snapshot.is_file()
+    assert corpus_snapshot.is_file()
+    reloaded = examples_for_persisted_selection(
+        selection_root=selection_path.parent, selection=selection
+    )
+    assert tuple(item.id for item in reloaded) == ("one",)
+
+
+def test_missing_snapshot_recovery_rejects_changed_shared_dataset(tmp_path: Path) -> None:
+    _write_inputs(tmp_path, dataset_clauses=("one",), corpus_clauses=("one",))
+    _, _, selection = build_qualification_run_selection(
+        corpus_root=tmp_path,
+        task="statement-function-classification",
+        dataset_version="2.2.0",
+        corpus_id="corpus-v1",
+    )
+    selection_path = persist_qualification_run_selection(
+        selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
+    )
+    (selection_path.parent / selection.dataset_snapshot).unlink()
+    dataset_path = tmp_path / "statement-function-classification" / "2.2.0" / "dataset.json"
+    payload = json.loads(dataset_path.read_text(encoding="utf-8"))
+    payload["examples"][0]["input"]["content"] = "changed shared content"
+    dataset_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+    with pytest.raises(
+        QualificationCorpusIntegrityError, match="dataset source changed.*cannot be recovered"
+    ):
+        ensure_qualification_run_snapshots(
+            selection_root=selection_path.parent,
+            selection=selection,
+            corpus_root=tmp_path,
+        )
+
+
+def test_missing_snapshot_recovery_rejects_corrupt_surviving_snapshot(tmp_path: Path) -> None:
+    _write_inputs(tmp_path, dataset_clauses=("one",), corpus_clauses=("one",))
+    _, _, selection = build_qualification_run_selection(
+        corpus_root=tmp_path,
+        task="statement-function-classification",
+        dataset_version="2.2.0",
+        corpus_id="corpus-v1",
+    )
+    selection_path = persist_qualification_run_selection(
+        selection, tmp_path / "run" / "selection.json", corpus_root=tmp_path
+    )
+    (selection_path.parent / selection.dataset_snapshot).unlink()
+    corpus_snapshot = selection_path.parent / selection.corpus_snapshot
+    payload = yaml.safe_load(corpus_snapshot.read_text(encoding="utf-8"))
+    payload["seed"] = 99
+    corpus_snapshot.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(QualificationCorpusIntegrityError, match="corpus snapshot content changed"):
+        ensure_qualification_run_snapshots(
+            selection_root=selection_path.parent,
+            selection=selection,
+            corpus_root=tmp_path,
+        )
