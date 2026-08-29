@@ -8,6 +8,7 @@ from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
+    DocumentKey,
     Standard,
     StandardKey,
     StandardReference,
@@ -166,3 +167,62 @@ def test_links_clause_in_another_part_file(tmp_path):
 
     rendered = result.generated_files[0].read_text(encoding="utf-8")
     assert ("[ISO 26262-6:2018, 7.4.5](ISO26262-6.md#clause-7-4-5)") in rendered
+
+
+def test_exports_family_with_rootless_supplement(tmp_path):
+    workspace = tmp_path / ".atlas"
+    repository = FileSystemEngineeringDocumentRepository(workspace)
+    part = Standard.from_name(key=StandardKey(value="IEC61508-3"), name="IEC 61508-3", year=2010)
+    part = part.model_copy(
+        update={
+            "clauses": (
+                Clause(
+                    id=ClauseId(value="part-root"),
+                    reference=StandardReference(
+                        standard="IEC 61508", year=2010, clause="0", part="3"
+                    ),
+                    clause_type=ClauseType.TOC,
+                    heading="Part 3",
+                ),
+                _clause("part-clause", "3", "1", "Main part"),
+            )
+        }
+    )
+    supplement = Standard.from_name(
+        key=StandardKey(value="IEC61508-3-1"),
+        name="IEC 61508-3-1",
+        year=2016,
+    ).model_copy(
+        update={
+            "clauses": (
+                Clause(
+                    id=ClauseId(value="supplement-clause"),
+                    reference=StandardReference(
+                        standard="IEC 61508", year=2016, clause="1", part="3§1"
+                    ),
+                    clause_type=ClauseType.CLAUSE,
+                    heading="Scope",
+                    content=(TextBlock(id="supplement-text", text="Supplement content"),),
+                ),
+            )
+        }
+    )
+    repository.save(part)
+    repository.save(supplement)
+
+    result = MarkdownExportService(
+        MarkdownExporter(), FileSystemPublicationDocumentProvider(repository)
+    ).export(
+        "IEC61508",
+        tmp_path / "markdown",
+        part_keys=("IEC61508-3", "IEC61508-3-1"),
+        family_title="IEC 61508",
+    )
+
+    assert [path.name for path in result.generated_files] == [
+        "IEC61508-3.md",
+        "IEC61508-3-1.md",
+    ]
+    assert "Supplement content" in result.generated_files[1].read_text(encoding="utf-8")
+    persisted = repository.load(DocumentKey(value="IEC61508-3-1"))
+    assert [clause.reference.clause for clause in persisted.clauses] == ["1"]

@@ -52,10 +52,9 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
     repository = FileSystemEngineeringDocumentRepository(tmp_path)
     repository.save(_part_document("PART-1", _clause("A", "Content A")))
     repository.save(
-        _part_document(
+        _document(
             "SUPPLEMENT",
             _clause("S", "Supplement content", volume="3§1"),
-            volume="3§1",
         )
     )
     repository.save(_part_document("PART-2", _clause("B", "Content B", volume="2"), volume="2"))
@@ -74,7 +73,7 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
     ]
     assert [clause.heading for clause in composed.clauses[::2]] == [
         "Part 1",
-        "Part 3-1",
+        "SUPPLEMENT",
         "Part 2",
     ]
     assert [clause.content[0].text for clause in composed.clauses[1::2]] == [
@@ -82,6 +81,8 @@ def test_compose_uses_part_order_and_includes_supplement_clauses(tmp_path: Path)
         "Supplement content",
         "Content B",
     ]
+    persisted_supplement = repository.load(DocumentKey(value="SUPPLEMENT"))
+    assert [clause.reference.clause for clause in persisted_supplement.clauses] == ["S"]
     assert not repository.exists(DocumentKey(value="FAMILY"))
     assert composed.key == DocumentKey(value="FAMILY")
     assert composed.part_keys == ("PART-1", "SUPPLEMENT", "PART-2")

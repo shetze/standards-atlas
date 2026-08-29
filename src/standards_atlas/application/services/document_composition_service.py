@@ -7,6 +7,7 @@ from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
+    ClauseType,
     DocumentKey,
     EngineeringDocument,
 )
@@ -36,7 +37,7 @@ class DocumentCompositionService:
         composed_clauses: list[Clause] = []
         seen: set[ClauseId] = set()
         for part in parts:
-            root = _part_root_clause(part)
+            root = _part_publication_root(part)
             ordered_clauses = (root, *(clause for clause in part.clauses if clause.id != root.id))
             for clause in ordered_clauses:
                 if clause.id in seen:
@@ -85,12 +86,46 @@ def _family_title(document: EngineeringDocument, family_key: str) -> str:
     return family_key
 
 
-def _part_root_clause(part: EngineeringDocument) -> Clause:
-    """Return the single persisted part root required by canonical onboarding."""
+def _part_publication_root(part: EngineeringDocument) -> Clause:
+    """Return the persisted part root or a runtime-only supplement root.
+
+    Canonical physical parts are expected to persist exactly one clause-0 root.
+    Supplements are represented by a hierarchical part reference such as ``3§1``
+    and may legitimately start at clause 1.  Publication composition supplies a
+    synthetic root for those supplements only; the canonical EngineeringDocument
+    remains unchanged.
+    """
     roots = [clause for clause in part.clauses if clause.reference.clause.strip() == "0"]
-    if len(roots) != 1:
+    if len(roots) == 1:
+        return roots[0]
+    if len(roots) > 1:
         raise DocumentCompositionError(
             f"Part document {part.key.value!r} must contain exactly one clause 0 root, "
             f"got {len(roots)}."
         )
-    return roots[0]
+    if _is_supplement(part):
+        return _supplement_publication_root(part)
+    raise DocumentCompositionError(
+        f"Part document {part.key.value!r} must contain exactly one clause 0 root, got 0."
+    )
+
+
+def _is_supplement(part: EngineeringDocument) -> bool:
+    volumes = {
+        clause.reference.part for clause in part.clauses if clause.reference.part is not None
+    }
+    return len(volumes) == 1 and "§" in next(iter(volumes), "")
+
+
+def _supplement_publication_root(part: EngineeringDocument) -> Clause:
+    if not part.clauses:
+        raise DocumentCompositionError(
+            f"Supplement document {part.key.value!r} contains no clauses."
+        )
+    first = part.clauses[0]
+    return Clause(
+        id=ClauseId(value=f"{part.key.value}-publication-root"),
+        reference=first.reference.model_copy(update={"clause": "0"}),
+        clause_type=ClauseType.TOC,
+        heading=part.title,
+    )

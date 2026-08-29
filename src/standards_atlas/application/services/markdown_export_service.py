@@ -180,4 +180,11 @@ def _anchor(reference: str) -> str:
 
 
 def _safe_filename(value: str) -> str:
-    return value.strip().replace("/", "_").replace("\\", "_").replace(":", "_").replace(" ", "_")
+    return (
+        value.strip()
+        .replace("§", "-")
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace(":", "_")
+        .replace(" ", "_")
+    )
