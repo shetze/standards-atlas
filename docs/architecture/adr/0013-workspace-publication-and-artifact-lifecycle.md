@@ -3,6 +3,9 @@
 ## Status
 Accepted
 
+## Goal alignment
+The knowledge-engineering pipeline produces artifacts with different authority and rebuildability. Lifecycle placement must preserve the distinction between canonical documents, qualified semantic evidence, rebuildable CBox/ABox/OWL and retrieval projections, human review material, and application-specific publications.
+
 ## Context
 The project produces canonical data, caches, temporary work products, human review material, generated publications, and immutable qualification evidence. Mixing these by feature makes cleanup and ownership unclear.
 

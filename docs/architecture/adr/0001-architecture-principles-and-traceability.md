@@ -3,8 +3,13 @@
 ## Status
 Accepted
 
+## Goal alignment
+Standards Atlas is a **traceable knowledge-engineering platform for structured technical documents**. Its durable purpose is to transform source publications into canonical `EngineeringDocument` representations and from them into qualified, machine-processable knowledge. LLMs, OWL stores, retrieval engines, MCP, Doorstop, and visualization technologies are means or consumers, not the identity of the system.
+
+Traceability is therefore a product property: every material semantic assertion must remain attributable through its derivation and provenance to the clause, canonical document, and source evidence from which it originated.
+
 ## Context
-Standards Atlas transforms heterogeneous standards sources into durable engineering evidence. The architecture must preserve provenance and traceability while allowing extraction, publication, retrieval, and LLM technology to evolve independently.
+Standards Atlas transforms heterogeneous standards sources into traceable, machine-processable engineering knowledge while preserving durable source evidence. The architecture must preserve provenance and traceability while allowing extraction, publication, retrieval, and LLM technology to evolve independently.
 
 ## Decision
 Standards Atlas uses a traceability-centric hexagonal architecture and an explicit transformation pipeline.
@@ -20,7 +25,7 @@ Standards Atlas uses a traceability-centric hexagonal architecture and an explic
 The preferred data flow is:
 
 ```text
-source evidence -> normalized evidence -> canonical model -> deterministic projections -> inferred projections -> publication/retrieval
+source evidence -> normalized evidence -> EngineeringDocument -> context (CBox) -> domain knowledge (ABox/TBox) -> retrieval/serving -> applications
 ```
 
 ## Boundaries

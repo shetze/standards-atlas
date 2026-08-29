@@ -3,6 +3,9 @@
 ## Status
 Accepted
 
+## Goal alignment
+The project goal requires machine-processable knowledge without sacrificing evidential traceability. Visual material is therefore retained as source evidence even when later stages create textual, semantic, or OWL projections from it. Derived interpretations must remain linked to the visual source rather than replacing it.
+
 ## Context
 Figures and formulas may carry normative meaning that is absent from surrounding text. OCR or LLM transcription can be useful but is not sufficiently reliable to replace source evidence.
 

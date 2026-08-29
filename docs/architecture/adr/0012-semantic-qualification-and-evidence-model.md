@@ -3,6 +3,15 @@
 ## Status
 Accepted
 
+## Goal alignment
+Qualification is the trust boundary that makes LLM-assisted knowledge engineering suitable for traceable technical content. The objective is not to maximize generated triples, but to establish evidence for which semantic functions, concepts, and relations may be accepted and projected into CBox/ABox knowledge.
+
+The intended trust chain is:
+
+```text
+formal assertion -> accepted extraction/context -> qualification/provenance -> clause -> EngineeringDocument -> source evidence
+```
+
 ## Context
 LLM-based semantic inference must be evaluated reproducibly across models, prompts, dimensions, and hard cases without turning transient model output into canonical truth.
 
@@ -20,4 +29,4 @@ Semantic evaluation is an evidence-producing subsystem with explicit corpora, pr
 - Human-facing review material belongs in local review/report locations; machine evidence belongs in workspace/evaluation storage.
 
 ## Consequences
-Model changes can be compared without modifying canonical documents. Qualification results are reproducible and auditable.
+Model changes can be compared without modifying canonical documents. Qualification results are reproducible and auditable, and accepted semantic evidence can be promoted deliberately into document context and formal knowledge projections without treating raw model output as truth.

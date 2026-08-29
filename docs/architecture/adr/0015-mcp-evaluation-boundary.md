@@ -3,6 +3,9 @@
 ## Status
 Accepted
 
+## Goal alignment
+MCP is an **interface to Standards Atlas capabilities**, not the purpose of the system and not an alternate knowledge model. Evaluation access is one bounded use case. As knowledge-serving capabilities mature, MCP may also expose controlled retrieval and query services over the Engineering Knowledge Base through application-layer contracts while preserving provenance and authorization boundaries.
+
 ## Context
 External agents and tools need controlled access to evaluation and review capabilities without bypassing application boundaries or exposing unrestricted project state.
 

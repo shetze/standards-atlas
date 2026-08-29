@@ -3,6 +3,9 @@
 ## Status
 Accepted
 
+## Goal alignment
+Tables are evidence-bearing structures that can contribute directly to machine-processable knowledge. Preserving their deterministic structure before semantic interpretation supports qualified ABox extraction and keeps downstream RAG/GraphRAG representations replaceable.
+
 ## Context
 Normative standards frequently encode requirements, techniques, measures, mappings, and applicability rules in tables. Treating tables as plain text loses row/column semantics and causes poor extraction behavior.
 

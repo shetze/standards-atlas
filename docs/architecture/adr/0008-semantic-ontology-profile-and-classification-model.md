@@ -3,6 +3,11 @@
 ## Status
 Accepted
 
+## Goal alignment
+LLMs are **qualified and replaceable analysis components** used where deterministic methods are insufficient; they are not the architectural core of Standards Atlas. Semantic classification captures abstract functions and interpretation context that can contribute to the CBox. It must remain distinguishable from domain knowledge extracted into ABox assertions.
+
+Task contracts, qualification evidence, and provenance make model-assisted analysis substitutable and auditable across model and prompt changes.
+
 ## Context
 Engineering semantics are multidimensional and evolve at different rates. Earlier flat `SemanticRole`/responsibility classifications coupled taxonomies, prompts, tasks, and profile versions too tightly.
 
@@ -15,7 +20,7 @@ Semantic inference is modeled through three separate concepts:
 
 Role semantics use grounded role relations rather than a `responsibility_functions` dimension. Role relevance/presence and relation tuple extraction are separate tasks.
 
-Semantic classification uses canonical content plus deterministic structural context. Accepted production results are materialized as semantic enrichments in the canonical EngineeringDocument knowledge state, while qualification candidates remain separate evaluation artifacts until explicitly accepted. Semantic enrichments remain distinct from the deterministic baseline and canonical document structure.
+Semantic classification uses canonical content plus deterministic structural context. Accepted production results are materialized as clause-level semantic/context enrichments in the canonical `EngineeringDocument`, while qualification candidates remain separate evaluation artifacts until explicitly accepted. Formal domain assertions derived from those enrichments are projected into the ABox rather than becoming canonical document structure. Semantic enrichments remain distinct from the deterministic baseline and canonical document structure.
 
 The term *semantic ontology* here means a controlled classification vocabulary. Formal OWL TBox/RBox ontologies are defined separately by ADR 0009.
 

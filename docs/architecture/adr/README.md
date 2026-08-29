@@ -4,6 +4,12 @@ The ADR set describes the **current intended architecture** of Standards Atlas. 
 
 Each ADR is deliberately broad enough to represent a durable architectural boundary rather than an individual implementation slice.
 
+## Architectural orientation
+
+All ADRs are interpreted against the project purpose: **Standards Atlas transforms strongly structured technical documents into a traceable, machine-processable Engineering Knowledge Base.** `EngineeringDocument` is the canonical document representation. Deterministic taxonomy and accepted abstract semantic functions provide interpretation context (CBox); domain ontologies provide TBox/RBox semantics; qualified clause-level extraction provides ABox knowledge. Retrieval technologies such as RAG and GraphRAG, interfaces such as Chat and MCP, and applications such as Doorstop export or heatmaps are replaceable consumers rather than the project purpose.
+
+LLMs are qualified, replaceable analysis components for semantic work that cannot be derived reliably through deterministic processing. Every accepted derived assertion must remain traceable through provenance and qualification to its clause, canonical document, and source evidence.
+
 | ADR | Decision |
 |---|---|
 | [0001](0001-architecture-principles-and-traceability.md) | Architecture principles and traceability |
@@ -21,6 +27,18 @@ Each ADR is deliberately broad enough to represent a durable architectural bound
 | [0013](0013-workspace-publication-and-artifact-lifecycle.md) | Workspace, publication, and artifact lifecycle |
 | [0014](0014-schema-and-artifact-versioning-policy.md) | Schema and artifact versioning policy |
 | [0015](0015-mcp-evaluation-boundary.md) | MCP evaluation boundary |
+
+## Consistency review against the project purpose
+
+The review found no architectural decision that must be reversed, but it exposed several wording-level tensions that are resolved by this revision:
+
+- **Canonical document vs. knowledge base:** ADR 0002 previously described `EngineeringDocument` as the complete engineering knowledge state. It is now explicitly the canonical **document-centered** state; integrated OWL knowledge is a derived, cross-document view.
+- **Semantic enrichments vs. ABox knowledge:** ADR 0008 now distinguishes accepted clause-level semantic/context enrichment from formal domain assertions. The former may be persisted with the canonical document; the latter belongs to the derived ABox/knowledge layer.
+- **CBox vs. ABox:** ADRs 0007–0009 now state explicitly that structural taxonomy and abstract semantic functions describe interpretation context, whereas ABox assertions describe engineering-domain knowledge.
+- **Qualification vs. production:** ADR 0011 previously risked making semantic work appear evaluation-only. Qualification remains the trust boundary for model-assisted inference, but accepted results feed a downstream knowledge-projection/serving stage.
+- **Interfaces/applications vs. purpose:** Doorstop, Markdown, heatmaps, RAG/GraphRAG, Chat, and MCP are consistently treated as projections, retrieval mechanisms, interfaces, or applications rather than canonical models or fixed project goals.
+
+These are clarifications of ownership and layering rather than reversals of the existing architecture.
 
 ## Reading order
 

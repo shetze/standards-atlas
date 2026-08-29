@@ -3,6 +3,9 @@
 ## Status
 Accepted
 
+## Goal alignment
+Stable physical-document identity anchors the trace from knowledge assertions back to source publications. Family composition and cross-document knowledge integration are intentionally separate concerns: canonical identity remains document-centered, while family views and the knowledge base may span many physical documents.
+
 ## Context
 AtlasData provides curated document structure and family metadata, while Docling provides extracted source evidence. Multipart standards require stable identity for each physical part.
 

@@ -3,6 +3,9 @@
 ## Status
 Accepted
 
+## Goal alignment
+Doorstop and Markdown are application/publication projections of the canonical document model, not purposes or canonical representations of Standards Atlas. Keeping family publication views derived and runtime-only preserves the independence of the knowledge-engineering pipeline from individual downstream applications.
+
 ## Context
 Users need family-level Markdown and Doorstop publications, but a synthetic family `EngineeringDocument` duplicates canonical state and creates identity, provenance, schema-versioning, and cache-invalidation ambiguity. Persisting a derived composition adds no independent lifecycle value because the view can be rebuilt deterministically from the manifest/catalog and the canonical physical parts.
 

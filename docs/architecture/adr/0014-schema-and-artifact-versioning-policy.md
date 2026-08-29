@@ -3,6 +3,9 @@
 ## Status
 Accepted
 
+## Goal alignment
+Standards Atlas must allow taxonomies, semantic tasks, domain TBoxes, knowledge projections, retrieval backends, and interfaces to evolve without losing auditability. Independent schema and resource versioning supports that goal by preserving the exact semantic and processing context required to reproduce a derived assertion.
+
 ## Context
 Refactoring changes persisted artifact schemas frequently. Unbounded compatibility code obscures the current model and increases test/support cost. At the same time, several independently evolving resources carry a domain/resource version in addition to their serialization schema. Treating these as one version axis couples readability to meaning and makes evolution unnecessarily expensive.
 

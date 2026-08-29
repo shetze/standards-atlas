@@ -3,13 +3,18 @@
 ## Status
 Accepted
 
+## Goal alignment
+The `EngineeringDocument` is the **canonical document-centered representation**, not the knowledge base itself. It preserves source evidence, deterministic context, and accepted clause-level semantic enrichments needed to reproduce and audit downstream knowledge projections. Cross-document knowledge integration belongs to the formal semantic/knowledge layer defined by ADR 0009.
+
+This separation prevents OWL, GraphRAG, Doorstop, or any other consumer-specific representation from becoming a second document source of truth.
+
 ## Context
-Extraction and publication formats are unsuitable as the long-lived engineering representation. The project needs one canonical document model that preserves the complete auditable knowledge state of a physical source document while keeping source-derived facts, deterministic interpretation, model-assisted enrichment, and community-curated authority distinguishable.
+Extraction and publication formats are unsuitable as the long-lived engineering representation. The project needs one canonical document model that preserves the complete auditable document-centered state of a physical source document while keeping source-derived facts, deterministic interpretation, accepted semantic context, model-assisted enrichment, and community-curated authority distinguishable. Cross-document formal knowledge is a derived layer rather than part of canonical document identity.
 
 Deterministic processing is not equivalent to certainty. Source extraction, structural classification, scope detection, and reference resolution can all be imperfect even when their algorithms are reproducible. AtlasData provides a community-curated authoritative overlay that can confirm or correct these generated properties over time.
 
 ## Decision
-`EngineeringDocument` is the canonical representation of one **physical source document or standard part** and contains its complete accepted engineering knowledge state.
+`EngineeringDocument` is the canonical representation of one **physical source document or standard part** and contains the accepted document-centered evidence and enrichments required to reproduce and audit downstream knowledge projections.
 
 Knowledge-bearing clause data is explicitly separated into:
 
@@ -30,12 +35,12 @@ Canonical construction follows these rules:
 - page starts, terms, headings, list structure, tables, figures, formulas, references, and structural context retain source anchors when available;
 - deterministic transformations record lineage/configuration identity and mark newly generated attributes;
 - deterministic reference relations belong to the baseline, not to semantic classification;
-- accepted semantic and ontological enrichments remain inside the `EngineeringDocument`, but under the enrichment boundary with generation provenance;
+- accepted clause-level semantic/context enrichments may remain inside the `EngineeringDocument` under the enrichment boundary with generation provenance; formal OWL ABox assertions and cross-document graph integration remain derived knowledge projections;
 - model-run candidates, qualification evidence, disagreements, and rejected proposals remain evaluation/run artifacts until accepted into the canonical knowledge state.
 
 A standard family is **not** represented by a synthetic canonical `EngineeringDocument`; family composition is a derived publication view defined by ADR 0006.
 
 ## Consequences
-The canonical document contains everything needed to inspect the accepted knowledge state without conflating origin, authority, and inference method. Community-maintained AtlasData can progressively replace generated assertions with authoritative knowledge without requiring every extraction or inference algorithm to reach perfect accuracy.
+The canonical document contains everything needed to inspect its accepted document-centered state and to reproduce downstream semantic projections without conflating origin, authority, and inference method. Community-maintained AtlasData can progressively replace generated assertions with authoritative knowledge without requiring every extraction or inference algorithm to reach perfect accuracy.
 
 The schema is more explicit and carries additional provenance metadata. This is intentional: auditability and progressive community curation take precedence over a flatter serialized representation.
