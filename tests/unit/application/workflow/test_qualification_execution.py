@@ -72,10 +72,10 @@ def test_resume_retries_failed_export_without_repeating_completed_step(tmp_path:
     prepared = WorkflowStep(
         family="FAMILY",
         document="DOC",
-        stage=WorkflowStage.SEMANTIC_ENRICHMENT,
+        stage=WorkflowStage.CONTEXT_ENRICHMENT,
         command=("prepare",),
         artifact_policy=ArtifactPolicy.DERIVED,
-        output_paths=(".atlas/work/workflow/semantic-enrichment/DOC.complete",),
+        output_paths=(".atlas/work/workflow/context-enrichment/DOC.complete",),
     )
     export = WorkflowStep(
         family="FAMILY",
@@ -107,10 +107,10 @@ def test_resume_survives_normal_work_cleanup(tmp_path: Path) -> None:
     prepared = WorkflowStep(
         family="FAMILY",
         document="DOC",
-        stage=WorkflowStage.SEMANTIC_ENRICHMENT,
+        stage=WorkflowStage.CONTEXT_ENRICHMENT,
         command=("prepare", "--mode", "current"),
         artifact_policy=ArtifactPolicy.DERIVED,
-        output_paths=(".atlas/work/workflow/semantic-enrichment/DOC.complete",),
+        output_paths=(".atlas/work/workflow/context-enrichment/DOC.complete",),
     )
     failed = WorkflowStep(
         family="evaluation",

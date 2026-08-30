@@ -28,7 +28,7 @@ class WorkflowStage(StrEnum):
     REVIEW = "review"
     ENRICH = "enrich"
     TAXONOMY = "taxonomy"
-    SEMANTIC_ENRICHMENT = "semantic-enrichment"
+    CONTEXT_ENRICHMENT = "context-enrichment"
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"
     DOORSTOP_PUBLISH = "doorstop-publish"

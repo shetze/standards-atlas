@@ -15,7 +15,7 @@ from standards_atlas.cli.commands.document_commands.management import (
     derive_document_part,
     derive_document_view,
     enrich_document_content,
-    enrich_document_semantics,
+    enrich_document_context,
     import_document,
 )
 from standards_atlas.cli.commands.document_commands.publication import (
@@ -23,7 +23,7 @@ from standards_atlas.cli.commands.document_commands.publication import (
 )
 
 __all__ = [
-    "enrich_document_semantics",
+    "enrich_document_context",
     "derive_document_part",
     "derive_document_view",
     "enrich_document_content",

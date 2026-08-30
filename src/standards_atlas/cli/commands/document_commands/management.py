@@ -14,18 +14,18 @@ from standards_atlas.application.services import DocumentImportService
 from standards_atlas.application.services.content_enrichment_service import (
     ContentEnrichmentError,
 )
+from standards_atlas.application.services.context_enrichment_service import (
+    ContextEnrichmentProgress,
+)
 from standards_atlas.application.services.document_selection_service import (
     DocumentSelectionError,
-)
-from standards_atlas.application.services.semantic_enrichment_service import (
-    SemanticEnrichmentProgress,
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import document_app
 from standards_atlas.cli.composition import (
     build_content_enrichment_service,
+    build_context_enrichment_service,
     build_document_selection_service,
-    build_semantic_enrichment_service,
     build_structural_taxonomy_service,
 )
 from standards_atlas.cli.runtime_managers import managed_llm_server
@@ -200,8 +200,8 @@ def classify_document_taxonomy(
     typer.echo(f"Structural leaves     : {len(result.document.clauses) - nodes}")
 
 
-@document_app.command("enrich-semantics")
-def enrich_document_semantics(
+@document_app.command("enrich-context")
+def enrich_document_context(
     document_key: Annotated[str, typer.Argument(help="EngineeringDocument key to enrich.")],
     workspace: Annotated[
         Path,
@@ -212,12 +212,12 @@ def enrich_document_semantics(
         typer.Option("--llm-config", help="LLM configuration file."),
     ] = Path("cfg/llm.yaml"),
 ) -> None:
-    """Materialize accepted semantic profile enrichment in the EngineeringDocument."""
+    """Materialize CBox scope and reference routing enrichment."""
 
-    def report_progress(progress: SemanticEnrichmentProgress) -> None:
+    def report_progress(progress: ContextEnrichmentProgress) -> None:
         reference = progress.clause_reference or progress.clause_id
         title = f" — {progress.clause_title}" if progress.clause_title else ""
-        prefix = f"[Enrich Document Semantics {progress.current:03d}/{progress.total:03d}]"
+        prefix = f"[Enrich Document Context {progress.current:03d}/{progress.total:03d}]"
         if progress.state == "started":
             typer.echo(f"{prefix} {reference}{title} started")
             return
@@ -225,12 +225,12 @@ def enrich_document_semantics(
         typer.echo(f"{prefix} {reference}{title} {progress.state} elapsed={elapsed:.1f}s")
 
     try:
-        typer.echo(f"Semantic enrichment    : starting for {document_key}")
+        typer.echo(f"Context enrichment     : starting for {document_key}")
         if llm_config is not None:
             config = LlmConfig.load(llm_config)
             typer.echo(f"LLM model             : {config.model}")
             managed_llm_server(llm_config).start()
-        result = build_semantic_enrichment_service(
+        result = build_context_enrichment_service(
             workspace,
             llm_config_path=llm_config,
             progress=report_progress,
@@ -241,6 +241,6 @@ def enrich_document_semantics(
 
     typer.echo(f"Document              : {result.document.key.value}")
     typer.echo(f"Clauses enriched      : {result.clauses_enriched}")
-    typer.echo(f"Semantic classification failures     : {result.semantic_classification_failures}")
-    typer.echo(f"Role semantic failures: {result.role_semantics_failures}")
-    typer.echo("Semantic profile      : functional-safety:1.0.0")
+    typer.echo(f"Context candidates    : {result.candidates}")
+    typer.echo(f"Context failures      : {result.context_enrichment_failures}")
+    typer.echo("Context prompt        : context-routing-enrichment/context-routing-v1")

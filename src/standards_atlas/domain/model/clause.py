@@ -11,6 +11,7 @@ from standards_atlas.domain.model.content import (
     ContentBlock,
     render_content_as_plain_text,
 )
+from standards_atlas.domain.model.context_routing import ContextRouting
 from standards_atlas.domain.model.doorstop_attributes import DoorstopItemAttributes
 from standards_atlas.domain.model.identifiers import ClauseId, StandardReference
 from standards_atlas.domain.model.knowledge_state import (
@@ -73,6 +74,7 @@ class ClauseEnrichments(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     semantic: SemanticClassification = SemanticClassification()
+    context_routing: ContextRouting = ContextRouting()
 
 
 class Clause(BaseModel):
@@ -128,6 +130,11 @@ class Clause(BaseModel):
     def semantic_classification(self) -> SemanticClassification:
         """Return derived semantic enrichment (read-only convenience projection)."""
         return self.enrichments.semantic
+
+    @property
+    def context_routing(self) -> ContextRouting:
+        """Return derived CBox routing enrichment (read-only convenience projection)."""
+        return self.enrichments.context_routing
 
     @property
     def structural_profile(self) -> StructuralProfile | None:
@@ -194,6 +201,12 @@ class Clause(BaseModel):
         """Return a clause with a replaced semantic enrichment."""
         return self.model_copy(
             update={"enrichments": self.enrichments.model_copy(update={"semantic": semantic})}
+        )
+
+    def with_context_routing(self, routing: ContextRouting) -> Clause:
+        """Return a clause with replaced contextual routing enrichment."""
+        return self.model_copy(
+            update={"enrichments": self.enrichments.model_copy(update={"context_routing": routing})}
         )
 
     def mark_generated(self, *attributes: GeneratedAttribute) -> Clause:

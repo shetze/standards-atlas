@@ -45,8 +45,8 @@ def test_qualification_plan_requires_taxonomy_and_semantic_profile_classificatio
     stages = tuple(step.stage for step in plan.steps)
 
     assert WorkflowStage.TAXONOMY in stages
-    assert WorkflowStage.SEMANTIC_ENRICHMENT in stages
-    assert any("enrich-semantics" in step.command for step in plan.steps)
+    assert WorkflowStage.CONTEXT_ENRICHMENT in stages
+    assert any("enrich-context" in step.command for step in plan.steps)
 
 
 def test_qualification_plan_derives_corpus_contract_from_matrix_manifest() -> None:

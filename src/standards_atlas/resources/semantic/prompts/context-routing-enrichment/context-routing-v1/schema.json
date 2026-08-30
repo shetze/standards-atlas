@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scope_declarations", "reference_routings"],
+  "properties": {
+    "scope_declarations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reaches", "conditions", "exclusions", "qualifications", "evidence"],
+        "properties": {
+          "reaches": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "document_key", "part", "clause_id", "reference"],
+              "properties": {
+                "kind": {"type": "string", "enum": ["document", "part", "subtree", "clause"]},
+                "document_key": {"type": ["string", "null"]},
+                "part": {"type": ["string", "null"]},
+                "clause_id": {"type": ["string", "null"]},
+                "reference": {"type": ["string", "null"]}
+              }
+            }
+          },
+          "conditions": {"type": "array", "items": {"type": "string"}},
+          "exclusions": {"type": "array", "items": {"type": "string"}},
+          "qualifications": {"type": "array", "items": {"type": "string"}},
+          "evidence": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "reference_routings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target", "role", "evidence"],
+        "properties": {
+          "target": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["document_key", "clause_id", "reference", "title"],
+            "properties": {
+              "document_key": {"type": ["string", "null"]},
+              "clause_id": {"type": ["string", "null"]},
+              "reference": {"type": "string", "minLength": 1},
+              "title": {"type": ["string", "null"]}
+            }
+          },
+          "role": {
+            "type": "string",
+            "enum": ["defines", "constrains", "requires", "provides_procedure", "provides_exception", "provides_applicability", "provides_evidence", "refines", "depends_on", "other"]
+          },
+          "evidence": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Interpret scope reach and reference-routing semantics for CBox context enrichment.",
+  "version": "context-routing-v1"
+}

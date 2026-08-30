@@ -382,19 +382,19 @@ class WorkflowPlanner:
                     WorkflowStep(
                         family.key,
                         key,
-                        WorkflowStage.SEMANTIC_ENRICHMENT,
+                        WorkflowStage.CONTEXT_ENRICHMENT,
                         (
                             "uv",
                             "run",
                             "standards-atlas",
                             "document",
-                            "enrich-semantics",
+                            "enrich-context",
                             key,
                             "--llm-config",
                             "cfg/llm.yaml",
                         ),
                         ArtifactPolicy.DERIVED,
-                        output_paths=(f".atlas/work/workflow/semantic-enrichment/{key}.complete",),
+                        output_paths=(f".atlas/work/workflow/context-enrichment/{key}.complete",),
                     )
                 )
         part_keys = tuple(key for key, _, _ in documents) if family.source is None else ()

@@ -18,8 +18,8 @@ from standards_atlas.application.services import (
     DocumentNormalizationService,
     MarkdownExportService,
 )
-from standards_atlas.application.services.semantic_enrichment_service import (
-    SemanticEnrichmentProgressCallback,
+from standards_atlas.application.services.context_enrichment_service import (
+    ContextEnrichmentProgressCallback,
 )
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
@@ -142,59 +142,33 @@ def build_structural_taxonomy_service(workspace: Path):
     return StructuralTaxonomyService(FileSystemEngineeringDocumentRepository(workspace))
 
 
-def build_semantic_enrichment_service(
+def build_context_enrichment_service(
     workspace: Path,
     *,
     llm_config_path: Path | None = None,
-    progress: SemanticEnrichmentProgressCallback | None = None,
+    progress: ContextEnrichmentProgressCallback | None = None,
 ):
     from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
     from standards_atlas.application.evaluation.repository import PromptRepository
-    from standards_atlas.application.semantic_classification import (
-        LlmSemanticClassifier,
-        ResourceSemanticProfileRepository,
-        SemanticClassificationEngine,
-        SemanticClassifierRegistry,
+    from standards_atlas.application.services import (
+        ContextEnrichmentService,
+        LlmContextRoutingEnricher,
     )
-    from standards_atlas.application.semantic_ontology import (
-        LlmRoleSemanticsClassifier,
-        ResourceOntologyDefinitionRepository,
-    )
-    from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
-    from standards_atlas.application.services import SemanticEnrichmentService
 
-    task_id = "semantic-profile-classification"
-    task_version = "2.4.0"
-    prompt_version = "structure-aware-v6"
+    task_id = "context-routing-enrichment"
+    prompt_version = "context-routing-v1"
     resources = Path(__file__).resolve().parents[1] / "resources" / "semantic"
-    task, canonical_schema = SemanticTaskRepository(resources / "tasks").load(task_id, task_version)
     prompt = PromptRepository(resources / "prompts").load(task_id, prompt_version)
-    if dict(prompt.output_schema) != canonical_schema:
-        raise ValueError("production semantic prompt schema differs from task contract")
-    if task.semantic_profile is None:
-        raise ValueError("production semantic classification task has no semantic profile")
 
     config = LlmConfig.load(llm_config_path)
     gateway = OpenAICompatibleLlmGateway(config)
-    classifier = LlmSemanticClassifier(
-        gateway,
-        prompt=prompt,
-        task_version=task.version,
-        model=config.model,
-    )
-    profile = ResourceSemanticProfileRepository().load(
-        task.semantic_profile.id, task.semantic_profile.version
-    )
-    profile = profile.select_dimensions(task.profile_dimensions or tuple(profile.dimensions))
-    engine = SemanticClassificationEngine(
-        definitions=ResourceOntologyDefinitionRepository(),
-        registry=SemanticClassifierRegistry((classifier,)),
-    )
-    return SemanticEnrichmentService(
+    return ContextEnrichmentService(
         documents=FileSystemEngineeringDocumentRepository(workspace),
-        engine=engine,
-        profile=profile,
-        role_semantics=LlmRoleSemanticsClassifier(gateway, model=config.model),
+        enricher=LlmContextRoutingEnricher(
+            gateway,
+            prompt=prompt,
+            model=config.model,
+        ),
         progress=progress,
     )
 

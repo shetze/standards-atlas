@@ -19,8 +19,8 @@ class _FakeServer:
 class _FakeClassificationResult:
     document: object
     clauses_enriched: int
-    role_semantics_failures: int = 0
-    semantic_classification_failures: int = 0
+    candidates: int = 0
+    context_enrichment_failures: int = 0
 
 
 class _FakeClassificationService:
@@ -43,11 +43,11 @@ def test_classify_ontology_ensures_managed_llm_is_running(monkeypatch) -> None:
     monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
     monkeypatch.setattr(
         management,
-        "build_semantic_enrichment_service",
+        "build_context_enrichment_service",
         lambda workspace, llm_config_path, progress=None: service,
     )
 
-    management.enrich_document_semantics(
+    management.enrich_document_context(
         "IEC61508-0",
         workspace=Path(".atlas"),
         llm_config=config,
@@ -58,8 +58,8 @@ def test_classify_ontology_ensures_managed_llm_is_running(monkeypatch) -> None:
 
 
 def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
-    from standards_atlas.application.services.semantic_enrichment_service import (
-        SemanticEnrichmentProgress,
+    from standards_atlas.application.services.context_enrichment_service import (
+        ContextEnrichmentProgress,
     )
 
     server = _FakeServer()
@@ -71,7 +71,7 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
 
         def enrich(self, document_key: str) -> _FakeClassificationResult:
             self._progress(
-                SemanticEnrichmentProgress(
+                ContextEnrichmentProgress(
                     current=1,
                     total=1,
                     document_key=document_key,
@@ -82,7 +82,7 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
                 )
             )
             self._progress(
-                SemanticEnrichmentProgress(
+                ContextEnrichmentProgress(
                     current=1,
                     total=1,
                     document_key=document_key,
@@ -97,24 +97,25 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
             return _FakeClassificationResult(
                 document=document,
                 clauses_enriched=0,
-                semantic_classification_failures=1,
+                candidates=1,
+                context_enrichment_failures=1,
             )
 
     monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
     monkeypatch.setattr(
         management,
-        "build_semantic_enrichment_service",
+        "build_context_enrichment_service",
         lambda workspace, llm_config_path, progress=None: _ProgressService(progress),
     )
 
-    management.enrich_document_semantics(
+    management.enrich_document_context(
         "IEC61508-2",
         workspace=Path(".atlas"),
         llm_config=config,
     )
 
     output = capsys.readouterr().out
-    assert "Semantic enrichment    : starting for IEC61508-2" in output
-    assert "[Enrich Document Semantics 001/001] 7.4.1 — Verification started" in output
-    assert "[Enrich Document Semantics 001/001] 7.4.1 — Verification partial elapsed=2.5s" in output
-    assert "Semantic classification failures     : 1" in output
+    assert "Context enrichment     : starting for IEC61508-2" in output
+    assert "[Enrich Document Context 001/001] 7.4.1 — Verification started" in output
+    assert "[Enrich Document Context 001/001] 7.4.1 — Verification partial elapsed=2.5s" in output
+    assert "Context failures      : 1" in output

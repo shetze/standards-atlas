@@ -12,6 +12,10 @@ from standards_atlas.application.services.atlasdata_toc_service import (
     AtlasDataTocService,
 )
 from standards_atlas.application.services.content_enrichment_service import ContentEnrichmentService
+from standards_atlas.application.services.context_enrichment_service import (
+    ContextEnrichmentService,
+    LlmContextRoutingEnricher,
+)
 from standards_atlas.application.services.document_composition_service import (
     DocumentCompositionService,
 )
@@ -62,6 +66,7 @@ __all__ = [
     "AtlasDataOnboardingService",
     "AtlasDataTocService",
     "ContentEnrichmentService",
+    "ContextEnrichmentService",
     "DocumentCompositionService",
     "DocumentExportService",
     "DocumentExtractionService",
@@ -73,8 +78,9 @@ __all__ = [
     "EngineeringConstructionContractValidator",
     "ExtractionInspectionService",
     "MarkdownExportService",
-    "SemanticEnrichmentService",
+    "LlmContextRoutingEnricher",
     "ReferenceCandidateService",
+    "SemanticEnrichmentService",
     "StructuralTaxonomyService",
     "StructuredKnowledgeMappingService",
     "TableRetrievalProjectionService",
