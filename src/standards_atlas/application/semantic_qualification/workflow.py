@@ -37,6 +37,7 @@ from standards_atlas.application.semantic_qualification.eligibility import (
     SemanticTaskEligibilityPolicy,
 )
 from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
+from standards_atlas.domain.model import CanonicalDocumentSection, ClauseType
 
 
 class CorpusBuildConfig(BaseModel):
@@ -54,6 +55,7 @@ class CorpusBuildConfig(BaseModel):
     knowledge_domain: str = "default"
     corpus_id: str | None = None
     exclude_table_dominant: bool = True
+    exclude_context_meta: bool = True
     resources: Path = Path("src/standards_atlas/resources/semantic")
 
 
@@ -124,14 +126,34 @@ class EvaluationCorpusBuilder:
             if config.exclude_table_dominant
             else non_empty_population
         )
-        population = qualification_population
+        scope_meta_population = tuple(
+            clause
+            for clause in qualification_population
+            if _context_meta_exclusion_reason(clause) == "scope_declaration"
+        )
+        reference_meta_population = tuple(
+            clause
+            for clause in qualification_population
+            if _context_meta_exclusion_reason(clause) == "reference_routing"
+        )
+        population = (
+            tuple(
+                clause
+                for clause in qualification_population
+                if _context_meta_exclusion_reason(clause) is None
+            )
+            if config.exclude_context_meta
+            else qualification_population
+        )
         if config.count > len(population):
-            exclusions = "empty clauses"
+            exclusions = ["empty clauses"]
             if config.exclude_table_dominant:
-                exclusions = "empty clauses and table-dominant clauses"
+                exclusions.append("table-dominant clauses")
+            if config.exclude_context_meta:
+                exclusions.append("scope/reference meta clauses")
             raise ValueError(
                 f"sample count {config.count} exceeds eligible population {len(population)} "
-                f"after excluding {exclusions}"
+                f"after excluding {' and '.join(exclusions)}"
             )
         clauses = _sample_eligible_population(
             population, config.count, config.strategy, config.seed
@@ -209,16 +231,24 @@ class EvaluationCorpusBuilder:
                 qualification_population,
                 population,
                 clauses,
+                scope_meta_population=(
+                    scope_meta_population if config.exclude_context_meta else ()
+                ),
+                reference_meta_population=(
+                    reference_meta_population if config.exclude_context_meta else ()
+                ),
             ),
             duplicate_content_groups=_duplicate_content_groups(clauses),
-            exclusions=(
-                {
-                    "table_dominant": tuple(
-                        _readable_clause_occurrence(clause) for clause in table_dominant_population
-                    )
-                }
-                if config.exclude_table_dominant and table_dominant_population
-                else {}
+            exclusions=_corpus_exclusions(
+                table_dominant_population=(
+                    table_dominant_population if config.exclude_table_dominant else ()
+                ),
+                scope_meta_population=(
+                    scope_meta_population if config.exclude_context_meta else ()
+                ),
+                reference_meta_population=(
+                    reference_meta_population if config.exclude_context_meta else ()
+                ),
             ),
             clauses=tuple(corpus_clauses),
         )
@@ -300,6 +330,44 @@ def _ancestor_headings(
             )
         parent_id = parent.parent_id
     return headings
+
+
+def _context_meta_exclusion_reason(clause: ClauseDescriptor) -> str | None:
+    """Return the CBox task that owns a primarily contextual meta clause.
+
+    Scope and references sections operate on the interpretation/routing layer, not
+    on the clause-content layer qualified by the semantic cascade.  A technical
+    body clause that merely contains reference mentions or enriched reference
+    routing remains eligible: reference presence alone is deliberately not an
+    exclusion signal.
+    """
+
+    if (
+        clause.clause_type is ClauseType.SCOPE
+        or clause.canonical_section is CanonicalDocumentSection.SCOPE
+    ):
+        return "scope_declaration"
+    if clause.canonical_section is CanonicalDocumentSection.REFERENCES:
+        return "reference_routing"
+    return None
+
+
+def _corpus_exclusions(
+    *,
+    table_dominant_population: tuple[ClauseDescriptor, ...],
+    scope_meta_population: tuple[ClauseDescriptor, ...],
+    reference_meta_population: tuple[ClauseDescriptor, ...],
+) -> dict[str, tuple[str, ...]]:
+    populations = {
+        "table_dominant": table_dominant_population,
+        "scope_declaration": scope_meta_population,
+        "reference_routing": reference_meta_population,
+    }
+    return {
+        reason: tuple(_readable_clause_occurrence(clause) for clause in clauses)
+        for reason, clauses in populations.items()
+        if clauses
+    }
 
 
 def _eligibility_policy(config: CorpusBuildConfig) -> SemanticTaskEligibilityPolicy:
@@ -405,6 +473,9 @@ def _statistics(
     qualification_population: tuple[ClauseDescriptor, ...],
     eligible_population: tuple[ClauseDescriptor, ...],
     selected: tuple[ClauseDescriptor, ...],
+    *,
+    scope_meta_population: tuple[ClauseDescriptor, ...] = (),
+    reference_meta_population: tuple[ClauseDescriptor, ...] = (),
 ) -> CorpusPopulationStatistics:
     def counts(items: tuple[ClauseDescriptor, ...]) -> dict[str, dict[str, int]]:
         dimensions: dict[str, Counter[str]] = {}
@@ -422,7 +493,9 @@ def _statistics(
         ineligible_table_dominant_content=(
             len(non_empty_population) - len(qualification_population)
         ),
-        duplicate_document_occurrences=(len(qualification_population) - len(eligible_population)),
+        ineligible_scope_meta_content=len(scope_meta_population),
+        ineligible_reference_meta_content=len(reference_meta_population),
+        duplicate_document_occurrences=0,
         eligible_occurrences=len(eligible_population),
         unique_contents=len({clause.content_hash for clause in eligible_population}),
         selected_occurrences=len(selected),

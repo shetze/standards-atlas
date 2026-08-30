@@ -202,6 +202,8 @@ class CorpusPopulationStatistics(BaseModel):
     total_occurrences: int = Field(ge=0)
     ineligible_empty_content: int = Field(ge=0)
     ineligible_table_dominant_content: int = Field(default=0, ge=0)
+    ineligible_scope_meta_content: int = Field(default=0, ge=0)
+    ineligible_reference_meta_content: int = Field(default=0, ge=0)
     duplicate_document_occurrences: int = Field(default=0, ge=0)
     eligible_occurrences: int = Field(ge=0)
     unique_contents: int = Field(ge=0)

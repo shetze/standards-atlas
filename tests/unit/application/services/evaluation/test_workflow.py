@@ -20,7 +20,7 @@ from standards_atlas.application.services.evaluation import (
     EvaluationReporter,
     EvaluationRunner,
 )
-from standards_atlas.domain.model import ClauseType
+from standards_atlas.domain.model import CanonicalDocumentSection, ClauseType
 
 
 class FakeProvider:
@@ -389,6 +389,124 @@ def test_can_explicitly_include_table_dominant_clauses(tmp_path: Path) -> None:
     assert dataset["examples"][0]["input"]["context"]["content_profile"] == ("table_dominant")
     assert dataset["examples"][0]["input"]["context"]["table_block_count"] == 1
     assert manifest["statistics"]["ineligible_table_dominant_content"] == 0
+    assert manifest["exclusions"] == {}
+
+
+def test_excludes_context_meta_clauses_but_keeps_referenced_technical_content(
+    tmp_path: Path,
+) -> None:
+    technical = ClauseDescriptor(
+        id="DOC:5",
+        document_key="DOC",
+        reference="DOC:5",
+        clause_reference="5",
+        content_hash="sha256:" + "5" * 64,
+        clause_type=ClauseType.REQUIREMENT,
+        canonical_section=CanonicalDocumentSection.BODY,
+        text="The controller shall satisfy the requirements of 7.4.",
+        reference_mentions=({"raw_text": "7.4"},),
+        context_routing={
+            "scopes": [],
+            "references": [
+                {
+                    "source_clause_id": "DOC:5",
+                    "target": {"reference": "7.4"},
+                    "role": "requires",
+                    "evidence": [],
+                }
+            ],
+        },
+    )
+    scope = ClauseDescriptor(
+        id="DOC:1",
+        document_key="DOC",
+        reference="DOC:1",
+        clause_reference="1",
+        content_hash="sha256:" + "1" * 64,
+        clause_type=ClauseType.SCOPE,
+        canonical_section=CanonicalDocumentSection.SCOPE,
+        heading="Scope",
+        text="This document specifies requirements for train control software.",
+    )
+    references = ClauseDescriptor(
+        id="DOC:2",
+        document_key="DOC",
+        reference="DOC:2",
+        clause_reference="2",
+        content_hash="sha256:" + "2" * 64,
+        clause_type=ClauseType.CLAUSE,
+        canonical_section=CanonicalDocumentSection.REFERENCES,
+        heading="Normative references",
+        text="IEC 61508-2:2010, Functional safety — Part 2.",
+    )
+
+    class Provider:
+        def list_clauses(self, **kwargs):
+            return (technical, scope, references)
+
+    result = EvaluationCorpusBuilder(Provider()).build(
+        CorpusBuildConfig(
+            task="statement-function-classification",
+            version="1.0.0",
+            count=1,
+        ),
+        tmp_path,
+    )
+    dataset = json.loads(result.dataset_path.read_text())
+    manifest = yaml.safe_load(result.manifest_path.read_text())
+
+    assert [example["id"] for example in dataset["examples"]] == ["DOC:5"]
+    assert manifest["statistics"]["ineligible_scope_meta_content"] == 1
+    assert manifest["statistics"]["ineligible_reference_meta_content"] == 1
+    assert manifest["statistics"]["eligible_occurrences"] == 1
+    assert set(manifest["exclusions"]) == {"scope_declaration", "reference_routing"}
+    assert manifest["exclusions"]["scope_declaration"] == ["DOC:1 — Scope [DOC:1]"]
+    assert manifest["exclusions"]["reference_routing"] == ["DOC:2 — Normative references [DOC:2]"]
+
+
+def test_context_meta_clauses_can_be_included_for_specialized_benchmarks(
+    tmp_path: Path,
+) -> None:
+    scope = ClauseDescriptor(
+        id="DOC:1",
+        document_key="DOC",
+        reference="DOC:1",
+        clause_reference="1",
+        content_hash="sha256:" + "a" * 64,
+        clause_type=ClauseType.SCOPE,
+        canonical_section=CanonicalDocumentSection.SCOPE,
+        text="This document applies to railway control systems.",
+    )
+    references = ClauseDescriptor(
+        id="DOC:2",
+        document_key="DOC",
+        reference="DOC:2",
+        clause_reference="2",
+        content_hash="sha256:" + "b" * 64,
+        clause_type=ClauseType.CLAUSE,
+        canonical_section=CanonicalDocumentSection.REFERENCES,
+        text="IEC 61508-1:2010.",
+    )
+
+    class Provider:
+        def list_clauses(self, **kwargs):
+            return (scope, references)
+
+    result = EvaluationCorpusBuilder(Provider()).build(
+        CorpusBuildConfig(
+            task="context-routing-benchmark",
+            version="1.0.0",
+            count=2,
+            exclude_context_meta=False,
+        ),
+        tmp_path,
+    )
+    dataset = json.loads(result.dataset_path.read_text())
+    manifest = yaml.safe_load(result.manifest_path.read_text())
+
+    assert {example["id"] for example in dataset["examples"]} == {"DOC:1", "DOC:2"}
+    assert manifest["statistics"]["ineligible_scope_meta_content"] == 0
+    assert manifest["statistics"]["ineligible_reference_meta_content"] == 0
     assert manifest["exclusions"] == {}
 
 

@@ -58,6 +58,16 @@ def build_evaluation_corpus(
         bool,
         typer.Option("--exclude-table-dominant/--include-table-dominant"),
     ] = True,
+    exclude_context_meta: Annotated[
+        bool,
+        typer.Option(
+            "--exclude-context-meta/--include-context-meta",
+            help=(
+                "Exclude scope declarations and reference-section routing metadata from "
+                "clause-semantic qualification corpora."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Create an annotation-ready corpus from persisted clauses."""
     try:
@@ -72,6 +82,7 @@ def build_evaluation_corpus(
                 knowledge_domain=knowledge_domain,
                 corpus_id=corpus_id,
                 exclude_table_dominant=exclude_table_dominant,
+                exclude_context_meta=exclude_context_meta,
             ),
             output,
         )
