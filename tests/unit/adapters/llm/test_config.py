@@ -84,6 +84,7 @@ llm:
   server:
     name: context-server
     model: challenger-model-ref
+    ownership_file: work/shared/active-runtime.json
     state_directory: work/context/runtime
 """.strip(),
         encoding="utf-8",
@@ -101,6 +102,7 @@ llm:
     assert config.llm.server.name == "context-server"
     assert config.llm.server.model == "challenger-model-ref"
     assert config.llm.server.state_directory == Path("work/context/runtime")
+    assert config.llm.server.ownership_file == Path("work/shared/active-runtime.json")
 
 
 def test_context_enrichment_rejects_retry_budget_below_initial_budget() -> None:
@@ -118,4 +120,5 @@ def test_project_context_enrichment_profile_uses_independent_challenger() -> Non
     assert config.llm.model == "hf.co/bartowski/phi-4-GGUF:Q4_K_M"
     assert config.llm.server.model == config.llm.model
     assert config.llm.server.name == "standards-atlas-context-enrichment"
+    assert config.llm.server.ownership_file == Path(".atlas/work/llm/active-runtime.json")
     assert config.llm.cache_directory == Path(".atlas/cache/llm/context-enrichment")

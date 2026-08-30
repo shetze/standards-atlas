@@ -33,6 +33,7 @@ class RamaLamaServerConfig:
     backend: str = "auto"
     selinux: bool = False
     state_directory: Path = Path(".atlas/work/llm/runtime")
+    ownership_file: Path = Path(".atlas/work/llm/active-runtime.json")
 
     def __post_init__(self) -> None:
         if not self.name.strip():
@@ -118,6 +119,9 @@ class LlmConfig:
             selinux=bool(server_payload.get("selinux", False)),
             state_directory=Path(
                 str(server_payload.get("state_directory", ".atlas/work/llm/runtime"))
+            ),
+            ownership_file=Path(
+                str(server_payload.get("ownership_file", ".atlas/work/llm/active-runtime.json"))
             ),
         )
         return cls(

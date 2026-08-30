@@ -10,6 +10,7 @@ llm:
     runtime: llama.cpp
     backend: auto
     selinux: false
+    ownership_file: .atlas/work/llm/active-runtime.json
     state_directory: .atlas/work/llm/runtime
     startup_timeout_seconds: 120
     shutdown_timeout_seconds: 30

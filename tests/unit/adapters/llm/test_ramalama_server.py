@@ -24,6 +24,7 @@ def _config(tmp_path: Path = Path(".atlas/work/llm/runtime")) -> LlmConfig:
             startup_timeout_seconds=1,
             shutdown_timeout_seconds=1,
             state_directory=tmp_path,
+            ownership_file=tmp_path / "active-runtime.json",
         ),
     )
 
@@ -42,12 +43,14 @@ def test_start_invokes_same_foreground_command_as_start_script(tmp_path: Path) -
         patch.object(manager, "status", side_effect=lambda: next(statuses)),
         patch.object(manager, "_remove_named_container") as remove_container,
         patch.object(manager, "_wait_for_start") as wait_for_start,
+        patch.object(manager, "_record_runtime_ownership") as record_ownership,
         patch("subprocess.Popen", return_value=process) as popen,
     ):
         manager.start()
 
     remove_container.assert_called_once_with()
     wait_for_start.assert_called_once_with(1234, timeout=1)
+    record_ownership.assert_called_once_with()
     popen.assert_called_once_with(
         (
             "ramalama",
@@ -206,12 +209,14 @@ def test_stop_falls_back_to_named_container(
         "_wait_for_process_exit",
         Mock(side_effect=RamaLamaServerError("shutdown failed")),
     )
-    monkeypatch.setattr(manager, "_stop_named_container", Mock())
+    monkeypatch.setattr(manager, "_remove_owned_runtime_container", Mock(return_value=True))
     monkeypatch.setattr(manager, "_wait_until_process_stopped", Mock(return_value=True))
+    monkeypatch.setattr(manager, "_wait_for_endpoint_shutdown", Mock())
 
     manager.stop()
 
-    manager._stop_named_container.assert_called_once_with()
+    manager._remove_owned_runtime_container.assert_called_once_with()
+    manager._wait_for_endpoint_shutdown.assert_called_once_with(1)
     assert not manager._config.server.pid_file.exists()
 
 
@@ -223,6 +228,7 @@ def test_start_removes_stale_named_container_before_launch(tmp_path: Path) -> No
         patch.object(manager, "status", return_value=RamaLamaServerStatus(False)),
         patch.object(manager, "_remove_named_container") as remove_container,
         patch.object(manager, "_wait_for_start"),
+        patch.object(manager, "_record_runtime_ownership"),
         patch("subprocess.Popen", return_value=process),
     ):
         manager.start()
@@ -303,13 +309,16 @@ def test_stop_cleans_stale_container_without_live_pid(tmp_path: Path) -> None:
 
     with (
         patch.object(manager, "_pid_is_running", return_value=False),
-        patch.object(manager, "_stop_named_container") as stop_container,
-        patch.object(manager, "_remove_named_container") as remove_container,
+        patch.object(manager, "_remove_owned_runtime_container", return_value=False),
+        patch.object(
+            manager, "_remove_project_container_on_port", return_value=True
+        ) as remove_legacy,
+        patch.object(manager, "_wait_for_endpoint_shutdown") as wait_for_shutdown,
     ):
         manager.stop()
 
-    stop_container.assert_called_once_with()
-    remove_container.assert_called_once_with()
+    remove_legacy.assert_called_once_with()
+    wait_for_shutdown.assert_called_once_with(1)
     assert not manager._config.server.pid_file.exists()
 
 
@@ -438,3 +447,153 @@ def test_endpoint_shutdown_fails_closed_when_server_remains_available(
     ):
         with pytest.raises(RamaLamaServerError, match="remained available after shutdown"):
             manager._wait_for_endpoint_shutdown(1)
+
+
+def test_status_accepts_ramalama_gguf_repository_identity_without_quantization(
+    tmp_path: Path,
+) -> None:
+    config = _config(tmp_path)
+    config = replace(
+        config,
+        model="hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M",
+        server=replace(
+            config.server,
+            model="hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M",
+        ),
+    )
+    manager = RamaLamaServerManager(config)
+
+    with patch(
+        "standards_atlas.adapters.llm.ramalama_server.OpenAICompatibleLlmGateway.health",
+        return_value=LlmHealth(
+            available=True,
+            models=("ibm-granite/granite-3.3-8b-instruct-GGUF",),
+        ),
+    ):
+        status = manager.status()
+
+    assert status.running
+    assert status.endpoint_available
+
+
+def test_status_still_rejects_different_gguf_repository_with_same_quantization(
+    tmp_path: Path,
+) -> None:
+    config = _config(tmp_path)
+    config = replace(
+        config,
+        model="hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M",
+        server=replace(
+            config.server,
+            model="hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M",
+        ),
+    )
+    manager = RamaLamaServerManager(config)
+
+    with patch(
+        "standards_atlas.adapters.llm.ramalama_server.OpenAICompatibleLlmGateway.health",
+        return_value=LlmHealth(
+            available=True,
+            models=("Qwen/Qwen3-8B-GGUF",),
+        ),
+    ):
+        status = manager.status()
+
+    assert not status.running
+    assert status.endpoint_available
+
+
+def test_record_runtime_ownership_persists_actual_container_identity(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+
+    with patch.object(
+        manager, "_container_id_for_name", return_value="abc123"
+    ) as inspect_container:
+        manager._record_runtime_ownership()
+
+    inspect_container.assert_called_once_with("standards-atlas-llm")
+    payload = manager._config.server.ownership_file.read_text(encoding="utf-8")
+    assert '"container_id": "abc123"' in payload
+    assert '"container_name": "standards-atlas-llm"' in payload
+    assert '"model": "granite"' in payload
+    assert '"port": 8080' in payload
+
+
+def test_stop_removes_container_from_shared_ownership_across_profiles(tmp_path: Path) -> None:
+    ownership_file = tmp_path / "active-runtime.json"
+    context_config = replace(
+        _config(tmp_path / "context"),
+        model="hf.co/bartowski/phi-4-GGUF:Q4_K_M",
+        server=replace(
+            _config(tmp_path / "context").server,
+            name="standards-atlas-context-enrichment",
+            model="hf.co/bartowski/phi-4-GGUF:Q4_K_M",
+            ownership_file=ownership_file,
+        ),
+    )
+    qualification_config = replace(
+        _config(tmp_path / "qualification"),
+        server=replace(
+            _config(tmp_path / "qualification").server,
+            ownership_file=ownership_file,
+        ),
+    )
+    context_manager = RamaLamaServerManager(context_config)
+    qualification_manager = RamaLamaServerManager(qualification_config)
+
+    with patch.object(context_manager, "_container_id_for_name", return_value="phi4-id"):
+        context_manager._record_runtime_ownership()
+
+    with (
+        patch.object(qualification_manager, "_read_pid", return_value=None),
+        patch.object(qualification_manager, "_remove_container") as remove_container,
+        patch.object(qualification_manager, "_wait_for_endpoint_shutdown"),
+    ):
+        qualification_manager.stop()
+
+    remove_container.assert_called_once_with("phi4-id")
+    assert not ownership_file.exists()
+
+
+def test_stop_discovers_legacy_context_container_by_managed_port(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+
+    with (
+        patch.object(manager, "_read_pid", return_value=None),
+        patch.object(manager, "_read_runtime_ownership", return_value=None),
+        patch.object(
+            manager,
+            "_containers_publishing_port",
+            return_value=(("phi4-id", "standards-atlas-context-enrichment"),),
+        ),
+        patch.object(manager, "_remove_container") as remove_container,
+        patch.object(manager, "_wait_for_endpoint_shutdown"),
+    ):
+        manager.stop()
+
+    remove_container.assert_called_once_with("phi4-id")
+
+
+def test_stop_does_not_take_over_foreign_container_on_managed_port(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+
+    with (
+        patch.object(manager, "_read_pid", return_value=None),
+        patch.object(manager, "_read_runtime_ownership", return_value=None),
+        patch.object(
+            manager,
+            "_containers_publishing_port",
+            return_value=(("foreign-id", "unrelated-llm"),),
+        ),
+        patch.object(manager, "_remove_container") as remove_container,
+        patch.object(manager, "_remove_named_container"),
+        patch.object(
+            manager,
+            "_wait_for_endpoint_shutdown",
+            side_effect=RamaLamaServerError("endpoint remained available"),
+        ),
+    ):
+        with pytest.raises(RamaLamaServerError, match="endpoint remained available"):
+            manager.stop()
+
+    remove_container.assert_not_called()

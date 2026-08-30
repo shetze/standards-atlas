@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import signal
 import subprocess
@@ -114,6 +115,7 @@ class RamaLamaServerManager:
         server.pid_file.write_text(f"{process.pid}\n", encoding="utf-8")
         try:
             self._wait_for_start(process.pid, timeout=server.startup_timeout_seconds)
+            self._record_runtime_ownership()
         except RamaLamaServerError:
             self._cleanup_failed_start(process.pid)
             raise
@@ -142,28 +144,41 @@ class RamaLamaServerManager:
             ) from exc
 
     def stop(self) -> None:
+        """Stop the project-owned container and clean up its launcher process.
+
+        RamaLama's foreground CLI process is only a launcher/controller when the
+        actual inference runtime is containerized.  Container ownership is
+        therefore authoritative; the PID is retained only for host-side cleanup.
+        """
         if not self._config.server.enabled:
             return
 
         pid = self._read_pid()
-        if pid is None or not self._pid_is_running(pid):
-            self._config.server.pid_file.unlink(missing_ok=True)
-            self._stop_named_container()
+        removed_container = self._remove_owned_runtime_container()
+        if not removed_container:
+            # Compatibility for containers created before ownership persistence
+            # existed.  Only project-owned containers publishing this manager's
+            # inference port may be taken over.
+            removed_container = self._remove_project_container_on_port()
+        if not removed_container:
+            # Still clean the configured name in case the container exists but is
+            # stopped and therefore absent from ``podman ps`` discovery.
             self._remove_named_container()
-            self._wait_for_endpoint_shutdown(self._config.server.shutdown_timeout_seconds)
-            return
 
         try:
-            self._terminate_process(pid)
-            try:
-                self._wait_for_process_exit(pid, self._config.server.shutdown_timeout_seconds)
-            except RamaLamaServerError:
-                self._stop_named_container()
-                if not self._wait_until_process_stopped(pid, 5.0):
-                    raise
+            if pid is not None and self._pid_is_running(pid):
+                self._terminate_process(pid)
+                try:
+                    self._wait_for_process_exit(
+                        pid, self._config.server.shutdown_timeout_seconds
+                    )
+                except RamaLamaServerError:
+                    # The container is authoritative.  If it has already been
+                    # removed, force-clean the stale host launcher and continue.
+                    if not self._wait_until_process_stopped(pid, 5.0):
+                        raise
         finally:
             self._config.server.pid_file.unlink(missing_ok=True)
-            self._remove_named_container()
 
         self._wait_for_endpoint_shutdown(self._config.server.shutdown_timeout_seconds)
 
@@ -189,6 +204,140 @@ class RamaLamaServerManager:
     def _expected_model_is_served(self, advertised_models: tuple[str, ...]) -> bool:
         expected = _canonical_model_identity(self._config.server.model)
         return any(_canonical_model_identity(model) == expected for model in advertised_models)
+
+    def _record_runtime_ownership(self) -> None:
+        """Persist the actual project-owned container behind the shared endpoint."""
+        container_id = self._container_id_for_name(self._config.server.name)
+        if container_id is None:
+            raise RamaLamaServerError(
+                "RamaLama endpoint became ready but its managed container could not "
+                f"be resolved by name {self._config.server.name!r}"
+            )
+        ownership_file = self._config.server.ownership_file
+        ownership_file.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "container_id": container_id,
+            "container_name": self._config.server.name,
+            "model": self._config.server.model,
+            "port": self._port(),
+        }
+        ownership_file.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
+    def _read_runtime_ownership(self) -> dict[str, object] | None:
+        try:
+            payload = json.loads(
+                self._config.server.ownership_file.read_text(encoding="utf-8")
+            )
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
+            return None
+        return payload if isinstance(payload, dict) else None
+
+    def _clear_runtime_ownership(self) -> None:
+        self._config.server.ownership_file.unlink(missing_ok=True)
+
+    def _remove_owned_runtime_container(self) -> bool:
+        ownership = self._read_runtime_ownership()
+        if ownership is None:
+            return False
+        container_id = str(ownership.get("container_id") or "").strip()
+        container_name = str(ownership.get("container_name") or "").strip()
+        target = container_id or container_name
+        if not target:
+            self._clear_runtime_ownership()
+            return False
+        self._remove_container(target)
+        self._clear_runtime_ownership()
+        return True
+
+    def _remove_project_container_on_port(self) -> bool:
+        """Remove a legacy Standards Atlas container publishing our LLM port."""
+        containers = self._containers_publishing_port(self._port())
+        project_containers = [
+            (container_id, name)
+            for container_id, name in containers
+            if name == self._config.server.name or name.startswith("standards-atlas-")
+        ]
+        if not project_containers:
+            return False
+        if len(project_containers) > 1:
+            names = ", ".join(name for _, name in project_containers)
+            raise RamaLamaServerError(
+                "Multiple project-owned containers publish the managed LLM port "
+                f"{self._port()}: {names}"
+            )
+        container_id, _ = project_containers[0]
+        self._remove_container(container_id)
+        return True
+
+    def _containers_publishing_port(self, port: int) -> tuple[tuple[str, str], ...]:
+        engine = self._container_engine()
+        try:
+            result = subprocess.run(  # noqa: S603
+                (
+                    engine,
+                    "ps",
+                    "--filter",
+                    f"publish={port}",
+                    "--format",
+                    "{{.ID}}\t{{.Names}}",
+                ),
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10.0,
+            )
+        except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+            return ()
+        containers: list[tuple[str, str]] = []
+        for line in result.stdout.splitlines():
+            container_id, separator, name = line.partition("\t")
+            if separator and container_id.strip() and name.strip():
+                containers.append((container_id.strip(), name.strip()))
+        return tuple(containers)
+
+    def _container_id_for_name(self, name: str) -> str | None:
+        engine = self._container_engine()
+        try:
+            result = subprocess.run(  # noqa: S603
+                (engine, "inspect", "--format", "{{.Id}}", name),
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10.0,
+            )
+        except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+            return None
+        container_id = result.stdout.strip()
+        return container_id if result.returncode == 0 and container_id else None
+
+    def _remove_container(self, target: str) -> None:
+        engine = self._container_engine()
+        try:
+            result = subprocess.run(  # noqa: S603
+                (engine, "rm", "--force", target),
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10.0,
+            )
+        except FileNotFoundError as exc:
+            raise RamaLamaServerError(f"Container engine not found: {engine}") from exc
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RamaLamaServerError(
+                f"Could not remove RamaLama container {target!r}: {exc}"
+            ) from exc
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            suffix = f": {detail}" if detail else ""
+            raise RamaLamaServerError(
+                f"Could not remove RamaLama container {target!r}{suffix}"
+            )
+
+    @staticmethod
+    def _container_engine() -> str:
+        return os.environ.get("RAMALAMA_CONTAINER_ENGINE", "podman").strip() or "podman"
 
     def _wait_for_endpoint_shutdown(self, timeout: float) -> None:
         """Require the old endpoint to disappear before another model may be started."""
@@ -288,8 +437,8 @@ class RamaLamaServerManager:
                 return
 
     def _remove_named_container(self) -> None:
-        """Remove a stale project-owned container before starting a new server."""
-        engine = os.environ.get("RAMALAMA_CONTAINER_ENGINE", "podman").strip() or "podman"
+        """Best-effort removal of a stale container with the configured name."""
+        engine = self._container_engine()
         try:
             subprocess.run(  # noqa: S603
                 (engine, "rm", "--force", self._config.server.name),
@@ -354,7 +503,15 @@ class RamaLamaServerManager:
 
 
 def _canonical_model_identity(model: str) -> str:
-    """Normalize equivalent Hugging Face transport spellings for identity checks."""
+    """Normalize a served model to its stable repository identity.
+
+    RamaLama accepts Hugging Face GGUF references such as
+    ``hf.co/owner/model-GGUF:Q4_K_M`` but the OpenAI-compatible
+    ``/v1/models`` endpoint advertises only ``owner/model-GGUF``.
+    The quantization selector therefore cannot be verified through that
+    endpoint and must not make an otherwise identical repository look like
+    a different model.
+    """
     value = model.strip()
     lowered = value.lower()
     prefixes = (
@@ -366,5 +523,19 @@ def _canonical_model_identity(model: str) -> str:
     )
     for prefix in prefixes:
         if lowered.startswith(prefix):
-            return "hf:" + value[len(prefix):].lstrip("/")
+            value = value[len(prefix):].lstrip("/")
+            break
+
+    # GGUF transport references may append the selected quantization after
+    # the repository id. llama.cpp/RamaLama does not expose that selector via
+    # /v1/models, so compare the stable repository identity instead.
+    repository, separator, selector = value.rpartition(":")
+    if separator and repository.lower().endswith("-gguf") and selector:
+        value = repository
+
+    # RamaLama may advertise Hugging Face repositories without a transport
+    # prefix. A slash distinguishes those repository ids from simple local
+    # aliases such as ``granite`` or ``qwen``.
+    if "/" in value:
+        return "hf:" + value
     return value
