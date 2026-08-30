@@ -39,11 +39,13 @@ def test_start_invokes_same_foreground_command_as_start_script(tmp_path: Path) -
     with (
         patch.object(manager, "status", side_effect=lambda: next(statuses)),
         patch.object(manager, "_remove_named_container") as remove_container,
+        patch.object(manager, "_wait_for_start") as wait_for_start,
         patch("subprocess.Popen", return_value=process) as popen,
     ):
         manager.start()
 
     remove_container.assert_called_once_with()
+    wait_for_start.assert_called_once_with(1234, timeout=1)
     popen.assert_called_once_with(
         (
             "ramalama",
@@ -213,17 +215,100 @@ def test_stop_falls_back_to_named_container(
 
 def test_start_removes_stale_named_container_before_launch(tmp_path: Path) -> None:
     manager = RamaLamaServerManager(_config(tmp_path))
-    statuses = iter([RamaLamaServerStatus(False), RamaLamaServerStatus(True)])
     process = Mock(pid=1234)
 
     with (
-        patch.object(manager, "status", side_effect=lambda: next(statuses)),
+        patch.object(manager, "status", return_value=RamaLamaServerStatus(False)),
         patch.object(manager, "_remove_named_container") as remove_container,
+        patch.object(manager, "_wait_for_start"),
         patch("subprocess.Popen", return_value=process),
     ):
         manager.start()
 
     remove_container.assert_called_once_with()
+
+
+def test_start_failure_waits_for_process_and_removes_container(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    process = Mock(pid=1234)
+    failure = RamaLamaServerError("startup timed out")
+
+    with (
+        patch.object(manager, "status", return_value=RamaLamaServerStatus(False)),
+        patch.object(manager, "_remove_named_container") as remove_container,
+        patch.object(manager, "_wait_for_start", side_effect=failure),
+        patch.object(manager, "_terminate_process") as terminate,
+        patch.object(manager, "_wait_for_process_exit") as wait_for_exit,
+        patch("subprocess.Popen", return_value=process),
+    ):
+        with pytest.raises(RamaLamaServerError, match="startup timed out"):
+            manager.start()
+
+    terminate.assert_called_once_with(1234)
+    wait_for_exit.assert_called_once_with(1234, 1)
+    assert remove_container.call_count == 2
+    assert not manager._config.server.pid_file.exists()
+
+
+def test_start_failure_falls_back_to_container_stop_when_process_will_not_exit(
+    tmp_path: Path,
+) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    process = Mock(pid=1234)
+
+    with (
+        patch.object(manager, "status", return_value=RamaLamaServerStatus(False)),
+        patch.object(manager, "_remove_named_container"),
+        patch.object(
+            manager,
+            "_wait_for_start",
+            side_effect=RamaLamaServerError("startup timed out"),
+        ),
+        patch.object(manager, "_terminate_process"),
+        patch.object(
+            manager,
+            "_wait_for_process_exit",
+            side_effect=RamaLamaServerError("shutdown failed"),
+        ),
+        patch.object(manager, "_stop_named_container") as stop_container,
+        patch.object(manager, "_wait_until_process_stopped", return_value=True),
+        patch("subprocess.Popen", return_value=process),
+    ):
+        with pytest.raises(RamaLamaServerError, match="startup timed out"):
+            manager.start()
+
+    stop_container.assert_called_once_with()
+
+
+def test_wait_for_start_fails_early_when_foreground_process_exits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    monkeypatch.setattr(manager, "status", Mock(return_value=RamaLamaServerStatus(False)))
+    monkeypatch.setattr(manager, "_pid_is_running", Mock(return_value=False))
+    monkeypatch.setattr(manager, "_tail_log", Mock(return_value="container name is in use"))
+
+    with pytest.raises(RamaLamaServerError, match="exited before becoming ready") as exc_info:
+        manager._wait_for_start(1234, timeout=1)
+
+    assert "container name is in use" in str(exc_info.value)
+
+
+def test_stop_cleans_stale_container_without_live_pid(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    manager._config.server.state_directory.mkdir(parents=True, exist_ok=True)
+    manager._config.server.pid_file.write_text("123\n", encoding="utf-8")
+
+    with (
+        patch.object(manager, "_pid_is_running", return_value=False),
+        patch.object(manager, "_stop_named_container") as stop_container,
+        patch.object(manager, "_remove_named_container") as remove_container,
+    ):
+        manager.stop()
+
+    stop_container.assert_called_once_with()
+    remove_container.assert_called_once_with()
+    assert not manager._config.server.pid_file.exists()
 
 
 def test_remove_named_container_uses_configured_engine(

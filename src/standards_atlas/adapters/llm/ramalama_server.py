@@ -93,10 +93,9 @@ class RamaLamaServerManager:
 
         server.pid_file.write_text(f"{process.pid}\n", encoding="utf-8")
         try:
-            self._wait_for(running=True, timeout=server.startup_timeout_seconds)
+            self._wait_for_start(process.pid, timeout=server.startup_timeout_seconds)
         except RamaLamaServerError:
-            self._terminate_process(process.pid)
-            server.pid_file.unlink(missing_ok=True)
+            self._cleanup_failed_start(process.pid)
             raise
 
     def pull(self, model: str | None = None) -> None:
@@ -129,6 +128,8 @@ class RamaLamaServerManager:
         pid = self._read_pid()
         if pid is None or not self._pid_is_running(pid):
             self._config.server.pid_file.unlink(missing_ok=True)
+            self._stop_named_container()
+            self._remove_named_container()
             return
 
         try:
@@ -137,11 +138,11 @@ class RamaLamaServerManager:
                 self._wait_for_process_exit(pid, self._config.server.shutdown_timeout_seconds)
             except RamaLamaServerError:
                 self._stop_named_container()
-                if self._wait_until_process_stopped(pid, 5.0):
-                    return
-                raise
+                if not self._wait_until_process_stopped(pid, 5.0):
+                    raise
         finally:
             self._config.server.pid_file.unlink(missing_ok=True)
+            self._remove_named_container()
 
     @contextmanager
     def paused_for_exclusive_accelerator(self) -> Iterator[None]:
@@ -174,18 +175,36 @@ class RamaLamaServerManager:
             return parsed.port
         return 443 if parsed.scheme == "https" else 80
 
-    def _wait_for(self, *, running: bool, timeout: float) -> None:
+    def _wait_for_start(self, pid: int, *, timeout: float) -> None:
+        """Wait for readiness and fail early if the foreground server process exits."""
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            if self.status().running is running:
+            if self.status().running:
                 return
+            if not self._pid_is_running(pid):
+                detail = self._tail_log()
+                suffix = f"\nRamaLama log:\n{detail}" if detail else ""
+                raise RamaLamaServerError(
+                    f"RamaLama server process {pid} exited before becoming ready{suffix}"
+                )
             time.sleep(0.25)
-        state = "start" if running else "stop"
-        detail = self._tail_log() if running else None
+        detail = self._tail_log()
         suffix = f"\nRamaLama log:\n{detail}" if detail else ""
         raise RamaLamaServerError(
-            f"RamaLama server did not {state} within {timeout:g} seconds{suffix}"
+            f"RamaLama server did not start within {timeout:g} seconds{suffix}"
         )
+
+    def _cleanup_failed_start(self, pid: int) -> None:
+        """Best-effort cleanup after a failed start so a retry can reuse the name."""
+        self._terminate_process(pid)
+        try:
+            self._wait_for_process_exit(pid, self._config.server.shutdown_timeout_seconds)
+        except RamaLamaServerError:
+            self._stop_named_container()
+            self._wait_until_process_stopped(pid, 5.0)
+        finally:
+            self._config.server.pid_file.unlink(missing_ok=True)
+            self._remove_named_container()
 
     def _read_pid(self) -> int | None:
         try:
