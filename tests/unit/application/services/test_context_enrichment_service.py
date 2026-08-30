@@ -157,7 +157,13 @@ def test_context_enrichment_only_analyzes_scope_or_reference_candidates() -> Non
     gateway = _Gateway()
     service = ContextEnrichmentService(
         documents=documents,
-        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="test-model"),
+        enricher=LlmContextRoutingEnricher(
+            gateway,
+            prompt=_prompt(),
+            model="test-model",
+            max_tokens=321,
+            retry_max_tokens=654,
+        ),
     )
 
     result = service.enrich(document.key.value)
@@ -168,6 +174,8 @@ def test_context_enrichment_only_analyzes_scope_or_reference_candidates() -> Non
     assert len(gateway.requests) == 1
     assert gateway.requests[0].task == "context-routing-enrichment"
     assert gateway.requests[0].prompt_version == "context-routing-v1"
+    assert gateway.requests[0].model == "test-model"
+    assert gateway.requests[0].max_tokens == 321
     assert "statement function" in gateway.requests[0].system_prompt.lower()
 
     clause = result.document.clauses[0]
@@ -177,7 +185,7 @@ def test_context_enrichment_only_analyzes_scope_or_reference_candidates() -> Non
     assert result.document.clauses[1] == document.clauses[1]
     generated = {item.path: item for item in clause.provenance.generated_attributes}
     assert generated["enrichments.context_routing"].generator == (
-        "context-routing-enrichment/context-routing-v1"
+        "context-routing-enrichment/context-routing-v1@test-model"
     )
     assert documents.saved == result.document
 

@@ -145,29 +145,32 @@ def build_structural_taxonomy_service(workspace: Path):
 def build_context_enrichment_service(
     workspace: Path,
     *,
-    llm_config_path: Path | None = None,
+    context_config_path: Path = Path("cfg/context-enrichment.yaml"),
     progress: ContextEnrichmentProgressCallback | None = None,
 ):
-    from standards_atlas.adapters.llm import LlmConfig, OpenAICompatibleLlmGateway
+    from standards_atlas.adapters.llm import (
+        ContextEnrichmentConfig,
+        OpenAICompatibleLlmGateway,
+    )
     from standards_atlas.application.evaluation.repository import PromptRepository
     from standards_atlas.application.services import (
         ContextEnrichmentService,
         LlmContextRoutingEnricher,
     )
 
-    task_id = "context-routing-enrichment"
-    prompt_version = "context-routing-v1"
+    config = ContextEnrichmentConfig.load(context_config_path)
     resources = Path(__file__).resolve().parents[1] / "resources" / "semantic"
-    prompt = PromptRepository(resources / "prompts").load(task_id, prompt_version)
+    prompt = PromptRepository(resources / "prompts").load(config.prompt_task, config.prompt_version)
 
-    config = LlmConfig.load(llm_config_path)
-    gateway = OpenAICompatibleLlmGateway(config)
+    gateway = OpenAICompatibleLlmGateway(config.llm)
     return ContextEnrichmentService(
         documents=FileSystemEngineeringDocumentRepository(workspace),
         enricher=LlmContextRoutingEnricher(
             gateway,
             prompt=prompt,
-            model=config.model,
+            model=config.llm.model,
+            max_tokens=config.max_tokens,
+            retry_max_tokens=config.retry_max_tokens,
         ),
         progress=progress,
     )

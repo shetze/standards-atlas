@@ -9,7 +9,7 @@ import typer
 
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.adapters.llm import LlmConfig, RamaLamaServerError
+from standards_atlas.adapters.llm import ContextEnrichmentConfig, RamaLamaServerError
 from standards_atlas.application.services import DocumentImportService
 from standards_atlas.application.services.content_enrichment_service import (
     ContentEnrichmentError,
@@ -207,10 +207,13 @@ def enrich_document_context(
         Path,
         typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
     ] = cli_defaults.DEFAULT_WORKSPACE,
-    llm_config: Annotated[
-        Path | None,
-        typer.Option("--llm-config", help="LLM configuration file."),
-    ] = Path("cfg/llm.yaml"),
+    context_config: Annotated[
+        Path,
+        typer.Option(
+            "--context-config",
+            help="Context-enrichment prompt, generation, and LLM configuration file.",
+        ),
+    ] = Path("cfg/context-enrichment.yaml"),
 ) -> None:
     """Materialize CBox scope and reference routing enrichment."""
 
@@ -226,13 +229,13 @@ def enrich_document_context(
 
     try:
         typer.echo(f"Context enrichment     : starting for {document_key}")
-        if llm_config is not None:
-            config = LlmConfig.load(llm_config)
-            typer.echo(f"LLM model             : {config.model}")
-            managed_llm_server(llm_config).start()
+        config = ContextEnrichmentConfig.load(context_config)
+        typer.echo(f"Context prompt        : {config.prompt_task}/{config.prompt_version}")
+        typer.echo(f"Context model         : {config.llm.model}")
+        managed_llm_server(context_config).start()
         result = build_context_enrichment_service(
             workspace,
-            llm_config_path=llm_config,
+            context_config_path=context_config,
             progress=report_progress,
         ).enrich(document_key)
     except (OSError, ValueError, KeyError, RamaLamaServerError) as exc:
@@ -243,4 +246,3 @@ def enrich_document_context(
     typer.echo(f"Clauses enriched      : {result.clauses_enriched}")
     typer.echo(f"Context candidates    : {result.candidates}")
     typer.echo(f"Context failures      : {result.context_enrichment_failures}")
-    typer.echo("Context prompt        : context-routing-enrichment/context-routing-v1")

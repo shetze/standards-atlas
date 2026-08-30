@@ -2,6 +2,7 @@
 
 from standards_atlas.adapters.llm.codex_cli import CodexCliConfig, CodexCliLlmGateway
 from standards_atlas.adapters.llm.config import (
+    ContextEnrichmentConfig,
     LlmConfig,
     LlmRuntime,
     RamaLamaServerConfig,
@@ -23,6 +24,7 @@ from standards_atlas.adapters.llm.ramalama_server import (
 __all__ = [
     "CodexCliConfig",
     "CodexCliLlmGateway",
+    "ContextEnrichmentConfig",
     "LlmConfig",
     "LlmRuntime",
     "LlmGatewayError",

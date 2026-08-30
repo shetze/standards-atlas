@@ -1,0 +1,26 @@
+context_enrichment:
+  prompt:
+    task: context-routing-enrichment
+    version: context-routing-v1
+  generation:
+    max_tokens: 1024
+    retry_max_tokens: 2048
+
+# Context enrichment intentionally has its own inference profile. It must not inherit
+# the production qualification baseline, because its task is contextual extraction
+# and validation rather than semantic classification.
+llm:
+  base_url: http://127.0.0.1:8080/v1
+  model: hf.co/bartowski/phi-4-GGUF:Q4_K_M
+  timeout_seconds: 180
+  cache_directory: .atlas/cache/llm/context-enrichment
+  server:
+    enabled: true
+    name: standards-atlas-context-enrichment
+    model: hf.co/bartowski/phi-4-GGUF:Q4_K_M
+    runtime: llama.cpp
+    backend: auto
+    selinux: false
+    state_directory: .atlas/work/llm/context-enrichment/runtime
+    startup_timeout_seconds: 180
+    shutdown_timeout_seconds: 30

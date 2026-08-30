@@ -130,6 +130,43 @@ class LlmConfig:
         )
 
 
+@dataclass(frozen=True)
+class ContextEnrichmentConfig:
+    """Task-specific runtime configuration for CBox context enrichment."""
+
+    prompt_task: str = "context-routing-enrichment"
+    prompt_version: str = "context-routing-v1"
+    max_tokens: int = 1024
+    retry_max_tokens: int = 2048
+    llm: LlmConfig = LlmConfig()
+
+    def __post_init__(self) -> None:
+        if not self.prompt_task.strip():
+            raise ValueError("context_enrichment.prompt.task must not be empty")
+        if not self.prompt_version.strip():
+            raise ValueError("context_enrichment.prompt.version must not be empty")
+        if self.max_tokens <= 0:
+            raise ValueError("context_enrichment.generation.max_tokens must be positive")
+        if self.retry_max_tokens < self.max_tokens:
+            raise ValueError("context_enrichment.generation.retry_max_tokens must be >= max_tokens")
+
+    @classmethod
+    def load(cls, path: Path) -> ContextEnrichmentConfig:
+        """Load task settings plus the dedicated LLM runtime from one YAML file."""
+        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        root = _mapping(payload)
+        task = _mapping(root.get("context_enrichment", {}))
+        prompt = _mapping(task.get("prompt", {}))
+        generation = _mapping(task.get("generation", {}))
+        return cls(
+            prompt_task=str(prompt.get("task", cls.prompt_task)),
+            prompt_version=str(prompt.get("version", cls.prompt_version)),
+            max_tokens=int(generation.get("max_tokens", cls.max_tokens)),
+            retry_max_tokens=int(generation.get("retry_max_tokens", cls.retry_max_tokens)),
+            llm=LlmConfig.load(path),
+        )
+
+
 def _mapping(value: object) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise ValueError("LLM configuration must be a YAML mapping")

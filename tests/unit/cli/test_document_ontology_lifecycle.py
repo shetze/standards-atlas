@@ -38,19 +38,19 @@ class _FakeClassificationService:
 def test_classify_ontology_ensures_managed_llm_is_running(monkeypatch) -> None:
     server = _FakeServer()
     service = _FakeClassificationService(server)
-    config = Path("cfg/llm.yaml")
+    config = Path("cfg/context-enrichment.yaml")
 
     monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
     monkeypatch.setattr(
         management,
         "build_context_enrichment_service",
-        lambda workspace, llm_config_path, progress=None: service,
+        lambda workspace, context_config_path, progress=None: service,
     )
 
     management.enrich_document_context(
         "IEC61508-0",
         workspace=Path(".atlas"),
-        llm_config=config,
+        context_config=config,
     )
 
     assert server.start_calls == 1
@@ -63,7 +63,7 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
     )
 
     server = _FakeServer()
-    config = Path("cfg/llm.yaml")
+    config = Path("cfg/context-enrichment.yaml")
 
     class _ProgressService:
         def __init__(self, progress) -> None:
@@ -105,13 +105,13 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         management,
         "build_context_enrichment_service",
-        lambda workspace, llm_config_path, progress=None: _ProgressService(progress),
+        lambda workspace, context_config_path, progress=None: _ProgressService(progress),
     )
 
     management.enrich_document_context(
         "IEC61508-2",
         workspace=Path(".atlas"),
-        llm_config=config,
+        context_config=config,
     )
 
     output = capsys.readouterr().out

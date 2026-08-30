@@ -70,14 +70,19 @@ class LlmContextRoutingEnricher:
         *,
         prompt: PromptDefinition,
         model: str | None = None,
+        max_tokens: int = 1024,
+        retry_max_tokens: int = 2048,
     ) -> None:
         self._gateway = gateway
         self._prompt = prompt
         self._model = model
+        self._max_tokens = max_tokens
+        self._retry_max_tokens = retry_max_tokens
 
     @property
     def generator_id(self) -> str:
-        return f"{self._prompt.task}/{self._prompt.version}"
+        model = self._model or "default-model"
+        return f"{self._prompt.task}/{self._prompt.version}@{model}"
 
     def enrich(self, *, clause: Clause, document: EngineeringDocument) -> ContextRouting:
         structural = clause.structural_context
@@ -122,7 +127,7 @@ class LlmContextRoutingEnricher:
             model=self._model,
             temperature=0.0,
             seed=0,
-            max_tokens=1024,
+            max_tokens=self._max_tokens,
             reasoning_enabled=False,
         )
         try:
@@ -138,7 +143,7 @@ class LlmContextRoutingEnricher:
                         + " The previous response was truncated. Return only the compact JSON "
                         "object required by the schema, with no explanations or extra fields."
                     ),
-                    max_tokens=2048,
+                    max_tokens=self._retry_max_tokens,
                 )
             )
         return _context_routing_from_payload(clause.id.value, result.value)
