@@ -1,5 +1,5 @@
 {
-  "description": "Require an evidence-based rationale before assigning semantic dimensions and grounded role relations; applicability is restricted to explicit applicability assertions.",
+  "description": "Require evidence-based classification using deterministic natural-language CBox context and resolved reference routing; applicability is restricted to explicit applicability assertions.",
   "task": "statement-function-classification",
   "version": "evidence-first-v6"
 }

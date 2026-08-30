@@ -69,6 +69,7 @@ class ClauseDescriptor(BaseModel):
     non_table_text_length: int = Field(default=0, ge=0)
     structural_context: dict[str, Any] | None = None
     reference_mentions: tuple[dict[str, Any], ...] = ()
+    context_routing: dict[str, Any] | None = None
 
 
 class ClauseFilter(BaseModel):

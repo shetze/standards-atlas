@@ -204,6 +204,11 @@ class EngineeringDocumentClauseProvider:
             reference_mentions=tuple(
                 mention.model_dump(mode="json") for mention in clause.reference_mentions
             ),
+            context_routing=(
+                clause.context_routing.model_dump(mode="json")
+                if clause.context_routing.scopes or clause.context_routing.references
+                else None
+            ),
         )
 
     @staticmethod

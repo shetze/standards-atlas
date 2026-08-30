@@ -52,6 +52,9 @@ from standards_atlas.application.semantic_qualification.batch import (
     ProposalBatchExecutor,
     ProposalItemOutcome,
 )
+from standards_atlas.application.semantic_qualification.context_projection import (
+    project_cbox_context,
+)
 from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
     DEFAULT_EVALUATION_RETRY_ATTEMPTS,
@@ -557,7 +560,10 @@ def _run_adaptive_interview(
 ):
     content = dict(item_input.get("content", {}))
     full_context = dict(item_input.get("context", {}))
-    context = full_context if "{context_json}" in prompt.user_template else {}
+    uses_context = (
+        "{context_json}" in prompt.user_template or "{context_text}" in prompt.user_template
+    )
+    context = full_context if uses_context else {}
     interview_input = {**dict(item_input), "context": context}
     plan = AdaptiveInterviewPlanner().plan(interview_input)
     answers: list[dict[str, Any]] = []
@@ -597,7 +603,7 @@ def _run_adaptive_interview(
                 f"Allowed labels: {', '.join(question.allowed_labels)}\n"
                 f"Selection reason: {question.reason}\n\n"
                 f"Normalized clause content:\n{content.get('text', '')}\n\n"
-                f"Structural context:\n{json.dumps(context, ensure_ascii=False, sort_keys=True)}"
+                f"Contextual evidence:\n{project_cbox_context(context)}"
             ),
             output_schema=focused_response_schema(question.allowed_labels),
             prompt_version=f"{config.prompt_version}:{question.id}",

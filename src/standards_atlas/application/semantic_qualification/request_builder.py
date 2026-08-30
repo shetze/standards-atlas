@@ -9,6 +9,9 @@ from typing import Any
 from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.ports.llm_gateway import StructuredGenerationRequest
 from standards_atlas.application.semantic_qualification.annotations import ClauseReference
+from standards_atlas.application.semantic_qualification.context_projection import (
+    project_cbox_context,
+)
 
 
 def build_proposal_request(
@@ -24,6 +27,7 @@ def build_proposal_request(
         "content": content.get("text", ""),
         "content_hash": content.get("hash", ""),
         "context_json": json.dumps(context, ensure_ascii=False, sort_keys=True),
+        "context_text": project_cbox_context(context),
         **context,
     }
     try:
