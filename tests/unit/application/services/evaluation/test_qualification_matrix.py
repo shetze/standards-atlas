@@ -1305,3 +1305,58 @@ def test_cascade_escalates_structured_role_presence_conflict() -> None:
     )
 
     assert "role_semantics_evidence_conflict" in cascade_escalation_reasons(clause, resolution)
+
+
+def test_consensus_prompt_selection_includes_knowledge_kind(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["consensus"] = {
+        "prompt_selection": {
+            "statement_function": "p1",
+            "knowledge_kind": "p2",
+            "applicability": "p3",
+            "role_relation": "p4",
+        }
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    manifest = QualificationMatrixManifest.load(path)
+
+    assert manifest.consensus.prompt_selection.model_dump() == {
+        "statement_function": "p1",
+        "knowledge_kind": "p2",
+        "applicability": "p3",
+        "role_relation": "p4",
+    }
+
+
+def test_v5_production_cascade_executes_only_consensus_prompts() -> None:
+    project_root = Path(__file__).resolve().parents[5]
+    manifest = QualificationMatrixManifest.load(
+        project_root
+        / "manifests"
+        / "multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml"
+    )
+
+    stages = {stage.id: stage for stage in manifest.execution.stages}
+    assert [prompt.id for prompt in manifest.prompts_for_stage(stages["efficient-local"])] == [
+        "structure-aware"
+    ]
+    assert [
+        prompt.id for prompt in manifest.prompts_for_stage(stages["intermediate-escalation"])
+    ] == ["structure-aware"]
+    assert [prompt.id for prompt in manifest.prompts_for_stage(stages["escalation"])] == [
+        "structure-aware",
+        "reference-aware",
+    ]
+
+    production_prompts = {
+        prompt.id
+        for stage in manifest.execution.stages
+        for prompt in manifest.prompts_for_stage(stage)
+    }
+    assert production_prompts == {"structure-aware", "reference-aware"}
+    assert {prompt.id for prompt in manifest.prompts} - production_prompts == {
+        "content-only",
+        "bounded-reasoning",
+    }

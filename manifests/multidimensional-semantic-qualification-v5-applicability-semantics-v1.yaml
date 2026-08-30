@@ -17,7 +17,6 @@ execution:
         - llama-3.1-8b-instruct-q4-k-m
         - smollm3-3b-q4-k-m
       prompts:
-        - content-only
         - structure-aware
       apply_to: all
       resolution:
@@ -37,7 +36,6 @@ execution:
         - mistral-small-3.2-24b-instruct-q4-k-m
         - glm-4-9b-chat-q4-k-m
       prompts:
-        - content-only
         - structure-aware
       apply_to: unresolved
       resolution:
@@ -62,10 +60,8 @@ execution:
         - exaone-3.5-32b-instruct-q4-k-m
         # - codex-gpt-5.6-luna
       prompts:
-        - content-only
         - structure-aware
         - reference-aware
-        - bounded-reasoning
       apply_to: unresolved
   resolution:
     minimum_successful_models: 3
@@ -148,24 +144,24 @@ prompts:
     prompt_version: content-only-v6
     max_output_tokens: 512
     adaptive_interview: true
-    description: Clause text without structural context.
+    description: Benchmark control using clause text only; retained for prompt qualification, not production cascade execution.
 
   - id: structure-aware
     prompt_version: structure-aware-v6
     max_output_tokens: 640
     adaptive_interview: true
-    description: Clause text with reference, title, and hierarchy context.
+    description: Primary production prompt using deterministic natural-language CBox structural context.
 
   - id: reference-aware
     prompt_version: evidence-first-v6
     max_output_tokens: 768
     adaptive_interview: true
-    description: Clause text with deterministically resolved internal references.
+    description: Escalation prompt adding resolved reference evidence to the deterministic CBox context.
 
   - id: bounded-reasoning
     prompt_version: bounded-reasoning-v6
     max_output_tokens: 768
-    description: Bounded internal reasoning with concise schema-only output.
+    description: Benchmark challenger for reasoning-mode qualification; retained outside production cascade execution.
 
 reasoning_modes:
   - id: disabled

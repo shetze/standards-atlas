@@ -714,6 +714,7 @@ class ConsensusPromptSelection(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     statement_function: str = "content-only"
+    knowledge_kind: str = "content-only"
     applicability: str = "content-only"
     role_relation: str = "content-only"
 
