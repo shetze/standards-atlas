@@ -34,6 +34,10 @@ from standards_atlas.application.semantic_qualification.analysis_archive import 
 from standards_atlas.application.semantic_qualification.challenger import (
     write_challenger_comparison,
 )
+from standards_atlas.application.semantic_qualification.prompt_comparison import (
+    build_prompt_comparison_report,
+    persist_prompt_comparison_report,
+)
 from standards_atlas.application.semantic_qualification.proposals import (
     ProposalProgress,
     ProposalRunConfig,
@@ -919,6 +923,15 @@ def qualify_model_prompt_matrix(
             manifest,
             output_directory / manifest.matrix_id,
         )
+        prompt_comparison = build_prompt_comparison_report(
+            manifest=manifest,
+            local_corpus_root=corpus_root,
+            published_corpus_root=published_corpus_root,
+        )
+        prompt_comparison_paths = persist_prompt_comparison_report(
+            prompt_comparison,
+            output_directory / manifest.matrix_id,
+        )
         consensus_paths: tuple[Path, Path, Path] | None = None
         if manifest.consensus.enabled:
             consensus_report, consensus_json, proposal_yaml, review_markdown = (
@@ -1014,6 +1027,7 @@ def qualify_model_prompt_matrix(
                         analysis_metrics_path,
                         coverage_path,
                         diagnostics_path,
+                        *prompt_comparison_paths,
                         *challenger_paths,
                         *((challenger_sample_path,) if challenger_sample_path is not None else ()),
                     ),
