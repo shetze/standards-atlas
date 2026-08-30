@@ -32,6 +32,14 @@ from standards_atlas.domain.model.content import (
     TextBlock,
     render_content_as_plain_text,
 )
+from standards_atlas.domain.model.context_routing import (
+    ContextRouting,
+    ReferenceRole,
+    ReferenceRouting,
+    ScopeDeclaration,
+    ScopeReach,
+    ScopeReachKind,
+)
 from standards_atlas.domain.model.document import DocumentType, EngineeringDocument
 from standards_atlas.domain.model.doorstop_attributes import (
     DoorstopItemAttributes,
@@ -159,6 +167,12 @@ from standards_atlas.domain.model.table_structure import (
 
 __all__ = [
     "ClauseBaseline",
+    "ContextRouting",
+    "ReferenceRole",
+    "ReferenceRouting",
+    "ScopeDeclaration",
+    "ScopeReach",
+    "ScopeReachKind",
     "ClauseEnrichments",
     "GeneratedAttribute",
     "GenerationMethod",
