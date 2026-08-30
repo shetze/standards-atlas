@@ -22,10 +22,12 @@ class RamaLamaServerError(RuntimeError):
 
 @dataclass(frozen=True)
 class RamaLamaServerStatus:
-    """Current availability of the managed server."""
+    """Current availability and model identity of the managed server."""
 
     running: bool
     detail: str | None = None
+    models: tuple[str, ...] = ()
+    endpoint_available: bool = False
 
 
 class RamaLamaServerManager:
@@ -43,7 +45,19 @@ class RamaLamaServerManager:
         health = OpenAICompatibleLlmGateway(self._config).health()
 
         if health.available:
-            return RamaLamaServerStatus(True, health.detail)
+            if self._expected_model_is_served(health.models):
+                return RamaLamaServerStatus(
+                    True, health.detail, health.models, endpoint_available=True
+                )
+            expected = self._config.server.model
+            advertised = ", ".join(health.models) if health.models else "<none>"
+            return RamaLamaServerStatus(
+                False,
+                f"LLM endpoint is available but does not serve requested model "
+                f"{expected!r}; advertised models: {advertised}",
+                health.models,
+                endpoint_available=True,
+            )
         if process_running:
             return RamaLamaServerStatus(
                 False,
@@ -52,8 +66,14 @@ class RamaLamaServerManager:
         return RamaLamaServerStatus(False, health.detail)
 
     def start(self) -> None:
-        if not self._config.server.enabled or self.status().running:
+        if not self._config.server.enabled:
             return
+
+        status = self.status()
+        if status.running:
+            return
+        if status.endpoint_available:
+            raise RamaLamaServerError(status.detail or "LLM endpoint serves an unexpected model")
 
         server = self._config.server
         self._remove_named_container()
@@ -130,6 +150,7 @@ class RamaLamaServerManager:
             self._config.server.pid_file.unlink(missing_ok=True)
             self._stop_named_container()
             self._remove_named_container()
+            self._wait_for_endpoint_shutdown(self._config.server.shutdown_timeout_seconds)
             return
 
         try:
@@ -143,6 +164,8 @@ class RamaLamaServerManager:
         finally:
             self._config.server.pid_file.unlink(missing_ok=True)
             self._remove_named_container()
+
+        self._wait_for_endpoint_shutdown(self._config.server.shutdown_timeout_seconds)
 
     @contextmanager
     def paused_for_exclusive_accelerator(self) -> Iterator[None]:
@@ -163,6 +186,25 @@ class RamaLamaServerManager:
             self.stop()
         yield
 
+    def _expected_model_is_served(self, advertised_models: tuple[str, ...]) -> bool:
+        expected = _canonical_model_identity(self._config.server.model)
+        return any(_canonical_model_identity(model) == expected for model in advertised_models)
+
+    def _wait_for_endpoint_shutdown(self, timeout: float) -> None:
+        """Require the old endpoint to disappear before another model may be started."""
+        deadline = time.monotonic() + timeout
+        gateway = OpenAICompatibleLlmGateway(self._config)
+        while time.monotonic() < deadline:
+            if not gateway.health().available:
+                return
+            time.sleep(0.25)
+        health = gateway.health()
+        models = ", ".join(health.models) if health.models else "<unknown>"
+        raise RamaLamaServerError(
+            "RamaLama endpoint remained available after shutdown; refusing model switch "
+            f"because it still advertises: {models}"
+        )
+
     def _port(self) -> int:
         parsed = urlparse(self._config.base_url)
         if parsed.scheme not in {"http", "https"} or parsed.hostname not in {
@@ -179,8 +221,13 @@ class RamaLamaServerManager:
         """Wait for readiness and fail early if the foreground server process exits."""
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            if self.status().running:
+            status = self.status()
+            if status.running:
                 return
+            if status.endpoint_available:
+                raise RamaLamaServerError(
+                    status.detail or "RamaLama endpoint serves an unexpected model"
+                )
             if not self._pid_is_running(pid):
                 detail = self._tail_log()
                 suffix = f"\nRamaLama log:\n{detail}" if detail else ""
@@ -304,3 +351,20 @@ class RamaLamaServerManager:
         except FileNotFoundError:
             return None
         return "\n".join(lines[-line_count:]) or None
+
+
+def _canonical_model_identity(model: str) -> str:
+    """Normalize equivalent Hugging Face transport spellings for identity checks."""
+    value = model.strip()
+    lowered = value.lower()
+    prefixes = (
+        "huggingface://",
+        "huggingface.co/",
+        "hf.co://",
+        "hf.co/",
+        "hf://",
+    )
+    for prefix in prefixes:
+        if lowered.startswith(prefix):
+            return "hf:" + value[len(prefix):].lstrip("/")
+    return value

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import signal
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import ANY, Mock, patch
 
@@ -13,6 +14,7 @@ from standards_atlas.adapters.llm import (
     RamaLamaServerManager,
     RamaLamaServerStatus,
 )
+from standards_atlas.application.ports.llm_gateway import LlmHealth
 
 
 def _config(tmp_path: Path = Path(".atlas/work/llm/runtime")) -> LlmConfig:
@@ -327,3 +329,112 @@ def test_remove_named_container_uses_configured_engine(
         stderr=-3,
         timeout=10.0,
     )
+
+
+def test_status_requires_requested_model_identity(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    config = replace(
+        config,
+        model="hf.co://example/Model-GGUF:Q4_K_M",
+        server=replace(config.server, model="hf.co://example/Model-GGUF:Q4_K_M"),
+    )
+    manager = RamaLamaServerManager(config)
+
+    with patch(
+        "standards_atlas.adapters.llm.ramalama_server.OpenAICompatibleLlmGateway.health",
+        return_value=LlmHealth(
+            available=True, models=("hf://example/Model-GGUF:Q4_K_M",)
+        ),
+    ):
+        status = manager.status()
+
+    assert status.running
+    assert status.endpoint_available
+    assert status.models == ("hf://example/Model-GGUF:Q4_K_M",)
+
+
+def test_status_rejects_endpoint_serving_different_model(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+
+    with patch(
+        "standards_atlas.adapters.llm.ramalama_server.OpenAICompatibleLlmGateway.health",
+        return_value=LlmHealth(available=True, models=("qwen",)),
+    ):
+        status = manager.status()
+
+    assert not status.running
+    assert status.endpoint_available
+    assert status.models == ("qwen",)
+    assert "does not serve requested model 'granite'" in (status.detail or "")
+
+
+def test_start_refuses_reachable_endpoint_with_wrong_model(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+
+    with (
+        patch.object(
+            manager,
+            "status",
+            return_value=RamaLamaServerStatus(
+                False,
+                "wrong model",
+                ("qwen",),
+                endpoint_available=True,
+            ),
+        ),
+        patch("subprocess.Popen") as popen,
+    ):
+        with pytest.raises(RamaLamaServerError, match="wrong model"):
+            manager.start()
+
+    popen.assert_not_called()
+
+
+def test_wait_for_start_fails_immediately_on_wrong_served_model(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    manager.status = Mock(  # type: ignore[method-assign]
+        return_value=RamaLamaServerStatus(
+            False,
+            "model identity mismatch",
+            ("qwen",),
+            endpoint_available=True,
+        )
+    )
+    manager._pid_is_running = Mock(return_value=True)  # type: ignore[method-assign]
+
+    with pytest.raises(RamaLamaServerError, match="model identity mismatch"):
+        manager._wait_for_start(1234, timeout=1)
+
+
+def test_stop_requires_endpoint_to_disappear_without_live_pid(tmp_path: Path) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+
+    with (
+        patch.object(manager, "_read_pid", return_value=None),
+        patch.object(manager, "_stop_named_container"),
+        patch.object(manager, "_remove_named_container"),
+        patch.object(manager, "_wait_for_endpoint_shutdown") as wait_for_shutdown,
+    ):
+        manager.stop()
+
+    wait_for_shutdown.assert_called_once_with(1)
+
+
+def test_endpoint_shutdown_fails_closed_when_server_remains_available(
+    tmp_path: Path,
+) -> None:
+    manager = RamaLamaServerManager(_config(tmp_path))
+    health = LlmHealth(available=True, models=("granite",))
+
+    with (
+        patch(
+            "standards_atlas.adapters.llm.ramalama_server.OpenAICompatibleLlmGateway.health",
+            return_value=health,
+        ),
+        patch(
+            "standards_atlas.adapters.llm.ramalama_server.time.monotonic",
+            side_effect=(0.0, 2.0),
+        ),
+    ):
+        with pytest.raises(RamaLamaServerError, match="remained available after shutdown"):
+            manager._wait_for_endpoint_shutdown(1)

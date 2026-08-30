@@ -535,6 +535,12 @@ def qualify_model_prompt_matrix(
                             active_server = RamaLamaServerManager(model_config)
                             if model_config.server.enabled:
                                 active_server.start()
+                                runtime_status = active_server.status()
+                                served_models = ", ".join(runtime_status.models) or "<none>"
+                                typer.echo(
+                                    "LLM runtime identity     : "
+                                    f"requested={model.model_ref} served={served_models}"
+                                )
                             gateway = OpenAICompatibleLlmGateway(model_config)
                         elif model.provider == "codex":
                             if active_mcp_lease is None:
