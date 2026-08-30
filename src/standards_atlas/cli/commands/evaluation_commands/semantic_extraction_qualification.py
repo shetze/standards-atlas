@@ -25,6 +25,10 @@ from standards_atlas.application.semantic_extraction import (
     SemanticExtractionService,
     extraction_eligibility,
 )
+from standards_atlas.application.semantic_qualification.qualification_coverage import (
+    QUALIFICATION_COVERAGE_FILENAME,
+    load_qualification_coverage,
+)
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
 )
@@ -116,7 +120,40 @@ def qualify_semantic_extraction(
         selection=run_selection,
     )
     selected_ids_by_document = selected_clause_ids_by_document(selected_examples)
+    coverage_path = output / QUALIFICATION_COVERAGE_FILENAME
+    if not coverage_path.is_file():
+        raise typer.BadParameter(f"qualification coverage not found: {coverage_path}")
+    coverage = load_qualification_coverage(coverage_path)
+    if coverage.accounted_clause_count != run_selection.selected_clause_count:
+        raise typer.BadParameter(
+            "qualification coverage does not account for the persisted run selection: "
+            f"{coverage.accounted_clause_count}/{run_selection.selected_clause_count} clauses"
+        )
+    qualified_coordinates = {
+        (item.document_key, item.clause_id)
+        for item in coverage.clauses
+        if item.status == "qualified"
+    }
+    selected_coordinates = {(item.document_key, item.clause_id) for item in run_selection.clauses}
+    coverage_coordinates = {(item.document_key, item.clause_id) for item in coverage.clauses}
+    if coverage_coordinates != selected_coordinates:
+        raise typer.BadParameter(
+            "qualification coverage clause coordinates differ from the persisted run selection"
+        )
     eligibility_contexts = _load_qualification_eligibility_contexts(output)
+    context_coordinates = set(eligibility_contexts)
+    missing_contexts = qualified_coordinates - context_coordinates
+    unexpected_contexts = context_coordinates - qualified_coordinates
+    if missing_contexts or unexpected_contexts:
+        details = []
+        if missing_contexts:
+            details.append(f"missing={len(missing_contexts)}")
+        if unexpected_contexts:
+            details.append(f"unexpected={len(unexpected_contexts)}")
+        raise typer.BadParameter(
+            "semantic extraction eligibility contexts disagree with qualification coverage: "
+            + ", ".join(details)
+        )
 
     root = workspace / "semantic-extractions"
     repository = FileSystemSemanticExtractionRepository(workspace)
@@ -279,6 +316,7 @@ def qualify_semantic_extraction(
         expected_clause_count=selected_clause_count,
         selected_clause_count=selected_clause_count,
         eligibility_context_clause_count=eligibility_context_clause_count,
+        expected_eligibility_context_clause_count=coverage.qualified_clause_count,
         eligible_clause_count=eligible_clause_count,
         extraction_model=resolved_model,
         extraction_provider=resolved_provider,

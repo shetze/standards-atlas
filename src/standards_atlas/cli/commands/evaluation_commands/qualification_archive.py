@@ -177,10 +177,10 @@ def finalize_qualification_archive(
                 "semantic extraction qualification selection differs from matrix selection: "
                 f"{selected_count} vs {run_selection.selected_clause_count} clauses"
             )
-        if context_count != run_selection.selected_clause_count:
+        if context_count != coverage.qualified_clause_count:
             raise typer.BadParameter(
-                "semantic extraction eligibility context is incomplete for the persisted run "
-                f"selection: {context_count}/{run_selection.selected_clause_count} clauses"
+                "semantic extraction eligibility context disagrees with persisted qualification "
+                f"coverage: {context_count}/{coverage.qualified_clause_count} qualified clauses"
             )
 
     core_paths = tuple(

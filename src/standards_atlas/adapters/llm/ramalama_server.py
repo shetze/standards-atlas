@@ -169,9 +169,7 @@ class RamaLamaServerManager:
             if pid is not None and self._pid_is_running(pid):
                 self._terminate_process(pid)
                 try:
-                    self._wait_for_process_exit(
-                        pid, self._config.server.shutdown_timeout_seconds
-                    )
+                    self._wait_for_process_exit(pid, self._config.server.shutdown_timeout_seconds)
                 except RamaLamaServerError:
                     # The container is authoritative.  If it has already been
                     # removed, force-clean the stale host launcher and continue.
@@ -227,9 +225,7 @@ class RamaLamaServerManager:
 
     def _read_runtime_ownership(self) -> dict[str, object] | None:
         try:
-            payload = json.loads(
-                self._config.server.ownership_file.read_text(encoding="utf-8")
-            )
+            payload = json.loads(self._config.server.ownership_file.read_text(encoding="utf-8"))
         except (FileNotFoundError, json.JSONDecodeError, OSError):
             return None
         return payload if isinstance(payload, dict) else None
@@ -331,9 +327,7 @@ class RamaLamaServerManager:
         if result.returncode != 0:
             detail = (result.stderr or result.stdout).strip()
             suffix = f": {detail}" if detail else ""
-            raise RamaLamaServerError(
-                f"Could not remove RamaLama container {target!r}{suffix}"
-            )
+            raise RamaLamaServerError(f"Could not remove RamaLama container {target!r}{suffix}")
 
     @staticmethod
     def _container_engine() -> str:
@@ -523,7 +517,7 @@ def _canonical_model_identity(model: str) -> str:
     )
     for prefix in prefixes:
         if lowered.startswith(prefix):
-            value = value[len(prefix):].lstrip("/")
+            value = value[len(prefix) :].lstrip("/")
             break
 
     # GGUF transport references may append the selected quantization after

@@ -122,8 +122,25 @@ def test_semantic_extraction_qualification_fails_on_missing_consensus_context() 
 
     assert report.passed is False
     assert report.failures == (
-        "qualification eligibility context missing for 1 of 50 selected clauses",
+        "qualification eligibility context accounting mismatch: "
+        "49/50 contexts for qualified clauses",
     )
+
+
+def test_semantic_extraction_qualification_accepts_unqualified_selection_without_context() -> None:
+    report = qualify_semantic_extractions(
+        (),
+        SemanticExtractionQualificationConfig(ontology_versions=("standards-atlas-core@1.1.0",)),
+        selected_clause_count=50,
+        eligibility_context_clause_count=49,
+        expected_eligibility_context_clause_count=49,
+        eligible_clause_count=0,
+    )
+
+    assert report.passed is True
+    assert report.selected_clause_count == 50
+    assert report.eligibility_context_clause_count == 49
+    assert report.failures == ()
 
 
 def test_semantic_extraction_qualification_counts_rejected_ontology_terms() -> None:

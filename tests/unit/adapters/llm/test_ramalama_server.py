@@ -351,9 +351,7 @@ def test_status_requires_requested_model_identity(tmp_path: Path) -> None:
 
     with patch(
         "standards_atlas.adapters.llm.ramalama_server.OpenAICompatibleLlmGateway.health",
-        return_value=LlmHealth(
-            available=True, models=("hf://example/Model-GGUF:Q4_K_M",)
-        ),
+        return_value=LlmHealth(available=True, models=("hf://example/Model-GGUF:Q4_K_M",)),
     ):
         status = manager.status()
 
