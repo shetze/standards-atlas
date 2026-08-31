@@ -111,12 +111,27 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
     assert len(golden.cases) == 1
     loaded = ApplicabilityGoldenCorpus.load(result.golden_path)
     report = evaluate_applicability_golden_corpus(loaded, archive)
-    assert report.consensus.presence_accuracy == 1.0
+    assert report.positive_cases == 1
+    assert report.negative_cases == 0
+    assert report.baseline_majority.presence_accuracy == 1.0
+    assert report.baseline_majority.true_positive == 1
+    assert report.baseline_majority.false_negative == 0
+    assert report.baseline_majority.presence_specificity == 1.0
+    assert report.baseline_majority.presence_balanced_accuracy == 1.0
+    assert report.baseline_majority.polarity_end_to_end_accuracy == 1.0
+    assert report.baseline_majority.polarity_accuracy_given_presence == 1.0
     metrics = {item.model_id: item for item in report.models}
     assert metrics["a"].presence_accuracy == 1.0
     assert metrics["b"].presence_accuracy == 0.0
+    assert metrics["b"].false_negative == 1
+    assert metrics["b"].polarity_end_to_end_accuracy == 0.0
+    assert metrics["b"].polarity_accuracy_given_presence is None
     assert metrics["c"].presence_accuracy == 1.0
     assert "ignored" not in metrics
+    assert report.ensembles == ()
+    assert {(error.evaluator_id, error.error) for error in report.errors} == {
+        ("b", "false_negative")
+    }
 
 
 def test_applicability_golden_contract_rejects_legacy_subtype_fields() -> None:

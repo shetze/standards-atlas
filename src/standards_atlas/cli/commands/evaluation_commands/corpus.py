@@ -258,6 +258,12 @@ def evaluate_applicability_corpus(
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
     typer.echo(f"Published gold cases    : {report.published_cases}")
-    typer.echo(f"Consensus presence F1   : {report.consensus.presence_f1:.3f}")
+    typer.echo(
+        f"Published class balance : {report.positive_cases} positive / "
+        f"{report.negative_cases} negative"
+    )
+    typer.echo(f"Baseline majority F1    : {report.baseline_majority.presence_f1:.3f}")
     typer.echo(f"Model metrics           : {len(report.models)}")
+    typer.echo(f"Offline ensembles       : {len(report.ensembles)}")
+    typer.echo(f"Presence errors         : {len(report.errors)}")
     typer.echo(f"Report                  : {output}")

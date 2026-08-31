@@ -93,27 +93,63 @@ class ApplicabilityCorpusBuildResult(BaseModel):
 
 
 class ApplicabilityModelMetrics(BaseModel):
-    """Per-model presence accuracy against published applicability gold cases."""
+    """Presence and polarity diagnostics against published applicability gold cases."""
 
     model_config = ConfigDict(frozen=True)
 
     model_id: str
     evaluated_cases: int = Field(ge=0)
+    true_positive: int = Field(ge=0)
+    false_positive: int = Field(ge=0)
+    true_negative: int = Field(ge=0)
+    false_negative: int = Field(ge=0)
     presence_accuracy: float = Field(ge=0.0, le=1.0)
     presence_precision: float = Field(ge=0.0, le=1.0)
     presence_recall: float = Field(ge=0.0, le=1.0)
+    presence_specificity: float = Field(ge=0.0, le=1.0)
+    presence_balanced_accuracy: float = Field(ge=0.0, le=1.0)
     presence_f1: float = Field(ge=0.0, le=1.0)
-    polarity_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
+    polarity_end_to_end_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
+    polarity_accuracy_given_presence: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class ApplicabilityCaseError(BaseModel):
+    """One false presence prediction with enough context for HITL diagnosis."""
+
+    model_config = ConfigDict(frozen=True)
+
+    evaluator_id: str
+    document_key: str
+    clause_id: str
+    reference: str
+    expected_present: bool
+    predicted_present: bool
+    error: Literal["false_positive", "false_negative"]
+    presence_votes: dict[str, bool] = Field(default_factory=dict)
+
+
+class ApplicabilityEnsembleMetrics(BaseModel):
+    """Offline majority-vote candidate evaluated without changing production consensus."""
+
+    model_config = ConfigDict(frozen=True)
+
+    ensemble_id: str
+    model_ids: tuple[str, ...]
+    metrics: ApplicabilityModelMetrics
 
 
 class ApplicabilityGoldenRegressionReport(BaseModel):
-    """Consensus and per-model metrics against the applicability golden set."""
+    """Offline calibration report against the applicability golden set."""
 
     model_config = ConfigDict(frozen=True)
 
     published_cases: int = Field(ge=0)
-    consensus: ApplicabilityModelMetrics
+    positive_cases: int = Field(ge=0)
+    negative_cases: int = Field(ge=0)
+    baseline_majority: ApplicabilityModelMetrics
     models: tuple[ApplicabilityModelMetrics, ...]
+    ensembles: tuple[ApplicabilityEnsembleMetrics, ...] = ()
+    errors: tuple[ApplicabilityCaseError, ...] = ()
 
 
 def build_applicability_golden_review(
@@ -240,7 +276,7 @@ def evaluate_applicability_golden_corpus(
     golden: ApplicabilityGoldenCorpus,
     run_archive: Path,
 ) -> ApplicabilityGoldenRegressionReport:
-    """Measure final consensus and every available model against HITL gold."""
+    """Measure baseline majority, models, and offline ensembles against HITL gold."""
     report, _ = _load_run_inputs(run_archive)
     clauses = {
         (str(item.get("document_key")), str(item.get("clause_id"))): item
@@ -252,40 +288,165 @@ def evaluate_applicability_golden_corpus(
     if not published:
         raise ValueError("applicability golden corpus contains no published cases")
 
-    consensus_predictions: list[tuple[bool, str | None, ApplicabilityGoldenExpected]] = []
+    baseline_predictions: list[tuple[bool, str | None, ApplicabilityGoldenExpected]] = []
     model_predictions: dict[str, list[tuple[bool, str | None, ApplicabilityGoldenExpected]]] = {}
+    case_votes: dict[tuple[str, str], dict[str, tuple[bool, str | None]]] = {}
+    matched_cases: list[ApplicabilityGoldenCase] = []
     for case in published:
         clause = clauses.get((case.document_key, case.clause_id))
         if clause is None:
             continue
+        matched_cases.append(case)
         expected = case.expected
         assert expected is not None
-        consensus_present = clause.get("applicability_present")
-        if consensus_present is not None:
-            consensus_predictions.append(
-                (
-                    bool(consensus_present),
-                    clause.get("applicability_polarity"),
-                    expected,
-                )
+        baseline_present = clause.get("applicability_present")
+        if baseline_present is not None:
+            baseline_predictions.append(
+                (bool(baseline_present), clause.get("applicability_polarity"), expected)
             )
+        votes: dict[str, tuple[bool, str | None]] = {}
         for vote in clause.get("votes", []):
             model_id = str(vote.get("model_id"))
-            model_predictions.setdefault(model_id, []).append(
-                (
-                    bool(vote.get("applicability_present")),
-                    vote.get("applicability_polarity"),
-                    expected,
-                )
+            prediction = (
+                bool(vote.get("applicability_present")),
+                vote.get("applicability_polarity"),
             )
+            votes[model_id] = prediction
+            model_predictions.setdefault(model_id, []).append((*prediction, expected))
+        case_votes[(case.document_key, case.clause_id)] = votes
 
+    ensemble_specs = _available_ensemble_specs(set(model_predictions))
+    ensemble_predictions: dict[str, list[tuple[bool, str | None, ApplicabilityGoldenExpected]]] = {
+        ensemble_id: [] for ensemble_id, _ in ensemble_specs
+    }
+    ensemble_models = dict(ensemble_specs)
+    for case in matched_cases:
+        expected = case.expected
+        assert expected is not None
+        votes = case_votes[(case.document_key, case.clause_id)]
+        for ensemble_id, model_ids in ensemble_specs:
+            selected = [votes.get(model_id) for model_id in model_ids]
+            if any(prediction is None for prediction in selected):
+                continue
+            resolved = _offline_majority(tuple(prediction for prediction in selected if prediction))
+            if resolved is not None:
+                ensemble_predictions[ensemble_id].append((*resolved, expected))
+
+    errors: list[ApplicabilityCaseError] = []
+    for case in matched_cases:
+        expected = case.expected
+        assert expected is not None
+        clause = clauses[(case.document_key, case.clause_id)]
+        votes = case_votes[(case.document_key, case.clause_id)]
+        presence_votes = {model_id: value[0] for model_id, value in sorted(votes.items())}
+        baseline_present = clause.get("applicability_present")
+        if baseline_present is not None:
+            _append_presence_error(
+                errors, "baseline_majority", case, expected, bool(baseline_present), presence_votes
+            )
+        for model_id, (predicted_present, _) in sorted(votes.items()):
+            _append_presence_error(
+                errors, model_id, case, expected, predicted_present, presence_votes
+            )
+        for ensemble_id, model_ids in ensemble_specs:
+            selected = [votes.get(model_id) for model_id in model_ids]
+            if any(prediction is None for prediction in selected):
+                continue
+            resolved = _offline_majority(tuple(prediction for prediction in selected if prediction))
+            if resolved is not None:
+                _append_presence_error(
+                    errors, ensemble_id, case, expected, resolved[0], presence_votes
+                )
+
+    positive_cases = sum(bool(case.expected and case.expected.present) for case in published)
     return ApplicabilityGoldenRegressionReport(
         published_cases=len(published),
-        consensus=_metrics("consensus", consensus_predictions),
+        positive_cases=positive_cases,
+        negative_cases=len(published) - positive_cases,
+        baseline_majority=_metrics("baseline_majority", baseline_predictions),
         models=tuple(
             _metrics(model_id, predictions)
             for model_id, predictions in sorted(model_predictions.items())
         ),
+        ensembles=tuple(
+            ApplicabilityEnsembleMetrics(
+                ensemble_id=ensemble_id,
+                model_ids=ensemble_models[ensemble_id],
+                metrics=_metrics(ensemble_id, ensemble_predictions[ensemble_id]),
+            )
+            for ensemble_id, _ in ensemble_specs
+        ),
+        errors=tuple(errors),
+    )
+
+
+def _available_ensemble_specs(available: set[str]) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    candidates = (
+        (
+            "mistral-q4-q6-ministral",
+            (
+                "mistral-small-3.2-24b-instruct-q4-k-m",
+                "mistral-small-3.2-24b-instruct-q6-k",
+                "ministral-3-8b-instruct-2512-q4-k-m",
+            ),
+        ),
+        (
+            "mistral-q4-q6",
+            (
+                "mistral-small-3.2-24b-instruct-q4-k-m",
+                "mistral-small-3.2-24b-instruct-q6-k",
+            ),
+        ),
+        ("mistral-q4", ("mistral-small-3.2-24b-instruct-q4-k-m",)),
+    )
+    return tuple(spec for spec in candidates if set(spec[1]) <= available)
+
+
+def _offline_majority(
+    predictions: tuple[tuple[bool, str | None], ...],
+) -> tuple[bool, str | None] | None:
+    present = sum(prediction[0] for prediction in predictions)
+    absent = len(predictions) - present
+    if present == absent:
+        return None
+    resolved_present = present > absent
+    if not resolved_present:
+        return False, None
+    polarities = Counter(
+        _qualification_polarity(prediction[1])
+        for prediction in predictions
+        if prediction[0] and prediction[1]
+    )
+    if not polarities:
+        return True, None
+    ranked = polarities.most_common()
+    if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:
+        return True, None
+    polarity = ranked[0][0]
+    return True, polarity.value if polarity is not None else None
+
+
+def _append_presence_error(
+    errors: list[ApplicabilityCaseError],
+    evaluator_id: str,
+    case: ApplicabilityGoldenCase,
+    expected: ApplicabilityGoldenExpected,
+    predicted_present: bool,
+    presence_votes: dict[str, bool],
+) -> None:
+    if predicted_present == expected.present:
+        return
+    errors.append(
+        ApplicabilityCaseError(
+            evaluator_id=evaluator_id,
+            document_key=case.document_key,
+            clause_id=case.clause_id,
+            reference=case.reference,
+            expected_present=expected.present,
+            predicted_present=predicted_present,
+            error="false_negative" if expected.present else "false_positive",
+            presence_votes=presence_votes,
+        )
     )
 
 
@@ -294,7 +455,8 @@ def _metrics(
     predictions: list[tuple[bool, str | None, ApplicabilityGoldenExpected]],
 ) -> ApplicabilityModelMetrics:
     tp = fp = tn = fn = 0
-    polarity_total = polarity_correct = 0
+    polarity_end_to_end_total = polarity_end_to_end_correct = 0
+    polarity_given_presence_total = polarity_given_presence_correct = 0
     for predicted_present, predicted_polarity, expected in predictions:
         if expected.present and predicted_present:
             tp += 1
@@ -305,19 +467,42 @@ def _metrics(
         else:
             tn += 1
         if expected.present and expected.polarity is not None:
-            polarity_total += 1
-            polarity_correct += _qualification_polarity(predicted_polarity) == expected.polarity
+            polarity_end_to_end_total += 1
+            polarity_end_to_end_correct += (
+                _qualification_polarity(predicted_polarity) == expected.polarity
+            )
+            if predicted_present:
+                polarity_given_presence_total += 1
+                polarity_given_presence_correct += (
+                    _qualification_polarity(predicted_polarity) == expected.polarity
+                )
     precision = _ratio(tp, tp + fp, empty=1.0)
     recall = _ratio(tp, tp + fn, empty=1.0)
+    specificity = _ratio(tn, tn + fp, empty=1.0)
     total = tp + fp + tn + fn
     return ApplicabilityModelMetrics(
         model_id=model_id,
         evaluated_cases=total,
+        true_positive=tp,
+        false_positive=fp,
+        true_negative=tn,
+        false_negative=fn,
         presence_accuracy=_ratio(tp + tn, total, empty=0.0),
         presence_precision=precision,
         presence_recall=recall,
+        presence_specificity=specificity,
+        presence_balanced_accuracy=(recall + specificity) / 2,
         presence_f1=_f1(precision, recall),
-        polarity_accuracy=(polarity_correct / polarity_total if polarity_total else None),
+        polarity_end_to_end_accuracy=(
+            polarity_end_to_end_correct / polarity_end_to_end_total
+            if polarity_end_to_end_total
+            else None
+        ),
+        polarity_accuracy_given_presence=(
+            polarity_given_presence_correct / polarity_given_presence_total
+            if polarity_given_presence_total
+            else None
+        ),
     )
 
 
