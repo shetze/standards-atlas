@@ -595,6 +595,7 @@ def qualify_model_prompt_matrix(
                                     task_version=manifest.task_version,
                                     dataset_version=manifest.dataset_version,
                                     prompt_version=prompt_version,
+                                    cbox_frame=prompt.cbox_frame,
                                     provider=model.provider,
                                     model=model.model_ref,
                                     seed=repetition,

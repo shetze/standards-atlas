@@ -52,8 +52,12 @@ from standards_atlas.application.semantic_qualification.batch import (
     ProposalBatchExecutor,
     ProposalItemOutcome,
 )
+from standards_atlas.application.semantic_qualification.context_framing import (
+    frame_cbox_context,
+    resolve_cbox_frame_policy,
+)
 from standards_atlas.application.semantic_qualification.context_projection import (
-    project_cbox_context,
+    render_cbox_context,
 )
 from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
@@ -179,6 +183,7 @@ class ProposalRunConfig(BaseModel):
     task_version: str = Field(min_length=1)
     dataset_version: str = Field(min_length=1)
     prompt_version: str = Field(min_length=1)
+    cbox_frame: str = Field(default="full-context-v1", min_length=1)
     provider: str = Field(min_length=1)
     model: str = Field(min_length=1)
     temperature: float = Field(default=DEFAULT_EVALUATION_TEMPERATURE, ge=0.0, le=2.0)
@@ -218,6 +223,7 @@ def proposal_run_directory(config: ProposalRunConfig, output_root: Path) -> Path
         / "runs"
         / config.corpus_id
         / config.prompt_version
+        / _safe(config.cbox_frame)
         / _safe(config.provider)
         / _safe(config.model)
     )
@@ -427,6 +433,7 @@ class BaselineProposalGenerator:
                         "task_version": config.task_version,
                         "dataset_version": config.dataset_version,
                         "prompt_version": config.prompt_version,
+                        "cbox_frame": config.cbox_frame,
                         "provider": config.provider,
                         "model": config.model,
                     },
@@ -564,6 +571,8 @@ def _run_adaptive_interview(
         "{context_json}" in prompt.user_template or "{context_text}" in prompt.user_template
     )
     context = full_context if uses_context else {}
+    frame_policy = resolve_cbox_frame_policy(config.cbox_frame)
+    framed_context = frame_cbox_context(context, frame_policy)
     interview_input = {**dict(item_input), "context": context}
     plan = AdaptiveInterviewPlanner().plan(interview_input)
     answers: list[dict[str, Any]] = []
@@ -603,7 +612,7 @@ def _run_adaptive_interview(
                 f"Allowed labels: {', '.join(question.allowed_labels)}\n"
                 f"Selection reason: {question.reason}\n\n"
                 f"Normalized clause content:\n{content.get('text', '')}\n\n"
-                f"Contextual evidence:\n{project_cbox_context(context)}"
+                f"Contextual evidence:\n{render_cbox_context(framed_context)}"
             ),
             output_schema=focused_response_schema(question.allowed_labels),
             prompt_version=f"{config.prompt_version}:{question.id}",
@@ -617,6 +626,11 @@ def _run_adaptive_interview(
                 "dataset_version": config.dataset_version,
                 "task_version": task.version,
                 "content_hash": content.get("hash"),
+                "cbox_frame": {
+                    "id": framed_context.policy_id,
+                    "version": framed_context.policy_version,
+                },
+                "framed_cbox": dict(framed_context.values),
                 "clause_context": context,
                 "interview_question": question.model_dump(mode="json"),
             },

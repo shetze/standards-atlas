@@ -9,8 +9,12 @@ from typing import Any
 from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.ports.llm_gateway import StructuredGenerationRequest
 from standards_atlas.application.semantic_qualification.annotations import ClauseReference
+from standards_atlas.application.semantic_qualification.context_framing import (
+    frame_cbox_context,
+    resolve_cbox_frame_policy,
+)
 from standards_atlas.application.semantic_qualification.context_projection import (
-    project_cbox_context,
+    render_cbox_context,
 )
 
 
@@ -23,11 +27,14 @@ def build_proposal_request(
     """Build one structured-generation request from a corpus item."""
     content = dict(item_input.get("content", {}))
     context = dict(item_input.get("context", {}))
+    frame_name = getattr(config, "cbox_frame", "full-context-v1")
+    frame_policy = resolve_cbox_frame_policy(frame_name)
+    framed_context = frame_cbox_context(context, frame_policy)
     values = {
         "content": content.get("text", ""),
         "content_hash": content.get("hash", ""),
-        "context_json": json.dumps(context, ensure_ascii=False, sort_keys=True),
-        "context_text": project_cbox_context(context),
+        "context_json": json.dumps(framed_context.values, ensure_ascii=False, sort_keys=True),
+        "context_text": render_cbox_context(framed_context),
         **context,
     }
     try:
@@ -50,6 +57,11 @@ def build_proposal_request(
             "dataset_version": config.dataset_version,
             "task_version": task.version,
             "content_hash": content.get("hash"),
+            "cbox_frame": {
+                "id": framed_context.policy_id,
+                "version": framed_context.policy_version,
+            },
+            "framed_cbox": dict(framed_context.values),
             "clause_context": context,
         },
     )

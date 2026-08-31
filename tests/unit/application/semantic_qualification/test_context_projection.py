@@ -236,3 +236,14 @@ def test_framing_does_not_expose_opaque_or_bookkeeping_fields() -> None:
     assert "opaque" not in serialized
     assert "eligibility" not in frame.values
     assert "structural_roles" not in frame.values
+
+
+def test_versioned_cbox_frame_identifier_resolves_full_context_policy() -> None:
+    from standards_atlas.application.semantic_qualification.context_framing import (
+        FULL_CONTEXT_V1,
+        cbox_frame_key,
+        resolve_cbox_frame_policy,
+    )
+
+    assert cbox_frame_key(FULL_CONTEXT_V1) == "full-context-v1"
+    assert resolve_cbox_frame_policy("full-context-v1") is FULL_CONTEXT_V1

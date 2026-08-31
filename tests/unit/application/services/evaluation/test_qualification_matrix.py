@@ -1360,3 +1360,12 @@ def test_v5_production_cascade_executes_only_consensus_prompts() -> None:
         "content-only",
         "bounded-reasoning",
     }
+
+
+def test_prompt_candidate_defaults_to_versioned_full_context_frame() -> None:
+    assert PromptCandidate(id="structure-aware").cbox_frame == "full-context-v1"
+
+
+def test_prompt_candidate_rejects_unknown_cbox_frame() -> None:
+    with pytest.raises(ValueError, match="unknown CBox frame"):
+        PromptCandidate(id="structure-aware", cbox_frame="missing-v1")

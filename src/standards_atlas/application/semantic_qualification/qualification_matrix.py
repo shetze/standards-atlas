@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from standards_atlas.application.semantic_qualification.qualification import (
     AnnotationQualificationReport,
@@ -39,6 +39,17 @@ class PromptCandidate(BaseModel):
     prompt_version: str | None = None
     max_output_tokens: int = Field(default=512, gt=0)
     adaptive_interview: bool = False
+    cbox_frame: str = "full-context-v1"
+
+    @field_validator("cbox_frame")
+    @classmethod
+    def _validate_cbox_frame(cls, value: str) -> str:
+        from standards_atlas.application.semantic_qualification.context_framing import (
+            resolve_cbox_frame_policy,
+        )
+
+        resolve_cbox_frame_policy(value)
+        return value
 
 
 def resolve_prompt_version(

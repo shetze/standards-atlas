@@ -623,3 +623,30 @@ def test_proposal_run_can_restrict_examples_for_cascade(tmp_path: Path) -> None:
     assert result.generated == 1
     assert (result.run_directory / "clause-2" / "evaluation.yaml").exists()
     assert not (result.run_directory / "clause-0").exists()
+
+
+def test_proposal_run_directory_isolated_by_cbox_frame(tmp_path: Path) -> None:
+    from standards_atlas.application.semantic_qualification.proposals import proposal_run_directory
+
+    config = ProposalRunConfig(
+        corpus_id="semantic-roles-v1",
+        task="statement-function-classification",
+        task_version="1.0.0",
+        dataset_version="1.0.0",
+        prompt_version="structure-aware-v6",
+        cbox_frame="full-context-v1",
+        provider="fake",
+        model="test-model",
+    )
+
+    run_dir = proposal_run_directory(config, tmp_path)
+
+    assert run_dir == (
+        tmp_path
+        / "runs"
+        / "semantic-roles-v1"
+        / "structure-aware-v6"
+        / "full-context-v1"
+        / "fake"
+        / "test-model"
+    )

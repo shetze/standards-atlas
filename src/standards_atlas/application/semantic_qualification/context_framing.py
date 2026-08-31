@@ -45,6 +45,23 @@ class FramedCBoxContext:
 FULL_CONTEXT_V1 = CBoxFramePolicy(id="full-context", version="1")
 
 
+def cbox_frame_key(policy: CBoxFramePolicy) -> str:
+    """Return the stable external identifier of a CBox frame policy."""
+    return f"{policy.id}-v{policy.version}"
+
+
+_CBOX_FRAME_POLICIES = {cbox_frame_key(FULL_CONTEXT_V1): FULL_CONTEXT_V1}
+
+
+def resolve_cbox_frame_policy(frame: str) -> CBoxFramePolicy:
+    """Resolve a versioned external frame identifier to its policy."""
+    try:
+        return _CBOX_FRAME_POLICIES[frame]
+    except KeyError as exc:
+        available = ", ".join(sorted(_CBOX_FRAME_POLICIES))
+        raise ValueError(f"unknown CBox frame {frame!r}; available frames: {available}") from exc
+
+
 def frame_cbox_context(
     context: Mapping[str, Any],
     policy: CBoxFramePolicy = FULL_CONTEXT_V1,
