@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any, Literal
 from zipfile import ZipFile
@@ -14,6 +15,15 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.semantic_qualification.applicability_contract import (
     ApplicabilityPolarity,
+)
+from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
+    PREDICTION_SNAPSHOT_FILENAME,
+    ApplicabilityPrediction,
+    ApplicabilityPredictionSnapshot,
+    _baseline,
+    _collapsed_predictions,
+    _dataset_details,
+    _find_member,
 )
 
 
@@ -250,13 +260,15 @@ def evaluate_applicability_golden_corpus(
             continue
         expected = case.expected
         assert expected is not None
-        consensus_predictions.append(
-            (
-                bool(clause.get("applicability_present")),
-                clause.get("applicability_polarity"),
-                expected,
+        consensus_present = clause.get("applicability_present")
+        if consensus_present is not None:
+            consensus_predictions.append(
+                (
+                    bool(consensus_present),
+                    clause.get("applicability_polarity"),
+                    expected,
+                )
             )
-        )
         for vote in clause.get("votes", []):
             model_id = str(vote.get("model_id"))
             model_predictions.setdefault(model_id, []).append(
@@ -311,9 +323,100 @@ def _metrics(
 
 def _load_run_inputs(run_archive: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     with ZipFile(run_archive) as archive:
-        report = json.loads(archive.read("reports/consensus-report.json"))
         manifest = yaml.safe_load(archive.read("configuration/qualification-manifest.yaml")) or {}
-    return report, manifest
+        snapshot_name = _find_member(archive, PREDICTION_SNAPSHOT_FILENAME)
+        if snapshot_name is None:
+            raise ValueError(
+                "qualification run does not contain clause-level applicability predictions; "
+                "rerun qualification with the current archive schema"
+            )
+        snapshot = ApplicabilityPredictionSnapshot.model_validate_json(archive.read(snapshot_name))
+        dataset = json.loads(archive.read("inputs/corpus/dataset.json"))
+
+    presence_eligible = {
+        str(model.get("id"))
+        for model in manifest.get("models", [])
+        if bool((model.get("dimension_eligibility") or {}).get("applicability_presence", True))
+    }
+    polarity_eligible = {
+        str(model.get("id"))
+        for model in manifest.get("models", [])
+        if bool((model.get("dimension_eligibility") or {}).get("applicability_polarity", True))
+    }
+    baseline_prompt, baseline_frame = _baseline(snapshot)
+    baseline = _collapsed_predictions(
+        snapshot,
+        prompt_id=baseline_prompt,
+        cbox_frame=baseline_frame,
+        eligible=presence_eligible,
+    )
+    details = _dataset_details(dataset)
+    clause_keys = sorted({key for predictions in baseline.values() for key in predictions})
+    clauses: list[dict[str, Any]] = []
+    for clause_key in clause_keys:
+        votes = {
+            model_id: predictions[clause_key]
+            for model_id, predictions in baseline.items()
+            if clause_key in predictions
+        }
+        if not votes:
+            continue
+        first = next(iter(votes.values()))
+        reference, text = details.get(
+            (first.document_key, first.clause_id),
+            (first.clause_id, ""),
+        )
+        consensus_present = _presence_consensus(tuple(votes.values()))
+        consensus_polarity = (
+            _polarity_consensus(votes, eligible=polarity_eligible)
+            if consensus_present is True
+            else None
+        )
+        clauses.append(
+            {
+                "clause_id": first.clause_id,
+                "document_key": first.document_key,
+                "reference": reference,
+                "clause_text": text,
+                "applicability_present": consensus_present,
+                "applicability_polarity": consensus_polarity,
+                "votes": [
+                    {
+                        "model_id": model_id,
+                        "applicability_present": prediction.present,
+                        "applicability_polarity": prediction.polarity,
+                    }
+                    for model_id, prediction in sorted(votes.items())
+                ],
+            }
+        )
+    return {"clauses": clauses}, manifest
+
+
+def _presence_consensus(predictions: tuple[ApplicabilityPrediction, ...]) -> bool | None:
+    present = sum(prediction.present for prediction in predictions)
+    absent = len(predictions) - present
+    if present == absent:
+        return None
+    return present > absent
+
+
+def _polarity_consensus(
+    predictions: dict[str, ApplicabilityPrediction],
+    *,
+    eligible: set[str],
+) -> str | None:
+    counts = Counter(
+        prediction.polarity
+        for model_id, prediction in predictions.items()
+        if model_id in eligible and prediction.present and prediction.polarity is not None
+    )
+    if not counts:
+        return None
+    ranked = counts.most_common()
+    if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:
+        return None
+    return ranked[0][0]
 
 
 def _qualified_reference(clause: dict[str, Any]) -> str:

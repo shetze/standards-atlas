@@ -19,85 +19,73 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
 
 
 def _run_archive(path: Path) -> Path:
-    report = {
-        "clauses": [
+    clauses = (
+        ("c1", "This requirement applies to new systems."),
+        ("c2", "The analysis shall be performed if requested."),
+        ("c3", "This part applies to A but does not apply to B."),
+    )
+    predictions = {
+        "a": ((True, "included"), (False, None), (True, "included")),
+        "b": ((False, None), (False, None), (True, "excluded")),
+        "c": ((True, "included"), (False, None), (True, "included")),
+        "ignored": ((False, None), (False, None), (False, None)),
+    }
+    snapshot = {
+        "schema_version": "1.0",
+        "matrix_id": "applicability-test-matrix",
+        "observations": [
             {
-                "clause_id": "c1",
-                "document_key": "DOC",
-                "reference": "DOC:1",
-                "clause_text": "This requirement applies to new systems.",
-                "applicability_present": True,
-                "applicability_polarity": "included",
-                "votes": [
+                "prompt_id": "applicability-clean-full",
+                "cbox_frame": "full-context-v1",
+                "model_id": model_id,
+                "reasoning_mode_id": "disabled",
+                "repetition": 1,
+                "predictions": [
                     {
-                        "model_id": "a",
-                        "applicability_present": True,
-                        "applicability_polarity": "included",
-                    },
-                    {
-                        "model_id": "b",
-                        "applicability_present": False,
-                        "applicability_polarity": None,
-                    },
-                    {
-                        "model_id": "ignored",
-                        "applicability_present": False,
-                        "applicability_polarity": None,
-                    },
+                        "clause_key": f"DOC/{clause_id}",
+                        "document_key": "DOC",
+                        "clause_id": clause_id,
+                        "present": values[index][0],
+                        "polarity": values[index][1],
+                        "confidence": 0.9,
+                    }
+                    for index, (clause_id, _) in enumerate(clauses)
                 ],
-            },
+            }
+            for model_id, values in predictions.items()
+        ],
+    }
+    dataset = {
+        "examples": [
             {
-                "clause_id": "c2",
-                "document_key": "DOC",
-                "reference": "DOC:2",
-                "clause_text": "The analysis shall be performed if requested.",
-                "applicability_present": False,
-                "applicability_polarity": None,
-                "votes": [
-                    {
-                        "model_id": "a",
-                        "applicability_present": False,
-                        "applicability_polarity": None,
+                "id": clause_id,
+                "input": {
+                    "context": {
+                        "document_key": "DOC",
+                        "clause_id": clause_id,
+                        "reference": clause_id[1:],
                     },
-                    {
-                        "model_id": "b",
-                        "applicability_present": False,
-                        "applicability_polarity": None,
-                    },
-                ],
-            },
-            {
-                "clause_id": "c3",
-                "document_key": "DOC",
-                "reference": "DOC:3",
-                "clause_text": "This part applies to A but does not apply to B.",
-                "applicability_present": True,
-                "applicability_polarity": "included",
-                "votes": [
-                    {
-                        "model_id": "a",
-                        "applicability_present": True,
-                        "applicability_polarity": "included",
-                    },
-                    {
-                        "model_id": "b",
-                        "applicability_present": True,
-                        "applicability_polarity": "excluded",
-                    },
-                ],
-            },
+                    "content": {"text": text},
+                },
+            }
+            for clause_id, text in clauses
         ]
     }
     manifest = {
         "models": [
             {"id": "a"},
             {"id": "b"},
+            {"id": "c"},
             {"id": "ignored", "dimension_eligibility": {"applicability_presence": False}},
         ]
     }
     with ZipFile(path, "w", compression=ZIP_DEFLATED) as archive:
-        archive.writestr("reports/consensus-report.json", json.dumps(report))
         archive.writestr("configuration/qualification-manifest.yaml", yaml.safe_dump(manifest))
+        archive.writestr("inputs/corpus/dataset.json", json.dumps(dataset))
+        archive.writestr(
+            "applicability-test-matrix/applicability-predictions.json",
+            json.dumps(snapshot),
+        )
     return path
 
 
@@ -127,6 +115,8 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
     metrics = {item.model_id: item for item in report.models}
     assert metrics["a"].presence_accuracy == 1.0
     assert metrics["b"].presence_accuracy == 0.0
+    assert metrics["c"].presence_accuracy == 1.0
+    assert "ignored" not in metrics
 
 
 def test_applicability_golden_contract_rejects_legacy_subtype_fields() -> None:
