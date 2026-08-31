@@ -18,7 +18,8 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 ### Formal semantics and GraphRAG foundation
 
 - Introduced a provider-neutral **Formal Semantic & Context Model** with versioned Standards Atlas Core and Functional Safety OWL ontologies.
-- Added deterministic **ABox/CBox projection** from canonical `EngineeringDocument` data, covering document structure, Knowledge Domains, semantic taxonomy context, applicability, normative context, lineage, and resolved relations.
+- Added deterministic **ABox/CBox projection** from canonical `EngineeringDocument` data, covering document structure, Knowledge Domains, semantic taxonomy context, applicability, normative context, lineage, resolved relations, and standard-defined primary-subject context.
+- Added an open subject vocabulary from AtlasData terms and deterministic clause subject identification; `Enrich Document Context` now materializes the resulting subject context for every clause while retaining LLM routing only for scope/reference candidates.
 - Added ontology-guided concept and relation extraction constrained to declared OWL classes and properties, with confidence and provenance kept in rebuildable semantic-extraction artifacts rather than canonical documents.
 - Integrated semantic extraction into qualification, including ontology-conformance checks, per-clause failure isolation, bounded retries/timeouts, progress reporting, undeclared-term diagnostics, and archival of extraction evidence.
 - Refined the Functional Safety ontology from qualification evidence with explicit part/whole relations and additional system, requirement, specification, quantity, fault, error, and failure concepts.

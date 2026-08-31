@@ -20,6 +20,9 @@ class _FakeClassificationResult:
     document: object
     clauses_enriched: int
     candidates: int = 0
+    subject_clauses: int = 0
+    subjects_identified: int = 0
+    subjects_ambiguous: int = 0
     context_enrichment_failures: int = 0
 
 

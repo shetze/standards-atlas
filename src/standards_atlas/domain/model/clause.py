@@ -27,6 +27,10 @@ from standards_atlas.domain.model.semantic_classification import (
 )
 from standards_atlas.domain.model.structural_context import StructuralContext
 from standards_atlas.domain.model.structural_profile import StructuralProfile
+from standards_atlas.domain.model.subject_context import (
+    ClauseSubjectContext,
+    PrimarySubjectContext,
+)
 
 
 class ClauseType(StrEnum):
@@ -75,6 +79,7 @@ class ClauseEnrichments(BaseModel):
 
     semantic: SemanticClassification = SemanticClassification()
     context_routing: ContextRouting = ContextRouting()
+    subject_context: ClauseSubjectContext = ClauseSubjectContext()
 
 
 class Clause(BaseModel):
@@ -100,7 +105,7 @@ class Clause(BaseModel):
     def normalize_constructor_shape(cls, data: Any) -> Any:
         """Normalize in-process flat construction to the canonical nested shape.
 
-        Persisted EngineeringDocument schema v7 only writes the nested shape.
+        Persisted EngineeringDocument schema v8 only writes the nested shape.
         This normalizer keeps Python construction concise while the refactoring
         migrates call sites; it is not a reader compatibility promise for older
         persisted schema versions.
@@ -135,6 +140,16 @@ class Clause(BaseModel):
     def context_routing(self) -> ContextRouting:
         """Return derived CBox routing enrichment (read-only convenience projection)."""
         return self.enrichments.context_routing
+
+    @property
+    def primary_subject(self) -> PrimarySubjectContext | None:
+        """Return the deterministic primary subject when one is available."""
+        return self.enrichments.subject_context.primary_subject
+
+    @property
+    def subject_context(self) -> ClauseSubjectContext:
+        """Return deterministic subject-oriented CBox enrichment."""
+        return self.enrichments.subject_context
 
     @property
     def structural_profile(self) -> StructuralProfile | None:
@@ -207,6 +222,16 @@ class Clause(BaseModel):
         """Return a clause with replaced contextual routing enrichment."""
         return self.model_copy(
             update={"enrichments": self.enrichments.model_copy(update={"context_routing": routing})}
+        )
+
+    def with_subject_context(self, subject_context: ClauseSubjectContext) -> Clause:
+        """Return a clause with replaced deterministic subject context."""
+        return self.model_copy(
+            update={
+                "enrichments": self.enrichments.model_copy(
+                    update={"subject_context": subject_context}
+                )
+            }
         )
 
     def mark_generated(self, *attributes: GeneratedAttribute) -> Clause:

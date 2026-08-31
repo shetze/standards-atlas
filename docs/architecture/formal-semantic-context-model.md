@@ -27,7 +27,7 @@ The model distinguishes four logical boxes.
 
 A context frame groups facets from three independent sources:
 
-- **semantic context**: Knowledge Domains, domain functions, applicability, lifecycle or integrity-level interpretation;
+- **semantic context**: Knowledge Domains, domain functions, applicability, deterministic primary subject, lifecycle or integrity-level interpretation;
 - **structural context**: document identity, parent/ancestor hierarchy, sibling position, node/leaf status, scope reach, resolved references;
 - **epistemic context**: taxonomy/ontology versions, extraction or classification source, model or rule identity, confidence, qualification and review provenance.
 
@@ -112,7 +112,7 @@ The vocabulary namespace remains stable while ontology IRIs are versioned. Concr
 
 Slice 3 adds deterministic ABox/CBox projection from `EngineeringDocument`. The projection materializes only facts already present in the canonical document, semantic classification, structural context and lineage; it does not infer new engineering concepts and does not duplicate protected clause body text.
 
-The current projection uses `standards-atlas-core@1.1.0` and, when Functional Safety context is present, `functional-safety@1.1.0`. A Turtle adapter emits direct RDF triples plus reified `stat:SemanticAssertion` and explicit context-facet resources. The provider-neutral projection can also be persisted as versioned JSON under `.atlas/data/formal-semantic-projections/`.
+The current projection uses `standards-atlas-core@1.2.0` and, when Functional Safety context is present, `functional-safety@1.2.0`. The core CBox vocabulary includes deterministic `primarySubject`, `subjectConfidence`, and `subjectEvidenceKind` facets. A Turtle adapter emits direct RDF triples plus reified `stat:SemanticAssertion` and explicit context-facet resources. The provider-neutral projection can also be persisted as versioned JSON under `.atlas/data/formal-semantic-projections/`.
 
 Slice 4 adds ontology-guided concept and relation extraction as a separate, rebuildable artifact. Existing Knowledge Domain and semantic-taxonomy results act as deterministic eligibility signals. Extractors are constrained to classes and properties declared by the selected formal ontologies, while each inferred assertion carries an epistemic CBox context with confidence and extraction provenance. `EngineeringDocument` remains unchanged. Unknown classes or properties returned by an extractor are rejected non-fatally and retained as extraction violations for qualification; rejected terms never enter the ABox. The extraction prompt receives the selected ontology classes and properties as closed vocabularies, but runtime validation remains authoritative.
 

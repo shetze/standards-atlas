@@ -31,6 +31,7 @@ class CBoxFramePolicy:
     scope_routing: bool = True
     reference_routing: bool = True
     reference_mentions: bool = True
+    primary_subject: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,6 +58,7 @@ APPLICABILITY_MINIMAL_V1 = CBoxFramePolicy(
     scope_routing=False,
     reference_routing=False,
     reference_mentions=False,
+    primary_subject=False,
 )
 
 APPLICABILITY_ISOLATED_V1 = CBoxFramePolicy(
@@ -73,6 +75,7 @@ APPLICABILITY_ISOLATED_V1 = CBoxFramePolicy(
     scope_routing=False,
     reference_routing=False,
     reference_mentions=False,
+    primary_subject=False,
 )
 
 
@@ -152,6 +155,11 @@ def frame_cbox_context(
         if mentions:
             values["reference_mentions"] = mentions
 
+    if policy.primary_subject:
+        subject = _frame_subject_context(_mapping(context.get("subject_context")))
+        if subject:
+            values["subject_context"] = subject
+
     return FramedCBoxContext(
         policy_id=policy.id,
         policy_version=policy.version,
@@ -208,6 +216,27 @@ def _frame_ancestor(ancestor: Mapping[str, Any], policy: CBoxFramePolicy) -> dic
         _copy_if_present(ancestor, framed, "reference")
     if policy.ancestor_heading:
         _copy_if_present(ancestor, framed, "heading")
+    return framed
+
+
+def _frame_subject_context(subject_context: Mapping[str, Any]) -> dict[str, Any]:
+    primary = _mapping(subject_context.get("primary_subject"))
+    framed: dict[str, Any] = {}
+    if primary:
+        selected = _selected(primary, "normalized_label", "confidence")
+        evidence = _selected(
+            _mapping(primary.get("evidence")),
+            "kind",
+            "source_clause_id",
+            "ancestor_distance",
+        )
+        if evidence:
+            selected["evidence"] = evidence
+        if selected:
+            framed["primary_subject"] = selected
+    ambiguous = list(_sequence(subject_context.get("ambiguous_candidates")))
+    if ambiguous:
+        framed["ambiguous_candidates"] = ambiguous
     return framed
 
 

@@ -1,0 +1,132 @@
+@prefix stat: <http://lunetix.org/standards-atlas#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://lunetix.org/standards-atlas/core> a owl:Ontology ;
+    owl:versionIRI <http://lunetix.org/standards-atlas/core/1.2.0> ;
+    owl:versionInfo "1.2.0" .
+
+stat:StandardsEntity a owl:Class .
+stat:Standard a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:StandardPart a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:Clause a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:Annex a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:SemanticAssertion a owl:Class .
+stat:ContextFrame a owl:Class .
+stat:SemanticContext a owl:Class ; rdfs:subClassOf stat:ContextFrame .
+stat:StructuralContext a owl:Class ; rdfs:subClassOf stat:ContextFrame .
+stat:EpistemicContext a owl:Class ; rdfs:subClassOf stat:ContextFrame .
+stat:KnowledgeDomain a owl:Class .
+stat:EngineeringEntity a owl:Class .
+stat:EngineeringConcept a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:Requirement a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:Specification a owl:Class ; rdfs:subClassOf stat:Artifact .
+stat:InterfaceSpecification a owl:Class ; rdfs:subClassOf stat:Specification .
+stat:EngineeringQuantity a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:Metric a owl:Class ; rdfs:subClassOf stat:EngineeringQuantity .
+stat:Parameter a owl:Class ; rdfs:subClassOf stat:EngineeringQuantity .
+stat:Rate a owl:Class ; rdfs:subClassOf stat:EngineeringQuantity .
+stat:TimeInterval a owl:Class ; rdfs:subClassOf stat:EngineeringQuantity .
+stat:Process a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:Activity a owl:Class ; rdfs:subClassOf stat:Process .
+stat:Artifact a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:EvidenceArtifact a owl:Class ; rdfs:subClassOf stat:Artifact .
+stat:Role a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:TechniqueOrMeasure a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:SystemEntity a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+stat:System a owl:Class ; rdfs:subClassOf stat:SystemEntity .
+stat:Subsystem a owl:Class ; rdfs:subClassOf stat:SystemEntity .
+stat:Element a owl:Class ; rdfs:subClassOf stat:SystemEntity .
+stat:HardwareComponent a owl:Class ; rdfs:subClassOf stat:Element .
+stat:SoftwareElement a owl:Class ; rdfs:subClassOf stat:Element .
+stat:IntegrityLevel a owl:Class ; rdfs:subClassOf stat:EngineeringEntity .
+
+stat:hasPart a owl:ObjectProperty .
+stat:partOf a owl:ObjectProperty ; owl:inverseOf stat:hasPart .
+stat:containsClause a owl:ObjectProperty ;
+    rdfs:subPropertyOf stat:hasPart ;
+    rdfs:domain stat:StandardsEntity ;
+    rdfs:range stat:Clause .
+stat:hasParentClause a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:Clause .
+stat:precedesClause a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:Clause .
+stat:expresses a owl:ObjectProperty ; rdfs:domain stat:Clause .
+stat:describes a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:EngineeringEntity .
+stat:requires a owl:ObjectProperty ; rdfs:domain stat:EngineeringEntity ; rdfs:range stat:EngineeringEntity .
+stat:produces a owl:ObjectProperty ; rdfs:domain stat:Process ; rdfs:range stat:Artifact .
+stat:performedBy a owl:ObjectProperty ; rdfs:domain stat:Activity ; rdfs:range stat:Role .
+stat:appliesTo a owl:ObjectProperty .
+stat:inKnowledgeDomain a owl:ObjectProperty ; rdfs:range stat:KnowledgeDomain .
+stat:qualifiedByContext a owl:ObjectProperty ; rdfs:range stat:ContextFrame .
+stat:derivedFrom a owl:ObjectProperty .
+stat:references a owl:ObjectProperty .
+stat:refines a owl:ObjectProperty .
+stat:implements a owl:ObjectProperty .
+stat:providesEvidenceFor a owl:ObjectProperty .
+stat:dependsOn a owl:ObjectProperty .
+
+
+# Slice 3 projection vocabulary.
+stat:EngineeringDocument a owl:Class ; rdfs:subClassOf stat:StandardsEntity .
+stat:ContextFacet a owl:Class .
+
+stat:assertionSubject a owl:ObjectProperty ; rdfs:domain stat:SemanticAssertion .
+stat:assertionPredicate a owl:ObjectProperty ; rdfs:domain stat:SemanticAssertion .
+stat:assertionObject a rdf:Property ; rdfs:domain stat:SemanticAssertion .
+stat:hasContextFacet a owl:ObjectProperty ; rdfs:domain stat:ContextFrame ; rdfs:range stat:ContextFacet .
+stat:facetPredicate a owl:ObjectProperty ; rdfs:domain stat:ContextFacet .
+stat:facetValue a rdf:Property ; rdfs:domain stat:ContextFacet .
+
+stat:documentKey a owl:DatatypeProperty .
+stat:referenceText a owl:DatatypeProperty .
+stat:title a owl:DatatypeProperty .
+stat:documentType a owl:DatatypeProperty .
+stat:publicationYear a owl:DatatypeProperty .
+stat:documentVersion a owl:DatatypeProperty .
+stat:clauseType a owl:DatatypeProperty .
+stat:statementFunction a owl:DatatypeProperty .
+stat:knowledgeKind a owl:DatatypeProperty .
+stat:processFunction a owl:DatatypeProperty .
+stat:applicabilityPresent a owl:DatatypeProperty .
+stat:applicabilityFunction a owl:DatatypeProperty .
+stat:primarySubject a owl:DatatypeProperty .
+stat:subjectConfidence a owl:DatatypeProperty .
+stat:subjectEvidenceKind a owl:DatatypeProperty .
+stat:roleSemanticsPresent a owl:DatatypeProperty .
+stat:roleRelationClass a owl:DatatypeProperty .
+stat:normativeStatus a owl:DatatypeProperty .
+stat:domainFunction a owl:DatatypeProperty .
+stat:taxonomyVersion a owl:DatatypeProperty .
+stat:canonicalSection a owl:DatatypeProperty .
+stat:documentCategory a owl:DatatypeProperty .
+stat:domainCategory a owl:DatatypeProperty .
+stat:annexStatus a owl:DatatypeProperty .
+stat:nodeKind a owl:DatatypeProperty .
+stat:siblingIndex a owl:DatatypeProperty .
+stat:siblingCount a owl:DatatypeProperty .
+stat:sourceArtifactId a owl:DatatypeProperty .
+stat:sourceArtifactHash a owl:DatatypeProperty .
+stat:contextKind a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:facetLiteralValue a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:facetSource a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:semanticBox a owl:DatatypeProperty ; rdfs:domain stat:SemanticAssertion .
+stat:evidenceId a owl:DatatypeProperty ; rdfs:domain stat:SemanticAssertion .
+stat:projectionRuleVersion a owl:DatatypeProperty .
+stat:normativeReferences a owl:ObjectProperty ; rdfs:subPropertyOf stat:references .
+stat:informativeReferences a owl:ObjectProperty ; rdfs:subPropertyOf stat:references .
+stat:conflictsWith a owl:ObjectProperty .
+stat:equivalentTo a owl:ObjectProperty .
+stat:verifies a owl:ObjectProperty .
+stat:validates a owl:ObjectProperty .
+
+# Slice 4 ontology-guided semantic extraction vocabulary.
+stat:confidence a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:extractionRationale a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:extractor a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:extractorVersion a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:modelIdentifier a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:providerIdentifier a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:promptVersion a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:inputHash a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
+stat:rawResponseHash a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .

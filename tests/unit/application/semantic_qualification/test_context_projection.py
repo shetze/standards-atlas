@@ -308,3 +308,40 @@ def test_versioned_applicability_frame_identifiers_resolve() -> None:
 
     assert resolve_cbox_frame_policy("applicability-minimal-v1") is APPLICABILITY_MINIMAL_V1
     assert resolve_cbox_frame_policy("applicability-isolated-v1") is APPLICABILITY_ISOLATED_V1
+
+
+def test_full_cbox_projects_primary_subject_but_minimal_frame_omits_it() -> None:
+    from standards_atlas.application.semantic_qualification.context_framing import (
+        APPLICABILITY_MINIMAL_V1,
+        FULL_CONTEXT_V1,
+        frame_cbox_context,
+    )
+    from standards_atlas.application.semantic_qualification.context_projection import (
+        render_cbox_context,
+    )
+
+    context = {
+        "document_key": "EN50126-1",
+        "reference": "6.2",
+        "subject_context": {
+            "primary_subject": {
+                "normalized_label": "system under consideration",
+                "confidence": 0.9,
+                "evidence": {
+                    "kind": "ancestor_heading",
+                    "source_clause_id": "parent",
+                    "ancestor_distance": 1,
+                },
+            },
+            "ambiguous_candidates": [],
+        },
+    }
+
+    full = frame_cbox_context(context, FULL_CONTEXT_V1)
+    minimal = frame_cbox_context(context, APPLICABILITY_MINIMAL_V1)
+
+    assert full.values["subject_context"]["primary_subject"]["normalized_label"] == (
+        "system under consideration"
+    )
+    assert "Primary subject context: system under consideration." in render_cbox_context(full)
+    assert "subject_context" not in minimal.values

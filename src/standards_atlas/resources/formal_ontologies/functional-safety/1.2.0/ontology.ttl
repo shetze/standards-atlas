@@ -1,0 +1,42 @@
+@prefix stat: <http://lunetix.org/standards-atlas#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://lunetix.org/standards-atlas/functional-safety> a owl:Ontology ;
+    owl:imports <http://lunetix.org/standards-atlas/core/1.2.0> ;
+    owl:versionIRI <http://lunetix.org/standards-atlas/functional-safety/1.2.0> ;
+    owl:versionInfo "1.2.0" .
+
+stat:FunctionalSafety a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:SafetyLifecycle a owl:Class ; rdfs:subClassOf stat:Process .
+stat:SafetyLifecyclePhase a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:SafetyActivity a owl:Class ; rdfs:subClassOf stat:Activity .
+stat:AssuranceActivity a owl:Class ; rdfs:subClassOf stat:SafetyActivity .
+stat:VerificationActivity a owl:Class ; rdfs:subClassOf stat:AssuranceActivity .
+stat:ValidationActivity a owl:Class ; rdfs:subClassOf stat:AssuranceActivity .
+stat:AssessmentActivity a owl:Class ; rdfs:subClassOf stat:AssuranceActivity .
+stat:SafetyRequirement a owl:Class ; rdfs:subClassOf stat:Requirement .
+stat:Fault a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:Error a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:Failure a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:SafetyMechanism a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:SafetyState a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:HazardousEvent a owl:Class ; rdfs:subClassOf stat:EngineeringConcept .
+stat:SafetyPlan a owl:Class ; rdfs:subClassOf stat:Artifact .
+stat:VerificationReport a owl:Class ; rdfs:subClassOf stat:EvidenceArtifact .
+stat:ValidationReport a owl:Class ; rdfs:subClassOf stat:EvidenceArtifact .
+stat:AssessmentReport a owl:Class ; rdfs:subClassOf stat:EvidenceArtifact .
+stat:SafetyEvidence a owl:Class ; rdfs:subClassOf stat:EvidenceArtifact .
+stat:SafetyRole a owl:Class ; rdfs:subClassOf stat:Role .
+stat:Verifier a owl:Class ; rdfs:subClassOf stat:SafetyRole .
+stat:Validator a owl:Class ; rdfs:subClassOf stat:SafetyRole .
+stat:Assessor a owl:Class ; rdfs:subClassOf stat:SafetyRole .
+stat:SafetyTechniqueOrMeasure a owl:Class ; rdfs:subClassOf stat:TechniqueOrMeasure .
+stat:SafetyIntegrityLevel a owl:Class ; rdfs:subClassOf stat:IntegrityLevel .
+
+stat:hasLifecyclePhase a owl:ObjectProperty ; rdfs:domain stat:SafetyLifecycle ; rdfs:range stat:SafetyLifecyclePhase .
+stat:hasIntegrityLevel a owl:ObjectProperty ; rdfs:range stat:SafetyIntegrityLevel .
+stat:requiresTechnique a owl:ObjectProperty ; rdfs:range stat:SafetyTechniqueOrMeasure .
+stat:verifies a owl:ObjectProperty ; rdfs:domain stat:VerificationActivity .
+stat:validates a owl:ObjectProperty ; rdfs:domain stat:ValidationActivity .
+stat:assesses a owl:ObjectProperty ; rdfs:domain stat:AssessmentActivity .

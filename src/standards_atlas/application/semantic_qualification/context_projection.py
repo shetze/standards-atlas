@@ -84,6 +84,16 @@ def render_cbox_context(frame: FramedCBoxContext) -> str:
     if semantic_sections:
         lines.append("Semantic section context: " + ", ".join(semantic_sections) + ".")
 
+    subject_context = _mapping(context.get("subject_context"))
+    primary_subject = _mapping(subject_context.get("primary_subject"))
+    subject_label = _text(primary_subject.get("normalized_label"))
+    if subject_label:
+        lines.append(f"Primary subject context: {subject_label}.")
+    elif _sequence(subject_context.get("ambiguous_candidates")):
+        ambiguous = _strings(subject_context.get("ambiguous_candidates"))
+        if ambiguous:
+            lines.append("Ambiguous subject candidates: " + ", ".join(ambiguous) + ".")
+
     routing = _mapping(context.get("context_routing"))
     lines.extend(_project_scope_routing(routing.get("scopes")))
     lines.extend(_project_reference_routing(routing.get("references")))

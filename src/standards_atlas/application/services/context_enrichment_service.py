@@ -1,4 +1,4 @@
-"""Materialize CBox-oriented scope and reference routing enrichment."""
+"""Materialize deterministic subject context plus scope/reference routing."""
 
 from __future__ import annotations
 
@@ -9,6 +9,11 @@ from dataclasses import dataclass, replace
 
 from pydantic import BaseModel, ConfigDict
 
+from standards_atlas.application.context import (
+    ClauseSubjectIdentification,
+    DeterministicSubjectIdentifier,
+    SubjectCandidateVocabularyBuilder,
+)
 from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.application.ports.llm_gateway import (
@@ -18,17 +23,20 @@ from standards_atlas.application.ports.llm_gateway import (
 )
 from standards_atlas.domain.model import (
     Clause,
+    ClauseSubjectContext,
     ClauseType,
     ContextRouting,
     DocumentKey,
     EngineeringDocument,
     GeneratedAttribute,
     GenerationMethod,
+    PrimarySubjectContext,
     ReferenceRole,
     ReferenceRouting,
     ReferenceTarget,
     ScopeDeclaration,
     ScopeReach,
+    SubjectContextEvidence,
 )
 
 
@@ -54,6 +62,9 @@ class ContextEnrichmentResult(BaseModel):
     document: EngineeringDocument
     candidates: int
     clauses_enriched: int
+    subject_clauses: int = 0
+    subjects_identified: int = 0
+    subjects_ambiguous: int = 0
     context_enrichment_failures: int = 0
 
 
@@ -105,6 +116,7 @@ class LlmContextRoutingEnricher:
             "reference_mentions": [
                 item.model_dump(mode="json") for item in clause.reference_mentions
             ],
+            "subject_context": clause.subject_context.model_dump(mode="json"),
         }
         values = {
             "content": clause.plain_text,
@@ -210,7 +222,7 @@ def _is_context_candidate(clause: Clause) -> bool:
 
 
 class ContextEnrichmentService:
-    """Persist focused CBox enrichment without pre-classifying clause semantics."""
+    """Persist deterministic subject context plus focused LLM routing enrichment."""
 
     def __init__(
         self,
@@ -231,17 +243,40 @@ class ContextEnrichmentService:
                     f"Clause {clause.id.value} has no structural_context; run taxonomy first"
                 )
 
+        vocabulary = SubjectCandidateVocabularyBuilder().build(self._documents.list())
+        subject_report = DeterministicSubjectIdentifier().identify((document,), vocabulary)
+        subjects_by_clause = {item.clause_id: item for item in subject_report.results}
+
         candidates = tuple(clause for clause in document.clauses if _is_context_candidate(clause))
         candidate_ids = {clause.id.value for clause in candidates}
         updated = []
-        enriched_count = 0
+        enriched_ids: set[str] = set()
         failures = 0
         current = 0
         total = len(candidates)
 
         for clause in document.clauses:
+            subject_result = subjects_by_clause[clause.id.value]
+            subject_context = _subject_context(subject_result)
+            contextual_clause = clause.with_subject_context(subject_context)
+            if subject_result.primary_subject is not None or subject_result.ambiguous_candidates:
+                evidence = (
+                    (subject_result.primary_subject.evidence.source_text,)
+                    if subject_result.primary_subject is not None
+                    else subject_result.ambiguous_candidates
+                )
+                contextual_clause = contextual_clause.mark_generated(
+                    GeneratedAttribute(
+                        path="enrichments.subject_context",
+                        generator="subject-identification/1.0",
+                        method=GenerationMethod.DETERMINISTIC,
+                        evidence=evidence,
+                    )
+                )
+                enriched_ids.add(clause.id.value)
+
             if clause.id.value not in candidate_ids:
-                updated.append(clause)
+                updated.append(contextual_clause)
                 continue
             current += 1
             if self._progress is not None:
@@ -258,13 +293,13 @@ class ContextEnrichmentService:
                 )
             started = time.monotonic()
             try:
-                routing = self._enricher.enrich(clause=clause, document=document)
+                routing = self._enricher.enrich(clause=contextual_clause, document=document)
             except LlmResponseError:
                 failures += 1
-                updated.append(clause)
+                updated.append(contextual_clause)
                 state = "partial"
             else:
-                enriched_clause = clause.with_context_routing(routing).mark_generated(
+                enriched_clause = contextual_clause.with_context_routing(routing).mark_generated(
                     GeneratedAttribute(
                         path="enrichments.context_routing",
                         generator=self._enricher.generator_id,
@@ -273,7 +308,7 @@ class ContextEnrichmentService:
                     )
                 )
                 updated.append(enriched_clause)
-                enriched_count += 1
+                enriched_ids.add(clause.id.value)
                 state = "ok"
 
             if self._progress is not None:
@@ -295,9 +330,34 @@ class ContextEnrichmentService:
         return ContextEnrichmentResult(
             document=result,
             candidates=total,
-            clauses_enriched=enriched_count,
+            clauses_enriched=len(enriched_ids),
+            subject_clauses=len(document.clauses),
+            subjects_identified=subject_report.analysis.resolved_clauses,
+            subjects_ambiguous=subject_report.analysis.ambiguous_clauses,
             context_enrichment_failures=failures,
         )
+
+
+def _subject_context(result: ClauseSubjectIdentification) -> ClauseSubjectContext:
+    primary = result.primary_subject
+    ambiguous = tuple(result.ambiguous_candidates)
+    if primary is None:
+        return ClauseSubjectContext(ambiguous_candidates=ambiguous)
+    evidence = primary.evidence
+    return ClauseSubjectContext(
+        primary_subject=PrimarySubjectContext(
+            normalized_label=primary.normalized_label,
+            confidence=primary.confidence,
+            evidence=SubjectContextEvidence(
+                kind=evidence.kind,
+                matched_label=evidence.matched_label,
+                source_text=evidence.source_text,
+                source_clause_id=evidence.source_clause_id,
+                ancestor_distance=evidence.ancestor_distance,
+            ),
+        ),
+        ambiguous_candidates=ambiguous,
+    )
 
 
 def _source_evidence(clause: Clause) -> tuple[str, ...]:

@@ -73,6 +73,16 @@ uv run standards-atlas document classify-taxonomy EN50716
 
 It materializes `StructuralProfile` and `StructuralContext`, including ancestor context, node/leaf role, sibling sequence position, contextual node content, and structural reference edges.
 
+`document enrich-context` then materializes the clause interpretation context. Subject
+identification runs deterministically for every clause from the open AtlasData term vocabulary,
+using clause text/headings, ancestors, and resolved scope evidence. The existing LLM-backed
+scope/reference routing remains limited to clauses that contain routing evidence. Subject
+identification does not invoke an LLM and does not invent a value for unresolved clauses.
+
+```bash
+uv run standards-atlas document enrich-context EN50716
+```
+
 `--task documents` stops semantic processing at this deterministic boundary. It does not run `document enrich-semantics`, does not require `cfg/llm.yaml`, and does not start a managed LLM endpoint. Family composition plus Markdown and configured Doorstop publication therefore operate on the canonical deterministic document representation.
 
 `document enrich-semantics` explicitly materializes accepted semantic-profile results in the canonical EngineeringDocument. It is therefore a mutating enrichment command, not a qualification probe. Normal workflow ownership is `--task qualification`, which performs this accepted enrichment after structural taxonomy before constructing qualification corpora. Candidate model/prompt results produced by qualification remain separate evaluation artifacts and never update EngineeringDocument directly. The underlying classifier is distinct from the formal OWL TBox/RBox/ABox/CBox model.

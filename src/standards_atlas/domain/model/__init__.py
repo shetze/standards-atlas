@@ -159,6 +159,12 @@ from standards_atlas.domain.model.structural_profile import (
     SemanticSectionRole,
     StructuralProfile,
 )
+from standards_atlas.domain.model.subject_context import (
+    ClauseSubjectContext,
+    PrimarySubjectContext,
+    SubjectContextEvidence,
+    SubjectEvidenceKind,
+)
 from standards_atlas.domain.model.table_structure import (
     DocumentTable,
     DocumentTableId,
@@ -167,6 +173,10 @@ from standards_atlas.domain.model.table_structure import (
 
 __all__ = [
     "ClauseBaseline",
+    "ClauseSubjectContext",
+    "PrimarySubjectContext",
+    "SubjectContextEvidence",
+    "SubjectEvidenceKind",
     "ContextRouting",
     "ReferenceRole",
     "ReferenceRouting",

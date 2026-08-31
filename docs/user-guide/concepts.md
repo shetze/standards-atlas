@@ -42,8 +42,11 @@ matches in the clause heading and text, then inherits the nearest matching ances
 finally considers resolved scope context. Every result records its evidence source and a
 deterministic confidence. Equally specific matches remain explicit ambiguities instead of being
 broken by an arbitrary lexical tie-break. Unresolved clauses remain explicit rather than receiving
-an invented subject. CBox projection is a later stage, so the identification heuristic can be
-qualified before it becomes interpretation context.
+an invented subject. `document enrich-context` now materializes the deterministic result as
+`enrichments.subject_context` for every clause alongside the existing scope/reference routing
+stage. Resolved subjects and explicit ambiguities retain their evidence provenance; unresolved
+clauses keep an empty subject context. The full CBox exposes `primary_subject` to downstream
+semantic and ontology analysis, while deliberately minimal qualification frames may omit it.
 
 ## CBox, TBox, and ABox
 

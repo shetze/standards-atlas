@@ -20,8 +20,8 @@ from standards_atlas.domain.model import (
 )
 
 PROJECTION_VERSION = "1.0.0"
-CORE_ONTOLOGY_VERSION = "standards-atlas-core@1.1.0"
-FUNCTIONAL_SAFETY_ONTOLOGY_VERSION = "functional-safety@1.1.0"
+CORE_ONTOLOGY_VERSION = "standards-atlas-core@1.2.0"
+FUNCTIONAL_SAFETY_ONTOLOGY_VERSION = "functional-safety@1.2.0"
 RDF_TYPE = SemanticResource(iri="http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
 _RELATION_PREDICATES: dict[SemanticRelationKind, str] = {
@@ -440,6 +440,33 @@ class DeterministicFormalSemanticProjector:
                         f"knowledge-domain:{domain.knowledge_domain}",
                     )
                 )
+
+        primary_subject = clause.primary_subject
+        if primary_subject is not None:
+            facets.append(
+                _facet(
+                    ContextKind.SEMANTIC,
+                    "primarySubject",
+                    primary_subject.normalized_label,
+                    "subject-identification",
+                )
+            )
+            facets.append(
+                _facet(
+                    ContextKind.EPISTEMIC,
+                    "subjectConfidence",
+                    primary_subject.confidence,
+                    "subject-identification",
+                )
+            )
+            facets.append(
+                _facet(
+                    ContextKind.EPISTEMIC,
+                    "subjectEvidenceKind",
+                    primary_subject.evidence.kind,
+                    "subject-identification",
+                )
+            )
 
         if clause.document_structure:
             structure = clause.document_structure

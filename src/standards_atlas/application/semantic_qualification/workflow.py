@@ -189,6 +189,7 @@ class EvaluationCorpusBuilder:
                     "structural_context": clause.structural_context,
                     "reference_mentions": list(clause.reference_mentions),
                     "context_routing": clause.context_routing,
+                    "subject_context": clause.subject_context,
                     "content_profile": clause.content_profile.value,
                     "table_block_count": clause.table_block_count,
                     "eligibility": policy.evaluate_clause(clause).model_dump(mode="json"),

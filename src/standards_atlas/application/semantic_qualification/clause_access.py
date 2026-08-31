@@ -70,6 +70,7 @@ class ClauseDescriptor(BaseModel):
     structural_context: dict[str, Any] | None = None
     reference_mentions: tuple[dict[str, Any], ...] = ()
     context_routing: dict[str, Any] | None = None
+    subject_context: dict[str, Any] | None = None
 
 
 class ClauseFilter(BaseModel):

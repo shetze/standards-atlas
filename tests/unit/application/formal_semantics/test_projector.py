@@ -5,12 +5,14 @@ from standards_atlas.domain.model import (
     ApplicabilityFunction,
     Clause,
     ClauseId,
+    ClauseSubjectContext,
     ClauseType,
     DocumentKey,
     DocumentType,
     DomainFunctionClassification,
     EngineeringDocument,
     NormativeStatus,
+    PrimarySubjectContext,
     RelationScope,
     SemanticBox,
     SemanticClassification,
@@ -21,6 +23,7 @@ from standards_atlas.domain.model import (
     StructuralContext,
     StructuralNodeKind,
     StructuralSiblingContext,
+    SubjectContextEvidence,
 )
 
 
@@ -61,6 +64,21 @@ def _document() -> EngineeringDocument:
             ),
         ),
     )
+    first = first.with_subject_context(
+        ClauseSubjectContext(
+            primary_subject=PrimarySubjectContext(
+                normalized_label="system under consideration",
+                confidence=0.9,
+                evidence=SubjectContextEvidence(
+                    kind="ancestor_heading",
+                    matched_label="system under consideration",
+                    source_text="System under consideration",
+                    source_clause_id="clause:1",
+                    ancestor_distance=1,
+                ),
+            )
+        )
+    )
     second = Clause(
         id=ClauseId(value="clause:2"),
         reference=StandardReference(standard="EXAMPLE", year=2026, clause="2"),
@@ -85,8 +103,8 @@ def test_projector_creates_deterministic_abox_and_cbox_projection() -> None:
     assert first == second
     assert first.projection_version == "1.0.0"
     assert first.ontology_versions == (
-        "standards-atlas-core@1.1.0",
-        "functional-safety@1.1.0",
+        "standards-atlas-core@1.2.0",
+        "functional-safety@1.2.0",
     )
     assert first.contexts
     assert all(assertion.box is SemanticBox.ABOX for assertion in first.assertions)
@@ -117,3 +135,6 @@ def test_context_projects_taxonomy_and_structural_information() -> None:
     assert ("normativeStatus", "normative") in values
     assert ("nodeKind", "leaf") in values
     assert ("taxonomyVersion", "functional-safety@2.0.0") in values
+    assert ("primarySubject", "system under consideration") in values
+    assert ("subjectConfidence", 0.9) in values
+    assert ("subjectEvidenceKind", "ancestor_heading") in values

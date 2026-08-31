@@ -40,6 +40,9 @@ class _Documents:
     def save(self, document: EngineeringDocument) -> None:
         self.saved = document
 
+    def list(self) -> tuple[EngineeringDocument, ...]:
+        return (self.document,)
+
 
 class _Gateway:
     def __init__(self) -> None:
@@ -143,11 +146,19 @@ def _document() -> EngineeringDocument:
         content=(TextBlock(id="text-2", text="Perform the calculation."),),
         structural_context=StructuralContext(node_kind=StructuralNodeKind.LEAF),
     )
+    term = Clause(
+        id=ClauseId(value="term-software"),
+        reference=StandardReference(standard="TEST", year=2026, clause="3.1"),
+        clause_type=ClauseType.TERM,
+        heading="software",
+        content=(TextBlock(id="text-3", text="programs and associated data"),),
+        structural_context=StructuralContext(node_kind=StructuralNodeKind.LEAF),
+    )
     return EngineeringDocument(
         key=DocumentKey(value="TEST-2026"),
         title="Test standard",
         document_type=DocumentType.STANDARD,
-        clauses=(candidate, ordinary),
+        clauses=(candidate, ordinary, term),
     )
 
 
@@ -169,7 +180,10 @@ def test_context_enrichment_only_analyzes_scope_or_reference_candidates() -> Non
     result = service.enrich(document.key.value)
 
     assert result.candidates == 1
-    assert result.clauses_enriched == 1
+    assert result.clauses_enriched == 2
+    assert result.subject_clauses == 3
+    assert result.subjects_identified == 2
+    assert result.subjects_ambiguous == 0
     assert result.context_enrichment_failures == 0
     assert len(gateway.requests) == 1
     assert gateway.requests[0].task == "context-routing-enrichment"
@@ -182,8 +196,12 @@ def test_context_enrichment_only_analyzes_scope_or_reference_candidates() -> Non
     assert clause.semantic_classification == document.clauses[0].semantic_classification
     assert clause.context_routing.scopes[0].reaches[0].kind == ScopeReachKind.SUBTREE
     assert clause.context_routing.references[0].role.value == "provides_procedure"
+    assert clause.primary_subject is not None
+    assert clause.primary_subject.normalized_label == "software"
+    assert clause.primary_subject.evidence.kind == "clause_text"
     assert result.document.clauses[1] == document.clauses[1]
     generated = {item.path: item for item in clause.provenance.generated_attributes}
+    assert generated["enrichments.subject_context"].method.value == "deterministic"
     assert generated["enrichments.context_routing"].generator == (
         "context-routing-enrichment/context-routing-v1@test-model"
     )

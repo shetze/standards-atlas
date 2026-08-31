@@ -215,7 +215,7 @@ def enrich_document_context(
         ),
     ] = Path("cfg/context-enrichment.yaml"),
 ) -> None:
-    """Materialize CBox scope and reference routing enrichment."""
+    """Materialize deterministic subject context and scope/reference routing."""
 
     def report_progress(progress: ContextEnrichmentProgress) -> None:
         reference = progress.clause_reference or progress.clause_id
@@ -244,5 +244,8 @@ def enrich_document_context(
 
     typer.echo(f"Document              : {result.document.key.value}")
     typer.echo(f"Clauses enriched      : {result.clauses_enriched}")
-    typer.echo(f"Context candidates    : {result.candidates}")
+    typer.echo(f"Subject clauses       : {result.subject_clauses}")
+    typer.echo(f"Subjects identified   : {result.subjects_identified}")
+    typer.echo(f"Subjects ambiguous    : {result.subjects_ambiguous}")
+    typer.echo(f"Routing candidates    : {result.candidates}")
     typer.echo(f"Context failures      : {result.context_enrichment_failures}")

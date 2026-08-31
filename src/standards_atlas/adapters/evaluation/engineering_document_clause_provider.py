@@ -209,6 +209,11 @@ class EngineeringDocumentClauseProvider:
                 if clause.context_routing.scopes or clause.context_routing.references
                 else None
             ),
+            subject_context=(
+                clause.subject_context.model_dump(mode="json")
+                if clause.primary_subject is not None or clause.subject_context.ambiguous_candidates
+                else None
+            ),
         )
 
     @staticmethod

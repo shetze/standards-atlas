@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from collections import Counter
 from collections.abc import Iterable
-from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,16 +15,7 @@ from standards_atlas.application.context.subject_vocabulary import (
     normalize_subject_label,
 )
 from standards_atlas.application.ports.document_repositories import EngineeringDocumentReader
-from standards_atlas.domain.model import Clause, EngineeringDocument
-
-
-class SubjectEvidenceKind(StrEnum):
-    """Deterministic evidence source supporting a primary-subject decision."""
-
-    CLAUSE_HEADING = "clause_heading"
-    CLAUSE_TEXT = "clause_text"
-    ANCESTOR_HEADING = "ancestor_heading"
-    SCOPE_CONTEXT = "scope_context"
+from standards_atlas.domain.model import Clause, EngineeringDocument, SubjectEvidenceKind
 
 
 class SubjectIdentificationEvidence(BaseModel):
