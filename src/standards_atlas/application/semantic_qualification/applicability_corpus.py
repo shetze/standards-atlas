@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
 from zipfile import ZipFile
@@ -12,31 +13,26 @@ from zipfile import ZipFile
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-_ALLOWED_SUBTYPES = {
-    "inclusion",
-    "exclusion",
-    "exception",
-    "applicability_condition",
-}
+
+class ApplicabilityPolarity(StrEnum):
+    """Binary applicability direction used by qualification only."""
+
+    INCLUDED = "included"
+    EXCLUDED = "excluded"
 
 
 class ApplicabilityGoldenExpected(BaseModel):
     """Human-reviewed applicability reference for one clause."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    applicability_present: bool
-    applicability_function: str | None = None
+    present: bool
+    polarity: ApplicabilityPolarity | None = None
 
     @model_validator(mode="after")
-    def subtype_requires_presence(self) -> ApplicabilityGoldenExpected:
-        if self.applicability_function is not None:
-            if not self.applicability_present:
-                raise ValueError("applicability subtype requires applicability_present=true")
-            if self.applicability_function not in _ALLOWED_SUBTYPES:
-                raise ValueError(
-                    f"unsupported applicability subtype: {self.applicability_function}"
-                )
+    def polarity_requires_presence(self) -> ApplicabilityGoldenExpected:
+        if self.polarity is not None and not self.present:
+            raise ValueError("applicability polarity requires present=true")
         return self
 
 
@@ -59,9 +55,9 @@ class ApplicabilityGoldenCorpus(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal["1.0"] = "1.0"
-    corpus_id: str = "applicability-presence-hard-cases"
-    corpus_version: str = "1.0.0"
+    schema_version: Literal["2.0"] = "2.0"
+    corpus_id: str = "applicability-hard-cases"
+    corpus_version: str = "2.0.0"
     source_archive: str
     source_archive_sha256: str
     cases: tuple[ApplicabilityGoldenCase, ...]
@@ -101,7 +97,7 @@ class ApplicabilityModelMetrics(BaseModel):
     presence_precision: float = Field(ge=0.0, le=1.0)
     presence_recall: float = Field(ge=0.0, le=1.0)
     presence_f1: float = Field(ge=0.0, le=1.0)
-    subtype_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
+    polarity_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class ApplicabilityGoldenRegressionReport(BaseModel):
@@ -152,7 +148,7 @@ def build_applicability_golden_review(
     if not cases:
         raise ValueError("qualification run contains no applicability presence disagreements")
 
-    review_dir = review_root / "applicability-presence" / "1.0.0"
+    review_dir = review_root / "applicability" / "2.0.0"
     review_path = review_dir / "applicability-golden-review.csv"
     review_created = False
     if not review_path.exists():
@@ -183,10 +179,10 @@ def publish_applicability_golden_review(
         status = (row.get("review_status") or "pending").strip().lower()
         if status != "published":
             continue
-        present = _parse_bool(row.get("applicability_present"))
+        present = _parse_bool(row.get("present"))
         if present is None:
-            raise ValueError("published applicability rows require applicability_present")
-        subtype = (row.get("applicability_function") or "").strip() or None
+            raise ValueError("published applicability rows require present")
+        polarity = (row.get("polarity") or "").strip() or None
         published.append(
             ApplicabilityGoldenCase(
                 clause_id=(row.get("clause_id") or "").strip(),
@@ -196,8 +192,8 @@ def publish_applicability_golden_review(
                 category=(row.get("category") or "presence_disagreement").strip(),
                 status="published",
                 expected=ApplicabilityGoldenExpected(
-                    applicability_present=present,
-                    applicability_function=subtype,
+                    present=present,
+                    polarity=polarity,
                 ),
             )
         )
@@ -272,19 +268,19 @@ def _metrics(
     predictions: list[tuple[bool, str | None, ApplicabilityGoldenExpected]],
 ) -> ApplicabilityModelMetrics:
     tp = fp = tn = fn = 0
-    subtype_total = subtype_correct = 0
-    for predicted_present, predicted_subtype, expected in predictions:
-        if expected.applicability_present and predicted_present:
+    polarity_total = polarity_correct = 0
+    for predicted_present, predicted_polarity, expected in predictions:
+        if expected.present and predicted_present:
             tp += 1
-        elif expected.applicability_present:
+        elif expected.present:
             fn += 1
         elif predicted_present:
             fp += 1
         else:
             tn += 1
-        if expected.applicability_present and expected.applicability_function is not None:
-            subtype_total += 1
-            subtype_correct += predicted_subtype == expected.applicability_function
+        if expected.present and expected.polarity is not None:
+            polarity_total += 1
+            polarity_correct += _qualification_polarity(predicted_polarity) == expected.polarity
     precision = _ratio(tp, tp + fp, empty=1.0)
     recall = _ratio(tp, tp + fn, empty=1.0)
     total = tp + fp + tn + fn
@@ -295,7 +291,7 @@ def _metrics(
         presence_precision=precision,
         presence_recall=recall,
         presence_f1=_f1(precision, recall),
-        subtype_accuracy=(subtype_correct / subtype_total if subtype_total else None),
+        polarity_accuracy=(polarity_correct / polarity_total if polarity_total else None),
     )
 
 
@@ -321,8 +317,8 @@ def _write_review_csv(path: Path, cases: tuple[ApplicabilityGoldenCase, ...]) ->
         "category",
         "text",
         "review_status",
-        "applicability_present",
-        "applicability_function",
+        "present",
+        "polarity",
         "review_note",
         "clause_id",
     )
@@ -337,8 +333,8 @@ def _write_review_csv(path: Path, cases: tuple[ApplicabilityGoldenCase, ...]) ->
                     "category": case.category,
                     "text": case.text,
                     "review_status": "pending",
-                    "applicability_present": "",
-                    "applicability_function": "",
+                    "present": "",
+                    "polarity": "",
                     "review_note": "",
                     "clause_id": case.clause_id,
                 }
@@ -350,12 +346,13 @@ def _write_review_guide(path: Path) -> None:
         "# Applicability Golden Review\n\n"
         "Review only the semantic applicability of each clause. Set "
         "`review_status=published` when complete.\n\n"
-        "`applicability_present` is `true` only when the clause explicitly changes whether "
-        "normative content is in force. Conditions that only change how an activity, method, "
-        "analysis, design, calculation, or process is performed are not applicability.\n\n"
-        "When presence is true and the subtype is clear, use one of: `inclusion`, `exclusion`, "
-        "`exception`, `applicability_condition`. Leave the subtype empty when presence is clear "
-        "but the subtype is genuinely uncertain.\n",
+        "`present` is `true` only when the clause explicitly changes whether normative content "
+        "is in force. Conditions that only change how an activity, method, analysis, design, "
+        "calculation, or process is performed are not applicability.\n\n"
+        "When `present=true`, set `polarity` to `included` when the normative content is in "
+        "scope and to `excluded` when it is explicitly out of scope. Leave `polarity` empty "
+        "only when presence is clear but the direction is genuinely uncertain. Exceptions and "
+        "generic condition semantics are deliberately outside this qualification stage.\n",
         encoding="utf-8",
     )
 
@@ -376,6 +373,14 @@ def _first_subtype(value: Any) -> str | None:
         return str(value[0])
     if isinstance(value, tuple) and value:
         return str(value[0])
+    return None
+
+
+def _qualification_polarity(value: str | None) -> ApplicabilityPolarity | None:
+    if value == "inclusion":
+        return ApplicabilityPolarity.INCLUDED
+    if value == "exclusion":
+        return ApplicabilityPolarity.EXCLUDED
     return None
 
 

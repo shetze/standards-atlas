@@ -178,7 +178,7 @@ def build_applicability_golden_corpus(
     ] = cli_defaults.DEFAULT_REVIEW_ROOT,
     limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 30,
 ) -> None:
-    """Build a small HITL set from applicability-presence disagreements."""
+    """Build a small HITL set for present + binary polarity qualification."""
     try:
         result = build_applicability_golden_review(run_archive, review_output, limit=limit)
     except (OSError, ValueError) as exc:

@@ -36,14 +36,14 @@ class ApplicabilityFrameMetrics(BaseModel):
     evaluated_clauses: int = Field(ge=0)
     applicability_present_count: int = Field(ge=0)
     applicability_present_rate: float = Field(ge=0.0, le=1.0)
-    subtype_counts: dict[str, int]
+    polarity_counts: dict[str, int]
     golden_cases: int = Field(default=0, ge=0)
     false_positives: int | None = Field(default=None, ge=0)
     false_negatives: int | None = Field(default=None, ge=0)
     presence_precision: float | None = Field(default=None, ge=0.0, le=1.0)
     presence_recall: float | None = Field(default=None, ge=0.0, le=1.0)
     presence_f1: float | None = Field(default=None, ge=0.0, le=1.0)
-    subtype_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
+    polarity_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class ApplicabilityFrameDelta(BaseModel):
@@ -203,8 +203,8 @@ def _golden_expected(
         if case.status != "published" or case.expected is None:
             continue
         result[(case.document_key, case.clause_id)] = (
-            case.expected.applicability_present,
-            case.expected.applicability_function,
+            case.expected.present,
+            case.expected.polarity.value if case.expected.polarity is not None else None,
         )
     return result
 
@@ -221,28 +221,28 @@ def _metrics(
     expected: dict[tuple[str, str], tuple[bool, str | None]],
 ) -> ApplicabilityFrameMetrics:
     present = sum(selection.applicability_present for selection in predictions.values())
-    subtype_counts = Counter(
-        _subtype(selection) or "none"
+    polarity_counts = Counter(
+        _polarity(selection) or "none"
         for selection in predictions.values()
         if selection.applicability_present
     )
-    tp = fp = fn = subtype_total = subtype_correct = 0
+    tp = fp = fn = polarity_total = polarity_correct = 0
     golden_cases = 0
     for key, selection in predictions.items():
         gold = _expected_for_prediction_key(expected, key)
         if gold is None:
             continue
         golden_cases += 1
-        expected_present, expected_subtype = gold
+        expected_present, expected_polarity = gold
         if selection.applicability_present and expected_present:
             tp += 1
         elif selection.applicability_present and not expected_present:
             fp += 1
         elif not selection.applicability_present and expected_present:
             fn += 1
-        if expected_present and expected_subtype is not None:
-            subtype_total += 1
-            subtype_correct += _subtype(selection) == expected_subtype
+        if expected_present and expected_polarity is not None:
+            polarity_total += 1
+            polarity_correct += _polarity(selection) == expected_polarity
     precision = tp / (tp + fp) if tp + fp else 0.0
     recall = tp / (tp + fn) if tp + fn else 0.0
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
@@ -256,14 +256,14 @@ def _metrics(
         evaluated_clauses=len(predictions),
         applicability_present_count=present,
         applicability_present_rate=present / len(predictions) if predictions else 0.0,
-        subtype_counts=dict(sorted(subtype_counts.items())),
+        polarity_counts=dict(sorted(polarity_counts.items())),
         golden_cases=golden_cases,
         false_positives=fp if golden_cases else None,
         false_negatives=fn if golden_cases else None,
         presence_precision=precision if golden_cases else None,
         presence_recall=recall if golden_cases else None,
         presence_f1=f1 if golden_cases else None,
-        subtype_accuracy=(subtype_correct / subtype_total if subtype_total else None),
+        polarity_accuracy=(polarity_correct / polarity_total if polarity_total else None),
     )
 
 
@@ -302,7 +302,7 @@ def _compare(
         if (
             left.applicability_present
             and right.applicability_present
-            and _subtype(left) != _subtype(right)
+            and _polarity(left) != _polarity(right)
         ):
             subtype_disagreement += 1
     baseline_errors = _golden_errors(baseline)
@@ -342,11 +342,16 @@ def _golden_errors(metrics: ApplicabilityFrameMetrics) -> int | None:
     return metrics.false_positives + metrics.false_negatives
 
 
-def _subtype(selection: StatementFunctionSelection) -> str | None:
+def _polarity(selection: StatementFunctionSelection) -> str | None:
+    value = None
     if selection.primary_applicability_function is not None:
-        return selection.primary_applicability_function.value
-    if selection.applicability_functions:
-        return selection.applicability_functions[0].value
+        value = selection.primary_applicability_function.value
+    elif selection.applicability_functions:
+        value = selection.applicability_functions[0].value
+    if value == "inclusion":
+        return "included"
+    if value == "exclusion":
+        return "excluded"
     return None
 
 
@@ -365,7 +370,7 @@ def _render_markdown(report: ApplicabilityFramingReport) -> str:
             "## Frame observations",
             "",
             "| Prompt / frame | Model | Clauses | Present | Rate | FP | FN | "
-            "Precision | Recall | F1 | Subtype acc. |",
+            "Precision | Recall | F1 | Polarity acc. |",
             "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
         for item in report.observations:
@@ -383,7 +388,7 @@ def _render_markdown(report: ApplicabilityFramingReport) -> str:
                         _fmt_float(item.presence_precision),
                         _fmt_float(item.presence_recall),
                         _fmt_float(item.presence_f1),
-                        _fmt_float(item.subtype_accuracy),
+                        _fmt_float(item.polarity_accuracy),
                     ]
                 )
                 + " |"

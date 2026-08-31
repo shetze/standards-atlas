@@ -5,10 +5,13 @@ import json
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
+import pytest
 import yaml
+from pydantic import ValidationError
 
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
     ApplicabilityGoldenCorpus,
+    ApplicabilityGoldenExpected,
     build_applicability_golden_review,
     evaluate_applicability_golden_corpus,
     publish_applicability_golden_review,
@@ -86,8 +89,8 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
         rows = list(csv.DictReader(handle))
     assert rows[0]["reference"] == "DOC:1"
     rows[0]["review_status"] = "published"
-    rows[0]["applicability_present"] = "true"
-    rows[0]["applicability_function"] = "inclusion"
+    rows[0]["present"] = "true"
+    rows[0]["polarity"] = "included"
     with result.review_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
         writer.writeheader()
@@ -101,3 +104,23 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
     metrics = {item.model_id: item for item in report.models}
     assert metrics["a"].presence_accuracy == 1.0
     assert metrics["b"].presence_accuracy == 0.0
+
+
+def test_applicability_golden_contract_rejects_legacy_subtype_fields() -> None:
+    with pytest.raises(ValidationError):
+        ApplicabilityGoldenExpected.model_validate(
+            {"present": True, "applicability_function": "inclusion"}
+        )
+
+
+def test_applicability_golden_contract_accepts_only_binary_polarity() -> None:
+    included = ApplicabilityGoldenExpected(present=True, polarity="included")
+    excluded = ApplicabilityGoldenExpected(present=True, polarity="excluded")
+    assert included.polarity is not None and included.polarity.value == "included"
+    assert excluded.polarity is not None and excluded.polarity.value == "excluded"
+    with pytest.raises(ValidationError):
+        ApplicabilityGoldenExpected(present=True, polarity="exception")
+    with pytest.raises(ValidationError):
+        ApplicabilityGoldenExpected(present=True, polarity="applicability_condition")
+    with pytest.raises(ValidationError):
+        ApplicabilityGoldenExpected(present=False, polarity="included")

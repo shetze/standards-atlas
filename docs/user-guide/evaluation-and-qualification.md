@@ -446,9 +446,9 @@ Passive role/action semantics remain positive for `role_semantics_present` when 
 
 Targets must be the explicit object or subject matter toward which the predicate is directed and must not simply repeat the actor unless the clause explicitly states a reflexive relation. Applicability, scope, technical properties, and logical conditions must not leak into `role_relations`.
 
-### Applicability presence golden set
+### Applicability qualification golden set
 
-Applicability presence model eligibility can be checked against a small HITL-reviewed set built directly from the presence disagreements of an archived qualification run. This avoids selecting presence voters from their positive/negative rate alone.
+Applicability qualification uses a deliberately small HITL-reviewed contract: `present` plus an optional binary `polarity` (`included` or `excluded`). Exception and generic condition semantics are outside this qualification stage. The hard-case set is still seeded from presence disagreements of an archived qualification run.
 
 Build the review set from a qualification archive:
 
@@ -457,20 +457,20 @@ uv run standards-atlas evaluation applicability-corpus-build \
   --run local/evaluation/qualification/qualification-run-040.zip
 ```
 
-The command writes `local/review/applicability-presence/1.0.0/applicability-golden-review.csv`. Set `review_status=published`, review `applicability_present`, and optionally set `applicability_function` when the subtype is clear. Publish and evaluate it with:
+The command writes `local/review/applicability/2.0.0/applicability-golden-review.csv`. Set `review_status=published`, review `present`, and set `polarity` to `included` or `excluded` when presence is true and the direction is clear. The v2 contract is breaking: legacy `applicability_function`/subtype fields are not accepted. Publish and evaluate it with:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-publish \
-  --review local/review/applicability-presence/1.0.0/applicability-golden-review.csv \
+  --review local/review/applicability/2.0.0/applicability-golden-review.csv \
   --run local/evaluation/qualification/qualification-run-040.zip
 
 uv run standards-atlas evaluation applicability-corpus-evaluate \
-  --golden local/review/applicability-presence/1.0.0/applicability-golden-corpus.yaml \
+  --golden local/review/applicability/2.0.0/applicability-golden-corpus.yaml \
   --run local/evaluation/qualification/qualification-run-040.zip \
   --output local/evaluation/qualification/applicability-golden-regression.json
 ```
 
-The regression report contains consensus metrics and presence precision/recall/F1 for every model represented in the archived run. Use these reviewed metrics, rather than raw `none_rate`, when changing future `applicability_presence` eligibility.
+The regression report contains consensus metrics, presence precision/recall/F1, and binary polarity accuracy for every model represented in the archived run. Use these reviewed metrics, rather than raw `none_rate`, when changing future `applicability_presence` eligibility.
 
 ### Knowledge qualification
 

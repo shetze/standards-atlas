@@ -142,7 +142,7 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
                 reference="IEC61508-3 c1",
                 text="Clause c1",
                 status="published",
-                expected=ApplicabilityGoldenExpected(applicability_present=False),
+                expected=ApplicabilityGoldenExpected(present=False),
             ),
             ApplicabilityGoldenCase(
                 clause_id="c2",
@@ -151,8 +151,8 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
                 text="Clause c2",
                 status="published",
                 expected=ApplicabilityGoldenExpected(
-                    applicability_present=True,
-                    applicability_function="exclusion",
+                    present=True,
+                    polarity="excluded",
                 ),
             ),
         ),
@@ -174,7 +174,7 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
     assert baseline.false_positives == 1
     assert candidate.false_positives == 0
     assert candidate.false_negatives == 0
-    assert candidate.subtype_accuracy == 1.0
+    assert candidate.polarity_accuracy == 1.0
 
     delta = report.comparisons[0]
     assert delta.presence_disagreement_count == 1
