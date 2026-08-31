@@ -247,3 +247,64 @@ def test_versioned_cbox_frame_identifier_resolves_full_context_policy() -> None:
 
     assert cbox_frame_key(FULL_CONTEXT_V1) == "full-context-v1"
     assert resolve_cbox_frame_policy("full-context-v1") is FULL_CONTEXT_V1
+
+
+def test_applicability_minimal_frame_exposes_only_identity_and_heading() -> None:
+    from standards_atlas.application.semantic_qualification.context_framing import (
+        APPLICABILITY_MINIMAL_V1,
+        frame_cbox_context,
+    )
+
+    context = {
+        "document_key": "EN50126-1",
+        "reference": "4.2",
+        "heading": "Purpose",
+        "clause_type": "narrative",
+        "canonical_section": "scope",
+        "ancestor_headings": [{"reference": "4", "heading": "Scope"}],
+        "document_categories": ["scope"],
+        "semantic_sections": ["scope"],
+        "context_routing": {
+            "scopes": [{"conditions": ["for railway applications"]}],
+            "references": [{"role": "applicability", "target": {"reference": "7.2"}}],
+        },
+        "reference_mentions": [{"surface_text": "7.2", "reference": "7.2"}],
+    }
+
+    frame = frame_cbox_context(context, APPLICABILITY_MINIMAL_V1)
+
+    assert frame.values == {
+        "document_key": "EN50126-1",
+        "reference": "4.2",
+        "heading": "Purpose",
+    }
+
+
+def test_applicability_isolated_frame_exposes_only_identity() -> None:
+    from standards_atlas.application.semantic_qualification.context_framing import (
+        APPLICABILITY_ISOLATED_V1,
+        frame_cbox_context,
+    )
+
+    context = {
+        "document_key": "EN50126-1",
+        "reference": "4.2",
+        "heading": "Applicability",
+        "canonical_section": "scope",
+        "ancestor_headings": [{"reference": "4", "heading": "Scope"}],
+    }
+
+    frame = frame_cbox_context(context, APPLICABILITY_ISOLATED_V1)
+
+    assert frame.values == {"document_key": "EN50126-1", "reference": "4.2"}
+
+
+def test_versioned_applicability_frame_identifiers_resolve() -> None:
+    from standards_atlas.application.semantic_qualification.context_framing import (
+        APPLICABILITY_ISOLATED_V1,
+        APPLICABILITY_MINIMAL_V1,
+        resolve_cbox_frame_policy,
+    )
+
+    assert resolve_cbox_frame_policy("applicability-minimal-v1") is APPLICABILITY_MINIMAL_V1
+    assert resolve_cbox_frame_policy("applicability-isolated-v1") is APPLICABILITY_ISOLATED_V1

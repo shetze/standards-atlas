@@ -134,3 +134,17 @@ def test_v6_prompts_describe_open_role_relation_contract() -> None:
         assert '"applicability_present": false' in prompt
         assert "role_relation_types" not in prompt
         assert "primary relation type" not in prompt
+
+
+def test_structure_aware_v7_uses_positive_applicability_framing() -> None:
+    prompt_path = Path(
+        "src/standards_atlas/resources/semantic/prompts/"
+        "statement-function-classification/structure-aware-v7/system.txt"
+    )
+    prompt = prompt_path.read_text(encoding="utf-8")
+
+    assert "First decide applicability_present independently from the subtype" in prompt
+    assert "An applicability condition determines whether normative content is in force" in prompt
+    assert "Structural membership in a Scope section" not in prompt
+    assert "Do not infer applicability merely from Scope context" not in prompt
+    assert "scope_definition" not in prompt

@@ -44,13 +44,51 @@ class FramedCBoxContext:
 
 FULL_CONTEXT_V1 = CBoxFramePolicy(id="full-context", version="1")
 
+APPLICABILITY_MINIMAL_V1 = CBoxFramePolicy(
+    id="applicability-minimal",
+    version="1",
+    clause_type=False,
+    canonical_section=False,
+    ancestor_identity=False,
+    ancestor_heading=False,
+    sibling_position=False,
+    document_categories=False,
+    semantic_sections=False,
+    scope_routing=False,
+    reference_routing=False,
+    reference_mentions=False,
+)
+
+APPLICABILITY_ISOLATED_V1 = CBoxFramePolicy(
+    id="applicability-isolated",
+    version="1",
+    heading=False,
+    clause_type=False,
+    canonical_section=False,
+    ancestor_identity=False,
+    ancestor_heading=False,
+    sibling_position=False,
+    document_categories=False,
+    semantic_sections=False,
+    scope_routing=False,
+    reference_routing=False,
+    reference_mentions=False,
+)
+
 
 def cbox_frame_key(policy: CBoxFramePolicy) -> str:
     """Return the stable external identifier of a CBox frame policy."""
     return f"{policy.id}-v{policy.version}"
 
 
-_CBOX_FRAME_POLICIES = {cbox_frame_key(FULL_CONTEXT_V1): FULL_CONTEXT_V1}
+_CBOX_FRAME_POLICIES = {
+    cbox_frame_key(policy): policy
+    for policy in (
+        FULL_CONTEXT_V1,
+        APPLICABILITY_MINIMAL_V1,
+        APPLICABILITY_ISOLATED_V1,
+    )
+}
 
 
 def resolve_cbox_frame_policy(frame: str) -> CBoxFramePolicy:

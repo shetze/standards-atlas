@@ -1,0 +1,5 @@
+{
+  "description": "Classify clause content using deterministic CBox context with positive applicability semantics and no defensive structural-applicability instructions.",
+  "task": "statement-function-classification",
+  "version": "structure-aware-v7"
+}

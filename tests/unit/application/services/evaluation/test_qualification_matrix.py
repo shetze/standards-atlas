@@ -1369,3 +1369,33 @@ def test_prompt_candidate_defaults_to_versioned_full_context_frame() -> None:
 def test_prompt_candidate_rejects_unknown_cbox_frame() -> None:
     with pytest.raises(ValueError, match="unknown CBox frame"):
         PromptCandidate(id="structure-aware", cbox_frame="missing-v1")
+
+
+def test_applicability_framing_manifest_declares_frame_ablation_without_changing_production() -> (
+    None
+):
+    project_root = Path(__file__).resolve().parents[5]
+    production = QualificationMatrixManifest.load(
+        project_root
+        / "manifests"
+        / "multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml"
+    )
+    experiment = QualificationMatrixManifest.load(
+        project_root
+        / "manifests"
+        / "multidimensional-semantic-qualification-v5-applicability-framing-v1.yaml"
+    )
+
+    assert production.execution.mode == "cascade"
+    assert {prompt.id: prompt.prompt_version for prompt in production.prompts}[
+        "structure-aware"
+    ] == ("structure-aware-v6")
+    assert experiment.execution.mode == "full_matrix"
+    assert [prompt.cbox_frame for prompt in experiment.prompts] == [
+        "full-context-v1",
+        "full-context-v1",
+        "applicability-minimal-v1",
+        "applicability-isolated-v1",
+    ]
+    cleaned = experiment.prompts[1:]
+    assert {prompt.prompt_version for prompt in cleaned} == {"structure-aware-v7"}
