@@ -189,8 +189,10 @@ def test_analysis_metrics_separate_observed_and_unresolved_structural_conflicts(
 
 
 def test_analysis_metrics_include_non_normative_diagnostics() -> None:
+    from standards_atlas.application.semantic_qualification.applicability_contract import (
+        ApplicabilityPolarity,
+    )
     from standards_atlas.application.semantic_qualification.consensus import ModelVote
-    from standards_atlas.domain.model import ApplicabilityFunction
 
     clauses = (
         ClauseConsensus(
@@ -202,9 +204,9 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
             applicability_category=ConsensusCategory.MAJORITY,
             overall_status=OverallConsensusStatus.REVIEW_REQUIRED,
             applicability_present=True,
-            proposed_applicability_functions=(ApplicabilityFunction.INCLUSION,),
+            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             applicability_presence_confidence=2 / 3,
-            applicability_subtype_confidence=2 / 3,
+            applicability_polarity_confidence=2 / 3,
             confidence=0.7,
             participating_models=3,
             requires_review=True,
@@ -212,14 +214,14 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
                 ModelVote(
                     model_id="model-a",
                     applicability_present=True,
-                    applicability_function=ApplicabilityFunction.INCLUSION,
+                    applicability_polarity=ApplicabilityPolarity.INCLUDED,
                     repetitions=1,
                     stability=1.0,
                 ),
                 ModelVote(
                     model_id="model-b",
                     applicability_present=True,
-                    applicability_function=ApplicabilityFunction.INCLUSION,
+                    applicability_polarity=ApplicabilityPolarity.INCLUDED,
                     repetitions=1,
                     stability=1.0,
                 ),

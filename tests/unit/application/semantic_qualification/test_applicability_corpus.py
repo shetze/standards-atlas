@@ -27,22 +27,22 @@ def _run_archive(path: Path) -> Path:
                 "reference": "DOC:1",
                 "clause_text": "This requirement applies to new systems.",
                 "applicability_present": True,
-                "proposed_applicability_functions": ["inclusion"],
+                "applicability_polarity": "included",
                 "votes": [
                     {
                         "model_id": "a",
                         "applicability_present": True,
-                        "applicability_function": "inclusion",
+                        "applicability_polarity": "included",
                     },
                     {
                         "model_id": "b",
                         "applicability_present": False,
-                        "applicability_function": None,
+                        "applicability_polarity": None,
                     },
                     {
                         "model_id": "ignored",
                         "applicability_present": False,
-                        "applicability_function": None,
+                        "applicability_polarity": None,
                     },
                 ],
             },
@@ -52,17 +52,37 @@ def _run_archive(path: Path) -> Path:
                 "reference": "DOC:2",
                 "clause_text": "The analysis shall be performed if requested.",
                 "applicability_present": False,
-                "proposed_applicability_functions": [],
+                "applicability_polarity": None,
                 "votes": [
                     {
                         "model_id": "a",
                         "applicability_present": False,
-                        "applicability_function": None,
+                        "applicability_polarity": None,
                     },
                     {
                         "model_id": "b",
                         "applicability_present": False,
-                        "applicability_function": None,
+                        "applicability_polarity": None,
+                    },
+                ],
+            },
+            {
+                "clause_id": "c3",
+                "document_key": "DOC",
+                "reference": "DOC:3",
+                "clause_text": "This part applies to A but does not apply to B.",
+                "applicability_present": True,
+                "applicability_polarity": "included",
+                "votes": [
+                    {
+                        "model_id": "a",
+                        "applicability_present": True,
+                        "applicability_polarity": "included",
+                    },
+                    {
+                        "model_id": "b",
+                        "applicability_present": True,
+                        "applicability_polarity": "excluded",
                     },
                 ],
             },
@@ -84,10 +104,13 @@ def _run_archive(path: Path) -> Path:
 def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> None:
     archive = _run_archive(tmp_path / "qualification-run.zip")
     result = build_applicability_golden_review(archive, tmp_path / "review")
-    assert result.selected_count == 1
+    assert result.selected_count == 2
     with result.review_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     assert rows[0]["reference"] == "DOC:1"
+    assert rows[0]["category"] == "presence_disagreement"
+    assert rows[1]["reference"] == "DOC:3"
+    assert rows[1]["category"] == "polarity_disagreement"
     rows[0]["review_status"] = "published"
     rows[0]["present"] = "true"
     rows[0]["polarity"] = "included"
@@ -109,7 +132,7 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
 def test_applicability_golden_contract_rejects_legacy_subtype_fields() -> None:
     with pytest.raises(ValidationError):
         ApplicabilityGoldenExpected.model_validate(
-            {"present": True, "applicability_function": "inclusion"}
+            {"present": True, "applicability_polarity": "included"}
         )
 
 

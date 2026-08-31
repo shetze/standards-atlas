@@ -5,6 +5,9 @@ from pathlib import Path
 import pytest
 import yaml
 
+from standards_atlas.application.semantic_qualification.applicability_contract import (
+    ApplicabilityPolarity,
+)
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
     ConsensusCategory,
@@ -367,7 +370,7 @@ def test_model_votes_are_rendered_as_space_padded_table() -> None:
             primary_function="requirement",
             primary_knowledge_kind="technique",
             applicability_present=True,
-            applicability_function="scope_definition",
+            applicability_polarity="included",
             repetitions=1,
             stability=1.0,
         ),
@@ -385,13 +388,13 @@ def test_model_votes_are_rendered_as_space_padded_table() -> None:
 
     assert lines == [
         "| Voter                 | Primary statement | Secondary statements | Knowledge kinds | "
-        "Applicability    | Role relation   | Stability |",
+        "Applicability | Role relation   | Stability |",
         "| --------------------- | ----------------- | -------------------- | --------------- | "
-        "---------------- | --------------- | --------- |",
+        "------------- | --------------- | --------- |",
         "| granite               | requirement       | none                 | technique       | "
-        "scope_definition | none            | 1.000     |",
+        "included      | none            | 1.000     |",
         "| gemma-long-model-name | description       | none                 | none            | "
-        "none             | responsible_for | 0.667     |",
+        "none          | responsible_for | 0.667     |",
     ]
     assert all(len(line) == len(lines[0]) for line in lines)
 
@@ -565,30 +568,63 @@ def test_local_unless_condition_does_not_hide_explicit_exclusion_prior() -> None
     assert evidence.applicability_subtype.value == "exclusion"
 
 
-def test_applicability_presence_and_subtype_confidence_are_separate() -> None:
+def test_applicability_presence_is_resolved_before_polarity() -> None:
     from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
 
-    labels = (
-        "inclusion",
-        "inclusion",
-        "inclusion",
-        "inclusion",
-        "inclusion",
-        "applicability_condition",
-        "applicability_condition",
-        "applicability_condition",
+    votes = tuple(
+        ModelVote(
+            model_id=f"model-{index}",
+            primary_function=StatementFunction.DESCRIPTION,
+            applicability_present=True,
+            applicability_polarity=None,
+            repetitions=1,
+            stability=1.0,
+        )
+        for index in range(3)
+    )
+    result = _resolve_clause(
+        votes=votes,
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=3,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
+    )
+
+    assert result["applicability_present"] is True
+    assert result["applicability_presence_confidence"] == pytest.approx(1.0)
+    assert result["applicability_polarity"] is None
+    assert result["applicability_polarity_confidence"] == pytest.approx(0.0)
+    assert result["applicability_decision_confidence"] == pytest.approx(0.0)
+
+
+def test_applicability_presence_and_polarity_confidence_are_separate() -> None:
+    from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
+
+    polarities = (
+        "included",
+        "included",
+        "included",
+        "included",
+        "included",
+        "excluded",
+        "excluded",
+        "excluded",
         None,
     )
     votes = tuple(
         ModelVote(
             model_id=f"model-{index}",
             primary_function=StatementFunction.DESCRIPTION,
-            applicability_present=label is not None,
-            applicability_function=label,
+            applicability_present=index < 8,
+            applicability_polarity=polarity,
             repetitions=1,
             stability=1.0,
         )
-        for index, label in enumerate(labels)
+        for index, polarity in enumerate(polarities)
     )
     result = _resolve_clause(
         votes=votes,
@@ -599,17 +635,15 @@ def test_applicability_presence_and_subtype_confidence_are_separate() -> None:
         majority_threshold=0.5,
         label_threshold=0.5,
         adjudicator_min_confidence=0.7,
-        policy={
-            "applicability_min_confidence": 0.75,
-        },
+        policy={"applicability_min_confidence": 0.75},
     )
 
     assert result["applicability_present"] is True
     assert result["applicability_presence_confidence"] == pytest.approx(8 / 9)
-    assert result["applicability_subtype_confidence"] == pytest.approx(5 / 9)
-    assert result["applicability_confidence"] == pytest.approx(5 / 9)
+    assert result["applicability_polarity_confidence"] == pytest.approx(5 / 8)
+    assert result["applicability_confidence"] == pytest.approx(5 / 8)
     assert (
-        "applicability subtype confidence is below its confidence threshold"
+        "applicability polarity confidence is below its confidence threshold"
         in result["review_reasons"]
     )
 
@@ -639,7 +673,7 @@ def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None
             model_id="a",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function="exclusion",
+            applicability_polarity="excluded",
             role_relation_present=True,
             role_relation_type="responsible_for",
             evidence="The supplier shall ensure verification.",
@@ -650,7 +684,7 @@ def test_dimension_confidence_does_not_treat_none_as_positive_evidence() -> None
             model_id="b",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function="exclusion",
+            applicability_polarity="excluded",
             role_relation_present=True,
             role_relation_type="responsible_for",
             evidence="The supplier shall ensure verification.",
@@ -886,7 +920,7 @@ def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> No
                 primary_knowledge_kind="process",
                 proposed_knowledge_kinds=("process",),
                 applicability_present=True,
-                proposed_applicability_functions=("exception",),
+                applicability_polarity="excluded",
                 role_relation_present=True,
                 proposed_role_relation_types=("responsible_for",),
                 confidence=0.8,
@@ -906,7 +940,7 @@ def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> No
                         secondary_functions=("prerequisite",),
                         primary_knowledge_kind="process",
                         applicability_present=True,
-                        applicability_function="exception",
+                        applicability_polarity="excluded",
                         role_relation_present=True,
                         role_relation_type="responsible_for",
                         repetitions=1,
@@ -923,7 +957,7 @@ def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> No
     assert "- Primary statement function: requirement" in review
     assert "- Secondary statement functions: prerequisite" in review
     assert "- Knowledge kinds: process" in review
-    assert "- Applicability present/function: true / exception" in review
+    assert "- Applicability present/function: present:excluded" in review
     assert "- Role relation present/function: \n" in review
     assert "| Primary statement | Secondary statements |" in review
     assert "| requirement" in review and "| prerequisite" in review
@@ -958,7 +992,7 @@ def test_review_prefills_unanimous_absent_secondary_dimensions() -> None:
 
     review = _render_review(report)
 
-    assert "- Applicability present/function: false / none" in review
+    assert "- Applicability present/function: absent" in review
     assert "- Role relation present/function: false / none" in review
     assert "- HITL required for: statement functions, knowledge kinds" in review
 
@@ -1049,7 +1083,7 @@ def test_scope_context_uses_applicability_as_compatibility_category() -> None:
             model_id="a",
             primary_function=StatementFunction.DESCRIPTION,
             applicability_present=True,
-            applicability_function="inclusion",
+            applicability_polarity="included",
             repetitions=1,
             stability=1.0,
         ),
@@ -1057,14 +1091,14 @@ def test_scope_context_uses_applicability_as_compatibility_category() -> None:
             model_id="b",
             primary_function=StatementFunction.OBJECTIVE,
             applicability_present=True,
-            applicability_function="inclusion",
+            applicability_polarity="included",
             repetitions=1,
             stability=1.0,
         ),
         ModelVote(
             model_id="c",
             applicability_present=True,
-            applicability_function="inclusion",
+            applicability_polarity="included",
             repetitions=1,
             stability=1.0,
         ),
@@ -1100,7 +1134,7 @@ def test_applicability_structural_prior_conflict_requires_review() -> None:
             model_id=f"model-{index}",
             primary_function=StatementFunction.DESCRIPTION,
             applicability_present=True,
-            applicability_function="exclusion",
+            applicability_polarity="excluded",
             repetitions=1,
             stability=1.0,
         )
@@ -1111,7 +1145,7 @@ def test_applicability_structural_prior_conflict_requires_review() -> None:
         adjudicator_vote=None,
         structural_prior={
             "scope_context": True,
-            "applicability_subtype": "exception",
+            "applicability_subtype": "inclusion",
             "confidence": 0.95,
         },
         minimum_models=3,
@@ -1138,7 +1172,7 @@ def test_resolved_structural_conflict_is_audited_but_not_reviewed() -> None:
             model_id="a",
             primary_function=StatementFunction.DESCRIPTION,
             applicability_present=True,
-            applicability_function="exclusion",
+            applicability_polarity="excluded",
             repetitions=1,
             stability=1.0,
         ),
@@ -1146,7 +1180,7 @@ def test_resolved_structural_conflict_is_audited_but_not_reviewed() -> None:
             model_id="b",
             primary_function=StatementFunction.DESCRIPTION,
             applicability_present=True,
-            applicability_function="exclusion",
+            applicability_polarity="excluded",
             repetitions=1,
             stability=1.0,
         ),
@@ -1154,7 +1188,7 @@ def test_resolved_structural_conflict_is_audited_but_not_reviewed() -> None:
             model_id="c",
             primary_function=StatementFunction.DESCRIPTION,
             applicability_present=True,
-            applicability_function="exception",
+            applicability_polarity="excluded",
             repetitions=1,
             stability=1.0,
         ),
@@ -1179,7 +1213,7 @@ def test_resolved_structural_conflict_is_audited_but_not_reviewed() -> None:
         resolution_override={
             "applicability": {
                 "present": True,
-                "value": "exception",
+                "polarity": "excluded",
                 "confidence": 0.95,
                 "category": "strong_consensus",
                 "source": "resolver-stage",
@@ -1198,16 +1232,15 @@ def test_resolved_structural_conflict_is_audited_but_not_reviewed() -> None:
     )
 
 
-def test_applicability_subtype_eligibility_excludes_model_from_denominator() -> None:
+def test_applicability_polarity_eligibility_excludes_model_from_denominator() -> None:
     from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
-    from standards_atlas.domain.model import ApplicabilityFunction
 
     votes = (
         ModelVote(
             model_id="granite",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function=ApplicabilityFunction.INCLUSION,
+            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             repetitions=1,
             stability=1.0,
         ),
@@ -1215,7 +1248,7 @@ def test_applicability_subtype_eligibility_excludes_model_from_denominator() -> 
             model_id="ministral",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function=ApplicabilityFunction.INCLUSION,
+            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             repetitions=1,
             stability=1.0,
         ),
@@ -1223,7 +1256,7 @@ def test_applicability_subtype_eligibility_excludes_model_from_denominator() -> 
             model_id="llama",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function=ApplicabilityFunction.APPLICABILITY_CONDITION,
+            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             repetitions=1,
             stability=1.0,
         ),
@@ -1231,7 +1264,7 @@ def test_applicability_subtype_eligibility_excludes_model_from_denominator() -> 
             model_id="smollm",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function=ApplicabilityFunction.EXCEPTION,
+            applicability_polarity=ApplicabilityPolarity.EXCLUDED,
             repetitions=1,
             stability=1.0,
         ),
@@ -1250,28 +1283,27 @@ def test_applicability_subtype_eligibility_excludes_model_from_denominator() -> 
         model_dimension_eligibility={
             "smollm": {
                 "applicability_presence": True,
-                "applicability_subtype": False,
+                "applicability_polarity": False,
             }
         },
     )
 
     assert result["applicability_present"] is True
     assert result["applicability_presence_confidence"] == pytest.approx(1.0)
-    assert result["applicability_subtype_confidence"] == pytest.approx(2 / 3)
-    assert result["applicability_support"]["inclusion"] == pytest.approx(2 / 3)
-    assert result["proposed_applicability_functions"] == (ApplicabilityFunction.INCLUSION,)
+    assert result["applicability_polarity_confidence"] == pytest.approx(1.0)
+    assert result["applicability_support"]["included"] == pytest.approx(1.0)
+    assert result["applicability_polarity"] is ApplicabilityPolarity.INCLUDED
 
 
 def test_applicability_presence_eligibility_excludes_model_from_presence_vote() -> None:
     from standards_atlas.application.semantic_qualification.consensus import _resolve_clause
-    from standards_atlas.domain.model import ApplicabilityFunction
 
     votes = (
         ModelVote(
             model_id="a",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function=ApplicabilityFunction.INCLUSION,
+            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             repetitions=1,
             stability=1.0,
         ),
@@ -1279,7 +1311,7 @@ def test_applicability_presence_eligibility_excludes_model_from_presence_vote() 
             model_id="b",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function=ApplicabilityFunction.INCLUSION,
+            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             repetitions=1,
             stability=1.0,
         ),
@@ -1287,7 +1319,7 @@ def test_applicability_presence_eligibility_excludes_model_from_presence_vote() 
             model_id="c",
             primary_function=StatementFunction.REQUIREMENT,
             applicability_present=True,
-            applicability_function=ApplicabilityFunction.INCLUSION,
+            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             repetitions=1,
             stability=1.0,
         ),
@@ -1313,7 +1345,7 @@ def test_applicability_presence_eligibility_excludes_model_from_presence_vote() 
         model_dimension_eligibility={
             "presence-outlier": {
                 "applicability_presence": False,
-                "applicability_subtype": True,
+                "applicability_polarity": True,
             }
         },
     )
@@ -1506,10 +1538,6 @@ def test_explicit_applicability_presence_prior_conflicts_with_negative_consensus
         scope_context=False,
     )
 
-    assert result["applicability_present"] is True
-    assert result["proposed_applicability_functions"] == (
-        ApplicabilityFunction.APPLICABILITY_CONDITION,
-    )
-    assert result["applicability_structural_conflict_observed"] is True
-    assert result["applicability_structural_conflict_unresolved"] is True
-    assert result["requires_review"] is True
+    assert result["applicability_present"] is False
+    assert result["applicability_polarity"] is None
+    assert result["applicability_structural_conflict_observed"] is False

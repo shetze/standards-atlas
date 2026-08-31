@@ -772,7 +772,7 @@ def test_capture_resolved_dimensions_persists_stage_resolver_statement() -> None
         knowledge_kind_confidence=1.0,
         knowledge_kind_category=SimpleNamespace(value="unanimous"),
         applicability_present=False,
-        proposed_applicability_functions=(),
+        applicability_polarity=None,
         applicability_decision_confidence=1.0,
         applicability_category=SimpleNamespace(value="unanimous"),
         role_relation_present=False,
@@ -848,7 +848,7 @@ def test_capture_initial_knowledge_kind_uses_decision_confidence_for_none() -> N
         knowledge_kind_decision_confidence=1.0,
         knowledge_kind_category=SimpleNamespace(value="unanimous"),
         applicability_present=False,
-        proposed_applicability_functions=(),
+        applicability_polarity=None,
         applicability_decision_confidence=1.0,
         applicability_category=SimpleNamespace(value="unanimous"),
         applicability_structural_conflict=False,
@@ -963,7 +963,7 @@ def test_model_dimension_eligibility_defaults_true_and_is_exposed(tmp_path: Path
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     payload["models"][0]["dimension_eligibility"] = {
         "applicability_presence": True,
-        "applicability_subtype": False,
+        "applicability_polarity": False,
     }
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
@@ -971,15 +971,15 @@ def test_model_dimension_eligibility_defaults_true_and_is_exposed(tmp_path: Path
 
     assert manifest.model_dimension_eligibility["fast"] == {
         "applicability_presence": True,
-        "applicability_subtype": False,
+        "applicability_polarity": False,
     }
     assert manifest.model_dimension_eligibility["accurate"] == {
         "applicability_presence": True,
-        "applicability_subtype": True,
+        "applicability_polarity": True,
     }
 
 
-def test_split_applicability_does_not_escalate_subtype_when_presence_is_negative() -> None:
+def test_split_applicability_does_not_escalate_polarity_when_presence_is_negative() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -993,9 +993,9 @@ def test_split_applicability_does_not_escalate_subtype_when_presence_is_negative
         statement_function_confidence=0.9,
         applicability_present=False,
         applicability_presence_confidence=0.86,
-        applicability_subtype_confidence=0.40,
+        applicability_polarity_confidence=0.40,
         applicability_presence_unanimous=False,
-        applicability_subtype_unanimous=False,
+        applicability_polarity_unanimous=False,
         applicability_unanimous=False,
         applicability_structural_conflict=False,
         applicability_confidence=0.40,
@@ -1009,16 +1009,16 @@ def test_split_applicability_does_not_escalate_subtype_when_presence_is_negative
     resolution = CascadeResolutionConfig(
         escalate_on_applicability_disagreement=False,
         escalate_on_applicability_presence_disagreement=False,
-        escalate_on_applicability_subtype_disagreement=True,
+        escalate_on_applicability_polarity_disagreement=True,
         minimum_applicability_presence_confidence=0.75,
-        minimum_applicability_subtype_confidence=0.75,
+        minimum_applicability_polarity_confidence=0.75,
         escalate_on_role_relation_disagreement=False,
     )
 
     assert cascade_escalation_reasons(clause, resolution) == ()
 
 
-def test_split_applicability_reports_presence_and_subtype_reasons_separately() -> None:
+def test_split_applicability_reports_presence_and_polarity_reasons_separately() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -1032,9 +1032,9 @@ def test_split_applicability_reports_presence_and_subtype_reasons_separately() -
         statement_function_confidence=0.9,
         applicability_present=True,
         applicability_presence_confidence=0.70,
-        applicability_subtype_confidence=0.60,
+        applicability_polarity_confidence=0.60,
         applicability_presence_unanimous=False,
-        applicability_subtype_unanimous=False,
+        applicability_polarity_unanimous=False,
         applicability_unanimous=False,
         applicability_structural_conflict=False,
         applicability_confidence=0.60,
@@ -1048,17 +1048,17 @@ def test_split_applicability_reports_presence_and_subtype_reasons_separately() -
     resolution = CascadeResolutionConfig(
         escalate_on_applicability_disagreement=False,
         escalate_on_applicability_presence_disagreement=True,
-        escalate_on_applicability_subtype_disagreement=True,
+        escalate_on_applicability_polarity_disagreement=True,
         minimum_applicability_presence_confidence=0.75,
-        minimum_applicability_subtype_confidence=0.75,
+        minimum_applicability_polarity_confidence=0.75,
         escalate_on_role_relation_disagreement=False,
     )
 
     assert cascade_escalation_reasons(clause, resolution) == (
         "applicability_presence_disagreement",
-        "applicability_subtype_disagreement",
+        "applicability_polarity_disagreement",
         "applicability_presence_confidence",
-        "applicability_subtype_confidence",
+        "applicability_polarity_confidence",
     )
 
 
@@ -1067,14 +1067,14 @@ def test_dimension_eligibility_reports_filtered_model_ids(tmp_path: Path) -> Non
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     payload["models"][0]["dimension_eligibility"] = {
         "applicability_presence": False,
-        "applicability_subtype": True,
+        "applicability_polarity": True,
     }
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
     manifest = QualificationMatrixManifest.load(path)
 
     assert manifest.eligible_model_ids_for_dimension("applicability_presence") == ("accurate",)
-    assert manifest.eligible_model_ids_for_dimension("applicability_subtype") == (
+    assert manifest.eligible_model_ids_for_dimension("applicability_polarity") == (
         "fast",
         "accurate",
     )

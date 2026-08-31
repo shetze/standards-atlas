@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from standards_atlas.application.semantic_qualification.applicability_contract import (
+    ApplicabilityPolarity,
+)
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
     ConsensusCategory,
@@ -13,7 +16,6 @@ from standards_atlas.application.semantic_qualification.diagnostics import (
     build_qualification_diagnostics,
     render_qualification_diagnostics_markdown,
 )
-from standards_atlas.domain.model import ApplicabilityFunction
 
 
 def _clause(
@@ -39,37 +41,34 @@ def _clause(
 
 def _vote(
     model_id: str,
-    subtype: ApplicabilityFunction | None,
+    polarity: ApplicabilityPolarity | None,
 ) -> ModelVote:
     return ModelVote(
         model_id=model_id,
-        applicability_present=subtype is not None,
-        applicability_function=subtype,
+        applicability_present=polarity is not None,
+        applicability_polarity=polarity,
         repetitions=1,
         stability=1.0,
     )
 
 
 def test_diagnostics_cluster_conflicts_duplicates_and_multi_assertions() -> None:
-    text = (
-        "This part does not apply to medical equipment. "
-        "The requirement applies to ASIL C unless an exemption is granted."
-    )
+    text = "This part does not apply to medical equipment. The requirement applies to ASIL C."
     clauses = (
         _clause(
             "one",
             "1",
             text,
-            _vote("model-a", ApplicabilityFunction.EXCLUSION),
-            _vote("model-b", ApplicabilityFunction.EXCEPTION),
+            _vote("model-a", ApplicabilityPolarity.EXCLUDED),
+            _vote("model-b", ApplicabilityPolarity.INCLUDED),
             _vote("model-c", None),
         ),
         _clause(
             "two",
             "2",
             text,
-            _vote("model-a", ApplicabilityFunction.EXCLUSION),
-            _vote("model-b", ApplicabilityFunction.EXCEPTION),
+            _vote("model-a", ApplicabilityPolarity.EXCLUDED),
+            _vote("model-b", ApplicabilityPolarity.INCLUDED),
             _vote("model-c", None),
         ),
     )
@@ -91,14 +90,14 @@ def test_diagnostics_cluster_conflicts_duplicates_and_multi_assertions() -> None
     conflicts = diagnostics["applicability_conflicts"]
     assert conflicts["clause_count"] == 2
     assert conflicts["presence_disagreement_count"] == 2
-    assert conflicts["subtype_disagreement_count"] == 2
+    assert conflicts["polarity_disagreement_count"] == 2
     assert conflicts["clusters"][0]["count"] == 2
     assert diagnostics["duplicate_clusters"]["exact_cluster_count"] == 1
     candidates = diagnostics["multi_applicability_assertion_candidates"]
     assert len(candidates) == 2
-    assert set(candidates[0]["detected_subtypes"]) == {
-        "exclusion",
-        "exception",
+    assert set(candidates[0]["detected_polarities"]) == {
+        "included",
+        "excluded",
     }
 
     markdown = render_qualification_diagnostics_markdown(
@@ -119,24 +118,24 @@ def test_applicability_model_fitness_respects_dimension_eligibility() -> None:
         ModelVote(
             model_id="presence-voter",
             applicability_present=True,
-            applicability_function=ApplicabilityFunction.INCLUSION,
+            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             applicability_presence_eligible=True,
-            applicability_subtype_eligible=True,
+            applicability_polarity_eligible=True,
             repetitions=1,
             stability=1.0,
         ),
         ModelVote(
-            model_id="subtype-only",
+            model_id="polarity-only",
             applicability_present=False,
             applicability_presence_eligible=False,
-            applicability_subtype_eligible=True,
+            applicability_polarity_eligible=True,
             repetitions=1,
             stability=1.0,
         ),
     ).model_copy(
         update={
             "applicability_present": True,
-            "proposed_applicability_functions": (ApplicabilityFunction.INCLUSION,),
+            "applicability_polarity": ApplicabilityPolarity.INCLUDED,
             "applicability_category": ConsensusCategory.UNANIMOUS,
         }
     )
@@ -157,4 +156,4 @@ def test_applicability_model_fitness_respects_dimension_eligibility() -> None:
     fitness = {item["model_id"]: item for item in diagnostics["applicability_model_fitness"]}
 
     assert fitness["presence-voter"]["vote_count"] == 1
-    assert fitness["subtype-only"]["vote_count"] == 0
+    assert fitness["polarity-only"]["vote_count"] == 0

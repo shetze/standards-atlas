@@ -28,7 +28,7 @@ execution:
         minimum_knowledge_kind_confidence: 0.60
         escalate_on_applicability_disagreement: false
         escalate_on_applicability_presence_disagreement: true
-        escalate_on_applicability_subtype_disagreement: true
+        escalate_on_applicability_polarity_disagreement: true
         escalate_on_role_relation_disagreement: true
     - id: intermediate-escalation
       models:
@@ -49,10 +49,10 @@ execution:
         minimum_knowledge_kind_confidence: 0.60
         escalate_on_applicability_disagreement: false
         escalate_on_applicability_presence_disagreement: false
-        escalate_on_applicability_subtype_disagreement: false
+        escalate_on_applicability_polarity_disagreement: false
         escalate_on_role_relation_disagreement: false
         minimum_applicability_presence_confidence: 0.75
-        minimum_applicability_subtype_confidence: 0.75
+        minimum_applicability_polarity_confidence: 0.75
         minimum_role_relation_confidence: 0.80
     - id: escalation
       models:
@@ -75,7 +75,7 @@ execution:
     minimum_knowledge_kind_confidence: 0.60
     escalate_on_applicability_disagreement: false
     escalate_on_applicability_presence_disagreement: true
-    escalate_on_applicability_subtype_disagreement: true
+    escalate_on_applicability_polarity_disagreement: true
     escalate_on_role_relation_disagreement: true
 
 
@@ -238,7 +238,7 @@ models:
     declared_memory_gb: 4
     dimension_eligibility:
       applicability_presence: false
-      applicability_subtype: false
+      applicability_polarity: false
     generation:
       max_output_tokens: 384
       adaptive_question_max_tokens: 256
@@ -253,7 +253,7 @@ models:
     description: GLM-family voter retained for non-presence dimensions.
     dimension_eligibility:
       applicability_presence: false
-      applicability_subtype: true
+      applicability_polarity: true
     accelerator: gpu
     parameters_billion: 9
     declared_memory_gb: 8
@@ -329,7 +329,7 @@ models:
     description: Compact Granite voter retained for non-presence dimensions.
     dimension_eligibility:
       applicability_presence: false
-      applicability_subtype: true
+      applicability_polarity: true
     accelerator: gpu
     parameters_billion: 8
     declared_memory_gb: 8

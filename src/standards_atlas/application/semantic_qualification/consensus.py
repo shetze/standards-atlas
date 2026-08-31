@@ -17,6 +17,10 @@ from standards_atlas.application.evaluation.repository import EvaluationDatasetR
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
 )
+from standards_atlas.application.semantic_qualification.applicability_contract import (
+    ApplicabilityPolarity,
+    project_applicability_polarity,
+)
 from standards_atlas.application.semantic_qualification.role_qualification import (
     RoleTupleConsensus,
     detect_role_candidate,
@@ -27,7 +31,6 @@ from standards_atlas.application.semantic_qualification.structural_evidence impo
     derive_structural_evidence,
 )
 from standards_atlas.domain.model import (
-    ApplicabilityFunction,
     KnowledgeKind,
     RoleRelation,
     RoleRelationType,
@@ -52,7 +55,7 @@ class OverallConsensusStatus(StrEnum):
 class ModelVote(BaseModel):
     """One stable, dimension-aware vote contributed by a model."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     model_id: str
     primary_function: StatementFunction | None = None
@@ -60,9 +63,9 @@ class ModelVote(BaseModel):
     primary_knowledge_kind: KnowledgeKind | None = None
     secondary_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
-    applicability_function: ApplicabilityFunction | None = None
+    applicability_polarity: ApplicabilityPolarity | None = None
     applicability_presence_eligible: bool = True
-    applicability_subtype_eligible: bool = True
+    applicability_polarity_eligible: bool = True
     role_semantics_present: bool = False
     role_relations: tuple[RoleRelation, ...] = ()
     role_relation_present: bool = False
@@ -86,12 +89,6 @@ class ModelVote(BaseModel):
         return (self.primary_knowledge_kind, *self.secondary_knowledge_kinds)
 
     @property
-    def applicability_functions(self) -> tuple[ApplicabilityFunction, ...]:
-        if not self.applicability_present or self.applicability_function is None:
-            return ()
-        return (self.applicability_function,)
-
-    @property
     def role_relation_types(self) -> tuple[RoleRelationType, ...]:
         if not self.role_relation_present or self.role_relation_type is None:
             return ()
@@ -99,7 +96,7 @@ class ModelVote(BaseModel):
 
 
 class ClauseConsensus(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     clause_id: str
     document_key: str
@@ -120,7 +117,7 @@ class ClauseConsensus(BaseModel):
     primary_knowledge_kind: KnowledgeKind | None = None
     proposed_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
-    proposed_applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    applicability_polarity: ApplicabilityPolarity | None = None
     role_semantics_present: bool = False
     role_semantics_presence_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     role_candidate: bool = False
@@ -137,12 +134,10 @@ class ClauseConsensus(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     statement_function_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     knowledge_kind_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    # ``applicability_confidence`` remains the compatibility alias for subtype
-    # confidence. Presence confidence is exposed separately so that strong
-    # evidence that applicability exists is not confused with subtype agreement.
+    # Applicability is resolved hierarchically: presence first, polarity second.
     applicability_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_presence_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    applicability_subtype_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    applicability_polarity_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     role_relation_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     statement_function_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     knowledge_kind_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -152,8 +147,8 @@ class ClauseConsensus(BaseModel):
     applicability_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     role_relation_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_presence_unanimous: bool = True
-    applicability_subtype_unanimous: bool = True
-    # Compatibility aggregate: true only when both presence and subtype are unanimous.
+    applicability_polarity_unanimous: bool = True
+    # Aggregate unanimity follows the resolved hierarchy.
     applicability_unanimous: bool = True
     role_relation_unanimous: bool = True
     role_semantics_unanimous: bool = True
@@ -178,7 +173,7 @@ class ClauseConsensus(BaseModel):
 class ConsensusReport(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal["2.1"] = "2.1"
+    schema_version: Literal["3.0"] = "3.0"
     matrix_id: str
     corpus_id: str
     prompt_id: str
@@ -299,10 +294,10 @@ class ModelConsensusService:
                             .get(model_id, {})
                             .get("applicability_presence", True)
                         ),
-                        "applicability_subtype_eligible": bool(
+                        "applicability_polarity_eligible": bool(
                             (model_dimension_eligibility or {})
                             .get(model_id, {})
-                            .get("applicability_subtype", True)
+                            .get("applicability_polarity", True)
                         ),
                     }
                 )
@@ -323,10 +318,10 @@ class ModelConsensusService:
                             .get(adjudicator_id, {})
                             .get("applicability_presence", True)
                         ),
-                        "applicability_subtype_eligible": bool(
+                        "applicability_polarity_eligible": bool(
                             (model_dimension_eligibility or {})
                             .get(adjudicator_id, {})
-                            .get("applicability_subtype", True)
+                            .get("applicability_polarity", True)
                         ),
                     }
                 )
@@ -539,7 +534,7 @@ def _model_vote(
         primary_knowledge_kind=primary_knowledge,
         secondary_knowledge_kinds=secondary_knowledge,
         applicability_present=applicability[0].proposal.applicability_present,
-        applicability_function=app,
+        applicability_polarity=project_applicability_polarity(app),
         role_semantics_present=responsibility[0].proposal.role_semantics_present,
         role_relations=responsibility[0].proposal.role_relations,
         role_relation_present=bool(responsibility[0].proposal.role_relations or resp is not None),
@@ -685,40 +680,46 @@ def _resolve_clause(
         return bool(eligibility.get(vote.model_id, {}).get(dimension, True))
 
     app_presence_votes = tuple(vote for vote in votes if eligible(vote, "applicability_presence"))
-    app_subtype_votes = tuple(vote for vote in votes if eligible(vote, "applicability_subtype"))
+    app_polarity_votes = tuple(vote for vote in votes if eligible(vote, "applicability_polarity"))
     app_presence_model_count = len(app_presence_votes)
-    app_subtype_model_count = len(app_subtype_votes)
+    app_polarity_model_count = len(app_polarity_votes)
     app_present_support = (
         sum(vote.applicability_present for vote in app_presence_votes) / app_presence_model_count
         if app_presence_model_count
         else 0.0
     )
+    positive_polarity_votes = tuple(
+        vote for vote in app_polarity_votes if vote.applicability_present
+    )
     app_counts = Counter(
-        vote.applicability_function for vote in app_subtype_votes if vote.applicability_present
+        vote.applicability_polarity
+        for vote in positive_polarity_votes
+        if vote.applicability_polarity is not None
     )
     app_label, app_count = app_counts.most_common(1)[0] if app_counts else (None, 0)
-    app_label_support = app_count / app_subtype_model_count if app_subtype_model_count else 0.0
-    prior_app = structural_prior.get("applicability_subtype")
+    app_polarity_model_count = len(positive_polarity_votes)
+    app_label_support = app_count / app_polarity_model_count if app_polarity_model_count else 0.0
+    prior_app = project_applicability_polarity(structural_prior.get("applicability_subtype"))
     applicability_presence_conflict = bool(
         prior_app
         and app_present_support < majority_threshold
         and prior_confidence >= majority_threshold
     )
-    applicability_subtype_conflict = bool(
+    applicability_polarity_conflict = bool(
         prior_app
         and app_label is not None
-        and app_label.value != prior_app
+        and app_label != prior_app
         and app_label_support >= majority_threshold
         and prior_confidence >= majority_threshold
     )
     applicability_structural_conflict = (
-        applicability_presence_conflict or applicability_subtype_conflict
+        applicability_presence_conflict or applicability_polarity_conflict
     )
     if prior_app and app_label_support < majority_threshold:
-        app_label = ApplicabilityFunction(prior_app)
+        app_label = prior_app
         app_present_support = max(app_present_support, prior_confidence)
         app_label_support = max(app_label_support, prior_confidence)
-    app_accepted = app_present_support >= majority_threshold and app_label is not None
+    app_accepted = app_present_support >= majority_threshold
 
     valid_role_relation_votes = tuple(
         vote for vote in votes if _role_relation_evidence_is_valid(vote)
@@ -740,14 +741,16 @@ def _resolve_clause(
     applicability_presence_unanimous = _dimension_votes_are_unanimous(
         tuple(vote.applicability_present for vote in app_presence_votes)
     )
-    applicability_subtype_unanimous = _dimension_votes_are_unanimous(
-        tuple(
-            vote.applicability_function
-            for vote in app_subtype_votes
-            if vote.applicability_present and vote.applicability_function is not None
+    applicability_polarity_unanimous = (
+        _dimension_votes_are_unanimous(
+            tuple(vote.applicability_polarity for vote in positive_polarity_votes)
         )
+        if app_accepted
+        else True
     )
-    applicability_unanimous = applicability_presence_unanimous and applicability_subtype_unanimous
+    applicability_unanimous = applicability_presence_unanimous and (
+        applicability_polarity_unanimous if app_accepted else True
+    )
     role_relation_unanimous = _dimension_votes_are_unanimous(
         tuple(
             (
@@ -788,18 +791,18 @@ def _resolve_clause(
     applicability_presence_confidence = (
         app_present_support if app_accepted else 1.0 - app_present_support
     )
-    applicability_subtype_confidence = app_label_support if app_label is not None else 0.0
-    applicability_decision_confidence = _dimension_decision_confidence(
-        present=app_accepted,
-        positive_confidence=applicability_subtype_confidence,
-        support={"present": app_present_support},
+    applicability_polarity_confidence = app_label_support if app_label is not None else 0.0
+    applicability_decision_confidence = (
+        min(app_present_support, applicability_polarity_confidence)
+        if app_accepted
+        else max(0.0, 1.0 - app_present_support)
     )
     role_relation_decision_confidence = _dimension_decision_confidence(
         present=resp_accepted,
         positive_confidence=resp_label_support,
         support={"present": resp_present_support},
     )
-    applicability_confidence = applicability_subtype_confidence
+    applicability_confidence = applicability_decision_confidence
     role_relation_confidence = resp_present_support if resp_accepted else 0.0
 
     statement_category = category
@@ -820,7 +823,7 @@ def _resolve_clause(
     # Compatibility: knowledge_kind_category continues to represent the primary decision.
     knowledge_category = knowledge_primary_category
     applicability_model_count = (
-        app_subtype_model_count if app_accepted else app_presence_model_count
+        app_polarity_model_count if app_accepted else app_presence_model_count
     )
     applicability_min_models = (
         min_applicability_presence_models
@@ -876,18 +879,18 @@ def _resolve_clause(
         applicability_structural_conflict_unresolved = bool(
             item.get("structural_conflict_unresolved", False)
         )
-        app_label = ApplicabilityFunction(item["value"]) if item.get("value") else None
-        app_accepted = bool(item.get("present", app_label is not None))
+        app_label = ApplicabilityPolarity(item["polarity"]) if item.get("polarity") else None
+        app_accepted = bool(item.get("present", False))
         applicability_decision_confidence = float(item["confidence"])
         applicability_presence_confidence = float(
             item.get("presence_confidence", applicability_decision_confidence)
         )
-        applicability_subtype_confidence = (
-            float(item.get("subtype_confidence", applicability_decision_confidence))
+        applicability_polarity_confidence = (
+            float(item.get("polarity_confidence", applicability_decision_confidence))
             if app_accepted and app_label is not None
             else 0.0
         )
-        applicability_confidence = applicability_subtype_confidence
+        applicability_confidence = applicability_decision_confidence
         applicability_category = ConsensusCategory(item["category"])
         resolution_sources["applicability"] = str(item.get("source", "cascade"))
     if "role_relation" in override:
@@ -956,7 +959,7 @@ def _resolve_clause(
         "primary_knowledge_kind": primary_knowledge,
         "proposed_knowledge_kinds": proposed_knowledge_kinds,
         "applicability_present": app_accepted,
-        "proposed_applicability_functions": ((app_label,) if app_accepted else ()),
+        "applicability_polarity": (app_label if app_accepted and app_label is not None else None),
         "role_relation_present": resp_accepted,
         "proposed_role_relation_types": ((resp_label,) if resp_label is not None else ()),
         "confidence": confidence,
@@ -964,7 +967,7 @@ def _resolve_clause(
         "knowledge_kind_confidence": knowledge_kind_confidence,
         "applicability_confidence": applicability_confidence,
         "applicability_presence_confidence": applicability_presence_confidence,
-        "applicability_subtype_confidence": applicability_subtype_confidence,
+        "applicability_polarity_confidence": applicability_polarity_confidence,
         "role_relation_confidence": role_relation_confidence,
         "statement_function_decision_confidence": statement_function_decision_confidence,
         "knowledge_kind_decision_confidence": knowledge_kind_decision_confidence,
@@ -974,7 +977,7 @@ def _resolve_clause(
         "applicability_decision_confidence": applicability_decision_confidence,
         "role_relation_decision_confidence": role_relation_decision_confidence,
         "applicability_presence_unanimous": applicability_presence_unanimous,
-        "applicability_subtype_unanimous": applicability_subtype_unanimous,
+        "applicability_polarity_unanimous": applicability_polarity_unanimous,
         "applicability_unanimous": applicability_unanimous,
         "role_relation_unanimous": role_relation_unanimous,
         "applicability_structural_conflict": applicability_structural_conflict_unresolved,
@@ -1072,7 +1075,7 @@ def _review_reasons(
     if applicability_present and applicability_confidence < float(
         policy["applicability_min_confidence"]
     ):
-        reasons.append("applicability subtype confidence is below its confidence threshold")
+        reasons.append("applicability polarity confidence is below its confidence threshold")
     if role_relation_present and role_relation_confidence < float(
         policy["role_relation_min_confidence"]
     ):
@@ -1141,10 +1144,8 @@ def _write_outputs(
                 ],
                 "applicability": {
                     "present": item.applicability_present,
-                    "function": (
-                        item.proposed_applicability_functions[0].value
-                        if item.proposed_applicability_functions
-                        else None
+                    "polarity": (
+                        item.applicability_polarity.value if item.applicability_polarity else None
                     ),
                 },
                 "role_semantics": {
@@ -1268,9 +1269,7 @@ def _render_review(report: ConsensusReport) -> str:
     for item in uncertain:
         proposed = ", ".join(value.value for value in item.proposed_functions) or "none"
         knowledge = ", ".join(value.value for value in item.proposed_knowledge_kinds) or "none"
-        applicability = (
-            ", ".join(value.value for value in item.proposed_applicability_functions) or "none"
-        )
+        applicability = item.applicability_polarity.value if item.applicability_polarity else "none"
         responsibility = (
             ", ".join(value.value for value in item.proposed_role_relation_types) or "none"
         )
@@ -1304,7 +1303,7 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Knowledge-kind confidence: `{item.knowledge_kind_confidence:.3f}`",
                 "- Applicability confidence: "
                 f"presence=`{item.applicability_presence_confidence:.3f}`, "
-                f"subtype=`{item.applicability_subtype_confidence:.3f}`",
+                f"polarity=`{item.applicability_polarity_confidence:.3f}`",
                 f"- Role relation confidence: `{item.role_relation_confidence:.3f}`",
                 "- Decision confidence: "
                 f"statement_function=`{item.statement_function_decision_confidence:.3f}`, "
@@ -1400,9 +1399,10 @@ def _hitl_prefill(item: ClauseConsensus, policy: dict[str, Any]) -> dict[str, st
             else ""
         ),
         "applicability": (
-            _present_function_value(
-                item.applicability_present,
-                item.proposed_applicability_functions,
+            (
+                f"present:{item.applicability_polarity.value}"
+                if item.applicability_present and item.applicability_polarity is not None
+                else ("present" if item.applicability_present else "absent")
             )
             if applicability_reliable
             else ""
@@ -1439,7 +1439,7 @@ def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
             _enum_value(vote.primary_function),
             _enum_values(vote.secondary_functions),
             _enum_values(vote.knowledge_kinds),
-            _enum_values(vote.applicability_functions),
+            (vote.applicability_polarity.value if vote.applicability_polarity else "none"),
             _enum_values(vote.role_relation_types),
             f"{vote.stability:.3f}",
         )

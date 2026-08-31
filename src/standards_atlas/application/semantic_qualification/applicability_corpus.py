@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
-from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
 from zipfile import ZipFile
@@ -13,12 +12,9 @@ from zipfile import ZipFile
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-
-class ApplicabilityPolarity(StrEnum):
-    """Binary applicability direction used by qualification only."""
-
-    INCLUDED = "included"
-    EXCLUDED = "excluded"
+from standards_atlas.application.semantic_qualification.applicability_contract import (
+    ApplicabilityPolarity,
+)
 
 
 class ApplicabilityGoldenExpected(BaseModel):
@@ -118,21 +114,39 @@ def build_applicability_golden_review(
 ) -> ApplicabilityCorpusBuildResult:
     """Create a flat HITL review from final applicability-presence disagreements."""
     report, manifest = _load_run_inputs(run_archive)
-    eligibility = {
+    presence_eligibility = {
         str(model.get("id")): bool(
             (model.get("dimension_eligibility") or {}).get("applicability_presence", True)
         )
         for model in manifest.get("models", [])
     }
+    polarity_eligibility = {
+        str(model.get("id")): bool(
+            (model.get("dimension_eligibility") or {}).get("applicability_polarity", True)
+        )
+        for model in manifest.get("models", [])
+    }
     cases: list[ApplicabilityGoldenCase] = []
     for clause in report.get("clauses", []):
-        votes = [
-            vote
-            for vote in clause.get("votes", [])
-            if eligibility.get(str(vote.get("model_id")), True)
+        votes = list(clause.get("votes", []))
+        presence_votes = [
+            vote for vote in votes if presence_eligibility.get(str(vote.get("model_id")), True)
         ]
-        presence_values = {bool(vote.get("applicability_present")) for vote in votes}
-        if len(presence_values) <= 1:
+        presence_values = {bool(vote.get("applicability_present")) for vote in presence_votes}
+        category = None
+        if len(presence_values) > 1:
+            category = "presence_disagreement"
+        else:
+            polarity_values = {
+                vote.get("applicability_polarity")
+                for vote in votes
+                if bool(vote.get("applicability_present"))
+                and polarity_eligibility.get(str(vote.get("model_id")), True)
+                and vote.get("applicability_polarity") is not None
+            }
+            if len(polarity_values) > 1:
+                category = "polarity_disagreement"
+        if category is None:
             continue
         cases.append(
             ApplicabilityGoldenCase(
@@ -140,7 +154,7 @@ def build_applicability_golden_review(
                 document_key=str(clause["document_key"]),
                 reference=_qualified_reference(clause),
                 text=str(clause.get("clause_text") or ""),
-                category="presence_disagreement",
+                category=category,
             )
         )
     cases.sort(key=lambda case: (case.document_key, case.reference, case.clause_id))
@@ -239,7 +253,7 @@ def evaluate_applicability_golden_corpus(
         consensus_predictions.append(
             (
                 bool(clause.get("applicability_present")),
-                _first_subtype(clause.get("proposed_applicability_functions")),
+                clause.get("applicability_polarity"),
                 expected,
             )
         )
@@ -248,7 +262,7 @@ def evaluate_applicability_golden_corpus(
             model_predictions.setdefault(model_id, []).append(
                 (
                     bool(vote.get("applicability_present")),
-                    vote.get("applicability_function"),
+                    vote.get("applicability_polarity"),
                     expected,
                 )
             )
@@ -368,20 +382,8 @@ def _parse_bool(value: str | None) -> bool | None:
     raise ValueError(f"invalid boolean value: {value!r}")
 
 
-def _first_subtype(value: Any) -> str | None:
-    if isinstance(value, list) and value:
-        return str(value[0])
-    if isinstance(value, tuple) and value:
-        return str(value[0])
-    return None
-
-
 def _qualification_polarity(value: str | None) -> ApplicabilityPolarity | None:
-    if value == "inclusion":
-        return ApplicabilityPolarity.INCLUDED
-    if value == "exclusion":
-        return ApplicabilityPolarity.EXCLUDED
-    return None
+    return ApplicabilityPolarity(value) if value is not None else None
 
 
 def _sha256(path: Path) -> str:
