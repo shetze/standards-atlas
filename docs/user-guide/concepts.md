@@ -36,10 +36,14 @@ A structural profile classifies independent dimensions instead of forcing a clau
 AtlasData term headings provide the initial open vocabulary for clause subjects. Standards
 Atlas derives this vocabulary deterministically from `ClauseType.TERM` entries, preserves
 each original label and source reference, and merges only lexical variants under conservative
-normalization. The resulting candidates are not yet clause assignments and are not CBox
-assertions: subject identification and CBox projection are separate later stages. This keeps
-the vocabulary grounded in standard-defined terminology without prematurely introducing a
-project-specific subject taxonomy.
+normalization. The resulting candidates are not CBox assertions. A separate deterministic
+subject-identification stage selects at most one `primary_subject` for each clause. It prefers
+matches in the clause heading and text, then inherits the nearest matching ancestor heading, and
+finally considers resolved scope context. Every result records its evidence source and a
+deterministic confidence. Equally specific matches remain explicit ambiguities instead of being
+broken by an arbitrary lexical tie-break. Unresolved clauses remain explicit rather than receiving
+an invented subject. CBox projection is a later stage, so the identification heuristic can be
+qualified before it becomes interpretation context.
 
 ## CBox, TBox, and ABox
 

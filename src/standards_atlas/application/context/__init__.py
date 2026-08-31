@@ -1,5 +1,15 @@
 """CBox-oriented deterministic context discovery."""
 
+from standards_atlas.application.context.subject_identification import (
+    ClauseSubjectIdentification,
+    DeterministicSubjectIdentifier,
+    IdentifiedSubject,
+    SubjectEvidenceKind,
+    SubjectIdentificationAnalysis,
+    SubjectIdentificationEvidence,
+    SubjectIdentificationReport,
+    SubjectIdentificationService,
+)
 from standards_atlas.application.context.subject_vocabulary import (
     SubjectCandidate,
     SubjectCandidateProvenance,
@@ -11,6 +21,14 @@ from standards_atlas.application.context.subject_vocabulary import (
 )
 
 __all__ = [
+    "ClauseSubjectIdentification",
+    "DeterministicSubjectIdentifier",
+    "IdentifiedSubject",
+    "SubjectEvidenceKind",
+    "SubjectIdentificationAnalysis",
+    "SubjectIdentificationEvidence",
+    "SubjectIdentificationReport",
+    "SubjectIdentificationService",
     "SubjectCandidate",
     "SubjectCandidateProvenance",
     "SubjectCandidateVocabulary",
