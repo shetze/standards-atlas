@@ -14,6 +14,9 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
     evaluate_applicability_golden_corpus,
     publish_applicability_golden_review,
 )
+from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
+    analyze_applicability_hard_cases,
+)
 from standards_atlas.application.semantic_qualification.clause_access import (
     SamplingStrategy,
 )
@@ -168,6 +171,35 @@ def evaluate_role_corpus(
     typer.echo(f"Presence F1             : {report.presence_f1:.3f}")
     typer.echo(f"Tuple F1                : {report.tuple_f1:.3f}")
     typer.echo(f"Report                  : {output}")
+
+
+@evaluation_app.command("applicability-hard-cases")
+def analyze_applicability_presence_hard_cases(
+    run_archive: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option("--output", file_okay=False)] = Path(
+        "local/evaluation/applicability-hard-cases"
+    ),
+    limit: Annotated[int, typer.Option("--limit", min=1, max=500)] = 30,
+) -> None:
+    """Rank applicability presence disagreements from an immutable qualification run."""
+    try:
+        report, artifacts = analyze_applicability_hard_cases(run_archive, output, limit=limit)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Analyzed clauses         : {report.analyzed_clauses}")
+    typer.echo(
+        "Balanced disagreements   : "
+        f"{report.category_counts.get('balanced_presence_disagreement', 0)}"
+    )
+    typer.echo(
+        "Minority disagreements   : "
+        f"{report.category_counts.get('minority_presence_disagreement', 0)}"
+    )
+    typer.echo(f"Review candidates        : {artifacts.selected_count}")
+    typer.echo(f"JSON report              : {artifacts.json_path}")
+    typer.echo(f"Markdown report          : {artifacts.markdown_path}")
+    typer.echo(f"HITL review CSV          : {artifacts.review_path}")
 
 
 @evaluation_app.command("applicability-corpus-build")

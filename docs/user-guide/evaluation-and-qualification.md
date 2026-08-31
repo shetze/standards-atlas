@@ -473,6 +473,16 @@ The regression report contains consensus metrics, presence precision/recall/F1, 
 
 ### Full vs minimal CBox applicability matrix
 
+Analyze clause-level applicability presence disagreements from an immutable qualification run with:
+
+```bash
+uv run standards-atlas evaluation applicability-hard-cases \
+  local/evaluation/qualification-run-064.zip \
+  --output local/evaluation/applicability-hard-cases
+```
+
+The analyzer ranks balanced and minority presence disagreements before framing-sensitive and polarity-only cases, reports per-model presence profiles, and writes JSON, Markdown, and a HITL-ready review CSV. New qualification archives include the compact `applicability-predictions.json` snapshot required for this retrospective analysis; older archives without clause-level predictions cannot be reconstructed from aggregate metrics alone.
+
 The dedicated framing manifest `manifests/multidimensional-semantic-qualification-v5-applicability-framing-v1.yaml` is a two-arm full-matrix experiment. Both arms use the same `structure-aware-v8` prompt and model set; only the deterministic CBox projection changes:
 
 - `applicability-clean-full` uses `full-context-v1`.

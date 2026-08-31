@@ -35,6 +35,9 @@ from standards_atlas.application.semantic_qualification.applicability_framing im
     build_applicability_framing_report,
     persist_applicability_framing_report,
 )
+from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
+    persist_applicability_prediction_snapshot,
+)
 from standards_atlas.application.semantic_qualification.challenger import (
     write_challenger_comparison,
 )
@@ -930,6 +933,9 @@ def qualify_model_prompt_matrix(
                 }
             )
 
+        applicability_predictions_path = persist_applicability_prediction_snapshot(
+            manifest, output_directory / manifest.matrix_id
+        )
         report, json_path, markdown_path = ModelPromptQualificationService().evaluate(
             manifest,
             output_directory / manifest.matrix_id,
@@ -945,9 +951,7 @@ def qualify_model_prompt_matrix(
         )
         applicability_framing = build_applicability_framing_report(
             manifest=manifest,
-            golden_path=Path(
-                "local/review/applicability-presence/1.0.0/applicability-golden-corpus.yaml"
-            ),
+            golden_path=Path("local/review/applicability/2.0.0/applicability-golden-corpus.yaml"),
         )
         applicability_framing_paths = persist_applicability_framing_report(
             applicability_framing,
@@ -1050,6 +1054,7 @@ def qualify_model_prompt_matrix(
                         diagnostics_path,
                         *prompt_comparison_paths,
                         *applicability_framing_paths,
+                        applicability_predictions_path,
                         *challenger_paths,
                         *((challenger_sample_path,) if challenger_sample_path is not None else ()),
                     ),

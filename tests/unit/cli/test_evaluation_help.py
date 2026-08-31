@@ -62,3 +62,9 @@ def test_challenger_qualification_help_is_registered() -> None:
     assert "--fresh" in result.stdout
     assert "--allow-reuse" in result.stdout
     assert "--challenger-source-manifest" not in result.stdout
+
+
+def test_evaluation_help_lists_applicability_hard_case_analysis() -> None:
+    result = runner.invoke(app, ["evaluation", "--help"])
+    assert result.exit_code == 0
+    assert "applicability-hard-cases" in result.stdout
