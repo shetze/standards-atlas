@@ -1,0 +1,5 @@
+{
+  "description": "Qualification prompt with presence-first binary applicability polarity and deterministic CBox context.",
+  "task": "statement-function-classification",
+  "version": "structure-aware-v8"
+}

@@ -165,3 +165,46 @@ def test_context_json_uses_the_same_framed_cbox_as_context_text() -> None:
     assert rendered == {"document_key": "IEC61508-3", "reference": "7.4.2"}
     assert "clause_id" not in rendered
     assert "eligibility" not in rendered
+
+
+def test_binary_applicability_prompt_schema_is_safe_canonical_narrowing() -> None:
+    from pathlib import Path
+
+    from standards_atlas.application.evaluation.repository import PromptRepository
+    from standards_atlas.application.semantic_qualification.proposals import (
+        SemanticTaskRepository,
+        _prompt_schema_is_compatible,
+    )
+
+    resources = Path("src/standards_atlas/resources/semantic")
+    _, canonical = SemanticTaskRepository(resources / "tasks").load(
+        "semantic-profile-classification", "2.4.0"
+    )
+    prompt = PromptRepository(resources / "prompts").load(
+        "semantic-profile-classification", "structure-aware-v8"
+    )
+
+    assert _prompt_schema_is_compatible(prompt.output_schema, canonical)
+
+
+def test_prompt_schema_cannot_expand_canonical_applicability_labels() -> None:
+    from standards_atlas.application.semantic_qualification.proposals import (
+        _prompt_schema_is_compatible,
+    )
+
+    canonical = {
+        "properties": {
+            "applicability_functions": {"items": {"enum": ["inclusion", "exclusion"]}},
+            "primary_applicability_function": {"enum": ["inclusion", "exclusion", None]},
+        }
+    }
+    expanded = {
+        "properties": {
+            "applicability_functions": {"items": {"enum": ["inclusion", "exclusion", "exception"]}},
+            "primary_applicability_function": {
+                "enum": ["inclusion", "exclusion", "exception", None]
+            },
+        }
+    }
+
+    assert not _prompt_schema_is_compatible(expanded, canonical)

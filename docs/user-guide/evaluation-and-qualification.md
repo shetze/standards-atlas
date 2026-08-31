@@ -144,12 +144,12 @@ models:
     provider: ramalama
     dimension_eligibility:
       applicability_presence: true
-      applicability_subtype: false
+      applicability_polarity: false
 ```
 
 An ineligible vote is removed from both numerator and denominator. For example, if SmolLM3 is
-ineligible for `applicability_subtype`, three remaining subtype voters with two `inclusion`
-votes and one `applicability_condition` vote yield `2/3`, not `2/4`. Applicability presence is
+ineligible for `applicability_polarity`, three remaining positive-presence polarity voters with two `included`
+votes and one `excluded` vote yield `2/3`, not `2/4`. Applicability presence is
 calculated independently, so SmolLM3 can still contribute to the presence decision. Omitted
 eligibility settings default to `true` for backward compatibility.
 
@@ -218,11 +218,10 @@ Structural applicability conflicts have separate observed and unresolved states.
 observed conflict remains available for audit after a later stage resolves it; only an
 unresolved structural conflict forces final review.
 
-Applicability cascade resolution treats **presence** and **subtype** as separate dimensions.
+Applicability cascade resolution treats **presence** and **polarity** as separate hierarchical decisions.
 Presence disagreement/confidence determines whether the clause is applicability-relevant at all;
-subtype disagreement/confidence is evaluated only after the cumulative decision is positive. A
-negative presence decision therefore cannot be escalated merely because a minority of positive
-voters disagree on `inclusion`, `exclusion`, `exception`, or `applicability_condition`. The
+polarity disagreement/confidence is evaluated only after the cumulative decision is positive. A
+negative presence decision therefore cannot be escalated because of polarity votes. The
 diagnostics report also records how many applicability-driven entries each cascade stage resolves
 and how many leave the stage still unresolved.
 
@@ -285,7 +284,7 @@ Ministral 3 8B into `efficient-local` and Gemma 3 12B into `intermediate-escalat
 Mistral-family correlation in the resolver stage. Slice 3c further narrows applicability-presence
 voting after the Slice 3b representative run exposed GLM-4 and SmolLM3 as opposite calibration
 extremes. Both remain production voters for other semantic dimensions, but neither contributes to
-`applicability_presence`; SmolLM3 also remains excluded from `applicability_subtype`. The displaced
+`applicability_presence`; SmolLM3 also remains excluded from `applicability_polarity`. The displaced
 Qwen3 8B, Phi-4 14B, and Qwen3 32B models remain in `challenger_qualification.models` as regression baselines. This keeps the
 head-to-head workflow useful without duplicating a model between the production and challenger
 pools. Challenger comparison aggregates only `qualification_eligible` candidates; unsupported
@@ -316,7 +315,7 @@ uv run standards-atlas evaluation challenger-qualification \
 ```
 
 `applicability-conflicts` selects clauses whose final archived model votes disagree either on
-applicability presence or, among positive votes, on the applicability subtype. The source
+applicability presence or, among positive votes, on binary applicability polarity. The source
 archive must use the same corpus and dataset version as the current manifest. The exact clause
 IDs and source archive are persisted as `challenger-sample-selection.json` and included in the
 qualification-run archive. `--limit` may be added to shorten a hard-case smoke test; it limits
@@ -326,7 +325,7 @@ The challenger run emits the normal qualification and diagnostics artifacts plus
 `challenger-comparison.json` and `challenger-comparison.md`. Both comparison artifacts are
 created before the immutable qualification-run archive is written and are included in that
 archive. The comparison groups incumbents and challengers by cascade role and reports
-applicability conflict `none` rate, reference agreement for applicability presence and subtype,
+applicability conflict `none` rate, reference agreement for applicability presence and polarity,
 prediction success, and measured duration. These signals are observational and do not
 automatically replace, weight, or promote models.
 
@@ -391,21 +390,21 @@ consensus from appearing equivalent to correct relation extraction.
 
 ### Applicability semantic boundary
 
-Qualification task 2.4.0 treats applicability as one semantic dimension with two explicit
-outputs. `applicability_present` first records whether explicit applicability semantics are present;
-`applicability_functions` then records at most one supported subtype. Presence may be true while the
-subtype remains empty when applicability is explicit but the subtype is not sufficiently supported.
-When presence is false, subtype fields must be empty. Older task payloads that predate the explicit
-presence field remain readable by inferring presence from an existing subtype.
+Qualification task 2.4.0 treats applicability as one hierarchical qualification dimension:
+**presence first, binary polarity second**. `applicability_present` decides whether the clause
+explicitly includes or excludes normative content for a stated subject or case. When presence is
+positive, the qualification prompt permits exactly one transport label: `inclusion` (projected to
+`included`) or `exclusion` (projected to `excluded`). `exception` and `applicability_condition` are
+not qualification labels in this stage. Conditional wording that only changes how an activity or
+method is performed is not applicability.
 
-Applicability remains deliberately narrow: structural membership in a Scope section, prerequisites,
-assumptions, and local activity conditions are not applicability by themselves.
+The canonical semantic task remains broader because those concepts may still be useful outside
+qualification. The `structure-aware-v8` qualification prompt therefore uses a safe narrowing of the
+canonical structured-output schema rather than changing the ontology or EngineeringDocument
+contract.
 
 Use `manifests/multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml`
-to evaluate this boundary. The v4 role-semantics manifest remains available as the pre-change
-baseline. In particular, compare clauses where models previously disagreed between `inclusion`
-and `none`; generic conditional requirements should now converge toward `none`, while explicit
-`applies to`/`applicable to` statements remain positive.
+for the production cascade. Its structure-aware applicability vote uses `structure-aware-v8`.
 
 
 ### Applicability presence model eligibility
@@ -420,8 +419,8 @@ Eligibility is cumulative across cascade stages. The configured production casca
 eligible applicability-presence voters after `efficient-local`, five after
 `intermediate-escalation`, and seven after final escalation. Manifest validation rejects filtered
 cascade configurations that would leave fewer dimension-eligible voters than a stage's configured
-`minimum_successful_models`. Applicability-subtype eligibility is independent from presence
-eligibility; a model may therefore remain useful for subtype discrimination even when it is not
+`minimum_successful_models`. Applicability-polarity eligibility is independent from presence
+eligibility; a model may therefore remain useful for included/excluded discrimination even when it is not
 trusted to decide whether applicability semantics are present at all.
 
 ### Role qualification contract
@@ -471,6 +470,15 @@ uv run standards-atlas evaluation applicability-corpus-evaluate \
 ```
 
 The regression report contains consensus metrics, presence precision/recall/F1, and binary polarity accuracy for every model represented in the archived run. Use these reviewed metrics, rather than raw `none_rate`, when changing future `applicability_presence` eligibility.
+
+### Full vs minimal CBox applicability matrix
+
+The dedicated framing manifest `manifests/multidimensional-semantic-qualification-v5-applicability-framing-v1.yaml` is a two-arm full-matrix experiment. Both arms use the same `structure-aware-v8` prompt and model set; only the deterministic CBox projection changes:
+
+- `applicability-clean-full` uses `full-context-v1`.
+- `applicability-clean-minimal` uses `applicability-minimal-v1`, which retains clause identity and heading but removes ancestors, sibling position, document categories, semantic sections, routing, and reference mentions.
+
+This isolates the effect of additional CBox context from prompt wording. The applicability framing report is schema `2.0` and compares presence disagreement plus **polarity disagreement** between the full and minimal observations. Content-only and identity-only arms are intentionally excluded from this matrix.
 
 ### Knowledge qualification
 

@@ -68,3 +68,18 @@ def test_v6_qualification_prompts_use_compact_four_dimension_contract() -> None:
         assert system.rstrip().endswith(
             "Confidence values must be JSON numbers from 0.0 through 1.0."
         )
+
+
+def test_v8_applicability_qualification_prompt_is_binary_and_presence_first() -> None:
+    prompt = PromptRepository(RESOURCES / "prompts").load(
+        "statement-function-classification", "structure-aware-v8"
+    )
+    system = prompt.system_prompt
+    applicability_items = prompt.output_schema["properties"]["applicability_functions"]["items"]
+    primary = prompt.output_schema["properties"]["primary_applicability_function"]
+
+    assert "Decide applicability_present first" in system
+    assert "binary polarity" in system
+    assert "Do not classify exception or applicability_condition" in system
+    assert applicability_items["enum"] == ["inclusion", "exclusion"]
+    assert primary["enum"] == ["inclusion", "exclusion", None]

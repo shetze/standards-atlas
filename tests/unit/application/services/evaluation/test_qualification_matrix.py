@@ -152,13 +152,13 @@ def test_baseline_drop_threshold_detects_regression(tmp_path: Path) -> None:
     assert any("baseline allowance" in item for item in fast.regressions)
 
 
-def test_manifest_requires_exactly_four_prompts(tmp_path: Path) -> None:
+def test_manifest_requires_at_least_two_prompts(tmp_path: Path) -> None:
     path = _manifest(tmp_path)
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["prompts"] = payload["prompts"][:3]
+    payload["prompts"] = payload["prompts"][:1]
     path.write_text(yaml.safe_dump(payload), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="exactly four"):
+    with pytest.raises(ValueError, match="at least two"):
         QualificationMatrixManifest.load(path)
 
 
@@ -1389,13 +1389,15 @@ def test_applicability_framing_manifest_declares_frame_ablation_without_changing
     assert production.execution.mode == "cascade"
     assert {prompt.id: prompt.prompt_version for prompt in production.prompts}[
         "structure-aware"
-    ] == ("structure-aware-v6")
+    ] == "structure-aware-v8"
     assert experiment.execution.mode == "full_matrix"
+    assert [prompt.id for prompt in experiment.prompts] == [
+        "applicability-clean-full",
+        "applicability-clean-minimal",
+    ]
     assert [prompt.cbox_frame for prompt in experiment.prompts] == [
         "full-context-v1",
-        "full-context-v1",
         "applicability-minimal-v1",
-        "applicability-isolated-v1",
     ]
-    cleaned = experiment.prompts[1:]
-    assert {prompt.prompt_version for prompt in cleaned} == {"structure-aware-v7"}
+    assert {prompt.prompt_version for prompt in experiment.prompts} == {"structure-aware-v8"}
+    assert experiment.thresholds.baseline_prompt_id == "applicability-clean-full"

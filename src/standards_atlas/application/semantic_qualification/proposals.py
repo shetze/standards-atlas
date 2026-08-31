@@ -275,8 +275,8 @@ class BaselineProposalGenerator:
             config.task, config.task_version
         )
         prompt = PromptRepository(resources / "prompts").load(config.task, config.prompt_version)
-        if dict(prompt.output_schema) != canonical_schema:
-            raise ValueError("prompt schema differs from the canonical task schema")
+        if not _prompt_schema_is_compatible(dict(prompt.output_schema), canonical_schema):
+            raise ValueError("prompt schema is not a safe narrowing of the canonical task schema")
         dataset = EvaluationDatasetRepository(corpus_root).load(config.task, config.dataset_version)
         all_examples = dataset.examples
         eligibility_policy = SemanticTaskEligibilityPolicy.from_task(task)
@@ -898,6 +898,51 @@ def _normalize_selection_payload(
                 normalized_values.insert(0, primary_value)
             normalized[field] = normalized_values
     return normalized
+
+
+def _prompt_schema_is_compatible(
+    prompt_schema: Mapping[str, Any], canonical_schema: Mapping[str, Any]
+) -> bool:
+    """Allow qualification prompts to narrow applicability labels without changing the task.
+
+    The canonical semantic task remains broader because production semantics may still represent
+    exception and condition concepts. Qualification prompts may only make the two applicability
+    enum locations stricter; every other schema detail must stay identical.
+    """
+    if prompt_schema == canonical_schema:
+        return True
+
+    prompt_copy = json.loads(json.dumps(prompt_schema))
+    canonical_copy = json.loads(json.dumps(canonical_schema))
+    paths = (
+        ("properties", "applicability_functions", "items", "enum"),
+        ("properties", "primary_applicability_function", "enum"),
+    )
+    for path in paths:
+        prompt_enum = _schema_path(prompt_copy, path)
+        canonical_enum = _schema_path(canonical_copy, path)
+        if not isinstance(prompt_enum, list) or not isinstance(canonical_enum, list):
+            return False
+        if not set(prompt_enum).issubset(set(canonical_enum)):
+            return False
+        _set_schema_path(canonical_copy, path, prompt_enum)
+    return prompt_copy == canonical_copy
+
+
+def _schema_path(schema: Mapping[str, Any], path: tuple[str, ...]) -> Any:
+    value: Any = schema
+    for key in path:
+        if not isinstance(value, Mapping) or key not in value:
+            return None
+        value = value[key]
+    return value
+
+
+def _set_schema_path(schema: dict[str, Any], path: tuple[str, ...], value: Any) -> None:
+    target = schema
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
 
 
 def _write_json(path: Path, payload: Any) -> None:

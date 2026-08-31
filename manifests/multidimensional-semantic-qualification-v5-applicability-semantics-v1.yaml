@@ -147,10 +147,10 @@ prompts:
     description: Benchmark control using clause text only; retained for prompt qualification, not production cascade execution.
 
   - id: structure-aware
-    prompt_version: structure-aware-v6
+    prompt_version: structure-aware-v8
     max_output_tokens: 640
     adaptive_interview: true
-    description: Primary production prompt using deterministic natural-language CBox structural context.
+    description: Primary production qualification prompt with presence-first binary applicability polarity and deterministic CBox context.
 
   - id: reference-aware
     prompt_version: evidence-first-v6

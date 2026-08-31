@@ -1,0 +1,5 @@
+Normalized clause content:
+{content}
+
+Contextual evidence:
+{context_text}

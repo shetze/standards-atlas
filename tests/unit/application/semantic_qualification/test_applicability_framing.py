@@ -84,17 +84,17 @@ def _manifest(tmp_path: Path, full: Path, minimal: Path) -> QualificationMatrixM
         prompts=(
             PromptCandidate(
                 id="applicability-clean-full",
-                prompt_version="structure-aware-v7",
+                prompt_version="structure-aware-v8",
                 cbox_frame="full-context-v1",
             ),
             PromptCandidate(
                 id="applicability-clean-minimal",
-                prompt_version="structure-aware-v7",
+                prompt_version="structure-aware-v8",
                 cbox_frame="applicability-minimal-v1",
             ),
             PromptCandidate(
                 id="applicability-clean-isolated",
-                prompt_version="structure-aware-v7",
+                prompt_version="structure-aware-v8",
                 cbox_frame="applicability-isolated-v1",
             ),
             PromptCandidate(
@@ -166,6 +166,7 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
         manifest=_manifest(tmp_path, full, minimal), golden_path=golden_path
     )
 
+    assert report.schema_version == "2.0"
     assert len(report.observations) == 2
     baseline = next(row for row in report.observations if row.cbox_frame == "full-context-v1")
     candidate = next(
@@ -178,7 +179,7 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
 
     delta = report.comparisons[0]
     assert delta.presence_disagreement_count == 1
-    assert delta.subtype_disagreement_count == 1
+    assert delta.polarity_disagreement_count == 1
     assert delta.changed_to_absent == 1
     assert delta.golden_outcome == "improved"
     assert (delta.baseline_golden_errors, delta.candidate_golden_errors) == (1, 0)
@@ -187,6 +188,8 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
     assert json_path.exists()
     rendered = markdown_path.read_text(encoding="utf-8")
     assert "Full-context deltas" in rendered
+    assert "Polarity Δ" in rendered
+    assert "Subtype Δ" not in rendered
     assert "improved" in rendered
 
 

@@ -860,8 +860,8 @@ class QualificationMatrixManifest(BaseModel):
 
     @model_validator(mode="after")
     def validate_matrix(self) -> QualificationMatrixManifest:
-        if len(self.prompts) != 4:
-            raise ValueError("qualification matrix must declare exactly four prompt variants")
+        if len(self.prompts) < 2:
+            raise ValueError("qualification matrix must declare at least two prompt variants")
         prompt_ids = [item.id for item in self.prompts]
         model_ids = [item.id for item in self.models]
         reasoning_mode_ids = [item.id for item in self.reasoning_modes]

@@ -61,8 +61,8 @@ class ApplicabilityFrameDelta(BaseModel):
     comparable_clauses: int = Field(ge=0)
     presence_disagreement_count: int = Field(ge=0)
     presence_disagreement_rate: float = Field(ge=0.0, le=1.0)
-    subtype_disagreement_count: int = Field(ge=0)
-    subtype_disagreement_rate: float = Field(ge=0.0, le=1.0)
+    polarity_disagreement_count: int = Field(ge=0)
+    polarity_disagreement_rate: float = Field(ge=0.0, le=1.0)
     changed_to_present: int = Field(ge=0)
     changed_to_absent: int = Field(ge=0)
     golden_outcome: Literal["improved", "degraded", "unchanged", "unscored"] = "unscored"
@@ -75,7 +75,7 @@ class ApplicabilityFramingReport(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["2.0"] = "2.0"
     matrix_id: str
     corpus_id: str
     golden_corpus_id: str | None = None
@@ -289,7 +289,7 @@ def _compare(
     candidate_predictions: dict[str, StatementFunctionSelection],
 ) -> ApplicabilityFrameDelta:
     keys = sorted(set(baseline_predictions).intersection(candidate_predictions))
-    presence_disagreement = subtype_disagreement = to_present = to_absent = 0
+    presence_disagreement = polarity_disagreement = to_present = to_absent = 0
     for key in keys:
         left = baseline_predictions[key]
         right = candidate_predictions[key]
@@ -304,7 +304,7 @@ def _compare(
             and right.applicability_present
             and _polarity(left) != _polarity(right)
         ):
-            subtype_disagreement += 1
+            polarity_disagreement += 1
     baseline_errors = _golden_errors(baseline)
     candidate_errors = _golden_errors(candidate)
     outcome: Literal["improved", "degraded", "unchanged", "unscored"] = "unscored"
@@ -326,8 +326,8 @@ def _compare(
         comparable_clauses=len(keys),
         presence_disagreement_count=presence_disagreement,
         presence_disagreement_rate=presence_disagreement / len(keys) if keys else 0.0,
-        subtype_disagreement_count=subtype_disagreement,
-        subtype_disagreement_rate=subtype_disagreement / len(keys) if keys else 0.0,
+        polarity_disagreement_count=polarity_disagreement,
+        polarity_disagreement_rate=polarity_disagreement / len(keys) if keys else 0.0,
         changed_to_present=to_present,
         changed_to_absent=to_absent,
         golden_outcome=outcome,
@@ -399,7 +399,7 @@ def _render_markdown(report: ApplicabilityFramingReport) -> str:
             "## Full-context deltas",
             "",
             "| Baseline → candidate | Model | Clauses | Presence Δ | To present | "
-            "To absent | Subtype Δ | Golden | Errors |",
+            "To absent | Polarity Δ | Golden | Errors |",
             "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |",
         ]
         for item in report.comparisons:
@@ -420,7 +420,10 @@ def _render_markdown(report: ApplicabilityFramingReport) -> str:
                         f"({item.presence_disagreement_rate:.3f})",
                         str(item.changed_to_present),
                         str(item.changed_to_absent),
-                        f"{item.subtype_disagreement_count} ({item.subtype_disagreement_rate:.3f})",
+                        (
+                            f"{item.polarity_disagreement_count} "
+                            f"({item.polarity_disagreement_rate:.3f})"
+                        ),
                         item.golden_outcome,
                         errors,
                     ]
