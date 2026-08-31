@@ -31,6 +31,16 @@ surrounding clause into a `responsibility_assignment`.
 
 A structural profile classifies independent dimensions instead of forcing a clause into one role. Dimensions can describe, for example, normative status, statement function, lifecycle context, evidence relevance or document region. Taxonomies are knowledge-domain specific and must not be inferred from keywords alone when evidence is insufficient.
 
+## Subject candidate vocabulary
+
+AtlasData term headings provide the initial open vocabulary for clause subjects. Standards
+Atlas derives this vocabulary deterministically from `ClauseType.TERM` entries, preserves
+each original label and source reference, and merges only lexical variants under conservative
+normalization. The resulting candidates are not yet clause assignments and are not CBox
+assertions: subject identification and CBox projection are separate later stages. This keeps
+the vocabulary grounded in standard-defined terminology without prematurely introducing a
+project-specific subject taxonomy.
+
 ## CBox, TBox, and ABox
 
 Standards Atlas uses OWL for formal engineering knowledge while keeping `EngineeringDocument` canonical. A domain-specific **TBox** defines domain concepts, relations, and constraints. The **CBox** is the Standards Atlas interpretation context for a document fragment: it combines Knowledge Domain, deterministic taxonomy, semantic functions, structural position, source identity, provenance, and qualification evidence. It describes how a clause is to be interpreted rather than asserting the clause's engineering-domain knowledge itself.
