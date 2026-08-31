@@ -47,7 +47,7 @@ models:
 - id: codex-gpt-5.6-luna
   provider: codex
   model_ref: gpt-5.6-luna
-  repetitions: 1
+  repetitions: 0
   description: Codex reference candidate using the Standards Atlas MCP server.
   accelerator: remote
 - id: llama-3.1-8b-instruct-q4-k-m
@@ -207,7 +207,7 @@ review_imports:
   overwrite: false
   required: false
 consensus:
-  enabled: true
+  enabled: false
   prompt_id: structure-aware
   reasoning_mode_id: disabled
   prompt_selection:
