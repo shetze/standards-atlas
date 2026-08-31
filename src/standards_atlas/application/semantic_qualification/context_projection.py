@@ -10,15 +10,21 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from standards_atlas.application.semantic_qualification.context_framing import (
+    FULL_CONTEXT_V1,
+    FramedCBoxContext,
+    frame_cbox_context,
+)
+
 
 def project_cbox_context(context: Mapping[str, Any]) -> str:
-    """Render stable structural and contextual-routing evidence as concise prose.
+    """Frame canonical CBox context with the compatibility policy and render it."""
+    return render_cbox_context(frame_cbox_context(context, FULL_CONTEXT_V1))
 
-    The projection deliberately excludes workflow bookkeeping, opaque clause ids,
-    eligibility data, content-profile statistics, and semantic classification
-    targets such as ``structural_roles``.  Missing information is omitted rather
-    than represented as empty JSON structures.
-    """
+
+def render_cbox_context(frame: FramedCBoxContext) -> str:
+    """Render a previously framed CBox projection as concise deterministic prose."""
+    context = frame.values
     lines: list[str] = []
 
     document_key = _text(context.get("document_key"))
