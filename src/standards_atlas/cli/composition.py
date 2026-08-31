@@ -136,6 +136,14 @@ def build_content_enrichment_service(workspace: Path, review_root: Path | None =
     )
 
 
+
+def build_subject_candidate_vocabulary_service(workspace: Path):
+    from standards_atlas.application.context import SubjectCandidateVocabularyService
+
+    return SubjectCandidateVocabularyService(
+        FileSystemEngineeringDocumentRepository(workspace)
+    )
+
 def build_structural_taxonomy_service(workspace: Path):
     from standards_atlas.application.services import StructuralTaxonomyService
 

@@ -51,6 +51,9 @@ evaluation_app = typer.Typer(
 qualification_app = typer.Typer(
     help="Execute reproducible qualification checks and persist evidence.", no_args_is_help=True
 )
+context_app = typer.Typer(
+    help="Discover and inspect deterministic clause context.", no_args_is_help=True
+)
 
 app.add_typer(inspect_app, name="inspect")
 app.add_typer(atlasdata_app, name="atlasdata")
@@ -68,3 +71,4 @@ app.add_typer(mcp_app, name="mcp")
 app.add_typer(semantic_evaluation_app, name="semantic-evaluation")
 app.add_typer(evaluation_app, name="evaluation")
 app.add_typer(qualification_app, name="qualification")
+app.add_typer(context_app, name="context")
