@@ -31,6 +31,10 @@ from standards_atlas.application.semantic_qualification.analysis_archive import 
     write_cascade_provenance,
     write_qualification_diagnostics,
 )
+from standards_atlas.application.semantic_qualification.applicability_framing import (
+    build_applicability_framing_report,
+    persist_applicability_framing_report,
+)
 from standards_atlas.application.semantic_qualification.challenger import (
     write_challenger_comparison,
 )
@@ -939,6 +943,16 @@ def qualify_model_prompt_matrix(
             prompt_comparison,
             output_directory / manifest.matrix_id,
         )
+        applicability_framing = build_applicability_framing_report(
+            manifest=manifest,
+            golden_path=Path(
+                "local/review/applicability-presence/1.0.0/applicability-golden-corpus.yaml"
+            ),
+        )
+        applicability_framing_paths = persist_applicability_framing_report(
+            applicability_framing,
+            output_directory / manifest.matrix_id,
+        )
         consensus_paths: tuple[Path, Path, Path] | None = None
         if manifest.consensus.enabled:
             consensus_report, consensus_json, proposal_yaml, review_markdown = (
@@ -1035,6 +1049,7 @@ def qualify_model_prompt_matrix(
                         coverage_path,
                         diagnostics_path,
                         *prompt_comparison_paths,
+                        *applicability_framing_paths,
                         *challenger_paths,
                         *((challenger_sample_path,) if challenger_sample_path is not None else ()),
                     ),
