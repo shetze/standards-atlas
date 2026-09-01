@@ -64,7 +64,7 @@ class GemaraMetadata(BaseModel):
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
     id: str = Field(min_length=1)
-    type: Literal["GuidanceCatalog", "ControlCatalog"] = "GuidanceCatalog"
+    type: Literal["GuidanceCatalog", "ControlCatalog", "Policy"] = "GuidanceCatalog"
     gemara_version: str = Field(alias="gemara-version", min_length=1)
     version: str | None = None
     description: str = Field(min_length=1)
@@ -157,3 +157,84 @@ class GemaraControlCatalog(BaseModel):
     metadata: GemaraMetadata
     groups: tuple[GemaraGroup, ...]
     controls: tuple[GemaraControl, ...] | None = None
+
+
+class GemaraContact(BaseModel):
+    """Gemara contact supplied explicitly for policy ownership."""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(min_length=1)
+    affiliation: str | None = None
+    email: str | None = None
+    social: str | None = None
+
+
+class GemaraRaci(BaseModel):
+    """Required policy ownership roles; never inferred from standards content."""
+
+    model_config = ConfigDict(frozen=True)
+
+    responsible: tuple[GemaraContact, ...] = Field(min_length=1)
+    accountable: tuple[GemaraContact, ...] = Field(min_length=1)
+    consulted: tuple[GemaraContact, ...] | None = None
+    informed: tuple[GemaraContact, ...] | None = None
+
+
+class GemaraPolicyDimensions(BaseModel):
+    """Gemara policy scope dimensions projected from governance context."""
+
+    model_config = ConfigDict(frozen=True)
+
+    technologies: tuple[str, ...] | None = None
+    geopolitical: tuple[str, ...] | None = None
+    sensitivity: tuple[str, ...] | None = None
+    users: tuple[str, ...] | None = None
+    groups: tuple[str, ...] | None = None
+
+
+class GemaraPolicyScope(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    in_: GemaraPolicyDimensions = Field(alias="in")
+    out: GemaraPolicyDimensions | None = None
+
+
+class GemaraCatalogImport(BaseModel):
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    reference_id: str = Field(alias="reference-id", min_length=1)
+    exclusions: tuple[str, ...] | None = None
+
+
+class GemaraGuidanceImport(BaseModel):
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    reference_id: str = Field(alias="reference-id", min_length=1)
+    exclusions: tuple[str, ...] | None = None
+
+
+class GemaraPolicyImports(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    catalogs: tuple[GemaraCatalogImport, ...] | None = None
+    guidance: tuple[GemaraGuidanceImport, ...] | None = None
+
+
+class GemaraPolicyAdherence(BaseModel):
+    """Empty authoring boundary until evaluation details are supplied externally."""
+
+    model_config = ConfigDict(frozen=True)
+
+
+class GemaraPolicy(BaseModel):
+    """Gemara Policy scaffold emitted from reviewed governance candidates."""
+
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    title: str = Field(min_length=1)
+    metadata: GemaraMetadata
+    contacts: GemaraRaci
+    scope: GemaraPolicyScope
+    imports: GemaraPolicyImports
+    adherence: GemaraPolicyAdherence = Field(default_factory=GemaraPolicyAdherence)

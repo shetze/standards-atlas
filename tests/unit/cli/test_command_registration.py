@@ -47,3 +47,9 @@ def test_composition_root_registers_governance_profile_select() -> None:
     result = runner.invoke(app, ["governance", "profile", "select", "--help"])
 
     assert result.exit_code == 0, result.output
+
+
+def test_composition_root_registers_governance_profile_export_policy() -> None:
+    result = runner.invoke(app, ["governance", "profile", "export-policy", "--help"])
+
+    assert result.exit_code == 0, result.output
