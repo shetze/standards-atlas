@@ -16,6 +16,9 @@ from standards_atlas.cli.commands.evaluation_commands.benchmark import (
     run_semantic_evaluation,
 )
 from standards_atlas.cli.commands.evaluation_commands.challenger import qualify_challengers
+from standards_atlas.cli.commands.evaluation_commands.complytime_feedback import (
+    import_complytime_feedback,
+)
 from standards_atlas.cli.commands.evaluation_commands.corpus import (
     build_evaluation_corpus,
     build_role_golden_corpus,
@@ -45,6 +48,7 @@ __all__ = [
     "export_annotation_reviews",
     "extract_clause_references",
     "import_annotation_reviews",
+    "import_complytime_feedback",
     "propose_evaluation_annotations",
     "publish_annotation_reviews",
     "qualify_challengers",

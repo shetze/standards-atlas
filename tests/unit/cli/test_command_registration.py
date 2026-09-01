@@ -29,3 +29,9 @@ def test_composition_root_registers_context_subject_vocabulary() -> None:
     result = runner.invoke(app, ["context", "subject-vocabulary", "--help"])
 
     assert result.exit_code == 0, result.output
+
+
+def test_composition_root_registers_complytime_feedback_import() -> None:
+    result = runner.invoke(app, ["evaluation", "complytime-feedback", "--help"])
+
+    assert result.exit_code == 0, result.output
