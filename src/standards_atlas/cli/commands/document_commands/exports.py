@@ -367,3 +367,73 @@ def export_document_to_gemara_controls(
     typer.echo(f"Clauses considered    : {len(document.clauses)}")
     typer.echo(f"Gemara control target : {generated_path}")
     typer.echo(f"Gemara version        : {GEMARA_SPEC_VERSION}")
+
+
+@document_export_app.command("complytime")
+def export_document_to_complytime(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the persisted EngineeringDocument or standard family."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+    target: Annotated[
+        Path | None,
+        typer.Option(
+            "--target",
+            "-t",
+            help=("Target bundle directory. Defaults to local/exports/complytime/<document-key>."),
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
+    part: Annotated[
+        list[str] | None,
+        typer.Option("--part", help="Physical part key; repeat for a family publication."),
+    ] = cli_defaults.DEFAULT_NONE,
+    family_title: Annotated[
+        str | None,
+        typer.Option("--title", help="Logical family title used for runtime composition."),
+    ] = cli_defaults.DEFAULT_NONE,
+    replace_existing: Annotated[
+        bool,
+        typer.Option(
+            "--replace/--no-replace",
+            help="Replace an existing ComplyTime governance bundle.",
+        ),
+    ] = cli_defaults.DEFAULT_TRUE,
+) -> None:
+    """Export evaluator-independent Gemara governance sources for ComplyTime authoring."""
+    from standards_atlas.adapters.complytime import ComplyTimeGovernanceBundleExporter
+
+    repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
+    publications = FileSystemPublicationDocumentProvider(repository)
+    try:
+        document = publications.load(
+            document_key,
+            part_keys=tuple(part or ()),
+            family_title=family_title,
+        )
+    except FileNotFoundError:
+        typer.echo(f"No persisted document found for key: {document_key}", err=True)
+        raise typer.Exit(code=1) from None
+
+    export_target = target or Path("local/exports/complytime") / document.key.value
+    try:
+        generated_path = ComplyTimeGovernanceBundleExporter().export(
+            document,
+            export_target,
+            replace_existing=replace_existing,
+        )
+    except (FileExistsError, ValueError) as exc:
+        typer.echo(f"ComplyTime governance export failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Exported document     : {document.title}")
+    typer.echo(f"Document key          : {document.key.value}")
+    typer.echo(f"Clauses considered    : {len(document.clauses)}")
+    typer.echo(f"Governance bundle     : {generated_path}")
+    typer.echo(f"Gemara version        : {GEMARA_SPEC_VERSION}")

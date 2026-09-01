@@ -20,6 +20,7 @@ ArtifactKind = Literal[
     "doorstop_export",
     "gemara_guidance_export",
     "gemara_control_export",
+    "complytime_governance_bundle",
 ]
 
 
