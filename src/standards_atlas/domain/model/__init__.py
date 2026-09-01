@@ -57,6 +57,13 @@ from standards_atlas.domain.model.formal_semantics import (
     SemanticLiteral,
     SemanticResource,
 )
+from standards_atlas.domain.model.governance_selection import (
+    GovernanceApplicabilityContext,
+    GovernanceContext,
+    GovernanceSelectionProfile,
+    GovernanceSemanticSelection,
+    GovernanceStandardSelection,
+)
 from standards_atlas.domain.model.identifiers import (
     AnnotationId,
     ClauseId,
@@ -184,6 +191,11 @@ __all__ = [
     "ScopeReach",
     "ScopeReachKind",
     "ClauseEnrichments",
+    "GovernanceApplicabilityContext",
+    "GovernanceContext",
+    "GovernanceSelectionProfile",
+    "GovernanceSemanticSelection",
+    "GovernanceStandardSelection",
     "GeneratedAttribute",
     "GenerationMethod",
     "KnowledgeStateProvenance",

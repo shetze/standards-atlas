@@ -11,6 +11,7 @@ from standards_atlas.cli.commands import (  # noqa: F401, E402
     context,
     documents,
     evaluation,
+    governance,
     normalization,
     root,
     runtime,

@@ -35,3 +35,9 @@ def test_composition_root_registers_complytime_feedback_import() -> None:
     result = runner.invoke(app, ["evaluation", "complytime-feedback", "--help"])
 
     assert result.exit_code == 0, result.output
+
+
+def test_composition_root_registers_governance_profile_validate() -> None:
+    result = runner.invoke(app, ["governance", "profile", "validate", "--help"])
+
+    assert result.exit_code == 0, result.output
