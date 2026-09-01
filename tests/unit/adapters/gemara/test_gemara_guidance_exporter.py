@@ -306,3 +306,176 @@ def test_scope_is_projected_to_front_matter() -> None:
 
     assert catalog.front_matter == "This standard applies to railway software."
     assert "scope-1" not in {guideline.id for guideline in catalog.guidelines}
+
+
+def test_internal_relations_project_to_guideline_see_also_through_statement_owners() -> None:
+    from standards_atlas.domain.model import (
+        RelationScope,
+        SemanticClassification,
+        SemanticRelation,
+        SemanticRelationKind,
+        StatementFunction,
+    )
+
+    first = _clause(
+        "obj-a",
+        "9.1",
+        "First objective",
+        parent="section-4",
+        text="First objective.",
+        clause_type=ClauseType.OBJECTIVE,
+    ).with_semantic_classification(
+        SemanticClassification(statement_functions=(StatementFunction.OBJECTIVE,))
+    )
+    first_statement = (
+        _clause(
+            "req-a-1",
+            "9.1.1",
+            "First requirement",
+            parent="obj-a",
+            text="Apply the second objective.",
+        )
+        .with_semantic_classification(
+            SemanticClassification(statement_functions=(StatementFunction.REQUIREMENT,))
+        )
+        .with_baseline_updates(
+            reference_relations=(
+                SemanticRelation(
+                    kind=SemanticRelationKind.REFERENCES,
+                    scope=RelationScope.INTERNAL,
+                    target_reference="9.2.1",
+                    target_clause_id="req-b-1",
+                    display_text="9.2.1",
+                ),
+            )
+        )
+    )
+    second = _clause(
+        "obj-b",
+        "9.2",
+        "Second objective",
+        parent="section-4",
+        text="Second objective.",
+        clause_type=ClauseType.OBJECTIVE,
+    ).with_semantic_classification(
+        SemanticClassification(statement_functions=(StatementFunction.OBJECTIVE,))
+    )
+    second_statement = _clause(
+        "req-b-1", "9.2.1", "Second requirement", parent="obj-b", text="Second requirement."
+    ).with_semantic_classification(
+        SemanticClassification(statement_functions=(StatementFunction.REQUIREMENT,))
+    )
+    document = _document().model_copy(
+        update={
+            "clauses": _document().clauses[:2] + (first, first_statement, second, second_statement)
+        }
+    )
+
+    catalog = GemaraGuidanceMapper().map(document)
+
+    first_guideline = next(item for item in catalog.guidelines if item.id == "obj-a")
+    assert first_guideline.see_also == ("obj-b",)
+    second_guideline = next(item for item in catalog.guidelines if item.id == "obj-b")
+    assert second_guideline.see_also is None
+
+
+def test_versioned_external_relations_register_mapping_reference() -> None:
+    from standards_atlas.domain.model import RelationScope, SemanticRelation, SemanticRelationKind
+
+    source = (
+        _document()
+        .clauses[-1]
+        .with_baseline_updates(
+            reference_relations=(
+                SemanticRelation(
+                    kind=SemanticRelationKind.NORMATIVE_REFERENCE,
+                    scope=RelationScope.EXTERNAL,
+                    target_reference="7.4.5",
+                    target_clause_id="external-target",
+                    target_document_key="ISO26262-6",
+                    display_text="ISO 26262-6:2018, 7.4.5",
+                ),
+            )
+        )
+    )
+    document = _document().model_copy(update={"clauses": _document().clauses[:-1] + (source,)})
+
+    catalog = GemaraGuidanceMapper().map(document)
+
+    assert catalog.metadata.mapping_references is not None
+    assert len(catalog.metadata.mapping_references) == 1
+    reference = catalog.metadata.mapping_references[0]
+    assert reference.id == "ref-iso26262-6-2018"
+    assert reference.title == "ISO26262-6"
+    assert reference.version == "2018"
+
+
+def test_unversioned_external_relation_does_not_invent_mapping_reference() -> None:
+    from standards_atlas.domain.model import RelationScope, SemanticRelation, SemanticRelationKind
+
+    source = (
+        _document()
+        .clauses[-1]
+        .with_baseline_updates(
+            reference_relations=(
+                SemanticRelation(
+                    kind=SemanticRelationKind.REFERENCES,
+                    scope=RelationScope.EXTERNAL,
+                    target_reference="7.4.5",
+                    target_document_key="TARGET",
+                    display_text="TARGET, 7.4.5",
+                ),
+            )
+        )
+    )
+    document = _document().model_copy(update={"clauses": _document().clauses[:-1] + (source,)})
+
+    assert GemaraGuidanceMapper().map(document).metadata.mapping_references is None
+
+
+def test_export_writes_precise_traceability_sidecar(tmp_path: Path) -> None:
+    import json
+
+    from standards_atlas.domain.model import RelationScope, SemanticRelation, SemanticRelationKind
+
+    source = (
+        _document()
+        .clauses[-1]
+        .with_baseline_updates(
+            reference_relations=(
+                SemanticRelation(
+                    kind=SemanticRelationKind.NORMATIVE_REFERENCE,
+                    scope=RelationScope.EXTERNAL,
+                    target_reference="7.4.5",
+                    target_clause_id="external-target",
+                    target_document_key="ISO26262-6",
+                    display_text="ISO 26262-6:2018, 7.4.5",
+                    rationale="Resolved from an explicit standard reference.",
+                ),
+            )
+        )
+    )
+    document = _document().model_copy(update={"clauses": _document().clauses[:-1] + (source,)})
+    target = tmp_path / "sample.yaml"
+
+    GemaraGuidanceExporter().export_document(document, target)
+
+    sidecar = target.with_suffix(".yaml.traceability.json")
+    assert sidecar.exists()
+    payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "1.0"
+    assert payload["document_key"] == "SAMPLE-1"
+    assert len(payload["exported_artifact_sha256"]) == 64
+    assert payload["entries"] == [
+        {
+            "clause_id": "req-4-1",
+            "gemara_entry_id": "req-4-1",
+            "entry_type": "guideline",
+            "owner_guideline_id": "req-4-1",
+        }
+    ]
+    relation = payload["relations"][0]
+    assert relation["source_gemara_entry_id"] == "req-4-1"
+    assert relation["target_clause_id"] == "external-target"
+    assert relation["mapping_reference_id"] == "ref-iso26262-6-2018"
+    assert relation["represented_as"] == "mapping-reference"

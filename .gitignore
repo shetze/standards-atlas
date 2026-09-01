@@ -7,7 +7,5 @@ uv.lock
 # Local copyrighted sources and consumable publications
 local/*
 !local/README.md
-!local/sources/
 !local/sources/.gitkeep
-!local/exports/
 !local/exports/.gitkeep

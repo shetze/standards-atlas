@@ -30,6 +30,18 @@ class GemaraGroup(BaseModel):
     description: str = Field(min_length=1)
 
 
+class GemaraMappingReference(BaseModel):
+    """Reference to one external artifact registered in Gemara metadata."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    version: str = Field(min_length=1)
+    description: str | None = None
+    url: str | None = None
+
+
 class GemaraMetadata(BaseModel):
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
@@ -39,6 +51,9 @@ class GemaraMetadata(BaseModel):
     version: str | None = None
     description: str = Field(min_length=1)
     author: GemaraActor
+    mapping_references: tuple[GemaraMappingReference, ...] | None = Field(
+        default=None, alias="mapping-references"
+    )
     applicability_groups: tuple[GemaraGroup, ...] | None = Field(
         default=None, alias="applicability-groups"
     )

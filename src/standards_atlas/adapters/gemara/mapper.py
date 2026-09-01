@@ -12,6 +12,7 @@ from standards_atlas.adapters.gemara.models import (
     GemaraGroup,
     GemaraGuidanceCatalog,
     GemaraGuideline,
+    GemaraMappingReference,
     GemaraMetadata,
     GemaraRationale,
     GemaraStatement,
@@ -25,6 +26,7 @@ from standards_atlas.domain.model import (
     ClauseAnnotation,
     ClauseType,
     ProcessFunction,
+    RelationScope,
     StatementFunction,
 )
 from standards_atlas.domain.model.structural_profile import CanonicalDocumentSection
@@ -108,6 +110,17 @@ class GemaraGuidanceMapper:
             else:
                 standalone.append(clause)
 
+        owner_guideline_by_clause = _owner_guideline_by_clause(
+            document.clauses,
+            objective_anchor_ids=objective_anchor_ids,
+            projection_targets=projection_targets,
+            standalone=standalone,
+        )
+        see_also_by_guideline = _internal_see_also(
+            document.clauses, owner_guideline_by_clause=owner_guideline_by_clause
+        )
+        mapping_references = _external_mapping_references(document.clauses)
+
         applicability_groups: list[GemaraGroup] = []
         guidelines: list[GemaraGuideline] = []
         for clause in document.clauses:
@@ -149,6 +162,13 @@ class GemaraGuidanceMapper:
                 )
             )
 
+        guidelines = [
+            guideline.model_copy(
+                update={"see_also": see_also_by_guideline.get(guideline.id) or None}
+            )
+            for guideline in guidelines
+        ]
+
         _ensure_unique_ids((guideline.id for guideline in guidelines), kind="guideline")
         _ensure_unique_ids((group.id for group in applicability_groups), kind="applicability group")
 
@@ -172,6 +192,7 @@ class GemaraGuidanceMapper:
                     version=__version__,
                 ),
                 **{
+                    "mapping-references": mapping_references or None,
                     "applicability-groups": tuple(applicability_groups) or None,
                 },
             ),
@@ -188,6 +209,84 @@ def gemara_id(value: str) -> str:
     if not normalized:
         raise ValueError(f"Cannot derive Gemara id from {value!r}.")
     return normalized
+
+
+def _owner_guideline_by_clause(
+    clauses: tuple[Clause, ...],
+    *,
+    objective_anchor_ids: set[str],
+    projection_targets: dict[str, list[Clause]],
+    standalone: list[Clause],
+) -> dict[str, str]:
+    """Map projected clause ids to their owning Gemara guideline id."""
+    owners = {clause_id: gemara_id(clause_id) for clause_id in objective_anchor_ids}
+    for anchor_id, folded in projection_targets.items():
+        owner = gemara_id(anchor_id)
+        for clause in folded:
+            owners[clause.id.value] = owner
+    for clause in standalone:
+        owners[clause.id.value] = gemara_id(clause.id.value)
+    return owners
+
+
+def _internal_see_also(
+    clauses: tuple[Clause, ...], *, owner_guideline_by_clause: dict[str, str]
+) -> dict[str, tuple[str, ...]]:
+    """Project resolved internal clause relations to Gemara guideline see-also links."""
+    related: dict[str, list[str]] = defaultdict(list)
+    for clause in clauses:
+        source_owner = owner_guideline_by_clause.get(clause.id.value)
+        if source_owner is None:
+            continue
+        for relation in clause.reference_relations:
+            if relation.scope is not RelationScope.INTERNAL or relation.target_clause_id is None:
+                continue
+            target_owner = owner_guideline_by_clause.get(relation.target_clause_id)
+            if target_owner is None or target_owner == source_owner:
+                continue
+            if target_owner not in related[source_owner]:
+                related[source_owner].append(target_owner)
+    return {key: tuple(value) for key, value in related.items()}
+
+
+def _external_mapping_references(clauses: tuple[Clause, ...]) -> tuple[GemaraMappingReference, ...]:
+    """Register versioned external document targets in Gemara metadata.
+
+    Gemara requires every MappingReference to carry a version. Standards Atlas therefore
+    emits one only when the resolved source evidence contains a deterministic four-digit
+    version/year. Exact clause-to-clause provenance is retained in the traceability sidecar.
+    """
+    refs: dict[tuple[str, str], GemaraMappingReference] = {}
+    for clause in clauses:
+        for relation in clause.reference_relations:
+            if relation.scope is not RelationScope.EXTERNAL or not relation.target_document_key:
+                continue
+            version = _external_version(relation.display_text)
+            if version is None:
+                continue
+            key = (relation.target_document_key, version)
+            refs.setdefault(
+                key,
+                GemaraMappingReference(
+                    id=gemara_id(f"ref-{relation.target_document_key}-{version}"),
+                    title=relation.target_document_key,
+                    version=version,
+                    description=(
+                        "External standard referenced from this guidance catalog: "
+                        f"{relation.target_document_key}."
+                    ),
+                ),
+            )
+    ordered = tuple(refs[key] for key in sorted(refs))
+    _ensure_unique_ids((item.id for item in ordered), kind="mapping reference")
+    return ordered
+
+
+def _external_version(display_text: str | None) -> str | None:
+    if not display_text:
+        return None
+    match = re.search(r"(?<!\d)((?:19|20)\d{2})(?!\d)", display_text)
+    return match.group(1) if match else None
 
 
 def _groups(
