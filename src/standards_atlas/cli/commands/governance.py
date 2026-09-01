@@ -49,3 +49,104 @@ def show_governance_profile(
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=1) from exc
     typer.echo(render_governance_selection_profile(loaded), nl=False)
+
+
+@governance_profile_app.command("select")
+def select_governance_candidates(
+    profile: Annotated[
+        Path,
+        typer.Argument(exists=True, dir_okay=False, readable=True, help="Selection profile YAML."),
+    ],
+    document: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--document",
+            help=(
+                "Persisted document key to analyze; repeat as needed. "
+                "Defaults to profile standards.include."
+            ),
+        ),
+    ] = None,
+    workspace: Annotated[
+        Path,
+        typer.Option(
+            "--workspace",
+            "-w",
+            help="Standards Atlas workspace directory.",
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+        ),
+    ] = Path(".atlas/data"),
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help=(
+                "Candidate analysis JSON. Defaults to "
+                "local/review/governance/<profile-id>/candidate-analysis.json."
+            ),
+            file_okay=True,
+            dir_okay=False,
+        ),
+    ] = None,
+    replace_existing: Annotated[
+        bool,
+        typer.Option("--replace/--no-replace", help="Replace existing analysis artifacts."),
+    ] = True,
+) -> None:
+    """Analyze Gemara control candidates against a governance selection profile."""
+    from standards_atlas.adapters.filesystem import (
+        FileSystemEngineeringDocumentRepository,
+        FileSystemPublicationDocumentProvider,
+    )
+    from standards_atlas.adapters.governance import (
+        GovernanceCandidateAnalyzer,
+        write_candidate_analysis,
+    )
+
+    try:
+        loaded_profile = load_governance_selection_profile(profile)
+    except GovernanceSelectionProfileError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+
+    document_keys = tuple(document or loaded_profile.standards.include)
+    if not document_keys:
+        typer.echo(
+            "No documents selected; provide --document or standards.include in the profile.",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
+    publications = FileSystemPublicationDocumentProvider(repository)
+    try:
+        documents = tuple(publications.load(key) for key in document_keys)
+    except FileNotFoundError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    analysis = GovernanceCandidateAnalyzer().analyze(loaded_profile, documents)
+    target = output or (
+        Path("local/review/governance") / loaded_profile.id / "candidate-analysis.json"
+    )
+    try:
+        json_path, csv_path = write_candidate_analysis(
+            analysis,
+            target,
+            replace_existing=replace_existing,
+        )
+    except FileExistsError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=3) from exc
+
+    typer.echo(f"Governance profile : {loaded_profile.id}")
+    typer.echo(f"Documents          : {len(documents)}")
+    typer.echo(f"Candidates         : {len(analysis.candidates)}")
+    typer.echo(f"Selected           : {analysis.selected}")
+    typer.echo(f"Excluded           : {analysis.excluded}")
+    typer.echo(f"Undetermined       : {analysis.undetermined}")
+    typer.echo(f"Analysis JSON      : {json_path}")
+    typer.echo(f"Review CSV         : {csv_path}")

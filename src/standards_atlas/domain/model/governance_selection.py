@@ -6,6 +6,7 @@ is intentionally independent from Gemara and from any evaluator/runtime model.
 
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -171,3 +172,52 @@ class GovernanceSelectionProfile(BaseModel):
     @classmethod
     def _strip_text(cls, value: Any) -> Any:
         return value.strip() if isinstance(value, str) else value
+
+
+class GovernanceCandidateDecision(StrEnum):
+    """Deterministic tri-state outcome for one policy candidate."""
+
+    SELECTED = "selected"
+    EXCLUDED = "excluded"
+    UNDETERMINED = "undetermined"
+
+
+class GovernanceCandidateSignal(BaseModel):
+    """One auditable selector signal contributing to a candidate decision."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    dimension: str = Field(min_length=1)
+    outcome: GovernanceCandidateDecision
+    reason: str = Field(min_length=1)
+    expected: tuple[str, ...] = ()
+    observed: tuple[str, ...] = ()
+
+
+class GovernancePolicyCandidate(BaseModel):
+    """One ControlCatalog control evaluated against a selection profile."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    document_key: str = Field(min_length=1)
+    control_id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    source_clause_ids: tuple[str, ...] = Field(min_length=1)
+    assessment_requirement_ids: tuple[str, ...] = Field(min_length=1)
+    decision: GovernanceCandidateDecision
+    signals: tuple[GovernanceCandidateSignal, ...] = Field(min_length=1)
+
+
+class GovernanceCandidateAnalysis(BaseModel):
+    """Deterministic review artifact produced for one selection profile."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: int = Field(default=1, alias="schema-version")
+    profile_id: str = Field(alias="profile-id", min_length=1)
+    profile_version: str = Field(alias="profile-version", min_length=1)
+    documents: tuple[str, ...] = ()
+    selected: int = 0
+    excluded: int = 0
+    undetermined: int = 0
+    candidates: tuple[GovernancePolicyCandidate, ...] = ()

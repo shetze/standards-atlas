@@ -59,7 +59,11 @@ from standards_atlas.domain.model.formal_semantics import (
 )
 from standards_atlas.domain.model.governance_selection import (
     GovernanceApplicabilityContext,
+    GovernanceCandidateAnalysis,
+    GovernanceCandidateDecision,
+    GovernanceCandidateSignal,
     GovernanceContext,
+    GovernancePolicyCandidate,
     GovernanceSelectionProfile,
     GovernanceSemanticSelection,
     GovernanceStandardSelection,
@@ -316,4 +320,8 @@ __all__ = [
     "artifact_reference",
     "canonical_content_hash",
     "render_content_as_plain_text",
+    "GovernanceCandidateAnalysis",
+    "GovernanceCandidateDecision",
+    "GovernanceCandidateSignal",
+    "GovernancePolicyCandidate",
 ]
