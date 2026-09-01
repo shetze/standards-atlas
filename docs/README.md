@@ -47,6 +47,14 @@ The project follows four complementary documentation modes:
 8. [Relationship-mapping target architecture](architecture/relationship-mapping.md)
 9. [ADR index](architecture/adr/README.md)
 
+### Governance and compliance integration
+
+1. [Exports](user-guide/exports.md)
+2. [Gemara and ComplyTime integration](user-guide/gemara-complytime.md)
+3. [Artifact formats](reference/artifact-formats.md)
+4. [Ports and adapters](architecture/ports-and-adapters.md)
+5. [Persistence and lineage](architecture/persistence-and-lineage.md)
+
 ### Evaluation and model-assisted review
 
 1. [Evaluation and qualification](user-guide/evaluation-and-qualification.md)

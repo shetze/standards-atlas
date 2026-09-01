@@ -6,7 +6,7 @@
 
 **Import · Normalize · Align · Evaluate · Serve · Publish**
 
-[Documentation](docs/README.md) · [Getting started](docs/getting-started/README.md) · [Architecture](docs/architecture/README.md) · [CLI reference](docs/reference/cli-reference.md) · [Architecture decisions](docs/architecture/adr/README.md)
+[Documentation](docs/README.md) · [Gemara & ComplyTime](docs/user-guide/gemara-complytime.md) · [Getting started](docs/getting-started/README.md) · [Architecture](docs/architecture/README.md) · [CLI reference](docs/reference/cli-reference.md) · [Architecture decisions](docs/architecture/adr/README.md)
 
 </div>
 
@@ -35,6 +35,7 @@ The resulting knowledge base can be indexed through lexical, vector, RAG, or Gra
 | **Semantic evaluation** | Reproducible local corpora, versioned prompt/model matrices, protected-content-safe reports, and regression evidence. |
 | **MCP access** | Read-only clause tools and resources over stdio or secured Streamable HTTP, with an automated compatibility probe. |
 | **Reusable publications** | Markdown and Doorstop outputs generated from canonical models rather than treated as internal source formats. |
+| **Gemara and ComplyTime integration** | Deterministic Guidance/Control catalogs, use-case policy selection, ComplyPack hand-off, and EvaluationLog feedback with clause-level provenance. |
 
 ## Quick start
 
@@ -89,7 +90,7 @@ The workflow intentionally stops at review boundaries when human confirmation is
 
 ## Project status
 
-Standards Atlas 0.8.5 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
+Standards Atlas 0.8.6 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
 
 ## Development
 
@@ -116,7 +117,7 @@ See `docs/user-guide/codex-integration.md` for setup and verification.
 
 ## Current version
 
-This snapshot corresponds to **standards-atlas 0.8.5**. Version 0.8.5 builds on the completed application-package refactoring with auditable qualification-run archives, typed workflow manifests, deterministic structural-taxonomy context, qualified production ontology classification, dimension-aware cascade resolution, visual-formula preservation and transcription enrichment, and optional LLM-assisted normalization-quality qualification.
+This snapshot corresponds to **standards-atlas 0.8.6**. Version 0.8.6 adds deterministic Gemara Guidance/Control projections, governance selection and policy scaffolding, ComplyTime/ComplyPack hand-off, and EvaluationLog feedback while retaining clause-level provenance across the integration.
 
 ### Formula transcription enrichment
 

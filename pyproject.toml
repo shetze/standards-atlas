@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "standards-atlas"
-version = "0.8.5"
+version = "0.8.6"
 description = "A semantic traceability platform for technical standards."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"

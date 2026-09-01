@@ -33,3 +33,14 @@ Before export, verify:
 - all parts have stable identities and a clause `0` root;
 - the selected hierarchy relationships are valid;
 - copyright-sensitive content is written only to approved local destinations.
+
+## Gemara and ComplyTime
+
+Standards Atlas can publish linked Gemara `GuidanceCatalog` and `ControlCatalog` projections,
+create evaluator-independent ComplyTime governance bundles, prepare ComplyPack authoring
+workspaces, and resolve Gemara `EvaluationLog` results back to source clauses. For standard
+families and use-case-specific filtering, Governance Selection Profiles keep catalog identities
+stable while Gemara Policies select the applicable view.
+
+See the complete [Gemara and ComplyTime integration guide](gemara-complytime.md) for commands,
+artifact flow, traceability, policy selection, ComplyPack validation, OCI packaging, and feedback.

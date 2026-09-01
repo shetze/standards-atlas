@@ -32,6 +32,7 @@ This guide describes the supported user workflows for turning private standards 
 | Build corpora and execute qualification matrices | [Evaluation and qualification](evaluation-and-qualification.md) |
 | Review generated annotation proposals | [Annotation review](semantic-annotation-review.md) |
 | Diagnose common failures | [Troubleshooting](troubleshooting.md) |
+| Integrate Gemara and ComplyTime | [Gemara and ComplyTime](gemara-complytime.md) |
 
 The [CLI reference](../reference/cli-reference.md) lists command groups and options. Architecture rationale belongs in [Architecture](../architecture/README.md), not in this task-oriented guide.
 

@@ -53,6 +53,9 @@ Ports should express application needs rather than mirror third-party APIs. The 
 | `adapters/doorstop` | Doorstop hierarchy and publication templates |
 | `adapters/llm` | Codex CLI, OpenAI-compatible APIs, RamaLama process control |
 | `adapters/mcp` | MCP protocol, HTTP security, process management, audit |
+| `adapters/gemara` | Gemara GuidanceCatalog/ControlCatalog projections, IDs, mappings, and traceability |
+| `adapters/governance` | Use-case candidate analysis and Gemara Policy scaffold projection |
+| `adapters/complytime` | Governance bundles, ComplyPack authoring/CLI boundary, EvaluationLog feedback |
 
 ## Migration state
 
@@ -75,3 +78,21 @@ ports. `TableRetrievalProjectionService` creates deterministic table, row, conce
 retrieval documents with the `structured-table-v1` tokenization profile. Concrete tokenizer,
 embedding, vector-store, graph, or GraphRAG implementations remain adapters and must not become
 part of the table domain model or T1-T3 knowledge contracts.
+
+### Governance adapter boundary
+
+Governance Selection Profiles and candidate-decision types are domain concepts and have no Gemara
+dependency. Gemara serialization and policy scaffolding remain outer adapters. Likewise,
+ComplyTime and ComplyPack are downstream integration concerns: reusable application/domain code
+must not import their concrete APIs.
+
+The integration deliberately preserves the direction:
+
+```text
+canonical document + governance profile
+        -> adapter projection
+        -> Gemara / ComplyTime / ComplyPack
+```
+
+EvaluationLog import resolves external result identities through generated traceability and emits a
+separate feedback projection; it does not mutate the canonical document.

@@ -54,6 +54,10 @@ The unified `--manifests` interface belongs to the workflow envelope. Direct low
 - `document enrich-semantics`
 - `document export markdown`
 - `document export doorstop`
+- `document export gemara`: Gemara GuidanceCatalog plus traceability sidecar
+- `document export gemara-controls`: assessment-oriented Gemara ControlCatalog
+- `document export complytime`: evaluator-independent governance source bundle
+- `document export complypack`: ComplyPack authoring workspace and optional OCI packaging
 
 ## Extraction and normalization
 
@@ -82,6 +86,24 @@ By default the command selects the configured Mistral Small 3.2 24B and Gemma 3 
 when available. Repeat `--model MODEL_ID` to choose an explicit comparison set. `--limit` supports
 small trial runs and `--no-cache` forces fresh inference. Outputs are `qualification.json`,
 `findings.jsonl`, and `qualification.md`. The command never modifies an EngineeringDocument.
+
+## Governance selection and Gemara policy authoring
+
+- `governance profile validate PROFILE`: validate a Governance Selection Profile
+- `governance profile show PROFILE`: render its normalized representation
+- `governance profile select PROFILE`: classify Control candidates as `selected`, `excluded`, or
+  `undetermined` and emit JSON/CSV review artifacts
+- `governance profile export-policy PROFILE`: create a draft Gemara Policy scaffold
+
+Policy export requires explicit `--responsible` and `--accountable` contacts. Undetermined
+candidates block export unless `--withhold-undetermined` is explicitly selected.
+
+See [Gemara and ComplyTime integration](../user-guide/gemara-complytime.md).
+
+## ComplyTime feedback
+
+- `evaluation complytime-feedback --log LOG --bundle BUNDLE`: resolve a Gemara EvaluationLog to
+  Standards Atlas clause, guideline, control, and assessment-requirement provenance.
 
 ## References and alignment
 

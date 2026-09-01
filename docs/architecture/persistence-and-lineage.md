@@ -31,3 +31,27 @@ Machine proposals and human overrides remain distinct. Review imports preserve s
 ## Privacy
 
 Source paths, copyrighted text, local corpora, tokens, PID files, and audit logs must not leak into public documentation or generated public artifacts. Location fields in lineage are operational metadata and require the same visibility policy as their containing artifact.
+
+## Governance and compliance lineage
+
+Gemara and ComplyTime projections extend the artifact chain without becoming canonical state:
+
+```text
+EngineeringDocument
+  -> GuidanceCatalog
+  -> ControlCatalog
+  -> ComplyTime governance bundle
+  -> Gemara Policy / ComplyPack workspace
+  -> EvaluationLog
+  -> Standards Atlas feedback
+```
+
+Guidance and Control sidecars preserve clause-to-entry mappings and bind to exported YAML with
+SHA-256. The ComplyTime bundle consolidates those mappings and hashes its component artifacts.
+ComplyPack workspaces additionally hash evaluator policy content and generated configuration.
+Evaluation feedback records hashes of both the EvaluationLog and governance manifest so a result
+can be tied to the exact governance projection used for the assessment.
+
+Use-case-specific selection is represented by profiles, candidate analyses, and Gemara Policy
+imports/exclusions. The source catalogs remain stable rather than being copied into many filtered
+variants.

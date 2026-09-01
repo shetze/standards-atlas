@@ -2,6 +2,22 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## 0.8.6 — Gemara and ComplyTime governance integration (2026-09-01)
+
+### Governance interchange and executable-compliance hand-off
+
+- Added deterministic Gemara `GuidanceCatalog` and `ControlCatalog` projections with stable IDs,
+  semantic mapping, cross-layer links, and SHA-256-bound clause-level traceability.
+- Added evaluator-independent ComplyTime governance source bundles and explicit ComplyPack authoring
+  workspaces while keeping evaluator policy generation outside Standards Atlas.
+- Added Governance Selection Profiles, deterministic `selected` / `excluded` / `undetermined`
+  candidate analysis, and draft Gemara Policy scaffolding for use-case-specific selection without
+  proliferating filtered catalog variants.
+- Added Gemara `EvaluationLog` feedback import that resolves Control and Assessment Requirement
+  results back to Standards Atlas clauses without mutating canonical EngineeringDocuments.
+- Documented the end-to-end Gemara/ComplyTime architecture, CLI workflows, artifact contracts,
+  policy-authoring boundary, OCI behavior, and feedback lineage.
+
 ## Unreleased — Refactoring consolidation (2026-08-20 to 2026-08-28)
 
 ### Semantic architecture and qualification

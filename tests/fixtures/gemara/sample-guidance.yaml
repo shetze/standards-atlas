@@ -9,7 +9,7 @@ metadata:
     id: standards-atlas
     name: Standards Atlas
     type: Software
-    version: 0.8.5
+    version: 0.8.6
 type: Standard
 groups:
 - id: sample-1-root
