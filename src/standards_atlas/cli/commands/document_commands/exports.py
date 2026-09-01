@@ -437,3 +437,146 @@ def export_document_to_complytime(
     typer.echo(f"Clauses considered    : {len(document.clauses)}")
     typer.echo(f"Governance bundle     : {generated_path}")
     typer.echo(f"Gemara version        : {GEMARA_SPEC_VERSION}")
+
+
+@document_export_app.command("complypack")
+def export_document_to_complypack(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the persisted EngineeringDocument or standard family."),
+    ],
+    policy_content: Annotated[
+        Path,
+        typer.Option(
+            "--policy-content",
+            help="Existing evaluator-specific policy content directory to package.",
+            file_okay=False,
+            dir_okay=True,
+            exists=True,
+            resolve_path=True,
+        ),
+    ],
+    gemara_source: Annotated[
+        str,
+        typer.Option(
+            "--gemara-source",
+            help="Existing Gemara Policy source URI consumed by ComplyPack.",
+        ),
+    ],
+    evaluator_id: Annotated[
+        str,
+        typer.Option("--evaluator-id", help="ComplyTime provider/evaluator identifier."),
+    ],
+    pack_id: Annotated[
+        str,
+        typer.Option("--pack-id", help="Globally unique reverse-domain ComplyPack identifier."),
+    ],
+    pack_version: Annotated[
+        str,
+        typer.Option("--pack-version", help="Semantic version of the ComplyPack artifact."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+    target: Annotated[
+        Path | None,
+        typer.Option(
+            "--target",
+            "-t",
+            help=(
+                "Target authoring workspace. Defaults to local/exports/complypack/<document-key>."
+            ),
+            file_okay=False,
+            dir_okay=True,
+            resolve_path=True,
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
+    schema: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--schema",
+            help="ComplyPack platform schema; repeat for multiple platforms.",
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
+    part: Annotated[
+        list[str] | None,
+        typer.Option("--part", help="Physical part key; repeat for a family publication."),
+    ] = cli_defaults.DEFAULT_NONE,
+    family_title: Annotated[
+        str | None,
+        typer.Option("--title", help="Logical family title used for runtime composition."),
+    ] = cli_defaults.DEFAULT_NONE,
+    replace_existing: Annotated[
+        bool,
+        typer.Option(
+            "--replace/--no-replace",
+            help="Replace an existing ComplyPack authoring workspace.",
+        ),
+    ] = cli_defaults.DEFAULT_TRUE,
+    validate: Annotated[
+        bool,
+        typer.Option(
+            "--validate/--no-validate",
+            help="Run external 'complypack config validate' after preparing the workspace.",
+        ),
+    ] = False,
+    oci_target: Annotated[
+        str | None,
+        typer.Option(
+            "--oci-target",
+            help="OCI registry reference to pack and push with external complypack.",
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
+    plain_http: Annotated[
+        bool,
+        typer.Option(
+            "--plain-http/--no-plain-http",
+            help="Allow plain HTTP when packing to a local OCI registry.",
+        ),
+    ] = False,
+) -> None:
+    """Prepare and optionally publish an evaluator-specific ComplyPack workspace."""
+    from standards_atlas.adapters.complytime import ComplyPackCli, ComplyPackWorkspaceExporter
+
+    repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
+    publications = FileSystemPublicationDocumentProvider(repository)
+    try:
+        document = publications.load(
+            document_key,
+            part_keys=tuple(part or ()),
+            family_title=family_title,
+        )
+    except FileNotFoundError:
+        typer.echo(f"No persisted document found for key: {document_key}", err=True)
+        raise typer.Exit(code=1) from None
+
+    export_target = target or Path("local/exports/complypack") / document.key.value
+    try:
+        generated_path = ComplyPackWorkspaceExporter().export(
+            document,
+            export_target,
+            policy_content=policy_content,
+            pack_id=pack_id,
+            evaluator_id=evaluator_id,
+            pack_version=pack_version,
+            gemara_source=gemara_source,
+            schemas=tuple(schema or ()),
+            replace_existing=replace_existing,
+        )
+        cli = ComplyPackCli()
+        if validate:
+            cli.validate(generated_path)
+        if oci_target is not None:
+            cli.pack(generated_path, oci_target, plain_http=plain_http)
+    except (FileExistsError, FileNotFoundError, RuntimeError, ValueError) as exc:
+        typer.echo(f"ComplyPack export failed: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Exported document     : {document.title}")
+    typer.echo(f"Document key          : {document.key.value}")
+    typer.echo(f"ComplyPack workspace  : {generated_path}")
+    typer.echo(f"Evaluator             : {evaluator_id}")
+    typer.echo(f"Gemara policy source  : {gemara_source}")
+    if oci_target is not None:
+        typer.echo(f"OCI target            : {oci_target}")

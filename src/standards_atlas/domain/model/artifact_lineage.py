@@ -21,6 +21,7 @@ ArtifactKind = Literal[
     "gemara_guidance_export",
     "gemara_control_export",
     "complytime_governance_bundle",
+    "complypack_authoring_workspace",
 ]
 
 
