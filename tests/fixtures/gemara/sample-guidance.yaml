@@ -1,0 +1,26 @@
+title: Sample Standard - Part 1
+metadata:
+  id: sample-1
+  type: GuidanceCatalog
+  gemara-version: v-test
+  version: 2026-09
+  description: 'Gemara guidance projection of Sample Standard - Part 1. Source: sample-source.'
+  author:
+    id: standards-atlas
+    name: Standards Atlas
+    type: Software
+    version: 0.8.5
+type: Standard
+groups:
+- id: sample-1-root
+  title: Sample Standard - Part 1
+  description: Guidance projected from Sample Standard - Part 1.
+- id: section-4
+  title: Requirements
+  description: 'Section SAMPLE:2026 4: Requirements'
+guidelines:
+- id: req-4-1
+  title: Design requirements
+  objective: The system shall provide deterministic behavior.
+  group: section-4
+  state: Active

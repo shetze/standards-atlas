@@ -219,3 +219,78 @@ def export_document_to_doorstop(
     typer.echo(f"Clauses exported      : {len(document.clauses)}")
     typer.echo(f"Doorstop target       : {generated_path}")
     typer.echo(f"Validation enabled    : {validate}")
+
+
+@document_export_app.command("gemara")
+def export_document_to_gemara(
+    document_key: Annotated[
+        str,
+        typer.Argument(help="Key of the persisted EngineeringDocument or standard family."),
+    ],
+    workspace: Annotated[
+        Path,
+        typer.Option("--workspace", "-w", help="Standards Atlas workspace directory."),
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+    target: Annotated[
+        Path | None,
+        typer.Option(
+            "--target",
+            "-t",
+            help="Target YAML file. Defaults to local/exports/gemara/<document-key>.yaml.",
+            file_okay=True,
+            dir_okay=False,
+            resolve_path=True,
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
+    part: Annotated[
+        list[str] | None,
+        typer.Option("--part", help="Physical part key; repeat for a family publication."),
+    ] = cli_defaults.DEFAULT_NONE,
+    family_title: Annotated[
+        str | None,
+        typer.Option("--title", help="Logical family title used for runtime composition."),
+    ] = cli_defaults.DEFAULT_NONE,
+    gemara_version: Annotated[
+        str,
+        typer.Option("--gemara-version", help="Gemara specification version declared in metadata."),
+    ] = "v0.17.0-dev",
+    replace_existing: Annotated[
+        bool,
+        typer.Option("--replace/--no-replace", help="Replace an existing Gemara YAML export."),
+    ] = cli_defaults.DEFAULT_TRUE,
+) -> None:
+    """Export a persisted document or family as a Gemara GuidanceCatalog."""
+    from standards_atlas.adapters.gemara import GemaraGuidanceExporter, GemaraGuidanceMapper
+
+    repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
+    publications = FileSystemPublicationDocumentProvider(repository)
+    try:
+        document = publications.load(
+            document_key,
+            part_keys=tuple(part or ()),
+            family_title=family_title,
+        )
+    except FileNotFoundError:
+        typer.echo(f"No persisted document found for key: {document_key}", err=True)
+        raise typer.Exit(code=1) from None
+
+    export_target = target or Path("local/exports/gemara") / f"{document.key.value}.yaml"
+    if export_target.exists() and not replace_existing:
+        typer.echo(f"Gemara target already exists: {export_target}", err=True)
+        raise typer.Exit(code=2)
+
+    exporter = GemaraGuidanceExporter(mapper=GemaraGuidanceMapper(gemara_version=gemara_version))
+    try:
+        generated_path = DocumentExportService(exporter=exporter).export_document(
+            document=document,
+            target=export_target,
+        )
+    except ValueError as exc:
+        typer.echo(f"Gemara export failed: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+
+    typer.echo(f"Exported document     : {document.title}")
+    typer.echo(f"Document key          : {document.key.value}")
+    typer.echo(f"Clauses considered    : {len(document.clauses)}")
+    typer.echo(f"Gemara target         : {generated_path}")
+    typer.echo(f"Gemara version        : {gemara_version}")

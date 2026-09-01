@@ -9,6 +9,7 @@ from standards_atlas.domain.model import (
     ClauseId,
     ClauseType,
     DocumentKey,
+    DocumentType,
     EngineeringDocument,
 )
 
@@ -54,6 +55,10 @@ class DocumentCompositionService:
         return PublicationDocument(
             key=DocumentKey(value=family_key),
             title=family_title or _family_title(first, family_key),
+            document_type=_common_value(parts, "document_type") or DocumentType.OTHER,
+            year=_common_value(parts, "year"),
+            version=_common_value(parts, "version"),
+            source=_common_value(parts, "source"),
             clauses=tuple(composed_clauses),
             annotations=tuple(annotation for part in parts for annotation in part.annotations),
             tables=tuple(table for part in parts for table in part.tables),
@@ -129,3 +134,9 @@ def _supplement_publication_root(part: EngineeringDocument) -> Clause:
         clause_type=ClauseType.TOC,
         heading=part.title,
     )
+
+
+def _common_value(parts: tuple[EngineeringDocument, ...], attribute: str):
+    """Return a shared part metadata value, otherwise leave family metadata unspecified."""
+    values = {getattr(part, attribute) for part in parts}
+    return next(iter(values)) if len(values) == 1 else None

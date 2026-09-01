@@ -20,6 +20,9 @@ def _document(key: str, part: str) -> EngineeringDocument:
         key=DocumentKey(value=key),
         title=f"Test Part {part}",
         document_type=DocumentType.OTHER,
+        year=2026,
+        version="1.0",
+        source="fixture",
         clauses=(
             Clause(
                 id=ClauseId(value=f"{key}-root"),
@@ -46,6 +49,9 @@ def test_provider_projects_physical_document_without_persistence(tmp_path: Path)
 
     assert publication.key.value == "PART-1"
     assert publication.part_keys == ("PART-1",)
+    assert publication.year == 2026
+    assert publication.version == "1.0"
+    assert publication.source == "fixture"
     assert [clause.reference.clause for clause in publication.clauses] == ["0", "1"]
 
 
@@ -64,6 +70,9 @@ def test_provider_composes_family_on_demand_without_family_document(tmp_path: Pa
     assert publication.key.value == "FAMILY"
     assert publication.title == "Test Family"
     assert publication.part_keys == ("PART-1", "PART-2")
+    assert publication.year == 2026
+    assert publication.version == "1.0"
+    assert publication.source == "fixture"
     assert [clause.reference.part for clause in publication.clauses] == ["1", "1", "2", "2"]
     assert not documents.exists(DocumentKey(value="FAMILY"))
     assert not (tmp_path / "work" / "composed-documents").exists()

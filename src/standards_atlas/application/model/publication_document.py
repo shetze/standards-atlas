@@ -11,6 +11,7 @@ from standards_atlas.domain.model import (
     ClauseAnnotation,
     DocumentKey,
     DocumentTable,
+    DocumentType,
     EngineeringDocument,
     TableIndexEntry,
 )
@@ -27,6 +28,10 @@ class PublicationDocument(BaseModel):
 
     key: DocumentKey
     title: str = Field(min_length=1)
+    document_type: DocumentType = DocumentType.OTHER
+    year: int | None = None
+    version: str | None = None
+    source: str | None = None
     clauses: tuple[Clause, ...] = ()
     tables: tuple[DocumentTable, ...] = ()
     table_index: tuple[TableIndexEntry, ...] = ()
@@ -41,6 +46,10 @@ class PublicationDocument(BaseModel):
         return cls(
             key=DocumentKey(value=document.key.value),
             title=document.title,
+            document_type=document.document_type,
+            year=document.year,
+            version=document.version,
+            source=document.source,
             clauses=document.clauses,
             tables=document.tables,
             table_index=document.table_index,
