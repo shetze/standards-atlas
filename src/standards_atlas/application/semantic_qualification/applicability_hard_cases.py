@@ -171,13 +171,8 @@ def persist_applicability_prediction_snapshot(
     return path
 
 
-def analyze_applicability_hard_cases(
-    run_archive: Path,
-    output_directory: Path,
-    *,
-    limit: int = 30,
-) -> tuple[PresenceHardCaseReport, PresenceHardCaseArtifacts]:
-    """Analyze model presence disagreement from an immutable qualification archive."""
+def project_applicability_hard_cases(run_archive: Path) -> PresenceHardCaseReport:
+    """Project the shared clause-level hard-case view from an immutable qualification archive."""
     with ZipFile(run_archive) as archive:
         manifest = yaml.safe_load(archive.read("configuration/qualification-manifest.yaml")) or {}
         snapshot_name = _find_member(archive, PREDICTION_SNAPSHOT_FILENAME)
@@ -207,7 +202,7 @@ def analyze_applicability_hard_cases(
     minimal = _minimal_predictions(snapshot, eligible=eligible)
     cases = _build_cases(baseline, minimal, details, polarity_eligible=polarity_eligible)
     profiles = _model_profiles(baseline, minimal, cases)
-    report = PresenceHardCaseReport(
+    return PresenceHardCaseReport(
         source_archive=run_archive.name,
         matrix_id=snapshot.matrix_id,
         baseline_prompt_id=baseline_prompt,
@@ -217,6 +212,17 @@ def analyze_applicability_hard_cases(
         cases=tuple(cases),
         model_profiles=tuple(profiles),
     )
+
+
+def analyze_applicability_hard_cases(
+    run_archive: Path,
+    output_directory: Path,
+    *,
+    limit: int = 30,
+) -> tuple[PresenceHardCaseReport, PresenceHardCaseArtifacts]:
+    """Analyze model presence disagreement from an immutable qualification archive."""
+    report = project_applicability_hard_cases(run_archive)
+    cases = list(report.cases)
     output_directory.mkdir(parents=True, exist_ok=True)
     json_path = output_directory / "presence-disagreement-analysis.json"
     markdown_path = output_directory / "presence-disagreement-analysis.md"

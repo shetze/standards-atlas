@@ -15,6 +15,7 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
     ApplicabilityGoldenCase,
     ApplicabilityGoldenCorpus,
     ApplicabilityGoldenExpected,
+    ApplicabilityGoldenProvenance,
 )
 from standards_atlas.application.semantic_qualification.applicability_framing import (
     build_applicability_framing_report,
@@ -132,28 +133,33 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
     _write(minimal, _prediction(c1, present=False))
     _write(minimal, _prediction(c2, present=True, subtype=ApplicabilityFunction.EXCLUSION))
 
+    provenance = ApplicabilityGoldenProvenance(
+        source_archive="test.zip", source_archive_sha256="0" * 64
+    )
     golden = ApplicabilityGoldenCorpus(
-        source_archive="test.zip",
-        source_archive_sha256="0" * 64,
         cases=(
             ApplicabilityGoldenCase(
                 clause_id="c1",
                 document_key="IEC61508-3",
                 reference="IEC61508-3 c1",
                 text="Clause c1",
+                category="minority_presence_disagreement",
                 status="published",
                 expected=ApplicabilityGoldenExpected(present=False),
+                provenance=provenance,
             ),
             ApplicabilityGoldenCase(
                 clause_id="c2",
                 document_key="IEC61508-3",
                 reference="IEC61508-3 c2",
                 text="Clause c2",
+                category="polarity_disagreement",
                 status="published",
                 expected=ApplicabilityGoldenExpected(
                     present=True,
                     polarity="excluded",
                 ),
+                provenance=provenance,
             ),
         ),
     )

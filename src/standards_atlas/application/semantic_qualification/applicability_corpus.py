@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Literal
 from zipfile import ZipFile
@@ -20,10 +20,14 @@ from standards_atlas.application.semantic_qualification.applicability_hard_cases
     PREDICTION_SNAPSHOT_FILENAME,
     ApplicabilityPrediction,
     ApplicabilityPredictionSnapshot,
+    PresenceHardCase,
     _baseline,
+    _case_rank,
     _collapsed_predictions,
     _dataset_details,
     _find_member,
+    _review_candidate,
+    project_applicability_hard_cases,
 )
 
 
@@ -42,30 +46,44 @@ class ApplicabilityGoldenExpected(BaseModel):
         return self
 
 
+class ApplicabilityGoldenProvenance(BaseModel):
+    """Immutable source-run provenance for one published gold case."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source_archive: str
+    source_archive_sha256: str
+
+
 class ApplicabilityGoldenCase(BaseModel):
     """One selected applicability hard case and optional published reference."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     clause_id: str
     document_key: str
     reference: str
     text: str
-    category: str = "presence_disagreement"
+    category: str
     status: Literal["proposed", "published", "rejected"] = "proposed"
     expected: ApplicabilityGoldenExpected | None = None
+    provenance: ApplicabilityGoldenProvenance | None = None
+
+    @model_validator(mode="after")
+    def published_requires_reference_and_provenance(self) -> ApplicabilityGoldenCase:
+        if self.status == "published" and (self.expected is None or self.provenance is None):
+            raise ValueError("published applicability gold cases require expected and provenance")
+        return self
 
 
 class ApplicabilityGoldenCorpus(BaseModel):
-    """Small run-derived applicability golden set."""
+    """Incremental applicability hard-case golden corpus."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["2.0"] = "2.0"
+    schema_version: Literal["2.1"] = "2.1"
     corpus_id: str = "applicability-hard-cases"
-    corpus_version: str = "2.0.0"
-    source_archive: str
-    source_archive_sha256: str
+    corpus_version: str = "2.1.0"
     cases: tuple[ApplicabilityGoldenCase, ...]
 
     @model_validator(mode="after")
@@ -81,14 +99,19 @@ class ApplicabilityGoldenCorpus(BaseModel):
 
 
 class ApplicabilityCorpusBuildResult(BaseModel):
-    """Artifacts written by the run-derived applicability hard-case builder."""
+    """Artifacts and auditable accounting from stratified hard-case selection."""
 
     model_config = ConfigDict(frozen=True)
 
     review_path: Path
     review_guide_path: Path
     golden_path: Path
-    selected_count: int
+    candidate_count: int = Field(ge=0)
+    excluded_existing_count: int = Field(ge=0)
+    selected_count: int = Field(ge=0)
+    category_candidate_counts: dict[str, int]
+    category_selected_counts: dict[str, int]
+    document_count: int = Field(ge=0)
     review_created: bool
 
 
@@ -152,68 +175,42 @@ class ApplicabilityGoldenRegressionReport(BaseModel):
     errors: tuple[ApplicabilityCaseError, ...] = ()
 
 
+STRATIFIED_CATEGORY_WEIGHTS: tuple[tuple[str, int], ...] = (
+    ("balanced_presence_disagreement", 35),
+    ("minority_presence_disagreement", 30),
+    ("framing_sensitive_presence", 20),
+    ("polarity_disagreement", 15),
+)
+
+
 def build_applicability_golden_review(
     run_archive: Path,
     review_root: Path = Path("local/review"),
     *,
+    golden_path: Path | None = None,
     limit: int = 30,
 ) -> ApplicabilityCorpusBuildResult:
-    """Create a flat HITL review from final applicability-presence disagreements."""
-    report, manifest = _load_run_inputs(run_archive)
-    presence_eligibility = {
-        str(model.get("id")): bool(
-            (model.get("dimension_eligibility") or {}).get("applicability_presence", True)
-        )
-        for model in manifest.get("models", [])
-    }
-    polarity_eligibility = {
-        str(model.get("id")): bool(
-            (model.get("dimension_eligibility") or {}).get("applicability_polarity", True)
-        )
-        for model in manifest.get("models", [])
-    }
-    cases: list[ApplicabilityGoldenCase] = []
-    for clause in report.get("clauses", []):
-        votes = list(clause.get("votes", []))
-        presence_votes = [
-            vote for vote in votes if presence_eligibility.get(str(vote.get("model_id")), True)
-        ]
-        presence_values = {bool(vote.get("applicability_present")) for vote in presence_votes}
-        category = None
-        if len(presence_values) > 1:
-            category = "presence_disagreement"
-        else:
-            polarity_values = {
-                vote.get("applicability_polarity")
-                for vote in votes
-                if bool(vote.get("applicability_present"))
-                and polarity_eligibility.get(str(vote.get("model_id")), True)
-                and vote.get("applicability_polarity") is not None
-            }
-            if len(polarity_values) > 1:
-                category = "polarity_disagreement"
-        if category is None:
-            continue
-        cases.append(
-            ApplicabilityGoldenCase(
-                clause_id=str(clause["clause_id"]),
-                document_key=str(clause["document_key"]),
-                reference=_qualified_reference(clause),
-                text=str(clause.get("clause_text") or ""),
-                category=category,
-            )
-        )
-    cases.sort(key=lambda case: (case.document_key, case.reference, case.clause_id))
-    cases = cases[:limit]
-    if not cases:
-        raise ValueError("qualification run contains no applicability presence disagreements")
+    """Create an incremental deterministic stratified HITL applicability review."""
+    report = project_applicability_hard_cases(run_archive)
+    candidates = [case for case in report.cases if _review_candidate(case)]
+    existing_keys: set[tuple[str, str]] = set()
+    if golden_path is not None:
+        golden = ApplicabilityGoldenCorpus.load(golden_path)
+        existing_keys = {(case.document_key, case.clause_id) for case in golden.cases}
+    new_candidates = [
+        case for case in candidates if (case.document_key, case.clause_id) not in existing_keys
+    ]
+    excluded_existing_count = len(candidates) - len(new_candidates)
+    selected = _select_stratified_cases(new_candidates, limit=limit)
+    if not selected:
+        raise ValueError("qualification run contains no new applicability hard-case candidates")
 
-    review_dir = review_root / "applicability" / "2.0.0"
+    review_dir = review_root / "applicability" / "2.1.0"
     review_path = review_dir / "applicability-golden-review.csv"
     review_created = False
     if not review_path.exists():
         review_dir.mkdir(parents=True, exist_ok=True)
-        _write_review_csv(review_path, tuple(cases))
+        _write_review_csv(review_path, selected)
         review_created = True
     review_guide_path = review_dir / "README.md"
     _write_review_guide(review_guide_path)
@@ -221,19 +218,103 @@ def build_applicability_golden_review(
         review_path=review_path,
         review_guide_path=review_guide_path,
         golden_path=review_dir / "applicability-golden-corpus.yaml",
-        selected_count=len(cases),
+        candidate_count=len(candidates),
+        excluded_existing_count=excluded_existing_count,
+        selected_count=len(selected),
+        category_candidate_counts=dict(
+            sorted(Counter(case.category for case in new_candidates).items())
+        ),
+        category_selected_counts=dict(sorted(Counter(case.category for case in selected).items())),
+        document_count=len({case.document_key for case in selected}),
         review_created=review_created,
     )
+
+
+def _select_stratified_cases(
+    candidates: list[PresenceHardCase], *, limit: int
+) -> tuple[PresenceHardCase, ...]:
+    """Select deterministic category-stratified cases with document round-robin diversity."""
+    if limit <= 0 or not candidates:
+        return ()
+    category_order = tuple(category for category, _ in STRATIFIED_CATEGORY_WEIGHTS)
+    grouped = {category: [] for category in category_order}
+    for case in candidates:
+        if case.category in grouped:
+            grouped[case.category].append(case)
+    for values in grouped.values():
+        values.sort(key=_case_rank)
+
+    quota_limit = min(limit, len(candidates))
+    quotas = {
+        category: quota_limit * weight // 100 for category, weight in STRATIFIED_CATEGORY_WEIGHTS
+    }
+    remainder = quota_limit - sum(quotas.values())
+    fractional = sorted(
+        STRATIFIED_CATEGORY_WEIGHTS,
+        key=lambda item: (-(quota_limit * item[1] % 100), category_order.index(item[0])),
+    )
+    for category, _ in fractional[:remainder]:
+        quotas[category] += 1
+
+    selected: list[PresenceHardCase] = []
+    selected_keys: set[tuple[str, str]] = set()
+    for category in category_order:
+        for case in _document_round_robin(grouped[category], quotas[category]):
+            selected.append(case)
+            selected_keys.add((case.document_key, case.clause_id))
+
+    remaining = quota_limit - len(selected)
+    if remaining:
+        spill = [
+            case
+            for category in category_order
+            for case in grouped[category]
+            if (case.document_key, case.clause_id) not in selected_keys
+        ]
+        spill.sort(key=_case_rank)
+        selected.extend(_document_round_robin(spill, remaining))
+    return tuple(selected)
+
+
+def _document_round_robin(
+    cases: list[PresenceHardCase], limit: int
+) -> tuple[PresenceHardCase, ...]:
+    if limit <= 0:
+        return ()
+    by_document: dict[str, list[PresenceHardCase]] = defaultdict(list)
+    for case in cases:
+        by_document[case.document_key].append(case)
+    documents = sorted(by_document)
+    selected: list[PresenceHardCase] = []
+    index = 0
+    while len(selected) < limit:
+        progressed = False
+        for document in documents:
+            values = by_document[document]
+            if index < len(values):
+                selected.append(values[index])
+                progressed = True
+                if len(selected) == limit:
+                    break
+        if not progressed:
+            break
+        index += 1
+    return tuple(selected)
 
 
 def publish_applicability_golden_review(
     review_path: Path,
     run_archive: Path,
     output_path: Path,
+    *,
+    golden_path: Path | None = None,
 ) -> ApplicabilityGoldenCorpus:
-    """Compile published HITL rows into a machine-readable golden set."""
+    """Merge published HITL rows into the schema-2.1 machine-readable golden set."""
     with review_path.open("r", encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
+    provenance = ApplicabilityGoldenProvenance(
+        source_archive=run_archive.name, source_archive_sha256=_sha256(run_archive)
+    )
     published: list[ApplicabilityGoldenCase] = []
     for row in rows:
         status = (row.get("review_status") or "pending").strip().lower()
@@ -249,21 +330,32 @@ def publish_applicability_golden_review(
                 document_key=(row.get("document_key") or "").strip(),
                 reference=(row.get("reference") or "").strip(),
                 text=row.get("text") or "",
-                category=(row.get("category") or "presence_disagreement").strip(),
+                category=(row.get("category") or "minority_presence_disagreement").strip(),
                 status="published",
-                expected=ApplicabilityGoldenExpected(
-                    present=present,
-                    polarity=polarity,
-                ),
+                expected=ApplicabilityGoldenExpected(present=present, polarity=polarity),
+                provenance=provenance,
             )
         )
     if not published:
         raise ValueError("applicability review contains no published cases")
-    corpus = ApplicabilityGoldenCorpus(
-        source_archive=run_archive.name,
-        source_archive_sha256=_sha256(run_archive),
-        cases=tuple(published),
-    )
+
+    existing = ApplicabilityGoldenCorpus.load(golden_path) if golden_path is not None else None
+    merged = list(existing.cases) if existing is not None else []
+    by_key = {(case.document_key, case.clause_id): case for case in merged}
+    for case in published:
+        key = (case.document_key, case.clause_id)
+        prior = by_key.get(key)
+        if prior is None:
+            merged.append(case)
+            by_key[key] = case
+            continue
+        if prior.expected != case.expected:
+            raise ValueError(
+                f"conflicting applicability gold label for {case.document_key}/{case.clause_id}"
+            )
+
+    merged.sort(key=lambda case: (case.document_key, case.reference, case.clause_id))
+    corpus = ApplicabilityGoldenCorpus(cases=tuple(merged))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         yaml.safe_dump(corpus.model_dump(mode="json"), sort_keys=False, allow_unicode=True),
@@ -604,19 +696,21 @@ def _polarity_consensus(
     return ranked[0][0]
 
 
-def _qualified_reference(clause: dict[str, Any]) -> str:
-    document_key = str(clause.get("document_key") or "").strip()
-    reference = str(clause.get("reference") or "").strip()
-    if reference.startswith(f"{document_key}:"):
-        return reference
-    return f"{document_key}:{reference}" if reference else document_key
-
-
-def _write_review_csv(path: Path, cases: tuple[ApplicabilityGoldenCase, ...]) -> None:
+def _write_review_csv(path: Path, cases: tuple[PresenceHardCase, ...]) -> None:
     fields = (
         "document_key",
         "reference",
         "category",
+        "participating_models",
+        "present_count",
+        "absent_count",
+        "presence_rate",
+        "majority_margin",
+        "disagreement_score",
+        "present_models",
+        "absent_models",
+        "framing_sensitive_models",
+        "selection_rank",
         "text",
         "review_status",
         "present",
@@ -627,12 +721,22 @@ def _write_review_csv(path: Path, cases: tuple[ApplicabilityGoldenCase, ...]) ->
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
-        for case in cases:
+        for rank, case in enumerate(cases, start=1):
             writer.writerow(
                 {
                     "document_key": case.document_key,
                     "reference": case.reference,
                     "category": case.category,
+                    "participating_models": case.participating_models,
+                    "present_count": case.present_count,
+                    "absent_count": case.absent_count,
+                    "presence_rate": case.presence_rate,
+                    "majority_margin": case.majority_margin,
+                    "disagreement_score": case.disagreement_score,
+                    "present_models": ";".join(case.present_models),
+                    "absent_models": ";".join(case.absent_models),
+                    "framing_sensitive_models": ";".join(case.framing_sensitive_models),
+                    "selection_rank": rank,
                     "text": case.text,
                     "review_status": "pending",
                     "present": "",

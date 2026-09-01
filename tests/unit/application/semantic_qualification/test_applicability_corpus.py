@@ -10,8 +10,11 @@ import yaml
 from pydantic import ValidationError
 
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
+    ApplicabilityGoldenCase,
     ApplicabilityGoldenCorpus,
     ApplicabilityGoldenExpected,
+    ApplicabilityGoldenProvenance,
+    _select_stratified_cases,
     build_applicability_golden_review,
     evaluate_applicability_golden_corpus,
     publish_applicability_golden_review,
@@ -96,7 +99,9 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
     with result.review_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     assert rows[0]["reference"] == "DOC:1"
-    assert rows[0]["category"] == "presence_disagreement"
+    assert rows[0]["category"] == "minority_presence_disagreement"
+    assert rows[0]["participating_models"] == "3"
+    assert rows[0]["selection_rank"] == "1"
     assert rows[1]["reference"] == "DOC:3"
     assert rows[1]["category"] == "polarity_disagreement"
     rows[0]["review_status"] = "published"
@@ -109,6 +114,9 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
 
     golden = publish_applicability_golden_review(result.review_path, archive, result.golden_path)
     assert len(golden.cases) == 1
+    assert golden.schema_version == "2.1"
+    assert golden.cases[0].provenance is not None
+    assert golden.cases[0].provenance.source_archive == archive.name
     loaded = ApplicabilityGoldenCorpus.load(result.golden_path)
     report = evaluate_applicability_golden_corpus(loaded, archive)
     assert report.positive_cases == 1
@@ -152,3 +160,121 @@ def test_applicability_golden_contract_accepts_only_binary_polarity() -> None:
         ApplicabilityGoldenExpected(present=True, polarity="applicability_condition")
     with pytest.raises(ValidationError):
         ApplicabilityGoldenExpected(present=False, polarity="included")
+
+
+def _hard_case(clause_id: str, document_key: str, category: str, score: float = 0.8):
+    from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
+        PresenceHardCase,
+    )
+
+    return PresenceHardCase(
+        document_key=document_key,
+        clause_id=clause_id,
+        reference=f"{document_key}:{clause_id}",
+        text=clause_id,
+        category=category,
+        participating_models=5,
+        present_count=3,
+        absent_count=2,
+        presence_rate=0.6,
+        majority_margin=0.2,
+        disagreement_score=score,
+    )
+
+
+def test_stratified_selector_spills_quota_and_round_robins_documents() -> None:
+    cases = [
+        _hard_case("b1", "DOC-A", "balanced_presence_disagreement", 1.0),
+        _hard_case("b2", "DOC-A", "balanced_presence_disagreement", 0.9),
+        _hard_case("b3", "DOC-B", "balanced_presence_disagreement", 0.8),
+        _hard_case("m1", "DOC-C", "minority_presence_disagreement", 0.7),
+        _hard_case("m2", "DOC-D", "minority_presence_disagreement", 0.6),
+        _hard_case("p1", "DOC-E", "polarity_disagreement", 0.0),
+    ]
+    selected = _select_stratified_cases(cases, limit=5)
+    assert len(selected) == 5
+    assert len({(case.document_key, case.clause_id) for case in selected}) == 5
+    balanced = [case for case in selected if case.category == "balanced_presence_disagreement"]
+    assert [case.document_key for case in balanced[:2]] == ["DOC-A", "DOC-B"]
+    assert any(case.category == "polarity_disagreement" for case in selected)
+
+
+def test_build_excludes_existing_golden_cases(tmp_path: Path) -> None:
+    archive = _run_archive(tmp_path / "qualification-run.zip")
+    provenance = ApplicabilityGoldenProvenance(
+        source_archive="old.zip", source_archive_sha256="0" * 64
+    )
+    golden = ApplicabilityGoldenCorpus(
+        cases=(
+            ApplicabilityGoldenCase(
+                clause_id="c1",
+                document_key="DOC",
+                reference="DOC:1",
+                text="old",
+                category="minority_presence_disagreement",
+                status="published",
+                expected=ApplicabilityGoldenExpected(present=True, polarity="included"),
+                provenance=provenance,
+            ),
+        )
+    )
+    golden_path = tmp_path / "golden.yaml"
+    golden_path.write_text(
+        yaml.safe_dump(golden.model_dump(mode="json"), sort_keys=False), encoding="utf-8"
+    )
+    result = build_applicability_golden_review(
+        archive, tmp_path / "review", golden_path=golden_path
+    )
+    assert result.candidate_count == 2
+    assert result.excluded_existing_count == 1
+    assert result.selected_count == 1
+    with result.review_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    assert [row["clause_id"] for row in rows] == ["c3"]
+
+
+def test_publish_merges_idempotently_and_rejects_conflicting_gold(tmp_path: Path) -> None:
+    archive = _run_archive(tmp_path / "qualification-run.zip")
+    result = build_applicability_golden_review(archive, tmp_path / "review")
+    with result.review_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    rows[0]["review_status"] = "published"
+    rows[0]["present"] = "true"
+    rows[0]["polarity"] = "included"
+    with result.review_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+    initial = publish_applicability_golden_review(result.review_path, archive, result.golden_path)
+    assert len(initial.cases) == 1
+
+    merged_path = tmp_path / "merged.yaml"
+    merged = publish_applicability_golden_review(
+        result.review_path, archive, merged_path, golden_path=result.golden_path
+    )
+    assert len(merged.cases) == 1
+
+    rows[0]["present"] = "false"
+    rows[0]["polarity"] = ""
+    with result.review_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+    with pytest.raises(ValueError, match="conflicting applicability gold label"):
+        publish_applicability_golden_review(
+            result.review_path, archive, merged_path, golden_path=result.golden_path
+        )
+
+
+def test_schema_21_rejects_corpus_level_run_provenance() -> None:
+    with pytest.raises(ValidationError):
+        ApplicabilityGoldenCorpus.model_validate(
+            {
+                "schema_version": "2.1",
+                "corpus_id": "applicability-hard-cases",
+                "corpus_version": "2.1.0",
+                "source_archive": "legacy.zip",
+                "source_archive_sha256": "0" * 64,
+                "cases": [],
+            }
+        )

@@ -208,15 +208,24 @@ def build_applicability_golden_corpus(
     review_output: Annotated[
         Path, typer.Option("--review-output", file_okay=False)
     ] = cli_defaults.DEFAULT_REVIEW_ROOT,
+    golden: Annotated[Path | None, typer.Option("--golden", exists=True, dir_okay=False)] = None,
     limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 30,
 ) -> None:
-    """Build a small HITL set for present + binary polarity qualification."""
+    """Build an incremental stratified HITL set for applicability qualification."""
     try:
-        result = build_applicability_golden_review(run_archive, review_output, limit=limit)
+        result = build_applicability_golden_review(
+            run_archive, review_output, golden_path=golden, limit=limit
+        )
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
-    typer.echo(f"Applicability hard cases: {result.selected_count}")
+    typer.echo(f"Applicability candidates: {result.candidate_count}")
+    typer.echo(f"Already in golden corpus: {result.excluded_existing_count}")
+    typer.echo(f"Selected for review     : {result.selected_count}")
+    for category, count in result.category_selected_counts.items():
+        available = result.category_candidate_counts.get(category, 0)
+        typer.echo(f"  {category:<28}: {count} / {available}")
+    typer.echo(f"Documents represented   : {result.document_count}")
     typer.echo(f"HITL review file        : {result.review_path}")
     typer.echo(f"HITL review guide       : {result.review_guide_path}")
     if result.review_created:
@@ -229,12 +238,15 @@ def build_applicability_golden_corpus(
 def publish_applicability_corpus(
     review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False)],
     run_archive: Annotated[Path, typer.Option("--run", exists=True, dir_okay=False)],
+    golden: Annotated[Path | None, typer.Option("--golden", exists=True, dir_okay=False)] = None,
     output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
 ) -> None:
-    """Publish reviewed applicability cases as golden ground truth."""
+    """Publish reviewed applicability cases, optionally merging an existing golden corpus."""
     resolved_output = output or review.parent / "applicability-golden-corpus.yaml"
     try:
-        corpus = publish_applicability_golden_review(review, run_archive, resolved_output)
+        corpus = publish_applicability_golden_review(
+            review, run_archive, resolved_output, golden_path=golden
+        )
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc

@@ -447,29 +447,57 @@ Targets must be the explicit object or subject matter toward which the predicate
 
 ### Applicability qualification golden set
 
-Applicability qualification uses a deliberately small HITL-reviewed contract: `present` plus an optional binary `polarity` (`included` or `excluded`). Exception and generic condition semantics are outside this qualification stage. The hard-case set is still seeded from presence disagreements of an archived qualification run.
+Applicability qualification uses a HITL-reviewed contract with `present` plus an optional binary `polarity` (`included` or `excluded`). Exception and generic condition semantics are outside this qualification stage. Schema 2.1 makes the corpus incremental: provenance is recorded per case, and new review batches can exclude clauses that are already published in an existing golden corpus. Legacy `applicability_function`/subtype fields and schema-2.0 corpus-level run provenance are not accepted.
 
-Build the review set from a qualification archive:
+Build the first review batch from a qualification archive:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-build \
-  --run local/evaluation/qualification/qualification-run-040.zip
+  --run local/evaluation/qualification-run-066.zip \
+  --limit 30
 ```
 
-The command writes `local/review/applicability/2.0.0/applicability-golden-review.csv`. Set `review_status=published`, review `present`, and set `polarity` to `included` or `excluded` when presence is true and the direction is clear. The v2 contract is breaking: legacy `applicability_function`/subtype fields are not accepted. Publish and evaluate it with:
+The command writes `local/review/applicability/2.1.0/applicability-golden-review.csv`. Selection is deterministic and stratified across balanced presence disagreement, minority presence disagreement, framing-sensitive presence, and polarity disagreement. Within strata, document round-robin selection reduces domination by a single standard or part. Unused quota spills deterministically into the remaining candidate pool. The CLI reports candidate counts, exclusions, per-category selection accounting, and represented documents. The CSV also records vote counts, disagreement scores, participating model groups, and selection rank so that the selection decision remains auditable.
+
+Set `review_status=published`, review `present`, and set `polarity` to `included` or `excluded` when presence is true and the direction is clear. Publish the initial corpus with:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-publish \
-  --review local/review/applicability/2.0.0/applicability-golden-review.csv \
-  --run local/evaluation/qualification/qualification-run-040.zip
+  --review local/review/applicability/2.1.0/applicability-golden-review.csv \
+  --run local/evaluation/qualification-run-066.zip
+```
 
+For a later qualification run, exclude already-published clauses during review construction:
+
+```bash
+uv run standards-atlas evaluation applicability-corpus-build \
+  --run local/evaluation/qualification-run-067.zip \
+  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --limit 30
+```
+
+After review, merge the newly published cases into the existing corpus:
+
+```bash
+uv run standards-atlas evaluation applicability-corpus-publish \
+  --review local/review/applicability/2.1.0/applicability-golden-review.csv \
+  --run local/evaluation/qualification-run-067.zip \
+  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --output local/review/applicability/2.1.0/applicability-golden-corpus.yaml
+```
+
+Re-publishing an already known clause with the same gold annotation is idempotent. A different `present` or `polarity` annotation for an existing `(document_key, clause_id)` is rejected instead of silently overwriting reviewed ground truth. Each published case retains the source qualification archive name and SHA256 digest.
+
+Evaluate the enlarged corpus with:
+
+```bash
 uv run standards-atlas evaluation applicability-corpus-evaluate \
-  --golden local/review/applicability/2.0.0/applicability-golden-corpus.yaml \
-  --run local/evaluation/qualification/qualification-run-040.zip \
+  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --run local/evaluation/qualification-run-067.zip \
   --output local/evaluation/qualification/applicability-golden-regression.json
 ```
 
-The regression report contains consensus metrics, presence precision/recall/F1, and binary polarity accuracy for every model represented in the archived run. Use these reviewed metrics, rather than raw `none_rate`, when changing future `applicability_presence` eligibility.
+The regression report contains consensus metrics, presence precision/recall/F1, and binary polarity accuracy for every model represented in the archived run. The golden corpus is deliberately a diagnostic hard-case corpus rather than a representative random sample; use its reviewed metrics for calibration and regression analysis rather than interpreting the class balance as corpus prevalence.
 
 ### Full vs minimal CBox applicability matrix
 
