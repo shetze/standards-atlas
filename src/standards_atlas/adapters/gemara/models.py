@@ -46,7 +46,7 @@ class GemaraMetadata(BaseModel):
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
     id: str = Field(min_length=1)
-    type: Literal["GuidanceCatalog"] = "GuidanceCatalog"
+    type: Literal["GuidanceCatalog", "ControlCatalog"] = "GuidanceCatalog"
     gemara_version: str = Field(alias="gemara-version", min_length=1)
     version: str | None = None
     description: str = Field(min_length=1)
@@ -100,3 +100,41 @@ class GemaraGuidanceCatalog(BaseModel):
     front_matter: str | None = Field(default=None, alias="front-matter")
     groups: tuple[GemaraGroup, ...]
     guidelines: tuple[GemaraGuideline, ...] | None = None
+
+
+class GemaraAssessmentRequirement(BaseModel):
+    """Verifiable requirement within a Gemara control."""
+
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    id: str = Field(min_length=1)
+    text: str = Field(min_length=1)
+    applicability: tuple[str, ...] = Field(min_length=1)
+    recommendation: str | None = None
+    state: Literal["Active", "Draft", "Deprecated", "Retired"] = "Active"
+
+
+class GemaraControl(BaseModel):
+    """Safeguard/countermeasure projected from qualified normative clauses."""
+
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    objective: str = Field(min_length=1)
+    group: str = Field(min_length=1)
+    assessment_requirements: tuple[GemaraAssessmentRequirement, ...] = Field(
+        alias="assessment-requirements", min_length=1
+    )
+    state: Literal["Active", "Draft", "Deprecated", "Retired"] = "Active"
+
+
+class GemaraControlCatalog(BaseModel):
+    """Gemara ControlCatalog subset emitted by Standards Atlas."""
+
+    model_config = ConfigDict(frozen=True)
+
+    title: str = Field(min_length=1)
+    metadata: GemaraMetadata
+    groups: tuple[GemaraGroup, ...]
+    controls: tuple[GemaraControl, ...] | None = None

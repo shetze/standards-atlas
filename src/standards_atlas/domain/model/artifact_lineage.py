@@ -19,6 +19,7 @@ ArtifactKind = Literal[
     "markdown_export",
     "doorstop_export",
     "gemara_guidance_export",
+    "gemara_control_export",
 ]
 
 
