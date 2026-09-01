@@ -41,6 +41,7 @@ DEFAULT_CACHE_ROOT = Path(".atlas/cache")
 DEFAULT_WORK_ROOT = Path(".atlas/work")
 DEFAULT_LOCAL_ROOT = Path("local")
 DEFAULT_REVIEW_ROOT = Path("local/review")
+DEFAULT_APPLICABILITY_REVIEW_OUTPUT = evaluation_defaults.DEFAULT_APPLICABILITY_REVIEW_OUTPUT
 DEFAULT_EVALUATION_CORPUS_ROOT = Path(".atlas/data/evaluation/corpora")
 DEFAULT_EVALUATION_OUTPUT = Path(".atlas/data/evaluation")
 DEFAULT_EVALUATION_RESOURCES = Path("src/standards_atlas/resources/semantic")

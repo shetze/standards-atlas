@@ -7,6 +7,7 @@ from standards_atlas.application.semantic_qualification.defaults import (
     STATEMENT_FUNCTION_PROMPT_VERSIONS,
 )
 from standards_atlas.application.semantic_qualification.proposals import ProposalRunConfig
+from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.main import app
 
 runner = CliRunner()
@@ -68,3 +69,19 @@ def test_evaluation_help_lists_applicability_hard_case_analysis() -> None:
     result = runner.invoke(app, ["evaluation", "--help"])
     assert result.exit_code == 0
     assert "applicability-hard-cases" in result.stdout
+
+
+def test_applicability_corpus_build_treats_review_output_as_csv_file() -> None:
+    result = runner.invoke(
+        app,
+        ["evaluation", "applicability-corpus-build", "--help"],
+        terminal_width=240,
+    )
+
+    assert result.exit_code == 0
+    assert "--review-output" in result.stdout
+    assert "CSV file to create for" in result.stdout
+    assert "HITL review." in result.stdout
+    assert cli_defaults.DEFAULT_APPLICABILITY_REVIEW_OUTPUT.as_posix() == (
+        "local/review/applicability/2.1.0/applicability-golden-review.csv"
+    )

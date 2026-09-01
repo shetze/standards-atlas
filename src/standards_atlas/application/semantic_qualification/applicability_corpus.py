@@ -29,6 +29,9 @@ from standards_atlas.application.semantic_qualification.applicability_hard_cases
     _review_candidate,
     project_applicability_hard_cases,
 )
+from standards_atlas.application.semantic_qualification.defaults import (
+    DEFAULT_APPLICABILITY_REVIEW_OUTPUT,
+)
 
 
 class ApplicabilityGoldenExpected(BaseModel):
@@ -185,7 +188,7 @@ STRATIFIED_CATEGORY_WEIGHTS: tuple[tuple[str, int], ...] = (
 
 def build_applicability_golden_review(
     run_archive: Path,
-    review_root: Path = Path("local/review"),
+    review_path: Path = DEFAULT_APPLICABILITY_REVIEW_OUTPUT,
     *,
     golden_path: Path | None = None,
     limit: int = 30,
@@ -205,8 +208,7 @@ def build_applicability_golden_review(
     if not selected:
         raise ValueError("qualification run contains no new applicability hard-case candidates")
 
-    review_dir = review_root / "applicability" / "2.1.0"
-    review_path = review_dir / "applicability-golden-review.csv"
+    review_dir = review_path.parent
     review_created = False
     if not review_path.exists():
         review_dir.mkdir(parents=True, exist_ok=True)

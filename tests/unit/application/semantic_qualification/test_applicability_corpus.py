@@ -94,7 +94,10 @@ def _run_archive(path: Path) -> Path:
 
 def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> None:
     archive = _run_archive(tmp_path / "qualification-run.zip")
-    result = build_applicability_golden_review(archive, tmp_path / "review")
+    review_path = tmp_path / "review" / "applicability-review-066.csv"
+    result = build_applicability_golden_review(archive, review_path)
+    assert result.review_path == review_path
+    assert result.review_guide_path == review_path.parent / "README.md"
     assert result.selected_count == 2
     with result.review_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
@@ -223,7 +226,7 @@ def test_build_excludes_existing_golden_cases(tmp_path: Path) -> None:
         yaml.safe_dump(golden.model_dump(mode="json"), sort_keys=False), encoding="utf-8"
     )
     result = build_applicability_golden_review(
-        archive, tmp_path / "review", golden_path=golden_path
+        archive, tmp_path / "review" / "review.csv", golden_path=golden_path
     )
     assert result.candidate_count == 2
     assert result.excluded_existing_count == 1
@@ -235,7 +238,7 @@ def test_build_excludes_existing_golden_cases(tmp_path: Path) -> None:
 
 def test_publish_merges_idempotently_and_rejects_conflicting_gold(tmp_path: Path) -> None:
     archive = _run_archive(tmp_path / "qualification-run.zip")
-    result = build_applicability_golden_review(archive, tmp_path / "review")
+    result = build_applicability_golden_review(archive, tmp_path / "review" / "review.csv")
     with result.review_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     rows[0]["review_status"] = "published"

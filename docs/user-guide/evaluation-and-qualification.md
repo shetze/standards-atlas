@@ -454,10 +454,11 @@ Build the first review batch from a qualification archive:
 ```bash
 uv run standards-atlas evaluation applicability-corpus-build \
   --run local/evaluation/qualification-run-066.zip \
+  --review-output local/review/applicability/2.1.0/applicability-review-066.csv \
   --limit 30
 ```
 
-The command writes `local/review/applicability/2.1.0/applicability-golden-review.csv`. Selection is deterministic and stratified across balanced presence disagreement, minority presence disagreement, framing-sensitive presence, and polarity disagreement. Within strata, document round-robin selection reduces domination by a single standard or part. Unused quota spills deterministically into the remaining candidate pool. The CLI reports candidate counts, exclusions, per-category selection accounting, and represented documents. The CSV also records vote counts, disagreement scores, participating model groups, and selection rank so that the selection decision remains auditable.
+`--review-output` names the CSV file, allowing review batches to carry the qualification-run number. If the option is omitted, the command writes `local/review/applicability/2.1.0/applicability-golden-review.csv`. In either case it creates or updates `README.md` beside the CSV with the HITL instructions. Selection is deterministic and stratified across balanced presence disagreement, minority presence disagreement, framing-sensitive presence, and polarity disagreement. Within strata, document round-robin selection reduces domination by a single standard or part. Unused quota spills deterministically into the remaining candidate pool. The CLI reports candidate counts, exclusions, per-category selection accounting, and represented documents. The CSV also records vote counts, disagreement scores, participating model groups, and selection rank so that the selection decision remains auditable.
 
 Set `review_status=published`, review `present`, and set `polarity` to `included` or `excluded` when presence is true and the direction is clear. Publish the initial corpus with:
 
@@ -473,6 +474,7 @@ For a later qualification run, exclude already-published clauses during review c
 uv run standards-atlas evaluation applicability-corpus-build \
   --run local/evaluation/qualification-run-067.zip \
   --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --review-output local/review/applicability/2.1.0/applicability-review-067.csv \
   --limit 30
 ```
 
@@ -480,7 +482,7 @@ After review, merge the newly published cases into the existing corpus:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-publish \
-  --review local/review/applicability/2.1.0/applicability-golden-review.csv \
+  --review local/review/applicability/2.1.0/applicability-review-067.csv \
   --run local/evaluation/qualification-run-067.zip \
   --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
   --output local/review/applicability/2.1.0/applicability-golden-corpus.yaml

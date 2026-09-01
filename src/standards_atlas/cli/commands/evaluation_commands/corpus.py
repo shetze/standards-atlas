@@ -206,8 +206,13 @@ def analyze_applicability_presence_hard_cases(
 def build_applicability_golden_corpus(
     run_archive: Annotated[Path, typer.Option("--run", exists=True, dir_okay=False)],
     review_output: Annotated[
-        Path, typer.Option("--review-output", file_okay=False)
-    ] = cli_defaults.DEFAULT_REVIEW_ROOT,
+        Path,
+        typer.Option(
+            "--review-output",
+            dir_okay=False,
+            help="CSV file to create for HITL review.",
+        ),
+    ] = cli_defaults.DEFAULT_APPLICABILITY_REVIEW_OUTPUT,
     golden: Annotated[Path | None, typer.Option("--golden", exists=True, dir_okay=False)] = None,
     limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 30,
 ) -> None:
