@@ -42,6 +42,24 @@ class GemaraMappingReference(BaseModel):
     url: str | None = None
 
 
+class GemaraArtifactMapping(BaseModel):
+    """Reference to an artifact or entry through a registered mapping reference."""
+
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    reference_id: str = Field(alias="reference-id", min_length=1)
+    remarks: str | None = None
+
+
+class GemaraMultiEntryMapping(BaseModel):
+    """Relationship from one artifact entry to one or more referenced entries."""
+
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    reference_id: str = Field(alias="reference-id", min_length=1)
+    entries: tuple[GemaraArtifactMapping, ...] = Field(min_length=1)
+
+
 class GemaraMetadata(BaseModel):
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
@@ -126,6 +144,7 @@ class GemaraControl(BaseModel):
     assessment_requirements: tuple[GemaraAssessmentRequirement, ...] = Field(
         alias="assessment-requirements", min_length=1
     )
+    guidelines: tuple[GemaraMultiEntryMapping, ...] | None = None
     state: Literal["Active", "Draft", "Deprecated", "Retired"] = "Active"
 
 

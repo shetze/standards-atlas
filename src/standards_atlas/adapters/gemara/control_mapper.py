@@ -5,8 +5,15 @@ from __future__ import annotations
 from collections import defaultdict
 
 from standards_atlas import __version__
+from standards_atlas.adapters.gemara.contract import (
+    GEMARA_SPEC_VERSION,
+    artifact_version,
+    control_catalog_id,
+    gemara_id,
+    guidance_catalog_id,
+)
 from standards_atlas.adapters.gemara.mapper import (
-    DEFAULT_GEMARA_VERSION,
+    GemaraGuidanceMapper,
     _children_by_parent,
     _ensure_unique_ids,
     _groups,
@@ -16,15 +23,18 @@ from standards_atlas.adapters.gemara.mapper import (
     _is_structural_group_candidate,
     _nearest_group_id,
     _nearest_objective_anchor,
-    gemara_id,
 )
 from standards_atlas.adapters.gemara.models import (
     GemaraActor,
+    GemaraArtifactMapping,
     GemaraAssessmentRequirement,
     GemaraControl,
     GemaraControlCatalog,
     GemaraGroup,
+    GemaraGuidanceCatalog,
+    GemaraMappingReference,
     GemaraMetadata,
+    GemaraMultiEntryMapping,
 )
 from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import Clause, ClauseType, NormativeStatus, StatementFunction
@@ -47,7 +57,7 @@ class GemaraControlMapper:
     standalone controls so that qualified requirements are not lost.
     """
 
-    def __init__(self, *, gemara_version: str = DEFAULT_GEMARA_VERSION) -> None:
+    def __init__(self, *, gemara_version: str = GEMARA_SPEC_VERSION) -> None:
         self._gemara_version = gemara_version
 
     def map(self, document: PublicationDocument) -> GemaraControlCatalog:
@@ -65,6 +75,9 @@ class GemaraControlMapper:
             group_clause_ids=group_clause_ids,
         )
         _ensure_unique_ids((group.id for group in groups), kind="group")
+
+        guidance_catalog = GemaraGuidanceMapper(gemara_version=self._gemara_version).map(document)
+        guidance_owner_by_clause = _guidance_owner_by_clause(document, guidance_catalog)
 
         objective_anchor_ids = {
             clause.id.value
@@ -108,6 +121,11 @@ class GemaraControlMapper:
                             _assessment_requirement(item) for item in requirements
                         )
                     },
+                    guidelines=_guideline_mapping(
+                        clause.id.value,
+                        guidance_owner_by_clause=guidance_owner_by_clause,
+                        guidance_catalog_id=guidance_catalog.metadata.id,
+                    ),
                     state="Active",
                 )
             )
@@ -125,6 +143,11 @@ class GemaraControlMapper:
                         root_group_id=root_group_id,
                     ),
                     **{"assessment-requirements": (_assessment_requirement(clause),)},
+                    guidelines=_guideline_mapping(
+                        clause.id.value,
+                        guidance_owner_by_clause=guidance_owner_by_clause,
+                        guidance_catalog_id=guidance_catalog.metadata.id,
+                    ),
                     state="Active",
                 )
             )
@@ -157,12 +180,10 @@ class GemaraControlMapper:
         return GemaraControlCatalog(
             title=document.title,
             metadata=GemaraMetadata(
-                id=gemara_id(f"{document.key.value}-controls"),
+                id=control_catalog_id(document.key.value),
                 type="ControlCatalog",
                 **{"gemara-version": self._gemara_version},
-                version=(
-                    document.version or (str(document.year) if document.year is not None else None)
-                ),
+                version=artifact_version(document),
                 description=description,
                 author=GemaraActor(
                     id="standards-atlas",
@@ -170,11 +191,68 @@ class GemaraControlMapper:
                     type="Software",
                     version=__version__,
                 ),
-                **{"applicability-groups": applicability_groups},
+                **{
+                    "mapping-references": (
+                        GemaraMappingReference(
+                            id=guidance_catalog_id(document.key.value),
+                            title=f"{document.title} guidance",
+                            version=artifact_version(document),
+                            description=(
+                                "Layer-1 guidance projection from which this control "
+                                "catalog is derived."
+                            ),
+                        ),
+                    ),
+                    "applicability-groups": applicability_groups,
+                },
             ),
             groups=tuple(groups),
             controls=tuple(controls) or None,
         )
+
+
+def _guidance_owner_by_clause(
+    document: PublicationDocument,
+    catalog: GemaraGuidanceCatalog,
+) -> dict[str, str]:
+    """Resolve canonical clauses to the owning Layer-1 guideline."""
+    original_by_id = {gemara_id(clause.id.value): clause.id.value for clause in document.clauses}
+    owners: dict[str, str] = {}
+    for guideline in catalog.guidelines or ():
+        clause_id = original_by_id.get(guideline.id)
+        if clause_id is not None:
+            owners[clause_id] = guideline.id
+        for statement in guideline.statements or ():
+            clause_id = original_by_id.get(statement.id)
+            if clause_id is not None:
+                owners[clause_id] = guideline.id
+    return owners
+
+
+def _guideline_mapping(
+    clause_id: str,
+    *,
+    guidance_owner_by_clause: dict[str, str],
+    guidance_catalog_id: str,
+) -> tuple[GemaraMultiEntryMapping, ...] | None:
+    guideline_id = guidance_owner_by_clause.get(clause_id)
+    if guideline_id is None:
+        return None
+    return (
+        GemaraMultiEntryMapping(
+            **{
+                "reference-id": guidance_catalog_id,
+                "entries": (
+                    GemaraArtifactMapping(
+                        **{
+                            "reference-id": guideline_id,
+                            "remarks": "Derived from this Layer-1 guideline.",
+                        }
+                    ),
+                ),
+            }
+        ),
+    )
 
 
 def _is_control_candidate_container(clause: Clause) -> bool:

@@ -7,6 +7,12 @@ from collections import defaultdict
 from collections.abc import Iterable
 
 from standards_atlas import __version__
+from standards_atlas.adapters.gemara.contract import (
+    GEMARA_SPEC_VERSION,
+    artifact_version,
+    gemara_id,
+    guidance_catalog_id,
+)
 from standards_atlas.adapters.gemara.models import (
     GemaraActor,
     GemaraGroup,
@@ -30,8 +36,6 @@ from standards_atlas.domain.model import (
     StatementFunction,
 )
 from standards_atlas.domain.model.structural_profile import CanonicalDocumentSection
-
-DEFAULT_GEMARA_VERSION = "v0.17.0-dev"
 
 _OMITTED_SECTIONS = {
     CanonicalDocumentSection.FRONT_MATTER,
@@ -73,7 +77,7 @@ class GemaraGuidanceMapper:
     one-guideline fallback used by the MVP exporter.
     """
 
-    def __init__(self, *, gemara_version: str = DEFAULT_GEMARA_VERSION) -> None:
+    def __init__(self, *, gemara_version: str = GEMARA_SPEC_VERSION) -> None:
         self._gemara_version = gemara_version
 
     def map(self, document: PublicationDocument) -> GemaraGuidanceCatalog:
@@ -179,11 +183,9 @@ class GemaraGuidanceMapper:
         return GemaraGuidanceCatalog(
             title=document.title,
             metadata=GemaraMetadata(
-                id=gemara_id(document.key.value),
+                id=guidance_catalog_id(document.key.value),
                 **{"gemara-version": self._gemara_version},
-                version=(
-                    document.version or (str(document.year) if document.year is not None else None)
-                ),
+                version=artifact_version(document),
                 description=description,
                 author=GemaraActor(
                     id="standards-atlas",
@@ -201,14 +203,6 @@ class GemaraGuidanceMapper:
             groups=tuple(groups),
             guidelines=tuple(guidelines) or None,
         )
-
-
-def gemara_id(value: str) -> str:
-    """Return a stable, conservative Gemara identifier."""
-    normalized = re.sub(r"[^a-z0-9]+", "-", value.casefold()).strip("-")
-    if not normalized:
-        raise ValueError(f"Cannot derive Gemara id from {value!r}.")
-    return normalized
 
 
 def _owner_guideline_by_clause(

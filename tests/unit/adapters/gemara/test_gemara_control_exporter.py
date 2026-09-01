@@ -96,12 +96,18 @@ def test_objective_with_normative_children_becomes_control() -> None:
     assert catalog.metadata.gemara_version == "v-test"
     assert catalog.metadata.applicability_groups is not None
     assert [group.id for group in catalog.metadata.applicability_groups] == ["all"]
+    assert catalog.metadata.mapping_references is not None
+    assert catalog.metadata.mapping_references[0].id == "sample-1"
+    assert catalog.metadata.mapping_references[0].version == "2026-09"
     assert catalog.controls is not None
     assert len(catalog.controls) == 1
     control = catalog.controls[0]
     assert control.id == "obj-4"
     assert control.group == "section-4"
     assert control.objective == "The system shall behave deterministically."
+    assert control.guidelines is not None
+    assert control.guidelines[0].reference_id == "sample-1"
+    assert control.guidelines[0].entries[0].reference_id == "obj-4"
     assert [item.id for item in control.assessment_requirements] == [
         "ar-req-4-1",
         "ar-req-4-2",
@@ -127,6 +133,8 @@ def test_standalone_requirement_becomes_single_requirement_control() -> None:
 
     assert control.id == "control-req-4-1"
     assert control.objective == "The design shall be documented."
+    assert control.guidelines is not None
+    assert control.guidelines[0].entries[0].reference_id == "req-4-1"
     assert control.assessment_requirements[0].id == "ar-req-4-1"
     assert control.assessment_requirements[0].text == "The design shall be documented."
 
@@ -195,7 +203,9 @@ def test_control_export_is_deterministic_and_writes_traceability(tmp_path: Path)
 
     sidecar = first.with_suffix(".yaml.traceability.json")
     traceability = __import__("json").loads(sidecar.read_text(encoding="utf-8"))
+    assert traceability["schema_version"] == "2.0"
     assert traceability["document_key"] == "SAMPLE-1"
+    assert traceability["guidance_catalog_id"] == "sample-1"
     assert len(traceability["exported_artifact_sha256"]) == 64
     assert traceability["entries"] == [
         {
@@ -203,11 +213,15 @@ def test_control_export_is_deterministic_and_writes_traceability(tmp_path: Path)
             "gemara_entry_id": "ar-req-7",
             "entry_type": "assessment_requirement",
             "owner_control_id": "control-req-7",
+            "guidance_catalog_id": "sample-1",
+            "guidance_entry_id": "req-7",
         },
         {
             "clause_id": "req-7",
             "gemara_entry_id": "control-req-7",
             "entry_type": "control",
             "owner_control_id": "control-req-7",
+            "guidance_catalog_id": "sample-1",
+            "guidance_entry_id": "req-7",
         },
     ]

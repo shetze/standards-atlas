@@ -12,6 +12,7 @@ from standards_atlas.adapters.filesystem import (
     FileSystemEngineeringDocumentRepository,
     FileSystemPublicationDocumentProvider,
 )
+from standards_atlas.adapters.gemara.contract import GEMARA_SPEC_VERSION
 from standards_atlas.application.services import DocumentExportService
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import document_export_app
@@ -250,10 +251,6 @@ def export_document_to_gemara(
         str | None,
         typer.Option("--title", help="Logical family title used for runtime composition."),
     ] = cli_defaults.DEFAULT_NONE,
-    gemara_version: Annotated[
-        str,
-        typer.Option("--gemara-version", help="Gemara specification version declared in metadata."),
-    ] = "v0.17.0-dev",
     replace_existing: Annotated[
         bool,
         typer.Option("--replace/--no-replace", help="Replace an existing Gemara YAML export."),
@@ -279,7 +276,7 @@ def export_document_to_gemara(
         typer.echo(f"Gemara target already exists: {export_target}", err=True)
         raise typer.Exit(code=2)
 
-    exporter = GemaraGuidanceExporter(mapper=GemaraGuidanceMapper(gemara_version=gemara_version))
+    exporter = GemaraGuidanceExporter(mapper=GemaraGuidanceMapper())
     try:
         generated_path = DocumentExportService(exporter=exporter).export_document(
             document=document,
@@ -293,7 +290,7 @@ def export_document_to_gemara(
     typer.echo(f"Document key          : {document.key.value}")
     typer.echo(f"Clauses considered    : {len(document.clauses)}")
     typer.echo(f"Gemara target         : {generated_path}")
-    typer.echo(f"Gemara version        : {gemara_version}")
+    typer.echo(f"Gemara version        : {GEMARA_SPEC_VERSION}")
 
 
 @document_export_app.command("gemara-controls")
@@ -327,10 +324,6 @@ def export_document_to_gemara_controls(
         str | None,
         typer.Option("--title", help="Logical family title used for runtime composition."),
     ] = cli_defaults.DEFAULT_NONE,
-    gemara_version: Annotated[
-        str,
-        typer.Option("--gemara-version", help="Gemara specification version declared in metadata."),
-    ] = "v0.17.0-dev",
     replace_existing: Annotated[
         bool,
         typer.Option(
@@ -359,7 +352,7 @@ def export_document_to_gemara_controls(
         typer.echo(f"Gemara target already exists: {export_target}", err=True)
         raise typer.Exit(code=2)
 
-    exporter = GemaraControlExporter(mapper=GemaraControlMapper(gemara_version=gemara_version))
+    exporter = GemaraControlExporter(mapper=GemaraControlMapper())
     try:
         generated_path = DocumentExportService(exporter=exporter).export_document(
             document=document,
@@ -373,4 +366,4 @@ def export_document_to_gemara_controls(
     typer.echo(f"Document key          : {document.key.value}")
     typer.echo(f"Clauses considered    : {len(document.clauses)}")
     typer.echo(f"Gemara control target : {generated_path}")
-    typer.echo(f"Gemara version        : {gemara_version}")
+    typer.echo(f"Gemara version        : {GEMARA_SPEC_VERSION}")
