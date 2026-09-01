@@ -22,6 +22,14 @@ class GemaraActor(BaseModel):
     uri: str | None = None
 
 
+class GemaraGroup(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+
+
 class GemaraMetadata(BaseModel):
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
@@ -31,15 +39,10 @@ class GemaraMetadata(BaseModel):
     version: str | None = None
     description: str = Field(min_length=1)
     author: GemaraActor
+    applicability_groups: tuple[GemaraGroup, ...] | None = Field(
+        default=None, alias="applicability-groups"
+    )
     draft: bool | None = None
-
-
-class GemaraGroup(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    id: str = Field(min_length=1)
-    title: str = Field(min_length=1)
-    description: str = Field(min_length=1)
 
 
 class GemaraStatement(BaseModel):
@@ -51,6 +54,13 @@ class GemaraStatement(BaseModel):
     recommendations: tuple[str, ...] | None = None
 
 
+class GemaraRationale(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    importance: str = Field(min_length=1)
+    goals: tuple[str, ...] = Field(min_length=1)
+
+
 class GemaraGuideline(BaseModel):
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
@@ -60,6 +70,7 @@ class GemaraGuideline(BaseModel):
     group: str = Field(min_length=1)
     recommendations: tuple[str, ...] | None = None
     applicability: tuple[str, ...] | None = None
+    rationale: GemaraRationale | None = None
     statements: tuple[GemaraStatement, ...] | None = None
     see_also: tuple[str, ...] | None = Field(default=None, alias="see-also")
     state: Literal["Active", "Draft", "Deprecated", "Retired"] = "Active"
