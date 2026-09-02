@@ -11,18 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.ports.document_repositories import EngineeringDocumentReader
 from standards_atlas.domain.model import Clause, ClauseType, EngineeringDocument, StandardReference
+from standards_atlas.domain.model.subject_normalization import normalize_subject_label
 
-_DASHES = str.maketrans(
-    {
-        "\u2010": "-",
-        "\u2011": "-",
-        "\u2012": "-",
-        "\u2013": "-",
-        "\u2014": "-",
-        "\u2015": "-",
-        "\u2212": "-",
-    }
-)
 _WHITESPACE = re.compile(r"\s+")
 _TERM_CONTAINER = re.compile(r"^terms\b.*\bdefinitions\b", re.IGNORECASE)
 
@@ -156,14 +146,6 @@ class SubjectCandidateVocabularyService:
 
     def build(self) -> SubjectCandidateVocabulary:
         return self._builder.build(self._documents.list())
-
-
-def normalize_subject_label(label: str) -> str:
-    """Normalize lexical variants without introducing semantic equivalence."""
-
-    normalized = unicodedata.normalize("NFKC", label).translate(_DASHES).casefold()
-    normalized = _WHITESPACE.sub(" ", normalized).strip()
-    return normalized.strip(" \t\r\n.,;:")
 
 
 def _clean_source_label(label: str | None) -> str | None:

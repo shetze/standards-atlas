@@ -6,16 +6,21 @@ is intentionally independent from Gemara and from any evaluator/runtime model.
 
 from __future__ import annotations
 
+import re
 from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from standards_atlas.domain.model.governance_subject_groups import GovernanceSubjectGroupProfileRef
 from standards_atlas.domain.model.semantic_classification import (
     KnowledgeKind,
     ProcessFunction,
     StatementFunction,
 )
+from standards_atlas.domain.model.subject_normalization import normalize_subject_label
+
+_SUBJECT_GROUP_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 class GovernanceContext(BaseModel):
@@ -101,7 +106,7 @@ class GovernanceStandardSelection(BaseModel):
 
 
 class GovernanceSemanticSelection(BaseModel):
-    """Optional deterministic semantic dimensions used by later candidate analysis."""
+    """Optional orthogonal semantic dimensions used by candidate analysis."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -110,38 +115,60 @@ class GovernanceSemanticSelection(BaseModel):
     statement_functions: tuple[StatementFunction, ...] = Field(
         default=(), alias="statement-functions"
     )
+    primary_subjects: tuple[str, ...] = Field(default=(), alias="primary-subjects")
+    primary_subject_groups: tuple[str, ...] = Field(default=(), alias="primary-subject-groups")
+    subject_group_profile: GovernanceSubjectGroupProfileRef | None = Field(
+        default=None, alias="subject-group-profile"
+    )
+
+    @field_validator("primary_subjects", mode="before")
+    @classmethod
+    def _normalize_primary_subjects(cls, value: Any) -> Any:
+        if value is None:
+            return ()
+        if not isinstance(value, (list, tuple)):
+            return value
+        normalized: list[str] = []
+        for item in value:
+            if not isinstance(item, str) or not item.strip():
+                raise ValueError("selection primary-subjects must be non-empty strings")
+            label = normalize_subject_label(item)
+            if not label:
+                raise ValueError("selection primary-subjects must normalize to non-empty labels")
+            normalized.append(label)
+        return tuple(normalized)
+
+    @field_validator("primary_subject_groups", mode="before")
+    @classmethod
+    def _normalize_subject_groups(cls, value: Any) -> Any:
+        if value is None:
+            return ()
+        if not isinstance(value, (list, tuple)):
+            return value
+        normalized: list[str] = []
+        for item in value:
+            if not isinstance(item, str) or not item.strip():
+                raise ValueError("selection primary-subject-groups must be non-empty strings")
+            group_id = item.strip()
+            if not _SUBJECT_GROUP_ID.fullmatch(group_id):
+                raise ValueError("selection primary-subject-groups must use lower-case kebab-case")
+            normalized.append(group_id)
+        return tuple(normalized)
 
     @model_validator(mode="after")
-    def _dimensions_are_unique(self) -> GovernanceSemanticSelection:
-        for name in ("process_functions", "knowledge_kinds", "statement_functions"):
+    def _dimensions_are_consistent(self) -> GovernanceSemanticSelection:
+        for name in (
+            "process_functions",
+            "knowledge_kinds",
+            "statement_functions",
+            "primary_subjects",
+            "primary_subject_groups",
+        ):
             values = getattr(self, name)
             if len(values) != len(set(values)):
                 raise ValueError(f"selection {name.replace('_', '-')} must be unique")
-        return self
-
-
-class GovernanceApplicabilityContext(BaseModel):
-    """Selection-time applicability intent, without Gemara policy semantics."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    require_present: bool = Field(default=False, alias="require-present")
-    polarity: str | None = None
-
-    @field_validator("polarity")
-    @classmethod
-    def _validate_polarity(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        normalized = value.strip().lower()
-        if normalized not in {"included", "excluded"}:
-            raise ValueError("applicability polarity must be 'included' or 'excluded'")
-        return normalized
-
-    @model_validator(mode="after")
-    def _polarity_requires_presence(self) -> GovernanceApplicabilityContext:
-        if self.polarity is not None and not self.require_present:
-            raise ValueError("applicability polarity requires require-present: true")
+        if self.primary_subject_groups and self.subject_group_profile is None:
+            raise ValueError("selection primary-subject-groups requires subject-group-profile")
         return self
 
 
@@ -150,22 +177,19 @@ class GovernanceSelectionProfile(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
 
-    schema_version: int = Field(default=1, alias="schema-version")
+    schema_version: int = Field(default=2, alias="schema-version")
     id: str = Field(min_length=1)
     version: str = Field(min_length=1)
     description: str = ""
     context: GovernanceContext
     standards: GovernanceStandardSelection = Field(default_factory=GovernanceStandardSelection)
     selection: GovernanceSemanticSelection = Field(default_factory=GovernanceSemanticSelection)
-    applicability: GovernanceApplicabilityContext = Field(
-        default_factory=GovernanceApplicabilityContext
-    )
 
     @field_validator("schema_version")
     @classmethod
     def _supported_schema(cls, value: int) -> int:
-        if value != 1:
-            raise ValueError("unsupported governance selection profile schema-version; expected 1")
+        if value != 2:
+            raise ValueError("unsupported governance selection profile schema-version; expected 2")
         return value
 
     @field_validator("id", "version", "description", mode="before")

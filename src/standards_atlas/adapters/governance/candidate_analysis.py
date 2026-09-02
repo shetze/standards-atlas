@@ -11,7 +11,6 @@ from standards_atlas.adapters.gemara import GemaraControlMapper
 from standards_atlas.adapters.gemara.control_traceability import build_control_traceability
 from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
-    ApplicabilityFunction,
     GovernanceCandidateAnalysis,
     GovernanceCandidateDecision,
     GovernanceCandidateSignal,
@@ -28,6 +27,10 @@ class GovernanceCandidateAnalyzer:
         profile: GovernanceSelectionProfile,
         documents: tuple[PublicationDocument, ...],
     ) -> GovernanceCandidateAnalysis:
+        if profile.selection.primary_subjects or profile.selection.primary_subject_groups:
+            raise ValueError(
+                "primary-subject selection requires clause-local candidate analysis v2"
+            )
         candidates: list[GovernancePolicyCandidate] = []
         for document in sorted(documents, key=lambda item: item.key.value):
             candidates.extend(self._document_candidates(profile, document))
@@ -197,66 +200,6 @@ class GovernanceCandidateAnalyzer:
                     )
                 )
 
-        applicability = profile.applicability
-        if applicability.require_present:
-            applicable_clauses = tuple(
-                clause for clause in clauses if clause.semantic_classification.applicability_present
-            )
-            if not applicable_clauses:
-                signals.append(
-                    _signal(
-                        "applicability",
-                        "undetermined",
-                        "profile requires applicability evidence but candidate has none",
-                        (applicability.polarity,) if applicability.polarity else (),
-                        (),
-                    )
-                )
-            elif applicability.polarity is None:
-                signals.append(
-                    _signal(
-                        "applicability",
-                        "selected",
-                        "candidate has explicit applicability evidence",
-                        (),
-                        ("present",),
-                    )
-                )
-            else:
-                expected_function = (
-                    ApplicabilityFunction.INCLUSION
-                    if applicability.polarity == "included"
-                    else ApplicabilityFunction.EXCLUSION
-                )
-                opposite = (
-                    ApplicabilityFunction.EXCLUSION
-                    if expected_function is ApplicabilityFunction.INCLUSION
-                    else ApplicabilityFunction.INCLUSION
-                )
-                functions = {
-                    item
-                    for clause in applicable_clauses
-                    for item in clause.semantic_classification.applicability_functions
-                }
-                observed = tuple(sorted(item.value for item in functions))
-                if expected_function in functions:
-                    outcome = "selected"
-                    reason = "candidate matches requested applicability polarity"
-                elif opposite in functions:
-                    outcome = "excluded"
-                    reason = "candidate has opposite applicability polarity"
-                else:
-                    outcome = "undetermined"
-                    reason = "applicability is present but polarity is not qualified"
-                signals.append(
-                    _signal(
-                        "applicability",
-                        outcome,
-                        reason,
-                        (applicability.polarity,),
-                        observed,
-                    )
-                )
         return tuple(signals)
 
 

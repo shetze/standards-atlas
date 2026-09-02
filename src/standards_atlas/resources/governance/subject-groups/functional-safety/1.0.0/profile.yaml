@@ -1,0 +1,19 @@
+schema-version: 1
+id: functional-safety
+version: 1.0.0
+description: Initial governance-oriented grouping of functional-safety primary subjects.
+groups:
+  - id: safety-lifecycle
+    description: Lifecycle concepts used to select safety-lifecycle governance content.
+    subjects:
+      - safety lifecycle
+      - software lifecycle
+  - id: verification-and-validation
+    description: Verification and validation concepts across functional-safety standards.
+    subjects:
+      - verification
+      - validation
+  - id: configuration-management
+    description: Configuration-management governance content.
+    subjects:
+      - configuration management

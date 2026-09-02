@@ -58,7 +58,6 @@ from standards_atlas.domain.model.formal_semantics import (
     SemanticResource,
 )
 from standards_atlas.domain.model.governance_selection import (
-    GovernanceApplicabilityContext,
     GovernanceCandidateAnalysis,
     GovernanceCandidateDecision,
     GovernanceCandidateSignal,
@@ -67,6 +66,11 @@ from standards_atlas.domain.model.governance_selection import (
     GovernanceSelectionProfile,
     GovernanceSemanticSelection,
     GovernanceStandardSelection,
+)
+from standards_atlas.domain.model.governance_subject_groups import (
+    GovernanceSubjectGroupDefinition,
+    GovernanceSubjectGroupProfile,
+    GovernanceSubjectGroupProfileRef,
 )
 from standards_atlas.domain.model.identifiers import (
     AnnotationId,
@@ -195,11 +199,13 @@ __all__ = [
     "ScopeReach",
     "ScopeReachKind",
     "ClauseEnrichments",
-    "GovernanceApplicabilityContext",
     "GovernanceContext",
     "GovernanceSelectionProfile",
     "GovernanceSemanticSelection",
     "GovernanceStandardSelection",
+    "GovernanceSubjectGroupDefinition",
+    "GovernanceSubjectGroupProfile",
+    "GovernanceSubjectGroupProfileRef",
     "GeneratedAttribute",
     "GenerationMethod",
     "KnowledgeStateProvenance",

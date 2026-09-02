@@ -113,23 +113,6 @@ def test_missing_requested_semantics_are_undetermined() -> None:
     assert analysis.candidates[0].decision is GovernanceCandidateDecision.UNDETERMINED
 
 
-def test_required_applicability_without_evidence_is_undetermined() -> None:
-    document = _document(_clause("c1", "5.1", "The software shall be verified."))
-    profile = GovernanceSelectionProfile.model_validate(
-        {
-            "id": "rail-onboard",
-            "version": "1.0.0",
-            "context": {"domain": "railway"},
-            "standards": {"include": ["EN50716"]},
-            "applicability": {"require-present": True},
-        }
-    )
-
-    analysis = GovernanceCandidateAnalyzer().analyze(profile, (document,))
-
-    assert analysis.undetermined == 1
-
-
 def test_renderers_are_deterministic_and_review_friendly() -> None:
     document = _document(_clause("c1", "5.1", "The software shall be verified."))
     analysis = GovernanceCandidateAnalyzer().analyze(_profile(), (document,))

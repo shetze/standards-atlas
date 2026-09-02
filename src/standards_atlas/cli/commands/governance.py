@@ -11,8 +11,27 @@ from standards_atlas.application.governance import (
     GovernanceSelectionProfileError,
     load_governance_selection_profile,
     render_governance_selection_profile,
+    resolve_governance_subject_selection,
 )
 from standards_atlas.cli.apps import governance_profile_app
+
+
+def _load_profile(path: Path):
+    from standards_atlas.adapters.governance import (
+        ResourceGovernanceSubjectGroupProfileRepository,
+    )
+
+    profile = load_governance_selection_profile(path)
+    try:
+        resolve_governance_subject_selection(
+            profile,
+            ResourceGovernanceSubjectGroupProfileRepository(),
+        )
+    except ValueError as exc:
+        raise GovernanceSelectionProfileError(
+            f"Invalid governance selection profile: {path}: {exc}"
+        ) from exc
+    return profile
 
 
 @governance_profile_app.command("validate")
@@ -24,7 +43,7 @@ def validate_governance_profile(
 ) -> None:
     """Validate a governance selection profile."""
     try:
-        loaded = load_governance_selection_profile(profile)
+        loaded = _load_profile(profile)
     except GovernanceSelectionProfileError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=1) from exc
@@ -44,7 +63,7 @@ def show_governance_profile(
 ) -> None:
     """Render the canonical normalized governance selection profile."""
     try:
-        loaded = load_governance_selection_profile(profile)
+        loaded = _load_profile(profile)
     except GovernanceSelectionProfileError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=1) from exc
@@ -107,7 +126,7 @@ def select_governance_candidates(
     )
 
     try:
-        loaded_profile = load_governance_selection_profile(profile)
+        loaded_profile = _load_profile(profile)
     except GovernanceSelectionProfileError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=1) from exc
@@ -128,7 +147,11 @@ def select_governance_candidates(
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
 
-    analysis = GovernanceCandidateAnalyzer().analyze(loaded_profile, documents)
+    try:
+        analysis = GovernanceCandidateAnalyzer().analyze(loaded_profile, documents)
+    except ValueError as exc:
+        typer.echo(f"Governance candidate analysis failed: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
     target = output or (
         Path("local/review/governance") / loaded_profile.id / "candidate-analysis.json"
     )
@@ -236,7 +259,7 @@ def export_governance_policy_scaffold(
     )
 
     try:
-        loaded_profile = load_governance_selection_profile(profile)
+        loaded_profile = _load_profile(profile)
     except GovernanceSelectionProfileError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=1) from exc
@@ -264,7 +287,11 @@ def export_governance_policy_scaffold(
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
 
-    analysis = GovernanceCandidateAnalyzer().analyze(loaded_profile, documents)
+    try:
+        analysis = GovernanceCandidateAnalyzer().analyze(loaded_profile, documents)
+    except ValueError as exc:
+        typer.echo(f"Governance candidate analysis failed: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
     target = output or (Path("local/exports/governance") / loaded_profile.id / "policy.yaml")
     try:
         policy_path, manifest_path = GovernancePolicyScaffoldExporter().export(
