@@ -42,9 +42,14 @@ traceability supports later EvaluationLog feedback resolution.
 
 ## Governance selection artifacts
 
-`governance profile select` writes deterministic `candidate-analysis.json` plus a review-oriented
-CSV. `governance profile export-policy` writes a Gemara Policy scaffold and a sidecar that records
-withheld/undetermined decisions.
+`governance profile select` writes Candidate Analysis schema v2 as deterministic
+`candidate-analysis.json` plus a review-oriented CSV. The analysis records resolved Subject Groups,
+effective Primary Subjects, clause-local selector signals, matching Clause IDs, and undetermined
+Clause IDs. The CSV exposes the same provenance for HITL review.
+
+`governance profile export-policy` writes a Gemara Policy scaffold and a schema-v2 sidecar. The
+sidecar binds selected/withheld Controls to the clause-local evidence and resolved Subject Group
+Profile used to create the draft.
 
 ## ComplyPack authoring workspace
 

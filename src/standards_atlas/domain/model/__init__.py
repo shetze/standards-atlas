@@ -64,10 +64,10 @@ from standards_atlas.domain.model.governance_selection import (
     GovernanceClauseSelectionResult,
     GovernanceContext,
     GovernancePolicyCandidate,
+    GovernanceSubjectSelectionResolution,
     GovernanceSelectionProfile,
     GovernanceSemanticSelection,
     GovernanceStandardSelection,
-    GovernanceSubjectSelectionResolution,
 )
 from standards_atlas.domain.model.governance_subject_groups import (
     GovernanceSubjectGroupDefinition,

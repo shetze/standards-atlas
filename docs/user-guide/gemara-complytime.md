@@ -115,6 +115,10 @@ Profile.
 
 ### Profile
 
+Governance Selection Profiles use schema version 2. Applicability is deliberately not a profile
+selector. A profile selects governance content by independent semantic dimensions and engineering
+context; normative applicability remains part of the underlying standard/Gemara semantics.
+
 ```bash
 uv run standards-atlas governance profile validate local/governance/rail-onboard-sil2.yaml
 uv run standards-atlas governance profile show local/governance/rail-onboard-sil2.yaml
@@ -123,34 +127,81 @@ uv run standards-atlas governance profile show local/governance/rail-onboard-sil
 Example:
 
 ```yaml
-schema-version: 1
+schema-version: 2
 id: rail-onboard-sil2
 version: 1.0.0
 context:
   domain: railway
-  system-types: [onboard-software, linux]
-  lifecycle-phases: [software-development, software-validation]
-  integrity-levels: [SIL-2]
-  roles: [software-developer, verifier]
+  system-types:
+    - onboard-software
+    - linux
+  lifecycle-phases:
+    - software-development
+    - software-validation
+  integrity-levels:
+    - SIL-2
+  roles:
+    - software-developer
+    - verifier
   attributes:
     automation-level: GoA4
+
 standards:
-  include: [EN50716]
+  include:
+    - EN50716
   exclude: []
+
 selection:
-  statement-functions: [requirement, conformance_statement]
-applicability:
-  require-present: true
-  polarity: included
+  subject-group-profile:
+    id: functional-safety
+    version: 1.0.0
+
+  statement-functions:
+    - requirement
+
+  primary-subjects: []
+
+  primary-subject-groups:
+    - safety-lifecycle
 ```
 
-Engineering vocabulary remains open; existing canonical Standards Atlas semantic dimensions are
-typed.
+Selection dimensions are independent. Missing or empty dimensions do not filter candidates. Within
+one active dimension, listed values use OR semantics. Across active dimensions, the analyzer uses
+AND semantics **on the same source clause**.
 
-### Candidate analysis
+The example therefore means:
+
+```text
+statement_function == requirement
+AND
+primary_subject belongs to subject group "safety-lifecycle"
+```
+
+It does not mean "one clause is a requirement and another clause happens to concern the safety
+lifecycle."
+
+`primary-subjects` and the subjects expanded from `primary-subject-groups` are combined as one
+effective subject set. Subject groups are versioned resources so a policy selection remains
+reproducible even when grouping conventions evolve.
+
+A ready-to-edit example is available at
+[`examples/governance/rail-onboard-sil2.yaml`](../../examples/governance/rail-onboard-sil2.yaml).
+
+The initial `functional-safety@1.0.0` resource contains:
+
+- `safety-lifecycle`
+- `verification-and-validation`
+- `configuration-management`
+
+Engineering vocabulary in `context` remains open; canonical Standards Atlas semantic dimensions
+and primary-subject identities are normalized and validated.
+
+### Candidate analysis and HITL review
 
 ```bash
-uv run standards-atlas governance profile select   local/governance/rail-onboard-sil2.yaml   --document EN50716
+uv run standards-atlas governance profile select \
+  local/governance/rail-onboard-sil2.yaml \
+  --document EN50716
 ```
 
 Default output:
@@ -161,19 +212,50 @@ local/review/governance/rail-onboard-sil2/
   candidate-analysis.csv
 ```
 
-Each Control is `selected`, `excluded`, or `undetermined`. Missing qualified evidence is never
-guessed into a positive result. Decision precedence is:
+Candidate analysis schema version 2 records both the Control-level result and clause-local
+evaluation evidence. Every source clause is evaluated against all active semantic dimensions.
+
+Clause result precedence is:
 
 ```text
 excluded > undetermined > selected
 ```
 
-The CSV is the intended HITL review surface.
+That means an explicit mismatch in any active dimension makes that clause non-matching; missing
+required evidence keeps it `undetermined`.
+
+Control aggregation is intentionally different:
+
+```text
+selected > undetermined > excluded
+```
+
+A Control is selected if at least one source clause satisfies all active dimensions. If no clause
+matches but at least one could match once missing evidence is resolved, the Control remains
+`undetermined`. Only when all relevant clauses explicitly fail the selection is the Control
+`excluded`.
+
+The analysis JSON records:
+
+- resolved subject-group profile and effective primary subjects;
+- source clauses for every Control;
+- clause-local decision and selector signals;
+- primary subject and ambiguous subject candidates;
+- `matching-clause-ids`;
+- `undetermined-clause-ids`.
+
+The CSV is the intended HITL review surface and includes `matching_clause_ids`,
+`matching_primary_subjects`, `undetermined_clause_ids`, and detailed reasons. Reviewers can
+therefore inspect the exact clause responsible for inclusion or uncertainty instead of reviewing a
+Control-level label without evidence.
 
 ### Gemara Policy scaffold
 
 ```bash
-uv run standards-atlas governance profile export-policy   local/governance/rail-onboard-sil2.yaml   --responsible "Rail Safety Engineering"   --accountable "Project Safety Manager"
+uv run standards-atlas governance profile export-policy \
+  local/governance/rail-onboard-sil2.yaml \
+  --responsible "Rail Safety Engineering" \
+  --accountable "Project Safety Manager"
 ```
 
 Default output:
@@ -186,16 +268,41 @@ local/exports/governance/rail-onboard-sil2/
 
 Scope, imports, and exclusions are deterministic. RACI contacts are explicit because organizational
 responsibility cannot be derived from a technical standard. Evaluation methods, assessment plans,
-frequency, evidence requirements, and executor selection are deliberately left for policy
-authoring.
+frequency, evidence requirements, and executor selection remain explicit downstream policy
+authoring concerns.
 
-`undetermined` blocks export by default. To produce a draft while preserving the review boundary:
+The scaffold sidecar uses schema version 2 and preserves the Selection Profile plus clause-level
+selection provenance used to create the draft. In particular it records:
 
-```bash
-uv run standards-atlas governance profile export-policy   local/governance/rail-onboard-sil2.yaml   --responsible "Rail Safety Engineering"   --accountable "Project Safety Manager"   --withhold-undetermined
+- Candidate Analysis schema version;
+- resolved Subject Group Profile and effective primary subjects;
+- selected, excluded, and withheld Controls;
+- matching Clause IDs and Primary Subjects for selected Controls;
+- undetermined Clause IDs and clause-local reasons for withheld Controls.
+
+`undetermined` blocks policy export by default:
+
+```text
+candidate analysis contains undetermined controls
+    -> no policy scaffold
 ```
 
-Withheld controls are excluded from effective imports and recorded in the scaffold sidecar.
+This prevents an incomplete classification from silently becoming policy truth. A reviewer can
+inspect the CSV/JSON evidence and improve the profile or the source semantic enrichment.
+
+For authoring experiments where unresolved Controls must remain outside the effective policy, use:
+
+```bash
+uv run standards-atlas governance profile export-policy \
+  local/governance/rail-onboard-sil2.yaml \
+  --responsible "Rail Safety Engineering" \
+  --accountable "Project Safety Manager" \
+  --withhold-undetermined
+```
+
+The generated artifact remains a draft. Undetermined Controls are excluded from the effective
+catalog import and listed separately in `policy.yaml.scaffold.json` together with their
+clause-local reasons.
 
 ## ComplyPack authoring
 

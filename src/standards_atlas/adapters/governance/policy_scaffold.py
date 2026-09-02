@@ -32,24 +32,39 @@ from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
     GovernanceCandidateAnalysis,
     GovernanceCandidateDecision,
+    GovernancePolicyCandidate,
     GovernanceSelectionProfile,
+    GovernanceSubjectSelectionResolution,
 )
 from standards_atlas.shared.artifacts import write_json, write_yaml
 
 
 class GovernancePolicyScaffoldManifest(BaseModel):
-    """Standards Atlas sidecar preserving selection state not expressible in Gemara."""
+    """Sidecar preserving selection state and clause-local policy provenance."""
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
-    schema_version: int = Field(default=1, alias="schema-version")
+    schema_version: int = Field(default=2, alias="schema-version")
     profile_id: str = Field(alias="profile-id", min_length=1)
     profile_version: str = Field(alias="profile-version", min_length=1)
+    candidate_analysis_schema_version: int = Field(
+        alias="candidate-analysis-schema-version", ge=2
+    )
     policy_id: str = Field(alias="policy-id", min_length=1)
     documents: tuple[str, ...]
+    subject_selection: GovernanceSubjectSelectionResolution = Field(
+        alias="subject-selection"
+    )
     selected_controls: tuple[str, ...] = Field(alias="selected-controls")
     excluded_controls: tuple[str, ...] = Field(alias="excluded-controls")
     withheld_controls: tuple[str, ...] = Field(alias="withheld-controls")
+    selected_matching_clauses: dict[str, tuple[str, ...]] = Field(
+        alias="selected-matching-clauses"
+    )
+    selected_primary_subjects: dict[str, tuple[str, ...]] = Field(
+        alias="selected-primary-subjects"
+    )
+    withheld_clause_ids: dict[str, tuple[str, ...]] = Field(alias="withheld-clause-ids")
     withheld_reasons: dict[str, tuple[str, ...]] = Field(alias="withheld-reasons")
 
 
@@ -236,7 +251,9 @@ class GovernancePolicyScaffoldExporter:
                 "profile-id": profile.id,
                 "profile-version": profile.version,
                 "policy-id": policy_id,
+                "candidate-analysis-schema-version": analysis.schema_version,
                 "documents": tuple(sorted(analysis.documents)),
+                "subject-selection": analysis.subject_selection,
                 "selected-controls": tuple(
                     item.control_id
                     for item in analysis.candidates
@@ -252,17 +269,47 @@ class GovernancePolicyScaffoldExporter:
                     for item in analysis.candidates
                     if item.decision is GovernanceCandidateDecision.UNDETERMINED
                 ),
+                "selected-matching-clauses": {
+                    item.control_id: item.matching_clause_ids
+                    for item in analysis.candidates
+                    if item.decision is GovernanceCandidateDecision.SELECTED
+                },
+                "selected-primary-subjects": {
+                    item.control_id: item.matching_primary_subjects
+                    for item in analysis.candidates
+                    if item.decision is GovernanceCandidateDecision.SELECTED
+                },
+                "withheld-clause-ids": {
+                    item.control_id: item.undetermined_clause_ids
+                    for item in analysis.candidates
+                    if item.decision is GovernanceCandidateDecision.UNDETERMINED
+                },
                 "withheld-reasons": {
-                    item.control_id: tuple(
-                        signal.reason
-                        for signal in item.signals
-                        if signal.outcome is GovernanceCandidateDecision.UNDETERMINED
-                    )
+                    item.control_id: _withheld_reasons(item)
                     for item in analysis.candidates
                     if item.decision is GovernanceCandidateDecision.UNDETERMINED
                 },
             }
         )
+
+
+def _withheld_reasons(candidate: GovernancePolicyCandidate) -> tuple[str, ...]:
+    reasons: list[str] = []
+    for result in candidate.clause_results:
+        if result.decision is not GovernanceCandidateDecision.UNDETERMINED:
+            continue
+        reasons.extend(
+            f"{result.clause_id}/{signal.dimension}: {signal.reason}"
+            for signal in result.signals
+            if signal.outcome is GovernanceCandidateDecision.UNDETERMINED
+        )
+    if reasons:
+        return tuple(reasons)
+    return tuple(
+        signal.reason
+        for signal in candidate.signals
+        if signal.outcome is GovernanceCandidateDecision.UNDETERMINED
+    )
 
 
 def _scope_dimensions(profile: GovernanceSelectionProfile) -> GemaraPolicyDimensions:

@@ -10,15 +10,19 @@ from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
+    ClauseSubjectContext,
     ClauseType,
     DocumentKey,
     GovernanceSelectionProfile,
     KnowledgeKind,
     NormativeStatus,
+    PrimarySubjectContext,
     ProcessFunction,
     SemanticClassification,
     StandardReference,
     StatementFunction,
+    SubjectContextEvidence,
+    SubjectEvidenceKind,
 )
 from standards_atlas.domain.model.content import TextBlock
 
@@ -29,8 +33,9 @@ def _clause(
     *,
     process: tuple[ProcessFunction, ...] = (),
     knowledge: tuple[KnowledgeKind, ...] = (),
+    primary_subject: str | None = None,
 ) -> Clause:
-    return Clause(
+    clause = Clause(
         id=ClauseId(value=clause_id),
         reference=StandardReference(standard="EN50716", year=2023, clause=clause_ref),
         clause_type=ClauseType.REQUIREMENT,
@@ -42,6 +47,22 @@ def _clause(
             knowledge_kinds=knowledge,
         ),
     )
+    if primary_subject is not None:
+        clause = clause.with_subject_context(
+            ClauseSubjectContext(
+                primary_subject=PrimarySubjectContext(
+                    normalized_label=primary_subject,
+                    confidence=1.0,
+                    evidence=SubjectContextEvidence(
+                        kind=SubjectEvidenceKind.CLAUSE_TEXT,
+                        matched_label=primary_subject,
+                        source_text="The software shall be verified.",
+                        source_clause_id=clause_id,
+                    ),
+                )
+            )
+        )
+    return clause
 
 
 def _document(*clauses: Clause) -> PublicationDocument:
@@ -172,3 +193,89 @@ def test_policy_scaffold_is_deterministic(tmp_path: Path) -> None:
     )
 
     assert first.read_bytes() == second.read_bytes()
+
+
+def test_policy_scaffold_sidecar_preserves_subject_selection_and_matching_clauses(
+    tmp_path: Path,
+) -> None:
+    import json
+
+    document = _document(
+        _clause(
+            "c1",
+            "5.1",
+            process=(ProcessFunction.ACTIVITY,),
+            primary_subject="safety lifecycle",
+        )
+    )
+    profile = GovernanceSelectionProfile.model_validate(
+        {
+            "id": "rail-onboard-sil2",
+            "version": "1.0.0",
+            "context": {"domain": "railway"},
+            "standards": {"include": ["EN50716"]},
+            "selection": {
+                "statement-functions": ["requirement"],
+                "subject-group-profile": {
+                    "id": "functional-safety",
+                    "version": "1.0.0",
+                },
+                "primary-subject-groups": ["safety-lifecycle"],
+            },
+        }
+    )
+    analysis = GovernanceCandidateAnalyzer().analyze(profile, (document,))
+
+    _, manifest_path = GovernancePolicyScaffoldExporter().export(
+        profile,
+        analysis,
+        (document,),
+        tmp_path / "policy.yaml",
+        responsible=("Rail Safety Engineering",),
+        accountable=("Project Safety Manager",),
+    )
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["schema-version"] == 2
+    assert manifest["candidate-analysis-schema-version"] == 2
+    assert manifest["subject-selection"]["subject-group-profile"] == {
+        "id": "functional-safety",
+        "version": "1.0.0",
+    }
+    control_id = analysis.candidates[0].control_id
+    assert manifest["selected-matching-clauses"][control_id] == ["c1"]
+    assert manifest["selected-primary-subjects"][control_id] == ["safety lifecycle"]
+
+
+def test_withheld_manifest_preserves_clause_local_undetermined_reason(tmp_path: Path) -> None:
+    import json
+
+    document = _document(_clause("c1", "5.1", process=(ProcessFunction.ACTIVITY,)))
+    profile = GovernanceSelectionProfile.model_validate(
+        {
+            "id": "rail-onboard-sil2",
+            "version": "1.0.0",
+            "context": {"domain": "railway"},
+            "standards": {"include": ["EN50716"]},
+            "selection": {"primary-subjects": ["safety lifecycle"]},
+        }
+    )
+    analysis = GovernanceCandidateAnalyzer().analyze(profile, (document,))
+
+    _, manifest_path = GovernancePolicyScaffoldExporter().export(
+        profile,
+        analysis,
+        (document,),
+        tmp_path / "policy.yaml",
+        responsible=("Rail Safety Engineering",),
+        accountable=("Project Safety Manager",),
+        withhold_undetermined=True,
+    )
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    control_id = analysis.candidates[0].control_id
+    assert manifest["withheld-clause-ids"][control_id] == ["c1"]
+    assert any(
+        "c1/primary-subject" in reason
+        for reason in manifest["withheld-reasons"][control_id]
+    )

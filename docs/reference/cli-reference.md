@@ -92,8 +92,9 @@ small trial runs and `--no-cache` forces fresh inference. Outputs are `qualifica
 - `governance profile validate PROFILE`: validate a Governance Selection Profile
 - `governance profile show PROFILE`: render its normalized representation
 - `governance profile select PROFILE`: classify Control candidates as `selected`, `excluded`, or
-  `undetermined` and emit JSON/CSV review artifacts
-- `governance profile export-policy PROFILE`: create a draft Gemara Policy scaffold
+  `undetermined` with clause-local semantic evidence and emit JSON/CSV review artifacts
+- `governance profile export-policy PROFILE`: create a draft Gemara Policy scaffold from Candidate
+  Analysis v2, preserving Subject Group and matching-Clause provenance in its sidecar
 
 Policy export requires explicit `--responsible` and `--accountable` contacts. Undetermined
 candidates block export unless `--withhold-undetermined` is explicitly selected.

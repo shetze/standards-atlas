@@ -1,0 +1,30 @@
+schema-version: 2
+id: rail-onboard-sil2
+version: 1.0.0
+description: Example railway onboard software governance selection.
+
+context:
+  domain: railway
+  system-types:
+    - onboard-software
+    - linux
+  lifecycle-phases:
+    - software-development
+    - software-validation
+  integrity-levels:
+    - SIL-2
+
+standards:
+  include:
+    - EN50716
+  exclude: []
+
+selection:
+  subject-group-profile:
+    id: functional-safety
+    version: 1.0.0
+  statement-functions:
+    - requirement
+  primary-subjects: []
+  primary-subject-groups:
+    - safety-lifecycle

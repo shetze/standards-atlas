@@ -199,7 +199,7 @@ class GovernanceSelectionProfile(BaseModel):
 
 
 class GovernanceCandidateDecision(StrEnum):
-    """Deterministic tri-state outcome for one policy candidate or source clause."""
+    """Deterministic tri-state outcome for governance selection."""
 
     SELECTED = "selected"
     EXCLUDED = "excluded"
@@ -207,7 +207,7 @@ class GovernanceCandidateDecision(StrEnum):
 
 
 class GovernanceCandidateSignal(BaseModel):
-    """One auditable selector signal contributing to a clause or control decision."""
+    """One auditable selector signal contributing to a decision."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -218,54 +218,73 @@ class GovernanceCandidateSignal(BaseModel):
     observed: tuple[str, ...] = ()
 
 
-class GovernanceClauseSelectionResult(BaseModel):
-    """Clause-local evaluation preserving the AND semantics between active dimensions."""
+class GovernanceSubjectSelectionResolution(BaseModel):
+    """Resolved primary-subject selection recorded with candidate analysis."""
 
     model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
+
+    subject_group_profile: GovernanceSubjectGroupProfileRef | None = Field(
+        default=None, alias="subject-group-profile"
+    )
+    primary_subject_groups: tuple[str, ...] = Field(
+        default=(), alias="primary-subject-groups"
+    )
+    explicit_primary_subjects: tuple[str, ...] = Field(
+        default=(), alias="explicit-primary-subjects"
+    )
+    effective_primary_subjects: tuple[str, ...] = Field(
+        default=(), alias="effective-primary-subjects"
+    )
+
+
+class GovernanceClauseSelectionResult(BaseModel):
+    """Clause-local evaluation of all active semantic selection dimensions."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     clause_id: str = Field(alias="clause-id", min_length=1)
     decision: GovernanceCandidateDecision
     primary_subject: str | None = Field(default=None, alias="primary-subject")
-    ambiguous_subjects: tuple[str, ...] = Field(default=(), alias="ambiguous-subjects")
-    signals: tuple[GovernanceCandidateSignal, ...] = Field(min_length=1)
-
-
-class GovernanceSubjectSelectionResolution(BaseModel):
-    """Expanded primary-subject selection used by one candidate analysis."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
-
-    profile_id: str | None = Field(default=None, alias="profile-id")
-    profile_version: str | None = Field(default=None, alias="profile-version")
-    requested_groups: tuple[str, ...] = Field(default=(), alias="requested-groups")
-    explicit_subjects: tuple[str, ...] = Field(default=(), alias="explicit-subjects")
-    effective_subjects: tuple[str, ...] = Field(default=(), alias="effective-subjects")
+    ambiguous_primary_subjects: tuple[str, ...] = Field(
+        default=(), alias="ambiguous-primary-subjects"
+    )
+    signals: tuple[GovernanceCandidateSignal, ...] = ()
 
 
 class GovernancePolicyCandidate(BaseModel):
     """One ControlCatalog control evaluated against a selection profile."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    document_key: str = Field(alias="document-key", min_length=1)
-    control_id: str = Field(alias="control-id", min_length=1)
+    document_key: str = Field(min_length=1)
+    control_id: str = Field(min_length=1)
     title: str = Field(min_length=1)
-    source_clause_ids: tuple[str, ...] = Field(alias="source-clause-ids", min_length=1)
-    assessment_requirement_ids: tuple[str, ...] = Field(
-        alias="assessment-requirement-ids",
-        min_length=1,
-    )
+    source_clause_ids: tuple[str, ...] = Field(min_length=1)
+    assessment_requirement_ids: tuple[str, ...] = Field(min_length=1)
     decision: GovernanceCandidateDecision
     signals: tuple[GovernanceCandidateSignal, ...] = Field(min_length=1)
     matching_clause_ids: tuple[str, ...] = Field(default=(), alias="matching-clause-ids")
     undetermined_clause_ids: tuple[str, ...] = Field(
-        default=(),
-        alias="undetermined-clause-ids",
+        default=(), alias="undetermined-clause-ids"
     )
     clause_results: tuple[GovernanceClauseSelectionResult, ...] = Field(
-        default=(),
-        alias="clause-results",
+        default=(), alias="clause-results"
     )
+
+    @property
+    def matching_primary_subjects(self) -> tuple[str, ...]:
+        """Return distinct primary subjects from fully matching clauses."""
+
+        matching = set(self.matching_clause_ids)
+        return tuple(
+            sorted(
+                {
+                    result.primary_subject
+                    for result in self.clause_results
+                    if result.clause_id in matching and result.primary_subject is not None
+                }
+            )
+        )
 
 
 class GovernanceCandidateAnalysis(BaseModel):
@@ -285,3 +304,10 @@ class GovernanceCandidateAnalysis(BaseModel):
     excluded: int = 0
     undetermined: int = 0
     candidates: tuple[GovernancePolicyCandidate, ...] = ()
+
+    @field_validator("schema_version")
+    @classmethod
+    def _supported_analysis_schema(cls, value: int) -> int:
+        if value != 2:
+            raise ValueError("unsupported governance candidate analysis schema-version; expected 2")
+        return value
