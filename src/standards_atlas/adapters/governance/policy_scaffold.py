@@ -47,23 +47,15 @@ class GovernancePolicyScaffoldManifest(BaseModel):
     schema_version: int = Field(default=2, alias="schema-version")
     profile_id: str = Field(alias="profile-id", min_length=1)
     profile_version: str = Field(alias="profile-version", min_length=1)
-    candidate_analysis_schema_version: int = Field(
-        alias="candidate-analysis-schema-version", ge=2
-    )
+    candidate_analysis_schema_version: int = Field(alias="candidate-analysis-schema-version", ge=2)
     policy_id: str = Field(alias="policy-id", min_length=1)
     documents: tuple[str, ...]
-    subject_selection: GovernanceSubjectSelectionResolution = Field(
-        alias="subject-selection"
-    )
+    subject_selection: GovernanceSubjectSelectionResolution = Field(alias="subject-selection")
     selected_controls: tuple[str, ...] = Field(alias="selected-controls")
     excluded_controls: tuple[str, ...] = Field(alias="excluded-controls")
     withheld_controls: tuple[str, ...] = Field(alias="withheld-controls")
-    selected_matching_clauses: dict[str, tuple[str, ...]] = Field(
-        alias="selected-matching-clauses"
-    )
-    selected_primary_subjects: dict[str, tuple[str, ...]] = Field(
-        alias="selected-primary-subjects"
-    )
+    selected_matching_clauses: dict[str, tuple[str, ...]] = Field(alias="selected-matching-clauses")
+    selected_primary_subjects: dict[str, tuple[str, ...]] = Field(alias="selected-primary-subjects")
     withheld_clause_ids: dict[str, tuple[str, ...]] = Field(alias="withheld-clause-ids")
     withheld_reasons: dict[str, tuple[str, ...]] = Field(alias="withheld-reasons")
 

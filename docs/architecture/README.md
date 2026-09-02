@@ -19,6 +19,7 @@ The overview is deliberately compact. It shows the governing dependency and data
 | Persisted contracts, invalidation, and provenance | [Persistence and lineage](persistence-and-lineage.md) |
 | Compatibility, migration, regeneration, and deprecation | [Evolution and compatibility](evolution-and-compatibility.md) |
 | Generic evaluation and semantic qualification | [Evaluation architecture](evaluation-services.md) |
+| Reproducible single-clause prompt experiments | [Prompt workbench](prompt-workbench.md) |
 | Structural profiles and semantic classification | [Structural classification](structural-classification.md) |
 | Addressable tables, records, and portable relations | [Table semantics](table-semantics.md) |
 | LLM gateways and managed local runtimes | [LLM integration](llm-integration.md) |

@@ -226,9 +226,7 @@ class GovernanceSubjectSelectionResolution(BaseModel):
     subject_group_profile: GovernanceSubjectGroupProfileRef | None = Field(
         default=None, alias="subject-group-profile"
     )
-    primary_subject_groups: tuple[str, ...] = Field(
-        default=(), alias="primary-subject-groups"
-    )
+    primary_subject_groups: tuple[str, ...] = Field(default=(), alias="primary-subject-groups")
     explicit_primary_subjects: tuple[str, ...] = Field(
         default=(), alias="explicit-primary-subjects"
     )
@@ -264,9 +262,7 @@ class GovernancePolicyCandidate(BaseModel):
     decision: GovernanceCandidateDecision
     signals: tuple[GovernanceCandidateSignal, ...] = Field(min_length=1)
     matching_clause_ids: tuple[str, ...] = Field(default=(), alias="matching-clause-ids")
-    undetermined_clause_ids: tuple[str, ...] = Field(
-        default=(), alias="undetermined-clause-ids"
-    )
+    undetermined_clause_ids: tuple[str, ...] = Field(default=(), alias="undetermined-clause-ids")
     clause_results: tuple[GovernanceClauseSelectionResult, ...] = Field(
         default=(), alias="clause-results"
     )

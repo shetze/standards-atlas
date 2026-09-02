@@ -25,6 +25,7 @@ The command-line interface is the main composition root and exposes document, wo
 | Publication | Project engineering documents into Markdown and Doorstop without changing the canonical aggregate. |
 | Generic evaluation | Run versioned datasets, prompts, models, metrics, regression checks, and reports. |
 | Semantic qualification | Build eligible clause corpora, generate proposals, review annotations, resolve references, and qualify model/prompt candidates. |
+| Prompt workbench | Compile and execute reproducible single-clause prompt experiments with explicit context and model selection. |
 | Pipeline qualification | Verify extraction and normalization against checked-in golden corpora and persist auditable qualification evidence. |
 | Table knowledge projection | Project structured tables into addressable records, classify supported matrix schemas, and derive evidence-backed concepts and relations. |
 | Analysis | Extract methods, techniques, references, and future cross-standard relations. |

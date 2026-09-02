@@ -276,6 +276,5 @@ def test_withheld_manifest_preserves_clause_local_undetermined_reason(tmp_path: 
     control_id = analysis.candidates[0].control_id
     assert manifest["withheld-clause-ids"][control_id] == ["c1"]
     assert any(
-        "c1/primary-subject" in reason
-        for reason in manifest["withheld-reasons"][control_id]
+        "c1/primary-subject" in reason for reason in manifest["withheld-reasons"][control_id]
     )

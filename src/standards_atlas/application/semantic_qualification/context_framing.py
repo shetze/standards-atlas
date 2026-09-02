@@ -103,6 +103,11 @@ def resolve_cbox_frame_policy(frame: str) -> CBoxFramePolicy:
         raise ValueError(f"unknown CBox frame {frame!r}; available frames: {available}") from exc
 
 
+def list_cbox_frame_policies() -> tuple[CBoxFramePolicy, ...]:
+    """Return every public CBox frame in stable external-key order."""
+    return tuple(_CBOX_FRAME_POLICIES[key] for key in sorted(_CBOX_FRAME_POLICIES))
+
+
 def frame_cbox_context(
     context: Mapping[str, Any],
     policy: CBoxFramePolicy = FULL_CONTEXT_V1,
