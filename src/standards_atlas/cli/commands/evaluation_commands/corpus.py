@@ -12,6 +12,7 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
     ApplicabilityGoldenCorpus,
     build_applicability_golden_review,
     evaluate_applicability_golden_corpus,
+    evaluate_applicability_golden_corpus_all_prompts,
     publish_applicability_golden_review,
 )
 from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
@@ -206,13 +207,8 @@ def analyze_applicability_presence_hard_cases(
 def build_applicability_golden_corpus(
     run_archive: Annotated[Path, typer.Option("--run", exists=True, dir_okay=False)],
     review_output: Annotated[
-        Path,
-        typer.Option(
-            "--review-output",
-            dir_okay=False,
-            help="CSV file to create for HITL review.",
-        ),
-    ] = cli_defaults.DEFAULT_APPLICABILITY_REVIEW_OUTPUT,
+        Path, typer.Option("--review-output", file_okay=False)
+    ] = cli_defaults.DEFAULT_REVIEW_ROOT,
     golden: Annotated[Path | None, typer.Option("--golden", exists=True, dir_okay=False)] = None,
     limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 30,
 ) -> None:
@@ -264,11 +260,29 @@ def evaluate_applicability_corpus(
     golden: Annotated[Path, typer.Option("--golden", exists=True, dir_okay=False)],
     run_archive: Annotated[Path, typer.Option("--run", exists=True, dir_okay=False)],
     output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+    prompt: Annotated[
+        str | None,
+        typer.Option("--prompt", help="Evaluate one archived prompt id instead of the baseline."),
+    ] = None,
+    all_prompts: Annotated[
+        bool,
+        typer.Option("--all-prompts", help="Evaluate every archived prompt/frame arm."),
+    ] = False,
 ) -> None:
     """Evaluate applicability consensus and individual models against HITL gold."""
+    if prompt is not None and all_prompts:
+        raise typer.BadParameter("--prompt and --all-prompts are mutually exclusive")
     try:
         corpus = ApplicabilityGoldenCorpus.load(golden)
-        report = evaluate_applicability_golden_corpus(corpus, run_archive)
+        report = (
+            evaluate_applicability_golden_corpus_all_prompts(corpus, run_archive)
+            if all_prompts
+            else evaluate_applicability_golden_corpus(
+                corpus,
+                run_archive,
+                prompt_id=prompt,
+            )
+        )
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
     except (OSError, ValueError) as exc:
@@ -279,8 +293,17 @@ def evaluate_applicability_corpus(
         f"Published class balance : {report.positive_cases} positive / "
         f"{report.negative_cases} negative"
     )
-    typer.echo(f"Baseline majority F1    : {report.baseline_majority.presence_f1:.3f}")
-    typer.echo(f"Model metrics           : {len(report.models)}")
-    typer.echo(f"Offline ensembles       : {len(report.ensembles)}")
-    typer.echo(f"Presence errors         : {len(report.errors)}")
+    if all_prompts:
+        typer.echo(f"Prompt arms             : {len(report.prompt_reports)}")
+        for prompt_report in report.prompt_reports:
+            typer.echo(
+                f"  {prompt_report.prompt_id} / {prompt_report.cbox_frame}: "
+                f"majority F1 {prompt_report.baseline_majority.presence_f1:.3f}"
+            )
+    else:
+        typer.echo(f"Prompt                  : {report.prompt_id} / {report.cbox_frame}")
+        typer.echo(f"Baseline majority F1    : {report.baseline_majority.presence_f1:.3f}")
+        typer.echo(f"Model metrics           : {len(report.models)}")
+        typer.echo(f"Offline ensembles       : {len(report.ensembles)}")
+        typer.echo(f"Presence errors         : {len(report.errors)}")
     typer.echo(f"Report                  : {output}")

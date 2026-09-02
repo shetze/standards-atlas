@@ -29,9 +29,6 @@ from standards_atlas.application.semantic_qualification.applicability_hard_cases
     _review_candidate,
     project_applicability_hard_cases,
 )
-from standards_atlas.application.semantic_qualification.defaults import (
-    DEFAULT_APPLICABILITY_REVIEW_OUTPUT,
-)
 
 
 class ApplicabilityGoldenExpected(BaseModel):
@@ -169,6 +166,8 @@ class ApplicabilityGoldenRegressionReport(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    prompt_id: str | None = None
+    cbox_frame: str | None = None
     published_cases: int = Field(ge=0)
     positive_cases: int = Field(ge=0)
     negative_cases: int = Field(ge=0)
@@ -176,6 +175,21 @@ class ApplicabilityGoldenRegressionReport(BaseModel):
     models: tuple[ApplicabilityModelMetrics, ...]
     ensembles: tuple[ApplicabilityEnsembleMetrics, ...] = ()
     errors: tuple[ApplicabilityCaseError, ...] = ()
+
+
+class ApplicabilityGoldenMultiPromptRegressionReport(BaseModel):
+    """Offline calibration reports for every prompt/frame arm in one archived run."""
+
+    model_config = ConfigDict(frozen=True)
+
+    schema_version: Literal["1.0"] = "1.0"
+    source_archive: str
+    golden_corpus_id: str
+    golden_corpus_version: str
+    published_cases: int = Field(ge=0)
+    positive_cases: int = Field(ge=0)
+    negative_cases: int = Field(ge=0)
+    prompt_reports: tuple[ApplicabilityGoldenRegressionReport, ...]
 
 
 STRATIFIED_CATEGORY_WEIGHTS: tuple[tuple[str, int], ...] = (
@@ -188,7 +202,7 @@ STRATIFIED_CATEGORY_WEIGHTS: tuple[tuple[str, int], ...] = (
 
 def build_applicability_golden_review(
     run_archive: Path,
-    review_path: Path = DEFAULT_APPLICABILITY_REVIEW_OUTPUT,
+    review_root: Path = Path("local/review"),
     *,
     golden_path: Path | None = None,
     limit: int = 30,
@@ -208,7 +222,8 @@ def build_applicability_golden_review(
     if not selected:
         raise ValueError("qualification run contains no new applicability hard-case candidates")
 
-    review_dir = review_path.parent
+    review_dir = review_root / "applicability" / "2.1.0"
+    review_path = review_dir / "applicability-golden-review.csv"
     review_created = False
     if not review_path.exists():
         review_dir.mkdir(parents=True, exist_ok=True)
@@ -369,9 +384,70 @@ def publish_applicability_golden_review(
 def evaluate_applicability_golden_corpus(
     golden: ApplicabilityGoldenCorpus,
     run_archive: Path,
+    *,
+    prompt_id: str | None = None,
 ) -> ApplicabilityGoldenRegressionReport:
-    """Measure baseline majority, models, and offline ensembles against HITL gold."""
-    report, _ = _load_run_inputs(run_archive)
+    """Measure one prompt arm against HITL gold, defaulting to the archived baseline."""
+    manifest, snapshot, dataset = _load_run_snapshot(run_archive)
+    selected_prompt_id, cbox_frame = _resolve_prompt_frame(snapshot, prompt_id)
+    report = _project_run_inputs(
+        manifest,
+        snapshot,
+        dataset,
+        prompt_id=selected_prompt_id,
+        cbox_frame=cbox_frame,
+    )
+    return _evaluate_applicability_run_report(
+        golden,
+        report,
+        prompt_id=selected_prompt_id,
+        cbox_frame=cbox_frame,
+    )
+
+
+def evaluate_applicability_golden_corpus_all_prompts(
+    golden: ApplicabilityGoldenCorpus,
+    run_archive: Path,
+) -> ApplicabilityGoldenMultiPromptRegressionReport:
+    """Measure every prompt/frame arm in an archived run without executing an LLM."""
+    manifest, snapshot, dataset = _load_run_snapshot(run_archive)
+    prompt_reports = tuple(
+        _evaluate_applicability_run_report(
+            golden,
+            _project_run_inputs(
+                manifest,
+                snapshot,
+                dataset,
+                prompt_id=prompt_id,
+                cbox_frame=cbox_frame,
+            ),
+            prompt_id=prompt_id,
+            cbox_frame=cbox_frame,
+        )
+        for prompt_id, cbox_frame in _available_prompt_frames(snapshot)
+    )
+    if not prompt_reports:
+        raise ValueError("applicability prediction snapshot contains no observations")
+    first = prompt_reports[0]
+    return ApplicabilityGoldenMultiPromptRegressionReport(
+        source_archive=run_archive.name,
+        golden_corpus_id=golden.corpus_id,
+        golden_corpus_version=golden.corpus_version,
+        published_cases=first.published_cases,
+        positive_cases=first.positive_cases,
+        negative_cases=first.negative_cases,
+        prompt_reports=prompt_reports,
+    )
+
+
+def _evaluate_applicability_run_report(
+    golden: ApplicabilityGoldenCorpus,
+    report: dict[str, Any],
+    *,
+    prompt_id: str,
+    cbox_frame: str,
+) -> ApplicabilityGoldenRegressionReport:
+    """Score one already-projected prompt arm against published HITL labels."""
     clauses = {
         (str(item.get("document_key")), str(item.get("clause_id"))): item
         for item in report.get("clauses", [])
@@ -454,6 +530,8 @@ def evaluate_applicability_golden_corpus(
 
     positive_cases = sum(bool(case.expected and case.expected.present) for case in published)
     return ApplicabilityGoldenRegressionReport(
+        prompt_id=prompt_id,
+        cbox_frame=cbox_frame,
         published_cases=len(published),
         positive_cases=positive_cases,
         negative_cases=len(published) - positive_cases,
@@ -600,7 +678,9 @@ def _metrics(
     )
 
 
-def _load_run_inputs(run_archive: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+def _load_run_snapshot(
+    run_archive: Path,
+) -> tuple[dict[str, Any], ApplicabilityPredictionSnapshot, dict[str, Any]]:
     with ZipFile(run_archive) as archive:
         manifest = yaml.safe_load(archive.read("configuration/qualification-manifest.yaml")) or {}
         snapshot_name = _find_member(archive, PREDICTION_SNAPSHOT_FILENAME)
@@ -611,6 +691,51 @@ def _load_run_inputs(run_archive: Path) -> tuple[dict[str, Any], dict[str, Any]]
             )
         snapshot = ApplicabilityPredictionSnapshot.model_validate_json(archive.read(snapshot_name))
         dataset = json.loads(archive.read("inputs/corpus/dataset.json"))
+    return manifest, snapshot, dataset
+
+
+def _available_prompt_frames(
+    snapshot: ApplicabilityPredictionSnapshot,
+) -> tuple[tuple[str, str], ...]:
+    return tuple(
+        dict.fromkeys(
+            (observation.prompt_id, observation.cbox_frame) for observation in snapshot.observations
+        )
+    )
+
+
+def _resolve_prompt_frame(
+    snapshot: ApplicabilityPredictionSnapshot,
+    prompt_id: str | None,
+) -> tuple[str, str]:
+    if prompt_id is None:
+        return _baseline(snapshot)
+    matches = tuple(
+        frame for candidate, frame in _available_prompt_frames(snapshot) if candidate == prompt_id
+    )
+    if not matches:
+        available = ", ".join(sorted({item[0] for item in _available_prompt_frames(snapshot)}))
+        raise ValueError(
+            f"unknown applicability prompt '{prompt_id}'; available prompts: {available}"
+        )
+    if len(matches) > 1:
+        frames = ", ".join(matches)
+        raise ValueError(
+            f"applicability prompt '{prompt_id}' has multiple CBox frames ({frames}); "
+            "prompt ids must identify one archived prompt/frame arm"
+        )
+    return prompt_id, matches[0]
+
+
+def _project_run_inputs(
+    manifest: dict[str, Any],
+    snapshot: ApplicabilityPredictionSnapshot,
+    dataset: dict[str, Any],
+    *,
+    prompt_id: str,
+    cbox_frame: str,
+) -> dict[str, Any]:
+    """Project one archived prompt/frame arm into the legacy clause/vote representation."""
 
     presence_eligible = {
         str(model.get("id"))
@@ -622,11 +747,10 @@ def _load_run_inputs(run_archive: Path) -> tuple[dict[str, Any], dict[str, Any]]
         for model in manifest.get("models", [])
         if bool((model.get("dimension_eligibility") or {}).get("applicability_polarity", True))
     }
-    baseline_prompt, baseline_frame = _baseline(snapshot)
     baseline = _collapsed_predictions(
         snapshot,
-        prompt_id=baseline_prompt,
-        cbox_frame=baseline_frame,
+        prompt_id=prompt_id,
+        cbox_frame=cbox_frame,
         eligible=presence_eligible,
     )
     details = _dataset_details(dataset)
@@ -669,7 +793,7 @@ def _load_run_inputs(run_archive: Path) -> tuple[dict[str, Any], dict[str, Any]]
                 ],
             }
         )
-    return {"clauses": clauses}, manifest
+    return {"clauses": clauses}
 
 
 def _presence_consensus(predictions: tuple[ApplicabilityPrediction, ...]) -> bool | None:

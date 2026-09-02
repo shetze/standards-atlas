@@ -1,5 +1,7 @@
 """CLI help and shared-default regression tests."""
 
+from pathlib import Path
+
 from typer.testing import CliRunner
 
 from standards_atlas.application.semantic_qualification.defaults import (
@@ -7,7 +9,6 @@ from standards_atlas.application.semantic_qualification.defaults import (
     STATEMENT_FUNCTION_PROMPT_VERSIONS,
 )
 from standards_atlas.application.semantic_qualification.proposals import ProposalRunConfig
-from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.main import app
 
 runner = CliRunner()
@@ -71,17 +72,36 @@ def test_evaluation_help_lists_applicability_hard_case_analysis() -> None:
     assert "applicability-hard-cases" in result.stdout
 
 
-def test_applicability_corpus_build_treats_review_output_as_csv_file() -> None:
-    result = runner.invoke(
-        app,
-        ["evaluation", "applicability-corpus-build", "--help"],
-        terminal_width=240,
-    )
+def test_applicability_corpus_evaluate_help_exposes_prompt_selection() -> None:
+    result = runner.invoke(app, ["evaluation", "applicability-corpus-evaluate", "--help"])
 
     assert result.exit_code == 0
-    assert "--review-output" in result.stdout
-    assert "CSV file to create for" in result.stdout
-    assert "HITL review." in result.stdout
-    assert cli_defaults.DEFAULT_APPLICABILITY_REVIEW_OUTPUT.as_posix() == (
-        "local/review/applicability/2.1.0/applicability-golden-review.csv"
+    assert "--prompt" in result.stdout
+    assert "--all-prompts" in result.stdout
+
+
+def test_applicability_corpus_evaluate_rejects_both_prompt_selectors(tmp_path: Path) -> None:
+    golden = tmp_path / "golden.yaml"
+    run = tmp_path / "run.zip"
+    golden.write_text("{}\n", encoding="utf-8")
+    run.write_bytes(b"not-needed")
+
+    result = runner.invoke(
+        app,
+        [
+            "evaluation",
+            "applicability-corpus-evaluate",
+            "--golden",
+            str(golden),
+            "--run",
+            str(run),
+            "--output",
+            str(tmp_path / "report.json"),
+            "--prompt",
+            "candidate",
+            "--all-prompts",
+        ],
     )
+
+    assert result.exit_code == 2
+    assert "--prompt and --all-prompts are mutually exclusive" in result.stderr

@@ -499,6 +499,28 @@ uv run standards-atlas evaluation applicability-corpus-evaluate \
 
 The regression report contains consensus metrics, presence precision/recall/F1, and binary polarity accuracy for every model represented in the archived run. The golden corpus is deliberately a diagnostic hard-case corpus rather than a representative random sample; use its reviewed metrics for calibration and regression analysis rather than interpreting the class balance as corpus prevalence.
 
+Without a prompt selector, the evaluator preserves the historical behavior and evaluates the archived baseline prompt. Select one experimental arm explicitly with its archived prompt id:
+
+```bash
+uv run standards-atlas evaluation applicability-corpus-evaluate \
+  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --run local/evaluation/qualification-run-068.zip \
+  --prompt applicability-boundary-examples \
+  --output local/evaluation/qualification/applicability-golden-regression-068-examples.json
+```
+
+Evaluate every prompt/frame arm in the archive with:
+
+```bash
+uv run standards-atlas evaluation applicability-corpus-evaluate \
+  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --run local/evaluation/qualification-run-068.zip \
+  --all-prompts \
+  --output local/evaluation/qualification/applicability-golden-regression-068-all-prompts.json
+```
+
+`--prompt` and `--all-prompts` are mutually exclusive. The multi-prompt output wraps one complete regression report per prompt/frame arm in `prompt_reports`. Keeping baseline-only evaluation as the default preserves the established single-report JSON contract and avoids silently treating experimental or CBox-ablation arms as production candidates.
+
 ### Applicability boundary prompt matrix
 
 Analyze clause-level applicability presence disagreements from an immutable qualification run with:

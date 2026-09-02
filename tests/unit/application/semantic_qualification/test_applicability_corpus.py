@@ -17,11 +17,12 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
     _select_stratified_cases,
     build_applicability_golden_review,
     evaluate_applicability_golden_corpus,
+    evaluate_applicability_golden_corpus_all_prompts,
     publish_applicability_golden_review,
 )
 
 
-def _run_archive(path: Path) -> Path:
+def _run_archive(path: Path, *, include_candidate_prompt: bool = False) -> Path:
     clauses = (
         ("c1", "This requirement applies to new systems."),
         ("c2", "The analysis shall be performed if requested."),
@@ -33,12 +34,32 @@ def _run_archive(path: Path) -> Path:
         "c": ((True, "included"), (False, None), (True, "included")),
         "ignored": ((False, None), (False, None), (False, None)),
     }
-    snapshot = {
-        "schema_version": "1.0",
-        "matrix_id": "applicability-test-matrix",
-        "observations": [
+    observations = [
+        {
+            "prompt_id": "applicability-clean-full",
+            "cbox_frame": "full-context-v1",
+            "model_id": model_id,
+            "reasoning_mode_id": "disabled",
+            "repetition": 1,
+            "predictions": [
+                {
+                    "clause_key": f"DOC/{clause_id}",
+                    "document_key": "DOC",
+                    "clause_id": clause_id,
+                    "present": values[index][0],
+                    "polarity": values[index][1],
+                    "confidence": 0.9,
+                }
+                for index, (clause_id, _) in enumerate(clauses)
+            ],
+        }
+        for model_id, values in predictions.items()
+    ]
+    if include_candidate_prompt:
+        candidate_values = ((False, None), (True, "included"), (False, None))
+        observations.extend(
             {
-                "prompt_id": "applicability-clean-full",
+                "prompt_id": "applicability-boundary-examples",
                 "cbox_frame": "full-context-v1",
                 "model_id": model_id,
                 "reasoning_mode_id": "disabled",
@@ -48,15 +69,19 @@ def _run_archive(path: Path) -> Path:
                         "clause_key": f"DOC/{clause_id}",
                         "document_key": "DOC",
                         "clause_id": clause_id,
-                        "present": values[index][0],
-                        "polarity": values[index][1],
-                        "confidence": 0.9,
+                        "present": candidate_values[index][0],
+                        "polarity": candidate_values[index][1],
+                        "confidence": 0.8,
                     }
                     for index, (clause_id, _) in enumerate(clauses)
                 ],
             }
-            for model_id, values in predictions.items()
-        ],
+            for model_id in predictions
+        )
+    snapshot = {
+        "schema_version": "1.0",
+        "matrix_id": "applicability-test-matrix",
+        "observations": observations,
     }
     dataset = {
         "examples": [
@@ -94,10 +119,7 @@ def _run_archive(path: Path) -> Path:
 
 def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> None:
     archive = _run_archive(tmp_path / "qualification-run.zip")
-    review_path = tmp_path / "review" / "applicability-review-066.csv"
-    result = build_applicability_golden_review(archive, review_path)
-    assert result.review_path == review_path
-    assert result.review_guide_path == review_path.parent / "README.md"
+    result = build_applicability_golden_review(archive, tmp_path / "review")
     assert result.selected_count == 2
     with result.review_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
@@ -122,6 +144,8 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
     assert golden.cases[0].provenance.source_archive == archive.name
     loaded = ApplicabilityGoldenCorpus.load(result.golden_path)
     report = evaluate_applicability_golden_corpus(loaded, archive)
+    assert report.prompt_id == "applicability-clean-full"
+    assert report.cbox_frame == "full-context-v1"
     assert report.positive_cases == 1
     assert report.negative_cases == 0
     assert report.baseline_majority.presence_accuracy == 1.0
@@ -143,6 +167,74 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
     assert {(error.evaluator_id, error.error) for error in report.errors} == {
         ("b", "false_negative")
     }
+
+
+def test_evaluate_selects_one_prompt_or_all_archived_prompts(tmp_path: Path) -> None:
+    archive = _run_archive(tmp_path / "qualification-run.zip", include_candidate_prompt=True)
+    provenance = ApplicabilityGoldenProvenance(
+        source_archive=archive.name,
+        source_archive_sha256="0" * 64,
+    )
+    golden = ApplicabilityGoldenCorpus(
+        cases=(
+            ApplicabilityGoldenCase(
+                clause_id="c1",
+                document_key="DOC",
+                reference="DOC:1",
+                text="This requirement applies to new systems.",
+                category="test",
+                status="published",
+                expected=ApplicabilityGoldenExpected(present=True, polarity="included"),
+                provenance=provenance,
+            ),
+            ApplicabilityGoldenCase(
+                clause_id="c2",
+                document_key="DOC",
+                reference="DOC:2",
+                text="The analysis shall be performed if requested.",
+                category="test",
+                status="published",
+                expected=ApplicabilityGoldenExpected(present=False),
+                provenance=provenance,
+            ),
+            ApplicabilityGoldenCase(
+                clause_id="c3",
+                document_key="DOC",
+                reference="DOC:3",
+                text="This part applies to A but does not apply to B.",
+                category="test",
+                status="published",
+                expected=ApplicabilityGoldenExpected(present=True),
+                provenance=provenance,
+            ),
+        )
+    )
+
+    baseline = evaluate_applicability_golden_corpus(golden, archive)
+    candidate = evaluate_applicability_golden_corpus(
+        golden,
+        archive,
+        prompt_id="applicability-boundary-examples",
+    )
+    combined = evaluate_applicability_golden_corpus_all_prompts(golden, archive)
+
+    assert baseline.prompt_id == "applicability-clean-full"
+    assert baseline.baseline_majority.presence_f1 == 1.0
+    assert candidate.prompt_id == "applicability-boundary-examples"
+    assert candidate.baseline_majority.presence_f1 == 0.0
+    assert [report.prompt_id for report in combined.prompt_reports] == [
+        "applicability-clean-full",
+        "applicability-boundary-examples",
+    ]
+    assert combined.golden_corpus_id == golden.corpus_id
+    assert combined.golden_corpus_version == golden.corpus_version
+
+
+def test_evaluate_rejects_unknown_prompt(tmp_path: Path) -> None:
+    archive = _run_archive(tmp_path / "qualification-run.zip")
+    golden = ApplicabilityGoldenCorpus(cases=())
+    with pytest.raises(ValueError, match="unknown applicability prompt 'missing'"):
+        evaluate_applicability_golden_corpus(golden, archive, prompt_id="missing")
 
 
 def test_applicability_golden_contract_rejects_legacy_subtype_fields() -> None:
@@ -226,7 +318,7 @@ def test_build_excludes_existing_golden_cases(tmp_path: Path) -> None:
         yaml.safe_dump(golden.model_dump(mode="json"), sort_keys=False), encoding="utf-8"
     )
     result = build_applicability_golden_review(
-        archive, tmp_path / "review" / "review.csv", golden_path=golden_path
+        archive, tmp_path / "review", golden_path=golden_path
     )
     assert result.candidate_count == 2
     assert result.excluded_existing_count == 1
@@ -238,7 +330,7 @@ def test_build_excludes_existing_golden_cases(tmp_path: Path) -> None:
 
 def test_publish_merges_idempotently_and_rejects_conflicting_gold(tmp_path: Path) -> None:
     archive = _run_archive(tmp_path / "qualification-run.zip")
-    result = build_applicability_golden_review(archive, tmp_path / "review" / "review.csv")
+    result = build_applicability_golden_review(archive, tmp_path / "review")
     with result.review_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     rows[0]["review_status"] = "published"
