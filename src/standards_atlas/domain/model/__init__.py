@@ -61,11 +61,13 @@ from standards_atlas.domain.model.governance_selection import (
     GovernanceCandidateAnalysis,
     GovernanceCandidateDecision,
     GovernanceCandidateSignal,
+    GovernanceClauseSelectionResult,
     GovernanceContext,
     GovernancePolicyCandidate,
     GovernanceSelectionProfile,
     GovernanceSemanticSelection,
     GovernanceStandardSelection,
+    GovernanceSubjectSelectionResolution,
 )
 from standards_atlas.domain.model.governance_subject_groups import (
     GovernanceSubjectGroupDefinition,
@@ -329,5 +331,7 @@ __all__ = [
     "GovernanceCandidateAnalysis",
     "GovernanceCandidateDecision",
     "GovernanceCandidateSignal",
+    "GovernanceClauseSelectionResult",
     "GovernancePolicyCandidate",
+    "GovernanceSubjectSelectionResolution",
 ]

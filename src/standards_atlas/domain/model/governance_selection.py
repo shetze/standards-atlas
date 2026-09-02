@@ -199,7 +199,7 @@ class GovernanceSelectionProfile(BaseModel):
 
 
 class GovernanceCandidateDecision(StrEnum):
-    """Deterministic tri-state outcome for one policy candidate."""
+    """Deterministic tri-state outcome for one policy candidate or source clause."""
 
     SELECTED = "selected"
     EXCLUDED = "excluded"
@@ -207,7 +207,7 @@ class GovernanceCandidateDecision(StrEnum):
 
 
 class GovernanceCandidateSignal(BaseModel):
-    """One auditable selector signal contributing to a candidate decision."""
+    """One auditable selector signal contributing to a clause or control decision."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -218,29 +218,69 @@ class GovernanceCandidateSignal(BaseModel):
     observed: tuple[str, ...] = ()
 
 
+class GovernanceClauseSelectionResult(BaseModel):
+    """Clause-local evaluation preserving the AND semantics between active dimensions."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
+
+    clause_id: str = Field(alias="clause-id", min_length=1)
+    decision: GovernanceCandidateDecision
+    primary_subject: str | None = Field(default=None, alias="primary-subject")
+    ambiguous_subjects: tuple[str, ...] = Field(default=(), alias="ambiguous-subjects")
+    signals: tuple[GovernanceCandidateSignal, ...] = Field(min_length=1)
+
+
+class GovernanceSubjectSelectionResolution(BaseModel):
+    """Expanded primary-subject selection used by one candidate analysis."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
+
+    profile_id: str | None = Field(default=None, alias="profile-id")
+    profile_version: str | None = Field(default=None, alias="profile-version")
+    requested_groups: tuple[str, ...] = Field(default=(), alias="requested-groups")
+    explicit_subjects: tuple[str, ...] = Field(default=(), alias="explicit-subjects")
+    effective_subjects: tuple[str, ...] = Field(default=(), alias="effective-subjects")
+
+
 class GovernancePolicyCandidate(BaseModel):
     """One ControlCatalog control evaluated against a selection profile."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
 
-    document_key: str = Field(min_length=1)
-    control_id: str = Field(min_length=1)
+    document_key: str = Field(alias="document-key", min_length=1)
+    control_id: str = Field(alias="control-id", min_length=1)
     title: str = Field(min_length=1)
-    source_clause_ids: tuple[str, ...] = Field(min_length=1)
-    assessment_requirement_ids: tuple[str, ...] = Field(min_length=1)
+    source_clause_ids: tuple[str, ...] = Field(alias="source-clause-ids", min_length=1)
+    assessment_requirement_ids: tuple[str, ...] = Field(
+        alias="assessment-requirement-ids",
+        min_length=1,
+    )
     decision: GovernanceCandidateDecision
     signals: tuple[GovernanceCandidateSignal, ...] = Field(min_length=1)
+    matching_clause_ids: tuple[str, ...] = Field(default=(), alias="matching-clause-ids")
+    undetermined_clause_ids: tuple[str, ...] = Field(
+        default=(),
+        alias="undetermined-clause-ids",
+    )
+    clause_results: tuple[GovernanceClauseSelectionResult, ...] = Field(
+        default=(),
+        alias="clause-results",
+    )
 
 
 class GovernanceCandidateAnalysis(BaseModel):
     """Deterministic review artifact produced for one selection profile."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
 
-    schema_version: int = Field(default=1, alias="schema-version")
+    schema_version: int = Field(default=2, alias="schema-version")
     profile_id: str = Field(alias="profile-id", min_length=1)
     profile_version: str = Field(alias="profile-version", min_length=1)
     documents: tuple[str, ...] = ()
+    subject_selection: GovernanceSubjectSelectionResolution = Field(
+        default_factory=GovernanceSubjectSelectionResolution,
+        alias="subject-selection",
+    )
     selected: int = 0
     excluded: int = 0
     undetermined: int = 0
