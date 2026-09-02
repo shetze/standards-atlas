@@ -17,8 +17,8 @@ variant, one manifest-declared model, and one structured output schema.
 - complete Draft 2020-12 validation of the generated JSON object.
 
 The application service depends on `ClauseProvider`, `LlmGateway`, `PromptCatalog`, and
-`ModelCatalog`. It does not start or stop RamaLama, host HTTP, read arbitrary paths, or write
-results into an `EngineeringDocument`.
+`ModelCatalog`. It does not host HTTP, read arbitrary paths, or write results into an
+`EngineeringDocument`.
 
 ## Context variants
 
@@ -45,6 +45,37 @@ actually used by the current template.
 matrix manifests, filters RamaLama candidates, deduplicates identical declarations, retains
 their source manifests, and rejects conflicting model references.
 
-The later web slice is an inbound adapter around this boundary. RamaLama lifecycle
-serialization, local HTTP security, experiment persistence, and browser rendering remain
-outside the headless core.
+## Local web adapter
+
+The `adapters.web` package wraps the headless application capability with a Starlette API and
+packaged, dependency-free browser client. It exposes prompt/model/context catalogs, clause
+search and exact resolution, context previews, explicit model activation, and experiment
+execution. The browser can edit both prompt texts and the output schema before a run.
+
+The CLI requires the service implementation to be named explicitly:
+
+```bash
+uv run standards-atlas chat serve --service prompt-workbench
+```
+
+`chat serve` is the extensible command family; `prompt-workbench` is one registered service
+type rather than an implicit default. `--service-type` is accepted as an alias. New chat
+services can therefore receive separate composition functions while sharing the foreground
+server entry point.
+
+The HTTP service is deliberately local: configuration rejects non-loopback bind addresses,
+requests require a loopback `Host` and (when supplied) `Origin`, bodies are capped at 1 MiB,
+and browser responses carry a restrictive Content Security Policy. There is no remote access,
+authentication, TLS termination, or multi-user isolation contract in this slice.
+
+## RamaLama coordination
+
+`ManagedRamaLamaGateway` serializes model activation and structured generation with one
+process-local lock. If a requested model is not active, it stops only the runtime referenced by
+the project ownership record, starts the selected manifest model, waits for readiness, and
+performs inference without releasing the lock. Interactive runs bypass the response cache by
+default; the request must opt into reuse explicitly.
+
+Experiment persistence and comparison histories remain a later slice. The current endpoint
+returns full compilation, validation, generation, and hash provenance to the caller without
+mutating an `EngineeringDocument`.

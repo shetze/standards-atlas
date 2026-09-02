@@ -53,3 +53,9 @@ def test_composition_root_registers_governance_profile_export_policy() -> None:
     result = runner.invoke(app, ["governance", "profile", "export-policy", "--help"])
 
     assert result.exit_code == 0, result.output
+
+
+def test_composition_root_registers_chat_service_family() -> None:
+    result = runner.invoke(app, ["chat", "serve", "--help"])
+
+    assert result.exit_code == 0, result.output

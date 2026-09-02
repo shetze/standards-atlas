@@ -114,12 +114,14 @@ def test_runs_auditable_experiment_and_reports_full_schema_errors() -> None:
             prompt_version="1.0.0",
             model_id="granite",
             context_variant="none",
+            use_cache=True,
         )
     )
 
     assert gateway.request.model == "hf.co/example/granite:Q4_K_M"
     assert gateway.request.max_tokens == 384
     assert gateway.request.metadata["clause"]["content_hash"] == "sha256:" + "d" * 64
+    assert gateway.request.metadata["use_cache"] is True
     assert result.schema_valid is False
     assert "$.kind" in result.schema_errors[0]
 

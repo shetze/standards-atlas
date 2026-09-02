@@ -27,6 +27,7 @@ This guide describes the supported user workflows for turning private standards 
 | Goal | Guide |
 |---|---|
 | Manage the project-owned RamaLama server | [Local LLM operation](local-llm.md) |
+| Test clause-enrichment prompts interactively | [Prompt workbench](prompt-workbench.md) |
 | Run the read-only MCP server | [MCP server](mcp-server.md) |
 | Connect Codex to MCP | [Codex integration](codex-integration.md) |
 | Build corpora and execute qualification matrices | [Evaluation and qualification](evaluation-and-qualification.md) |

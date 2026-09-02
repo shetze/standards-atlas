@@ -54,6 +54,7 @@ qualification_app = typer.Typer(
 context_app = typer.Typer(
     help="Discover and inspect deterministic clause context.", no_args_is_help=True
 )
+chat_app = typer.Typer(help="Serve local interactive LLM services.", no_args_is_help=True)
 
 governance_app = typer.Typer(
     help="Define and inspect engineering governance selection context.", no_args_is_help=True
@@ -79,5 +80,6 @@ app.add_typer(semantic_evaluation_app, name="semantic-evaluation")
 app.add_typer(evaluation_app, name="evaluation")
 app.add_typer(qualification_app, name="qualification")
 app.add_typer(context_app, name="context")
+app.add_typer(chat_app, name="chat")
 app.add_typer(governance_app, name="governance")
 governance_app.add_typer(governance_profile_app, name="profile")

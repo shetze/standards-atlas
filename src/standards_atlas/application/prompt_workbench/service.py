@@ -12,10 +12,14 @@ from standards_atlas.application.prompt_workbench.clauses import ClauseResolver
 from standards_atlas.application.prompt_workbench.compiler import PromptCompiler
 from standards_atlas.application.prompt_workbench.context import ClausePromptContextAssembler
 from standards_atlas.application.prompt_workbench.models import (
+    AssembledPromptContext,
     PromptExperimentRequest,
     PromptExperimentResult,
 )
-from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
+from standards_atlas.application.semantic_qualification.clause_access import (
+    ClauseDescriptor,
+    ClauseProvider,
+)
 
 
 class PromptExperimentService:
@@ -40,22 +44,12 @@ class PromptExperimentService:
         self._compiler = compiler or PromptCompiler()
 
     def run(self, experiment: PromptExperimentRequest) -> PromptExperimentResult:
-        clause = self._resolver.resolve(experiment.clause_identifier)
+        clause, context = self.assemble_context(
+            experiment.clause_identifier,
+            experiment.context_variant,
+        )
         prompt = self._prompts.load_prompt(experiment.prompt_task, experiment.prompt_version)
         model = self._models.get_model(experiment.model_id)
-        document_title = next(
-            (
-                item.title
-                for item in self._clauses.list_documents()
-                if item.key == clause.document_key
-            ),
-            None,
-        )
-        context = self._context_assembler.assemble(
-            clause,
-            variant_id=experiment.context_variant,
-            document_title=document_title,
-        )
         compiled = self._compiler.compile(
             prompt,
             context,
@@ -85,6 +79,7 @@ class PromptExperimentService:
             reasoning_enabled=reasoning_enabled,
             metadata={
                 "prompt_workbench": True,
+                "use_cache": experiment.use_cache,
                 "model_id": model.id,
                 "clause": {
                     "document_key": clause.document_key,
@@ -108,3 +103,29 @@ class PromptExperimentService:
             schema_valid=not schema_errors,
             schema_errors=schema_errors,
         )
+
+    def resolve_clause(self, identifier: str) -> ClauseDescriptor:
+        """Resolve a clause for interactive inspection without running inference."""
+        return self._resolver.resolve(identifier)
+
+    def assemble_context(
+        self,
+        clause_identifier: str,
+        variant_id: str,
+    ) -> tuple[ClauseDescriptor, AssembledPromptContext]:
+        """Resolve a clause and expose the exact context used for compilation."""
+        clause = self._resolver.resolve(clause_identifier)
+        document_title = next(
+            (
+                item.title
+                for item in self._clauses.list_documents()
+                if item.key == clause.document_key
+            ),
+            None,
+        )
+        context = self._context_assembler.assemble(
+            clause,
+            variant_id=variant_id,
+            document_title=document_title,
+        )
+        return clause, context

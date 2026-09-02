@@ -36,6 +36,14 @@ uv run standards-atlas workflow plan \
 
 The unified `--manifests` interface belongs to the workflow envelope. Direct low-level commands remain intentionally specific: for example `evaluation qualification-matrix`, `evaluation challenger-qualification`, and `llm preload-qualification-models` use their own singular `--manifest` option because they consume one qualification-matrix manifest rather than a heterogeneous workflow manifest set.
 
+## Local chat services
+
+- `chat serve --service prompt-workbench`: run the local prompt experimentation UI.
+
+The required `--service` option (alias `--service-type`) keeps the command family extensible;
+there is no implicit service implementation. The prompt workbench binds to `127.0.0.1:8765`
+by default and rejects non-loopback hosts.
+
 ## AtlasData
 
 - `atlasdata onboard-docling`

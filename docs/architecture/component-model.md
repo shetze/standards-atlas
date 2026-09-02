@@ -10,7 +10,7 @@ The component model separates stable knowledge structures from orchestration and
 
 ## Inbound adapters
 
-The command-line interface is the main composition root and exposes document, workflow, evaluation, qualification, LLM, and MCP commands. The MCP adapter exposes a deliberately restricted read-only clause service. Future HTTP or desktop interfaces should call the same application use cases rather than reaching into repositories directly.
+The command-line interface is the main composition root and exposes document, workflow, evaluation, qualification, LLM, MCP, and local chat-service commands. The MCP adapter exposes a deliberately restricted read-only clause service. The prompt-workbench HTTP adapter calls the same transport-neutral application use cases rather than reaching into repositories directly.
 
 ## Application components
 
@@ -43,6 +43,7 @@ The domain layer contains immutable value objects and aggregates for standards, 
 - **Doorstop** creates requirement-document hierarchies and installs publication templates.
 - **LLM** provides Codex CLI and OpenAI-compatible gateways plus managed RamaLama runtime control.
 - **MCP transport** hosts the read-only clause and knowledge-table service over STDIO or Streamable HTTP.
+- **Web** hosts the loopback-only prompt workbench and its packaged browser client.
 
 ## Cross-cutting component relationships
 

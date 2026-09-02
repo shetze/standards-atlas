@@ -8,6 +8,7 @@ from standards_atlas.cli.apps import app
 # composition root and the command-registration regression tests.
 from standards_atlas.cli.commands import (  # noqa: F401, E402
     alignment,
+    chat,
     context,
     documents,
     evaluation,

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Standards Atlas · Prompt Workbench</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Standards Atlas</p>
+      <h1>Prompt Workbench</h1>
+    </div>
+    <div class="runtime-pill" id="runtimePill" data-state="pending">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span id="runtimeText">RamaLama wird geprüft …</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="control-deck" aria-labelledby="setupHeading">
+      <div class="section-heading">
+        <div>
+          <p class="step">01 · Versuchsaufbau</p>
+          <h2 id="setupHeading">Klausel, Prompt und Modell</h2>
+        </div>
+        <button class="button ghost" id="refreshButton" type="button">Kataloge neu laden</button>
+      </div>
+
+      <div class="control-grid">
+        <label>
+          <span>Prompt</span>
+          <select id="promptSelect"></select>
+          <small id="promptDescription">Versionierten Prompt auswählen.</small>
+        </label>
+        <label>
+          <span>Kontextvariante</span>
+          <select id="contextSelect"></select>
+          <small id="contextDescription">CBox-Projektion für diesen Lauf.</small>
+        </label>
+        <label>
+          <span>LLM-Modell</span>
+          <span class="joined-control">
+            <select id="modelSelect"></select>
+            <button class="button secondary" id="activateButton" type="button">Aktivieren</button>
+          </span>
+          <small id="modelDescription">Aus den Qualification-Manifesten.</small>
+        </label>
+      </div>
+
+      <div class="clause-search">
+        <label class="grow">
+          <span>Klausel-ID oder Referenz-Key</span>
+          <span class="joined-control">
+            <input id="clauseIdentifier" placeholder="z. B. IEC61508-1:7.4.2 oder clause.id" autocomplete="off">
+            <button class="button primary" id="resolveButton" type="button">Auflösen</button>
+          </span>
+        </label>
+        <label class="grow">
+          <span>Volltextsuche</span>
+          <span class="joined-control">
+            <input id="clauseQuery" placeholder="Überschrift, Referenz oder Inhalt" autocomplete="off">
+            <button class="button secondary" id="searchButton" type="button">Suchen</button>
+          </span>
+        </label>
+      </div>
+      <select id="clauseResults" class="search-results" size="4" aria-label="Gefundene Klauseln" hidden></select>
+    </section>
+
+    <section class="workspace" aria-labelledby="workspaceHeading">
+      <div class="section-heading">
+        <div>
+          <p class="step">02 · Arbeitsfläche</p>
+          <h2 id="workspaceHeading">Prompt und Eingabedaten</h2>
+        </div>
+        <p class="clause-badge" id="clauseBadge">Keine Klausel ausgewählt</p>
+      </div>
+
+      <div class="editor-grid">
+        <article class="panel prompt-panel">
+          <div class="panel-title">
+            <h3>Prompt</h3>
+            <div class="tabs" role="tablist" aria-label="Prompt-Bestandteile">
+              <button class="tab active" data-tab="system" role="tab" type="button">System</button>
+              <button class="tab" data-tab="user" role="tab" type="button">User Template</button>
+              <button class="tab" data-tab="schema" role="tab" type="button">Schema</button>
+            </div>
+          </div>
+          <textarea id="systemEditor" class="editor tab-pane" data-pane="system" spellcheck="false"></textarea>
+          <textarea id="userEditor" class="editor tab-pane" data-pane="user" spellcheck="false" hidden></textarea>
+          <textarea id="schemaEditor" class="editor tab-pane code" data-pane="schema" spellcheck="false" hidden></textarea>
+        </article>
+
+        <article class="panel clause-panel">
+          <div class="panel-title">
+            <h3>Klauseltext</h3>
+            <span id="clauseHash" class="mono subtle"></span>
+          </div>
+          <textarea id="clauseEditor" class="editor" readonly placeholder="Klausel über ID, Referenz oder Suche auswählen."></textarea>
+        </article>
+
+        <article class="panel context-panel">
+          <div class="panel-title">
+            <h3>Kontextvorschau</h3>
+            <span id="contextVariantBadge" class="tag">—</span>
+          </div>
+          <textarea id="contextEditor" class="editor code" readonly placeholder="Die ausgewählte Kontextprojektion erscheint hier."></textarea>
+        </article>
+
+        <article class="panel run-panel">
+          <div class="panel-title"><h3>Generierung</h3></div>
+          <div class="run-options">
+            <label><span>Temperatur</span><input id="temperature" type="number" min="0" max="2" step="0.1" value="0"></label>
+            <label><span>Seed</span><input id="seed" type="number" value="0"></label>
+            <label><span>Max. Tokens</span><input id="maxTokens" type="number" min="1" placeholder="Modellstandard"></label>
+          </div>
+          <label class="check"><input id="reasoning" type="checkbox"><span>Reasoning aktivieren</span></label>
+          <label class="check"><input id="useCache" type="checkbox"><span>Lokalen Response-Cache verwenden</span></label>
+          <button class="button run" id="runButton" type="button">Experiment ausführen <span>→</span></button>
+          <p class="run-note">Prompt, Klausel und ausgewählte Kontextprojektion werden strukturiert an RamaLama gesendet.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="result-section" aria-labelledby="resultHeading">
+      <div class="section-heading">
+        <div>
+          <p class="step">03 · Ergebnis</p>
+          <h2 id="resultHeading">Strukturierte Antwort</h2>
+        </div>
+        <div class="result-meta" id="resultMeta"></div>
+      </div>
+      <div class="result-grid">
+        <pre id="resultOutput" class="result-output">Noch kein Experiment ausgeführt.</pre>
+        <details class="compiled-details">
+          <summary>Compilierten Prompt und Provenienz anzeigen</summary>
+          <pre id="compiledOutput"></pre>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

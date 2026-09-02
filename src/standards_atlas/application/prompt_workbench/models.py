@@ -101,6 +101,7 @@ class PromptExperimentRequest(BaseModel):
     seed: int | None = 0
     max_tokens: int | None = Field(default=None, gt=0)
     reasoning_enabled: bool | None = None
+    use_cache: bool = False
 
 
 @dataclass(frozen=True)

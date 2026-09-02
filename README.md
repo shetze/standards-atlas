@@ -62,6 +62,13 @@ uv run standards-atlas evaluation --help
 uv run standards-atlas mcp --help
 ```
 
+Start the optional local prompt workbench with an explicit chat-service type:
+
+```bash
+uv sync --extra chat --dev
+uv run standards-atlas chat serve --service prompt-workbench
+```
+
 The workflow intentionally stops at review boundaries when human confirmation is required. See the [getting-started path](docs/getting-started/README.md), the [document workflow](docs/user-guide/document-workflow.md), and the [MCP server guide](docs/user-guide/mcp-server.md) for operational details.
 
 ## Documentation

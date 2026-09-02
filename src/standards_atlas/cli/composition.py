@@ -223,3 +223,46 @@ def _work_root_for_workspace(workspace: Path) -> Path:
     if workspace.name == "data":
         return workspace.parent / "work"
     return workspace / "work"
+
+
+def build_prompt_workbench_web_app(
+    *,
+    workspace: Path,
+    llm_config_path: Path,
+    manifest_directory: Path,
+    http_config,
+):
+    """Compose the prompt workbench while keeping optional web imports lazy."""
+    from standards_atlas.adapters.evaluation import (
+        EngineeringDocumentClauseProvider,
+        ManifestRamaLamaModelCatalog,
+        ResourcePromptCatalog,
+    )
+    from standards_atlas.adapters.llm import LlmConfig, ManagedRamaLamaGateway
+    from standards_atlas.adapters.web import (
+        PromptWorkbenchWebDependencies,
+        create_prompt_workbench_app,
+    )
+    from standards_atlas.application.prompt_workbench import PromptExperimentService
+
+    clauses = EngineeringDocumentClauseProvider(workspace)
+    resources = Path(__file__).resolve().parents[1] / "resources" / "semantic" / "prompts"
+    prompts = ResourcePromptCatalog(resources)
+    models = ManifestRamaLamaModelCatalog.from_directory(manifest_directory)
+    runtime = ManagedRamaLamaGateway(LlmConfig.load(llm_config_path))
+    experiments = PromptExperimentService(
+        clauses=clauses,
+        prompts=prompts,
+        models=models,
+        gateway=runtime,
+    )
+    return create_prompt_workbench_app(
+        PromptWorkbenchWebDependencies(
+            clauses=clauses,
+            prompts=prompts,
+            models=models,
+            experiments=experiments,
+            runtime=runtime,
+        ),
+        http_config,
+    )
