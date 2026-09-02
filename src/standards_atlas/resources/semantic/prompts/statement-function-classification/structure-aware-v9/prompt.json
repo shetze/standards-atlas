@@ -1,0 +1,5 @@
+{
+  "description": "Qualification prompt centered on clause applicability with explicit requirement and technique-or-method boundaries.",
+  "task": "statement-function-classification",
+  "version": "structure-aware-v9"
+}

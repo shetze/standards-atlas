@@ -1371,7 +1371,7 @@ def test_prompt_candidate_rejects_unknown_cbox_frame() -> None:
         PromptCandidate(id="structure-aware", cbox_frame="missing-v1")
 
 
-def test_applicability_framing_manifest_declares_frame_ablation_without_changing_production() -> (
+def test_applicability_framing_manifest_declares_prompt_ablation_without_changing_production() -> (
     None
 ):
     project_root = Path(__file__).resolve().parents[5]
@@ -1392,12 +1392,15 @@ def test_applicability_framing_manifest_declares_frame_ablation_without_changing
     ] == "structure-aware-v8"
     assert experiment.execution.mode == "full_matrix"
     assert [prompt.id for prompt in experiment.prompts] == [
-        "applicability-clean-full",
-        "applicability-clean-minimal",
+        "applicability-boundary",
+        "applicability-boundary-examples",
     ]
     assert [prompt.cbox_frame for prompt in experiment.prompts] == [
         "full-context-v1",
-        "applicability-minimal-v1",
+        "full-context-v1",
     ]
-    assert {prompt.prompt_version for prompt in experiment.prompts} == {"structure-aware-v8"}
-    assert experiment.thresholds.baseline_prompt_id == "applicability-clean-full"
+    assert [prompt.prompt_version for prompt in experiment.prompts] == [
+        "structure-aware-v9",
+        "structure-aware-v9-examples",
+    ]
+    assert experiment.thresholds.baseline_prompt_id == "applicability-boundary"

@@ -83,3 +83,33 @@ def test_v8_applicability_qualification_prompt_is_binary_and_presence_first() ->
     assert "Do not classify exception or applicability_condition" in system
     assert applicability_items["enum"] == ["inclusion", "exclusion"]
     assert primary["enum"] == ["inclusion", "exclusion", None]
+
+
+def test_v9_applicability_prompts_encode_core_question_and_method_boundary() -> None:
+    plain = PromptRepository(RESOURCES / "prompts").load(
+        "statement-function-classification", "structure-aware-v9"
+    )
+    examples = PromptRepository(RESOURCES / "prompts").load(
+        "statement-function-classification", "structure-aware-v9-examples"
+    )
+
+    core_question = (
+        "Does the text contain a statement that restricts or extends the applicability "
+        "of this clause or of a referenced clause?"
+    )
+    for prompt in (plain, examples):
+        system = prompt.system_prompt
+        assert core_question in system
+        assert "technique, method, or measure applies or can be used" in system
+        assert 'A bare qualifier such as "if applicable" does not decide applicability' in system
+        assert "contains applicability statements in both directions" in system
+        assert prompt.output_schema["properties"]["applicability_functions"]["items"]["enum"] == [
+            "inclusion",
+            "exclusion",
+        ]
+
+    assert "Applicability boundary examples:" not in plain.system_prompt
+    assert examples.system_prompt.count("- Positive:") == 1
+    assert examples.system_prompt.count("- Negative:") == 1
+    assert "applicability_present=true" in examples.system_prompt
+    assert "applicability_present=false" in examples.system_prompt

@@ -454,11 +454,10 @@ Build the first review batch from a qualification archive:
 ```bash
 uv run standards-atlas evaluation applicability-corpus-build \
   --run local/evaluation/qualification-run-066.zip \
-  --review-output local/review/applicability/2.1.0/applicability-review-066.csv \
   --limit 30
 ```
 
-`--review-output` names the CSV file, allowing review batches to carry the qualification-run number. If the option is omitted, the command writes `local/review/applicability/2.1.0/applicability-golden-review.csv`. In either case it creates or updates `README.md` beside the CSV with the HITL instructions. Selection is deterministic and stratified across balanced presence disagreement, minority presence disagreement, framing-sensitive presence, and polarity disagreement. Within strata, document round-robin selection reduces domination by a single standard or part. Unused quota spills deterministically into the remaining candidate pool. The CLI reports candidate counts, exclusions, per-category selection accounting, and represented documents. The CSV also records vote counts, disagreement scores, participating model groups, and selection rank so that the selection decision remains auditable.
+The command writes `local/review/applicability/2.1.0/applicability-golden-review.csv`. Selection is deterministic and stratified across balanced presence disagreement, minority presence disagreement, framing-sensitive presence, and polarity disagreement. Within strata, document round-robin selection reduces domination by a single standard or part. Unused quota spills deterministically into the remaining candidate pool. The CLI reports candidate counts, exclusions, per-category selection accounting, and represented documents. The CSV also records vote counts, disagreement scores, participating model groups, and selection rank so that the selection decision remains auditable.
 
 Set `review_status=published`, review `present`, and set `polarity` to `included` or `excluded` when presence is true and the direction is clear. Publish the initial corpus with:
 
@@ -474,7 +473,6 @@ For a later qualification run, exclude already-published clauses during review c
 uv run standards-atlas evaluation applicability-corpus-build \
   --run local/evaluation/qualification-run-067.zip \
   --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
-  --review-output local/review/applicability/2.1.0/applicability-review-067.csv \
   --limit 30
 ```
 
@@ -482,7 +480,7 @@ After review, merge the newly published cases into the existing corpus:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-publish \
-  --review local/review/applicability/2.1.0/applicability-review-067.csv \
+  --review local/review/applicability/2.1.0/applicability-golden-review.csv \
   --run local/evaluation/qualification-run-067.zip \
   --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
   --output local/review/applicability/2.1.0/applicability-golden-corpus.yaml
@@ -501,7 +499,7 @@ uv run standards-atlas evaluation applicability-corpus-evaluate \
 
 The regression report contains consensus metrics, presence precision/recall/F1, and binary polarity accuracy for every model represented in the archived run. The golden corpus is deliberately a diagnostic hard-case corpus rather than a representative random sample; use its reviewed metrics for calibration and regression analysis rather than interpreting the class balance as corpus prevalence.
 
-### Full vs minimal CBox applicability matrix
+### Applicability boundary prompt matrix
 
 Analyze clause-level applicability presence disagreements from an immutable qualification run with:
 
@@ -513,12 +511,14 @@ uv run standards-atlas evaluation applicability-hard-cases \
 
 The analyzer ranks balanced and minority presence disagreements before framing-sensitive and polarity-only cases, reports per-model presence profiles, and writes JSON, Markdown, and a HITL-ready review CSV. New qualification archives include the compact `applicability-predictions.json` snapshot required for this retrospective analysis; older archives without clause-level predictions cannot be reconstructed from aggregate metrics alone.
 
-The dedicated framing manifest `manifests/multidimensional-semantic-qualification-v5-applicability-framing-v1.yaml` is a two-arm full-matrix experiment. Both arms use the same `structure-aware-v8` prompt and model set; only the deterministic CBox projection changes:
+The dedicated manifest `manifests/multidimensional-semantic-qualification-v5-applicability-framing-v1.yaml` is a two-arm full-matrix prompt experiment. Both arms use the same model set and the complete deterministic `full-context-v1` CBox, so only the prompt wording changes:
 
-- `applicability-clean-full` uses `full-context-v1`.
-- `applicability-clean-minimal` uses `applicability-minimal-v1`, which retains clause identity and heading but removes ancestors, sibling position, document categories, semantic sections, routing, and reference mentions.
+- `applicability-boundary` uses `structure-aware-v9` with the core question and explicit conceptual boundaries.
+- `applicability-boundary-examples` uses `structure-aware-v9-examples` with the same rules plus one positive and one negative technique-or-method example.
 
-This isolates the effect of additional CBox context from prompt wording. The applicability framing report is schema `2.0` and compares presence disagreement plus **polarity disagreement** between the full and minimal observations. Content-only and identity-only arms are intentionally excluded from this matrix.
+This isolates the effect of the examples from CBox framing. Both prompts treat an explicit statement about the applicability of a technique, method, or measure as positive applicability evidence, while a condition that only changes how it is performed remains negative. When a clause contains explicit applicability statements in both directions, presence stays positive and polarity remains empty.
+
+Qualification archives retain the matrix id, prompt candidate id, prompt resource version, CBox frame, model id, and clause-level predictions. New results can therefore be compared with archived `structure-aware-v8` results by evaluating both archives against the same published golden corpus. Recompute the regression report for older archives after the golden corpus changes; previously generated aggregate reports still reflect the earlier HITL labels.
 
 ### Knowledge qualification
 

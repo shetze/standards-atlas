@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "statement_functions",
+    "primary_function",
+    "knowledge_kinds",
+    "primary_knowledge_kind",
+    "process_functions",
+    "primary_process_function",
+    "applicability_present",
+    "applicability_functions",
+    "primary_applicability_function",
+    "role_semantics_present",
+    "role_relations",
+    "confidence",
+    "rationale"
+  ],
+  "properties": {
+    "statement_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "requirement",
+          "recommendation",
+          "condemnation",
+          "warning",
+          "guideline",
+          "permission",
+          "prohibition",
+          "definition",
+          "description",
+          "explanation",
+          "rationale",
+          "example",
+          "note",
+          "conformance_statement",
+          "objective",
+          "prerequisite",
+          "assumption"
+        ]
+      }
+    },
+    "knowledge_kinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "technique_or_measure",
+          "process",
+          "artifact",
+          "role",
+          "evidence",
+          "concept"
+        ]
+      }
+    },
+    "primary_knowledge_kind": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "technique_or_measure",
+        "process",
+        "artifact",
+        "role",
+        "evidence",
+        "concept",
+        null
+      ]
+    },
+    "process_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "objective",
+          "prerequisite",
+          "input",
+          "activity",
+          "decision",
+          "branch",
+          "sequence",
+          "output",
+          "completion_criterion",
+          "option",
+          "assumption"
+        ]
+      }
+    },
+    "applicability_present": {
+      "type": "boolean"
+    },
+    "applicability_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "inclusion",
+          "exclusion"
+        ]
+      }
+    },
+    "primary_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "requirement",
+        "recommendation",
+        "condemnation",
+        "warning",
+        "guideline",
+        "permission",
+        "prohibition",
+        "definition",
+        "description",
+        "explanation",
+        "rationale",
+        "example",
+        "note",
+        "conformance_statement",
+        "objective",
+        "prerequisite",
+        "assumption",
+        null
+      ]
+    },
+    "primary_process_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "objective",
+        "prerequisite",
+        "input",
+        "activity",
+        "decision",
+        "branch",
+        "sequence",
+        "output",
+        "completion_criterion",
+        "option",
+        "assumption",
+        null
+      ]
+    },
+    "primary_applicability_function": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "inclusion",
+        "exclusion",
+        null
+      ]
+    },
+    "confidence": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rationale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "role_relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "actor",
+          "relation_class",
+          "target"
+        ],
+        "properties": {
+          "actor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "relation_class": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Open semantic relation class; prefer the documented core vocabulary when it fits."
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "role_semantics_present": {
+      "type": "boolean"
+    }
+  }
+}

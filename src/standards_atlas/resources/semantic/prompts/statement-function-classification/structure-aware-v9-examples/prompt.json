@@ -1,0 +1,5 @@
+{
+  "description": "Qualification prompt centered on clause applicability with explicit boundaries and one positive and one negative technique-or-method example.",
+  "task": "statement-function-classification",
+  "version": "structure-aware-v9-examples"
+}

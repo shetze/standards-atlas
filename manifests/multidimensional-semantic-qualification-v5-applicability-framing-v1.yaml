@@ -1,6 +1,6 @@
 manifest_type: qualification_matrix
 schema_version: '1.5'
-matrix_id: multidimensional-semantic-qualification-v5-applicability-full-vs-minimal-cbox
+matrix_id: multidimensional-semantic-qualification-v5-applicability-prompt-boundary
 corpus_id: semantic-profile-v1
 task: semantic-profile-classification
 task_version: 2.4.0
@@ -11,18 +11,18 @@ execution:
 challenger_qualification:
   enabled: false
 prompts:
-- id: applicability-clean-full
-  prompt_version: structure-aware-v8
+- id: applicability-boundary
+  prompt_version: structure-aware-v9
   cbox_frame: full-context-v1
   max_output_tokens: 640
   adaptive_interview: true
-  description: Binary applicability qualification using the full deterministic CBox frame.
-- id: applicability-clean-minimal
-  prompt_version: structure-aware-v8
-  cbox_frame: applicability-minimal-v1
+  description: Core applicability question and conceptual boundaries without applicability examples.
+- id: applicability-boundary-examples
+  prompt_version: structure-aware-v9-examples
+  cbox_frame: full-context-v1
   max_output_tokens: 640
   adaptive_interview: true
-  description: Binary applicability qualification using clause identity and heading only.
+  description: Same applicability boundary with one positive and one negative technique-or-method example.
 reasoning_modes:
 - id: disabled
   enabled: false
@@ -235,7 +235,7 @@ thresholds:
   max_truncation_rate: 0.01
   max_mean_duration_seconds: 60
   max_peak_memory_gb: 24
-  baseline_prompt_id: applicability-clean-full
+  baseline_prompt_id: applicability-boundary
   baseline_model_id: qwen3-14b-q4-k-m
   baseline_reasoning_mode_id: disabled
   max_gold_f1_drop: 0.02

@@ -1,0 +1,61 @@
+Classify the clause along four independent semantic dimensions:
+1. statement_functions: linguistic or logical force;
+2. knowledge_kinds: engineering knowledge represented;
+3. applicability: whether explicit applicability semantics are present and, when present, their binary polarity;
+4. role_semantics: whether role semantics are present and, when explicit, the corresponding role_relations.
+
+A clause may have labels in more than one dimension. Empty lists are allowed when evidence is absent. Document structure is context evidence, but do not infer labels solely from a heading.
+Treat label arrays as sets: return each statement function, knowledge kind, process function, and applicability function at most once.
+
+Classify process-model functions separately from role semantics: objectives, prerequisites, inputs, activities, decisions, branches, sequences, outputs, completion criteria, options, and assumptions.
+
+Applicability qualification rules:
+- Decide applicability_present first by answering this core question: Does the text contain a statement that restricts or extends the applicability of this clause or of a referenced clause?
+- Treat normative content as including a document, section, clause, requirement, recommendation, technique, method, or measure. An explicit statement about where, when, or to what subject a technique, method, or measure applies or can be used is positive applicability evidence. Classify that knowledge independently as technique_or_measure.
+- Applicability requires a grounded change to the applicable set: the text must identify content whose applicability is included, excluded, restricted, extended, imported, or preserved for a stated subject or case.
+- A bare qualifier such as "if applicable" does not decide applicability. A condition that only changes how an activity, method, analysis, design, calculation, or process is selected or performed is not applicability.
+- Do not infer applicability merely because the clause is located in a Scope section, contains a prerequisite or assumption, references other content, uses a technique, or states an ordinary conditional requirement.
+- If applicability_present=false, return applicability_functions=[] and primary_applicability_function=null.
+- If applicability_present=true and every explicit applicability statement has one clear direction, return exactly one binary polarity using the existing transport labels: inclusion means included; exclusion means excluded.
+- Use inclusion for content brought into or retained in the applicable set, including explicit applicability, imported requirements, extensions to a stated subject, and statements that a technique, method, or measure can be used for that subject. Use exclusion for explicit non-applicability, scope exclusions, restrictions expressed as "only", or an explicit carve-out from otherwise applicable content.
+- If presence is clear but the clause contains applicability statements in both directions, or the direction is genuinely indeterminate, keep applicability_present=true and return applicability_functions=[] and primary_applicability_function=null.
+- Do not classify exception or applicability_condition in this qualification stage. Project an explicit one-directional carve-out to exclusion; otherwise leave polarity empty as described above.
+
+Classify techniques, methods, and measures as technique_or_measure. Statement function and knowledge kind are orthogonal. For statement functions, first collect every function directly supported by the complete clause, then choose primary_function as the main communicative purpose. Classify should as recommendation and should not as condemnation unless the wording is merely descriptive. Use warning for explicit risk, limitation, unsafe consequence, unreliable result, invalid assumption, or possible misuse. Preserve supported secondary functions.
+
+Role qualification rules:
+- role_semantics_present and role_relations belong to the same role_semantics dimension; they are not independent dimensions.
+- Set role_semantics_present=true when the clause explicitly describes a human or organizational role, responsibility, participation, assignment, consultation/information relationship, dependency/independence, membership, or a passive role/action semantics where the actor is omitted.
+- An actor must be an explicitly identified human or organizational role, person, group, organization, organizational unit, committee/body, supplier, duty holder, authority, or stakeholder. Being the grammatical subject is not sufficient. Technical objects such as systems, software, hardware, documents, requirements, methods, processes, results, and safety integrity levels are not actors merely because they are grammatical subjects.
+- Do not invent a missing actor. Passive role/action semantics such as "A hazard analysis shall be performed" may set role_semantics_present=true while returning role_relations=[].
+- Each role relation contains only actor, relation_class, and target. relation_class is open; prefer the core classes performance, responsibility, assignment, dependency, consultation, information, participation, and membership when they fit.
+- Target identifies what the actor's relation is about or directed toward. Do not repeat the actor as target unless the text explicitly states a reflexive relation.
+- If the text explicitly frames an action as a responsibility or accountability, use responsibility rather than performance. Do not turn applicability, technical properties, logical conditions, or artifact relations into RoleRelations.
+- Return every grounded relation separately for clauses containing multiple actors or relations.
+
+Boundary examples:
+- "The Assessor shall evaluate the evidence." -> role_semantics_present=true; Assessor / performance / evidence.
+- "A hazard analysis shall be performed." -> role_semantics_present=true; role_relations=[].
+- "The system shall satisfy the RAMS requirements." -> role_semantics_present=false; role_relations=[].
+- "These requirements apply to new systems." -> role_semantics_present=false; role_relations=[]; this is applicability.
+- "One responsibility of the technical committee is preparation of its publications." -> technical committee / responsibility / preparation of its publications.
+
+The task applies to clause narrative, not table-derived concepts or relations. Do not project table semantics back onto the containing clause.
+
+Return exactly one JSON object with every field below. Do not omit empty dimensions:
+{
+  "statement_functions": [],
+  "primary_function": null,
+  "knowledge_kinds": [],
+  "primary_knowledge_kind": null,
+  "process_functions": [],
+  "primary_process_function": null,
+  "applicability_present": false,
+  "applicability_functions": [],
+  "primary_applicability_function": null,
+  "role_semantics_present": false,
+  "role_relations": [],
+  "confidence": null,
+  "rationale": null
+}
+Use [] and null when the evidence does not support a label. Confidence values must be JSON numbers from 0.0 through 1.0.
