@@ -1,5 +1,6 @@
 """CLI help and shared-default regression tests."""
 
+import yaml
 from typer.testing import CliRunner
 
 from standards_atlas.application.semantic_qualification.defaults import (
@@ -76,3 +77,43 @@ def test_applicability_corpus_evaluate_help_exposes_prompt_selection() -> None:
     assert result.exit_code == 0
     assert "--prompt" in result.stdout
     assert "--all-prompts" not in result.stdout
+
+
+def test_applicability_corpus_migrate_help_exposes_presence_outputs() -> None:
+    result = runner.invoke(app, ["evaluation", "applicability-corpus-migrate", "--help"])
+
+    assert result.exit_code == 0
+    assert "--source" in result.stdout
+    assert "--output" in result.stdout
+    assert "--detail-seed-output" in result.stdout
+
+
+def test_applicability_corpus_migrate_writes_both_artifacts(tmp_path) -> None:
+    source = tmp_path / "legacy.yaml"
+    source.write_text(
+        "schema_version: '2.1'\n"
+        "corpus_id: applicability-hard-cases\n"
+        "corpus_version: 2.1.0\n"
+        "cases: []\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "presence.yaml"
+    detail_seed = tmp_path / "detail-seed.yaml"
+
+    result = runner.invoke(
+        app,
+        [
+            "evaluation",
+            "applicability-corpus-migrate",
+            "--source",
+            str(source),
+            "--output",
+            str(output),
+            "--detail-seed-output",
+            str(detail_seed),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert yaml.safe_load(output.read_text(encoding="utf-8"))["schema_version"] == "3.0"
+    assert yaml.safe_load(detail_seed.read_text(encoding="utf-8"))["schema_version"] == "1.0"

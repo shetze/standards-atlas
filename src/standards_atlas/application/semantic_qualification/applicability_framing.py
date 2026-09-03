@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from pathlib import Path
 from typing import Literal
 
@@ -23,9 +22,9 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
 
 
 class ApplicabilityFrameMetrics(BaseModel):
-    """Applicability behavior for one model/prompt/frame observation."""
+    """Presence behavior for one model/prompt/frame observation."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     prompt_id: str
     prompt_version: str | None = None
@@ -36,20 +35,18 @@ class ApplicabilityFrameMetrics(BaseModel):
     evaluated_clauses: int = Field(ge=0)
     applicability_present_count: int = Field(ge=0)
     applicability_present_rate: float = Field(ge=0.0, le=1.0)
-    polarity_counts: dict[str, int]
     golden_cases: int = Field(default=0, ge=0)
     false_positives: int | None = Field(default=None, ge=0)
     false_negatives: int | None = Field(default=None, ge=0)
     presence_precision: float | None = Field(default=None, ge=0.0, le=1.0)
     presence_recall: float | None = Field(default=None, ge=0.0, le=1.0)
     presence_f1: float | None = Field(default=None, ge=0.0, le=1.0)
-    polarity_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class ApplicabilityFrameDelta(BaseModel):
-    """Same-model applicability delta between two prompt/frame observations."""
+    """Same-model presence delta between two prompt/frame observations."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     baseline_prompt_id: str
     baseline_cbox_frame: str
@@ -61,8 +58,6 @@ class ApplicabilityFrameDelta(BaseModel):
     comparable_clauses: int = Field(ge=0)
     presence_disagreement_count: int = Field(ge=0)
     presence_disagreement_rate: float = Field(ge=0.0, le=1.0)
-    polarity_disagreement_count: int = Field(ge=0)
-    polarity_disagreement_rate: float = Field(ge=0.0, le=1.0)
     changed_to_present: int = Field(ge=0)
     changed_to_absent: int = Field(ge=0)
     golden_outcome: Literal["improved", "degraded", "unchanged", "unscored"] = "unscored"
@@ -71,11 +66,11 @@ class ApplicabilityFrameDelta(BaseModel):
 
 
 class ApplicabilityFramingReport(BaseModel):
-    """CBox framing ablation focused exclusively on applicability semantics."""
+    """CBox framing ablation focused exclusively on applicability presence."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["2.0"] = "2.0"
+    schema_version: Literal["3.0"] = "3.0"
     matrix_id: str
     corpus_id: str
     golden_corpus_id: str | None = None
@@ -90,6 +85,7 @@ def build_applicability_framing_report(
     golden_path: Path | None = None,
 ) -> ApplicabilityFramingReport:
     """Build a no-inference applicability framing ablation from existing observations."""
+
     prompt_by_id = {prompt.id: prompt for prompt in manifest.prompts}
     golden = _load_optional_golden(golden_path)
     expected = _golden_expected(golden)
@@ -151,7 +147,7 @@ def build_applicability_framing_report(
     if not rows:
         diagnostics.append("no completed prompt observations available for framing analysis")
     if rows and not comparisons:
-        diagnostics.append("no same-model full-context baseline is available for frame deltas")
+        diagnostics.append("no same-model comparison prompt is available for presence deltas")
     if golden is None:
         diagnostics.append(
             "no published applicability golden corpus loaded; framing deltas are descriptive only"
@@ -195,18 +191,14 @@ def _load_optional_golden(path: Path | None) -> ApplicabilityGoldenCorpus | None
 
 def _golden_expected(
     golden: ApplicabilityGoldenCorpus | None,
-) -> dict[tuple[str, str], tuple[bool, str | None]]:
+) -> dict[tuple[str, str], bool]:
     if golden is None:
         return {}
-    result: dict[tuple[str, str], tuple[bool, str | None]] = {}
-    for case in golden.cases:
-        if case.status != "published" or case.expected is None:
-            continue
-        result[(case.document_key, case.clause_id)] = (
-            case.expected.present,
-            case.expected.polarity.value if case.expected.polarity is not None else None,
-        )
-    return result
+    return {
+        (case.document_key, case.clause_id): case.expected.present
+        for case in golden.cases
+        if case.status == "published" and case.expected is not None
+    }
 
 
 def _metrics(
@@ -218,31 +210,21 @@ def _metrics(
     reasoning_mode_id: str,
     repetition: int,
     predictions: dict[str, StatementFunctionSelection],
-    expected: dict[tuple[str, str], tuple[bool, str | None]],
+    expected: dict[tuple[str, str], bool],
 ) -> ApplicabilityFrameMetrics:
     present = sum(selection.applicability_present for selection in predictions.values())
-    polarity_counts = Counter(
-        _polarity(selection) or "none"
-        for selection in predictions.values()
-        if selection.applicability_present
-    )
-    tp = fp = fn = polarity_total = polarity_correct = 0
-    golden_cases = 0
+    tp = fp = fn = golden_cases = 0
     for key, selection in predictions.items():
-        gold = _expected_for_prediction_key(expected, key)
-        if gold is None:
+        expected_present = _expected_for_prediction_key(expected, key)
+        if expected_present is None:
             continue
         golden_cases += 1
-        expected_present, expected_polarity = gold
         if selection.applicability_present and expected_present:
             tp += 1
-        elif selection.applicability_present and not expected_present:
+        elif selection.applicability_present:
             fp += 1
-        elif not selection.applicability_present and expected_present:
+        elif expected_present:
             fn += 1
-        if expected_present and expected_polarity is not None:
-            polarity_total += 1
-            polarity_correct += _polarity(selection) == expected_polarity
     precision = tp / (tp + fp) if tp + fp else 0.0
     recall = tp / (tp + fn) if tp + fn else 0.0
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
@@ -256,20 +238,16 @@ def _metrics(
         evaluated_clauses=len(predictions),
         applicability_present_count=present,
         applicability_present_rate=present / len(predictions) if predictions else 0.0,
-        polarity_counts=dict(sorted(polarity_counts.items())),
         golden_cases=golden_cases,
         false_positives=fp if golden_cases else None,
         false_negatives=fn if golden_cases else None,
         presence_precision=precision if golden_cases else None,
         presence_recall=recall if golden_cases else None,
         presence_f1=f1 if golden_cases else None,
-        polarity_accuracy=(polarity_correct / polarity_total if polarity_total else None),
     )
 
 
-def _expected_for_prediction_key(
-    expected: dict[tuple[str, str], tuple[bool, str | None]], key: str
-) -> tuple[bool, str | None] | None:
+def _expected_for_prediction_key(expected: dict[tuple[str, str], bool], key: str) -> bool | None:
     for (document_key, clause_id), value in expected.items():
         if key.endswith(f":{document_key}:{clause_id}"):
             return value
@@ -279,7 +257,7 @@ def _expected_for_prediction_key(
 def _select_baseline(rows: list[ApplicabilityFrameMetrics]) -> ApplicabilityFrameMetrics | None:
     full = [row for row in rows if row.cbox_frame == "full-context-v1"]
     clean_full = [row for row in full if row.prompt_id == "applicability-clean-full"]
-    return (clean_full or full or [None])[0]
+    return (clean_full or full or rows or [None])[0]
 
 
 def _compare(
@@ -289,7 +267,7 @@ def _compare(
     candidate_predictions: dict[str, StatementFunctionSelection],
 ) -> ApplicabilityFrameDelta:
     keys = sorted(set(baseline_predictions).intersection(candidate_predictions))
-    presence_disagreement = polarity_disagreement = to_present = to_absent = 0
+    presence_disagreement = to_present = to_absent = 0
     for key in keys:
         left = baseline_predictions[key]
         right = candidate_predictions[key]
@@ -299,12 +277,6 @@ def _compare(
                 to_present += 1
             else:
                 to_absent += 1
-        if (
-            left.applicability_present
-            and right.applicability_present
-            and _polarity(left) != _polarity(right)
-        ):
-            polarity_disagreement += 1
     baseline_errors = _golden_errors(baseline)
     candidate_errors = _golden_errors(candidate)
     outcome: Literal["improved", "degraded", "unchanged", "unscored"] = "unscored"
@@ -326,8 +298,6 @@ def _compare(
         comparable_clauses=len(keys),
         presence_disagreement_count=presence_disagreement,
         presence_disagreement_rate=presence_disagreement / len(keys) if keys else 0.0,
-        polarity_disagreement_count=polarity_disagreement,
-        polarity_disagreement_rate=polarity_disagreement / len(keys) if keys else 0.0,
         changed_to_present=to_present,
         changed_to_absent=to_absent,
         golden_outcome=outcome,
@@ -340,19 +310,6 @@ def _golden_errors(metrics: ApplicabilityFrameMetrics) -> int | None:
     if metrics.false_positives is None or metrics.false_negatives is None:
         return None
     return metrics.false_positives + metrics.false_negatives
-
-
-def _polarity(selection: StatementFunctionSelection) -> str | None:
-    value = None
-    if selection.primary_applicability_function is not None:
-        value = selection.primary_applicability_function.value
-    elif selection.applicability_functions:
-        value = selection.applicability_functions[0].value
-    if value == "inclusion":
-        return "included"
-    if value == "exclusion":
-        return "excluded"
-    return None
 
 
 def _render_markdown(report: ApplicabilityFramingReport) -> str:
@@ -370,8 +327,8 @@ def _render_markdown(report: ApplicabilityFramingReport) -> str:
             "## Frame observations",
             "",
             "| Prompt / frame | Model | Clauses | Present | Rate | FP | FN | "
-            "Precision | Recall | F1 | Polarity acc. |",
-            "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            "Precision | Recall | F1 |",
+            "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
         for item in report.observations:
             lines.append(
@@ -388,7 +345,6 @@ def _render_markdown(report: ApplicabilityFramingReport) -> str:
                         _fmt_float(item.presence_precision),
                         _fmt_float(item.presence_recall),
                         _fmt_float(item.presence_f1),
-                        _fmt_float(item.polarity_accuracy),
                     ]
                 )
                 + " |"
@@ -396,11 +352,11 @@ def _render_markdown(report: ApplicabilityFramingReport) -> str:
     if report.comparisons:
         lines += [
             "",
-            "## Full-context deltas",
+            "## Prompt/frame deltas",
             "",
             "| Baseline → candidate | Model | Clauses | Presence Δ | To present | "
-            "To absent | Polarity Δ | Golden | Errors |",
-            "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |",
+            "To absent | Golden | Errors |",
+            "| --- | --- | ---: | ---: | ---: | ---: | --- | --- |",
         ]
         for item in report.comparisons:
             errors = (
@@ -420,10 +376,6 @@ def _render_markdown(report: ApplicabilityFramingReport) -> str:
                         f"({item.presence_disagreement_rate:.3f})",
                         str(item.changed_to_present),
                         str(item.changed_to_absent),
-                        (
-                            f"{item.polarity_disagreement_count} "
-                            f"({item.polarity_disagreement_rate:.3f})"
-                        ),
                         item.golden_outcome,
                         errors,
                     ]

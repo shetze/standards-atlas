@@ -41,3 +41,18 @@ def test_cli_reexports_all_evaluation_defaults() -> None:
         cli_defaults.DEFAULT_EVALUATION_RETRY_TIMEOUTS
         == evaluation_defaults.DEFAULT_EVALUATION_RETRY_TIMEOUTS
     )
+
+
+def test_cli_reexports_applicability_presence_paths() -> None:
+    assert (
+        cli_defaults.DEFAULT_APPLICABILITY_REVIEW_OUTPUT
+        == evaluation_defaults.DEFAULT_APPLICABILITY_REVIEW_OUTPUT
+    )
+    assert (
+        cli_defaults.DEFAULT_APPLICABILITY_GOLDEN_CORPUS
+        == evaluation_defaults.DEFAULT_APPLICABILITY_GOLDEN_CORPUS
+    )
+    assert (
+        cli_defaults.DEFAULT_APPLICABILITY_DETAIL_SEED
+        == evaluation_defaults.DEFAULT_APPLICABILITY_DETAIL_SEED
+    )

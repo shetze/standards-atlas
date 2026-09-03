@@ -12,6 +12,7 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
     ApplicabilityGoldenCorpus,
     build_applicability_golden_review,
     evaluate_applicability_golden_corpus,
+    migrate_applicability_golden_corpus,
     publish_applicability_golden_review,
 )
 from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
@@ -200,6 +201,30 @@ def analyze_applicability_presence_hard_cases(
     typer.echo(f"JSON report              : {artifacts.json_path}")
     typer.echo(f"Markdown report          : {artifacts.markdown_path}")
     typer.echo(f"HITL review CSV          : {artifacts.review_path}")
+
+
+@evaluation_app.command("applicability-corpus-migrate")
+def migrate_applicability_corpus(
+    source: Annotated[Path, typer.Option("--source", exists=True, dir_okay=False)],
+    output: Annotated[
+        Path, typer.Option("--output", dir_okay=False)
+    ] = cli_defaults.DEFAULT_APPLICABILITY_GOLDEN_CORPUS,
+    detail_seed_output: Annotated[
+        Path, typer.Option("--detail-seed-output", dir_okay=False)
+    ] = cli_defaults.DEFAULT_APPLICABILITY_DETAIL_SEED,
+) -> None:
+    """Migrate schema-2.1 gold to presence-only schema 3.0 and preserve detail seeds."""
+    try:
+        result = migrate_applicability_golden_corpus(source, output, detail_seed_output)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Migrated gold cases     : {result.migrated_cases}")
+    typer.echo(f"Published gold cases    : {result.published_cases}")
+    typer.echo(f"Detail seed cases       : {result.detail_seed_cases}")
+    typer.echo(f"Positive without seed   : {result.positive_cases_without_detail_seed}")
+    typer.echo(f"Presence golden corpus  : {result.presence_corpus_path}")
+    typer.echo(f"Detail golden seed      : {result.detail_seed_path}")
 
 
 @evaluation_app.command("applicability-corpus-build")

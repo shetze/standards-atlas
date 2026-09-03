@@ -951,7 +951,7 @@ def qualify_model_prompt_matrix(
         )
         applicability_framing = build_applicability_framing_report(
             manifest=manifest,
-            golden_path=Path("local/review/applicability/2.1.0/applicability-golden-corpus.yaml"),
+            golden_path=cli_defaults.DEFAULT_APPLICABILITY_GOLDEN_CORPUS,
         )
         applicability_framing_paths = persist_applicability_framing_report(
             applicability_framing,

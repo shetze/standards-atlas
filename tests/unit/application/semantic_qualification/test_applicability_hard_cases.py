@@ -6,7 +6,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from zipfile import ZIP_DEFLATED, ZipFile
 
+import pytest
 import yaml
+from pydantic import ValidationError
 
 from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
     PREDICTION_SNAPSHOT_FILENAME,
@@ -14,22 +16,22 @@ from standards_atlas.application.semantic_qualification.applicability_hard_cases
     ApplicabilityPredictionObservation,
     ApplicabilityPredictionSnapshot,
     analyze_applicability_hard_cases,
+    load_applicability_prediction_snapshot,
     persist_applicability_prediction_snapshot,
 )
 
 
-def _prediction(model_clause: str, present: bool, polarity: str | None = None):
+def _prediction(model_clause: str, present: bool) -> ApplicabilityPrediction:
     return ApplicabilityPrediction(
         clause_key=f"functional-safety:DOC:{model_clause}",
         document_key="DOC",
         clause_id=model_clause,
         present=present,
-        polarity=polarity,
         confidence=0.8,
     )
 
 
-def _archive(path: Path) -> Path:
+def _archive(path: Path, *, presence_eligible: bool = True) -> Path:
     observations = []
     full = {
         "a": {"c1": True, "c2": False, "c3": True},
@@ -56,17 +58,22 @@ def _archive(path: Path) -> Path:
                     reasoning_mode_id="disabled",
                     repetition=1,
                     predictions=tuple(
-                        _prediction(
-                            clause_id,
-                            present,
-                            "included" if present else None,
-                        )
-                        for clause_id, present in clauses.items()
+                        _prediction(clause_id, present) for clause_id, present in clauses.items()
                     ),
                 )
             )
     snapshot = ApplicabilityPredictionSnapshot(matrix_id="matrix", observations=tuple(observations))
-    manifest = {"models": [{"id": model} for model in full]}
+    manifest = {
+        "models": [
+            {
+                "id": model,
+                "dimension_eligibility": {
+                    "applicability_presence": presence_eligible,
+                },
+            }
+            for model in full
+        ]
+    }
     dataset = {
         "examples": [
             {
@@ -95,6 +102,7 @@ def test_analyze_applicability_hard_cases_ranks_balanced_disagreement(tmp_path: 
         _archive(tmp_path / "qualification-run.zip"), tmp_path / "out", limit=10
     )
 
+    assert report.schema_version == "2.0"
     assert report.analyzed_clauses == 3
     assert report.cases[0].clause_id == "c1"
     assert report.cases[0].category == "balanced_presence_disagreement"
@@ -104,11 +112,13 @@ def test_analyze_applicability_hard_cases_ranks_balanced_disagreement(tmp_path: 
     assert report.cases[0].framing_sensitive_models == ("a",)
     assert report.category_counts["unanimous_absent"] == 1
     assert report.category_counts["unanimous_present"] == 1
+    assert "polarity_disagreement" not in report.category_counts
     assert artifacts.selected_count == 1
     with artifacts.review_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     assert rows[0]["vote_summary"] == "2 present / 2 absent"
     assert rows[0]["reference"] == "DOC:1"
+    assert "polarity" not in rows[0]
 
 
 def test_hard_case_analysis_requires_archived_clause_predictions(tmp_path: Path) -> None:
@@ -124,7 +134,7 @@ def test_hard_case_analysis_requires_archived_clause_predictions(tmp_path: Path)
         raise AssertionError("missing prediction snapshot must fail")
 
 
-def test_persist_prediction_snapshot_projects_only_applicability_fields(tmp_path: Path) -> None:
+def test_persist_prediction_snapshot_projects_presence_only(tmp_path: Path) -> None:
     run = tmp_path / "run" / "c1"
     run.mkdir(parents=True)
     payload = {
@@ -167,8 +177,80 @@ def test_persist_prediction_snapshot_projects_only_applicability_fields(tmp_path
         ),
     )
     path = persist_applicability_prediction_snapshot(manifest, tmp_path / "out")
-    snapshot = ApplicabilityPredictionSnapshot.model_validate_json(path.read_text())
+    raw = path.read_text()
+    snapshot = ApplicabilityPredictionSnapshot.model_validate_json(raw)
     prediction = snapshot.observations[0].predictions[0]
+    assert snapshot.schema_version == "2.0"
     assert prediction.present is True
-    assert prediction.polarity == "included"
     assert prediction.confidence == 0.91
+    assert "polarity" not in raw
+
+
+def test_legacy_prediction_snapshot_is_projected_to_presence_only() -> None:
+    legacy = {
+        "schema_version": "1.0",
+        "matrix_id": "legacy",
+        "observations": [
+            {
+                "prompt_id": "old",
+                "cbox_frame": "full-context-v1",
+                "model_id": "model-a",
+                "reasoning_mode_id": "disabled",
+                "repetition": 1,
+                "predictions": [
+                    {
+                        "clause_key": "functional-safety:DOC:c1",
+                        "document_key": "DOC",
+                        "clause_id": "c1",
+                        "present": True,
+                        "polarity": "excluded",
+                        "confidence": 0.8,
+                    }
+                ],
+            }
+        ],
+    }
+
+    projected = load_applicability_prediction_snapshot(json.dumps(legacy))
+
+    assert projected.schema_version == "2.0"
+    assert projected.observations[0].predictions[0].present is True
+    assert "polarity" not in projected.model_dump_json()
+
+
+def test_current_prediction_contract_rejects_polarity() -> None:
+    with pytest.raises(ValidationError):
+        ApplicabilityPrediction.model_validate(
+            {
+                "clause_key": "functional-safety:DOC:c1",
+                "document_key": "DOC",
+                "clause_id": "c1",
+                "present": True,
+                "polarity": "included",
+            }
+        )
+
+
+def test_explicitly_ineligible_presence_models_are_not_projected(tmp_path: Path) -> None:
+    report, artifacts = analyze_applicability_hard_cases(
+        _archive(tmp_path / "qualification-run.zip", presence_eligible=False),
+        tmp_path / "out",
+    )
+
+    assert report.analyzed_clauses == 0
+    assert report.cases == ()
+    assert report.model_profiles == ()
+    assert artifacts.selected_count == 0
+
+
+def test_unknown_prediction_snapshot_schema_is_rejected() -> None:
+    with pytest.raises(ValueError, match="unsupported applicability prediction snapshot schema"):
+        load_applicability_prediction_snapshot(
+            json.dumps(
+                {
+                    "schema_version": "3.0",
+                    "matrix_id": "future",
+                    "observations": [],
+                }
+            )
+        )

@@ -27,7 +27,6 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     PromptCandidate,
     QualificationMatrixManifest,
 )
-from standards_atlas.domain.model import ApplicabilityFunction
 
 
 def _reference(clause_id: str) -> ClauseReference:
@@ -44,17 +43,13 @@ def _prediction(
     reference: ClauseReference,
     *,
     present: bool,
-    subtype: ApplicabilityFunction | None = None,
 ) -> ClauseEvaluationAnnotation:
-    functions = (subtype,) if subtype is not None else ()
     return ClauseEvaluationAnnotation(
         task="semantic-profile-classification",
         lifecycle_status=AnnotationLifecycleStatus.PROPOSED,
         clause=reference,
         proposal=StatementFunctionSelection(
             applicability_present=present,
-            applicability_functions=functions,
-            primary_applicability_function=subtype,
             confidence=0.8,
         ),
         generator=AnnotationGenerator(
@@ -85,22 +80,22 @@ def _manifest(tmp_path: Path, full: Path, minimal: Path) -> QualificationMatrixM
         prompts=(
             PromptCandidate(
                 id="applicability-clean-full",
-                prompt_version="structure-aware-v8",
+                prompt_version="structure-aware-v10",
                 cbox_frame="full-context-v1",
             ),
             PromptCandidate(
                 id="applicability-clean-minimal",
-                prompt_version="structure-aware-v8",
+                prompt_version="structure-aware-v10",
                 cbox_frame="applicability-minimal-v1",
             ),
             PromptCandidate(
                 id="applicability-clean-isolated",
-                prompt_version="structure-aware-v8",
+                prompt_version="structure-aware-v10",
                 cbox_frame="applicability-isolated-v1",
             ),
             PromptCandidate(
                 id="content-only",
-                prompt_version="content-only-v6",
+                prompt_version="structure-aware-v10",
             ),
         ),
         models=(ModelCandidate(id="model-a", provider="local"),),
@@ -128,10 +123,10 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
     c2 = _reference("c2")
     full = tmp_path / "full"
     minimal = tmp_path / "minimal"
-    _write(full, _prediction(c1, present=True, subtype=ApplicabilityFunction.INCLUSION))
-    _write(full, _prediction(c2, present=True, subtype=ApplicabilityFunction.INCLUSION))
+    _write(full, _prediction(c1, present=True))
+    _write(full, _prediction(c2, present=True))
     _write(minimal, _prediction(c1, present=False))
-    _write(minimal, _prediction(c2, present=True, subtype=ApplicabilityFunction.EXCLUSION))
+    _write(minimal, _prediction(c2, present=True))
 
     provenance = ApplicabilityGoldenProvenance(
         source_archive="test.zip", source_archive_sha256="0" * 64
@@ -153,12 +148,9 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
                 document_key="IEC61508-3",
                 reference="IEC61508-3 c2",
                 text="Clause c2",
-                category="polarity_disagreement",
+                category="framing_sensitive_presence",
                 status="published",
-                expected=ApplicabilityGoldenExpected(
-                    present=True,
-                    polarity="excluded",
-                ),
+                expected=ApplicabilityGoldenExpected(present=True),
                 provenance=provenance,
             ),
         ),
@@ -172,7 +164,7 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
         manifest=_manifest(tmp_path, full, minimal), golden_path=golden_path
     )
 
-    assert report.schema_version == "2.0"
+    assert report.schema_version == "3.0"
     assert len(report.observations) == 2
     baseline = next(row for row in report.observations if row.cbox_frame == "full-context-v1")
     candidate = next(
@@ -181,11 +173,10 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
     assert baseline.false_positives == 1
     assert candidate.false_positives == 0
     assert candidate.false_negatives == 0
-    assert candidate.polarity_accuracy == 1.0
+    assert candidate.presence_f1 == 1.0
 
     delta = report.comparisons[0]
     assert delta.presence_disagreement_count == 1
-    assert delta.polarity_disagreement_count == 1
     assert delta.changed_to_absent == 1
     assert delta.golden_outcome == "improved"
     assert (delta.baseline_golden_errors, delta.candidate_golden_errors) == (1, 0)
@@ -193,9 +184,9 @@ def test_framing_report_measures_presence_deltas_and_golden_errors(tmp_path: Pat
     json_path, markdown_path = persist_applicability_framing_report(report, tmp_path / "out")
     assert json_path.exists()
     rendered = markdown_path.read_text(encoding="utf-8")
-    assert "Full-context deltas" in rendered
-    assert "Polarity Δ" in rendered
-    assert "Subtype Δ" not in rendered
+    assert "Prompt/frame deltas" in rendered
+    assert "Presence Δ" in rendered
+    assert "Polarity" not in rendered
     assert "improved" in rendered
 
 
@@ -203,7 +194,7 @@ def test_framing_report_is_descriptive_without_golden_corpus(tmp_path: Path) -> 
     reference = _reference("c1")
     full = tmp_path / "full"
     minimal = tmp_path / "minimal"
-    _write(full, _prediction(reference, present=True, subtype=ApplicabilityFunction.INCLUSION))
+    _write(full, _prediction(reference, present=True))
     _write(minimal, _prediction(reference, present=False))
 
     report = build_applicability_framing_report(

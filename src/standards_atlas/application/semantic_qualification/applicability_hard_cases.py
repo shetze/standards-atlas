@@ -14,7 +14,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
-    StatementFunctionSelection,
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
@@ -24,18 +23,19 @@ PREDICTION_SNAPSHOT_FILENAME = "applicability-predictions.json"
 
 
 class ApplicabilityPrediction(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    """One presence-only applicability prediction for an archived clause."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     clause_key: str
     document_key: str
     clause_id: str
     present: bool
-    polarity: Literal["included", "excluded"] | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class ApplicabilityPredictionObservation(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     prompt_id: str
     cbox_frame: str
@@ -46,15 +46,49 @@ class ApplicabilityPredictionObservation(BaseModel):
 
 
 class ApplicabilityPredictionSnapshot(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    """Current presence-only prediction snapshot written to qualification archives."""
 
-    schema_version: Literal["1.0"] = "1.0"
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["2.0"] = "2.0"
     matrix_id: str
     observations: tuple[ApplicabilityPredictionObservation, ...]
 
 
+class _LegacyApplicabilityPrediction(BaseModel):
+    """Polarity-era snapshot item accepted only for retrospective projection."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    clause_key: str
+    document_key: str
+    clause_id: str
+    present: bool
+    polarity: Literal["included", "excluded"] | None = None
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class _LegacyApplicabilityPredictionObservation(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    prompt_id: str
+    cbox_frame: str
+    model_id: str
+    reasoning_mode_id: str
+    repetition: int = Field(ge=1)
+    predictions: tuple[_LegacyApplicabilityPrediction, ...]
+
+
+class _LegacyApplicabilityPredictionSnapshot(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["1.0"] = "1.0"
+    matrix_id: str
+    observations: tuple[_LegacyApplicabilityPredictionObservation, ...]
+
+
 class PresenceHardCase(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     document_key: str
     clause_id: str
@@ -67,7 +101,6 @@ class PresenceHardCase(BaseModel):
         "unanimous_absent",
         "insufficient_presence_votes",
         "framing_sensitive_presence",
-        "polarity_disagreement",
     ]
     participating_models: int = Field(ge=0)
     present_count: int = Field(ge=0)
@@ -79,12 +112,10 @@ class PresenceHardCase(BaseModel):
     absent_models: tuple[str, ...] = ()
     consensus_present: bool | None = None
     framing_sensitive_models: tuple[str, ...] = ()
-    included_models: tuple[str, ...] = ()
-    excluded_models: tuple[str, ...] = ()
 
 
 class ApplicabilityModelPresenceProfile(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     model_id: str
     evaluated_clauses: int = Field(ge=0)
@@ -98,9 +129,9 @@ class ApplicabilityModelPresenceProfile(BaseModel):
 
 
 class PresenceHardCaseReport(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["2.0"] = "2.0"
     source_archive: str
     matrix_id: str
     baseline_prompt_id: str
@@ -113,7 +144,7 @@ class PresenceHardCaseReport(BaseModel):
 
 
 class PresenceHardCaseArtifacts(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     json_path: Path
     markdown_path: Path
@@ -121,11 +152,51 @@ class PresenceHardCaseArtifacts(BaseModel):
     selected_count: int = Field(ge=0)
 
 
+def load_applicability_prediction_snapshot(payload: bytes | str) -> ApplicabilityPredictionSnapshot:
+    """Load current snapshots and project polarity-era schema 1.0 to presence only."""
+
+    raw = json.loads(payload)
+    schema_version = str(raw.get("schema_version") or "")
+    if schema_version == "2.0":
+        return ApplicabilityPredictionSnapshot.model_validate(raw)
+    if schema_version != "1.0":
+        raise ValueError(
+            "unsupported applicability prediction snapshot schema "
+            f"{schema_version!r}; readable versions are '1.0' and '2.0'"
+        )
+
+    legacy = _LegacyApplicabilityPredictionSnapshot.model_validate(raw)
+    return ApplicabilityPredictionSnapshot(
+        matrix_id=legacy.matrix_id,
+        observations=tuple(
+            ApplicabilityPredictionObservation(
+                prompt_id=observation.prompt_id,
+                cbox_frame=observation.cbox_frame,
+                model_id=observation.model_id,
+                reasoning_mode_id=observation.reasoning_mode_id,
+                repetition=observation.repetition,
+                predictions=tuple(
+                    ApplicabilityPrediction(
+                        clause_key=prediction.clause_key,
+                        document_key=prediction.document_key,
+                        clause_id=prediction.clause_id,
+                        present=prediction.present,
+                        confidence=prediction.confidence,
+                    )
+                    for prediction in observation.predictions
+                ),
+            )
+            for observation in legacy.observations
+        ),
+    )
+
+
 def persist_applicability_prediction_snapshot(
     manifest: QualificationMatrixManifest,
     output_directory: Path,
 ) -> Path:
-    """Persist compact clause-level applicability predictions needed by run analysis."""
+    """Persist compact clause-level presence predictions needed by run analysis."""
+
     prompt_frames = {prompt.id: prompt.cbox_frame for prompt in manifest.prompts}
     observations: list[ApplicabilityPredictionObservation] = []
     for observation in manifest.observations:
@@ -145,7 +216,6 @@ def persist_applicability_prediction_snapshot(
                     document_key=annotation.clause.document_key,
                     clause_id=annotation.clause.clause_id,
                     present=selection.applicability_present,
-                    polarity=_polarity(selection),
                     confidence=selection.confidence,
                 )
             )
@@ -172,7 +242,8 @@ def persist_applicability_prediction_snapshot(
 
 
 def project_applicability_hard_cases(run_archive: Path) -> PresenceHardCaseReport:
-    """Project the shared clause-level hard-case view from an immutable qualification archive."""
+    """Project the shared clause-level hard-case view from an immutable run archive."""
+
     with ZipFile(run_archive) as archive:
         manifest = yaml.safe_load(archive.read("configuration/qualification-manifest.yaml")) or {}
         snapshot_name = _find_member(archive, PREDICTION_SNAPSHOT_FILENAME)
@@ -181,27 +252,26 @@ def project_applicability_hard_cases(run_archive: Path) -> PresenceHardCaseRepor
                 "qualification run does not contain clause-level applicability predictions; "
                 "rerun qualification with the current archive schema"
             )
-        snapshot = ApplicabilityPredictionSnapshot.model_validate_json(archive.read(snapshot_name))
+        snapshot = load_applicability_prediction_snapshot(archive.read(snapshot_name))
         dataset = json.loads(archive.read("inputs/corpus/dataset.json"))
 
     details = _dataset_details(dataset)
-    eligible = {
-        str(model.get("id"))
-        for model in manifest.get("models", [])
-        if bool((model.get("dimension_eligibility") or {}).get("applicability_presence", True))
-    }
-    polarity_eligible = {
-        str(model.get("id"))
-        for model in manifest.get("models", [])
-        if bool((model.get("dimension_eligibility") or {}).get("applicability_polarity", True))
-    }
+    eligible = _presence_eligible_model_ids(manifest)
     baseline_prompt, baseline_frame = _baseline(snapshot)
     baseline = _collapsed_predictions(
-        snapshot, prompt_id=baseline_prompt, cbox_frame=baseline_frame, eligible=eligible
+        snapshot,
+        prompt_id=baseline_prompt,
+        cbox_frame=baseline_frame,
+        eligible=eligible,
     )
-    minimal = _minimal_predictions(snapshot, eligible=eligible)
-    cases = _build_cases(baseline, minimal, details, polarity_eligible=polarity_eligible)
-    profiles = _model_profiles(baseline, minimal, cases)
+    comparison = _comparison_predictions(
+        snapshot,
+        baseline_prompt_id=baseline_prompt,
+        baseline_cbox_frame=baseline_frame,
+        eligible=eligible,
+    )
+    cases = _build_cases(baseline, comparison, details)
+    profiles = _model_profiles(baseline, comparison, cases)
     return PresenceHardCaseReport(
         source_archive=run_archive.name,
         matrix_id=snapshot.matrix_id,
@@ -221,6 +291,7 @@ def analyze_applicability_hard_cases(
     limit: int = 30,
 ) -> tuple[PresenceHardCaseReport, PresenceHardCaseArtifacts]:
     """Analyze model presence disagreement from an immutable qualification archive."""
+
     report = project_applicability_hard_cases(run_archive)
     cases = list(report.cases)
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -239,6 +310,17 @@ def analyze_applicability_hard_cases(
     )
 
 
+def _presence_eligible_model_ids(manifest: dict[str, Any]) -> set[str] | None:
+    models = tuple(manifest.get("models", []))
+    if not models:
+        return None
+    return {
+        str(model.get("id"))
+        for model in models
+        if bool((model.get("dimension_eligibility") or {}).get("applicability_presence", True))
+    }
+
+
 def _baseline(snapshot: ApplicabilityPredictionSnapshot) -> tuple[str, str]:
     observations = list(snapshot.observations)
     clean = [
@@ -253,16 +335,29 @@ def _baseline(snapshot: ApplicabilityPredictionSnapshot) -> tuple[str, str]:
     return selected[0].prompt_id, selected[0].cbox_frame
 
 
-def _minimal_predictions(
-    snapshot: ApplicabilityPredictionSnapshot, *, eligible: set[str]
+def _comparison_predictions(
+    snapshot: ApplicabilityPredictionSnapshot,
+    *,
+    baseline_prompt_id: str,
+    baseline_cbox_frame: str,
+    eligible: set[str] | None,
 ) -> dict[str, dict[str, ApplicabilityPrediction]]:
-    minimal = [item for item in snapshot.observations if item.cbox_frame != "full-context-v1"]
-    if not minimal:
+    arms = sorted(
+        {
+            (item.prompt_id, item.cbox_frame)
+            for item in snapshot.observations
+            if (item.prompt_id, item.cbox_frame) != (baseline_prompt_id, baseline_cbox_frame)
+        },
+        key=lambda item: (item[1] == "full-context-v1", item[0], item[1]),
+    )
+    if not arms:
         return {}
-    prompt_id = sorted({item.prompt_id for item in minimal})[0]
-    cbox_frame = sorted({item.cbox_frame for item in minimal if item.prompt_id == prompt_id})[0]
+    prompt_id, cbox_frame = arms[0]
     return _collapsed_predictions(
-        snapshot, prompt_id=prompt_id, cbox_frame=cbox_frame, eligible=eligible
+        snapshot,
+        prompt_id=prompt_id,
+        cbox_frame=cbox_frame,
+        eligible=eligible,
     )
 
 
@@ -271,13 +366,13 @@ def _collapsed_predictions(
     *,
     prompt_id: str,
     cbox_frame: str,
-    eligible: set[str],
+    eligible: set[str] | None,
 ) -> dict[str, dict[str, ApplicabilityPrediction]]:
     grouped: dict[tuple[str, str], list[ApplicabilityPrediction]] = defaultdict(list)
     for observation in snapshot.observations:
         if observation.prompt_id != prompt_id or observation.cbox_frame != cbox_frame:
             continue
-        if eligible and observation.model_id not in eligible:
+        if eligible is not None and observation.model_id not in eligible:
             continue
         for prediction in observation.predictions:
             grouped[(observation.model_id, prediction.clause_key)].append(prediction)
@@ -298,18 +393,10 @@ def _collapse_repetitions(
         return None
     selected_present = present > absent
     chosen = next(item for item in predictions if item.present == selected_present)
-    polarity = None
-    if selected_present:
-        counts = Counter(item.polarity for item in predictions if item.present and item.polarity)
-        if counts:
-            top = counts.most_common()
-            if len(top) == 1 or top[0][1] > top[1][1]:
-                polarity = top[0][0]
     confidences = [item.confidence for item in predictions if item.confidence is not None]
     return chosen.model_copy(
         update={
             "present": selected_present,
-            "polarity": polarity,
             "confidence": sum(confidences) / len(confidences) if confidences else None,
         }
     )
@@ -317,10 +404,8 @@ def _collapse_repetitions(
 
 def _build_cases(
     baseline: dict[str, dict[str, ApplicabilityPrediction]],
-    minimal: dict[str, dict[str, ApplicabilityPrediction]],
+    comparison: dict[str, dict[str, ApplicabilityPrediction]],
     details: dict[tuple[str, str], tuple[str, str]],
-    *,
-    polarity_eligible: set[str],
 ) -> list[PresenceHardCase]:
     clause_keys = sorted({key for predictions in baseline.values() for key in predictions})
     cases: list[PresenceHardCase] = []
@@ -328,6 +413,8 @@ def _build_cases(
         votes = {
             model: values[clause_key] for model, values in baseline.items() if clause_key in values
         }
+        if not votes:
+            continue
         present_models = tuple(sorted(model for model, vote in votes.items() if vote.present))
         absent_models = tuple(sorted(model for model, vote in votes.items() if not vote.present))
         count = len(votes)
@@ -340,25 +427,11 @@ def _build_cases(
             sorted(
                 model
                 for model, vote in votes.items()
-                if clause_key in minimal.get(model, {})
-                and minimal[model][clause_key].present != vote.present
+                if clause_key in comparison.get(model, {})
+                and comparison[model][clause_key].present != vote.present
             )
         )
-        included = tuple(
-            sorted(
-                model
-                for model, vote in votes.items()
-                if model in polarity_eligible and vote.present and vote.polarity == "included"
-            )
-        )
-        excluded = tuple(
-            sorted(
-                model
-                for model, vote in votes.items()
-                if model in polarity_eligible and vote.present and vote.polarity == "excluded"
-            )
-        )
-        category = _category(count, present_count, absent_count, framing, included, excluded)
+        category = _category(count, present_count, absent_count, framing)
         first = next(iter(votes.values()))
         reference, text = details.get((first.document_key, first.clause_id), (first.clause_id, ""))
         consensus = None if present_count == absent_count else present_count > absent_count
@@ -379,8 +452,6 @@ def _build_cases(
                 absent_models=absent_models,
                 consensus_present=consensus,
                 framing_sensitive_models=framing,
-                included_models=included,
-                excluded_models=excluded,
             )
         )
     cases.sort(key=_case_rank)
@@ -392,8 +463,6 @@ def _category(
     present: int,
     absent: int,
     framing: tuple[str, ...],
-    included: tuple[str, ...],
-    excluded: tuple[str, ...],
 ) -> str:
     if count < 3:
         return "insufficient_presence_votes"
@@ -404,8 +473,6 @@ def _category(
         )
     if framing:
         return "framing_sensitive_presence"
-    if included and excluded:
-        return "polarity_disagreement"
     return "unanimous_present" if present else "unanimous_absent"
 
 
@@ -414,10 +481,9 @@ def _case_rank(case: PresenceHardCase) -> tuple[Any, ...]:
         "balanced_presence_disagreement": 0,
         "minority_presence_disagreement": 1,
         "framing_sensitive_presence": 2,
-        "polarity_disagreement": 3,
-        "insufficient_presence_votes": 4,
-        "unanimous_present": 5,
-        "unanimous_absent": 6,
+        "insufficient_presence_votes": 3,
+        "unanimous_present": 4,
+        "unanimous_absent": 5,
     }
     return (
         priority[case.category],
@@ -432,7 +498,7 @@ def _case_rank(case: PresenceHardCase) -> tuple[Any, ...]:
 
 def _model_profiles(
     baseline: dict[str, dict[str, ApplicabilityPrediction]],
-    minimal: dict[str, dict[str, ApplicabilityPrediction]],
+    comparison: dict[str, dict[str, ApplicabilityPrediction]],
     cases: list[PresenceHardCase],
 ) -> list[ApplicabilityModelPresenceProfile]:
     case_map = {(case.document_key, case.clause_id): case for case in cases}
@@ -452,8 +518,8 @@ def _model_profiles(
                     minority_absent += 1
             if case.category == "balanced_presence_disagreement":
                 balanced += 1
-            if clause_key in minimal.get(model_id, {}):
-                framing += minimal[model_id][clause_key].present != prediction.present
+            if clause_key in comparison.get(model_id, {}):
+                framing += comparison[model_id][clause_key].present != prediction.present
         total = len(predictions)
         profiles.append(
             ApplicabilityModelPresenceProfile(
@@ -496,7 +562,6 @@ def _review_candidate(case: PresenceHardCase) -> bool:
         "balanced_presence_disagreement",
         "minority_presence_disagreement",
         "framing_sensitive_presence",
-        "polarity_disagreement",
     }
 
 
@@ -512,7 +577,6 @@ def _write_review_csv(path: Path, cases: tuple[PresenceHardCase, ...]) -> None:
         "text",
         "review_status",
         "present",
-        "polarity",
         "review_note",
         "clause_id",
     )
@@ -532,7 +596,6 @@ def _write_review_csv(path: Path, cases: tuple[PresenceHardCase, ...]) -> None:
                     "text": case.text,
                     "review_status": "pending",
                     "present": "",
-                    "polarity": "",
                     "review_note": "",
                     "clause_id": case.clause_id,
                 }
@@ -589,16 +652,3 @@ def _render_markdown(report: PresenceHardCaseReport) -> str:
             ]
         )
     return "\n".join(lines).rstrip() + "\n"
-
-
-def _polarity(selection: StatementFunctionSelection) -> Literal["included", "excluded"] | None:
-    value = None
-    if selection.primary_applicability_function is not None:
-        value = selection.primary_applicability_function.value
-    elif selection.applicability_functions:
-        value = selection.applicability_functions[0].value
-    if value == "inclusion":
-        return "included"
-    if value == "exclusion":
-        return "excluded"
-    return None

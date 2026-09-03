@@ -432,99 +432,150 @@ Passive role/action semantics remain positive for `role_semantics_present` when 
 
 Targets must be the explicit object or subject matter toward which the predicate is directed and must not simply repeat the actor unless the clause explicitly states a reflexive relation. Applicability, scope, technical properties, and logical conditions must not leak into `role_relations`.
 
-### Applicability qualification golden set
+### Applicability Presence Golden Set
 
-Applicability qualification uses a HITL-reviewed contract with `present` plus an optional binary `polarity` (`included` or `excluded`). Exception and generic condition semantics are outside this qualification stage. Schema 2.1 makes the corpus incremental: provenance is recorded per case, and new review batches can exclude clauses that are already published in an existing golden corpus. Legacy `applicability_function`/subtype fields and schema-2.0 corpus-level run provenance are not accepted.
+Applicability qualification uses a HITL-reviewed Presence-only contract. Schema 3.0 stores
+exactly one reviewed decision per published case:
 
-This 2.1 corpus and its evaluator are retained temporarily for regression against existing archived
-runs. The v6 central cascade consumes only the reviewed `present` value; the optional historical
-polarity annotation does not participate in v6 consensus, confidence, escalation, or model
-eligibility. Its dedicated Presence-only corpus migration belongs to the following slice.
+```yaml
+expected:
+  present: true
+```
 
-Build the first review batch from a qualification archive:
+The review question is identical to the question used by the central task:
+
+> Does the text contain statements that restrict or extend the applicability of this clause or a
+> referenced clause?
+
+Case-level provenance records the source qualification archive and its SHA-256 digest. The
+current corpus has no fields for detail classification. Additional Applicability semantics are a
+separate enrichment concern and do not affect Presence consensus, model eligibility, escalation,
+or regression metrics.
+
+#### Migrate an existing 2.1 corpus
+
+Schema 2.1 corpora are not loaded implicitly. Migrate them once with:
+
+```bash
+uv run standards-atlas evaluation applicability-corpus-migrate \
+  --source local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --output local/review/applicability/3.0.0/applicability-golden-corpus.yaml \
+  --detail-seed-output local/review/applicability/3.0.0/applicability-detail-golden-seed.yaml
+```
+
+The migration is deterministic. It copies the reviewed Presence decision and per-case provenance
+into the schema-3.0 corpus. Historical direction labels, where available, are isolated in
+`applicability-detail-golden-seed.yaml`. That file is marked as a partial seed for the later detail
+workflow; it is not a complete detail golden corpus and is never read by Presence qualification or
+regression. Reviewed positive cases without such a historical label are reported by the command.
+
+#### Build and publish review batches
+
+Build a review batch from a qualification archive:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-build \
-  --run local/evaluation/qualification-run-066.zip \
+  --run local/evaluation/qualification-run-070.zip \
   --limit 30
 ```
 
-The command writes `local/review/applicability/2.1.0/applicability-golden-review.csv`. Selection is deterministic and stratified across balanced presence disagreement, minority presence disagreement, framing-sensitive presence, and polarity disagreement. Within strata, document round-robin selection reduces domination by a single standard or part. Unused quota spills deterministically into the remaining candidate pool. The CLI reports candidate counts, exclusions, per-category selection accounting, and represented documents. The CSV also records vote counts, disagreement scores, participating model groups, and selection rank so that the selection decision remains auditable.
+The command writes
+`local/review/applicability/3.0.0/applicability-golden-review.csv` and a colocated review guide.
+Selection is deterministic and stratified across balanced Presence disagreement, minority
+Presence disagreement, and framing-sensitive Presence. Document round-robin selection reduces
+domination by a single standard or part, and unused quota spills deterministically into the
+remaining candidate pool. Vote counts, disagreement scores, participating model groups, and the
+selection rank remain in the CSV as audit evidence.
 
-Set `review_status=published`, review `present`, and set `polarity` to `included` or `excluded` when presence is true and the direction is clear. Publish the initial corpus with:
+For each completed row, set `review_status=published` and set only `present=true` or
+`present=false`. Publish the initial corpus with:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-publish \
-  --review local/review/applicability/2.1.0/applicability-golden-review.csv \
-  --run local/evaluation/qualification-run-066.zip
+  --review local/review/applicability/3.0.0/applicability-golden-review.csv \
+  --run local/evaluation/qualification-run-070.zip
 ```
 
-For a later qualification run, exclude already-published clauses during review construction:
+For a later qualification run, exclude already published clauses while constructing the next
+batch:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-build \
-  --run local/evaluation/qualification-run-067.zip \
-  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --run local/evaluation/qualification-run-071.zip \
+  --golden local/review/applicability/3.0.0/applicability-golden-corpus.yaml \
   --limit 30
 ```
 
-After review, merge the newly published cases into the existing corpus:
+Merge the reviewed batch into the existing corpus with:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-publish \
-  --review local/review/applicability/2.1.0/applicability-golden-review.csv \
-  --run local/evaluation/qualification-run-067.zip \
-  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
-  --output local/review/applicability/2.1.0/applicability-golden-corpus.yaml
+  --review local/review/applicability/3.0.0/applicability-golden-review.csv \
+  --run local/evaluation/qualification-run-071.zip \
+  --golden local/review/applicability/3.0.0/applicability-golden-corpus.yaml \
+  --output local/review/applicability/3.0.0/applicability-golden-corpus.yaml
 ```
 
-Re-publishing an already known clause with the same gold annotation is idempotent. A different `present` or `polarity` annotation for an existing `(document_key, clause_id)` is rejected instead of silently overwriting reviewed ground truth. Each published case retains the source qualification archive name and SHA256 digest.
+Publishing an already known clause with the same Presence decision is idempotent. A conflicting
+Presence decision for an existing `(document_key, clause_id)` is rejected instead of replacing
+reviewed ground truth. Review CSVs containing obsolete detail columns are rejected explicitly.
 
-Evaluate the enlarged corpus with:
+#### Evaluate archived runs
+
+Evaluate the Presence-only corpus with:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-evaluate \
-  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
-  --run local/evaluation/qualification-run-067.zip \
-  --output local/evaluation/qualification/applicability-golden-regression.json
+  --golden local/review/applicability/3.0.0/applicability-golden-corpus.yaml \
+  --run local/evaluation/qualification-run-071.zip \
+  --output local/evaluation/qualification/applicability-golden-regression-071.json
 ```
 
-The regression report contains consensus metrics, presence precision/recall/F1, and binary polarity accuracy for every model represented in the archived run. The golden corpus is deliberately a diagnostic hard-case corpus rather than a representative random sample; use its reviewed metrics for calibration and regression analysis rather than interpreting the class balance as corpus prevalence.
+The regression report records the corpus identity and version, published and matched case counts,
+missing clause identities, positive and negative class counts, predicted-positive counts and
+rates, the confusion matrix, precision, recall, specificity, balanced accuracy, and F1 for the
+archived majority decision and every eligible model. False-positive and false-negative cases keep
+the individual Presence votes for diagnosis. The golden corpus is deliberately a diagnostic
+hard-case corpus rather than a representative sample; its class balance must not be interpreted
+as corpus prevalence.
 
-Without a prompt selector, the evaluator uses the archived baseline prompt. Select one other
-archived prompt arm explicitly with its prompt id:
+Without `--prompt`, the evaluator selects the archived baseline prompt. Exactly one alternative
+archived prompt arm can be selected explicitly:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-evaluate \
-  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
+  --golden local/review/applicability/3.0.0/applicability-golden-corpus.yaml \
   --run local/evaluation/qualification-run-068.zip \
   --prompt applicability-boundary-examples \
   --output local/evaluation/qualification/applicability-golden-regression-068-examples.json
 ```
 
-Each evaluator invocation produces exactly one regression report. Re-run the command with a
-different `--prompt` value when archived prompt arms need separate comparison artifacts.
+Each invocation creates one report. Current prediction snapshots use schema 2.0 and contain only
+Presence. Prediction snapshots from archived schema-1.0 runs are read through an explicit
+Presence projection, so those runs remain comparable against schema-3.0 gold. Unknown snapshot
+schemas and archives without clause-level predictions are rejected.
 
-### Applicability boundary prompt matrix
+### Applicability Presence hard cases and archived prompt experiments
 
-Analyze clause-level applicability presence disagreements from an immutable qualification run with:
+Analyze clause-level Presence disagreements from an immutable qualification run with:
 
 ```bash
 uv run standards-atlas evaluation applicability-hard-cases \
-  local/evaluation/qualification-run-064.zip \
+  local/evaluation/qualification-run-070.zip \
   --output local/evaluation/applicability-hard-cases
 ```
 
-The analyzer ranks balanced and minority presence disagreements before framing-sensitive and polarity-only cases, reports per-model presence profiles, and writes JSON, Markdown, and a HITL-ready review CSV. New qualification archives include the compact `applicability-predictions.json` snapshot required for this retrospective analysis; older archives without clause-level predictions cannot be reconstructed from aggregate metrics alone.
+The analyzer ranks balanced and minority Presence disagreements and framing-sensitive cases,
+reports per-model Presence profiles, and writes JSON, Markdown, and a HITL-ready review CSV. New
+qualification archives write the compact `applicability-predictions.json` snapshot with schema
+2.0. The same explicit schema-1.0 Presence projection used by the evaluator is available for
+older archives.
 
-The dedicated manifest `manifests/multidimensional-semantic-qualification-v5-applicability-framing-v1.yaml` is a two-arm full-matrix prompt experiment. Both arms use the same model set and the complete deterministic `full-context-v1` CBox, so only the prompt wording changes:
-
-- `applicability-boundary` uses `structure-aware-v9` with the core question and explicit conceptual boundaries.
-- `applicability-boundary-examples` uses `structure-aware-v9-examples` with the same rules plus one positive and one negative technique-or-method example.
-
-This isolates the effect of the examples from CBox framing. Both prompts treat an explicit statement about the applicability of a technique, method, or measure as positive applicability evidence, while a condition that only changes how it is performed remains negative. When a clause contains explicit applicability statements in both directions, presence stays positive and polarity remains empty.
-
-Qualification archives retain the matrix id, prompt candidate id, prompt resource version, CBox frame, model id, and clause-level predictions. New results can therefore be compared with archived `structure-aware-v8` results by evaluating both archives against the same published golden corpus. Recompute the regression report for older archives after the golden corpus changes; previously generated aggregate reports still reflect the earlier HITL labels.
+The active v6 cascade uses one shared `structure-aware-v10` prompt arm. Older qualification
+archives may contain several prompt/frame arms from earlier experiments. They remain selectable
+one at a time through `applicability-corpus-evaluate --prompt`; only their archived Presence
+answers participate in the comparison. Recompute a report whenever the published Golden Corpus
+changes because aggregate reports retain the labels used when they were created.
 
 ### Knowledge qualification
 

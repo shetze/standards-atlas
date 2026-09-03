@@ -17,7 +17,13 @@ DEFAULT_EVALUATION_RETRY_ATTEMPTS = 3
 DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS = 2.0
 DEFAULT_EVALUATION_RETRY_TIMEOUTS = False
 DEFAULT_APPLICABILITY_REVIEW_OUTPUT = Path(
-    "local/review/applicability/2.1.0/applicability-golden-review.csv"
+    "local/review/applicability/3.0.0/applicability-golden-review.csv"
+)
+DEFAULT_APPLICABILITY_GOLDEN_CORPUS = Path(
+    "local/review/applicability/3.0.0/applicability-golden-corpus.yaml"
+)
+DEFAULT_APPLICABILITY_DETAIL_SEED = Path(
+    "local/review/applicability/3.0.0/applicability-detail-golden-seed.yaml"
 )
 
 STATEMENT_FUNCTION_PROMPT_VERSIONS = (

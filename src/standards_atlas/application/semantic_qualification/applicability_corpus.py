@@ -13,9 +13,6 @@ from zipfile import ZipFile
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from standards_atlas.application.semantic_qualification.applicability_contract import (
-    ApplicabilityPolarity,
-)
 from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
     PREDICTION_SNAPSHOT_FILENAME,
     ApplicabilityPrediction,
@@ -26,24 +23,19 @@ from standards_atlas.application.semantic_qualification.applicability_hard_cases
     _collapsed_predictions,
     _dataset_details,
     _find_member,
+    _presence_eligible_model_ids,
     _review_candidate,
+    load_applicability_prediction_snapshot,
     project_applicability_hard_cases,
 )
 
 
 class ApplicabilityGoldenExpected(BaseModel):
-    """Human-reviewed applicability reference for one clause."""
+    """Human-reviewed presence reference for one clause."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     present: bool
-    polarity: ApplicabilityPolarity | None = None
-
-    @model_validator(mode="after")
-    def polarity_requires_presence(self) -> ApplicabilityGoldenExpected:
-        if self.polarity is not None and not self.present:
-            raise ValueError("applicability polarity requires present=true")
-        return self
 
 
 class ApplicabilityGoldenProvenance(BaseModel):
@@ -52,11 +44,11 @@ class ApplicabilityGoldenProvenance(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     source_archive: str
-    source_archive_sha256: str
+    source_archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class ApplicabilityGoldenCase(BaseModel):
-    """One selected applicability hard case and optional published reference."""
+    """One selected applicability hard case and optional published presence reference."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -77,13 +69,13 @@ class ApplicabilityGoldenCase(BaseModel):
 
 
 class ApplicabilityGoldenCorpus(BaseModel):
-    """Incremental applicability hard-case golden corpus."""
+    """Incremental presence-only applicability hard-case golden corpus."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["2.1"] = "2.1"
+    schema_version: Literal["3.0"] = "3.0"
     corpus_id: str = "applicability-hard-cases"
-    corpus_version: str = "2.1.0"
+    corpus_version: str = "3.0.0"
     cases: tuple[ApplicabilityGoldenCase, ...]
 
     @model_validator(mode="after")
@@ -95,13 +87,126 @@ class ApplicabilityGoldenCorpus(BaseModel):
 
     @classmethod
     def load(cls, path: Path) -> ApplicabilityGoldenCorpus:
-        return cls.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")) or {})
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        if isinstance(raw, dict) and raw.get("schema_version") == "2.1":
+            raise ValueError(
+                "applicability golden corpus schema 2.1 must be migrated to presence-only "
+                "schema 3.0 with `standards-atlas evaluation applicability-corpus-migrate`"
+            )
+        return cls.model_validate(raw)
+
+
+class _LegacyApplicabilityGoldenExpected(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    present: bool
+    polarity: Literal["included", "excluded"] | None = None
+
+    @model_validator(mode="after")
+    def polarity_requires_presence(self) -> _LegacyApplicabilityGoldenExpected:
+        if self.polarity is not None and not self.present:
+            raise ValueError("legacy applicability polarity requires present=true")
+        return self
+
+
+class _LegacyApplicabilityGoldenCase(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    clause_id: str
+    document_key: str
+    reference: str
+    text: str
+    category: str
+    status: Literal["proposed", "published", "rejected"] = "proposed"
+    expected: _LegacyApplicabilityGoldenExpected | None = None
+    provenance: ApplicabilityGoldenProvenance | None = None
+
+    @model_validator(mode="after")
+    def published_requires_reference_and_provenance(self) -> _LegacyApplicabilityGoldenCase:
+        if self.status == "published" and (self.expected is None or self.provenance is None):
+            raise ValueError("published legacy applicability cases require expected and provenance")
+        return self
+
+
+class _LegacyApplicabilityGoldenCorpus(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["2.1"] = "2.1"
+    corpus_id: str = "applicability-hard-cases"
+    corpus_version: str = "2.1.0"
+    cases: tuple[_LegacyApplicabilityGoldenCase, ...]
+
+    @model_validator(mode="after")
+    def case_keys_must_be_unique(self) -> _LegacyApplicabilityGoldenCorpus:
+        keys = [(case.document_key, case.clause_id) for case in self.cases]
+        if len(keys) != len(set(keys)):
+            raise ValueError("legacy applicability golden corpus case keys must be unique")
+        return self
+
+
+class ApplicabilityDetailSeedExpected(BaseModel):
+    """Partial historical hint retained for the later detail-enrichment corpus."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source_polarity: Literal["included", "excluded"]
+    applicability_functions: tuple[Literal["inclusion", "exclusion"], ...] = Field(
+        min_length=1,
+        max_length=1,
+    )
+    annotation_scope: Literal["partial"] = "partial"
+
+
+class ApplicabilityDetailSeedCase(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    clause_id: str
+    document_key: str
+    reference: str
+    text: str
+    category: str
+    expected: ApplicabilityDetailSeedExpected
+    provenance: ApplicabilityGoldenProvenance
+
+
+class ApplicabilityDetailGoldenSeed(BaseModel):
+    """Historical labels isolated from the presence-only qualification contract."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["1.0"] = "1.0"
+    seed_id: str = "applicability-detail-golden-seed"
+    seed_version: str = "1.0.0"
+    source_corpus_id: str
+    source_corpus_version: str
+    source_corpus_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    cases: tuple[ApplicabilityDetailSeedCase, ...]
+
+    @model_validator(mode="after")
+    def case_keys_must_be_unique(self) -> ApplicabilityDetailGoldenSeed:
+        keys = [(case.document_key, case.clause_id) for case in self.cases]
+        if len(keys) != len(set(keys)):
+            raise ValueError("applicability detail seed case keys must be unique")
+        return self
+
+
+class ApplicabilityCorpusMigrationResult(BaseModel):
+    """Artifacts and accounting from the deterministic schema-2.1 migration."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    presence_corpus_path: Path
+    detail_seed_path: Path
+    migrated_cases: int = Field(ge=0)
+    published_cases: int = Field(ge=0)
+    detail_seed_cases: int = Field(ge=0)
+    positive_cases_without_detail_seed: int = Field(ge=0)
 
 
 class ApplicabilityCorpusBuildResult(BaseModel):
     """Artifacts and auditable accounting from stratified hard-case selection."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     review_path: Path
     review_guide_path: Path
@@ -116,12 +221,14 @@ class ApplicabilityCorpusBuildResult(BaseModel):
 
 
 class ApplicabilityModelMetrics(BaseModel):
-    """Presence and polarity diagnostics against published applicability gold cases."""
+    """Presence diagnostics against published applicability gold cases."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     model_id: str
     evaluated_cases: int = Field(ge=0)
+    predicted_positive_cases: int = Field(ge=0)
+    predicted_positive_rate: float = Field(ge=0.0, le=1.0)
     true_positive: int = Field(ge=0)
     false_positive: int = Field(ge=0)
     true_negative: int = Field(ge=0)
@@ -132,14 +239,12 @@ class ApplicabilityModelMetrics(BaseModel):
     presence_specificity: float = Field(ge=0.0, le=1.0)
     presence_balanced_accuracy: float = Field(ge=0.0, le=1.0)
     presence_f1: float = Field(ge=0.0, le=1.0)
-    polarity_end_to_end_accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
-    polarity_accuracy_given_presence: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class ApplicabilityCaseError(BaseModel):
     """One false presence prediction with enough context for HITL diagnosis."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     evaluator_id: str
     document_key: str
@@ -154,7 +259,7 @@ class ApplicabilityCaseError(BaseModel):
 class ApplicabilityEnsembleMetrics(BaseModel):
     """Offline majority-vote candidate evaluated without changing production consensus."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     ensemble_id: str
     model_ids: tuple[str, ...]
@@ -162,13 +267,18 @@ class ApplicabilityEnsembleMetrics(BaseModel):
 
 
 class ApplicabilityGoldenRegressionReport(BaseModel):
-    """Offline calibration report against the applicability golden set."""
+    """Presence-only calibration report against the applicability golden set."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
+    schema_version: Literal["2.0"] = "2.0"
+    golden_corpus_id: str
+    golden_corpus_version: str
     prompt_id: str | None = None
     cbox_frame: str | None = None
     published_cases: int = Field(ge=0)
+    matched_cases: int = Field(ge=0)
+    missing_cases: tuple[str, ...] = ()
     positive_cases: int = Field(ge=0)
     negative_cases: int = Field(ge=0)
     baseline_majority: ApplicabilityModelMetrics
@@ -178,10 +288,9 @@ class ApplicabilityGoldenRegressionReport(BaseModel):
 
 
 STRATIFIED_CATEGORY_WEIGHTS: tuple[tuple[str, int], ...] = (
-    ("balanced_presence_disagreement", 35),
-    ("minority_presence_disagreement", 30),
+    ("balanced_presence_disagreement", 45),
+    ("minority_presence_disagreement", 35),
     ("framing_sensitive_presence", 20),
-    ("polarity_disagreement", 15),
 )
 
 
@@ -193,6 +302,7 @@ def build_applicability_golden_review(
     limit: int = 30,
 ) -> ApplicabilityCorpusBuildResult:
     """Create an incremental deterministic stratified HITL applicability review."""
+
     report = project_applicability_hard_cases(run_archive)
     candidates = [case for case in report.cases if _review_candidate(case)]
     existing_keys: set[tuple[str, str]] = set()
@@ -207,7 +317,7 @@ def build_applicability_golden_review(
     if not selected:
         raise ValueError("qualification run contains no new applicability hard-case candidates")
 
-    review_dir = review_root / "applicability" / "2.1.0"
+    review_dir = review_root / "applicability" / "3.0.0"
     review_path = review_dir / "applicability-golden-review.csv"
     review_created = False
     if not review_path.exists():
@@ -236,6 +346,7 @@ def _select_stratified_cases(
     candidates: list[PresenceHardCase], *, limit: int
 ) -> tuple[PresenceHardCase, ...]:
     """Select deterministic category-stratified cases with document round-robin diversity."""
+
     if limit <= 0 or not candidates:
         return ()
     category_order = tuple(category for category, _ in STRATIFIED_CATEGORY_WEIGHTS)
@@ -311,11 +422,15 @@ def publish_applicability_golden_review(
     *,
     golden_path: Path | None = None,
 ) -> ApplicabilityGoldenCorpus:
-    """Merge published HITL rows into the schema-2.1 machine-readable golden set."""
+    """Merge published HITL rows into the presence-only schema-3.0 golden set."""
+
     with review_path.open("r", encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+        reader = csv.DictReader(handle)
+        _validate_presence_review_columns(reader.fieldnames)
+        rows = list(reader)
     provenance = ApplicabilityGoldenProvenance(
-        source_archive=run_archive.name, source_archive_sha256=_sha256(run_archive)
+        source_archive=run_archive.name,
+        source_archive_sha256=_sha256(run_archive),
     )
     published: list[ApplicabilityGoldenCase] = []
     for row in rows:
@@ -325,7 +440,6 @@ def publish_applicability_golden_review(
         present = _parse_bool(row.get("present"))
         if present is None:
             raise ValueError("published applicability rows require present")
-        polarity = (row.get("polarity") or "").strip() or None
         published.append(
             ApplicabilityGoldenCase(
                 clause_id=(row.get("clause_id") or "").strip(),
@@ -334,7 +448,7 @@ def publish_applicability_golden_review(
                 text=row.get("text") or "",
                 category=(row.get("category") or "minority_presence_disagreement").strip(),
                 status="published",
-                expected=ApplicabilityGoldenExpected(present=present, polarity=polarity),
+                expected=ApplicabilityGoldenExpected(present=present),
                 provenance=provenance,
             )
         )
@@ -358,12 +472,96 @@ def publish_applicability_golden_review(
 
     merged.sort(key=lambda case: (case.document_key, case.reference, case.clause_id))
     corpus = ApplicabilityGoldenCorpus(cases=tuple(merged))
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        yaml.safe_dump(corpus.model_dump(mode="json"), sort_keys=False, allow_unicode=True),
-        encoding="utf-8",
-    )
+    _write_yaml(output_path, corpus.model_dump(mode="json"))
     return corpus
+
+
+def migrate_applicability_golden_corpus(
+    source_path: Path,
+    output_path: Path,
+    detail_seed_path: Path,
+) -> ApplicabilityCorpusMigrationResult:
+    """Migrate schema 2.1 to presence-only schema 3.0 and isolate historical detail hints."""
+
+    raw = yaml.safe_load(source_path.read_text(encoding="utf-8")) or {}
+    legacy = _LegacyApplicabilityGoldenCorpus.model_validate(raw)
+    ordered = sorted(
+        legacy.cases,
+        key=lambda case: (case.document_key, case.reference, case.clause_id),
+    )
+    presence_cases = tuple(
+        ApplicabilityGoldenCase(
+            clause_id=case.clause_id,
+            document_key=case.document_key,
+            reference=case.reference,
+            text=case.text,
+            category=_presence_category(case.category),
+            status=case.status,
+            expected=(
+                ApplicabilityGoldenExpected(present=case.expected.present)
+                if case.expected is not None
+                else None
+            ),
+            provenance=case.provenance,
+        )
+        for case in ordered
+    )
+    presence_corpus = ApplicabilityGoldenCorpus(
+        corpus_id=legacy.corpus_id,
+        cases=presence_cases,
+    )
+
+    detail_cases: list[ApplicabilityDetailSeedCase] = []
+    positive_without_seed = 0
+    for case in ordered:
+        expected = case.expected
+        if case.status != "published" or expected is None or not expected.present:
+            continue
+        if expected.polarity is None:
+            positive_without_seed += 1
+            continue
+        if case.provenance is None:
+            raise ValueError("published legacy applicability case lacks provenance")
+        function = "inclusion" if expected.polarity == "included" else "exclusion"
+        detail_cases.append(
+            ApplicabilityDetailSeedCase(
+                clause_id=case.clause_id,
+                document_key=case.document_key,
+                reference=case.reference,
+                text=case.text,
+                category=case.category,
+                expected=ApplicabilityDetailSeedExpected(
+                    source_polarity=expected.polarity,
+                    applicability_functions=(function,),
+                ),
+                provenance=case.provenance,
+            )
+        )
+    detail_seed = ApplicabilityDetailGoldenSeed(
+        source_corpus_id=legacy.corpus_id,
+        source_corpus_version=legacy.corpus_version,
+        source_corpus_sha256=_sha256(source_path),
+        cases=tuple(detail_cases),
+    )
+
+    _write_yaml(output_path, presence_corpus.model_dump(mode="json"))
+    _write_yaml(detail_seed_path, detail_seed.model_dump(mode="json"))
+    return ApplicabilityCorpusMigrationResult(
+        presence_corpus_path=output_path,
+        detail_seed_path=detail_seed_path,
+        migrated_cases=len(presence_cases),
+        published_cases=sum(case.status == "published" for case in presence_cases),
+        detail_seed_cases=len(detail_cases),
+        positive_cases_without_detail_seed=positive_without_seed,
+    )
+
+
+def _presence_category(category: str) -> str:
+    """Normalize obsolete detail-oriented strata in the presence-only corpus."""
+
+    if "polarity" in category:
+        return "migrated_reviewed_presence"
+    return category
 
 
 def evaluate_applicability_golden_corpus(
@@ -372,7 +570,8 @@ def evaluate_applicability_golden_corpus(
     *,
     prompt_id: str | None = None,
 ) -> ApplicabilityGoldenRegressionReport:
-    """Measure one prompt arm against HITL gold, defaulting to the archived baseline."""
+    """Measure one archived prompt arm against presence-only HITL gold."""
+
     manifest, snapshot, dataset = _load_run_snapshot(run_archive)
     selected_prompt_id, cbox_frame = _resolve_prompt_frame(snapshot, prompt_id)
     report = _project_run_inputs(
@@ -397,7 +596,8 @@ def _evaluate_applicability_run_report(
     prompt_id: str,
     cbox_frame: str,
 ) -> ApplicabilityGoldenRegressionReport:
-    """Score one already-projected prompt arm against published HITL labels."""
+    """Score one already-projected prompt arm against published presence labels."""
+
     clauses = {
         (str(item.get("document_key")), str(item.get("clause_id"))): item
         for item in report.get("clauses", [])
@@ -408,35 +608,32 @@ def _evaluate_applicability_run_report(
     if not published:
         raise ValueError("applicability golden corpus contains no published cases")
 
-    baseline_predictions: list[tuple[bool, str | None, ApplicabilityGoldenExpected]] = []
-    model_predictions: dict[str, list[tuple[bool, str | None, ApplicabilityGoldenExpected]]] = {}
-    case_votes: dict[tuple[str, str], dict[str, tuple[bool, str | None]]] = {}
+    baseline_predictions: list[tuple[bool, ApplicabilityGoldenExpected]] = []
+    model_predictions: dict[str, list[tuple[bool, ApplicabilityGoldenExpected]]] = {}
+    case_votes: dict[tuple[str, str], dict[str, bool]] = {}
     matched_cases: list[ApplicabilityGoldenCase] = []
+    missing_cases: list[str] = []
     for case in published:
         clause = clauses.get((case.document_key, case.clause_id))
         if clause is None:
+            missing_cases.append(f"{case.document_key}/{case.clause_id}")
             continue
         matched_cases.append(case)
         expected = case.expected
         assert expected is not None
         baseline_present = clause.get("applicability_present")
         if baseline_present is not None:
-            baseline_predictions.append(
-                (bool(baseline_present), clause.get("applicability_polarity"), expected)
-            )
-        votes: dict[str, tuple[bool, str | None]] = {}
+            baseline_predictions.append((bool(baseline_present), expected))
+        votes: dict[str, bool] = {}
         for vote in clause.get("votes", []):
             model_id = str(vote.get("model_id"))
-            prediction = (
-                bool(vote.get("applicability_present")),
-                vote.get("applicability_polarity"),
-            )
+            prediction = bool(vote.get("applicability_present"))
             votes[model_id] = prediction
-            model_predictions.setdefault(model_id, []).append((*prediction, expected))
+            model_predictions.setdefault(model_id, []).append((prediction, expected))
         case_votes[(case.document_key, case.clause_id)] = votes
 
     ensemble_specs = _available_ensemble_specs(set(model_predictions))
-    ensemble_predictions: dict[str, list[tuple[bool, str | None, ApplicabilityGoldenExpected]]] = {
+    ensemble_predictions: dict[str, list[tuple[bool, ApplicabilityGoldenExpected]]] = {
         ensemble_id: [] for ensemble_id, _ in ensemble_specs
     }
     ensemble_models = dict(ensemble_specs)
@@ -448,9 +645,9 @@ def _evaluate_applicability_run_report(
             selected = [votes.get(model_id) for model_id in model_ids]
             if any(prediction is None for prediction in selected):
                 continue
-            resolved = _offline_majority(tuple(prediction for prediction in selected if prediction))
+            resolved = _offline_majority(tuple(bool(prediction) for prediction in selected))
             if resolved is not None:
-                ensemble_predictions[ensemble_id].append((*resolved, expected))
+                ensemble_predictions[ensemble_id].append((resolved, expected))
 
     errors: list[ApplicabilityCaseError] = []
     for case in matched_cases:
@@ -458,31 +655,50 @@ def _evaluate_applicability_run_report(
         assert expected is not None
         clause = clauses[(case.document_key, case.clause_id)]
         votes = case_votes[(case.document_key, case.clause_id)]
-        presence_votes = {model_id: value[0] for model_id, value in sorted(votes.items())}
+        presence_votes = dict(sorted(votes.items()))
         baseline_present = clause.get("applicability_present")
         if baseline_present is not None:
             _append_presence_error(
-                errors, "baseline_majority", case, expected, bool(baseline_present), presence_votes
+                errors,
+                "baseline_majority",
+                case,
+                expected,
+                bool(baseline_present),
+                presence_votes,
             )
-        for model_id, (predicted_present, _) in sorted(votes.items()):
+        for model_id, predicted_present in sorted(votes.items()):
             _append_presence_error(
-                errors, model_id, case, expected, predicted_present, presence_votes
+                errors,
+                model_id,
+                case,
+                expected,
+                predicted_present,
+                presence_votes,
             )
         for ensemble_id, model_ids in ensemble_specs:
             selected = [votes.get(model_id) for model_id in model_ids]
             if any(prediction is None for prediction in selected):
                 continue
-            resolved = _offline_majority(tuple(prediction for prediction in selected if prediction))
+            resolved = _offline_majority(tuple(bool(prediction) for prediction in selected))
             if resolved is not None:
                 _append_presence_error(
-                    errors, ensemble_id, case, expected, resolved[0], presence_votes
+                    errors,
+                    ensemble_id,
+                    case,
+                    expected,
+                    resolved,
+                    presence_votes,
                 )
 
     positive_cases = sum(bool(case.expected and case.expected.present) for case in published)
     return ApplicabilityGoldenRegressionReport(
+        golden_corpus_id=golden.corpus_id,
+        golden_corpus_version=golden.corpus_version,
         prompt_id=prompt_id,
         cbox_frame=cbox_frame,
         published_cases=len(published),
+        matched_cases=len(matched_cases),
+        missing_cases=tuple(missing_cases),
         positive_cases=positive_cases,
         negative_cases=len(published) - positive_cases,
         baseline_majority=_metrics("baseline_majority", baseline_predictions),
@@ -524,28 +740,12 @@ def _available_ensemble_specs(available: set[str]) -> tuple[tuple[str, tuple[str
     return tuple(spec for spec in candidates if set(spec[1]) <= available)
 
 
-def _offline_majority(
-    predictions: tuple[tuple[bool, str | None], ...],
-) -> tuple[bool, str | None] | None:
-    present = sum(prediction[0] for prediction in predictions)
+def _offline_majority(predictions: tuple[bool, ...]) -> bool | None:
+    present = sum(predictions)
     absent = len(predictions) - present
     if present == absent:
         return None
-    resolved_present = present > absent
-    if not resolved_present:
-        return False, None
-    polarities = Counter(
-        _qualification_polarity(prediction[1])
-        for prediction in predictions
-        if prediction[0] and prediction[1]
-    )
-    if not polarities:
-        return True, None
-    ranked = polarities.most_common()
-    if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:
-        return True, None
-    polarity = ranked[0][0]
-    return True, polarity.value if polarity is not None else None
+    return present > absent
 
 
 def _append_presence_error(
@@ -574,12 +774,10 @@ def _append_presence_error(
 
 def _metrics(
     model_id: str,
-    predictions: list[tuple[bool, str | None, ApplicabilityGoldenExpected]],
+    predictions: list[tuple[bool, ApplicabilityGoldenExpected]],
 ) -> ApplicabilityModelMetrics:
     tp = fp = tn = fn = 0
-    polarity_end_to_end_total = polarity_end_to_end_correct = 0
-    polarity_given_presence_total = polarity_given_presence_correct = 0
-    for predicted_present, predicted_polarity, expected in predictions:
+    for predicted_present, expected in predictions:
         if expected.present and predicted_present:
             tp += 1
         elif expected.present:
@@ -588,23 +786,16 @@ def _metrics(
             fp += 1
         else:
             tn += 1
-        if expected.present and expected.polarity is not None:
-            polarity_end_to_end_total += 1
-            polarity_end_to_end_correct += (
-                _qualification_polarity(predicted_polarity) == expected.polarity
-            )
-            if predicted_present:
-                polarity_given_presence_total += 1
-                polarity_given_presence_correct += (
-                    _qualification_polarity(predicted_polarity) == expected.polarity
-                )
     precision = _ratio(tp, tp + fp, empty=1.0)
     recall = _ratio(tp, tp + fn, empty=1.0)
     specificity = _ratio(tn, tn + fp, empty=1.0)
     total = tp + fp + tn + fn
+    predicted_positive = tp + fp
     return ApplicabilityModelMetrics(
         model_id=model_id,
         evaluated_cases=total,
+        predicted_positive_cases=predicted_positive,
+        predicted_positive_rate=_ratio(predicted_positive, total, empty=0.0),
         true_positive=tp,
         false_positive=fp,
         true_negative=tn,
@@ -615,16 +806,6 @@ def _metrics(
         presence_specificity=specificity,
         presence_balanced_accuracy=(recall + specificity) / 2,
         presence_f1=_f1(precision, recall),
-        polarity_end_to_end_accuracy=(
-            polarity_end_to_end_correct / polarity_end_to_end_total
-            if polarity_end_to_end_total
-            else None
-        ),
-        polarity_accuracy_given_presence=(
-            polarity_given_presence_correct / polarity_given_presence_total
-            if polarity_given_presence_total
-            else None
-        ),
     )
 
 
@@ -639,7 +820,7 @@ def _load_run_snapshot(
                 "qualification run does not contain clause-level applicability predictions; "
                 "rerun qualification with the current archive schema"
             )
-        snapshot = ApplicabilityPredictionSnapshot.model_validate_json(archive.read(snapshot_name))
+        snapshot = load_applicability_prediction_snapshot(archive.read(snapshot_name))
         dataset = json.loads(archive.read("inputs/corpus/dataset.json"))
     return manifest, snapshot, dataset
 
@@ -685,23 +866,13 @@ def _project_run_inputs(
     prompt_id: str,
     cbox_frame: str,
 ) -> dict[str, Any]:
-    """Project one archived prompt/frame arm into the legacy clause/vote representation."""
+    """Project one archived prompt/frame arm into a presence-only clause/vote view."""
 
-    presence_eligible = {
-        str(model.get("id"))
-        for model in manifest.get("models", [])
-        if bool((model.get("dimension_eligibility") or {}).get("applicability_presence", True))
-    }
-    polarity_eligible = {
-        str(model.get("id"))
-        for model in manifest.get("models", [])
-        if bool((model.get("dimension_eligibility") or {}).get("applicability_polarity", True))
-    }
     baseline = _collapsed_predictions(
         snapshot,
         prompt_id=prompt_id,
         cbox_frame=cbox_frame,
-        eligible=presence_eligible,
+        eligible=_presence_eligible_model_ids(manifest),
     )
     details = _dataset_details(dataset)
     clause_keys = sorted({key for predictions in baseline.values() for key in predictions})
@@ -719,25 +890,17 @@ def _project_run_inputs(
             (first.document_key, first.clause_id),
             (first.clause_id, ""),
         )
-        consensus_present = _presence_consensus(tuple(votes.values()))
-        consensus_polarity = (
-            _polarity_consensus(votes, eligible=polarity_eligible)
-            if consensus_present is True
-            else None
-        )
         clauses.append(
             {
                 "clause_id": first.clause_id,
                 "document_key": first.document_key,
                 "reference": reference,
                 "clause_text": text,
-                "applicability_present": consensus_present,
-                "applicability_polarity": consensus_polarity,
+                "applicability_present": _presence_consensus(tuple(votes.values())),
                 "votes": [
                     {
                         "model_id": model_id,
                         "applicability_present": prediction.present,
-                        "applicability_polarity": prediction.polarity,
                     }
                     for model_id, prediction in sorted(votes.items())
                 ],
@@ -752,24 +915,6 @@ def _presence_consensus(predictions: tuple[ApplicabilityPrediction, ...]) -> boo
     if present == absent:
         return None
     return present > absent
-
-
-def _polarity_consensus(
-    predictions: dict[str, ApplicabilityPrediction],
-    *,
-    eligible: set[str],
-) -> str | None:
-    counts = Counter(
-        prediction.polarity
-        for model_id, prediction in predictions.items()
-        if model_id in eligible and prediction.present and prediction.polarity is not None
-    )
-    if not counts:
-        return None
-    ranked = counts.most_common()
-    if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:
-        return None
-    return ranked[0][0]
 
 
 def _write_review_csv(path: Path, cases: tuple[PresenceHardCase, ...]) -> None:
@@ -790,7 +935,6 @@ def _write_review_csv(path: Path, cases: tuple[PresenceHardCase, ...]) -> None:
         "text",
         "review_status",
         "present",
-        "polarity",
         "review_note",
         "clause_id",
     )
@@ -816,7 +960,6 @@ def _write_review_csv(path: Path, cases: tuple[PresenceHardCase, ...]) -> None:
                     "text": case.text,
                     "review_status": "pending",
                     "present": "",
-                    "polarity": "",
                     "review_note": "",
                     "clause_id": case.clause_id,
                 }
@@ -826,17 +969,40 @@ def _write_review_csv(path: Path, cases: tuple[PresenceHardCase, ...]) -> None:
 def _write_review_guide(path: Path) -> None:
     path.write_text(
         "# Applicability Golden Review\n\n"
-        "Review only the semantic applicability of each clause. Set "
-        "`review_status=published` when complete.\n\n"
-        "`present` is `true` only when the clause explicitly changes whether normative content "
-        "is in force. Conditions that only change how an activity, method, analysis, design, "
-        "calculation, or process is performed are not applicability.\n\n"
-        "When `present=true`, set `polarity` to `included` when the normative content is in "
-        "scope and to `excluded` when it is explicitly out of scope. Leave `polarity` empty "
-        "only when presence is clear but the direction is genuinely uncertain. Exceptions and "
-        "generic condition semantics are deliberately outside this qualification stage.\n",
+        "Review the clause text using exactly this question:\n\n"
+        "> Does the text contain statements that restrict or extend the applicability of this "
+        "clause or a referenced clause?\n\n"
+        "Set `present=true` when the answer is yes and `present=false` otherwise. Set "
+        "`review_status=published` when the row is complete. Record review observations in "
+        "`review_note`; no detail classification is performed in this corpus.\n",
         encoding="utf-8",
     )
+
+
+def _validate_presence_review_columns(fieldnames: list[str] | None) -> None:
+    fields = set(fieldnames or ())
+    obsolete = fields.intersection(
+        {"polarity", "applicability_polarity", "applicability_function", "applicability_subtype"}
+    )
+    if obsolete:
+        names = ", ".join(sorted(obsolete))
+        raise ValueError(
+            f"presence-only applicability review must not contain detail columns: {names}"
+        )
+    required = {
+        "document_key",
+        "reference",
+        "category",
+        "text",
+        "review_status",
+        "present",
+        "clause_id",
+    }
+    missing = required - fields
+    if missing:
+        raise ValueError(
+            "applicability review is missing required columns: " + ", ".join(sorted(missing))
+        )
 
 
 def _parse_bool(value: str | None) -> bool | None:
@@ -850,8 +1016,12 @@ def _parse_bool(value: str | None) -> bool | None:
     raise ValueError(f"invalid boolean value: {value!r}")
 
 
-def _qualification_polarity(value: str | None) -> ApplicabilityPolarity | None:
-    return ApplicabilityPolarity(value) if value is not None else None
+def _write_yaml(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        yaml.safe_dump(payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
 
 
 def _sha256(path: Path) -> str:
