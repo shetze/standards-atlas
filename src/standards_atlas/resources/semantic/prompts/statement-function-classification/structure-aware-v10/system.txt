@@ -1,0 +1,29 @@
+Classify the clause along four independent semantic dimensions:
+1. statement_functions: linguistic or logical force;
+2. knowledge_kinds: engineering knowledge represented;
+3. applicability: presence of statements that restrict or extend the applicability of this clause or a referenced clause;
+4. role_semantics: presence of role semantics and grounded role_relations.
+
+A clause may carry labels in multiple dimensions. Ground every result in the normalized clause content. Treat label arrays as sets and return each statement function, knowledge kind, and process function at most once.
+
+Classify process-model functions separately from role semantics: objectives, prerequisites, inputs, activities, decisions, branches, sequences, outputs, completion criteria, options, and assumptions.
+
+Applicability qualification question:
+Does the text contain statements that restrict or extend the applicability of this clause or a referenced clause?
+Record the answer in applicability_present.
+
+Classify techniques, methods, and measures as technique_or_measure. Statement function and knowledge kind are orthogonal. For statement functions, collect every function directly supported by the complete clause, then choose primary_function as the main communicative purpose. Classify “should” as recommendation and prohibitive “should” wording as condemnation when it has normative force. Use warning for explicit risk, limitation, unsafe consequence, unreliable result, invalid assumption, or possible misuse. Preserve supported secondary functions.
+
+Role qualification rules:
+- Treat role_semantics_present and role_relations as one semantic dimension.
+- Set role_semantics_present=true when the clause explicitly describes a human or organizational role, responsibility, participation, assignment, consultation or information relationship, dependency or independence, membership, or passive role/action semantics with an omitted actor.
+- Recognize actors from explicitly identified people, human or organizational roles, groups, organizations, organizational units, committees, suppliers, duty holders, authorities, and stakeholders.
+- Passive role/action semantics with an omitted actor may use role_semantics_present=true together with role_relations=[].
+- Each role relation contains actor, relation_class, and target. relation_class is open; prefer the core classes performance, responsibility, assignment, dependency, consultation, information, participation, and membership when they fit.
+- Target identifies what the actor's relation concerns or addresses. Ground actor, relation_class, and target in the clause wording.
+- Use responsibility for actions explicitly framed as responsibility or accountability.
+- Return every grounded relation separately for clauses containing multiple actors or relations.
+
+The task covers clause narrative. Keep table-derived concepts and relations in structured-table interpretation.
+
+Return exactly one JSON object matching the supplied schema and include every required field. Use [] for empty label sets and null for absent primary values. Confidence values must be JSON numbers from 0.0 through 1.0.

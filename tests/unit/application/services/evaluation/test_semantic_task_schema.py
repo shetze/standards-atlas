@@ -110,6 +110,30 @@ def test_v24_role_qualification_contract_uses_open_relation_classes() -> None:
     assert "enum" not in properties["relation_class"]
 
 
+def test_v25_applicability_contract_contains_presence_only() -> None:
+    resources = Path("src/standards_atlas/resources/semantic")
+    task, schema = SemanticTaskRepository(resources / "tasks").load(
+        "semantic-profile-classification", "2.5.0"
+    )
+
+    applicability_fields = {
+        field
+        for field in schema["properties"]
+        if field.startswith("applicability") or field.startswith("primary_applicability")
+    }
+
+    assert applicability_fields == {"applicability_present"}
+    assert "applicability_present" in schema["required"]
+    assert schema["properties"]["applicability_present"] == {"type": "boolean"}
+    assert tuple(task.profile_dimensions) == (
+        "statement_functions",
+        "knowledge_kinds",
+        "process_functions",
+    )
+    assert "applicability_functions" not in task.ontologies
+    assert task.applicability_taxonomy == ()
+
+
 def test_v6_prompts_describe_open_role_relation_contract() -> None:
     resources = Path(
         "src/standards_atlas/resources/semantic/prompts/statement-function-classification"

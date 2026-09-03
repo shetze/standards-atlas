@@ -650,3 +650,121 @@ def test_proposal_run_directory_isolated_by_cbox_frame(tmp_path: Path) -> None:
         / "fake"
         / "test-model"
     )
+
+
+def test_v25_presence_only_contract_runs_as_one_shared_generation(tmp_path: Path) -> None:
+    class PresenceOnlyGateway:
+        def __init__(self) -> None:
+            self.requests = []
+
+        def health(self):
+            return LlmHealth(True, ("presence-model",))
+
+        def generate_structured(self, request):
+            self.requests.append(request)
+            return StructuredGenerationResult(
+                value={
+                    "statement_functions": ["description"],
+                    "primary_function": "description",
+                    "knowledge_kinds": ["concept"],
+                    "primary_knowledge_kind": "concept",
+                    "process_functions": [],
+                    "primary_process_function": None,
+                    "applicability_present": True,
+                    "role_semantics_present": False,
+                    "role_relations": [],
+                    "confidence": 0.9,
+                    "rationale": "The clause contains an applicability statement.",
+                },
+                model=request.model or "presence-model",
+                provider="fake",
+                prompt_version=request.prompt_version,
+                input_hash="input-hash",
+                raw_response_hash="response-hash",
+                duration_ms=12,
+                raw_response={"choices": []},
+            )
+
+    corpus_root = tmp_path / "corpora"
+    dataset_dir = corpus_root / "semantic-profile-classification" / "2.2.0"
+    dataset_dir.mkdir(parents=True)
+    (dataset_dir / "dataset.json").write_text(
+        json.dumps(
+            {
+                "task": "semantic-profile-classification",
+                "version": "2.2.0",
+                "examples": [
+                    {
+                        "id": "clause-1",
+                        "input": {
+                            "content": {
+                                "hash": "sha256:" + "a" * 64,
+                                "text": "This clause applies to the referenced subsystem.",
+                            },
+                            "context": {
+                                "knowledge_domain": "functional-safety",
+                                "document_key": "IEC61508-3",
+                                "clause_id": "clause-1",
+                                "reference": "7.4.2",
+                                "heading": "Verification",
+                                "context_routing": {
+                                    "scopes": [
+                                        {
+                                            "reaches": [
+                                                {
+                                                    "kind": "clause",
+                                                    "document_key": "IEC61508-3",
+                                                    "reference": "7.4.2",
+                                                }
+                                            ],
+                                            "conditions": ["for SIL 3"],
+                                            "exclusions": ["legacy systems"],
+                                        }
+                                    ]
+                                },
+                            },
+                        },
+                        "expected": {},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    gateway = PresenceOnlyGateway()
+
+    result = BaselineProposalGenerator(gateway).run(
+        ProposalRunConfig(
+            corpus_id="semantic-profile-v1",
+            task="semantic-profile-classification",
+            task_version="2.5.0",
+            dataset_version="2.2.0",
+            prompt_version="structure-aware-v10",
+            cbox_frame="applicability-isolated-v1",
+            provider="fake",
+            model="presence-model",
+        ),
+        resources=Path("src/standards_atlas/resources/semantic"),
+        corpus_root=corpus_root,
+        output_root=tmp_path / "evaluation",
+    )
+
+    assert result.generated == 1
+    assert result.failed == 0
+    assert len(gateway.requests) == 1
+    request = gateway.requests[0]
+    assert "Clause identity:\nThis clause is IEC61508-3 7.4.2." in request.user_prompt
+    assert "Verification" not in request.user_prompt
+    assert "Scope" not in request.user_prompt
+    assert "legacy systems" not in request.user_prompt
+    assert "for SIL 3" not in request.user_prompt
+    properties = request.output_schema["properties"]
+    assert "applicability_present" in properties
+    assert "applicability_functions" not in properties
+    assert "primary_applicability_function" not in properties
+    response = json.loads(
+        (result.run_directory / "clause-1" / "response.json").read_text(encoding="utf-8")
+    )
+    assert response["value"]["applicability_present"] is True
+    assert "applicability_functions" not in response["value"]
+    assert "primary_applicability_function" not in response["value"]

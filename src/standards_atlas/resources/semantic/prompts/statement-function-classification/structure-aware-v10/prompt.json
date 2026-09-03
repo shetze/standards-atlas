@@ -1,0 +1,5 @@
+{
+  "description": "Shared multidimensional qualification prompt with identity-only context and applicability represented by applicability_present.",
+  "task": "statement-function-classification",
+  "version": "structure-aware-v10"
+}

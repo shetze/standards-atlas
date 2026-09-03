@@ -113,3 +113,45 @@ def test_v9_applicability_prompts_encode_core_question_and_method_boundary() -> 
     assert examples.system_prompt.count("- Negative:") == 1
     assert "applicability_present=true" in examples.system_prompt
     assert "applicability_present=false" in examples.system_prompt
+
+
+def test_v10_applicability_prompt_uses_only_the_presence_question() -> None:
+    task, schema = SemanticTaskRepository(RESOURCES / "tasks").load(
+        "semantic-profile-classification", "2.5.0"
+    )
+    prompt = PromptRepository(RESOURCES / "prompts").load(
+        "semantic-profile-classification", "structure-aware-v10"
+    )
+
+    core_question = (
+        "Does the text contain statements that restrict or extend the applicability "
+        "of this clause or a referenced clause?"
+    )
+    system = prompt.system_prompt
+    lowered = system.lower()
+    applicability_fields = {
+        field
+        for field in prompt.output_schema["properties"]
+        if field.startswith("applicability") or field.startswith("primary_applicability")
+    }
+
+    assert prompt.output_schema == schema
+    assert task.version == "2.5.0"
+    assert system.count(core_question) == 1
+    assert "Record the answer in applicability_present." in system
+    assert applicability_fields == {"applicability_present"}
+    assert "applicability_present" in prompt.output_schema["required"]
+    for attention_cue in (
+        "polarity",
+        "inclusion",
+        "exclusion",
+        "exception",
+        "subtype",
+        "applicability_functions",
+        "primary_applicability_function",
+        " negative ",
+        " false",
+        " not ",
+        "never",
+    ):
+        assert attention_cue not in lowered

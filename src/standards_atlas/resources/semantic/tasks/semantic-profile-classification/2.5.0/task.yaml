@@ -1,0 +1,23 @@
+schema_version: 1
+task: semantic-profile-classification
+version: 2.5.0
+description: Classify statement, knowledge-kind, process, applicability-presence, and role
+  semantics. Applicability answers whether the text contains statements that restrict or
+  extend the applicability of this clause or a referenced clause.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds:
+- clause
+excluded_content_profiles:
+- table_dominant
+alternative_tasks:
+  table_dominant: structured-table-interpretation
+semantic_profile:
+  id: functional-safety
+  version: 1.0.0
+profile_dimensions:
+- statement_functions
+- knowledge_kinds
+- process_functions
+aliases:
+- statement-function-classification

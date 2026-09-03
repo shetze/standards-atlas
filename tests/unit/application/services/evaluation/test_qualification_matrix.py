@@ -152,13 +152,28 @@ def test_baseline_drop_threshold_detects_regression(tmp_path: Path) -> None:
     assert any("baseline allowance" in item for item in fast.regressions)
 
 
-def test_manifest_requires_at_least_two_prompts(tmp_path: Path) -> None:
+def test_manifest_accepts_one_shared_prompt(tmp_path: Path) -> None:
     path = _manifest(tmp_path)
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     payload["prompts"] = payload["prompts"][:1]
+    payload["observations"] = [
+        item for item in payload["observations"] if item["prompt_id"] == "p1"
+    ]
     path.write_text(yaml.safe_dump(payload), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="at least two"):
+    manifest = QualificationMatrixManifest.load(path)
+
+    assert [prompt.id for prompt in manifest.prompts] == ["p1"]
+
+
+def test_manifest_requires_at_least_one_prompt(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["prompts"] = []
+    payload["observations"] = []
+    path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="at least one prompt"):
         QualificationMatrixManifest.load(path)
 
 
@@ -1404,3 +1419,26 @@ def test_applicability_framing_manifest_declares_prompt_ablation_without_changin
         "structure-aware-v9-examples",
     ]
     assert experiment.thresholds.baseline_prompt_id == "applicability-boundary"
+
+
+def test_v6_applicability_presence_manifest_uses_one_shared_prompt() -> None:
+    project_root = Path(__file__).resolve().parents[5]
+    path = (
+        project_root
+        / "manifests"
+        / "multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml"
+    )
+    manifest = QualificationMatrixManifest.load(path)
+    raw = path.read_text(encoding="utf-8")
+
+    assert manifest.task == "semantic-profile-classification"
+    assert manifest.task_version == "2.5.0"
+    assert manifest.execution.mode == "full_matrix"
+    assert len(manifest.prompts) == 1
+    assert manifest.prompts[0].id == "applicability-presence"
+    assert manifest.prompts[0].prompt_version == "structure-aware-v10"
+    assert manifest.prompts[0].cbox_frame == "applicability-isolated-v1"
+    assert manifest.prompts[0].adaptive_interview is False
+    assert manifest.consensus.enabled is False
+    assert manifest.thresholds.baseline_prompt_id == "applicability-presence"
+    assert "applicability_polarity" not in raw
