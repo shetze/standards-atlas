@@ -85,13 +85,12 @@ def _sha256(path: Path) -> str:
 
 
 def _has_applicability_disagreement(votes: list[dict[str, Any]]) -> bool:
-    presence = {bool(vote.get("applicability_present")) for vote in votes}
-    present_subtypes = {
-        vote.get("applicability_function")
+    presence = {
+        bool(vote.get("applicability_present"))
         for vote in votes
-        if vote.get("applicability_present") and vote.get("applicability_function")
+        if bool(vote.get("applicability_presence_eligible", True))
     }
-    return len(presence) > 1 or len(present_subtypes) > 1
+    return len(presence) > 1
 
 
 def build_challenger_manifest(
@@ -222,18 +221,21 @@ def _render_comparison(payload: dict[str, Any]) -> str:
                 "",
                 f"## {group['id']}",
                 "",
-                "| Role | Model | Conflict none | Presence agreement | Subtype agreement | "
-                "Prediction success | Mean duration |",
-                "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+                "| Role | Model | Presence votes | Present | Absent rate | Conflict votes | "
+                "Conflict absent rate | Presence agreement | Prediction success | Mean duration |",
+                "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
             ]
         )
         for item in group["models"]:
             fitness = item.get("applicability_fitness") or {}
             lines.append(
                 f"| {item['role']} | `{item['model_id']}` | "
-                f"{_rate(fitness.get('conflict_none_rate'))} | "
+                f"{fitness.get('vote_count', 0)} | "
+                f"{fitness.get('present_count', 0)} | "
+                f"{_rate(fitness.get('absent_rate'))} | "
+                f"{fitness.get('conflict_vote_count', 0)} | "
+                f"{_rate(fitness.get('conflict_absent_rate'))} | "
                 f"{_rate(fitness.get('presence_reference_agreement_rate'))} | "
-                f"{_rate(fitness.get('subtype_reference_agreement_rate'))} | "
                 f"{_rate(item.get('mean_prediction_success_rate'))} | "
                 f"{_seconds(item.get('mean_duration_seconds'))} |"
             )

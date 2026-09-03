@@ -17,7 +17,6 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
     _select_stratified_cases,
     build_applicability_golden_review,
     evaluate_applicability_golden_corpus,
-    evaluate_applicability_golden_corpus_all_prompts,
     publish_applicability_golden_review,
 )
 
@@ -169,7 +168,7 @@ def test_build_publish_and_evaluate_applicability_hard_cases(tmp_path: Path) -> 
     }
 
 
-def test_evaluate_selects_one_prompt_or_all_archived_prompts(tmp_path: Path) -> None:
+def test_evaluate_selects_one_archived_prompt(tmp_path: Path) -> None:
     archive = _run_archive(tmp_path / "qualification-run.zip", include_candidate_prompt=True)
     provenance = ApplicabilityGoldenProvenance(
         source_archive=archive.name,
@@ -216,18 +215,10 @@ def test_evaluate_selects_one_prompt_or_all_archived_prompts(tmp_path: Path) -> 
         archive,
         prompt_id="applicability-boundary-examples",
     )
-    combined = evaluate_applicability_golden_corpus_all_prompts(golden, archive)
-
     assert baseline.prompt_id == "applicability-clean-full"
     assert baseline.baseline_majority.presence_f1 == 1.0
     assert candidate.prompt_id == "applicability-boundary-examples"
     assert candidate.baseline_majority.presence_f1 == 0.0
-    assert [report.prompt_id for report in combined.prompt_reports] == [
-        "applicability-clean-full",
-        "applicability-boundary-examples",
-    ]
-    assert combined.golden_corpus_id == golden.corpus_id
-    assert combined.golden_corpus_version == golden.corpus_version
 
 
 def test_evaluate_rejects_unknown_prompt(tmp_path: Path) -> None:

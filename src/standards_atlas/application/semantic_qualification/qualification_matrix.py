@@ -121,17 +121,13 @@ class CascadeResolutionConfig(BaseModel):
         "majority_consensus",
     )
     minimum_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
-    # Legacy aggregate controls remain readable for older manifests. New
-    # manifests should configure applicability presence and polarity separately.
     escalate_on_knowledge_kind_disagreement: bool = True
     minimum_knowledge_kind_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     escalate_on_applicability_disagreement: bool = True
     escalate_on_applicability_presence_disagreement: bool | None = None
-    escalate_on_applicability_polarity_disagreement: bool | None = None
     escalate_on_role_relation_disagreement: bool = True
     minimum_applicability_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     minimum_applicability_presence_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    minimum_applicability_polarity_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     minimum_role_relation_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     statement_function_resolution_mode: Literal["cumulative", "stage_resolver"] = "cumulative"
     statement_function_resolver_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
@@ -191,57 +187,19 @@ def cascade_escalation_reasons(
         clause, "knowledge_primary_unanimous", True
     ):
         reasons.append("knowledge_kind_disagreement")
-    split_applicability = any(
-        value is not None
-        for value in (
-            resolution.escalate_on_applicability_presence_disagreement,
-            resolution.escalate_on_applicability_polarity_disagreement,
-            resolution.minimum_applicability_presence_confidence,
-            resolution.minimum_applicability_polarity_confidence,
-        )
+    applicability_minimum_models = (
+        resolution.minimum_applicability_presence_models or resolution.minimum_successful_models
     )
-    if split_applicability:
-        presence_escalation = bool(resolution.escalate_on_applicability_presence_disagreement)
-        polarity_escalation = bool(resolution.escalate_on_applicability_polarity_disagreement)
-        presence_unanimous = getattr(
-            clause, "applicability_presence_unanimous", clause.applicability_unanimous
-        )
-        polarity_unanimous = getattr(
-            clause, "applicability_polarity_unanimous", clause.applicability_unanimous
-        )
-        if presence_escalation and not presence_unanimous:
-            reasons.append("applicability_presence_disagreement")
-        if clause.applicability_present and polarity_escalation and not polarity_unanimous:
-            reasons.append("applicability_polarity_disagreement")
-
-        presence_threshold = resolution.minimum_applicability_presence_confidence
-        if (
-            presence_threshold is not None
-            and clause.applicability_presence_confidence < presence_threshold
-        ):
+    if _applicability_presence_model_count(clause) < applicability_minimum_models:
+        reasons.append("insufficient_applicability_presence_models")
+    applicability_threshold = _applicability_presence_threshold(resolution)
+    if applicability_threshold is not None:
+        if _applicability_presence_confidence(clause) < applicability_threshold:
             reasons.append("applicability_presence_confidence")
-        polarity_threshold = resolution.minimum_applicability_polarity_confidence
-        if (
-            polarity_threshold is not None
-            and clause.applicability_present
-            and clause.applicability_polarity_confidence < polarity_threshold
-        ):
-            reasons.append("applicability_polarity_confidence")
-    else:
-        if resolution.escalate_on_applicability_disagreement and not clause.applicability_unanimous:
-            reasons.append("applicability_disagreement")
-        applicability_threshold = resolution.minimum_applicability_confidence
-        if applicability_threshold is not None:
-            applicability_confidence = _dimension_decision_confidence(
-                present=clause.applicability_present,
-                positive_confidence=clause.applicability_confidence,
-                support=clause.applicability_support,
-            )
-            if applicability_confidence < applicability_threshold:
-                reasons.append("applicability_confidence")
-
-    if getattr(clause, "applicability_structural_conflict", False):
-        reasons.append("applicability_structural_conflict")
+    elif _escalate_on_applicability_presence_disagreement(resolution) and not getattr(
+        clause, "applicability_presence_unanimous", clause.applicability_unanimous
+    ):
+        reasons.append("applicability_presence_disagreement")
     if getattr(clause, "role_semantics_evidence_conflict", False):
         reasons.append("role_semantics_evidence_conflict")
     role_unanimous = getattr(clause, "role_semantics_unanimous", clause.role_relation_unanimous)
@@ -337,75 +295,25 @@ def cascade_stage_escalation_reasons(
 
     applicability_unresolved = bool(unresolved & _APPLICABILITY_REASONS)
     if applicability_unresolved:
-        if "applicability_structural_conflict" in unresolved and getattr(
-            cumulative_clause, "applicability_structural_conflict", False
-        ):
-            reasons.append("applicability_structural_conflict")
-
-        split_applicability = any(
-            value is not None
-            for value in (
-                resolution.escalate_on_applicability_presence_disagreement,
-                resolution.escalate_on_applicability_polarity_disagreement,
-                resolution.minimum_applicability_presence_confidence,
-                resolution.minimum_applicability_polarity_confidence,
-            )
+        applicability_minimum_models = (
+            resolution.minimum_applicability_presence_models or resolution.minimum_successful_models
         )
-        if not split_applicability:
-            threshold = resolution.minimum_applicability_confidence
-            if threshold is not None:
-                confidence = _dimension_decision_confidence(
-                    present=cumulative_clause.applicability_present,
-                    positive_confidence=cumulative_clause.applicability_confidence,
-                    support=cumulative_clause.applicability_support,
-                )
-                if confidence < threshold:
-                    reasons.append("applicability_confidence")
-            elif (
-                resolution.escalate_on_applicability_disagreement
-                and not cumulative_clause.applicability_unanimous
-            ):
-                reasons.append("applicability_disagreement")
-        else:
-            presence_was_unresolved = bool(
-                unresolved
-                & {
-                    "applicability_disagreement",
-                    "applicability_confidence",
-                    "applicability_presence_disagreement",
-                    "applicability_presence_confidence",
-                }
-            )
-            polarity_was_unresolved = bool(
-                unresolved
-                & {
-                    "applicability_disagreement",
-                    "applicability_confidence",
-                    "applicability_polarity_disagreement",
-                    "applicability_polarity_confidence",
-                }
-            )
-            if presence_was_unresolved:
-                threshold = resolution.minimum_applicability_presence_confidence
-                if threshold is not None:
-                    if cumulative_clause.applicability_presence_confidence < threshold:
-                        reasons.append("applicability_presence_confidence")
-                elif (
-                    resolution.escalate_on_applicability_presence_disagreement
-                    and not cumulative_clause.applicability_presence_unanimous
-                ):
-                    reasons.append("applicability_presence_disagreement")
-
-            if polarity_was_unresolved and cumulative_clause.applicability_present:
-                threshold = resolution.minimum_applicability_polarity_confidence
-                if threshold is not None:
-                    if cumulative_clause.applicability_polarity_confidence < threshold:
-                        reasons.append("applicability_polarity_confidence")
-                elif (
-                    resolution.escalate_on_applicability_polarity_disagreement
-                    and not cumulative_clause.applicability_polarity_unanimous
-                ):
-                    reasons.append("applicability_polarity_disagreement")
+        if (
+            "insufficient_applicability_presence_models" in unresolved
+            and _applicability_presence_model_count(cumulative_clause)
+            < applicability_minimum_models
+        ):
+            reasons.append("insufficient_applicability_presence_models")
+        threshold = _applicability_presence_threshold(resolution)
+        if threshold is not None:
+            if _applicability_presence_confidence(cumulative_clause) < threshold:
+                reasons.append("applicability_presence_confidence")
+        elif _escalate_on_applicability_presence_disagreement(resolution) and not getattr(
+            cumulative_clause,
+            "applicability_presence_unanimous",
+            cumulative_clause.applicability_unanimous,
+        ):
+            reasons.append("applicability_presence_disagreement")
 
     role_relation_unresolved = bool(
         unresolved
@@ -482,6 +390,52 @@ def _dimension_decision_confidence(
     return max(0.0, 1.0 - float(support.get("present", 0.0)))
 
 
+def _applicability_presence_model_count(clause: object) -> int:
+    configured = getattr(clause, "applicability_participating_models", None)
+    if configured is not None:
+        return int(configured)
+    votes = getattr(clause, "votes", ())
+    if votes:
+        return sum(
+            bool(getattr(vote, "applicability_presence_eligible", True))
+            for vote in votes
+            if getattr(vote, "role", "voter") == "voter"
+        )
+    return int(getattr(clause, "participating_models", 0))
+
+
+def _applicability_presence_confidence(clause: object) -> float:
+    return float(
+        getattr(
+            clause,
+            "applicability_presence_confidence",
+            getattr(
+                clause,
+                "applicability_decision_confidence",
+                _dimension_decision_confidence(
+                    present=clause.applicability_present,
+                    positive_confidence=clause.applicability_confidence,
+                    support=clause.applicability_support,
+                ),
+            ),
+        )
+    )
+
+
+def _escalate_on_applicability_presence_disagreement(
+    resolution: CascadeResolutionConfig,
+) -> bool:
+    configured = resolution.escalate_on_applicability_presence_disagreement
+    return resolution.escalate_on_applicability_disagreement if configured is None else configured
+
+
+def _applicability_presence_threshold(
+    resolution: CascadeResolutionConfig,
+) -> float | None:
+    configured = resolution.minimum_applicability_presence_confidence
+    return resolution.minimum_applicability_confidence if configured is None else configured
+
+
 _STATEMENT_REASONS = {
     "consensus_category",
     "statement_function_confidence",
@@ -489,13 +443,9 @@ _STATEMENT_REASONS = {
 }
 _KNOWLEDGE_REASONS = {"knowledge_kind_disagreement", "knowledge_kind_confidence"}
 _APPLICABILITY_REASONS = {
-    "applicability_disagreement",
-    "applicability_confidence",
+    "insufficient_applicability_presence_models",
     "applicability_presence_disagreement",
-    "applicability_polarity_disagreement",
     "applicability_presence_confidence",
-    "applicability_polarity_confidence",
-    "applicability_structural_conflict",
 }
 _ROLE_RELATION_REASONS = {
     "role_relation_disagreement",
@@ -556,36 +506,14 @@ def capture_resolved_dimensions(
     if resolved(_APPLICABILITY_REASONS):
         result["applicability"] = {
             "present": cumulative_clause.applicability_present,
-            "polarity": (
-                cumulative_clause.applicability_polarity.value
-                if cumulative_clause.applicability_polarity
-                else None
-            ),
             "confidence": cumulative_clause.applicability_decision_confidence,
             "presence_confidence": getattr(
                 cumulative_clause,
                 "applicability_presence_confidence",
                 cumulative_clause.applicability_decision_confidence,
             ),
-            "polarity_confidence": getattr(
-                cumulative_clause,
-                "applicability_polarity_confidence",
-                cumulative_clause.applicability_decision_confidence,
-            ),
             "category": cumulative_clause.applicability_category.value,
             "source": source,
-            "structural_conflict_observed": (
-                "applicability_structural_conflict" in previous
-                or "applicability_structural_conflict" in remaining
-                or bool(
-                    getattr(
-                        cumulative_clause,
-                        "applicability_structural_conflict_observed",
-                        getattr(cumulative_clause, "applicability_structural_conflict", False),
-                    )
-                )
-            ),
-            "structural_conflict_unresolved": ("applicability_structural_conflict" in remaining),
         }
     if resolved(_ROLE_RELATION_REASONS):
         result["role_relation"] = {
@@ -613,7 +541,6 @@ class ModelDimensionEligibility(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     applicability_presence: bool = True
-    applicability_polarity: bool = True
 
 
 class ModelCandidate(BaseModel):
@@ -842,7 +769,7 @@ class QualificationMatrixManifest(BaseModel):
 
     def eligible_model_ids_for_dimension(self, dimension: str) -> tuple[str, ...]:
         """Return production model ids allowed to vote on one semantic dimension."""
-        if dimension not in {"applicability_presence", "applicability_polarity"}:
+        if dimension != "applicability_presence":
             raise ValueError(f"unsupported model-eligibility dimension: {dimension}")
         return tuple(
             model.id for model in self.models if getattr(model.dimension_eligibility, dimension)
@@ -943,29 +870,26 @@ class QualificationMatrixManifest(BaseModel):
             for stage in self.execution.stages:
                 cumulative_stage_models.extend(stage.models)
                 resolution = stage.resolution or self.execution.resolution
-                for dimension in ("applicability_presence", "applicability_polarity"):
-                    dimension_is_filtered = any(
-                        not bool(getattr(model.dimension_eligibility, dimension))
-                        for model in self.models
+                dimension = "applicability_presence"
+                dimension_is_filtered = any(
+                    not model.dimension_eligibility.applicability_presence for model in self.models
+                )
+                if not dimension_is_filtered:
+                    continue
+                eligible_count = sum(
+                    model_by_id[model_id].dimension_eligibility.applicability_presence
+                    for model_id in cumulative_stage_models
+                )
+                minimum_dimension_models = (
+                    resolution.minimum_applicability_presence_models
+                    or resolution.minimum_successful_models
+                )
+                if eligible_count < minimum_dimension_models:
+                    raise ValueError(
+                        f"cascade stage {stage.id} has only {eligible_count} cumulative "
+                        f"{dimension} voters, below required minimum "
+                        f"{minimum_dimension_models}"
                     )
-                    if not dimension_is_filtered:
-                        continue
-                    eligible_count = sum(
-                        bool(getattr(model_by_id[model_id].dimension_eligibility, dimension))
-                        for model_id in cumulative_stage_models
-                    )
-                    minimum_dimension_models = (
-                        resolution.minimum_applicability_presence_models
-                        if dimension == "applicability_presence"
-                        and resolution.minimum_applicability_presence_models is not None
-                        else resolution.minimum_successful_models
-                    )
-                    if eligible_count < minimum_dimension_models:
-                        raise ValueError(
-                            f"cascade stage {stage.id} has only {eligible_count} cumulative "
-                            f"{dimension} voters, below required minimum "
-                            f"{minimum_dimension_models}"
-                        )
         model_repetitions = {item.id: self.repetitions_for(item) for item in self.models}
         seen: set[tuple[str, str, str, int]] = set()
         for item in self.observations:

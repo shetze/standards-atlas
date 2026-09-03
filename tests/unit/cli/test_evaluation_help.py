@@ -1,7 +1,5 @@
 """CLI help and shared-default regression tests."""
 
-from pathlib import Path
-
 from typer.testing import CliRunner
 
 from standards_atlas.application.semantic_qualification.defaults import (
@@ -77,31 +75,4 @@ def test_applicability_corpus_evaluate_help_exposes_prompt_selection() -> None:
 
     assert result.exit_code == 0
     assert "--prompt" in result.stdout
-    assert "--all-prompts" in result.stdout
-
-
-def test_applicability_corpus_evaluate_rejects_both_prompt_selectors(tmp_path: Path) -> None:
-    golden = tmp_path / "golden.yaml"
-    run = tmp_path / "run.zip"
-    golden.write_text("{}\n", encoding="utf-8")
-    run.write_bytes(b"not-needed")
-
-    result = runner.invoke(
-        app,
-        [
-            "evaluation",
-            "applicability-corpus-evaluate",
-            "--golden",
-            str(golden),
-            "--run",
-            str(run),
-            "--output",
-            str(tmp_path / "report.json"),
-            "--prompt",
-            "candidate",
-            "--all-prompts",
-        ],
-    )
-
-    assert result.exit_code == 2
-    assert "--prompt and --all-prompts are mutually exclusive" in result.stderr
+    assert "--all-prompts" not in result.stdout

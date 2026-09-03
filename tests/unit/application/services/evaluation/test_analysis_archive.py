@@ -102,7 +102,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         assert metadata["semantic_extraction_qualification"] is None
         archive_manifest = json.loads(payload.read("archive-manifest.json"))
         assert archive_manifest["archive_id"] == "qualification-run-001"
-        assert archive_manifest["schema_version"] == "1.2"
+        assert archive_manifest["schema_version"] == "1.3"
         assert any(
             item["path"] == "qualification-run-metadata.json" for item in archive_manifest["files"]
         )
@@ -148,7 +148,7 @@ def test_analysis_archive_sequence_is_immutable_and_monotonic(tmp_path: Path) ->
     assert [item["sequence_number"] for item in index["archives"]] == [1, 2]
 
 
-def test_analysis_metrics_separate_observed_and_unresolved_structural_conflicts() -> None:
+def test_analysis_metrics_omit_removed_applicability_structural_conflicts() -> None:
     clauses = (
         ClauseConsensus(
             clause_id="one",
@@ -162,8 +162,6 @@ def test_analysis_metrics_separate_observed_and_unresolved_structural_conflicts(
             confidence=1.0,
             participating_models=3,
             requires_review=False,
-            applicability_structural_conflict_observed=True,
-            applicability_structural_conflict_unresolved=False,
         ),
     )
     report = ConsensusReport(
@@ -181,17 +179,10 @@ def test_analysis_metrics_separate_observed_and_unresolved_structural_conflicts(
 
     metrics = build_analysis_metrics(report=report, cascade_stages=[])
 
-    assert metrics["structural_conflicts"] == {
-        "observed": 1,
-        "unresolved": 0,
-        "resolved_during_cascade": 1,
-    }
+    assert "structural_conflicts" not in metrics
 
 
 def test_analysis_metrics_include_non_normative_diagnostics() -> None:
-    from standards_atlas.application.semantic_qualification.applicability_contract import (
-        ApplicabilityPolarity,
-    )
     from standards_atlas.application.semantic_qualification.consensus import ModelVote
 
     clauses = (
@@ -204,9 +195,7 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
             applicability_category=ConsensusCategory.MAJORITY,
             overall_status=OverallConsensusStatus.REVIEW_REQUIRED,
             applicability_present=True,
-            applicability_polarity=ApplicabilityPolarity.INCLUDED,
             applicability_presence_confidence=2 / 3,
-            applicability_polarity_confidence=2 / 3,
             confidence=0.7,
             participating_models=3,
             requires_review=True,
@@ -214,14 +203,12 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
                 ModelVote(
                     model_id="model-a",
                     applicability_present=True,
-                    applicability_polarity=ApplicabilityPolarity.INCLUDED,
                     repetitions=1,
                     stability=1.0,
                 ),
                 ModelVote(
                     model_id="model-b",
                     applicability_present=True,
-                    applicability_polarity=ApplicabilityPolarity.INCLUDED,
                     repetitions=1,
                     stability=1.0,
                 ),
@@ -255,7 +242,7 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
                 "entered_clause_count": 1,
                 "unresolved_clause_count": 1,
                 "entry_reason_counts": {"initial_stage": 1},
-                "exit_reason_counts": {"applicability_disagreement": 1},
+                "exit_reason_counts": {"applicability_presence_disagreement": 1},
                 "resolution_counts_before": {"applicability": 0},
                 "resolution_counts_after": {"applicability": 0},
                 "newly_resolved_counts": {"applicability": 0},
@@ -269,7 +256,7 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
     model_c = next(
         item for item in diagnostics["applicability_model_fitness"] if item["model_id"] == "model-c"
     )
-    assert model_c["conflict_none_rate"] == 1.0
+    assert model_c["conflict_absent_rate"] == 1.0
     assert diagnostics["stage_contributions"][0]["stage_id"] == "efficient-local"
 
 

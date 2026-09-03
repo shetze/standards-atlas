@@ -6,10 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from standards_atlas.application.semantic_qualification.applicability_semantics import (
-    derive_explicit_applicability_subtype,
-)
-from standards_atlas.domain.model import ApplicabilityFunction, StatementFunction
+from standards_atlas.domain.model import StatementFunction
 
 
 @dataclass(frozen=True)
@@ -19,7 +16,6 @@ class StructuralEvidence:
     primary_function: StatementFunction | None = None
     statement_functions: tuple[StatementFunction, ...] = ()
     scope_context: bool = False
-    applicability_subtype: ApplicabilityFunction | None = None
     confidence: float = 0.0
     evidence: tuple[str, ...] = ()
 
@@ -31,8 +27,6 @@ class StructuralEvidence:
             result["statement_functions"] = [item.value for item in self.statement_functions]
         if self.scope_context:
             result["scope_context"] = True
-        if self.applicability_subtype is not None:
-            result["applicability_subtype"] = self.applicability_subtype.value
         if result:
             result["confidence"] = self.confidence
             result["evidence"] = list(self.evidence)
@@ -138,25 +132,10 @@ def derive_structural_evidence(
     if own_scope:
         evidence.append("structure:scope")
 
-    # Explicit applicability wording is semantically meaningful anywhere in the
-    # document, not only inside a structural Scope section. Scope remains an
-    # additional structural signal, while lexical applicability evidence is
-    # evaluated independently.
-    applicability_subtype = _derive_applicability_subtype(text)
-    if applicability_subtype is not None:
-        evidence.append(f"text:{applicability_subtype.value}")
-
     return StructuralEvidence(
         primary_function=primary,
         statement_functions=tuple(functions),
         scope_context=scope_context,
-        applicability_subtype=applicability_subtype,
-        confidence=confidence if functions or scope_context or applicability_subtype else 0.0,
+        confidence=confidence if functions or scope_context else 0.0,
         evidence=tuple(dict.fromkeys(evidence)),
     )
-
-
-def _derive_applicability_subtype(text: str) -> ApplicabilityFunction | None:
-    """Return a conservative subtype for explicit applicability wording."""
-
-    return derive_explicit_applicability_subtype(text)

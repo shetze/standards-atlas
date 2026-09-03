@@ -25,7 +25,7 @@ from standards_atlas.application.semantic_qualification.qualification_coverage i
 )
 from standards_atlas.shared.hashing import sha256_file
 
-ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.2"
+ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.3"
 QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.3"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
@@ -68,12 +68,6 @@ def build_analysis_metrics(
     review_reasons = Counter(
         reason for clause in report.clauses for reason in clause.review_reasons
     )
-    structural_observed = sum(
-        clause.applicability_structural_conflict_observed for clause in report.clauses
-    )
-    structural_unresolved = sum(
-        clause.applicability_structural_conflict_unresolved for clause in report.clauses
-    )
     diagnostics = build_qualification_diagnostics(report=report, cascade_stages=cascade_stages)
     return {
         "schema_version": ANALYSIS_ARCHIVE_SCHEMA_VERSION,
@@ -102,11 +96,6 @@ def build_analysis_metrics(
         "resolution_sources": report.resolution_sources,
         "review_reasons": dict(sorted(review_reasons.items())),
         "diagnostics": diagnostics,
-        "structural_conflicts": {
-            "observed": structural_observed,
-            "unresolved": structural_unresolved,
-            "resolved_during_cascade": max(0, structural_observed - structural_unresolved),
-        },
         "cascade": {
             "stage_count": len(cascade_stages),
             "stages": [

@@ -64,7 +64,23 @@ def test_v4_prompts_define_normalized_confidence_contract() -> None:
 
 def test_challenger_comparison_ignores_ineligible_candidates(tmp_path: Path) -> None:
     source = QualificationMatrixManifest.load(MANIFEST)
-    metrics = {"diagnostics": {"applicability_model_fitness": []}}
+    metrics = {
+        "diagnostics": {
+            "applicability_model_fitness": [
+                {
+                    "model_id": "smollm3-3b-q4-k-m",
+                    "vote_count": 4,
+                    "present_count": 1,
+                    "absent_count": 3,
+                    "absent_rate": 0.75,
+                    "conflict_vote_count": 2,
+                    "conflict_absent_count": 2,
+                    "conflict_absent_rate": 1.0,
+                    "presence_reference_agreement_rate": 0.5,
+                }
+            ]
+        }
+    }
     matrix = {
         "candidates": [
             {
@@ -88,13 +104,19 @@ def test_challenger_comparison_ignores_ineligible_candidates(tmp_path: Path) -> 
     )
     (tmp_path / "qualification-matrix.json").write_text(json.dumps(matrix), encoding="utf-8")
 
-    json_path, _ = write_challenger_comparison(source_manifest=source, run_directory=tmp_path)
+    json_path, markdown_path = write_challenger_comparison(
+        source_manifest=source, run_directory=tmp_path
+    )
     comparison = json.loads(json_path.read_text(encoding="utf-8"))
     efficient = next(group for group in comparison["groups"] if group["id"] == "efficient-local")
     aya = next(model for model in efficient["models"] if model["model_id"] == "smollm3-3b-q4-k-m")
 
     assert aya["mean_prediction_success_rate"] == 1.0
     assert aya["mean_duration_seconds"] == 10.0
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert "Presence votes" in markdown
+    assert "Conflict absent rate" in markdown
+    assert "Subtype agreement" not in markdown
 
 
 def test_loads_applicability_hard_cases_from_qualification_archive(tmp_path: Path) -> None:
@@ -123,12 +145,15 @@ def test_loads_applicability_hard_cases_from_qualification_archive(tmp_path: Pat
             ],
         },
         {
-            "clause_id": "subtype-conflict",
+            "clause_id": "ineligible-presence-conflict",
             "votes": [
-                {"applicability_present": True, "applicability_function": "inclusion"},
                 {
                     "applicability_present": True,
-                    "applicability_function": "applicability_condition",
+                    "applicability_presence_eligible": True,
+                },
+                {
+                    "applicability_present": False,
+                    "applicability_presence_eligible": False,
                 },
             ],
         },
@@ -153,8 +178,8 @@ def test_loads_applicability_hard_cases_from_qualification_archive(tmp_path: Pat
         sample="applicability-conflicts",
     )
 
-    assert clause_ids == ("presence-conflict", "subtype-conflict")
-    assert selection["clause_count"] == 2
+    assert clause_ids == ("presence-conflict",)
+    assert selection["clause_count"] == 1
     assert selection["sample"] == "applicability-conflicts"
     assert selection["source_matrix_id"] == source.matrix_id
 

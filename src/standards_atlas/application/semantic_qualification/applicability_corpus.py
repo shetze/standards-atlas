@@ -177,21 +177,6 @@ class ApplicabilityGoldenRegressionReport(BaseModel):
     errors: tuple[ApplicabilityCaseError, ...] = ()
 
 
-class ApplicabilityGoldenMultiPromptRegressionReport(BaseModel):
-    """Offline calibration reports for every prompt/frame arm in one archived run."""
-
-    model_config = ConfigDict(frozen=True)
-
-    schema_version: Literal["1.0"] = "1.0"
-    source_archive: str
-    golden_corpus_id: str
-    golden_corpus_version: str
-    published_cases: int = Field(ge=0)
-    positive_cases: int = Field(ge=0)
-    negative_cases: int = Field(ge=0)
-    prompt_reports: tuple[ApplicabilityGoldenRegressionReport, ...]
-
-
 STRATIFIED_CATEGORY_WEIGHTS: tuple[tuple[str, int], ...] = (
     ("balanced_presence_disagreement", 35),
     ("minority_presence_disagreement", 30),
@@ -402,41 +387,6 @@ def evaluate_applicability_golden_corpus(
         report,
         prompt_id=selected_prompt_id,
         cbox_frame=cbox_frame,
-    )
-
-
-def evaluate_applicability_golden_corpus_all_prompts(
-    golden: ApplicabilityGoldenCorpus,
-    run_archive: Path,
-) -> ApplicabilityGoldenMultiPromptRegressionReport:
-    """Measure every prompt/frame arm in an archived run without executing an LLM."""
-    manifest, snapshot, dataset = _load_run_snapshot(run_archive)
-    prompt_reports = tuple(
-        _evaluate_applicability_run_report(
-            golden,
-            _project_run_inputs(
-                manifest,
-                snapshot,
-                dataset,
-                prompt_id=prompt_id,
-                cbox_frame=cbox_frame,
-            ),
-            prompt_id=prompt_id,
-            cbox_frame=cbox_frame,
-        )
-        for prompt_id, cbox_frame in _available_prompt_frames(snapshot)
-    )
-    if not prompt_reports:
-        raise ValueError("applicability prediction snapshot contains no observations")
-    first = prompt_reports[0]
-    return ApplicabilityGoldenMultiPromptRegressionReport(
-        source_archive=run_archive.name,
-        golden_corpus_id=golden.corpus_id,
-        golden_corpus_version=golden.corpus_version,
-        published_cases=first.published_cases,
-        positive_cases=first.positive_cases,
-        negative_cases=first.negative_cases,
-        prompt_reports=prompt_reports,
     )
 
 

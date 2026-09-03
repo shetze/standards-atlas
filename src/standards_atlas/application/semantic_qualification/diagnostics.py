@@ -7,19 +7,14 @@ from collections import Counter, defaultdict
 from difflib import SequenceMatcher
 from typing import Any
 
-from standards_atlas.application.semantic_qualification.applicability_contract import (
-    project_applicability_polarity,
-)
-from standards_atlas.application.semantic_qualification.applicability_semantics import (
-    detect_explicit_applicability_subtypes,
-)
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
     ConsensusCategory,
     ConsensusReport,
 )
 
-_NONE = "none"
+_PRESENT = "present"
+_ABSENT = "absent"
 _NEAR_DUPLICATE_THRESHOLD = 0.92
 
 
@@ -31,13 +26,11 @@ def build_qualification_diagnostics(
     applicability_conflicts = _applicability_conflict_diagnostics(report.clauses)
     model_fitness = _applicability_model_fitness(report.clauses)
     duplicates = _duplicate_diagnostics(report.clauses)
-    multi_assertion = _multi_assertion_candidates(report.clauses)
     stage_contributions = _stage_contributions(cascade_stages)
     return {
         "applicability_conflicts": applicability_conflicts,
         "applicability_model_fitness": model_fitness,
         "duplicate_clusters": duplicates,
-        "multi_applicability_assertion_candidates": multi_assertion,
         "stage_contributions": stage_contributions,
     }
 
@@ -50,7 +43,6 @@ def render_qualification_diagnostics_markdown(
     conflicts = diagnostics["applicability_conflicts"]
     fitness = diagnostics["applicability_model_fitness"]
     duplicates = diagnostics["duplicate_clusters"]
-    multi = diagnostics["multi_applicability_assertion_candidates"]
     stages = diagnostics["stage_contributions"]
     lines = [
         f"# Qualification diagnostics: {report.matrix_id}",
@@ -62,7 +54,6 @@ def render_qualification_diagnostics_markdown(
         "",
         f"- Clauses with applicability vote disagreement: `{conflicts['clause_count']}`",
         f"- Clauses with presence disagreement: `{conflicts['presence_disagreement_count']}`",
-        f"- Clauses with polarity disagreement: `{conflicts['polarity_disagreement_count']}`",
         "",
         "| Votes observed | Clauses |",
         "| --- | ---: |",
@@ -77,22 +68,21 @@ def render_qualification_diagnostics_markdown(
             "",
             "## Applicability model fitness signals",
             "",
-            "`none` rate is shown separately for all voted clauses and for clauses with "
+            "The absent rate is shown separately for all voted clauses and for clauses with "
             "applicability disagreement. Agreement rates use only high-confidence "
             "unanimous/strong consensus as a reference signal; they are not accuracy scores.",
             "",
-            "| Model | Votes | Present | None rate | Conflict votes | Conflict none rate | "
-            "Presence agreement | Polarity agreement |",
-            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            "| Model | Votes | Present | Absent rate | Conflict votes | Conflict absent rate | "
+            "Presence agreement |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
     )
     for item in fitness:
         lines.append(
             f"| `{item['model_id']}` | {item['vote_count']} | {item['present_count']} | "
-            f"{item['none_rate']:.3f} | {item['conflict_vote_count']} | "
-            f"{item['conflict_none_rate']:.3f} | "
-            f"{_format_optional_rate(item['presence_reference_agreement_rate'])} | "
-            f"{_format_optional_rate(item['polarity_reference_agreement_rate'])} |"
+            f"{item['absent_rate']:.3f} | {item['conflict_vote_count']} | "
+            f"{item['conflict_absent_rate']:.3f} | "
+            f"{_format_optional_rate(item['presence_reference_agreement_rate'])} |"
         )
 
     lines.extend(["", "## Cascade stage contributions", ""])
@@ -144,35 +134,24 @@ def render_qualification_diagnostics_markdown(
         refs = ", ".join(f"`{ref}`" for ref in item["references"])
         lines.append(f"- **{item['kind']}** ({item['size']}): {refs}")
 
-    lines.extend(
-        [
-            "",
-            "## Multiple applicability assertion candidates",
-            "",
-            "Clauses below contain lexical evidence for both applicability polarities. "
-            "They are candidates for future multi-label/domain-model analysis.",
-            "",
-        ]
-    )
-    if not multi:
-        lines.append("No candidates detected.")
-    else:
-        for item in multi:
-            labels = ", ".join(f"`{label}`" for label in item["detected_polarities"])
-            lines.append(
-                f"- `{item['document_key']}:{item['reference'] or item['clause_id']}`: {labels}"
-            )
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _applicability_vote_label(clause: ClauseConsensus, vote: Any) -> str:
-    if not vote.applicability_present or vote.applicability_polarity is None:
-        return _NONE
-    return vote.applicability_polarity.value
+def _applicability_vote_label(vote: Any) -> str:
+    return _PRESENT if vote.applicability_present else _ABSENT
 
 
 def _has_applicability_disagreement(clause: ClauseConsensus) -> bool:
-    return len({_applicability_vote_label(clause, vote) for vote in clause.votes}) > 1
+    return (
+        len(
+            {
+                _applicability_vote_label(vote)
+                for vote in clause.votes
+                if vote.applicability_presence_eligible
+            }
+        )
+        > 1
+    )
 
 
 def _applicability_conflict_diagnostics(
@@ -180,19 +159,17 @@ def _applicability_conflict_diagnostics(
 ) -> dict[str, Any]:
     clusters: Counter[str] = Counter()
     presence_disagreement = 0
-    polarity_disagreement = 0
     clause_count = 0
     for clause in clauses:
-        labels = [_applicability_vote_label(clause, vote) for vote in clause.votes]
+        labels = [
+            _applicability_vote_label(vote)
+            for vote in clause.votes
+            if vote.applicability_presence_eligible
+        ]
         if len(set(labels)) <= 1:
             continue
         clause_count += 1
-        present_values = {label != _NONE for label in labels}
-        if len(present_values) > 1:
-            presence_disagreement += 1
-        present_labels = {label for label in labels if label != _NONE}
-        if len(present_labels) > 1:
-            polarity_disagreement += 1
+        presence_disagreement += 1
         counts = Counter(labels)
         signature = " ↔ ".join(
             f"{label} ({counts[label]})" for label in sorted(counts, key=_applicability_sort_key)
@@ -201,7 +178,6 @@ def _applicability_conflict_diagnostics(
     return {
         "clause_count": clause_count,
         "presence_disagreement_count": presence_disagreement,
-        "polarity_disagreement_count": polarity_disagreement,
         "clusters": [
             {"signature": signature, "count": count} for signature, count in clusters.most_common()
         ],
@@ -210,9 +186,8 @@ def _applicability_conflict_diagnostics(
 
 def _applicability_sort_key(label: str) -> tuple[int, str]:
     order = {
-        "included": 0,
-        "excluded": 1,
-        _NONE: 2,
+        _PRESENT: 0,
+        _ABSENT: 1,
     }
     return order.get(label, 5), label
 
@@ -220,7 +195,6 @@ def _applicability_sort_key(label: str) -> tuple[int, str]:
 def _applicability_model_fitness(clauses: tuple[ClauseConsensus, ...]) -> list[dict[str, Any]]:
     stats: dict[str, Counter[str]] = defaultdict(Counter)
     reference_presence: dict[str, list[bool]] = defaultdict(list)
-    reference_polarity: dict[str, list[bool]] = defaultdict(list)
 
     for clause in clauses:
         conflict = _has_applicability_disagreement(clause)
@@ -228,11 +202,6 @@ def _applicability_model_fitness(clauses: tuple[ClauseConsensus, ...]) -> list[d
             ConsensusCategory.UNANIMOUS,
             ConsensusCategory.STRONG,
         }
-        accepted_polarity = (
-            clause.applicability_polarity.value
-            if clause.applicability_present and clause.applicability_polarity is not None
-            else None
-        )
         for vote in clause.votes:
             item = stats[vote.model_id]
             if vote.applicability_presence_eligible:
@@ -240,26 +209,15 @@ def _applicability_model_fitness(clauses: tuple[ClauseConsensus, ...]) -> list[d
                 if vote.applicability_present:
                     item["present_count"] += 1
                 else:
-                    item["none_count"] += 1
+                    item["absent_count"] += 1
                 if conflict:
                     item["conflict_vote_count"] += 1
                     if not vote.applicability_present:
-                        item["conflict_none_count"] += 1
+                        item["conflict_absent_count"] += 1
                 if is_reference:
                     reference_presence[vote.model_id].append(
                         vote.applicability_present == clause.applicability_present
                     )
-            if (
-                vote.applicability_polarity_eligible
-                and is_reference
-                and clause.applicability_present
-                and accepted_polarity is not None
-            ):
-                reference_polarity[vote.model_id].append(
-                    vote.applicability_present
-                    and vote.applicability_polarity is not None
-                    and vote.applicability_polarity.value == accepted_polarity
-                )
 
     result = []
     for model_id in sorted(stats):
@@ -271,15 +229,14 @@ def _applicability_model_fitness(clauses: tuple[ClauseConsensus, ...]) -> list[d
                 "model_id": model_id,
                 "vote_count": vote_count,
                 "present_count": item["present_count"],
-                "none_count": item["none_count"],
-                "none_rate": item["none_count"] / vote_count if vote_count else 0.0,
+                "absent_count": item["absent_count"],
+                "absent_rate": item["absent_count"] / vote_count if vote_count else 0.0,
                 "conflict_vote_count": conflict_votes,
-                "conflict_none_count": item["conflict_none_count"],
-                "conflict_none_rate": (
-                    item["conflict_none_count"] / conflict_votes if conflict_votes else 0.0
+                "conflict_absent_count": item["conflict_absent_count"],
+                "conflict_absent_rate": (
+                    item["conflict_absent_count"] / conflict_votes if conflict_votes else 0.0
                 ),
                 "presence_reference_agreement_rate": _mean_bool(reference_presence[model_id]),
-                "polarity_reference_agreement_rate": _mean_bool(reference_polarity[model_id]),
             }
         )
     return result
@@ -379,42 +336,11 @@ def _duplicate_cluster_payload(kind: str, group: list[ClauseConsensus]) -> dict[
     }
 
 
-def _multi_assertion_candidates(clauses: tuple[ClauseConsensus, ...]) -> list[dict[str, Any]]:
-    result = []
-    for clause in clauses:
-        polarities = _detect_applicability_polarities(clause.clause_text or "")
-        if len(polarities) <= 1:
-            continue
-        result.append(
-            {
-                "clause_id": clause.clause_id,
-                "document_key": clause.document_key,
-                "reference": clause.reference,
-                "detected_polarities": sorted(polarities, key=_applicability_sort_key),
-                "requires_review": clause.requires_review,
-            }
-        )
-    return result
-
-
-def _detect_applicability_polarities(text: str) -> set[str]:
-    return {
-        polarity.value
-        for item in detect_explicit_applicability_subtypes(text)
-        if (polarity := project_applicability_polarity(item)) is not None
-    }
-
-
 def _stage_contributions(cascade_stages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     applicability_reasons = {
-        "applicability_disagreement",
-        "applicability_confidence",
         "applicability_presence_disagreement",
-        "applicability_polarity_disagreement",
         "applicability_presence_confidence",
-        "applicability_polarity_confidence",
-        "applicability_structural_conflict",
     }
     for stage in cascade_stages:
         entry_reasons = stage.get("entry_reasons", {})

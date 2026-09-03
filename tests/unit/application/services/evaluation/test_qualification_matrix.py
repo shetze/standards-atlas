@@ -415,7 +415,9 @@ def test_cascade_stage_can_select_prompts(tmp_path: Path) -> None:
     assert not any("missing all runs" in item for item in report.diagnostics)
 
 
-def test_cascade_stage_without_prompt_selection_uses_all_prompts(tmp_path: Path) -> None:
+def test_cascade_stage_without_prompt_selection_uses_declared_prompt_catalog(
+    tmp_path: Path,
+) -> None:
     path = _manifest(tmp_path)
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     payload["execution"] = {
@@ -462,7 +464,7 @@ def test_cascade_rejects_unknown_stage_prompts(tmp_path: Path) -> None:
         QualificationMatrixManifest.load(path)
 
 
-def test_cascade_resolution_escalates_dimension_disagreement() -> None:
+def test_cascade_resolution_escalates_presence_disagreement() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -473,19 +475,20 @@ def test_cascade_resolution_escalates_dimension_disagreement() -> None:
     resolution = CascadeResolutionConfig(
         minimum_successful_models=3,
         minimum_confidence=0.6,
-        escalate_on_applicability_disagreement=True,
+        escalate_on_applicability_presence_disagreement=True,
         escalate_on_role_relation_disagreement=True,
     )
     clause = SimpleNamespace(
         participating_models=3,
         category=SimpleNamespace(value="strong_consensus"),
         statement_function_confidence=1.0,
+        applicability_presence_unanimous=False,
         applicability_unanimous=False,
         role_relation_unanimous=False,
     )
 
     assert cascade_escalation_reasons(clause, resolution) == (
-        "applicability_disagreement",
+        "applicability_presence_disagreement",
         "role_relation_disagreement",
     )
 
@@ -507,6 +510,76 @@ def test_cascade_resolution_accepts_unanimous_secondary_dimensions() -> None:
     )
 
     assert cascade_escalation_reasons(clause, CascadeResolutionConfig()) == ()
+
+
+def test_cascade_resolution_requires_enough_eligible_applicability_presence_votes() -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_escalation_reasons,
+    )
+
+    clause = SimpleNamespace(
+        participating_models=3,
+        applicability_participating_models=2,
+        category=SimpleNamespace(value="unanimous"),
+        statement_function_confidence=1.0,
+        applicability_presence_unanimous=True,
+        applicability_unanimous=True,
+        role_relation_unanimous=True,
+    )
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=3,
+        minimum_applicability_presence_models=3,
+        escalate_on_knowledge_kind_disagreement=False,
+        escalate_on_applicability_presence_disagreement=False,
+        escalate_on_role_relation_disagreement=False,
+    )
+
+    assert cascade_escalation_reasons(clause, resolution) == (
+        "insufficient_applicability_presence_models",
+    )
+
+
+@pytest.mark.parametrize(
+    ("participating_models", "expected"),
+    [
+        (2, ("insufficient_applicability_presence_models",)),
+        (3, ()),
+    ],
+)
+def test_later_stage_rechecks_eligible_applicability_presence_votes(
+    participating_models: int, expected: tuple[str, ...]
+) -> None:
+    from types import SimpleNamespace
+
+    from standards_atlas.application.semantic_qualification.qualification_matrix import (
+        CascadeResolutionConfig,
+        cascade_stage_escalation_reasons,
+    )
+
+    cumulative = SimpleNamespace(
+        participating_models=3,
+        applicability_participating_models=participating_models,
+        applicability_presence_unanimous=True,
+        applicability_unanimous=True,
+    )
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=3,
+        minimum_applicability_presence_models=3,
+        escalate_on_applicability_presence_disagreement=False,
+    )
+
+    assert (
+        cascade_stage_escalation_reasons(
+            cumulative_clause=cumulative,
+            stage_clause=SimpleNamespace(),
+            previous_reasons=("insufficient_applicability_presence_models",),
+            resolution=resolution,
+        )
+        == expected
+    )
 
 
 def test_cascade_stage_can_override_resolution_policy() -> None:
@@ -535,7 +608,7 @@ def test_cascade_stage_can_override_resolution_policy() -> None:
     assert stage.resolution.minimum_role_relation_confidence == 0.80
 
 
-def test_cascade_resolution_uses_dimension_confidence_after_intermediate_stage() -> None:
+def test_cascade_resolution_uses_presence_confidence_after_intermediate_stage() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -546,9 +619,9 @@ def test_cascade_resolution_uses_dimension_confidence_after_intermediate_stage()
     resolution = CascadeResolutionConfig(
         minimum_successful_models=5,
         minimum_confidence=0.6,
-        escalate_on_applicability_disagreement=False,
+        escalate_on_applicability_presence_disagreement=False,
         escalate_on_role_relation_disagreement=False,
-        minimum_applicability_confidence=0.75,
+        minimum_applicability_presence_confidence=0.75,
         minimum_role_relation_confidence=0.80,
     )
     resolved = SimpleNamespace(
@@ -559,24 +632,25 @@ def test_cascade_resolution_uses_dimension_confidence_after_intermediate_stage()
         role_relation_unanimous=False,
         applicability_present=True,
         applicability_confidence=6 / 7,
-        applicability_support={"present": 6 / 7, "exception": 6 / 7},
+        applicability_presence_confidence=6 / 7,
+        applicability_support={"present": 6 / 7, "absent": 1 / 7},
         role_relation_present=True,
         role_relation_confidence=6 / 7,
-        role_relation_support={
-            "present": 6 / 7,
-            "responsible_for": 6 / 7,
-        },
+        role_relation_support={"present": 6 / 7, "responsible_for": 6 / 7},
     )
     unresolved = SimpleNamespace(
         **{
             **resolved.__dict__,
             "applicability_confidence": 5 / 7,
-            "applicability_support": {"present": 5 / 7, "exception": 5 / 7},
+            "applicability_presence_confidence": 5 / 7,
+            "applicability_support": {"present": 5 / 7, "absent": 2 / 7},
         }
     )
 
     assert cascade_escalation_reasons(resolved, resolution) == ()
-    assert cascade_escalation_reasons(unresolved, resolution) == ("applicability_confidence",)
+    assert cascade_escalation_reasons(unresolved, resolution) == (
+        "applicability_presence_confidence",
+    )
 
 
 def test_cascade_resolution_can_accept_confident_absence() -> None:
@@ -731,14 +805,14 @@ def test_stage_resolution_does_not_reopen_resolved_statement_function() -> None:
         cascade_stage_escalation_reasons(
             cumulative_clause=cumulative,
             stage_clause=stage,
-            previous_reasons=("applicability_disagreement",),
+            previous_reasons=("applicability_presence_disagreement",),
             resolution=resolution,
         )
         == ()
     )
 
 
-def test_stage_resolution_uses_cumulative_applicability_confidence() -> None:
+def test_stage_resolution_uses_cumulative_applicability_presence_confidence() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -749,7 +823,7 @@ def test_stage_resolution_uses_cumulative_applicability_confidence() -> None:
     resolution = CascadeResolutionConfig(
         minimum_successful_models=5,
         statement_function_resolution_mode="stage_resolver",
-        minimum_applicability_confidence=0.75,
+        minimum_applicability_presence_confidence=0.75,
         minimum_role_relation_confidence=0.80,
     )
     cumulative = SimpleNamespace(
@@ -758,7 +832,8 @@ def test_stage_resolution_uses_cumulative_applicability_confidence() -> None:
         statement_function_confidence=1.0,
         applicability_present=True,
         applicability_confidence=5 / 7,
-        applicability_support={"present": 5 / 7, "exception": 5 / 7},
+        applicability_presence_confidence=5 / 7,
+        applicability_support={"present": 5 / 7, "absent": 2 / 7},
         applicability_unanimous=False,
         role_relation_present=False,
         role_relation_confidence=0.0,
@@ -770,9 +845,9 @@ def test_stage_resolution_uses_cumulative_applicability_confidence() -> None:
     assert cascade_stage_escalation_reasons(
         cumulative_clause=cumulative,
         stage_clause=stage,
-        previous_reasons=("applicability_disagreement",),
+        previous_reasons=("applicability_presence_disagreement",),
         resolution=resolution,
-    ) == ("applicability_confidence",)
+    ) == ("applicability_presence_confidence",)
 
 
 def test_capture_resolved_dimensions_persists_stage_resolver_statement() -> None:
@@ -787,7 +862,6 @@ def test_capture_resolved_dimensions_persists_stage_resolver_statement() -> None
         knowledge_kind_confidence=1.0,
         knowledge_kind_category=SimpleNamespace(value="unanimous"),
         applicability_present=False,
-        applicability_polarity=None,
         applicability_decision_confidence=1.0,
         applicability_category=SimpleNamespace(value="unanimous"),
         role_relation_present=False,
@@ -819,7 +893,7 @@ def test_capture_resolved_dimensions_persists_stage_resolver_statement() -> None
     }
 
 
-def test_cascade_escalates_applicability_structural_conflict() -> None:
+def test_cascade_ignores_stale_applicability_structural_conflict() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -831,20 +905,20 @@ def test_cascade_escalates_applicability_structural_conflict() -> None:
         participating_models=3,
         category=SimpleNamespace(value="unanimous"),
         statement_function_confidence=1.0,
+        applicability_presence_unanimous=True,
         applicability_unanimous=True,
         applicability_structural_conflict=True,
         applicability_present=True,
+        applicability_presence_confidence=1.0,
         applicability_confidence=1.0,
-        applicability_support={"present": 1.0, "exclusion": 1.0},
+        applicability_support={"present": 1.0, "absent": 0.0},
         role_relation_unanimous=True,
         role_relation_present=False,
         role_relation_confidence=0.0,
         role_relation_support={"present": 0.0},
     )
 
-    reasons = cascade_escalation_reasons(clause, CascadeResolutionConfig())
-
-    assert "applicability_structural_conflict" in reasons
+    assert cascade_escalation_reasons(clause, CascadeResolutionConfig()) == ()
 
 
 def test_capture_initial_knowledge_kind_uses_decision_confidence_for_none() -> None:
@@ -863,7 +937,6 @@ def test_capture_initial_knowledge_kind_uses_decision_confidence_for_none() -> N
         knowledge_kind_decision_confidence=1.0,
         knowledge_kind_category=SimpleNamespace(value="unanimous"),
         applicability_present=False,
-        applicability_polarity=None,
         applicability_decision_confidence=1.0,
         applicability_category=SimpleNamespace(value="unanimous"),
         applicability_structural_conflict=False,
@@ -906,7 +979,7 @@ def test_effective_cascade_resolution_honors_review_majority_threshold() -> None
     assert effective.minimum_confidence == 0.67
 
 
-def test_stage_keeps_unresolved_structural_conflict_without_other_applicability_reason() -> None:
+def test_stage_does_not_reopen_presence_for_stale_structural_conflict() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -920,8 +993,10 @@ def test_stage_keeps_unresolved_structural_conflict_without_other_applicability_
         statement_function_confidence=1.0,
         applicability_structural_conflict=True,
         applicability_present=True,
+        applicability_presence_confidence=1.0,
         applicability_confidence=1.0,
-        applicability_support={"present": 1.0, "exclusion": 1.0},
+        applicability_support={"present": 1.0, "absent": 0.0},
+        applicability_presence_unanimous=True,
         applicability_unanimous=True,
         role_relation_present=False,
         role_relation_confidence=0.0,
@@ -935,12 +1010,12 @@ def test_stage_keeps_unresolved_structural_conflict_without_other_applicability_
         stage_clause=stage,
         previous_reasons=("applicability_structural_conflict",),
         resolution=CascadeResolutionConfig(
-            escalate_on_applicability_disagreement=False,
-            minimum_applicability_confidence=0.75,
+            escalate_on_applicability_presence_disagreement=False,
+            minimum_applicability_presence_confidence=0.75,
         ),
     )
 
-    assert reasons == ("applicability_structural_conflict",)
+    assert reasons == ()
 
 
 def test_cached_or_reused_wall_time_does_not_satisfy_duration_threshold(tmp_path: Path) -> None:
@@ -973,28 +1048,25 @@ def test_cached_or_reused_wall_time_does_not_satisfy_duration_threshold(tmp_path
     assert "fresh inference performance not measured" in candidate.regressions
 
 
-def test_model_dimension_eligibility_defaults_true_and_is_exposed(tmp_path: Path) -> None:
+def test_model_dimension_eligibility_is_presence_only(tmp_path: Path) -> None:
     path = _manifest(tmp_path)
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     payload["models"][0]["dimension_eligibility"] = {
-        "applicability_presence": True,
-        "applicability_polarity": False,
+        "applicability_presence": False,
     }
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
     manifest = QualificationMatrixManifest.load(path)
 
     assert manifest.model_dimension_eligibility["fast"] == {
-        "applicability_presence": True,
-        "applicability_polarity": False,
+        "applicability_presence": False,
     }
     assert manifest.model_dimension_eligibility["accurate"] == {
         "applicability_presence": True,
-        "applicability_polarity": True,
     }
 
 
-def test_split_applicability_does_not_escalate_polarity_when_presence_is_negative() -> None:
+def test_confident_absence_uses_presence_confidence_only() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -1008,13 +1080,10 @@ def test_split_applicability_does_not_escalate_polarity_when_presence_is_negativ
         statement_function_confidence=0.9,
         applicability_present=False,
         applicability_presence_confidence=0.86,
-        applicability_polarity_confidence=0.40,
         applicability_presence_unanimous=False,
-        applicability_polarity_unanimous=False,
         applicability_unanimous=False,
-        applicability_structural_conflict=False,
-        applicability_confidence=0.40,
-        applicability_support={"present": 0.14},
+        applicability_confidence=0.86,
+        applicability_support={"present": 0.14, "absent": 0.86},
         role_relation_present=False,
         role_relation_confidence=0.0,
         role_relation_support={"present": 0.0},
@@ -1022,18 +1091,15 @@ def test_split_applicability_does_not_escalate_polarity_when_presence_is_negativ
         role_semantics_unanimous=True,
     )
     resolution = CascadeResolutionConfig(
-        escalate_on_applicability_disagreement=False,
         escalate_on_applicability_presence_disagreement=False,
-        escalate_on_applicability_polarity_disagreement=True,
         minimum_applicability_presence_confidence=0.75,
-        minimum_applicability_polarity_confidence=0.75,
         escalate_on_role_relation_disagreement=False,
     )
 
     assert cascade_escalation_reasons(clause, resolution) == ()
 
 
-def test_split_applicability_reports_presence_and_polarity_reasons_separately() -> None:
+def test_presence_threshold_emits_one_applicability_reason() -> None:
     from types import SimpleNamespace
 
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -1047,13 +1113,10 @@ def test_split_applicability_reports_presence_and_polarity_reasons_separately() 
         statement_function_confidence=0.9,
         applicability_present=True,
         applicability_presence_confidence=0.70,
-        applicability_polarity_confidence=0.60,
         applicability_presence_unanimous=False,
-        applicability_polarity_unanimous=False,
         applicability_unanimous=False,
-        applicability_structural_conflict=False,
-        applicability_confidence=0.60,
-        applicability_support={"present": 0.70, "inclusion": 0.60},
+        applicability_confidence=0.70,
+        applicability_support={"present": 0.70, "absent": 0.30},
         role_relation_present=False,
         role_relation_confidence=0.0,
         role_relation_support={"present": 0.0},
@@ -1061,38 +1124,27 @@ def test_split_applicability_reports_presence_and_polarity_reasons_separately() 
         role_semantics_unanimous=True,
     )
     resolution = CascadeResolutionConfig(
-        escalate_on_applicability_disagreement=False,
         escalate_on_applicability_presence_disagreement=True,
-        escalate_on_applicability_polarity_disagreement=True,
         minimum_applicability_presence_confidence=0.75,
-        minimum_applicability_polarity_confidence=0.75,
         escalate_on_role_relation_disagreement=False,
     )
 
-    assert cascade_escalation_reasons(clause, resolution) == (
-        "applicability_presence_disagreement",
-        "applicability_polarity_disagreement",
-        "applicability_presence_confidence",
-        "applicability_polarity_confidence",
-    )
+    assert cascade_escalation_reasons(clause, resolution) == ("applicability_presence_confidence",)
 
 
-def test_dimension_eligibility_reports_filtered_model_ids(tmp_path: Path) -> None:
+def test_dimension_eligibility_reports_presence_filtered_model_ids(tmp_path: Path) -> None:
     path = _manifest(tmp_path)
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     payload["models"][0]["dimension_eligibility"] = {
         "applicability_presence": False,
-        "applicability_polarity": True,
     }
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
     manifest = QualificationMatrixManifest.load(path)
 
     assert manifest.eligible_model_ids_for_dimension("applicability_presence") == ("accurate",)
-    assert manifest.eligible_model_ids_for_dimension("applicability_polarity") == (
-        "fast",
-        "accurate",
-    )
+    with pytest.raises(ValueError, match="unsupported model-eligibility dimension"):
+        manifest.eligible_model_ids_for_dimension("applicability_polarity")
 
 
 def test_cascade_requires_enough_cumulative_dimension_eligible_models(tmp_path: Path) -> None:
@@ -1421,7 +1473,7 @@ def test_applicability_framing_manifest_declares_prompt_ablation_without_changin
     assert experiment.thresholds.baseline_prompt_id == "applicability-boundary"
 
 
-def test_v6_applicability_presence_manifest_uses_one_shared_prompt() -> None:
+def test_v6_applicability_presence_manifest_uses_one_shared_prompt_in_every_stage() -> None:
     project_root = Path(__file__).resolve().parents[5]
     path = (
         project_root
@@ -1433,12 +1485,13 @@ def test_v6_applicability_presence_manifest_uses_one_shared_prompt() -> None:
 
     assert manifest.task == "semantic-profile-classification"
     assert manifest.task_version == "2.5.0"
-    assert manifest.execution.mode == "full_matrix"
+    assert manifest.execution.mode == "cascade"
     assert len(manifest.prompts) == 1
     assert manifest.prompts[0].id == "applicability-presence"
     assert manifest.prompts[0].prompt_version == "structure-aware-v10"
     assert manifest.prompts[0].cbox_frame == "applicability-isolated-v1"
     assert manifest.prompts[0].adaptive_interview is False
-    assert manifest.consensus.enabled is False
+    assert all(stage.prompts == ("applicability-presence",) for stage in manifest.execution.stages)
+    assert manifest.consensus.enabled is True
     assert manifest.thresholds.baseline_prompt_id == "applicability-presence"
     assert "applicability_polarity" not in raw

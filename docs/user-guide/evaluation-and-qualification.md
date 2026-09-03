@@ -102,8 +102,7 @@ engineering knowledge represented.
 ## Stage-specific prompt selection
 
 Cascade stages may restrict the globally declared prompt catalog with a `prompts` list.
-Omitting the list preserves the previous behaviour and executes every declared prompt for
-every model in the stage.
+Omitting the list selects the complete declared prompt catalog for every model in the stage.
 
 ```yaml
 execution:
@@ -133,25 +132,22 @@ unresolved clauses in later stages. Qualification reports contain only combinati
 were configured for the respective model; intentionally omitted combinations are not
 reported as missing runs.
 
-Models may also declare dimension-specific voting eligibility. This keeps the complete model
-prediction in the qualification artifacts while excluding a model from a semantic subtask for
-which qualification showed systematic weakness. Eligibility affects only consensus arithmetic;
-it does not suppress inference or diagnostics.
+Models may also declare applicability-presence voting eligibility. This keeps the complete model
+prediction in the qualification artifacts while excluding a model whose binary presence behavior
+has not qualified for consensus use. Eligibility affects only consensus arithmetic; it does not
+suppress inference or diagnostics.
 
 ```yaml
 models:
-  - id: smollm3-3b
+  - id: model-under-review
     provider: ramalama
     dimension_eligibility:
-      applicability_presence: true
-      applicability_polarity: false
+      applicability_presence: false
 ```
 
-An ineligible vote is removed from both numerator and denominator. For example, if SmolLM3 is
-ineligible for `applicability_polarity`, three remaining positive-presence polarity voters with two `included`
-votes and one `excluded` vote yield `2/3`, not `2/4`. Applicability presence is
-calculated independently, so SmolLM3 can still contribute to the presence decision. Omitted
-eligibility settings default to `true` for backward compatibility.
+An ineligible vote is removed from both numerator and denominator. The single eligibility flag
+therefore governs the complete applicability decision. Omitted eligibility settings default to
+`true`.
 
 
 ### Taxonomy distinctions
@@ -184,7 +180,7 @@ matrix report:
   counts before and after the stage;
 - `qualification-analysis-metrics.json` summarizes consensus categories, dimension
   categories, overall resolution states, participation, review reasons, resolution sources,
-  and observed versus unresolved structural conflicts.
+  and non-normative presence-disagreement diagnostics.
 
 The command also creates an immutable qualification-run archive directly below
 `local/evaluation/`, for example `qualification-run-012.zip`. Run numbers are monotonic and
@@ -214,16 +210,16 @@ majority auto-acceptance threshold. This prevents a `2/3` majority from being fr
 final cascade decision when the review policy would immediately reject that same
 confidence.
 
-Structural applicability conflicts have separate observed and unresolved states. An
-observed conflict remains available for audit after a later stage resolves it; only an
-unresolved structural conflict forces final review.
+Structural taxonomy and CBox data no longer project an applicability result into consensus and
+do not override the model votes. They remain available as general clause context and audit evidence
+for the other semantic dimensions.
 
-Applicability cascade resolution treats **presence** and **polarity** as separate hierarchical decisions.
-Presence disagreement/confidence determines whether the clause is applicability-relevant at all;
-polarity disagreement/confidence is evaluated only after the cumulative decision is positive. A
-negative presence decision therefore cannot be escalated because of polarity votes. The
-diagnostics report also records how many applicability-driven entries each cascade stage resolves
-and how many leave the stage still unresolved.
+Applicability cascade resolution is one binary presence decision. Its support, confidence,
+unanimity, escalation, and model eligibility are calculated solely from eligible
+`applicability_present` votes. The current consensus contract contains no applicability polarity or
+subtype fields. Cascade provenance uses only the reasons
+`applicability_presence_disagreement` and `applicability_presence_confidence`; diagnostics record
+how many applicability-driven entries each stage resolves and how many leave the stage unresolved.
 
 Use `--overwrite` after changing cascade resolution semantics when the goal is to measure
 execution behavior itself. `--recompute` can rebuild derived metrics from persisted
@@ -278,17 +274,16 @@ definitions separately from the production `models` pool and groups them with th
 models whose cascade roles they challenge. A normal `qualification-matrix` run ignores these
 challenger-only models.
 
-The applicability hard-case qualification promoted SmolLM3 3B, GLM-4 9B, and EXAONE
-3.5 32B into the production cascade. The representative 500-clause follow-up then moved
-Ministral 3 8B into `efficient-local` and Gemma 3 12B into `intermediate-escalation` to reduce
-Mistral-family correlation in the resolver stage. Slice 3c further narrows applicability-presence
-voting after the Slice 3b representative run exposed GLM-4 and SmolLM3 as opposite calibration
-extremes. Both remain production voters for other semantic dimensions, but neither contributes to
-`applicability_presence`; SmolLM3 also remains excluded from `applicability_polarity`. The displaced
-Qwen3 8B, Phi-4 14B, and Qwen3 32B models remain in `challenger_qualification.models` as regression baselines. This keeps the
-head-to-head workflow useful without duplicating a model between the production and challenger
-pools. Challenger comparison aggregates only `qualification_eligible` candidates; unsupported
-or non-executed candidate rows do not dilute model-level success or duration metrics.
+Earlier applicability hard-case qualification shaped the model ordering used by the production
+cascade. Because task 2.5.0 changes Applicability to a single presence decision with a substantially
+smaller prompt contract, the v6 manifest starts a fresh Presence qualification with all staged
+production models eligible. Any later exclusion must therefore be justified against the new
+Presence-only Golden regression rather than inherited from polarity-era behavior. The displaced
+Qwen3 8B, Phi-4 14B, and Qwen3 32B models remain in
+`challenger_qualification.models` as regression baselines. This keeps the head-to-head workflow
+useful without duplicating a model between the production and challenger pools. Challenger
+comparison aggregates only `qualification_eligible` candidates; unsupported or non-executed
+candidate rows do not dilute model-level success or duration metrics.
 
 Run the isolated comparison with:
 
@@ -314,20 +309,20 @@ uv run standards-atlas evaluation challenger-qualification \
   --sample-from local/evaluation/qualification-run-005.zip
 ```
 
-`applicability-conflicts` selects clauses whose final archived model votes disagree either on
-applicability presence or, among positive votes, on binary applicability polarity. The source
-archive must use the same corpus and dataset version as the current manifest. The exact clause
-IDs and source archive are persisted as `challenger-sample-selection.json` and included in the
-qualification-run archive. `--limit` may be added to shorten a hard-case smoke test; it limits
-the selected hard-case set rather than the start of the corpus.
+`applicability-conflicts` selects clauses whose final eligible model votes disagree on
+Applicability Presence. The source archive must use the same corpus and dataset version as the
+current manifest. The exact clause IDs and source archive are persisted as
+`challenger-sample-selection.json` and included in the qualification-run archive. `--limit` may
+be added to shorten a hard-case smoke test; it limits the selected hard-case set rather than the
+start of the corpus.
 
 The challenger run emits the normal qualification and diagnostics artifacts plus
 `challenger-comparison.json` and `challenger-comparison.md`. Both comparison artifacts are
 created before the immutable qualification-run archive is written and are included in that
-archive. The comparison groups incumbents and challengers by cascade role and reports
-applicability conflict `none` rate, reference agreement for applicability presence and polarity,
-prediction success, and measured duration. These signals are observational and do not
-automatically replace, weight, or promote models.
+archive. The comparison groups incumbents and challengers by cascade role and reports Presence
+vote counts, present/absent behavior in conflict clauses, Presence reference agreement, prediction
+success, and measured duration. These signals are observational and do not automatically replace,
+weight, or promote models.
 
 All v3 semantic prompts use the same confidence contract: confidence is a JSON number from
 `0.0` through `1.0` (for example, `0.95`), never a percentage such as `95` or `95%`. Invalid
@@ -390,38 +385,30 @@ consensus from appearing equivalent to correct relation extraction.
 
 ### Applicability semantic boundary
 
-Qualification task 2.4.0 treats applicability as one hierarchical qualification dimension:
-**presence first, binary polarity second**. `applicability_present` decides whether the clause
-explicitly includes or excludes normative content for a stated subject or case. When presence is
-positive, the qualification prompt permits exactly one transport label: `inclusion` (projected to
-`included`) or `exclusion` (projected to `excluded`). `exception` and `applicability_condition` are
-not qualification labels in this stage. Conditional wording that only changes how an activity or
-method is performed is not applicability.
+Qualification task 2.5.0 represents Applicability in the central multidimensional cascade with one
+Boolean field: `applicability_present`. The qualification question is whether the clause text
+contains statements that restrict or extend the applicability of this clause or a referenced
+clause. The shared prompt does not ask the model to classify a direction, subtype, or detailed
+Applicability semantics.
 
-The canonical semantic task remains broader because those concepts may still be useful outside
-qualification. The `structure-aware-v8` qualification prompt therefore uses a safe narrowing of the
-canonical structured-output schema rather than changing the ontology or EngineeringDocument
-contract.
+The central cascade still makes one shared model call per clause, model, and stage. Applicability
+is not split into a second corpus-wide prompt lane. A later specialized enrichment task may process
+the small final-positive subset independently; that enrichment is not part of the central
+qualification contract.
 
-Use `manifests/multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml`
-for the production cascade. Its structure-aware applicability vote uses `structure-aware-v8`.
-
+Use
+`manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml` for the
+Presence-only cascade. It uses `structure-aware-v10` with the `applicability-isolated-v1` CBox
+frame, which supplies the clause text and neutral identity context without interpreted
+Applicability signals. The same single prompt is used in all cascade stages.
 
 ### Applicability presence model eligibility
 
-Slice 3c applies model eligibility independently from prompt and ontology semantics. The v5
-manifest excludes GLM-4 9B and SmolLM3 3B from `applicability_presence` voting because the
-Slice 3b representative run showed opposite calibration extremes (strongly permissive versus
-strongly conservative). Their predictions are still produced and remain available for diagnostics
-and for semantic dimensions where they are eligible.
-
-Eligibility is cumulative across cascade stages. The configured production cascade retains three
-eligible applicability-presence voters after `efficient-local`, five after
-`intermediate-escalation`, and seven after final escalation. Manifest validation rejects filtered
-cascade configurations that would leave fewer dimension-eligible voters than a stage's configured
-`minimum_successful_models`. Applicability-polarity eligibility is independent from presence
-eligibility; a model may therefore remain useful for included/excluded discrimination even when it is not
-trusted to decide whether applicability semantics are present at all.
+The only Applicability eligibility setting is `applicability_presence`. Eligibility is cumulative
+across cascade stages, and manifest validation rejects a filtered configuration whose cumulative
+eligible voters fall below `minimum_applicability_presence_models`. The v6 recalibration manifest
+currently leaves all staged models eligible so their behavior can be measured under the new
+Presence-only task before introducing model-specific exclusions.
 
 ### Role qualification contract
 
@@ -448,6 +435,11 @@ Targets must be the explicit object or subject matter toward which the predicate
 ### Applicability qualification golden set
 
 Applicability qualification uses a HITL-reviewed contract with `present` plus an optional binary `polarity` (`included` or `excluded`). Exception and generic condition semantics are outside this qualification stage. Schema 2.1 makes the corpus incremental: provenance is recorded per case, and new review batches can exclude clauses that are already published in an existing golden corpus. Legacy `applicability_function`/subtype fields and schema-2.0 corpus-level run provenance are not accepted.
+
+This 2.1 corpus and its evaluator are retained temporarily for regression against existing archived
+runs. The v6 central cascade consumes only the reviewed `present` value; the optional historical
+polarity annotation does not participate in v6 consensus, confidence, escalation, or model
+eligibility. Its dedicated Presence-only corpus migration belongs to the following slice.
 
 Build the first review batch from a qualification archive:
 
@@ -499,7 +491,8 @@ uv run standards-atlas evaluation applicability-corpus-evaluate \
 
 The regression report contains consensus metrics, presence precision/recall/F1, and binary polarity accuracy for every model represented in the archived run. The golden corpus is deliberately a diagnostic hard-case corpus rather than a representative random sample; use its reviewed metrics for calibration and regression analysis rather than interpreting the class balance as corpus prevalence.
 
-Without a prompt selector, the evaluator preserves the historical behavior and evaluates the archived baseline prompt. Select one experimental arm explicitly with its archived prompt id:
+Without a prompt selector, the evaluator uses the archived baseline prompt. Select one other
+archived prompt arm explicitly with its prompt id:
 
 ```bash
 uv run standards-atlas evaluation applicability-corpus-evaluate \
@@ -509,17 +502,8 @@ uv run standards-atlas evaluation applicability-corpus-evaluate \
   --output local/evaluation/qualification/applicability-golden-regression-068-examples.json
 ```
 
-Evaluate every prompt/frame arm in the archive with:
-
-```bash
-uv run standards-atlas evaluation applicability-corpus-evaluate \
-  --golden local/review/applicability/2.1.0/applicability-golden-corpus.yaml \
-  --run local/evaluation/qualification-run-068.zip \
-  --all-prompts \
-  --output local/evaluation/qualification/applicability-golden-regression-068-all-prompts.json
-```
-
-`--prompt` and `--all-prompts` are mutually exclusive. The multi-prompt output wraps one complete regression report per prompt/frame arm in `prompt_reports`. Keeping baseline-only evaluation as the default preserves the established single-report JSON contract and avoids silently treating experimental or CBox-ablation arms as production candidates.
+Each evaluator invocation produces exactly one regression report. Re-run the command with a
+different `--prompt` value when archived prompt arms need separate comparison artifacts.
 
 ### Applicability boundary prompt matrix
 
