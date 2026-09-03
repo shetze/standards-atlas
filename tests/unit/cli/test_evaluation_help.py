@@ -117,3 +117,13 @@ def test_applicability_corpus_migrate_writes_both_artifacts(tmp_path) -> None:
     assert result.exit_code == 0
     assert yaml.safe_load(output.read_text(encoding="utf-8"))["schema_version"] == "3.0"
     assert yaml.safe_load(detail_seed.read_text(encoding="utf-8"))["schema_version"] == "1.0"
+
+
+def test_applicability_detail_enrich_help_is_registered() -> None:
+    result = runner.invoke(app, ["evaluation", "applicability-detail-enrich", "--help"])
+
+    assert result.exit_code == 0
+    assert "--manifest" in result.stdout
+    assert "--run" in result.stdout
+    assert "--consensus" in result.stdout
+    assert "--fresh" in result.stdout

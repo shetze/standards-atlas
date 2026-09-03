@@ -1,0 +1,25 @@
+schema_version: 1
+id: applicability-functions
+version: 1.3.0
+dimension: applicability_functions
+description: >-
+  Detailed functions expressed by statements that restrict or extend the applicability
+  of a clause or referenced clause.
+values:
+- scope_definition
+- applicability_condition
+- inclusion
+- exclusion
+- exception
+semantics:
+  scope_definition: Establishes the governed set of subjects, systems, cases, or content.
+  applicability_condition: Links applicability to an explicitly stated condition.
+  inclusion: Adds named subjects, systems, cases, or content to the governed set.
+  exclusion: Removes named subjects, systems, cases, or content from the governed set.
+  exception: Carves named subjects, systems, cases, or content from a stated applicability rule.
+codes:
+  scope_definition: SCP
+  applicability_condition: APC
+  inclusion: INC
+  exclusion: EXC
+  exception: XCP

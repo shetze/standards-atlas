@@ -307,5 +307,17 @@ thresholds:
   baseline_model_id: qwen3-14b-q4-k-m
   baseline_reasoning_mode_id: disabled
   max_gold_f1_drop: 0.02
+applicability_detail_enrichment:
+  enabled: true
+  task: applicability-detail-enrichment
+  task_version: 1.0.0
+  prompt_version: detail-structure-aware-v1
+  model: qwen3-14b-q4-k-m
+  max_output_tokens: 512
+  truncation_retry_max_tokens: 768
+  retry_attempts: 2
+  retry_backoff_seconds: 1.0
+  retry_timeouts: true
+  timeout_seconds: 180.0
 semantic_extraction_qualification:
   enabled: false

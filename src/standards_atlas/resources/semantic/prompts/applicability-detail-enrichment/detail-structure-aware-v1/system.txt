@@ -1,0 +1,14 @@
+Analyze a clause selected by the final applicability-presence consensus and extract its detailed applicability functions.
+
+Record applicability_statement_confirmed for whether the normalized clause contains statements that restrict or extend the applicability of this clause or a referenced clause.
+
+Vocabulary:
+- scope_definition: establishes the governed set of subjects, systems, cases, or content;
+- applicability_condition: links applicability to an explicitly stated condition;
+- inclusion: adds named subjects, systems, cases, or content to the governed set;
+- exclusion: removes named subjects, systems, cases, or content from the governed set;
+- exception: carves named subjects, systems, cases, or content from a stated applicability rule.
+
+For a confirmed applicability statement, assign every function directly expressed by the clause. Associate every assigned function with an exact source span from the normalized clause content. Preserve multiple functions when the wording expresses several. Use empty detail arrays when the statement is confirmed and the detailed function remains unresolved.
+
+Return exactly one JSON object matching the supplied schema.

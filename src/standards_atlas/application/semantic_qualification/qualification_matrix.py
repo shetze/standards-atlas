@@ -9,6 +9,9 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
+    ApplicabilityDetailEnrichmentConfig,
+)
 from standards_atlas.application.semantic_qualification.qualification import (
     AnnotationQualificationReport,
 )
@@ -747,6 +750,9 @@ class QualificationMatrixManifest(BaseModel):
     execution: MatrixExecutionConfig = MatrixExecutionConfig()
     thresholds: RegressionThresholds = RegressionThresholds()
     challenger_qualification: ChallengerQualificationConfig = ChallengerQualificationConfig()
+    applicability_detail_enrichment: ApplicabilityDetailEnrichmentConfig = (
+        ApplicabilityDetailEnrichmentConfig(enabled=False)
+    )
     semantic_extraction_qualification: SemanticExtractionQualificationConfig = (
         SemanticExtractionQualificationConfig(enabled=False)
     )
@@ -826,6 +832,14 @@ class QualificationMatrixManifest(BaseModel):
         adjudicator = self.consensus.adjudication
         if adjudicator.enabled and adjudicator.model_id not in model_ids:
             raise ValueError(f"unknown consensus adjudicator model: {adjudicator.model_id!r}")
+        detail = self.applicability_detail_enrichment
+        if detail.enabled:
+            if not self.consensus.enabled:
+                raise ValueError("applicability detail enrichment requires enabled final consensus")
+            if detail.model is None:
+                raise ValueError("enabled applicability detail enrichment requires a model")
+            if detail.model not in model_ids:
+                raise ValueError(f"unknown applicability detail enrichment model: {detail.model!r}")
         for model in self.models:
             unknown_modes = set(model.supported_reasoning_modes) - set(reasoning_mode_ids)
             if unknown_modes:

@@ -1,0 +1,14 @@
+schema_version: 1
+task: applicability-detail-enrichment
+version: 1.0.0
+description: >-
+  Extract the detailed functions and exact source evidence of an applicability statement
+  selected by the final applicability-presence consensus.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds:
+- clause
+ontologies:
+  applicability_functions:
+    id: applicability-functions
+    version: 1.3.0

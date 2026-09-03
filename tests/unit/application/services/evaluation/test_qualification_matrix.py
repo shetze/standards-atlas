@@ -1494,4 +1494,35 @@ def test_v6_applicability_presence_manifest_uses_one_shared_prompt_in_every_stag
     assert all(stage.prompts == ("applicability-presence",) for stage in manifest.execution.stages)
     assert manifest.consensus.enabled is True
     assert manifest.thresholds.baseline_prompt_id == "applicability-presence"
+    assert manifest.applicability_detail_enrichment.enabled is True
+    assert manifest.applicability_detail_enrichment.task_version == "1.0.0"
+    assert manifest.applicability_detail_enrichment.prompt_version == "detail-structure-aware-v1"
+    assert manifest.applicability_detail_enrichment.model == "qwen3-14b-q4-k-m"
     assert "applicability_polarity" not in raw
+
+
+def test_enabled_applicability_detail_enrichment_requires_known_model(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["applicability_detail_enrichment"] = {
+        "enabled": True,
+        "model": "missing-model",
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unknown applicability detail enrichment model"):
+        QualificationMatrixManifest.load(path)
+
+
+def test_enabled_applicability_detail_enrichment_requires_consensus(tmp_path: Path) -> None:
+    path = _manifest(tmp_path)
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload["consensus"] = {"enabled": False}
+    payload["applicability_detail_enrichment"] = {
+        "enabled": True,
+        "model": "fast",
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="requires enabled final consensus"):
+        QualificationMatrixManifest.load(path)

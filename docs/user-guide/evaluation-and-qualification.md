@@ -402,6 +402,46 @@ Presence-only cascade. It uses `structure-aware-v10` with the `applicability-iso
 frame, which supplies the clause text and neutral identity context without interpreted
 Applicability signals. The same single prompt is used in all cascade stages.
 
+### Selective Applicability detail enrichment
+
+After the final Presence consensus, the detail task processes only clauses whose final
+`applicability_present` decision is `true`. Run it against an existing qualification matrix run:
+
+```bash
+uv run standards-atlas evaluation applicability-detail-enrich \
+  --manifest manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml \
+  --run .atlas/data/evaluation/multidimensional-semantic-qualification-v6-applicability-presence
+```
+
+The command resolves the final `consensus-report.json` through the manifest. `--consensus` may
+select an explicit final report. Before selection, the command verifies the report identity,
+prompt configuration, and clause coordinates against `qualification-coverage.json`. Every clause
+marked `qualified` must occur in final consensus; clauses explicitly marked `unqualified` remain
+accounted for without entering detail enrichment. The deterministic Selection preserves the source
+Selection, coverage, and consensus hashes and contains exactly the final Presence-positive clauses in
+qualification order. An empty positive Selection produces no model requests.
+
+The specialized task `applicability-detail-enrichment@1.0.0` extracts a multi-label set from
+`scope_definition`, `applicability_condition`, `inclusion`, `exclusion`, and `exception`. Each
+assigned function carries an exact evidence span from the normalized clause. The prompt records a
+separate confirmation of the selected Applicability statement and uses positively framed
+instructions throughout.
+
+The run directory receives:
+
+- `applicability-detail-selection.json`: deterministic positive Selection and upstream hashes;
+- `applicability-detail-enrichment.json`: complete clause outcomes and inference provenance;
+- `applicability-detail-failures.json`: compact retry and review view;
+- `applicability-detail/clauses/<example-id>/`: clause-local request, response, and failure evidence.
+
+Clause outcomes are `enriched`, `not_confirmed`, `unresolved`, or `failed`. A detail result never
+changes `applicability_present` or the central consensus. By default, completed clause results are
+reused and only failed clauses are retried. `--fresh` regenerates the complete positive Selection
+and disables the LLM response cache. This command is a standalone post-consensus step in the
+current slice; workflow-stage and archive validation are added separately. A RamaLama runtime that
+was already serving the configured model remains running after the command. The command stops only
+a runtime it started for its own pending inferences.
+
 ### Applicability presence model eligibility
 
 The only Applicability eligibility setting is `applicability_presence`. Eligibility is cumulative

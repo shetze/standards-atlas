@@ -10,6 +10,9 @@ from standards_atlas.cli.commands.evaluation_commands.annotations import (
     propose_evaluation_annotations,
     publish_annotation_reviews,
 )
+from standards_atlas.cli.commands.evaluation_commands.applicability_detail import (
+    enrich_applicability_details,
+)
 from standards_atlas.cli.commands.evaluation_commands.benchmark import (
     qualify_golden_corpus,
     run_evaluation_matrix,
@@ -43,6 +46,7 @@ __all__ = [
     "build_evaluation_corpus",
     "build_role_golden_corpus",
     "build_golden_corpus_qualifier",
+    "enrich_applicability_details",
     "evaluate_annotation_metrics",
     "evaluate_role_corpus",
     "export_annotation_reviews",

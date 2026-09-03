@@ -76,6 +76,7 @@ by default and rejects non-loopback hosts.
 
 - `evaluation corpus-build`: build a representative reusable clause corpus
 - `evaluation qualification-matrix`: execute multidimensional semantic model qualification
+- `evaluation applicability-detail-enrich`: enrich only final Applicability Presence-positive clauses with detailed functions and exact evidence
 - `evaluation challenger-qualification`: compare configured challenger and incumbent models without changing the production cascade
 - `evaluation normalization-quality`: run read-only linguistic-integrity qualification over an
   existing `dataset.json`; semantic labels are ignored
