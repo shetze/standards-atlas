@@ -17,6 +17,18 @@ from standards_atlas.application.semantic_qualification.analysis_archive import 
     collect_qualification_input_members,
     create_analysis_archive,
 )
+from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
+    APPLICABILITY_DETAIL_FAILURES_FILENAME,
+    APPLICABILITY_DETAIL_REPORT_FILENAME,
+    APPLICABILITY_DETAIL_SELECTION_FILENAME,
+    build_applicability_detail_selection,
+    load_applicability_detail_failure_report,
+    load_applicability_detail_report,
+    load_applicability_detail_selection,
+    validate_applicability_detail_artifacts,
+    validate_completed_applicability_detail_enrichment,
+)
+from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
     QUALIFICATION_COVERAGE_FILENAME,
     load_qualification_coverage,
@@ -66,7 +78,7 @@ def finalize_qualification_archive(
         Path, typer.Option("--published-corpus-root", file_okay=False)
     ] = Path("data/evaluation/corpora"),
 ) -> None:
-    """Create the final run archive after matrix and semantic extraction qualification."""
+    """Create the final run archive after all enabled qualification stages."""
     manifest = QualificationMatrixManifest.load(manifest_path)
     run_directory = output / manifest.matrix_id
     metrics_path = run_directory / "qualification-analysis-metrics.json"
@@ -160,6 +172,88 @@ def finalize_qualification_archive(
         matrix_report = json.loads(matrix_report_path.read_text(encoding="utf-8"))
         matrix_passed = matrix_report.get("passed")
 
+    detail_summary: dict[str, Any] | None = None
+    detail_consensus_path: Path | None = None
+    detail_config = manifest.applicability_detail_enrichment
+    if detail_config.enabled:
+        if coverage is None:
+            raise typer.BadParameter(
+                "applicability detail enrichment requires consensus qualification coverage"
+            )
+        detail_consensus_path = (
+            manifest.consensus.output_directory / manifest.matrix_id / "consensus-report.json"
+        )
+        if not detail_consensus_path.is_file():
+            raise typer.BadParameter(
+                f"final qualification consensus not found: {detail_consensus_path}"
+            )
+        consensus = ConsensusReport.model_validate_json(
+            detail_consensus_path.read_text(encoding="utf-8")
+        )
+        expected_prompt_selection = manifest.consensus.prompt_selection.model_dump()
+        if (
+            consensus.matrix_id != manifest.matrix_id
+            or consensus.corpus_id != manifest.corpus_id
+            or consensus.prompt_id != manifest.consensus.prompt_id
+            or consensus.reasoning_mode_id != manifest.consensus.reasoning_mode_id
+            or consensus.prompt_selection != expected_prompt_selection
+        ):
+            raise typer.BadParameter(
+                "final qualification consensus does not match the qualification manifest"
+            )
+
+        detail_selection_path = run_directory / APPLICABILITY_DETAIL_SELECTION_FILENAME
+        detail_report_path = run_directory / APPLICABILITY_DETAIL_REPORT_FILENAME
+        detail_failures_path = run_directory / APPLICABILITY_DETAIL_FAILURES_FILENAME
+        for label, path in (
+            ("selection", detail_selection_path),
+            ("report", detail_report_path),
+            ("failure report", detail_failures_path),
+        ):
+            if not path.is_file():
+                raise typer.BadParameter(
+                    f"applicability detail {label} not found; run "
+                    f"applicability-detail-enrich first: {path}"
+                )
+        if detail_config.model is None:
+            raise typer.BadParameter("applicability detail enrichment has no configured model")
+        detail_model = next(
+            (item for item in manifest.models if item.id == detail_config.model),
+            None,
+        )
+        if detail_model is None or not detail_model.model_ref:
+            raise typer.BadParameter(
+                "applicability detail enrichment model is absent or incomplete in the manifest"
+            )
+        try:
+            expected_detail_selection = build_applicability_detail_selection(
+                run_selection=run_selection,
+                examples=selected_examples,
+                consensus=consensus,
+                coverage=coverage,
+                task_version=detail_config.task_version,
+            )
+            detail_selection = load_applicability_detail_selection(detail_selection_path)
+            detail_report = load_applicability_detail_report(detail_report_path)
+            detail_failures = load_applicability_detail_failure_report(detail_failures_path)
+            summary = validate_completed_applicability_detail_enrichment(
+                expected_selection=expected_detail_selection,
+                persisted_selection=detail_selection,
+                report=detail_report,
+                failures=detail_failures,
+                config=detail_config,
+                model_id=detail_model.id,
+                model_ref=detail_model.model_ref,
+            )
+            validate_applicability_detail_artifacts(
+                artifact_root=run_directory / "applicability-detail",
+                selection=detail_selection,
+                report=detail_report,
+            )
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc)) from exc
+        detail_summary = summary.model_dump(mode="json")
+
     semantic_report_path = run_directory / "semantic-extraction-qualification.json"
     semantic_report: dict[str, Any] | None = None
     if manifest.semantic_extraction_qualification.enabled:
@@ -217,6 +311,13 @@ def finalize_qualification_archive(
             (mcp_config, "inputs/runtime/mcp-config.yaml"),
         )
     )
+    if detail_consensus_path is not None:
+        input_members.append(
+            (
+                detail_consensus_path,
+                "inputs/applicability-detail/final-consensus-report.json",
+            )
+        )
 
     execution_policy = None
     provenance_path = run_directory / "cascade-provenance.json"
@@ -300,6 +401,7 @@ def finalize_qualification_archive(
         analysis_metrics=analysis_metrics,
         matrix_passed=matrix_passed,
         execution_policy=execution_policy,
+        applicability_detail_enrichment=detail_summary,
         semantic_extraction_qualification=semantic_report,
         archive_directory=archive_output,
         input_members=tuple(input_members),

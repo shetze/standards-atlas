@@ -61,6 +61,11 @@ class ApplicabilityDetailEnrichmentConfig(BaseModel):
             )
         return self
 
+    @property
+    def fingerprint(self) -> str:
+        """Return the stable configuration identity used by persisted detail reports."""
+        return _canonical_sha256(self.model_dump(mode="json"))
+
 
 class ApplicabilityDetailOutcome(StrEnum):
     """Operational result of one selected detail-enrichment clause."""
@@ -346,6 +351,31 @@ class ApplicabilityDetailFailureReport(BaseModel):
         return self
 
 
+class ApplicabilityDetailArchiveSummary(BaseModel):
+    """Compact, validated metadata embedded into a qualification-run archive."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    task: Literal["applicability-detail-enrichment"] = "applicability-detail-enrichment"
+    task_version: str = Field(min_length=1)
+    prompt_version: str = Field(min_length=1)
+    model_id: str = Field(min_length=1)
+    model_ref: str = Field(min_length=1)
+    selection_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    config_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_selection_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_consensus_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_coverage_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    generated_at: datetime
+    selected_clause_count: int = Field(ge=0)
+    processed_clause_count: int = Field(ge=0)
+    enriched_clause_count: int = Field(ge=0)
+    not_confirmed_clause_count: int = Field(ge=0)
+    unresolved_clause_count: int = Field(ge=0)
+    failed_clause_count: int = Field(ge=0)
+    complete: Literal[True] = True
+
+
 ApplicabilityDetailCheckpoint = Callable[[ApplicabilityDetailEnrichmentReport], None]
 
 
@@ -526,7 +556,7 @@ class ApplicabilityDetailEnrichmentService:
         fresh: bool = False,
     ) -> int:
         """Count clauses that require provider inference for this invocation."""
-        config_sha256 = _canonical_sha256(self._config.model_dump(mode="json"))
+        config_sha256 = self._config.fingerprint
         self._validate_existing_report(
             selection=selection,
             existing=existing,
@@ -556,7 +586,7 @@ class ApplicabilityDetailEnrichmentService:
         checkpoint: ApplicabilityDetailCheckpoint | None = None,
     ) -> ApplicabilityDetailEnrichmentReport:
         """Enrich selected clauses, reusing completed results and retrying failures."""
-        config_sha256 = _canonical_sha256(self._config.model_dump(mode="json"))
+        config_sha256 = self._config.fingerprint
         self._validate_existing_report(
             selection=selection,
             existing=existing,
@@ -820,6 +850,244 @@ def load_applicability_detail_report(path: Path) -> ApplicabilityDetailEnrichmen
     return ApplicabilityDetailEnrichmentReport.model_validate_json(path.read_text(encoding="utf-8"))
 
 
+def load_applicability_detail_failure_report(path: Path) -> ApplicabilityDetailFailureReport:
+    return ApplicabilityDetailFailureReport.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def validate_applicability_detail_artifacts(
+    *,
+    artifact_root: Path,
+    selection: ApplicabilityDetailSelection,
+    report: ApplicabilityDetailEnrichmentReport,
+) -> None:
+    """Validate clause-local request and response/failure evidence before archival."""
+    if not artifact_root.is_dir():
+        raise ValueError(f"applicability detail artifact directory not found: {artifact_root}")
+
+    artifact_keys = tuple(_safe(item.example_id) for item in selection.clauses)
+    if len(artifact_keys) != len(set(artifact_keys)):
+        raise ValueError("applicability detail example identifiers collide as artifact paths")
+
+    clauses_root = artifact_root / "clauses"
+    actual_keys = (
+        {path.name for path in clauses_root.iterdir() if path.is_dir()}
+        if clauses_root.is_dir()
+        else set()
+    )
+    expected_keys = set(artifact_keys)
+    if actual_keys != expected_keys:
+        missing = expected_keys - actual_keys
+        unexpected = actual_keys - expected_keys
+        details: list[str] = []
+        if missing:
+            details.append(f"missing={len(missing)}")
+        if unexpected:
+            details.append(f"unexpected={len(unexpected)}")
+        suffix = f" ({', '.join(details)})" if details else ""
+        raise ValueError(
+            "applicability detail clause artifacts differ from the completed report" + suffix
+        )
+
+    selected_by_id = {item.example_id: item for item in selection.clauses}
+    for result in report.clauses:
+        selected = selected_by_id[result.example_id]
+        case_root = clauses_root / _safe(result.example_id)
+        request_path = case_root / "request.json"
+        response_path = case_root / "response.json"
+        failure_path = case_root / "failure.json"
+        request = _read_json_object(
+            request_path,
+            label=f"applicability detail request for {result.example_id}",
+        )
+        expected_selection = selected.model_dump(mode="json")
+        metadata = request.get("metadata")
+        if not isinstance(metadata, dict) or metadata.get("selection_clause") != expected_selection:
+            raise ValueError(
+                f"applicability detail request selection differs for {result.example_id}"
+            )
+        if (
+            request.get("task") != report.task
+            or request.get("prompt_version") != report.prompt_version
+            or request.get("model") != report.model_ref
+            or metadata.get("task_version") != report.task_version
+        ):
+            raise ValueError(
+                f"applicability detail request provenance differs for {result.example_id}"
+            )
+
+        if result.outcome is ApplicabilityDetailOutcome.FAILED:
+            if response_path.exists():
+                _read_json_object(
+                    response_path,
+                    label=f"applicability detail response for {result.example_id}",
+                )
+            failure = _read_json_object(
+                failure_path,
+                label=f"applicability detail failure for {result.example_id}",
+            )
+            if failure.get("clause") != expected_selection:
+                raise ValueError(
+                    f"applicability detail failure selection differs for {result.example_id}"
+                )
+            expected_failure = (
+                result.failure.model_dump(mode="json") if result.failure is not None else None
+            )
+            if failure.get("error") != expected_failure:
+                raise ValueError(
+                    f"applicability detail failure evidence differs for {result.example_id}"
+                )
+            continue
+
+        if failure_path.exists():
+            raise ValueError(
+                f"completed applicability detail clause has a failure artifact: {result.example_id}"
+            )
+        response = _read_json_object(
+            response_path,
+            label=f"applicability detail response for {result.example_id}",
+        )
+        generator = result.generator
+        if generator is None:
+            raise ValueError(
+                f"completed applicability detail clause lacks generator provenance: "
+                f"{result.example_id}"
+            )
+        provenance_fields = {
+            "model": generator.model,
+            "provider": generator.provider,
+            "prompt_version": generator.prompt_version,
+            "input_hash": generator.input_hash,
+            "raw_response_hash": generator.raw_response_hash,
+            "duration_ms": generator.duration_ms,
+            "cached": generator.cached,
+        }
+        if any(response.get(key) != value for key, value in provenance_fields.items()):
+            raise ValueError(
+                f"applicability detail response provenance differs for {result.example_id}"
+            )
+        try:
+            prediction = _canonicalize_prediction(
+                ApplicabilityDetailPrediction.model_validate(response.get("value"))
+            )
+        except ValueError as exc:
+            raise ValueError(
+                f"applicability detail response is invalid for {result.example_id}: {exc}"
+            ) from exc
+        if (
+            prediction.applicability_statement_confirmed != result.applicability_statement_confirmed
+            or prediction.applicability_functions != result.applicability_functions
+            or prediction.evidence != result.evidence
+        ):
+            raise ValueError(
+                f"applicability detail response differs from report for {result.example_id}"
+            )
+
+
+def validate_completed_applicability_detail_enrichment(
+    *,
+    expected_selection: ApplicabilityDetailSelection,
+    persisted_selection: ApplicabilityDetailSelection,
+    report: ApplicabilityDetailEnrichmentReport,
+    failures: ApplicabilityDetailFailureReport,
+    config: ApplicabilityDetailEnrichmentConfig,
+    model_id: str,
+    model_ref: str,
+) -> ApplicabilityDetailArchiveSummary:
+    """Validate one complete sparse enrichment before immutable archival.
+
+    The workflow may be resumed from clause-level checkpoints. Archival is stricter: the
+    persisted positive Selection must still be the deterministic projection of the current
+    matrix Selection, coverage, and final consensus, and every selected clause must have one
+    terminal detail outcome produced under the manifest-owned configuration.
+    """
+    if persisted_selection != expected_selection:
+        raise ValueError(
+            "persisted applicability detail selection differs from the current final "
+            "Presence consensus"
+        )
+    if report.task_version != config.task_version:
+        raise ValueError(
+            "applicability detail report task version differs from the manifest configuration"
+        )
+    if report.prompt_version != config.prompt_version:
+        raise ValueError(
+            "applicability detail report prompt version differs from the manifest configuration"
+        )
+    if report.model_id != model_id or report.model_ref != model_ref:
+        raise ValueError(
+            "applicability detail report model differs from the manifest configuration"
+        )
+    if report.selection_sha256 != persisted_selection.fingerprint:
+        raise ValueError("applicability detail report belongs to a different positive selection")
+    if report.config_sha256 != config.fingerprint:
+        raise ValueError("applicability detail report configuration differs from the manifest")
+    if report.selected_clause_count != persisted_selection.selected_clause_count:
+        raise ValueError("applicability detail report selected-clause count differs from selection")
+    if report.processed_clause_count != persisted_selection.selected_clause_count:
+        raise ValueError(
+            "applicability detail enrichment is incomplete: "
+            f"{report.processed_clause_count}/{persisted_selection.selected_clause_count} clauses"
+        )
+
+    selected_coordinates = tuple(
+        (item.example_id, item.document_key, item.clause_id, item.content_hash)
+        for item in persisted_selection.clauses
+    )
+    result_coordinates = tuple(
+        (item.example_id, item.document_key, item.clause_id, item.content_hash)
+        for item in report.clauses
+    )
+    if result_coordinates != selected_coordinates:
+        raise ValueError(
+            "applicability detail report clauses differ from the persisted positive selection"
+        )
+    for selected, result in zip(persisted_selection.clauses, report.clauses, strict=True):
+        if result.presence_confidence != selected.presence_confidence:
+            raise ValueError(
+                "applicability detail report Presence confidence differs from its selection"
+            )
+        generator = result.generator
+        if generator is None:
+            continue
+        if (
+            generator.model_id != model_id
+            or generator.task_version != config.task_version
+            or generator.prompt_version != config.prompt_version
+        ):
+            raise ValueError(
+                "applicability detail clause provenance differs from the manifest configuration"
+            )
+
+    failed_results = tuple(
+        item for item in report.clauses if item.outcome is ApplicabilityDetailOutcome.FAILED
+    )
+    if failures.selection_sha256 != report.selection_sha256:
+        raise ValueError("applicability detail failure report belongs to a different selection")
+    if failures.failed_clause_count != report.failed_clause_count:
+        raise ValueError("applicability detail failure count differs from the full report")
+    if failures.clauses != failed_results:
+        raise ValueError("applicability detail failure projection differs from the full report")
+
+    return ApplicabilityDetailArchiveSummary(
+        task_version=report.task_version,
+        prompt_version=report.prompt_version,
+        model_id=report.model_id,
+        model_ref=report.model_ref,
+        selection_sha256=report.selection_sha256,
+        config_sha256=report.config_sha256,
+        source_selection_sha256=persisted_selection.source_selection_sha256,
+        source_consensus_sha256=persisted_selection.source_consensus_sha256,
+        source_coverage_sha256=persisted_selection.source_coverage_sha256,
+        generated_at=report.generated_at,
+        selected_clause_count=report.selected_clause_count,
+        processed_clause_count=report.processed_clause_count,
+        enriched_clause_count=report.enriched_clause_count,
+        not_confirmed_clause_count=report.not_confirmed_clause_count,
+        unresolved_clause_count=report.unresolved_clause_count,
+        failed_clause_count=report.failed_clause_count,
+    )
+
+
 def _detail_result_is_reusable(
     previous: ApplicabilityDetailClauseResult | None,
     *,
@@ -1014,6 +1282,18 @@ def _canonical_sha256(payload: object) -> str:
         separators=(",", ":"),
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _read_json_object(path: Path, *, label: str) -> dict[str, Any]:
+    if not path.is_file():
+        raise ValueError(f"{label} not found: {path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError) as exc:
+        raise ValueError(f"{label} is not valid JSON: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"{label} must contain a JSON object: {path}")
+    return payload
 
 
 def _write_json(path: Path, payload: object) -> None:

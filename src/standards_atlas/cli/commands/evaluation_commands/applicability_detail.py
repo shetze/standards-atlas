@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import replace
@@ -218,6 +219,10 @@ def enrich_applicability_details(
     detail_selection_path = run_directory / APPLICABILITY_DETAIL_SELECTION_FILENAME
     report_path = run_directory / APPLICABILITY_DETAIL_REPORT_FILENAME
     failure_path = run_directory / APPLICABILITY_DETAIL_FAILURES_FILENAME
+    artifact_root = run_directory / APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY
+    if fresh:
+        shutil.rmtree(artifact_root, ignore_errors=True)
+    artifact_root.mkdir(parents=True, exist_ok=True)
     persist_applicability_detail_selection(selection, detail_selection_path)
 
     existing = None
@@ -240,7 +245,7 @@ def enrich_applicability_details(
         canonical_schema=canonical_schema,
         model_id=model.id,
         model_ref=model.model_ref,
-        artifact_root=run_directory / APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY,
+        artifact_root=artifact_root,
     )
 
     last_processed = 0

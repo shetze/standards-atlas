@@ -23,5 +23,16 @@ The principal workflows are:
 
 Typed manifest envelopes declare resources and task configuration. `--overwrite` rebuilds owned artifacts; resumable execution reuses valid persisted artifacts according to workflow contracts. Workflow stages must not implicitly perform work owned by another stage.
 
+Within the qualification workflow, post-consensus processing has explicit stage boundaries:
+
+```text
+qualification matrix and final consensus
+    -> sparse Applicability detail enrichment, when enabled
+    -> semantic-extraction qualification, when enabled
+    -> immutable qualification archive
+```
+
+The sparse detail stage owns its Selection, reports, clause evidence, and workflow checkpoint. The archive stage validates every enabled upstream stage against the current manifest and persisted matrix Selection before packaging it; an enabled stale or incomplete stage is an archive error rather than an implicitly accepted partial run.
+
 ## Consequences
 Canonical document generation remains deterministic with respect to semantic interpretation and robust when LLM services are unavailable. Semantic inference is explicit, measurable, and qualification-gated. Knowledge projection and serving are downstream concerns and may evolve independently from both document construction and model qualification.

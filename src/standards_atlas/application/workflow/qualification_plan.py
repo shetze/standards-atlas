@@ -6,6 +6,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from standards_atlas.application.catalog import StandardCatalog
+from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
+    APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY,
+    APPLICABILITY_DETAIL_FAILURES_FILENAME,
+    APPLICABILITY_DETAIL_REPORT_FILENAME,
+    APPLICABILITY_DETAIL_SELECTION_FILENAME,
+)
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
@@ -153,6 +159,57 @@ class QualificationWorkflowPlanner:
             ),
         )
         steps: tuple[WorkflowStep, ...] = (*document_steps, corpus_step, matrix_step)
+        detail_config = manifest.applicability_detail_enrichment
+        if detail_config.enabled:
+            detail_command = [
+                "uv",
+                "run",
+                "standards-atlas",
+                "evaluation",
+                "applicability-detail-enrich",
+                "--manifest",
+                str(manifest_path),
+                "--run",
+                str(qualification_output / manifest.matrix_id),
+                "--corpus-root",
+                str(corpus_output),
+            ]
+            if fresh:
+                detail_command.append("--fresh")
+            detail_step = WorkflowStep(
+                family="evaluation",
+                document=f"{manifest.matrix_id}-applicability-detail",
+                stage=WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT,
+                command=tuple(detail_command),
+                artifact_policy=ArtifactPolicy.DERIVED,
+                output_paths=(
+                    str(
+                        qualification_output
+                        / manifest.matrix_id
+                        / APPLICABILITY_DETAIL_SELECTION_FILENAME
+                    ),
+                    str(
+                        qualification_output
+                        / manifest.matrix_id
+                        / APPLICABILITY_DETAIL_REPORT_FILENAME
+                    ),
+                    str(
+                        qualification_output
+                        / manifest.matrix_id
+                        / APPLICABILITY_DETAIL_FAILURES_FILENAME
+                    ),
+                    str(
+                        qualification_output
+                        / manifest.matrix_id
+                        / APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY
+                    ),
+                    (
+                        ".atlas/work/workflow/qualification/"
+                        f"{manifest.matrix_id}/applicability-detail.complete"
+                    ),
+                ),
+            )
+            steps = (*steps, detail_step)
         extraction_config = manifest.semantic_extraction_qualification
         if extraction_config.enabled:
             extraction_command = [
@@ -200,6 +257,8 @@ class QualificationWorkflowPlanner:
             str(manifest_path),
             "--output",
             str(qualification_output),
+            "--corpus-root",
+            str(corpus_output),
         ]
         if limit is not None:
             archive_command.extend(("--limit", str(limit)))

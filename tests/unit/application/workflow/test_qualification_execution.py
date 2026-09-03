@@ -44,7 +44,31 @@ def test_evaluation_steps_wait_for_open_document_review_gate(tmp_path: Path) -> 
         command=("qualification-matrix",),
         artifact_policy=ArtifactPolicy.DERIVED,
     )
-    plan = WorkflowPlan(("FAMILY",), (atlasdata, corpus, matrix))
+    detail = WorkflowStep(
+        family="evaluation",
+        document="matrix-applicability-detail",
+        stage=WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT,
+        command=("applicability-detail-enrich",),
+        artifact_policy=ArtifactPolicy.DERIVED,
+    )
+    semantic = WorkflowStep(
+        family="evaluation",
+        document="matrix-semantic-extraction",
+        stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
+        command=("semantic-extraction-qualification",),
+        artifact_policy=ArtifactPolicy.DERIVED,
+    )
+    archive = WorkflowStep(
+        family="evaluation",
+        document="matrix-archive",
+        stage=WorkflowStage.QUALIFICATION_ARCHIVE,
+        command=("qualification-archive",),
+        artifact_policy=ArtifactPolicy.REVIEW,
+    )
+    plan = WorkflowPlan(
+        ("FAMILY",),
+        (atlasdata, corpus, matrix, detail, semantic, archive),
+    )
     runner = RecordingRunner()
     executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
 
@@ -164,3 +188,49 @@ def test_changed_step_command_invalidates_workflow_checkpoint(tmp_path: Path) ->
     executor.execute(WorkflowPlan(("evaluation",), (fresh,)), project_root=tmp_path, runner=runner)
 
     assert runner.commands == [("matrix", "--fresh")]
+
+
+def test_resume_reuses_completed_applicability_detail_stage(tmp_path: Path) -> None:
+    matrix = WorkflowStep(
+        family="evaluation",
+        document="matrix",
+        stage=WorkflowStage.QUALIFICATION_MATRIX,
+        command=("qualification-matrix",),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/matrix.complete",),
+    )
+    detail = WorkflowStep(
+        family="evaluation",
+        document="matrix-applicability-detail",
+        stage=WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT,
+        command=("applicability-detail-enrich",),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/detail.complete",),
+    )
+    archive = WorkflowStep(
+        family="evaluation",
+        document="matrix-archive",
+        stage=WorkflowStage.QUALIFICATION_ARCHIVE,
+        command=("qualification-archive",),
+        artifact_policy=ArtifactPolicy.REVIEW,
+        output_paths=(".atlas/work/workflow/qualification/archive.complete",),
+    )
+    plan = WorkflowPlan(("evaluation",), (matrix, detail, archive))
+    executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    first = FailingOnceRunner(("qualification-archive",))
+
+    with pytest.raises(RuntimeError, match="simulated export failure"):
+        executor.execute(plan, project_root=tmp_path, runner=first)
+
+    assert first.commands == [
+        ("qualification-matrix",),
+        ("applicability-detail-enrich",),
+        ("qualification-archive",),
+    ]
+    assert (tmp_path / detail.output_paths[0]).is_file()
+
+    resumed = RecordingRunner()
+    result = executor.execute(plan, project_root=tmp_path, runner=resumed)
+
+    assert resumed.commands == [("qualification-archive",)]
+    assert result.executed_steps == (archive,)

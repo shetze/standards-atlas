@@ -34,6 +34,7 @@ class WorkflowStage(StrEnum):
     DOORSTOP_PUBLISH = "doorstop-publish"
     CORPUS_BUILD = "corpus-build"
     QUALIFICATION_MATRIX = "qualification-matrix"
+    APPLICABILITY_DETAIL_ENRICHMENT = "applicability-detail-enrichment"
     SEMANTIC_EXTRACTION_QUALIFICATION = "semantic-extraction-qualification"
     QUALIFICATION_ARCHIVE = "qualification-archive"
 

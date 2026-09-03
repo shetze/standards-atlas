@@ -23,9 +23,10 @@ Semantic evaluation is an evidence-producing subsystem with explicit corpora, pr
 - Consensus may propose golden annotations, but publication requires explicit review where configured.
 - Clause references are extracted/resolved before semantic evaluation when they materially affect context.
 - Qualification runs measure dimensions independently and may use deterministic routing/escalation policies.
+- Applicability Presence is decided in the shared central cascade. Detailed Applicability functions are extracted only from the final positive subset in a separate sparse post-consensus stage and never revise the Presence decision.
 - Role presence and role-relation tuples are qualified separately.
 - Ontology-guided concept/relation extraction is qualified as inferred semantic evidence.
-- Completed run/suite artifacts are archived immutably with sequential identity, configuration/manifests, hashes, routing/context artifacts, and relevant metrics.
+- Completed run/suite artifacts are archived immutably with sequential identity, configuration/manifests, hashes, routing/context artifacts, and relevant metrics. Before archival, enabled sparse stages must be complete and still match the current source Selection, coverage, consensus, task, prompt, model, and configuration. Their exact resources and clause-level evidence are archived with the validated summary.
 - Human-facing review material belongs in local review/report locations; machine evidence belongs in workspace/evaluation storage.
 
 ## Consequences

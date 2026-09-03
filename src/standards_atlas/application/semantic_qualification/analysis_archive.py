@@ -25,8 +25,8 @@ from standards_atlas.application.semantic_qualification.qualification_coverage i
 )
 from standards_atlas.shared.hashing import sha256_file
 
-ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.3"
-QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.3"
+ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.4"
+QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.4"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
 
@@ -208,6 +208,54 @@ def collect_qualification_input_members(
             source = ontology_root / str(ontology_id) / str(ontology_version) / "ontology.yaml"
             members.append((source, f"inputs/ontologies/{dimension}/ontology.yaml"))
 
+    detail = manifest_payload.get("applicability_detail_enrichment")
+    if isinstance(detail, dict) and detail.get("enabled"):
+        detail_task = str(detail.get("task") or "applicability-detail-enrichment")
+        detail_task_version = str(detail.get("task_version") or "")
+        detail_prompt_version = str(detail.get("prompt_version") or "")
+        detail_task_root = resources / "tasks" / detail_task / detail_task_version
+        if detail_task_root.is_dir():
+            for path in sorted(detail_task_root.rglob("*")):
+                if path.is_file():
+                    members.append(
+                        (
+                            path,
+                            "inputs/applicability-detail/task/"
+                            f"{path.relative_to(detail_task_root)}",
+                        )
+                    )
+        detail_prompt_root = resources / "prompts" / detail_task / detail_prompt_version
+        if detail_prompt_root.is_dir():
+            for path in sorted(detail_prompt_root.rglob("*")):
+                if path.is_file():
+                    members.append(
+                        (
+                            path,
+                            "inputs/applicability-detail/prompt/"
+                            f"{path.relative_to(detail_prompt_root)}",
+                        )
+                    )
+        detail_task_yaml = detail_task_root / "task.yaml"
+        if detail_task_yaml.is_file():
+            detail_task_payload = yaml.safe_load(detail_task_yaml.read_text(encoding="utf-8")) or {}
+            ontology_root = resources.parent / "ontologies"
+            for dimension, reference in sorted(
+                dict(detail_task_payload.get("ontologies", {})).items()
+            ):
+                if not isinstance(reference, dict):
+                    continue
+                ontology_id = reference.get("id")
+                ontology_version = reference.get("version")
+                if not ontology_id or not ontology_version:
+                    continue
+                source = ontology_root / str(ontology_id) / str(ontology_version) / "ontology.yaml"
+                members.append(
+                    (
+                        source,
+                        f"inputs/applicability-detail/ontologies/{dimension}/ontology.yaml",
+                    )
+                )
+
     return tuple(members)
 
 
@@ -221,6 +269,7 @@ def create_analysis_archive(
     analysis_metrics: dict[str, Any] | None = None,
     matrix_passed: bool | None = None,
     execution_policy: dict[str, bool] | None = None,
+    applicability_detail_enrichment: dict[str, Any] | None = None,
     semantic_extraction_qualification: dict[str, Any] | None = None,
     archive_directory: Path | None = None,
     input_members: Iterable[tuple[Path, str]] = (),
@@ -245,6 +294,7 @@ def create_analysis_archive(
         analysis_metrics=analysis_metrics,
         matrix_passed=matrix_passed,
         execution_policy=execution_policy,
+        applicability_detail_enrichment=applicability_detail_enrichment,
         semantic_extraction_qualification=semantic_extraction_qualification,
     )
     metadata_bytes = _json_bytes(metadata)
@@ -332,6 +382,7 @@ def _build_run_metadata(
     analysis_metrics: dict[str, Any] | None,
     matrix_passed: bool | None,
     execution_policy: dict[str, bool] | None,
+    applicability_detail_enrichment: dict[str, Any] | None = None,
     semantic_extraction_qualification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     prompts = [
@@ -390,6 +441,7 @@ def _build_run_metadata(
             }
         },
         "result": result,
+        "applicability_detail_enrichment": applicability_detail_enrichment,
         "semantic_extraction_qualification": semantic_extraction_qualification,
     }
 

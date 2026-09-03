@@ -392,9 +392,9 @@ clause. The shared prompt does not ask the model to classify a direction, subtyp
 Applicability semantics.
 
 The central cascade still makes one shared model call per clause, model, and stage. Applicability
-is not split into a second corpus-wide prompt lane. A later specialized enrichment task may process
-the small final-positive subset independently; that enrichment is not part of the central
-qualification contract.
+is not split into a second corpus-wide prompt lane. The qualification workflow runs the specialized
+detail task only for the small final-positive subset; that enrichment remains outside the central
+classification and consensus contract.
 
 Use
 `manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml` for the
@@ -404,13 +404,17 @@ Applicability signals. The same single prompt is used in all cascade stages.
 
 ### Selective Applicability detail enrichment
 
-After the final Presence consensus, the detail task processes only clauses whose final
-`applicability_present` decision is `true`. Run it against an existing qualification matrix run:
+With the v6 manifest, `workflow run --task qualification` schedules Applicability detail
+enrichment automatically after the final Presence consensus and before semantic-extraction
+qualification and archival. The stage processes only clauses whose final
+`applicability_present` decision is `true`.
+
+The stage may also be resumed or rerun independently against an existing qualification matrix run:
 
 ```bash
 uv run standards-atlas evaluation applicability-detail-enrich \
   --manifest manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml \
-  --run .atlas/data/evaluation/multidimensional-semantic-qualification-v6-applicability-presence
+  --run .atlas/data/evaluation/qualification/multidimensional-semantic-qualification-v6-applicability-presence
 ```
 
 The command resolves the final `consensus-report.json` through the manifest. `--consensus` may
@@ -436,11 +440,20 @@ The run directory receives:
 
 Clause outcomes are `enriched`, `not_confirmed`, `unresolved`, or `failed`. A detail result never
 changes `applicability_present` or the central consensus. By default, completed clause results are
-reused and only failed clauses are retried. `--fresh` regenerates the complete positive Selection
-and disables the LLM response cache. This command is a standalone post-consensus step in the
-current slice; workflow-stage and archive validation are added separately. A RamaLama runtime that
-was already serving the configured model remains running after the command. The command stops only
-a runtime it started for its own pending inferences.
+reused and only failed clauses are retried. `--fresh` removes stale clause-local detail evidence,
+regenerates the complete positive Selection, and disables the LLM response cache. A RamaLama
+runtime that was already serving the configured model remains running after the command. The
+command stops only a runtime it started for its own pending inferences.
+
+The integrated workflow owns a separate
+`.atlas/work/workflow/qualification/<matrix-id>/applicability-detail.complete` checkpoint. The
+final archive step rebuilds the expected positive Selection from the immutable matrix Selection,
+qualification coverage, and final consensus. It rejects stale, incomplete, or differently
+configured detail results and verifies the failure-only projection before creating the archive.
+The archive contains the detail Selection, complete and failure reports, clause-local request and
+response/failure evidence, the final Presence consensus used for routing, and the exact task,
+prompt, and ontology resources. Qualification-run metadata schema 1.4 embeds a compact validated
+summary of the detail stage.
 
 ### Applicability presence model eligibility
 

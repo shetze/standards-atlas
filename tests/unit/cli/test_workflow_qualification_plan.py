@@ -5,6 +5,9 @@ from standards_atlas.cli.main import app
 QUALIFICATION_MANIFEST = (
     "manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml"
 )
+APPLICABILITY_PRESENCE_MANIFEST = (
+    "manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml"
+)
 
 
 def test_qualification_task_plan_omits_doorstop_and_docling_by_default() -> None:
@@ -89,3 +92,31 @@ def test_qualification_plan_command_is_removed() -> None:
 
     assert result.exit_code != 0
     assert "No such command" in result.output
+
+
+def test_presence_qualification_plan_includes_sparse_detail_stage() -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "plan",
+            "--task",
+            "qualification",
+            "--manifests",
+            f"manifests/standards.yaml,{APPLICABILITY_PRESENCE_MANIFEST}",
+            "--family",
+            "EN50716",
+            "--limit",
+            "50",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "applicability-detail-enrichment" in result.output
+    assert "applicability-detail-enrich" in result.output
+    assert result.output.index("qualification-matrix") < result.output.index(
+        "applicability-detail-enrichment"
+    )
+    assert result.output.index("applicability-detail-enrichment") < result.output.index(
+        "qualification-archive"
+    )

@@ -47,6 +47,9 @@ class WorkflowExecutor:
                 if step.stage in {
                     WorkflowStage.CORPUS_BUILD,
                     WorkflowStage.QUALIFICATION_MATRIX,
+                    WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT,
+                    WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
+                    WorkflowStage.QUALIFICATION_ARCHIVE,
                 } and (blocked_documents or blocked_families):
                     continue
                 if step.family in blocked_families:

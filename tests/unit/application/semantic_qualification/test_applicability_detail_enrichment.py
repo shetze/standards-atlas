@@ -16,8 +16,11 @@ from standards_atlas.application.ports.llm_gateway import (
 from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
     ApplicabilityDetailEnrichmentConfig,
     ApplicabilityDetailEnrichmentService,
+    ApplicabilityDetailFailureReport,
     ApplicabilityDetailOutcome,
     build_applicability_detail_selection,
+    validate_applicability_detail_artifacts,
+    validate_completed_applicability_detail_enrichment,
 )
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
@@ -511,3 +514,204 @@ def test_selection_rejects_content_hash_mismatch() -> None:
             examples=(corrupted,),
             consensus=_consensus(True),
         )
+
+
+def test_completed_detail_enrichment_is_validated_for_archival() -> None:
+    examples = (_example(1, "These requirements apply to new systems."),)
+    selection = _detail_selection(examples=examples, consensus=_consensus(True))
+    gateway = SequenceGateway(
+        {
+            "applicability_statement_confirmed": True,
+            "applicability_functions": ["inclusion"],
+            "evidence": [{"function": "inclusion", "text": "apply to new systems"}],
+        }
+    )
+    report = _service(gateway).enrich(selection=selection, examples=examples)
+    failures = ApplicabilityDetailFailureReport(
+        selection_sha256=report.selection_sha256,
+        failed_clause_count=0,
+        clauses=(),
+    )
+    config = ApplicabilityDetailEnrichmentConfig(
+        enabled=True,
+        model="detail-model",
+        retry_attempts=1,
+        retry_backoff_seconds=0,
+    )
+
+    summary = validate_completed_applicability_detail_enrichment(
+        expected_selection=selection,
+        persisted_selection=selection,
+        report=report,
+        failures=failures,
+        config=config,
+        model_id="detail-model",
+        model_ref="model-ref",
+    )
+
+    assert summary.complete is True
+    assert summary.selected_clause_count == 1
+    assert summary.processed_clause_count == 1
+    assert summary.enriched_clause_count == 1
+    assert summary.failed_clause_count == 0
+    assert summary.selection_sha256 == selection.fingerprint
+    assert summary.config_sha256 == config.fingerprint
+
+
+def test_archival_rejects_checkpoint_before_all_detail_clauses_are_processed() -> None:
+    examples = (
+        _example(1, "These requirements apply to new systems."),
+        _example(2, "This clause applies when the safety function is active."),
+    )
+    selection = _detail_selection(examples=examples, consensus=_consensus(True, True))
+    gateway = SequenceGateway(
+        {
+            "applicability_statement_confirmed": True,
+            "applicability_functions": ["inclusion"],
+            "evidence": [{"function": "inclusion", "text": "new systems"}],
+        },
+        {
+            "applicability_statement_confirmed": True,
+            "applicability_functions": ["applicability_condition"],
+            "evidence": [
+                {
+                    "function": "applicability_condition",
+                    "text": "when the safety function is active",
+                }
+            ],
+        },
+    )
+    checkpoints = []
+    _service(gateway).enrich(
+        selection=selection,
+        examples=examples,
+        checkpoint=checkpoints.append,
+    )
+    partial = checkpoints[0]
+    failures = ApplicabilityDetailFailureReport(
+        selection_sha256=partial.selection_sha256,
+        failed_clause_count=0,
+        clauses=(),
+    )
+    config = ApplicabilityDetailEnrichmentConfig(
+        enabled=True,
+        model="detail-model",
+        retry_attempts=1,
+        retry_backoff_seconds=0,
+    )
+
+    with pytest.raises(ValueError, match="enrichment is incomplete: 1/2 clauses"):
+        validate_completed_applicability_detail_enrichment(
+            expected_selection=selection,
+            persisted_selection=selection,
+            report=partial,
+            failures=failures,
+            config=config,
+            model_id="detail-model",
+            model_ref="model-ref",
+        )
+
+
+def test_archival_rejects_detail_selection_from_outdated_presence_consensus() -> None:
+    examples = (_example(1, "These requirements apply to new systems."),)
+    selection = _detail_selection(examples=examples, consensus=_consensus(True))
+    gateway = SequenceGateway(
+        {
+            "applicability_statement_confirmed": False,
+            "applicability_functions": [],
+            "evidence": [],
+        }
+    )
+    report = _service(gateway).enrich(selection=selection, examples=examples)
+    failures = ApplicabilityDetailFailureReport(
+        selection_sha256=report.selection_sha256,
+        failed_clause_count=0,
+        clauses=(),
+    )
+    config = ApplicabilityDetailEnrichmentConfig(
+        enabled=True,
+        model="detail-model",
+        retry_attempts=1,
+        retry_backoff_seconds=0,
+    )
+    outdated = selection.model_copy(update={"source_consensus_sha256": "0" * 64})
+
+    with pytest.raises(ValueError, match="differs from the current final Presence consensus"):
+        validate_completed_applicability_detail_enrichment(
+            expected_selection=selection,
+            persisted_selection=outdated,
+            report=report,
+            failures=failures,
+            config=config,
+            model_id="detail-model",
+            model_ref="model-ref",
+        )
+
+
+def test_archival_validates_clause_local_detail_evidence(tmp_path: Path) -> None:
+    examples = (_example(1, "These requirements apply to new systems."),)
+    selection = _detail_selection(examples=examples, consensus=_consensus(True))
+    artifact_root = tmp_path / "applicability-detail"
+    gateway = SequenceGateway(
+        {
+            "applicability_statement_confirmed": True,
+            "applicability_functions": ["inclusion"],
+            "evidence": [{"function": "inclusion", "text": "apply to new systems"}],
+        }
+    )
+    report = _service(gateway, artifact_root=artifact_root).enrich(
+        selection=selection,
+        examples=examples,
+    )
+
+    validate_applicability_detail_artifacts(
+        artifact_root=artifact_root,
+        selection=selection,
+        report=report,
+    )
+
+    (artifact_root / "clauses" / "example-1" / "response.json").unlink()
+    with pytest.raises(ValueError, match="response for example-1 not found"):
+        validate_applicability_detail_artifacts(
+            artifact_root=artifact_root,
+            selection=selection,
+            report=report,
+        )
+
+
+def test_archival_rejects_unreferenced_detail_clause_artifacts(tmp_path: Path) -> None:
+    artifact_root = tmp_path / "applicability-detail"
+    artifact_root.mkdir()
+    (artifact_root / "clauses" / "stale-example").mkdir(parents=True)
+    examples: tuple[EvaluationExample, ...] = ()
+    selection = _detail_selection(examples=examples, consensus=_consensus())
+    report = _service(SequenceGateway(), artifact_root=artifact_root).enrich(
+        selection=selection,
+        examples=examples,
+    )
+
+    with pytest.raises(ValueError, match="clause artifacts differ.*unexpected=1"):
+        validate_applicability_detail_artifacts(
+            artifact_root=artifact_root,
+            selection=selection,
+            report=report,
+        )
+
+
+def test_failed_detail_clause_may_archive_raw_response_and_failure(tmp_path: Path) -> None:
+    examples = (_example(1, "These requirements apply to new systems."),)
+    selection = _detail_selection(examples=examples, consensus=_consensus(True))
+    artifact_root = tmp_path / "applicability-detail"
+    report = _service(
+        SequenceGateway({"unexpected": "response"}),
+        artifact_root=artifact_root,
+    ).enrich(selection=selection, examples=examples)
+
+    assert report.clauses[0].outcome is ApplicabilityDetailOutcome.FAILED
+    assert (artifact_root / "clauses" / "example-1" / "response.json").is_file()
+    assert (artifact_root / "clauses" / "example-1" / "failure.json").is_file()
+    validate_applicability_detail_artifacts(
+        artifact_root=artifact_root,
+        selection=selection,
+        report=report,
+    )

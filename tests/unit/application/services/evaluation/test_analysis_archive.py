@@ -80,7 +80,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         assert "qualification-run-metadata.json" in names
         assert "configuration/qualification-manifest.yaml" in names
         metadata = json.loads(payload.read("qualification-run-metadata.json"))
-        assert metadata["schema_version"] == "1.3"
+        assert metadata["schema_version"] == "1.4"
         assert metadata["archive_id"] == "qualification-run-001"
         assert metadata["sequence_number"] == 1
         assert metadata["qualification_matrix"] == {
@@ -99,10 +99,11 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
             "llm_cache": False,
             "proposal_reuse": False,
         }
+        assert metadata["applicability_detail_enrichment"] is None
         assert metadata["semantic_extraction_qualification"] is None
         archive_manifest = json.loads(payload.read("archive-manifest.json"))
         assert archive_manifest["archive_id"] == "qualification-run-001"
-        assert archive_manifest["schema_version"] == "1.3"
+        assert archive_manifest["schema_version"] == "1.4"
         assert any(
             item["path"] == "qualification-run-metadata.json" for item in archive_manifest["files"]
         )
@@ -401,3 +402,110 @@ def test_analysis_metrics_report_selection_coverage_counts() -> None:
     assert metrics["qualified_clause_count"] == 1
     assert metrics["unqualified_clause_count"] == 1
     assert metrics["accounted_clause_count"] == 2
+
+
+def test_collects_reproducible_applicability_detail_inputs(tmp_path: Path) -> None:
+    resources = tmp_path / "resources" / "semantic"
+    detail_task_root = resources / "tasks" / "applicability-detail-enrichment" / "1.0.0"
+    detail_task_root.mkdir(parents=True)
+    (detail_task_root / "task.yaml").write_text(
+        "\n".join(
+            (
+                "schema_version: 1",
+                "task: applicability-detail-enrichment",
+                "version: 1.0.0",
+                "ontologies:",
+                "  applicability_functions:",
+                "    id: applicability-functions",
+                "    version: 1.3.0",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (detail_task_root / "schema.json").write_text("{}\n", encoding="utf-8")
+    detail_prompt_root = (
+        resources / "prompts" / "applicability-detail-enrichment" / "detail-structure-aware-v1"
+    )
+    detail_prompt_root.mkdir(parents=True)
+    for name in ("prompt.json", "schema.json", "system.txt", "user.txt"):
+        (detail_prompt_root / name).write_text(
+            "{}\n" if name.endswith(".json") else "detail\n",
+            encoding="utf-8",
+        )
+    ontology = (
+        resources.parent / "ontologies" / "applicability-functions" / "1.3.0" / "ontology.yaml"
+    )
+    ontology.parent.mkdir(parents=True)
+    ontology.write_text(
+        "id: applicability-functions\nversion: 1.3.0\n",
+        encoding="utf-8",
+    )
+
+    members = {
+        member: path
+        for path, member in collect_qualification_input_members(
+            manifest_payload={
+                "task": "semantic-profile-classification",
+                "task_version": "2.5.0",
+                "dataset_version": "2.2.0",
+                "corpus_id": "semantic-profile-v1",
+                "prompts": [],
+                "applicability_detail_enrichment": {
+                    "enabled": True,
+                    "task": "applicability-detail-enrichment",
+                    "task_version": "1.0.0",
+                    "prompt_version": "detail-structure-aware-v1",
+                },
+            },
+            resources=resources,
+            corpus_root=tmp_path / "corpora",
+        )
+    }
+
+    assert members["inputs/applicability-detail/task/task.yaml"] == (detail_task_root / "task.yaml")
+    assert members["inputs/applicability-detail/task/schema.json"] == (
+        detail_task_root / "schema.json"
+    )
+    assert members["inputs/applicability-detail/prompt/user.txt"] == (
+        detail_prompt_root / "user.txt"
+    )
+    assert (
+        members["inputs/applicability-detail/ontologies/applicability_functions/ontology.yaml"]
+        == ontology
+    )
+
+
+def test_analysis_archive_embeds_applicability_detail_summary(tmp_path: Path) -> None:
+    manifest = tmp_path / "matrix.yaml"
+    _write_manifest(manifest)
+    output_directory = tmp_path / "local" / "evaluation" / "qualification"
+    report_path = output_directory / "matrix-v1" / "report.json"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("{}\n", encoding="utf-8")
+    detail = {
+        "task": "applicability-detail-enrichment",
+        "task_version": "1.0.0",
+        "prompt_version": "detail-structure-aware-v1",
+        "model_id": "model-one",
+        "model_ref": "example/model:Q4_K_M",
+        "selected_clause_count": 7,
+        "processed_clause_count": 7,
+        "enriched_clause_count": 5,
+        "not_confirmed_clause_count": 1,
+        "unresolved_clause_count": 1,
+        "failed_clause_count": 0,
+        "complete": True,
+    }
+
+    archive = create_analysis_archive(
+        output_directory=output_directory,
+        matrix_id="matrix-v1",
+        manifest_path=manifest,
+        core_paths=(report_path,),
+        applicability_detail_enrichment=detail,
+    )
+
+    with zipfile.ZipFile(archive) as payload:
+        metadata = json.loads(payload.read("qualification-run-metadata.json"))
+        assert metadata["applicability_detail_enrichment"] == detail
