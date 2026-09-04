@@ -1,0 +1,36 @@
+schema_version: 1
+id: applicability-targets
+version: 1.0.0
+dimension: applicability_targets
+description: >-
+  Semantic target whose applicability or use is classified during applicability-detail
+  verification of a Presence-positive clause.
+values:
+- clause_or_requirement
+- method_or_technique
+- process_or_activity
+- object_or_component
+- other
+- none
+semantics:
+  clause_or_requirement: >-
+    The statement governs the applicability of this clause, a referenced clause, or normative
+    content such as requirements or recommendations belonging to them.
+  method_or_technique: >-
+    The statement governs the use, suitability, or selection of a method, technique, measure,
+    calculation, evaluation approach, or tool.
+  process_or_activity: >-
+    The statement governs the use, performance, or selection of a process, lifecycle step,
+    activity, or task.
+  object_or_component: >-
+    The statement governs an object, product, system, component, element, data item, or other
+    engineering subject rather than normative content.
+  other: The statement has an explicit applicability or use target of another kind.
+  none: The clause contains no applicability or use statement to classify.
+codes:
+  clause_or_requirement: CLR
+  method_or_technique: MTH
+  process_or_activity: PRC
+  object_or_component: OBJ
+  other: OTH
+  none: NON

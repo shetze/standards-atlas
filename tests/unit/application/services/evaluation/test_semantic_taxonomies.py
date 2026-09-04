@@ -53,3 +53,23 @@ def test_current_semantic_classification_task_references_versioned_profile() -> 
         "process_functions",
         "applicability_functions",
     )
+
+
+def test_applicability_detail_task_composes_target_and_function_ontologies() -> None:
+    task, schema = SemanticTaskRepository(SEMANTIC_ROOT / "tasks").load(
+        "applicability-detail-enrichment", "1.0.0"
+    )
+
+    assert task.ontologies["applicability_functions"].version == "1.3.0"
+    assert task.ontologies["applicability_targets"].version == "1.0.0"
+    assert task.applicability_target_taxonomy == (
+        "clause_or_requirement",
+        "method_or_technique",
+        "process_or_activity",
+        "object_or_component",
+        "other",
+        "none",
+    )
+    assert schema["properties"]["applicability_target"]["enum"] == list(
+        task.applicability_target_taxonomy
+    )

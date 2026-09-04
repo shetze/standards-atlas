@@ -101,6 +101,7 @@ class SemanticTaskDefinition(BaseModel):
     knowledge_taxonomy: tuple[str, ...] = ()
     process_taxonomy: tuple[str, ...] = ()
     applicability_taxonomy: tuple[str, ...] = ()
+    applicability_target_taxonomy: tuple[str, ...] = ()
     role_relation_taxonomy: tuple[str, ...] = ()
     multi_label: bool = True
     allow_unclassified: bool = True
@@ -165,6 +166,9 @@ class SemanticTaskRepository:
             loaded.get("applicability_functions").values
             if "applicability_functions" in loaded
             else ()
+        )
+        metadata["applicability_target_taxonomy"] = tuple(
+            loaded.get("applicability_targets").values if "applicability_targets" in loaded else ()
         )
         metadata["role_relation_taxonomy"] = tuple(
             loaded.get("role_relation_types").values if "role_relation_types" in loaded else ()

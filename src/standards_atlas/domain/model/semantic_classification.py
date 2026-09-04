@@ -68,6 +68,17 @@ class ApplicabilityFunction(StrEnum):
     EXCEPTION = "exception"
 
 
+class ApplicabilityTarget(StrEnum):
+    """Semantic target whose applicability or use is classified in detail verification."""
+
+    CLAUSE_OR_REQUIREMENT = "clause_or_requirement"
+    METHOD_OR_TECHNIQUE = "method_or_technique"
+    PROCESS_OR_ACTIVITY = "process_or_activity"
+    OBJECT_OR_COMPONENT = "object_or_component"
+    OTHER = "other"
+    NONE = "none"
+
+
 class RoleRelationFamily(StrEnum):
     """High-level semantic family for role relations."""
 

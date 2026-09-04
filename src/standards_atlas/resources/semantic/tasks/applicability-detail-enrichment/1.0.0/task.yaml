@@ -2,8 +2,9 @@ schema_version: 1
 task: applicability-detail-enrichment
 version: 1.0.0
 description: >-
-  Extract the detailed functions and exact source evidence of an applicability statement
-  selected by the final applicability-presence consensus.
+  Verify the semantic target of an applicability statement selected by the final
+  applicability-presence consensus and extract detailed functions and exact source evidence
+  for clause-or-requirement applicability.
 multi_label: true
 allow_unclassified: true
 supported_item_kinds:
@@ -12,3 +13,6 @@ ontologies:
   applicability_functions:
     id: applicability-functions
     version: 1.3.0
+  applicability_targets:
+    id: applicability-targets
+    version: 1.0.0

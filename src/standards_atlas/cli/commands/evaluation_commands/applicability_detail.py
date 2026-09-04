@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import shutil
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import replace
@@ -118,7 +117,7 @@ def enrich_applicability_details(
         ),
     ] = False,
 ) -> None:
-    """Enrich only clauses selected by final applicability-presence consensus."""
+    """Verify targets and enrich clauses selected by final applicability-presence consensus."""
     manifest = QualificationMatrixManifest.load(manifest_path)
     detail_config = manifest.applicability_detail_enrichment
     if not detail_config.enabled:
@@ -219,10 +218,6 @@ def enrich_applicability_details(
     detail_selection_path = run_directory / APPLICABILITY_DETAIL_SELECTION_FILENAME
     report_path = run_directory / APPLICABILITY_DETAIL_REPORT_FILENAME
     failure_path = run_directory / APPLICABILITY_DETAIL_FAILURES_FILENAME
-    artifact_root = run_directory / APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY
-    if fresh:
-        shutil.rmtree(artifact_root, ignore_errors=True)
-    artifact_root.mkdir(parents=True, exist_ok=True)
     persist_applicability_detail_selection(selection, detail_selection_path)
 
     existing = None
@@ -245,7 +240,7 @@ def enrich_applicability_details(
         canonical_schema=canonical_schema,
         model_id=model.id,
         model_ref=model.model_ref,
-        artifact_root=artifact_root,
+        artifact_root=run_directory / APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY,
     )
 
     last_processed = 0
@@ -289,7 +284,7 @@ def enrich_applicability_details(
     typer.echo(f"Unqualified clauses      : {selection.source_unqualified_clause_count}")
     typer.echo(f"Enriched clauses         : {report.enriched_clause_count}")
     typer.echo(f"Unresolved details       : {report.unresolved_clause_count}")
-    typer.echo(f"Presence not confirmed   : {report.not_confirmed_clause_count}")
+    typer.echo(f"Not clause applicability : {report.not_confirmed_clause_count}")
     typer.echo(f"Failed clauses           : {report.failed_clause_count}")
     typer.echo(f"Reused clauses           : {report.run_statistics.reused_clause_count}")
     typer.echo(f"Fresh predictions        : {report.run_statistics.fresh_prediction_count}")

@@ -1,5 +1,5 @@
 {
-  "description": "Sparse detail extraction for clauses selected by final applicability-presence consensus.",
+  "description": "Target verification and sparse detail extraction for clauses selected by final applicability-presence consensus.",
   "task": "applicability-detail-enrichment",
   "version": "detail-structure-aware-v1"
 }

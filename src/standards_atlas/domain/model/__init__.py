@@ -127,6 +127,7 @@ from standards_atlas.domain.model.retrieval_projection import (
 )
 from standards_atlas.domain.model.semantic_classification import (
     ApplicabilityFunction,
+    ApplicabilityTarget,
     DocumentStructure,
     DocumentStructureClassification,
     DomainFunctionClassification,
@@ -273,6 +274,7 @@ __all__ = [
     "RetrievalTokenizationProfile",
     "RelationType",
     "ApplicabilityFunction",
+    "ApplicabilityTarget",
     "DocumentStructure",
     "DocumentStructureClassification",
     "DomainFunctionClassification",

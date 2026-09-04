@@ -3,13 +3,21 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "applicability_statement_confirmed",
+    "applicability_target",
     "applicability_functions",
     "evidence"
   ],
   "properties": {
-    "applicability_statement_confirmed": {
-      "type": "boolean"
+    "applicability_target": {
+      "type": "string",
+      "enum": [
+        "clause_or_requirement",
+        "method_or_technique",
+        "process_or_activity",
+        "object_or_component",
+        "other",
+        "none"
+      ]
     },
     "applicability_functions": {
       "type": "array",
@@ -52,5 +60,29 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "applicability_target": {
+            "enum": [
+              "method_or_technique",
+              "process_or_activity",
+              "object_or_component",
+              "other",
+              "none"
+            ]
+          }
+        },
+        "required": ["applicability_target"]
+      },
+      "then": {
+        "properties": {
+          "applicability_functions": {"maxItems": 0},
+          "evidence": {"maxItems": 0}
+        }
+      }
+    }
+  ]
 }

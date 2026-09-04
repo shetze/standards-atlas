@@ -1,14 +1,22 @@
-Analyze a clause selected by the final applicability-presence consensus and extract its detailed applicability functions.
+Analyze a clause selected by the final applicability-presence consensus and verify the semantic target of its applicability or use statement.
 
-Record applicability_statement_confirmed for whether the normalized clause contains statements that restrict or extend the applicability of this clause or a referenced clause.
+First classify applicability_target by the object whose applicability, use, suitability, inclusion, exclusion, or scope is being stated:
+- clause_or_requirement: this clause, a referenced clause, or normative content such as requirements or recommendations belonging to them;
+- method_or_technique: a method, technique, measure, calculation, evaluation approach, or tool;
+- process_or_activity: a process, lifecycle step, activity, or task;
+- object_or_component: an object, product, system, component, element, data item, or other engineering subject;
+- other: an explicit applicability or use target of another kind;
+- none: absence of an applicability or use statement in the normalized clause.
 
-Vocabulary:
+Method or technique applicability is a distinct target from clause or requirement applicability. The same separation applies to processes, activities, objects, and components.
+
+For applicability_target clause_or_requirement, classify the detailed applicability functions directly expressed by the clause:
 - scope_definition: establishes the governed set of subjects, systems, cases, or content;
 - applicability_condition: links applicability to an explicitly stated condition;
 - inclusion: adds named subjects, systems, cases, or content to the governed set;
 - exclusion: removes named subjects, systems, cases, or content from the governed set;
 - exception: carves named subjects, systems, cases, or content from a stated applicability rule.
 
-For a confirmed applicability statement, assign every function directly expressed by the clause. Associate every assigned function with an exact source span from the normalized clause content. Preserve multiple functions when the wording expresses several. Use empty detail arrays when the statement is confirmed and the detailed function remains unresolved.
+Associate every assigned function with an exact source span from the normalized clause content. Preserve multiple functions when the wording expresses several. Empty detail arrays represent an open function classification for clause_or_requirement and the complete result for every other applicability_target.
 
 Return exactly one JSON object matching the supplied schema.
