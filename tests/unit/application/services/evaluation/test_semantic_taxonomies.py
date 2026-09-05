@@ -73,3 +73,7 @@ def test_applicability_detail_task_composes_target_and_function_ontologies() -> 
     assert schema["properties"]["applicability_target"]["enum"] == list(
         task.applicability_target_taxonomy
     )
+    assert "allOf" not in schema
+
+    target_ontology = ResourceOntologyDefinitionRepository().load("applicability-targets", "1.0.0")
+    assert "existential priority" in target_ontology.semantics["tie_break_rules"][0]

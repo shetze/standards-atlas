@@ -21,7 +21,6 @@
     },
     "applicability_functions": {
       "type": "array",
-      "uniqueItems": true,
       "items": {
         "type": "string",
         "enum": [
@@ -60,29 +59,5 @@
         }
       }
     }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "applicability_target": {
-            "enum": [
-              "method_or_technique",
-              "process_or_activity",
-              "object_or_component",
-              "other",
-              "none"
-            ]
-          }
-        },
-        "required": ["applicability_target"]
-      },
-      "then": {
-        "properties": {
-          "applicability_functions": {"maxItems": 0},
-          "evidence": {"maxItems": 0}
-        }
-      }
-    }
-  ]
+  }
 }

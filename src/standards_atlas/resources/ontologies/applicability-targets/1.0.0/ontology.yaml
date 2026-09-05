@@ -27,6 +27,12 @@ semantics:
     engineering subject rather than normative content.
   other: The statement has an explicit applicability or use target of another kind.
   none: The clause contains no applicability or use statement to classify.
+  tie_break_rules:
+  - >-
+    Clause-or-requirement applicability has existential priority: when any statement in the
+    normalized clause governs this clause, a referenced clause, or normative content belonging
+    to them, classify the target as clause_or_requirement even if other applicability targets are
+    also present.
 codes:
   clause_or_requirement: CLR
   method_or_technique: MTH

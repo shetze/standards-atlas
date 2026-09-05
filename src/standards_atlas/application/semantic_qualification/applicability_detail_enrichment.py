@@ -149,29 +149,6 @@ class ApplicabilityDetailPrediction(BaseModel):
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     evidence: tuple[ApplicabilityDetailEvidence, ...] = ()
 
-    @model_validator(mode="after")
-    def validate_prediction(self) -> ApplicabilityDetailPrediction:
-        if len(self.applicability_functions) != len(set(self.applicability_functions)):
-            raise ValueError("applicability_functions must not contain duplicates")
-        evidence_keys = [(item.function, _normalize_text(item.text)) for item in self.evidence]
-        if len(evidence_keys) != len(set(evidence_keys)):
-            raise ValueError("applicability detail evidence must not contain duplicates")
-        selected = set(self.applicability_functions)
-        evidence_functions = {item.function for item in self.evidence}
-        if evidence_functions - selected:
-            raise ValueError("evidence functions must be included in applicability_functions")
-        if selected - evidence_functions:
-            raise ValueError("each applicability function requires source evidence")
-        if not selected and self.evidence:
-            raise ValueError("evidence requires at least one applicability function")
-        if self.applicability_target is not ApplicabilityTarget.CLAUSE_OR_REQUIREMENT and (
-            selected or self.evidence
-        ):
-            raise ValueError(
-                "non-clause applicability targets require empty detail classifications"
-            )
-        return self
-
 
 class ApplicabilityDetailGenerator(BaseModel):
     """Inference provenance for one detail result."""
@@ -734,19 +711,18 @@ class ApplicabilityDetailEnrichmentService:
             if not valid:
                 raise ValueError(f"provider response violates task schema: {error}")
             prediction = _canonicalize_prediction(
-                ApplicabilityDetailPrediction.model_validate(generated.value)
+                ApplicabilityDetailPrediction.model_validate(generated.value),
+                content=text,
             )
-            grounded = all(_evidence_is_grounded(item.text, text) for item in prediction.evidence)
             if prediction.applicability_target is not ApplicabilityTarget.CLAUSE_OR_REQUIREMENT:
                 outcome = ApplicabilityDetailOutcome.NOT_CONFIRMED
                 grounded = True
             elif not prediction.applicability_functions:
                 outcome = ApplicabilityDetailOutcome.UNRESOLVED
                 grounded = True
-            elif grounded:
-                outcome = ApplicabilityDetailOutcome.ENRICHED
             else:
-                outcome = ApplicabilityDetailOutcome.UNRESOLVED
+                outcome = ApplicabilityDetailOutcome.ENRICHED
+                grounded = True
             result = ApplicabilityDetailClauseResult(
                 example_id=selected.example_id,
                 document_key=selected.document_key,
@@ -977,19 +953,36 @@ def _build_report(
 
 def _canonicalize_prediction(
     prediction: ApplicabilityDetailPrediction,
+    *,
+    content: str,
 ) -> ApplicabilityDetailPrediction:
+    if prediction.applicability_target is not ApplicabilityTarget.CLAUSE_OR_REQUIREMENT:
+        return prediction.model_copy(
+            update={
+                "applicability_functions": (),
+                "evidence": (),
+            }
+        )
+
     order = {value: index for index, value in enumerate(ApplicabilityFunction)}
+    selected = set(prediction.applicability_functions)
+    evidence_by_key: dict[tuple[ApplicabilityFunction, str], ApplicabilityDetailEvidence] = {}
+    for item in prediction.evidence:
+        if item.function not in selected or not _evidence_is_grounded(item.text, content):
+            continue
+        evidence_by_key.setdefault((item.function, _normalize_text(item.text)), item)
+    supported_functions = {item.function for item in evidence_by_key.values()}
+    functions = tuple(sorted(selected & supported_functions, key=order.__getitem__))
+    evidence = tuple(
+        sorted(
+            (item for item in evidence_by_key.values() if item.function in supported_functions),
+            key=lambda item: (order[item.function], _normalize_text(item.text)),
+        )
+    )
     return prediction.model_copy(
         update={
-            "applicability_functions": tuple(
-                sorted(prediction.applicability_functions, key=order.__getitem__)
-            ),
-            "evidence": tuple(
-                sorted(
-                    prediction.evidence,
-                    key=lambda item: (order[item.function], _normalize_text(item.text)),
-                )
-            ),
+            "applicability_functions": functions,
+            "evidence": evidence,
         }
     )
 

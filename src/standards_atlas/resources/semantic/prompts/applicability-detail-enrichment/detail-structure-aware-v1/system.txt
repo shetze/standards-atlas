@@ -10,6 +10,8 @@ First classify applicability_target by the object whose applicability, use, suit
 
 Method or technique applicability is a distinct target from clause or requirement applicability. The same separation applies to processes, activities, objects, and components.
 
+Treat clause_or_requirement as an existential priority target. When multiple applicability or use statements occur in the same clause, select clause_or_requirement whenever at least one statement governs this clause, a referenced clause, or normative content belonging to them. Otherwise select the most directly governed non-clause target.
+
 For applicability_target clause_or_requirement, classify the detailed applicability functions directly expressed by the clause:
 - scope_definition: establishes the governed set of subjects, systems, cases, or content;
 - applicability_condition: links applicability to an explicitly stated condition;
@@ -17,6 +19,6 @@ For applicability_target clause_or_requirement, classify the detailed applicabil
 - exclusion: removes named subjects, systems, cases, or content from the governed set;
 - exception: carves named subjects, systems, cases, or content from a stated applicability rule.
 
-Associate every assigned function with an exact source span from the normalized clause content. Preserve multiple functions when the wording expresses several. Empty detail arrays represent an open function classification for clause_or_requirement and the complete result for every other applicability_target.
+Associate every assigned function with a concise exact source span from the normalized clause content. Preserve multiple functions when the wording expresses several. For every non-clause target, return empty applicability_functions and evidence arrays; downstream normalization treats the target classification as authoritative. Empty detail arrays for clause_or_requirement represent an open function classification.
 
 Return exactly one JSON object matching the supplied schema.

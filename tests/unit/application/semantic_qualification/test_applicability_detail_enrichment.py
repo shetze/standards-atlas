@@ -416,7 +416,9 @@ def test_evidence_grounding_preserves_source_case() -> None:
     report = _service(gateway).enrich(selection=selection, examples=examples)
 
     assert report.clauses[0].outcome is ApplicabilityDetailOutcome.UNRESOLVED
-    assert report.clauses[0].evidence_grounded is False
+    assert report.clauses[0].applicability_functions == ()
+    assert report.clauses[0].evidence == ()
+    assert report.clauses[0].evidence_grounded is True
 
 
 def test_empty_positive_selection_performs_zero_inference_calls() -> None:
@@ -547,7 +549,7 @@ def test_non_clause_applicability_targets_are_reclassified_as_not_confirmed() ->
     assert all(item.evidence_grounded for item in report.clauses)
 
 
-def test_non_clause_target_rejects_clause_detail_classification() -> None:
+def test_non_clause_target_discards_clause_detail_classification() -> None:
     examples = (_example(1, "This calculation method can be applied to matching products."),)
     selection = _detail_selection(examples=examples, consensus=_consensus(True))
     gateway = SequenceGateway(
@@ -560,9 +562,68 @@ def test_non_clause_target_rejects_clause_detail_classification() -> None:
 
     report = _service(gateway).enrich(selection=selection, examples=examples)
 
-    assert report.failed_clause_count == 1
-    assert report.clauses[0].failure is not None
-    assert report.clauses[0].failure.category == "validation"
+    assert report.failed_clause_count == 0
+    assert report.not_confirmed_clause_count == 1
+    assert report.clauses[0].outcome is ApplicabilityDetailOutcome.NOT_CONFIRMED
+    assert report.clauses[0].applicability_target.value == "method_or_technique"
+    assert report.clauses[0].applicability_functions == ()
+    assert report.clauses[0].evidence == ()
+    assert report.clauses[0].evidence_grounded is True
+
+
+def test_clause_target_prunes_unsupported_functions_and_evidence() -> None:
+    text = "This clause applies to new systems except for legacy installations."
+    examples = (_example(1, text),)
+    selection = _detail_selection(examples=examples, consensus=_consensus(True))
+    gateway = SequenceGateway(
+        {
+            "applicability_target": "clause_or_requirement",
+            "applicability_functions": ["inclusion", "exclusion", "exception"],
+            "evidence": [
+                {"function": "inclusion", "text": "applies to new systems"},
+                {"function": "exception", "text": "except for legacy installations"},
+                {"function": "scope_definition", "text": "new systems"},
+                {"function": "exclusion", "text": "text that is absent"},
+            ],
+        }
+    )
+
+    report = _service(gateway).enrich(selection=selection, examples=examples)
+
+    assert report.failed_clause_count == 0
+    assert report.enriched_clause_count == 1
+    assert [item.value for item in report.clauses[0].applicability_functions] == [
+        "inclusion",
+        "exception",
+    ]
+    assert [item.function.value for item in report.clauses[0].evidence] == [
+        "inclusion",
+        "exception",
+    ]
+    assert report.clauses[0].evidence_grounded is True
+
+
+def test_clause_target_deduplicates_supported_prediction_detail() -> None:
+    text = "These requirements apply to new systems."
+    examples = (_example(1, text),)
+    selection = _detail_selection(examples=examples, consensus=_consensus(True))
+    gateway = SequenceGateway(
+        {
+            "applicability_target": "clause_or_requirement",
+            "applicability_functions": ["inclusion", "inclusion"],
+            "evidence": [
+                {"function": "inclusion", "text": "apply to new systems"},
+                {"function": "inclusion", "text": "apply to new systems"},
+            ],
+        }
+    )
+
+    report = _service(gateway).enrich(selection=selection, examples=examples)
+
+    assert report.failed_clause_count == 0
+    assert report.enriched_clause_count == 1
+    assert [item.value for item in report.clauses[0].applicability_functions] == ["inclusion"]
+    assert len(report.clauses[0].evidence) == 1
 
 
 def test_selection_rejects_content_hash_mismatch() -> None:

@@ -425,11 +425,19 @@ accounted for without entering detail enrichment. The deterministic Selection pr
 Selection, coverage, and consensus hashes and contains exactly the final Presence-positive clauses in
 qualification order. An empty positive Selection produces no model requests.
 
-The specialized task `applicability-detail-enrichment@1.0.0` extracts a multi-label set from
-`scope_definition`, `applicability_condition`, `inclusion`, `exclusion`, and `exception`. Each
-assigned function carries an exact evidence span from the normalized clause. The prompt records a
-separate confirmation of the selected Applicability statement and uses positively framed
-instructions throughout.
+The specialized task `applicability-detail-enrichment@1.0.0` first verifies the semantic target of
+the Presence candidate. Targets distinguish clause/requirement Applicability from applicability or
+use of methods/techniques, processes/activities, objects/components, and other subjects. A
+non-clause target produces `not_confirmed`; any extra function/evidence detail returned by the
+provider is discarded deterministically. When several applicability targets occur in one clause,
+`clause_or_requirement` has existential priority whenever at least one statement governs this
+clause, a referenced clause, or normative content belonging to them.
+
+For a `clause_or_requirement` target, the task extracts a multi-label set from `scope_definition`,
+`applicability_condition`, `inclusion`, `exclusion`, and `exception`. Each retained function has at
+least one grounded source-evidence span. Unsupported functions, unrelated evidence, duplicate
+detail, and ungrounded evidence spans are pruned instead of failing the whole clause. If no
+supported function remains, the target decision is retained with outcome `unresolved`.
 
 The run directory receives:
 
