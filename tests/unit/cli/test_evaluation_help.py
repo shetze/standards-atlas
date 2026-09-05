@@ -127,3 +127,12 @@ def test_applicability_detail_enrich_help_is_registered() -> None:
     assert "--run" in result.stdout
     assert "--consensus" in result.stdout
     assert "--fresh" in result.stdout
+
+
+def test_applicability_end_to_end_evaluate_help_is_registered() -> None:
+    result = runner.invoke(app, ["evaluation", "applicability-end-to-end-evaluate", "--help"])
+
+    assert result.exit_code == 0
+    assert "--golden" in result.stdout
+    assert "--run" in result.stdout
+    assert "--output" in result.stdout

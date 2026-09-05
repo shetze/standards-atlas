@@ -328,6 +328,25 @@ class ApplicabilityDetailEnrichmentReport(BaseModel):
         return self
 
 
+class ApplicabilityDetailCompletionSummary(BaseModel):
+    """Validated archive summary for a completed applicability-detail run."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    task: Literal["applicability-detail-enrichment"] = "applicability-detail-enrichment"
+    task_version: str = Field(min_length=1)
+    prompt_version: str = Field(min_length=1)
+    model_id: str = Field(min_length=1)
+    model_ref: str = Field(min_length=1)
+    selected_clause_count: int = Field(ge=0)
+    processed_clause_count: int = Field(ge=0)
+    enriched_clause_count: int = Field(ge=0)
+    not_confirmed_clause_count: int = Field(ge=0)
+    unresolved_clause_count: int = Field(ge=0)
+    failed_clause_count: int = Field(ge=0)
+    complete: bool = True
+
+
 class ApplicabilityDetailFailureReport(BaseModel):
     """Compact retry and review view over failed detail clauses."""
 
@@ -820,6 +839,86 @@ def persist_applicability_detail_report(
 
 def load_applicability_detail_report(path: Path) -> ApplicabilityDetailEnrichmentReport:
     return ApplicabilityDetailEnrichmentReport.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def load_applicability_detail_failure_report(path: Path) -> ApplicabilityDetailFailureReport:
+    return ApplicabilityDetailFailureReport.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def validate_completed_applicability_detail_enrichment(
+    *,
+    expected_selection: ApplicabilityDetailSelection,
+    persisted_selection: ApplicabilityDetailSelection,
+    report: ApplicabilityDetailEnrichmentReport,
+    failures: ApplicabilityDetailFailureReport,
+    config: ApplicabilityDetailEnrichmentConfig,
+    model_id: str,
+    model_ref: str,
+) -> ApplicabilityDetailCompletionSummary:
+    """Validate persisted detail artifacts before qualification archival."""
+    if persisted_selection != expected_selection:
+        raise ValueError("persisted applicability detail selection differs from final consensus")
+    if report.selection_sha256 != persisted_selection.fingerprint:
+        raise ValueError("applicability detail report belongs to a different selection")
+    if report.selected_clause_count != persisted_selection.selected_clause_count:
+        raise ValueError("applicability detail report selection count differs from selection")
+    if report.processed_clause_count != persisted_selection.selected_clause_count:
+        raise ValueError("applicability detail enrichment is incomplete")
+    if report.task_version != config.task_version or report.prompt_version != config.prompt_version:
+        raise ValueError("applicability detail report uses a different task or prompt version")
+    if report.config_sha256 != _canonical_sha256(config.model_dump(mode="json")):
+        raise ValueError("applicability detail report uses a different configuration")
+    if report.model_id != model_id or report.model_ref != model_ref:
+        raise ValueError("applicability detail report uses a different model")
+    if failures.selection_sha256 != report.selection_sha256:
+        raise ValueError("applicability detail failure report belongs to a different selection")
+    expected_failures = tuple(
+        item for item in report.clauses if item.outcome is ApplicabilityDetailOutcome.FAILED
+    )
+    if failures.clauses != expected_failures:
+        raise ValueError("applicability detail failure report differs from failed clause results")
+    return ApplicabilityDetailCompletionSummary(
+        task_version=report.task_version,
+        prompt_version=report.prompt_version,
+        model_id=report.model_id,
+        model_ref=report.model_ref,
+        selected_clause_count=report.selected_clause_count,
+        processed_clause_count=report.processed_clause_count,
+        enriched_clause_count=report.enriched_clause_count,
+        not_confirmed_clause_count=report.not_confirmed_clause_count,
+        unresolved_clause_count=report.unresolved_clause_count,
+        failed_clause_count=report.failed_clause_count,
+        complete=True,
+    )
+
+
+def validate_applicability_detail_artifacts(
+    *,
+    artifact_root: Path,
+    selection: ApplicabilityDetailSelection,
+    report: ApplicabilityDetailEnrichmentReport,
+) -> None:
+    """Ensure each completed clause has the expected immutable request/result artifacts."""
+    report_by_coordinate = {(item.document_key, item.clause_id): item for item in report.clauses}
+    for selected in selection.clauses:
+        result = report_by_coordinate.get((selected.document_key, selected.clause_id))
+        if result is None:
+            raise ValueError(
+                "applicability detail artifacts are incomplete for "
+                f"{selected.document_key}/{selected.clause_id}"
+            )
+        case_root = artifact_root / "clauses" / _safe(selected.example_id)
+        request_path = case_root / "request.json"
+        if not request_path.is_file():
+            raise ValueError(f"applicability detail request artifact not found: {request_path}")
+        terminal_name = (
+            "failure.json"
+            if result.outcome is ApplicabilityDetailOutcome.FAILED
+            else "response.json"
+        )
+        terminal_path = case_root / terminal_name
+        if not terminal_path.is_file():
+            raise ValueError(f"applicability detail result artifact not found: {terminal_path}")
 
 
 def _detail_result_is_reusable(
