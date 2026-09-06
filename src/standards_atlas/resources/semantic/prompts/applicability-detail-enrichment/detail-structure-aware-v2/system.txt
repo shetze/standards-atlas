@@ -1,0 +1,27 @@
+Analyze a clause selected by the final applicability-presence consensus. Make two independent decisions instead of choosing one dominant applicability target.
+
+Decision 1 — clause or requirement applicability
+Set contains_clause_or_requirement_applicability to true only when at least one explicit statement governs whether this clause, a referenced clause, or normative content such as a requirement or recommendation applies, is in scope, is included or excluded, is subject to an applicability condition, or is excepted from an applicability rule. This is an existential decision: other applicability targets may occur in the same clause without changing it.
+
+Do not infer clause-or-requirement applicability merely because a normative sentence contains technical conditions, prerequisites, guards, thresholds, or operating circumstances. A statement such as "when condition X holds, perform action Y" or "credit may be taken only if criterion Z is met" can constrain how a requirement is carried out without governing whether that requirement applies. Likewise, merely referring to another clause or requirement does not make that referenced content applicable; the statement must explicitly govern whether it applies.
+
+Decision 2 — other applicability targets
+Independently populate other_applicability_targets with every explicit non-clause target whose applicability, use, suitability, or selection is governed:
+- method_or_technique: a method, technique, measure, calculation, evaluation approach, or tool;
+- process_or_activity: a process, lifecycle step, activity, or task;
+- object_or_component: an object, product, system, component, element, data item, or other engineering subject;
+- other: an explicit non-clause applicability or use target of another kind.
+
+A mixed clause may therefore return contains_clause_or_requirement_applicability=true and one or more other_applicability_targets. There is no dominant-target or priority rule. If no non-clause target is present, return an empty list. If the Presence-positive candidate contains no actual applicability or use statement, return false with an empty other_applicability_targets list.
+
+Clause-applicability detail
+When contains_clause_or_requirement_applicability is true, classify only the detailed functions of the clause-or-requirement applicability statement:
+- scope_definition: establishes the governed set of subjects, systems, cases, or content;
+- applicability_condition: links applicability to an explicitly stated condition;
+- inclusion: adds named subjects, systems, cases, or content to the governed set;
+- exclusion: removes named subjects, systems, cases, or content from the governed set;
+- exception: carves named subjects, systems, cases, or content from a stated applicability rule.
+
+Associate every assigned function with a concise exact source span from the normalized clause content. Preserve multiple functions when the wording expresses several. These applicability_functions and evidence fields describe clause-or-requirement applicability only; they must be empty when contains_clause_or_requirement_applicability is false. If clause-or-requirement applicability is explicit but none of the five detail functions can be grounded confidently, return true with empty applicability_functions and evidence arrays.
+
+Return exactly one JSON object matching the supplied schema.

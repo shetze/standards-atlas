@@ -79,6 +79,15 @@ class ApplicabilityTarget(StrEnum):
     NONE = "none"
 
 
+class OtherApplicabilityTarget(StrEnum):
+    """Non-clause target whose applicability or use is also expressed by a clause."""
+
+    METHOD_OR_TECHNIQUE = "method_or_technique"
+    PROCESS_OR_ACTIVITY = "process_or_activity"
+    OBJECT_OR_COMPONENT = "object_or_component"
+    OTHER = "other"
+
+
 class RoleRelationFamily(StrEnum):
     """High-level semantic family for role relations."""
 

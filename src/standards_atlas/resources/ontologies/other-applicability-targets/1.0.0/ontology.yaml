@@ -1,0 +1,28 @@
+schema_version: 1
+id: other-applicability-targets
+version: 1.0.0
+dimension: other_applicability_targets
+description: >-
+  Non-clause semantic targets whose applicability or use may be expressed independently
+  alongside clause-or-requirement applicability in a Presence-positive clause.
+values:
+- method_or_technique
+- process_or_activity
+- object_or_component
+- other
+semantics:
+  method_or_technique: >-
+    A method, technique, measure, calculation, evaluation approach, or tool whose use,
+    suitability, or selection is governed.
+  process_or_activity: >-
+    A process, lifecycle step, activity, or task whose use, performance, or selection is
+    governed.
+  object_or_component: >-
+    An object, product, system, component, element, data item, or other engineering subject
+    whose use or applicability is governed.
+  other: An explicit non-clause applicability or use target of another kind.
+codes:
+  method_or_technique: MTH
+  process_or_activity: PRC
+  object_or_component: OBJ
+  other: OTH

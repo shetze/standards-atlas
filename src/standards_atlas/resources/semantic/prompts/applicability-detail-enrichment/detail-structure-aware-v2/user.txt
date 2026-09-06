@@ -1,0 +1,8 @@
+Normalized clause content:
+{content}
+
+Clause identity:
+Document: {document_key}
+Clause: {clause_id}
+Reference: {reference}
+Heading: {heading}

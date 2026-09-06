@@ -77,3 +77,33 @@ def test_applicability_detail_task_composes_target_and_function_ontologies() -> 
 
     target_ontology = ResourceOntologyDefinitionRepository().load("applicability-targets", "1.0.0")
     assert "existential priority" in target_ontology.semantics["tie_break_rules"][0]
+
+
+def test_applicability_detail_v2_separates_clause_decision_from_other_targets() -> None:
+    task, schema = SemanticTaskRepository(SEMANTIC_ROOT / "tasks").load(
+        "applicability-detail-enrichment", "2.0.0"
+    )
+
+    assert task.ontologies["applicability_functions"].version == "1.3.0"
+    assert task.ontologies["other_applicability_targets"].version == "1.0.0"
+    assert task.applicability_target_taxonomy == ()
+    assert task.other_applicability_target_taxonomy == (
+        "method_or_technique",
+        "process_or_activity",
+        "object_or_component",
+        "other",
+    )
+    assert schema["properties"]["contains_clause_or_requirement_applicability"] == {
+        "type": "boolean"
+    }
+    assert schema["properties"]["other_applicability_targets"]["items"]["enum"] == list(
+        task.other_applicability_target_taxonomy
+    )
+    assert "applicability_target" not in schema["properties"]
+
+    target_ontology = ResourceOntologyDefinitionRepository().load(
+        "other-applicability-targets", "1.0.0"
+    )
+    assert target_ontology.dimension == "other_applicability_targets"
+    assert "clause_or_requirement" not in target_ontology.values
+    assert "none" not in target_ontology.values

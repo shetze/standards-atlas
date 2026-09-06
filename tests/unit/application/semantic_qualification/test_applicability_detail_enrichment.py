@@ -18,6 +18,7 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     ApplicabilityDetailEnrichmentService,
     ApplicabilityDetailOutcome,
     build_applicability_detail_selection,
+    parse_applicability_detail_prediction_v2,
 )
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
@@ -642,3 +643,134 @@ def test_selection_rejects_content_hash_mismatch() -> None:
             examples=(corrupted,),
             consensus=_consensus(True),
         )
+
+
+def test_v2_prompt_uses_independent_clause_and_other_target_decisions() -> None:
+    prompt = PromptRepository(RESOURCES / "prompts").load(
+        "applicability-detail-enrichment", "detail-structure-aware-v2"
+    )
+
+    assert "two independent decisions" in prompt.system_prompt
+    assert "There is no dominant-target or priority rule" in prompt.system_prompt
+    assert "technical conditions, prerequisites, guards, thresholds" in prompt.system_prompt
+    assert "merely referring to another clause or requirement" in prompt.system_prompt
+    assert prompt.output_schema["properties"]["contains_clause_or_requirement_applicability"] == {
+        "type": "boolean"
+    }
+    assert prompt.output_schema["properties"]["other_applicability_targets"]["items"]["enum"] == [
+        "method_or_technique",
+        "process_or_activity",
+        "object_or_component",
+        "other",
+    ]
+
+
+def test_v2_prediction_preserves_mixed_clause_and_method_applicability() -> None:
+    content = (
+        "These requirements apply to replacement systems. "
+        "The diagnostic method may also be used for replacement systems."
+    )
+
+    prediction = parse_applicability_detail_prediction_v2(
+        {
+            "contains_clause_or_requirement_applicability": True,
+            "other_applicability_targets": ["method_or_technique"],
+            "applicability_functions": ["inclusion"],
+            "evidence": [
+                {
+                    "function": "inclusion",
+                    "text": "requirements apply to replacement systems",
+                }
+            ],
+        },
+        content=content,
+    )
+
+    assert prediction.contains_clause_or_requirement_applicability is True
+    assert [item.value for item in prediction.other_applicability_targets] == [
+        "method_or_technique"
+    ]
+    assert [item.value for item in prediction.applicability_functions] == ["inclusion"]
+    assert len(prediction.evidence) == 1
+
+
+def test_v2_prediction_keeps_non_clause_target_but_clears_clause_detail() -> None:
+    content = "The calculation method may be used when the input data are complete."
+
+    prediction = parse_applicability_detail_prediction_v2(
+        {
+            "contains_clause_or_requirement_applicability": False,
+            "other_applicability_targets": ["method_or_technique"],
+            "applicability_functions": ["applicability_condition"],
+            "evidence": [
+                {
+                    "function": "applicability_condition",
+                    "text": "when the input data are complete",
+                }
+            ],
+        },
+        content=content,
+    )
+
+    assert prediction.contains_clause_or_requirement_applicability is False
+    assert [item.value for item in prediction.other_applicability_targets] == [
+        "method_or_technique"
+    ]
+    assert prediction.applicability_functions == ()
+    assert prediction.evidence == ()
+
+
+def test_v2_prediction_represents_presence_false_positive_without_none_target() -> None:
+    prediction = parse_applicability_detail_prediction_v2(
+        {
+            "contains_clause_or_requirement_applicability": False,
+            "other_applicability_targets": [],
+            "applicability_functions": [],
+            "evidence": [],
+        },
+        content="The supplier records the result.",
+    )
+
+    assert prediction.contains_clause_or_requirement_applicability is False
+    assert prediction.other_applicability_targets == ()
+    assert prediction.applicability_functions == ()
+    assert prediction.evidence == ()
+
+
+def test_v2_prediction_rejects_clause_target_inside_other_targets() -> None:
+    with pytest.raises(ValueError, match="other_applicability_targets"):
+        parse_applicability_detail_prediction_v2(
+            {
+                "contains_clause_or_requirement_applicability": True,
+                "other_applicability_targets": ["clause_or_requirement"],
+                "applicability_functions": [],
+                "evidence": [],
+            },
+            content="These requirements apply to the subsystem.",
+        )
+
+
+def test_v2_prediction_deduplicates_other_targets_and_prunes_ungrounded_detail() -> None:
+    content = "These requirements apply to new systems and a verification method may be used."
+
+    prediction = parse_applicability_detail_prediction_v2(
+        {
+            "contains_clause_or_requirement_applicability": True,
+            "other_applicability_targets": [
+                "method_or_technique",
+                "method_or_technique",
+            ],
+            "applicability_functions": ["inclusion", "exception"],
+            "evidence": [
+                {"function": "inclusion", "text": "requirements apply to new systems"},
+                {"function": "exception", "text": "legacy systems are excepted"},
+            ],
+        },
+        content=content,
+    )
+
+    assert [item.value for item in prediction.other_applicability_targets] == [
+        "method_or_technique"
+    ]
+    assert [item.value for item in prediction.applicability_functions] == ["inclusion"]
+    assert [item.function.value for item in prediction.evidence] == ["inclusion"]

@@ -1,0 +1,5 @@
+{
+  "description": "Independent clause-applicability verification plus secondary-target classification for clauses selected by final applicability-presence consensus.",
+  "task": "applicability-detail-enrichment",
+  "version": "detail-structure-aware-v2"
+}

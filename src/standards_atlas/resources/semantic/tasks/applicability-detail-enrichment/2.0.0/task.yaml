@@ -1,0 +1,19 @@
+schema_version: 1
+task: applicability-detail-enrichment
+version: 2.0.0
+description: >-
+  Verify independently whether a Presence-positive clause contains applicability semantics
+  governing a clause or requirement, record any additional non-clause applicability targets,
+  and extract detailed functions and exact source evidence only for clause-or-requirement
+  applicability.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds:
+- clause
+ontologies:
+  applicability_functions:
+    id: applicability-functions
+    version: 1.3.0
+  other_applicability_targets:
+    id: other-applicability-targets
+    version: 1.0.0

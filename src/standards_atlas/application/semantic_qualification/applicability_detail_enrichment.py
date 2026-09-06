@@ -28,7 +28,11 @@ from standards_atlas.application.semantic_qualification.retry import generate_wi
 from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
 )
-from standards_atlas.domain.model import ApplicabilityFunction, ApplicabilityTarget
+from standards_atlas.domain.model import (
+    ApplicabilityFunction,
+    ApplicabilityTarget,
+    OtherApplicabilityTarget,
+)
 
 APPLICABILITY_DETAIL_SELECTION_FILENAME = "applicability-detail-selection.json"
 APPLICABILITY_DETAIL_REPORT_FILENAME = "applicability-detail-enrichment.json"
@@ -146,6 +150,17 @@ class ApplicabilityDetailPrediction(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     applicability_target: ApplicabilityTarget
+    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    evidence: tuple[ApplicabilityDetailEvidence, ...] = ()
+
+
+class ApplicabilityDetailPredictionV2(BaseModel):
+    """Dual-decision v2 output for clause applicability plus independent other targets."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    contains_clause_or_requirement_applicability: bool
+    other_applicability_targets: tuple[OtherApplicabilityTarget, ...] = ()
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     evidence: tuple[ApplicabilityDetailEvidence, ...] = ()
 
@@ -951,6 +966,48 @@ def _build_report(
     )
 
 
+def parse_applicability_detail_prediction_v2(
+    value: Mapping[str, Any],
+    *,
+    content: str,
+) -> ApplicabilityDetailPredictionV2:
+    """Parse and canonicalize the experimental dual-decision detail contract."""
+    prediction = ApplicabilityDetailPredictionV2.model_validate(value)
+    return _canonicalize_prediction_v2(prediction, content=content)
+
+
+def _canonicalize_prediction_v2(
+    prediction: ApplicabilityDetailPredictionV2,
+    *,
+    content: str,
+) -> ApplicabilityDetailPredictionV2:
+    target_order = {value: index for index, value in enumerate(OtherApplicabilityTarget)}
+    targets = tuple(
+        sorted(set(prediction.other_applicability_targets), key=target_order.__getitem__)
+    )
+    if not prediction.contains_clause_or_requirement_applicability:
+        return prediction.model_copy(
+            update={
+                "other_applicability_targets": targets,
+                "applicability_functions": (),
+                "evidence": (),
+            }
+        )
+
+    functions, evidence = _canonicalize_function_evidence(
+        prediction.applicability_functions,
+        prediction.evidence,
+        content=content,
+    )
+    return prediction.model_copy(
+        update={
+            "other_applicability_targets": targets,
+            "applicability_functions": functions,
+            "evidence": evidence,
+        }
+    )
+
+
 def _canonicalize_prediction(
     prediction: ApplicabilityDetailPrediction,
     *,
@@ -964,20 +1021,10 @@ def _canonicalize_prediction(
             }
         )
 
-    order = {value: index for index, value in enumerate(ApplicabilityFunction)}
-    selected = set(prediction.applicability_functions)
-    evidence_by_key: dict[tuple[ApplicabilityFunction, str], ApplicabilityDetailEvidence] = {}
-    for item in prediction.evidence:
-        if item.function not in selected or not _evidence_is_grounded(item.text, content):
-            continue
-        evidence_by_key.setdefault((item.function, _normalize_text(item.text)), item)
-    supported_functions = {item.function for item in evidence_by_key.values()}
-    functions = tuple(sorted(selected & supported_functions, key=order.__getitem__))
-    evidence = tuple(
-        sorted(
-            (item for item in evidence_by_key.values() if item.function in supported_functions),
-            key=lambda item: (order[item.function], _normalize_text(item.text)),
-        )
+    functions, evidence = _canonicalize_function_evidence(
+        prediction.applicability_functions,
+        prediction.evidence,
+        content=content,
     )
     return prediction.model_copy(
         update={
@@ -985,6 +1032,30 @@ def _canonicalize_prediction(
             "evidence": evidence,
         }
     )
+
+
+def _canonicalize_function_evidence(
+    functions: tuple[ApplicabilityFunction, ...],
+    evidence: tuple[ApplicabilityDetailEvidence, ...],
+    *,
+    content: str,
+) -> tuple[tuple[ApplicabilityFunction, ...], tuple[ApplicabilityDetailEvidence, ...]]:
+    order = {value: index for index, value in enumerate(ApplicabilityFunction)}
+    selected = set(functions)
+    evidence_by_key: dict[tuple[ApplicabilityFunction, str], ApplicabilityDetailEvidence] = {}
+    for item in evidence:
+        if item.function not in selected or not _evidence_is_grounded(item.text, content):
+            continue
+        evidence_by_key.setdefault((item.function, _normalize_text(item.text)), item)
+    supported_functions = {item.function for item in evidence_by_key.values()}
+    grounded_functions = tuple(sorted(selected & supported_functions, key=order.__getitem__))
+    grounded_evidence = tuple(
+        sorted(
+            (item for item in evidence_by_key.values() if item.function in supported_functions),
+            key=lambda item: (order[item.function], _normalize_text(item.text)),
+        )
+    )
+    return grounded_functions, grounded_evidence
 
 
 def _generator(
