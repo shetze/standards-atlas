@@ -1,0 +1,5 @@
+{
+  "description": "Calibrated dual-decision clause-applicability verification that separates normative scope gates from technical execution and method-selection conditions while preserving independent secondary targets.",
+  "task": "applicability-detail-enrichment",
+  "version": "detail-structure-aware-v3"
+}

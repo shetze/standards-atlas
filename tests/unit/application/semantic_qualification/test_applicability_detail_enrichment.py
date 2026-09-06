@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -696,6 +697,58 @@ def test_v2_prompt_uses_independent_clause_and_other_target_decisions() -> None:
         "object_or_component",
         "other",
     ]
+
+
+def test_v3_prompt_calibrates_gate_against_moving_golden_archetypes() -> None:
+    v2 = PromptRepository(RESOURCES / "prompts").load(
+        "applicability-detail-enrichment", "detail-structure-aware-v2"
+    )
+    v3 = PromptRepository(RESOURCES / "prompts").load(
+        "applicability-detail-enrichment", "detail-structure-aware-v3"
+    )
+    fixture = json.loads(
+        Path("tests/fixtures/applicability/detail-v3-moving-golden-cases.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    cases = fixture["cases"]
+    assert len(cases) == 9
+    assert sum(item["v2_transition"] == "wrong_to_correct" for item in cases) == 4
+    assert sum(item["v2_transition"] == "correct_to_wrong" for item in cases) == 5
+    assert v3.output_schema == v2.output_schema
+    assert v3.user_template == v2.user_template
+    assert "conditions are not automatically applicability" in v3.system_prompt
+    assert "Do not use one decision as evidence for the other" in v3.system_prompt
+    assert 'Do not use "mixed" as a fallback for uncertainty' in v3.system_prompt
+
+    for archetype in {item["prompt_archetype"] for item in cases}:
+        assert archetype in v3.system_prompt
+
+    # Keep the calibration structural rather than leaking Golden clause identities into the prompt.
+    for document_key in {item["document_key"] for item in cases}:
+        assert document_key not in v3.system_prompt
+
+
+def test_v3_prompt_preserves_true_mixed_and_false_method_only_contrasts() -> None:
+    prompt = PromptRepository(RESOURCES / "prompts").load(
+        "applicability-detail-enrichment", "detail-structure-aware-v3"
+    )
+
+    assert (
+        '"These requirements apply throughout development and are also applicable to the '
+        'constituent functions."' in prompt.system_prompt
+    )
+    assert (
+        '"If a technique not listed in the tables is proposed, its effectiveness and '
+        'suitability shall be justified."' in prompt.system_prompt
+    )
+    assert (
+        '"If applicable, an evaluation of the applied tailoring shall be performed."'
+        in prompt.system_prompt
+    )
+    assert "technical credit is admissible" in prompt.system_prompt
+    assert "the condition changes its execution" in prompt.system_prompt
 
 
 def test_v2_prediction_preserves_mixed_clause_and_method_applicability() -> None:
