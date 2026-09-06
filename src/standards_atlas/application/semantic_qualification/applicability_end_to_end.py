@@ -182,14 +182,35 @@ def evaluate_applicability_end_to_end(
 ) -> ApplicabilityEndToEndRegressionReport:
     """Evaluate archived final Presence decisions and detail verification without inference."""
 
+    consensus, selection, detail = load_applicability_end_to_end_artifacts(run_archive)
+    return evaluate_applicability_end_to_end_from_artifacts(
+        golden,
+        consensus=consensus,
+        selection=selection,
+        detail=detail,
+    )
+
+
+def evaluate_applicability_end_to_end_from_artifacts(
+    golden: ApplicabilityGoldenCorpus,
+    *,
+    consensus: ConsensusReport,
+    selection: ApplicabilityDetailSelection,
+    detail: ApplicabilityDetailEnrichmentReport,
+) -> ApplicabilityEndToEndRegressionReport:
+    """Evaluate one validated Presence/detail artifact set without performing inference."""
+
     published = tuple(
         case for case in golden.cases if case.status == "published" and case.expected is not None
     )
     if not published:
         raise ValueError("applicability golden corpus contains no published cases")
 
-    consensus, selection, detail = _load_end_to_end_artifacts(run_archive)
-    _validate_detail_provenance(consensus=consensus, selection=selection, detail=detail)
+    validate_applicability_detail_provenance(
+        consensus=consensus,
+        selection=selection,
+        detail=detail,
+    )
 
     consensus_by_coordinate = {
         (item.document_key, item.clause_id): item for item in consensus.clauses
@@ -356,7 +377,7 @@ def evaluate_applicability_end_to_end(
     )
 
 
-def _load_end_to_end_artifacts(
+def load_applicability_end_to_end_artifacts(
     run_archive: Path,
 ) -> tuple[ConsensusReport, ApplicabilityDetailSelection, ApplicabilityDetailEnrichmentReport]:
     with ZipFile(run_archive) as archive:
@@ -389,7 +410,7 @@ def _load_end_to_end_artifacts(
     return consensus, selection, detail
 
 
-def _validate_detail_provenance(
+def validate_applicability_detail_provenance(
     *,
     consensus: ConsensusReport,
     selection: ApplicabilityDetailSelection,

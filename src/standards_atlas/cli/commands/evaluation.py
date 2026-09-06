@@ -13,6 +13,9 @@ from standards_atlas.cli.commands.evaluation_commands.annotations import (
 from standards_atlas.cli.commands.evaluation_commands.applicability_detail import (
     enrich_applicability_details,
 )
+from standards_atlas.cli.commands.evaluation_commands.applicability_detail_comparison import (
+    compare_applicability_detail_runs,
+)
 from standards_atlas.cli.commands.evaluation_commands.applicability_end_to_end import (
     evaluate_applicability_end_to_end_corpus,
 )
@@ -49,6 +52,7 @@ __all__ = [
     "build_evaluation_corpus",
     "build_role_golden_corpus",
     "build_golden_corpus_qualifier",
+    "compare_applicability_detail_runs",
     "enrich_applicability_details",
     "evaluate_applicability_end_to_end_corpus",
     "evaluate_annotation_metrics",
