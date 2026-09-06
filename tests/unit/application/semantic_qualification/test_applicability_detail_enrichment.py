@@ -19,6 +19,7 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     ApplicabilityDetailOutcome,
     build_applicability_detail_selection,
     parse_applicability_detail_prediction_v2,
+    validate_reused_applicability_detail_selection,
 )
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
@@ -181,6 +182,38 @@ def _service(gateway: SequenceGateway, artifact_root: Path | None = None):
     )
     config = ApplicabilityDetailEnrichmentConfig(
         enabled=True,
+        model="detail-model",
+        retry_attempts=1,
+        retry_backoff_seconds=0,
+    )
+    return ApplicabilityDetailEnrichmentService(
+        gateway,
+        config=config,
+        prompt=prompt,
+        canonical_schema=schema,
+        model_id="detail-model",
+        model_ref="model-ref",
+        artifact_root=artifact_root,
+    )
+
+
+def _service_v2(gateway: SequenceGateway, artifact_root: Path | None = None):
+    task, schema = SemanticTaskRepository(RESOURCES / "tasks").load(
+        "applicability-detail-enrichment", "2.0.0"
+    )
+    assert task.other_applicability_target_taxonomy == (
+        "method_or_technique",
+        "process_or_activity",
+        "object_or_component",
+        "other",
+    )
+    prompt = PromptRepository(RESOURCES / "prompts").load(
+        "applicability-detail-enrichment", "detail-structure-aware-v2"
+    )
+    config = ApplicabilityDetailEnrichmentConfig(
+        enabled=True,
+        task_version="2.0.0",
+        prompt_version="detail-structure-aware-v2",
         model="detail-model",
         retry_attempts=1,
         retry_backoff_seconds=0,
@@ -774,3 +807,157 @@ def test_v2_prediction_deduplicates_other_targets_and_prunes_ungrounded_detail()
     ]
     assert [item.value for item in prediction.applicability_functions] == ["inclusion"]
     assert [item.function.value for item in prediction.evidence] == ["inclusion"]
+
+
+def test_reused_detail_selection_keeps_original_fingerprint_across_contract_experiment() -> None:
+    examples = (
+        _example(1, "These requirements apply to replacement systems."),
+        _example(2, "The supplier records the result."),
+    )
+    run_selection = _selection(2)
+    consensus = _consensus(True, False)
+    coverage = build_qualification_coverage(selection=run_selection, report=consensus)
+    original = build_applicability_detail_selection(
+        run_selection=run_selection,
+        examples=examples,
+        consensus=consensus,
+        coverage=coverage,
+        task_version="1.0.0",
+    )
+
+    reused = validate_reused_applicability_detail_selection(
+        persisted_selection=original,
+        run_selection=run_selection,
+        examples=examples,
+        consensus=consensus,
+        coverage=coverage,
+    )
+
+    assert reused is original
+    assert reused.task_version == "1.0.0"
+    assert reused.fingerprint == original.fingerprint
+
+
+def test_reused_detail_selection_rejects_changed_presence_projection() -> None:
+    examples = (_example(1, "These requirements apply to replacement systems."),)
+    run_selection = _selection(1)
+    positive_consensus = _consensus(True)
+    original = build_applicability_detail_selection(
+        run_selection=run_selection,
+        examples=examples,
+        consensus=positive_consensus,
+        coverage=build_qualification_coverage(
+            selection=run_selection,
+            report=positive_consensus,
+        ),
+        task_version="1.0.0",
+    )
+    negative_consensus = _consensus(False)
+
+    with pytest.raises(ValueError, match="persisted applicability detail selection differs"):
+        validate_reused_applicability_detail_selection(
+            persisted_selection=original,
+            run_selection=run_selection,
+            examples=examples,
+            consensus=negative_consensus,
+            coverage=build_qualification_coverage(
+                selection=run_selection,
+                report=negative_consensus,
+            ),
+        )
+
+
+def test_v2_service_uses_boolean_gate_and_preserves_mixed_targets() -> None:
+    texts = (
+        (
+            "These requirements apply to replacement systems. "
+            "The diagnostic method may also be used for replacement systems."
+        ),
+        "The calculation method may be used when the input data are complete.",
+        "The supplier records the result.",
+    )
+    examples = tuple(_example(index, text) for index, text in enumerate(texts, start=1))
+    selection = _detail_selection(
+        examples=examples,
+        consensus=_consensus(True, True, True),
+    )
+    gateway = SequenceGateway(
+        {
+            "contains_clause_or_requirement_applicability": True,
+            "other_applicability_targets": ["method_or_technique"],
+            "applicability_functions": ["inclusion"],
+            "evidence": [
+                {
+                    "function": "inclusion",
+                    "text": "requirements apply to replacement systems",
+                }
+            ],
+        },
+        {
+            "contains_clause_or_requirement_applicability": False,
+            "other_applicability_targets": ["method_or_technique"],
+            "applicability_functions": [],
+            "evidence": [],
+        },
+        {
+            "contains_clause_or_requirement_applicability": False,
+            "other_applicability_targets": [],
+            "applicability_functions": [],
+            "evidence": [],
+        },
+    )
+
+    report = _service_v2(gateway).enrich(selection=selection, examples=examples)
+
+    assert report.task_version == "2.0.0"
+    assert report.prompt_version == "detail-structure-aware-v2"
+    assert [item.outcome for item in report.clauses] == [
+        ApplicabilityDetailOutcome.ENRICHED,
+        ApplicabilityDetailOutcome.NOT_CONFIRMED,
+        ApplicabilityDetailOutcome.NOT_CONFIRMED,
+    ]
+    mixed = report.clauses[0]
+    assert mixed.contains_clause_or_requirement_applicability is True
+    assert mixed.applicability_target.value == "clause_or_requirement"
+    assert [item.value for item in mixed.other_applicability_targets] == ["method_or_technique"]
+    method_only = report.clauses[1]
+    assert method_only.contains_clause_or_requirement_applicability is False
+    assert method_only.applicability_target.value == "method_or_technique"
+    assert [item.value for item in method_only.other_applicability_targets] == [
+        "method_or_technique"
+    ]
+    no_target = report.clauses[2]
+    assert no_target.contains_clause_or_requirement_applicability is False
+    assert no_target.applicability_target.value == "none"
+    assert no_target.other_applicability_targets == ()
+
+
+def test_v2_service_uses_clause_boolean_not_secondary_target_as_gate() -> None:
+    content = (
+        "These requirements apply to replacement systems. "
+        "A diagnostic method may be used for the same systems."
+    )
+    examples = (_example(1, content),)
+    selection = _detail_selection(examples=examples, consensus=_consensus(True))
+    gateway = SequenceGateway(
+        {
+            "contains_clause_or_requirement_applicability": True,
+            "other_applicability_targets": ["method_or_technique"],
+            "applicability_functions": ["inclusion"],
+            "evidence": [
+                {
+                    "function": "inclusion",
+                    "text": "requirements apply to replacement systems",
+                }
+            ],
+        }
+    )
+
+    report = _service_v2(gateway).enrich(selection=selection, examples=examples)
+
+    assert report.enriched_clause_count == 1
+    assert report.not_confirmed_clause_count == 0
+    assert report.clauses[0].contains_clause_or_requirement_applicability is True
+    assert [item.value for item in report.clauses[0].other_applicability_targets] == [
+        "method_or_technique"
+    ]

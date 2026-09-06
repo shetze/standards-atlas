@@ -126,6 +126,10 @@ def test_applicability_detail_enrich_help_is_registered() -> None:
     assert "--manifest" in result.stdout
     assert "--run" in result.stdout
     assert "--consensus" in result.stdout
+    assert "--selection" in result.stdout
+    assert "--task-version" in result.stdout
+    assert "--prompt-version" in result.stdout
+    assert "--output-directory" in result.stdout
     assert "--fresh" in result.stdout
 
 

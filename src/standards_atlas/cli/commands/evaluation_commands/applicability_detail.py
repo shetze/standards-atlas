@@ -25,8 +25,10 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     ApplicabilityDetailEnrichmentService,
     build_applicability_detail_selection,
     load_applicability_detail_report,
+    load_applicability_detail_selection,
     persist_applicability_detail_report,
     persist_applicability_detail_selection,
+    validate_reused_applicability_detail_selection,
 )
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
@@ -45,7 +47,7 @@ from standards_atlas.application.semantic_qualification.run_selection import (
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
-from standards_atlas.domain.model import ApplicabilityFunction
+from standards_atlas.domain.model import ApplicabilityFunction, OtherApplicabilityTarget
 
 
 class _RunningStatus(Protocol):
@@ -109,6 +111,44 @@ def enrich_applicability_details(
     corpus_root: Annotated[Path, typer.Option("--corpus-root", file_okay=False)] = (
         cli_defaults.DEFAULT_EVALUATION_CORPUS_ROOT
     ),
+    selection: Annotated[
+        Path | None,
+        typer.Option(
+            "--selection",
+            exists=True,
+            readable=True,
+            dir_okay=False,
+            help=(
+                "Reuse an existing applicability-detail-selection.json exactly. "
+                "Required for task/prompt contract experiments."
+            ),
+        ),
+    ] = None,
+    task_version: Annotated[
+        str | None,
+        typer.Option(
+            "--task-version",
+            help="Override the manifest detail task version for an isolated experiment.",
+        ),
+    ] = None,
+    prompt_version: Annotated[
+        str | None,
+        typer.Option(
+            "--prompt-version",
+            help="Override the manifest detail prompt version for an isolated experiment.",
+        ),
+    ] = None,
+    output_directory: Annotated[
+        Path | None,
+        typer.Option(
+            "--output-directory",
+            file_okay=False,
+            help=(
+                "Write detail artifacts outside the qualification run directory. "
+                "Required for task/prompt contract experiments."
+            ),
+        ),
+    ] = None,
     fresh: Annotated[
         bool,
         typer.Option(
@@ -124,6 +164,27 @@ def enrich_applicability_details(
         raise typer.BadParameter("applicability detail enrichment is disabled in the manifest")
     if detail_config.model is None:
         raise typer.BadParameter("applicability detail enrichment has no configured model")
+
+    if (task_version is None) != (prompt_version is None):
+        raise typer.BadParameter("--task-version and --prompt-version must be supplied together")
+    contract_override = task_version is not None
+    if contract_override:
+        if selection is None:
+            raise typer.BadParameter(
+                "detail contract experiments require --selection so the exact persisted "
+                "Presence-positive selection is reused"
+            )
+        if output_directory is None:
+            raise typer.BadParameter(
+                "detail contract experiments require --output-directory so production "
+                "detail artifacts are not overwritten"
+            )
+        detail_config = detail_config.model_copy(
+            update={
+                "task_version": task_version,
+                "prompt_version": prompt_version,
+            }
+        )
 
     model = next((item for item in manifest.models if item.id == detail_config.model), None)
     if model is None:
@@ -204,21 +265,41 @@ def enrich_applicability_details(
             "applicability detail task ontology differs from the domain taxonomy: "
             f"{task.applicability_taxonomy!r} != {expected_functions!r}"
         )
+    expected_other_targets = tuple(item.value for item in OtherApplicabilityTarget)
+    if (
+        task.other_applicability_target_taxonomy
+        and task.other_applicability_target_taxonomy != expected_other_targets
+    ):
+        raise typer.BadParameter(
+            "applicability detail other-target ontology differs from the domain taxonomy: "
+            f"{task.other_applicability_target_taxonomy!r} != {expected_other_targets!r}"
+        )
 
     try:
-        selection = build_applicability_detail_selection(
-            run_selection=run_selection,
-            examples=examples,
-            consensus=consensus,
-            coverage=coverage,
-            task_version=detail_config.task_version,
-        )
+        if selection is not None:
+            detail_selection = validate_reused_applicability_detail_selection(
+                persisted_selection=load_applicability_detail_selection(selection),
+                run_selection=run_selection,
+                examples=examples,
+                consensus=consensus,
+                coverage=coverage,
+            )
+        else:
+            detail_selection = build_applicability_detail_selection(
+                run_selection=run_selection,
+                examples=examples,
+                consensus=consensus,
+                coverage=coverage,
+                task_version=detail_config.task_version,
+            )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    detail_selection_path = run_directory / APPLICABILITY_DETAIL_SELECTION_FILENAME
-    report_path = run_directory / APPLICABILITY_DETAIL_REPORT_FILENAME
-    failure_path = run_directory / APPLICABILITY_DETAIL_FAILURES_FILENAME
-    persist_applicability_detail_selection(selection, detail_selection_path)
+    resolved_output_directory = output_directory or run_directory
+    resolved_output_directory.mkdir(parents=True, exist_ok=True)
+    detail_selection_path = resolved_output_directory / APPLICABILITY_DETAIL_SELECTION_FILENAME
+    report_path = resolved_output_directory / APPLICABILITY_DETAIL_REPORT_FILENAME
+    failure_path = resolved_output_directory / APPLICABILITY_DETAIL_FAILURES_FILENAME
+    persist_applicability_detail_selection(detail_selection, detail_selection_path)
 
     existing = None
     if report_path.is_file() and not fresh:
@@ -240,7 +321,7 @@ def enrich_applicability_details(
         canonical_schema=canonical_schema,
         model_id=model.id,
         model_ref=model.model_ref,
-        artifact_root=run_directory / APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY,
+        artifact_root=resolved_output_directory / APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY,
     )
 
     last_processed = 0
@@ -258,7 +339,7 @@ def enrich_applicability_details(
             last_processed = report.processed_clause_count
 
     pending_clause_count = service.pending_clause_count(
-        selection=selection,
+        selection=detail_selection,
         existing=existing,
         fresh=fresh,
     )
@@ -269,7 +350,7 @@ def enrich_applicability_details(
         enabled=llm_config.server.enabled,
     ):
         report = service.enrich(
-            selection=selection,
+            selection=detail_selection,
             examples=examples,
             existing=existing,
             fresh=fresh,
@@ -278,10 +359,15 @@ def enrich_applicability_details(
     persist_applicability_detail_report(report, report_path, failure_path)
 
     typer.echo(f"Final Presence consensus : {resolved_consensus_path}")
+    typer.echo(
+        f"Detail task/prompt       : {detail_config.task_version} / {detail_config.prompt_version}"
+    )
+    if selection is not None:
+        typer.echo(f"Reused input selection   : {selection}")
     typer.echo(f"Selected clauses         : {report.selected_clause_count}")
     typer.echo(f"Pending inference        : {pending_clause_count}")
-    typer.echo(f"Qualified clauses        : {selection.source_qualified_clause_count}")
-    typer.echo(f"Unqualified clauses      : {selection.source_unqualified_clause_count}")
+    typer.echo(f"Qualified clauses        : {detail_selection.source_qualified_clause_count}")
+    typer.echo(f"Unqualified clauses      : {detail_selection.source_unqualified_clause_count}")
     typer.echo(f"Enriched clauses         : {report.enriched_clause_count}")
     typer.echo(f"Unresolved details       : {report.unresolved_clause_count}")
     typer.echo(f"Not clause applicability : {report.not_confirmed_clause_count}")
@@ -289,6 +375,7 @@ def enrich_applicability_details(
     typer.echo(f"Reused clauses           : {report.run_statistics.reused_clause_count}")
     typer.echo(f"Fresh predictions        : {report.run_statistics.fresh_prediction_count}")
     typer.echo(f"Cached predictions       : {report.run_statistics.cached_prediction_count}")
+    typer.echo(f"Detail output directory  : {resolved_output_directory}")
     typer.echo(f"Detail selection         : {detail_selection_path}")
     typer.echo(f"Detail report            : {report_path}")
     typer.echo(f"Failure report           : {failure_path}")

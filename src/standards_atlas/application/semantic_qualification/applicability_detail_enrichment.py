@@ -207,6 +207,8 @@ class ApplicabilityDetailClauseResult(BaseModel):
     presence_confidence: float = Field(ge=0.0, le=1.0)
     outcome: ApplicabilityDetailOutcome
     applicability_target: ApplicabilityTarget | None = None
+    contains_clause_or_requirement_applicability: bool | None = None
+    other_applicability_targets: tuple[OtherApplicabilityTarget, ...] = ()
     applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     evidence: tuple[ApplicabilityDetailEvidence, ...] = ()
     evidence_grounded: bool = False
@@ -222,6 +224,10 @@ class ApplicabilityDetailClauseResult(BaseModel):
                 raise ValueError("failed detail results must not contain generator information")
             if self.applicability_target is not None:
                 raise ValueError("failed detail results have no applicability target")
+            if self.contains_clause_or_requirement_applicability is not None:
+                raise ValueError("failed detail results have no clause applicability decision")
+            if self.other_applicability_targets:
+                raise ValueError("failed detail results have no other applicability targets")
             return self
         if self.failure is not None:
             raise ValueError("non-failed detail results must not contain failure information")
@@ -229,6 +235,22 @@ class ApplicabilityDetailClauseResult(BaseModel):
             raise ValueError("generated detail results require generator information")
         if self.applicability_target is None:
             raise ValueError("generated detail results require an applicability target")
+        if self.contains_clause_or_requirement_applicability is not None:
+            expected_target = _legacy_target_projection(
+                contains_clause_or_requirement_applicability=(
+                    self.contains_clause_or_requirement_applicability
+                ),
+                other_applicability_targets=self.other_applicability_targets,
+            )
+            if self.applicability_target is not expected_target:
+                raise ValueError(
+                    "v2 applicability target projection differs from the dual-decision result"
+                )
+            if self.contains_clause_or_requirement_applicability:
+                if self.outcome is ApplicabilityDetailOutcome.NOT_CONFIRMED:
+                    raise ValueError("v2 clause applicability cannot be not_confirmed")
+            elif self.outcome is not ApplicabilityDetailOutcome.NOT_CONFIRMED:
+                raise ValueError("v2 non-clause applicability must be not_confirmed")
         if self.outcome is ApplicabilityDetailOutcome.NOT_CONFIRMED:
             if self.applicability_target is ApplicabilityTarget.CLAUSE_OR_REQUIREMENT:
                 raise ValueError("not_confirmed results require a non-clause applicability target")
@@ -449,6 +471,34 @@ def build_applicability_detail_selection(
     )
 
 
+def validate_reused_applicability_detail_selection(
+    *,
+    persisted_selection: ApplicabilityDetailSelection,
+    run_selection: QualificationRunSelection,
+    examples: tuple[EvaluationExample, ...],
+    consensus: ConsensusReport,
+    coverage: QualificationCoverage,
+) -> ApplicabilityDetailSelection:
+    """Verify that an experiment reuses exactly the persisted Presence-positive selection.
+
+    The selection's own task version is retained when rebuilding the expected projection so
+    its fingerprint remains byte-semantically identical across detail-contract experiments.
+    """
+    expected = build_applicability_detail_selection(
+        run_selection=run_selection,
+        examples=examples,
+        consensus=consensus,
+        coverage=coverage,
+        task_version=persisted_selection.task_version,
+    )
+    if persisted_selection != expected:
+        raise ValueError(
+            "persisted applicability detail selection differs from current "
+            "Presence consensus, coverage, or clause content"
+        )
+    return persisted_selection
+
+
 def _validate_qualification_coverage(
     *,
     run_selection: QualificationRunSelection,
@@ -530,6 +580,11 @@ class ApplicabilityDetailEnrichmentService:
         self._model_id = model_id
         self._model_ref = model_ref
         self._artifact_root = artifact_root
+        properties = dict(self._schema.get("properties", {}))
+        self._uses_dual_decision_contract = (
+            "contains_clause_or_requirement_applicability" in properties
+            and "applicability_target" not in properties
+        )
 
     def pending_clause_count(
         self,
@@ -725,38 +780,75 @@ class ApplicabilityDetailEnrichmentService:
             valid, error = validate_schema(generated.value, self._schema)
             if not valid:
                 raise ValueError(f"provider response violates task schema: {error}")
-            prediction = _canonicalize_prediction(
-                ApplicabilityDetailPrediction.model_validate(generated.value),
-                content=text,
-            )
-            if prediction.applicability_target is not ApplicabilityTarget.CLAUSE_OR_REQUIREMENT:
-                outcome = ApplicabilityDetailOutcome.NOT_CONFIRMED
-                grounded = True
-            elif not prediction.applicability_functions:
-                outcome = ApplicabilityDetailOutcome.UNRESOLVED
-                grounded = True
+            if self._uses_dual_decision_contract:
+                prediction_v2 = parse_applicability_detail_prediction_v2(
+                    generated.value,
+                    content=text,
+                )
+                if not prediction_v2.contains_clause_or_requirement_applicability:
+                    outcome = ApplicabilityDetailOutcome.NOT_CONFIRMED
+                elif not prediction_v2.applicability_functions:
+                    outcome = ApplicabilityDetailOutcome.UNRESOLVED
+                else:
+                    outcome = ApplicabilityDetailOutcome.ENRICHED
+                result = ApplicabilityDetailClauseResult(
+                    example_id=selected.example_id,
+                    document_key=selected.document_key,
+                    clause_id=selected.clause_id,
+                    content_hash=selected.content_hash,
+                    reference=selected.reference,
+                    heading=selected.heading,
+                    presence_confidence=selected.presence_confidence,
+                    outcome=outcome,
+                    applicability_target=_legacy_target_projection(
+                        contains_clause_or_requirement_applicability=(
+                            prediction_v2.contains_clause_or_requirement_applicability
+                        ),
+                        other_applicability_targets=prediction_v2.other_applicability_targets,
+                    ),
+                    contains_clause_or_requirement_applicability=(
+                        prediction_v2.contains_clause_or_requirement_applicability
+                    ),
+                    other_applicability_targets=prediction_v2.other_applicability_targets,
+                    applicability_functions=prediction_v2.applicability_functions,
+                    evidence=prediction_v2.evidence,
+                    evidence_grounded=True,
+                    generator=_generator(
+                        generated,
+                        model_id=self._model_id,
+                        task_version=self._config.task_version,
+                    ),
+                )
             else:
-                outcome = ApplicabilityDetailOutcome.ENRICHED
-                grounded = True
-            result = ApplicabilityDetailClauseResult(
-                example_id=selected.example_id,
-                document_key=selected.document_key,
-                clause_id=selected.clause_id,
-                content_hash=selected.content_hash,
-                reference=selected.reference,
-                heading=selected.heading,
-                presence_confidence=selected.presence_confidence,
-                outcome=outcome,
-                applicability_target=prediction.applicability_target,
-                applicability_functions=prediction.applicability_functions,
-                evidence=prediction.evidence,
-                evidence_grounded=grounded,
-                generator=_generator(
-                    generated,
-                    model_id=self._model_id,
-                    task_version=self._config.task_version,
-                ),
-            )
+                prediction = _canonicalize_prediction(
+                    ApplicabilityDetailPrediction.model_validate(generated.value),
+                    content=text,
+                )
+                if prediction.applicability_target is not ApplicabilityTarget.CLAUSE_OR_REQUIREMENT:
+                    outcome = ApplicabilityDetailOutcome.NOT_CONFIRMED
+                elif not prediction.applicability_functions:
+                    outcome = ApplicabilityDetailOutcome.UNRESOLVED
+                else:
+                    outcome = ApplicabilityDetailOutcome.ENRICHED
+                result = ApplicabilityDetailClauseResult(
+                    example_id=selected.example_id,
+                    document_key=selected.document_key,
+                    clause_id=selected.clause_id,
+                    content_hash=selected.content_hash,
+                    reference=selected.reference,
+                    heading=selected.heading,
+                    presence_confidence=selected.presence_confidence,
+                    outcome=outcome,
+                    applicability_target=prediction.applicability_target,
+                    applicability_functions=prediction.applicability_functions,
+                    evidence=prediction.evidence,
+                    evidence_grounded=True,
+                    generator=_generator(
+                        generated,
+                        model_id=self._model_id,
+                        task_version=self._config.task_version,
+                    ),
+                )
             return result, int(not generated.cached), int(generated.cached)
         except Exception as exc:  # isolate sparse enrichment failures per clause
             failure = ApplicabilityDetailFailure(
@@ -1006,6 +1098,24 @@ def _canonicalize_prediction_v2(
             "evidence": evidence,
         }
     )
+
+
+def _legacy_target_projection(
+    *,
+    contains_clause_or_requirement_applicability: bool,
+    other_applicability_targets: tuple[OtherApplicabilityTarget, ...],
+) -> ApplicabilityTarget:
+    """Project v2 dual decisions onto the v1 target field for temporary comparability.
+
+    The projection is deliberately not used as an inference decision. It exists only so
+    current report/evaluator infrastructure can consume v2 experiment artifacts until the
+    later breaking schema migration removes the single-valued target field.
+    """
+    if contains_clause_or_requirement_applicability:
+        return ApplicabilityTarget.CLAUSE_OR_REQUIREMENT
+    if not other_applicability_targets:
+        return ApplicabilityTarget.NONE
+    return ApplicabilityTarget(other_applicability_targets[0].value)
 
 
 def _canonicalize_prediction(
