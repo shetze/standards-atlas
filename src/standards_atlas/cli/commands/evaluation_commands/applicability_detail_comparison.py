@@ -39,7 +39,7 @@ def compare_applicability_detail_runs(
     ],
     output: Annotated[Path, typer.Option("--output", dir_okay=False)],
 ) -> None:
-    """Compare a candidate detail contract against an archived baseline without inference."""
+    """Compare a candidate detail run against an archived baseline without inference."""
     try:
         corpus = ApplicabilityGoldenCorpus.load(golden)
         report = compare_applicability_detail_contracts(
@@ -60,6 +60,9 @@ def compare_applicability_detail_runs(
         "Detail contract          : "
         f"{report.baseline_task_version}/{report.baseline_prompt_version} -> "
         f"{report.candidate_task_version}/{report.candidate_prompt_version}"
+    )
+    typer.echo(
+        f"Detail model             : {report.baseline_model_id} -> {report.candidate_model_id}"
     )
     typer.echo(f"Improvements             : {report.improvement_count}")
     typer.echo(f"Regressions              : {report.regression_count}")

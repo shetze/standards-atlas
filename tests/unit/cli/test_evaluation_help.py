@@ -129,6 +129,7 @@ def test_applicability_detail_enrich_help_is_registered() -> None:
     assert "--selection" in result.stdout
     assert "--task-version" in result.stdout
     assert "--prompt-version" in result.stdout
+    assert "--model" in result.stdout
     assert "--output-directory" in result.stdout
     assert "--fresh" in result.stdout
 
@@ -144,6 +145,16 @@ def test_applicability_end_to_end_evaluate_help_is_registered() -> None:
 
 def test_applicability_detail_compare_help_is_registered() -> None:
     result = runner.invoke(app, ["evaluation", "applicability-detail-compare", "--help"])
+
+    assert result.exit_code == 0
+    assert "--golden" in result.stdout
+    assert "--baseline-run" in result.stdout
+    assert "--candidate-directory" in result.stdout
+    assert "--output" in result.stdout
+
+
+def test_applicability_detail_model_matrix_help_is_registered() -> None:
+    result = runner.invoke(app, ["evaluation", "applicability-detail-model-matrix", "--help"])
 
     assert result.exit_code == 0
     assert "--golden" in result.stdout

@@ -49,7 +49,7 @@ class ApplicabilityDetailDecisionClass(StrEnum):
 
 
 class ApplicabilityCandidateTargetPattern(StrEnum):
-    """Diagnostic projection of the v2 dual-decision output."""
+    """Contract-neutral diagnostic projection of one candidate detail output."""
 
     CLAUSE_ONLY = "clause_only"
     MIXED_TARGET = "mixed_target"
@@ -116,11 +116,11 @@ class ApplicabilityDetailComparisonCase(BaseModel):
 
 
 class ApplicabilityDetailComparisonReport(BaseModel):
-    """Reproducible contract A/B report over one immutable Presence-positive selection."""
+    """Reproducible detail A/B report over one immutable Presence-positive selection."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
     golden_corpus_id: str = Field(min_length=1)
     golden_corpus_version: str = Field(min_length=1)
     source_matrix_id: str = Field(min_length=1)
@@ -132,10 +132,12 @@ class ApplicabilityDetailComparisonReport(BaseModel):
     golden_candidate_count: int = Field(ge=0)
     baseline_task_version: str = Field(min_length=1)
     baseline_prompt_version: str = Field(min_length=1)
+    baseline_model_id: str = Field(min_length=1)
+    baseline_model_ref: str = Field(min_length=1)
     candidate_task_version: str = Field(min_length=1)
     candidate_prompt_version: str = Field(min_length=1)
-    model_id: str = Field(min_length=1)
-    model_ref: str = Field(min_length=1)
+    candidate_model_id: str = Field(min_length=1)
+    candidate_model_ref: str = Field(min_length=1)
     decision_transition_counts: dict[str, int] = Field(default_factory=dict)
     correctness_transition_counts: dict[str, int] = Field(default_factory=dict)
     candidate_target_pattern_counts: dict[str, int] = Field(default_factory=dict)
@@ -170,7 +172,7 @@ def compare_applicability_detail_contracts(
     baseline_archive: Path,
     candidate_directory: Path,
 ) -> ApplicabilityDetailComparisonReport:
-    """Compare one isolated v2 detail run with the archived baseline on the same selection."""
+    """Compare one isolated detail run with the archived baseline on the same selection."""
 
     baseline_consensus, baseline_selection, baseline_detail = (
         load_applicability_end_to_end_artifacts(baseline_archive)
@@ -294,10 +296,12 @@ def compare_applicability_detail_contracts(
         golden_candidate_count=sum(item.expected_present is not None for item in cases),
         baseline_task_version=baseline_detail.task_version,
         baseline_prompt_version=baseline_detail.prompt_version,
+        baseline_model_id=baseline_detail.model_id,
+        baseline_model_ref=baseline_detail.model_ref,
         candidate_task_version=candidate_detail.task_version,
         candidate_prompt_version=candidate_detail.prompt_version,
-        model_id=baseline_detail.model_id,
-        model_ref=baseline_detail.model_ref,
+        candidate_model_id=candidate_detail.model_id,
+        candidate_model_ref=candidate_detail.model_ref,
         decision_transition_counts=dict(sorted(decision_transitions.items())),
         correctness_transition_counts=dict(sorted(correctness_transitions.items())),
         candidate_target_pattern_counts=dict(sorted(target_patterns.items())),
@@ -323,22 +327,25 @@ def _validate_comparison_inputs(
             "candidate applicability detail selection differs from the archived baseline; "
             "reuse the exact persisted selection for a valid contract A/B comparison"
         )
-    if candidate_detail.model_id != baseline_detail.model_id:
-        raise ValueError("candidate detail model id differs from the archived baseline")
-    if candidate_detail.model_ref != baseline_detail.model_ref:
-        raise ValueError("candidate detail model reference differs from the archived baseline")
     if candidate_detail.processed_clause_count != candidate_detail.selected_clause_count:
         raise ValueError("candidate applicability detail report is incomplete")
     if baseline_detail.processed_clause_count != baseline_detail.selected_clause_count:
         raise ValueError("baseline applicability detail report is incomplete")
 
-    for item in candidate_detail.clauses:
+    _validate_candidate_contract(candidate_detail)
+
+
+def _validate_candidate_contract(report: ApplicabilityDetailEnrichmentReport) -> None:
+    """Accept either the legacy single-target contract or the dual-decision contract."""
+    for item in report.clauses:
         if item.outcome is ApplicabilityDetailOutcome.FAILED:
             continue
-        if item.contains_clause_or_requirement_applicability is None:
+        if item.contains_clause_or_requirement_applicability is not None:
+            continue
+        if item.applicability_target is None:
             raise ValueError(
-                "candidate detail report does not use the dual-decision contract: "
-                f"{item.document_key}/{item.clause_id}"
+                "candidate detail result has neither a dual-decision boolean nor a "
+                f"single applicability target: {item.document_key}/{item.clause_id}"
             )
 
 
@@ -377,7 +384,11 @@ def _candidate_target_pattern(
         return ApplicabilityCandidateTargetPattern.FAILED
     contains_clause = result.contains_clause_or_requirement_applicability
     if contains_clause is None:
-        raise ValueError("candidate detail result is missing the dual-decision boolean")
+        if result.applicability_target is ApplicabilityTarget.CLAUSE_OR_REQUIREMENT:
+            return ApplicabilityCandidateTargetPattern.CLAUSE_ONLY
+        if result.applicability_target in {None, ApplicabilityTarget.NONE}:
+            return ApplicabilityCandidateTargetPattern.NON_CLAUSE_UNSPECIFIED
+        return ApplicabilityCandidateTargetPattern.NON_CLAUSE_TARGET
     if contains_clause:
         if result.other_applicability_targets:
             return ApplicabilityCandidateTargetPattern.MIXED_TARGET

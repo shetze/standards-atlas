@@ -138,6 +138,17 @@ def enrich_applicability_details(
             help="Override the manifest detail prompt version for an isolated experiment.",
         ),
     ] = None,
+    model_id: Annotated[
+        str | None,
+        typer.Option(
+            "--model",
+            help=(
+                "Override the manifest detail model with another ramalama model id declared "
+                "in manifest.models. Model experiments require --selection and "
+                "--output-directory."
+            ),
+        ),
+    ] = None,
     output_directory: Annotated[
         Path | None,
         typer.Option(
@@ -168,23 +179,28 @@ def enrich_applicability_details(
     if (task_version is None) != (prompt_version is None):
         raise typer.BadParameter("--task-version and --prompt-version must be supplied together")
     contract_override = task_version is not None
-    if contract_override:
+    model_override = model_id is not None and model_id != detail_config.model
+    experiment_override = contract_override or model_override
+    if experiment_override:
         if selection is None:
             raise typer.BadParameter(
-                "detail contract experiments require --selection so the exact persisted "
+                "detail experiments require --selection so the exact persisted "
                 "Presence-positive selection is reused"
             )
         if output_directory is None:
             raise typer.BadParameter(
-                "detail contract experiments require --output-directory so production "
+                "detail experiments require --output-directory so production "
                 "detail artifacts are not overwritten"
             )
+    if contract_override:
         detail_config = detail_config.model_copy(
             update={
                 "task_version": task_version,
                 "prompt_version": prompt_version,
             }
         )
+    if model_id is not None:
+        detail_config = detail_config.model_copy(update={"model": model_id})
 
     model = next((item for item in manifest.models if item.id == detail_config.model), None)
     if model is None:
@@ -362,6 +378,7 @@ def enrich_applicability_details(
     typer.echo(
         f"Detail task/prompt       : {detail_config.task_version} / {detail_config.prompt_version}"
     )
+    typer.echo(f"Detail model             : {model.id} / {model.model_ref}")
     if selection is not None:
         typer.echo(f"Reused input selection   : {selection}")
     typer.echo(f"Selected clauses         : {report.selected_clause_count}")

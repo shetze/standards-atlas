@@ -111,7 +111,7 @@ def test_detail_contract_override_requires_exact_reused_selection(tmp_path: Path
     )
 
     assert result.exit_code == 2
-    assert "detail contract experiments require --selection" in result.output
+    assert "detail experiments require --selection" in result.output
 
 
 def test_detail_contract_override_requires_isolated_output_directory(tmp_path: Path) -> None:
@@ -134,4 +134,44 @@ def test_detail_contract_override_requires_isolated_output_directory(tmp_path: P
     )
 
     assert result.exit_code == 2
-    assert "detail contract experiments require --output-directory" in result.output
+    assert "detail experiments require --output-directory" in result.output
+
+
+def test_detail_model_override_requires_exact_reused_selection(tmp_path: Path) -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "evaluation",
+            "applicability-detail-enrich",
+            "--manifest",
+            str(V6_MANIFEST),
+            "--run",
+            str(tmp_path),
+            "--model",
+            "mistral-small-3.2-24b-instruct-q4-k-m",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "detail experiments require --selection" in result.output
+
+
+def test_detail_model_override_requires_isolated_output_directory(tmp_path: Path) -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "evaluation",
+            "applicability-detail-enrich",
+            "--manifest",
+            str(V6_MANIFEST),
+            "--run",
+            str(tmp_path),
+            "--selection",
+            str(V6_MANIFEST),
+            "--model",
+            "mistral-small-3.2-24b-instruct-q4-k-m",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "detail experiments require --output-directory" in result.output

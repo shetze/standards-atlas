@@ -30,6 +30,9 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     ApplicabilityDetailSelection,
     ApplicabilityDetailSelectionClause,
 )
+from standards_atlas.application.semantic_qualification.applicability_detail_model_matrix import (
+    build_applicability_detail_model_matrix,
+)
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
     ConsensusCategory,
@@ -367,6 +370,8 @@ def test_comparison_reports_contract_transitions_and_metric_deltas(tmp_path: Pat
     assert report.end_to_end_metrics.false_positive_delta == 0
     assert report.end_to_end_metrics.false_negative_delta == -1
     assert report.end_to_end_metrics.f1_delta > 0
+    assert report.baseline_model_id == "qwen"
+    assert report.candidate_model_id == "qwen"
 
     cases = {item.clause_id: item for item in report.cases}
     assert cases["clause-2"].correctness_transition == "wrong_to_correct"
@@ -393,3 +398,60 @@ def test_comparison_rejects_candidate_selection_drift(tmp_path: Path) -> None:
             baseline_archive=archive,
             candidate_directory=candidate_directory,
         )
+
+
+def test_comparison_allows_candidate_model_change(tmp_path: Path) -> None:
+    golden, archive, candidate_directory = _fixture(tmp_path)
+    report_path = candidate_directory / APPLICABILITY_DETAIL_REPORT_FILENAME
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["model_id"] = "mistral-small"
+    payload["model_ref"] = "mistral/model"
+    for item in payload["clauses"]:
+        item["generator"]["model_id"] = "mistral-small"
+        item["generator"]["model"] = "mistral/model"
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = compare_applicability_detail_contracts(
+        golden,
+        baseline_archive=archive,
+        candidate_directory=candidate_directory,
+    )
+
+    assert report.baseline_model_id == "qwen"
+    assert report.baseline_model_ref == "qwen/model"
+    assert report.candidate_model_id == "mistral-small"
+    assert report.candidate_model_ref == "mistral/model"
+
+
+def test_model_matrix_summarizes_prompt_model_candidates(tmp_path: Path) -> None:
+    golden, archive, first = _fixture(tmp_path)
+    second = tmp_path / "detail-v4-mistral"
+    second.mkdir()
+    for source in first.iterdir():
+        second.joinpath(source.name).write_bytes(source.read_bytes())
+
+    report_path = second / APPLICABILITY_DETAIL_REPORT_FILENAME
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    payload["model_id"] = "mistral-small"
+    payload["model_ref"] = "mistral/model"
+    payload["prompt_version"] = "detail-structure-aware-v4"
+    for item in payload["clauses"]:
+        item["generator"]["model_id"] = "mistral-small"
+        item["generator"]["model"] = "mistral/model"
+        item["generator"]["prompt_version"] = "detail-structure-aware-v4"
+    report_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_applicability_detail_model_matrix(
+        golden,
+        baseline_archive=archive,
+        candidate_directories=(first, second),
+    )
+
+    assert report.baseline_model_id == "qwen"
+    assert report.selected_clause_count == 5
+    assert [(item.model_id, item.prompt_version) for item in report.rows] == [
+        ("qwen", "detail-structure-aware-v2"),
+        ("mistral-small", "detail-structure-aware-v4"),
+    ]
+    assert len(report.comparisons) == 2
+    assert report.comparisons[1].candidate_model_id == "mistral-small"
