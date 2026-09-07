@@ -1,0 +1,5 @@
+{
+  "description": "Balanced dual-decision clause-applicability verification using a normative-consequence test to preserve explicit scope, waiver, and compliance semantics without treating technical execution conditions as clause applicability.",
+  "task": "applicability-detail-enrichment",
+  "version": "detail-structure-aware-v4"
+}

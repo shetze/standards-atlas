@@ -751,6 +751,67 @@ def test_v3_prompt_preserves_true_mixed_and_false_method_only_contrasts() -> Non
     assert "the condition changes its execution" in prompt.system_prompt
 
 
+def test_v4_prompt_balances_v3_regressions_with_normative_consequence_test() -> None:
+    v3 = PromptRepository(RESOURCES / "prompts").load(
+        "applicability-detail-enrichment", "detail-structure-aware-v3"
+    )
+    v4 = PromptRepository(RESOURCES / "prompts").load(
+        "applicability-detail-enrichment", "detail-structure-aware-v4"
+    )
+    fixture = json.loads(
+        Path("tests/fixtures/applicability/detail-v4-v3-calibration-cases.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    cases = fixture["cases"]
+    assert len(cases) == 14
+    assert sum(item["v3_transition"] == "wrong_to_correct" for item in cases) == 8
+    assert sum(item["v3_transition"] == "correct_to_wrong" for item in cases) == 6
+    assert v4.output_schema == v3.output_schema
+    assert v4.user_template == v3.user_template
+    assert "normative-consequence test" in v4.system_prompt
+    assert "Judge the normative consequence, not the grammatical subject" in v4.system_prompt
+    assert (
+        "If removing the statement would change whether a normative provision" in v4.system_prompt
+    )
+    assert "Eligibility or achievement condition" in v4.system_prompt
+    assert "Applicability adjective attached to an engineering artifact" in v4.system_prompt
+
+    for archetype in {item["prompt_archetype"] for item in cases}:
+        assert archetype in v4.system_prompt
+
+    # Keep the calibration structural rather than leaking Golden clause identities into the prompt.
+    for document_key in {item["document_key"] for item in cases}:
+        assert document_key not in v4.system_prompt
+
+
+def test_v4_prompt_preserves_waivers_scope_and_technical_negative_contrasts() -> None:
+    prompt = PromptRepository(RESOURCES / "prompts").load(
+        "applicability-detail-enrichment", "detail-structure-aware-v4"
+    )
+
+    assert (
+        '"Items assigned class Q have no requirement to comply with Part 5."'
+        in prompt.system_prompt
+    )
+    assert (
+        '"If the event is assigned exposure class N, no integrity-level assignment is required."'
+        in prompt.system_prompt
+    )
+    assert (
+        '"This standard applies to programmable controllers irrespective of their '
+        'application sector."' in prompt.system_prompt
+    )
+    assert (
+        '"For qualified status to be obtained, the evaluation period shall demonstrate the '
+        'specified target."' in prompt.system_prompt
+    )
+    assert '"All applicable work products are provided for integration."' in prompt.system_prompt
+    assert 'does not need to use "this clause applies"' in prompt.system_prompt
+    assert "secondary target neither proves nor disproves Decision 1" in prompt.system_prompt
+
+
 def test_v2_prediction_preserves_mixed_clause_and_method_applicability() -> None:
     content = (
         "These requirements apply to replacement systems. "

@@ -1,0 +1,85 @@
+Analyze a clause selected by the final applicability-presence consensus. Make two independent decisions. Decision 1 asks whether the normalized content explicitly changes whether normative content is in force for a defined case. Decision 2 records explicit non-clause applicability or use targets. Never infer one decision from the other.
+
+Decision 1 — normative-consequence test
+Set contains_clause_or_requirement_applicability to true when at least one explicit statement determines whether a standard, part, clause, requirement, recommendation, obligation, permission, prohibition, compliance duty, or other normative provision applies, does not apply, is required, is not required, is included, is excluded, or is in force for a defined scope or case.
+
+Judge the normative consequence, not the grammatical subject. The wording does not need to use "this clause applies" and the grammatical subject may be a system, event, classification, component, status, or other engineering object. Return true when the consequence explicitly changes whether normative content must be followed or whether a normative duty exists for that case.
+
+Use this counterfactual check when the boundary is unclear:
+- If removing the statement would change whether a normative provision, compliance duty, or required assignment/action exists for the described case, Decision 1 is true.
+- If removing the statement would only change how an already-operative requirement is executed, which method is selected, how a value is calculated, whether technical credit is allowed, or whether an engineering result/status is achieved, Decision 1 is false.
+
+Positive patterns
+
+1. Direct normative applicability
+A standard, clause, requirement, recommendation, provision, or explicit normative status is said to apply, not apply, be applicable, be excluded, or be limited to a named scope.
+Example: "The requirements apply to the assembled unit and remain applicable to its constituent functions." Return true even if the same clause also discusses methods, processes, or objects.
+
+2. Compliance waiver or exemption
+A classification or case explicitly removes a duty to comply with normative content.
+Example: "Items assigned class Q have no requirement to comply with Part 5." Return true because the classification changes whether compliance with normative content is required.
+
+3. Conditional normative waiver
+A condition explicitly causes a normative assignment, obligation, or compliance duty to disappear or become required.
+Example: "If the event is assigned exposure class N, no integrity-level assignment is required." Return true because the condition changes whether a normative duty exists, not merely how it is performed.
+
+4. Standard or provision scope
+The content explicitly defines the systems, applications, lifecycle contexts, or other subjects to which a standard or normative provision applies.
+Example: "This standard applies to programmable controllers irrespective of their application sector." Return true with scope_definition.
+
+5. Meta-applicability gate
+An applicability qualifier determines whether an entire normative obligation is required at all.
+Example: "If applicable, an assessment of the tailoring shall be performed." Return true with applicability_condition.
+
+6. Mixed normative and non-clause applicability
+A clause may contain both a normative applicability statement and independent applicability or use semantics about an engineering subject.
+Example: "The verification requirements apply to replacement units. The diagnostic method may also be used for those units." Return true and also record method_or_technique. The secondary target neither proves nor disproves Decision 1.
+
+Negative patterns — technical or engineering conditions are not normative applicability
+
+7. Method-selection rule
+Example: "One of the listed decomposition schemes shall be selected according to the assigned integrity level; a more stringent scheme may also be used." This governs method selection inside an operative requirement. Return false and record method_or_technique.
+
+8. Technical execution or credit condition
+Example: "When estimating the metric, credit shall only be taken for diagnostics if the interval satisfies the stated limit." The rule remains operative; the condition controls calculation or admissible technical credit. Return false and record a non-clause target only when its applicability, use, suitability, or selection is explicit.
+
+9. Eligibility or achievement condition
+A requirement may define what must be demonstrated to obtain an engineering status, result, qualification, or approval. That is not by itself a rule about whether the requirement applies.
+Example: "For qualified status to be obtained, the evaluation period shall demonstrate the specified target." Return false unless another statement explicitly governs the applicability of normative content.
+
+10. Permitted engineering use
+Example: "The provider may use a reduced parameter value for the component calculation." This concerns use of a value or method, not whether normative content is in force. Return false and record the relevant non-clause target.
+
+11. Applicability adjective attached to an engineering artifact
+Example: "All applicable work products are provided for integration." The word "applicable" selects engineering artifacts; it does not state whether a clause or requirement applies. Return false and record object_or_component only if that selection is explicit applicability semantics.
+
+12. No applicability statement
+Descriptive statements about architecture, behavior, parameters, or failure modes are not applicability merely because they contain modal verbs or conditional wording. If there is no explicit normative applicability and no explicit non-clause applicability/use statement, return false with an empty other_applicability_targets list.
+
+Boundary guards
+- Do not require an explicit clause number or the noun "requirement" for Decision 1. Explicit statements that a standard applies to a class of systems, that compliance is not required, or that a normative assignment is waived are clause-or-requirement applicability even when an engineering object is the grammatical subject.
+- Conversely, a modal obligation inside a condition is not automatically applicability. Ask whether the condition changes existence of the normative duty or only its execution.
+- References to another clause or standard are not applicability by themselves. The statement must explicitly govern whether referenced normative content is in force or must be followed.
+- Do not use the presence, number, or type of other_applicability_targets as evidence for Decision 1. A clause with several secondary targets may still be normative applicability, and a clause with no secondary target may still be non-applicability.
+- Do not use "mixed" as a fallback for uncertainty. Record a secondary target only when its applicability, use, suitability, or selection is explicit.
+
+Decision 2 — other applicability targets
+Independently populate other_applicability_targets with every explicit non-clause target whose applicability, use, suitability, or selection is governed:
+- method_or_technique: a method, technique, measure, calculation, evaluation approach, decomposition scheme, or tool;
+- process_or_activity: a process, lifecycle step, activity, or task;
+- object_or_component: an object, product, system, component, element, data item, parameter, result, status, work product, or other engineering subject;
+- other: an explicit non-clause applicability or use target of another kind.
+
+A mixed clause may therefore return contains_clause_or_requirement_applicability=true and one or more other_applicability_targets. There is no dominant-target or priority rule. If no non-clause target is explicit, return an empty list. If the Presence-positive candidate contains no actual applicability or use statement, return false with an empty list.
+
+Clause-applicability detail
+When contains_clause_or_requirement_applicability is true, classify only the detailed functions of the clause-or-requirement applicability statement:
+- scope_definition: establishes the governed set of subjects, systems, cases, or normative content;
+- applicability_condition: links whether normative content is in force to an explicitly stated condition;
+- inclusion: adds named subjects, systems, cases, or normative content to the governed set;
+- exclusion: removes named subjects, systems, cases, or normative content from the governed set or explicitly removes a compliance duty;
+- exception: carves named subjects, systems, cases, or normative content from a stated applicability rule.
+
+Associate every assigned function with a concise exact source span from the normalized clause content. Preserve multiple functions when the wording expresses several. applicability_functions and evidence describe clause-or-requirement applicability only and must be empty when contains_clause_or_requirement_applicability is false. If clause-or-requirement applicability is explicit but none of the five detail functions can be grounded confidently, return true with empty applicability_functions and evidence arrays.
+
+Return exactly one JSON object matching the supplied schema.

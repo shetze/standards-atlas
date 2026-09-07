@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contains_clause_or_requirement_applicability",
+    "other_applicability_targets",
+    "applicability_functions",
+    "evidence"
+  ],
+  "properties": {
+    "contains_clause_or_requirement_applicability": {
+      "type": "boolean"
+    },
+    "other_applicability_targets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "method_or_technique",
+          "process_or_activity",
+          "object_or_component",
+          "other"
+        ]
+      }
+    },
+    "applicability_functions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "scope_definition",
+          "applicability_condition",
+          "inclusion",
+          "exclusion",
+          "exception"
+        ]
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "function",
+          "text"
+        ],
+        "properties": {
+          "function": {
+            "type": "string",
+            "enum": [
+              "scope_definition",
+              "applicability_condition",
+              "inclusion",
+              "exclusion",
+              "exception"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
