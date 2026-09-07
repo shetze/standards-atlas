@@ -168,6 +168,7 @@ def test_applicability_detail_disagreement_build_help_is_registered() -> None:
 
     assert result.exit_code == 0
     assert "--run" in result.stdout
+    assert "--golden" in result.stdout
     assert "--left-directory" in result.stdout
     assert "--right-directory" in result.stdout
     assert "--review-output" in result.stdout
@@ -181,6 +182,7 @@ def test_applicability_detail_disagreement_publish_help_is_registered() -> None:
     assert result.exit_code == 0
     assert "--review" in result.stdout
     assert "--run" in result.stdout
+    assert "--golden" in result.stdout
     assert "--left-directory" in result.stdout
     assert "--right-directory" in result.stdout
     assert "--output" in result.stdout

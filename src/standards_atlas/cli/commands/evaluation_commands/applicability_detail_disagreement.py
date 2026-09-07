@@ -33,6 +33,15 @@ def build_applicability_detail_disagreement_hitl(
             help="Archived qualification run providing immutable clause text.",
         ),
     ],
+    golden: Annotated[
+        Path,
+        typer.Option(
+            "--golden",
+            exists=True,
+            dir_okay=False,
+            help="Published Applicability Golden corpus used to auto-resolve known cases.",
+        ),
+    ],
     left_directory: Annotated[
         Path,
         typer.Option("--left-directory", exists=True, file_okay=False),
@@ -48,7 +57,9 @@ def build_applicability_detail_disagreement_hitl(
 ) -> None:
     """Build a flat HITL CSV for all primary v3/v4 detail disagreements."""
     try:
+        corpus = ApplicabilityGoldenCorpus.load(golden)
         result = build_applicability_detail_disagreement_review(
+            golden=corpus,
             run_archive=run_archive,
             left_directory=left_directory,
             right_directory=right_directory,
@@ -60,8 +71,10 @@ def build_applicability_detail_disagreement_hitl(
 
     typer.echo(f"Exact selection clauses : {result.selected_clause_count}")
     typer.echo(f"Automatic agreements    : {result.agreement_count}")
-    typer.echo(f"HITL disagreements      : {result.disagreement_count}")
-    typer.echo(f"Source failures         : {result.failure_disagreement_count}")
+    typer.echo(f"Semantic disagreements  : {result.disagreement_count}")
+    typer.echo(f"Golden auto-resolved    : {result.golden_auto_resolved_count}")
+    typer.echo(f"New HITL cases          : {result.new_hitl_count}")
+    typer.echo(f"Source failures         : {result.source_failure_count}")
     typer.echo(f"HITL review CSV         : {result.review_path}")
     typer.echo(f"HITL review guide       : {result.review_guide_path}")
     review_message = (
@@ -76,6 +89,15 @@ def build_applicability_detail_disagreement_hitl(
 def publish_applicability_detail_disagreement_hitl(
     review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False)],
     run_archive: Annotated[Path, typer.Option("--run", exists=True, dir_okay=False)],
+    golden: Annotated[
+        Path,
+        typer.Option(
+            "--golden",
+            exists=True,
+            dir_okay=False,
+            help="Published Applicability Golden corpus used for automatic resolution.",
+        ),
+    ],
     left_directory: Annotated[
         Path,
         typer.Option("--left-directory", exists=True, file_okay=False),
@@ -89,7 +111,9 @@ def publish_applicability_detail_disagreement_hitl(
     """Publish automatic agreements plus reviewed disagreements into HITL consensus."""
     resolved_output = output or review.parent / "applicability-detail-hitl-consensus.json"
     try:
+        corpus = ApplicabilityGoldenCorpus.load(golden)
         report = publish_applicability_detail_disagreement_review(
+            golden=corpus,
             review_path=review,
             run_archive=run_archive,
             left_directory=left_directory,
@@ -101,9 +125,12 @@ def publish_applicability_detail_disagreement_hitl(
         raise typer.Exit(code=2) from exc
 
     typer.echo(f"Automatic agreements    : {report.automatic_agreement_count}")
-    typer.echo(f"HITL disagreements      : {report.disagreement_count}")
+    typer.echo(f"Semantic disagreements  : {report.disagreement_count}")
+    typer.echo(f"Golden auto-resolved    : {report.golden_auto_resolved_count}")
+    typer.echo(f"HITL review cases       : {report.hitl_review_count}")
     typer.echo(f"HITL resolved           : {report.hitl_resolved_count}")
     typer.echo(f"HITL pending            : {report.pending_count}")
+    typer.echo(f"Source failures         : {report.source_failure_count}")
     typer.echo(f"Final positive          : {report.final_positive_count}")
     typer.echo(f"Final negative          : {report.final_negative_count}")
     typer.echo(f"Consensus report        : {resolved_output}")

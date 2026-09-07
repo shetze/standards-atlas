@@ -14,6 +14,7 @@ from zipfile import ZipFile
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
+    ApplicabilityGoldenCase,
     ApplicabilityGoldenCorpus,
     ApplicabilityGoldenExpected,
     ApplicabilityModelMetrics,
@@ -49,8 +50,10 @@ class ApplicabilityDetailResolutionSource(StrEnum):
     """Source of one final dual-decision Boolean."""
 
     AUTOMATIC_AGREEMENT = "automatic_agreement"
+    GOLDEN = "golden"
     HITL = "hitl"
     PENDING = "pending"
+    SOURCE_FAILURE = "source_failure"
 
 
 class ApplicabilityDetailDisagreementBuildResult(BaseModel):
@@ -63,7 +66,9 @@ class ApplicabilityDetailDisagreementBuildResult(BaseModel):
     selected_clause_count: int = Field(ge=0)
     agreement_count: int = Field(ge=0)
     disagreement_count: int = Field(ge=0)
-    failure_disagreement_count: int = Field(ge=0)
+    golden_auto_resolved_count: int = Field(ge=0)
+    new_hitl_count: int = Field(ge=0)
+    source_failure_count: int = Field(ge=0)
     review_created: bool
 
 
@@ -82,6 +87,7 @@ class ApplicabilityDetailHitlConsensusCase(BaseModel):
     right_decision: bool | None = None
     disagreement_kind: ApplicabilityDetailDisagreementKind | None = None
     review_status: Literal["published", "pending"] | None = None
+    golden_decision: bool | None = None
     hitl_decision: bool | None = None
     review_note: str = ""
     final_decision: bool | None = None
@@ -98,20 +104,38 @@ class ApplicabilityDetailHitlConsensusCase(BaseModel):
                 raise ValueError("automatic agreement final decision must equal both arms")
             if self.hitl_decision is not None or self.review_status is not None:
                 raise ValueError("automatic agreement must not contain HITL fields")
-        elif self.resolution_source is ApplicabilityDetailResolutionSource.HITL:
+        elif self.resolution_source is ApplicabilityDetailResolutionSource.GOLDEN:
             if self.disagreement_kind is None:
-                raise ValueError("HITL resolution requires a disagreement_kind")
+                raise ValueError("Golden resolution requires a disagreement_kind")
+            if self.golden_decision is None or self.final_decision != self.golden_decision:
+                raise ValueError("Golden final decision must equal the published Golden decision")
+            if self.hitl_decision is not None or self.review_status is not None:
+                raise ValueError("Golden resolution must not contain HITL fields")
+        elif self.resolution_source is ApplicabilityDetailResolutionSource.HITL:
+            if self.disagreement_kind is not ApplicabilityDetailDisagreementKind.DECISION:
+                raise ValueError("HITL resolution requires a semantic decision disagreement")
             if self.review_status != "published" or self.hitl_decision is None:
                 raise ValueError("HITL resolution requires a published human decision")
             if self.final_decision != self.hitl_decision:
                 raise ValueError("HITL final decision must equal the human decision")
-        else:
-            if self.disagreement_kind is None:
-                raise ValueError("pending resolution requires a disagreement_kind")
+        elif self.resolution_source is ApplicabilityDetailResolutionSource.PENDING:
+            if self.disagreement_kind is not ApplicabilityDetailDisagreementKind.DECISION:
+                raise ValueError("pending resolution requires a semantic decision disagreement")
             if self.final_decision is not None or self.hitl_decision is not None:
                 raise ValueError("pending resolution must not contain a final decision")
             if self.review_status not in {None, "pending"}:
                 raise ValueError("pending resolution must have pending review status")
+        else:
+            if self.disagreement_kind in {None, ApplicabilityDetailDisagreementKind.DECISION}:
+                raise ValueError("source failure resolution requires a technical arm failure")
+            if self.final_decision is not None:
+                raise ValueError("source failure must remain unresolved")
+            if (
+                self.golden_decision is not None
+                or self.hitl_decision is not None
+                or self.review_status is not None
+            ):
+                raise ValueError("source failure must not contain Golden or HITL fields")
         return self
 
 
@@ -120,7 +144,7 @@ class ApplicabilityDetailHitlConsensusReport(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.1"] = "1.1"
     source_archive: str = Field(min_length=1)
     source_archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     selection_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -135,11 +159,15 @@ class ApplicabilityDetailHitlConsensusReport(BaseModel):
     right_model_id: str = Field(min_length=1)
     right_model_ref: str = Field(min_length=1)
     right_report_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    golden_corpus_id: str = Field(min_length=1)
+    golden_corpus_version: str = Field(min_length=1)
     automatic_agreement_count: int = Field(ge=0)
     disagreement_count: int = Field(ge=0)
+    golden_auto_resolved_count: int = Field(ge=0)
+    hitl_review_count: int = Field(ge=0)
     hitl_resolved_count: int = Field(ge=0)
     pending_count: int = Field(ge=0)
-    failure_disagreement_count: int = Field(ge=0)
+    source_failure_count: int = Field(ge=0)
     final_positive_count: int = Field(ge=0)
     final_negative_count: int = Field(ge=0)
     clauses: tuple[ApplicabilityDetailHitlConsensusCase, ...]
@@ -148,12 +176,23 @@ class ApplicabilityDetailHitlConsensusReport(BaseModel):
     def validate_accounting(self) -> ApplicabilityDetailHitlConsensusReport:
         if len(self.clauses) != self.selected_clause_count:
             raise ValueError("HITL consensus clause count must match selected_clause_count")
-        if self.automatic_agreement_count + self.disagreement_count != self.selected_clause_count:
-            raise ValueError("HITL agreement/disagreement accounting does not balance")
-        if self.hitl_resolved_count + self.pending_count != self.disagreement_count:
+        if (
+            self.automatic_agreement_count
+            + self.disagreement_count
+            + self.source_failure_count
+            != self.selected_clause_count
+        ):
+            raise ValueError("HITL agreement/disagreement/failure accounting does not balance")
+        if self.golden_auto_resolved_count + self.hitl_review_count != self.disagreement_count:
+            raise ValueError("Golden/HITL disagreement accounting does not balance")
+        if self.hitl_resolved_count + self.pending_count != self.hitl_review_count:
             raise ValueError("HITL resolved/pending accounting does not balance")
-        if self.final_positive_count + self.final_negative_count + self.pending_count != len(
-            self.clauses
+        if (
+            self.final_positive_count
+            + self.final_negative_count
+            + self.pending_count
+            + self.source_failure_count
+            != len(self.clauses)
         ):
             raise ValueError("HITL final decision accounting does not balance")
         return self
@@ -207,6 +246,9 @@ _REVIEW_FIELDS = (
     "document_key",
     "reference",
     "heading",
+    "review_status",
+    "contains_clause_or_requirement_applicability",
+    "review_note",
     "clause_id",
     "content_hash",
     "presence_confidence",
@@ -231,25 +273,24 @@ _REVIEW_FIELDS = (
     "right_functions",
     "right_evidence",
     "text",
-    "review_status",
-    "contains_clause_or_requirement_applicability",
-    "review_note",
 )
 
 
 def build_applicability_detail_disagreement_review(
     *,
+    golden: ApplicabilityGoldenCorpus,
     run_archive: Path,
     left_directory: Path,
     right_directory: Path,
     review_path: Path,
 ) -> ApplicabilityDetailDisagreementBuildResult:
-    """Create a flat HITL CSV for every v3/v4 primary gate disagreement."""
+    """Create a flat HITL CSV only for new semantic v3/v4 gate disagreements."""
 
     left_selection, left_report = _load_candidate(left_directory)
     right_selection, right_report = _load_candidate(right_directory)
     _validate_pair(left_selection, left_report, right_selection, right_report)
     source_text = _load_dataset_text(run_archive)
+    golden_by = _published_golden_by_coordinate(golden)
     archive_sha = _file_sha256(run_archive)
     left_sha = _file_sha256(left_directory / APPLICABILITY_DETAIL_REPORT_FILENAME)
     right_sha = _file_sha256(right_directory / APPLICABILITY_DETAIL_REPORT_FILENAME)
@@ -258,6 +299,8 @@ def build_applicability_detail_disagreement_review(
 
     rows: list[dict[str, str]] = []
     agreement_count = 0
+    semantic_disagreement_count = 0
+    golden_resolved_count = 0
     failure_count = 0
     for selected in left_selection.clauses:
         coordinate = (selected.document_key, selected.clause_id)
@@ -269,6 +312,21 @@ def build_applicability_detail_disagreement_review(
             continue
         if kind is not ApplicabilityDetailDisagreementKind.DECISION:
             failure_count += 1
+            continue
+
+        semantic_disagreement_count += 1
+        golden_case = golden_by.get(coordinate)
+        if golden_case is not None:
+            text = source_text.get(coordinate)
+            if text is None:
+                raise ValueError(
+                    "qualification archive is missing Golden-matched clause text for "
+                    f"{selected.document_key}/{selected.clause_id}"
+                )
+            _validate_golden_resolution(golden_case, selected=selected, source_text=text)
+            golden_resolved_count += 1
+            continue
+
         text = source_text.get(coordinate)
         if text is None:
             raise ValueError(
@@ -299,40 +357,49 @@ def build_applicability_detail_disagreement_review(
         )
 
     review_path.parent.mkdir(parents=True, exist_ok=True)
-    created = False
-    if not review_path.exists():
-        with review_path.open("w", encoding="utf-8", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=_REVIEW_FIELDS)
-            writer.writeheader()
-            writer.writerows(rows)
-        created = True
+    created = _write_or_preserve_review(review_path, rows)
     guide = review_path.parent / "README.md"
-    _write_review_guide(guide, left_report=left_report, right_report=right_report)
+    _write_review_guide(
+        guide,
+        left_report=left_report,
+        right_report=right_report,
+        golden=golden,
+        selected_clause_count=left_selection.selected_clause_count,
+        agreement_count=agreement_count,
+        disagreement_count=semantic_disagreement_count,
+        golden_auto_resolved_count=golden_resolved_count,
+        new_hitl_count=len(rows),
+        source_failure_count=failure_count,
+    )
     return ApplicabilityDetailDisagreementBuildResult(
         review_path=review_path,
         review_guide_path=guide,
         selected_clause_count=left_selection.selected_clause_count,
         agreement_count=agreement_count,
-        disagreement_count=len(rows),
-        failure_disagreement_count=failure_count,
+        disagreement_count=semantic_disagreement_count,
+        golden_auto_resolved_count=golden_resolved_count,
+        new_hitl_count=len(rows),
+        source_failure_count=failure_count,
         review_created=created,
     )
 
 
 def publish_applicability_detail_disagreement_review(
     *,
+    golden: ApplicabilityGoldenCorpus,
     review_path: Path,
     run_archive: Path,
     left_directory: Path,
     right_directory: Path,
     output_path: Path,
 ) -> ApplicabilityDetailHitlConsensusReport:
-    """Merge automatic prompt agreement and published HITL decisions into consensus."""
+    """Merge agreements, existing Golden decisions, and new HITL decisions into consensus."""
 
     left_selection, left_report = _load_candidate(left_directory)
     right_selection, right_report = _load_candidate(right_directory)
     _validate_pair(left_selection, left_report, right_selection, right_report)
     source_text = _load_dataset_text(run_archive)
+    golden_by = _published_golden_by_coordinate(golden)
     archive_sha = _file_sha256(run_archive)
     left_report_path = left_directory / APPLICABILITY_DETAIL_REPORT_FILENAME
     right_report_path = right_directory / APPLICABILITY_DETAIL_REPORT_FILENAME
@@ -342,25 +409,24 @@ def publish_applicability_detail_disagreement_review(
     left_by = _by_coordinate(left_report, "left")
     right_by = _by_coordinate(right_report, "right")
 
-    expected_disagreements = {
-        (selected.document_key, selected.clause_id): _disagreement_kind(
-            left_by[(selected.document_key, selected.clause_id)],
-            right_by[(selected.document_key, selected.clause_id)],
-        )
-        for selected in left_selection.clauses
-    }
-    expected_disagreements = {
-        key: kind for key, kind in expected_disagreements.items() if kind is not None
-    }
-    if set(review_rows) != set(expected_disagreements):
+    expected_review_coordinates: set[tuple[str, str]] = set()
+    for selected in left_selection.clauses:
+        coordinate = (selected.document_key, selected.clause_id)
+        kind = _disagreement_kind(left_by[coordinate], right_by[coordinate])
+        if (
+            kind is ApplicabilityDetailDisagreementKind.DECISION
+            and coordinate not in golden_by
+        ):
+            expected_review_coordinates.add(coordinate)
+    if set(review_rows) != expected_review_coordinates:
         raise ValueError(
-            "HITL review coordinates differ from the current prompt disagreements; rebuild the "
-            "review from the exact candidate reports"
+            "HITL review coordinates differ from the current new semantic disagreements; "
+            "rebuild the review from the exact candidate reports and Golden corpus"
         )
 
     cases: list[ApplicabilityDetailHitlConsensusCase] = []
     source_counts: Counter[ApplicabilityDetailResolutionSource] = Counter()
-    failure_disagreements = 0
+    semantic_disagreements = 0
     positives = negatives = 0
 
     for selected in left_selection.clauses:
@@ -370,55 +436,73 @@ def publish_applicability_detail_disagreement_review(
         kind = _disagreement_kind(left, right)
         left_decision = _detail_decision(left)
         right_decision = _detail_decision(right)
+        review_status = None
+        golden_decision = None
+        hitl_decision = None
+        note = ""
+
         if kind is None:
             assert left_decision is not None and left_decision == right_decision
             final = left_decision
             source = ApplicabilityDetailResolutionSource.AUTOMATIC_AGREEMENT
-            review_status = None
-            hitl_decision = None
-            note = ""
+        elif kind is not ApplicabilityDetailDisagreementKind.DECISION:
+            final = None
+            source = ApplicabilityDetailResolutionSource.SOURCE_FAILURE
         else:
-            row = review_rows[coordinate]
-            _validate_review_row(
-                row,
-                selected=selected,
-                selection_sha256=left_selection.fingerprint,
-                source_archive=run_archive.name,
-                source_archive_sha256=archive_sha,
-                source_text=source_text[coordinate],
-                kind=kind,
-                left=left,
-                right=right,
-                left_report=left_report,
-                right_report=right_report,
-                left_report_sha256=left_sha,
-                right_report_sha256=right_sha,
-            )
-            review_status = (row.get("review_status") or "pending").strip().lower()
-            if review_status not in {"pending", "published"}:
-                raise ValueError(
-                    f"unsupported review_status {review_status!r} for "
-                    f"{selected.document_key}/{selected.clause_id}"
-                )
-            if review_status == "published":
-                hitl_decision = _parse_bool_required(
-                    row.get("contains_clause_or_requirement_applicability"),
-                    coordinate=coordinate,
-                )
-                final = hitl_decision
-                source = ApplicabilityDetailResolutionSource.HITL
-            else:
-                if (row.get("contains_clause_or_requirement_applicability") or "").strip():
+            semantic_disagreements += 1
+            golden_case = golden_by.get(coordinate)
+            if golden_case is not None:
+                text = source_text.get(coordinate)
+                if text is None:
                     raise ValueError(
-                        "pending HITL rows must leave the decision empty for "
+                        "qualification archive is missing Golden-matched clause text for "
                         f"{selected.document_key}/{selected.clause_id}"
                     )
-                hitl_decision = None
-                final = None
-                source = ApplicabilityDetailResolutionSource.PENDING
-            note = row.get("review_note") or ""
-            if kind is not ApplicabilityDetailDisagreementKind.DECISION:
-                failure_disagreements += 1
+                _validate_golden_resolution(golden_case, selected=selected, source_text=text)
+                expected = golden_case.expected
+                assert expected is not None
+                golden_decision = expected.present
+                final = golden_decision
+                source = ApplicabilityDetailResolutionSource.GOLDEN
+            else:
+                row = review_rows[coordinate]
+                _validate_review_row(
+                    row,
+                    selected=selected,
+                    selection_sha256=left_selection.fingerprint,
+                    source_archive=run_archive.name,
+                    source_archive_sha256=archive_sha,
+                    source_text=source_text[coordinate],
+                    kind=kind,
+                    left=left,
+                    right=right,
+                    left_report=left_report,
+                    right_report=right_report,
+                    left_report_sha256=left_sha,
+                    right_report_sha256=right_sha,
+                )
+                review_status = (row.get("review_status") or "pending").strip().lower()
+                if review_status not in {"pending", "published"}:
+                    raise ValueError(
+                        f"unsupported review_status {review_status!r} for "
+                        f"{selected.document_key}/{selected.clause_id}"
+                    )
+                if review_status == "published":
+                    hitl_decision = _parse_bool_required(
+                        row.get("contains_clause_or_requirement_applicability"),
+                        coordinate=coordinate,
+                    )
+                    final = hitl_decision
+                    source = ApplicabilityDetailResolutionSource.HITL
+                else:
+                    if (row.get("contains_clause_or_requirement_applicability") or "").strip():
+                        raise ValueError(
+                            "pending HITL rows must leave the decision empty for "
+                            f"{selected.document_key}/{selected.clause_id}"
+                        )
+                    final = None
+                    source = ApplicabilityDetailResolutionSource.PENDING
+                note = row.get("review_note") or ""
 
         source_counts[source] += 1
         if final is True:
@@ -437,6 +521,7 @@ def publish_applicability_detail_disagreement_review(
                 right_decision=right_decision,
                 disagreement_kind=kind,
                 review_status=review_status,
+                golden_decision=golden_decision,
                 hitl_decision=hitl_decision,
                 review_note=note,
                 final_decision=final,
@@ -459,16 +544,20 @@ def publish_applicability_detail_disagreement_review(
         right_model_id=right_report.model_id,
         right_model_ref=right_report.model_ref,
         right_report_sha256=right_sha,
+        golden_corpus_id=golden.corpus_id,
+        golden_corpus_version=golden.corpus_version,
         automatic_agreement_count=source_counts[
             ApplicabilityDetailResolutionSource.AUTOMATIC_AGREEMENT
         ],
-        disagreement_count=(
+        disagreement_count=semantic_disagreements,
+        golden_auto_resolved_count=source_counts[ApplicabilityDetailResolutionSource.GOLDEN],
+        hitl_review_count=(
             source_counts[ApplicabilityDetailResolutionSource.HITL]
             + source_counts[ApplicabilityDetailResolutionSource.PENDING]
         ),
         hitl_resolved_count=source_counts[ApplicabilityDetailResolutionSource.HITL],
         pending_count=source_counts[ApplicabilityDetailResolutionSource.PENDING],
-        failure_disagreement_count=failure_disagreements,
+        source_failure_count=source_counts[ApplicabilityDetailResolutionSource.SOURCE_FAILURE],
         final_positive_count=positives,
         final_negative_count=negatives,
         clauses=tuple(cases),
@@ -673,6 +762,79 @@ def _load_dataset_text(run_archive: Path) -> dict[tuple[str, str], str]:
     return result
 
 
+def _published_golden_by_coordinate(
+    golden: ApplicabilityGoldenCorpus,
+) -> dict[tuple[str, str], ApplicabilityGoldenCase]:
+    return {
+        (case.document_key, case.clause_id): case
+        for case in golden.cases
+        if case.status == "published" and case.expected is not None
+    }
+
+
+def _validate_golden_resolution(
+    case: ApplicabilityGoldenCase,
+    *,
+    selected: Any,
+    source_text: str,
+) -> None:
+    if case.reference != (selected.reference or ""):
+        raise ValueError(
+            "published Golden reference differs from the persisted detail selection for "
+            f"{case.document_key}/{case.clause_id}"
+        )
+    golden_hash = "sha256:" + hashlib.sha256(case.text.encode("utf-8")).hexdigest()
+    if golden_hash != selected.content_hash or case.text != source_text:
+        raise ValueError(
+            "published Golden text differs from the immutable qualification archive for "
+            f"{case.document_key}/{case.clause_id}"
+        )
+
+
+def _review_has_human_edits(rows: list[dict[str, str]]) -> bool:
+    for row in rows:
+        status = (row.get("review_status") or "pending").strip().lower()
+        decision = (row.get("contains_clause_or_requirement_applicability") or "").strip()
+        note = (row.get("review_note") or "").strip()
+        if status != "pending" or decision or note:
+            return True
+    return False
+
+
+def _write_or_preserve_review(review_path: Path, rows: list[dict[str, str]]) -> bool:
+    expected_coordinates = {
+        (row["document_key"], row["clause_id"])
+        for row in rows
+    }
+    if review_path.exists():
+        with review_path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            existing_fields = tuple(reader.fieldnames or ())
+            existing_rows = list(reader)
+        existing_coordinates = {
+            (
+                (row.get("document_key") or "").strip(),
+                (row.get("clause_id") or "").strip(),
+            )
+            for row in existing_rows
+        }
+        if _review_has_human_edits(existing_rows):
+            if existing_coordinates != expected_coordinates:
+                raise ValueError(
+                    "existing HITL review contains human edits but belongs to a different "
+                    "disagreement set; use a new --review-output"
+                )
+            return False
+        if existing_coordinates == expected_coordinates and existing_fields == _REVIEW_FIELDS:
+            return False
+
+    with review_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=_REVIEW_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+    return True
+
+
 def _review_row(
     *,
     selected: Any,
@@ -731,14 +893,29 @@ def _write_review_guide(
     *,
     left_report: ApplicabilityDetailEnrichmentReport,
     right_report: ApplicabilityDetailEnrichmentReport,
+    golden: ApplicabilityGoldenCorpus,
+    selected_clause_count: int,
+    agreement_count: int,
+    disagreement_count: int,
+    golden_auto_resolved_count: int,
+    new_hitl_count: int,
+    source_failure_count: int,
 ) -> None:
     path.write_text(
         "# Applicability Detail Disagreement Review\n\n"
-        "This review adjudicates only the primary dual-decision Boolean between two detail "
-        "prompt arms.\n\n"
+        "This review contains only new semantic primary-gate disagreements that are not already "
+        "resolved by the published Applicability Golden corpus. Technical source failures are "
+        "not sent to HITL and remain explicitly unresolved until the failed arm is rerun.\n\n"
         f"- left: `{left_report.model_id}` / `{left_report.prompt_version}`\n"
-        f"- right: `{right_report.model_id}` / `{right_report.prompt_version}`\n\n"
-        "For every row answer exactly this question:\n\n"
+        f"- right: `{right_report.model_id}` / `{right_report.prompt_version}`\n"
+        f"- Golden: `{golden.corpus_id}` / `{golden.corpus_version}`\n"
+        f"- exact selection: {selected_clause_count}\n"
+        f"- automatic agreements: {agreement_count}\n"
+        f"- semantic disagreements: {disagreement_count}\n"
+        f"- Golden auto-resolved: {golden_auto_resolved_count}\n"
+        f"- new HITL cases: {new_hitl_count}\n"
+        f"- technical source failures: {source_failure_count}\n\n"
+        "For every CSV row answer exactly this question:\n\n"
         "> Does the clause text contain at least one explicit statement that determines "
         "whether a normative clause, requirement, recommendation, or provision applies, "
         "does not apply, is in scope, is excluded/waived, or becomes applicable under a "
@@ -746,10 +923,11 @@ def _write_review_guide(
         "Do not infer clause applicability merely because a method, technique, activity, "
         "object, threshold, engineering status, or execution step is conditional. Other "
         "applicability targets are diagnostic context and are not evidence by themselves.\n\n"
-        "Set `contains_clause_or_requirement_applicability=true` or `false`, then set "
-        "`review_status=published`. Leave source/provenance columns unchanged. Use "
-        "`review_note` for the rationale. Rows left as `pending` are intentionally unresolved "
-        "and will remain unresolved in the published consensus.\n",
+        "The three editable review columns are intentionally placed directly after document_key, "
+        "reference, and heading. Set `contains_clause_or_requirement_applicability=true` or "
+        "`false`, then set `review_status=published`. Use `review_note` for the rationale. "
+        "Leave all source/provenance columns unchanged. Rows left as `pending` remain unresolved "
+        "in the published consensus.\n",
         encoding="utf-8",
     )
 

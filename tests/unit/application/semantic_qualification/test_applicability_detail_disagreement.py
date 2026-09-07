@@ -27,6 +27,7 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     ApplicabilityDetailClauseResult,
     ApplicabilityDetailEnrichmentReport,
     ApplicabilityDetailEvidence,
+    ApplicabilityDetailFailure,
     ApplicabilityDetailGenerator,
     ApplicabilityDetailOutcome,
     ApplicabilityDetailRunStatistics,
@@ -123,6 +124,58 @@ def _result(
     )
 
 
+def _failed_result(index: int, text: str) -> ApplicabilityDetailClauseResult:
+    return ApplicabilityDetailClauseResult(
+        example_id=f"example-{index}",
+        document_key="DOC",
+        clause_id=f"clause-{index}",
+        content_hash=_hash(text),
+        reference=str(index),
+        heading=f"Clause {index}",
+        presence_confidence=1.0,
+        outcome=ApplicabilityDetailOutcome.FAILED,
+        failure=ApplicabilityDetailFailure(
+            error_type="LlmResponseError",
+            message="finish_reason=length",
+            category="invalid_response",
+            finish_reason="length",
+        ),
+    )
+
+
+def _report_from_clauses(
+    selection: ApplicabilityDetailSelection,
+    clauses: tuple[ApplicabilityDetailClauseResult, ...],
+    *,
+    prompt: str,
+) -> ApplicabilityDetailEnrichmentReport:
+    outcomes = {outcome: 0 for outcome in ApplicabilityDetailOutcome}
+    for clause in clauses:
+        outcomes[clause.outcome] += 1
+    return ApplicabilityDetailEnrichmentReport(
+        task_version="2.0.0",
+        prompt_version=prompt,
+        model_id="mistral",
+        model_ref="mistral/model",
+        selection_sha256=selection.fingerprint,
+        config_sha256="d" * 64,
+        generated_at=NOW,
+        selected_clause_count=len(clauses),
+        processed_clause_count=len(clauses),
+        enriched_clause_count=outcomes[ApplicabilityDetailOutcome.ENRICHED],
+        not_confirmed_clause_count=outcomes[ApplicabilityDetailOutcome.NOT_CONFIRMED],
+        unresolved_clause_count=outcomes[ApplicabilityDetailOutcome.UNRESOLVED],
+        failed_clause_count=outcomes[ApplicabilityDetailOutcome.FAILED],
+        run_statistics=ApplicabilityDetailRunStatistics(
+            attempted_clause_count=len(clauses),
+            reused_clause_count=0,
+            fresh_prediction_count=len(clauses),
+            cached_prediction_count=0,
+        ),
+        clauses=clauses,
+    )
+
+
 def _report(
     selection: ApplicabilityDetailSelection,
     texts: tuple[str, ...],
@@ -194,6 +247,35 @@ def _archive(path: Path, texts: tuple[str, ...]) -> Path:
     return path
 
 
+def _empty_golden() -> ApplicabilityGoldenCorpus:
+    return ApplicabilityGoldenCorpus(cases=())
+
+
+def _golden_for(
+    texts: tuple[str, ...],
+    *,
+    decisions: dict[int, bool],
+) -> ApplicabilityGoldenCorpus:
+    return ApplicabilityGoldenCorpus(
+        cases=tuple(
+            ApplicabilityGoldenCase(
+                clause_id=f"clause-{index}",
+                document_key="DOC",
+                reference=str(index),
+                text=texts[index - 1],
+                category="test",
+                status="published",
+                expected=ApplicabilityGoldenExpected(present=decision),
+                provenance=ApplicabilityGoldenProvenance(
+                    source_archive="run.zip",
+                    source_archive_sha256="a" * 64,
+                ),
+            )
+            for index, decision in decisions.items()
+        )
+    )
+
+
 def _fixture(tmp_path: Path):
     texts = ("Clause one applies when X.", "Clause two applies always.")
     selection = _selection(texts)
@@ -215,6 +297,7 @@ def test_build_creates_review_only_for_primary_disagreements(tmp_path: Path) -> 
     review = tmp_path / "review" / "disagreement.csv"
 
     result = build_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
         run_archive=archive,
         left_directory=left,
         right_directory=right,
@@ -234,10 +317,149 @@ def test_build_creates_review_only_for_primary_disagreements(tmp_path: Path) -> 
     assert (review.parent / "README.md").is_file()
 
 
+def test_review_places_editable_columns_immediately_after_clause_identity(tmp_path: Path) -> None:
+    _, _, left, right, archive = _fixture(tmp_path)
+    review = tmp_path / "review" / "disagreement.csv"
+
+    build_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
+        run_archive=archive,
+        left_directory=left,
+        right_directory=right,
+        review_path=review,
+    )
+
+    with review.open(encoding="utf-8", newline="") as handle:
+        fieldnames = tuple(csv.DictReader(handle).fieldnames or ())
+    assert fieldnames[:6] == (
+        "document_key",
+        "reference",
+        "heading",
+        "review_status",
+        "contains_clause_or_requirement_applicability",
+        "review_note",
+    )
+
+
+def test_build_excludes_published_golden_disagreement_from_hitl(tmp_path: Path) -> None:
+    texts, _, left, right, archive = _fixture(tmp_path)
+    review = tmp_path / "review" / "disagreement.csv"
+    golden = _golden_for(texts, decisions={1: True})
+
+    result = build_applicability_detail_disagreement_review(
+        golden=golden,
+        run_archive=archive,
+        left_directory=left,
+        right_directory=right,
+        review_path=review,
+    )
+
+    assert result.disagreement_count == 1
+    assert result.golden_auto_resolved_count == 1
+    assert result.new_hitl_count == 0
+    rows = list(csv.DictReader(review.open(encoding="utf-8")))
+    assert rows == []
+
+    consensus = publish_applicability_detail_disagreement_review(
+        golden=golden,
+        review_path=review,
+        run_archive=archive,
+        left_directory=left,
+        right_directory=right,
+        output_path=tmp_path / "consensus.json",
+    )
+    assert consensus.golden_auto_resolved_count == 1
+    assert consensus.hitl_review_count == 0
+    first = consensus.clauses[0]
+    assert first.resolution_source.value == "golden"
+    assert first.golden_decision is True
+    assert first.final_decision is True
+
+
+def test_build_rejects_stale_golden_text_for_auto_resolution(tmp_path: Path) -> None:
+    texts, _, left, right, archive = _fixture(tmp_path)
+    stale = ApplicabilityGoldenCorpus(
+        cases=(
+            ApplicabilityGoldenCase(
+                clause_id="clause-1",
+                document_key="DOC",
+                reference="1",
+                text="Changed clause text.",
+                category="test",
+                status="published",
+                expected=ApplicabilityGoldenExpected(present=True),
+                provenance=ApplicabilityGoldenProvenance(
+                    source_archive="run.zip",
+                    source_archive_sha256="a" * 64,
+                ),
+            ),
+        )
+    )
+
+    with pytest.raises(ValueError, match="published Golden text differs"):
+        build_applicability_detail_disagreement_review(
+            golden=stale,
+            run_archive=archive,
+            left_directory=left,
+            right_directory=right,
+            review_path=tmp_path / "review.csv",
+        )
+
+
+def test_build_excludes_source_failure_from_hitl(tmp_path: Path) -> None:
+    texts = ("Clause one applies when X.", "Clause two applies always.")
+    selection = _selection(texts)
+    left_report = _report_from_clauses(
+        selection,
+        (
+            _failed_result(1, texts[0]),
+            _result(2, texts[1], decision=False, prompt="detail-structure-aware-v3"),
+        ),
+        prompt="detail-structure-aware-v3",
+    )
+    right_report = _report(
+        selection,
+        texts,
+        decisions=(True, False),
+        prompt="detail-structure-aware-v4",
+    )
+    left = _candidate_directory(tmp_path / "left", selection, left_report)
+    right = _candidate_directory(tmp_path / "right", selection, right_report)
+    archive = _archive(tmp_path / "run.zip", texts)
+    review = tmp_path / "review" / "disagreement.csv"
+
+    result = build_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
+        run_archive=archive,
+        left_directory=left,
+        right_directory=right,
+        review_path=review,
+    )
+
+    assert result.agreement_count == 1
+    assert result.disagreement_count == 0
+    assert result.new_hitl_count == 0
+    assert result.source_failure_count == 1
+    assert list(csv.DictReader(review.open(encoding="utf-8"))) == []
+
+    consensus = publish_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
+        review_path=review,
+        run_archive=archive,
+        left_directory=left,
+        right_directory=right,
+        output_path=tmp_path / "consensus.json",
+    )
+    assert consensus.source_failure_count == 1
+    assert consensus.clauses[0].resolution_source.value == "source_failure"
+    assert consensus.clauses[0].final_decision is None
+
+
 def test_publish_merges_automatic_agreement_and_hitl_decision(tmp_path: Path) -> None:
     _, _, left, right, archive = _fixture(tmp_path)
     review = tmp_path / "review" / "disagreement.csv"
     build_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
         run_archive=archive,
         left_directory=left,
         right_directory=right,
@@ -254,6 +476,7 @@ def test_publish_merges_automatic_agreement_and_hitl_decision(tmp_path: Path) ->
 
     output = tmp_path / "consensus.json"
     report = publish_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
         review_path=review,
         run_archive=archive,
         left_directory=left,
@@ -275,6 +498,7 @@ def test_publish_rejects_stale_review_provenance(tmp_path: Path) -> None:
     _, _, left, right, archive = _fixture(tmp_path)
     review = tmp_path / "review" / "disagreement.csv"
     build_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
         run_archive=archive,
         left_directory=left,
         right_directory=right,
@@ -289,6 +513,7 @@ def test_publish_rejects_stale_review_provenance(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="source/provenance changed"):
         publish_applicability_detail_disagreement_review(
+            golden=_empty_golden(),
             review_path=review,
             run_archive=archive,
             left_directory=left,
@@ -301,6 +526,7 @@ def test_evaluate_uses_presence_then_hitl_detail(monkeypatch, tmp_path: Path) ->
     _, selection, left, right, archive = _fixture(tmp_path)
     review = tmp_path / "review" / "disagreement.csv"
     build_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
         run_archive=archive,
         left_directory=left,
         right_directory=right,
@@ -315,6 +541,7 @@ def test_evaluate_uses_presence_then_hitl_detail(monkeypatch, tmp_path: Path) ->
         writer.writerows(rows)
     consensus_path = tmp_path / "consensus.json"
     publish_applicability_detail_disagreement_review(
+        golden=_empty_golden(),
         review_path=review,
         run_archive=archive,
         left_directory=left,
