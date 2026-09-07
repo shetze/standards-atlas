@@ -161,3 +161,38 @@ def test_applicability_detail_model_matrix_help_is_registered() -> None:
     assert "--baseline-run" in result.stdout
     assert "--candidate-directory" in result.stdout
     assert "--output" in result.stdout
+
+
+def test_applicability_detail_disagreement_build_help_is_registered() -> None:
+    result = runner.invoke(app, ["evaluation", "applicability-detail-disagreement-build", "--help"])
+
+    assert result.exit_code == 0
+    assert "--run" in result.stdout
+    assert "--left-directory" in result.stdout
+    assert "--right-directory" in result.stdout
+    assert "--review-output" in result.stdout
+
+
+def test_applicability_detail_disagreement_publish_help_is_registered() -> None:
+    result = runner.invoke(
+        app, ["evaluation", "applicability-detail-disagreement-publish", "--help"]
+    )
+
+    assert result.exit_code == 0
+    assert "--review" in result.stdout
+    assert "--run" in result.stdout
+    assert "--left-directory" in result.stdout
+    assert "--right-directory" in result.stdout
+    assert "--output" in result.stdout
+
+
+def test_applicability_detail_disagreement_evaluate_help_is_registered() -> None:
+    result = runner.invoke(
+        app, ["evaluation", "applicability-detail-disagreement-evaluate", "--help"]
+    )
+
+    assert result.exit_code == 0
+    assert "--golden" in result.stdout
+    assert "--baseline-run" in result.stdout
+    assert "--consensus" in result.stdout
+    assert "--output" in result.stdout
