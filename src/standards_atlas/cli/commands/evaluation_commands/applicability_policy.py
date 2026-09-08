@@ -48,6 +48,10 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 from standards_atlas.application.semantic_qualification.applicability_policy_evaluation import (
     evaluate_applicability_policy,
 )
+from standards_atlas.application.semantic_qualification.applicability_policy_replay import (
+    ApplicabilityPolicyReplayReport,
+    replay_applicability_policy,
+)
 from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
     APPLICABILITY_POLICY_EVALUATION_FILENAME,
     APPLICABILITY_POLICY_RUN_FILENAME,
@@ -55,10 +59,6 @@ from standards_atlas.application.semantic_qualification.applicability_policy_qua
     APPLICABILITY_POLICY_STATE_FILENAME,
     ApplicabilityPolicyQualificationMode,
     ApplicabilityPolicyRunState,
-)
-from standards_atlas.application.semantic_qualification.applicability_policy_replay import (
-    ApplicabilityPolicyReplayReport,
-    replay_applicability_policy,
 )
 from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
     CONFIRMATION_PROMPT_VERSION,
@@ -337,37 +337,23 @@ def run_applicability_policy_command(
         raise typer.BadParameter(f"qualification coverage not found: {coverage_path}")
     coverage = load_qualification_coverage(coverage_path)
 
-    persisted_detail_selection_path = run_directory / APPLICABILITY_DETAIL_SELECTION_FILENAME
-    try:
-        if persisted_detail_selection_path.is_file():
-            detail_selection = validate_reused_applicability_detail_selection(
-                persisted_selection=load_applicability_detail_selection(
-                    persisted_detail_selection_path
-                ),
-                run_selection=run_selection,
-                examples=examples,
-                consensus=consensus,
-                coverage=coverage,
-            )
-        else:
-            detail_selection = build_applicability_detail_selection(
-                run_selection=run_selection,
-                examples=examples,
-                consensus=consensus,
-                coverage=coverage,
-                task_version=PRIMARY_TASK_VERSION,
-            )
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
     resolved_output = output_directory or (run_directory / "applicability-policy")
     if fresh:
         _clear_policy_artifacts(resolved_output)
     resolved_output.mkdir(parents=True, exist_ok=True)
-    persist_applicability_detail_selection(
-        detail_selection,
-        resolved_output / APPLICABILITY_POLICY_SELECTION_FILENAME,
-    )
+    policy_selection_path = resolved_output / APPLICABILITY_POLICY_SELECTION_FILENAME
+    try:
+        detail_selection = _resolve_policy_selection(
+            selection_path=policy_selection_path,
+            fresh=fresh,
+            run_selection=run_selection,
+            examples=examples,
+            consensus=consensus,
+            coverage=coverage,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    persist_applicability_detail_selection(detail_selection, policy_selection_path)
 
     state_path = resolved_output / APPLICABILITY_POLICY_STATE_FILENAME
     if state_path.is_file() and not fresh:
@@ -573,6 +559,33 @@ def run_applicability_policy_command(
     typer.echo(f"Policy output directory  : {resolved_output}")
     typer.echo(f"Policy report            : {run_report_path}")
 
+
+
+def _resolve_policy_selection(
+    *,
+    selection_path: Path,
+    fresh: bool,
+    run_selection: object,
+    examples: tuple[object, ...],
+    consensus: ConsensusReport,
+    coverage: object,
+) -> ApplicabilityDetailSelection:
+    """Resolve the policy-owned selection against the current Presence result."""
+    if selection_path.is_file() and not fresh:
+        return validate_reused_applicability_detail_selection(
+            persisted_selection=load_applicability_detail_selection(selection_path),
+            run_selection=run_selection,
+            examples=examples,
+            consensus=consensus,
+            coverage=coverage,
+        )
+    return build_applicability_detail_selection(
+        run_selection=run_selection,
+        examples=examples,
+        consensus=consensus,
+        coverage=coverage,
+        task_version=PRIMARY_TASK_VERSION,
+    )
 
 def _validate_policy_task_taxonomy(task: object) -> None:
     expected_functions = tuple(item.value for item in ApplicabilityFunction)
