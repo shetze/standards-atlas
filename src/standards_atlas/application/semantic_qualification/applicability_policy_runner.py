@@ -22,6 +22,8 @@ from standards_atlas.application.semantic_qualification.applicability_decision_p
 )
 from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
     ApplicabilityDetailEnrichmentReport,
+    ApplicabilityDetailOutcome,
+    ApplicabilityDetailRunStatistics,
     ApplicabilityDetailSelection,
     ApplicabilityDetailSelectionClause,
 )
@@ -259,9 +261,23 @@ def applicability_policy_inference_required(
         clauses=rescue_clauses,
         task_version=RESCUE_TASK_VERSION,
     )
+    terminal_rescue = _terminal_rescue_reuse_coordinates(
+        primary_by_coordinate=primary_by_coordinate,
+        rescue_selection=rescue_selection,
+        existing_rescue=existing_rescue,
+        existing_confirmation=existing_confirmation,
+    )
+    active_rescue_selection = _selection_without_coordinates(
+        rescue_selection,
+        terminal_rescue,
+    )
+    active_existing_rescue = _subset_existing_report(
+        existing_rescue,
+        active_rescue_selection,
+    )
     if rescue_service.pending_clause_count(
-        selection=rescue_selection,
-        existing=existing_rescue,
+        selection=active_rescue_selection,
+        existing=active_existing_rescue,
         fresh=False,
     ):
         return True
@@ -353,6 +369,12 @@ def run_applicability_policy(
         clauses=rescue_clauses,
         task_version=RESCUE_TASK_VERSION,
     )
+    terminal_rescue = _terminal_rescue_reuse_coordinates(
+        primary_by_coordinate=primary_by_coordinate,
+        rescue_selection=rescue_selection,
+        existing_rescue=existing_rescue,
+        existing_confirmation=existing_confirmation,
+    )
     rescue_report, rescue_summary = _run_stage(
         role="rescue",
         selection=rescue_selection,
@@ -361,6 +383,7 @@ def run_applicability_policy(
         existing=existing_rescue,
         checkpoint=checkpoint,
         request_count=request_count,
+        terminal_reuse_coordinates=terminal_rescue,
     )
     rescue_by_coordinate = _normalized_results(rescue_report, rescue_selection, role="rescue")
 
@@ -481,20 +504,47 @@ def _run_stage(
     existing: ApplicabilityDetailEnrichmentReport | None,
     checkpoint: PolicyCheckpoint | None,
     request_count: Callable[[], int] | None,
+    terminal_reuse_coordinates: frozenset[tuple[str, str]] = frozenset(),
 ) -> tuple[ApplicabilityDetailEnrichmentReport, ApplicabilityPolicyStageSummary]:
-    pending = service.pending_clause_count(selection=selection, existing=existing, fresh=False)
+    active_selection = _selection_without_coordinates(selection, terminal_reuse_coordinates)
+    active_existing = _subset_existing_report(existing, active_selection)
+    pending = service.pending_clause_count(
+        selection=active_selection,
+        existing=active_existing,
+        fresh=False,
+    )
     before = request_count() if request_count is not None else None
 
-    def role_checkpoint(report: ApplicabilityDetailEnrichmentReport) -> None:
+    def role_checkpoint(active_report: ApplicabilityDetailEnrichmentReport) -> None:
         if checkpoint is not None:
-            checkpoint(role, selection, report)
+            checkpoint(
+                role,
+                selection,
+                _merge_terminal_reuse_results(
+                    selection=selection,
+                    active_report=active_report,
+                    existing=existing,
+                    terminal_reuse_coordinates=terminal_reuse_coordinates,
+                ),
+            )
 
-    report = service.enrich(
+    if active_selection.clauses or not terminal_reuse_coordinates:
+        active_report = service.enrich(
+            selection=active_selection,
+            examples=examples,
+            existing=active_existing,
+            fresh=False,
+            checkpoint=role_checkpoint,
+        )
+    else:
+        if existing is None:
+            raise ValueError(f"{role} terminal policy reuse requires persisted results")
+        active_report = _empty_stage_report(existing, active_selection)
+    report = _merge_terminal_reuse_results(
         selection=selection,
-        examples=examples,
+        active_report=active_report,
         existing=existing,
-        fresh=False,
-        checkpoint=role_checkpoint,
+        terminal_reuse_coordinates=terminal_reuse_coordinates,
     )
     after = request_count() if request_count is not None else None
     if report.processed_clause_count != selection.selected_clause_count:
@@ -538,6 +588,187 @@ def _role_selection(
     data["selected_clause_count"] = len(clauses)
     data["clauses"] = clauses
     return ApplicabilityDetailSelection.model_validate(data)
+
+
+def _selection_without_coordinates(
+    selection: ApplicabilityDetailSelection,
+    coordinates: frozenset[tuple[str, str]],
+) -> ApplicabilityDetailSelection:
+    if not coordinates:
+        return selection
+    clauses = tuple(
+        item for item in selection.clauses if (item.document_key, item.clause_id) not in coordinates
+    )
+    return _role_selection(
+        selection,
+        clauses=clauses,
+        task_version=selection.task_version,
+    )
+
+
+def _validated_report_copy(
+    report: ApplicabilityDetailEnrichmentReport,
+    **updates: object,
+) -> ApplicabilityDetailEnrichmentReport:
+    data = report.model_dump(mode="python")
+    data.update(updates)
+    return ApplicabilityDetailEnrichmentReport.model_validate(data)
+
+
+def _subset_existing_report(
+    existing: ApplicabilityDetailEnrichmentReport | None,
+    selection: ApplicabilityDetailSelection,
+) -> ApplicabilityDetailEnrichmentReport | None:
+    if existing is None:
+        return None
+    selected_coordinates = {(item.document_key, item.clause_id) for item in selection.clauses}
+    clauses = tuple(
+        item
+        for item in existing.clauses
+        if (item.document_key, item.clause_id) in selected_coordinates
+    )
+    counts = {status: 0 for status in ApplicabilityDetailOutcome}
+    for item in clauses:
+        counts[item.outcome] += 1
+    return _validated_report_copy(
+        existing,
+        selection_sha256=selection.fingerprint,
+        selected_clause_count=selection.selected_clause_count,
+        processed_clause_count=len(clauses),
+        enriched_clause_count=counts[ApplicabilityDetailOutcome.ENRICHED],
+        not_confirmed_clause_count=counts[ApplicabilityDetailOutcome.NOT_CONFIRMED],
+        unresolved_clause_count=counts[ApplicabilityDetailOutcome.UNRESOLVED],
+        failed_clause_count=counts[ApplicabilityDetailOutcome.FAILED],
+        run_statistics=ApplicabilityDetailRunStatistics(
+            attempted_clause_count=0,
+            reused_clause_count=len(clauses),
+            fresh_prediction_count=0,
+            cached_prediction_count=0,
+        ),
+        clauses=clauses,
+    )
+
+
+def _empty_stage_report(
+    existing: ApplicabilityDetailEnrichmentReport,
+    selection: ApplicabilityDetailSelection,
+) -> ApplicabilityDetailEnrichmentReport:
+    return _validated_report_copy(
+        existing,
+        selection_sha256=selection.fingerprint,
+        selected_clause_count=0,
+        processed_clause_count=0,
+        enriched_clause_count=0,
+        not_confirmed_clause_count=0,
+        unresolved_clause_count=0,
+        failed_clause_count=0,
+        run_statistics=ApplicabilityDetailRunStatistics(
+            attempted_clause_count=0,
+            reused_clause_count=0,
+            fresh_prediction_count=0,
+            cached_prediction_count=0,
+        ),
+        clauses=(),
+    )
+
+
+def _merge_terminal_reuse_results(
+    *,
+    selection: ApplicabilityDetailSelection,
+    active_report: ApplicabilityDetailEnrichmentReport,
+    existing: ApplicabilityDetailEnrichmentReport | None,
+    terminal_reuse_coordinates: frozenset[tuple[str, str]],
+) -> ApplicabilityDetailEnrichmentReport:
+    if not terminal_reuse_coordinates:
+        return active_report
+    if existing is None:
+        raise ValueError("terminal policy reuse requires persisted stage results")
+
+    active_by_coordinate = {
+        (item.document_key, item.clause_id): item for item in active_report.clauses
+    }
+    existing_by_coordinate = {
+        (item.document_key, item.clause_id): item for item in existing.clauses
+    }
+    clauses = []
+    for selected in selection.clauses:
+        coordinate = (selected.document_key, selected.clause_id)
+        if coordinate in terminal_reuse_coordinates:
+            item = existing_by_coordinate.get(coordinate)
+            if item is None:
+                raise ValueError("terminal policy reuse is missing persisted stage result")
+        else:
+            item = active_by_coordinate.get(coordinate)
+            if item is None:
+                continue
+        if item.content_hash != selected.content_hash:
+            raise ValueError("terminal policy reuse content hash differs from selection")
+        clauses.append(item)
+
+    counts = {status: 0 for status in ApplicabilityDetailOutcome}
+    for item in clauses:
+        counts[item.outcome] += 1
+    stats = active_report.run_statistics
+    return _validated_report_copy(
+        active_report,
+        selection_sha256=selection.fingerprint,
+        selected_clause_count=selection.selected_clause_count,
+        processed_clause_count=len(clauses),
+        enriched_clause_count=counts[ApplicabilityDetailOutcome.ENRICHED],
+        not_confirmed_clause_count=counts[ApplicabilityDetailOutcome.NOT_CONFIRMED],
+        unresolved_clause_count=counts[ApplicabilityDetailOutcome.UNRESOLVED],
+        failed_clause_count=counts[ApplicabilityDetailOutcome.FAILED],
+        run_statistics=ApplicabilityDetailRunStatistics(
+            attempted_clause_count=stats.attempted_clause_count,
+            reused_clause_count=(stats.reused_clause_count + len(terminal_reuse_coordinates)),
+            fresh_prediction_count=stats.fresh_prediction_count,
+            cached_prediction_count=stats.cached_prediction_count,
+        ),
+        clauses=tuple(clauses),
+    )
+
+
+def _terminal_rescue_reuse_coordinates(
+    *,
+    primary_by_coordinate: Mapping[tuple[str, str], TriState],
+    rescue_selection: ApplicabilityDetailSelection,
+    existing_rescue: ApplicabilityDetailEnrichmentReport | None,
+    existing_confirmation: ApplicabilityDetailEnrichmentReport | None,
+) -> frozenset[tuple[str, str]]:
+    if existing_rescue is None or existing_confirmation is None:
+        return frozenset()
+    rescue_by_coordinate = {
+        (item.document_key, item.clause_id): item for item in existing_rescue.clauses
+    }
+    confirmation_by_coordinate = {
+        (item.document_key, item.clause_id): item for item in existing_confirmation.clauses
+    }
+    terminal: set[tuple[str, str]] = set()
+    for selected in rescue_selection.clauses:
+        coordinate = (selected.document_key, selected.clause_id)
+        rescue_item = rescue_by_coordinate.get(coordinate)
+        confirmation_item = confirmation_by_coordinate.get(coordinate)
+        if rescue_item is None or confirmation_item is None:
+            continue
+        if rescue_item.content_hash != selected.content_hash:
+            raise ValueError("persisted rescue content hash differs from current selection")
+        if confirmation_item.content_hash != selected.content_hash:
+            raise ValueError("persisted confirmation content hash differs from current selection")
+        if normalize_detail_presence(rescue_item) is not None:
+            continue
+        primary = primary_by_coordinate[coordinate]
+        confirmation = normalize_detail_presence(confirmation_item)
+        outcomes = {
+            decide_detail_presence(
+                primary=primary,
+                rescue=rescue_value,
+                confirmation=confirmation,
+            )
+            for rescue_value in (False, True, None)
+        }
+        if len(outcomes) == 1 and next(iter(outcomes)) is not None:
+            terminal.add(coordinate)
+    return frozenset(terminal)
 
 
 def _normalized_results(

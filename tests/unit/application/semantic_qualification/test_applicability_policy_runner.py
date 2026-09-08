@@ -210,9 +210,12 @@ class FakeService:
     def pending_clause_count(self, *, selection, existing=None, fresh=False):
         if existing is None:
             return selection.selected_clause_count
-        existing_coordinates = {(item.document_key, item.clause_id) for item in existing.clauses}
+        existing_by_coordinate = {
+            (item.document_key, item.clause_id): item for item in existing.clauses
+        }
         return sum(
-            (item.document_key, item.clause_id) not in existing_coordinates
+            (previous := existing_by_coordinate.get((item.document_key, item.clause_id))) is None
+            or previous.outcome is ApplicabilityDetailOutcome.FAILED
             for item in selection.clauses
         )
 
@@ -227,8 +230,9 @@ class FakeService:
         reused = 0
         for selected in selection.clauses:
             coordinate = (selected.document_key, selected.clause_id)
-            if coordinate in existing_by_coordinate:
-                results.append(existing_by_coordinate[coordinate])
+            previous = existing_by_coordinate.get(coordinate)
+            if previous is not None and previous.outcome is not ApplicabilityDetailOutcome.FAILED:
+                results.append(previous)
                 reused += 1
             else:
                 results.append(
@@ -383,3 +387,128 @@ def test_selective_runner_reuses_complete_role_reports_on_resume() -> None:
     assert [stage.pending_clause_count for stage in resumed.report.stages] == [0, 0, 0]
     assert [stage.reused_clause_count for stage in resumed.report.stages] == [2, 1, 0]
     assert [case.final_present for case in resumed.report.cases] == [True, False]
+
+
+def test_resume_reuses_failed_rescue_when_confirmation_makes_it_terminal() -> None:
+    selection = _selection(1)
+    examples = (_example(1),)
+    primary = FakeService(
+        {"clause-1": False},
+        task_version=PRIMARY_TASK_VERSION,
+        prompt_version=PRIMARY_PROMPT_VERSION,
+    )
+    rescue = FakeService(
+        {"clause-1": None},
+        task_version=RESCUE_TASK_VERSION,
+        prompt_version=RESCUE_PROMPT_VERSION,
+    )
+    confirmation = FakeService(
+        {"clause-1": False},
+        task_version=CONFIRMATION_TASK_VERSION,
+        prompt_version=CONFIRMATION_PROMPT_VERSION,
+    )
+
+    first = run_applicability_policy(
+        selection=selection,
+        consensus=_consensus(1),
+        examples=examples,
+        primary_service=primary,
+        rescue_service=rescue,
+        confirmation_service=confirmation,
+    )
+    assert first.report.cases[0].final_present is False
+    assert first.reports["rescue"].failed_clause_count == 1
+    assert first.report.stages[1].attempted_clause_count == 1
+
+    assert not applicability_policy_inference_required(
+        selection=selection,
+        primary_service=primary,
+        rescue_service=rescue,
+        confirmation_service=confirmation,
+        existing_primary=first.reports["primary"],
+        existing_rescue=first.reports["rescue"],
+        existing_confirmation=first.reports["confirmation"],
+    )
+
+    resumed = run_applicability_policy(
+        selection=selection,
+        consensus=_consensus(1),
+        examples=examples,
+        primary_service=primary,
+        rescue_service=rescue,
+        confirmation_service=confirmation,
+        existing_primary=first.reports["primary"],
+        existing_rescue=first.reports["rescue"],
+        existing_confirmation=first.reports["confirmation"],
+    )
+
+    rescue_stage = resumed.report.stages[1]
+    assert rescue_stage.selected_clause_count == 1
+    assert rescue_stage.pending_clause_count == 0
+    assert rescue_stage.attempted_clause_count == 0
+    assert rescue_stage.reused_clause_count == 1
+    assert rescue_stage.failed_clause_count == 1
+    assert resumed.report.cases[0].rescue_present is None
+    assert resumed.report.cases[0].confirmation_present is False
+    assert resumed.report.cases[0].final_present is False
+
+
+def test_resume_retries_only_failed_rescue_that_can_change_policy() -> None:
+    selection = _selection(2)
+    examples = (_example(1), _example(2))
+    primary = FakeService(
+        {"clause-1": False, "clause-2": False},
+        task_version=PRIMARY_TASK_VERSION,
+        prompt_version=PRIMARY_PROMPT_VERSION,
+    )
+    rescue = FakeService(
+        {"clause-1": None, "clause-2": None},
+        task_version=RESCUE_TASK_VERSION,
+        prompt_version=RESCUE_PROMPT_VERSION,
+    )
+    confirmation = FakeService(
+        {"clause-1": False, "clause-2": True},
+        task_version=CONFIRMATION_TASK_VERSION,
+        prompt_version=CONFIRMATION_PROMPT_VERSION,
+    )
+
+    first = run_applicability_policy(
+        selection=selection,
+        consensus=_consensus(2),
+        examples=examples,
+        primary_service=primary,
+        rescue_service=rescue,
+        confirmation_service=confirmation,
+    )
+    assert first.reports["rescue"].failed_clause_count == 2
+
+    assert applicability_policy_inference_required(
+        selection=selection,
+        primary_service=primary,
+        rescue_service=rescue,
+        confirmation_service=confirmation,
+        existing_primary=first.reports["primary"],
+        existing_rescue=first.reports["rescue"],
+        existing_confirmation=first.reports["confirmation"],
+    )
+
+    resumed = run_applicability_policy(
+        selection=selection,
+        consensus=_consensus(2),
+        examples=examples,
+        primary_service=primary,
+        rescue_service=rescue,
+        confirmation_service=confirmation,
+        existing_primary=first.reports["primary"],
+        existing_rescue=first.reports["rescue"],
+        existing_confirmation=first.reports["confirmation"],
+    )
+
+    rescue_stage = resumed.report.stages[1]
+    assert rescue.selections[-1] == ("clause-2",)
+    assert rescue_stage.selected_clause_count == 2
+    assert rescue_stage.pending_clause_count == 1
+    assert rescue_stage.attempted_clause_count == 1
+    assert rescue_stage.reused_clause_count == 1
+    assert rescue_stage.failed_clause_count == 2
+    assert [case.final_present for case in resumed.report.cases] == [False, None]
