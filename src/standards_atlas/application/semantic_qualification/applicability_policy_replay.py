@@ -19,14 +19,15 @@ from standards_atlas.application.semantic_qualification.applicability_decision_p
 from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
     ApplicabilityDetailClauseResult,
     ApplicabilityDetailEnrichmentReport,
-    ApplicabilityDetailOutcome,
     ApplicabilityDetailSelection,
     load_applicability_detail_report,
 )
 from standards_atlas.application.semantic_qualification.applicability_end_to_end import (
     load_applicability_end_to_end_artifacts,
 )
-from standards_atlas.domain.model import ApplicabilityTarget
+from standards_atlas.application.semantic_qualification.applicability_policy_normalization import (
+    normalize_detail_presence,
+)
 
 PRIMARY_PROMPT = "detail-structure-aware-v4"
 RESCUE_PROMPT = "detail-structure-aware-v3"
@@ -253,27 +254,6 @@ def replay_applicability_policy(
         roles=roles,
         cases=tuple(cases),
     )
-
-
-def normalize_detail_presence(result: ApplicabilityDetailClauseResult) -> TriState:
-    """Normalize persisted task-v1/task-v2 detail results into Presence tri-state."""
-
-    if result.outcome is ApplicabilityDetailOutcome.FAILED:
-        return None
-    generator = result.generator
-    if generator is None:
-        raise ValueError("non-failed detail result is missing generator provenance")
-    if generator.task_version == CONFIRMATION_TASK_VERSION:
-        if result.contains_clause_or_requirement_applicability is not None:
-            raise ValueError(
-                "task-v1 detail result unexpectedly carries the task-v2 Presence field"
-            )
-        return result.applicability_target is ApplicabilityTarget.CLAUSE_OR_REQUIREMENT
-    if generator.task_version == PRIMARY_TASK_VERSION:
-        if result.contains_clause_or_requirement_applicability is None:
-            raise ValueError("task-v2 detail result is missing clause applicability Presence")
-        return result.contains_clause_or_requirement_applicability
-    raise ValueError(f"unsupported applicability detail task version: {generator.task_version}")
 
 
 def _validate_role_report(

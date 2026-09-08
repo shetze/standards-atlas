@@ -1,14 +1,52 @@
-"""CLI commands for offline applicability policy replay and evaluation."""
+"""CLI commands for applicability policy replay, evaluation, and selective inference."""
 
 from __future__ import annotations
 
+import shutil
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import replace
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal, Protocol
 
 import typer
+from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.adapters.llm import (
+    LlmConfig,
+    OpenAICompatibleLlmGateway,
+    RamaLamaServerManager,
+)
+from standards_atlas.application.evaluation.repository import PromptRepository
+from standards_atlas.application.ports.llm_gateway import (
+    LlmGateway,
+    LlmHealth,
+    StructuredGenerationRequest,
+    StructuredGenerationResult,
+)
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
     ApplicabilityGoldenCorpus,
+)
+from standards_atlas.application.semantic_qualification.applicability_decision_policy import (
+    POLICY_ID,
+    POLICY_MODEL_ID,
+    POLICY_VERSION,
+)
+from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
+    APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY,
+    APPLICABILITY_DETAIL_FAILURES_FILENAME,
+    APPLICABILITY_DETAIL_REPORT_FILENAME,
+    APPLICABILITY_DETAIL_SELECTION_FILENAME,
+    ApplicabilityDetailEnrichmentConfig,
+    ApplicabilityDetailEnrichmentReport,
+    ApplicabilityDetailEnrichmentService,
+    ApplicabilityDetailSelection,
+    build_applicability_detail_selection,
+    load_applicability_detail_report,
+    load_applicability_detail_selection,
+    persist_applicability_detail_report,
+    persist_applicability_detail_selection,
+    validate_reused_applicability_detail_selection,
 )
 from standards_atlas.application.semantic_qualification.applicability_policy_evaluation import (
     evaluate_applicability_policy,
@@ -17,7 +55,35 @@ from standards_atlas.application.semantic_qualification.applicability_policy_rep
     ApplicabilityPolicyReplayReport,
     replay_applicability_policy,
 )
+from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
+    CONFIRMATION_PROMPT_VERSION,
+    CONFIRMATION_TASK_VERSION,
+    PRIMARY_PROMPT_VERSION,
+    PRIMARY_TASK_VERSION,
+    RESCUE_PROMPT_VERSION,
+    RESCUE_TASK_VERSION,
+    ApplicabilityPolicyRole,
+    applicability_policy_inference_required,
+    run_applicability_policy,
+)
+from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
+from standards_atlas.application.semantic_qualification.proposals import SemanticTaskRepository
+from standards_atlas.application.semantic_qualification.qualification_coverage import (
+    QUALIFICATION_COVERAGE_FILENAME,
+    load_qualification_coverage,
+)
+from standards_atlas.application.semantic_qualification.qualification_matrix import (
+    QualificationMatrixManifest,
+)
+from standards_atlas.application.semantic_qualification.run_selection import (
+    QUALIFICATION_SELECTION_FILENAME,
+    ensure_qualification_run_snapshots,
+    examples_for_persisted_selection,
+    load_qualification_run_selection,
+)
+from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
+from standards_atlas.domain.model import ApplicabilityFunction, OtherApplicabilityTarget
 
 
 @evaluation_app.command("applicability-policy-replay")
@@ -87,3 +153,392 @@ def evaluate_applicability_policy_command(
     typer.echo(f"False negatives          : {metrics.false_negative} / {report.max_false_negative}")
     typer.echo(f"Qualification passed     : {'yes' if report.passed else 'no'}")
     typer.echo(f"Report                   : {output}")
+
+
+APPLICABILITY_POLICY_RUN_FILENAME = "applicability-policy-run.json"
+APPLICABILITY_POLICY_SELECTION_FILENAME = "applicability-policy-selection.json"
+APPLICABILITY_POLICY_STATE_FILENAME = "applicability-policy-run-state.json"
+
+
+class _PolicyRunState(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["1.0"] = "1.0"
+    policy_id: Literal[POLICY_ID] = POLICY_ID
+    policy_version: Literal[POLICY_VERSION] = POLICY_VERSION
+    source_selection_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    model_id: str = Field(min_length=1)
+    model_ref: str = Field(min_length=1)
+    cache_disabled: bool = False
+
+
+class _RunningStatus(Protocol):
+    running: bool
+
+
+class _PolicyServer(Protocol):
+    def status(self) -> _RunningStatus: ...
+    def start(self) -> None: ...
+    def stop(self) -> None: ...
+
+
+@contextmanager
+def _managed_policy_server(server: _PolicyServer, *, enabled: bool) -> Iterator[None]:
+    started_for_run = False
+    try:
+        if enabled and not server.status().running:
+            server.start()
+            started_for_run = True
+        yield
+    finally:
+        if started_for_run:
+            server.stop()
+
+
+class _CountingGateway(LlmGateway):
+    """Count low-level provider attempts, including retries."""
+
+    def __init__(self, delegate: LlmGateway) -> None:
+        self._delegate = delegate
+        self.request_count = 0
+
+    def health(self) -> LlmHealth:
+        return self._delegate.health()
+
+    def generate_structured(
+        self, request: StructuredGenerationRequest
+    ) -> StructuredGenerationResult:
+        self.request_count += 1
+        return self._delegate.generate_structured(request)
+
+
+@evaluation_app.command("applicability-policy-run")
+def run_applicability_policy_command(
+    manifest_path: Annotated[Path, typer.Option("--manifest", exists=True, readable=True)],
+    run_directory: Annotated[
+        Path,
+        typer.Option(
+            "--run",
+            file_okay=False,
+            help="Qualification run directory containing the persisted run selection.",
+        ),
+    ],
+    consensus_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--consensus",
+            exists=True,
+            readable=True,
+            dir_okay=False,
+            help="Override the final consensus-report.json selected by the manifest.",
+        ),
+    ] = None,
+    resources: Annotated[Path, typer.Option("--resources", file_okay=False)] = (
+        cli_defaults.DEFAULT_EVALUATION_RESOURCES
+    ),
+    config_path: Annotated[Path, typer.Option("--config", exists=True, readable=True)] = (
+        cli_defaults.DEFAULT_LLM_CONFIG
+    ),
+    corpus_root: Annotated[Path, typer.Option("--corpus-root", file_okay=False)] = (
+        cli_defaults.DEFAULT_EVALUATION_CORPUS_ROOT
+    ),
+    output_directory: Annotated[
+        Path | None,
+        typer.Option(
+            "--output-directory",
+            file_okay=False,
+            help="Policy artifact directory; defaults to <run>/applicability-policy.",
+        ),
+    ] = None,
+    fresh: Annotated[
+        bool,
+        typer.Option(
+            "--fresh",
+            help="Start a new policy repetition and keep the LLM cache disabled on resume.",
+        ),
+    ] = False,
+) -> None:
+    """Run Mistral v4 -> v3 -> v1 only where each policy stage can affect the result."""
+
+    manifest = QualificationMatrixManifest.load(manifest_path)
+    base_detail_config = manifest.applicability_detail_enrichment
+    if not base_detail_config.enabled:
+        raise typer.BadParameter("applicability detail enrichment is disabled in the manifest")
+    model = next((item for item in manifest.models if item.id == POLICY_MODEL_ID), None)
+    if model is None:
+        raise typer.BadParameter(
+            "qualified applicability policy model "
+            f"{POLICY_MODEL_ID!r} is absent from manifest.models"
+        )
+    if model.provider != "ramalama" or not model.model_ref:
+        raise typer.BadParameter(
+            "qualified applicability policy currently requires a ramalama model with model_ref"
+        )
+
+    selection_path = run_directory / QUALIFICATION_SELECTION_FILENAME
+    if not selection_path.is_file():
+        raise typer.BadParameter(f"qualification clause selection not found: {selection_path}")
+    run_selection = load_qualification_run_selection(selection_path)
+    ensure_qualification_run_snapshots(
+        selection_root=run_directory,
+        selection=run_selection,
+        corpus_root=corpus_root,
+    )
+    if (
+        run_selection.task != manifest.task
+        or run_selection.dataset_version != manifest.dataset_version
+        or run_selection.corpus_id != manifest.corpus_id
+    ):
+        raise typer.BadParameter(
+            "persisted qualification selection does not match the qualification manifest"
+        )
+    examples = examples_for_persisted_selection(
+        selection_root=run_directory,
+        selection=run_selection,
+    )
+
+    resolved_consensus_path = consensus_path or (
+        manifest.consensus.output_directory / manifest.matrix_id / "consensus-report.json"
+    )
+    if not resolved_consensus_path.is_file():
+        raise typer.BadParameter(
+            f"final qualification consensus not found: {resolved_consensus_path}"
+        )
+    consensus = ConsensusReport.model_validate_json(
+        resolved_consensus_path.read_text(encoding="utf-8")
+    )
+    expected_prompt_selection = manifest.consensus.prompt_selection.model_dump()
+    if (
+        consensus.matrix_id != manifest.matrix_id
+        or consensus.corpus_id != manifest.corpus_id
+        or consensus.prompt_id != manifest.consensus.prompt_id
+        or consensus.reasoning_mode_id != manifest.consensus.reasoning_mode_id
+        or consensus.prompt_selection != expected_prompt_selection
+    ):
+        raise typer.BadParameter(
+            "final qualification consensus does not match the qualification manifest"
+        )
+
+    coverage_path = run_directory / QUALIFICATION_COVERAGE_FILENAME
+    if not coverage_path.is_file():
+        raise typer.BadParameter(f"qualification coverage not found: {coverage_path}")
+    coverage = load_qualification_coverage(coverage_path)
+
+    persisted_detail_selection_path = run_directory / APPLICABILITY_DETAIL_SELECTION_FILENAME
+    try:
+        if persisted_detail_selection_path.is_file():
+            detail_selection = validate_reused_applicability_detail_selection(
+                persisted_selection=load_applicability_detail_selection(
+                    persisted_detail_selection_path
+                ),
+                run_selection=run_selection,
+                examples=examples,
+                consensus=consensus,
+                coverage=coverage,
+            )
+        else:
+            detail_selection = build_applicability_detail_selection(
+                run_selection=run_selection,
+                examples=examples,
+                consensus=consensus,
+                coverage=coverage,
+                task_version=PRIMARY_TASK_VERSION,
+            )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    resolved_output = output_directory or (run_directory / "applicability-policy")
+    if fresh:
+        _clear_policy_artifacts(resolved_output)
+    resolved_output.mkdir(parents=True, exist_ok=True)
+    persist_applicability_detail_selection(
+        detail_selection,
+        resolved_output / APPLICABILITY_POLICY_SELECTION_FILENAME,
+    )
+
+    state_path = resolved_output / APPLICABILITY_POLICY_STATE_FILENAME
+    if state_path.is_file() and not fresh:
+        state = _PolicyRunState.model_validate_json(state_path.read_text(encoding="utf-8"))
+        if (
+            state.source_selection_sha256 != detail_selection.fingerprint
+            or state.model_id != model.id
+            or state.model_ref != model.model_ref
+        ):
+            raise typer.BadParameter(
+                "existing applicability policy run state belongs to a different "
+                "selection or model; "
+                "use --fresh to replace it"
+            )
+    else:
+        state = _PolicyRunState(
+            source_selection_sha256=detail_selection.fingerprint,
+            model_id=model.id,
+            model_ref=model.model_ref,
+            cache_disabled=fresh,
+        )
+        state_path.write_text(state.model_dump_json(indent=2) + "\n", encoding="utf-8")
+
+    llm_config = LlmConfig.load(config_path)
+    llm_config = replace(
+        llm_config,
+        model=model.model_ref,
+        timeout_seconds=base_detail_config.timeout_seconds,
+        cache_directory=None if state.cache_disabled else llm_config.cache_directory,
+        server=replace(llm_config.server, model=model.model_ref),
+    )
+    gateway = _CountingGateway(OpenAICompatibleLlmGateway(llm_config))
+
+    role_specs = {
+        "primary": (PRIMARY_TASK_VERSION, PRIMARY_PROMPT_VERSION),
+        "rescue": (RESCUE_TASK_VERSION, RESCUE_PROMPT_VERSION),
+        "confirmation": (CONFIRMATION_TASK_VERSION, CONFIRMATION_PROMPT_VERSION),
+    }
+    services: dict[ApplicabilityPolicyRole, ApplicabilityDetailEnrichmentService] = {}
+    existing: dict[ApplicabilityPolicyRole, ApplicabilityDetailEnrichmentReport | None] = {}
+    for role, (task_version, prompt_version) in role_specs.items():
+        role_dir = resolved_output / role
+        role_dir.mkdir(parents=True, exist_ok=True)
+        task, schema = SemanticTaskRepository(resources / "tasks").load(
+            base_detail_config.task,
+            task_version,
+        )
+        prompt = PromptRepository(resources / "prompts").load(
+            base_detail_config.task,
+            prompt_version,
+        )
+        _validate_policy_task_taxonomy(task)
+        role_config = ApplicabilityDetailEnrichmentConfig.model_validate(
+            {
+                **base_detail_config.model_dump(),
+                "task_version": task_version,
+                "prompt_version": prompt_version,
+                "model": model.id,
+            }
+        )
+        services[role] = ApplicabilityDetailEnrichmentService(
+            gateway,
+            config=role_config,
+            prompt=prompt,
+            canonical_schema=schema,
+            model_id=model.id,
+            model_ref=model.model_ref,
+            artifact_root=role_dir / APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY,
+        )
+        report_path = role_dir / APPLICABILITY_DETAIL_REPORT_FILENAME
+        existing[role] = (
+            load_applicability_detail_report(report_path) if report_path.is_file() else None
+        )
+
+    last_processed = {role: 0 for role in role_specs}
+
+    def checkpoint(
+        role: ApplicabilityPolicyRole,
+        role_selection: ApplicabilityDetailSelection,
+        report: ApplicabilityDetailEnrichmentReport,
+    ) -> None:
+        role_dir = resolved_output / role
+        persist_applicability_detail_selection(
+            role_selection,
+            role_dir / APPLICABILITY_DETAIL_SELECTION_FILENAME,
+        )
+        persist_applicability_detail_report(
+            report,
+            role_dir / APPLICABILITY_DETAIL_REPORT_FILENAME,
+            role_dir / APPLICABILITY_DETAIL_FAILURES_FILENAME,
+        )
+        if report.processed_clause_count > last_processed[role]:
+            latest = report.clauses[-1]
+            typer.echo(
+                f"Applicability policy {role:12}: "
+                f"{report.processed_clause_count}/{report.selected_clause_count} "
+                f"{latest.document_key}/{latest.clause_id} {latest.outcome.value}"
+            )
+            last_processed[role] = report.processed_clause_count
+
+    try:
+        inference_required = applicability_policy_inference_required(
+            selection=detail_selection,
+            primary_service=services["primary"],
+            rescue_service=services["rescue"],
+            confirmation_service=services["confirmation"],
+            existing_primary=existing["primary"],
+            existing_rescue=existing["rescue"],
+            existing_confirmation=existing["confirmation"],
+        )
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    server = RamaLamaServerManager(llm_config)
+    try:
+        with _managed_policy_server(
+            server,
+            enabled=llm_config.server.enabled and inference_required,
+        ):
+            result = run_applicability_policy(
+                selection=detail_selection,
+                consensus=consensus,
+                examples=examples,
+                primary_service=services["primary"],
+                rescue_service=services["rescue"],
+                confirmation_service=services["confirmation"],
+                existing_primary=existing["primary"],
+                existing_rescue=existing["rescue"],
+                existing_confirmation=existing["confirmation"],
+                checkpoint=checkpoint,
+                request_count=lambda: gateway.request_count,
+            )
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    for role in role_specs:
+        checkpoint(role, result.selections[role], result.reports[role])
+    run_report_path = resolved_output / APPLICABILITY_POLICY_RUN_FILENAME
+    run_report_path.write_text(
+        result.report.model_dump_json(indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    typer.echo(
+        f"Policy                   : {result.report.policy_id} {result.report.policy_version}"
+    )
+    typer.echo(f"Detail model             : {model.id} / {model.model_ref}")
+    typer.echo(f"Presence selection       : {result.report.selected_clause_count}")
+    for stage in result.report.stages:
+        requests = (
+            "n/a" if stage.provider_request_count is None else str(stage.provider_request_count)
+        )
+        typer.echo(
+            f"{stage.role.title():24}: selected={stage.selected_clause_count} "
+            f"pending={stage.pending_clause_count} provider_requests={requests}"
+        )
+    typer.echo(f"Final positive           : {result.report.final_positive_count}")
+    typer.echo(f"Final negative           : {result.report.final_negative_count}")
+    typer.echo(f"Final unknown            : {result.report.final_unknown_count}")
+    typer.echo(f"Cache disabled           : {'yes' if state.cache_disabled else 'no'}")
+    typer.echo(f"Policy output directory  : {resolved_output}")
+    typer.echo(f"Policy report            : {run_report_path}")
+
+
+def _validate_policy_task_taxonomy(task: object) -> None:
+    expected_functions = tuple(item.value for item in ApplicabilityFunction)
+    if getattr(task, "applicability_taxonomy", ()) != expected_functions:
+        raise typer.BadParameter("applicability policy task ontology differs from domain taxonomy")
+    expected_other_targets = tuple(item.value for item in OtherApplicabilityTarget)
+    task_other_targets = getattr(task, "other_applicability_target_taxonomy", ())
+    if task_other_targets and task_other_targets != expected_other_targets:
+        raise typer.BadParameter(
+            "applicability policy other-target ontology differs from domain taxonomy"
+        )
+
+
+def _clear_policy_artifacts(root: Path) -> None:
+    for role in ("primary", "rescue", "confirmation"):
+        shutil.rmtree(root / role, ignore_errors=True)
+    for filename in (
+        APPLICABILITY_POLICY_RUN_FILENAME,
+        APPLICABILITY_POLICY_SELECTION_FILENAME,
+        APPLICABILITY_POLICY_STATE_FILENAME,
+    ):
+        (root / filename).unlink(missing_ok=True)

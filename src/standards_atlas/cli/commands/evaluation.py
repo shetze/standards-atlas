@@ -30,6 +30,7 @@ from standards_atlas.cli.commands.evaluation_commands.applicability_end_to_end i
 from standards_atlas.cli.commands.evaluation_commands.applicability_policy import (
     evaluate_applicability_policy_command,
     replay_applicability_policy_command,
+    run_applicability_policy_command,
 )
 from standards_atlas.cli.commands.evaluation_commands.benchmark import (
     qualify_golden_corpus,
@@ -81,6 +82,7 @@ __all__ = [
     "publish_annotation_reviews",
     "publish_applicability_detail_disagreement_hitl",
     "replay_applicability_policy_command",
+    "run_applicability_policy_command",
     "qualify_challengers",
     "qualify_golden_corpus",
     "qualify_model_prompt_matrix",

@@ -11,3 +11,4 @@ def test_evaluation_help_lists_applicability_policy_commands() -> None:
     assert result.exit_code == 0
     assert "applicability-policy-replay" in result.stdout
     assert "applicability-policy-evaluate" in result.stdout
+    assert "applicability-policy-run" in result.stdout
