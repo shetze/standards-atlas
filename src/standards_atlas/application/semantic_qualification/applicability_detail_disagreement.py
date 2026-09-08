@@ -177,9 +177,7 @@ class ApplicabilityDetailHitlConsensusReport(BaseModel):
         if len(self.clauses) != self.selected_clause_count:
             raise ValueError("HITL consensus clause count must match selected_clause_count")
         if (
-            self.automatic_agreement_count
-            + self.disagreement_count
-            + self.source_failure_count
+            self.automatic_agreement_count + self.disagreement_count + self.source_failure_count
             != self.selected_clause_count
         ):
             raise ValueError("HITL agreement/disagreement/failure accounting does not balance")
@@ -413,10 +411,7 @@ def publish_applicability_detail_disagreement_review(
     for selected in left_selection.clauses:
         coordinate = (selected.document_key, selected.clause_id)
         kind = _disagreement_kind(left_by[coordinate], right_by[coordinate])
-        if (
-            kind is ApplicabilityDetailDisagreementKind.DECISION
-            and coordinate not in golden_by
-        ):
+        if kind is ApplicabilityDetailDisagreementKind.DECISION and coordinate not in golden_by:
             expected_review_coordinates.add(coordinate)
     if set(review_rows) != expected_review_coordinates:
         raise ValueError(
@@ -802,10 +797,7 @@ def _review_has_human_edits(rows: list[dict[str, str]]) -> bool:
 
 
 def _write_or_preserve_review(review_path: Path, rows: list[dict[str, str]]) -> bool:
-    expected_coordinates = {
-        (row["document_key"], row["clause_id"])
-        for row in rows
-    }
+    expected_coordinates = {(row["document_key"], row["clause_id"]) for row in rows}
     if review_path.exists():
         with review_path.open("r", encoding="utf-8", newline="") as handle:
             reader = csv.DictReader(handle)

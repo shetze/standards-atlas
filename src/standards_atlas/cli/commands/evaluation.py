@@ -27,6 +27,10 @@ from standards_atlas.cli.commands.evaluation_commands.applicability_detail_model
 from standards_atlas.cli.commands.evaluation_commands.applicability_end_to_end import (
     evaluate_applicability_end_to_end_corpus,
 )
+from standards_atlas.cli.commands.evaluation_commands.applicability_policy import (
+    evaluate_applicability_policy_command,
+    replay_applicability_policy_command,
+)
 from standards_atlas.cli.commands.evaluation_commands.benchmark import (
     qualify_golden_corpus,
     run_evaluation_matrix,
@@ -66,6 +70,7 @@ __all__ = [
     "enrich_applicability_details",
     "evaluate_applicability_detail_disagreement_hitl",
     "evaluate_applicability_end_to_end_corpus",
+    "evaluate_applicability_policy_command",
     "evaluate_annotation_metrics",
     "evaluate_role_corpus",
     "export_annotation_reviews",
@@ -75,6 +80,7 @@ __all__ = [
     "propose_evaluation_annotations",
     "publish_annotation_reviews",
     "publish_applicability_detail_disagreement_hitl",
+    "replay_applicability_policy_command",
     "qualify_challengers",
     "qualify_golden_corpus",
     "qualify_model_prompt_matrix",
