@@ -12,6 +12,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
     ApplicabilityDetailEnrichmentConfig,
 )
+from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
+    ApplicabilityDecisionPolicyConfig,
+)
 from standards_atlas.application.semantic_qualification.qualification import (
     AnnotationQualificationReport,
 )
@@ -734,7 +737,7 @@ class QualificationMatrixManifest(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     manifest_type: Literal["qualification_matrix"] = "qualification_matrix"
-    schema_version: Literal["1.5"] = "1.5"
+    schema_version: Literal["1.5", "1.6"] = "1.6"
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)
     task: str = Field(default="semantic-profile-classification", min_length=1)
@@ -752,6 +755,9 @@ class QualificationMatrixManifest(BaseModel):
     challenger_qualification: ChallengerQualificationConfig = ChallengerQualificationConfig()
     applicability_detail_enrichment: ApplicabilityDetailEnrichmentConfig = (
         ApplicabilityDetailEnrichmentConfig(enabled=False)
+    )
+    applicability_decision_policy: ApplicabilityDecisionPolicyConfig = (
+        ApplicabilityDecisionPolicyConfig(enabled=False)
     )
     semantic_extraction_qualification: SemanticExtractionQualificationConfig = (
         SemanticExtractionQualificationConfig(enabled=False)
@@ -840,6 +846,16 @@ class QualificationMatrixManifest(BaseModel):
                 raise ValueError("enabled applicability detail enrichment requires a model")
             if detail.model not in model_ids:
                 raise ValueError(f"unknown applicability detail enrichment model: {detail.model!r}")
+        policy = self.applicability_decision_policy
+        if policy.enabled:
+            if not detail.enabled:
+                raise ValueError(
+                    "applicability decision policy requires enabled applicability detail enrichment"
+                )
+            if not self.consensus.enabled:
+                raise ValueError("applicability decision policy requires enabled final consensus")
+            if policy.model not in model_ids:
+                raise ValueError(f"unknown applicability decision policy model: {policy.model!r}")
         for model in self.models:
             unknown_modes = set(model.supported_reasoning_modes) - set(reasoning_mode_ids)
             if unknown_modes:
@@ -992,11 +1008,15 @@ class QualificationMatrixManifest(BaseModel):
                 )
             }
         )
+        policy = manifest.applicability_decision_policy
+        if policy.golden_corpus is not None and not policy.golden_corpus.is_absolute():
+            policy = policy.model_copy(update={"golden_corpus": base / policy.golden_corpus})
         return manifest.model_copy(
             update={
                 "observations": observations,
                 "review_imports": review_imports,
                 "consensus": consensus,
+                "applicability_decision_policy": policy,
             }
         )
 

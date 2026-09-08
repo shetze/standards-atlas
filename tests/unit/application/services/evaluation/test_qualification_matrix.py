@@ -1498,6 +1498,21 @@ def test_v6_applicability_presence_manifest_uses_one_shared_prompt_in_every_stag
     assert manifest.applicability_detail_enrichment.task_version == "1.0.0"
     assert manifest.applicability_detail_enrichment.prompt_version == "detail-structure-aware-v1"
     assert manifest.applicability_detail_enrichment.model == "qwen3-14b-q4-k-m"
+    assert manifest.schema_version == "1.6"
+    assert manifest.applicability_decision_policy.enabled is True
+    assert manifest.applicability_decision_policy.model == "mistral-small-3.2-24b-instruct-q4-k-m"
+    assert manifest.applicability_decision_policy.primary.prompt_version == (
+        "detail-structure-aware-v4"
+    )
+    assert manifest.applicability_decision_policy.rescue.prompt_version == (
+        "detail-structure-aware-v3"
+    )
+    assert manifest.applicability_decision_policy.confirmation.prompt_version == (
+        "detail-structure-aware-v1"
+    )
+    assert manifest.applicability_decision_policy.max_false_positive == 2
+    assert manifest.applicability_decision_policy.max_false_negative == 2
+    assert manifest.applicability_decision_policy.required_fresh_repetitions == 3
     assert "applicability_polarity" not in raw
 
 

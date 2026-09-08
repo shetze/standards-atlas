@@ -30,6 +30,9 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 from standards_atlas.application.semantic_qualification.applicability_policy_normalization import (
     normalize_detail_presence,
 )
+from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
+    ApplicabilityPolicyQualificationMode,
+)
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 
 ApplicabilityPolicyRole = Literal["primary", "rescue", "confirmation"]
@@ -161,12 +164,16 @@ class ApplicabilityPolicyRunReport(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.0", "1.1"] = "1.1"
     task: Literal["applicability-policy-run"] = "applicability-policy-run"
     policy_id: Literal[POLICY_ID] = POLICY_ID
     policy_version: Literal[POLICY_VERSION] = POLICY_VERSION
     expression: Literal[POLICY_EXPRESSION] = POLICY_EXPRESSION
     generated_at: datetime
+    qualification_mode: ApplicabilityPolicyQualificationMode = (
+        ApplicabilityPolicyQualificationMode.OPERATIONAL
+    )
+    fresh_requested: bool = False
     source_matrix_id: str = Field(min_length=1)
     source_corpus_id: str = Field(min_length=1)
     source_selection_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -326,6 +333,10 @@ def run_applicability_policy(
     existing_confirmation: ApplicabilityDetailEnrichmentReport | None = None,
     checkpoint: PolicyCheckpoint | None = None,
     request_count: Callable[[], int] | None = None,
+    qualification_mode: ApplicabilityPolicyQualificationMode = (
+        ApplicabilityPolicyQualificationMode.OPERATIONAL
+    ),
+    fresh_requested: bool = False,
 ) -> ApplicabilityPolicyRunResult:
     """Run only the detail roles that can still affect D4 OR (D3 AND D1)."""
 
@@ -468,6 +479,8 @@ def run_applicability_policy(
 
     report = ApplicabilityPolicyRunReport(
         generated_at=datetime.now(UTC),
+        qualification_mode=qualification_mode,
+        fresh_requested=fresh_requested,
         source_matrix_id=consensus.matrix_id,
         source_corpus_id=consensus.corpus_id,
         source_selection_sha256=selection.fingerprint,

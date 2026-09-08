@@ -12,6 +12,14 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     APPLICABILITY_DETAIL_REPORT_FILENAME,
     APPLICABILITY_DETAIL_SELECTION_FILENAME,
 )
+from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
+    APPLICABILITY_POLICY_ARTIFACT_DIRECTORY,
+    APPLICABILITY_POLICY_EVALUATION_FILENAME,
+    APPLICABILITY_POLICY_RUN_FILENAME,
+    APPLICABILITY_POLICY_SELECTION_FILENAME,
+    APPLICABILITY_POLICY_STATE_FILENAME,
+    ApplicabilityPolicyQualificationMode,
+)
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
@@ -36,6 +44,7 @@ class QualificationWorkflowPlan:
 
     document_plan: WorkflowPlan
     steps: tuple[WorkflowStep, ...]
+    fresh_repetition_stages: tuple[WorkflowStage, ...] = ()
 
 
 class QualificationWorkflowPlanner:
@@ -60,11 +69,16 @@ class QualificationWorkflowPlanner:
         regenerate_docling: bool = False,
         overwrite: bool = False,
         fresh: bool = False,
+        fresh_applicability_policy: bool = False,
         keep_stages: tuple[WorkflowStage, ...] = (),
         qualification_output: Path = Path(".atlas/data/evaluation/qualification"),
         corpus_output: Path = Path(".atlas/data/evaluation/corpora"),
     ) -> QualificationWorkflowPlan:
         manifest = QualificationMatrixManifest.load(manifest_path)
+        if fresh_applicability_policy and not manifest.applicability_decision_policy.enabled:
+            raise ValueError(
+                "--fresh-applicability-policy requires an enabled applicability decision policy"
+            )
         document_plan = self._document_planner.plan(
             catalog,
             family_keys=family_keys,
@@ -160,7 +174,60 @@ class QualificationWorkflowPlanner:
         )
         steps: tuple[WorkflowStep, ...] = (*document_steps, corpus_step, matrix_step)
         detail_config = manifest.applicability_detail_enrichment
-        if detail_config.enabled:
+        policy_config = manifest.applicability_decision_policy
+        if policy_config.enabled:
+            policy_output = (
+                qualification_output / manifest.matrix_id / APPLICABILITY_POLICY_ARTIFACT_DIRECTORY
+            )
+            policy_command = [
+                "uv",
+                "run",
+                "standards-atlas",
+                "evaluation",
+                "applicability-policy-run",
+                "--manifest",
+                str(manifest_path),
+                "--run",
+                str(qualification_output / manifest.matrix_id),
+                "--corpus-root",
+                str(corpus_output),
+                "--output-directory",
+                str(policy_output),
+            ]
+            if fresh or fresh_applicability_policy:
+                policy_command.append("--fresh")
+                mode = (
+                    ApplicabilityPolicyQualificationMode.FRESH_END_TO_END
+                    if fresh
+                    else ApplicabilityPolicyQualificationMode.FRESH_DETAIL_FIXED_PRESENCE
+                )
+                policy_command.extend(("--qualification-mode", mode.value))
+            policy_outputs = [
+                str(policy_output / APPLICABILITY_POLICY_SELECTION_FILENAME),
+                str(policy_output / APPLICABILITY_POLICY_STATE_FILENAME),
+                str(policy_output / APPLICABILITY_POLICY_RUN_FILENAME),
+            ]
+            if policy_config.golden_corpus is not None:
+                policy_outputs.append(str(policy_output / APPLICABILITY_POLICY_EVALUATION_FILENAME))
+            policy_outputs.extend(
+                (
+                    str(policy_output),
+                    (
+                        ".atlas/work/workflow/qualification/"
+                        f"{manifest.matrix_id}/applicability-policy.complete"
+                    ),
+                )
+            )
+            policy_step = WorkflowStep(
+                family="evaluation",
+                document=f"{manifest.matrix_id}-applicability-policy",
+                stage=WorkflowStage.APPLICABILITY_DECISION_POLICY,
+                command=tuple(policy_command),
+                artifact_policy=ArtifactPolicy.DERIVED,
+                output_paths=tuple(policy_outputs),
+            )
+            steps = (*steps, policy_step)
+        elif detail_config.enabled:
             detail_command = [
                 "uv",
                 "run",
@@ -174,7 +241,7 @@ class QualificationWorkflowPlanner:
                 "--corpus-root",
                 str(corpus_output),
             ]
-            if fresh:
+            if fresh or fresh_applicability_policy:
                 detail_command.append("--fresh")
             detail_step = WorkflowStep(
                 family="evaluation",
@@ -271,9 +338,21 @@ class QualificationWorkflowPlanner:
             output_paths=("local/evaluation/qualification-run-*.zip",),
         )
         steps = (*steps, archive_step)
+        fresh_repetition_stages: list[WorkflowStage] = []
+        if fresh:
+            fresh_repetition_stages.append(WorkflowStage.QUALIFICATION_MATRIX)
+            if policy_config.enabled:
+                fresh_repetition_stages.append(WorkflowStage.APPLICABILITY_DECISION_POLICY)
+            elif detail_config.enabled:
+                fresh_repetition_stages.append(WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT)
+            if extraction_config.enabled:
+                fresh_repetition_stages.append(WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION)
+        elif fresh_applicability_policy:
+            fresh_repetition_stages.append(WorkflowStage.APPLICABILITY_DECISION_POLICY)
         return QualificationWorkflowPlan(
             document_plan=document_plan,
             steps=steps,
+            fresh_repetition_stages=tuple(fresh_repetition_stages),
         )
 
     @staticmethod

@@ -14,6 +14,9 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
 from standards_atlas.application.semantic_qualification.applicability_policy_replay import (
     ApplicabilityPolicyReplayReport,
 )
+from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
+    ApplicabilityPolicyRunReport,
+)
 
 
 class ApplicabilityPolicyEvaluationCase(BaseModel):
@@ -81,7 +84,7 @@ class ApplicabilityPolicyEvaluationReport(BaseModel):
 
 def evaluate_applicability_policy(
     golden: ApplicabilityGoldenCorpus,
-    replay: ApplicabilityPolicyReplayReport,
+    replay: ApplicabilityPolicyReplayReport | ApplicabilityPolicyRunReport,
     *,
     max_false_positive: int = 2,
     max_false_negative: int = 2,

@@ -17,6 +17,9 @@ from standards_atlas.application.semantic_qualification.analysis_archive import 
     collect_qualification_input_members,
     create_analysis_archive,
 )
+from standards_atlas.application.semantic_qualification.applicability_corpus import (
+    ApplicabilityGoldenCorpus,
+)
 from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
     APPLICABILITY_DETAIL_FAILURES_FILENAME,
     APPLICABILITY_DETAIL_REPORT_FILENAME,
@@ -27,6 +30,25 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     load_applicability_detail_selection,
     validate_applicability_detail_artifacts,
     validate_completed_applicability_detail_enrichment,
+    validate_reused_applicability_detail_selection,
+)
+from standards_atlas.application.semantic_qualification.applicability_policy_archive import (
+    validate_completed_applicability_policy,
+)
+from standards_atlas.application.semantic_qualification.applicability_policy_evaluation import (
+    ApplicabilityPolicyEvaluationReport,
+    evaluate_applicability_policy,
+)
+from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
+    APPLICABILITY_POLICY_ARTIFACT_DIRECTORY,
+    APPLICABILITY_POLICY_EVALUATION_FILENAME,
+    APPLICABILITY_POLICY_RUN_FILENAME,
+    APPLICABILITY_POLICY_SELECTION_FILENAME,
+    APPLICABILITY_POLICY_STATE_FILENAME,
+    ApplicabilityPolicyRunState,
+)
+from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
+    ApplicabilityPolicyRunReport,
 )
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
@@ -173,9 +195,11 @@ def finalize_qualification_archive(
         matrix_passed = matrix_report.get("passed")
 
     detail_summary: dict[str, Any] | None = None
+    policy_summary: dict[str, Any] | None = None
     detail_consensus_path: Path | None = None
     detail_config = manifest.applicability_detail_enrichment
-    if detail_config.enabled:
+    policy_config = manifest.applicability_decision_policy
+    if detail_config.enabled and not policy_config.enabled:
         if coverage is None:
             raise typer.BadParameter(
                 "applicability detail enrichment requires consensus qualification coverage"
@@ -254,6 +278,121 @@ def finalize_qualification_archive(
             raise typer.BadParameter(str(exc)) from exc
         detail_summary = summary.model_dump(mode="json")
 
+    if policy_config.enabled:
+        if coverage is None:
+            raise typer.BadParameter(
+                "applicability decision policy requires consensus qualification coverage"
+            )
+        detail_consensus_path = (
+            manifest.consensus.output_directory / manifest.matrix_id / "consensus-report.json"
+        )
+        if not detail_consensus_path.is_file():
+            raise typer.BadParameter(
+                f"final qualification consensus not found: {detail_consensus_path}"
+            )
+        consensus = ConsensusReport.model_validate_json(
+            detail_consensus_path.read_text(encoding="utf-8")
+        )
+        expected_prompt_selection = manifest.consensus.prompt_selection.model_dump()
+        if (
+            consensus.matrix_id != manifest.matrix_id
+            or consensus.corpus_id != manifest.corpus_id
+            or consensus.prompt_id != manifest.consensus.prompt_id
+            or consensus.reasoning_mode_id != manifest.consensus.reasoning_mode_id
+            or consensus.prompt_selection != expected_prompt_selection
+        ):
+            raise typer.BadParameter(
+                "final qualification consensus does not match the qualification manifest"
+            )
+        policy_root = run_directory / APPLICABILITY_POLICY_ARTIFACT_DIRECTORY
+        required_policy_paths = {
+            "selection": policy_root / APPLICABILITY_POLICY_SELECTION_FILENAME,
+            "state": policy_root / APPLICABILITY_POLICY_STATE_FILENAME,
+            "run report": policy_root / APPLICABILITY_POLICY_RUN_FILENAME,
+        }
+        if policy_config.golden_corpus is not None:
+            required_policy_paths["golden evaluation"] = (
+                policy_root / APPLICABILITY_POLICY_EVALUATION_FILENAME
+            )
+        for label, path in required_policy_paths.items():
+            if not path.is_file():
+                raise typer.BadParameter(
+                    f"applicability policy {label} not found; run "
+                    f"applicability-policy-run first: {path}"
+                )
+        if policy_config.model is None:
+            raise typer.BadParameter("applicability decision policy has no configured model")
+        policy_model = next(
+            (item for item in manifest.models if item.id == policy_config.model),
+            None,
+        )
+        if policy_model is None or not policy_model.model_ref:
+            raise typer.BadParameter(
+                "applicability decision policy model is absent or incomplete in the manifest"
+            )
+        try:
+            policy_selection = validate_reused_applicability_detail_selection(
+                persisted_selection=load_applicability_detail_selection(
+                    required_policy_paths["selection"]
+                ),
+                run_selection=run_selection,
+                examples=selected_examples,
+                consensus=consensus,
+                coverage=coverage,
+            )
+            state = ApplicabilityPolicyRunState.model_validate_json(
+                required_policy_paths["state"].read_text(encoding="utf-8")
+            )
+            run_report = ApplicabilityPolicyRunReport.model_validate_json(
+                required_policy_paths["run report"].read_text(encoding="utf-8")
+            )
+            role_selections = {}
+            role_reports = {}
+            for role in ("primary", "rescue", "confirmation"):
+                role_root = policy_root / role
+                role_selection_path = role_root / APPLICABILITY_DETAIL_SELECTION_FILENAME
+                role_report_path = role_root / APPLICABILITY_DETAIL_REPORT_FILENAME
+                if not role_selection_path.is_file() or not role_report_path.is_file():
+                    raise ValueError(f"applicability policy {role} artifacts are incomplete")
+                role_selections[role] = load_applicability_detail_selection(role_selection_path)
+                role_reports[role] = load_applicability_detail_report(role_report_path)
+
+            evaluation = None
+            if policy_config.golden_corpus is not None:
+                if not policy_config.golden_corpus.is_file():
+                    raise ValueError(
+                        "applicability policy golden corpus not found: "
+                        f"{policy_config.golden_corpus}"
+                    )
+                evaluation = ApplicabilityPolicyEvaluationReport.model_validate_json(
+                    required_policy_paths["golden evaluation"].read_text(encoding="utf-8")
+                )
+                recomputed = evaluate_applicability_policy(
+                    ApplicabilityGoldenCorpus.load(policy_config.golden_corpus),
+                    run_report,
+                    max_false_positive=policy_config.max_false_positive,
+                    max_false_negative=policy_config.max_false_negative,
+                )
+                if evaluation != recomputed:
+                    raise ValueError(
+                        "persisted applicability policy golden evaluation is stale "
+                        "or belongs to different inputs"
+                    )
+            summary = validate_completed_applicability_policy(
+                expected_selection=policy_selection,
+                run_report=run_report,
+                state=state,
+                role_selections=role_selections,
+                role_reports=role_reports,
+                config=policy_config,
+                model_id=policy_model.id,
+                model_ref=policy_model.model_ref,
+                evaluation=evaluation,
+            )
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc)) from exc
+        policy_summary = summary.model_dump(mode="json")
+
     semantic_report_path = run_directory / "semantic-extraction-qualification.json"
     semantic_report: dict[str, Any] | None = None
     if manifest.semantic_extraction_qualification.enabled:
@@ -312,10 +451,22 @@ def finalize_qualification_archive(
         )
     )
     if detail_consensus_path is not None:
+        consensus_member = (
+            "inputs/applicability-policy/final-consensus-report.json"
+            if policy_config.enabled
+            else "inputs/applicability-detail/final-consensus-report.json"
+        )
+        input_members.append((detail_consensus_path, consensus_member))
+    if policy_config.enabled and policy_config.golden_corpus is not None:
+        input_members = [
+            member
+            for member in input_members
+            if member[1] != "inputs/applicability-policy/golden-corpus.yaml"
+        ]
         input_members.append(
             (
-                detail_consensus_path,
-                "inputs/applicability-detail/final-consensus-report.json",
+                policy_config.golden_corpus,
+                "inputs/applicability-policy/golden-corpus.yaml",
             )
         )
 
@@ -402,6 +553,7 @@ def finalize_qualification_archive(
         matrix_passed=matrix_passed,
         execution_policy=execution_policy,
         applicability_detail_enrichment=detail_summary,
+        applicability_decision_policy=policy_summary,
         semantic_extraction_qualification=semantic_report,
         archive_directory=archive_output,
         input_members=tuple(input_members),

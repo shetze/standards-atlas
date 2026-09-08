@@ -42,12 +42,15 @@ class WorkflowExecutor:
         blocked_documents: set[str] = set()
         blocked_families: set[str] = set()
 
+        self._recovery.begin_fresh_repetition(plan, project_root)
+
         for step in plan.steps:
             if not continue_after_review:
                 if step.stage in {
                     WorkflowStage.CORPUS_BUILD,
                     WorkflowStage.QUALIFICATION_MATRIX,
                     WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT,
+                    WorkflowStage.APPLICABILITY_DECISION_POLICY,
                     WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
                     WorkflowStage.QUALIFICATION_ARCHIVE,
                 } and (blocked_documents or blocked_families):
@@ -92,8 +95,11 @@ class WorkflowExecutor:
                 elif self._recovery.alignment_requires_review(project_root, step.document):
                     blocked_documents.add(step.document)
 
-        return WorkflowExecutionResult(
+        result = WorkflowExecutionResult(
             executed_steps=tuple(executed),
             blocked_documents=tuple(sorted(blocked_documents)),
             blocked_families=tuple(sorted(blocked_families)),
         )
+        if result.completed:
+            self._recovery.record_fresh_repetition_completion(plan, project_root)
+        return result

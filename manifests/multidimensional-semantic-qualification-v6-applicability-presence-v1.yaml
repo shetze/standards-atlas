@@ -1,5 +1,5 @@
 manifest_type: qualification_matrix
-schema_version: '1.5'
+schema_version: '1.6'
 matrix_id: multidimensional-semantic-qualification-v6-applicability-presence
 corpus_id: semantic-profile-v1
 task: semantic-profile-classification
@@ -319,5 +319,23 @@ applicability_detail_enrichment:
   retry_backoff_seconds: 1.0
   retry_timeouts: true
   timeout_seconds: 180.0
+applicability_decision_policy:
+  enabled: true
+  policy_id: mistral-v4-or-v3-and-v1
+  policy_version: 1.0.0
+  model: mistral-small-3.2-24b-instruct-q4-k-m
+  primary:
+    task_version: 2.0.0
+    prompt_version: detail-structure-aware-v4
+  rescue:
+    task_version: 2.0.0
+    prompt_version: detail-structure-aware-v3
+  confirmation:
+    task_version: 1.0.0
+    prompt_version: detail-structure-aware-v1
+  golden_corpus: ../local/review/applicability/3.0.0/applicability-golden-corpus.yaml
+  max_false_positive: 2
+  max_false_negative: 2
+  required_fresh_repetitions: 3
 semantic_extraction_qualification:
   enabled: false

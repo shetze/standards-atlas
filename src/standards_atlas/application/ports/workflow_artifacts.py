@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from standards_atlas.application.workflow.models import WorkflowStep
+    from standards_atlas.application.workflow.models import WorkflowPlan, WorkflowStep
 
 
 class ExtractionState(StrEnum):
@@ -31,5 +31,11 @@ class WorkflowArtifactStore(Protocol):
     def record_completion(self, step: WorkflowStep, project_root: Path) -> None: ...
 
     def remove_outputs(self, step: WorkflowStep, project_root: Path) -> None: ...
+
+    def begin_fresh_repetition(self, plan: WorkflowPlan, project_root: Path) -> None: ...
+
+    def record_fresh_repetition_completion(
+        self, plan: WorkflowPlan, project_root: Path
+    ) -> None: ...
 
     def alignment_requires_review(self, project_root: Path, document_key: str) -> bool: ...

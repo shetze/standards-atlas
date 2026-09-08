@@ -35,6 +35,7 @@ class WorkflowStage(StrEnum):
     CORPUS_BUILD = "corpus-build"
     QUALIFICATION_MATRIX = "qualification-matrix"
     APPLICABILITY_DETAIL_ENRICHMENT = "applicability-detail-enrichment"
+    APPLICABILITY_DECISION_POLICY = "applicability-decision-policy"
     SEMANTIC_EXTRACTION_QUALIFICATION = "semantic-extraction-qualification"
     QUALIFICATION_ARCHIVE = "qualification-archive"
 
@@ -57,6 +58,7 @@ class WorkflowPlan:
     steps: tuple[WorkflowStep, ...]
     force: bool = False
     kept_stages: tuple[WorkflowStage, ...] = ()
+    fresh_repetition_stages: tuple[WorkflowStage, ...] = ()
 
 
 @dataclass(frozen=True)

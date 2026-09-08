@@ -7,10 +7,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
-from typing import Annotated, Literal, Protocol
+from typing import Annotated, Protocol
 
 import typer
-from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.adapters.llm import (
     LlmConfig,
@@ -28,9 +27,7 @@ from standards_atlas.application.semantic_qualification.applicability_corpus imp
     ApplicabilityGoldenCorpus,
 )
 from standards_atlas.application.semantic_qualification.applicability_decision_policy import (
-    POLICY_ID,
     POLICY_MODEL_ID,
-    POLICY_VERSION,
 )
 from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
     APPLICABILITY_DETAIL_ARTIFACT_DIRECTORY,
@@ -51,6 +48,14 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 from standards_atlas.application.semantic_qualification.applicability_policy_evaluation import (
     evaluate_applicability_policy,
 )
+from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
+    APPLICABILITY_POLICY_EVALUATION_FILENAME,
+    APPLICABILITY_POLICY_RUN_FILENAME,
+    APPLICABILITY_POLICY_SELECTION_FILENAME,
+    APPLICABILITY_POLICY_STATE_FILENAME,
+    ApplicabilityPolicyQualificationMode,
+    ApplicabilityPolicyRunState,
+)
 from standards_atlas.application.semantic_qualification.applicability_policy_replay import (
     ApplicabilityPolicyReplayReport,
     replay_applicability_policy,
@@ -63,6 +68,7 @@ from standards_atlas.application.semantic_qualification.applicability_policy_run
     RESCUE_PROMPT_VERSION,
     RESCUE_TASK_VERSION,
     ApplicabilityPolicyRole,
+    ApplicabilityPolicyRunReport,
     applicability_policy_inference_required,
     run_applicability_policy,
 )
@@ -123,18 +129,33 @@ def replay_applicability_policy_command(
 @evaluation_app.command("applicability-policy-evaluate")
 def evaluate_applicability_policy_command(
     golden: Annotated[Path, typer.Option("--golden", exists=True, dir_okay=False)],
-    replay: Annotated[Path, typer.Option("--replay", exists=True, dir_okay=False)],
     output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+    replay: Annotated[
+        Path | None,
+        typer.Option("--replay", exists=True, dir_okay=False),
+    ] = None,
+    run_report: Annotated[
+        Path | None,
+        typer.Option("--run-report", exists=True, dir_okay=False),
+    ] = None,
     max_false_positive: Annotated[int, typer.Option("--max-fp", min=0)] = 2,
     max_false_negative: Annotated[int, typer.Option("--max-fn", min=0)] = 2,
 ) -> None:
-    """Evaluate an offline policy replay against published applicability gold."""
+    """Evaluate one persisted policy replay or selective run against published gold."""
     try:
+        if (replay is None) == (run_report is None):
+            raise ValueError("select exactly one of --replay or --run-report")
         corpus = ApplicabilityGoldenCorpus.load(golden)
-        replay_report = ApplicabilityPolicyReplayReport.load(replay)
+        if replay is not None:
+            policy_report = ApplicabilityPolicyReplayReport.load(replay)
+        else:
+            assert run_report is not None
+            policy_report = ApplicabilityPolicyRunReport.model_validate_json(
+                run_report.read_text(encoding="utf-8")
+            )
         report = evaluate_applicability_policy(
             corpus,
-            replay_report,
+            policy_report,
             max_false_positive=max_false_positive,
             max_false_negative=max_false_negative,
         )
@@ -153,23 +174,6 @@ def evaluate_applicability_policy_command(
     typer.echo(f"False negatives          : {metrics.false_negative} / {report.max_false_negative}")
     typer.echo(f"Qualification passed     : {'yes' if report.passed else 'no'}")
     typer.echo(f"Report                   : {output}")
-
-
-APPLICABILITY_POLICY_RUN_FILENAME = "applicability-policy-run.json"
-APPLICABILITY_POLICY_SELECTION_FILENAME = "applicability-policy-selection.json"
-APPLICABILITY_POLICY_STATE_FILENAME = "applicability-policy-run-state.json"
-
-
-class _PolicyRunState(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    schema_version: Literal["1.0"] = "1.0"
-    policy_id: Literal[POLICY_ID] = POLICY_ID
-    policy_version: Literal[POLICY_VERSION] = POLICY_VERSION
-    source_selection_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    model_id: str = Field(min_length=1)
-    model_ref: str = Field(min_length=1)
-    cache_disabled: bool = False
 
 
 class _RunningStatus(Protocol):
@@ -250,6 +254,13 @@ def run_applicability_policy_command(
             help="Policy artifact directory; defaults to <run>/applicability-policy.",
         ),
     ] = None,
+    qualification_mode: Annotated[
+        ApplicabilityPolicyQualificationMode | None,
+        typer.Option(
+            "--qualification-mode",
+            help="Qualification freshness scope recorded for this policy run.",
+        ),
+    ] = None,
     fresh: Annotated[
         bool,
         typer.Option(
@@ -264,7 +275,9 @@ def run_applicability_policy_command(
     base_detail_config = manifest.applicability_detail_enrichment
     if not base_detail_config.enabled:
         raise typer.BadParameter("applicability detail enrichment is disabled in the manifest")
-    model = next((item for item in manifest.models if item.id == POLICY_MODEL_ID), None)
+    policy_config = manifest.applicability_decision_policy
+    configured_model_id = policy_config.model if policy_config.enabled else POLICY_MODEL_ID
+    model = next((item for item in manifest.models if item.id == configured_model_id), None)
     if model is None:
         raise typer.BadParameter(
             "qualified applicability policy model "
@@ -358,7 +371,9 @@ def run_applicability_policy_command(
 
     state_path = resolved_output / APPLICABILITY_POLICY_STATE_FILENAME
     if state_path.is_file() and not fresh:
-        state = _PolicyRunState.model_validate_json(state_path.read_text(encoding="utf-8"))
+        state = ApplicabilityPolicyRunState.model_validate_json(
+            state_path.read_text(encoding="utf-8")
+        )
         if (
             state.source_selection_sha256 != detail_selection.fingerprint
             or state.model_id != model.id
@@ -366,15 +381,22 @@ def run_applicability_policy_command(
         ):
             raise typer.BadParameter(
                 "existing applicability policy run state belongs to a different "
-                "selection or model; "
-                "use --fresh to replace it"
+                "selection or model; use --fresh to replace it"
+            )
+        if qualification_mode is not None and qualification_mode != state.qualification_mode:
+            raise typer.BadParameter(
+                "existing applicability policy run state uses a different "
+                "qualification mode; use --fresh to replace it"
             )
     else:
-        state = _PolicyRunState(
+        resolved_mode = qualification_mode or ApplicabilityPolicyQualificationMode.OPERATIONAL
+        state = ApplicabilityPolicyRunState(
             source_selection_sha256=detail_selection.fingerprint,
             model_id=model.id,
             model_ref=model.model_ref,
             cache_disabled=fresh,
+            fresh_requested=fresh,
+            qualification_mode=resolved_mode,
         )
         state_path.write_text(state.model_dump_json(indent=2) + "\n", encoding="utf-8")
 
@@ -487,6 +509,8 @@ def run_applicability_policy_command(
                 existing_confirmation=existing["confirmation"],
                 checkpoint=checkpoint,
                 request_count=lambda: gateway.request_count,
+                qualification_mode=state.qualification_mode,
+                fresh_requested=state.fresh_requested,
             )
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
@@ -499,6 +523,25 @@ def run_applicability_policy_command(
         result.report.model_dump_json(indent=2) + "\n",
         encoding="utf-8",
     )
+
+    evaluation_report = None
+    if policy_config.enabled and policy_config.golden_corpus is not None:
+        if not policy_config.golden_corpus.is_file():
+            raise typer.BadParameter(
+                f"applicability policy golden corpus not found: {policy_config.golden_corpus}"
+            )
+        golden = ApplicabilityGoldenCorpus.load(policy_config.golden_corpus)
+        evaluation_report = evaluate_applicability_policy(
+            golden,
+            result.report,
+            max_false_positive=policy_config.max_false_positive,
+            max_false_negative=policy_config.max_false_negative,
+        )
+        evaluation_path = resolved_output / APPLICABILITY_POLICY_EVALUATION_FILENAME
+        evaluation_path.write_text(
+            evaluation_report.model_dump_json(indent=2) + "\n",
+            encoding="utf-8",
+        )
 
     typer.echo(
         f"Policy                   : {result.report.policy_id} {result.report.policy_version}"
@@ -516,7 +559,17 @@ def run_applicability_policy_command(
     typer.echo(f"Final positive           : {result.report.final_positive_count}")
     typer.echo(f"Final negative           : {result.report.final_negative_count}")
     typer.echo(f"Final unknown            : {result.report.final_unknown_count}")
+    typer.echo(f"Qualification mode       : {state.qualification_mode.value}")
     typer.echo(f"Cache disabled           : {'yes' if state.cache_disabled else 'no'}")
+    if evaluation_report is not None:
+        typer.echo(
+            "Policy quality            : "
+            f"{'passed' if evaluation_report.passed else 'failed'} "
+            f"(FP={evaluation_report.metrics.false_positive}/"
+            f"{evaluation_report.max_false_positive}, "
+            f"FN={evaluation_report.metrics.false_negative}/"
+            f"{evaluation_report.max_false_negative})"
+        )
     typer.echo(f"Policy output directory  : {resolved_output}")
     typer.echo(f"Policy report            : {run_report_path}")
 
@@ -540,5 +593,6 @@ def _clear_policy_artifacts(root: Path) -> None:
         APPLICABILITY_POLICY_RUN_FILENAME,
         APPLICABILITY_POLICY_SELECTION_FILENAME,
         APPLICABILITY_POLICY_STATE_FILENAME,
+        APPLICABILITY_POLICY_EVALUATION_FILENAME,
     ):
         (root / filename).unlink(missing_ok=True)

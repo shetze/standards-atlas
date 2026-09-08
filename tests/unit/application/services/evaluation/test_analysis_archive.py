@@ -80,7 +80,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         assert "qualification-run-metadata.json" in names
         assert "configuration/qualification-manifest.yaml" in names
         metadata = json.loads(payload.read("qualification-run-metadata.json"))
-        assert metadata["schema_version"] == "1.4"
+        assert metadata["schema_version"] == "1.5"
         assert metadata["archive_id"] == "qualification-run-001"
         assert metadata["sequence_number"] == 1
         assert metadata["qualification_matrix"] == {
@@ -100,10 +100,11 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
             "proposal_reuse": False,
         }
         assert metadata["applicability_detail_enrichment"] is None
+        assert metadata["applicability_decision_policy"] is None
         assert metadata["semantic_extraction_qualification"] is None
         archive_manifest = json.loads(payload.read("archive-manifest.json"))
         assert archive_manifest["archive_id"] == "qualification-run-001"
-        assert archive_manifest["schema_version"] == "1.4"
+        assert archive_manifest["schema_version"] == "1.5"
         assert any(
             item["path"] == "qualification-run-metadata.json" for item in archive_manifest["files"]
         )
@@ -509,3 +510,108 @@ def test_analysis_archive_embeds_applicability_detail_summary(tmp_path: Path) ->
     with zipfile.ZipFile(archive) as payload:
         metadata = json.loads(payload.read("qualification-run-metadata.json"))
         assert metadata["applicability_detail_enrichment"] == detail
+
+
+def test_collects_reproducible_applicability_policy_inputs(tmp_path: Path) -> None:
+    resources = tmp_path / "resources" / "semantic"
+    for task_version in ("1.0.0", "2.0.0"):
+        task_root = resources / "tasks" / "applicability-detail-enrichment" / task_version
+        task_root.mkdir(parents=True)
+        (task_root / "task.yaml").write_text(
+            "schema_version: 1\ntask: applicability-detail-enrichment\n"
+            f"version: {task_version}\nontologies: {{}}\n",
+            encoding="utf-8",
+        )
+        (task_root / "schema.json").write_text("{}\n", encoding="utf-8")
+    for prompt_version in (
+        "detail-structure-aware-v1",
+        "detail-structure-aware-v3",
+        "detail-structure-aware-v4",
+    ):
+        prompt_root = resources / "prompts" / "applicability-detail-enrichment" / prompt_version
+        prompt_root.mkdir(parents=True)
+        (prompt_root / "prompt.json").write_text("{}\n", encoding="utf-8")
+        (prompt_root / "user.txt").write_text("detail\n", encoding="utf-8")
+
+    golden = tmp_path / "golden.yaml"
+    golden.write_text("schema_version: '3.0'\ncases: []\n", encoding="utf-8")
+
+    members = {
+        member: path
+        for path, member in collect_qualification_input_members(
+            manifest_payload={
+                "task": "semantic-profile-classification",
+                "task_version": "2.5.0",
+                "dataset_version": "2.2.0",
+                "corpus_id": "semantic-profile-v1",
+                "prompts": [],
+                "applicability_detail_enrichment": {
+                    "enabled": True,
+                    "task": "applicability-detail-enrichment",
+                },
+                "applicability_decision_policy": {
+                    "enabled": True,
+                    "primary": {
+                        "task_version": "2.0.0",
+                        "prompt_version": "detail-structure-aware-v4",
+                    },
+                    "rescue": {
+                        "task_version": "2.0.0",
+                        "prompt_version": "detail-structure-aware-v3",
+                    },
+                    "confirmation": {
+                        "task_version": "1.0.0",
+                        "prompt_version": "detail-structure-aware-v1",
+                    },
+                    "golden_corpus": str(golden),
+                },
+            },
+            resources=resources,
+            corpus_root=tmp_path / "corpora",
+        )
+    }
+
+    assert "inputs/applicability-detail/prompt/user.txt" not in members
+    assert members["inputs/applicability-policy/roles/primary/prompt/user.txt"].name == "user.txt"
+    assert members["inputs/applicability-policy/roles/rescue/task/task.yaml"].name == "task.yaml"
+    assert (
+        members["inputs/applicability-policy/roles/confirmation/prompt/prompt.json"].name
+        == "prompt.json"
+    )
+    assert members["inputs/applicability-policy/golden-corpus.yaml"] == golden
+
+
+def test_analysis_archive_embeds_applicability_policy_summary(tmp_path: Path) -> None:
+    manifest = tmp_path / "matrix.yaml"
+    _write_manifest(manifest)
+    output_directory = tmp_path / "local" / "evaluation" / "qualification"
+    report_path = output_directory / "matrix-v1" / "report.json"
+    report_path.parent.mkdir(parents=True)
+    report_path.write_text("{}\n", encoding="utf-8")
+    policy = {
+        "task": "applicability-policy-run",
+        "policy_id": "mistral-v4-or-v3-and-v1",
+        "policy_version": "1.0.0",
+        "qualification_mode": "fresh_end_to_end",
+        "technical_complete": True,
+        "quality_evaluation": {"passed": True},
+    }
+
+    archive = create_analysis_archive(
+        output_directory=output_directory,
+        matrix_id="matrix-v1",
+        manifest_path=manifest,
+        core_paths=(report_path,),
+        applicability_decision_policy=policy,
+    )
+
+    with zipfile.ZipFile(archive) as payload:
+        metadata = json.loads(payload.read("qualification-run-metadata.json"))
+        assert metadata["applicability_decision_policy"] == policy
+
+    index = json.loads(
+        (tmp_path / "local" / "evaluation" / "qualification-run-index.json").read_text()
+    )
+    assert index["archives"][0]["applicability_policy_technical_complete"] is True
+    assert index["archives"][0]["applicability_policy_quality_passed"] is True
+    assert index["archives"][0]["applicability_policy_qualification_mode"] == "fresh_end_to_end"

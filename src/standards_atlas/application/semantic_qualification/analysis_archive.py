@@ -25,8 +25,8 @@ from standards_atlas.application.semantic_qualification.qualification_coverage i
 )
 from standards_atlas.shared.hashing import sha256_file
 
-ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.4"
-QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.4"
+ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.5"
+QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.5"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
 
@@ -208,8 +208,10 @@ def collect_qualification_input_members(
             source = ontology_root / str(ontology_id) / str(ontology_version) / "ontology.yaml"
             members.append((source, f"inputs/ontologies/{dimension}/ontology.yaml"))
 
+    policy = manifest_payload.get("applicability_decision_policy")
+    policy_enabled = isinstance(policy, dict) and bool(policy.get("enabled"))
     detail = manifest_payload.get("applicability_detail_enrichment")
-    if isinstance(detail, dict) and detail.get("enabled"):
+    if isinstance(detail, dict) and detail.get("enabled") and not policy_enabled:
         detail_task = str(detail.get("task") or "applicability-detail-enrichment")
         detail_task_version = str(detail.get("task_version") or "")
         detail_prompt_version = str(detail.get("prompt_version") or "")
@@ -256,6 +258,79 @@ def collect_qualification_input_members(
                     )
                 )
 
+    if policy_enabled:
+        assert isinstance(policy, dict)
+        detail = manifest_payload.get("applicability_detail_enrichment")
+        detail_task = (
+            str(detail.get("task") or "applicability-detail-enrichment")
+            if isinstance(detail, dict)
+            else "applicability-detail-enrichment"
+        )
+        for role in ("primary", "rescue", "confirmation"):
+            role_config = policy.get(role)
+            if not isinstance(role_config, dict):
+                continue
+            role_task_version = str(role_config.get("task_version") or "")
+            role_prompt_version = str(role_config.get("prompt_version") or "")
+            role_task_root = resources / "tasks" / detail_task / role_task_version
+            if role_task_root.is_dir():
+                for path in sorted(role_task_root.rglob("*")):
+                    if path.is_file():
+                        members.append(
+                            (
+                                path,
+                                "inputs/applicability-policy/roles/"
+                                f"{role}/task/{path.relative_to(role_task_root)}",
+                            )
+                        )
+            role_prompt_root = resources / "prompts" / detail_task / role_prompt_version
+            if role_prompt_root.is_dir():
+                for path in sorted(role_prompt_root.rglob("*")):
+                    if path.is_file():
+                        members.append(
+                            (
+                                path,
+                                "inputs/applicability-policy/roles/"
+                                f"{role}/prompt/{path.relative_to(role_prompt_root)}",
+                            )
+                        )
+            role_task_yaml = role_task_root / "task.yaml"
+            if role_task_yaml.is_file():
+                role_task_payload = yaml.safe_load(role_task_yaml.read_text(encoding="utf-8")) or {}
+                ontology_root = resources.parent / "ontologies"
+                for dimension, reference in sorted(
+                    dict(role_task_payload.get("ontologies", {})).items()
+                ):
+                    if not isinstance(reference, dict):
+                        continue
+                    ontology_id = reference.get("id")
+                    ontology_version = reference.get("version")
+                    if not ontology_id or not ontology_version:
+                        continue
+                    source = (
+                        ontology_root / str(ontology_id) / str(ontology_version) / "ontology.yaml"
+                    )
+                    members.append(
+                        (
+                            source,
+                            "inputs/applicability-policy/roles/"
+                            f"{role}/ontologies/{dimension}/ontology.yaml",
+                        )
+                    )
+        golden = policy.get("golden_corpus")
+        if golden:
+            golden_path = Path(str(golden))
+            # The raw payload does not retain the manifest source directory.
+            # Relative golden paths are therefore added by the archive command
+            # from the resolved manifest model instead of being guessed here.
+            if golden_path.is_absolute():
+                members.append(
+                    (
+                        golden_path,
+                        "inputs/applicability-policy/golden-corpus.yaml",
+                    )
+                )
+
     return tuple(members)
 
 
@@ -270,6 +345,7 @@ def create_analysis_archive(
     matrix_passed: bool | None = None,
     execution_policy: dict[str, bool] | None = None,
     applicability_detail_enrichment: dict[str, Any] | None = None,
+    applicability_decision_policy: dict[str, Any] | None = None,
     semantic_extraction_qualification: dict[str, Any] | None = None,
     archive_directory: Path | None = None,
     input_members: Iterable[tuple[Path, str]] = (),
@@ -295,6 +371,7 @@ def create_analysis_archive(
         matrix_passed=matrix_passed,
         execution_policy=execution_policy,
         applicability_detail_enrichment=applicability_detail_enrichment,
+        applicability_decision_policy=applicability_decision_policy,
         semantic_extraction_qualification=semantic_extraction_qualification,
     )
     metadata_bytes = _json_bytes(metadata)
@@ -383,6 +460,7 @@ def _build_run_metadata(
     matrix_passed: bool | None,
     execution_policy: dict[str, bool] | None,
     applicability_detail_enrichment: dict[str, Any] | None = None,
+    applicability_decision_policy: dict[str, Any] | None = None,
     semantic_extraction_qualification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     prompts = [
@@ -442,6 +520,7 @@ def _build_run_metadata(
         },
         "result": result,
         "applicability_detail_enrichment": applicability_detail_enrichment,
+        "applicability_decision_policy": applicability_decision_policy,
         "semantic_extraction_qualification": semantic_extraction_qualification,
     }
 
@@ -467,6 +546,8 @@ def _update_run_index(
     result = metadata.get("result") or {}
     matrix = metadata.get("qualification_matrix") or {}
     corpus = metadata.get("corpus") or {}
+    policy = metadata.get("applicability_decision_policy") or {}
+    policy_quality = policy.get("quality_evaluation") or {}
     archives.append(
         {
             "sequence_number": sequence_number,
@@ -480,6 +561,9 @@ def _update_run_index(
             "clause_count": result.get("clause_count"),
             "review_count": result.get("review_count"),
             "passed": result.get("passed"),
+            "applicability_policy_technical_complete": policy.get("technical_complete"),
+            "applicability_policy_quality_passed": policy_quality.get("passed"),
+            "applicability_policy_qualification_mode": policy.get("qualification_mode"),
         }
     )
     archives.sort(key=lambda item: int(item["sequence_number"]))

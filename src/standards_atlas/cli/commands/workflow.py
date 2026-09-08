@@ -91,6 +91,16 @@ def plan_workflow(
             help="Run qualification LLM inference without proposal reuse or response cache.",
         ),
     ] = cli_defaults.DEFAULT_FALSE,
+    fresh_applicability_policy: Annotated[
+        bool,
+        typer.Option(
+            "--fresh-applicability-policy",
+            help=(
+                "Refresh only the applicability decision policy while reusing the "
+                "persisted Presence qualification."
+            ),
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
     keep: Annotated[
         list[WorkflowStage] | None,
         typer.Option(
@@ -133,6 +143,7 @@ def plan_workflow(
         regenerate_docling=regenerate_docling,
         overwrite=overwrite,
         fresh=fresh,
+        fresh_applicability_policy=fresh_applicability_policy,
         keep=tuple(keep or ()),
         corpus_count=corpus_count,
         limit=limit,
@@ -206,6 +217,16 @@ def run_workflow(
             help="Run qualification LLM inference without proposal reuse or response cache.",
         ),
     ] = cli_defaults.DEFAULT_FALSE,
+    fresh_applicability_policy: Annotated[
+        bool,
+        typer.Option(
+            "--fresh-applicability-policy",
+            help=(
+                "Refresh only the applicability decision policy while reusing the "
+                "persisted Presence qualification."
+            ),
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
     keep: Annotated[
         list[WorkflowStage] | None,
         typer.Option(
@@ -248,6 +269,7 @@ def run_workflow(
         regenerate_docling=regenerate_docling,
         overwrite=overwrite,
         fresh=fresh,
+        fresh_applicability_policy=fresh_applicability_policy,
         keep=tuple(keep or ()),
         corpus_count=corpus_count,
         limit=limit,
@@ -300,6 +322,7 @@ def _build_task_plan(
     regenerate_docling: bool,
     overwrite: bool,
     fresh: bool,
+    fresh_applicability_policy: bool,
     keep: tuple[WorkflowStage, ...],
     corpus_count: int,
     limit: int | None,
@@ -319,6 +342,12 @@ def _build_task_plan(
         raise typer.BadParameter("--limit is only valid for --task qualification")
     if task is WorkflowTask.DOCUMENTS and fresh:
         raise typer.BadParameter("--fresh is only valid for --task qualification")
+    if task is WorkflowTask.DOCUMENTS and fresh_applicability_policy:
+        raise typer.BadParameter(
+            "--fresh-applicability-policy is only valid for --task qualification"
+        )
+    if fresh and fresh_applicability_policy:
+        raise typer.BadParameter("--fresh and --fresh-applicability-policy are mutually exclusive")
     if task is WorkflowTask.QUALIFICATION and force:
         raise typer.BadParameter(
             "--force is only valid for --task documents; use --regenerate-docling or --overwrite"
@@ -365,6 +394,7 @@ def _build_task_plan(
         regenerate_docling=regenerate_docling,
         overwrite=overwrite or regenerate_docling,
         fresh=fresh,
+        fresh_applicability_policy=fresh_applicability_policy,
         keep_stages=keep,
         corpus_output=corpus_output,
         qualification_output=qualification_output,
@@ -374,6 +404,7 @@ def _build_task_plan(
         steps=qualification.steps,
         force=qualification.document_plan.force,
         kept_stages=qualification.document_plan.kept_stages,
+        fresh_repetition_stages=qualification.fresh_repetition_stages,
     )
 
 

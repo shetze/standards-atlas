@@ -94,7 +94,7 @@ def test_qualification_plan_command_is_removed() -> None:
     assert "No such command" in result.output
 
 
-def test_presence_qualification_plan_includes_sparse_detail_stage() -> None:
+def test_presence_qualification_plan_uses_applicability_policy_stage() -> None:
     result = CliRunner().invoke(
         app,
         [
@@ -112,11 +112,68 @@ def test_presence_qualification_plan_includes_sparse_detail_stage() -> None:
     )
 
     assert result.exit_code == 0, result.output
-    assert "applicability-detail-enrichment" in result.output
-    assert "applicability-detail-enrich" in result.output
+    assert "applicability-decision-policy" in result.output
+    assert "applicability-policy-run" in result.output
+    assert "applicability-detail-enrich" not in result.output
     assert result.output.index("qualification-matrix") < result.output.index(
-        "applicability-detail-enrichment"
+        "applicability-decision-policy"
     )
-    assert result.output.index("applicability-detail-enrichment") < result.output.index(
+    assert result.output.index("applicability-decision-policy") < result.output.index(
         "qualification-archive"
     )
+
+
+def test_presence_qualification_plan_marks_fresh_end_to_end_policy() -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "plan",
+            "--task",
+            "qualification",
+            "--manifests",
+            f"manifests/standards.yaml,{APPLICABILITY_PRESENCE_MANIFEST}",
+            "--family",
+            "EN50716",
+            "--fresh",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    policy_line = next(
+        line for line in result.output.splitlines() if "applicability-policy-run" in line
+    )
+    matrix_line = next(
+        line for line in result.output.splitlines() if "qualification-matrix" in line
+    )
+    assert "--fresh" in matrix_line
+    assert "--fresh" in policy_line
+    assert "--qualification-mode fresh_end_to_end" in policy_line
+
+
+def test_presence_qualification_plan_can_refresh_only_policy() -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "plan",
+            "--task",
+            "qualification",
+            "--manifests",
+            f"manifests/standards.yaml,{APPLICABILITY_PRESENCE_MANIFEST}",
+            "--family",
+            "EN50716",
+            "--fresh-applicability-policy",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    policy_line = next(
+        line for line in result.output.splitlines() if "applicability-policy-run" in line
+    )
+    matrix_line = next(
+        line for line in result.output.splitlines() if "qualification-matrix" in line
+    )
+    assert "--fresh" not in matrix_line
+    assert "--fresh" in policy_line
+    assert "--qualification-mode fresh_detail_fixed_presence" in policy_line

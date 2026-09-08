@@ -234,3 +234,145 @@ def test_resume_reuses_completed_applicability_detail_stage(tmp_path: Path) -> N
 
     assert resumed.commands == [("qualification-archive",)]
     assert result.executed_steps == (archive,)
+
+
+def _fresh_policy_plan() -> WorkflowPlan:
+    matrix = WorkflowStep(
+        family="evaluation",
+        document="matrix",
+        stage=WorkflowStage.QUALIFICATION_MATRIX,
+        command=("qualification-matrix",),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/matrix.complete",),
+    )
+    policy = WorkflowStep(
+        family="evaluation",
+        document="matrix-applicability-policy",
+        stage=WorkflowStage.APPLICABILITY_DECISION_POLICY,
+        command=("applicability-policy-run", "--fresh"),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/policy.complete",),
+    )
+    archive = WorkflowStep(
+        family="evaluation",
+        document="matrix-archive",
+        stage=WorkflowStage.QUALIFICATION_ARCHIVE,
+        command=("qualification-archive",),
+        artifact_policy=ArtifactPolicy.REVIEW,
+    )
+    return WorkflowPlan(
+        ("evaluation",),
+        (matrix, policy, archive),
+        fresh_repetition_stages=(WorkflowStage.APPLICABILITY_DECISION_POLICY,),
+    )
+
+
+def test_completed_fresh_policy_invocation_starts_a_new_repetition(tmp_path: Path) -> None:
+    plan = _fresh_policy_plan()
+    executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+
+    first = RecordingRunner()
+    executor.execute(plan, project_root=tmp_path, runner=first)
+    assert first.commands == [
+        ("qualification-matrix",),
+        ("applicability-policy-run", "--fresh"),
+        ("qualification-archive",),
+    ]
+
+    second = RecordingRunner()
+    result = executor.execute(plan, project_root=tmp_path, runner=second)
+
+    assert second.commands == [
+        ("applicability-policy-run", "--fresh"),
+        ("qualification-archive",),
+    ]
+    assert tuple(step.stage for step in result.executed_steps) == (
+        WorkflowStage.APPLICABILITY_DECISION_POLICY,
+        WorkflowStage.QUALIFICATION_ARCHIVE,
+    )
+
+
+def test_interrupted_fresh_policy_repetition_resumes_without_repeating_policy(
+    tmp_path: Path,
+) -> None:
+    plan = _fresh_policy_plan()
+    executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+
+    executor.execute(plan, project_root=tmp_path, runner=RecordingRunner())
+
+    interrupted = FailingOnceRunner(("qualification-archive",))
+    with pytest.raises(RuntimeError, match="simulated export failure"):
+        executor.execute(plan, project_root=tmp_path, runner=interrupted)
+    assert interrupted.commands == [
+        ("applicability-policy-run", "--fresh"),
+        ("qualification-archive",),
+    ]
+
+    resumed = RecordingRunner()
+    result = executor.execute(plan, project_root=tmp_path, runner=resumed)
+
+    assert resumed.commands == [("qualification-archive",)]
+    assert result.executed_steps == (plan.steps[-1],)
+
+
+def test_completed_full_fresh_invocation_invalidates_all_fresh_stages(tmp_path: Path) -> None:
+    matrix = WorkflowStep(
+        family="evaluation",
+        document="matrix",
+        stage=WorkflowStage.QUALIFICATION_MATRIX,
+        command=("qualification-matrix", "--fresh"),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/matrix.complete",),
+    )
+    policy = WorkflowStep(
+        family="evaluation",
+        document="policy",
+        stage=WorkflowStage.APPLICABILITY_DECISION_POLICY,
+        command=("applicability-policy-run", "--fresh"),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/policy.complete",),
+    )
+    semantic = WorkflowStep(
+        family="evaluation",
+        document="semantic",
+        stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
+        command=("semantic-extraction-qualification", "--fresh"),
+        artifact_policy=ArtifactPolicy.DERIVED,
+        output_paths=(".atlas/work/workflow/qualification/semantic.complete",),
+    )
+    plan = WorkflowPlan(
+        ("evaluation",),
+        (matrix, policy, semantic),
+        fresh_repetition_stages=(
+            WorkflowStage.QUALIFICATION_MATRIX,
+            WorkflowStage.APPLICABILITY_DECISION_POLICY,
+            WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
+        ),
+    )
+    executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+
+    executor.execute(plan, project_root=tmp_path, runner=RecordingRunner())
+    repeated = RecordingRunner()
+    executor.execute(plan, project_root=tmp_path, runner=repeated)
+
+    assert repeated.commands == [matrix.command, policy.command, semantic.command]
+
+
+def test_first_fresh_invocation_after_upgrade_invalidates_legacy_completion_marker(
+    tmp_path: Path,
+) -> None:
+    plan = _fresh_policy_plan()
+    executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    executor.execute(plan, project_root=tmp_path, runner=RecordingRunner())
+
+    repetition_root = tmp_path / ".atlas" / "work" / "workflow" / "fresh-repetitions"
+    for marker in repetition_root.glob("*.complete"):
+        marker.unlink()
+
+    repeated = RecordingRunner()
+    executor.execute(plan, project_root=tmp_path, runner=repeated)
+
+    assert repeated.commands == [
+        ("applicability-policy-run", "--fresh"),
+        ("qualification-archive",),
+    ]

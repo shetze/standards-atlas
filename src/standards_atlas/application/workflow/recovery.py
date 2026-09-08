@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from standards_atlas.application.ports import ExtractionState, WorkflowArtifactStore
-from standards_atlas.application.workflow.models import WorkflowStage, WorkflowStep
+from standards_atlas.application.workflow.models import WorkflowPlan, WorkflowStage, WorkflowStep
 
 
 class WorkflowRecovery:
@@ -40,6 +40,12 @@ class WorkflowRecovery:
 
     def remove_outputs(self, step: WorkflowStep, project_root: Path) -> None:
         self._artifacts.remove_outputs(step, project_root)
+
+    def begin_fresh_repetition(self, plan: WorkflowPlan, project_root: Path) -> None:
+        self._artifacts.begin_fresh_repetition(plan, project_root)
+
+    def record_fresh_repetition_completion(self, plan: WorkflowPlan, project_root: Path) -> None:
+        self._artifacts.record_fresh_repetition_completion(plan, project_root)
 
     def alignment_requires_review(self, project_root: Path, document_key: str) -> bool:
         return self._artifacts.alignment_requires_review(project_root, document_key)

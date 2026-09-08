@@ -12,6 +12,7 @@ V6_MANIFEST = Path(
 def _plan(
     *,
     fresh: bool = False,
+    fresh_applicability_policy: bool = False,
     corpus_output: Path = Path(".atlas/data/evaluation/corpora"),
 ):
     catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
@@ -27,60 +28,85 @@ def _plan(
         knowledge_domain="functional-safety",
         overwrite=fresh,
         fresh=fresh,
+        fresh_applicability_policy=fresh_applicability_policy,
         corpus_output=corpus_output,
     )
 
 
-def test_v6_workflow_runs_sparse_detail_enrichment_between_matrix_and_archive() -> None:
+def test_v6_workflow_runs_applicability_policy_between_matrix_and_archive() -> None:
     plan = _plan()
     matrix = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_MATRIX)
-    detail = next(
-        step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT
+    policy = next(
+        step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DECISION_POLICY
     )
     archive = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE)
 
-    assert plan.steps.index(matrix) < plan.steps.index(detail) < plan.steps.index(archive)
-    assert detail.command[:5] == (
+    assert plan.steps.index(matrix) < plan.steps.index(policy) < plan.steps.index(archive)
+    assert policy.command[:5] == (
         "uv",
         "run",
         "standards-atlas",
         "evaluation",
-        "applicability-detail-enrich",
+        "applicability-policy-run",
     )
-    assert detail.command[detail.command.index("--manifest") + 1] == str(V6_MANIFEST)
-    assert detail.command[detail.command.index("--run") + 1].endswith(
+    assert policy.command[policy.command.index("--manifest") + 1] == str(V6_MANIFEST)
+    assert policy.command[policy.command.index("--run") + 1].endswith(
         "/multidimensional-semantic-qualification-v6-applicability-presence"
     )
-    assert "--limit" not in detail.command
+    assert "--limit" not in policy.command
     assert any(
-        path.endswith("/applicability-detail-selection.json") for path in detail.output_paths
+        path.endswith("/applicability-policy-selection.json") for path in policy.output_paths
     )
     assert any(
-        path.endswith("/applicability-detail-enrichment.json") for path in detail.output_paths
+        path.endswith("/applicability-policy-run-state.json") for path in policy.output_paths
     )
-    assert any(path.endswith("/applicability-detail-failures.json") for path in detail.output_paths)
-    assert any(path.endswith("/applicability-detail") for path in detail.output_paths)
-    assert any(path.endswith("/applicability-detail.complete") for path in detail.output_paths)
+    assert any(path.endswith("/applicability-policy-run.json") for path in policy.output_paths)
+    assert any(
+        path.endswith("/applicability-policy-evaluation.json") for path in policy.output_paths
+    )
+    assert any(path.endswith("/applicability-policy") for path in policy.output_paths)
+    assert any(path.endswith("/applicability-policy.complete") for path in policy.output_paths)
 
 
-def test_fresh_qualification_propagates_to_sparse_detail_enrichment() -> None:
+def test_fresh_qualification_marks_policy_as_fresh_end_to_end() -> None:
     plan = _plan(fresh=True)
-    detail = next(
-        step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT
+    policy = next(
+        step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DECISION_POLICY
     )
 
-    assert detail.command[-1] == "--fresh"
+    assert "--fresh" in policy.command
+    assert policy.command[policy.command.index("--qualification-mode") + 1] == "fresh_end_to_end"
+    assert plan.fresh_repetition_stages == (
+        WorkflowStage.QUALIFICATION_MATRIX,
+        WorkflowStage.APPLICABILITY_DECISION_POLICY,
+    )
 
 
-def test_custom_corpus_root_is_shared_by_detail_and_archive_stages() -> None:
+def test_fresh_policy_only_keeps_matrix_nonfresh() -> None:
+    plan = _plan(fresh_applicability_policy=True)
+    matrix = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_MATRIX)
+    policy = next(
+        step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DECISION_POLICY
+    )
+
+    assert "--fresh" not in matrix.command
+    assert "--fresh" in policy.command
+    assert (
+        policy.command[policy.command.index("--qualification-mode") + 1]
+        == "fresh_detail_fixed_presence"
+    )
+    assert plan.fresh_repetition_stages == (WorkflowStage.APPLICABILITY_DECISION_POLICY,)
+
+
+def test_custom_corpus_root_is_shared_by_policy_and_archive_stages() -> None:
     corpus_root = Path("local/custom-corpora")
     plan = _plan(corpus_output=corpus_root)
-    detail = next(
-        step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT
+    policy = next(
+        step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DECISION_POLICY
     )
     archive = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE)
 
-    assert detail.command[detail.command.index("--corpus-root") + 1] == str(corpus_root)
+    assert policy.command[policy.command.index("--corpus-root") + 1] == str(corpus_root)
     assert archive.command[archive.command.index("--corpus-root") + 1] == str(corpus_root)
 
 
@@ -102,3 +128,4 @@ def test_manifests_without_detail_policy_keep_the_existing_workflow_shape() -> N
     assert all(
         step.stage is not WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT for step in plan.steps
     )
+    assert all(step.stage is not WorkflowStage.APPLICABILITY_DECISION_POLICY for step in plan.steps)
