@@ -22,6 +22,7 @@ from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
     LlmResponseError,
     StructuredGenerationRequest,
+    StructuredGenerationResult,
 )
 from standards_atlas.application.references.extractor import (
     extract_reference_mentions,
@@ -64,6 +65,7 @@ class ContextEnrichmentProgress:
     clause_title: str | None
     state: str
     elapsed_seconds: float | None = None
+    detail: str | None = None
 
 
 ContextEnrichmentProgressCallback = Callable[[ContextEnrichmentProgress], None]
@@ -191,11 +193,41 @@ class LlmContextRoutingEnricher:
     def enrich(self, *, clause: Clause, document: EngineeringDocument) -> ContextRouting:
         request = self._request(clause=clause, document=document)
         try:
-            result = self._gateway.generate_structured(request)
+            result = self._generate_with_truncation_retry(request)
+            routing = _context_routing_from_payload(clause.id.value, result.value)
+        except LlmResponseError:
+            retry_request = replace(
+                request,
+                system_prompt=(
+                    request.system_prompt
+                    + " The previous structured response was unusable. Re-evaluate the clause "
+                    "and return only JSON that satisfies every routing invariant. For document "
+                    "scope do not set part/clause/reference; for part scope set only part; for "
+                    "subtree/clause scope provide an exact target reference when no resolved "
+                    "clause_id is supplied. Do not add explanations."
+                ),
+                max_tokens=self._retry_max_tokens,
+                metadata={**request.metadata, "corrective_retry": "routing-invariants-v1"},
+            )
+            try:
+                result = self._generate_with_truncation_retry(retry_request)
+                routing = _context_routing_from_payload(clause.id.value, result.value)
+            except LlmResponseError as retry_error:
+                raise LlmResponseError(
+                    "context enrichment response remains invalid after corrective retry: "
+                    f"{retry_error}"
+                ) from retry_error
+        return normalize_context_routing_targets(routing, document)
+
+    def _generate_with_truncation_retry(
+        self, request: StructuredGenerationRequest
+    ) -> StructuredGenerationResult:
+        try:
+            return self._gateway.generate_structured(request)
         except LlmResponseError as error:
             if error.finish_reason != "length":
                 raise
-            result = self._gateway.generate_structured(
+            return self._gateway.generate_structured(
                 replace(
                     request,
                     system_prompt=(
@@ -204,12 +236,9 @@ class LlmContextRoutingEnricher:
                         "object required by the schema, with no explanations or extra fields."
                     ),
                     max_tokens=self._retry_max_tokens,
+                    metadata={**request.metadata, "corrective_retry": "truncation-v1"},
                 )
             )
-        return normalize_context_routing_targets(
-            _context_routing_from_payload(clause.id.value, result.value),
-            document,
-        )
 
 
 def _context_routing_from_payload(
@@ -284,10 +313,12 @@ class ContextEnrichmentService:
         documents: EngineeringDocumentRepository,
         enricher: LlmContextRoutingEnricher,
         progress: ContextEnrichmentProgressCallback | None = None,
+        fresh: bool = False,
     ) -> None:
         self._documents = documents
         self._enricher = enricher
         self._progress = progress
+        self._fresh = fresh
 
     def enrich(self, document_key: str) -> ContextEnrichmentResult:
         document = self._documents.load(DocumentKey(value=document_key))
@@ -347,7 +378,8 @@ class ContextEnrichmentService:
                 (item for item in clause.provenance.generated_attributes if item.path == path), None
             )
             reusable = (
-                fingerprint is not None
+                not self._fresh
+                and fingerprint is not None
                 and previous is not None
                 and previous.availability == "known"
                 and previous.decision is not None
@@ -397,14 +429,16 @@ class ContextEnrichmentService:
                     )
                 )
             started = time.monotonic()
+            failure_detail = None
             try:
                 routing = normalize_context_routing_targets(
                     self._enricher.enrich(clause=contextual_clause, document=document), document
                 )
-            except LlmResponseError:
+            except LlmResponseError as error:
                 failures += 1
                 updated.append(contextual_clause)
                 state = "partial"
+                failure_detail = str(error)
             else:
                 enriched_clause = merge_generated_enrichments(
                     contextual_clause,
@@ -442,6 +476,7 @@ class ContextEnrichmentService:
                         clause_title=clause.heading,
                         state=state,
                         elapsed_seconds=time.monotonic() - started,
+                        detail=failure_detail,
                     )
                 )
 

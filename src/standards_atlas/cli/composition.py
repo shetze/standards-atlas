@@ -1,5 +1,6 @@
 """CLI composition root for concrete Standards Atlas adapters."""
 
+from dataclasses import replace
 from pathlib import Path
 
 from standards_atlas.adapters.docling import (
@@ -153,6 +154,7 @@ def build_context_enrichment_service(
     *,
     context_config_path: Path = Path("cfg/context-enrichment.yaml"),
     progress: ContextEnrichmentProgressCallback | None = None,
+    fresh: bool = False,
 ):
     from standards_atlas.adapters.llm import (
         ContextEnrichmentConfig,
@@ -168,7 +170,8 @@ def build_context_enrichment_service(
     resources = Path(__file__).resolve().parents[1] / "resources" / "semantic"
     prompt = PromptRepository(resources / "prompts").load(config.prompt_task, config.prompt_version)
 
-    gateway = OpenAICompatibleLlmGateway(config.llm)
+    llm_config = replace(config.llm, cache_directory=None) if fresh else config.llm
+    gateway = OpenAICompatibleLlmGateway(llm_config)
     return ContextEnrichmentService(
         documents=FileSystemEngineeringDocumentRepository(workspace),
         enricher=LlmContextRoutingEnricher(
@@ -179,6 +182,7 @@ def build_context_enrichment_service(
             retry_max_tokens=config.retry_max_tokens,
         ),
         progress=progress,
+        fresh=fresh,
     )
 
 

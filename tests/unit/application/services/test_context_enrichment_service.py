@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 from standards_atlas.application.evaluation.repository import PromptRepository
@@ -212,6 +213,66 @@ def test_context_enrichment_only_analyzes_scope_or_reference_candidates() -> Non
         "context-routing-enrichment/context-routing-v1@test-model"
     )
     assert documents.saved == result.document
+
+
+def test_context_routing_retries_semantically_invalid_structured_response() -> None:
+    class InvalidThenValidGateway(_Gateway):
+        def generate_structured(self, request):
+            result = super().generate_structured(request)
+            if len(self.requests) != 1:
+                return result
+            value = dict(result.value)
+            value["scope_declarations"] = [
+                {
+                    "reaches": [
+                        {
+                            "kind": "document",
+                            "document_key": "TEST-2026",
+                            "part": None,
+                            "clause_id": None,
+                            "reference": "2.1",
+                        }
+                    ],
+                    "conditions": [],
+                    "exclusions": [],
+                    "qualifications": [],
+                    "evidence": ["The following clauses apply to software elements."],
+                }
+            ]
+            return replace(result, value=value)
+
+    gateway = InvalidThenValidGateway()
+    document = _document()
+    routing = LlmContextRoutingEnricher(
+        gateway, prompt=_prompt(), model="test-model", retry_max_tokens=777
+    ).enrich(clause=document.clauses[0], document=document)
+
+    assert routing.scopes
+    assert len(gateway.requests) == 2
+    assert gateway.requests[1].max_tokens == 777
+    assert gateway.requests[1].metadata["corrective_retry"] == "routing-invariants-v1"
+    assert "previous structured response was unusable" in (
+        gateway.requests[1].system_prompt.lower()
+    )
+
+
+def test_context_enrichment_fresh_bypasses_generated_routing_reuse() -> None:
+    documents = _Documents(_document())
+    gateway = _Gateway()
+    first = ContextEnrichmentService(
+        documents=documents,
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="test-model"),
+    ).enrich(documents.document.key.value)
+    documents.document = first.document
+
+    second = ContextEnrichmentService(
+        documents=documents,
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="test-model"),
+        fresh=True,
+    ).enrich(documents.document.key.value)
+
+    assert second.routing_reused == 0
+    assert len(gateway.requests) == 2
 
 
 def test_context_prompt_contract_excludes_qualification_targets_from_schema() -> None:

@@ -47,7 +47,7 @@ def test_classify_ontology_ensures_managed_llm_is_running(monkeypatch) -> None:
     monkeypatch.setattr(
         management,
         "build_context_enrichment_service",
-        lambda workspace, context_config_path, progress=None: service,
+        lambda workspace, context_config_path, progress=None, fresh=False: service,
     )
 
     management.enrich_document_context(
@@ -108,7 +108,9 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         management,
         "build_context_enrichment_service",
-        lambda workspace, context_config_path, progress=None: _ProgressService(progress),
+        lambda workspace, context_config_path, progress=None, fresh=False: _ProgressService(
+            progress
+        ),
     )
 
     management.enrich_document_context(

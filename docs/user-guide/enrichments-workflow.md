@@ -100,7 +100,10 @@ change the next corpus merely by writing the workflow's own semantic outputs bac
 An unresolved alignment blocks downstream evaluation **and the global adoption/publication tail**.
 Complete the existing alignment review procedure, then repeat the command with
 `--continue-after-review`. This option is not review approval: content construction still needs a
-valid reviewed alignment. A command failure is not recorded as a completed workflow stage.
+valid reviewed alignment. A command failure is not recorded as a completed workflow stage. Context-routing responses that
+are syntactically valid JSON but violate routing invariants receive one corrective retry with a
+distinct cache identity. Remaining failures are printed with their validation reason and stop this
+end-to-end task before qualification/publication.
 
 Default execution reuses current persisted artifacts/checkpoints. Transfer preflight and the CBox
 report run again against the actual current files. Archive reuse additionally requires unchanged
@@ -110,8 +113,10 @@ not silently replaced with the most recently numbered archive.
 - `--overwrite` rebuilds derived stages from persisted Docling artifacts. Use it after changing
   extraction/normalization inputs when a downstream artifact must be reconstructed.
 - `--regenerate-docling` explicitly includes PDF conversion and downstream regeneration.
-- `--fresh` refreshes qualification inference without response/proposal reuse; it does not
-  implicitly overwrite Docling or all document artifacts.
+- `--fresh` refreshes both generated context-routing inference and qualification inference.
+  Context routing bypasses its LLM response cache and does not reuse generated canonical routing;
+  confirmed routing remains protected. Qualification continues to bypass proposal/response reuse.
+  The option does not implicitly overwrite Docling or all document artifacts.
 - `--fresh-applicability-policy` refreshes that policy while reusing Presence qualification.
 - `--restore-enrichments` restores available companions after taxonomy, before context enrichment.
   Add `--strict-evidence` to require private evidence during restoration/reimport.

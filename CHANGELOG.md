@@ -15,6 +15,9 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 - Invoke the new composed task in-process without CLI subprocess glue; keep standalone documents,
   qualification and knowledge behavior and public schema/authority policies unchanged.
 - Add synthetic two-document persistence/idempotence integration coverage and document usage.
+- Make end-to-end `--fresh` refresh generated context routing as well as qualification, bypassing
+  the context LLM cache while preserving confirmed routing. Retry schema-valid but semantically
+  invalid routing responses once with a distinct corrective request and report residual failures.
 
 ## Unreleased — Presence-only public role semantics (2026-09-09)
 

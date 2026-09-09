@@ -219,6 +219,13 @@ def enrich_document_context(
     fail_on_failure: Annotated[
         bool, typer.Option("--fail-on-failure", help="Stop workflow if routing inference fails.")
     ] = False,
+    fresh: Annotated[
+        bool,
+        typer.Option(
+            "--fresh",
+            help="Recompute generated context routing and bypass its LLM response cache.",
+        ),
+    ] = False,
 ) -> None:
     """Materialize deterministic subject context and scope/reference routing."""
 
@@ -230,7 +237,8 @@ def enrich_document_context(
             typer.echo(f"{prefix} {reference}{title} started")
             return
         elapsed = progress.elapsed_seconds or 0.0
-        typer.echo(f"{prefix} {reference}{title} {progress.state} elapsed={elapsed:.1f}s")
+        detail = f" detail={progress.detail}" if progress.detail else ""
+        typer.echo(f"{prefix} {reference}{title} {progress.state} elapsed={elapsed:.1f}s{detail}")
 
     try:
         typer.echo(f"Context enrichment     : starting for {document_key}")
@@ -242,6 +250,7 @@ def enrich_document_context(
             workspace,
             context_config_path=context_config,
             progress=report_progress,
+            fresh=fresh,
         ).enrich(document_key)
     except (OSError, ValueError, KeyError, RamaLamaServerError) as exc:
         typer.echo(str(exc), err=True)

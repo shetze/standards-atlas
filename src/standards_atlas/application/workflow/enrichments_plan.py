@@ -124,7 +124,16 @@ class EnrichmentsWorkflowPlanner:
             if step.stage is WorkflowStage.MARKDOWN:
                 continue  # This task publishes companions, not separate document renderings.
             if step.stage is WorkflowStage.CONTEXT_ENRICHMENT:
-                context_steps.append(replace(step, command=(*step.command, "--fail-on-failure")))
+                context_steps.append(
+                    replace(
+                        step,
+                        command=(
+                            *step.command,
+                            "--fail-on-failure",
+                            *(("--fresh",) if fresh else ()),
+                        ),
+                    )
+                )
                 continue
             if step.stage is WorkflowStage.CORPUS_BUILD:
                 # Vocabulary/routing sees every selected document after normalization.

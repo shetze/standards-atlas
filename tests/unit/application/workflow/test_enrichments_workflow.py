@@ -65,6 +65,14 @@ def test_complete_explicit_chain_and_exact_archive_handoff():
         assert "--available-only" not in step.command  # Cannot silently skip publication.
 
 
+def test_fresh_enrichments_run_also_refreshes_context_routing():
+    normal = step_for(WorkflowStage.CONTEXT_ENRICHMENT)
+    fresh = step_for(WorkflowStage.CONTEXT_ENRICHMENT, fresh=True)
+    assert "--fresh" not in normal.command
+    assert "--fresh" in fresh.command
+    assert "--fail-on-failure" in fresh.command
+
+
 def test_context_runs_after_all_selected_document_taxonomies():
     stages = [step.stage for step in plan(family_keys=("EN50716", "EN50657")).steps]
     assert max(i for i, s in enumerate(stages) if s is WorkflowStage.TAXONOMY) < min(
