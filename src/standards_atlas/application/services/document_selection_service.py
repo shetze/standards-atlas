@@ -44,20 +44,9 @@ class DocumentSelectionService:
         title: str | None = None,
     ) -> EngineeringDocument:
         source = self._documents.load(DocumentKey(value=source_key))
-        clauses = tuple(clause for clause in source.clauses if clause.reference.part == volume)
-        if not clauses:
-            raise DocumentSelectionError(
-                f"Document {source_key!r} contains no clauses for volume {volume!r}."
-            )
-        part_title = title or f"Part {volume.replace('§', '-')}"
-        root_title = f"Part {volume.replace('§', '-')}"
-        clauses = tuple(
-            clause.with_baseline_updates(heading=root_title)
-            if clause.reference.clause.strip() == "0"
-            else clause
-            for clause in clauses
-        )
-        return self._persist_selection(source, target_key, clauses, part_title)
+        derived = select_document_part(source, target_key, volume, title)
+        self._target_documents.save(derived)
+        return derived
 
     def _persist_selection(
         self,
@@ -92,3 +81,38 @@ class DocumentSelectionService:
             )
         self._target_documents.save(derived)
         return derived
+
+
+def select_document_part(
+    source: EngineeringDocument,
+    target_key: str,
+    part: str,
+    title: str | None = None,
+) -> EngineeringDocument:
+    """Pure physical part projection shared by canonical import and AtlasData restore."""
+    clauses = tuple(clause for clause in source.clauses if clause.reference.part == part)
+    if not clauses:
+        raise DocumentSelectionError(
+            f"Document {source.key.value!r} contains no clauses for volume {part!r}."
+        )
+    root_title = f"Part {part.replace('§', '-')}"
+    clauses = tuple(
+        clause.with_baseline_updates(heading=root_title)
+        if clause.reference.clause.strip() == "0"
+        else clause
+        for clause in clauses
+    )
+    clause_ids = {clause.id for clause in clauses}
+    updates = {
+        "key": DocumentKey(value=target_key),
+        "title": title or root_title,
+        "clauses": clauses,
+        "annotations": tuple(a for a in source.annotations if a.clause_id in clause_ids),
+    }
+    if isinstance(source, Standard):
+        updates.update(
+            key=StandardKey(value=target_key),
+            name=title or root_title,
+            parent_key=StandardKey(value=source.key.value),
+        )
+    return source.model_copy(update=updates)

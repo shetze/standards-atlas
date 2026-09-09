@@ -26,3 +26,21 @@ class AtlasDataImportPipeline:
     def map_to_domain(self, atlas_data: AtlasStandardData, *, key: str) -> EngineeringDocument:
         """Map parsed Atlas data into the canonical domain model."""
         return map_atlas_data_to_standard(atlas_data, key=key)
+
+    def import_physical(
+        self,
+        source: Path,
+        *,
+        document_key: str,
+        part: str | None = None,
+        title: str | None = None,
+    ) -> EngineeringDocument:
+        """Map a manifest-selected physical part without persisting a family document."""
+        from standards_atlas.application.services.document_selection_service import (
+            select_document_part,
+        )
+
+        if part is None:
+            return self.import_file(source, key=document_key)
+        master = self.import_file(source)
+        return select_document_part(master, document_key, part, title)

@@ -554,3 +554,76 @@ uv run standards-atlas atlasdata apply-semantic-annotations \
 model-generated classifications to published gold automatically. This keeps the
 publication boundary explicit: only the reviewed annotation manifest can add or
 replace public semantic tags.
+
+## Accepted enrichment companions (schema 1.0)
+
+The existing structural text grammar and reviewed TOC tags remain unchanged. Accepted canonical
+attributes may additionally be persisted in `<AtlasData parent>/enrichments/<physical-key>.yaml`
+using `atlasdata export-enrichments`. This is an explicit transport contract, not a canonical
+CBox database or an automatic promotion to reviewed semantic tags.
+
+### Document and clause identity
+
+| Field | Meaning |
+| --- | --- |
+| `manifest_type`, `schema_version` | `atlasdata-enrichments`, string `"1.0"` |
+| `document_key`, `family_key` | Exact manifest-declared physical document and family |
+| `atlasdata_file`, `selection_part`, `publication_year` | Explicit owning source basename, part selection and manifest edition; unspecified supplement year stays null |
+| `structure_sha256` | Hash of the selected structural clause IDs, references, headings, types and parents; reviewed semantic tags are excluded |
+| `clauses[].clause_id`, `.reference` | Stable clause ID and complete canonical `StandardReference` |
+| `.heading_sha256` | Hash of the enrichment's independently normalized local-source heading |
+| `.atlasdata_heading_sha256` | Hash of the reviewed AtlasData heading; need not equal the source heading |
+| `.content_sha256` | Hash of available local `plain_text`; null when not available |
+| `.attributes[]` | Selected, typed attribute records; unselected fields and clauses are retained |
+
+Hashes use SHA-256. Heading/content hashes use UTF-8 bytes without another normalization step.
+The structure digest uses deterministic compact sorted JSON. Duplicate keys, IDs, full references,
+attribute paths, unknown fields, unsupported schema versions, contradictory semantic groups and
+raw private provenance in the public contract are rejected. Public semantic values are validated
+against existing canonical field types, not an independently defined vocabulary.
+
+### Attribute records
+
+Each record contains `path`, `origin`, `availability`, `value` and the appropriate provenance.
+Paths address primary/secondary statement, knowledge and process categories, Applicability
+presence/functions, role presence/types/relations, whole subject context or whole context routing.
+`origin` is `generated`, `confirmed` or `unattributed`. `availability` is `known` or `unknown`;
+absence is not assessed, not false. Unknown has a null value, no invented category and explicit
+generated assessment metadata. Known false and known empty lists are retained as real decisions.
+
+`generated` reuses canonical `GeneratedAttribute` and `DecisionSupport`: generator, method,
+reference hashes, rule, versions/identifiers, model IDs, vote counts and decision stage. Free text
+and raw evidence become hash references, not prose in AtlasData. `confirmed` reuses an explicit
+`ConfirmedAttribute` and does not infer authority from file location. Populated unmarked legacy
+values are retained as `unattributed`, not promoted. An omitted attribute never clears a value.
+
+Statement/knowledge/process values and controlled role types are public categorical values.
+`private_value_sha256` addresses source-bearing contexts or exact role tuples in the private store.
+For these fields, `value` is a bounded view: selected normalized subject/confidence/ambiguity labels;
+scope reach and counts of conditions/exclusions/qualifications plus reference coordinates/roles;
+or an exact-role tuple count. It never contains source evidence, reference titles, scope prose or
+raw role actor/target text. These public semantic labels and coordinates are deliberately published.
+`private_provenance_sha256` optionally binds the original unredacted provenance.
+
+### Restore and preservation
+
+`atlasdata import-enrichments` validates physical ownership, baseline and clause fingerprints,
+then uses the canonical group-wise merge. Current reviewed TOC tags participate on every restore,
+even with existing canonical documents. Generated values cannot replace protected confirmations;
+contradictory explicit confirmations fail before writes. Unselected state and structural lifecycle
+remain unchanged. A source-free structural skeleton may use its AtlasData heading and reports
+content as unverified. It does not recreate the copyrighted clause text.
+
+Private blobs are immutable `knowledge-evidence` JSON schema `1.0`, addressed by the SHA-256 of
+compact, key-sorted UTF-8 JSON with a final newline. `kind` distinguishes `value`, `generated` and
+`confirmed`; `path` and `value` bind the payload. Restore validates the blob hash, kind, path and
+public projection. An absent source-bearing value is deferred, not replaced by empty context.
+An absent raw provenance blob leaves public metadata/hash references and a diagnostic. Strict
+mode rejects either absence. An explicitly referenced canonical empty context can be reconstructed
+without private evidence when its exact blob digest verifies that value.
+
+Commands default to dry-run. Explicit writes use all-document preflight, atomic replacement per
+file and deterministic output; this is not an all-files transaction. An optional local JSON
+`atlasdata-knowledge-report` schema `1.0` gives selected keys, changed/written targets, source-content
+verification counts and per-attribute changes. It does not embed private values. Operational
+commands and backup/restore instructions are in [AtlasData enrichments](../user-guide/atlasdata-enrichments.md).

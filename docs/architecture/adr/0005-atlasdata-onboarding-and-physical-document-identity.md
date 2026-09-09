@@ -18,5 +18,35 @@ AtlasData onboarding is manifest-driven and produces canonical documents **per p
 - Multipart family sources are split/resolved into physical part inputs before canonical `EngineeringDocument` construction.
 - Annexes and other structural regions remain part of the owning physical document unless the source/manifest identifies them as separate physical documents.
 
+## Accepted enrichment transport
+
+An explicit `atlasdata-enrichments` companion (schema `1.0`) is stored at
+`<AtlasData parent>/enrichments/<physical-key>.yaml`. This extends, rather than replaces, the
+existing AtlasData adapter and text format. TOC tags continue to represent reviewed categories;
+companions additionally represent generated hints, confirmed negatives, primary labels,
+availability and decision provenance which the compact tags cannot express losslessly.
+
+The manifest selects source file, physical part/supplement and edition. Each clause binds its
+full reference and stable ID to the structural baseline hash, its AtlasData heading hash and its
+independently normalized local-source heading hash. Available source text has a separate content
+hash. A legacy reference year is not silently rewritten to the manifest edition; both identities
+are checked. Missing source text is explicitly unverified, not reconstructed or asserted equal.
+
+The existing import/part-selection pipeline builds physical skeletons without persisting a
+synthetic family document. Companions then merge through the canonical attribute-group contract.
+Generated values remain generated; current reviewed tags participate even in an existing workspace.
+Two conflicting explicit authorities fail preflight. Structural content and its lifecycle status
+are never rewritten by enrichment transfer. Selection is incremental: omission preserves state.
+
+Original source-bearing context objects and raw provenance live in private immutable evidence
+blobs, as defined by ADR 0013. Public companions contain categorical values, bounded context views
+and hash references, not a copy of protected source text. Missing private values defer whole
+context attributes rather than manufacturing empty conditions. Strict restoration rejects any
+missing referenced private evidence. The canonical model remains the single document authority.
+
+Qualification, canonical adoption and public persistence are separate explicit actions. The
+initial companion implementation does not introduce automatic workflow publication or change
+CBox framing and target-attribute isolation.
+
 ## Consequences
 Qualification, corpus construction, provenance, and persistence operate on unambiguous physical documents. Family-wide outputs are composed later as views.

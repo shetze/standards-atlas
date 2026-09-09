@@ -51,10 +51,22 @@ by default and rejects non-loopback hosts.
 - `atlasdata onboard-family`: manifest-driven multipart family onboarding
 - `atlasdata set-status`
 - `atlasdata generate-toc`
+- `atlasdata export-enrichments`: export selected canonical values to versioned physical-document
+  companions; default dry-run, `--write` performs persistence
+- `atlasdata import-enrichments`: restore companions into existing canonical documents or newly
+  imported physical AtlasData skeletons; default dry-run, `--strict-evidence` requires private blobs
+
+Both enrichment commands use `--manifest`, `--root`, `--workspace`, repeatable `--document` /
+`--family`, `--evidence-root`, and optional local `--output` for JSON changes. Export additionally
+supports repeatable `--dimension` and, for one selected document, `--clause`. With no selectors,
+export considers available physical canonical documents and import considers existing companions.
+There is no inferred family-file naming, blind overwrite or implicit qualification publication.
+See [AtlasData enrichments](../user-guide/atlasdata-enrichments.md) for commands and evidence handling.
 
 ## Documents and exports
 
 - `document import`
+- `document adopt-qualification`: explicitly materialize selected run results without new model calls
 - `document derive`
 - `document derive-part`
 - `document enrich-content`

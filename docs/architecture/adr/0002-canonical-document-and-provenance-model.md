@@ -59,9 +59,13 @@ window, with a deprecation warning. Populated unmarked v8 enrichments are retain
 protected `unattributed_attributes`, not silently labeled generated or authoritative.
 An explicit confirmation resolves that uncertainty. Loading does not rewrite the source.
 
-This does not introduce a public enrichment sidecar or promote generated classifications
-into curated AtlasData tags. The existing public-annotation path remains a separate,
-explicitly reviewed publication boundary; its `--merge` option preserves unaddressed tags.
+Canonical adoption does not publish anything. Explicit AtlasData export/import commands provide a
+versioned transport of selected canonical attributes beside their structural source, as described
+in ADR 0005. This does not promote generated classifications into curated TOC tags. The existing
+public-annotation path remains an explicitly reviewed boundary; its `--merge` option preserves
+unaddressed tags. The persisted-attribute merge reuses the same coupled-group semantics, restores
+explicit confirmations, and rejects contradictory explicit authorities. Separately recorded empty
+details retain their provenance even when the corresponding presence decision is negative.
 
 ## Consequences
 The canonical document contains everything needed to inspect its accepted document-centered state and to reproduce downstream semantic projections without conflating origin, authority, and inference method. Community-maintained AtlasData can progressively replace generated assertions with authoritative knowledge without requiring every extraction or inference algorithm to reach perfect accuracy.

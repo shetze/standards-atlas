@@ -6,6 +6,10 @@ from standards_atlas.cli.commands.document_commands.atlasdata import (
     onboard_docling_parts,
     set_atlasdata_status,
 )
+from standards_atlas.cli.commands.document_commands.atlasdata_knowledge import (
+    export_enrichments,
+    import_enrichments,
+)
 from standards_atlas.cli.commands.document_commands.exports import (
     export_document_to_doorstop,
     export_document_to_markdown,
@@ -23,6 +27,8 @@ from standards_atlas.cli.commands.document_commands.publication import publish_d
 
 __all__ = [
     "adopt_qualification",
+    "export_enrichments",
+    "import_enrichments",
     "enrich_document_context",
     "derive_document_part",
     "derive_document_view",

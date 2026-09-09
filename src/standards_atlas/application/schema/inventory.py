@@ -49,6 +49,30 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "atlasdata-enrichments",
+        "data/enrichments/*.yaml",
+        LifecycleBoundary.PUBLIC_CONTRACT,
+        (VersionAxis.SCHEMA,),
+        "atlasdata-enrichments",
+        "Selected generated/confirmed attributes; protected values are hash references.",
+    ),
+    VersionedInterface(
+        "knowledge-evidence",
+        ".atlas/data/knowledge-evidence/*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "knowledge-evidence",
+        "Private immutable hydration payloads.",
+    ),
+    VersionedInterface(
+        "atlasdata-knowledge-report",
+        "local/**/atlasdata-knowledge*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "atlasdata-knowledge-report",
+        "Explicit export/import preflight reports.",
+    ),
+    VersionedInterface(
         "knowledge-adoption-batch",
         "local/**/knowledge-adoption-batch.json",
         LifecycleBoundary.PERSISTENCE,

@@ -2,6 +2,21 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — AtlasData knowledge roundtrip (2026-09-09)
+
+- Added explicit `atlasdata export-enrichments` / `import-enrichments` with default dry-run,
+  per-attribute reports, all-document preflight and atomic, byte-stable per-file writes.
+- Persist selected canonical values in versioned, physical-document AtlasData companions.
+  Preserve primary labels, presence-only/negative/unknown states, vote support, explicit
+  confirmations and protected unattributed values without promoting generated hints to gold.
+- Reuse manifest-owned structural imports and the canonical group-wise merge. Distinguish
+  normalized-source and AtlasData heading hashes; reject stale identity, content or editions.
+- Keep source-bearing context and original provenance in a private content-addressed store;
+  export only bounded public views and references. Missing private values defer restoration,
+  or fail preflight with `--strict-evidence`; protected source text is never reconstructed.
+- Keep canonical schema 9 and reviewed TOC semantics unchanged. Automatic CBox/workflow
+  consumption and missing process-function qualification remain separate follow-up slices.
+
 ## Unreleased — Canonical knowledge adoption (2026-09-08)
 
 - Added `document adopt-qualification`: manifest-verified archive input, default dry-run,
@@ -12,8 +27,8 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
   populated unmarked legacy values are protected without inventing authoritative status.
 - Fixed Applicability tag reimport and added opt-in incremental `--merge` to
   `atlasdata apply-semantic-annotations`, retaining reviewed publication semantics.
-- Public persistence of generated CBox attributes and process-function qualification
-  remain separate follow-up slices, not implicit effects of qualification or adoption.
+- Qualification and adoption do not implicitly publish attributes. Public persistence is
+  provided by the subsequent explicit AtlasData roundtrip commands above.
 
 ## 0.8.6 — Gemara and ComplyTime governance integration (2026-09-01)
 

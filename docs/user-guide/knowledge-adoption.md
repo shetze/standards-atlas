@@ -2,7 +2,8 @@
 
 This first persistence slice uses the existing `EngineeringDocument` repository. It accepts
 selected run results as **generated knowledge**, not as authoritative confirmations, and
-never calls a model. It does not yet export generated attributes into public AtlasData.
+never calls a model. It does not itself export into public AtlasData. Follow it with the
+explicit [AtlasData enrichment export](atlasdata-enrichments.md) to persist selected values.
 
 ## Prerequisites
 

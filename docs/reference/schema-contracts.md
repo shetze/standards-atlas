@@ -24,6 +24,9 @@ Removed refactoring schemas are not recreated merely to fill the stable support 
 | Interface | Boundary | Schema axis | Resource axis | Location |
 | --- | --- | --- | --- | --- |
 | Engineering Document | persistence | `engineering-document` | — | `.atlas/data/documents/*.json` |
+| AtlasData enrichments | public contract | `atlasdata-enrichments` (`1.0`) | retained decision identities | `<AtlasData parent>/enrichments/<physical-key>.yaml` |
+| Private knowledge evidence | persistence | `knowledge-evidence` (`1.0`) | content-addressed payload | `.atlas/data/knowledge-evidence/<sha256>.json` |
+| AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.0`) | — | `local/review/atlasdata-knowledge*.json` |
 | Standards manifest | process | `standards-manifest` | — | `manifests/standards*.yaml` |
 | Qualification Matrix manifest | process | `qualification-matrix-manifest` | — | `manifests/*qualification*.yaml` |
 | Semantic task | packaged resource | `semantic-task-resource` | task version | `resources/semantic/tasks/<id>/<version>/task.yaml` |
@@ -46,6 +49,11 @@ This avoids versioning every internal DTO while still making independently consu
 ## AtlasData
 
 AtlasData is authored, Git-published, community-curated input and therefore has stronger preservation requirements than disposable derived artifacts. Its semantic profile reference is already explicitly resource-versioned. The AtlasData text grammar itself does not currently carry a standalone serialization `schema_version`; changes to that grammar must therefore remain backward-readable or be introduced with an explicit format-version mechanism before the project enters stable compatibility mode. AtlasData must not be treated as a disposable intermediate artifact.
+
+The optional `atlasdata-enrichments` companion has an explicit `schema_version: "1.0"` and
+`manifest_type: atlasdata-enrichments`. It is a versioned transport of selected canonical attributes,
+not a second canonical model. It does not change the existing text grammar or canonical schema 9.
+See [AtlasData format](atlas-data-format.md#accepted-enrichment-companions-schema-10).
 
 ## Packaged resource rule
 

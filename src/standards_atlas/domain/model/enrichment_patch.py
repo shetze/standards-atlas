@@ -8,7 +8,12 @@ from pydantic import BaseModel, ConfigDict, SerializerFunctionWrapHandler, model
 
 from standards_atlas.domain.model.clause import Clause, ClauseEnrichments
 from standards_atlas.domain.model.context_routing import ContextRouting
-from standards_atlas.domain.model.knowledge_state import GeneratedAttribute
+from standards_atlas.domain.model.knowledge_state import (
+    GeneratedAttribute,
+    GenerationMethod,
+    KnowledgeStateProvenance,
+    paths_overlap,
+)
 from standards_atlas.domain.model.semantic_classification import (
     ApplicabilityFunction,
     KnowledgeKind,
@@ -145,8 +150,9 @@ def merge_generated_enrichments(
                     path = f"enrichments.semantic.{dependent}"
                     if path in updates and updates[path]:
                         raise ValueError("negative presence conflicts with supplied details")
-                    updates[path] = ()
-                    by_path[path] = by_path[presence_path].model_copy(update={"path": path})
+                    if path not in updates:
+                        updates[path] = ()
+                        by_path[path] = by_path[presence_path].model_copy(update={"path": path})
                     if path not in addressed:
                         addressed.append(path)
         # A replaced set must not retain a stale primary not contained in it.
@@ -207,3 +213,83 @@ def _plain(value: object) -> object:
     if isinstance(value, tuple):
         return tuple(_plain(item) for item in value)
     return value
+
+
+def merge_persisted_enrichments(
+    clause: Clause,
+    patch: ClauseEnrichmentPatch,
+    provenance: KnowledgeStateProvenance,
+) -> EnrichmentMergeResult:
+    """Restore selected persisted knowledge through the same group-wise merge.
+
+    Persistence is not confirmation. Conflicting explicit authorities are a hard
+    error. Unattributed values stay protected; generated input cannot downgrade
+    existing authority. Baseline provenance is never replaced by this operation.
+    """
+    known_paths = set()
+    if patch.semantic is not None:
+        known_paths.update(
+            f"enrichments.semantic.{name}" for name in patch.semantic.model_fields_set
+        )
+    for name in ("context_routing", "subject_context"):
+        if getattr(patch, name) is not None:
+            known_paths.add(f"enrichments.{name}")
+    incoming = {item.path: item for item in provenance.generated_attributes}
+    confirmations = {item.path: item for item in provenance.confirmed_attributes}
+    protected = set(confirmations) | set(provenance.unattributed_attributes)
+    if not protected.issubset(known_paths):
+        raise ValueError("persisted authority requires an explicit known value")
+
+    def current_value(path: str) -> object:
+        value: object = clause
+        for name in path.split("."):
+            value = getattr(value, name)
+        return _plain(value)
+
+    def proposed_value(path: str) -> object:
+        value: object = patch
+        for name in path.split(".")[1:]:
+            value = getattr(value, name)
+        return _plain(value)
+
+    for path in protected:
+        if path in incoming:
+            raise ValueError("persisted generated and protected paths overlap")
+        if path in confirmations and clause.provenance.protection(path) == "confirmed":
+            if current_value(path) != proposed_value(path):
+                raise ValueError(f"conflicting authoritative AtlasData values: {path}")
+        incoming[path] = GeneratedAttribute(
+            path=path,
+            generator="atlasdata-roundtrip",
+            method=GenerationMethod.IMPORTED,
+        )
+    result = merge_generated_enrichments(clause, patch, tuple(incoming.values()))
+    state = result.clause.provenance
+    blocked = {item.path for item in result.changes if item.status == "protected"}
+    for path, confirmation in confirmations.items():
+        if path in blocked or clause.provenance.protection(path) == "confirmed":
+            continue
+        state = state.confirm_authoritative(path, authority=confirmation.authority)
+    unattributed = {
+        path
+        for path in provenance.unattributed_attributes
+        if path not in blocked and not clause.provenance.protection(path)
+    }
+    if unattributed:
+        state = KnowledgeStateProvenance.model_validate(
+            {
+                **state.model_dump(mode="python"),
+                "generated_attributes": tuple(
+                    item
+                    for item in state.generated_attributes
+                    if not any(paths_overlap(item.path, path) for path in unattributed)
+                ),
+                "unattributed_attributes": tuple(
+                    sorted(set(state.unattributed_attributes) | unattributed)
+                ),
+            }
+        )
+    return EnrichmentMergeResult(
+        result.clause.model_copy(update={"provenance": state}),
+        result.changes,
+    )

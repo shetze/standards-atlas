@@ -7,6 +7,15 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "atlasdata-enrichments": SchemaPolicy(
+        "atlasdata-enrichments", "1.0", ("1.0",), "data/enrichments/*.yaml"
+    ),
+    "knowledge-evidence": SchemaPolicy(
+        "knowledge-evidence", "1.0", ("1.0",), ".atlas/data/knowledge-evidence/*.json"
+    ),
+    "atlasdata-knowledge-report": SchemaPolicy(
+        "atlasdata-knowledge-report", "1.0", ("1.0",), "local/**/atlasdata-knowledge*.json"
+    ),
     "engineering-document": SchemaPolicy(
         "engineering-document", 9, (8, 9), ".atlas/data/documents/*.json"
     ),

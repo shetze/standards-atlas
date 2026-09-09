@@ -15,6 +15,7 @@ human-facing result.
 │   ├── reference-candidates/
 │   ├── alignments/
 │   ├── documents/
+│   ├── knowledge-evidence/
 │   └── evaluation/
 ├── cache/
 │   └── llm/
@@ -39,7 +40,10 @@ normalized documents, detected references, automatic alignments, canonical
 EngineeringDocuments, evaluation corpora, raw proposal runs, and machine
 qualification state.
 
-Deleting this directory can lose state or force expensive regeneration.
+Deleting this directory can lose state or force expensive regeneration. In particular,
+`knowledge-evidence/` holds private source-bearing values referenced by public AtlasData
+enrichment companions. Preserve it for lossless context/provenance restoration; it is not
+rebuildable from the public companion alone. See [AtlasData enrichments](atlasdata-enrichments.md).
 
 ### `.atlas/cache`
 

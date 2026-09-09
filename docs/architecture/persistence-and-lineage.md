@@ -55,3 +55,25 @@ can be tied to the exact governance projection used for the assessment.
 Use-case-specific selection is represented by profiles, candidate analyses, and Gemara Policy
 imports/exclusions. The source catalogs remain stable rather than being copied into many filtered
 variants.
+
+## AtlasData enrichment roundtrip
+
+Canonical adoption and public export are separate stages:
+
+```text
+Qualification results -> explicit canonical adoption -> EngineeringDocument (schema 9)
+  -> AtlasData enrichment companion (schema 1.0, public values and references)
+  + private knowledge-evidence blobs (schema 1.0, source-bearing values/provenance)
+  -> manifest-bound AtlasData physical import -> canonical attribute-group merge
+```
+
+The companion records origin and availability independently of the structural source's lifecycle.
+It does not make generated hints authoritative. Current reviewed TOC tags take precedence;
+contradictory explicit confirmations fail. Content and both source/AtlasData heading fingerprints
+protect restore against stale documents without publishing or normalizing their source text.
+
+The private evidence store is durable. A companion alone restores categorical fields and public
+provenance, but does not manufacture missing contexts or source text. A subsequent import with
+available private blobs can hydrate those fields. Reports distinguish unavailable evidence,
+deferred values and source-content verification. See the [operational guide](../user-guide/atlasdata-enrichments.md)
+and [format reference](../reference/atlas-data-format.md#accepted-enrichment-companions-schema-10).

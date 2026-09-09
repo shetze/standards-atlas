@@ -32,6 +32,7 @@ This guide describes the supported user workflows for turning private standards 
 | Connect Codex to MCP | [Codex integration](codex-integration.md) |
 | Build corpora and execute qualification matrices | [Evaluation and qualification](evaluation-and-qualification.md) |
 | Accept qualified CBox attributes into canonical documents | [Knowledge adoption](knowledge-adoption.md) |
+| Persist and restore accepted CBox attributes through AtlasData | [AtlasData enrichments](atlasdata-enrichments.md) |
 | Review generated annotation proposals | [Annotation review](semantic-annotation-review.md) |
 | Diagnose common failures | [Troubleshooting](troubleshooting.md) |
 | Integrate Gemara and ComplyTime | [Gemara and ComplyTime](gemara-complytime.md) |

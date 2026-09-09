@@ -19,5 +19,20 @@ Artifacts are classified primarily by **audience, authority, and lifecycle**.
 - Cleanup commands/scripts may remove rebuildable work but must not silently delete canonical or immutable qualification evidence.
 - AtlasData/source baselines have explicit lifecycle and governance rather than being inferred from generated output.
 
+## Knowledge persistence and protected evidence
+
+The public AtlasData enrichment companion transports selected attribute values and explicit
+origin, not complete private documents. `.atlas/data/knowledge-evidence/<sha256>.json` contains
+immutable source-bearing context and raw provenance needed for lossless private hydration.
+These blobs are persistent evidence, not a cache: cleanup of work/cache must not remove them.
+They are protected by content hashes and private file permissions and must not be committed into
+the public AtlasData tree. The export adapter rejects an evidence store inside that tree.
+
+Export/import commands stage and validate all selected documents before any persistence write.
+Each file replacement is atomic and unchanged outputs are byte-stable. This is not a transaction
+across multiple files or a concurrent-writer lock. Validation failures precede writes, while an
+operating-system error during commit may leave a partially completed batch that must be rerun.
+Explicit local change reports describe values/statuses without disclosing protected context text.
+
 ## Consequences
 Artifact ownership, cleanup, publication, and reproducibility are easier to reason about. New artifact types must declare their lifecycle instead of choosing a directory ad hoc.
