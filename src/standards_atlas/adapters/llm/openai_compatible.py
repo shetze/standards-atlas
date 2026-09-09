@@ -13,6 +13,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
+from jsonschema import Draft202012Validator
+
 from standards_atlas.adapters.llm.config import LlmConfig
 from standards_atlas.application.ports.llm_gateway import (
     LlmGatewayError,
@@ -55,7 +57,12 @@ class OpenAICompatibleLlmGateway:
         input_hash = _input_hash(request, model)
         cached = self._load_cache(input_hash)
         if cached is not None:
-            return replace(cached, cached=True)
+            cache_error = _schema_validation_error(cached.value, request.output_schema)
+            if cache_error is None:
+                return replace(cached, cached=True)
+            cache_path = self._cache_path(input_hash)
+            if cache_path is not None:
+                cache_path.unlink(missing_ok=True)
 
         payload: dict[str, Any] = {
             "model": model,
@@ -99,6 +106,14 @@ class OpenAICompatibleLlmGateway:
             ) from error
         if not isinstance(value, Mapping):
             raise LlmResponseError("LLM structured response must be a JSON object")
+        schema_error = _schema_validation_error(value, request.output_schema)
+        if schema_error is not None:
+            raise LlmResponseError(
+                f"LLM structured response violates output schema: {schema_error}",
+                raw_content=raw_content,
+                raw_response=dict(response),
+                finish_reason=finish_reason,
+            )
 
         result = StructuredGenerationResult(
             value=dict(value),
@@ -201,6 +216,20 @@ class OpenAICompatibleLlmGateway:
             encoding="utf-8",
         )
         temporary.replace(path)
+
+
+def _schema_validation_error(value: Mapping[str, Any], schema: Mapping[str, Any]) -> str | None:
+    errors = sorted(
+        Draft202012Validator(schema).iter_errors(value),
+        key=lambda error: tuple(str(item) for item in error.absolute_path),
+    )
+    if not errors:
+        return None
+    error = errors[0]
+    path = "$" + "".join(
+        f"[{item}]" if isinstance(item, int) else f".{item}" for item in error.absolute_path
+    )
+    return f"{path}: {error.message}"
 
 
 def _extract_content(response: Mapping[str, Any]) -> str:

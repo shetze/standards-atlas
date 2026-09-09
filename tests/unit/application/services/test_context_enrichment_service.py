@@ -496,3 +496,42 @@ def test_v2_prompt_supplies_deterministic_annex_targets_and_forbids_model_ids():
     assert not list(validator.iter_errors(answer))
     answer["reference_routings"][0]["target"]["clause_id"] = "clause-1"
     assert list(validator.iter_errors(answer))
+
+    invalid_document_scope = {
+        "scope_declarations": [
+            {
+                "reaches": [
+                    {
+                        "kind": "document",
+                        "document_key": "TEST-2026",
+                        "part": None,
+                        "clause_id": None,
+                        "reference": "2.1",
+                    }
+                ],
+                "conditions": [],
+                "exclusions": [],
+                "qualifications": [],
+                "evidence": [],
+            }
+        ],
+        "reference_routings": [],
+    }
+    assert list(validator.iter_errors(invalid_document_scope))
+
+    valid_document_scope = invalid_document_scope.copy()
+    valid_document_scope["scope_declarations"] = [
+        {
+            **invalid_document_scope["scope_declarations"][0],
+            "reaches": [
+                {
+                    "kind": "document",
+                    "document_key": "TEST-2026",
+                    "part": None,
+                    "clause_id": None,
+                    "reference": None,
+                }
+            ],
+        }
+    ]
+    assert not list(validator.iter_errors(valid_document_scope))

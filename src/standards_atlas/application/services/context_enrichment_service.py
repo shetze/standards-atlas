@@ -195,7 +195,7 @@ class LlmContextRoutingEnricher:
         try:
             result = self._generate_with_truncation_retry(request)
             routing = _context_routing_from_payload(clause.id.value, result.value)
-        except LlmResponseError:
+        except LlmResponseError as first_error:
             retry_request = replace(
                 request,
                 system_prompt=(
@@ -204,7 +204,8 @@ class LlmContextRoutingEnricher:
                     "and return only JSON that satisfies every routing invariant. For document "
                     "scope do not set part/clause/reference; for part scope set only part; for "
                     "subtree/clause scope provide an exact target reference when no resolved "
-                    "clause_id is supplied. Do not add explanations."
+                    "clause_id is supplied. Do not add explanations. Validation failure: "
+                    + str(first_error)
                 ),
                 max_tokens=self._retry_max_tokens,
                 metadata={**request.metadata, "corrective_retry": "routing-invariants-v1"},
@@ -248,7 +249,9 @@ def _context_routing_from_payload(
     try:
         return _validated_context_routing_from_payload(source_clause_id, payload)
     except (TypeError, ValueError) as exc:
-        raise LlmResponseError("context enrichment response violates routing invariants") from exc
+        raise LlmResponseError(
+            f"context enrichment response violates routing invariants: {exc}"
+        ) from exc
 
 
 def _validated_context_routing_from_payload(

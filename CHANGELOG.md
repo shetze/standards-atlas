@@ -18,6 +18,9 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 - Make end-to-end `--fresh` refresh generated context routing as well as qualification, bypassing
   the context LLM cache while preserving confirmed routing. Retry schema-valid but semantically
   invalid routing responses once with a distinct corrective request and report residual failures.
+- Validate every structured LLM response locally against its requested JSON Schema before caching;
+  discard stale schema-invalid cache entries and encode scope-reach cross-field invariants directly
+  in the context-routing-v2 schema so invalid reach combinations are rejected before domain merge.
 
 ## Unreleased — Presence-only public role semantics (2026-09-09)
 

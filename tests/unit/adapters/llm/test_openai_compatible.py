@@ -188,3 +188,58 @@ def test_disabled_reasoning_is_forwarded_to_llama_cpp(tmp_path: Path) -> None:
     outbound = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
     assert outbound["chat_template_kwargs"] == {"enable_thinking": False}
     assert outbound["messages"][-1]["content"].endswith("/no_think")
+
+
+def test_rejects_schema_invalid_response_before_caching(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(model="granite", cache_directory=tmp_path / "cache")
+    )
+    response = {
+        "model": "granite",
+        "choices": [{"finish_reason": "stop", "message": {"content": '{"summary":7}'}}],
+    }
+
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(response),
+    ):
+        try:
+            gateway.generate_structured(_request())
+        except LlmResponseError as error:
+            assert "violates output schema" in str(error)
+            assert "$.summary" in str(error)
+            assert error.raw_response == response
+        else:
+            raise AssertionError("expected LlmResponseError")
+
+    assert not list((tmp_path / "cache").glob("*.json"))
+
+
+def test_discards_schema_invalid_cached_response_and_regenerates(tmp_path: Path) -> None:
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(model="granite", cache_directory=tmp_path / "cache")
+    )
+    valid_response = {
+        "model": "granite",
+        "choices": [{"finish_reason": "stop", "message": {"content": '{"summary":"Valid."}'}}],
+    }
+
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(valid_response),
+    ):
+        first = gateway.generate_structured(_request())
+    cache_path = next((tmp_path / "cache").glob("*.json"))
+    payload = json.loads(cache_path.read_text(encoding="utf-8"))
+    payload["value"] = {"summary": 7}
+    cache_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with patch(
+        "standards_atlas.adapters.llm.openai_compatible.urlopen",
+        return_value=_Response(valid_response),
+    ) as urlopen:
+        second = gateway.generate_structured(_request())
+
+    assert urlopen.call_count == 1
+    assert not second.cached
+    assert second.value == first.value

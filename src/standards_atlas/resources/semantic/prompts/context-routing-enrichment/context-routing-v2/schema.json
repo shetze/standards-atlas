@@ -67,7 +67,95 @@
                     "null"
                   ]
                 }
-              }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "const": "document"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "part": {
+                        "type": "null"
+                      },
+                      "clause_id": {
+                        "type": "null"
+                      },
+                      "reference": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "const": "part"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "part": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "clause_id": {
+                        "type": "null"
+                      },
+                      "reference": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "subtree",
+                          "clause"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "clause_id": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      {
+                        "properties": {
+                          "reference": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
             }
           },
           "conditions": {
