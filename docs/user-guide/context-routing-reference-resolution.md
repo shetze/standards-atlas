@@ -13,21 +13,24 @@ The corrected flow separates source evidence, document coordinates and semantic 
 
 1. Content enrichment preserves syntactic mentions and offsets. Taxonomy refreshes the generated
    reference baseline from available source text using the same deterministic coordinate index.
-2. Context enrichment supplies current resolved mentions to the provider. The default v2 prompt
+2. Context enrichment supplies current resolved mentions to the provider. The default v3 prompt
    preserves literal citation text, assigns the semantic role and returns null target IDs/titles.
 3. The deterministic resolver validates local references and explicit scope coordinates before
    canonical persistence, during generated-result reuse, and as an export safeguard. It never
    substitutes a prefix/ancestor for a more specific coordinate.
 
-Legacy prompt v1 remains readable, but the shipped context configuration and default now use v2.
+Explicit legacy prompt selections v1 and v2 remain available. The shipped context configuration
+and default now use v3.
 The resolver revision and complete prompt/schema inputs participate in the input fingerprint, so a
-v1 result is not mislabeled as a v2 generation. A normal enrichment workflow may run the new model
+v1/v2 result is not mislabeled as a v3 generation. A normal enrichment workflow may run the new model
 prompt; the explicit repair command below is entirely model-free.
 
 ## Resolution boundaries
 
 Short references stay in the source standard, part and edition. Qualified coordinates must match
-the specified namespace. Clause and table prefixes are not interchangeable. A local citation must
+the specified namespace. Clause, table and figure prefixes are not interchangeable. `Figure 2` never resolves to
+`Clause 2` or `Table 2`. Mixed lists carry forward the most recent explicit label:
+`Figure 2, Table 1 and 3` denotes Figure 2, Table 1 and Table 3. A local citation must
 resolve uniquely; a supplied ID does not disambiguate duplicate coordinates.
 
 `7.2.2.1 to 7.2.2.9` expands to nine individually addressed reference edges when all nine sibling
@@ -51,6 +54,128 @@ resolver does not infer a target from `role`, target title, hash or source ID.
 Explicitly external targets are preserved for cross-document resolution; this local repair is not
 an audit of their IDs. Source-free public projection data cannot supply missing private evidence.
 The resolver intentionally leaves semantic role classification unchanged.
+
+## Scope extraction is not canonical ScopeReach serialization
+
+The v2 contract asked the provider to populate all of `kind`, `document_key`, `part`, `clause_id`
+and `reference`. Canonical document/part reaches prohibit clause references. Local validation
+therefore detected contradictory answers but could not translate a meaningful citation into the
+correct address; merely deleting the reference would lose information or widen the scope.
+
+V3 uses a uniform extraction shape, independent of the canonical address constraints:
+
+```json
+{"reference": "IEC 61508-0:2005 4.5", "include_descendants": false}
+```
+
+The application resolves the coordinate to a clause reach (or a subtree when descendants are
+explicitly included). The transport has no `kind`, `part`, `document_key` or `clause_id` fields
+inside scope reaches, and requires no conditional null-field grammar. The reference-routing
+contract and its semantic roles remain unchanged.
+
+```json
+{"reference": "Parts 1, 2, 3 and 4 of IEC 61508", "include_descendants": true}
+```
+
+This target expands atomically to four part reaches, each with its catalogued physical document
+key and its own `part`. It does not become four local clauses, one source-document scope, or
+merely the two endpoints. The source edition is not assumed to be the edition of all other parts.
+Missing or ambiguous physical documents cause a diagnostic error; specify the cited edition and
+make its structure available. Clause groups retain the established unresolved-whole-group behavior
+when any member is unavailable. No synthetic target ID is fabricated.
+
+An omitted `Parts` label (`1, 2, 3 and 4 of IEC 61508`) is accepted only when a verbatim,
+source-verified evidence excerpt explicitly identifies that same list as parts. Otherwise it is
+ambiguous and must not be guessed. Citations inside conditions are not substituted for an explicit
+scope target. Whole-document targets use `this document` or an exact catalogued document reference;
+unknown whole-document targets cannot fall back to the local document.
+
+These examples describe representations, not a finding that those source clauses actually declare
+such scopes. The provider still interprets whether the clause establishes a scope and whether it
+includes descendants. Schema/coordinate validation does not prove semantic extraction accuracy.
+
+The repository composition supplies the available physical-document catalogue. Catalogue identity
+and target structure participate in input/cache fingerprints; unrelated generated attributes do
+not. Canonical schema 9 and public companion schema 1.2 are unchanged. Nothing is deleted from
+existing documents or companions and confirmed routing remains protected.
+
+### Figure/table citations and unresolved identities
+
+The extractor and address index both recognize labelled figures (including `Fig.`), tables,
+complete mixed lists and bounded ranges. Prefix- and suffix-qualified scope citations are accepted,
+for example `IEC 61508-2 Figure 2 and Table 1` and `Figure 2 and Table 1 of IEC 61508-2`.
+They resolve against the cited physical document, not the source part or equal-numbered clauses.
+Existing labelled figure entries can be addressed without introducing a new canonical clause type.
+
+A meaningful citation is not invalid just because its objects have no standalone TOC entries.
+This now follows the existing unresolved-clause policy: if every member resolves uniquely, expand
+all members; otherwise retain the entire original group with `clause_id: null`. Never publish only
+the resolvable subset, invent an ID, discard the figure/table labels, or widen to a whole document.
+The reach retains the supplied descendant intent and the existing clause/subtree representation
+for clause-like addressed items. No document/enrichment schema migration is needed.
+
+For a single-item scope whose table/figure identities are unavailable, the canonical address is:
+
+```yaml
+kind: clause
+document_key: IEC61508-2
+clause_id: null
+reference: IEC 61508-2 Figure 2 and Table 1
+```
+
+`clause_id: null` is not a verified link. It preserves a citation for later resolution/review.
+The CLI separately reports `Scope targets unresolved` and writes complete retained target groups to:
+
+```text
+.atlas/data/evaluation/context-routing/IEC61508-0-unresolved-targets.json
+```
+
+The count is of unresolved **reach records/groups**, not necessarily individual list members.
+It includes reused/protected values, so reuse cannot hide missing identities. The report is cleared
+when no such targets remain. It is private diagnostic output, not additional WIP data in companions.
+`ok` means a valid routing extraction, not complete target resolution. `--fail-on-failure` still
+blocks invalid schema/domain output; valid unresolved citations do not trigger a futile corrective
+LLM request. Missing/ambiguous whole-document or part identities and malformed citations still fail.
+
+A figure/table citation does **not** by itself establish scope. Informational mentions belong under
+`reference_routings`; genuine declarations can govern figures/tables. The v3 prompt explains both
+cases. There is no deterministic rule moving every object citation out of scopes or inventing a
+role. The production log alone does not reveal the source evidence needed to judge that distinction.
+An unresolved address and an incorrect semantic interpretation are separate questions.
+
+The resolver revision and updated prompt invalidate stale generated-input fingerprints. The
+standalone command below remains sufficient; there is no need to repeat Docling or normalization.
+
+### Verify the context stage without repeating normalization
+
+From the project root, after applying the patch including `cfg/context-enrichment.yaml`:
+
+```bash
+uv run standards-atlas document enrich-context IEC61508-0 \
+  --workspace .atlas/data \
+  --fresh \
+  --fail-on-failure
+```
+
+The startup message must name `context-routing-enrichment/context-routing-v3`. This command needs
+existing canonical content/taxonomy and the dedicated local context model. It does not rerun
+Docling, normalization, qualification or publication. The normal `workflow run --task enrichments`
+command also uses v3 through the shipped configuration. Repeating it with `--overwrite --fresh`
+intentionally rebuilds derived steps and repeats generated context inference.
+
+Schema and canonical validation remain strict. One corrective retry receives both the precise
+error and the rejected JSON as diagnostic data (not as source evidence). After persistent failure,
+`--fail-on-failure` and the end-to-end workflow continue to block qualification/publication.
+The CLI writes private diagnostics before exiting:
+
+```text
+.atlas/data/evaluation/context-routing/IEC61508-0-failures.json
+```
+
+The report identifies each failed clause, generator, input fingerprint and both rejected answers
+where available. It can contain licensed text, so it is never written to `data/enrichments`.
+Successful retry removes the stale per-document failure report. No failed candidate is converted
+into a fabricated successful empty routing value.
 
 ## Repair existing canonical documents
 

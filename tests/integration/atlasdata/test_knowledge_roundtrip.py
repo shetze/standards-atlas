@@ -1516,3 +1516,38 @@ def test_cleanup_drops_only_empty_public_records_not_canonical_clauses(world, mo
     assert [item.path for item in record(world).clauses[0].attributes] == [
         S + "role_semantics_present"
     ]
+
+
+def test_unresolved_figure_table_scope_survives_public_private_roundtrip(world):
+    _, repository, service, binding, document = world
+    literal = "IEC 61508-2 Figure 2 and Table 1"
+    routing = ContextRouting(
+        scopes=(
+            ScopeDeclaration(
+                source_clause_id=document.clauses[0].id.value,
+                reaches=(ScopeReach(kind="clause", document_key="IEC61508-2", reference=literal),),
+                evidence=(SECRET,),
+                qualifications=(SECRET,),
+            ),
+        )
+    )
+    save(world, patch_clause(document, context={"context_routing": routing}))
+    export(world)
+    initial = binding.enrichments_path.read_bytes()
+    assert SECRET.encode() not in initial
+    payload = yaml.safe_load(initial)
+    attribute = next(
+        item
+        for item in payload["clauses"][0]["attributes"]
+        if item["path"] == "enrichments.context_routing"
+    )
+    (reach,) = attribute["value"]["scopes"][0]["reaches"]
+    assert reach["reference"] == literal
+    assert reach["clause_id"] is None
+    assert reach["kind"] == "clause" and reach["document_key"] == "IEC61508-2"
+    repository.delete(document.key)
+    service.import_(write=True, strict_evidence=True)
+    stored = repository.load(document.key).clauses[0].context_routing
+    assert stored == routing
+    export(world)
+    assert binding.enrichments_path.read_bytes() == initial

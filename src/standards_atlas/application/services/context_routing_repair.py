@@ -54,7 +54,7 @@ def repair_context_routing(document: EngineeringDocument) -> ContextRoutingRepai
     result = type(document).model_validate(result.model_dump(mode="python"))
     report = {
         "contract": "context-routing-repair-v1",
-        "resolver": "document-coordinates-v2",
+        "resolver": "document-coordinates-v3",
         "document_key": document.key.value,
         "clauses_changed": sum(
             a != b for a, b in zip(document.clauses, result.clauses, strict=True)

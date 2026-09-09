@@ -21,7 +21,7 @@ _ANNEX = r"[A-Z](?:\.\d+){0,7}"
 _ITEM = rf"(?:{_NUMBER}|{_ANNEX})"
 _PREFIX = (
     r"(?:clauses?|subclauses?|paragraphs?|sections?|annex(?:es)?|"
-    r"appendi(?:x|ces)|tables?|figures?)"
+    r"appendi(?:x|ces)|tables?|figures?|figs?\.?)"
 )
 _TAIL = rf"(?:\s*(?:to|through|–|—|-|,\s*(?:and\s+)?|\band\b|&)\s*(?:{_PREFIX}\s+)?{_ITEM})*"
 _STANDARD = r"(?:IEC|ISO|EN|DIN|BS|IEEE)(?:[/ -](?:IEC|ISO|EN))*\s*\d+(?:-\d+)*(?::\d{4})?"

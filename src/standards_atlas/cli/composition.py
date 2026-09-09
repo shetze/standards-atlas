@@ -172,14 +172,16 @@ def build_context_enrichment_service(
 
     llm_config = replace(config.llm, cache_directory=None) if fresh else config.llm
     gateway = OpenAICompatibleLlmGateway(llm_config)
+    documents = FileSystemEngineeringDocumentRepository(workspace)
     return ContextEnrichmentService(
-        documents=FileSystemEngineeringDocumentRepository(workspace),
+        documents=documents,
         enricher=LlmContextRoutingEnricher(
             gateway,
             prompt=prompt,
             model=config.llm.model,
             max_tokens=config.max_tokens,
             retry_max_tokens=config.retry_max_tokens,
+            scope_documents=documents.list(),
         ),
         progress=progress,
         fresh=fresh,

@@ -1,0 +1,4 @@
+{
+  "description": "Extract scope target citations; the application assigns canonical scope kinds and addresses.",
+  "version": "context-routing-v3"
+}

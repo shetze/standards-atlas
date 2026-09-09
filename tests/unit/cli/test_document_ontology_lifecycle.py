@@ -124,3 +124,87 @@ def test_classify_ontology_reports_clause_progress(monkeypatch, capsys) -> None:
     assert "[Enrich Document Context 001/001] 7.4.1 — Verification started" in output
     assert "[Enrich Document Context 001/001] 7.4.1 — Verification partial elapsed=2.5s" in output
     assert "Context failures      : 1" in output
+
+
+def test_context_failures_write_private_diagnostics_and_success_clears_them(
+    monkeypatch, tmp_path
+) -> None:
+    import json
+
+    import pytest
+    import typer
+
+    server = _FakeServer()
+    result = _FakeClassificationResult(
+        document=SimpleNamespace(key=SimpleNamespace(value="IEC61508-0")),
+        clauses_enriched=0,
+        context_enrichment_failures=1,
+    )
+    result.routing_failures = ({"clause_id": "example", "rejected_content": "private response"},)
+    monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
+    monkeypatch.setattr(
+        management,
+        "build_context_enrichment_service",
+        lambda *a, **kw: SimpleNamespace(enrich=lambda key: result),
+    )
+    workspace = tmp_path / ".atlas/data"
+    config = Path("cfg/context-enrichment.yaml")
+    with pytest.raises(typer.Exit) as captured:
+        management.enrich_document_context(
+            "IEC61508-0", workspace=workspace, context_config=config, fail_on_failure=True
+        )
+    assert captured.value.exit_code == 2
+    report = workspace / "evaluation/context-routing/IEC61508-0-failures.json"
+    payload = json.loads(report.read_text())
+    assert payload["failures"][0]["rejected_content"] == "private response"
+    assert payload["prompt"].endswith("context-routing-v3")
+    assert not (tmp_path / "data/enrichments").exists()
+    result.context_enrichment_failures = 0
+    result.routing_failures = ()
+    management.enrich_document_context(
+        "IEC61508-0", workspace=workspace, context_config=config, fail_on_failure=True
+    )
+    assert not report.exists()
+
+
+def test_unresolved_target_report_is_not_a_generation_failure_and_is_cleared(
+    monkeypatch, tmp_path, capsys
+) -> None:
+    import json
+
+    server = _FakeServer()
+    result = _FakeClassificationResult(
+        document=SimpleNamespace(key=SimpleNamespace(value="IEC61508-0")),
+        clauses_enriched=1,
+    )
+    result.unresolved_scope_targets = (
+        {
+            "source_clause_id": "source-4.9",
+            "document_key": "IEC61508-2",
+            "reference": "IEC 61508-2 Figure 2 and Table 1",
+            "clause_id": None,
+            "status": "unresolved",
+        },
+    )
+    monkeypatch.setattr(management, "managed_llm_server", lambda path: server)
+    monkeypatch.setattr(
+        management,
+        "build_context_enrichment_service",
+        lambda *a, **kw: SimpleNamespace(enrich=lambda key: result),
+    )
+    workspace = tmp_path / ".atlas/data"
+    management.enrich_document_context("IEC61508-0", workspace=workspace, fail_on_failure=True)
+    output = capsys.readouterr().out
+    assert "Context failures      : 0" in output
+    assert "Scope targets unresolved: 1" in output
+    report = workspace / "evaluation/context-routing/IEC61508-0-unresolved-targets.json"
+    payload = json.loads(report.read_text())
+    assert payload["unresolved_scope_targets"][0]["reference"] == (
+        "IEC 61508-2 Figure 2 and Table 1"
+    )
+    assert not (workspace / "evaluation/context-routing/IEC61508-0-failures.json").exists()
+    assert not (tmp_path / "data/enrichments").exists()
+    result.unresolved_scope_targets = ()
+    management.enrich_document_context("IEC61508-0", workspace=workspace, fail_on_failure=True)
+    assert not report.exists()
+    assert "Scope targets unresolved: 0" in capsys.readouterr().out

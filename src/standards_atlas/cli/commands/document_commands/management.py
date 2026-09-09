@@ -263,6 +263,54 @@ def enrich_document_context(
     typer.echo(f"Subjects ambiguous    : {result.subjects_ambiguous}")
     typer.echo(f"Routing candidates    : {result.candidates}")
     typer.echo(f"Context failures      : {result.context_enrichment_failures}")
+    # Raw rejected answers may contain licensed source excerpts: private workspace
+    # only, never data/enrichments. Clear the stale report after a successful retry.
+    failure_report = workspace / "evaluation/context-routing" / f"{document_key}-failures.json"
+    try:
+        if result.context_enrichment_failures:
+            failure_report.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "document_key": document_key,
+                "prompt": f"{config.prompt_task}/{config.prompt_version}",
+                "failures": getattr(result, "routing_failures", ()),
+            }
+            failure_report.write_text(
+                json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
+            typer.echo(f"Context failure report: {failure_report}")
+        else:
+            failure_report.unlink(missing_ok=True)
+    except OSError as exc:
+        typer.echo(f"Cannot write context failure report: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    # A syntactically valid citation without a TOC identity is not an inference
+    # failure. Make retained unresolved groups visible, also on cache/reuse runs.
+    unresolved = getattr(result, "unresolved_scope_targets", ())
+    typer.echo(f"Scope targets unresolved: {len(unresolved)}")
+    target_report = (
+        workspace / "evaluation/context-routing" / f"{document_key}-unresolved-targets.json"
+    )
+    try:
+        if unresolved:
+            target_report.parent.mkdir(parents=True, exist_ok=True)
+            target_report.write_text(
+                json.dumps(
+                    {
+                        "document_key": document_key,
+                        "unresolved_scope_targets": unresolved,
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            typer.echo(f"Unresolved target report: {target_report}")
+        else:
+            target_report.unlink(missing_ok=True)
+    except OSError as exc:
+        typer.echo(f"Cannot write unresolved target report: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
     if fail_on_failure and result.context_enrichment_failures:
         typer.echo(
             "Context routing is incomplete; retry before qualification/publication.", err=True

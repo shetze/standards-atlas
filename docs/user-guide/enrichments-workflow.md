@@ -22,7 +22,7 @@ The qualification matrix must enable final consensus and the Applicability decis
 existing verified adoption reader requires their final artifacts; it does not accept arbitrary
 proposal directories or substitute a Presence gate for the final policy. The snapshot's v6
 Applicability Presence manifest meets this contract. Context routing uses
-`cfg/context-enrichment.yaml` (currently `context-routing-v2`), and qualification uses the selected
+`cfg/context-enrichment.yaml` (currently `context-routing-v3`), and qualification uses the selected
 matrix and existing LLM configuration. The configured models/runtime must be available to execute
 new inference. Unknown or insufficient semantic outcomes retain their existing policy semantics;
 this workflow does not change thresholds or turn generated values into confirmations.
@@ -174,3 +174,15 @@ is represented by controlled qualification fixtures; these tests do not claim a 
 quality assessment. A second identical run verifies byte-identical canonical documents and public
 companions. Separate tests cover archive checksum/matrix validation, failed context inference,
 review gates, selection isolation and CLI failure propagation without subprocess orchestration.
+
+### Unresolved scope addresses are not inference failures
+
+Context enrichment distinguishes invalid responses from meaningful citations whose targets have
+no unique internal ID. Figure/table lists use the same rule as clause lists: keep the complete
+literal group with `clause_id: null`, without widening the scope or fabricating links. The context
+stage prints `Scope targets unresolved` and writes
+`.atlas/data/evaluation/context-routing/<document-key>-unresolved-targets.json` separately from
+`<document-key>-failures.json`. Valid unresolved targets do not abort `--fail-on-failure`; schema,
+malformed-citation and domain failures still stop before qualification/publication. `ok` does not
+claim that every target is resolved or that the model's interpretation is semantically verified.
+See [reference resolution](context-routing-reference-resolution.md) for review and representation.

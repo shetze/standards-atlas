@@ -1,7 +1,7 @@
 context_enrichment:
   prompt:
     task: context-routing-enrichment
-    version: context-routing-v2
+    version: context-routing-v3
   generation:
     max_tokens: 1024
     retry_max_tokens: 2048

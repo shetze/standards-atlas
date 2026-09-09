@@ -10,7 +10,8 @@ from standards_atlas.domain.model import Clause, ClauseType, EngineeringDocument
 _COORDINATE = r"(?:\d+(?:\.\d+)*[a-z]?|[a-z](?:\.\d+)*)"
 _SINGLE = re.compile(rf"{_COORDINATE}\Z", re.I)
 _PREFIX = re.compile(
-    r"^(clauses?|subclauses?|sections?|paragraphs?|annex(?:es)?|appendi(?:x|ces)|tables?)\s+",
+    r"^(clauses?|subclauses?|sections?|paragraphs?|annex(?:es)?|appendi(?:x|ces)|"
+    r"tables?|figures?|figs?\.?)\s+",
     re.I,
 )
 _SELF = {"this clause", "this subclause", "this section"}
@@ -20,6 +21,15 @@ _STANDARD = re.compile(r"\b(?:IEC|ISO|EN|DIN|BS|IEEE)(?:[/ -](?:IEC|ISO|EN))*\s*
 def reference_key(value: str) -> str:
     key = " ".join(value.strip().rstrip(".,;:)").split()).casefold()
     return re.sub(r"\b(iec|iso|en|din|bs|ieee)\s*(?=\d)", r"\1 ", key)
+
+
+def _object_prefix(prefix: str) -> str:
+    """Keep labelled objects out of the numeric clause namespace."""
+    if prefix.casefold().startswith("table"):
+        return "table "
+    if prefix.casefold().startswith("fig"):
+        return "figure "
+    return ""
 
 
 def _namespace(clause: Clause) -> tuple[str, str | None, int | None]:
@@ -40,10 +50,13 @@ def canonical_reference(clause: Clause) -> str:
 def _aliases(clause: Clause) -> set[str]:
     coordinate = reference_key(clause.reference.clause)
     match = _PREFIX.match(coordinate)
+    kind = _object_prefix(match.group(1)) if match else ""
     if match:
         coordinate = coordinate[match.end() :]
     if clause.clause_type == ClauseType.TABLE:
-        return {f"table {coordinate}"}
+        kind = "table "
+    if kind:
+        return {f"{kind}{coordinate}"}
     if not _SINGLE.fullmatch(coordinate):
         return {reference_key(clause.reference.clause)}
     aliases = {coordinate}
@@ -118,17 +131,19 @@ class DocumentReferenceIndex:
         kind = ""
         if match:
             prefix = match.group(1)
-            kind = "table " if prefix.startswith("table") else ""
+            kind = _object_prefix(prefix)
             key = key[match.end() :]
         # Accept repeated prefixes ("Annex G and Annex H") and shared prefixes.
         members = re.split(r"\s*(?:,\s*(?:and\s+)?|\band\b|&)\s*", key)
         result: list[str] = []
         for member in members:
             member_prefix = _PREFIX.match(member)
-            member_kind = kind
             if member_prefix:
-                member_kind = "table " if member_prefix.group(1).startswith("table") else ""
+                # In "Figure 2, Table 1 and 3", the last member is Table 3,
+                # not Figure 3 or Clause 3. A repeated label changes inheritance.
+                kind = _object_prefix(member_prefix.group(1))
                 member = member[member_prefix.end() :].strip()
+            member_kind = kind
             bounds = re.fullmatch(
                 rf"({_COORDINATE})\s*(?:to|through|–|—|-)\s*({_COORDINATE})", member, re.I
             )

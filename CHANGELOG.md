@@ -4,6 +4,21 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 
 ## 0.8.7 — Enrichment publication and reference resolution (2026-09-09)
 
+- Recognize labelled figure/table citations consistently in extraction and scope resolution,
+  including mixed lists, ranges and suffix-qualified targets. Never bind an object label to an
+  equal-numbered clause or widen an unresolvable target to its document.
+- Preserve complete valid citation groups with null target IDs when the TOC lacks an exact member,
+  and report unresolved scope addresses separately from context generation failures. Keep the
+  original scope/reference classification and evidence rather than silently reclassifying mentions.
+
+- Separate the default `context-routing-v3` scope extraction contract from canonical ScopeReach:
+  extract target citations plus descendant intent, then deterministically build document, part,
+  clause and subtree reaches. Resolve complete part lists against physical documents and never
+  null a meaningful citation to satisfy a mutually exclusive canonical field constraint.
+- Include the target catalogue/structure in reuse fingerprints. Preserve strict domain/schema
+  validation and the publication gate; record both rejected attempts in private per-document
+  diagnostics, and supply rejected JSON to the corrective retry.
+
 - Add explicit `--task enrichments`, composing document preparation, qualification, verified
   adoption, public/private transfer, reimport and CBox reporting through existing workflow APIs.
 - Reuse native Docling artifacts by default; prepare all selected structures before context,

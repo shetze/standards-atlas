@@ -16,6 +16,7 @@ from standards_atlas.application.context import (
     normalize_context_routing_targets,
 )
 from standards_atlas.application.context.canonical_cbox import context_fingerprint
+from standards_atlas.application.context.scope_targets import ScopeTargetResolver
 from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.application.ports.llm_gateway import (
@@ -81,6 +82,8 @@ class ContextEnrichmentResult(BaseModel):
     subjects_ambiguous: int = 0
     context_enrichment_failures: int = 0
     routing_reused: int = 0
+    routing_failures: tuple[dict[str, object], ...] = ()
+    unresolved_scope_targets: tuple[dict[str, object], ...] = ()
 
 
 class LlmContextRoutingEnricher:
@@ -98,12 +101,14 @@ class LlmContextRoutingEnricher:
         model: str | None = None,
         max_tokens: int = 1024,
         retry_max_tokens: int = 2048,
+        scope_documents: tuple[EngineeringDocument, ...] = (),
     ) -> None:
         self._gateway = gateway
         self._prompt = prompt
         self._model = model
         self._max_tokens = max_tokens
         self._retry_max_tokens = retry_max_tokens
+        self._scope_documents = scope_documents
 
     @property
     def generator_id(self) -> str:
@@ -149,6 +154,11 @@ class LlmContextRoutingEnricher:
             "reference_mentions": [item.model_dump(mode="json") for item in mentions],
             "subject_context": clause.subject_context.model_dump(mode="json"),
         }
+        metadata = {}
+        if self._prompt.version == "context-routing-v3":
+            resolver = ScopeTargetResolver(document, self._scope_documents)
+            context_payload["scope_target_documents"] = resolver.catalog()
+            metadata["scope_target_catalog_sha256"] = resolver.fingerprint()
         values = {
             "content": clause.plain_text,
             "context_json": json.dumps(context_payload, ensure_ascii=False, sort_keys=True),
@@ -172,6 +182,7 @@ class LlmContextRoutingEnricher:
             seed=0,
             max_tokens=self._max_tokens,
             reasoning_enabled=False,
+            metadata=metadata,
         )
 
     def input_fingerprint(self, *, clause: Clause, document: EngineeringDocument) -> str:
@@ -179,7 +190,7 @@ class LlmContextRoutingEnricher:
         return context_fingerprint(
             {
                 "contract": "context-routing-input-v1",
-                "reference_resolution": "document-coordinates-v2",
+                "reference_resolution": "document-coordinates-v3",
                 "generator": self.generator_id,
                 "system": request.system_prompt,
                 "prompt": request.user_prompt,
@@ -187,6 +198,7 @@ class LlmContextRoutingEnricher:
                 "model": request.model,
                 "max_tokens": request.max_tokens,
                 "retry_max_tokens": self._retry_max_tokens,
+                **dict(request.metadata),
             }
         )
 
@@ -194,17 +206,34 @@ class LlmContextRoutingEnricher:
         request = self._request(clause=clause, document=document)
         try:
             result = self._generate_with_truncation_retry(request)
-            routing = _context_routing_from_payload(clause.id.value, result.value)
+            routing = self._routing(clause, document, result.value)
         except LlmResponseError as first_error:
+            retry_hint = (
+                "Scope reaches have only reference and include_descendants. Preserve the complete "
+                "target citation, including an explicit Parts label for part lists. Never emit "
+                "kind, part, document_key or clause_id in reaches. Do not erase targets or "
+                "return empty arrays just to suppress the validation error. "
+                if self._prompt.version == "context-routing-v3"
+                else "For document scope do not set part/clause/reference; for part scope set "
+                "only part; for subtree/clause scope provide an exact target reference. "
+            )
+            rejected = first_error.raw_content
             retry_request = replace(
                 request,
+                user_prompt=(
+                    request.user_prompt
+                    + "\n\nRejected output (diagnostic data, not source evidence):\n"
+                    + json.dumps(
+                        {"response": rejected, "validation_error": str(first_error)},
+                        ensure_ascii=False,
+                    )
+                ),
                 system_prompt=(
                     request.system_prompt
                     + " The previous structured response was unusable. Re-evaluate the clause "
-                    "and return only JSON that satisfies every routing invariant. For document "
-                    "scope do not set part/clause/reference; for part scope set only part; for "
-                    "subtree/clause scope provide an exact target reference when no resolved "
-                    "clause_id is supplied. Do not add explanations. Validation failure: "
+                    "and return only JSON that satisfies every routing invariant. "
+                    + retry_hint
+                    + "Do not add explanations. Validation failure: "
                     + str(first_error)
                 ),
                 max_tokens=self._retry_max_tokens,
@@ -212,13 +241,31 @@ class LlmContextRoutingEnricher:
             )
             try:
                 result = self._generate_with_truncation_retry(retry_request)
-                routing = _context_routing_from_payload(clause.id.value, result.value)
+                routing = self._routing(clause, document, result.value)
             except LlmResponseError as retry_error:
                 raise LlmResponseError(
                     "context enrichment response remains invalid after corrective retry: "
-                    f"{retry_error}"
+                    f"{retry_error}",
+                    raw_content=retry_error.raw_content,
+                    raw_response={
+                        "first_error": str(first_error),
+                        "first_response": first_error.raw_content,
+                        "retry_error": str(retry_error),
+                        "retry_response": retry_error.raw_content,
+                    },
+                    finish_reason=retry_error.finish_reason,
                 ) from retry_error
         return normalize_context_routing_targets(routing, document)
+
+    def _routing(
+        self, clause: Clause, document: EngineeringDocument, payload: Mapping[str, object]
+    ) -> ContextRouting:
+        resolver = (
+            ScopeTargetResolver(document, self._scope_documents)
+            if self._prompt.version == "context-routing-v3"
+            else None
+        )
+        return _context_routing_from_payload(clause.id.value, payload, scope_resolver=resolver)
 
     def _generate_with_truncation_retry(
         self, request: StructuredGenerationRequest
@@ -245,24 +292,43 @@ class LlmContextRoutingEnricher:
 def _context_routing_from_payload(
     source_clause_id: str,
     payload: Mapping[str, object],
+    *,
+    scope_resolver: ScopeTargetResolver | None = None,
 ) -> ContextRouting:
     try:
-        return _validated_context_routing_from_payload(source_clause_id, payload)
-    except (TypeError, ValueError) as exc:
+        return _validated_context_routing_from_payload(
+            source_clause_id, payload, scope_resolver=scope_resolver
+        )
+    except (KeyError, TypeError, ValueError) as exc:
         raise LlmResponseError(
-            f"context enrichment response violates routing invariants: {exc}"
+            f"context enrichment response violates routing invariants: {exc}",
+            raw_content=json.dumps(dict(payload), ensure_ascii=False),
         ) from exc
 
 
 def _validated_context_routing_from_payload(
     source_clause_id: str,
     payload: Mapping[str, object],
+    *,
+    scope_resolver: ScopeTargetResolver | None = None,
 ) -> ContextRouting:
     scopes = []
     for item in payload.get("scope_declarations", ()):
         if not isinstance(item, Mapping):
             raise LlmResponseError("scope declaration must be an object")
-        reaches = tuple(ScopeReach.model_validate(value) for value in item.get("reaches", ()))
+        if scope_resolver is None:
+            reaches = tuple(ScopeReach.model_validate(value) for value in item.get("reaches", ()))
+        else:
+            reaches = tuple(
+                reach
+                for value in item.get("reaches", ())
+                for reach in scope_resolver.resolve(
+                    value["reference"],
+                    include_descendants=value["include_descendants"],
+                    source_clause_id=source_clause_id,
+                    evidence=tuple(item.get("evidence", ())),
+                )
+            )
         scopes.append(
             ScopeDeclaration(
                 source_clause_id=source_clause_id,
@@ -340,6 +406,7 @@ class ContextEnrichmentService:
         updated = []
         enriched_ids: set[str] = set()
         failures = 0
+        routing_failures: list[dict[str, object]] = []
         reused = 0
         current = 0
         total = len(candidates)
@@ -442,6 +509,17 @@ class ContextEnrichmentService:
                 updated.append(contextual_clause)
                 state = "partial"
                 failure_detail = str(error)
+                routing_failures.append(
+                    {
+                        "clause_id": clause.id.value,
+                        "reference": clause.reference.as_text(),
+                        "generator": self._enricher.generator_id,
+                        "input_fingerprint": fingerprint,
+                        "error": str(error),
+                        "rejected_content": error.raw_content,
+                        "attempts": error.raw_response,
+                    }
+                )
             else:
                 enriched_clause = merge_generated_enrichments(
                     contextual_clause,
@@ -495,7 +573,34 @@ class ContextEnrichmentService:
             subjects_identified=subject_report.analysis.resolved_clauses,
             subjects_ambiguous=subject_report.analysis.ambiguous_clauses,
             context_enrichment_failures=failures,
+            routing_failures=tuple(routing_failures),
+            unresolved_scope_targets=_unresolved_scope_targets(result),
         )
+
+
+def _unresolved_scope_targets(document: EngineeringDocument) -> tuple[dict[str, object], ...]:
+    """Report retained literal target groups separately from invalid generation.
+
+    Include reused/protected state too: an unchanged value is not proof that its
+    targets have become addressable. These records carry no source excerpts.
+    """
+    return tuple(
+        {
+            "source_clause_id": scope.source_clause_id,
+            "source_reference": clause.reference.as_text(),
+            "scope_index": scope_index,
+            "reach_index": reach_index,
+            "document_key": reach.document_key or document.key.value,
+            "kind": reach.kind.value,
+            "reference": reach.reference,
+            "clause_id": None,
+            "status": "unresolved",
+        }
+        for clause in document.clauses
+        for scope_index, scope in enumerate(clause.context_routing.scopes)
+        for reach_index, reach in enumerate(scope.reaches)
+        if reach.kind.value in {"clause", "subtree"} and reach.clause_id is None
+    )
 
 
 def _subject_context(result: ClauseSubjectIdentification) -> ClauseSubjectContext:

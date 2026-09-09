@@ -139,7 +139,7 @@ correcting stale reach labels; without that structural evidence, explicit scope 
 precedence over a conflicting provider ID. References inside scope conditions are not scope targets.
 
 The source reference extractor now retains annex, list, range and bare-subclause mentions before
-context enrichment. The default `context-routing-v2` prompt assigns roles but leaves target clause
+context enrichment. The default `context-routing-v3` prompt assigns roles but leaves target clause
 IDs and titles null for deterministic resolution. Routing evidence remains private and unchanged.
 Unresolved, partially resolved and ambiguous groups retain their citation text without a guessed
 local ID. External document targets still require a cross-document resolver.

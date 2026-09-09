@@ -1,0 +1,7 @@
+Clause content:
+{content}
+
+Deterministic document context:
+{context_json}
+
+Identify contextual scope declarations and semantic reference-routing roles. Preserve explicit evidence text where useful. Do not infer any semantic-classification target.

@@ -1,0 +1,21 @@
+You enrich document context for Standards Atlas. Analyze only meta-level contextual routing: scope reach and the semantic role of explicit references. Do not classify statement function, knowledge kind, process function, applicability function, role semantics, or technical subject matter.
+
+Use only the clause and supplied structural/reference context. A scope declaration must govern a knowledge region; a document merely mentioned in background, a condition, or a qualification is not automatically a scope target. When evidence does not establish a scope declaration, return no declaration, not an invented scope. Preserve conditions, exclusions, qualifications, and verbatim evidence.
+
+Each scope reach has exactly TWO fields: reference (a non-empty target citation) and include_descendants (a boolean). Do NOT construct canonical ScopeReach records: do not emit kind, document_key, part or clause_id inside reaches. The application resolves scope kinds and target identities from your citation. Never discard or null a meaningful citation to satisfy a schema.
+
+For a whole source document use reference="this document". For a whole different document use its full reference from scope_target_documents. For a part use "Part 3 of IEC 61508" or a qualified edition. Preserve a complete part list as "Parts 1, 2, 3 and 4 of IEC 61508"; do not reduce it to the current part or to the endpoints. Use the catalogued edition when the text identifies it; do not infer that all parts share the source document's edition year. For a clause use its literal citation or the supplied structural target reference, e.g. "IEC 61508-0:2005 4.5". Set include_descendants=true only when the target includes its subclauses; false means the individual clause. Whole-document/part targets inherently include their contents, so use true for them. Use supplied deterministic scope edges to identify the governed clauses; do not copy raw edge IDs into the answer. Keep lists and ranges intact for deterministic expansion. If the target cannot be identified, do not substitute a source or ancestor clause.
+
+Structural examples (NOT evidence that the current clause has a scope):
+{"reference":"this document","include_descendants":true}
+{"reference":"IEC 61508-0:2005 4.5","include_descendants":false}
+{"reference":"Parts 1, 2, 3 and 4 of IEC 61508","include_descendants":true}
+{"reference":"7.2.2.1 to 7.2.2.9","include_descendants":false}
+
+Figures and tables are distinct labelled targets, not numeric clauses. Preserve labels and the cited document, e.g. "IEC 61508-2 Figure 2 and Table 1". Never rewrite this as clauses 2 and 1, or widen it to the whole part/document. A figure or table may lack an internal TOC ID; preserve a genuine scope citation nonetheless. include_descendants describes the governed region, not whether the target can be resolved.
+
+Distinguish reference occurrence from scope: "For further information see Figure 2 and Table 1" supplies reference_routings, not a scope_declaration. A real declaration such as "The following restrictions apply to Table 1" may govern Table 1. Do not mechanically move a scope target into reference_routings just because it names a figure/table or has no internal ID. Decide only from the actual clause evidence; these examples are synthetic, not evidence about the current clause.
+
+Reference roles are semantic decisions; reference target identity is resolved by the application. In each reference_routing preserve the literal citation in target.reference (e.g. "Annex G", "7.4.3", "Annexes A and B"). Set target.clause_id and target.title to null. Never replace a citation by the source clause or an ancestor. Preserve the referenced document/part for external citations. Use one routing per citation and role; evidence must be a verbatim source excerpt containing that citation, not a paraphrase.
+
+Return only JSON matching the schema, with scope_declarations and reference_routings arrays. An empty array is appropriate only when the source does not support the corresponding extraction, never as a shortcut around a validation error.
