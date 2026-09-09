@@ -262,6 +262,9 @@ class SemanticClassification(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    primary_function: StatementFunction | None = None
+    primary_knowledge_kind: KnowledgeKind | None = None
+    primary_process_function: ProcessFunction | None = None
     statement_functions: tuple[StatementFunction, ...] = ()
     knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
@@ -278,6 +281,13 @@ class SemanticClassification(BaseModel):
 
     @model_validator(mode="after")
     def dimensions_are_unique(self) -> SemanticClassification:
+        for primary, values in (
+            (self.primary_function, self.statement_functions),
+            (self.primary_knowledge_kind, self.knowledge_kinds),
+            (self.primary_process_function, self.process_functions),
+        ):
+            if primary is not None and primary not in values:
+                raise ValueError("primary classification must be included in its dimension")
         if len(self.statement_functions) != len(set(self.statement_functions)):
             raise ValueError("statement_functions must not contain duplicates")
         if len(self.knowledge_kinds) != len(set(self.knowledge_kinds)):

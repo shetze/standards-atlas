@@ -199,7 +199,11 @@ def test_context_enrichment_only_analyzes_scope_or_reference_candidates() -> Non
     assert clause.primary_subject is not None
     assert clause.primary_subject.normalized_label == "software"
     assert clause.primary_subject.evidence.kind == "clause_text"
-    assert result.document.clauses[1] == document.clauses[1]
+    assert result.document.clauses[1].baseline == document.clauses[1].baseline
+    assert result.document.clauses[1].enrichments == document.clauses[1].enrichments
+    assert (
+        result.document.clauses[1].provenance.availability("enrichments.subject_context") == "known"
+    )
     generated = {item.path: item for item in clause.provenance.generated_attributes}
     assert generated["enrichments.subject_context"].method.value == "deterministic"
     assert generated["enrichments.context_routing"].generator == (
@@ -220,3 +224,17 @@ def test_context_prompt_contract_excludes_qualification_targets_from_schema() ->
         "scope_declarations",
         "reference_routings",
     }
+
+
+def test_context_service_preserves_explicitly_confirmed_empty_results() -> None:
+    document = _document()
+    clause = document.clauses[0].confirm_authoritative(
+        "enrichments.subject_context",
+        "enrichments.context_routing",
+    )
+    document = document.model_copy(update={"clauses": (clause, *document.clauses[1:])})
+    result = ContextEnrichmentService(
+        documents=_Documents(document),
+        enricher=LlmContextRoutingEnricher(_Gateway(), prompt=_prompt(), model="test-model"),
+    ).enrich(document.key.value)
+    assert result.document.clauses[0] == clause

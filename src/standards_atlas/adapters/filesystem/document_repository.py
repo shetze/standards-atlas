@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +17,7 @@ from standards_atlas.domain.model import (
     Standard,
 )
 
-CURRENT_DOCUMENT_SCHEMA_VERSION = 8
+CURRENT_DOCUMENT_SCHEMA_VERSION = 9
 
 _DOCUMENT_MODELS: dict[
     DocumentType,
@@ -43,10 +46,13 @@ class FileSystemEngineeringDocumentRepository:
             "document": document.model_dump(mode="json"),
         }
 
-        path.write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
+        descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                stream.write(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+            os.replace(temporary, path)
+        finally:
+            Path(temporary).unlink(missing_ok=True)
 
     def load(self, key: DocumentKey) -> EngineeringDocument:
         """Load a document using the current schema baseline."""
@@ -123,7 +129,43 @@ def _extract_document_data(payload: Any) -> dict[str, Any]:
     document = payload.get("document")
     if not isinstance(document, dict):
         raise ValueError("Versioned engineering document payload is missing 'document'")
+    if payload["schema_version"] == 8:
+        document = _upgrade_v8(document)
     return document
+
+
+def _upgrade_v8(document: dict[str, Any]) -> dict[str, Any]:
+    """Preserve populated unmarked v8 enrichments without inventing authority.
+
+    The old schema cannot distinguish reviewed AtlasData tags from unmarked
+    enrichment. Keep those values protected until explicitly confirmed. Empty
+    defaults remain unassessed; generated records remain generated.
+    """
+    from standards_atlas.domain.model.clause import ClauseEnrichments
+    from standards_atlas.domain.model.knowledge_state import paths_overlap
+
+    result = deepcopy(document)
+    defaults = ClauseEnrichments().model_dump(mode="json")
+    for clause in result.get("clauses", []):
+        provenance = clause.setdefault("provenance", {})
+        marked = [item["path"] for item in provenance.get("generated_attributes", [])]
+        marked.extend(item["path"] for item in provenance.get("confirmed_attributes", []))
+        unknown = set(provenance.get("unattributed_attributes", []))
+        enrichments = clause.get("enrichments", {})
+        for field, value in enrichments.get("semantic", {}).items():
+            path = f"enrichments.semantic.{field}"
+            if value != defaults["semantic"].get(field) and not any(
+                paths_overlap(path, item) for item in marked
+            ):
+                unknown.add(path)
+        for field in ("context_routing", "subject_context"):
+            path = f"enrichments.{field}"
+            if enrichments.get(field, defaults[field]) != defaults[field] and not any(
+                paths_overlap(path, item) for item in marked
+            ):
+                unknown.add(path)
+        provenance["unattributed_attributes"] = sorted(unknown)
+    return result
 
 
 def _safe_filename(value: str) -> str:

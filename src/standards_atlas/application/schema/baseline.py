@@ -8,7 +8,13 @@ from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "engineering-document": SchemaPolicy(
-        "engineering-document", 8, (8,), ".atlas/data/documents/*.json"
+        "engineering-document", 9, (8, 9), ".atlas/data/documents/*.json"
+    ),
+    "knowledge-adoption-batch": SchemaPolicy(
+        "knowledge-adoption-batch", "1.0", ("1.0",), "local/**/knowledge-adoption-batch.json"
+    ),
+    "knowledge-adoption-report": SchemaPolicy(
+        "knowledge-adoption-report", "1.0", ("1.0",), "local/**/knowledge-adoption-report.json"
     ),
     "standards-manifest": SchemaPolicy("standards-manifest", 2, (2,), "manifests/*.yaml"),
     "qualification-matrix-manifest": SchemaPolicy(

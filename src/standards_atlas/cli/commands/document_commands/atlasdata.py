@@ -17,9 +17,7 @@ from standards_atlas.application.services import (
     AtlasDataLifecycleService,
     AtlasDataOnboardingService,
 )
-from standards_atlas.application.services.atlasdata_lifecycle_service import (
-    AtlasDataLifecycleError,
-)
+from standards_atlas.application.services.atlasdata_lifecycle_service import AtlasDataLifecycleError
 from standards_atlas.application.services.atlasdata_onboarding_service import (
     AtlasDataOnboardingError,
     DoclingPartSource,
@@ -311,10 +309,16 @@ def apply_semantic_annotations(
         bool,
         typer.Option("--write", help="Write semantic annotations to the AtlasData file."),
     ] = cli_defaults.DEFAULT_FALSE,
+    merge: Annotated[
+        bool,
+        typer.Option("--merge", help="Update only supplied dimensions; preserve other tags."),
+    ] = False,
 ) -> None:
     """Apply reviewed, publishable semantic annotations to TOC records."""
     try:
-        result = AtlasDataSemanticAnnotationService().apply(file, annotations, write=write)
+        result = AtlasDataSemanticAnnotationService().apply(
+            file, annotations, write=write, merge=merge
+        )
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc

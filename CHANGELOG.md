@@ -2,6 +2,19 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Canonical knowledge adoption (2026-09-08)
+
+- Added `document adopt-qualification`: manifest-verified archive input, default dry-run,
+  explicit canonical writes, per-attribute diffs, source checks, and idempotent replay;
+  final Applicability policy decisions replace gate results without new model calls.
+- Extended canonical schema to 9 for explicit primary labels, assessment availability,
+  decision support, and authority-aware enrichment merging. Schema 8 remains readable;
+  populated unmarked legacy values are protected without inventing authoritative status.
+- Fixed Applicability tag reimport and added opt-in incremental `--merge` to
+  `atlasdata apply-semantic-annotations`, retaining reviewed publication semantics.
+- Public persistence of generated CBox attributes and process-function qualification
+  remain separate follow-up slices, not implicit effects of qualification or adoption.
+
 ## 0.8.6 — Gemara and ComplyTime governance integration (2026-09-01)
 
 ### Governance interchange and executable-compliance hand-off

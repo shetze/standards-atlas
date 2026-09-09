@@ -11,6 +11,7 @@ from standards_atlas.cli.commands.document_commands.exports import (
     export_document_to_markdown,
 )
 from standards_atlas.cli.commands.document_commands.inspection import inspect_data
+from standards_atlas.cli.commands.document_commands.knowledge import adopt_qualification
 from standards_atlas.cli.commands.document_commands.management import (
     derive_document_part,
     derive_document_view,
@@ -18,11 +19,10 @@ from standards_atlas.cli.commands.document_commands.management import (
     enrich_document_context,
     import_document,
 )
-from standards_atlas.cli.commands.document_commands.publication import (
-    publish_doorstop_hierarchy,
-)
+from standards_atlas.cli.commands.document_commands.publication import publish_doorstop_hierarchy
 
 __all__ = [
+    "adopt_qualification",
     "enrich_document_context",
     "derive_document_part",
     "derive_document_view",

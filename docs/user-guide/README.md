@@ -31,6 +31,7 @@ This guide describes the supported user workflows for turning private standards 
 | Run the read-only MCP server | [MCP server](mcp-server.md) |
 | Connect Codex to MCP | [Codex integration](codex-integration.md) |
 | Build corpora and execute qualification matrices | [Evaluation and qualification](evaluation-and-qualification.md) |
+| Accept qualified CBox attributes into canonical documents | [Knowledge adoption](knowledge-adoption.md) |
 | Review generated annotation proposals | [Annotation review](semantic-annotation-review.md) |
 | Diagnose common failures | [Troubleshooting](troubleshooting.md) |
 | Integrate Gemara and ComplyTime | [Gemara and ComplyTime](gemara-complytime.md) |

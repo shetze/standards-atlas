@@ -48,10 +48,6 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 from standards_atlas.application.semantic_qualification.applicability_policy_evaluation import (
     evaluate_applicability_policy,
 )
-from standards_atlas.application.semantic_qualification.applicability_policy_replay import (
-    ApplicabilityPolicyReplayReport,
-    replay_applicability_policy,
-)
 from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
     APPLICABILITY_POLICY_EVALUATION_FILENAME,
     APPLICABILITY_POLICY_RUN_FILENAME,
@@ -59,6 +55,10 @@ from standards_atlas.application.semantic_qualification.applicability_policy_qua
     APPLICABILITY_POLICY_STATE_FILENAME,
     ApplicabilityPolicyQualificationMode,
     ApplicabilityPolicyRunState,
+)
+from standards_atlas.application.semantic_qualification.applicability_policy_replay import (
+    ApplicabilityPolicyReplayReport,
+    replay_applicability_policy,
 )
 from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
     CONFIRMATION_PROMPT_VERSION,
@@ -560,7 +560,6 @@ def run_applicability_policy_command(
     typer.echo(f"Policy report            : {run_report_path}")
 
 
-
 def _resolve_policy_selection(
     *,
     selection_path: Path,
@@ -586,6 +585,7 @@ def _resolve_policy_selection(
         coverage=coverage,
         task_version=PRIMARY_TASK_VERSION,
     )
+
 
 def _validate_policy_task_taxonomy(task: object) -> None:
     expected_functions = tuple(item.value for item in ApplicabilityFunction)

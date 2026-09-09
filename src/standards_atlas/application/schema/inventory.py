@@ -49,6 +49,22 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "knowledge-adoption-batch",
+        "local/**/knowledge-adoption-batch.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "knowledge-adoption-batch",
+        "Optional serialized partial-update contract; omitted fields remain unaddressed.",
+    ),
+    VersionedInterface(
+        "knowledge-adoption-report",
+        "local/**/knowledge-adoption-report.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "knowledge-adoption-report",
+        "Explicit canonical adoption preview/write report, not public AtlasData.",
+    ),
+    VersionedInterface(
         "engineering-document",
         ".atlas/data/documents/*.json",
         LifecycleBoundary.PERSISTENCE,

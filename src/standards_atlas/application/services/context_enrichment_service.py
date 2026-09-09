@@ -38,6 +38,10 @@ from standards_atlas.domain.model import (
     ScopeReach,
     SubjectContextEvidence,
 )
+from standards_atlas.domain.model.enrichment_patch import (
+    ClauseEnrichmentPatch,
+    merge_generated_enrichments,
+)
 
 
 @dataclass(frozen=True)
@@ -258,21 +262,23 @@ class ContextEnrichmentService:
         for clause in document.clauses:
             subject_result = subjects_by_clause[clause.id.value]
             subject_context = _subject_context(subject_result)
-            contextual_clause = clause.with_subject_context(subject_context)
-            if subject_result.primary_subject is not None or subject_result.ambiguous_candidates:
-                evidence = (
-                    (subject_result.primary_subject.evidence.source_text,)
-                    if subject_result.primary_subject is not None
-                    else subject_result.ambiguous_candidates
-                )
-                contextual_clause = contextual_clause.mark_generated(
+            contextual_clause = merge_generated_enrichments(
+                clause,
+                ClauseEnrichmentPatch(subject_context=subject_context),
+                (
                     GeneratedAttribute(
                         path="enrichments.subject_context",
                         generator="subject-identification/1.0",
                         method=GenerationMethod.DETERMINISTIC,
-                        evidence=evidence,
-                    )
-                )
+                        evidence=(
+                            (subject_result.primary_subject.evidence.source_text,)
+                            if subject_result.primary_subject is not None
+                            else subject_result.ambiguous_candidates
+                        ),
+                    ),
+                ),
+            ).clause
+            if subject_result.primary_subject is not None or subject_result.ambiguous_candidates:
                 enriched_ids.add(clause.id.value)
 
             if clause.id.value not in candidate_ids:
@@ -299,14 +305,18 @@ class ContextEnrichmentService:
                 updated.append(contextual_clause)
                 state = "partial"
             else:
-                enriched_clause = contextual_clause.with_context_routing(routing).mark_generated(
-                    GeneratedAttribute(
-                        path="enrichments.context_routing",
-                        generator=self._enricher.generator_id,
-                        method=GenerationMethod.LLM,
-                        evidence=_source_evidence(clause),
-                    )
-                )
+                enriched_clause = merge_generated_enrichments(
+                    contextual_clause,
+                    ClauseEnrichmentPatch(context_routing=routing),
+                    (
+                        GeneratedAttribute(
+                            path="enrichments.context_routing",
+                            generator=self._enricher.generator_id,
+                            method=GenerationMethod.LLM,
+                            evidence=_source_evidence(clause),
+                        ),
+                    ),
+                ).clause
                 updated.append(enriched_clause)
                 enriched_ids.add(clause.id.value)
                 state = "ok"

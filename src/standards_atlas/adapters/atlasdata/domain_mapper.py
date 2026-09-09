@@ -245,6 +245,8 @@ def _merge_semantic_tags(
     )
     update: dict[str, object] = {}
     if statements:
+        if decoded["primary_statement_function"]:
+            update["primary_function"] = StatementFunction(decoded["primary_statement_function"][0])
         update["statement_functions"] = tuple(StatementFunction(value) for value in statements)
     if decoded["knowledge_kinds"]:
         update["knowledge_kinds"] = tuple(
@@ -255,6 +257,7 @@ def _merge_semantic_tags(
             ProcessFunction(value) for value in decoded["process_functions"]
         )
     if decoded["applicability_functions"]:
+        update["applicability_present"] = True
         update["applicability_functions"] = tuple(
             ApplicabilityFunction(value) for value in decoded["applicability_functions"]
         )
@@ -270,7 +273,7 @@ def _merge_semantic_tags(
         )
     if decoded["normative_status"]:
         update["normative_status"] = NormativeStatus(decoded["normative_status"][0])
-    return classification.model_copy(update=update)
+    return SemanticClassification.model_validate({**classification.model_dump(), **update})
 
 
 def _build_title_lookup(
@@ -348,7 +351,27 @@ def _map_structure_item_to_clause(
         source_token=item.source_token,
         enum_prefix=item.enum_prefix,
         identifier_width=item.identifier_width,
-    )
+    ).confirm_authoritative(*_authoritative_tag_paths(semantic_tags), authority="atlasdata")
+
+
+def _authoritative_tag_paths(tags: tuple[str, ...]) -> tuple[str, ...]:
+    fields = {
+        "SP": ("enrichments.semantic.statement_functions", "enrichments.semantic.primary_function"),
+        "SS": ("enrichments.semantic.statement_functions",),
+        "KK": ("enrichments.semantic.knowledge_kinds",),
+        "PF": ("enrichments.semantic.process_functions",),
+        "AF": (
+            "enrichments.semantic.applicability_present",
+            "enrichments.semantic.applicability_functions",
+        ),
+        "RR": (
+            "enrichments.semantic.role_semantics_present",
+            "enrichments.semantic.role_relation_types",
+        ),
+        "DS": ("baseline.document_structure",),
+        "NS": ("baseline.normative_status",),
+    }
+    return tuple(sorted({path for tag in tags for path in fields.get(tag.split("-")[0], ())}))
 
 
 def _structural_compatibility_classification(

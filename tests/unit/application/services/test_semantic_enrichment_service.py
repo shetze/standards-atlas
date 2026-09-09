@@ -442,3 +442,46 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
     assert semantic.role_relations[0].actor == relation.actor
     assert semantic.role_relations[0].relation_class == relation.relation_class
     assert semantic.role_relations[0].target == relation.target
+
+
+def test_existing_service_preserves_explicit_statement_confirmation() -> None:
+    document = _document_with_semantic(
+        SemanticClassification(
+            statement_functions=(StatementFunction.DESCRIPTION,),
+        )
+    )
+    clause = document.clauses[0].confirm_authoritative("enrichments.semantic.statement_functions")
+    document = document.model_copy(update={"clauses": (clause,)})
+    result = SemanticEnrichmentService(
+        documents=_Documents(document),
+        engine=_Engine(),
+        profile=SemanticProfile(
+            id="test",
+            version="1.0.0",
+            dimensions={
+                "statement_functions": OntologyReference(id="statement-functions", version="2.0.0"),
+            },
+        ),
+    ).enrich(document.key.value)
+    assert result.document.clauses[0] == clause
+
+
+def test_existing_service_preserves_authoritative_negative_applicability() -> None:
+    document = _document()
+    clause = document.clauses[0].confirm_authoritative("enrichments.semantic.applicability_present")
+    document = document.model_copy(update={"clauses": (clause,)})
+    result = SemanticEnrichmentService(
+        documents=_Documents(document),
+        engine=_ApplicabilityEngine(("inclusion",)),
+        profile=SemanticProfile(
+            id="test",
+            version="1.0.0",
+            dimensions={
+                "applicability_functions": OntologyReference(
+                    id="applicability-functions",
+                    version="2.0.0",
+                ),
+            },
+        ),
+    ).enrich(document.key.value)
+    assert result.document.clauses[0] == clause

@@ -105,7 +105,7 @@ class Clause(BaseModel):
     def normalize_constructor_shape(cls, data: Any) -> Any:
         """Normalize in-process flat construction to the canonical nested shape.
 
-        Persisted EngineeringDocument schema v8 only writes the nested shape.
+        Persisted EngineeringDocument schema v9 only writes the nested shape.
         This normalizer keeps Python construction concise while the refactoring
         migrates call sites; it is not a reader compatibility promise for older
         persisted schema versions.
@@ -238,6 +238,12 @@ class Clause(BaseModel):
         """Return a clause with generated attribute provenance upserted by path."""
         return self.model_copy(update={"provenance": self.provenance.mark_generated(*attributes)})
 
-    def confirm_authoritative(self, *paths: str) -> Clause:
-        """Return a clause after authoritative confirmation of generated paths."""
-        return self.model_copy(update={"provenance": self.provenance.confirm_authoritative(*paths)})
+    def confirm_authoritative(
+        self, *paths: str, authority: str = "explicit-confirmation"
+    ) -> Clause:
+        """Record explicit authority; a missing generated marker is not a confirmation."""
+        return self.model_copy(
+            update={
+                "provenance": self.provenance.confirm_authoritative(*paths, authority=authority)
+            }
+        )

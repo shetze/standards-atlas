@@ -28,6 +28,11 @@ from standards_atlas.domain.model import (
     SemanticClassification,
     StatementFunction,
 )
+from standards_atlas.domain.model.enrichment_patch import (
+    ClauseEnrichmentPatch,
+    SemanticEnrichmentPatch,
+    merge_generated_enrichments,
+)
 
 
 @dataclass(frozen=True)
@@ -103,6 +108,13 @@ def _validated_semantic_merge(
 
     payload = current.model_dump(mode="python")
     payload.update(update)
+    for values, primary in (
+        ("statement_functions", "primary_function"),
+        ("knowledge_kinds", "primary_knowledge_kind"),
+        ("process_functions", "primary_process_function"),
+    ):
+        if payload.get(primary) is not None and payload[primary] not in payload[values]:
+            payload[primary] = None
     return SemanticClassification.model_validate(_canonicalize_semantic_payload(payload))
 
 
@@ -266,7 +278,6 @@ class SemanticEnrichmentService:
             # Revalidate the complete classification before it crosses the persistence
             # boundary. This catches any future coupled-dimension merge bug at its source.
             semantic = _validated_semantic_merge(semantic, {})
-            enriched_clause = clause.with_semantic_classification(semantic)
             generated: list[GeneratedAttribute] = []
             if not ontology_failed:
                 generated.extend(
@@ -296,8 +307,48 @@ class SemanticEnrichmentService:
                         "role_relations",
                     )
                 )
-            if generated:
-                enriched_clause = enriched_clause.mark_generated(*generated)
+            available = set(values) if not ontology_failed else set()
+            if "applicability_functions" in available:
+                available.add("applicability_present")
+            if role_result is not None:
+                available.update(
+                    ("role_semantics_present", "role_relation_types", "role_relations")
+                )
+            generated = [item for item in generated if item.path.rsplit(".", 1)[-1] in available]
+            update = {
+                item.path.rsplit(".", 1)[-1]: getattr(semantic, item.path.rsplit(".", 1)[-1])
+                for item in generated
+            }
+            # Canonicalize pre-existing duplicate values as before, but only for
+            # unprotected fields. This is a repair of malformed in-memory values.
+            for field in (
+                "statement_functions",
+                "knowledge_kinds",
+                "process_functions",
+                "applicability_functions",
+                "role_relation_types",
+                "role_relations",
+            ):
+                path = f"enrichments.semantic.{field}"
+                if field not in update and not clause.provenance.protection(path):
+                    old = getattr(current, field)
+                    clean = (
+                        _unique_role_relations(old) if field == "role_relations" else _unique(old)
+                    )
+                    if clean != old:
+                        update[field] = clean
+                        generated.append(
+                            GeneratedAttribute(
+                                path=path,
+                                generator="semantic-canonicalization/1.0",
+                                method=GenerationMethod.DETERMINISTIC,
+                            )
+                        )
+            enriched_clause = merge_generated_enrichments(
+                clause,
+                ClauseEnrichmentPatch(semantic=SemanticEnrichmentPatch(**update)),
+                tuple(generated),
+            ).clause
             updated.append(enriched_clause)
             if not ontology_failed:
                 classified += 1

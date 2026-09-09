@@ -40,6 +40,29 @@ Canonical construction follows these rules:
 
 A standard family is **not** represented by a synthetic canonical `EngineeringDocument`; family composition is a derived publication view defined by ADR 0006.
 
+## Attribute acceptance and confirmation (schema 9)
+
+Qualification remains read-only. `KnowledgeAdoptionService` may explicitly accept selected
+final results as generated enrichment; this is not community confirmation. The same typed
+attribute merge is used by semantic and context enrichment writers. Confirmed values and
+coupled groups are protected; unrelated accepted attributes can still change. Omitted
+fields never clear existing values. Negative presence clears incompatible generated details.
+
+`KnowledgeStateProvenance` now records explicit confirmations in addition to generated
+attributes. Absence of a generated marker alone is not proof of authority: a default may
+never have been evaluated. Generated assessments distinguish `known` and `unknown`;
+no assessment is `not_evaluated`. Vote support describes the identified decision inputs,
+not a measured probability of correctness. Explicit primary labels are separate from sets.
+
+Canonical writers emit schema 9. Schema 8 remains readable within the bounded compatibility
+window, with a deprecation warning. Populated unmarked v8 enrichments are retained as
+protected `unattributed_attributes`, not silently labeled generated or authoritative.
+An explicit confirmation resolves that uncertainty. Loading does not rewrite the source.
+
+This does not introduce a public enrichment sidecar or promote generated classifications
+into curated AtlasData tags. The existing public-annotation path remains a separate,
+explicitly reviewed publication boundary; its `--merge` option preserves unaddressed tags.
+
 ## Consequences
 The canonical document contains everything needed to inspect its accepted document-centered state and to reproduce downstream semantic projections without conflating origin, authority, and inference method. Community-maintained AtlasData can progressively replace generated assertions with authoritative knowledge without requiring every extraction or inference algorithm to reach perfect accuracy.
 

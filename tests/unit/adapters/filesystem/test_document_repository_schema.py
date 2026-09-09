@@ -15,6 +15,7 @@ from standards_atlas.domain.model import (
     DocumentKey,
     DocumentType,
     EngineeringDocument,
+    SemanticClassification,
     StandardReference,
     StructuralProfile,
     TextBlock,
@@ -100,12 +101,12 @@ def test_repository_rejects_unknown_schema_version(tmp_path: Path) -> None:
         repository.load(DocumentKey(value="DOC"))
 
 
-def test_repository_rejects_previous_schema_version(tmp_path: Path) -> None:
+def test_repository_rejects_obsolete_schema_version(tmp_path: Path) -> None:
     workspace = tmp_path / ".atlas"
     documents = workspace / "documents"
     documents.mkdir(parents=True)
     payload = {
-        "schema_version": CURRENT_DOCUMENT_SCHEMA_VERSION - 1,
+        "schema_version": CURRENT_DOCUMENT_SCHEMA_VERSION - 2,
         "document": _document().model_dump(mode="json"),
     }
     (documents / "DOC.json").write_text(json.dumps(payload), encoding="utf-8")
@@ -113,3 +114,73 @@ def test_repository_rejects_previous_schema_version(tmp_path: Path) -> None:
     repository = FileSystemEngineeringDocumentRepository(workspace=workspace)
     with pytest.raises(ValueError, match="Unsupported engineering document schema version"):
         repository.load(DocumentKey(value="DOC"))
+
+
+def test_v8_nondefault_unmarked_values_are_preserved_without_invented_authority(
+    tmp_path: Path,
+) -> None:
+    document = _document()
+    clause = document.clauses[0].with_semantic_classification(
+        SemanticClassification(
+            applicability_present=True,
+        )
+    )
+    document = document.model_copy(update={"clauses": (clause,)})
+    path = tmp_path / "documents" / "DOC.json"
+    path.parent.mkdir()
+    payload = {"schema_version": 8, "document": document.model_dump(mode="json")}
+    # Reproduce the older payload; no v9 authority or availability fields existed.
+    payload["document"]["clauses"][0]["provenance"] = {"generated_attributes": []}
+    path.write_text(json.dumps(payload))
+    before = path.read_bytes()
+    from standards_atlas.application.schema.policy import SchemaDeprecationWarning
+
+    with pytest.warns(SchemaDeprecationWarning):
+        loaded = FileSystemEngineeringDocumentRepository(tmp_path).load(document.key)
+    assert path.read_bytes() == before
+    provenance = loaded.clauses[0].provenance
+    assert provenance.protection("enrichments.semantic.applicability_present") == "unattributed"
+    assert provenance.confirmed_attributes == ()
+    assert provenance.availability("enrichments.semantic.role_semantics_present") == "not_evaluated"
+
+
+def test_v9_roundtrip_preserves_known_false_unknown_and_primary(tmp_path: Path) -> None:
+    from standards_atlas.domain.model.knowledge_state import GeneratedAttribute, GenerationMethod
+
+    document = _document()
+    clause = (
+        document.clauses[0]
+        .with_semantic_classification(
+            SemanticClassification(
+                statement_functions=("requirement",),
+                primary_function="requirement",
+            )
+        )
+        .mark_generated(
+            GeneratedAttribute(
+                path="enrichments.semantic.applicability_present",
+                generator="test",
+                method=GenerationMethod.IMPORTED,
+            ),
+            GeneratedAttribute(
+                path="enrichments.semantic.role_semantics_present",
+                generator="test",
+                method=GenerationMethod.IMPORTED,
+                availability="unknown",
+            ),
+        )
+        .confirm_authoritative(
+            "enrichments.semantic.statement_functions",
+            "enrichments.semantic.primary_function",
+            authority="review",
+        )
+    )
+    document = document.model_copy(update={"clauses": (clause,)})
+    repository = FileSystemEngineeringDocumentRepository(tmp_path)
+    repository.save(document)
+    loaded = repository.load(document.key)
+    assert loaded == document
+    provenance = loaded.clauses[0].provenance
+    assert provenance.availability("enrichments.semantic.applicability_present") == "known"
+    assert provenance.availability("enrichments.semantic.role_semantics_present") == "unknown"
+    assert provenance.availability("enrichments.semantic.process_functions") == "not_evaluated"

@@ -15,6 +15,7 @@ from standards_atlas.adapters.atlasdata.parser import (
 )
 from standards_atlas.adapters.atlasdata.semantic_tags import (
     canonical_semantic_profile,
+    decode_semantic_tags,
     encode_semantic_tags,
 )
 from standards_atlas.domain.model import (
@@ -96,6 +97,7 @@ class AtlasDataSemanticAnnotationService:
         manifest_path: Path,
         *,
         write: bool = False,
+        merge: bool = False,
     ) -> AtlasDataSemanticAnnotationResult:
         payload = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
         manifest = PublicSemanticAnnotationManifest.model_validate(payload)
@@ -104,6 +106,14 @@ class AtlasDataSemanticAnnotationService:
         original = source.read_text(encoding="utf-8")
         records = parse_initialization_records(original)
         annotations = {item.reference: item for item in manifest.annotations}
+        if len(annotations) != len(manifest.annotations):
+            raise ValueError("semantic annotation references must be unique")
+        if merge and any(record.semantic_tags for record in records):
+            from standards_atlas.adapters.atlasdata.parser import parse_standard_file
+
+            old_profile = parse_standard_file(source).metadata.extra_fields.get("semanticProfile")
+            if old_profile != semantic_profile:
+                raise ValueError("partial annotation merge cannot change semanticProfile")
         known_toc = {record.reference for record in records if record.kind == "TOC"}
         missing = sorted(set(annotations) - known_toc)
         if missing:
@@ -122,6 +132,30 @@ class AtlasDataSemanticAnnotationService:
             tags = encode_semantic_tags(
                 annotation.classification(), semantic_profile=semantic_profile
             )
+            if merge:
+                addressed = set()
+                field_namespaces = {
+                    "primary_statement_function": ("SP", "SS"),
+                    "secondary_statement_functions": ("SP", "SS"),
+                    "knowledge_kinds": ("KK",),
+                    "process_functions": ("PF",),
+                    "applicability_functions": ("AF",),
+                    "role_relation_types": ("RR",),
+                    "document_structure": ("DS",),
+                    "normative_status": ("NS",),
+                }
+                for field in annotation.model_fields_set:
+                    addressed.update(field_namespaces.get(field, ()))
+                preserved = tuple(
+                    tag for tag in record.semantic_tags if tag.split("-", 1)[0] not in addressed
+                )
+                tags = preserved + tags
+                decode_semantic_tags(tags, semantic_profile=semantic_profile)
+                order = {
+                    prefix: index
+                    for index, prefix in enumerate(("SP", "SS", "KK", "PF", "AF", "RR", "DS", "NS"))
+                }
+                tags = tuple(sorted(tags, key=lambda tag: order[tag.split("-", 1)[0]]))
             replacement = InitializationRecord(
                 kind=record.kind,
                 hash_value=record.hash_value,
