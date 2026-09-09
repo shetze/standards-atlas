@@ -4,6 +4,15 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 
 ## 0.8.7 — Enrichment publication and reference resolution (2026-09-09)
 
+- Default end-to-end enrichments to complete baseline collection despite individual invalid context
+  responses; retain explicit `--fail-on-context-failure`, strict validation and technical/review gates.
+- Record per-clause context outcomes, including failed attempts retaining older values. Revisit
+  incomplete document checkpoints and retry their failed clauses without reloading rejected cache
+  answers, while reusing successful and preserving protected values.
+- Freeze private context and published baselines with aggregate diagnostics, exact code/configuration,
+  canonical documents and checksums; include companions, referenced evidence and the qualification
+  archive after publication. Never overwrite an earlier baseline or equate completion with approval.
+
 - Separate standard identities from reference coordinates before detecting ranges; preserve true
   lists/ranges and expand shared coordinates across all explicitly named standard parts, with
   unchanged source spans and `reference-mention-extractor/v3` provenance.
@@ -33,7 +42,7 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 - Add explicit `--task enrichments`, composing document preparation, qualification, verified
   adoption, public/private transfer, reimport and CBox reporting through existing workflow APIs.
 - Reuse native Docling artifacts by default; prepare all selected structures before context,
-  preserve alignment gates and stop on context-inference failures before publication.
+  preserve alignment gates and optionally stop on context-inference failures before publication.
 - Qualify all eligible selected physical clauses by default, with isolated full/sample run roots
   and source-only corpus context that excludes accepted semantic output feedback.
 - Handoff the exact immutable archive via a checksum- and matrix-verified receipt; reuse it only

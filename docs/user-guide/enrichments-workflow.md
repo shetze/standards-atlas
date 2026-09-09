@@ -60,19 +60,31 @@ existing Docling JSON + reviewed AtlasData
   -> normalize using Docling adapter
   -> detect references -> align -> alignment review gate
   -> enrich content -> structural taxonomy (all selected documents)
-  -> subject/context-routing enrichment (all selected documents)
+  -> subject/context-routing enrichment (all selected documents; record clause failures)
+  -> private context baseline archive + aggregate report
   -> selected eligible corpus -> qualification cascade
   -> final Applicability policy (+ optional extraction qualification)
   -> immutable archive + checksum-verified handoff receipt
   -> canonical adoption
   -> export public companions + private evidence
   -> reimport -> canonical CBox report
+  -> private published baseline archive + aggregate report
 ```
 
 All selected document structures are prepared before contextual enrichment so the subject
-vocabulary sees the complete selected inventory. Failed routing inference stops the task before
-qualification/publication, using `document enrich-context --fail-on-failure`. Standalone context
-enrichment keeps its existing default diagnostic behavior unless that option is supplied.
+vocabulary sees the complete selected inventory. By default, invalid context-routing responses are
+rejected and recorded, but do **not** stop subsequent documents, qualification or publication.
+This is development baseline collection, not semantic approval. Unresolved target groups remain
+separate from inference failures. `--fail-on-context-failure` explicitly restores the strict policy
+and forwards `--fail-on-failure` to each document command. Standalone `document enrich-context`
+retains its own optional `--fail-on-failure` flag.
+
+For the first full fresh baseline, use the execution command above with **`--fresh`**, without
+`--corpus-count` or `--limit`. Normalization need not be repeated when its inputs are current;
+`--overwrite` is only needed to deliberately rebuild derived document artifacts. The workflow does
+not add retries or lower JSON-schema/domain validation requirements to force completion.
+Technical failures (missing/corrupt inputs, server startup, storage failures, qualification errors)
+and alignment review gates still stop or pause execution. Those are not ordinary clause failures.
 
 ## Full population versus samples
 
@@ -102,11 +114,20 @@ Complete the existing alignment review procedure, then repeat the command with
 `--continue-after-review`. This option is not review approval: content construction still needs a
 valid reviewed alignment. A command failure is not recorded as a completed workflow stage. Context-routing responses that
 are syntactically valid JSON but violate routing invariants receive one corrective retry with a
-distinct cache identity. Remaining failures are printed with their validation reason and stop this
-end-to-end task before qualification/publication.
+distinct cache identity. Remaining failures are printed with their validation reason and recorded
+as failed attempts. The baseline policy continues; only `--fail-on-context-failure` makes that
+quality failure fatal at the end of the affected document.
 
 Default execution reuses current persisted artifacts/checkpoints. Transfer preflight and the CBox
-report run again against the actual current files. Archive reuse additionally requires unchanged
+report run again against the actual current files. Baseline snapshots are newly archived on each
+invocation, including when inference checkpoints are reused. Partial context documents are never
+considered complete solely because a checkpoint exists: the next invocation revisits them and
+reuses successful/protected clauses. Failed clauses are retried without reloading rejected LLM
+cache entries, even when an older valid routing value was retained. Omitting `--fresh` permits this
+targeted reuse. After a completed `--fresh` workflow, the next invocation with the same flags starts
+a new context and qualification repetition. An interrupted repetition resumes its completed steps
+instead of repeating them. This does not invalidate the earlier immutable baseline archives.
+Archive reuse additionally requires unchanged
 run inputs and a receipt whose exact ZIP bytes still match its SHA-256. A missing or altered ZIP is
 not silently replaced with the most recently numbered archive.
 
@@ -145,6 +166,12 @@ local/review/enrichments-workflow/<selection>/
   export.json
   reimport.json
   cbox.json
+  context-baseline.json
+  published-baseline.json
+.atlas/data/evaluation/context-routing/<key>-run.json
+.atlas/data/evaluation/baselines/enrichments/<selection>/
+  context-<timestamp>-<unique-id>.zip
+  published-<timestamp>-<unique-id>.zip
 ```
 
 The planner prints these paths. `--corpus-output` and `--qualification-output` change the base
@@ -183,7 +210,8 @@ literal group with `clause_id: null`, without widening the scope or fabricating 
 stage prints `Scope targets unresolved` and writes
 `.atlas/data/evaluation/context-routing/<document-key>-unresolved-targets.json` separately from
 `<document-key>-failures.json`. Valid unresolved targets do not abort `--fail-on-failure`; schema,
-malformed-citation and domain failures still stop before qualification/publication. `ok` does not
+malformed-citation and domain failures are still rejected. The strict option stops publication;
+the default baseline policy records those failed clauses and continues. `ok` does not
 claim that every target is resolved or that the model's interpretation is semantically verified.
 See [reference resolution](context-routing-reference-resolution.md) for review and representation.
 
@@ -193,9 +221,51 @@ Context generation refreshes unconfirmed deterministic references before inferen
 shared coordinates across multiple standard parts. The source-verified informational-routing
 safeguard then runs before canonical scope addressing. Proven reading advice and FAQ pointers
 become references with private correction diagnostics; genuine scopes and confirmed values remain
-protected. Mixed evidence requires a corrective answer and still blocks publication if invalid.
+protected. Mixed evidence requires a corrective answer and remains a failed clause when invalid;
+it cannot be accepted just because baseline collection continues.
 Unresolved figure/table references stay visible separately from unresolved scopes.
 
 For existing canonical errors, use the model-free repair and re-export sequence in
 [context routing reference resolution](context-routing-reference-resolution.md#source-verified-informational-routing).
 This does not rerun Docling, normalization, qualification or a model, and requires no data deletion.
+
+## Private baseline evidence and interpretation
+
+Each completed document invocation writes `<key>-run.json`, even if it has no unresolved targets
+or failures. It records prompt/model/config identity, time, counters and per-clause outcomes:
+`succeeded`, `reused`, `protected`, `failed`, or `not_candidate`. A failed fresh attempt may retain
+an older canonical value; that clause remains **failed**, with `retained_previous_value` and the
+old input fingerprint, rather than being counted as a new success or an empty/negative result.
+This patch deliberately does not erase older canonical knowledge or turn it into confirmation.
+Qualification/publication therefore operates on the available canonical state, potentially a mix
+of new, reused and retained values. Interpret its results together with the baseline ledger.
+
+The `context-baseline` stage freezes the selected canonical documents, context run/failure/target/
+correction reports, reviewed AtlasData structures, manifests, actual context configuration,
+qualification configuration and source code/prompt resources **before qualification**. That ZIP
+survives even if later qualification fails. The `enrichments-baseline` stage freezes the completed
+published state, public companions, all their referenced private evidence blobs, transfer reports
+and the exact checksum-verified qualification ZIP. Neither phase includes unrelated documents,
+model weights, LLM caches, PDFs or raw Docling artifacts. This is a comparison/knowledge snapshot,
+not a self-contained environment for regenerating PDFs. Config files are copied as files; process
+environment values and MCP credential stores are not collected.
+
+Archive names are unique, files are created with private permissions, and earlier ZIPs are never
+replaced. Receipts in `local/review/enrichments-workflow/<selection>/` point to the newest archive
+with its SHA-256; overwriting a receipt does not overwrite its previous archive. Each ZIP contains
+`baseline.json`, a readable `README.md`, and a `manifest.json` with per-member sizes and SHA-256.
+The archives live in persistent `.atlas/data`, not disposable `.atlas/work`. There is no automatic
+pruning or restoration. They can contain licensed source text and rejected model responses;
+keep them private, rather than checking them into `data/enrichments`.
+
+Aggregate counters describe the **last recorded per-document invocation**, with each timestamp
+included, even when the enclosing workflow reused a complete document checkpoint. They are not
+misrepresented as fresh model calls in the current process. Failed/retained, reused, protected,
+unresolved scopes and unresolved references remain separate. The aggregate `status` is
+`completed_with_context_failures` or `completed`, and `semantically_verified` is always `false`.
+The final workflow report includes that status and the published archive receipt.
+
+A strict run can stop before the context archive stage; the affected document's diagnostic files
+are still written. A technical failure of the archive stage is fatal rather than producing an
+apparently valid but incomplete baseline. Optional raw diagnostic files are absent only when
+there is no corresponding reported failure or unresolved target.

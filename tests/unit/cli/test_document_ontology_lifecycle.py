@@ -208,3 +208,28 @@ def test_unresolved_target_report_is_not_a_generation_failure_and_is_cleared(
     management.enrich_document_context("IEC61508-0", workspace=workspace, fail_on_failure=True)
     assert not report.exists()
     assert "Scope targets unresolved: 0" in capsys.readouterr().out
+
+
+def test_pending_retries_bypass_responses_without_refreshing_successful_clauses(
+    tmp_path, monkeypatch
+):
+    from standards_atlas.adapters import llm
+    from standards_atlas.cli.composition import build_context_enrichment_service
+
+    captured = []
+    monkeypatch.setattr(llm, "OpenAICompatibleLlmGateway", lambda config: captured.append(config))
+    service = build_context_enrichment_service(tmp_path, retry_clause_ids=("pending",))
+    assert captured[0].cache_directory is None
+    assert service._fresh is False
+    assert service._retry_clause_ids == frozenset({"pending"})
+
+
+def test_pending_retries_bootstrap_from_existing_failure_diagnostics(tmp_path):
+    import json
+
+    from standards_atlas.application.services.context_run_report import failed_context_clause_ids
+
+    path = tmp_path / "evaluation/context-routing/DOC-failures.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps({"document_key": "DOC", "failures": [{"clause_id": "failed"}]}))
+    assert failed_context_clause_ids(tmp_path, "DOC") == ("failed",)

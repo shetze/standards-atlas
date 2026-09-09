@@ -151,6 +151,16 @@ def plan_workflow(
     strict_evidence: Annotated[
         bool, typer.Option("--strict-evidence", help="Require private evidence when restoring.")
     ] = False,
+    fail_on_context_failure: Annotated[
+        bool,
+        typer.Option(
+            "--fail-on-context-failure",
+            help=(
+                "Enrichments only: stop after a document with invalid routing; "
+                "default reports and continues."
+            ),
+        ),
+    ] = False,
 ) -> None:
     """Plan either document publication or the full qualification workflow."""
     plan = _build_task_plan(
@@ -177,6 +187,7 @@ def plan_workflow(
         publish_enrichments=publish_enrichments,
         restore_enrichments=restore_enrichments,
         strict_evidence=strict_evidence,
+        fail_on_context_failure=fail_on_context_failure,
     )
     for step in plan.steps:
         gate = " [manual review gate]" if step.manual_gate else ""
@@ -296,6 +307,16 @@ def run_workflow(
     strict_evidence: Annotated[
         bool, typer.Option("--strict-evidence", help="Require private evidence when restoring.")
     ] = False,
+    fail_on_context_failure: Annotated[
+        bool,
+        typer.Option(
+            "--fail-on-context-failure",
+            help=(
+                "Enrichments only: stop after a document with invalid routing; "
+                "default reports and continues."
+            ),
+        ),
+    ] = False,
 ) -> None:
     """Execute either document publication or the full qualification workflow."""
     plan = _build_task_plan(
@@ -322,6 +343,7 @@ def run_workflow(
         publish_enrichments=publish_enrichments,
         restore_enrichments=restore_enrichments,
         strict_evidence=strict_evidence,
+        fail_on_context_failure=fail_on_context_failure,
     )
     # Keep cross-invocation workflow checkpoints so an interrupted workflow can
     # resume from the first incomplete step. Other scratch state is disposable.
@@ -382,7 +404,10 @@ def _build_task_plan(
     publish_enrichments: bool = False,
     restore_enrichments: bool = False,
     strict_evidence: bool = False,
+    fail_on_context_failure: bool = False,
 ) -> WorkflowPlan:
+    if fail_on_context_failure and task is not WorkflowTask.ENRICHMENTS:
+        raise typer.BadParameter("--fail-on-context-failure requires --task enrichments")
     if (adopt_run is not None or publish_enrichments) and task is not WorkflowTask.KNOWLEDGE:
         raise typer.BadParameter("--adopt-run/--publish-enrichments require --task knowledge")
     if strict_evidence and not (
@@ -467,6 +492,7 @@ def _build_task_plan(
                 qualification_output=qualification_output,
                 restore_enrichments=restore_enrichments,
                 strict_evidence=strict_evidence,
+                fail_on_context_failure=fail_on_context_failure,
             )
         except ValueError as exc:
             raise typer.BadParameter(str(exc)) from exc
@@ -567,3 +593,48 @@ def _select_manifest_families(
     if profile is not None:
         return model.profile(profile).families
     return tuple(family.key for family in model.families)
+
+
+@workflow_app.command("archive-baseline")
+def archive_baseline(
+    document: Annotated[list[str], typer.Option("--document", help="Selected physical documents.")],
+    manifest: Annotated[list[Path], typer.Option("--manifest", help="Standards manifest first.")],
+    selection: Annotated[str, typer.Option("--selection", help="Workflow selection identity.")],
+    phase: Annotated[str, typer.Option("--phase", help="context or published")],
+    reports_root: Annotated[Path, typer.Option("--reports-root")],
+    output: Annotated[Path, typer.Option("--output", help="Private baseline receipt.")],
+    workspace: Annotated[Path, typer.Option("--workspace", "-w")] = cli_defaults.DEFAULT_WORKSPACE,
+    corpus_count: Annotated[int | None, typer.Option("--corpus-count", min=1)] = None,
+    limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
+    strict_context: Annotated[bool, typer.Option("--strict-context")] = False,
+) -> None:
+    """Freeze a private baseline; context quality failures are recorded, not suppressed."""
+    from standards_atlas.adapters.workflow.baseline_archive import archive_enrichment_baseline
+
+    try:
+        result = archive_enrichment_baseline(
+            project_root=Path.cwd(),
+            workspace=workspace,
+            document_keys=tuple(document),
+            manifest_paths=tuple(manifest),
+            selection=selection,
+            phase=phase,
+            reports_root=reports_root,
+            output=output,
+            corpus_count=corpus_count,
+            limit=limit,
+            strict_context=strict_context,
+        )
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        typer.echo(f"Cannot archive enrichment baseline: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    summary = result["summary"]
+    typer.echo(f"Baseline phase        : {phase}")
+    typer.echo(f"Baseline status       : {result['status']} (not semantically verified)")
+    typer.echo(f"Context documents     : {summary['documents']}")
+    typer.echo(f"Context failures      : {summary['failed']}")
+    typer.echo(f"Older values retained : {summary['failed_with_retained_value']}")
+    typer.echo(f"Unresolved scopes     : {summary['unresolved_scope_targets']}")
+    typer.echo(f"Unresolved references : {summary['unresolved_reference_targets']}")
+    typer.echo(f"Baseline archive      : {result['archive']}")
+    typer.echo(f"Baseline receipt      : {output}")

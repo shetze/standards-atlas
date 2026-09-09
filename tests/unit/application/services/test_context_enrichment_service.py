@@ -540,3 +540,114 @@ def test_v2_prompt_supplies_deterministic_annex_targets_and_forbids_model_ids():
         }
     ]
     assert not list(validator.iter_errors(valid_document_scope))
+
+
+def test_failed_fresh_attempt_is_not_a_success_even_with_a_retained_value():
+    from standards_atlas.application.ports.llm_gateway import LlmResponseError
+
+    documents = _Documents(_document())
+    first = ContextEnrichmentService(
+        documents=documents,
+        enricher=LlmContextRoutingEnricher(_Gateway(), prompt=_prompt(), model="model-a"),
+    ).enrich(documents.document.key.value)
+    documents.document = first.document
+    assert first.routing_outcomes[0]["status"] == "succeeded"
+    assert first.routing_outcomes[1]["status"] == "not_candidate"
+
+    class FailedProvider:
+        generator_id = "failed-new-model"
+
+        def enrich(self, **kwargs):
+            raise LlmResponseError("invalid output")
+
+        def input_fingerprint(self, **kwargs):
+            return "f" * 64
+
+    second = ContextEnrichmentService(
+        documents=documents,
+        enricher=FailedProvider(),
+        fresh=True,
+    ).enrich(documents.document.key.value)
+    assert second.context_enrichment_failures == 1
+    failed = second.routing_outcomes[0]
+    assert failed["status"] == "failed"
+    assert failed["retained_previous_value"] is True
+    assert failed["input_fingerprint"] == "f" * 64
+    assert failed["retained_input_fingerprint"] != "f" * 64
+    assert second.document.clauses[0].context_routing == first.document.clauses[0].context_routing
+
+
+def test_outcomes_distinguish_protected_and_reused_routing():
+    documents = _Documents(_document())
+    gateway = _Gateway()
+
+    def service():
+        return ContextEnrichmentService(
+            documents=documents,
+            enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="model-a"),
+        )
+
+    first = service().enrich(documents.document.key.value)
+    documents.document = first.document
+    assert service().enrich(documents.document.key.value).routing_outcomes[0]["status"] == "reused"
+    clause = documents.document.clauses[0].confirm_authoritative("enrichments.context_routing")
+    documents.document = documents.document.model_copy(
+        update={"clauses": (clause, *documents.document.clauses[1:])}
+    )
+    protected = service().enrich(documents.document.key.value)
+    assert protected.routing_outcomes[0]["status"] == "protected"
+    assert len(gateway.requests) == 1
+
+
+def test_pending_failure_forces_retry_despite_same_retained_input_fingerprint(tmp_path):
+    from standards_atlas.application.ports.llm_gateway import LlmResponseError
+    from standards_atlas.application.services.context_run_report import (
+        failed_context_clause_ids,
+        write_context_run_report,
+    )
+    from standards_atlas.domain.model import ContextRouting
+
+    class Provider:
+        generator_id = "same-model-and-prompt"
+        failed = False
+        calls = 0
+
+        def input_fingerprint(self, **kwargs):
+            return "a" * 64
+
+        def enrich(self, **kwargs):
+            self.calls += 1
+            if self.failed:
+                raise LlmResponseError("failed new attempt")
+            return ContextRouting()
+
+    provider = Provider()
+    docs = _Documents(_document())
+    first = ContextEnrichmentService(documents=docs, enricher=provider).enrich(
+        docs.document.key.value
+    )
+    docs.document = first.document
+    provider.failed = True
+    failed = ContextEnrichmentService(documents=docs, enricher=provider, fresh=True).enrich(
+        docs.document.key.value
+    )
+    assert failed.routing_outcomes[0]["retained_input_fingerprint"] == "a" * 64
+    assert failed.routing_outcomes[0]["retained_previous_value"] is True
+    write_context_run_report(
+        failed,
+        workspace=tmp_path,
+        config_path=Path("cfg/context-enrichment.yaml"),
+        prompt="same-prompt",
+        model="same-model",
+        fresh=True,
+    )
+    pending = failed_context_clause_ids(tmp_path, docs.document.key.value)
+    assert pending == ("clause-1",)
+    provider.failed = False
+    retried = ContextEnrichmentService(
+        documents=docs,
+        enricher=provider,
+        retry_clause_ids=pending,
+    ).enrich(docs.document.key.value)
+    assert retried.routing_outcomes[0]["status"] == "succeeded"
+    assert provider.calls == 3

@@ -95,7 +95,10 @@ def project(root):
                         {
                             "self_ref": "#/texts/1",
                             "label": "text",
-                            "text": f"The supplier shall document the safety lifecycle for {key}.",
+                            "text": (
+                                f"The supplier shall document the safety lifecycle for {key}. "
+                                "See Clause 7."
+                            ),
                             "prov": [{"page_no": 1}],
                         },
                     ],
@@ -211,7 +214,7 @@ class BoundaryRunner:
         write_archive_receipt(receipt, archive=archive, matrix_id=matrix_id)
 
 
-def workflow(root, manifest):
+def workflow(root, manifest, **options):
     return EnrichmentsWorkflowPlanner().plan(
         YamlStandardCatalogReader().read(manifest),
         family_keys=("EXAMPLEA", "EXAMPLEB"),
@@ -219,6 +222,7 @@ def workflow(root, manifest):
         standards_manifest=manifest,
         qualification_manifest=root / "manifests/matrix.yaml",
         knowledge_domain="functional-safety",
+        **options,
     )
 
 
@@ -255,12 +259,14 @@ def test_two_documents_normalize_publish_and_repeat_without_duplicate_outputs(
     repeated = service.execute(plan, project_root=tmp_path, runner=runner)
     assert repeated.completed
     assert [s.stage for s in repeated.executed_steps] == [
+        WorkflowStage.CONTEXT_BASELINE,
         WorkflowStage.KNOWLEDGE_ADOPT,
         WorkflowStage.KNOWLEDGE_PUBLISH,
         WorkflowStage.KNOWLEDGE_RESTORE,
         WorkflowStage.CBOX_REPORT,
+        WorkflowStage.ENRICHMENTS_BASELINE,
     ]
-    assert len(runner.commands) == count + 4
+    assert len(runner.commands) == count + 6
     for key, (canonical, public) in snapshots.items():
         assert (tmp_path / f".atlas/data/documents/{key}.json").read_bytes() == canonical
         assert (tmp_path / f"data/enrichments/{key}.yaml").read_bytes() == public
@@ -275,3 +281,174 @@ def test_missing_docling_input_stops_without_fallback_or_publication(tmp_path, m
     with pytest.raises(RuntimeError, match="Cannot read Docling JSON"):
         build_workflow_service(tmp_path).execute(plan, project_root=tmp_path, runner=runner)
     assert not (tmp_path / "data/enrichments").exists()
+
+
+class FailingRoutingProvider:
+    generator_id = "baseline-test-provider"
+
+    def __init__(self, *, fail=True):
+        self.fail = fail
+        self.calls = []
+
+    def input_fingerprint(self, **kwargs):
+        return "d" * 64
+
+    def enrich(self, *, clause, document):
+        from standards_atlas.application.ports.llm_gateway import LlmResponseError
+
+        self.calls.append(document.key.value)
+        if self.fail and document.key.value == "EXAMPLEA":
+            raise LlmResponseError("deliberately invalid routing", raw_content="{rejected}")
+        return ContextRouting()
+
+
+def _use_provider(monkeypatch, provider):
+    monkeypatch.setattr(
+        management,
+        "build_context_enrichment_service",
+        lambda workspace, **kw: ContextEnrichmentService(
+            documents=FileSystemEngineeringDocumentRepository(workspace),
+            enricher=provider,
+            fresh=kw.get("fresh", False),
+            retry_clause_ids=kw.get("retry_clause_ids", ()),
+        ),
+    )
+
+
+def _baseline_receipt(root, plan, phase):
+    stage = (
+        WorkflowStage.CONTEXT_BASELINE if phase == "context" else WorkflowStage.ENRICHMENTS_BASELINE
+    )
+    step = next(s for s in plan.steps if s.stage is stage)
+    return json.loads((root / step.output_paths[0]).read_text())
+
+
+def test_partial_document_does_not_block_later_documents_or_publication(tmp_path, monkeypatch):
+    manifest = project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    plan = workflow(tmp_path, manifest)
+    runner = BoundaryRunner(plan, monkeypatch, tmp_path)
+    provider = FailingRoutingProvider()
+    _use_provider(monkeypatch, provider)
+    service = build_workflow_service(tmp_path)
+    result = service.execute(plan, project_root=tmp_path, runner=runner)
+    assert result.completed
+    assert provider.calls == ["EXAMPLEA", "EXAMPLEB"]
+    for key in ("EXAMPLEA", "EXAMPLEB"):
+        assert (tmp_path / f"data/enrichments/{key}.yaml").exists()
+    context = _baseline_receipt(tmp_path, plan, "context")
+    published = _baseline_receipt(tmp_path, plan, "published")
+    for receipt in (context, published):
+        assert receipt["status"] == "completed_with_context_failures"
+        assert receipt["semantically_verified"] is False
+        assert receipt["summary"]["failed"] == 1
+        assert receipt["summary"]["succeeded"] == 1
+        assert receipt["coverage"]["semantic"] == "all_eligible"
+        assert receipt["summary"]["failed_with_retained_value"] == 0
+        with ZipFile(receipt["archive"]) as zipped:
+            assert "EXAMPLEA-run.json" in " ".join(zipped.namelist())
+            failure = json.loads(zipped.read("reports/context/EXAMPLEA-failures.json"))
+            assert "deliberately invalid" in failure["failures"][0]["error"]
+            inventory = json.loads(zipped.read("manifest.json"))["files"]
+            import hashlib
+
+            for item in inventory:
+                data = zipped.read(item["path"])
+                assert len(data) == item["size"]
+                assert hashlib.sha256(data).hexdigest() == item["sha256"]
+    with ZipFile(published["archive"]) as zipped:
+        assert "qualification/run.zip" in zipped.namelist()
+        assert any(name.startswith("knowledge-evidence/") for name in zipped.namelist())
+        assert "public/enrichments/EXAMPLEB.yaml" in zipped.namelist()
+
+    from standards_atlas.application.workflow import WorkflowTask
+    from standards_atlas.application.workflow.report import WorkflowRunReporter
+
+    report_path, markdown = WorkflowRunReporter().write(
+        plan,
+        result,
+        project_root=tmp_path,
+        manifest_paths=(manifest,),
+        task=WorkflowTask.ENRICHMENTS,
+    )
+    report_payload = json.loads(report_path.read_text())
+    assert report_payload["status"] == "completed_with_context_failures"
+    assert report_payload["baseline"]["archive_sha256"] == published["archive_sha256"]
+    assert "not semantic approval" in markdown.read_text()
+
+    # Resume: failed document is revisited; successful checkpoint is reused.
+    frozen_context = Path(context["archive"]).read_bytes()
+    frozen_published = Path(published["archive"]).read_bytes()
+    provider.fail = False
+    provider.calls.clear()
+    repeated = service.execute(plan, project_root=tmp_path, runner=runner)
+    assert repeated.completed
+    assert provider.calls == ["EXAMPLEA"]
+    assert not (tmp_path / ".atlas/data/evaluation/context-routing/EXAMPLEA-failures.json").exists()
+    assert _baseline_receipt(tmp_path, plan, "published")["summary"]["failed"] == 0
+    # New receipts never replace the original archives, even as latest reports change.
+    assert Path(context["archive"]).read_bytes() == frozen_context
+    assert Path(published["archive"]).read_bytes() == frozen_published
+    assert _baseline_receipt(tmp_path, plan, "published")["archive"] != published["archive"]
+
+
+def test_explicit_strict_mode_keeps_the_document_failure_gate(tmp_path, monkeypatch):
+    manifest = project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    plan = EnrichmentsWorkflowPlanner().plan(
+        YamlStandardCatalogReader().read(manifest),
+        family_keys=("EXAMPLEA", "EXAMPLEB"),
+        catalog_root=tmp_path,
+        standards_manifest=manifest,
+        qualification_manifest=tmp_path / "manifests/matrix.yaml",
+        fail_on_context_failure=True,
+    )
+    runner = BoundaryRunner(plan, monkeypatch, tmp_path)
+    provider = FailingRoutingProvider()
+    _use_provider(monkeypatch, provider)
+    with pytest.raises(RuntimeError, match="Context routing is incomplete"):
+        build_workflow_service(tmp_path).execute(plan, project_root=tmp_path, runner=runner)
+    assert provider.calls == ["EXAMPLEA"]
+    assert not (tmp_path / "data/enrichments").exists()
+    ledger = tmp_path / ".atlas/data/evaluation/context-routing/EXAMPLEA-run.json"
+    assert json.loads(ledger.read_text())["summary"]["failed"] == 1
+
+
+def test_context_archive_survives_a_technical_qualification_failure(tmp_path, monkeypatch):
+    manifest = project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    plan = workflow(tmp_path, manifest)
+    runner = BoundaryRunner(plan, monkeypatch, tmp_path)
+    original = runner.run
+
+    def fail_qualification(command, cwd):
+        if "qualification-matrix" in command:
+            raise OSError("qualification disk failure")
+        return original(command, cwd)
+
+    runner.run = fail_qualification
+    with pytest.raises(OSError, match="disk failure"):
+        build_workflow_service(tmp_path).execute(plan, project_root=tmp_path, runner=runner)
+    receipt = _baseline_receipt(tmp_path, plan, "context")
+    assert Path(receipt["archive"]).is_file()
+    assert receipt["phase"] == "context"
+    assert not (tmp_path / "data/enrichments").exists()
+    assert not list(tmp_path.rglob("published-baseline.json"))
+
+
+def test_completed_fresh_baseline_repeats_context_but_not_normalization(tmp_path, monkeypatch):
+    manifest = project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    plan = workflow(tmp_path, manifest, fresh=True)
+    runner = BoundaryRunner(plan, monkeypatch, tmp_path)
+    provider = FailingRoutingProvider(fail=False)
+    _use_provider(monkeypatch, provider)
+    service = build_workflow_service(tmp_path)
+    assert service.execute(plan, project_root=tmp_path, runner=runner).completed
+    second = service.execute(plan, project_root=tmp_path, runner=runner)
+    assert second.completed
+    assert provider.calls == ["EXAMPLEA", "EXAMPLEB", "EXAMPLEA", "EXAMPLEB"]
+    stages = [s.stage for s in second.executed_steps]
+    assert stages.count(WorkflowStage.CONTEXT_ENRICHMENT) == 2
+    assert WorkflowStage.NORMALIZE not in stages
+    assert _baseline_receipt(tmp_path, plan, "context")["summary"]["succeeded"] == 2

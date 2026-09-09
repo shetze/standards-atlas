@@ -52,6 +52,7 @@ class EnrichmentsWorkflowPlanner:
         corpus_output: Path = Path(".atlas/data/evaluation/corpora"),
         restore_enrichments: bool = False,
         strict_evidence: bool = False,
+        fail_on_context_failure: bool = False,
     ) -> WorkflowPlan:
         if len(family_keys) != len(set(family_keys)):
             raise ValueError("enrichments family selection must not contain duplicates")
@@ -105,6 +106,46 @@ class EnrichmentsWorkflowPlanner:
             qualification_output=qualification_output,
             corpus_output=corpus_output,
         )
+
+        def baseline_step(phase: str) -> WorkflowStep:
+            stage = (
+                WorkflowStage.CONTEXT_BASELINE
+                if phase == "context"
+                else WorkflowStage.ENRICHMENTS_BASELINE
+            )
+            output = reports / f"{phase}-baseline.json"
+            command = (
+                "uv",
+                "run",
+                "standards-atlas",
+                "workflow",
+                "archive-baseline",
+                "--phase",
+                phase,
+                "--selection",
+                selection,
+                "--manifest",
+                str(standards_manifest),
+                "--manifest",
+                str(qualification_manifest),
+                "--reports-root",
+                str(reports),
+                "--output",
+                str(output),
+                *selector,
+                *(("--corpus-count", str(corpus_count)) if corpus_count is not None else ()),
+                *(("--limit", str(limit)) if limit is not None else ()),
+                *(("--strict-context",) if fail_on_context_failure else ()),
+            )
+            return WorkflowStep(
+                "baseline",
+                selection,
+                stage,
+                command,
+                ArtifactPolicy.DERIVED,
+                output_paths=(str(output),),
+            )
+
         steps = []
         context_steps = []
         for step in qualification.steps:
@@ -127,9 +168,13 @@ class EnrichmentsWorkflowPlanner:
                 context_steps.append(
                     replace(
                         step,
+                        output_paths=(
+                            *step.output_paths,
+                            f".atlas/data/evaluation/context-routing/{step.document}-run.json",
+                        ),
                         command=(
                             *step.command,
-                            "--fail-on-failure",
+                            *(("--fail-on-failure",) if fail_on_context_failure else ()),
                             *(("--fresh",) if fresh else ()),
                         ),
                     )
@@ -138,6 +183,7 @@ class EnrichmentsWorkflowPlanner:
             if step.stage is WorkflowStage.CORPUS_BUILD:
                 # Vocabulary/routing sees every selected document after normalization.
                 steps.extend(context_steps)
+                steps.append(baseline_step("context"))
                 step = replace(step, command=(*step.command, *selector, "--source-only-context"))
             if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE:
                 step = replace(
@@ -151,7 +197,10 @@ class EnrichmentsWorkflowPlanner:
             steps=tuple(steps),
             force=qualification.document_plan.force,
             kept_stages=qualification.document_plan.kept_stages,
-            fresh_repetition_stages=qualification.fresh_repetition_stages,
+            fresh_repetition_stages=(
+                *((WorkflowStage.CONTEXT_ENRICHMENT,) if fresh else ()),
+                *qualification.fresh_repetition_stages,
+            ),
         )
         if restore_enrichments:
             plan = with_knowledge_restore(
@@ -214,5 +263,6 @@ class EnrichmentsWorkflowPlanner:
                     )
                     for stage, tokens, name in tail
                 ),
+                baseline_step("published"),
             ),
         )

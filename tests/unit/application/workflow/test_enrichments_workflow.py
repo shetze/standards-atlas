@@ -46,18 +46,19 @@ def test_complete_explicit_chain_and_exact_archive_handoff():
     assert WorkflowStage.DOCLING not in stages
     assert WorkflowStage.MARKDOWN not in stages
     assert WorkflowStage.DOORSTOP not in stages
-    assert stages[-5:] == [
+    assert stages[-6:] == [
         WorkflowStage.QUALIFICATION_ARCHIVE,
         WorkflowStage.KNOWLEDGE_ADOPT,
         WorkflowStage.KNOWLEDGE_PUBLISH,
         WorkflowStage.KNOWLEDGE_RESTORE,
         WorkflowStage.CBOX_REPORT,
+        WorkflowStage.ENRICHMENTS_BASELINE,
     ]
     corpus = step_for(WorkflowStage.CORPUS_BUILD)
     assert "--all-clauses" in corpus.command and "--count" not in corpus.command
     assert "--source-only-context" in corpus.command
     assert corpus.command[corpus.command.index("--document") + 1] == "EN50716"
-    archive, adopt = steps[-5:-3]
+    archive, adopt = steps[-6:-4]
     receipt = archive.command[archive.command.index("--receipt") + 1]
     assert adopt.command[adopt.command.index("--run-receipt") + 1] == receipt
     assert "--run" not in adopt.command
@@ -70,7 +71,7 @@ def test_fresh_enrichments_run_also_refreshes_context_routing():
     fresh = step_for(WorkflowStage.CONTEXT_ENRICHMENT, fresh=True)
     assert "--fresh" not in normal.command
     assert "--fresh" in fresh.command
-    assert "--fail-on-failure" in fresh.command
+    assert "--fail-on-failure" not in fresh.command
 
 
 def test_context_runs_after_all_selected_document_taxonomies():
@@ -107,7 +108,7 @@ def test_regenerate_docling_and_restore_remain_explicit():
     assert stages.index(WorkflowStage.KNOWLEDGE_RESTORE) < stages.index(
         WorkflowStage.CONTEXT_ENRICHMENT
     )
-    assert "--strict-evidence" in p.steps[-2].command
+    assert "--strict-evidence" in p.steps[-3].command
 
 
 def test_manifest_without_final_policy_is_rejected():
@@ -307,4 +308,56 @@ def test_context_failures_are_fatal_only_with_explicit_workflow_policy(tmp_path,
     assert CliRunner().invoke(app, args).exit_code == 0
     failure = CliRunner().invoke(app, [*args, "--fail-on-failure"])
     assert failure.exit_code == 2 and "incomplete" in failure.output
-    assert "--fail-on-failure" in step_for(WorkflowStage.CONTEXT_ENRICHMENT).command
+    assert "--fail-on-failure" not in step_for(WorkflowStage.CONTEXT_ENRICHMENT).command
+    strict = step_for(WorkflowStage.CONTEXT_ENRICHMENT, fail_on_context_failure=True)
+    assert "--fail-on-failure" in strict.command
+
+
+def test_baseline_stages_are_ordered_around_qualification_and_publication():
+    stages = [s.stage for s in plan().steps]
+    assert (
+        max(i for i, s in enumerate(stages) if s is WorkflowStage.CONTEXT_ENRICHMENT)
+        < (stages.index(WorkflowStage.CONTEXT_BASELINE))
+        < stages.index(WorkflowStage.CORPUS_BUILD)
+    )
+    assert stages[-1] is WorkflowStage.ENRICHMENTS_BASELINE
+    assert "--strict-context" not in step_for(WorkflowStage.CONTEXT_BASELINE).command
+    sample = step_for(WorkflowStage.CONTEXT_BASELINE, corpus_count=50, limit=50)
+    assert sample.command[sample.command.index("--corpus-count") + 1] == "50"
+    assert sample.command[sample.command.index("--limit") + 1] == "50"
+
+
+def test_cli_default_and_explicit_strict_context_policy():
+    common = ["workflow", "plan", "--manifests", f"{MANIFEST},{MATRIX}", "--family", "EN50716"]
+    default = CliRunner().invoke(app, [*common, "--task", "enrichments"])
+    assert default.exit_code == 0
+    assert "--fail-on-failure" not in default.output
+    assert "archive-baseline" in default.output
+    strict = CliRunner().invoke(
+        app, [*common, "--task", "enrichments", "--fail-on-context-failure"]
+    )
+    assert strict.exit_code == 0 and "--fail-on-failure" in strict.output
+    invalid = CliRunner().invoke(
+        app, [*common, "--task", "qualification", "--fail-on-context-failure"]
+    )
+    assert invalid.exit_code == 2
+
+
+def test_old_or_partial_context_checkpoints_are_not_complete(tmp_path):
+    step = step_for(WorkflowStage.CONTEXT_ENRICHMENT)
+    store = FileSystemWorkflowArtifactStore()
+    for name in step.output_paths:
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("{}")
+    store.record_completion(step, tmp_path)
+    assert not store.outputs_exist(step, tmp_path)
+    ledger = tmp_path / ".atlas/data/evaluation/context-routing/EN50716-run.json"
+    ledger.write_text(json.dumps({"document_key": "EN50716", "summary": {"failed": 1}}))
+    store.record_completion(step, tmp_path)
+    assert not store.outputs_exist(step, tmp_path)
+    ledger.write_text(json.dumps({"document_key": "EN50716", "summary": {"failed": 0}}))
+    store.record_completion(step, tmp_path)
+    assert store.outputs_exist(step, tmp_path)
+    strict = replace(step, command=(*step.command, "--fail-on-failure"))
+    assert not store.outputs_exist(strict, tmp_path)

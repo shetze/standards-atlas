@@ -31,6 +31,8 @@ class WorkflowStage(StrEnum):
     ENRICH = "enrich"
     TAXONOMY = "taxonomy"
     CONTEXT_ENRICHMENT = "context-enrichment"
+    CONTEXT_BASELINE = "context-baseline"
+    ENRICHMENTS_BASELINE = "enrichments-baseline"
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"
     DOORSTOP_PUBLISH = "doorstop-publish"

@@ -164,5 +164,9 @@ companion publication explicitly, without changing the other tasks. See the
 Additional focused options: `evaluation corpus-build --all-clauses --document KEY
 --source-only-context`; `evaluation qualification-archive --receipt FILE`;
 `document adopt-qualification --run-receipt FILE`; and `document enrich-context
---fail-on-failure`. Corpus `--count`/`--all-clauses` and adoption `--run`/`--run-receipt`
+--fail-on-failure`. The end-to-end task now defaults to reporting context failures and continuing;
+`workflow plan|run --task enrichments --fail-on-context-failure` requests the strict alternative.
+Each document writes a private `<key>-run.json` ledger. The planner adds `workflow archive-baseline`
+stages after context and after publication, storing persistent, immutable comparison ZIPs and
+aggregate receipts. Corpus `--count`/`--all-clauses` and adoption `--run`/`--run-receipt`
 are mutually exclusive pairs.

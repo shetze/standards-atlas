@@ -245,12 +245,18 @@ def enrich_document_context(
         config = ContextEnrichmentConfig.load(context_config)
         typer.echo(f"Context prompt        : {config.prompt_task}/{config.prompt_version}")
         typer.echo(f"Context model         : {config.llm.model}")
+        from standards_atlas.application.services.context_run_report import (
+            failed_context_clause_ids,
+        )
+
+        pending = failed_context_clause_ids(workspace, document_key)
         managed_llm_server(context_config).start()
         result = build_context_enrichment_service(
             workspace,
             context_config_path=context_config,
             progress=report_progress,
             fresh=fresh,
+            **({"retry_clause_ids": pending} if pending else {}),
         ).enrich(document_key)
     except (OSError, ValueError, KeyError, RamaLamaServerError) as exc:
         typer.echo(str(exc), err=True)
@@ -337,6 +343,23 @@ def enrich_document_context(
         typer.echo(f"Routing correction report: {correction_report}")
     # Keep the last correction audit on a reuse-only/no-change run. Unlike a
     # failure report it records completed changes, not a current failure state.
+    from standards_atlas.application.services.context_run_report import write_context_run_report
+
+    try:
+        run_report = write_context_run_report(
+            result,
+            workspace=workspace,
+            config_path=context_config,
+            prompt=f"{config.prompt_task}/{config.prompt_version}",
+            model=config.llm.model,
+            fresh=fresh,
+        )
+    except OSError as exc:
+        typer.echo(f"Cannot write context run report: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Context run report    : {run_report}")
+    if result.context_enrichment_failures and not fail_on_failure:
+        typer.echo("Context baseline incomplete: failures recorded; continuing without approval.")
     if fail_on_failure and result.context_enrichment_failures:
         typer.echo(
             "Context routing is incomplete; retry before qualification/publication.", err=True

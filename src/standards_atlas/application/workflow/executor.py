@@ -47,6 +47,8 @@ class WorkflowExecutor:
         for step in plan.steps:
             if not continue_after_review:
                 if step.stage in {
+                    WorkflowStage.CONTEXT_BASELINE,
+                    WorkflowStage.ENRICHMENTS_BASELINE,
                     WorkflowStage.CORPUS_BUILD,
                     WorkflowStage.QUALIFICATION_MATRIX,
                     WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT,

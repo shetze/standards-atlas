@@ -42,8 +42,20 @@ candidate artifacts do not implicitly update canonical semantic fields or public
 public/private transfer, reimport and a CBox report. Its default starts after Docling and processes
 all eligible clauses of the selected physical documents. Source-only corpus context prevents
 accepted semantic output from becoming self-feedback on the next run. Every selected document's
-structure is prepared before contextual enrichment. Open review gates or context failures block
-publication. Existing tasks keep their previous non-publication/opt-in contracts.
+structure is prepared before contextual enrichment. Open review gates and technical failures block
+publication. Context response validation remains strict, but individual invalid responses are
+reported rather than stopping baseline collection. `--fail-on-context-failure` opts into the
+previous strict document-level exit. Invalid values are never merged; retained older values are
+explicitly distinguished from newly successful attempts. Existing tasks keep their previous
+non-publication/opt-in contracts.
+
+Private last-attempt ledgers distinguish succeeded/reused/protected/failed/not-candidate clauses.
+Incomplete context checkpoints are revisited; the service reuses successful clauses but does not
+use a retained older value to conceal a failed attempt. Baseline archival occurs after context
+and after final publication, before ordinary run reporting. It freezes selected source/code/config,
+canonical and diagnostic state; the published phase also includes companions, referenced private
+blobs and the exact qualification archive. It uses unique private ZIPs outside disposable work
+state. Baseline completion is explicitly not semantic verification.
 
 The new task is implemented in `EnrichmentsWorkflowPlanner`, reusing
 `QualificationWorkflowPlanner` and the existing workflow service/executor. The CLI injects an

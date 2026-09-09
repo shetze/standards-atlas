@@ -13,6 +13,7 @@ from standards_atlas import __version__
 from standards_atlas.application.workflow.models import (
     WorkflowExecutionResult,
     WorkflowPlan,
+    WorkflowStage,
     WorkflowStep,
     WorkflowTask,
 )
@@ -96,6 +97,24 @@ class WorkflowRunReporter:
             },
             "steps": steps,
         }
+        if task is WorkflowTask.ENRICHMENTS:
+            baseline_step = next(
+                (step for step in plan.steps if step.stage is WorkflowStage.ENRICHMENTS_BASELINE),
+                None,
+            )
+            if baseline_step is not None:
+                baseline = json.loads((root / baseline_step.output_paths[0]).read_text("utf-8"))
+                payload["status"] = baseline["status"]
+                payload["baseline"] = {
+                    name: baseline[name]
+                    for name in (
+                        "archive",
+                        "archive_sha256",
+                        "summary",
+                        "coverage",
+                        "semantically_verified",
+                    )
+                }
         report_json = run_dir / "report.json"
         report_json.write_text(self._canonical_json(payload) + "\n", encoding="utf-8")
         report_md = run_dir / "report.md"
@@ -197,6 +216,21 @@ class WorkflowRunReporter:
                 f"| {step['index']} | `{step['stage']}` | "
                 f"`{step['family']}` / `{step['document']}` | "
                 f"{step['disposition']} | {len(step['artifacts'])} |"
+            )
+        if "baseline" in payload:
+            baseline = payload["baseline"]
+            lines.extend(
+                [
+                    "",
+                    "## Development baseline",
+                    "",
+                    "Completion records collection/publication, not semantic approval.",
+                    f"- Archive: `{baseline['archive']}`",
+                    f"- SHA-256: `{baseline['archive_sha256']}`",
+                    f"- Context failures: {baseline['summary']['failed']}",
+                    "- Failed with retained values: "
+                    f"{baseline['summary']['failed_with_retained_value']}",
+                ]
             )
         lines.extend(["", "## Artifact hashes", ""])
         for step in payload["steps"]:

@@ -166,8 +166,10 @@ intentionally rebuilds derived steps and repeats generated context inference.
 
 Schema and canonical validation remain strict. One corrective retry receives both the precise
 error and the rejected JSON as diagnostic data (not as source evidence). After persistent failure,
-`--fail-on-failure` and the end-to-end workflow continue to block qualification/publication.
-The CLI writes private diagnostics before exiting:
+`--fail-on-failure` still stops the standalone command after writing diagnostics. The end-to-end
+workflow defaults to baseline collection and continues after recorded clause failures; use
+`--fail-on-context-failure` to request the strict workflow policy. Technical failures remain fatal.
+The CLI writes private diagnostics before returning:
 
 ```text
 .atlas/data/evaluation/context-routing/IEC61508-0-failures.json

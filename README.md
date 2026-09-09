@@ -136,3 +136,12 @@ Visual-only formulas preserved during PDF normalization can be exposed to truste
 qualification, verified canonical adoption and `data/enrichments` publication. It defaults to all
 eligible clauses in the selected physical documents and retains existing review gates.
 See [the workflow guide](docs/user-guide/enrichments-workflow.md) for commands and reuse policies.
+
+### Complete enrichment baselines
+
+The end-to-end `enrichments` task now records individual context failures and continues across the
+selected documents by default. Add `--fail-on-context-failure` only for strict runs. Without
+`--corpus-count`/`--limit`, all eligible selected clauses are qualified. Private immutable context
+and published snapshots under `.atlas/data/evaluation/baselines/enrichments/` preserve a comparison
+baseline, with failed, retained, reused and protected results distinguished. Completion is not
+semantic approval. See [the workflow guide](docs/user-guide/enrichments-workflow.md).

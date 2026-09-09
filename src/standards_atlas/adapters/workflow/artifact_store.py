@@ -38,8 +38,22 @@ class FileSystemWorkflowArtifactStore:
         return repository.extraction_state(document_key, source)
 
     def outputs_exist(self, step: WorkflowStep, project_root: Path) -> bool:
-        if step.stage in KNOWLEDGE_STAGES:
+        if step.stage in {
+            *KNOWLEDGE_STAGES,
+            WorkflowStage.CONTEXT_BASELINE,
+            WorkflowStage.ENRICHMENTS_BASELINE,
+        }:
             return False  # Always validate against the current source and accepted state.
+        if step.stage is WorkflowStage.CONTEXT_ENRICHMENT:
+            workspace = project_root / _option(step, "--workspace", ".atlas/data")
+            report = workspace / "evaluation/context-routing" / f"{step.document}-run.json"
+            if report.exists() or any(path.endswith("-run.json") for path in step.output_paths):
+                try:
+                    payload = json.loads(report.read_text(encoding="utf-8"))
+                    if payload["summary"]["failed"] or payload["document_key"] != step.document:
+                        return False  # Service reuses successful clauses of partial documents.
+                except (OSError, ValueError, TypeError, KeyError):
+                    return False  # Missing/legacy diagnostics are not evidence of completion.
         if not step.output_paths and not step.output_globs:
             return False
         paths_exist = all(

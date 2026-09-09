@@ -155,6 +155,7 @@ def build_context_enrichment_service(
     context_config_path: Path = Path("cfg/context-enrichment.yaml"),
     progress: ContextEnrichmentProgressCallback | None = None,
     fresh: bool = False,
+    retry_clause_ids: tuple[str, ...] = (),
 ):
     from standards_atlas.adapters.llm import (
         ContextEnrichmentConfig,
@@ -170,7 +171,11 @@ def build_context_enrichment_service(
     resources = Path(__file__).resolve().parents[1] / "resources" / "semantic"
     prompt = PromptRepository(resources / "prompts").load(config.prompt_task, config.prompt_version)
 
-    llm_config = replace(config.llm, cache_directory=None) if fresh else config.llm
+    # Successful canonical clauses can still be reused. Pending failed clauses
+    # must not reload the same rejected gateway answer on a targeted retry.
+    llm_config = (
+        replace(config.llm, cache_directory=None) if fresh or retry_clause_ids else config.llm
+    )
     gateway = OpenAICompatibleLlmGateway(llm_config)
     documents = FileSystemEngineeringDocumentRepository(workspace)
     return ContextEnrichmentService(
@@ -185,6 +190,7 @@ def build_context_enrichment_service(
         ),
         progress=progress,
         fresh=fresh,
+        retry_clause_ids=retry_clause_ids,
     )
 
 

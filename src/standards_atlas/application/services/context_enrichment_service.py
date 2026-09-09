@@ -88,6 +88,7 @@ class ContextEnrichmentResult(BaseModel):
     subjects_ambiguous: int = 0
     context_enrichment_failures: int = 0
     routing_reused: int = 0
+    routing_outcomes: tuple[dict[str, object], ...] = ()
     routing_failures: tuple[dict[str, object], ...] = ()
     unresolved_scope_targets: tuple[dict[str, object], ...] = ()
     unresolved_reference_targets: tuple[dict[str, object], ...] = ()
@@ -459,11 +460,13 @@ class ContextEnrichmentService:
         enricher: LlmContextRoutingEnricher,
         progress: ContextEnrichmentProgressCallback | None = None,
         fresh: bool = False,
+        retry_clause_ids: tuple[str, ...] = (),
     ) -> None:
         self._documents = documents
         self._enricher = enricher
         self._progress = progress
         self._fresh = fresh
+        self._retry_clause_ids = frozenset(retry_clause_ids)
 
     def enrich(self, document_key: str) -> ContextEnrichmentResult:
         original_document = self._documents.load(DocumentKey(value=document_key))
@@ -487,6 +490,7 @@ class ContextEnrichmentService:
         enriched_ids: set[str] = set()
         failures = 0
         routing_failures: list[dict[str, object]] = []
+        routing_outcomes: list[dict[str, object]] = []
         reused = 0
         current = 0
         total = len(candidates)
@@ -513,6 +517,12 @@ class ContextEnrichmentService:
             if subject_result.primary_subject is not None or subject_result.ambiguous_candidates:
                 enriched_ids.add(clause.id.value)
 
+            outcome = {
+                "clause_id": clause.id.value,
+                "reference": clause.reference.as_text(),
+                "status": "not_candidate",
+            }
+            routing_outcomes.append(outcome)
             if clause.id.value not in candidate_ids:
                 updated.append(contextual_clause)
                 continue
@@ -529,6 +539,7 @@ class ContextEnrichmentService:
             )
             reusable = (
                 not self._fresh
+                and clause.id.value not in self._retry_clause_ids
                 and fingerprint is not None
                 and previous is not None
                 and previous.availability == "known"
@@ -536,7 +547,9 @@ class ContextEnrichmentService:
                 and previous.decision.rule == "context-routing-input-v1"
                 and previous.decision.source_sha256 == fingerprint
             )
+            outcome["input_fingerprint"] = fingerprint
             if clause.provenance.protection(path) or reusable:
+                outcome["status"] = "protected" if clause.provenance.protection(path) else "reused"
                 if reusable and previous is not None and not clause.provenance.protection(path):
                     # Reuse the provider result, not a stale/unverified target ID.
                     # Deterministic routing repairs need no new model call and
@@ -597,6 +610,20 @@ class ContextEnrichmentService:
                 )
             except LlmResponseError as error:
                 failures += 1
+                outcome.update(
+                    status="failed",
+                    error=str(error),
+                    retained_previous_value=bool(
+                        previous is not None
+                        or clause.context_routing.scopes
+                        or clause.context_routing.references
+                    ),
+                    retained_input_fingerprint=(
+                        previous.decision.source_sha256
+                        if previous is not None and previous.decision is not None
+                        else None
+                    ),
+                )
                 updated.append(contextual_clause)
                 state = "partial"
                 failure_detail = str(error)
@@ -636,6 +663,7 @@ class ContextEnrichmentService:
                 updated.append(enriched_clause)
                 enriched_ids.add(clause.id.value)
                 state = "ok"
+                outcome["status"] = "succeeded"
 
             if self._progress is not None:
                 self._progress(
@@ -657,6 +685,7 @@ class ContextEnrichmentService:
             self._documents.save(result)
         return ContextEnrichmentResult(
             routing_reused=reused,
+            routing_outcomes=tuple(routing_outcomes),
             document=result,
             candidates=total,
             clauses_enriched=len(enriched_ids),
