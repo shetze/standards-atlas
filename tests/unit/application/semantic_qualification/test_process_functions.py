@@ -44,44 +44,68 @@ FIELDS = ("process_functions", "primary_process_function")
 
 def annotation(members=(), primary=None, *, supplied=FIELDS, model="m"):
     return ClauseEvaluationAnnotation(
-        task="semantic-profile-classification", lifecycle_status="proposed",
+        task="semantic-profile-classification",
+        lifecycle_status="proposed",
         clause=ClauseReference(
-            knowledge_domain="test", document_key="TEST", clause_id="c1",
+            knowledge_domain="test",
+            document_key="TEST",
+            clause_id="c1",
             content_hash="sha256:" + "a" * 64,
         ),
         proposal=StatementFunctionSelection(
-            statement_functions=("requirement",), primary_function="requirement",
-            process_functions=members, primary_process_function=primary,
-            confidence=0.9, rationale="Untrusted prose: process_functions=[output].",
+            statement_functions=("requirement",),
+            primary_function="requirement",
+            process_functions=members,
+            primary_process_function=primary,
+            confidence=0.9,
+            rationale="Untrusted prose: process_functions=[output].",
         ),
         generator=AnnotationGenerator(
-            provider="fake", model=model, prompt_id="p", generated_at=NOW,
-            input_hash="input", raw_response_hash="response", provided_fields=supplied,
+            provider="fake",
+            model=model,
+            prompt_id="p",
+            generated_at=NOW,
+            input_hash="input",
+            raw_response_hash="response",
+            provided_fields=supplied,
         ),
     )
 
 
 def vote(model="m", members=("activity",), primary="activity", *, evaluated=True):
     return ModelVote(
-        model_id=model, repetitions=1, stability=1.0,
-        primary_function="requirement", primary_knowledge_kind="process",
-        process_functions=members, primary_process_function=primary,
+        model_id=model,
+        repetitions=1,
+        stability=1.0,
+        primary_function="requirement",
+        primary_knowledge_kind="process",
+        process_functions=members,
+        primary_process_function=primary,
         process_primary_evaluated=evaluated,
     )
 
 
 def resolve(votes, *, minimum=2):
     return resolve_process_votes(
-        tuple(votes), minimum_models=minimum, strong_threshold=0.8,
-        majority_threshold=0.6, label_threshold=0.6,
+        tuple(votes),
+        minimum_models=minimum,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
     )
 
 
 def clause(votes, *, minimum=2, override=None):
     fields = _resolve_clause(
-        votes=tuple(votes), adjudicator_vote=None, structural_prior={},
-        minimum_models=minimum, strong_threshold=0.8, majority_threshold=0.6,
-        label_threshold=0.6, adjudicator_min_confidence=0.7, policy={},
+        votes=tuple(votes),
+        adjudicator_vote=None,
+        structural_prior={},
+        minimum_models=minimum,
+        strong_threshold=0.8,
+        majority_threshold=0.6,
+        label_threshold=0.6,
+        adjudicator_min_confidence=0.7,
+        policy={},
         resolution_override=override,
     )
     return ClauseConsensus(clause_id="c1", document_key="TEST", votes=tuple(votes), **fields)
@@ -124,11 +148,14 @@ def test_a_set_tie_is_not_an_explicit_empty_decision():
 
 
 def test_per_label_majorities_are_separate_from_exact_set_agreement():
-    result = resolve([
-        vote("a", ("activity", "input")),
-        vote("b", ("activity", "output")),
-        vote("c", ("activity", "input", "output")),
-    ], minimum=3)
+    result = resolve(
+        [
+            vote("a", ("activity", "input")),
+            vote("b", ("activity", "output")),
+            vote("c", ("activity", "input", "output")),
+        ],
+        minimum=3,
+    )
     assert result["proposed_process_functions"] == ("activity", "input", "output")
     assert result["process_set_confidence"] == pytest.approx(2 / 3)
     assert result["process_exact_set_agreement"] == pytest.approx(1 / 3)
@@ -136,21 +163,25 @@ def test_per_label_majorities_are_separate_from_exact_set_agreement():
 
 
 def test_set_only_observation_does_not_supply_a_null_primary():
-    result = resolve([
-        vote("a", ("activity",), None, evaluated=False),
-        vote("b", ("activity",), None, evaluated=False),
-    ])
+    result = resolve(
+        [
+            vote("a", ("activity",), None, evaluated=False),
+            vote("b", ("activity",), None, evaluated=False),
+        ]
+    )
     assert result["process_set_decided"]
     assert not result["process_primary_evaluated"]
     assert result["process_primary_participating_models"] == 0
 
 
 def test_repetitions_are_one_coherent_vote_not_three_independent_models():
-    fields = process_vote([
-        annotation(("activity",), "activity"),
-        annotation(("activity",), "activity"),
-        annotation(("output",), "output"),
-    ])
+    fields = process_vote(
+        [
+            annotation(("activity",), "activity"),
+            annotation(("activity",), "activity"),
+            annotation(("output",), "output"),
+        ]
+    )
     assert fields["process_repetitions"] == 3
     assert fields["process_stability"] == pytest.approx(2 / 3)
     result = resolve([ModelVote(model_id="m", repetitions=3, stability=1, **fields)])
@@ -162,10 +193,12 @@ def test_repetitions_are_one_coherent_vote_not_three_independent_models():
 
 
 def test_set_order_does_not_destabilize_repetitions():
-    fields = process_vote([
-        annotation(("output", "activity"), "activity"),
-        annotation(("activity", "output"), "activity"),
-    ])
+    fields = process_vote(
+        [
+            annotation(("output", "activity"), "activity"),
+            annotation(("activity", "output"), "activity"),
+        ]
+    )
     assert fields["process_stability"] == 1.0
     assert fields["process_functions"] == ("activity", "output")
 
@@ -184,8 +217,11 @@ def test_normalizer_defaults_are_not_observations():
 def test_legacy_replay_uses_only_matching_structured_response(tmp_path, change):
     original = annotation((), None, supplied=None)
     response = {
-        "provider": "fake", "model": "m", "prompt_version": "p",
-        "input_hash": "input", "raw_response_hash": "response",
+        "provider": "fake",
+        "model": "m",
+        "prompt_version": "p",
+        "input_hash": "input",
+        "raw_response_hash": "response",
         "value": {"process_functions": [], "primary_process_function": None},
     }
     if change == "input":
@@ -213,11 +249,18 @@ def test_legacy_missing_or_default_filled_interviews_are_not_reconstructed(tmp_p
     original = annotation(supplied=None)
     assert with_process_observation_fields(original, tmp_path).generator.provided_fields == ()
     (tmp_path / "interview.json").write_text('{"aggregated_selection":{"process_functions":[]}}')
-    (tmp_path / "response.json").write_text(json.dumps({
-        "provider": "fake", "model": "m", "prompt_version": "p",
-        "input_hash": "input", "raw_response_hash": "response",
-        "value": {"process_functions": [], "primary_process_function": None},
-    }))
+    (tmp_path / "response.json").write_text(
+        json.dumps(
+            {
+                "provider": "fake",
+                "model": "m",
+                "prompt_version": "p",
+                "input_hash": "input",
+                "raw_response_hash": "response",
+                "value": {"process_functions": [], "primary_process_function": None},
+            }
+        )
+    )
     assert with_process_observation_fields(original, tmp_path).generator.provided_fields == ()
 
 
@@ -236,17 +279,31 @@ def test_missing_process_prompt_never_falls_back_to_another_prompt(tmp_path):
         directory = tmp_path / model
         case = directory / "c1"
         case.mkdir(parents=True)
-        (case / "evaluation.yaml").write_text(yaml.safe_dump({
-            "annotation_candidate": annotation(("activity",), "activity", model=model).model_dump(
-                mode="json", exclude_none=True
+        (case / "evaluation.yaml").write_text(
+            yaml.safe_dump(
+                {
+                    "annotation_candidate": annotation(
+                        ("activity",), "activity", model=model
+                    ).model_dump(mode="json", exclude_none=True)
+                }
             )
-        }))
-        observations.append(SimpleNamespace(
-            model_id=model, prompt_id="p", reasoning_mode_id="off", run_directory=directory,
-        ))
+        )
+        observations.append(
+            SimpleNamespace(
+                model_id=model,
+                prompt_id="p",
+                reasoning_mode_id="off",
+                run_directory=directory,
+            )
+        )
     kwargs = dict(
-        matrix_id="test", corpus_id="test", prompt_id="p", reasoning_mode_id="off",
-        observations=tuple(observations), output_directory=tmp_path / "consensus", min_models=3,
+        matrix_id="test",
+        corpus_id="test",
+        prompt_id="p",
+        reasoning_mode_id="off",
+        observations=tuple(observations),
+        output_directory=tmp_path / "consensus",
+        min_models=3,
     )
     missing, *_ = ModelConsensusService().evaluate(
         **kwargs, prompt_selection={"process_function": "q"}
@@ -266,11 +323,20 @@ def test_missing_process_prompt_never_falls_back_to_another_prompt(tmp_path):
 
 def test_legacy_consensus_serialization_preserves_fingerprint_payload():
     report = ConsensusReport(
-        matrix_id="m", corpus_id="c", prompt_id="p", reasoning_mode_id="off", generated_at=NOW,
-        model_count=2, clause_count=1, categories={}, review_count=0,
-        clauses=(clause([
-            vote("a", None, None, evaluated=False), vote("b", None, None, evaluated=False)
-        ]),),
+        matrix_id="m",
+        corpus_id="c",
+        prompt_id="p",
+        reasoning_mode_id="off",
+        generated_at=NOW,
+        model_count=2,
+        clause_count=1,
+        categories={},
+        review_count=0,
+        clauses=(
+            clause(
+                [vote("a", None, None, evaluated=False), vote("b", None, None, evaluated=False)]
+            ),
+        ),
     )
     legacy = report.model_dump(mode="json")
     legacy["schema_version"] = "4.0"
@@ -310,9 +376,9 @@ def test_process_escalation_is_opt_in_and_tracks_only_measured_models():
         c, process_resolution(minimum_process_function_confidence=0.6)
     )
     assert "insufficient_process_function_models" in reasons
-    missing = clause([
-        vote("a", None, None, evaluated=False), vote("b", None, None, evaluated=False)
-    ])
+    missing = clause(
+        [vote("a", None, None, evaluated=False), vote("b", None, None, evaluated=False)]
+    )
     reasons = cascade_escalation_reasons(
         missing, process_resolution(minimum_process_set_confidence=0.6)
     )
@@ -323,8 +389,12 @@ def test_process_escalation_is_opt_in_and_tracks_only_measured_models():
 def test_primary_and_set_snapshots_preserve_earlier_resolutions():
     first = clause([vote("a"), vote("b")])
     snapshots = capture_resolved_dimensions(
-        cumulative_clause=first, stage_clause=first, source="efficient",
-        previous_reasons=(), remaining_reasons=(), initial_stage=True,
+        cumulative_clause=first,
+        stage_clause=first,
+        source="efficient",
+        previous_reasons=(),
+        remaining_reasons=(),
+        initial_stage=True,
         resolution=process_resolution(),
     )
     assert {"process_function", "process_set"}.issubset(snapshots)
@@ -344,35 +414,51 @@ def test_stage_resolver_uses_its_own_source_and_does_not_reopen_resolved_sets():
         process_function_resolution_mode="stage_resolver",
     )
     remaining = cascade_stage_escalation_reasons(
-        cumulative_clause=cumulative, stage_clause=resolver,
-        previous_reasons=("process_function_disagreement",), resolution=config,
+        cumulative_clause=cumulative,
+        stage_clause=resolver,
+        previous_reasons=("process_function_disagreement",),
+        resolution=config,
     )
     assert not any("process" in reason for reason in remaining)
     captured = capture_resolved_dimensions(
-        cumulative_clause=cumulative, stage_clause=resolver, process_stage_clause=resolver,
-        previous_reasons=("process_function_disagreement",), remaining_reasons=remaining,
-        source="final", resolution=config,
+        cumulative_clause=cumulative,
+        stage_clause=resolver,
+        process_stage_clause=resolver,
+        previous_reasons=("process_function_disagreement",),
+        remaining_reasons=remaining,
+        source="final",
+        resolution=config,
     )
     assert captured["process_function"]["source"] == "final/stage-resolver"
     assert "process_set" not in captured
 
 
 def test_no_snapshot_for_missing_process_data_and_conflicts_are_visible():
-    missing = clause([
-        vote("a", None, None, evaluated=False), vote("b", None, None, evaluated=False)
-    ])
+    missing = clause(
+        [vote("a", None, None, evaluated=False), vote("b", None, None, evaluated=False)]
+    )
     captured = capture_resolved_dimensions(
-        cumulative_clause=missing, stage_clause=missing, previous_reasons=(), remaining_reasons=(),
-        source="efficient", initial_stage=True,
+        cumulative_clause=missing,
+        stage_clause=missing,
+        previous_reasons=(),
+        remaining_reasons=(),
+        source="efficient",
+        initial_stage=True,
     )
     assert "process_function" not in captured and "process_set" not in captured
     first = clause([vote("a"), vote("b")])
     captured = capture_resolved_dimensions(
-        cumulative_clause=first, stage_clause=first, previous_reasons=(), remaining_reasons=(),
-        source="efficient", initial_stage=True,
+        cumulative_clause=first,
+        stage_clause=first,
+        previous_reasons=(),
+        remaining_reasons=(),
+        source="efficient",
+        initial_stage=True,
     )
-    final = clause([vote("c", ("output",), "output"), vote("d", ("output",), "output")],
-                   override={"process_function": captured["process_function"]})
+    final = clause(
+        [vote("c", ("output",), "output"), vote("d", ("output",), "output")],
+        override={"process_function": captured["process_function"]},
+    )
     assert final.process_decision_conflict
     assert final.requires_review
 
@@ -384,9 +470,9 @@ def test_process_prompt_inherits_statement_prompt_unless_explicit():
 
 
 def test_tied_repetitions_are_measured_but_not_a_negative_decision():
-    fields = process_vote([
-        annotation(("activity",), "activity"), annotation(("output",), "output")
-    ])
+    fields = process_vote(
+        [annotation(("activity",), "activity"), annotation(("output",), "output")]
+    )
     result = resolve([ModelVote(model_id="m", repetitions=2, stability=0.5, **fields)])
     assert result["process_set_evaluated"] and result["process_primary_evaluated"]
     assert result["process_participating_models"] == 0

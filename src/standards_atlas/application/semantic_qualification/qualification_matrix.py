@@ -373,9 +373,9 @@ def cascade_stage_escalation_reasons(
         ):
             reasons.append("role_relation_disagreement")
 
-    reasons.extend(process_stage_reasons(
-        cumulative_clause, stage_clause, previous_reasons, resolution
-    ))
+    reasons.extend(
+        process_stage_reasons(cumulative_clause, stage_clause, previous_reasons, resolution)
+    )
     return tuple(reasons)
 
 
@@ -546,15 +546,17 @@ def capture_resolved_dimensions(
             "category": cumulative_clause.role_relation_category.value,
             "source": source,
         }
-    result.update(capture_process_dimensions(
-        cumulative_clause=cumulative_clause,
-        stage_clause=process_stage_clause if process_stage_clause is not None else stage_clause,
-        previous_reasons=previous_reasons,
-        remaining_reasons=remaining_reasons,
-        source=source,
-        initial_stage=initial_stage,
-        resolution=resolution or CascadeResolutionConfig(),
-    ))
+    result.update(
+        capture_process_dimensions(
+            cumulative_clause=cumulative_clause,
+            stage_clause=process_stage_clause if process_stage_clause is not None else stage_clause,
+            previous_reasons=previous_reasons,
+            remaining_reasons=remaining_reasons,
+            source=source,
+            initial_stage=initial_stage,
+            resolution=resolution or CascadeResolutionConfig(),
+        )
+    )
     return result
 
 

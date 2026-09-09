@@ -237,7 +237,8 @@ class ConsensusReport(BaseModel):
     @model_validator(mode="after")
     def legacy_reports_cannot_claim_process_observations(self) -> ConsensusReport:
         if self.schema_version == "4.0" and any(
-            item.process_set_evaluated or item.process_primary_evaluated
+            item.process_set_evaluated
+            or item.process_primary_evaluated
             or any(vote.process_functions is not None for vote in item.votes)
             for item in self.clauses
         ):
@@ -540,7 +541,8 @@ def _model_vote(
         by_prompt.get(prompts.get("process_function", prompts["statement_function"]), [])
     )
     available = [
-        item for item in (statement, knowledge, applicability, responsibility, process)
+        item
+        for item in (statement, knowledge, applicability, responsibility, process)
         if item is not None
     ]
     if not available:
@@ -943,11 +945,13 @@ def _resolve_clause(
                         role_relation_category,
                         *(
                             (process_result["process_primary_category"],)
-                            if process_result["process_primary_evaluated"] else ()
+                            if process_result["process_primary_evaluated"]
+                            else ()
                         ),
                         *(
                             (process_result["process_set_category"],)
-                            if process_result["process_set_evaluated"] else ()
+                            if process_result["process_set_evaluated"]
+                            else ()
                         ),
                     )
                 )
@@ -1129,7 +1133,8 @@ def _write_outputs(
                 "knowledge_kinds": [value.value for value in item.proposed_knowledge_kinds],
                 "process_functions": (
                     [value.value for value in item.proposed_process_functions]
-                    if item.process_set_decided else None
+                    if item.process_set_decided
+                    else None
                 ),
                 "primary_process_function": (
                     item.primary_process_function.value if item.primary_process_function else None
@@ -1304,15 +1309,24 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Resolution sources: `{item.resolution_sources or 'model_consensus'}`",
                 f"- Primary/secondary statement functions: `{proposed}`",
                 f"- Knowledge kinds: `{knowledge}`",
-                "- Process functions: " + (
-                    (f"`{_enum_values(item.proposed_process_functions)}`"
-                     if item.proposed_process_functions else "`empty`")
-                    if item.process_set_decided else "unknown" if item.process_set_evaluated
+                "- Process functions: "
+                + (
+                    (
+                        f"`{_enum_values(item.proposed_process_functions)}`"
+                        if item.proposed_process_functions
+                        else "`empty`"
+                    )
+                    if item.process_set_decided
+                    else "unknown"
+                    if item.process_set_evaluated
                     else "not evaluated"
                 ),
-                "- Primary process function: " + (
+                "- Primary process function: "
+                + (
                     f"`{_enum_value(item.primary_process_function)}`"
-                    if item.process_primary_decided else "unknown" if item.process_primary_evaluated
+                    if item.process_primary_decided
+                    else "unknown"
+                    if item.process_primary_evaluated
                     else "not evaluated"
                 ),
                 f"- Process primary/set categories: `{item.process_primary_category.value}` / "
@@ -1354,12 +1368,14 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Primary statement function: {hitl['primary_function']}",
                 f"- Secondary statement functions: {hitl['secondary_functions']}",
                 f"- Knowledge kinds: {hitl['knowledge_kinds']}",
-                "- Primary process function: " + (
+                "- Primary process function: "
+                + (
                     _enum_value(item.primary_process_function)
                     if item.process_primary_decided and not item.process_decision_conflict
                     else "[review / not evaluated]"
                 ),
-                "- Process functions: " + (
+                "- Process functions: "
+                + (
                     _enum_values(item.proposed_process_functions)
                     if item.process_set_decided and not item.process_decision_conflict
                     else "[review / not evaluated]"
@@ -1469,10 +1485,16 @@ def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
             _enum_value(vote.primary_function),
             _enum_values(vote.secondary_functions),
             _enum_values(vote.knowledge_kinds),
-            (_enum_value(vote.primary_process_function)
-             if vote.process_primary_evaluated else "not evaluated"),
-            (_enum_values(vote.process_functions)
-             if vote.process_functions is not None else "not evaluated"),
+            (
+                _enum_value(vote.primary_process_function)
+                if vote.process_primary_evaluated
+                else "not evaluated"
+            ),
+            (
+                _enum_values(vote.process_functions)
+                if vote.process_functions is not None
+                else "not evaluated"
+            ),
             ("present" if vote.applicability_present else "absent"),
             _enum_values(vote.role_relation_types),
             f"{vote.stability:.3f}",

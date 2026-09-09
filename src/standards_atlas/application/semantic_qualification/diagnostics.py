@@ -90,20 +90,24 @@ def render_qualification_diagnostics_markdown(
         )
 
     process = process_report_metrics(report.clauses)
-    lines.extend([
-        "", "## Process-function observations", "",
-        "Set and primary use separate measured participation. Empty/null answers are valid; "
-        "missing fields and tied decisions are not negative labels. Agreement is not accuracy.",
-        "",
-        f"- Set evaluated / not evaluated: {process['set_evaluated']} / "
-        f"{process['set_not_evaluated']}",
-        f"- Primary evaluated / not evaluated: {process['primary_evaluated']} / "
-        f"{process['primary_not_evaluated']}",
-        f"- Decided set / primary: {process['set_decided']} / {process['primary_decided']}",
-        f"- Empty-set / null-primary decisions: {process['empty_set_decisions']} / "
-        f"{process['null_primary_decisions']}",
-        f"- Cross-stage decision conflicts: {process['decision_conflicts']}",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Process-function observations",
+            "",
+            "Set and primary use separate measured participation. Empty/null answers are valid; "
+            "missing fields and tied decisions are not negative labels. Agreement is not accuracy.",
+            "",
+            f"- Set evaluated / not evaluated: {process['set_evaluated']} / "
+            f"{process['set_not_evaluated']}",
+            f"- Primary evaluated / not evaluated: {process['primary_evaluated']} / "
+            f"{process['primary_not_evaluated']}",
+            f"- Decided set / primary: {process['set_decided']} / {process['primary_decided']}",
+            f"- Empty-set / null-primary decisions: {process['empty_set_decisions']} / "
+            f"{process['null_primary_decisions']}",
+            f"- Cross-stage decision conflicts: {process['decision_conflicts']}",
+        ]
+    )
     lines.extend(["", "## Cascade stage contributions", ""])
     if stages:
         lines.extend(

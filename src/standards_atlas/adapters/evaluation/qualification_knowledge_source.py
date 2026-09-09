@@ -49,7 +49,11 @@ from standards_atlas.domain.model.knowledge_state import (
 from standards_atlas.shared.hashing import sha256_bytes, sha256_json
 
 ADOPTION_DIMENSIONS = (
-    "statement_functions", "knowledge_kinds", "process_functions", "applicability", "role_semantics"
+    "statement_functions",
+    "knowledge_kinds",
+    "process_functions",
+    "applicability",
+    "role_semantics",
 )
 
 
@@ -355,9 +359,15 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
                 members = (primary, *proposed) if known else proposed
                 values[values_field] = tuple(dict.fromkeys(members))
         _adopt_process_functions(
-            archive=archive, consensus_name=consensus_name, consensus=consensus,
-            clause=clause, stages=stages, enabled="process_functions" in dimensions,
-            values=values, attributes=attributes, not_evaluated=not_evaluated,
+            archive=archive,
+            consensus_name=consensus_name,
+            consensus=consensus,
+            clause=clause,
+            stages=stages,
+            enabled="process_functions" in dimensions,
+            values=values,
+            attributes=attributes,
+            not_evaluated=not_evaluated,
         )
         if "applicability" in dimensions:
             support = DecisionSupport(
@@ -432,10 +442,15 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
 
 
 def _adopt_process_functions(
-    *, archive: _Archive, consensus_name: str, consensus: ConsensusReport,
+    *,
+    archive: _Archive,
+    consensus_name: str,
+    consensus: ConsensusReport,
     clause: ClauseConsensus,
     stages: dict[str, tuple[str, ConsensusReport, dict[tuple[str, str], ClauseConsensus]]],
-    enabled: bool, values: dict[str, object], attributes: list[GeneratedAttribute],
+    enabled: bool,
+    values: dict[str, object],
+    attributes: list[GeneratedAttribute],
     not_evaluated: list[str],
 ) -> None:
     coordinate = (clause.document_key, clause.clause_id)
@@ -446,17 +461,23 @@ def _adopt_process_functions(
     )
     for field, value, evaluated, decided, category, resolution in (
         (
-            "process_functions", clause.proposed_process_functions, clause.process_set_evaluated,
-            set_known, clause.process_set_category, "process_set",
+            "process_functions",
+            clause.proposed_process_functions,
+            clause.process_set_evaluated,
+            set_known,
+            clause.process_set_category,
+            "process_set",
         ),
         (
-            "primary_process_function", clause.primary_process_function,
+            "primary_process_function",
+            clause.primary_process_function,
             clause.process_primary_evaluated,
             clause.process_primary_decided
             and clause.process_primary_category != ConsensusCategory.INSUFFICIENT
             and not clause.process_decision_conflict
             and (clause.primary_process_function is None or set_known),
-            clause.process_primary_category, "process_function",
+            clause.process_primary_category,
+            "process_function",
         ),
     ):
         if not enabled or not evaluated:
@@ -470,14 +491,21 @@ def _adopt_process_functions(
                 raise ValueError(f"missing source stage for process decision: {stage}")
             name, report, source_clause = source[0], source[1], source[2][coordinate]
             source_value = (
-                source_clause.primary_process_function if field == "primary_process_function"
+                source_clause.primary_process_function
+                if field == "primary_process_function"
                 else source_clause.proposed_process_functions
             )
             if source_value != value:
                 raise ValueError("final process decision differs from its source stage")
         support = _process_support(
-            archive, name, report, source_clause, field, value,
-            stage=stage, category=category.value,
+            archive,
+            name,
+            report,
+            source_clause,
+            field,
+            value,
+            stage=stage,
+            category=category.value,
         )
         _record_attribute(attributes, field, support, decided)
         if decided:
@@ -485,38 +513,53 @@ def _adopt_process_functions(
 
 
 def _process_support(
-    archive: _Archive, name: str, report: ConsensusReport, clause: ClauseConsensus,
-    field: str, value: object, *, stage: str, category: str,
+    archive: _Archive,
+    name: str,
+    report: ConsensusReport,
+    clause: ClauseConsensus,
+    field: str,
+    value: object,
+    *,
+    stage: str,
+    category: str,
 ) -> DecisionSupport:
     all_votes = [vote for vote in clause.votes if vote.role == "voter"]
     if len(all_votes) != len({vote.model_id for vote in all_votes}):
         raise ValueError("duplicate model votes cannot be counted as independent support")
     primary = field == "primary_process_function"
     votes = [
-        vote for vote in all_votes
+        vote
+        for vote in all_votes
         if (vote.process_primary_evaluated if primary else vote.process_functions is not None)
     ]
     labels: Counter[str] = Counter()
     for vote in votes:
         if primary:
-            labels["none" if vote.primary_process_function is None
-                   else vote.primary_process_function.value] += 1
+            labels[
+                "none"
+                if vote.primary_process_function is None
+                else vote.primary_process_function.value
+            ] += 1
         else:
             labels.update(label.value for label in vote.process_functions)
     supporting = (
-        sum(vote.primary_process_function == value for vote in votes) if primary
+        sum(vote.primary_process_function == value for vote in votes)
+        if primary
         else sum(set(vote.process_functions) == set(value) for vote in votes)
     )
     return DecisionSupport(
         rule="process-primary-majority" if primary else "process-label-majority",
         source_artifact=f"{archive.id}/{name}",
-        source_sha256=archive.sha256(name), stage=stage,
+        source_sha256=archive.sha256(name),
+        stage=stage,
         prompt_id=report.prompt_selection.get("process_function", report.prompt_id),
         reasoning_mode_id=report.reasoning_mode_id,
         model_ids=tuple(vote.model_id for vote in votes),
-        valid_votes=len(votes), supporting_votes=supporting,
+        valid_votes=len(votes),
+        supporting_votes=supporting,
         abstained_votes=len(all_votes) - len(votes),
-        label_votes=dict(sorted(labels.items())), category=category,
+        label_votes=dict(sorted(labels.items())),
+        category=category,
     )
 
 

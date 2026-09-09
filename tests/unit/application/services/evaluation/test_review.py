@@ -253,10 +253,15 @@ def test_review_preserves_or_explicitly_corrects_process_functions(tmp_path, edi
     path = run / "clause-1/evaluation.yaml"
     payload = yaml.safe_load(path.read_text())
     proposal = payload["annotation_candidate"]["proposal"]
-    proposal.update(process_functions=["activity", "input"], primary_process_function="activity",
-                    applicability_present=True, role_semantics_present=True)
+    proposal.update(
+        process_functions=["activity", "input"],
+        primary_process_function="activity",
+        applicability_present=True,
+        role_semantics_present=True,
+    )
     payload["annotation_candidate"]["generator"]["provided_fields"] = [
-        "process_functions", "primary_process_function"
+        "process_functions",
+        "primary_process_function",
     ]
     path.write_text(yaml.safe_dump(payload))
     service = SemanticAnnotationReviewService()
@@ -264,11 +269,16 @@ def test_review_preserves_or_explicitly_corrects_process_functions(tmp_path, edi
     service.export_run(run_directory=run, review_directory=reviews)
     updates = {"reviewer": "Reviewer"}
     if edit:
-        updates.update(decision="corrected", process_functions=["output"],
-                       primary_process_function="output")
+        updates.update(
+            decision="corrected", process_functions=["output"], primary_process_function="output"
+        )
     _edit_review(reviews / "clause-1.md", **updates)
-    result = service.import_reviews(review_directory=reviews, run_directory=run,
-                                   local_corpus_root=tmp_path / "local", corpus_id="test")
+    result = service.import_reviews(
+        review_directory=reviews,
+        run_directory=run,
+        local_corpus_root=tmp_path / "local",
+        corpus_id="test",
+    )
     reviewed = ClauseAnnotationRepository(tmp_path / "local").load_path(result.annotation_paths[0])
     assert reviewed.annotation.process_functions == (("output",) if edit else ("activity", "input"))
     assert reviewed.annotation.primary_process_function == ("output" if edit else "activity")

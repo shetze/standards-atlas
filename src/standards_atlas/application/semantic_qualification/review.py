@@ -73,8 +73,10 @@ class ReviewForm(BaseModel):
         if self.process_functions is not None:
             if len(set(self.process_functions)) != len(self.process_functions):
                 raise ValueError("process_functions must not contain duplicates")
-            if (self.primary_process_function is not None
-                    and self.primary_process_function not in self.process_functions):
+            if (
+                self.primary_process_function is not None
+                and self.primary_process_function not in self.process_functions
+            ):
                 raise ValueError("primary_process_function must be included in process_functions")
         return self
 
@@ -282,7 +284,8 @@ def _render_review(
         ),
         process_functions=(
             tuple(value.value for value in proposal.process_functions)
-            if "process_functions" in (candidate.generator.provided_fields or ()) else None
+            if "process_functions" in (candidate.generator.provided_fields or ())
+            else None
         ),
         primary_process_function=(
             proposal.primary_process_function.value if proposal.primary_process_function else None
@@ -379,10 +382,14 @@ def _apply_review(
             "knowledge_kinds": form.knowledge_kinds,
             "primary_knowledge_kind": form.primary_knowledge_kind,
             "confidence": form.confidence,
-            **({
-                "process_functions": form.process_functions,
-                "primary_process_function": form.primary_process_function,
-            } if form.process_functions is not None else {}),
+            **(
+                {
+                    "process_functions": form.process_functions,
+                    "primary_process_function": form.primary_process_function,
+                }
+                if form.process_functions is not None
+                else {}
+            ),
         }
     )
     if form.decision is ReviewDecision.ACCEPTED and selection != candidate.proposal.model_copy(

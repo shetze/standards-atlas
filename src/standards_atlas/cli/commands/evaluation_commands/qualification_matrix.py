@@ -176,8 +176,12 @@ def _render_intermediate_resolution_summary(
     current: dict[str, tuple[str, ...]],
 ) -> None:
     for dimension in (
-        "statement_function", "knowledge_kind", "process_function", "process_set",
-        "applicability", "responsibility",
+        "statement_function",
+        "knowledge_kind",
+        "process_function",
+        "process_set",
+        "applicability",
+        "responsibility",
     ):
         candidates = {
             clause_id

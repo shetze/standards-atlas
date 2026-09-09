@@ -81,10 +81,14 @@ class ProcessGateway:
         self.calls += 1
         reference = request.metadata["clause_context"]["reference"]
         value = {
-            "statement_functions": ["requirement"], "primary_function": "requirement",
-            "knowledge_kinds": ["process"], "primary_knowledge_kind": "process",
-            "applicability_present": False, "role_semantics_present": False,
-            "role_relations": [], "confidence": 0.9,
+            "statement_functions": ["requirement"],
+            "primary_function": "requirement",
+            "knowledge_kinds": ["process"],
+            "primary_knowledge_kind": "process",
+            "applicability_present": False,
+            "role_semantics_present": False,
+            "role_relations": [],
+            "confidence": 0.9,
             "rationale": "Synthetic only. Prose suggesting output is not structured evidence.",
         }
         if reference.endswith("1"):
@@ -96,10 +100,14 @@ class ProcessGateway:
         elif reference.endswith("2"):
             value.update(process_functions=[], primary_process_function=None)
         return StructuredGenerationResult(
-            value=value, model=request.model, provider="fake",
+            value=value,
+            model=request.model,
+            provider="fake",
             prompt_version=request.prompt_version,
             input_hash=sha256_json(asdict(request)),
-            raw_response_hash=sha256_json(value), duration_ms=1, raw_response={"synthetic": True},
+            raw_response_hash=sha256_json(value),
+            duration_ms=1,
+            raw_response={"synthetic": True},
         )
 
 
@@ -113,45 +121,86 @@ def world(root):
         "TOC;a;Example:2025 1;One;r\nTOC;b;Example:2025 2;Two;r\n"
         "TOC;c;Example:2025 3;Three;r\n"
     )
-    catalog = StandardCatalog.model_validate({
-        "manifest_type": "standards", "schema_version": 2,
-        "knowledge_domains": [], "industry_sectors": [],
-        "families": [{"key": "EXAMPLE", "name": "Example", "organization": "Example",
-                      "publication_year": 2025, "source": {"pdf": "local/example.pdf"},
-                      "atlasdata": {"path": "data/EXAMPLE"}}],
-    })
+    catalog = StandardCatalog.model_validate(
+        {
+            "manifest_type": "standards",
+            "schema_version": 2,
+            "knowledge_domains": [],
+            "industry_sectors": [],
+            "families": [
+                {
+                    "key": "EXAMPLE",
+                    "name": "Example",
+                    "organization": "Example",
+                    "publication_year": 2025,
+                    "source": {"pdf": "local/example.pdf"},
+                    "atlasdata": {"path": "data/EXAMPLE"},
+                }
+            ],
+        }
+    )
     bindings = atlasdata_bindings(catalog, root=root)
     repo = FileSystemEngineeringDocumentRepository(root / "workspace")
     service = AtlasDataKnowledgeService(
         documents=repo, bindings=bindings, evidence_root=root / "private-evidence"
     )
     doc = service._skeleton(bindings["EXAMPLE"])
-    doc = doc.model_copy(update={"clauses": tuple(
-        clause.with_baseline_updates(content=(TextBlock(
-            id=f"text-{i}", text=f"Synthetic source clause {i} shall remain local.",
-        ),)) for i, clause in enumerate(doc.clauses, 1)
-    )})
+    doc = doc.model_copy(
+        update={
+            "clauses": tuple(
+                clause.with_baseline_updates(
+                    content=(
+                        TextBlock(
+                            id=f"text-{i}",
+                            text=f"Synthetic source clause {i} shall remain local.",
+                        ),
+                    )
+                )
+                for i, clause in enumerate(doc.clauses, 1)
+            )
+        }
+    )
     repo.save(doc)
     return repo, service, bindings, doc
 
 
 def qualification(root, document):
-    examples = tuple(EvaluationExample(
-        id=c.id.value,
-        input={"content": {"text": c.plain_text, "hash": normalized_content_hash(c.plain_text)},
-               "context": {"knowledge_domain": "functional-safety", "document_key": "EXAMPLE",
-                           "clause_id": c.id.value, "reference": c.reference.clause,
-                           "heading": c.heading, "clause_type": "clause"}},
-        expected={},
-    ) for c in document.clauses)
+    examples = tuple(
+        EvaluationExample(
+            id=c.id.value,
+            input={
+                "content": {"text": c.plain_text, "hash": normalized_content_hash(c.plain_text)},
+                "context": {
+                    "knowledge_domain": "functional-safety",
+                    "document_key": "EXAMPLE",
+                    "clause_id": c.id.value,
+                    "reference": c.reference.clause,
+                    "heading": c.heading,
+                    "clause_type": "clause",
+                },
+            },
+            expected={},
+        )
+        for c in document.clauses
+    )
     dataset = EvaluationDataset(task=TASK, version="synthetic", examples=examples)
     corpus = EvaluationCorpusManifest(
-        corpus_id="process-synthetic", task=TASK, corpus_version="synthetic",
-        seed=1, selection_strategy="synthetic",
-        clauses=tuple(CorpusClause(clause=ClauseReference(
-            knowledge_domain="functional-safety", document_key="EXAMPLE", clause_id=e.id,
-            content_hash=e.input["content"]["hash"],
-        )) for e in examples),
+        corpus_id="process-synthetic",
+        task=TASK,
+        corpus_version="synthetic",
+        seed=1,
+        selection_strategy="synthetic",
+        clauses=tuple(
+            CorpusClause(
+                clause=ClauseReference(
+                    knowledge_domain="functional-safety",
+                    document_key="EXAMPLE",
+                    clause_id=e.id,
+                    content_hash=e.input["content"]["hash"],
+                )
+            )
+            for e in examples
+        ),
     )
     corpus_root = root / "corpora"
     directory = corpus_root / TASK / dataset.version
@@ -163,24 +212,40 @@ def qualification(root, document):
     observations = []
     for model in ("model-a", "model-b", "model-c"):
         config = ProposalRunConfig(
-            corpus_id=corpus.corpus_id, task=TASK, task_version="2.5.0",
-            dataset_version=dataset.version, prompt_version=PROMPT, provider="fake", model=model,
+            corpus_id=corpus.corpus_id,
+            task=TASK,
+            task_version="2.5.0",
+            dataset_version=dataset.version,
+            prompt_version=PROMPT,
+            provider="fake",
+            model=model,
             retry_attempts=1,
         )
-        kwargs = dict(resources=Path("src/standards_atlas/resources/semantic"),
-                      corpus_root=corpus_root, output_root=root / "evaluation")
+        kwargs = dict(
+            resources=Path("src/standards_atlas/resources/semantic"),
+            corpus_root=corpus_root,
+            output_root=root / "evaluation",
+        )
         generated = generator.run(config, **kwargs)
         assert generated.failed == 0, generated.errors
         assert generated.generated == 3
         resumed = generator.run(config, **kwargs)
         assert resumed.skipped == 3 and resumed.generated == 0
-        observations.append(SimpleNamespace(
-            model_id=model, prompt_id=PROMPT, reasoning_mode_id="off",
-            run_directory=generated.run_directory,
-        ))
+        observations.append(
+            SimpleNamespace(
+                model_id=model,
+                prompt_id=PROMPT,
+                reasoning_mode_id="off",
+                run_directory=generated.run_directory,
+            )
+        )
     report, *paths = ModelConsensusService().evaluate(
-        matrix_id="synthetic-matrix", corpus_id=corpus.corpus_id, prompt_id=PROMPT,
-        reasoning_mode_id="off", observations=tuple(observations), min_models=3,
+        matrix_id="synthetic-matrix",
+        corpus_id=corpus.corpus_id,
+        prompt_id=PROMPT,
+        reasoning_mode_id="off",
+        observations=tuple(observations),
+        min_models=3,
         corpus_root=corpus_root,
         output_directory=root / "consensus",
     )
@@ -190,36 +255,67 @@ def qualification(root, document):
 
 def archive(root, dataset, corpus, report):
     selection = QualificationRunSelection(
-        task=dataset.task, dataset_version=dataset.version, corpus_id=corpus.corpus_id,
+        task=dataset.task,
+        dataset_version=dataset.version,
+        corpus_id=corpus.corpus_id,
         dataset_sha256=sha256_json(asdict(dataset)),
         corpus_sha256=sha256_json(corpus.model_dump(mode="json")),
-        dataset_clause_count=3, corpus_clause_count=3, selected_clause_count=3,
-        clauses=tuple(QualificationSelectionClause(
-            example_id=e.id, document_key="EXAMPLE", clause_id=e.id
-        ) for e in dataset.examples),
+        dataset_clause_count=3,
+        corpus_clause_count=3,
+        selected_clause_count=3,
+        clauses=tuple(
+            QualificationSelectionClause(example_id=e.id, document_key="EXAMPLE", clause_id=e.id)
+            for e in dataset.examples
+        ),
     )
     coverage = build_qualification_coverage(selection=selection, report=report)
     detail = build_applicability_detail_selection(
-        run_selection=selection, examples=dataset.examples, consensus=report,
-        coverage=coverage, task_version="2.5.0",
+        run_selection=selection,
+        examples=dataset.examples,
+        consensus=report,
+        coverage=coverage,
+        task_version="2.5.0",
     )
     policy = ApplicabilityPolicyRunReport(
-        generated_at=NOW, source_matrix_id=report.matrix_id, source_corpus_id=corpus.corpus_id,
+        generated_at=NOW,
+        source_matrix_id=report.matrix_id,
+        source_corpus_id=corpus.corpus_id,
         source_selection_sha256=detail.fingerprint,
         source_consensus_sha256=detail.source_consensus_sha256,
-        consensus_clause_count=3, selected_clause_count=0, final_positive_count=0,
-        final_negative_count=3, final_unknown_count=0,
-        cases=tuple(ApplicabilityPolicyRunCase(
-            document_key="EXAMPLE", clause_id=c.clause_id, reference=c.reference,
-            gate_present=False, detail_selected=False, final_present=False,
-        ) for c in report.clauses),
-        stages=tuple(ApplicabilityPolicyStageSummary(
-            role=role, task_version="2.0.0", prompt_version="synthetic", model_id="not-called",
-            model_ref="not-called", selection_sha256=detail.fingerprint,
-            selected_clause_count=0, pending_clause_count=0, attempted_clause_count=0,
-            reused_clause_count=0, fresh_prediction_count=0, cached_prediction_count=0,
-            failed_clause_count=0,
-        ) for role in ("primary", "rescue", "confirmation")),
+        consensus_clause_count=3,
+        selected_clause_count=0,
+        final_positive_count=0,
+        final_negative_count=3,
+        final_unknown_count=0,
+        cases=tuple(
+            ApplicabilityPolicyRunCase(
+                document_key="EXAMPLE",
+                clause_id=c.clause_id,
+                reference=c.reference,
+                gate_present=False,
+                detail_selected=False,
+                final_present=False,
+            )
+            for c in report.clauses
+        ),
+        stages=tuple(
+            ApplicabilityPolicyStageSummary(
+                role=role,
+                task_version="2.0.0",
+                prompt_version="synthetic",
+                model_id="not-called",
+                model_ref="not-called",
+                selection_sha256=detail.fingerprint,
+                selected_clause_count=0,
+                pending_clause_count=0,
+                attempted_clause_count=0,
+                reused_clause_count=0,
+                fresh_prediction_count=0,
+                cached_prediction_count=0,
+                failed_clause_count=0,
+            )
+            for role in ("primary", "rescue", "confirmation")
+        ),
     )
     prefix = "inputs/applicability-policy"
     values = {
@@ -232,10 +328,13 @@ def archive(root, dataset, corpus, report):
         "applicability-policy/applicability-policy-run.json": policy.model_dump(mode="json"),
     }
     members = {name: json.dumps(value).encode() for name, value in values.items()}
-    manifest = {"archive_id": "synthetic-process", "files": [
-        {"path": name, "sha256": sha256_bytes(data), "size_bytes": len(data)}
-        for name, data in members.items()
-    ]}
+    manifest = {
+        "archive_id": "synthetic-process",
+        "files": [
+            {"path": name, "sha256": sha256_bytes(data), "size_bytes": len(data)}
+            for name, data in members.items()
+        ],
+    }
     path = root / "synthetic-process.zip"
     with ZipFile(path, "w", ZIP_DEFLATED) as zipped:
         for name, data in members.items():
@@ -306,21 +405,34 @@ def test_replacing_a_set_does_not_turn_an_unobserved_primary_into_a_null_vote(tm
     _, _, _, doc = world(tmp_path)
 
     def apply(clause, values, unknown=False):
-        attributes = tuple(GeneratedAttribute(
-            path=S + name, generator="synthetic", method=GenerationMethod.LLM,
-        ) for name in values)
+        attributes = tuple(
+            GeneratedAttribute(
+                path=S + name,
+                generator="synthetic",
+                method=GenerationMethod.LLM,
+            )
+            for name in values
+        )
         if unknown:
-            attributes += (GeneratedAttribute(
-                path=S + "primary_process_function", generator="synthetic",
-                method=GenerationMethod.LLM, availability="unknown",
-            ),)
+            attributes += (
+                GeneratedAttribute(
+                    path=S + "primary_process_function",
+                    generator="synthetic",
+                    method=GenerationMethod.LLM,
+                    availability="unknown",
+                ),
+            )
         return merge_generated_enrichments(
             clause, ClauseEnrichmentPatch(semantic=SemanticEnrichmentPatch(**values)), attributes
         ).clause
 
-    initial = apply(doc.clauses[0], {
-        "process_functions": ("activity",), "primary_process_function": "activity",
-    })
+    initial = apply(
+        doc.clauses[0],
+        {
+            "process_functions": ("activity",),
+            "primary_process_function": "activity",
+        },
+    )
     for unknown in (False, True):
         changed = apply(initial, {"process_functions": ("input",)}, unknown=unknown)
         assert changed.enrichments.semantic.primary_process_function is None
@@ -328,8 +440,10 @@ def test_replacing_a_set_does_not_turn_an_unobserved_primary_into_a_null_vote(tm
         assert changed.provenance.availability(S + "process_functions") == "known"
     negative = apply(initial, {"process_functions": (), "primary_process_function": None})
     assert negative.provenance.availability(S + "primary_process_function") == "known"
-    confirmed = initial.model_copy(update={"provenance": initial.provenance.confirm_authoritative(
-        S + "primary_process_function"
-    )})
+    confirmed = initial.model_copy(
+        update={
+            "provenance": initial.provenance.confirm_authoritative(S + "primary_process_function")
+        }
+    )
     protected = apply(confirmed, {"process_functions": ("input",)})
     assert protected.enrichments.semantic == initial.enrichments.semantic

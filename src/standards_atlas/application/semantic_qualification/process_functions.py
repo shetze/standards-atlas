@@ -90,9 +90,7 @@ def with_process_observation_fields(
         except (OSError, TypeError, ValueError, KeyError):
             provided = ()
     return annotation.model_copy(
-        update={
-            "generator": annotation.generator.model_copy(update={"provided_fields": provided})
-        }
+        update={"generator": annotation.generator.model_copy(update={"provided_fields": provided})}
     )
 
 
@@ -177,9 +175,10 @@ def resolve_process_votes(
     set_votes = [vote for vote in votes if vote.process_functions is not None]
     primary_votes = [vote for vote in votes if vote.process_primary_evaluated]
     n_set, n_primary = len(set_votes), len(primary_votes)
-    if len({vote.model_id for vote in set_votes}) != n_set or len(
-        {vote.model_id for vote in primary_votes}
-    ) != n_primary:
+    if (
+        len({vote.model_id for vote in set_votes}) != n_set
+        or len({vote.model_id for vote in primary_votes}) != n_primary
+    ):
         raise ValueError("process votes must have unique model ids")
     primary_counts = Counter(vote.primary_process_function for vote in primary_votes)
     primary, count = primary_counts.most_common(1)[0] if primary_counts else (None, 0)
@@ -194,8 +193,7 @@ def resolve_process_votes(
             (
                 label
                 for label, count in label_counts.items()
-                if count / n_set > 0.5
-                and (count / n_set >= label_threshold or label == primary)
+                if count / n_set > 0.5 and (count / n_set >= label_threshold or label == primary)
             ),
             key=lambda item: item.value,
         )
@@ -204,12 +202,15 @@ def resolve_process_votes(
     set_confidence = (
         min(label_support[label.value] for label in selected)
         if selected
-        else empty_count / n_set if n_set else 0.0
+        else empty_count / n_set
+        if n_set
+        else 0.0
     )
     set_decided = bool(selected) or set_confidence > 0.5
     exact_agreement = (
         sum(set(vote.process_functions) == set(selected) for vote in set_votes) / n_set
-        if n_set else 0.0
+        if n_set
+        else 0.0
     )
 
     def category(confidence: float, count: int, decided: bool) -> ConsensusCategory:
@@ -224,9 +225,8 @@ def resolve_process_votes(
     return {
         "primary_process_function": primary,
         "proposed_process_functions": selected,
-        "process_primary_evaluated": n_primary > 0 or any(
-            vote.process_primary_repetitions > 0 for vote in votes
-        ),
+        "process_primary_evaluated": n_primary > 0
+        or any(vote.process_primary_repetitions > 0 for vote in votes),
         "process_set_evaluated": n_set > 0 or any(vote.process_repetitions > 0 for vote in votes),
         "process_primary_decided": primary_decided,
         "process_set_decided": set_decided,
@@ -237,9 +237,8 @@ def resolve_process_votes(
         "process_set_confidence": set_confidence,
         "process_exact_set_agreement": exact_agreement,
         "process_primary_unanimous": n_primary > 0 and len(primary_counts) == 1,
-        "process_set_unanimous": n_set > 0 and len(
-            {frozenset(vote.process_functions) for vote in set_votes}
-        ) == 1,
+        "process_set_unanimous": n_set > 0
+        and len({frozenset(vote.process_functions) for vote in set_votes}) == 1,
         "process_primary_participating_models": n_primary,
         "process_participating_models": n_set,
         "process_primary_support": {
@@ -304,14 +303,15 @@ def process_report_metrics(clauses: Any) -> dict[str, Any]:
             item.process_set_decided and not item.proposed_process_functions for item in items
         ),
         "null_primary_decisions": sum(
-            item.process_primary_decided and item.primary_process_function is None
-            for item in items
+            item.process_primary_decided and item.primary_process_function is None for item in items
         ),
         "decision_conflicts": sum(item.process_decision_conflict for item in items),
-        "set_participation": dict(sorted(Counter(
-            str(item.process_participating_models) for item in items
-        ).items())),
-        "primary_participation": dict(sorted(Counter(
-            str(item.process_primary_participating_models) for item in items
-        ).items())),
+        "set_participation": dict(
+            sorted(Counter(str(item.process_participating_models) for item in items).items())
+        ),
+        "primary_participation": dict(
+            sorted(
+                Counter(str(item.process_primary_participating_models) for item in items).items()
+            )
+        ),
     }

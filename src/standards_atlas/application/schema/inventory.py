@@ -49,13 +49,19 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
-        "qualification-consensus", "**/consensus-report.json", LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,), "qualification-consensus",
+        "qualification-consensus",
+        "**/consensus-report.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "qualification-consensus",
         "Measured process primary/set; legacy 4.0 preserves policy fingerprints.",
     ),
     VersionedInterface(
-        "golden-corpus-proposal", "**/golden-corpus-proposal.yaml", LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,), "golden-corpus-proposal",
+        "golden-corpus-proposal",
+        "**/golden-corpus-proposal.yaml",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "golden-corpus-proposal",
         "Review proposal including explicit process availability and support.",
     ),
     VersionedInterface(

@@ -181,8 +181,11 @@ def _members(
 
         def process_clause(supplied, *, minimum=2):
             fields = resolve_process_votes(
-                supplied, minimum_models=minimum, strong_threshold=0.8,
-                majority_threshold=0.6, label_threshold=0.6,
+                supplied,
+                minimum_models=minimum,
+                strong_threshold=0.8,
+                majority_threshold=0.6,
+                label_threshold=0.6,
             )
             return consensus.clauses[0].model_copy(update={**fields, "votes": supplied})
 
@@ -429,18 +432,26 @@ def test_supported_set_is_not_discarded_when_primary_is_unknown(tmp_path: Path) 
 
 def _process_model(model, members, primary, *, observed=True):
     return ModelVote(
-        model_id=model, repetitions=3, stability=1, primary_function="requirement",
-        primary_knowledge_kind="process", process_functions=members,
-        primary_process_function=primary, process_primary_evaluated=observed,
+        model_id=model,
+        repetitions=3,
+        stability=1,
+        primary_function="requirement",
+        primary_knowledge_kind="process",
+        process_functions=members,
+        primary_process_function=primary,
+        process_primary_evaluated=observed,
     )
 
 
 def test_adoption_keeps_decided_process_set_when_primary_ties(tmp_path):
     members = ("activity", "input")
-    data = _members(process_votes=(
-        _process_model("a", members, "activity"), _process_model("b", members, "input"),
-        _process_model("missing", None, None, observed=False),
-    ))
+    data = _members(
+        process_votes=(
+            _process_model("a", members, "activity"),
+            _process_model("b", members, "input"),
+            _process_model("missing", None, None, observed=False),
+        )
+    )
     batch = load_qualification_knowledge(
         _archive(tmp_path, data), dimensions=("process_functions",)
     )
@@ -456,10 +467,13 @@ def test_adoption_keeps_decided_process_set_when_primary_ties(tmp_path):
 
 
 def test_adoption_counts_explicit_empty_and_null_but_not_absent_votes(tmp_path):
-    data = _members(process_votes=(
-        _process_model("a", (), None), _process_model("b", (), None),
-        _process_model("absent", None, None, observed=False),
-    ))
+    data = _members(
+        process_votes=(
+            _process_model("a", (), None),
+            _process_model("b", (), None),
+            _process_model("absent", None, None, observed=False),
+        )
+    )
     batch = load_qualification_knowledge(_archive(tmp_path, data))
     candidate = batch.candidates[0]
     assert candidate.patch.semantic.process_functions == ()

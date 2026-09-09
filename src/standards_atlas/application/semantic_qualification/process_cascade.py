@@ -36,12 +36,16 @@ def process_escalation_reasons(
     reasons = []
     for dimension, prefix, enabled, threshold, count in (
         (
-            "function", "process_primary", resolution.escalate_on_process_function_disagreement,
+            "function",
+            "process_primary",
+            resolution.escalate_on_process_function_disagreement,
             resolution.minimum_process_function_confidence,
             getattr(clause, "process_primary_participating_models", 0),
         ),
         (
-            "set", "process_set", resolution.escalate_on_process_set_disagreement,
+            "set",
+            "process_set",
+            resolution.escalate_on_process_set_disagreement,
             resolution.minimum_process_set_confidence,
             getattr(clause, "process_participating_models", 0),
         ),
@@ -79,30 +83,42 @@ def process_stage_reasons(
     if resolution.process_function_resolution_mode == "stage_resolver":
         primary = process_escalation_reasons(stage_clause, resolution, resolver=True)
     return tuple(
-        reason for reason in primary
+        reason
+        for reason in primary
         if previous & PROCESS_PRIMARY_REASONS and reason in PROCESS_PRIMARY_REASONS
     ) + tuple(
-        reason for reason in cumulative
+        reason
+        for reason in cumulative
         if previous & PROCESS_SET_REASONS and reason in PROCESS_SET_REASONS
     )
 
 
 def capture_process_dimensions(
-    *, cumulative_clause: Any, stage_clause: Any, previous_reasons: tuple[str, ...],
-    remaining_reasons: tuple[str, ...], source: str, initial_stage: bool, resolution: Any,
+    *,
+    cumulative_clause: Any,
+    stage_clause: Any,
+    previous_reasons: tuple[str, ...],
+    remaining_reasons: tuple[str, ...],
+    source: str,
+    initial_stage: bool,
+    resolution: Any,
 ) -> dict[str, dict[str, Any]]:
     captured = {}
     previous, remaining = set(previous_reasons), set(remaining_reasons)
     resolver = not initial_stage and resolution.process_function_resolution_mode == "stage_resolver"
     for dimension, fields, prefix, reason_set, clause in (
         (
-            "process_function", PROCESS_PRIMARY_FIELDS, "process_primary", PROCESS_PRIMARY_REASONS,
+            "process_function",
+            PROCESS_PRIMARY_FIELDS,
+            "process_primary",
+            PROCESS_PRIMARY_REASONS,
             stage_clause if resolver else cumulative_clause,
         ),
         ("process_set", PROCESS_SET_FIELDS, "process_set", PROCESS_SET_REASONS, cumulative_clause),
     ):
         just_resolved = (
-            not remaining & reason_set if initial_stage
+            not remaining & reason_set
+            if initial_stage
             else bool(previous & reason_set) and not remaining & reason_set
         )
         category = getattr(clause, f"{prefix}_category", None)
