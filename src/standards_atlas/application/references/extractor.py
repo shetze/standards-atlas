@@ -16,6 +16,8 @@ from standards_atlas.domain.model.reference_mention import (
     ReferenceTarget,
 )
 
+REFERENCE_EXTRACTOR_VERSION = "reference-mention-extractor/v3"
+
 _NUMBER = r"\d+(?:\.\d+){0,7}(?:[a-z])?"
 _ANNEX = r"[A-Z](?:\.\d+){0,7}"
 _ITEM = rf"(?:{_NUMBER}|{_ANNEX})"
@@ -27,8 +29,19 @@ _TAIL = rf"(?:\s*(?:to|through|–|—|-|,\s*(?:and\s+)?|\band\b|&)\s*(?:{_PREFI
 _STANDARD = r"(?:IEC|ISO|EN|DIN|BS|IEEE)(?:[/ -](?:IEC|ISO|EN))*\s*\d+(?:-\d+)*(?::\d{4})?"
 # Qualified mentions are collected first so their numeric suffixes cannot leak
 # into the local namespace as independent bare references.
-_QUALIFIED = re.compile(rf"\b(?:{_STANDARD})\s*[,;]?\s+(?:{_PREFIX}\s+)?{_ITEM}{_TAIL}\b", re.I)
-_SUFFIX_QUALIFIED = re.compile(rf"\b(?:{_PREFIX}\s+)?{_ITEM}{_TAIL}\s+of\s+(?:{_STANDARD})\b", re.I)
+_QUALIFIED = re.compile(
+    rf"\b(?P<standard>{_STANDARD})\s*[,;]?\s+"
+    rf"(?P<coordinate>(?:{_PREFIX}\s+)?{_ITEM}{_TAIL})\b",
+    re.I,
+)
+# One coordinate may be shared by several explicitly named standards. Keep the
+# complete source span for each target; never manufacture an excerpt for it.
+_STANDARD_LIST = rf"{_STANDARD}(?:\s*(?:,\s*(?:and\s+)?|\band\b|&)\s*{_STANDARD})*"
+_SUFFIX_QUALIFIED = re.compile(
+    rf"\b(?P<coordinate>(?:{_PREFIX}\s+)?{_ITEM}{_TAIL})\s+of\s+"
+    rf"(?P<standards>{_STANDARD_LIST})\b",
+    re.I,
+)
 _EXPLICIT = re.compile(rf"\b{_PREFIX}\s+{_ITEM}{_TAIL}\b", re.I)
 _BARE = re.compile(rf"(?<![\w.:/-])\d+(?:\.\d+){{1,7}}[a-z]?{_TAIL}\b", re.I)
 _CONTEXTUAL = re.compile(
@@ -54,34 +67,44 @@ def extract_reference_mentions(text: str) -> tuple[ReferenceMention, ...]:
             ):
                 continue
             surface = match.group(0)
-            reference = surface
+            coordinate = surface
+            references = (surface,)
             if pattern is _SUFFIX_QUALIFIED:
-                coordinate, standard = re.split(r"\s+of\s+", surface, flags=re.I)
-                reference = f"{standard} {coordinate}"
+                coordinate = match.group("coordinate")
+                references = tuple(
+                    f"{standard.group(0)} {coordinate}"
+                    for standard in re.finditer(_STANDARD, match.group("standards"), re.I)
+                )
             elif pattern is _QUALIFIED:
-                reference = re.sub(r"(?<=\d)[,;]\s*", " ", surface)
+                coordinate = match.group("coordinate")
+                references = (f"{match.group('standard')} {coordinate}",)
             elif re.fullmatch(
                 rf"(?:clauses?|subclauses?|paragraphs?|sections?)\s+{_NUMBER}", surface, re.I
             ):
-                reference = surface.split()[-1]
-            bounds = _RANGE.search(surface)
-            mentions.append(
-                ReferenceMention(
-                    kind=(
-                        ReferenceMentionKind.CLAUSE_RANGE if bounds else ReferenceMentionKind.CLAUSE
-                    ),
-                    surface_text=surface,
-                    start_offset=match.start(),
-                    end_offset=match.end(),
-                    reference=reference,
-                    range_start=bounds.group(1) if bounds else None,
-                    range_end=bounds.group(2) if bounds else None,
-                    cardinality_hint=(
-                        "multiple" if bounds or re.search(r"\band\b|,|&", surface) else "one"
-                    ),
-                    status=ReferenceResolutionStatus.UNRESOLVED,
+                references = (surface.split()[-1],)
+            # Standard designators (61508-5, 26262-3:2018, ...) are identities,
+            # never coordinate ranges. Lists do not become ranges either.
+            bounds = _RANGE.search(coordinate)
+            for reference in references:
+                mentions.append(
+                    ReferenceMention(
+                        kind=(
+                            ReferenceMentionKind.CLAUSE_RANGE
+                            if bounds
+                            else ReferenceMentionKind.CLAUSE
+                        ),
+                        surface_text=surface,
+                        start_offset=match.start(),
+                        end_offset=match.end(),
+                        reference=reference,
+                        range_start=bounds.group(1) if bounds else None,
+                        range_end=bounds.group(2) if bounds else None,
+                        cardinality_hint=(
+                            "multiple" if bounds or re.search(r"\band\b|,|&", coordinate) else "one"
+                        ),
+                        status=ReferenceResolutionStatus.UNRESOLVED,
+                    )
                 )
-            )
             occupied.append(match.span())
     for match in _CONTEXTUAL.finditer(text):
         direction = (
@@ -175,7 +198,7 @@ def refresh_document_references(document: EngineeringDocument) -> EngineeringDoc
                 updated = updated.with_baseline_updates(reference_mentions=mentions).mark_generated(
                     GeneratedAttribute(
                         path="baseline.reference_mentions",
-                        generator="reference-mention-extractor/v2",
+                        generator=REFERENCE_EXTRACTOR_VERSION,
                         method=GenerationMethod.DETERMINISTIC,
                     )
                 )

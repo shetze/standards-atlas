@@ -1,0 +1,11 @@
+{
+  "description": "Synthetic structural analogue of the reported IEC61508-0 4.9 case; not a standard excerpt.",
+  "faq": "Further information and frequently asked questions are available in Annex A.",
+  "reading": "You may find it helpful to read the following sections first:\n\n- Annex A of IEC 61508-5 gives background for this synthetic example.\n- Figure 2 and Table 1 of IEC 61508-1 illustrate the example; Clause 7 of IEC 61508-1 contains related material.\n- Clauses 6 and 8 of IEC 61508-1 contain requirements discussed in the example.\n- Annex A of IEC 61508-6 contains an overview.\n- Figure 2 and Table 1 of IEC 61508-2 and Figure 3 and Table 1 of IEC 61508-3 explain the context of Clause 7 of IEC 61508-2 and IEC 61508-3 respectively.",
+  "interpretation": "Each requirement should be considered in the context of the example (where applicable), together with its objectives.",
+  "scope_targets": [
+    "IEC 61508-5 Annex A", "IEC 61508-1 Figure 2 and Table 1", "IEC 61508-1 Clause 7",
+    "IEC 61508-1 Clauses 6 and 8", "IEC 61508-6 Annex A",
+    "IEC 61508-2 Figure 2 and Table 1", "IEC 61508-3 Figure 3 and Table 1", "IEC 61508-2 Clause 7"
+  ]
+}

@@ -16,6 +16,10 @@ from standards_atlas.application.context import (
     normalize_context_routing_targets,
 )
 from standards_atlas.application.context.canonical_cbox import context_fingerprint
+from standards_atlas.application.context.information_routing import (
+    INFORMATION_ROUTING_POLICY,
+    InformationRoutingPolicy,
+)
 from standards_atlas.application.context.scope_targets import ScopeTargetResolver
 from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.ports import EngineeringDocumentRepository
@@ -26,7 +30,9 @@ from standards_atlas.application.ports.llm_gateway import (
     StructuredGenerationResult,
 )
 from standards_atlas.application.references.extractor import (
+    REFERENCE_EXTRACTOR_VERSION,
     extract_reference_mentions,
+    refresh_document_references,
     resolve_reference_mentions,
 )
 from standards_atlas.application.references.resolution import DocumentReferenceIndex
@@ -84,6 +90,8 @@ class ContextEnrichmentResult(BaseModel):
     routing_reused: int = 0
     routing_failures: tuple[dict[str, object], ...] = ()
     unresolved_scope_targets: tuple[dict[str, object], ...] = ()
+    unresolved_reference_targets: tuple[dict[str, object], ...] = ()
+    routing_corrections: tuple[dict[str, object], ...] = ()
 
 
 class LlmContextRoutingEnricher:
@@ -109,6 +117,7 @@ class LlmContextRoutingEnricher:
         self._max_tokens = max_tokens
         self._retry_max_tokens = retry_max_tokens
         self._scope_documents = scope_documents
+        self.semantic_diagnostics: tuple[dict, ...] = ()
 
     @property
     def generator_id(self) -> str:
@@ -154,7 +163,10 @@ class LlmContextRoutingEnricher:
             "reference_mentions": [item.model_dump(mode="json") for item in mentions],
             "subject_context": clause.subject_context.model_dump(mode="json"),
         }
-        metadata = {}
+        metadata = {
+            "reference_extraction": REFERENCE_EXTRACTOR_VERSION,
+            "routing_semantics": INFORMATION_ROUTING_POLICY,
+        }
         if self._prompt.version == "context-routing-v3":
             resolver = ScopeTargetResolver(document, self._scope_documents)
             context_payload["scope_target_documents"] = resolver.catalog()
@@ -190,7 +202,7 @@ class LlmContextRoutingEnricher:
         return context_fingerprint(
             {
                 "contract": "context-routing-input-v1",
-                "reference_resolution": "document-coordinates-v3",
+                "reference_resolution": "document-coordinates-v4",
                 "generator": self.generator_id,
                 "system": request.system_prompt,
                 "prompt": request.user_prompt,
@@ -203,6 +215,7 @@ class LlmContextRoutingEnricher:
         )
 
     def enrich(self, *, clause: Clause, document: EngineeringDocument) -> ContextRouting:
+        self.semantic_diagnostics = ()
         request = self._request(clause=clause, document=document)
         try:
             result = self._generate_with_truncation_retry(request)
@@ -265,7 +278,16 @@ class LlmContextRoutingEnricher:
             if self._prompt.version == "context-routing-v3"
             else None
         )
-        return _context_routing_from_payload(clause.id.value, payload, scope_resolver=resolver)
+        diagnostics: list[dict] = []
+        routing = _context_routing_from_payload(
+            clause.id.value,
+            payload,
+            scope_resolver=resolver,
+            information_policy=InformationRoutingPolicy(document, self._scope_documents),
+            diagnostics=diagnostics,
+        )
+        self.semantic_diagnostics = tuple(diagnostics)
+        return routing
 
     def _generate_with_truncation_retry(
         self, request: StructuredGenerationRequest
@@ -294,10 +316,16 @@ def _context_routing_from_payload(
     payload: Mapping[str, object],
     *,
     scope_resolver: ScopeTargetResolver | None = None,
+    information_policy: InformationRoutingPolicy | None = None,
+    diagnostics: list[dict] | None = None,
 ) -> ContextRouting:
     try:
         return _validated_context_routing_from_payload(
-            source_clause_id, payload, scope_resolver=scope_resolver
+            source_clause_id,
+            payload,
+            scope_resolver=scope_resolver,
+            information_policy=information_policy,
+            diagnostics=diagnostics,
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise LlmResponseError(
@@ -311,6 +339,8 @@ def _validated_context_routing_from_payload(
     payload: Mapping[str, object],
     *,
     scope_resolver: ScopeTargetResolver | None = None,
+    information_policy: InformationRoutingPolicy | None = None,
+    diagnostics: list[dict] | None = None,
 ) -> ContextRouting:
     scopes = []
     for item in payload.get("scope_declarations", ()):
@@ -319,16 +349,10 @@ def _validated_context_routing_from_payload(
         if scope_resolver is None:
             reaches = tuple(ScopeReach.model_validate(value) for value in item.get("reaches", ()))
         else:
-            reaches = tuple(
-                reach
-                for value in item.get("reaches", ())
-                for reach in scope_resolver.resolve(
-                    value["reference"],
-                    include_descendants=value["include_descendants"],
-                    source_clause_id=source_clause_id,
-                    evidence=tuple(item.get("evidence", ())),
-                )
-            )
+            # Interpret the evidence before attempting to address alleged scopes.
+            # Informational citations to uncatalogued documents are valid references,
+            # not grounds for failing scope-address construction.
+            reaches = tuple(_scope_transport_reach(value) for value in item.get("reaches", ()))
         scopes.append(
             ScopeDeclaration(
                 source_clause_id=source_clause_id,
@@ -352,7 +376,59 @@ def _validated_context_routing_from_payload(
                 evidence=tuple(str(value) for value in item.get("evidence", ())),
             )
         )
-    return ContextRouting(scopes=tuple(scopes), references=tuple(references))
+    routing = ContextRouting(scopes=tuple(scopes), references=tuple(references))
+    if information_policy is None and scope_resolver is not None:
+        information_policy = InformationRoutingPolicy(
+            scope_resolver.document, scope_resolver.documents.values()
+        )
+    if information_policy is not None:
+        semantic_diagnostics: list[dict] = []
+        routing = information_policy.normalize(routing, diagnostics=semantic_diagnostics)
+        if diagnostics is not None:
+            diagnostics.extend(semantic_diagnostics)
+        if any(item["status"] == "requires_review" for item in semantic_diagnostics):
+            raise ValueError(
+                "scope evidence establishes an informational reference, but the source or "
+                "modifiers also contain unverified/governing material. Quote the direct "
+                "governing statement for each scope; do not attach unrelated paragraphs "
+                "to a reading list. Keep informational citations in reference_routings."
+            )
+    if scope_resolver is not None:
+        routing = routing.model_copy(
+            update={
+                "scopes": tuple(
+                    scope.model_copy(
+                        update={
+                            "reaches": tuple(
+                                target
+                                for reach in scope.reaches
+                                for target in scope_resolver.resolve(
+                                    reach.reference or "",
+                                    include_descendants=reach.kind.value == "subtree",
+                                    source_clause_id=source_clause_id,
+                                    evidence=scope.evidence,
+                                )
+                            )
+                        }
+                    )
+                    for scope in routing.scopes
+                )
+            }
+        )
+    return routing
+
+
+def _scope_transport_reach(value: Mapping[str, object]) -> ScopeReach:
+    if not isinstance(value, Mapping):
+        raise TypeError("scope reach must be an object")
+    if not isinstance(value.get("reference"), str) or not value["reference"].strip():
+        raise ValueError("scope target reference must be a non-empty string")
+    if not isinstance(value.get("include_descendants"), bool):
+        raise ValueError("scope include_descendants must be a boolean")
+    return ScopeReach(
+        kind="subtree" if value["include_descendants"] else "clause",
+        reference=value["reference"],
+    )
 
 
 def _is_context_candidate(clause: Clause) -> bool:
@@ -390,14 +466,18 @@ class ContextEnrichmentService:
         self._fresh = fresh
 
     def enrich(self, document_key: str) -> ContextEnrichmentResult:
-        document = self._documents.load(DocumentKey(value=document_key))
+        original_document = self._documents.load(DocumentKey(value=document_key))
+        document = refresh_document_references(original_document)
         for clause in document.clauses:
             if clause.structural_context is None:
                 raise ValueError(
                     f"Clause {clause.id.value} has no structural_context; run taxonomy first"
                 )
 
-        vocabulary = SubjectCandidateVocabularyBuilder().build(self._documents.list())
+        documents = self._documents.list()
+        information_policy = InformationRoutingPolicy(document, documents)
+        routing_corrections: list[dict] = []
+        vocabulary = SubjectCandidateVocabularyBuilder().build(documents)
         subject_report = DeterministicSubjectIdentifier().identify((document,), vocabulary)
         subjects_by_clause = {item.clause_id: item for item in subject_report.results}
 
@@ -465,7 +545,11 @@ class ContextEnrichmentService:
                         contextual_clause,
                         ClauseEnrichmentPatch(
                             context_routing=normalize_context_routing_targets(
-                                contextual_clause.context_routing, document
+                                information_policy.normalize(
+                                    contextual_clause.context_routing,
+                                    diagnostics=routing_corrections,
+                                ),
+                                document,
                             )
                         ),
                         (previous,),
@@ -501,8 +585,15 @@ class ContextEnrichmentService:
             started = time.monotonic()
             failure_detail = None
             try:
+                generated_routing = self._enricher.enrich(
+                    clause=contextual_clause, document=document
+                )
+                routing_corrections.extend(getattr(self._enricher, "semantic_diagnostics", ()))
                 routing = normalize_context_routing_targets(
-                    self._enricher.enrich(clause=contextual_clause, document=document), document
+                    information_policy.normalize(
+                        generated_routing, diagnostics=routing_corrections
+                    ),
+                    document,
                 )
             except LlmResponseError as error:
                 failures += 1
@@ -562,7 +653,7 @@ class ContextEnrichmentService:
                 )
 
         result = document.model_copy(update={"clauses": tuple(updated)})
-        if result != document:
+        if result != original_document:
             self._documents.save(result)
         return ContextEnrichmentResult(
             routing_reused=reused,
@@ -575,6 +666,8 @@ class ContextEnrichmentService:
             context_enrichment_failures=failures,
             routing_failures=tuple(routing_failures),
             unresolved_scope_targets=_unresolved_scope_targets(result),
+            unresolved_reference_targets=_unresolved_reference_targets(result),
+            routing_corrections=tuple(routing_corrections),
         )
 
 
@@ -582,7 +675,7 @@ def _unresolved_scope_targets(document: EngineeringDocument) -> tuple[dict[str, 
     """Report retained literal target groups separately from invalid generation.
 
     Include reused/protected state too: an unchanged value is not proof that its
-    targets have become addressable. These records carry no source excerpts.
+    targets have become addressable. Evidence stays in this private report only.
     """
     return tuple(
         {
@@ -595,11 +688,34 @@ def _unresolved_scope_targets(document: EngineeringDocument) -> tuple[dict[str, 
             "reference": reach.reference,
             "clause_id": None,
             "status": "unresolved",
+            "evidence": scope.evidence,
+            "conditions": scope.conditions,
+            "exclusions": scope.exclusions,
+            "qualifications": scope.qualifications,
         }
         for clause in document.clauses
         for scope_index, scope in enumerate(clause.context_routing.scopes)
         for reach_index, reach in enumerate(scope.reaches)
         if reach.kind.value in {"clause", "subtree"} and reach.clause_id is None
+    )
+
+
+def _unresolved_reference_targets(document: EngineeringDocument) -> tuple[dict[str, object], ...]:
+    return tuple(
+        {
+            "source_clause_id": edge.source_clause_id,
+            "source_reference": clause.reference.as_text(),
+            "reference_index": position,
+            "document_key": edge.target.document_key,
+            "reference": edge.target.reference,
+            "clause_id": None,
+            "status": "unresolved",
+            "role": edge.role.value,
+            "evidence": edge.evidence,
+        }
+        for clause in document.clauses
+        for position, edge in enumerate(clause.context_routing.references)
+        if edge.target.clause_id is None
     )
 
 

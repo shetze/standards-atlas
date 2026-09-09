@@ -300,7 +300,12 @@ def test_context_service_preserves_explicitly_confirmed_empty_results() -> None:
         documents=_Documents(document),
         enricher=LlmContextRoutingEnricher(_Gateway(), prompt=_prompt(), model="test-model"),
     ).enrich(document.key.value)
-    assert result.document.clauses[0] == clause
+    updated = result.document.clauses[0]
+    assert updated.enrichments == clause.enrichments
+    assert updated.provenance.confirmed_attributes == clause.provenance.confirmed_attributes
+    # Refreshing unconfirmed syntactic inputs is independent of protecting the
+    # explicitly confirmed (empty) semantic outputs.
+    assert updated.reference_mentions != clause.reference_mentions
 
 
 def test_context_enrichment_reuses_restored_input_identity_without_llm(tmp_path):

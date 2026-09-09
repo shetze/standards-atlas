@@ -40,6 +40,7 @@ from standards_atlas.application.references import (
     extract_reference_mentions,
     resolve_document_reference_mentions,
 )
+from standards_atlas.application.references.extractor import REFERENCE_EXTRACTOR_VERSION
 from standards_atlas.application.services.engineering_construction_contract import (
     EngineeringConstructionContractValidator,
 )
@@ -195,7 +196,7 @@ class ContentEnrichmentService:
                 ),
                 GeneratedAttribute(
                     path="baseline.reference_mentions",
-                    generator="reference-mention-extractor/v2",
+                    generator=REFERENCE_EXTRACTOR_VERSION,
                     method=GenerationMethod.DETERMINISTIC,
                 ),
             ]

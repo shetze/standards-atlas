@@ -286,18 +286,21 @@ def enrich_document_context(
     # A syntactically valid citation without a TOC identity is not an inference
     # failure. Make retained unresolved groups visible, also on cache/reuse runs.
     unresolved = getattr(result, "unresolved_scope_targets", ())
+    unresolved_references = getattr(result, "unresolved_reference_targets", ())
     typer.echo(f"Scope targets unresolved: {len(unresolved)}")
+    typer.echo(f"Reference targets unresolved: {len(unresolved_references)}")
     target_report = (
         workspace / "evaluation/context-routing" / f"{document_key}-unresolved-targets.json"
     )
     try:
-        if unresolved:
+        if unresolved or unresolved_references:
             target_report.parent.mkdir(parents=True, exist_ok=True)
             target_report.write_text(
                 json.dumps(
                     {
                         "document_key": document_key,
                         "unresolved_scope_targets": unresolved,
+                        "unresolved_reference_targets": unresolved_references,
                     },
                     indent=2,
                     ensure_ascii=False,
@@ -311,6 +314,29 @@ def enrich_document_context(
     except OSError as exc:
         typer.echo(f"Cannot write unresolved target report: {exc}", err=True)
         raise typer.Exit(code=2) from exc
+    corrections = getattr(result, "routing_corrections", ())
+    correction_report = (
+        workspace / "evaluation/context-routing" / f"{document_key}-routing-corrections.json"
+    )
+    if corrections:
+        try:
+            correction_report.parent.mkdir(parents=True, exist_ok=True)
+            correction_report.write_text(
+                json.dumps(
+                    {"document_key": document_key, "corrections": corrections},
+                    indent=2,
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            typer.echo(f"Cannot write routing correction report: {exc}", err=True)
+            raise typer.Exit(code=2) from exc
+        typer.echo(f"Routing corrections/review: {len(corrections)}")
+        typer.echo(f"Routing correction report: {correction_report}")
+    # Keep the last correction audit on a reuse-only/no-change run. Unlike a
+    # failure report it records completed changes, not a current failure state.
     if fail_on_failure and result.context_enrichment_failures:
         typer.echo(
             "Context routing is incomplete; retry before qualification/publication.", err=True
@@ -338,7 +364,7 @@ def repair_document_context_routing(
     try:
         repository = FileSystemEngineeringDocumentRepository(workspace)
         document = repository.load(DocumentKey(value=document_key))
-        result = repair_context_routing(document)
+        result = repair_context_routing(document, documents=repository.list())
         if report is not None:
             if report.resolve().is_relative_to((workspace / "documents").resolve()):
                 raise ValueError("repair report must be outside the canonical documents directory")

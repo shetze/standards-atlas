@@ -1551,3 +1551,55 @@ def test_unresolved_figure_table_scope_survives_public_private_roundtrip(world):
     assert stored == routing
     export(world)
     assert binding.enrichments_path.read_bytes() == initial
+
+
+def test_information_scope_repair_survives_public_private_roundtrip(world):
+    from standards_atlas.application.services.context_routing_repair import repair_context_routing
+
+    _, repo, service, binding, original = world
+    source, target = original.clauses[:2]
+    text = "For further information see Clause 2."
+    routing = ContextRouting(
+        scopes=(
+            ScopeDeclaration(
+                source_clause_id=source.id.value,
+                reaches=(
+                    ScopeReach(
+                        kind="clause",
+                        document_key=original.key.value,
+                        clause_id=target.id.value,
+                        reference=target.reference.as_text(),
+                    ),
+                ),
+                evidence=(text,),
+            ),
+        )
+    )
+    document = patch_clause(original, context={"context_routing": routing})
+    document = document.model_copy(
+        update={
+            "clauses": (
+                document.clauses[0].with_baseline_updates(
+                    content=(TextBlock(id="text", text=text),)
+                ),
+                *document.clauses[1:],
+            )
+        }
+    )
+    repaired = repair_context_routing(document)
+    assert repaired.report["informational_scopes_reclassified"] == 1
+    repo.save(repaired.document)
+    service.export(write=True)
+    raw = binding.enrichments_path.read_text()
+    assert text not in raw  # Literal evidence and repair diagnostics are private.
+    before = binding.enrichments_path.read_bytes()
+    repo.save(original)
+    service.import_(write=True, strict_evidence=True)
+    restored = repo.load(original.key).clauses[0].context_routing
+    assert not restored.scopes
+    assert len(restored.references) == 1
+    assert restored.references[0].target.clause_id == target.id.value
+    assert restored.references[0].role == "other"
+    assert restored.references[0].evidence == (text,)
+    assert service.export(write=True).written_targets == ()
+    assert binding.enrichments_path.read_bytes() == before

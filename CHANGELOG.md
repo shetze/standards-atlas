@@ -4,12 +4,23 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 
 ## 0.8.7 — Enrichment publication and reference resolution (2026-09-09)
 
+- Separate standard identities from reference coordinates before detecting ranges; preserve true
+  lists/ranges and expand shared coordinates across all explicitly named standard parts, with
+  unchanged source spans and `reference-mention-extractor/v3` provenance.
+- Apply a bounded, source-verified information-routing safeguard before canonical scope addressing
+  and during model-free repair: retain reading-list/FAQ citations as references, not scope edges;
+  neutralize unsupported informational roles, never reinterpret a genuinely governing statement.
+- Record semantic corrections privately, reject mixed scope evidence through the existing retry
+  gate, and report unresolved reference targets with evidence separately from scope targets.
+  Refresh unconfirmed baseline references during standalone context enrichment as well as taxonomy.
+
 - Recognize labelled figure/table citations consistently in extraction and scope resolution,
   including mixed lists, ranges and suffix-qualified targets. Never bind an object label to an
   equal-numbered clause or widen an unresolvable target to its document.
 - Preserve complete valid citation groups with null target IDs when the TOC lacks an exact member,
   and report unresolved scope addresses separately from context generation failures. Keep the
-  original scope/reference classification and evidence rather than silently reclassifying mentions.
+  original classification during address resolution. Semantic corrections require separate
+  source-grounded evidence and explicit private diagnostics.
 
 - Separate the default `context-routing-v3` scope extraction contract from canonical ScopeReach:
   extract target citations plus descendant intent, then deterministically build document, part,

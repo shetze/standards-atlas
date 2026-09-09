@@ -124,7 +124,8 @@ reference: IEC 61508-2 Figure 2 and Table 1
 ```
 
 `clause_id: null` is not a verified link. It preserves a citation for later resolution/review.
-The CLI separately reports `Scope targets unresolved` and writes complete retained target groups to:
+The CLI separately reports `Scope targets unresolved` and `Reference targets unresolved`,
+and writes complete retained target groups (including private evidence) to:
 
 ```text
 .atlas/data/evaluation/context-routing/IEC61508-0-unresolved-targets.json
@@ -132,7 +133,7 @@ The CLI separately reports `Scope targets unresolved` and writes complete retain
 
 The count is of unresolved **reach records/groups**, not necessarily individual list members.
 It includes reused/protected values, so reuse cannot hide missing identities. The report is cleared
-when no such targets remain. It is private diagnostic output, not additional WIP data in companions.
+when neither scope nor reference targets remain unresolved. It is private diagnostic output, not additional WIP data in companions.
 `ok` means a valid routing extraction, not complete target resolution. `--fail-on-failure` still
 blocks invalid schema/domain output; valid unresolved citations do not trigger a futile corrective
 LLM request. Missing/ambiguous whole-document or part identities and malformed citations still fail.
@@ -177,6 +178,98 @@ where available. It can contain licensed text, so it is never written to `data/e
 Successful retry removes the stale per-document failure report. No failed candidate is converted
 into a fabricated successful empty routing value.
 
+## Source-verified informational routing
+
+Reference syntax is determined **after separating the standard designation from its coordinates**.
+`Annex A of IEC 61508-5` is a single target; the hyphen in `61508-5` is not a range operator.
+`Clauses 6 and 8` is a list with no range bounds. `Clauses 7.2 to 7.5` retains the true bounds.
+`Clause 7 of IEC 61508-2 and IEC 61508-3 respectively` produces two mentions with the same complete
+source span, one per named document. No synthetic quotation is substituted for the shared text.
+The extractor provenance is `reference-mention-extractor/v3`; the mention schema remains 1.0.
+
+A readable citation and valid target ID do not prove a scope relation. The
+`source-grounded-information-v1` policy recognizes a bounded set of **English informational
+navigation patterns** (reading recommendations, further-information and FAQ pointers). It verifies
+all supporting quotations against the actual clause, allowing whitespace differences only. A
+colon-introduced reading list belongs to that passage; the next prose paragraph does not.
+
+A proven informational-only scope is replaced with reference edges extracted from that source
+passage, including any omitted shared-coordinate target. Bare informational references use `other`
+unless their evidence explicitly supports a more specific existing role. An unsupported
+`provides_applicability` role on a FAQ pointer is therefore removed; genuine exception/procedure/
+applicability descriptions retain their supported roles. Source content and original generated
+provenance are preserved; before/after corrections are recorded separately, not silently discarded.
+
+This policy is not a universal semantic classifier. It does not infer scope from `if`, the target
+being normative, or a nearby interpretation paragraph. It never removes a scope merely because
+its modifier arrays are empty or its target is a figure/table. Missing, unverified or unrecognized
+evidence is not sufficient for automatic reclassification. Mixed informational/governing material
+is retained for review by offline repair; during new inference it requires a corrected governing
+quotation through the existing corrective retry and failure gate. Confirmed/protected routing and
+protected baseline fields remain unchanged.
+
+The check runs **before** the v3 transport is resolved into canonical scope addresses. Thus an
+informational citation to a document absent from the catalogue remains an unresolved reference,
+not a scope-resolution error. Exact physical-document targets are resolved from the catalogue;
+no target ID, edition or parent scope is invented. Complete groups remain literal when any member
+is unavailable. Reference addressing is separate from this limited semantic safeguard.
+
+Standalone `document enrich-context` also refreshes unconfirmed baseline reference mentions and
+structural reference edges. Prompt text, extractor revision and policy revision participate in
+LLM-cache/reuse input identity, so old semantic output is not accepted as current solely because
+the prompt is still named `context-routing-v3`.
+
+### Repair an existing informational-scope error without inference
+
+Preview (no changes to canonical files):
+
+```bash
+uv run standards-atlas document repair-context-routing IEC61508-0 \
+  --workspace .atlas/data \
+  --report local/evaluation/context-routing/IEC61508-0-repair.json
+```
+
+Add `--write` after inspecting the report. The command reads other physical documents from the
+same workspace for exact cross-document targets. It never starts a model, reruns Docling, or
+normalizes source content. It keeps an exact-byte backup before changing the canonical document.
+The report includes `informational_scopes_reclassified`, `reference_roles_corrected`,
+`unresolved_references_after`, `requires_review`, and complete before/after diagnostics. A second
+identical repair is a no-op. Missing physical target documents leave literal unresolved references.
+
+Then publish the corrected canonical state:
+
+```bash
+uv run standards-atlas atlasdata export-enrichments \
+  --manifest manifests/standards.yaml \
+  --workspace .atlas/data \
+  --document IEC61508-0 \
+  --dimension context_routing \
+  --write
+```
+
+No deletion or schema migration is required. The public companion still contains no literal
+source evidence or private repair diagnostics. Normal workflow context generation applies the
+same safeguard; `--fresh` is not needed for the model-free repair above.
+
+### Private semantic diagnostics
+
+Context generation writes corrections and review details, when present, to:
+
+```text
+.atlas/data/evaluation/context-routing/<document-key>-routing-corrections.json
+```
+
+A no-change/reuse-only run keeps the previous correction audit. A later run with new corrections
+replaces it with that run's details; it is a last-correction report, not an append-only history.
+Offline repair retains its report plus the exact-byte canonical backup instead.
+
+`<document-key>-unresolved-targets.json` now separates `unresolved_scope_targets` from
+`unresolved_reference_targets`. Both include source evidence (and scope modifiers where relevant)
+for private review. Their counts describe target records/groups, not individual objects. A known
+information-list regression has zero scopes, eleven reference edges and three unresolved figure/
+table groups with the matching catalogue. Those unresolved reference groups remain visible;
+reclassifying them must not be reported as complete target resolution.
+
 ## Repair existing canonical documents
 
 Inspect first:
@@ -218,6 +311,9 @@ Review the report's `requires_review`, `protected_clauses` and
 | `partially_resolved`, `unresolved`, `ambiguous` | No complete unique group or an unresolved evidence conflict; no guessed local ID. |
 | `unverified` | Conflicting evidence could not be grounded in source content; target ID removed, text retained. |
 | `protected` | Reviewed/unattributed protected routing was not rewritten. |
+| `corrected` / `source_verified_information_not_scope` | Informational scope converted to source-backed references. |
+| `corrected` / `source_verified_information_only` | Unsupported informational role or address corrected. |
+| `requires_review` / `informational_evidence_in_mixed_or_unverified_context` | Offline repair preserved an uncertain scope instead of deleting it. |
 
 No schema migration is needed: canonical schema 9, companion schema 1.2 and evidence schema 1.0
 remain unchanged. Re-export generated routing after canonical repair:

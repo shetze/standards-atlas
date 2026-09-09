@@ -186,3 +186,16 @@ stage prints `Scope targets unresolved` and writes
 malformed-citation and domain failures still stop before qualification/publication. `ok` does not
 claim that every target is resolved or that the model's interpretation is semantically verified.
 See [reference resolution](context-routing-reference-resolution.md) for review and representation.
+
+## Information references are not scope declarations
+
+Context generation refreshes unconfirmed deterministic references before inference, including
+shared coordinates across multiple standard parts. The source-verified informational-routing
+safeguard then runs before canonical scope addressing. Proven reading advice and FAQ pointers
+become references with private correction diagnostics; genuine scopes and confirmed values remain
+protected. Mixed evidence requires a corrective answer and still blocks publication if invalid.
+Unresolved figure/table references stay visible separately from unresolved scopes.
+
+For existing canonical errors, use the model-free repair and re-export sequence in
+[context routing reference resolution](context-routing-reference-resolution.md#source-verified-informational-routing).
+This does not rerun Docling, normalization, qualification or a model, and requires no data deletion.
