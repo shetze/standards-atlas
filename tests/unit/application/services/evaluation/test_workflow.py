@@ -605,3 +605,62 @@ def test_corpus_preserves_materialized_structural_context(tmp_path: Path) -> Non
     assert context["structural_context"]["node_kind"] == "leaf"
     assert context["structural_context"]["sibling"]["index"] == 1
     assert context["structural_context"]["scope_mentions"][0]["cardinality"] == 2
+
+
+def test_all_eligible_corpus_retains_explicit_source_context_only(tmp_path):
+    from standards_atlas.application.model.cbox import CBoxAttribute, CBoxEnrichments
+
+    clause = (
+        FakeProvider()
+        .list_clauses()[0]
+        .model_copy(
+            update={
+                "enrichment_context": CBoxEnrichments(
+                    attributes=(
+                        CBoxAttribute(
+                            path="enrichments.semantic.role_semantics_present",
+                            availability="known",
+                            origin="unattributed",
+                            value=True,
+                        ),
+                        CBoxAttribute(
+                            path="enrichments.subject_context",
+                            availability="known",
+                            origin="unattributed",
+                            value={"primary_subject": "safety"},
+                        ),
+                    )
+                ),
+            }
+        )
+    )
+
+    class Provider:
+        def list_clauses(self, **kwargs):
+            return (clause,)
+
+    result = EvaluationCorpusBuilder(Provider()).build(
+        CorpusBuildConfig(
+            task="clause-summary", version="all", count=None, source_only_context=True
+        ),
+        tmp_path,
+    )
+    assert result.clause_count == 1
+    context = json.loads(result.dataset_path.read_text())["examples"][0]["input"]["context"]
+    assert context["semantic"] == {}
+    assert "enrichments.semantic.role_semantics_present" not in context["attribute_sources"]
+    assert context["subject_context"] == {"primary_subject": "safety"}
+    assert "enrichments.subject_context" in context["attribute_sources"]
+
+
+def test_all_eligible_corpus_rejects_empty_population(tmp_path):
+    import pytest
+
+    class Empty:
+        def list_clauses(self, **kwargs):
+            return ()
+
+    with pytest.raises(ValueError, match="no eligible clauses"):
+        EvaluationCorpusBuilder(Empty()).build(
+            CorpusBuildConfig(task="clause-summary", version="all", count=None), tmp_path
+        )

@@ -32,21 +32,24 @@ Derivation reports make decisions observable: why a stage ran, why it was reused
 `--continue-after-review` is valid only when the expected reviewed artifact exists and passes its contract.
 ## Task boundaries
 
-The planner has two explicit task-level semantic boundaries. `--task documents` is the canonical
-deterministic document pipeline. It may invoke Docling and deterministic structural-taxonomy
-services and may publish Markdown and Doorstop output, but it never schedules an LLM-backed
-semantic-profile classifier.
+`documents` owns deterministic document construction, taxonomy and configured Markdown/Doorstop
+publication. `qualification` adds contextual enrichment, a reproducible corpus, the qualification
+matrix and configured detail/policy/extraction stages before immutable archival. Qualification
+candidate artifacts do not implicitly update canonical semantic fields or public companions.
 
-`--task qualification` reuses the required deterministic document stages, then explicitly opts
-into `document enrich-semantics`. `SEMANTIC_ENRICHMENT` materializes the accepted production
-semantic profile in the canonical EngineeringDocument; it is not a qualification candidate run.
-Qualification retains Markdown reference publication but removes Doorstop export/publication from
-its derived document plan. Corpus construction, matrix qualification, semantic extraction
-qualification, and immutable run archival follow afterwards. Candidate proposals remain in
-evaluation artifacts and never write through the semantic enrichment service.
+`knowledge` explicitly restores/adopts/publishes already available knowledge without inference.
+`enrichments` composes document preparation and qualification with verified archive adoption,
+public/private transfer, reimport and a CBox report. Its default starts after Docling and processes
+all eligible clauses of the selected physical documents. Source-only corpus context prevents
+accepted semantic output from becoming self-feedback on the next run. Every selected document's
+structure is prepared before contextual enrichment. Open review gates or context failures block
+publication. Existing tasks keep their previous non-publication/opt-in contracts.
 
-`--limit` applies only to qualification execution. Accepted semantic enrichment remains
-document-wide so qualification cannot leave persisted EngineeringDocuments partially enriched.
-The enrichment stage uses semantic classification internally and is distinct from the formal OWL
-TBox/RBox/ABox/CBox model.
+The new task is implemented in `EnrichmentsWorkflowPlanner`, reusing
+`QualificationWorkflowPlanner` and the existing workflow service/executor. The CLI injects an
+in-process command runner: focused commands retain parameter parsing, service construction and
+persistence ownership without CLI subprocess orchestration. Archive handoff uses a checksummed,
+matrix-verified receipt rather than a mutable run directory or a global latest-archive lookup.
 
+See the [enrichments workflow guide](../user-guide/enrichments-workflow.md) for execution,
+coverage, checkpoint/review behavior and artifact locations.

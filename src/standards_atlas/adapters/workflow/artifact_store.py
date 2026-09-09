@@ -6,8 +6,10 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
+from zipfile import BadZipFile
 
 from standards_atlas.adapters.docling import DoclingArtifactRepository
+from standards_atlas.adapters.evaluation.archive_receipt import resolve_archive_receipt
 from standards_atlas.adapters.filesystem.document_repository import (
     CURRENT_DOCUMENT_SCHEMA_VERSION,
 )
@@ -46,6 +48,11 @@ class FileSystemWorkflowArtifactStore:
         globs_exist = all(any(project_root.glob(pattern)) for pattern in step.output_globs)
         if not (paths_exist and globs_exist):
             return False
+        if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE and "--receipt" in step.command:
+            try:
+                resolve_archive_receipt(project_root / _option(step, "--receipt", ""))
+            except (OSError, ValueError, KeyError, BadZipFile):
+                return False
         fingerprint = _tracked_input_fingerprint(step, project_root)
         if fingerprint is None:
             return True
@@ -261,13 +268,39 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
     in other documents so the repository-wide vocabulary does not cause a loop.
     Renderer code is deliberately not an inference input.
     """
-    if step.stage not in _TRACKED_INPUT_STAGES:
+    archive_handoff = (
+        step.stage is WorkflowStage.QUALIFICATION_ARCHIVE and "--receipt" in step.command
+    )
+    if step.stage not in _TRACKED_INPUT_STAGES and not archive_handoff:
         return None
     entries = {}
     workspace = root / _option(step, "--workspace", ".atlas/data")
     if step.stage in {WorkflowStage.CORPUS_BUILD, WorkflowStage.CONTEXT_ENRICHMENT}:
+        selected = {
+            step.command[index + 1]
+            for index, token in enumerate(step.command[:-1])
+            if token == "--document"
+        }
         for path in sorted((workspace / "documents").glob("*.json")):
+            if selected and path.stem not in selected:
+                continue
             content = path.read_bytes()
+            if step.stage is WorkflowStage.CORPUS_BUILD and "--source-only-context" in step.command:
+                try:
+                    payload = json.loads(content)
+                    for clause in payload["document"].get("clauses", ()):
+                        clause.get("enrichments", {}).pop("semantic", None)
+                        for name in ("generated_attributes", "confirmed_attributes"):
+                            provenance = clause.get("provenance", {})
+                            provenance[name] = [
+                                item
+                                for item in provenance.get(name, ())
+                                if not item.get("path", "").startswith("enrichments.semantic")
+                            ]
+                    content = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+                except (ValueError, TypeError, KeyError):
+                    pass
+
             if step.stage is WorkflowStage.CONTEXT_ENRICHMENT:
                 try:
                     payload = json.loads(content)
@@ -309,6 +342,13 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
         files.update(corpus.rglob("corpus.yaml"))
         files.update((resources / "semantic").rglob("*"))
         files.update((resources / "ontologies").rglob("*"))
+    if archive_handoff:
+        output = root / _option(step, "--output", ".atlas/data/evaluation/qualification")
+        files.update((output / step.document.removesuffix("-archive")).rglob("*"))
+        files.add(root / _option(step, "--manifest", "manifests/qualification.yaml"))
+        corpus = root / _option(step, "--corpus-root", ".atlas/data/evaluation/corpora")
+        files.update(corpus.rglob("dataset.json"))
+        files.update(corpus.rglob("corpus.yaml"))
     for path in sorted(files):
         if path.is_file() and "__pycache__" not in path.parts:
             entries[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()

@@ -60,7 +60,7 @@ class QualificationWorkflowPlanner:
         family_keys: tuple[str, ...],
         catalog_root: Path,
         manifest_path: Path,
-        corpus_count: int,
+        corpus_count: int | None,
         limit: int | None = None,
         corpus_strategy: SamplingStrategy,
         corpus_seed: int,
@@ -116,8 +116,11 @@ class QualificationWorkflowPlanner:
                 manifest.corpus_id,
                 "--knowledge-domain",
                 knowledge_domain,
-                "--count",
-                str(corpus_count),
+                *(
+                    ("--count", str(corpus_count))
+                    if corpus_count is not None
+                    else ("--all-clauses",)
+                ),
                 "--strategy",
                 corpus_strategy.value,
                 "--seed",

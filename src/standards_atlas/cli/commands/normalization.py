@@ -15,6 +15,7 @@ from standards_atlas.adapters.docling import (
     DocumentConversionError,
     ExtractionState,
 )
+from standards_atlas.adapters.docling.errors import DoclingDocumentValidationError
 from standards_atlas.adapters.llm import (
     RamaLamaServerError,
 )
@@ -216,7 +217,7 @@ def normalize_extracted_document(
                 page_list=selected_pages,
             ),
         )
-    except (NormalizationDataLossError, OSError, ValueError) as exc:
+    except (NormalizationDataLossError, DoclingDocumentValidationError, OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
     stats = result.metadata.statistics

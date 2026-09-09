@@ -20,6 +20,7 @@ from standards_atlas.application.workflow import (
     WorkflowTask,
     parse_manifest_options,
 )
+from standards_atlas.application.workflow.enrichments_plan import EnrichmentsWorkflowPlanner
 from standards_atlas.application.workflow.knowledge_plan import (
     knowledge_plan,
     with_knowledge_restore,
@@ -28,6 +29,7 @@ from standards_atlas.application.workspace import WorkspaceLayout
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import catalog_app, workflow_app
 from standards_atlas.cli.composition import build_workflow_service
+from standards_atlas.cli.workflow_runner import InProcessWorkflowCommandRunner
 
 
 @catalog_app.command("validate")
@@ -78,7 +80,7 @@ def plan_workflow(
         bool,
         typer.Option(
             "--regenerate-docling",
-            help="Regenerate Docling and downstream artifacts for qualification.",
+            help="Regenerate Docling and downstream artifacts for qualification/enrichments.",
         ),
     ] = cli_defaults.DEFAULT_FALSE,
     overwrite: Annotated[
@@ -113,8 +115,11 @@ def plan_workflow(
         ),
     ] = cli_defaults.DEFAULT_NONE,
     corpus_count: Annotated[
-        int, typer.Option("--corpus-count", min=1, help="Qualification corpus size.")
-    ] = 500,
+        int | None,
+        typer.Option(
+            "--corpus-count", min=1, help="Corpus size; enrichments defaults to all eligible."
+        ),
+    ] = None,
     limit: Annotated[
         int | None,
         typer.Option("--limit", min=1, help="Limit clauses across qualification stages."),
@@ -220,7 +225,7 @@ def run_workflow(
         bool,
         typer.Option(
             "--regenerate-docling",
-            help="Regenerate Docling and downstream artifacts for qualification.",
+            help="Regenerate Docling and downstream artifacts for qualification/enrichments.",
         ),
     ] = cli_defaults.DEFAULT_FALSE,
     overwrite: Annotated[
@@ -255,8 +260,11 @@ def run_workflow(
         ),
     ] = cli_defaults.DEFAULT_NONE,
     corpus_count: Annotated[
-        int, typer.Option("--corpus-count", min=1, help="Qualification corpus size.")
-    ] = 500,
+        int | None,
+        typer.Option(
+            "--corpus-count", min=1, help="Corpus size; enrichments defaults to all eligible."
+        ),
+    ] = None,
     limit: Annotated[
         int | None,
         typer.Option("--limit", min=1, help="Limit clauses across qualification stages."),
@@ -323,6 +331,9 @@ def run_workflow(
         plan,
         project_root=Path.cwd(),
         continue_after_review=continue_after_review,
+        **(
+            {"runner": InProcessWorkflowCommandRunner()} if task is WorkflowTask.ENRICHMENTS else {}
+        ),
     )
     if result.completed:
         report_json, report_md = WorkflowRunReporter().write(
@@ -360,7 +371,7 @@ def _build_task_plan(
     fresh: bool,
     fresh_applicability_policy: bool,
     keep: tuple[WorkflowStage, ...],
-    corpus_count: int,
+    corpus_count: int | None,
     limit: int | None,
     corpus_strategy: SamplingStrategy,
     corpus_seed: int,
@@ -374,7 +385,9 @@ def _build_task_plan(
 ) -> WorkflowPlan:
     if (adopt_run is not None or publish_enrichments) and task is not WorkflowTask.KNOWLEDGE:
         raise typer.BadParameter("--adopt-run/--publish-enrichments require --task knowledge")
-    if strict_evidence and not (restore_enrichments or publish_enrichments):
+    if strict_evidence and not (
+        restore_enrichments or publish_enrichments or task is WorkflowTask.ENRICHMENTS
+    ):
         raise typer.BadParameter("--strict-evidence requires restore or publication")
     if task is WorkflowTask.KNOWLEDGE and (
         force
@@ -404,7 +417,7 @@ def _build_task_plan(
         )
     if fresh and fresh_applicability_policy:
         raise typer.BadParameter("--fresh and --fresh-applicability-policy are mutually exclusive")
-    if task is WorkflowTask.QUALIFICATION and force:
+    if task in {WorkflowTask.QUALIFICATION, WorkflowTask.ENRICHMENTS} and force:
         raise typer.BadParameter(
             "--force is only valid for --task documents; use --regenerate-docling or --overwrite"
         )
@@ -415,16 +428,48 @@ def _build_task_plan(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     qualification_manifest = resolved.optional(WorkflowManifestType.QUALIFICATION_MATRIX)
-    if task is WorkflowTask.QUALIFICATION and qualification_manifest is None:
+    if (
+        task in {WorkflowTask.QUALIFICATION, WorkflowTask.ENRICHMENTS}
+        and qualification_manifest is None
+    ):
         raise typer.BadParameter(
-            "--task qualification requires a manifest of type 'qualification_matrix'"
+            f"--task {task.value} requires a manifest of type 'qualification_matrix'"
         )
+    if hierarchy is not None and (family or profile is not None or all_families):
+        raise typer.BadParameter("select exactly one family/profile/all/hierarchy mode")
     model = YamlStandardCatalogReader().read(standards_manifest)
     keys = (
         model.doorstop_hierarchy(hierarchy).families
         if hierarchy is not None
         else _select_manifest_families(model, family, profile, all_families)
     )
+    if task is WorkflowTask.ENRICHMENTS:
+        assert qualification_manifest is not None
+        try:
+            return EnrichmentsWorkflowPlanner().plan(
+                model,
+                family_keys=keys,
+                catalog_root=Path.cwd(),
+                standards_manifest=standards_manifest,
+                qualification_manifest=qualification_manifest,
+                corpus_count=corpus_count,
+                limit=limit,
+                corpus_strategy=corpus_strategy,
+                corpus_seed=corpus_seed,
+                knowledge_domain=knowledge_domain,
+                hierarchy_key=hierarchy,
+                regenerate_docling=regenerate_docling,
+                overwrite=overwrite,
+                fresh=fresh,
+                fresh_applicability_policy=fresh_applicability_policy,
+                keep_stages=keep,
+                corpus_output=corpus_output,
+                qualification_output=qualification_output,
+                restore_enrichments=restore_enrichments,
+                strict_evidence=strict_evidence,
+            )
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc)) from exc
     if task is WorkflowTask.KNOWLEDGE:
         try:
             return knowledge_plan(
@@ -466,7 +511,7 @@ def _build_task_plan(
         family_keys=keys,
         catalog_root=Path.cwd(),
         manifest_path=qualification_manifest,
-        corpus_count=corpus_count,
+        corpus_count=500 if corpus_count is None else corpus_count,
         limit=limit,
         corpus_strategy=corpus_strategy,
         corpus_seed=corpus_seed,

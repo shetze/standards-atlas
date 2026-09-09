@@ -2,6 +2,10 @@
 
 The catalog-driven workflow is the preferred entry point. Individual commands remain useful for diagnosis and controlled development.
 
+For the full post-Docling path through qualification, canonical adoption and `data/enrichments`,
+use [`workflow run --task enrichments`](enrichments-workflow.md). `documents` alone does not perform
+this publication.
+
 ## Plan and run
 
 ```bash
@@ -85,7 +89,9 @@ uv run standards-atlas document enrich-context EN50716
 
 `--task documents` stops semantic processing at this deterministic boundary. It does not run `document enrich-semantics`, does not require `cfg/llm.yaml`, and does not start a managed LLM endpoint. Family composition plus Markdown and configured Doorstop publication therefore operate on the canonical deterministic document representation.
 
-`document enrich-semantics` explicitly materializes accepted semantic-profile results in the canonical EngineeringDocument. It is therefore a mutating enrichment command, not a qualification probe. Normal workflow ownership is `--task qualification`, which performs this accepted enrichment after structural taxonomy before constructing qualification corpora. Candidate model/prompt results produced by qualification remain separate evaluation artifacts and never update EngineeringDocument directly. The underlying classifier is distinct from the formal OWL TBox/RBox/ABox/CBox model.
+The current `qualification` planner runs subject/context enrichment and then produces evaluation
+artifacts; candidate results do not update canonical semantics automatically. The `enrichments`
+task adds explicit verified archive adoption before publishing the canonical state.
 
 Visual-only `FormulaBlock` entries retain their PNG asset and source evidence; formula transcription remains a separate enrichment concern.
 

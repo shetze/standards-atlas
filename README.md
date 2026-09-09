@@ -97,7 +97,7 @@ The workflow intentionally stops at review boundaries when human confirmation is
 
 ## Project status
 
-Standards Atlas 0.8.6 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
+Standards Atlas 0.8.7 is an evolving pre-alpha engineering platform. The deterministic document pipeline, local semantic-evaluation workflow, and read-only MCP access are operational. Generated artefacts and model-assisted results are not authoritative standards content and must be reviewed before being used as engineering evidence.
 
 ## Development
 
@@ -124,8 +124,15 @@ See `docs/user-guide/codex-integration.md` for setup and verification.
 
 ## Current version
 
-This snapshot corresponds to **standards-atlas 0.8.6**. Version 0.8.6 adds deterministic Gemara Guidance/Control projections, governance selection and policy scaffolding, ComplyTime/ComplyPack hand-off, and EvaluationLog feedback while retaining clause-level provenance across the integration.
+This snapshot corresponds to **standards-atlas 0.8.7**. Version 0.8.7 adds the end-to-end post-Docling enrichment publication workflow, AtlasData enrichment schema and routing-reference improvements, and presence-only public role semantics while retaining the existing governance and ComplyTime/ComplyPack integration.
 
 ### Formula transcription enrichment
 
 Visual-only formulas preserved during PDF normalization can be exposed to trusted MCP clients for LaTeX transcription. Submissions are stored as provenance-bearing enrichment artifacts and then deterministically applied to the canonical formula block; MCP writes require the explicit `capabilities.formula_transcription` opt-in.
+
+## End-to-end enrichment publication
+
+`workflow run --task enrichments` connects post-Docling normalization, context enrichment,
+qualification, verified canonical adoption and `data/enrichments` publication. It defaults to all
+eligible clauses in the selected physical documents and retains existing review gates.
+See [the workflow guide](docs/user-guide/enrichments-workflow.md) for commands and reuse policies.

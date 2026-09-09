@@ -5,6 +5,10 @@ commands below persist those selected attributes in the AtlasData area and resto
 new LLM calls. They do not change the qualification policy, infer missing process functions,
 reclassify polarity, or render a CBox. The canonical repository remains schema **9**.
 
+For an executable pipeline from normalized Docling input through qualification and publication,
+see the [end-to-end enrichments workflow](enrichments-workflow.md). The individual transfer
+commands below remain useful for model-free reuse and controlled partial updates.
+
 ## Storage and authority
 
 Physical document ownership comes from `manifests/standards.yaml`, not filename parsing. For

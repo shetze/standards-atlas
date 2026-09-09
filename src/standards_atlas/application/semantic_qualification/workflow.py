@@ -48,7 +48,7 @@ class CorpusBuildConfig(BaseModel):
 
     task: str = Field(min_length=1)
     version: str = Field(min_length=1)
-    count: int = Field(gt=0)
+    count: int | None = Field(gt=0)
     strategy: SamplingStrategy = SamplingStrategy.BALANCED_BY_DOCUMENT
     seed: int = 0
     filters: ClauseFilter = ClauseFilter()
@@ -57,6 +57,7 @@ class CorpusBuildConfig(BaseModel):
     corpus_id: str | None = None
     exclude_table_dominant: bool = True
     exclude_context_meta: bool = True
+    source_only_context: bool = False
     resources: Path = Path("src/standards_atlas/resources/semantic")
 
 
@@ -146,7 +147,10 @@ class EvaluationCorpusBuilder:
             if config.exclude_context_meta
             else qualification_population
         )
-        if config.count > len(population):
+        count = len(population) if config.count is None else config.count
+        if count == 0:
+            raise ValueError("no eligible clauses in the selected documents")
+        if count > len(population):
             exclusions = ["empty clauses"]
             if config.exclude_table_dominant:
                 exclusions.append("table-dominant clauses")
@@ -156,9 +160,7 @@ class EvaluationCorpusBuilder:
                 f"sample count {config.count} exceeds eligible population {len(population)} "
                 f"after excluding {' and '.join(exclusions)}"
             )
-        clauses = _sample_eligible_population(
-            population, config.count, config.strategy, config.seed
-        )
+        clauses = _sample_eligible_population(population, count, config.strategy, config.seed)
         clause_index = {clause.id: clause for clause in total_population}
 
         target = output_root / config.task / config.version
@@ -178,6 +180,15 @@ class EvaluationCorpusBuilder:
                     "eligibility": policy.evaluate_clause(clause).model_dump(mode="json"),
                 },
             }
+            if config.source_only_context:
+                # Accepted semantic predictions are outputs of the publication workflow,
+                # not inputs for its next run. Keep structural/subject/routing context.
+                item_input["context"]["semantic"] = {}
+                item_input["context"]["attribute_sources"] = {
+                    path: value
+                    for path, value in item_input["context"]["attribute_sources"].items()
+                    if not path.startswith("enrichments.semantic.")
+                }
             if config.include_text:
                 item_input["content"]["text"] = clause.text
             examples.append(

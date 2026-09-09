@@ -216,6 +216,9 @@ def enrich_document_context(
             help="Context-enrichment prompt, generation, and LLM configuration file.",
         ),
     ] = Path("cfg/context-enrichment.yaml"),
+    fail_on_failure: Annotated[
+        bool, typer.Option("--fail-on-failure", help="Stop workflow if routing inference fails.")
+    ] = False,
 ) -> None:
     """Materialize deterministic subject context and scope/reference routing."""
 
@@ -251,6 +254,11 @@ def enrich_document_context(
     typer.echo(f"Subjects ambiguous    : {result.subjects_ambiguous}")
     typer.echo(f"Routing candidates    : {result.candidates}")
     typer.echo(f"Context failures      : {result.context_enrichment_failures}")
+    if fail_on_failure and result.context_enrichment_failures:
+        typer.echo(
+            "Context routing is incomplete; retry before qualification/publication.", err=True
+        )
+        raise typer.Exit(code=2)
 
 
 @document_app.command("repair-context-routing")

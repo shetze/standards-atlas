@@ -53,6 +53,10 @@ class WorkflowExecutor:
                     WorkflowStage.APPLICABILITY_DECISION_POLICY,
                     WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
                     WorkflowStage.QUALIFICATION_ARCHIVE,
+                    WorkflowStage.KNOWLEDGE_ADOPT,
+                    WorkflowStage.KNOWLEDGE_PUBLISH,
+                    WorkflowStage.KNOWLEDGE_RESTORE,
+                    WorkflowStage.CBOX_REPORT,
                 } and (blocked_documents or blocked_families):
                     continue
                 if step.family in blocked_families:

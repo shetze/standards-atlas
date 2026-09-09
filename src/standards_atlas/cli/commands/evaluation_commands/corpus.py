@@ -19,6 +19,7 @@ from standards_atlas.application.semantic_qualification.applicability_hard_cases
     analyze_applicability_hard_cases,
 )
 from standards_atlas.application.semantic_qualification.clause_access import (
+    ClauseFilter,
     SamplingStrategy,
 )
 from standards_atlas.application.semantic_qualification.role_corpus import (
@@ -40,7 +41,18 @@ from standards_atlas.cli.apps import evaluation_app
 def build_evaluation_corpus(
     task: Annotated[str, typer.Option("--task")],
     version: Annotated[str, typer.Option("--version")],
-    count: Annotated[int, typer.Option("--count", min=1)],
+    count: Annotated[int | None, typer.Option("--count", min=1)] = None,
+    all_clauses: Annotated[
+        bool, typer.Option("--all-clauses", help="Include all eligible selected clauses.")
+    ] = False,
+    document: Annotated[
+        list[str] | None,
+        typer.Option("--document", help="Physical document key; repeat as needed."),
+    ] = None,
+    source_only_context: Annotated[
+        bool,
+        typer.Option("--source-only-context", help="Exclude accepted semantic output from inputs."),
+    ] = False,
     workspace: Annotated[
         Path, typer.Option("--workspace", file_okay=False)
     ] = cli_defaults.DEFAULT_WORKSPACE,
@@ -75,11 +87,15 @@ def build_evaluation_corpus(
 ) -> None:
     """Create an annotation-ready corpus from persisted clauses."""
     try:
+        if (count is not None) == all_clauses:
+            raise ValueError("select exactly one of --count or --all-clauses")
         result = EvaluationCorpusBuilder(EngineeringDocumentClauseProvider(workspace)).build(
             CorpusBuildConfig(
                 task=task,
                 version=version,
                 count=count,
+                filters=ClauseFilter(document_keys=tuple(document or ())),
+                source_only_context=source_only_context,
                 strategy=strategy,
                 seed=seed,
                 include_text=include_text,

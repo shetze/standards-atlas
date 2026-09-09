@@ -10,6 +10,7 @@ class WorkflowTask(StrEnum):
     DOCUMENTS = "documents"
     QUALIFICATION = "qualification"
     KNOWLEDGE = "knowledge"
+    ENRICHMENTS = "enrichments"
 
 
 class ArtifactPolicy(StrEnum):

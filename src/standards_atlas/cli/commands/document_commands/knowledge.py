@@ -9,6 +9,7 @@ from zipfile import BadZipFile
 
 import typer
 
+from standards_atlas.adapters.evaluation.archive_receipt import resolve_archive_receipt
 from standards_atlas.adapters.evaluation.qualification_knowledge_source import (
     ADOPTION_DIMENSIONS,
     load_qualification_knowledge,
@@ -21,14 +22,18 @@ from standards_atlas.cli.apps import document_app
 @document_app.command("adopt-qualification")
 def adopt_qualification(
     run: Annotated[
-        Path,
+        Path | None,
         typer.Option(
             "--run",
             exists=True,
             readable=True,
             help="Qualification ZIP or extracted archive with final policy artifacts.",
         ),
-    ],
+    ] = None,
+    run_receipt: Annotated[
+        Path | None,
+        typer.Option("--run-receipt", exists=True, help="Verified workflow archive receipt."),
+    ] = None,
     workspace: Annotated[
         Path,
         typer.Option("--workspace", help="Canonical workspace containing documents/."),
@@ -59,6 +64,13 @@ def adopt_qualification(
 ) -> None:
     """Preview or explicitly accept selected knowledge, without LLM calls or public export."""
     try:
+        if (run is None) == (run_receipt is None):
+            raise ValueError("select exactly one of --run or --run-receipt")
+        if run_receipt is not None:
+            if output is not None and output.resolve() == run_receipt.resolve():
+                raise ValueError("adoption report cannot overwrite archive receipt")
+            run = resolve_archive_receipt(run_receipt)
+        assert run is not None
         if output is not None:
             target = output.resolve()
             source = run.resolve()

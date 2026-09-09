@@ -2,6 +2,20 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## 0.8.7 — Enrichment publication and reference resolution (2026-09-09)
+
+- Add explicit `--task enrichments`, composing document preparation, qualification, verified
+  adoption, public/private transfer, reimport and CBox reporting through existing workflow APIs.
+- Reuse native Docling artifacts by default; prepare all selected structures before context,
+  preserve alignment gates and stop on context-inference failures before publication.
+- Qualify all eligible selected physical clauses by default, with isolated full/sample run roots
+  and source-only corpus context that excludes accepted semantic output feedback.
+- Handoff the exact immutable archive via a checksum- and matrix-verified receipt; reuse it only
+  while run inputs and ZIP bytes remain current. Do not guess archive sequence numbers.
+- Invoke the new composed task in-process without CLI subprocess glue; keep standalone documents,
+  qualification and knowledge behavior and public schema/authority policies unchanged.
+- Add synthetic two-document persistence/idempotence integration coverage and document usage.
+
 ## Unreleased — Presence-only public role semantics (2026-09-09)
 
 - Publish only `enrichments.semantic.role_semantics_present` for the role-semantics dimension;

@@ -1,5 +1,6 @@
 """Workflow planning, execution, recovery, and reporting."""
 
+from standards_atlas.application.workflow.enrichments_plan import EnrichmentsWorkflowPlanner
 from standards_atlas.application.workflow.executor import (
     CommandRunner,
     SubprocessCommandRunner,
@@ -32,6 +33,7 @@ __all__ = [
     "ArtifactPolicy",
     "CommandRunner",
     "EndToEndWorkflowService",
+    "EnrichmentsWorkflowPlanner",
     "QualificationWorkflowPlan",
     "QualificationWorkflowPlanner",
     "SubprocessCommandRunner",

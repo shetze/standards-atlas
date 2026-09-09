@@ -152,3 +152,17 @@ uv run standards-atlas clean --data --force
 The default command removes only `.atlas/work`. `--cache` additionally removes
 `.atlas/cache`. Persistent `.atlas/data` requires the explicit destructive
 combination `--data --force`. Human-facing `local/` artifacts are never removed.
+
+## End-to-end enrichment publication
+
+`workflow plan|run --task enrichments` requires standards and qualification-matrix manifests and
+one family/profile/hierarchy selection. It defaults to post-Docling execution and all eligible
+selected clauses; `--corpus-count`/`--limit` request a bounded trial. It adds verified adoption and
+companion publication explicitly, without changing the other tasks. See the
+[workflow guide](../user-guide/enrichments-workflow.md).
+
+Additional focused options: `evaluation corpus-build --all-clauses --document KEY
+--source-only-context`; `evaluation qualification-archive --receipt FILE`;
+`document adopt-qualification --run-receipt FILE`; and `document enrich-context
+--fail-on-failure`. Corpus `--count`/`--all-clauses` and adoption `--run`/`--run-receipt`
+are mutually exclusive pairs.

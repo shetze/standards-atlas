@@ -9,6 +9,7 @@ from typing import Annotated, Any
 import typer
 import yaml
 
+from standards_atlas.adapters.evaluation.archive_receipt import write_archive_receipt
 from standards_atlas.adapters.filesystem import FileSystemSemanticExtractionRepository
 from standards_atlas.application.formal_semantics.resource_repository import (
     ResourceFormalOntologyRepository,
@@ -96,6 +97,9 @@ def finalize_qualification_archive(
         ".atlas/data/evaluation/corpora"
     ),
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
+    receipt: Annotated[
+        Path | None, typer.Option("--receipt", help="Write a verified archive handoff receipt.")
+    ] = None,
     published_corpus_root: Annotated[
         Path, typer.Option("--published-corpus-root", file_okay=False)
     ] = Path("data/evaluation/corpora"),
@@ -103,6 +107,13 @@ def finalize_qualification_archive(
     """Create the final run archive after all enabled qualification stages."""
     manifest = QualificationMatrixManifest.load(manifest_path)
     run_directory = output / manifest.matrix_id
+    if receipt is not None:
+        target = receipt.resolve()
+        protected = (workspace.resolve(), output.resolve(), corpus_root.resolve())
+        if target == manifest_path.resolve() or any(target.is_relative_to(p) for p in protected):
+            raise typer.BadParameter(
+                "archive receipt must be outside source/qualification artifacts"
+            )
     metrics_path = run_directory / "qualification-analysis-metrics.json"
     analysis_metrics: dict[str, Any] | None = None
     if manifest.consensus.enabled:
@@ -558,4 +569,6 @@ def finalize_qualification_archive(
         archive_directory=archive_output,
         input_members=tuple(input_members),
     )
+    if receipt is not None:
+        write_archive_receipt(receipt, archive=archive, matrix_id=manifest.matrix_id)
     typer.echo(f"Analysis archive         : {archive}")
