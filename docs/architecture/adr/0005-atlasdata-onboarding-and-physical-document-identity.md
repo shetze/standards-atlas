@@ -20,17 +20,19 @@ AtlasData onboarding is manifest-driven and produces canonical documents **per p
 
 ## Accepted enrichment transport
 
-An explicit `atlasdata-enrichments` companion (schema `1.0`) is stored at
+An explicit `atlasdata-enrichments` companion (schema `1.1`) is stored at
 `<AtlasData parent>/enrichments/<physical-key>.yaml`. This extends, rather than replaces, the
 existing AtlasData adapter and text format. TOC tags continue to represent reviewed categories;
 companions additionally represent generated hints, confirmed negatives, primary labels,
 availability and decision provenance which the compact tags cannot express losslessly.
 
 The manifest selects source file, physical part/supplement and edition. Each clause binds its
-full reference and stable ID to the structural baseline hash, its AtlasData heading hash and its
-independently normalized local-source heading hash. Available source text has a separate content
-hash. A legacy reference year is not silently rewritten to the manifest edition; both identities
-are checked. Missing source text is explicitly unverified, not reconstructed or asserted equal.
+full reference and stable ID to the exact legacy MD5 of the existing AtlasData TOC record. The
+internal heading is persisted for review, and structural/source/content SHA-256 fingerprints are
+grouped separately under `fingerprints:`. A legacy reference year is not silently rewritten to the
+manifest edition; both identities are checked. Missing source text is explicitly unverified, not
+reconstructed or asserted equal. Clause records retain physical document order rather than sorting
+by hash-derived clause IDs.
 
 The existing import/part-selection pipeline builds physical skeletons without persisting a
 synthetic family document. Companions then merge through the canonical attribute-group contract.
@@ -40,7 +42,7 @@ are never rewritten by enrichment transfer. Selection is incremental: omission p
 
 Original source-bearing context objects and raw provenance live in private immutable evidence
 blobs, as defined by ADR 0013. Public companions contain categorical values, bounded context views
-and hash references, not a copy of protected source text. Missing private values defer whole
+and centralized SHA-256 fingerprint references, not a copy of protected source text. Missing private values defer whole
 context attributes rather than manufacturing empty conditions. Strict restoration rejects any
 missing referenced private evidence. The canonical model remains the single document authority.
 

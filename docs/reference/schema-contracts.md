@@ -24,7 +24,7 @@ Removed refactoring schemas are not recreated merely to fill the stable support 
 | Interface | Boundary | Schema axis | Resource axis | Location |
 | --- | --- | --- | --- | --- |
 | Engineering Document | persistence | `engineering-document` | — | `.atlas/data/documents/*.json` |
-| AtlasData enrichments | public contract | `atlasdata-enrichments` (`1.0`) | retained decision identities | `<AtlasData parent>/enrichments/<physical-key>.yaml` |
+| AtlasData enrichments | public contract | `atlasdata-enrichments` (`1.1`) | retained decision identities | `<AtlasData parent>/enrichments/<physical-key>.yaml` |
 | Private knowledge evidence | persistence | `knowledge-evidence` (`1.0`) | content-addressed payload | `.atlas/data/knowledge-evidence/<sha256>.json` |
 | AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.0`) | — | `local/review/atlasdata-knowledge*.json` |
 | Standards manifest | process | `standards-manifest` | — | `manifests/standards*.yaml` |
@@ -52,10 +52,10 @@ This avoids versioning every internal DTO while still making independently consu
 
 AtlasData is authored, Git-published, community-curated input and therefore has stronger preservation requirements than disposable derived artifacts. Its semantic profile reference is already explicitly resource-versioned. The AtlasData text grammar itself does not currently carry a standalone serialization `schema_version`; changes to that grammar must therefore remain backward-readable or be introduced with an explicit format-version mechanism before the project enters stable compatibility mode. AtlasData must not be treated as a disposable intermediate artifact.
 
-The optional `atlasdata-enrichments` companion has an explicit `schema_version: "1.0"` and
+The optional `atlasdata-enrichments` companion has an explicit `schema_version: "1.1"` and
 `manifest_type: atlasdata-enrichments`. It is a versioned transport of selected canonical attributes,
 not a second canonical model. It does not change the existing text grammar or canonical schema 9.
-See [AtlasData format](atlas-data-format.md#accepted-enrichment-companions-schema-10).
+See [AtlasData format](atlas-data-format.md#accepted-enrichment-companions-schema-11).
 
 ## Packaged resource rule
 
@@ -85,5 +85,5 @@ Consensus 5.0 adds explicitly measured process primary/set votes and decisions. 
 remains readable with the original normalized serialization for existing policy fingerprints;
 this is read preservation, not a writer migration. New consensus evaluation always writes 5.0.
 The review-only golden proposal uses 4.0. Missing legacy process observations are not replaced
-by empty votes. Canonical schema 9, companion 1.0, adoption 1.0 and archive layout 1.5 are
+by empty votes. Canonical schema 9, companion 1.1, adoption 1.0 and archive layout 1.5 are
 unchanged. See [Process-function qualification](../user-guide/process-function-qualification.md).

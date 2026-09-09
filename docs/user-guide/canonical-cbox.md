@@ -24,7 +24,7 @@ explicitly permits missing *document* selections and reports the resulting docum
 The versioned local report (`cbox-report`, schema `1.0`) contains each clause's accepted
 canonical context, attribute sources, framed values, rendered text and fingerprints.
 The nested `cbox-enrichments` contract is also `1.0`. EngineeringDocument schema remains
-`9`; AtlasData companion schema remains `1.0`.
+`9`; AtlasData companion schema is `1.1`.
 
 Attributewise availability is distinct from value:
 

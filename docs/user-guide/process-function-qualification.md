@@ -94,9 +94,9 @@ existing policy selection fingerprints valid. In particular, reading an old Run 
 must not add default process votes or break its Applicability selection hashes. New report
 writers emit 5.0; the reader does not rewrite the old archive.
 
-Canonical `EngineeringDocument` schema **9**, adoption contract **1.0**, AtlasData enrichment
-companion **1.0**, and archive layout **1.5** are unchanged. The existing companion already
-supports the process fields and their decision provenance.
+Canonical `EngineeringDocument` schema **9**, adoption contract **1.0**, and archive layout
+**1.5** are unchanged. AtlasData enrichment companion schema **1.1** keeps the same process
+values and decision provenance while reorganizing its readable persistence layout.
 
 ## Recomputing retained proposal runs without new inference
 

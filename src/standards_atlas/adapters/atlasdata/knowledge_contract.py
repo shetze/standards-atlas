@@ -17,6 +17,7 @@ from standards_atlas.domain.model.identifiers import StandardReference
 from standards_atlas.domain.model.knowledge_state import ConfirmedAttribute, GeneratedAttribute
 
 Digest = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+LegacyMd5 = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
 SafeKey = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")]
 AttributePath = Literal[
     "enrichments.semantic.primary_function",
@@ -162,7 +163,9 @@ class PublishedAttribute(_Strict):
 
 class ClauseKnowledge(_Strict):
     clause_id: str = Field(min_length=1)
+    atlasdata_md5: LegacyMd5
     reference: StandardReference
+    heading: str | None = None
     heading_sha256: Digest
     atlasdata_heading_sha256: Digest
     content_sha256: Digest | None = None
@@ -178,7 +181,7 @@ class ClauseKnowledge(_Strict):
 
 class AtlasDataKnowledge(_Strict):
     manifest_type: Literal["atlasdata-enrichments"] = "atlasdata-enrichments"
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.1"] = "1.1"
     document_key: SafeKey
     family_key: SafeKey
     atlasdata_file: str = Field(min_length=1)

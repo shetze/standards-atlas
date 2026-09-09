@@ -118,8 +118,9 @@ def world(root):
         'name="Example"\ndigits=4\nlifecycle_status="published"\n'
         'semanticProfile="functional-safety:1.0.0"\n'
         'structure=(\n "2025 r1 r2 r3"\n)\n#---data---#\n'
-        "TOC;a;Example:2025 1;One;r\nTOC;b;Example:2025 2;Two;r\n"
-        "TOC;c;Example:2025 3;Three;r\n"
+        "TOC;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;Example:2025 1;One;r\n"
+        "TOC;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;Example:2025 2;Two;r\n"
+        "TOC;cccccccccccccccccccccccccccccccc;Example:2025 3;Three;r\n"
     )
     catalog = StandardCatalog.model_validate(
         {

@@ -18,7 +18,7 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     ),
     "cbox-report": SchemaPolicy("cbox-report", "1.0", ("1.0",), "local/**/cbox*.json"),
     "atlasdata-enrichments": SchemaPolicy(
-        "atlasdata-enrichments", "1.0", ("1.0",), "data/enrichments/*.yaml"
+        "atlasdata-enrichments", "1.1", ("1.1",), "data/enrichments/*.yaml"
     ),
     "knowledge-evidence": SchemaPolicy(
         "knowledge-evidence", "1.0", ("1.0",), ".atlas/data/knowledge-evidence/*.json"

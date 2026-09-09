@@ -80,7 +80,7 @@ Model-free knowledge workflows explicitly orchestrate adoption, AtlasData export
 and inspection through the existing services. Ordinary qualification does not publish or
 accept results implicitly. Optional companion restoration precedes contextual processing.
 Reuse is based on source/configuration and selected-fact fingerprints, not merely output
-existence. Canonical schema 9 and the AtlasData companion 1.0 contract are unchanged.
+existence. Canonical schema 9 is unchanged; the AtlasData companion contract is schema 1.1.
 
 ## Consequences
 The canonical document contains everything needed to inspect its accepted document-centered state and to reproduce downstream semantic projections without conflating origin, authority, and inference method. Community-maintained AtlasData can progressively replace generated assertions with authoritative knowledge without requiring every extraction or inference algorithm to reach perfect accuracy.

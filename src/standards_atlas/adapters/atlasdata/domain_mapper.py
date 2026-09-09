@@ -154,7 +154,7 @@ def _map_initialization_records_to_annotations(
     annotations: list[ClauseAnnotation] = []
 
     for index, record in enumerate(atlas_data.initialization_records):
-        clause_identity = _extract_clause_identity(
+        clause_identity = extract_clause_identity(
             record.reference,
             atlas_data.metadata.name,
         )
@@ -205,7 +205,7 @@ def _build_semantic_tag_lookup(
     for record in atlas_data.initialization_records:
         if record.kind != "TOC" or not record.semantic_tags:
             continue
-        identity = _extract_clause_identity(record.reference, atlas_data.metadata.name)
+        identity = extract_clause_identity(record.reference, atlas_data.metadata.name)
         if identity is not None:
             result[identity] = record.semantic_tags
     return result
@@ -285,7 +285,7 @@ def _build_title_lookup(
         if record.kind != "TOC":
             continue
 
-        clause_identity = _extract_clause_identity(
+        clause_identity = extract_clause_identity(
             record.reference,
             atlas_data.metadata.name,
         )
@@ -456,7 +456,7 @@ def _build_clause_id(
     return ClauseId(value=f"clause-{digest}")
 
 
-def _extract_clause_identity(reference: str, standard_name: str) -> tuple[str | None, str] | None:
+def extract_clause_identity(reference: str, standard_name: str) -> tuple[str | None, str] | None:
     """Extract ``(volume, clause)`` from an AtlasData initialization reference."""
     if not reference.startswith(standard_name):
         return None

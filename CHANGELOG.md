@@ -13,8 +13,19 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 - Adopt usable process decisions through the existing authority-aware canonical merge and
   AtlasData companion roundtrip. Invalidated stale primaries remain unknown, not false null votes.
 - Write consensus schema 5.0 and golden proposal 4.0; preserve old consensus 4.0 policy hashes.
-  Keep canonical schema 9, companion/adoption 1.0 and archive layout 1.5 unchanged.
+  Keep canonical schema 9, adoption 1.0 and archive layout 1.5 unchanged.
 - Test fresh synthetic provider-to-AtlasData roundtrips and retained Run 074 compatibility.
+
+## Unreleased — AtlasData enrichment schema 1.1 readability (2026-09-09)
+
+- Add the exact legacy `atlasdata_md5` TOC identifier to every persisted clause and validate it
+  against the owning AtlasData file instead of recomputing a reference hash.
+- Emit clauses in physical document order and persist the internal heading text so reviewed
+  AtlasData headings and normalized source headings can be compared directly.
+- Centralize all SHA-256 state/provenance references under structured `fingerprints:` mappings;
+  keep the AtlasData MD5 outside that block because it is a record identity, not a fingerprint.
+- Omit redundant `availability: known` and duplicated generated path/availability fields while
+  retaining explicit `availability: unknown`. Schema 1.0 companions are intentionally unsupported.
 
 ## Unreleased — Effective CBox consumption and explicit knowledge workflows (2026-09-09)
 

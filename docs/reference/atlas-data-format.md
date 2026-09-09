@@ -555,7 +555,7 @@ model-generated classifications to published gold automatically. This keeps the
 publication boundary explicit: only the reviewed annotation manifest can add or
 replace public semantic tags.
 
-## Accepted enrichment companions (schema 1.0)
+## Accepted enrichment companions (schema 1.1)
 
 The existing structural text grammar and reviewed TOC tags remain unchanged. Accepted canonical
 attributes may additionally be persisted in `<AtlasData parent>/enrichments/<physical-key>.yaml`
@@ -566,44 +566,54 @@ CBox database or an automatic promotion to reviewed semantic tags.
 
 | Field | Meaning |
 | --- | --- |
-| `manifest_type`, `schema_version` | `atlasdata-enrichments`, string `"1.0"` |
+| `manifest_type`, `schema_version` | `atlasdata-enrichments`, string `"1.1"` |
 | `document_key`, `family_key` | Exact manifest-declared physical document and family |
 | `atlasdata_file`, `selection_part`, `publication_year` | Explicit owning source basename, part selection and manifest edition; unspecified supplement year stays null |
-| `structure_sha256` | Hash of the selected structural clause IDs, references, headings, types and parents; reviewed semantic tags are excluded |
+| `fingerprints.structure` | SHA-256 of selected structural clause IDs, references, headings, types and parents; reviewed semantic tags are excluded |
 | `clauses[].clause_id`, `.reference` | Stable clause ID and complete canonical `StandardReference` |
-| `.heading_sha256` | Hash of the enrichment's independently normalized local-source heading |
-| `.atlasdata_heading_sha256` | Hash of the reviewed AtlasData heading; need not equal the source heading |
-| `.content_sha256` | Hash of available local `plain_text`; null when not available |
+| `.atlasdata_md5` | Exact legacy MD5 from the existing AtlasData `TOC` record; a foreign-key reference, not a recomputed fingerprint |
+| `.heading` | Internal/canonical heading text used by the enriched document |
+| `.fingerprints.heading` | SHA-256 of the internal heading |
+| `.fingerprints.atlasdata_heading` | SHA-256 of the reviewed AtlasData heading; need not equal the internal heading |
+| `.fingerprints.content` | SHA-256 of available local `plain_text`; omitted when not available |
+| `.fingerprints.attributes.<path>` | Attribute-specific evidence, decision-source and private-store fingerprints |
 | `.attributes[]` | Selected, typed attribute records; unselected fields and clauses are retained |
 
-Hashes use SHA-256. Heading/content hashes use UTF-8 bytes without another normalization step.
-The structure digest uses deterministic compact sorted JSON. Duplicate keys, IDs, full references,
-attribute paths, unknown fields, unsupported schema versions, contradictory semantic groups and
-raw private provenance in the public contract are rejected. Public semantic values are validated
-against existing canonical field types, not an independently defined vocabulary.
+All fingerprint values use `sha256:<64 lowercase hex>` syntax. Heading/content fingerprints use
+UTF-8 bytes without another normalization step. The structure digest uses deterministic compact
+sorted JSON. The `atlasdata_md5` remains the exact 32-hex legacy TOC identifier and is verified
+against the current AtlasData file on export and import. Clause records are serialized in physical
+document order, not by hash-derived `clause_id`. Duplicate keys, IDs, full references, attribute
+paths, unknown fields, unsupported schema versions, contradictory semantic groups and raw private
+provenance in the public contract are rejected. Public semantic values are validated against
+existing canonical field types, not an independently defined vocabulary.
 
 ### Attribute records
 
-Each record contains `path`, `origin`, `availability`, `value` and the appropriate provenance.
+Each record contains `path`, `origin`, `value` and the appropriate provenance.
 Paths address primary/secondary statement, knowledge and process categories, Applicability
 presence/functions, role presence/types/relations, whole subject context or whole context routing.
-`origin` is `generated`, `confirmed` or `unattributed`. `availability` is `known` or `unknown`;
-absence is not assessed, not false. Unknown has a null value, no invented category and explicit
-generated assessment metadata. Known false and known empty lists are retained as real decisions.
+`origin` is `generated`, `confirmed` or `unattributed`. Known availability is the default and is
+omitted from YAML for readability. `availability: unknown` remains explicit; absence of an
+attribute means not assessed, not false. Unknown has a null value, no invented category and
+explicit generated assessment metadata. Known false and known empty lists are retained as real
+decisions.
 
-`generated` reuses canonical `GeneratedAttribute` and `DecisionSupport`: generator, method,
-reference hashes, rule, versions/identifiers, model IDs, vote counts and decision stage. Free text
-and raw evidence become hash references, not prose in AtlasData. `confirmed` reuses an explicit
-`ConfirmedAttribute` and does not infer authority from file location. Populated unmarked legacy
-values are retained as `unattributed`, not promoted. An omitted attribute never clears a value.
+`generated` retains generator, method and decision metadata but does not duplicate the enclosing
+attribute path or known/unknown state. Evidence strings and `DecisionSupport.source_sha256` are
+serialized under `fingerprints.attributes.<path>.evidence` and `.decision_source`. `confirmed`
+retains explicit authority without duplicating the enclosing path. Populated unmarked legacy values
+are retained as `unattributed`, not promoted. An omitted attribute never clears a value.
 
 Statement/knowledge/process values and controlled role types are public categorical values.
-`private_value_sha256` addresses source-bearing contexts or exact role tuples in the private store.
+`fingerprints.attributes.<path>.private_value` addresses source-bearing contexts or exact role
+tuples in the private store.
 For these fields, `value` is a bounded view: selected normalized subject/confidence/ambiguity labels;
 scope reach and counts of conditions/exclusions/qualifications plus reference coordinates/roles;
 or an exact-role tuple count. It never contains source evidence, reference titles, scope prose or
 raw role actor/target text. These public semantic labels and coordinates are deliberately published.
-`private_provenance_sha256` optionally binds the original unredacted provenance.
+`fingerprints.attributes.<path>.private_provenance` optionally binds the original unredacted
+provenance.
 
 ### Restore and preservation
 

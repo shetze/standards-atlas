@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from collections import Counter
+from copy import deepcopy
 from pathlib import Path
 
 import yaml
@@ -21,6 +23,7 @@ from standards_atlas.domain.model.enrichment_patch import (
 from standards_atlas.domain.model.knowledge_state import KnowledgeStateProvenance
 from standards_atlas.domain.model.semantic_classification import SemanticClassification
 
+from .domain_mapper import extract_clause_identity
 from .import_pipeline import AtlasDataImportPipeline
 from .knowledge_contract import (
     ALL_PATHS,
@@ -59,13 +62,206 @@ def _unique_mapping(loader: _UniqueLoader, node: yaml.MappingNode) -> dict:
 
 _UniqueLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _unique_mapping)
 
+_SHA256_REFERENCE = re.compile(r"sha256:([0-9a-f]{64})\Z")
+
+
+def _sha256_reference(value: str) -> str:
+    match = _SHA256_REFERENCE.fullmatch(value)
+    if match is not None:
+        return value
+    if re.fullmatch(r"[0-9a-f]{64}", value):
+        return f"sha256:{value}"
+    raise ValueError(f"invalid SHA-256 fingerprint: {value!r}")
+
+
+def _sha256_digest(value: object) -> str:
+    if not isinstance(value, str):
+        raise ValueError("SHA-256 fingerprint must be a string")
+    match = _SHA256_REFERENCE.fullmatch(value)
+    if match is None:
+        raise ValueError(f"invalid SHA-256 fingerprint reference: {value!r}")
+    return match.group(1)
+
+
+def _wire_to_model_payload(payload: dict) -> dict:
+    """Expand compact schema-1.1 fingerprints into the internal transport model."""
+
+    result = deepcopy(payload)
+    if "structure_sha256" in result:
+        raise ValueError("schema 1.1 stores structure fingerprints under fingerprints")
+    fingerprints = result.pop("fingerprints", None)
+    if not isinstance(fingerprints, dict) or set(fingerprints) != {"structure"}:
+        raise ValueError("AtlasData enrichments require fingerprints.structure")
+    result["structure_sha256"] = _sha256_digest(fingerprints["structure"])
+
+    clauses = result.get("clauses", ())
+    if not isinstance(clauses, list):
+        raise ValueError("AtlasData enrichment clauses must be a list")
+    for clause in clauses:
+        if not isinstance(clause, dict):
+            raise ValueError("AtlasData enrichment clause must be a mapping")
+        for legacy in ("heading_sha256", "atlasdata_heading_sha256", "content_sha256"):
+            if legacy in clause:
+                raise ValueError(f"schema 1.1 stores {legacy} under fingerprints")
+        clause_fingerprints = clause.pop("fingerprints", None)
+        if not isinstance(clause_fingerprints, dict):
+            raise ValueError("AtlasData enrichment clause requires fingerprints")
+        allowed = {"heading", "atlasdata_heading", "content", "attributes"}
+        unknown = set(clause_fingerprints) - allowed
+        if unknown:
+            raise ValueError(f"unknown clause fingerprint fields: {sorted(unknown)}")
+        clause["heading_sha256"] = _sha256_digest(clause_fingerprints.get("heading"))
+        clause["atlasdata_heading_sha256"] = _sha256_digest(
+            clause_fingerprints.get("atlasdata_heading")
+        )
+        if "content" in clause_fingerprints:
+            clause["content_sha256"] = _sha256_digest(clause_fingerprints["content"])
+
+        attribute_fingerprints = clause_fingerprints.get("attributes", {})
+        if not isinstance(attribute_fingerprints, dict):
+            raise ValueError("fingerprints.attributes must be a mapping")
+        attributes = clause.get("attributes", ())
+        if not isinstance(attributes, list):
+            raise ValueError("AtlasData enrichment attributes must be a list")
+        paths = {item.get("path") for item in attributes if isinstance(item, dict)}
+        dangling = set(attribute_fingerprints) - paths
+        if dangling:
+            raise ValueError(f"fingerprints reference unknown attributes: {sorted(dangling)}")
+        for attribute in attributes:
+            if not isinstance(attribute, dict):
+                raise ValueError("AtlasData enrichment attribute must be a mapping")
+            path = attribute.get("path")
+            fps = attribute_fingerprints.get(path, {})
+            if not isinstance(fps, dict):
+                raise ValueError(f"attribute fingerprints must be a mapping: {path}")
+            allowed_attribute_fps = {
+                "evidence",
+                "decision_source",
+                "private_value",
+                "private_provenance",
+            }
+            unknown = set(fps) - allowed_attribute_fps
+            if unknown:
+                raise ValueError(
+                    f"unknown attribute fingerprint fields for {path}: {sorted(unknown)}"
+                )
+
+            if "private_value_sha256" in attribute or "private_provenance_sha256" in attribute:
+                raise ValueError("schema 1.1 stores private fingerprints under fingerprints")
+            if "private_value" in fps:
+                attribute["private_value_sha256"] = _sha256_digest(fps["private_value"])
+            if "private_provenance" in fps:
+                attribute["private_provenance_sha256"] = _sha256_digest(fps["private_provenance"])
+
+            availability = attribute.get("availability", "known")
+            generated = attribute.get("generated")
+            if generated is not None:
+                if not isinstance(generated, dict):
+                    raise ValueError(f"generated provenance must be a mapping: {path}")
+                legacy = {"path", "availability", "evidence"} & set(generated)
+                if legacy:
+                    raise ValueError(
+                        "schema 1.1 derives generated "
+                        f"{sorted(legacy)} from the attribute/fingerprints"
+                    )
+                generated["path"] = path
+                generated["availability"] = availability
+                evidence = fps.get("evidence", [])
+                if not isinstance(evidence, list):
+                    raise ValueError(f"evidence fingerprints must be a list: {path}")
+                generated["evidence"] = tuple(
+                    f"sha256:{_sha256_digest(value)}" for value in evidence
+                )
+                decision = generated.get("decision")
+                if decision is not None:
+                    if not isinstance(decision, dict):
+                        raise ValueError(f"decision provenance must be a mapping: {path}")
+                    if "source_sha256" in decision:
+                        raise ValueError(
+                            "schema 1.1 stores decision source fingerprints under fingerprints"
+                        )
+                    if "decision_source" not in fps:
+                        raise ValueError(f"decision requires decision_source fingerprint: {path}")
+                    decision["source_sha256"] = _sha256_digest(fps["decision_source"])
+                elif "decision_source" in fps:
+                    raise ValueError(f"decision_source fingerprint without decision: {path}")
+            elif "evidence" in fps or "decision_source" in fps:
+                raise ValueError(f"generated fingerprints without generated provenance: {path}")
+
+            confirmed = attribute.get("confirmed")
+            if confirmed is not None:
+                if not isinstance(confirmed, dict):
+                    raise ValueError(f"confirmed provenance must be a mapping: {path}")
+                if "path" in confirmed:
+                    raise ValueError("schema 1.1 derives confirmed path from the attribute")
+                confirmed["path"] = path
+    return result
+
+
+def _model_to_wire_payload(manifest: AtlasDataKnowledge) -> dict:
+    """Serialize schema 1.1 with one readable fingerprint block per scope."""
+
+    payload = manifest.model_dump(mode="json")
+    clauses = payload.pop("clauses")
+    payload["fingerprints"] = {
+        "structure": _sha256_reference(payload.pop("structure_sha256")),
+    }
+    payload["clauses"] = clauses
+    for clause in clauses:
+        clause_fingerprints: dict[str, object] = {
+            "heading": _sha256_reference(clause.pop("heading_sha256")),
+            "atlasdata_heading": _sha256_reference(clause.pop("atlasdata_heading_sha256")),
+        }
+        content = clause.pop("content_sha256")
+        if content is not None:
+            clause_fingerprints["content"] = _sha256_reference(content)
+        attribute_fingerprints: dict[str, dict[str, object]] = {}
+        for attribute in clause["attributes"]:
+            path = attribute["path"]
+            fps: dict[str, object] = {}
+            private_value = attribute.pop("private_value_sha256")
+            private_provenance = attribute.pop("private_provenance_sha256")
+            if private_value is not None:
+                fps["private_value"] = _sha256_reference(private_value)
+            if private_provenance is not None:
+                fps["private_provenance"] = _sha256_reference(private_provenance)
+
+            generated = attribute.get("generated")
+            if generated is not None:
+                generated.pop("path")
+                generated.pop("availability")
+                evidence = generated.pop("evidence")
+                if evidence:
+                    fps["evidence"] = [_sha256_reference(value) for value in evidence]
+                decision = generated.get("decision")
+                if decision is not None:
+                    fps["decision_source"] = _sha256_reference(decision.pop("source_sha256"))
+                if generated.get("decision") is None:
+                    generated.pop("decision", None)
+
+            confirmed = attribute.get("confirmed")
+            if confirmed is not None:
+                confirmed.pop("path")
+            if attribute.get("generated") is None:
+                attribute.pop("generated", None)
+            if attribute.get("confirmed") is None:
+                attribute.pop("confirmed", None)
+            if attribute.get("availability") == "known":
+                attribute.pop("availability")
+            if fps:
+                attribute_fingerprints[path] = fps
+        if attribute_fingerprints:
+            clause_fingerprints["attributes"] = attribute_fingerprints
+        clause["fingerprints"] = clause_fingerprints
+    return payload
+
 
 def read_knowledge(path: Path) -> AtlasDataKnowledge:
     payload = yaml.load(path.read_text(encoding="utf-8"), Loader=_UniqueLoader)
     if not isinstance(payload, dict):
         raise ValueError("AtlasData enrichments must be a versioned mapping")
     require_supported_schema("atlasdata-enrichments", payload.get("schema_version"))
-    result = AtlasDataKnowledge.model_validate(payload)
+    result = AtlasDataKnowledge.model_validate(_wire_to_model_payload(payload))
     for clause in result.clauses:
         for attribute in clause.attributes:
             check_public_attribute(attribute)
@@ -81,7 +277,7 @@ def knowledge_bytes(manifest: AtlasDataKnowledge) -> bytes:
         for attribute in clause.attributes:
             check_public_attribute(attribute)
     return yaml.dump(
-        manifest.model_dump(mode="json"),
+        _model_to_wire_payload(manifest),
         Dumper=getattr(yaml, "CSafeDumper", yaml.SafeDumper),
         sort_keys=False,
         allow_unicode=True,
@@ -171,6 +367,17 @@ def _check_clause(
     return False
 
 
+def _check_atlasdata_md5(
+    record: ClauseKnowledge,
+    atlasdata_md5s: dict[str, str],
+    *,
+    key: str,
+) -> None:
+    expected = atlasdata_md5s.get(record.clause_id)
+    if expected is None or record.atlasdata_md5 != expected:
+        raise ValueError(f"AtlasData record MD5 mismatch: {key}/{record.clause_id}")
+
+
 def _same_value(left: PublishedAttribute, right: PublishedAttribute) -> bool:
     return (left.availability, left.value, left.private_value_sha256) == (
         right.availability,
@@ -190,7 +397,8 @@ def _merge_record(
     changes = []
     updates = {item.path: item for item in incoming.attributes}
     if old is not None:
-        if (old.reference, old.atlasdata_heading_sha256) != (
+        if (old.atlasdata_md5, old.reference, old.atlasdata_heading_sha256) != (
+            incoming.atlasdata_md5,
             incoming.reference,
             incoming.atlasdata_heading_sha256,
         ):
@@ -200,7 +408,9 @@ def _merge_record(
                 incoming.content_sha256 is None
                 and incoming.heading_sha256 == incoming.atlasdata_heading_sha256
             ):
-                incoming = incoming.model_copy(update={"heading_sha256": old.heading_sha256})
+                incoming = incoming.model_copy(
+                    update={"heading": old.heading, "heading_sha256": old.heading_sha256}
+                )
             else:
                 raise ValueError(f"stale AtlasData enrichment heading: {key}/{old.clause_id}")
         if (
@@ -334,6 +544,34 @@ class AtlasDataKnowledgeService:
             title=binding.title,
         )
 
+    def _atlasdata_md5s(
+        self,
+        binding: AtlasDataBinding,
+        skeleton: EngineeringDocument,
+    ) -> dict[str, str]:
+        atlas_data = self.pipeline.parse_file(binding.source)
+        by_identity: dict[tuple[str | None, str], str] = {}
+        for record in atlas_data.initialization_records:
+            if record.kind != "TOC":
+                continue
+            identity = extract_clause_identity(record.reference, atlas_data.metadata.name)
+            if identity is None:
+                continue
+            previous = by_identity.get(identity)
+            if previous is not None and previous != record.hash_value:
+                raise ValueError(f"duplicate AtlasData TOC identity with different MD5: {identity}")
+            by_identity[identity] = record.hash_value
+        result: dict[str, str] = {}
+        for clause in skeleton.clauses:
+            identity = (clause.reference.part, clause.reference.clause)
+            value = by_identity.get(identity)
+            if value is None:
+                raise ValueError(
+                    f"missing AtlasData TOC MD5: {binding.document_key}/{clause.id.value}"
+                )
+            result[clause.id.value] = value
+        return result
+
     def export(
         self,
         *,
@@ -360,6 +598,7 @@ class AtlasDataKnowledgeService:
         for key in keys:
             binding = self.bindings[key]
             skeleton = self._skeleton(binding, sources)
+            atlasdata_md5s = self._atlasdata_md5s(binding, skeleton)
             expected = _head(binding, skeleton)
             destination = binding.enrichments_path
             if destination.is_symlink():
@@ -376,7 +615,9 @@ class AtlasDataKnowledgeService:
             # Old entries outside the selection remain, but must still address this baseline.
             for old in existing.clauses:
                 _check_clause(old, structural_clauses.get(old.clause_id), key=key, structural=True)
-            for clause_id, clause in sorted(canonical_clauses.items()):
+                _check_atlasdata_md5(old, atlasdata_md5s, key=key)
+            for clause in source.clauses:
+                clause_id = clause.id.value
                 if clause_ids and clause_id not in clause_ids:
                     continue
                 attributes = tuple(
@@ -391,7 +632,9 @@ class AtlasDataKnowledgeService:
                     raise ValueError(f"missing AtlasData clause: {key}/{clause_id}")
                 record = ClauseKnowledge(
                     clause_id=clause_id,
+                    atlasdata_md5=atlasdata_md5s[clause_id],
                     reference=clause.reference,
+                    heading=clause.heading,
                     heading_sha256=_heading_digest(clause.heading),
                     atlasdata_heading_sha256=_heading_digest(structural_clause.heading),
                     content_sha256=(
@@ -407,7 +650,11 @@ class AtlasDataKnowledgeService:
                 changes.extend(delta)
             manifest = expected.model_copy(
                 update={
-                    "clauses": tuple(records[k] for k in sorted(records)),
+                    "clauses": tuple(
+                        records[clause.id.value]
+                        for clause in skeleton.clauses
+                        if clause.id.value in records
+                    ),
                 }
             )
             # Detect conflicting authoritative tags and companion values before publication.
@@ -439,7 +686,10 @@ class AtlasDataKnowledgeService:
             binding = self.bindings[key]
             manifest = read_knowledge(binding.enrichments_path)
             skeleton = self._skeleton(binding, sources)
+            atlasdata_md5s = self._atlasdata_md5s(binding, skeleton)
             _check_header(manifest, _head(binding, skeleton))
+            for record in manifest.clauses:
+                _check_atlasdata_md5(record, atlasdata_md5s, key=key)
             original = (
                 self.documents.load(DocumentKey(value=key))
                 if self.documents.exists(DocumentKey(value=key))

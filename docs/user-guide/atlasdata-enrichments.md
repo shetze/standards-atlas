@@ -15,7 +15,7 @@ data/ISO26262
 data/enrichments/ISO26262-11.yaml
 ```
 
-The companion is an `atlasdata-enrichments` manifest, schema `1.0`. Its values use the canonical
+The companion is an `atlasdata-enrichments` manifest, schema `1.1`. Its values use the canonical
 semantic vocabulary and explicit primary labels. It preserves generated/confirmed/unattributed
 origin, availability, decision support and reference identity. **A generated value stays generated
 when written into or read from AtlasData.** Existing reviewed TOC tags remain authoritative; two
@@ -89,7 +89,8 @@ This is **private persistent evidence**, not a disposable cache and not a second
 repository. Keep it with the local source material; do not commit it into public AtlasData.
 Protected clause text, evidence quotations, subject evidence text, reference titles, raw role
 actors/targets and scope-condition prose are not copied into public companions. Free-text
-provenance is replaced by hash references. Normalized subject labels and structural reference
+provenance is replaced by SHA-256 fingerprints collected under the clause-local `fingerprints:`
+mapping. Normalized subject labels and structural reference
 coordinates are intentionally published as semantic values, and should be reviewed as such.
 
 ## Restore, including into a fresh workspace
@@ -142,17 +143,25 @@ checked against the stored exact SHA-256 before any write.
 ## Identity and repeatability
 
 Each companion binds the manifest's physical key, family, explicitly supplied publication year,
-part selection and a structural fingerprint. Clause IDs and complete references, including the
+part selection and a structural fingerprint. Each persisted clause additionally stores the exact
+legacy `atlasdata_md5` from its existing AtlasData `TOC` record; this is a foreign-key reference,
+not a recalculated content fingerprint. Clause IDs and complete references, including the
 AtlasData edition, are checked. The manifest edition and the legacy AtlasData reference year are
 kept separate rather than silently correcting one from the other. An omitted supplement year is
 not inferred from its parent.
 
-AtlasData and local normalization may legitimately have different headings. Two hashes record
-these two sources separately. Export checks the public structural heading against AtlasData;
+AtlasData and local normalization may legitimately have different headings. The internal heading
+text is written explicitly for review, while separate fingerprints record the internal and
+published AtlasData headings. Export checks the public structural heading against AtlasData;
 existing enriched source content is checked against its enrichment heading and content hash.
 A fresh text-free skeleton can use the recorded AtlasData heading. No heading is rewritten,
 normalized again or published from private source text. Re-export retains the original source
 fingerprint when only a structural skeleton is present.
+
+Clause records are emitted in the order of the physical AtlasData document, never by hash-based
+`clause_id`. All SHA-256 values are serialized as `sha256:<digest>` inside `fingerprints:`. Known
+attribute availability is the default and is omitted for readability; `availability: unknown`
+remains explicit so an assessed-but-undetermined value cannot be confused with an unassessed one.
 
 All selected documents, identities, public schemas, known evidence hashes and conflicts are
 validated before the first write. Public and private files are each replaced atomically;

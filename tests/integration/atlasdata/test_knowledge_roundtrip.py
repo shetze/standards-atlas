@@ -52,8 +52,9 @@ def world(tmp_path):
         'name="Example"\ndigits=4\nlifecycle_status="published"\n'
         'semanticProfile="functional-safety:1.0.0"\n'
         'structure=(\n "2025 r1 r2 r3"\n)\n#---data---#\n'
-        "TOC;a;Example:2025 1;One;r\nTOC;b;Example:2025 2;Two;r\n"
-        "TOC;c;Example:2025 3;Three;r\n"
+        "TOC;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;Example:2025 1;One;r\n"
+        "TOC;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;Example:2025 2;Two;r\n"
+        "TOC;cccccccccccccccccccccccccccccccc;Example:2025 3;Three;r\n"
     )
     payload = {
         "manifest_type": "standards",
@@ -185,9 +186,73 @@ def record(world):
 
 
 def replace_record(world, update):
-    value = record(world).model_dump(mode="json")
+    value = yaml.safe_load(world[3].enrichments_path.read_text())
     update(value)
     world[3].enrichments_path.write_text(yaml.safe_dump(value, sort_keys=False))
+
+
+def test_schema_1_1_is_readable_naturally_ordered_and_centralizes_fingerprints(world):
+    root, repo, _, binding, document = world
+    document = patch_clause(
+        document,
+        0,
+        fields={"applicability_present": True},
+        secret=True,
+    )
+    document = patch_clause(document, 1, fields={"applicability_present": False})
+    document = patch_clause(document, 2, unknown=("knowledge_kinds",))
+    first = document.clauses[0].with_baseline_updates(heading="Internal normalized heading")
+    document = document.model_copy(update={"clauses": (first, *document.clauses[1:])})
+    repo.save(document)
+
+    export(world)
+    payload = yaml.safe_load(binding.enrichments_path.read_text())
+
+    assert payload["schema_version"] == "1.1"
+    assert payload["fingerprints"].keys() == {"structure"}
+    assert payload["fingerprints"]["structure"].startswith("sha256:")
+    assert "structure_sha256" not in payload
+    assert [item["reference"]["clause"] for item in payload["clauses"]] == ["1", "2", "3"]
+    assert [item["atlasdata_md5"] for item in payload["clauses"]] == [
+        "a" * 32,
+        "b" * 32,
+        "c" * 32,
+    ]
+
+    clause = payload["clauses"][0]
+    assert clause["heading"] == "Internal normalized heading"
+    assert set(clause["fingerprints"]) >= {"heading", "atlasdata_heading", "attributes"}
+    assert clause["fingerprints"]["heading"] != clause["fingerprints"]["atlasdata_heading"]
+    assert not any(key.endswith("_sha256") for key in clause)
+    attribute = next(
+        item for item in clause["attributes"] if item["path"] == S + "applicability_present"
+    )
+    assert "availability" not in attribute
+    assert "path" not in attribute["generated"]
+    assert "availability" not in attribute["generated"]
+    assert "evidence" not in attribute["generated"]
+    fingerprints = clause["fingerprints"]["attributes"][attribute["path"]]
+    assert fingerprints["decision_source"].startswith("sha256:")
+    assert fingerprints["evidence"] and all(
+        value.startswith("sha256:") for value in fingerprints["evidence"]
+    )
+    unknown = payload["clauses"][2]["attributes"][0]
+    assert unknown["availability"] == "unknown"
+    assert unknown["value"] is None
+    assert SECRET not in binding.enrichments_path.read_text()
+    assert root.joinpath("data/EXAMPLE").read_text().startswith('name="Example"')
+
+
+def test_atlasdata_md5_is_validated_against_the_existing_toc_record(world):
+    save(world, patch_clause(world[4], fields={"applicability_present": True}))
+    export(world)
+
+    def damage(payload):
+        payload["clauses"][0]["atlasdata_md5"] = "0" * 32
+
+    replace_record(world, damage)
+    with pytest.raises(ValueError, match="AtlasData record MD5 mismatch"):
+        world[2].import_(write=True)
 
 
 def test_complete_roundtrip_preserves_values_support_authority_and_private_context(world):
@@ -436,7 +501,7 @@ def test_stale_identity_or_sources_are_rejected_before_write(world, damage):
             if damage == "edition":
                 payload["publication_year"] = 2024
             elif damage == "heading":
-                payload["clauses"][0]["heading_sha256"] = "a" * 64
+                payload["clauses"][0]["fingerprints"]["heading"] = "sha256:" + "a" * 64
             elif damage == "reference":
                 payload["clauses"][0]["reference"]["clause"] = "absent"
             else:
@@ -591,7 +656,10 @@ def test_public_reader_rejects_invalid_contract(world, malformed):
         elif malformed == "unknown-field":
             a["prompt_response"] = SECRET
         elif malformed == "raw-evidence":
-            a["generated"]["evidence"] = [SECRET]
+            path = a["path"]
+            payload["clauses"][0]["fingerprints"].setdefault("attributes", {}).setdefault(path, {})[
+                "evidence"
+            ] = [SECRET]
         elif malformed == "bool":
             a["value"] = 1
         else:
@@ -658,7 +726,7 @@ def test_import_preflights_all_documents_before_creating_the_first_one(world):
     repo.delete(document.key)
     repo.delete(other.key)
     content = yaml.safe_load(other_binding.enrichments_path.read_text())
-    content["structure_sha256"] = "0" * 64
+    content["fingerprints"]["structure"] = "sha256:" + "0" * 64
     other_binding.enrichments_path.write_text(yaml.safe_dump(content))
     with pytest.raises(ValueError, match="identity/edition/structure mismatch"):
         service.import_(write=True)
