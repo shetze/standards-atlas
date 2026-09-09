@@ -170,7 +170,18 @@ def merge_generated_enrichments(
             ):
                 if get(primary_path) not in updates[path]:
                     updates[primary_path] = None
-                    by_path[primary_path] = by_path[path].model_copy(update={"path": primary_path})
+                    if primary == "primary_process_function":
+                        # Clearing an invalidated primary is not a measured null
+                        # decision. Retain an explicit unknown assessment when
+                        # supplied; otherwise derive only its unavailability.
+                        source = by_path.get(primary_path, by_path[path])
+                        by_path[primary_path] = source.model_copy(
+                            update={"path": primary_path, "availability": "unknown"}
+                        )
+                    else:
+                        by_path[primary_path] = by_path[path].model_copy(
+                            update={"path": primary_path}
+                        )
                     addressed.append(primary_path)
         conflicts = [
             path
@@ -197,7 +208,7 @@ def merge_generated_enrichments(
             status = "unchanged" if before == after and previous == by_path[path] else "updated"
             changes.append(AttributeChange(path, status, before, after))
     for path, item in by_path.items():
-        if item.availability != "unknown":
+        if item.availability != "unknown" or path in updates:
             continue
         if provenance.availability(path) != "known":
             provenance = provenance.mark_generated(item)

@@ -34,6 +34,7 @@ This guide describes the supported user workflows for turning private standards 
 | Accept qualified CBox attributes into canonical documents | [Knowledge adoption](knowledge-adoption.md) |
 | Persist and restore accepted CBox attributes through AtlasData | [AtlasData enrichments](atlasdata-enrichments.md) |
 | Inspect effective CBox values and run explicit knowledge workflows | [Canonical CBox](canonical-cbox.md) |
+| Qualify process sets and primary functions through persistence | [Process-function qualification](process-function-qualification.md) |
 | Review generated annotation proposals | [Annotation review](semantic-annotation-review.md) |
 | Diagnose common failures | [Troubleshooting](troubleshooting.md) |
 | Integrate Gemara and ComplyTime | [Gemara and ComplyTime](gemara-complytime.md) |

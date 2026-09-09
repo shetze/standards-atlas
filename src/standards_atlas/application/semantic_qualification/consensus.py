@@ -11,11 +11,20 @@ from statistics import median
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
+)
+from standards_atlas.application.semantic_qualification.process_functions import (
+    PROCESS_CLAUSE_FIELDS,
+    PROCESS_VOTE_FIELDS,
+    apply_process_overrides,
+    process_report_metrics,
+    process_vote,
+    resolve_process_votes,
+    with_process_observation_fields,
 )
 from standards_atlas.application.semantic_qualification.role_qualification import (
     RoleTupleConsensus,
@@ -28,6 +37,7 @@ from standards_atlas.application.semantic_qualification.structural_evidence impo
 )
 from standards_atlas.domain.model import (
     KnowledgeKind,
+    ProcessFunction,
     RoleRelation,
     RoleRelationType,
     StatementFunction,
@@ -58,6 +68,13 @@ class ModelVote(BaseModel):
     secondary_functions: tuple[StatementFunction, ...] = ()
     primary_knowledge_kind: KnowledgeKind | None = None
     secondary_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
+    # None means unobserved; () is an explicit empty process selection.
+    process_functions: tuple[ProcessFunction, ...] | None = None
+    primary_process_function: ProcessFunction | None = None
+    process_primary_evaluated: bool = False
+    process_repetitions: int = Field(default=0, ge=0)
+    process_primary_repetitions: int = Field(default=0, ge=0)
+    process_stability: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_present: bool = False
     applicability_presence_eligible: bool = True
     role_semantics_present: bool = False
@@ -69,6 +86,20 @@ class ModelVote(BaseModel):
     repetitions: int = Field(ge=1)
     stability: float = Field(ge=0.0, le=1.0)
     role: str = Field(default="voter", pattern="^(voter|adjudicator)$")
+
+    @model_validator(mode="after")
+    def validate_process_observation(self) -> ModelVote:
+        if self.process_functions is not None:
+            if len(set(self.process_functions)) != len(self.process_functions):
+                raise ValueError("process votes must not duplicate labels")
+        if self.process_primary_evaluated and self.process_functions is None:
+            raise ValueError("a process primary observation requires an observed set")
+        if self.primary_process_function is not None and (
+            not self.process_primary_evaluated
+            or self.primary_process_function not in (self.process_functions or ())
+        ):
+            raise ValueError("process primary must be explicitly observed and selected")
+        return self
 
     @property
     def statement_functions(self) -> tuple[StatementFunction, ...]:
@@ -102,6 +133,25 @@ class ClauseConsensus(BaseModel):
     knowledge_kind_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     knowledge_primary_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     knowledge_set_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    process_function_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    process_primary_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    process_set_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    primary_process_function: ProcessFunction | None = None
+    proposed_process_functions: tuple[ProcessFunction, ...] = ()
+    process_primary_evaluated: bool = False
+    process_set_evaluated: bool = False
+    process_primary_decided: bool = False
+    process_set_decided: bool = False
+    process_primary_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    process_set_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    process_exact_set_agreement: float = Field(default=0.0, ge=0.0, le=1.0)
+    process_primary_unanimous: bool = False
+    process_set_unanimous: bool = False
+    process_primary_participating_models: int = Field(default=0, ge=0)
+    process_participating_models: int = Field(default=0, ge=0)
+    process_primary_support: dict[str, float] = Field(default_factory=dict)
+    process_function_support: dict[str, float] = Field(default_factory=dict)
+    process_decision_conflict: bool = False
     applicability_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     role_relation_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
     role_semantics_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
@@ -161,7 +211,7 @@ class ClauseConsensus(BaseModel):
 class ConsensusReport(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal["4.0"] = "4.0"
+    schema_version: Literal["4.0", "5.0"] = "5.0"
     matrix_id: str
     corpus_id: str
     prompt_id: str
@@ -182,6 +232,32 @@ class ConsensusReport(BaseModel):
     resolution_sources: dict[str, int] = Field(default_factory=dict)
     role_qualification_metrics: dict[str, Any] = Field(default_factory=dict)
     clauses: tuple[ClauseConsensus, ...]
+    process_function_metrics: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def legacy_reports_cannot_claim_process_observations(self) -> ConsensusReport:
+        if self.schema_version == "4.0" and any(
+            item.process_set_evaluated or item.process_primary_evaluated
+            or any(vote.process_functions is not None for vote in item.votes)
+            for item in self.clauses
+        ):
+            raise ValueError("process observations require consensus schema 5.0")
+        return self
+
+    @model_serializer(mode="wrap")
+    def preserve_legacy_fingerprints(self, handler: Any) -> dict[str, Any]:
+        payload = handler(self)
+        if self.schema_version == "4.0":
+            # Existing policy selections hash the canonical 4.0 serialization.
+            # Reading must not add default fields and invalidate those hashes.
+            payload.pop("process_function_metrics", None)
+            for clause in payload.get("clauses", ()):
+                for field in PROCESS_CLAUSE_FIELDS:
+                    clause.pop(field, None)
+                for vote in clause.get("votes", ()):
+                    for field in PROCESS_VOTE_FIELDS:
+                        vote.pop(field, None)
+        return payload
 
 
 class ModelConsensusService:
@@ -215,8 +291,9 @@ class ModelConsensusService:
             "knowledge_kind": prompt_id,
             "applicability": prompt_id,
             "role_relation": prompt_id,
-            **(prompt_selection or {}),
+            **{key: value for key, value in (prompt_selection or {}).items() if value},
         }
+        prompts.setdefault("process_function", prompts["statement_function"])
         selected_prompt_ids = set(prompts.values())
         selected = tuple(
             item
@@ -249,6 +326,7 @@ class ModelConsensusService:
                 annotation = ClauseEvaluationAnnotation.model_validate(
                     payload["annotation_candidate"]
                 )
+                annotation = with_process_observation_fields(annotation, evaluation_path.parent)
                 if included_example_ids and annotation.clause.clause_id not in included_example_ids:
                     continue
                 predictions[annotation.clause.clause_id][str(observation.model_id)][
@@ -408,7 +486,7 @@ class ModelConsensusService:
                 str(count): occurrences
                 for count, occurrences in sorted(participation_distribution.items())
             },
-            review_policy=policy,
+            review_policy={**policy, "review_categories": sorted(policy["review_categories"])},
             clause_count=len(clauses),
             categories=dict(sorted(category_counts.items())),
             review_count=sum(item.requires_review for item in clauses),
@@ -419,6 +497,8 @@ class ModelConsensusService:
                 for dimension, field in (
                     ("statement_function", "statement_function_category"),
                     ("knowledge_kind", "knowledge_kind_category"),
+                    ("process_function", "process_primary_category"),
+                    ("process_set", "process_set_category"),
                     ("applicability", "applicability_category"),
                     ("role_semantics_presence", "role_semantics_category"),
                     ("role_relation", "role_relation_category"),
@@ -440,6 +520,7 @@ class ModelConsensusService:
                 mode="json"
             ),
             clauses=tuple(clauses),
+            process_function_metrics=process_report_metrics(clauses),
         )
         return _write_outputs(report, output_directory)
 
@@ -455,8 +536,12 @@ def _model_vote(
     knowledge = _modal_annotations(by_prompt.get(prompts["knowledge_kind"], []))
     applicability = _modal_annotations(by_prompt.get(prompts["applicability"], []))
     responsibility = _modal_annotations(by_prompt.get(prompts["role_relation"], []))
+    process = _modal_annotations(
+        by_prompt.get(prompts.get("process_function", prompts["statement_function"]), [])
+    )
     available = [
-        item for item in (statement, knowledge, applicability, responsibility) if item is not None
+        item for item in (statement, knowledge, applicability, responsibility, process)
+        if item is not None
     ]
     if not available:
         raise ValueError(f"model {model_id!r} has no annotations for selected prompts")
@@ -507,6 +592,9 @@ def _model_vote(
         secondary_functions=secondary,
         primary_knowledge_kind=primary_knowledge,
         secondary_knowledge_kinds=secondary_knowledge,
+        **process_vote(
+            by_prompt.get(prompts.get("process_function", prompts["statement_function"]), [])
+        ),
         applicability_present=applicability[0].proposal.applicability_present,
         role_semantics_present=responsibility[0].proposal.role_semantics_present,
         role_relations=responsibility[0].proposal.role_relations,
@@ -560,6 +648,13 @@ def _resolve_clause(
     min_applicability_presence_models: int | None = None,
 ) -> dict[str, Any]:
     policy = _review_policy(policy)
+    process_result = resolve_process_votes(
+        votes,
+        minimum_models=minimum_models,
+        strong_threshold=strong_threshold,
+        majority_threshold=majority_threshold,
+        label_threshold=label_threshold,
+    )
     model_count = len(votes)
     primary_counts = Counter(vote.primary_function for vote in votes)
     primary, primary_count = primary_counts.most_common(1)[0] if primary_counts else (None, 0)
@@ -796,6 +891,7 @@ def _resolve_clause(
         role_relation_category = ConsensusCategory(item["category"])
         resolution_sources["role_relation"] = str(item.get("source", "cascade"))
 
+    apply_process_overrides(process_result, override, resolution_sources)
     proposed_functions = (() if primary is None else (primary,)) + tuple(
         value for value in proposed_functions if value != primary
     )
@@ -822,7 +918,10 @@ def _resolve_clause(
         role_relation_confidence=role_relation_confidence,
         policy=policy,
     )
+    if process_result["process_decision_conflict"]:
+        review_reasons.append("process primary conflicts with selected process set")
     return {
+        **process_result,
         "category": category,
         "statement_function_category": statement_category,
         "knowledge_kind_category": knowledge_category,
@@ -842,6 +941,14 @@ def _resolve_clause(
                         knowledge_category,
                         applicability_category,
                         role_relation_category,
+                        *(
+                            (process_result["process_primary_category"],)
+                            if process_result["process_primary_evaluated"] else ()
+                        ),
+                        *(
+                            (process_result["process_set_category"],)
+                            if process_result["process_set_evaluated"] else ()
+                        ),
                     )
                 )
                 else OverallConsensusStatus.RESOLVED
@@ -1001,7 +1108,7 @@ def _write_outputs(
     review_path = output_directory / "consensus-review.md"
     json_path.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
     payload = {
-        "schema_version": "3.0",
+        "schema_version": "4.0",
         "kind": "golden_corpus_proposal",
         "matrix_id": report.matrix_id,
         "corpus_id": report.corpus_id,
@@ -1020,6 +1127,25 @@ def _write_outputs(
                     item.primary_knowledge_kind.value if item.primary_knowledge_kind else None
                 ),
                 "knowledge_kinds": [value.value for value in item.proposed_knowledge_kinds],
+                "process_functions": (
+                    [value.value for value in item.proposed_process_functions]
+                    if item.process_set_decided else None
+                ),
+                "primary_process_function": (
+                    item.primary_process_function.value if item.primary_process_function else None
+                ),
+                "process_function_decisions": {
+                    "set_evaluated": item.process_set_evaluated,
+                    "primary_evaluated": item.process_primary_evaluated,
+                    "set_decided": item.process_set_decided,
+                    "primary_decided": item.process_primary_decided,
+                    "set_participating_models": item.process_participating_models,
+                    "primary_participating_models": item.process_primary_participating_models,
+                    "label_support": item.process_function_support,
+                    "primary_support": item.process_primary_support,
+                    "exact_set_agreement": item.process_exact_set_agreement,
+                    "conflict": item.process_decision_conflict,
+                },
                 "secondary_functions": [
                     value.value
                     for value in item.proposed_functions
@@ -1056,12 +1182,16 @@ def _write_outputs(
                 "dimension_confidence": {
                     "statement_function": item.statement_function_confidence,
                     "knowledge_kind": item.knowledge_kind_confidence,
+                    "process_function": item.process_primary_confidence,
+                    "process_set": item.process_set_confidence,
                     "applicability": item.applicability_confidence,
                     "role_relation": item.role_relation_confidence,
                 },
                 "dimension_decision_confidence": {
                     "statement_function": item.statement_function_decision_confidence,
                     "knowledge_kind": item.knowledge_kind_decision_confidence,
+                    "process_function": item.process_primary_confidence,
+                    "process_set": item.process_set_confidence,
                     "applicability": item.applicability_decision_confidence,
                     "role_relation": item.role_relation_decision_confidence,
                 },
@@ -1069,6 +1199,8 @@ def _write_outputs(
                 "dimension_categories": {
                     "statement_function": item.statement_function_category.value,
                     "knowledge_kind": item.knowledge_kind_category.value,
+                    "process_function": item.process_primary_category.value,
+                    "process_set": item.process_set_category.value,
                     "applicability": item.applicability_category.value,
                     "role_relation": item.role_relation_category.value,
                 },
@@ -1113,6 +1245,8 @@ def _render_review(report: ConsensusReport) -> str:
         f"# Consensus review: {report.matrix_id}",
         "",
         "Only clauses selected by the risk-based review policy are listed.",
+        "Process support is agreement, not measured accuracy. Empty is not unevaluated.",
+        f"Process-function coverage: `{process_report_metrics(report.clauses)}`",
         "",
         f"- Models available globally: `{report.model_count}`",
         f"- Participating models per clause: min `{report.minimum_participating_models}`, "
@@ -1170,6 +1304,24 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Resolution sources: `{item.resolution_sources or 'model_consensus'}`",
                 f"- Primary/secondary statement functions: `{proposed}`",
                 f"- Knowledge kinds: `{knowledge}`",
+                "- Process functions: " + (
+                    (f"`{_enum_values(item.proposed_process_functions)}`"
+                     if item.proposed_process_functions else "`empty`")
+                    if item.process_set_decided else "unknown" if item.process_set_evaluated
+                    else "not evaluated"
+                ),
+                "- Primary process function: " + (
+                    f"`{_enum_value(item.primary_process_function)}`"
+                    if item.process_primary_decided else "unknown" if item.process_primary_evaluated
+                    else "not evaluated"
+                ),
+                f"- Process primary/set categories: `{item.process_primary_category.value}` / "
+                f"`{item.process_set_category.value}`",
+                f"- Process primary/set voters: `{item.process_primary_participating_models}` / "
+                f"`{item.process_participating_models}`",
+                f"- Process primary/set support: `{item.process_primary_support}` / "
+                f"`{item.process_function_support}`",
+                f"- Process exact-set agreement: `{item.process_exact_set_agreement:.3f}`",
                 f"- Applicability proposal: `{applicability}`",
                 f"- Role relation proposal: `{responsibility}`",
                 f"- Statement-function confidence: `{item.statement_function_confidence:.3f}`",
@@ -1202,6 +1354,16 @@ def _render_review(report: ConsensusReport) -> str:
                 f"- Primary statement function: {hitl['primary_function']}",
                 f"- Secondary statement functions: {hitl['secondary_functions']}",
                 f"- Knowledge kinds: {hitl['knowledge_kinds']}",
+                "- Primary process function: " + (
+                    _enum_value(item.primary_process_function)
+                    if item.process_primary_decided and not item.process_decision_conflict
+                    else "[review / not evaluated]"
+                ),
+                "- Process functions: " + (
+                    _enum_values(item.proposed_process_functions)
+                    if item.process_set_decided and not item.process_decision_conflict
+                    else "[review / not evaluated]"
+                ),
                 f"- Applicability present: {hitl['applicability']}",
                 f"- Role relation present/function: {hitl['role_relation']}",
                 "- Rationale: ",
@@ -1295,6 +1457,8 @@ def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
         "Primary statement",
         "Secondary statements",
         "Knowledge kinds",
+        "Process primary",
+        "Process set",
         "Applicability",
         "Role relation",
         "Stability",
@@ -1305,6 +1469,10 @@ def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
             _enum_value(vote.primary_function),
             _enum_values(vote.secondary_functions),
             _enum_values(vote.knowledge_kinds),
+            (_enum_value(vote.primary_process_function)
+             if vote.process_primary_evaluated else "not evaluated"),
+            (_enum_values(vote.process_functions)
+             if vote.process_functions is not None else "not evaluated"),
             ("present" if vote.applicability_present else "absent"),
             _enum_values(vote.role_relation_types),
             f"{vote.stability:.3f}",

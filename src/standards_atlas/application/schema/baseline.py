@@ -7,6 +7,12 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "qualification-consensus": SchemaPolicy(
+        "qualification-consensus", "5.0", ("4.0", "5.0"), "**/consensus-report.json"
+    ),
+    "golden-corpus-proposal": SchemaPolicy(
+        "golden-corpus-proposal", "4.0", ("4.0",), "**/golden-corpus-proposal.yaml"
+    ),
     "cbox-enrichments": SchemaPolicy(
         "cbox-enrichments", "1.0", ("1.0",), "clause-descriptor.enrichment_context"
     ),

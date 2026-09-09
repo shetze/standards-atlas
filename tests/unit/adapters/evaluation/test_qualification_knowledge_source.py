@@ -68,6 +68,8 @@ def _members(
     unknown: bool = False,
     duplicate_vote: bool = False,
     missing_primary: bool = False,
+    process_votes: tuple[ModelVote, ...] | None = None,
+    process_sources: dict[str, tuple[ModelVote, ...]] | None = None,
 ) -> dict[str, bytes]:
     examples = tuple(
         EvaluationExample(
@@ -169,6 +171,36 @@ def _members(
             ),
         ),
     )
+    stages = {}
+    if process_votes is not None:
+        from standards_atlas.application.semantic_qualification.process_functions import (
+            PROCESS_PRIMARY_FIELDS,
+            PROCESS_SET_FIELDS,
+            resolve_process_votes,
+        )
+
+        def process_clause(supplied, *, minimum=2):
+            fields = resolve_process_votes(
+                supplied, minimum_models=minimum, strong_threshold=0.8,
+                majority_threshold=0.6, label_threshold=0.6,
+            )
+            return consensus.clauses[0].model_copy(update={**fields, "votes": supplied})
+
+        current = process_clause(process_votes)
+        source_paths = {}
+        for dimension, supplied in (process_sources or {}).items():
+            stage = "efficient" if dimension == "process_set" else "final/stage-resolver"
+            stage_clause = process_clause(supplied, minimum=1)
+            stages[f"cascade/{stage}/consensus-report.json"] = consensus.model_copy(
+                update={"clauses": (stage_clause,)}
+            ).model_dump(mode="json")
+            fields = PROCESS_SET_FIELDS if dimension == "process_set" else PROCESS_PRIMARY_FIELDS
+            current = current.model_copy(
+                update={name: getattr(stage_clause, name) for name in fields}
+            )
+            source_paths[dimension] = stage
+        current = current.model_copy(update={"resolution_sources": source_paths})
+        consensus = consensus.model_copy(update={"clauses": (current,)})
     coverage = build_qualification_coverage(selection=selection, report=consensus)
     detail = build_applicability_detail_selection(
         run_selection=selection,
@@ -223,6 +255,7 @@ def _members(
         ),
     )
     values = {
+        **stages,
         f"{PREFIX}/qualification-selection.json": selection.model_dump(mode="json"),
         f"{PREFIX}/{selection.dataset_snapshot}": asdict(dataset),
         f"{PREFIX}/{selection.corpus_snapshot}": corpus.model_dump(mode="json"),
@@ -392,3 +425,76 @@ def test_supported_set_is_not_discarded_when_primary_is_unknown(tmp_path: Path) 
     assert "primary_function" not in candidate.patch.semantic.model_fields_set
     primary = next(a for a in candidate.attributes if a.path.endswith(".primary_function"))
     assert primary.availability == "unknown"
+
+
+def _process_model(model, members, primary, *, observed=True):
+    return ModelVote(
+        model_id=model, repetitions=3, stability=1, primary_function="requirement",
+        primary_knowledge_kind="process", process_functions=members,
+        primary_process_function=primary, process_primary_evaluated=observed,
+    )
+
+
+def test_adoption_keeps_decided_process_set_when_primary_ties(tmp_path):
+    members = ("activity", "input")
+    data = _members(process_votes=(
+        _process_model("a", members, "activity"), _process_model("b", members, "input"),
+        _process_model("missing", None, None, observed=False),
+    ))
+    batch = load_qualification_knowledge(
+        _archive(tmp_path, data), dimensions=("process_functions",)
+    )
+    candidate = batch.candidates[0]
+    assert candidate.patch.semantic.process_functions == members
+    assert "primary_process_function" not in candidate.patch.semantic.model_fields_set
+    attributes = {item.path: item for item in candidate.attributes}
+    primary = attributes["enrichments.semantic.primary_process_function"]
+    assert primary.availability == "unknown"
+    assert primary.decision.valid_votes == 2 and primary.decision.abstained_votes == 1
+    assert primary.decision.label_votes == {"activity": 1, "input": 1}
+    assert attributes["enrichments.semantic.process_functions"].availability == "known"
+
+
+def test_adoption_counts_explicit_empty_and_null_but_not_absent_votes(tmp_path):
+    data = _members(process_votes=(
+        _process_model("a", (), None), _process_model("b", (), None),
+        _process_model("absent", None, None, observed=False),
+    ))
+    batch = load_qualification_knowledge(_archive(tmp_path, data))
+    candidate = batch.candidates[0]
+    assert candidate.patch.semantic.process_functions == ()
+    assert candidate.patch.semantic.primary_process_function is None
+    attrs = {a.path: a for a in candidate.attributes}
+    for field in ("process_functions", "primary_process_function"):
+        a = attrs[f"enrichments.semantic.{field}"]
+        assert a.availability == "known"
+        assert (a.decision.valid_votes, a.decision.supporting_votes) == (2, 2)
+        assert a.decision.abstained_votes == 1
+    primary_support = attrs["enrichments.semantic.primary_process_function"].decision
+    assert primary_support.label_votes == {"none": 2}
+
+
+def test_process_frozen_set_and_primary_keep_their_own_stage_support(tmp_path):
+    members = ("activity", "input")
+    data = _members(
+        process_votes=tuple(_process_model(f"later-{i}", (), None) for i in range(4)),
+        process_sources={
+            "process_set": tuple(
+                _process_model(f"early-{i}", members, "activity") for i in range(3)
+            ),
+            "process_function": (_process_model("resolver", members, "input"),),
+        },
+    )
+    batch = load_qualification_knowledge(_archive(tmp_path, data))
+    candidate = batch.candidates[0]
+    assert candidate.patch.semantic.process_functions == members
+    assert candidate.patch.semantic.primary_process_function == "input"
+    attrs = {a.path: a for a in candidate.attributes}
+    primary = attrs["enrichments.semantic.primary_process_function"].decision
+    selected = attrs["enrichments.semantic.process_functions"].decision
+    assert primary.stage == "final/stage-resolver"
+    assert primary.model_ids == ("resolver",)
+    assert primary.valid_votes == primary.supporting_votes == 1
+    assert selected.stage == "efficient"
+    assert selected.valid_votes == selected.supporting_votes == 3
+    assert selected.model_ids == ("early-0", "early-1", "early-2")

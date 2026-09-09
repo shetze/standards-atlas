@@ -1392,6 +1392,7 @@ def test_consensus_prompt_selection_includes_knowledge_kind(tmp_path: Path) -> N
     assert manifest.consensus.prompt_selection.model_dump() == {
         "statement_function": "p1",
         "knowledge_kind": "p2",
+        "process_function": "p1",
         "applicability": "p3",
         "role_relation": "p4",
     }

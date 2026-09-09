@@ -436,6 +436,11 @@ class BaselineProposalGenerator:
                         seed=config.seed,
                         input_hash=result.input_hash,
                         raw_response_hash=result.raw_response_hash,
+                        provided_fields=(
+                            tuple(interview_payload["provided_fields"])
+                            if interview_payload is not None
+                            else tuple(sorted(result.value))
+                        ),
                         generated_at=datetime.now(UTC),
                     ),
                 )
@@ -610,6 +615,7 @@ def _run_adaptive_interview(
         "confidence": None,
         "rationale": None,
     }
+    provided_fields: set[str] = set()
     confidences: list[float] = []
     rationales: list[str] = []
     pending_questions = list(plan.questions)
@@ -679,6 +685,8 @@ def _run_adaptive_interview(
             if follow_up is not None:
                 pending_questions.insert(0, follow_up)
             continue
+        if question.dimension is InterviewDimension.PROCESS_FUNCTION and label != "unclear":
+            provided_fields.update(("process_functions", "primary_process_function"))
         if label in {"none", "unclear"}:
             continue
         if question.dimension is InterviewDimension.STATEMENT_FUNCTION:
@@ -717,6 +725,7 @@ def _run_adaptive_interview(
         else:
             fresh_predictions += 1
             fresh_inference_duration_seconds += last_result.duration_ms / 1000.0
+        provided_fields.update(last_result.value)
         selection = _normalize_selection_payload(
             last_result.value,
             required_fields=(
@@ -738,6 +747,7 @@ def _run_adaptive_interview(
             "plan": plan.model_dump(mode="json"),
             "answers": answers,
             "aggregated_selection": selection,
+            "provided_fields": sorted(provided_fields),
             "execution": {
                 "fresh_predictions": fresh_predictions,
                 "cached_predictions": cached_predictions,

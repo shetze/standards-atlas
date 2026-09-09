@@ -20,6 +20,9 @@ from standards_atlas.application.semantic_qualification.diagnostics import (
     build_qualification_diagnostics,
     render_qualification_diagnostics_markdown,
 )
+from standards_atlas.application.semantic_qualification.process_functions import (
+    process_report_metrics,
+)
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
     QualificationCoverage,
 )
@@ -91,6 +94,7 @@ def build_analysis_metrics(
         "review_count": report.review_count,
         "categories": report.categories,
         "dimension_categories": report.dimension_categories,
+        "process_functions": process_report_metrics(report.clauses),
         "overall_statuses": report.overall_statuses,
         "participation_distribution": report.participation_distribution,
         "resolution_sources": report.resolution_sources,

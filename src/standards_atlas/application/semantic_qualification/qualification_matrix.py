@@ -15,6 +15,11 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
     ApplicabilityDecisionPolicyConfig,
 )
+from standards_atlas.application.semantic_qualification.process_cascade import (
+    capture_process_dimensions,
+    process_escalation_reasons,
+    process_stage_reasons,
+)
 from standards_atlas.application.semantic_qualification.qualification import (
     AnnotationQualificationReport,
 )
@@ -129,6 +134,13 @@ class CascadeResolutionConfig(BaseModel):
     minimum_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
     escalate_on_knowledge_kind_disagreement: bool = True
     minimum_knowledge_kind_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    # Process measurement is always enabled; additional inference is explicit.
+    escalate_on_process_function_disagreement: bool = False
+    escalate_on_process_set_disagreement: bool = False
+    minimum_process_function_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    minimum_process_set_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    process_function_resolution_mode: Literal["cumulative", "stage_resolver"] = "cumulative"
+    process_function_resolver_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
     escalate_on_applicability_disagreement: bool = True
     escalate_on_applicability_presence_disagreement: bool | None = None
     escalate_on_role_relation_disagreement: bool = True
@@ -229,6 +241,7 @@ def cascade_escalation_reasons(
         )
         if role_presence_confidence < role_relation_threshold:
             reasons.append("role_relation_confidence")
+    reasons.extend(process_escalation_reasons(clause, resolution))
     return tuple(reasons)
 
 
@@ -360,6 +373,9 @@ def cascade_stage_escalation_reasons(
         ):
             reasons.append("role_relation_disagreement")
 
+    reasons.extend(process_stage_reasons(
+        cumulative_clause, stage_clause, previous_reasons, resolution
+    ))
     return tuple(reasons)
 
 
@@ -468,6 +484,8 @@ def capture_resolved_dimensions(
     remaining_reasons: tuple[str, ...],
     source: str,
     initial_stage: bool = False,
+    resolution: CascadeResolutionConfig | None = None,
+    process_stage_clause: object | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Capture semantic decisions that became final in one cascade stage.
 
@@ -528,6 +546,15 @@ def capture_resolved_dimensions(
             "category": cumulative_clause.role_relation_category.value,
             "source": source,
         }
+    result.update(capture_process_dimensions(
+        cumulative_clause=cumulative_clause,
+        stage_clause=process_stage_clause if process_stage_clause is not None else stage_clause,
+        previous_reasons=previous_reasons,
+        remaining_reasons=remaining_reasons,
+        source=source,
+        initial_stage=initial_stage,
+        resolution=resolution or CascadeResolutionConfig(),
+    ))
     return result
 
 
@@ -659,8 +686,16 @@ class ConsensusPromptSelection(BaseModel):
 
     statement_function: str = "content-only"
     knowledge_kind: str = "content-only"
+    process_function: str = "content-only"
     applicability: str = "content-only"
     role_relation: str = "content-only"
+
+    @model_validator(mode="before")
+    @classmethod
+    def inherit_process_prompt(cls, value: Any) -> Any:
+        if isinstance(value, dict) and not value.get("process_function"):
+            return {**value, "process_function": value.get("statement_function", "content-only")}
+        return value
 
 
 class AdjudicationConfig(BaseModel):

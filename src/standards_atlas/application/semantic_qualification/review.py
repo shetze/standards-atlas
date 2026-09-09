@@ -46,6 +46,9 @@ class ReviewForm(BaseModel):
     primary_function: str | None = None
     knowledge_kinds: tuple[str, ...] = ()
     primary_knowledge_kind: str | None = None
+    # A missing review dimension preserves the candidate, not an empty decision.
+    process_functions: tuple[str, ...] | None = None
+    primary_process_function: str | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     reviewer: str = ""
     reviewed_at: datetime | None = None
@@ -67,6 +70,12 @@ class ReviewForm(BaseModel):
             raise ValueError("primary_knowledge_kind must be included in knowledge_kinds")
         if len(set(self.knowledge_kinds)) != len(self.knowledge_kinds):
             raise ValueError("knowledge_kinds must not contain duplicates")
+        if self.process_functions is not None:
+            if len(set(self.process_functions)) != len(self.process_functions):
+                raise ValueError("process_functions must not contain duplicates")
+            if (self.primary_process_function is not None
+                    and self.primary_process_function not in self.process_functions):
+                raise ValueError("primary_process_function must be included in process_functions")
         return self
 
 
@@ -271,6 +280,13 @@ def _render_review(
         primary_knowledge_kind=(
             proposal.primary_knowledge_kind.value if proposal.primary_knowledge_kind else None
         ),
+        process_functions=(
+            tuple(value.value for value in proposal.process_functions)
+            if "process_functions" in (candidate.generator.provided_fields or ()) else None
+        ),
+        primary_process_function=(
+            proposal.primary_process_function.value if proposal.primary_process_function else None
+        ),
         confidence=proposal.confidence,
     )
     editable = yaml.safe_dump(form.model_dump(mode="json"), sort_keys=False, allow_unicode=True)
@@ -357,11 +373,16 @@ def _apply_review(
         raise AnnotationContractError(f"reviewer must be set: {path}")
     selection = StatementFunctionSelection.model_validate(
         {
+            **candidate.proposal.model_dump(mode="python", exclude={"rationale"}),
             "statement_functions": form.statement_functions,
             "primary_function": form.primary_function,
             "knowledge_kinds": form.knowledge_kinds,
             "primary_knowledge_kind": form.primary_knowledge_kind,
             "confidence": form.confidence,
+            **({
+                "process_functions": form.process_functions,
+                "primary_process_function": form.primary_process_function,
+            } if form.process_functions is not None else {}),
         }
     )
     if form.decision is ReviewDecision.ACCEPTED and selection != candidate.proposal.model_copy(

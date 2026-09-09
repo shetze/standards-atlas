@@ -61,3 +61,16 @@ configuration, and evaluator content by SHA-256.
 
 `evaluation complytime-feedback` writes a derived JSON report resolving EvaluationLog entries back
 to source clauses. It is evidence/reporting and is not imported into the canonical document.
+
+## Qualification consensus and process observations
+
+Consensus schema 5.0 preserves process sets and primaries independently, including availability,
+participation, per-label/primary support, exact-set agreement and resolution sources. A missing
+set is not an empty selection, and an undecided primary is not an explicit null vote. Annotation
+generators record `provided_fields` before normalization defaults are added.
+
+Schema 4.0 consensus remains readable without changing old policy hashes. Only matching retained
+structured provider responses can supply missing observations during explicit recomputation.
+Free-text rationale and old synthesized interview defaults are not evidence for this purpose.
+The human-review golden proposal is now schema 4.0; the qualification archive layout stays 1.5.
+See [Process-function qualification](../user-guide/process-function-qualification.md).

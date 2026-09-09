@@ -158,6 +158,12 @@ def _cascade_reason_dimensions(reasons: tuple[str, ...]) -> set[str]:
             "consensus_category",
         }:
             dimensions.add("statement_function")
+        elif reason.startswith(("process_function_", "insufficient_process_function_")):
+            dimensions.add("process_function")
+        elif reason.startswith(("process_set_", "insufficient_process_set_")):
+            dimensions.add("process_set")
+        elif reason.startswith("knowledge_kind_"):
+            dimensions.add("knowledge_kind")
         elif reason.startswith("applicability_"):
             dimensions.add("applicability")
         elif reason.startswith(("responsibility_", "role_relation_", "role_semantics_")):
@@ -169,7 +175,10 @@ def _render_intermediate_resolution_summary(
     previous: dict[str, tuple[str, ...]],
     current: dict[str, tuple[str, ...]],
 ) -> None:
-    for dimension in ("statement_function", "applicability", "responsibility"):
+    for dimension in (
+        "statement_function", "knowledge_kind", "process_function", "process_set",
+        "applicability", "responsibility",
+    ):
         candidates = {
             clause_id
             for clause_id, reasons in previous.items()
@@ -194,6 +203,8 @@ def _resolution_counts(
     dimensions = (
         "statement_function",
         "knowledge_kind",
+        "process_function",
+        "process_set",
         "applicability",
         "responsibility",
     )
@@ -810,6 +821,7 @@ def qualify_model_prompt_matrix(
                                 remaining_reasons=escalation_reasons.get(clause_id, ()),
                                 source=stage.id,
                                 initial_stage=True,
+                                resolution=stage_resolution,
                             )
                             dimension_resolutions.setdefault(clause_id, {}).update(captured)
                     else:
@@ -871,6 +883,8 @@ def qualify_model_prompt_matrix(
                                 previous_reasons=previous_escalation_reasons.get(clause_id, ()),
                                 remaining_reasons=escalation_reasons.get(clause_id, ()),
                                 source=stage.id,
+                                resolution=stage_resolution,
+                                process_stage_clause=stage_clause,
                             )
                             dimension_resolutions.setdefault(clause_id, {}).update(captured)
                         _render_intermediate_resolution_summary(

@@ -147,6 +147,9 @@ class AnnotationGenerator(BaseModel):
     seed: int | None = None
     input_hash: str | None = None
     raw_response_hash: str | None = None
+    # Keys actually returned by the provider, before normalization fills defaults.
+    # None denotes legacy provenance and requires matching raw-response evidence.
+    provided_fields: tuple[str, ...] | None = None
 
 
 class AnnotationReview(BaseModel):

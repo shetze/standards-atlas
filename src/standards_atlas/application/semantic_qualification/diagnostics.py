@@ -12,6 +12,9 @@ from standards_atlas.application.semantic_qualification.consensus import (
     ConsensusCategory,
     ConsensusReport,
 )
+from standards_atlas.application.semantic_qualification.process_functions import (
+    process_report_metrics,
+)
 
 _PRESENT = "present"
 _ABSENT = "absent"
@@ -32,6 +35,7 @@ def build_qualification_diagnostics(
         "applicability_model_fitness": model_fitness,
         "duplicate_clusters": duplicates,
         "stage_contributions": stage_contributions,
+        "process_functions": process_report_metrics(report.clauses),
     }
 
 
@@ -85,13 +89,29 @@ def render_qualification_diagnostics_markdown(
             f"{_format_optional_rate(item['presence_reference_agreement_rate'])} |"
         )
 
+    process = process_report_metrics(report.clauses)
+    lines.extend([
+        "", "## Process-function observations", "",
+        "Set and primary use separate measured participation. Empty/null answers are valid; "
+        "missing fields and tied decisions are not negative labels. Agreement is not accuracy.",
+        "",
+        f"- Set evaluated / not evaluated: {process['set_evaluated']} / "
+        f"{process['set_not_evaluated']}",
+        f"- Primary evaluated / not evaluated: {process['primary_evaluated']} / "
+        f"{process['primary_not_evaluated']}",
+        f"- Decided set / primary: {process['set_decided']} / {process['primary_decided']}",
+        f"- Empty-set / null-primary decisions: {process['empty_set_decisions']} / "
+        f"{process['null_primary_decisions']}",
+        f"- Cross-stage decision conflicts: {process['decision_conflicts']}",
+    ])
     lines.extend(["", "## Cascade stage contributions", ""])
     if stages:
         lines.extend(
             [
-                "| Stage | Entered | Remaining | Statement | Knowledge | Applicability | "
+                "| Stage | Entered | Remaining | Statement | Knowledge | "
+                "Process primary | Process set | Applicability | "
                 "Role relation |",
-                "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+                "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
             ]
         )
         for item in stages:
@@ -101,6 +121,8 @@ def render_qualification_diagnostics_markdown(
                 f"{item['unresolved_clause_count']} | "
                 f"{resolved.get('statement_function', 0)} | "
                 f"{resolved.get('knowledge_kind', 0)} | "
+                f"{resolved.get('process_function', 0)} | "
+                f"{resolved.get('process_set', 0)} | "
                 f"{resolved.get('applicability', 0)} | "
                 f"{resolved.get('role_relation', 0)} |"
             )

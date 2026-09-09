@@ -28,6 +28,8 @@ Removed refactoring schemas are not recreated merely to fill the stable support 
 | Private knowledge evidence | persistence | `knowledge-evidence` (`1.0`) | content-addressed payload | `.atlas/data/knowledge-evidence/<sha256>.json` |
 | AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.0`) | — | `local/review/atlasdata-knowledge*.json` |
 | Standards manifest | process | `standards-manifest` | — | `manifests/standards*.yaml` |
+| Qualification consensus | persistence | `qualification-consensus` (write 5.0, read 4.0/5.0) | model/prompt/stage identity | `**/consensus-report.json` |
+| Golden corpus proposal | persistence | `golden-corpus-proposal` (4.0) | — | `**/golden-corpus-proposal.yaml` |
 | Qualification Matrix manifest | process | `qualification-matrix-manifest` | — | `manifests/*qualification*.yaml` |
 | Semantic task | packaged resource | `semantic-task-resource` | task version | `resources/semantic/tasks/<id>/<version>/task.yaml` |
 | Semantic profile | packaged resource | `semantic-profile-resource` | profile version | `resources/semantic/profiles/<id>/<version>/profile.yaml` |
@@ -76,3 +78,12 @@ A new profile such as `1.1.0` can still use schema `1`; conversely a future prof
 Standards Atlas does not promise in-place migration of generated artifacts. Compatibility is a reader concern: a supported old payload may deserialize into the current model, while writers emit only the current schema. Derived `.atlas/cache` and `.atlas/work` data are not compatibility contracts and may be invalidated freely.
 
 See [ADR 0014](../architecture/adr/0014-schema-and-artifact-versioning-policy.md) for the normative policy.
+
+## Process-function qualification compatibility
+
+Consensus 5.0 adds explicitly measured process primary/set votes and decisions. Schema 4.0
+remains readable with the original normalized serialization for existing policy fingerprints;
+this is read preservation, not a writer migration. New consensus evaluation always writes 5.0.
+The review-only golden proposal uses 4.0. Missing legacy process observations are not replaced
+by empty votes. Canonical schema 9, companion 1.0, adoption 1.0 and archive layout 1.5 are
+unchanged. See [Process-function qualification](../user-guide/process-function-qualification.md).

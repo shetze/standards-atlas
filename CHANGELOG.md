@@ -2,6 +2,20 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Process-function qualification through AtlasData (2026-09-09)
+
+- Preserve actually supplied process sets and primary labels through per-model votes,
+  separate consensus decisions, stage/resolver snapshots, review and archive diagnostics.
+- Distinguish observed empty/null from missing/unknown; collapse repetitions instead of
+  counting them as independent votes. Recover old observations only from matching structured
+  responses, never from rationale or default-filled legacy interviews.
+- Add optional process-driven escalation without increasing existing manifest workloads.
+- Adopt usable process decisions through the existing authority-aware canonical merge and
+  AtlasData companion roundtrip. Invalidated stale primaries remain unknown, not false null votes.
+- Write consensus schema 5.0 and golden proposal 4.0; preserve old consensus 4.0 policy hashes.
+  Keep canonical schema 9, companion/adoption 1.0 and archive layout 1.5 unchanged.
+- Test fresh synthetic provider-to-AtlasData roundtrips and retained Run 074 compatibility.
+
 ## Unreleased — Effective CBox consumption and explicit knowledge workflows (2026-09-09)
 
 - Share accepted canonical CBox values, attribute availability and provenance across corpus

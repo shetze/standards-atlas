@@ -42,7 +42,8 @@ uv run standards-atlas document adopt-qualification \
 
 `--document ISO26262-11` restricts the operation to a physical document; the option is
 repeatable. `--dimension` is also repeatable and accepts `statement_functions`,
-`knowledge_kinds`, `applicability` and `role_semantics`. Without it, all four are addressed.
+`knowledge_kinds`, `process_functions`, `applicability` and `role_semantics`. Without it,
+all five are addressed.
 This version still requires a complete policy archive even for a subset of dimensions.
 
 The entire target set is validated first. Each changed document is replaced atomically;
@@ -63,7 +64,7 @@ document files. Reports may describe existing semantic values and belong in igno
 | Knowledge kinds and explicit primary | Final cascade selection; insufficient decisions are recorded as unknown. |
 | Applicability presence | Only `applicability-policy-run.json` `cases[].final_present`, never the pre-policy gate. |
 | Role-semantics presence | Final presence decision; no automatically accepted exact role tuples. |
-| Process functions | Not supplied by these archive votes; preserved and reported as not evaluated. |
+| Process functions and explicit primary | New consensus 5.0 observations, with separate primary/set support and stage sources; legacy 4.0 remains not evaluated. |
 | Applicability functions/polarity | No new detail inferred. Presence is usable without details; negative presence clears incompatible generated details. |
 | Subject and routing context | Existing canonical enrichment remains untouched by adoption. |
 
@@ -79,7 +80,9 @@ The partial transfer contract retains omitted fields across JSON roundtrips. An 
 `false` or an evaluated empty set is known; an unavailable decision is unknown. Unknown input
 does not erase a previously known value. A schema default without an assessment is not
 an inferred negative. Consumers must inspect provenance availability, not only boolean
-defaults; full downstream CBox/workflow integration remains the subsequent slice.
+defaults. [Canonical CBox and knowledge workflows](canonical-cbox.md) use this state.
+See [Process-function qualification](process-function-qualification.md) for availability,
+recomputation and opt-in escalation.
 
 ## Authority and compatibility
 

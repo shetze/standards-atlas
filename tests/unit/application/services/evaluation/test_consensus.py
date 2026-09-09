@@ -384,13 +384,13 @@ def test_model_votes_are_rendered_as_space_padded_table() -> None:
 
     assert lines == [
         "| Voter                 | Primary statement | Secondary statements | Knowledge kinds | "
-        "Applicability | Role relation   | Stability |",
+        "Process primary | Process set   | Applicability | Role relation   | Stability |",
         "| --------------------- | ----------------- | -------------------- | --------------- | "
-        "------------- | --------------- | --------- |",
+        "--------------- | ------------- | ------------- | --------------- | --------- |",
         "| granite               | requirement       | none                 | technique       | "
-        "present       | none            | 1.000     |",
+        "not evaluated   | not evaluated | present       | none            | 1.000     |",
         "| gemma-long-model-name | description       | none                 | none            | "
-        "absent        | responsible_for | 0.667     |",
+        "not evaluated   | not evaluated | absent        | responsible_for | 0.667     |",
     ]
     assert all(len(line) == len(lines[0]) for line in lines)
 
