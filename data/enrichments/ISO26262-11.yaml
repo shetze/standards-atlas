@@ -1,5 +1,5 @@
 manifest_type: atlasdata-enrichments
-schema_version: '1.1'
+schema_version: '1.2'
 document_key: ISO26262-11
 family_key: ISO26262
 atlasdata_file: ISO26262
@@ -45,10 +45,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - functional safety
-      - malfunctioning behaviour
-      - safety lifecycle
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -84,7 +80,6 @@ clauses:
     value:
       normalized_label: functional safety
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -224,65 +219,6 @@ clauses:
           concept: 1
           technique_or_measure: 3
         category: majority_consensus
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 8
-        abstained_votes: 0
-        label_votes:
-          'False': 8
-          'True': 1
-        category: strong_consensus
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 8
-        abstained_votes: 0
-        label_votes:
-          'False': 8
-          'True': 1
-        category: strong_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -359,11 +295,6 @@ clauses:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
       enrichments.semantic.primary_knowledge_kind:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.statement_functions:
@@ -382,9 +313,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - partitioning
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -412,9 +340,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - partitioning
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -442,7 +367,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -470,7 +394,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -498,7 +421,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -526,7 +448,6 @@ clauses:
     value:
       normalized_label: fault
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -554,7 +475,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -582,7 +502,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -610,13 +529,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - diagnostic coverage
-      - partitioning
-      - safety
-      - safety mechanism
-      - system
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -649,9 +561,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - partitioning
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -679,9 +588,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - partitioning
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -709,7 +615,6 @@ clauses:
     value:
       normalized_label: proven in use argument
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -737,18 +642,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - bus
-      - component
-      - configuration
-      - design
-      - fault
-      - integration
-      - integrator
-      - partitioning
-      - software
-      - supplier
-      - verification
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -786,7 +679,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -814,7 +706,6 @@ clauses:
     value:
       normalized_label: lifecycle
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -841,7 +732,6 @@ clauses:
     value:
       normalized_label: lifecycle
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -874,22 +764,22 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: '0'
+          reference: ISO 26262-11:2018 0
         - kind: clause
           document_key: ISO26262-11
           part: A semiconductor component and its partitioning
           clause_id: clause-32d0e2174e0c
-          reference: '4'
+          reference: ISO 26262-11:2018 4
         - kind: clause
           document_key: ISO26262-11
           part: Intellectual Property (IP)
           clause_id: clause-d556289bbf72
-          reference: '4.5'
+          reference: ISO 26262-11:2018 4.5
         - kind: clause
           document_key: ISO26262-11
           part: IP lifecycle
           clause_id: clause-882a501ce63c
-          reference: 4.5.3
+          reference: ISO 26262-11:2018 4.5.3
         conditions: 2
         exclusions: 0
         qualifications: 0
@@ -922,7 +812,6 @@ clauses:
     value:
       normalized_label: lifecycle
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -932,7 +821,7 @@ clauses:
     content: sha256:605178b400efecde13e02cf3e11982a852ec286bb574de82e3c0e28a9c4b895f
     attributes:
       enrichments.context_routing:
-        private_value: sha256:e409da95fc5ecec630a4e95a3040b99eaa9094dd4beb95cb1602334fa93ef255
+        private_value: sha256:b2a8df84c43563c5157c1e6e6a35a13563a7761c7716977058f7e12ce98861da
         private_provenance: sha256:74142358d3c970b19e4e4500892a3fd6359dcc4521a3838e3b54c651fa60f0b0
         evidence:
         - sha256:62e321a1639f971654b90ac68f6baf2048cf8ee202b4274bdfcbb6ea6077cd79
@@ -956,7 +845,6 @@ clauses:
     value:
       normalized_label: lifecycle
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1007,7 +895,6 @@ clauses:
     value:
       normalized_label: element
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1040,7 +927,6 @@ clauses:
     value:
       normalized_label: proven in use
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1068,9 +954,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - partitioning
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1103,7 +986,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-043e1222d364
-          reference: '5'
+          reference: ISO 26262-11:2018 5
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -1121,7 +1004,6 @@ clauses:
     value:
       normalized_label: integrator
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1131,7 +1013,7 @@ clauses:
     content: sha256:51c697f7ca8ca780753d17195f5e4071f72b247e4f555783bca5ce9926bb8f47
     attributes:
       enrichments.context_routing:
-        private_value: sha256:1f82d915c403dc46b644373b0db96f55416e7fd7209f4c4275a6807e6eb5223d
+        private_value: sha256:7c3c86dc8c24a31e3be7eaa8729f1fa37102a8e986fe22ceb695000f024ccfdc
         private_provenance: sha256:92dc0604dcba362950097fcf157e9b7a362924dc5f6565a99716fcbf3aaf5d8b
         evidence:
         - sha256:62e321a1639f971654b90ac68f6baf2048cf8ee202b4274bdfcbb6ea6077cd79
@@ -1154,7 +1036,6 @@ clauses:
     value:
       normalized_label: safety plan
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1182,7 +1063,6 @@ clauses:
     value:
       normalized_label: technical safety concept
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1210,7 +1090,6 @@ clauses:
     value:
       normalized_label: verification review
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1271,7 +1150,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1304,7 +1182,6 @@ clauses:
     value:
       normalized_label: dependent failures
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1332,14 +1209,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - confirmation measure
-      - fault avoidance
-      - partitioning
-      - safety case
-      - safety plan
-      - systematic fault
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1386,7 +1255,7 @@ clauses:
       - source_clause_id: clause-6da505011d86
         document_key: ISO26262-11
         clause_id: clause-043e1222d364
-        reference: '5'
+        reference: ISO 26262-11:2018 5
         role: defines
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -1396,7 +1265,6 @@ clauses:
     value:
       normalized_label: distributed development
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1406,7 +1274,7 @@ clauses:
     content: sha256:7b503c74efb8b065df2575016f9e1d7ef9c4a45eb18e8b2223c502f62b6da578
     attributes:
       enrichments.context_routing:
-        private_value: sha256:83f8210dacd9b69ff994cbd862c445df4451b75933f7f84cd4bb0692c9781869
+        private_value: sha256:d4b931c35fe9dd233a1a839f430b841744d2039e347a97e045410ecd8a0a375a
         private_provenance: sha256:92dc0604dcba362950097fcf157e9b7a362924dc5f6565a99716fcbf3aaf5d8b
         evidence:
         - sha256:62e321a1639f971654b90ac68f6baf2048cf8ee202b4274bdfcbb6ea6077cd79
@@ -1429,7 +1297,6 @@ clauses:
     value:
       normalized_label: integration
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1457,12 +1324,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - dependent failures
-      - failure mode
-      - partitioning
-      - work product
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1517,7 +1378,7 @@ clauses:
       - source_clause_id: clause-83efa227d83d
         document_key: ISO26262-11
         clause_id: clause-043e1222d364
-        reference: '5'
+        reference: ISO 26262-11:2018 5
         role: defines
       - source_clause_id: clause-83efa227d83d
         document_key: ISO26262-6
@@ -1532,7 +1393,6 @@ clauses:
     value:
       normalized_label: integration
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1542,7 +1402,7 @@ clauses:
     content: sha256:41e3e3f36e70e0f7f5b1e69ce20db522869ea04df9e7480ff27316faab97ca82
     attributes:
       enrichments.context_routing:
-        private_value: sha256:bf8481b8b54335b75bf7def97168f58a180c70366c2fb145c268035bede00626
+        private_value: sha256:8c314e32d3f376ea1b63128e404a92e4686fd08f4cfda6f06044ccdc18345ebc
         private_provenance: sha256:92dc0604dcba362950097fcf157e9b7a362924dc5f6565a99716fcbf3aaf5d8b
         evidence:
         - sha256:62e321a1639f971654b90ac68f6baf2048cf8ee202b4274bdfcbb6ea6077cd79
@@ -1565,7 +1425,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1592,7 +1451,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1619,7 +1477,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1647,7 +1504,6 @@ clauses:
     value:
       normalized_label: reliability
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1675,7 +1531,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1703,7 +1558,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1736,7 +1590,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-5b8c10bd6210
-          reference: '4.6'
+          reference: ISO 26262-11:2018 4.6
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -1744,12 +1598,12 @@ clauses:
       - source_clause_id: clause-47d7b8ee3653
         document_key: ISO26262-11
         clause_id: clause-47d7b8ee3653
-        reference: '8'
+        reference: ISO 26262-11:2018 4.6.1.5
         role: depends_on
       - source_clause_id: clause-47d7b8ee3653
         document_key: ISO26262-11
         clause_id: clause-47d7b8ee3653
-        reference: '9'
+        reference: ISO 26262-11:2018 4.6.1.5
         role: depends_on
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -1759,7 +1613,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1769,7 +1622,7 @@ clauses:
     content: sha256:e983637f8ee37dc304e99436c695f9f749502bb21d92b3dc0c40e2c7bda3df49
     attributes:
       enrichments.context_routing:
-        private_value: sha256:ab716b1db5ce1e1f5bbfb0b24f6459492a388aae1677713ba798e32e37a2b6c8
+        private_value: sha256:07f47de8fbbc74cc99699c72f58b258f980efa6c5542dd18ca372587ab460d03
         private_provenance: sha256:adfb851201fe46975145b204f5375d77b35a4da0ac90e27e792bf47c00196f06
         evidence:
         - sha256:cc3c7db81428d7fa8383246f91afe9e2f7eb8996d6da27fa3aca3e26d5e64179
@@ -1793,7 +1646,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1821,7 +1673,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1849,7 +1700,6 @@ clauses:
     value:
       normalized_label: transient fault
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1877,7 +1727,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1905,7 +1754,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1933,7 +1781,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1960,7 +1807,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -1987,7 +1833,6 @@ clauses:
     value:
       normalized_label: reliability
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -2192,7 +2037,6 @@ clauses:
     value:
       normalized_label: reliability
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -2353,65 +2197,6 @@ clauses:
           process: 3
           technique_or_measure: 6
         category: majority_consensus
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 6
-        abstained_votes: 0
-        label_votes:
-          'False': 6
-          'True': 3
-        category: majority_consensus
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 6
-        abstained_votes: 0
-        label_votes:
-          'False': 6
-          'True': 3
-        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -2480,7 +2265,6 @@ clauses:
     value:
       normalized_label: reliability
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -2499,11 +2283,6 @@ clauses:
         decision_source: sha256:eef7564a4cbfdf8238ec6080bc67ebf5e54c656776a49d2a631337875bed6853
       enrichments.semantic.primary_knowledge_kind:
         decision_source: sha256:7522fe81e71cafbb15eacd9dbed126ad7e30db1bcd300836a81037faae2cb451
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.statement_functions:
@@ -2704,7 +2483,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -2858,63 +2636,6 @@ clauses:
           process: 1
           technique_or_measure: 2
         category: majority_consensus
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 8
-        supporting_votes: 5
-        abstained_votes: 0
-        label_votes:
-          'False': 5
-          'True': 3
-        category: majority_consensus
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 8
-        supporting_votes: 5
-        abstained_votes: 0
-        label_votes:
-          'False': 5
-          'True': 3
-        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -2981,7 +2702,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -3000,11 +2720,6 @@ clauses:
         decision_source: sha256:eef7564a4cbfdf8238ec6080bc67ebf5e54c656776a49d2a631337875bed6853
       enrichments.semantic.primary_knowledge_kind:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.statement_functions:
@@ -3144,65 +2859,6 @@ clauses:
           process: 4
           technique_or_measure: 5
         category: disputed
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 4
-        abstained_votes: 0
-        label_votes:
-          'False': 4
-          'True': 5
-        category: disputed
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 4
-        abstained_votes: 0
-        label_votes:
-          'False': 4
-          'True': 5
-        category: disputed
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -3270,7 +2926,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -3288,11 +2943,6 @@ clauses:
       enrichments.semantic.primary_function:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
@@ -3433,65 +3083,6 @@ clauses:
           process: 4
           technique_or_measure: 5
         category: disputed
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 5
-        abstained_votes: 0
-        label_votes:
-          'False': 5
-          'True': 4
-        category: disputed
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 5
-        abstained_votes: 0
-        label_votes:
-          'False': 5
-          'True': 4
-        category: disputed
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -3562,7 +3153,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -3580,11 +3170,6 @@ clauses:
       enrichments.semantic.primary_function:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
@@ -3614,12 +3199,12 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-548054e277e2
-          reference: 4.6.2.1
+          reference: ISO 26262-11:2018 4.6.2.1
         - kind: clause
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-f3ebfa96547a
-          reference: 4.6.2.1.2
+          reference: ISO 26262-11:2018 4.6.2.1.2
         conditions: 2
         exclusions: 0
         qualifications: 0
@@ -3637,7 +3222,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -3647,7 +3231,7 @@ clauses:
     content: sha256:8cd4cb48fd31d587488d7bcfb8aed6b98df1559ddf9076078e400a99add6ffa2
     attributes:
       enrichments.context_routing:
-        private_value: sha256:a1d485c7e4c88c97b88f30fd7c5524b6ba6ced49135b9a6432fffb4730bde2a7
+        private_value: sha256:a12c2eb6aae918d6b5850cb93ebecdef2f471663077977aae4b93d391cef7aa3
         private_provenance: sha256:449974351e57e1f71921c810f07af988fdbb7cd7dfa8e0a4d02a51bb57b7767f
         evidence:
         - sha256:2421111e11774f9d0d2209243bdd5143467a98b7e973115dc5ad958117ef4f1f
@@ -3786,65 +3370,6 @@ clauses:
           process: 4
           technique_or_measure: 5
         category: disputed
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 6
-        abstained_votes: 0
-        label_votes:
-          'False': 6
-          'True': 3
-        category: majority_consensus
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 6
-        abstained_votes: 0
-        label_votes:
-          'False': 6
-          'True': 3
-        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -3912,7 +3437,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -3930,11 +3454,6 @@ clauses:
       enrichments.semantic.primary_function:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
@@ -4150,7 +3669,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4192,7 +3710,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4220,7 +3737,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4248,7 +3764,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 0.87
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4276,7 +3791,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4304,7 +3818,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4332,7 +3845,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4360,7 +3872,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4388,7 +3899,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4415,7 +3925,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4443,7 +3952,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4476,7 +3984,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-afdb5f17d8ca
-          reference: '4.7'
+          reference: ISO 26262-11:2018 4.7
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -4489,7 +3997,7 @@ clauses:
       - source_clause_id: clause-f42d68875936
         document_key: ISO26262-11
         clause_id: clause-f42d68875936
-        reference: 4.7.5.2
+        reference: ISO 26262-11:2018 4.7.3
         role: provides_exception
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -4499,7 +4007,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4509,7 +4016,7 @@ clauses:
     content: sha256:5b7311a7e4a396068bddb10bacf2edd22beaaff0f2e00e68a8558c354c696aeb
     attributes:
       enrichments.context_routing:
-        private_value: sha256:729abaf754d428e40533bf2c4bced2d9dd34e6ffd2fc778ac11667d4591ddc76
+        private_value: sha256:9509c1e2ac49bfa6042c07aac02927aab15898f53834b779f3760bf757f4e256
         private_provenance: sha256:36134f6a3864471fdfa81d6d7d897fbb6b5afbb603936a4bfe8e71c09c45e28c
         evidence:
         - sha256:067cf284515c2d8c34ae8a1b1026394eb691d7e12790c32457d9190748edbb52
@@ -4555,7 +4062,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4588,7 +4094,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4620,22 +4125,22 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: '0'
+          reference: ISO 26262-11:2018 0
         - kind: clause
           document_key: ISO26262-11
           part: A semiconductor component and its partitioning
           clause_id: clause-32d0e2174e0c
-          reference: '4'
+          reference: ISO 26262-11:2018 4
         - kind: clause
           document_key: ISO26262-11
           part: Semiconductor dependent failure analysis
           clause_id: clause-afdb5f17d8ca
-          reference: '4.7'
+          reference: ISO 26262-11:2018 4.7
         - kind: clause
           document_key: ISO26262-11
           part: Dependent failure initiators and mitigation measures
           clause_id: clause-29e131dcfe74
-          reference: 4.7.5
+          reference: ISO 26262-11:2018 4.7.5
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -4643,7 +4148,7 @@ clauses:
       - source_clause_id: clause-aff01bbf185d
         document_key: ISO26262-11
         clause_id: clause-29e131dcfe74
-        reference: 4.7.5
+        reference: ISO 26262-11:2018 4.7.5
         role: provides_applicability
       - source_clause_id: clause-aff01bbf185d
         document_key: ISO26262-6
@@ -4658,7 +4163,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4668,7 +4172,7 @@ clauses:
     content: sha256:fd6410df5635b3bd68f5e22a4e71eb0dd591d1981f995b477aeeec1b456f94da
     attributes:
       enrichments.context_routing:
-        private_value: sha256:487492cfa0930a4c761b046217e6ea61641815bb3445a2a8dbf0c44fe0b1b37d
+        private_value: sha256:b4446d36dc6a97edde32e9eb0f1daa3dd92d8834d850496823fde4356cbea12f
         private_provenance: sha256:3c042f4f753e8cff66e9250fece6b87cbd23ab1cfcabae18bd174ae4659e19da
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
@@ -4691,7 +4195,6 @@ clauses:
     value:
       normalized_label: verification
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4719,7 +4222,6 @@ clauses:
     value:
       normalized_label: freedom from interference
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4775,7 +4277,6 @@ clauses:
     value:
       normalized_label: software
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4809,7 +4310,6 @@ clauses:
     value:
       normalized_label: freedom from interference
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4838,7 +4338,6 @@ clauses:
     value:
       normalized_label: hardware subpart
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4866,7 +4365,6 @@ clauses:
     value:
       normalized_label: dependent failures
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4899,7 +4397,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-afdb5f17d8ca
-          reference: '4.7'
+          reference: ISO 26262-11:2018 4.7
         conditions: 1
         exclusions: 0
         qualifications: 1
@@ -4907,7 +4405,7 @@ clauses:
       - source_clause_id: clause-91e76f0b1f7f
         document_key: ISO26262-11
         clause_id: clause-aff01bbf185d
-        reference: 4.7.5.1
+        reference: ISO 26262-11:2018 4.7.5.1
         role: provides_applicability
       - source_clause_id: clause-91e76f0b1f7f
         document_key: ISO26262-5
@@ -4932,7 +4430,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4942,7 +4439,7 @@ clauses:
     content: sha256:98257fc7e659b1078d317021e2c3af7b9a62b713c60e314404336a60da6fcf5b
     attributes:
       enrichments.context_routing:
-        private_value: sha256:65391215eea84f689b517560598933f336f7883ea4004a162daf5372a7a33a32
+        private_value: sha256:56109a0a3b1318d9626427db90253cd0ed7039b472c3821b9ec4f4430f22dae6
         private_provenance: sha256:fcf93f7d489363748d340e9d31e8386e3786c8725c29bfad116a1a795dde5b77
         evidence:
         - sha256:4977730bbc6950ad8254566c3a975e273130a5e0ae4c13802adcf63586c0d6f4
@@ -4967,7 +4464,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -4995,7 +4491,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5071,7 +4566,6 @@ clauses:
     value:
       normalized_label: dependent failures
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5106,7 +4600,6 @@ clauses:
     value:
       normalized_label: random hardware fault
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5134,7 +4627,6 @@ clauses:
     value:
       normalized_label: dependent failures
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5162,7 +4654,6 @@ clauses:
     value:
       normalized_label: dependent failures
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5190,7 +4681,6 @@ clauses:
     value:
       normalized_label: fault injection
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5217,7 +4707,6 @@ clauses:
     value:
       normalized_label: hardware architectural metrics
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5250,7 +4739,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-a787e1fad2fc
-          reference: '4.8'
+          reference: ISO 26262-11:2018 4.8
         conditions: 2
         exclusions: 0
         qualifications: 5
@@ -5268,7 +4757,6 @@ clauses:
     value:
       normalized_label: fault injection
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5278,7 +4766,7 @@ clauses:
     content: sha256:cf05a91a9e9885ccc463d5d4a6fed85d2bec727b1dd648dbb9d49568aaf0f74c
     attributes:
       enrichments.context_routing:
-        private_value: sha256:454170521e4f9ac1e2d266a65358e7d8cb48928a2e7becde6c68d931d38d1649
+        private_value: sha256:0d0b2eb5390ff6bcc11e3e1aee25e7ee6149eb9933e49f79467d7b57c52bd2f8
         private_provenance: sha256:f889d710d6af7a4523056f31c785d90b658dc2b1ae360a116b47dfe4d824064d
         evidence:
         - sha256:cad7cb9612e2042cecf1ed92ffab51f2607358c4fdd315b356874bd2a19d03d1
@@ -5301,7 +4789,6 @@ clauses:
     value:
       normalized_label: fault injection
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5329,9 +4816,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - partitioning
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5364,7 +4848,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: '0'
+          reference: ISO 26262-11:2018 0
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -5372,7 +4856,7 @@ clauses:
       - source_clause_id: clause-b7594a46015d
         document_key: ISO26262-11
         clause_id: clause-043e1222d364
-        reference: '5'
+        reference: ISO 26262-11:2018 5
         role: provides_applicability
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -5382,15 +4866,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - design
-      - element
-      - partitioning
-      - risk
-      - safety
-      - safety-related
-      - testing
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5400,7 +4875,7 @@ clauses:
     content: sha256:6edeaea455bdb3cf0bd55d13dc6066fb2b03610aa9587e9e7095fd0bff200cde
     attributes:
       enrichments.context_routing:
-        private_value: sha256:bfa3ae07d132e55ec704cac951dffadcac3620fbde7b9d1d9650a45b26c9081b
+        private_value: sha256:baaf61d05ff029ed7e15cc7e06793849ffe63d71bd6f0a5d5a79f122cc6916d3
         private_provenance: sha256:1024c1cc68283e893f396b066d9143e5e3e0a4eb9f234a9ec56fc5b2ebe47f30
         evidence:
         - sha256:ba4aa47c155c6aee3ae8d9629cd00f51358a9b0b69e199b667eb08c34bccad83
@@ -5458,7 +4933,6 @@ clauses:
     value:
       normalized_label: management system
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5496,7 +4970,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-7d53a8e60b45
-          reference: '4.9'
+          reference: ISO 26262-11:2018 4.9
         conditions: 1
         exclusions: 1
         qualifications: 1
@@ -5514,7 +4988,6 @@ clauses:
     value:
       normalized_label: safety plan
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5524,7 +4997,7 @@ clauses:
     content: sha256:710c86b97fd05eb23f46ec9854833381010e5dea1c269d907a7909cf8ee96e01
     attributes:
       enrichments.context_routing:
-        private_value: sha256:298491a006c033e1d82381cd581804b171c0f223fa91fd35d0007ec189d69c94
+        private_value: sha256:f7a2bc9813051dcb1e39f5d45bf11c8d433e732d19eb92da7f35c25c2abc95ce
         private_provenance: sha256:3c042f4f753e8cff66e9250fece6b87cbd23ab1cfcabae18bd174ae4659e19da
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
@@ -5585,12 +5058,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - distributed development
-      - management system
-      - partitioning
-      - safety plan
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5661,11 +5128,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - functional safety assessment
-      - functional safety audit
-      - partitioning
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5719,7 +5181,7 @@ clauses:
       - source_clause_id: clause-10e709b8713c
         document_key: ISO26262-11
         clause_id: clause-10e709b8713c
-        reference: '4.8'
+        reference: ISO 26262-11:2018 4.12
         role: provides_exception
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -5729,7 +5191,6 @@ clauses:
     value:
       normalized_label: fault injection
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5739,7 +5200,7 @@ clauses:
     content: sha256:54f88eb8449f7b2455269976444bc2b0c0bbe5bf2b8349fdfb9545ac881ff230
     attributes:
       enrichments.context_routing:
-        private_value: sha256:37eb855bd39aa76eaf3c504eedf36579084e4577a61962f2024e42397be06fa9
+        private_value: sha256:c12e79dab089ccd51f650e522ddc22bbae5a7f6009bb4e7614a768cb3cc3b919
         private_provenance: sha256:3c042f4f753e8cff66e9250fece6b87cbd23ab1cfcabae18bd174ae4659e19da
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
@@ -5762,10 +5223,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - application
-      - integration
-      - system
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5795,7 +5252,6 @@ clauses:
     value:
       normalized_label: fault
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5823,7 +5279,6 @@ clauses:
     value:
       normalized_label: fault
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5851,7 +5306,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5879,7 +5333,6 @@ clauses:
     value:
       normalized_label: failure mode
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5907,7 +5360,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -5935,14 +5387,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - dependent failure
-      - dependent failures
-      - failure mode
-      - failure rate
-      - fault injection
-      - safety goal
-      - safety mechanism
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6099,65 +5543,6 @@ clauses:
           process: 4
           technique_or_measure: 5
         category: disputed
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 5
-        abstained_votes: 0
-        label_votes:
-          'False': 5
-          'True': 4
-        category: disputed
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 5
-        abstained_votes: 0
-        label_votes:
-          'False': 5
-          'True': 4
-        category: disputed
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -6227,10 +5612,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - failure rate
-      - single-point fault
-      - transient fault
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6248,11 +5629,6 @@ clauses:
       enrichments.semantic.primary_function:
         decision_source: sha256:7522fe81e71cafbb15eacd9dbed126ad7e30db1bcd300836a81037faae2cb451
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
@@ -6400,63 +5776,6 @@ clauses:
           process: 3
           technique_or_measure: 4
         category: disputed
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        valid_votes: 8
-        supporting_votes: 4
-        abstained_votes: 0
-        label_votes:
-          'False': 4
-          'True': 4
-        category: disputed
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        valid_votes: 8
-        supporting_votes: 4
-        abstained_votes: 0
-        label_votes:
-          'False': 4
-          'True': 4
-        category: disputed
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -6525,7 +5844,6 @@ clauses:
     value:
       normalized_label: transient fault
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6543,11 +5861,6 @@ clauses:
       enrichments.semantic.primary_function:
         decision_source: sha256:eef7564a4cbfdf8238ec6080bc67ebf5e54c656776a49d2a631337875bed6853
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
@@ -6573,14 +5886,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - component
-      - design
-      - external measure
-      - fault model
-      - field data
-      - formal verification
-      - robust design
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6614,7 +5919,6 @@ clauses:
     value:
       normalized_label: design
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6642,7 +5946,6 @@ clauses:
     value:
       normalized_label: fault injection
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6669,7 +5972,6 @@ clauses:
     value:
       normalized_label: fault injection
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6702,7 +6004,7 @@ clauses:
           document_key: ISO26262-11
           part: 5.1.2
           clause_id: clause-67c1e162b832
-          reference: Fault models of non-memory digital components
+          reference: ISO 26262-11:2018 5.1.2
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -6710,12 +6012,12 @@ clauses:
       - source_clause_id: clause-c32583f71b05
         document_key: ISO26262-11
         clause_id: clause-67c1e162b832
-        reference: 5.1.2
+        reference: ISO 26262-11:2018 5.1.2
         role: provides_evidence
       - source_clause_id: clause-c32583f71b05
         document_key: ISO26262-11
         clause_id: clause-c32583f71b05
-        reference: 5.1.2
+        reference: ISO 26262-11:2018 5.1.10.2
         role: provides_evidence
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -6725,7 +6027,6 @@ clauses:
     value:
       normalized_label: fault injection
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6735,7 +6036,7 @@ clauses:
     content: sha256:62beb2e83927453f73b75b0823092d779426bc2e9cac2b67fab9862f9efc1086
     attributes:
       enrichments.context_routing:
-        private_value: sha256:85a20b02b45b8719e0e6a808e8046d895828020467da65a209e22f8507312c5e
+        private_value: sha256:3d6c67078398226d5584f7c9b5f3870fe1cc2dac492f38d23d3bd616b829d3b7
         private_provenance: sha256:8563c7004f664a5efe9b2fed7e7ff7548b99195ec6e53d9f10a55f3e4ef3119f
         evidence:
         - sha256:0fe25cc8a23870957c0c239d02c21c78f855d3cd8c6bfce88327a90b8ddf98c6
@@ -6758,7 +6059,6 @@ clauses:
     value:
       normalized_label: functional safety assessment
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6786,7 +6086,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6814,10 +6113,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - data
-      - error
-      - failure
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -6957,65 +6252,6 @@ clauses:
         label_votes:
           technique_or_measure: 4
         category: unanimous
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 6
-        abstained_votes: 0
-        label_votes:
-          'False': 6
-          'True': 3
-        category: majority_consensus
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 6
-        abstained_votes: 0
-        label_votes:
-          'False': 6
-          'True': 3
-        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -7085,9 +6321,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - data
-      - failure
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -7106,11 +6339,6 @@ clauses:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
       enrichments.semantic.primary_knowledge_kind:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.statement_functions:
@@ -7245,65 +6473,6 @@ clauses:
         label_votes:
           technique_or_measure: 4
         category: unanimous
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 7
-        abstained_votes: 0
-        label_votes:
-          'False': 7
-          'True': 2
-        category: majority_consensus
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 7
-        abstained_votes: 0
-        label_votes:
-          'False': 7
-          'True': 2
-        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -7371,11 +6540,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - data
-      - failure
-      - redundancy
-      - software
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -7394,11 +6558,6 @@ clauses:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
       enrichments.semantic.primary_knowledge_kind:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.statement_functions:
@@ -7425,7 +6584,6 @@ clauses:
     value:
       normalized_label: software
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -7458,22 +6616,22 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: '0'
+          reference: ISO 26262-11:2018 0
         - kind: clause
           document_key: ISO26262-11
           part: Specific semiconductor technologies and use cases
           clause_id: clause-043e1222d364
-          reference: '5'
+          reference: ISO 26262-11:2018 5
         - kind: clause
           document_key: ISO26262-11
           part: Digital components and memories
           clause_id: clause-f59a005acda1
-          reference: '5.1'
+          reference: ISO 26262-11:2018 5.1
         - kind: clause
           document_key: ISO26262-11
           part: Overview of techniques for digital components and memories
           clause_id: clause-6b349857a251
-          reference: 5.1.13
+          reference: ISO 26262-11:2018 5.1.13
         conditions: 0
         exclusions: 0
         qualifications: 0
@@ -7491,7 +6649,6 @@ clauses:
     value:
       normalized_label: failure mode
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -7501,7 +6658,7 @@ clauses:
     content: sha256:8e1a99dea37f26cadfff324a0d4eb6c22552ac8d100ed2c83594337688460e94
     attributes:
       enrichments.context_routing:
-        private_value: sha256:bad97fb607e4d009e42a1f16098b460b0613709bbfb2614feaad7b3cc7c10ec9
+        private_value: sha256:e0b3f7e7fe881b24ad2877d9f30b7988efb49efcb33016ee4e6a6fa6682ac8f3
         private_provenance: sha256:7e86bb4e68e0604ae2c879e0ce641cc13964d5f730d814a5ebe00c945e3cba28
         evidence:
         - sha256:93fef83a22c9e28ee1d8d1bf6e66f31d6cde92c4f1a770660cb1e4d43242aea6
@@ -7637,65 +6794,6 @@ clauses:
         label_votes:
           technique_or_measure: 4
         category: unanimous
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 5
-        abstained_votes: 0
-        label_votes:
-          'False': 5
-          'True': 4
-        category: disputed
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 5
-        abstained_votes: 0
-        label_votes:
-          'False': 5
-          'True': 4
-        category: disputed
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -7765,10 +6863,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - data
-      - error
-      - failure
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -7787,11 +6881,6 @@ clauses:
         decision_source: sha256:eef7564a4cbfdf8238ec6080bc67ebf5e54c656776a49d2a631337875bed6853
       enrichments.semantic.primary_knowledge_kind:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.statement_functions:
@@ -7817,10 +6906,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - element
-      - error
-      - failure
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -7960,65 +7045,6 @@ clauses:
         label_votes:
           technique_or_measure: 4
         category: unanimous
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 7
-        abstained_votes: 0
-        label_votes:
-          'False': 7
-          'True': 2
-        category: majority_consensus
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 7
-        abstained_votes: 0
-        label_votes:
-          'False': 7
-          'True': 2
-        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -8088,10 +7114,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - data
-      - dc
-      - failure
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8110,11 +7132,6 @@ clauses:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
       enrichments.semantic.primary_knowledge_kind:
         decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.statement_functions:
@@ -8140,7 +7157,6 @@ clauses:
     value:
       normalized_label: freedom from interference
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8168,7 +7184,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8195,7 +7210,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8223,7 +7237,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8251,7 +7264,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8283,7 +7295,7 @@ clauses:
           document_key: ISO26262-11
           part: '5.2'
           clause_id: clause-acc909850412
-          reference: '5.2'
+          reference: ISO 26262-11:2018 5.2
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -8291,7 +7303,7 @@ clauses:
       - source_clause_id: clause-56f107103781
         document_key: ISO26262-11
         clause_id: clause-56f107103781
-        reference: 5.2.3.1
+        reference: ISO 26262-11:2018 5.2.3.1
         role: defines
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -8301,7 +7313,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8311,7 +7322,7 @@ clauses:
     content: sha256:64c3ef8b89c721307c3a27891849301e78471bc80584c02c7c3da87f1f92eec5
     attributes:
       enrichments.context_routing:
-        private_value: sha256:291f8847d1c236675510f622dc3282490f943252e384b7444e44358e68d52207
+        private_value: sha256:f1155627fa5f5a64a7fa651343cfea4bbab2537cacd4b6184a108b6f25a8867f
         private_provenance: sha256:17fad5b47e4ead8bfe5eb13f9121412d4a09962acf5cd2109fb7e15d4c497a4e
         evidence:
         - sha256:66158942076a7b47736d628a3449d9b97c321d204dcd54dc3932157c293e7bda
@@ -8347,7 +7358,7 @@ clauses:
       - source_clause_id: clause-4c27ba81a5b5
         document_key: ISO26262-11
         clause_id: clause-4c27ba81a5b5
-        reference: Clause 8
+        reference: ISO 26262-11:2018 5.2.3.2
         role: provides_applicability
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -8357,7 +7368,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8367,7 +7377,7 @@ clauses:
     content: sha256:acb8ef46bedf8c9b879c697e3a6846ca88070dcfc74afb0bd32f4323d604e360
     attributes:
       enrichments.context_routing:
-        private_value: sha256:a6dc0526bd5cce3f1b2c69dccc60534c624fbba6caa9c16eacc5b38523dcebc9
+        private_value: sha256:c4e3477b4f3e4783fc0620b9795e59bfe2c318ae8a8ad13416c95fe1a7ff0148
         private_provenance: sha256:be0c37b5c5902ed89ce2b503f0d9a41a75be58bf6a41db488e66d9bf3a1ef6bf
         evidence:
         - sha256:cc3c7db81428d7fa8383246f91afe9e2f7eb8996d6da27fa3aca3e26d5e64179
@@ -8390,7 +7400,6 @@ clauses:
     value:
       normalized_label: failure mode
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8418,7 +7427,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8446,7 +7454,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8474,7 +7481,6 @@ clauses:
     value:
       normalized_label: dependent failures
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8502,7 +7508,6 @@ clauses:
     value:
       normalized_label: verification
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8530,7 +7535,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8558,7 +7562,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8586,7 +7589,6 @@ clauses:
     value:
       normalized_label: fault
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8614,7 +7616,6 @@ clauses:
     value:
       normalized_label: system
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8642,7 +7643,6 @@ clauses:
     value:
       normalized_label: implementation
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8670,7 +7670,6 @@ clauses:
     value:
       normalized_label: system
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8698,7 +7697,6 @@ clauses:
     value:
       normalized_label: system
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8726,7 +7724,6 @@ clauses:
     value:
       normalized_label: fault
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8754,7 +7751,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8782,7 +7778,6 @@ clauses:
     value:
       normalized_label: fault
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8810,7 +7805,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8838,7 +7832,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8866,7 +7859,6 @@ clauses:
     value:
       normalized_label: element
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8894,7 +7886,6 @@ clauses:
     value:
       normalized_label: channel
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8922,7 +7913,6 @@ clauses:
     value:
       normalized_label: phase
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8963,7 +7953,7 @@ clauses:
       - source_clause_id: clause-ace525d748a7
         document_key: ISO26262-11
         clause_id: clause-acc909850412
-        reference: ISO 26262-11:2018 5.2.6
+        reference: ISO 26262-11:2018 5.2
         role: provides_applicability
       - source_clause_id: clause-ace525d748a7
         document_key: ISO26262-series
@@ -8978,7 +7968,6 @@ clauses:
     value:
       normalized_label: technical safety concept
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -8988,7 +7977,7 @@ clauses:
     content: sha256:2ff61ff775cbc22a5e8f88b8b6b2388983b395237144ebe4a5a3d164b99ce6a2
     attributes:
       enrichments.context_routing:
-        private_value: sha256:ccf8a2fd34b49e51799df0d9ff5acfd42cd0504d6a9bf1af7decd6839a2033d2
+        private_value: sha256:2b19fba38b3b336cacc7e2c79941258f4d6a6863517cfdff5a08dbd38b9894be
         private_provenance: sha256:c860f908e9d198657a512ec09d0ee49dfcc6ac97b6d14e8f6fc0e52bcdc25f15
         evidence:
         - sha256:84da97b6b8126b476fc68d152b608866251c599582f754a136a80d0191ce57a9
@@ -9011,13 +8000,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - application
-      - bus
-      - configuration
-      - design
-      - implementation
-      - safety-related
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9050,9 +8032,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - implementation
-      - integration
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9081,9 +8060,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - functional safety
-      - safety lifecycle
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9116,7 +8092,7 @@ clauses:
           document_key: ISO26262-11
           part: 5.3.1.3
           clause_id: clause-f772a4d4b10f
-          reference: 5.3.1.3.1
+          reference: ISO 26262-11:2018 5.3.1.3
         conditions: 1
         exclusions: 0
         qualifications: 1
@@ -9129,12 +8105,12 @@ clauses:
       - source_clause_id: clause-ad87780edddc
         document_key: ISO26262-11
         clause_id: clause-25f9a85de3a9
-        reference: 5.3.1
+        reference: ISO 26262-11:2018 5.3.1
         role: provides_exception
       - source_clause_id: clause-ad87780edddc
         document_key: ISO26262-11
         clause_id: clause-207d66745242
-        reference: '5.3'
+        reference: ISO 26262-11:2018 5.3
         role: provides_exception
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -9322,9 +8298,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - functional safety
-      - safety lifecycle
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9334,7 +8307,7 @@ clauses:
     content: sha256:f82c88611b6206213d356861569dd00cfa97bab434510dad1fc12acb962ce50a
     attributes:
       enrichments.context_routing:
-        private_value: sha256:615bbb7fe0c153a9ad94813f211e37ce863fd6feefb37d24acdced5b725e9d38
+        private_value: sha256:b36df1351d0c401b742b4083c7ace597121c9ae06bf79f5a0dc1c0cd86918986
         private_provenance: sha256:17fad5b47e4ead8bfe5eb13f9121412d4a09962acf5cd2109fb7e15d4c497a4e
         evidence:
         - sha256:66158942076a7b47736d628a3449d9b97c321d204dcd54dc3932157c293e7bda
@@ -9372,7 +8345,6 @@ clauses:
     value:
       normalized_label: functional safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9569,7 +8541,6 @@ clauses:
     value:
       normalized_label: phase
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9637,7 +8608,6 @@ clauses:
     value:
       normalized_label: system
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9858,7 +8828,6 @@ clauses:
     value:
       normalized_label: hardware architectural metrics
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9905,7 +8874,6 @@ clauses:
     value:
       normalized_label: software
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9933,7 +8901,6 @@ clauses:
     value:
       normalized_label: functional safety
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9961,7 +8928,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -9989,7 +8955,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10016,7 +8981,6 @@ clauses:
     value:
       normalized_label: hardware architectural metrics
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10044,7 +9008,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10077,7 +9040,7 @@ clauses:
           document_key: ISO26262-11
           part: 5.3.3.1
           clause_id: clause-134a2851af83
-          reference: 5.3.3.1
+          reference: ISO 26262-11:2018 5.3.3.1
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -10085,7 +9048,7 @@ clauses:
       - source_clause_id: clause-269b447dd844
         document_key: ISO26262-11
         clause_id: clause-269b447dd844
-        reference: 5.3.3.1.2
+        reference: ISO 26262-11:2018 5.3.3.1.2
         role: provides_procedure
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -10217,65 +9180,6 @@ clauses:
           process: 4
           technique_or_measure: 5
         category: disputed
-  - path: enrichments.semantic.role_relation_types
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 4
-        abstained_votes: 0
-        label_votes:
-          'False': 4
-          'True': 5
-        category: disputed
-  - path: enrichments.semantic.role_relations
-    origin: generated
-    value:
-      count: 0
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
-        stage: cumulative-consensus
-        prompt_id: applicability-presence
-        reasoning_mode_id: disabled
-        model_ids:
-        - exaone-3.5-32b-instruct-q4-k-m
-        - gemma-3-12b-it-q4-k-m
-        - glm-4-9b-chat-q4-k-m
-        - granite-3.3-8b-instruct-q4-k-m
-        - llama-3.1-8b-instruct-q4-k-m
-        - ministral-3-8b-instruct-2512-q4-k-m
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        - qwen3-14b-q4-k-m
-        - smollm3-3b-q4-k-m
-        valid_votes: 9
-        supporting_votes: 4
-        abstained_votes: 0
-        label_votes:
-          'False': 4
-          'True': 5
-        category: disputed
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -10344,7 +9248,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10354,7 +9257,7 @@ clauses:
     content: sha256:a3ab642e0833a9685c862dac07d70104aa00df7a036e067d7f20647a18f7ca48
     attributes:
       enrichments.context_routing:
-        private_value: sha256:01d0acbd76a430633452eba6256d217f307e7c38e87a46d0045008dc4d4db086
+        private_value: sha256:2802ab1480ca213a93c5b4394a6128abad7ea8b84025befbb4c59d3e053b58ac
         private_provenance: sha256:ecdf61fab83b7148511ccd6b6934990e8dc533924ff0bd9cca2b3005dbedf8d4
         evidence:
         - sha256:661aaea959e81127b722c30c76585d054dc9b0c9d0ed0cd9536842413cfdcc66
@@ -10367,11 +9270,6 @@ clauses:
       enrichments.semantic.primary_function:
         decision_source: sha256:7522fe81e71cafbb15eacd9dbed126ad7e30db1bcd300836a81037faae2cb451
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relation_types:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
-      enrichments.semantic.role_relations:
-        private_value: sha256:18fb6fad00b99a90e211851c3546a991c288d46c2524b1e4484e19c3c735f0b1
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
       enrichments.semantic.role_semantics_present:
         decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
@@ -10568,7 +9466,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10611,7 +9508,6 @@ clauses:
     value:
       normalized_label: safety mechanism
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10639,7 +9535,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10667,7 +9562,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10695,7 +9589,6 @@ clauses:
     value:
       normalized_label: implementation
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10728,7 +9621,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: '0'
+          reference: ISO 26262-11:2018 0
         conditions: 3
         exclusions: 0
         qualifications: 0
@@ -10746,9 +9639,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - safety-related element
-      - software tool
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10758,7 +9648,7 @@ clauses:
     content: sha256:6879258c74c3c95d1fd94950474cd4ea44b4bb3a86efb2a0b2c851cbedeba2e5
     attributes:
       enrichments.context_routing:
-        private_value: sha256:481ae7d2ed871c27934d3049b0e101174b91ca170a32299819f1205b64563863
+        private_value: sha256:9c97f232adc2a82f82bba26d41b07c4f5245d3a4faa5f4773a2e645066d25a75
         private_provenance: sha256:e00c0fb29037b1a8e0a6cd1fffbcea41a14eafc4378cc3b7b685b649df978101
         evidence:
         - sha256:e98a17477603d7d4c3f642ce92d8e1843cd8adf031cdf033a035ea54961c6eca
@@ -10805,9 +9695,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - field data
-      - robust design
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10841,7 +9728,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10869,7 +9755,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10897,7 +9782,6 @@ clauses:
     value:
       normalized_label: multi-core
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10924,7 +9808,6 @@ clauses:
     value:
       normalized_label: multi-core
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10952,7 +9835,6 @@ clauses:
     value:
       normalized_label: multi-core
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -10979,7 +9861,6 @@ clauses:
     value:
       normalized_label: multi-core
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11007,7 +9888,6 @@ clauses:
     value:
       normalized_label: freedom from interference
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11035,7 +9915,6 @@ clauses:
     value:
       normalized_label: multi-core
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11063,10 +9942,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - e/e system
-      - functional safety
-      - hardware part
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11101,17 +9976,17 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: '0'
+          reference: ISO 26262-11:2018 0
         - kind: clause
           document_key: ISO26262-11
           part: Specific semiconductor technologies and use cases
           clause_id: clause-043e1222d364
-          reference: '5'
+          reference: ISO 26262-11:2018 5
         - kind: clause
           document_key: ISO26262-11
           part: Sensors and transducers
           clause_id: clause-91d321a51cd6
-          reference: '5.5'
+          reference: ISO 26262-11:2018 5.5
         conditions: 1
         exclusions: 1
         qualifications: 1
@@ -11119,17 +9994,17 @@ clauses:
       - source_clause_id: clause-0cdd58413459
         document_key: ISO26262-11
         clause_id: clause-0cdd58413459
-        reference: ISO 26262-5:2018, Table D.1
+        reference: ISO 26262-11:2018 5.5.2
         role: depends_on
       - source_clause_id: clause-0cdd58413459
         document_key: ISO26262-11
         clause_id: clause-0cdd58413459
-        reference: '5.1'
+        reference: ISO 26262-11:2018 5.5.2
         role: constrains
       - source_clause_id: clause-0cdd58413459
         document_key: ISO26262-11
         clause_id: clause-0cdd58413459
-        reference: '5.2'
+        reference: ISO 26262-11:2018 5.5.2
         role: constrains
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -11139,7 +10014,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11149,7 +10023,7 @@ clauses:
     content: sha256:39a20db2de1ab2a4deed15796653723dd1b5d8f476238f3a59522f6dcc87fe6e
     attributes:
       enrichments.context_routing:
-        private_value: sha256:5ad6dad24e11e654f1f7f83e91fe28b5b2a694d0ccea5700c7ef1722d62b29df
+        private_value: sha256:a60fa1b6df79af951725c7d2244cb149a054c8ce02ed4b596ed171da1d0dabb9
         private_provenance: sha256:3c042f4f753e8cff66e9250fece6b87cbd23ab1cfcabae18bd174ae4659e19da
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
@@ -11172,7 +10046,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11200,7 +10073,6 @@ clauses:
     value:
       normalized_label: failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11228,7 +10100,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11255,7 +10126,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11283,7 +10153,6 @@ clauses:
     value:
       normalized_label: freedom from interference
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11354,7 +10223,6 @@ clauses:
     value:
       normalized_label: hardware architectural metrics
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11388,7 +10256,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11416,7 +10283,6 @@ clauses:
     value:
       normalized_label: transducer
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11444,7 +10310,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11472,7 +10337,6 @@ clauses:
     value:
       normalized_label: operating mode
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11500,7 +10364,6 @@ clauses:
     value:
       normalized_label: transducer
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11528,7 +10391,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11556,7 +10418,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11584,7 +10445,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11612,7 +10472,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11640,9 +10499,6 @@ clauses:
     value:
       normalized_label: null
       confidence: null
-      ambiguous_candidates:
-      - failure mode
-      - robust design
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11671,7 +10527,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11699,7 +10554,6 @@ clauses:
     value:
       normalized_label: diagnostic coverage
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11727,7 +10581,6 @@ clauses:
     value:
       normalized_label: safety mechanism
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11754,7 +10607,6 @@ clauses:
     value:
       normalized_label: safety mechanism
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11782,7 +10634,6 @@ clauses:
     value:
       normalized_label: safety
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11810,7 +10661,6 @@ clauses:
     value:
       normalized_label: diagnostic coverage
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11838,7 +10688,6 @@ clauses:
     value:
       normalized_label: data
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11866,7 +10715,6 @@ clauses:
     value:
       normalized_label: data
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11894,7 +10742,6 @@ clauses:
     value:
       normalized_label: data
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11922,7 +10769,6 @@ clauses:
     value:
       normalized_label: failure mode
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11950,7 +10796,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -11978,7 +10823,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12005,7 +10849,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 0.87
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12033,7 +10876,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12061,7 +10903,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12093,7 +10934,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-7a9f2372b3a1
-          reference: B.2.1
+          reference: ISO 26262-11:2018 B.2.1
         conditions: 1
         exclusions: 0
         qualifications: 0
@@ -12101,7 +10942,7 @@ clauses:
       - source_clause_id: clause-7a9f2372b3a1
         document_key: ISO26262-11
         clause_id: clause-7a9f2372b3a1
-        reference: B.2.1
+        reference: ISO 26262-11:2018 B.2.1
         role: depends_on
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -12111,7 +10952,6 @@ clauses:
     value:
       normalized_label: dependent failure
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12121,7 +10961,7 @@ clauses:
     content: sha256:cc03ede16d9899d69b0c0d1a9238b799a806550a7d5ebc0dee3b6c2d90cf35e6
     attributes:
       enrichments.context_routing:
-        private_value: sha256:6cfeb684c79d04bcff9f79541b94fae621190e1fc36eb9982c01dc04221e5b9f
+        private_value: sha256:d7976553df1d90d38f5e713fe660f3835094d6ee06f01bd3024f9aff34485d32
         private_provenance: sha256:f889d710d6af7a4523056f31c785d90b658dc2b1ae360a116b47dfe4d824064d
         evidence:
         - sha256:cad7cb9612e2042cecf1ed92ffab51f2607358c4fdd315b356874bd2a19d03d1
@@ -12144,7 +10984,6 @@ clauses:
     value:
       normalized_label: dependent failures
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12172,7 +11011,6 @@ clauses:
     value:
       normalized_label: dependent failures
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12200,7 +11038,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12228,7 +11065,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12256,7 +11092,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12284,7 +11119,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12312,7 +11146,6 @@ clauses:
     value:
       normalized_label: failure rate
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12340,7 +11173,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12373,12 +11205,12 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: '0'
+          reference: ISO 26262-11:2018 0
         - kind: clause
           document_key: ISO26262-11
           part: Examples of quantitative analysis for PLD component
           clause_id: clause-c85cfef62f1d
-          reference: E
+          reference: ISO 26262-11:2018 E
         conditions: 1
         exclusions: 1
         qualifications: 1
@@ -12396,7 +11228,6 @@ clauses:
     value:
       normalized_label: architecture
       confidence: 1.0
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12406,7 +11237,7 @@ clauses:
     content: sha256:064e231f00a32989588438db3fe798f145b897ee6524622f36459d6d3af0952d
     attributes:
       enrichments.context_routing:
-        private_value: sha256:b47f35173a19fea07ef1719b410600f7e13fba6b10b201e8caf201d8a3fcb8a1
+        private_value: sha256:65aa6c1f52b7d50387869bed1dc4abc6d6e5a303a4a39aafeab60ea0a7560077
         private_provenance: sha256:19b84f638cce70f905843d2e4c576cd53889286783e6b9c06024dd3ff6845cfd
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
@@ -12435,12 +11266,12 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: '0'
+          reference: ISO 26262-11:2018 0
         - kind: clause
           document_key: ISO26262-11
           part: Examples of quantitative analysis for PLD component
           clause_id: clause-c85cfef62f1d
-          reference: E
+          reference: ISO 26262-11:2018 E
         conditions: 2
         exclusions: 1
         qualifications: 2
@@ -12448,7 +11279,7 @@ clauses:
       - source_clause_id: clause-d84d72837012
         document_key: ISO26262-11
         clause_id: clause-d84d72837012
-        reference: 5.3.3.1.3
+        reference: ISO 26262-11:2018 E.2
         role: provides_applicability
     generated:
       generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
@@ -12458,7 +11289,6 @@ clauses:
     value:
       normalized_label: component
       confidence: 0.9
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12468,7 +11298,7 @@ clauses:
     content: sha256:6a2ef7375c6ef7b8c107ccc71e05507b07fb72a3ba5e0446c8969d87800c6121
     attributes:
       enrichments.context_routing:
-        private_value: sha256:629267957ea02f163f56ef8878642f56edf81d7ed19b5ca613abde2d5b612d1b
+        private_value: sha256:9cf3d7547ddec0a20b3ea220c4c358c44e63e0ad40163e5311a3c82a0a97a211
         private_provenance: sha256:3c042f4f753e8cff66e9250fece6b87cbd23ab1cfcabae18bd174ae4659e19da
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
@@ -12496,7 +11326,7 @@ clauses:
           document_key: ISO26262-11
           part: Part 11
           clause_id: clause-0ec3d8863acc
-          reference: E
+          reference: ISO 26262-11:2018 0
         conditions: 1
         exclusions: 1
         qualifications: 1
@@ -12514,7 +11344,6 @@ clauses:
     value:
       normalized_label: safety integrity level
       confidence: 0.95
-      ambiguous_candidates: []
     generated:
       generator: subject-identification/1.0
       method: deterministic
@@ -12524,7 +11353,7 @@ clauses:
     content: sha256:06f88b194ee2a90a84c674335951928031eca0e8e65264d99a3c4bb5d028a560
     attributes:
       enrichments.context_routing:
-        private_value: sha256:de6e7da042a0244bdd8ee1aa84b39225d4466da497efaabd802867f1848e3b71
+        private_value: sha256:1b4b5086a83560458548f35b72e88876116e2c41cc5068884cd91c1dbade5765
         private_provenance: sha256:3c042f4f753e8cff66e9250fece6b87cbd23ab1cfcabae18bd174ae4659e19da
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33

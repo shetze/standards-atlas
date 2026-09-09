@@ -13,6 +13,7 @@ from standards_atlas.application.context import (
     ClauseSubjectIdentification,
     DeterministicSubjectIdentifier,
     SubjectCandidateVocabularyBuilder,
+    normalize_context_routing_targets,
 )
 from standards_atlas.application.context.canonical_cbox import context_fingerprint
 from standards_atlas.application.evaluation.models import PromptDefinition
@@ -22,6 +23,11 @@ from standards_atlas.application.ports.llm_gateway import (
     LlmResponseError,
     StructuredGenerationRequest,
 )
+from standards_atlas.application.references.extractor import (
+    extract_reference_mentions,
+    resolve_reference_mentions,
+)
+from standards_atlas.application.references.resolution import DocumentReferenceIndex
 from standards_atlas.domain.model import (
     Clause,
     ClauseSubjectContext,
@@ -113,7 +119,15 @@ class LlmContextRoutingEnricher:
             raise ValueError(
                 f"Clause {clause.id.value} has no structural_context; run taxonomy first"
             )
+        # Rebuild the bounded citation context from source text: older baseline
+        # mentions may predate annex/list/range support or contain stale targets.
+        mentions = resolve_reference_mentions(
+            extract_reference_mentions(clause.plain_text),
+            clause.id.value,
+            DocumentReferenceIndex(document),
+        )
         context_payload = {
+            "source_clause_id": clause.id.value,
             "document_key": document.key.value,
             "document_title": document.title,
             "reference": clause.reference.as_text(),
@@ -123,11 +137,14 @@ class LlmContextRoutingEnricher:
             "scope_mentions": [item.model_dump(mode="json") for item in structural.scope_mentions],
             "scope_edges": [item.model_dump(mode="json") for item in structural.scopes],
             "structural_references": [
-                item.model_dump(mode="json") for item in structural.references
+                {
+                    "surface_text": mention.surface_text,
+                    "status": mention.status.value,
+                    "targets": [target.model_dump(mode="json") for target in mention.targets],
+                }
+                for mention in mentions
             ],
-            "reference_mentions": [
-                item.model_dump(mode="json") for item in clause.reference_mentions
-            ],
+            "reference_mentions": [item.model_dump(mode="json") for item in mentions],
             "subject_context": clause.subject_context.model_dump(mode="json"),
         }
         values = {
@@ -160,6 +177,7 @@ class LlmContextRoutingEnricher:
         return context_fingerprint(
             {
                 "contract": "context-routing-input-v1",
+                "reference_resolution": "document-coordinates-v2",
                 "generator": self.generator_id,
                 "system": request.system_prompt,
                 "prompt": request.user_prompt,
@@ -188,7 +206,10 @@ class LlmContextRoutingEnricher:
                     max_tokens=self._retry_max_tokens,
                 )
             )
-        return _context_routing_from_payload(clause.id.value, result.value)
+        return normalize_context_routing_targets(
+            _context_routing_from_payload(clause.id.value, result.value),
+            document,
+        )
 
 
 def _context_routing_from_payload(
@@ -245,6 +266,9 @@ def _is_context_candidate(clause: Clause) -> bool:
     return bool(
         clause.clause_type == ClauseType.SCOPE
         or clause.reference_mentions
+        or extract_reference_mentions(clause.plain_text)
+        or clause.context_routing.references
+        or clause.context_routing.scopes
         or structural.scope_mentions
         or structural.scopes
         or structural.references
@@ -331,6 +355,19 @@ class ContextEnrichmentService:
                 and previous.decision.source_sha256 == fingerprint
             )
             if clause.provenance.protection(path) or reusable:
+                if reusable and previous is not None and not clause.provenance.protection(path):
+                    # Reuse the provider result, not a stale/unverified target ID.
+                    # Deterministic routing repairs need no new model call and
+                    # retain the original evidence, role and generation provenance.
+                    contextual_clause = merge_generated_enrichments(
+                        contextual_clause,
+                        ClauseEnrichmentPatch(
+                            context_routing=normalize_context_routing_targets(
+                                contextual_clause.context_routing, document
+                            )
+                        ),
+                        (previous,),
+                    ).clause
                 updated.append(contextual_clause)
                 reused += 1
                 if self._progress is not None:
@@ -361,7 +398,9 @@ class ContextEnrichmentService:
                 )
             started = time.monotonic()
             try:
-                routing = self._enricher.enrich(clause=contextual_clause, document=document)
+                routing = normalize_context_routing_targets(
+                    self._enricher.enrich(clause=contextual_clause, document=document), document
+                )
             except LlmResponseError:
                 failures += 1
                 updated.append(contextual_clause)

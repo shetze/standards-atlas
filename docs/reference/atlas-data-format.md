@@ -555,7 +555,7 @@ model-generated classifications to published gold automatically. This keeps the
 publication boundary explicit: only the reviewed annotation manifest can add or
 replace public semantic tags.
 
-## Accepted enrichment companions (schema 1.1)
+## Accepted enrichment companions (schema 1.2)
 
 The existing structural text grammar and reviewed TOC tags remain unchanged. Accepted canonical
 attributes may additionally be persisted in `<AtlasData parent>/enrichments/<physical-key>.yaml`
@@ -566,7 +566,7 @@ CBox database or an automatic promotion to reviewed semantic tags.
 
 | Field | Meaning |
 | --- | --- |
-| `manifest_type`, `schema_version` | `atlasdata-enrichments`, string `"1.1"` |
+| `manifest_type`, `schema_version` | `atlasdata-enrichments`, string `"1.2"` |
 | `document_key`, `family_key` | Exact manifest-declared physical document and family |
 | `atlasdata_file`, `selection_part`, `publication_year` | Explicit owning source basename, part selection and manifest edition; unspecified supplement year stays null |
 | `fingerprints.structure` | SHA-256 of selected structural clause IDs, references, headings, types and parents; reviewed semantic tags are excluded |
@@ -592,7 +592,11 @@ existing canonical field types, not an independently defined vocabulary.
 
 Each record contains `path`, `origin`, `value` and the appropriate provenance.
 Paths address primary/secondary statement, knowledge and process categories, Applicability
-presence/functions, role presence/types/relations, whole subject context or whole context routing.
+presence/functions, role presence, whole subject context or whole context routing. Role details
+(`enrichments.semantic.role_relations` and `enrichments.semantic.role_relation_types`) remain
+canonical fields but are temporarily excluded from publication, regardless of value or origin.
+The same exclusion applies to their fingerprint entries. Existing schema-1.2 fields remain
+readable, but every writer omits them.
 `origin` is `generated`, `confirmed` or `unattributed`. Known availability is the default and is
 omitted from YAML for readability. `availability: unknown` remains explicit; absence of an
 attribute means not assessed, not false. Unknown has a null value, no invented category and
@@ -605,15 +609,35 @@ serialized under `fingerprints.attributes.<path>.evidence` and `.decision_source
 retains explicit authority without duplicating the enclosing path. Populated unmarked legacy values
 are retained as `unattributed`, not promoted. An omitted attribute never clears a value.
 
-Statement/knowledge/process values and controlled role types are public categorical values.
-`fingerprints.attributes.<path>.private_value` addresses source-bearing contexts or exact role
-tuples in the private store.
-For these fields, `value` is a bounded view: selected normalized subject/confidence/ambiguity labels;
-scope reach and counts of conditions/exclusions/qualifications plus reference coordinates/roles;
-or an exact-role tuple count. It never contains source evidence, reference titles, scope prose or
-raw role actor/target text. These public semantic labels and coordinates are deliberately published.
+Statement/knowledge/process values, Applicability classifications and role presence are public
+categorical values. `fingerprints.attributes.<path>.private_value` addresses source-bearing
+contexts in the private store; existing private role blobs remain unchanged but are not newly
+published or referenced by companion exports.
+For these fields, `value` is a bounded view: accepted normalized subject/confidence only; unresolved
+subject ambiguity candidates are working state and are omitted from companions. Routing values carry scope reach and counts of conditions/exclusions/qualifications plus reference
+coordinates/roles. Deferred role details publish neither a tuple count nor relation types.
+The public view never contains source evidence, reference titles, scope prose or raw role actor/target
+text. Explicit reference and scope coordinates are resolved against the
+physical document before accepting an ID. Deterministic structural scope edges may correct stale
+reach labels, but a provider-supplied ancestor ID alone cannot replace an explicit subclause.
+`Annex G` must not be rewritten into a self-reference just because the model copied the source ID.
+Lists and bounded same-level ranges expand only when all targets resolve uniquely. Unresolved,
+partial or ambiguous local groups retain their citation text with a null clause ID. Source-grounded
+private evidence can repair an already overwritten canonical reference; ambiguous or unverified
+conflicts require review. Protected routing is not normalized on export. The corrected generated
+public projection and private value are consistent. These public semantic labels and coordinates are
+deliberately published.
 `fingerprints.attributes.<path>.private_provenance` optionally binds the original unredacted
 provenance.
+
+Publication cleanup removes previously exported role-detail attributes and their fingerprints
+from the whole selected companion, including clauses/dimensions outside a partial value update.
+This is reported as `omitted`, with the normal dry-run and explicit-write safeguards. All other
+attributes and their authority remain subject to the existing merge. Empty public records are
+omitted, but canonical clauses, role values, provenance and private blobs are not deleted. Role
+presence keeps its true/false/unknown distinction; missing positive details must not be interpreted
+as a completed negative extraction. Canonical schema 9, companion schema 1.2 and private evidence
+schema 1.0 are unchanged. Reviewed `RR` TOC tags are unaffected.
 
 ### Restore and preservation
 

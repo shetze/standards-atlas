@@ -6,6 +6,10 @@ import re
 
 from pydantic import BaseModel, TypeAdapter
 
+from standards_atlas.application.context.routing_normalization import (
+    normalize_context_routing_targets,
+)
+from standards_atlas.domain.model import EngineeringDocument
 from standards_atlas.domain.model.clause import Clause, ClauseEnrichments
 from standards_atlas.domain.model.context_routing import ContextRouting
 from standards_atlas.domain.model.knowledge_state import (
@@ -98,7 +102,6 @@ def public_value(path: str, value: object) -> object:
         return SubjectView(
             normalized_label=primary.normalized_label if primary else None,
             confidence=primary.confidence if primary else None,
-            ambiguous_candidates=subject.ambiguous_candidates,
         ).model_dump(mode="json")
     if path == "enrichments.context_routing":
         routing = ContextRouting.model_validate(value)
@@ -142,8 +145,16 @@ def project_attribute(
     clause: Clause,
     path: str,
     store: KnowledgeEvidenceStore,
+    *,
+    document: EngineeringDocument | None = None,
 ) -> PublishedAttribute | None:
     value = field_value(clause, path)
+    if (
+        path == "enrichments.context_routing"
+        and document is not None
+        and not clause.provenance.protection(path)
+    ):
+        value = normalize_context_routing_targets(ContextRouting.model_validate(value), document)
     provenance = clause.provenance
     confirmations = [
         item

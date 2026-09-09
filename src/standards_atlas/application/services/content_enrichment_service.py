@@ -195,7 +195,7 @@ class ContentEnrichmentService:
                 ),
                 GeneratedAttribute(
                     path="baseline.reference_mentions",
-                    generator="reference-mention-extractor",
+                    generator="reference-mention-extractor/v2",
                     method=GenerationMethod.DETERMINISTIC,
                 ),
             ]

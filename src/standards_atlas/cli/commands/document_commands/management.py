@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -249,3 +251,59 @@ def enrich_document_context(
     typer.echo(f"Subjects ambiguous    : {result.subjects_ambiguous}")
     typer.echo(f"Routing candidates    : {result.candidates}")
     typer.echo(f"Context failures      : {result.context_enrichment_failures}")
+
+
+@document_app.command("repair-context-routing")
+def repair_document_context_routing(
+    document_key: Annotated[str, typer.Argument(help="Canonical document key to repair.")],
+    workspace: Annotated[
+        Path, typer.Option("--workspace", "-w", help="Canonical workspace directory.")
+    ] = cli_defaults.DEFAULT_WORKSPACE,
+    report: Annotated[
+        Path | None, typer.Option("--report", help="Private JSON diagnostics output.")
+    ] = None,
+    write: Annotated[
+        bool, typer.Option("--write", help="Back up and persist the repaired canonical document.")
+    ] = False,
+) -> None:
+    """Repair canonical references without an LLM; default is a dry run."""
+    from standards_atlas.application.services.context_routing_repair import repair_context_routing
+    from standards_atlas.domain.model import DocumentKey
+
+    try:
+        repository = FileSystemEngineeringDocumentRepository(workspace)
+        document = repository.load(DocumentKey(value=document_key))
+        result = repair_context_routing(document)
+        if report is not None:
+            if report.resolve().is_relative_to((workspace / "documents").resolve()):
+                raise ValueError("repair report must be outside the canonical documents directory")
+            report.parent.mkdir(parents=True, exist_ok=True)
+        backup = None
+        if write and result.document != document:
+            backup = repository.backup(document.key)
+            repository.save(result.document)
+        payload = {
+            **result.report,
+            "written": bool(write and result.document != document),
+            "backup": str(backup) if backup else None,
+            "before_sha256": hashlib.sha256(document.model_dump_json().encode()).hexdigest(),
+            "after_sha256": hashlib.sha256(result.document.model_dump_json().encode()).hexdigest(),
+        }
+        if report is not None:
+            report.write_text(
+                json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
+        else:
+            typer.echo(json.dumps(payload, indent=2, ensure_ascii=False))
+    except (OSError, ValueError, KeyError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Mode                  : {'write' if write else 'dry-run'}")
+    typer.echo(f"Routing clauses changed: {result.report['routing_clauses_changed']}")
+    typer.echo(f"Reference context refreshed: {result.report['baseline_clauses_refreshed']}")
+    typer.echo(f"Requires review       : {result.report['requires_review']}")
+    typer.echo(f"Protected clauses     : {result.report['protected_clauses']}")
+    if backup is not None:
+        typer.echo(f"Backup                : {backup}")
+    if report is not None:
+        typer.echo(f"Report                : {report}")

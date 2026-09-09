@@ -2,6 +2,45 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Presence-only public role semantics (2026-09-09)
+
+- Publish only `enrichments.semantic.role_semantics_present` for the role-semantics dimension;
+  temporarily omit role relations, relation types and their attribute fingerprints.
+- Remove these deferred fields from existing selected companions during re-export, including
+  retained clauses in partial updates, with explicit `omitted` dry-run/write diagnostics.
+- Keep canonical role values, provenance, reviewed TOC tags and existing private evidence intact;
+  preserve presence true/false/unknown and other published attributes without a schema change.
+- Cover fresh and existing-companion exports, protected local details, private-store preservation
+  and stable re-export after canonical empty dependents are regenerated on import.
+
+## Unreleased — Source-grounded canonical reference repair (2026-09-09)
+
+- Share an exact standard/part/edition-aware coordinate index between source reference extraction
+  and context routing; support annexes, bare subclauses, bounded lists and same-level ranges.
+- Refresh deterministic reference context before taxonomy and supply current source-grounded
+  targets to context enrichment. The new default context-routing-v2 prompt interprets roles but
+  leaves reference target IDs/titles to deterministic resolution.
+- Validate explicit scope coordinates as well as reference targets before canonical persistence;
+  retain verified structural scope edges without mistaking condition citations for scope targets.
+- Recover already overwritten self/ancestor references only from unambiguous, verbatim source
+  evidence; preserve original roles and evidence and flag ambiguous/unverified conflicts for review.
+- Add model-free document repair-context-routing with dry-run diagnostics, exact-byte backups,
+  explicit --write, confirmation protection and idempotent canonical repair before public export.
+- Keep canonical schema 9, AtlasData enrichment schema 1.2 and evidence schema 1.0 unchanged.
+
+## Unreleased — Explicit context-routing reference resolution (2026-09-09)
+
+- Resolve local reference-routing text before accepting provider-supplied clause IDs. Distinguish
+  genuine self references from explicit annex/subclause citations with incorrectly copied self IDs.
+- Retain unresolved or ambiguous citation text with a null local target ID; never manufacture a
+  self-link. Leave external targets untouched and keep short references within their source edition.
+- Repair fresh and reused generated routing without changing evidence, roles or provenance; retain
+  confirmed canonical routing protection and the existing ID-based scope-reach display repair.
+- Normalize public routing and private values together on export. Keep enrichment schema 1.2 and
+  regenerate affected generated companions from original canonical routing without new LLM calls.
+- Cover conflicting annex IDs, genuine self references, missing/ambiguous/external targets, reuse,
+  private hydration, existing-companion repair and byte-stable re-export with regression tests.
+
 ## Unreleased — Process-function qualification through AtlasData (2026-09-09)
 
 - Preserve actually supplied process sets and primary labels through per-model votes,
@@ -16,7 +55,7 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
   Keep canonical schema 9, adoption 1.0 and archive layout 1.5 unchanged.
 - Test fresh synthetic provider-to-AtlasData roundtrips and retained Run 074 compatibility.
 
-## Unreleased — AtlasData enrichment schema 1.1 readability (2026-09-09)
+## Unreleased — AtlasData enrichment schema 1.2 readability (2026-09-09)
 
 - Add the exact legacy `atlasdata_md5` TOC identifier to every persisted clause and validate it
   against the owning AtlasData file instead of recomputing a reference hash.
@@ -25,7 +64,13 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 - Centralize all SHA-256 state/provenance references under structured `fingerprints:` mappings;
   keep the AtlasData MD5 outside that block because it is a record identity, not a fingerprint.
 - Omit redundant `availability: known` and duplicated generated path/availability fields while
-  retaining explicit `availability: unknown`. Schema 1.0 companions are intentionally unsupported.
+  retaining explicit `availability: unknown`.
+- Keep unresolved `ambiguous_candidates` as internal/WIP subject-identification state instead of
+  publishing it as accepted AtlasData knowledge.
+- Canonicalize local context-routing targets from resolved `clause_id` values so persisted scope
+  reaches and reference routings always carry the actual target-clause reference.
+- Schema 1.0/1.1 companions are intentionally unsupported; schema 1.2 is regenerated from canonical
+  state rather than migrated in place.
 
 ## Unreleased — Effective CBox consumption and explicit knowledge workflows (2026-09-09)
 

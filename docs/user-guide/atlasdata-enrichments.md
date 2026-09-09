@@ -15,7 +15,7 @@ data/ISO26262
 data/enrichments/ISO26262-11.yaml
 ```
 
-The companion is an `atlasdata-enrichments` manifest, schema `1.1`. Its values use the canonical
+The companion is an `atlasdata-enrichments` manifest, schema `1.2`. Its values use the canonical
 semantic vocabulary and explicit primary labels. It preserves generated/confirmed/unattributed
 origin, availability, decision support and reference identity. **A generated value stays generated
 when written into or read from AtlasData.** Existing reviewed TOC tags remain authoritative; two
@@ -55,10 +55,13 @@ An explicitly requested local report is still produced. `--write` is the only mu
 `--dimension` restricts export to complete coupled attribute groups and is repeatable:
 `statement_functions`, `knowledge_kinds`, `process_functions`, `applicability`, `role_semantics`,
 `subject_context`, `context_routing`. With exactly one selected document, repeatable
-`--clause <clause-id>` restricts the update further. Unselected clauses and dimensions already
-in the companion are retained. An unknown input cannot erase known knowledge; omission is not
-an explicit empty set or a negative result. Existing protected values are reported as `protected`.
-There is deliberately no blind overwrite/force flag and no automatic deletion of old assertions.
+`--clause <clause-id>` restricts the update further. `role_semantics` currently publishes only
+`enrichments.semantic.role_semantics_present`. Unselected clauses and dimensions already
+in the companion are retained, except for the explicitly deferred role-detail fields below.
+An unknown input cannot erase known knowledge; omission is not an explicit empty set or a negative
+result. Existing protected values are reported as `protected`.
+There is deliberately no blind overwrite/force flag. The narrow role-detail publication cleanup
+below does not delete canonical assertions or private evidence.
 
 Use `--root /path/to/project` when invoking outside the checkout. All relative manifest, workspace,
 evidence and report paths are resolved against that explicit root. Companion paths are fixed
@@ -68,16 +71,47 @@ cannot be redirected by guessing a filename suffix.
 ## Public values versus private evidence
 
 Public categorical fields include statement, knowledge and process functions and their primary
-labels, Applicability presence/functions, role presence and controlled role types. Presence-only
-and explicit negatives are supported. Vote counts describe support, not measured correctness.
+labels, Applicability presence/functions, and role presence. Presence-only, explicit negatives and
+unknown assessments are supported. Vote counts describe support, not measured correctness.
+
+Role-detail publication is temporarily deferred: `enrichments.semantic.role_relations` and
+`enrichments.semantic.role_relation_types` are never emitted, even when a local value is nonempty
+or confirmed. Negative presence already implies no role relations; empty dependent fields from
+canonical adoption are not independent extraction results. Positive presence does not establish
+which actors or relations were found.
+
+This is an export policy, not removal of the canonical fields or reviewed AtlasData `RR` tags.
+Local role values, provenance, protected state and existing private evidence blobs remain intact.
+Fresh companions create no private blobs or fingerprint entries for the deferred attributes.
+Consequently, a fresh workspace cannot reconstruct positive role details from these companions;
+keep the canonical document to retain any such local results.
+
+Re-export to clean existing schema-1.2 companions without deleting them or running an LLM:
+
+```bash
+uv run standards-atlas atlasdata export-enrichments \
+  --manifest manifests/standards.yaml \
+  --workspace .atlas/data \
+  --dimension role_semantics \
+  --write
+```
+
+Omit `--write` for a preview. Old role-detail attributes and their fingerprint entries are removed
+throughout each selected companion, even if `--dimension` or `--clause` selects another field or
+clause. Each removed attribute is reported as `omitted`. Other attributes and clause ordering are
+preserved; an otherwise empty public record is dropped, not the canonical clause. Publication is
+idempotent, including after import regenerates canonical empty dependents from false presence.
+The reader still understands existing schema-1.2 records and private blobs; no schema bump is
+needed for this narrower publication policy.
 
 Subject and routing models also contain protected evidence or free-text conditions. Their public
 records therefore contain a **bounded projection plus a content-addressed value reference**.
-The public subject view carries the selected normalized label, confidence and ambiguity labels;
-the routing view carries source/target coordinates, reach/role and counts of conditions,
-exclusions and qualifications. It does not copy those sentences. Exact accepted role tuples
-travel privately; their public view contains only the tuple count. No extra role candidates are
-accepted merely because they occur in an evaluation report.
+The public subject view carries only an accepted normalized label and confidence; unresolved
+ambiguity candidates remain internal working state and are not published.
+The routing view carries source/target coordinates, reach/role and counts of conditions,
+exclusions and qualifications. It does not copy those sentences. No role-detail tuples or counts
+are exported while publication is deferred. No extra role candidates are accepted merely because
+they occur in an evaluation report.
 
 Original context objects and redacted raw provenance are stored as immutable, hash-checked JSON:
 
@@ -92,6 +126,59 @@ actors/targets and scope-condition prose are not copied into public companions. 
 provenance is replaced by SHA-256 fingerprints collected under the clause-local `fingerprints:`
 mapping. Normalized subject labels and structural reference
 coordinates are intentionally published as semantic values, and should be reviewed as such.
+
+Target identity is resolved deterministically before canonical persistence, not delegated to an
+LLM-provided ID. Numeric subclauses, annexes, bounded lists and same-level ranges use an exact
+standard/part/edition-aware TOC index. An available ancestor or source ID is never a substitute for
+an explicit coordinate. Deterministically resolved structural scope edges remain authoritative when
+correcting stale reach labels; without that structural evidence, explicit scope coordinates take
+precedence over a conflicting provider ID. References inside scope conditions are not scope targets.
+
+The source reference extractor now retains annex, list, range and bare-subclause mentions before
+context enrichment. The default `context-routing-v2` prompt assigns roles but leaves target clause
+IDs and titles null for deterministic resolution. Routing evidence remains private and unchanged.
+Unresolved, partially resolved and ambiguous groups retain their citation text without a guessed
+local ID. External document targets still require a cross-document resolver.
+
+A previously overwritten canonical self/ancestor target can be repaired when its original citation
+survives in one unambiguous evidence fragment that matches the source text verbatim (whitespace
+normalization only). Multiple unrelated citations or unverified evidence are reported for review;
+roles such as `provides_exception` are never used to guess an annex.
+
+Repair canonical JSON **before** re-exporting, without an LLM call:
+
+```bash
+uv run standards-atlas document repair-context-routing IEC61508-3 \
+  --workspace .atlas/data \
+  --report local/evaluation/context-routing/IEC61508-3-repair.json
+
+uv run standards-atlas document repair-context-routing IEC61508-3 \
+  --workspace .atlas/data \
+  --report local/evaluation/context-routing/IEC61508-3-repair.json \
+  --write
+
+uv run standards-atlas atlasdata export-enrichments \
+  --manifest manifests/standards.yaml \
+  --workspace .atlas/data \
+  --document IEC61508-3 \
+  --dimension context_routing \
+  --write
+```
+
+The first command is a dry run. `--write` creates an exact-byte `.bak` beside the original canonical
+JSON before saving changes. Reviewed/protected routing is not overwritten. Diagnostics distinguish
+repairs, unresolved or unverified evidence, and protected state. The reference baseline is refreshed
+from available source text; a second repair pass is idempotent.
+
+Companion schema `1.2`, private evidence schema `1.0` and canonical document schema `9` are unchanged;
+no companion deletion is required. Export still does not mutate the canonical repository. Neither
+a fingerprint nor a corrupted self-reference alone can recover a lost citation; when source/evidence
+is unavailable, restore the original private source-backed value or review/regenerate the routing.
+A later normal context-enrichment run can invoke the new v2 prompt because its input identity differs
+from v1. The repair/export commands above do not invoke either prompt.
+
+See [canonical reference repair](context-routing-reference-resolution.md) for resolution boundaries
+and interpretation of the diagnostic report.
 
 ## Restore, including into a fresh workspace
 

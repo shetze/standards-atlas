@@ -1,5 +1,8 @@
 """CBox-oriented deterministic context discovery."""
 
+from standards_atlas.application.context.routing_normalization import (
+    normalize_context_routing_targets,
+)
 from standards_atlas.application.context.subject_identification import (
     ClauseSubjectIdentification,
     DeterministicSubjectIdentifier,
@@ -36,4 +39,5 @@ __all__ = [
     "SubjectCandidateVocabularyService",
     "SubjectVocabularyAnalysis",
     "normalize_subject_label",
+    "normalize_context_routing_targets",
 ]

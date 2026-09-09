@@ -125,7 +125,9 @@ def test_enriches_clause_ranges_and_removes_structural_heads(tmp_path):
     first_generated = {item.path: item for item in first.provenance.generated_attributes}
     assert first_generated["baseline.content"].generator == "normalized-content-enrichment"
     assert first_generated["baseline.content"].method.value == "source_extraction"
-    assert first_generated["baseline.reference_mentions"].generator == "reference-mention-extractor"
+    assert (
+        first_generated["baseline.reference_mentions"].generator == "reference-mention-extractor/v2"
+    )
     assert first_generated["baseline.reference_mentions"].method.value == "deterministic"
 
 

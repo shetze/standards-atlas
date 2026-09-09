@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 from standards_atlas.application.ports import EngineeringDocumentRepository
+from standards_atlas.application.references.extractor import refresh_document_references
 from standards_atlas.application.services.structural_profile_classifier import (
     StructuralProfileClassifier,
     StructuralProfileContext,
@@ -42,7 +43,9 @@ class StructuralTaxonomyService:
         self._classifier = classifier or StructuralProfileClassifier()
 
     def classify(self, document_key: str) -> StructuralTaxonomyResult:
-        document = self._documents.load(DocumentKey(value=document_key))
+        document = refresh_document_references(
+            self._documents.load(DocumentKey(value=document_key))
+        )
         clauses = document.clauses
         by_id = {clause.id.value: clause for clause in clauses}
         children: dict[str | None, list[Clause]] = {}

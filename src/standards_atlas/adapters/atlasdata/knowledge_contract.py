@@ -53,6 +53,15 @@ DIMENSION_PATHS.update(
     }
 )
 ALL_PATHS = tuple(path for paths in DIMENSION_PATHS.values() for path in paths)
+# Keep the transport/read paths and canonical merge groups intact. Role-detail
+# publication is deferred independently of whether a local value is populated;
+# the public companion currently publishes only role_semantics_present.
+UNPUBLISHED_ROLE_PATHS = frozenset(
+    {
+        "enrichments.semantic.role_relation_types",
+        "enrichments.semantic.role_relations",
+    }
+)
 SEMANTIC_ADAPTERS = {
     name: TypeAdapter(field.annotation)
     for name, field in SemanticEnrichmentPatch.model_fields.items()
@@ -69,10 +78,9 @@ class _Strict(BaseModel):
 
 
 class SubjectView(_Strict):
-    # Controlled use of authored semantic labels, never evidence/source sentences.
+    # Controlled use of accepted authored semantic labels, never WIP candidates or evidence.
     normalized_label: str | None = None
     confidence: float | None = Field(default=None, ge=0, le=1)
-    ambiguous_candidates: tuple[str, ...] = ()
 
 
 class ScopeView(_Strict):
@@ -181,7 +189,7 @@ class ClauseKnowledge(_Strict):
 
 class AtlasDataKnowledge(_Strict):
     manifest_type: Literal["atlasdata-enrichments"] = "atlasdata-enrichments"
-    schema_version: Literal["1.1"] = "1.1"
+    schema_version: Literal["1.2"] = "1.2"
     document_key: SafeKey
     family_key: SafeKey
     atlasdata_file: str = Field(min_length=1)

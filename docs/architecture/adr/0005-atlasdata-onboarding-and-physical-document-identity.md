@@ -20,7 +20,7 @@ AtlasData onboarding is manifest-driven and produces canonical documents **per p
 
 ## Accepted enrichment transport
 
-An explicit `atlasdata-enrichments` companion (schema `1.1`) is stored at
+An explicit `atlasdata-enrichments` companion (schema `1.2`) is stored at
 `<AtlasData parent>/enrichments/<physical-key>.yaml`. This extends, rather than replaces, the
 existing AtlasData adapter and text format. TOC tags continue to represent reviewed categories;
 companions additionally represent generated hints, confirmed negatives, primary labels,
@@ -41,8 +41,9 @@ Two conflicting explicit authorities fail preflight. Structural content and its 
 are never rewritten by enrichment transfer. Selection is incremental: omission preserves state.
 
 Original source-bearing context objects and raw provenance live in private immutable evidence
-blobs, as defined by ADR 0013. Public companions contain categorical values, bounded context views
-and centralized SHA-256 fingerprint references, not a copy of protected source text. Missing private values defer whole
+blobs, as defined by ADR 0013. Public companions contain accepted categorical values, bounded context views and centralized
+SHA-256 fingerprint references, not unresolved subject candidates or a copy of protected source
+text. Local routing targets resolved by clause ID are normalized to the actual target reference. Missing private values defer whole
 context attributes rather than manufacturing empty conditions. Strict restoration rejects any
 missing referenced private evidence. The canonical model remains the single document authority.
 

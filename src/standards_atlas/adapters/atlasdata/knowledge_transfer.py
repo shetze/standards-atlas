@@ -28,6 +28,7 @@ from .import_pipeline import AtlasDataImportPipeline
 from .knowledge_contract import (
     ALL_PATHS,
     DIMENSION_PATHS,
+    UNPUBLISHED_ROLE_PATHS,
     AtlasDataKnowledge,
     AtlasDataKnowledgeReport,
     ClauseKnowledge,
@@ -84,11 +85,11 @@ def _sha256_digest(value: object) -> str:
 
 
 def _wire_to_model_payload(payload: dict) -> dict:
-    """Expand compact schema-1.1 fingerprints into the internal transport model."""
+    """Expand compact schema-1.2 fingerprints into the internal transport model."""
 
     result = deepcopy(payload)
     if "structure_sha256" in result:
-        raise ValueError("schema 1.1 stores structure fingerprints under fingerprints")
+        raise ValueError("schema 1.2 stores structure fingerprints under fingerprints")
     fingerprints = result.pop("fingerprints", None)
     if not isinstance(fingerprints, dict) or set(fingerprints) != {"structure"}:
         raise ValueError("AtlasData enrichments require fingerprints.structure")
@@ -102,7 +103,7 @@ def _wire_to_model_payload(payload: dict) -> dict:
             raise ValueError("AtlasData enrichment clause must be a mapping")
         for legacy in ("heading_sha256", "atlasdata_heading_sha256", "content_sha256"):
             if legacy in clause:
-                raise ValueError(f"schema 1.1 stores {legacy} under fingerprints")
+                raise ValueError(f"schema 1.2 stores {legacy} under fingerprints")
         clause_fingerprints = clause.pop("fingerprints", None)
         if not isinstance(clause_fingerprints, dict):
             raise ValueError("AtlasData enrichment clause requires fingerprints")
@@ -147,7 +148,7 @@ def _wire_to_model_payload(payload: dict) -> dict:
                 )
 
             if "private_value_sha256" in attribute or "private_provenance_sha256" in attribute:
-                raise ValueError("schema 1.1 stores private fingerprints under fingerprints")
+                raise ValueError("schema 1.2 stores private fingerprints under fingerprints")
             if "private_value" in fps:
                 attribute["private_value_sha256"] = _sha256_digest(fps["private_value"])
             if "private_provenance" in fps:
@@ -161,7 +162,7 @@ def _wire_to_model_payload(payload: dict) -> dict:
                 legacy = {"path", "availability", "evidence"} & set(generated)
                 if legacy:
                     raise ValueError(
-                        "schema 1.1 derives generated "
+                        "schema 1.2 derives generated "
                         f"{sorted(legacy)} from the attribute/fingerprints"
                     )
                 generated["path"] = path
@@ -178,7 +179,7 @@ def _wire_to_model_payload(payload: dict) -> dict:
                         raise ValueError(f"decision provenance must be a mapping: {path}")
                     if "source_sha256" in decision:
                         raise ValueError(
-                            "schema 1.1 stores decision source fingerprints under fingerprints"
+                            "schema 1.2 stores decision source fingerprints under fingerprints"
                         )
                     if "decision_source" not in fps:
                         raise ValueError(f"decision requires decision_source fingerprint: {path}")
@@ -193,13 +194,13 @@ def _wire_to_model_payload(payload: dict) -> dict:
                 if not isinstance(confirmed, dict):
                     raise ValueError(f"confirmed provenance must be a mapping: {path}")
                 if "path" in confirmed:
-                    raise ValueError("schema 1.1 derives confirmed path from the attribute")
+                    raise ValueError("schema 1.2 derives confirmed path from the attribute")
                 confirmed["path"] = path
     return result
 
 
 def _model_to_wire_payload(manifest: AtlasDataKnowledge) -> dict:
-    """Serialize schema 1.1 with one readable fingerprint block per scope."""
+    """Serialize schema 1.2 with one readable fingerprint block per scope."""
 
     payload = manifest.model_dump(mode="json")
     clauses = payload.pop("clauses")
@@ -269,9 +270,47 @@ def read_knowledge(path: Path) -> AtlasDataKnowledge:
     return result
 
 
+def _omit_unpublished_role_details(
+    manifest: AtlasDataKnowledge,
+) -> tuple[AtlasDataKnowledge, list[TransferChange]]:
+    """Remove deferred public fields, not canonical values or private evidence.
+
+    Apply to the whole selected companion, even on a dimension/clause-limited
+    export, so retained old records cannot leak fields outside publication policy.
+    Attribute fingerprints are serialized from the remaining records only.
+    """
+    clauses = []
+    changes = []
+    for clause in manifest.clauses:
+        attributes = []
+        for item in clause.attributes:
+            if item.path not in UNPUBLISHED_ROLE_PATHS:
+                attributes.append(item)
+                continue
+            changes.append(
+                TransferChange(
+                    document_key=manifest.document_key,
+                    clause_id=clause.clause_id,
+                    path=item.path,
+                    status="omitted",
+                    before=item.value,
+                    reason=(
+                        "role detail publication is deferred; only role presence is published; "
+                        "canonical values and private evidence are unchanged"
+                    ),
+                )
+            )
+        if attributes:
+            clauses.append(clause.model_copy(update={"attributes": tuple(attributes)}))
+        # A companion record without any published attributes is not meaningful.
+        # Other clauses and all their remaining attributes retain their order.
+    return manifest.model_copy(update={"clauses": tuple(clauses)}), changes
+
+
 def knowledge_bytes(manifest: AtlasDataKnowledge) -> bytes:
     # Revalidate model_copy updates as well as normally constructed objects.
     manifest = AtlasDataKnowledge.model_validate(manifest.model_dump(mode="json"))
+    manifest, _ = _omit_unpublished_role_details(manifest)
     for clause in manifest.clauses:
         _validate_semantics(clause.attributes)
         for attribute in clause.attributes:
@@ -590,6 +629,7 @@ class AtlasDataKnowledgeService:
             if dimensions
             else ALL_PATHS
         )
+        paths = tuple(path for path in paths if path not in UNPUBLISHED_ROLE_PATHS)
         store = KnowledgeEvidenceStore(self.evidence_root)
         pending: dict[Path, bytes] = {}
         changes = []
@@ -611,11 +651,14 @@ class AtlasDataKnowledgeService:
             canonical_clauses, structural_clauses = _clauses(source), _clauses(skeleton)
             if set(clause_ids) - canonical_clauses.keys():
                 raise ValueError("selected clauses do not exist in the physical document")
-            records = {item.clause_id: item for item in existing.clauses}
-            # Old entries outside the selection remain, but must still address this baseline.
+            # Validate every old identity before removing any deferred public fields.
             for old in existing.clauses:
                 _check_clause(old, structural_clauses.get(old.clause_id), key=key, structural=True)
                 _check_atlasdata_md5(old, atlasdata_md5s, key=key)
+            existing, omitted = _omit_unpublished_role_details(existing)
+            changes.extend(omitted)
+            records = {item.clause_id: item for item in existing.clauses}
+            # Other unselected clauses and dimensions keep their existing state.
             for clause in source.clauses:
                 clause_id = clause.id.value
                 if clause_ids and clause_id not in clause_ids:
@@ -623,7 +666,7 @@ class AtlasDataKnowledgeService:
                 attributes = tuple(
                     item
                     for path in sorted(set(paths))
-                    if (item := project_attribute(clause, path, store)) is not None
+                    if (item := project_attribute(clause, path, store, document=source)) is not None
                 )
                 if not attributes:
                     continue

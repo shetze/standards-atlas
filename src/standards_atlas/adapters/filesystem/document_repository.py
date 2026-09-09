@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import tempfile
@@ -10,12 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from standards_atlas.application.schema import require_supported_schema
-from standards_atlas.domain.model import (
-    DocumentKey,
-    DocumentType,
-    EngineeringDocument,
-    Standard,
-)
+from standards_atlas.domain.model import DocumentKey, DocumentType, EngineeringDocument, Standard
 
 CURRENT_DOCUMENT_SCHEMA_VERSION = 9
 
@@ -53,6 +49,20 @@ class FileSystemEngineeringDocumentRepository:
             os.replace(temporary, path)
         finally:
             Path(temporary).unlink(missing_ok=True)
+
+    def backup(self, key: DocumentKey) -> Path:
+        """Keep exact pre-repair bytes outside the repository's *.json inventory."""
+        source = self._path_for_key(key)
+        payload = source.read_bytes()
+        digest = hashlib.sha256(payload).hexdigest()
+        target = source.with_name(f"{source.name}.before-routing-repair-{digest[:16]}.bak")
+        try:
+            with target.open("xb") as stream:
+                stream.write(payload)
+        except FileExistsError:
+            if target.read_bytes() != payload:
+                raise ValueError(f"existing backup has different content: {target}") from None
+        return target
 
     def load(self, key: DocumentKey) -> EngineeringDocument:
         """Load a document using the current schema baseline."""

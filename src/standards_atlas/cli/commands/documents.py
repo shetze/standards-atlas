@@ -23,6 +23,7 @@ from standards_atlas.cli.commands.document_commands.management import (
     enrich_document_content,
     enrich_document_context,
     import_document,
+    repair_document_context_routing,
 )
 from standards_atlas.cli.commands.document_commands.publication import publish_doorstop_hierarchy
 
@@ -39,6 +40,7 @@ __all__ = [
     "export_document_to_markdown",
     "generate_toc",
     "import_document",
+    "repair_document_context_routing",
     "inspect_data",
     "onboard_docling",
     "onboard_docling_parts",

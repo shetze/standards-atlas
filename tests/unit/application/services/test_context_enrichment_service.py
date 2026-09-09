@@ -59,8 +59,8 @@ class _Gateway:
                                 "kind": "subtree",
                                 "document_key": None,
                                 "part": None,
-                                "clause_id": None,
-                                "reference": "2",
+                                "clause_id": "clause-1",
+                                "reference": "2.1",
                             }
                         ],
                         "conditions": ["for software elements"],
@@ -195,6 +195,8 @@ def test_context_enrichment_only_analyzes_scope_or_reference_candidates() -> Non
     clause = result.document.clauses[0]
     assert clause.semantic_classification == document.clauses[0].semantic_classification
     assert clause.context_routing.scopes[0].reaches[0].kind == ScopeReachKind.SUBTREE
+    assert clause.context_routing.scopes[0].reaches[0].reference == "TEST:2026 2.1"
+    assert clause.context_routing.references[0].target.reference == "TEST:2026 2.1"
     assert clause.context_routing.references[0].role.value == "provides_procedure"
     assert clause.primary_subject is not None
     assert clause.primary_subject.normalized_label == "software"
@@ -297,3 +299,139 @@ def test_confirmed_routing_does_not_call_a_model():
     assert result.routing_reused == 1
     assert not gateway.requests
     assert result.document.clauses[0].context_routing == clause.context_routing
+
+
+def test_llm_annex_reference_is_not_normalized_into_a_self_reference():
+    from dataclasses import replace
+
+    class WrongTargetGateway(_Gateway):
+        def generate_structured(self, request):
+            response = super().generate_structured(request)
+            value = dict(response.value)
+            value["reference_routings"] = [
+                {
+                    "target": {
+                        "document_key": "TEST-2026",
+                        "clause_id": "clause-1",
+                        "reference": text,
+                        "title": None,
+                    },
+                    "role": role,
+                    "evidence": [evidence],
+                }
+                for text, role, evidence in (
+                    ("this clause", "defines", "Synthetic self reference."),
+                    ("Annex G", "provides_exception", "Synthetic Annex G exception."),
+                )
+            ]
+            return replace(response, value=value)
+
+    document = _document()
+    annex = Clause(
+        id=ClauseId(value="annex-g"),
+        reference=StandardReference(standard="TEST", year=2026, clause="G"),
+        clause_type=ClauseType.CLAUSE,
+    )
+    document = document.model_copy(update={"clauses": (*document.clauses, annex)})
+    routing = LlmContextRoutingEnricher(WrongTargetGateway(), prompt=_prompt()).enrich(
+        clause=document.clauses[0], document=document
+    )
+    self_edge, annex_edge = routing.references
+    assert self_edge.target.clause_id == "clause-1"
+    assert self_edge.target.reference == "TEST:2026 1"
+    assert annex_edge.source_clause_id == "clause-1"
+    assert annex_edge.target.clause_id == "annex-g"
+    assert annex_edge.target.reference == "TEST:2026 G"
+    assert annex_edge.role.value == "provides_exception"
+    assert annex_edge.evidence == ("Synthetic Annex G exception.",)
+
+
+def test_reused_routing_repairs_wrong_self_id_without_llm_or_provenance_changes():
+    documents = _Documents(_document())
+    gateway = _Gateway()
+    service = ContextEnrichmentService(
+        documents=documents,
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="test-model"),
+    )
+    first = service.enrich(documents.document.key.value)
+    source = first.document.clauses[0]
+    reference = source.context_routing.references[0]
+    broken = source.with_context_routing(
+        source.context_routing.model_copy(
+            update={
+                "references": (
+                    reference.model_copy(
+                        update={
+                            "target": ReferenceTarget(
+                                document_key=first.document.key.value,
+                                clause_id=source.id.value,
+                                reference="2.1",
+                            )
+                        }
+                    ),
+                )
+            }
+        )
+    )
+    documents.document = first.document.model_copy(
+        update={"clauses": (broken, *first.document.clauses[1:])}
+    )
+    second = service.enrich(documents.document.key.value)
+    assert second.routing_reused == 1
+    assert len(gateway.requests) == 1
+    assert second.document == first.document
+    assert second.document.clauses[0].provenance == broken.provenance
+
+    documents.document = second.document
+    third = service.enrich(documents.document.key.value)
+    assert third.document == second.document
+    assert third.routing_reused == 1
+    assert len(gateway.requests) == 1
+
+
+def test_v2_prompt_supplies_deterministic_annex_targets_and_forbids_model_ids():
+    from jsonschema import Draft202012Validator
+
+    from standards_atlas.application.services.context_enrichment_service import (
+        _is_context_candidate,
+    )
+
+    source, other, term = _document().clauses
+    source = source.with_baseline_updates(
+        content=(TextBlock(id="source", text="See Annex G for this synthetic exception."),),
+        reference_mentions=(),
+        structural_context=StructuralContext(node_kind=StructuralNodeKind.LEAF),
+    )
+    annex = other.model_copy(
+        update={"reference": other.reference.model_copy(update={"clause": "G"})}
+    )
+    doc = _document().model_copy(update={"clauses": (source, annex, term)})
+    resources = (
+        Path(__file__).resolve().parents[4] / "src/standards_atlas/resources/semantic/prompts"
+    )
+    prompt = PromptRepository(resources).load("context-routing-enrichment", "context-routing-v2")
+    enricher = LlmContextRoutingEnricher(_Gateway(), prompt=prompt, model="test")
+    request = enricher._request(clause=source, document=doc)
+    assert _is_context_candidate(source)
+    assert '"source_clause_id": "clause-1"' in request.user_prompt
+    assert '"clause_id": "clause-2"' in request.user_prompt
+    assert '"reference": "TEST:2026 G"' in request.user_prompt
+    answer = {
+        "scope_declarations": [],
+        "reference_routings": [
+            {
+                "target": {
+                    "document_key": None,
+                    "clause_id": None,
+                    "reference": "Annex G",
+                    "title": None,
+                },
+                "role": "provides_exception",
+                "evidence": ["See Annex G for this synthetic exception."],
+            }
+        ],
+    }
+    validator = Draft202012Validator(request.output_schema)
+    assert not list(validator.iter_errors(answer))
+    answer["reference_routings"][0]["target"]["clause_id"] = "clause-1"
+    assert list(validator.iter_errors(answer))

@@ -139,7 +139,7 @@ class ContextEnrichmentConfig:
     """Task-specific runtime configuration for CBox context enrichment."""
 
     prompt_task: str = "context-routing-enrichment"
-    prompt_version: str = "context-routing-v1"
+    prompt_version: str = "context-routing-v2"
     max_tokens: int = 1024
     retry_max_tokens: int = 2048
     llm: LlmConfig = LlmConfig()

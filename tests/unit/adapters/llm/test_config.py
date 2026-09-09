@@ -116,7 +116,7 @@ def test_project_context_enrichment_profile_uses_independent_challenger() -> Non
     config = ContextEnrichmentConfig.load(Path("cfg/context-enrichment.yaml"))
 
     assert config.prompt_task == "context-routing-enrichment"
-    assert config.prompt_version == "context-routing-v1"
+    assert config.prompt_version == "context-routing-v2"
     assert config.llm.model == "hf.co/bartowski/phi-4-GGUF:Q4_K_M"
     assert config.llm.server.model == config.llm.model
     assert config.llm.server.name == "standards-atlas-context-enrichment"
