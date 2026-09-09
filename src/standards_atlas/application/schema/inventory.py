@@ -49,6 +49,22 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "cbox-enrichments",
+        "clause-descriptor.enrichment_context",
+        LifecycleBoundary.PROCESS,
+        (VersionAxis.SCHEMA,),
+        "cbox-enrichments",
+        "Read-only canonical attribute projection.",
+    ),
+    VersionedInterface(
+        "cbox-report",
+        "local/**/cbox*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "cbox-report",
+        "Local effective post-import CBox and provenance.",
+    ),
+    VersionedInterface(
         "atlasdata-enrichments",
         "data/enrichments/*.yaml",
         LifecycleBoundary.PUBLIC_CONTRACT,

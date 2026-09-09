@@ -10,6 +10,7 @@ from standards_atlas.cli.commands.document_commands.atlasdata_knowledge import (
     export_enrichments,
     import_enrichments,
 )
+from standards_atlas.cli.commands.document_commands.cbox import cbox_report
 from standards_atlas.cli.commands.document_commands.exports import (
     export_document_to_doorstop,
     export_document_to_markdown,
@@ -26,6 +27,7 @@ from standards_atlas.cli.commands.document_commands.management import (
 from standards_atlas.cli.commands.document_commands.publication import publish_doorstop_hierarchy
 
 __all__ = [
+    "cbox_report",
     "adopt_qualification",
     "export_enrichments",
     "import_enrichments",

@@ -180,9 +180,10 @@ archive-matched source evidence in an isolated workspace. It verifies 497 accept
 cases and byte-stable export/import replay. It is not a fresh qualification or a verification of
 the user's production workspace. The repository contains no protected standard-text fixture.
 
-## Subsequent work
+## Effective CBox and workflow reuse
 
-Automatic CBox/workflow reuse and target-attribute isolation remain the next slice. A normal
-`document import` or qualification workflow does not implicitly load or publish companions;
-use the explicit `atlasdata import-enrichments` operation described above. Process-function
-qualification reporting remains separate; existing canonical values are already persistable.
+[Canonical CBox](canonical-cbox.md) describes inspection of the accepted state, qualification
+isolation and explicit workflow adoption/restore/publication. A normal `document import` or
+default qualification workflow still does not implicitly load or publish companions.
+Use `--restore-enrichments` for opt-in workflow restoration or the standalone command above.
+Process-function qualification reporting remains separate; existing values are persistable.

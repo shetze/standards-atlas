@@ -53,6 +53,9 @@ def adopt_qualification(
         bool,
         typer.Option("--write", help="Accept selected results into canonical documents."),
     ] = False,
+    available_only: Annotated[
+        bool, typer.Option("--available-only", help="Restrict selected documents to this archive.")
+    ] = False,
 ) -> None:
     """Preview or explicitly accept selected knowledge, without LLM calls or public export."""
     try:
@@ -71,7 +74,13 @@ def adopt_qualification(
         service = KnowledgeAdoptionService(
             documents=FileSystemEngineeringDocumentRepository(workspace),
         )
-        report = service.apply(batch, document_keys=tuple(document or ()), write=write)
+        selected = tuple(document or ())
+        if available_only and selected:
+            known = {item.document_key for item in batch.candidates}
+            selected = tuple(key for key in selected if key in known)
+            if not selected:
+                raise ValueError("selected documents have no qualified candidates in this archive")
+        report = service.apply(batch, document_keys=selected, write=write)
         if output is not None:
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")

@@ -238,3 +238,62 @@ def test_context_service_preserves_explicitly_confirmed_empty_results() -> None:
         enricher=LlmContextRoutingEnricher(_Gateway(), prompt=_prompt(), model="test-model"),
     ).enrich(document.key.value)
     assert result.document.clauses[0] == clause
+
+
+def test_context_enrichment_reuses_restored_input_identity_without_llm(tmp_path):
+    from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+    from standards_atlas.domain.model import Standard
+
+    repository = FileSystemEngineeringDocumentRepository(tmp_path)
+    document = Standard.model_validate({**_document().model_dump(), "name": "Test"})
+    repository.save(document)
+    gateway = _Gateway()
+    first = ContextEnrichmentService(
+        documents=repository,
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="test-model"),
+    ).enrich(document.key.value)
+    assert len(gateway.requests) == 1
+    assert first.routing_reused == 0
+    before = {path: path.read_bytes() for path in (tmp_path / "documents").glob("*.json")}
+    # Discard all service/repository instances, just as after a restart or import.
+    fresh_repository = FileSystemEngineeringDocumentRepository(tmp_path)
+    second = ContextEnrichmentService(
+        documents=fresh_repository,
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="test-model"),
+    ).enrich(document.key.value)
+    assert second.routing_reused == 1
+    assert len(gateway.requests) == 1
+    assert second.document == first.document
+    assert before == {path: path.read_bytes() for path in before}
+
+
+def test_changed_routing_model_invalidates_generated_result():
+    documents = _Documents(_document())
+    gateway = _Gateway()
+    first = ContextEnrichmentService(
+        documents=documents,
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="model-a"),
+    ).enrich(documents.document.key.value)
+    documents.document = first.document
+    second = ContextEnrichmentService(
+        documents=documents,
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="model-b"),
+    ).enrich(documents.document.key.value)
+    assert second.routing_reused == 0
+    assert len(gateway.requests) == 2
+
+
+def test_confirmed_routing_does_not_call_a_model():
+    documents = _Documents(_document())
+    clause = documents.document.clauses[0].confirm_authoritative("enrichments.context_routing")
+    documents.document = documents.document.model_copy(
+        update={"clauses": (clause, *documents.document.clauses[1:])}
+    )
+    gateway = _Gateway()
+    result = ContextEnrichmentService(
+        documents=documents,
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt(), model="model-a"),
+    ).enrich(documents.document.key.value)
+    assert result.routing_reused == 1
+    assert not gateway.requests
+    assert result.document.clauses[0].context_routing == clause.context_routing

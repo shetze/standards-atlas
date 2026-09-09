@@ -6,6 +6,7 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
+from standards_atlas.application.context.canonical_cbox import canonical_cbox_context
 from standards_atlas.application.prompt_workbench.models import (
     AssembledPromptContext,
     ContextVariantDescriptor,
@@ -89,7 +90,10 @@ class ClausePromptContextAssembler:
             context_text = _pretty_json(selected)
         elif variant_id == ROUTING_SOURCE_V1.id:
             selected = self._routing_source_context(
-                clause, document_title=document_title, structural=structural
+                clause,
+                document_title=document_title,
+                structural=structural,
+                subject_context=canonical.get("subject_context"),
             )
             context_text = _pretty_json(selected)
         else:
@@ -102,6 +106,14 @@ class ClausePromptContextAssembler:
         else:
             template_structural_context = dict(selected.get("structural_context", {}))
 
+        if "isolated-v" in variant_id:
+            # Explicit isolated frames also constrain alternate template variables.
+            metadata = {
+                key: value
+                for key, value in metadata.items()
+                if key in {"document_key", "clause_id", "reference", "clause_reference"}
+                or key in selected
+            }
         values = {
             "content": clause.text,
             "text": clause.text,
@@ -110,7 +122,11 @@ class ClausePromptContextAssembler:
             "clause_reference": clause.clause_reference,
             "document_key": clause.document_key,
             "clause_id": clause.id,
-            "heading": clause.heading or "",
+            "heading": (
+                str(selected.get("heading") or "")
+                if "isolated-v" in variant_id
+                else clause.heading or ""
+            ),
             "metadata": _compact_json(metadata),
             "structural_context": _compact_json(template_structural_context),
             "context_json": _compact_json(selected),
@@ -125,32 +141,7 @@ class ClausePromptContextAssembler:
         )
 
     def _canonical_context(self, clause: ClauseDescriptor) -> dict[str, Any]:
-        structural = dict(clause.structural_context or {})
-        return {
-            "knowledge_domain": self._knowledge_domain,
-            "document_key": clause.document_key,
-            "clause_id": clause.id,
-            "reference": clause.clause_reference,
-            "heading": clause.heading,
-            "parent_id": clause.parent_id,
-            "ancestor_headings": list(structural.get("ancestors", ())),
-            "structural_roles": [item.value for item in clause.statement_functions],
-            "clause_type": clause.clause_type.value,
-            "canonical_section": (
-                clause.canonical_section.value if clause.canonical_section is not None else None
-            ),
-            "document_categories": list(clause.document_categories),
-            "domain_categories": list(clause.domain_categories),
-            "semantic_sections": [
-                item.model_dump(mode="json") for item in clause.semantic_sections
-            ],
-            "structural_context": clause.structural_context,
-            "reference_mentions": list(clause.reference_mentions),
-            "context_routing": clause.context_routing,
-            "subject_context": clause.subject_context,
-            "content_profile": clause.content_profile.value,
-            "table_block_count": clause.table_block_count,
-        }
+        return canonical_cbox_context(clause, knowledge_domain=self._knowledge_domain)
 
     @staticmethod
     def _metadata(clause: ClauseDescriptor, *, document_title: str | None) -> dict[str, Any]:
@@ -173,6 +164,7 @@ class ClausePromptContextAssembler:
         *,
         document_title: str | None,
         structural: Mapping[str, Any],
+        subject_context: object = None,
     ) -> dict[str, Any]:
         return {
             "document_key": clause.document_key,
@@ -185,7 +177,7 @@ class ClausePromptContextAssembler:
             "scope_edges": list(structural.get("scopes", ())),
             "structural_references": list(structural.get("references", ())),
             "reference_mentions": list(clause.reference_mentions),
-            "subject_context": clause.subject_context or {},
+            "subject_context": subject_context or {},
         }
 
 

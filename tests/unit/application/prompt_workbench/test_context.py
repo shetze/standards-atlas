@@ -45,7 +45,12 @@ def test_lists_all_custom_and_versioned_cbox_variants() -> None:
         "none",
         "applicability-isolated-v1",
         "applicability-minimal-v1",
+        "effective-context-v1",
         "full-context-v1",
+        "role-isolated-v1",
+        "routing-isolated-v1",
+        "semantic-isolated-v1",
+        "subject-isolated-v1",
         "routing-source-v1",
         "structural-context-v1",
     ]

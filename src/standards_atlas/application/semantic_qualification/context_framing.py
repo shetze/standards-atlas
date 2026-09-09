@@ -9,7 +9,7 @@ specific framing can evolve without coupling information selection to prose.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 
@@ -32,6 +32,8 @@ class CBoxFramePolicy:
     reference_routing: bool = True
     reference_mentions: bool = True
     primary_subject: bool = True
+    semantic_enrichments: bool = False
+    attribute_provenance: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +46,24 @@ class FramedCBoxContext:
 
 
 FULL_CONTEXT_V1 = CBoxFramePolicy(id="full-context", version="1")
+
+# Opt-in downstream view. Legacy frames retain their exact visible field set.
+EFFECTIVE_CONTEXT_V1 = CBoxFramePolicy(
+    id="effective-context",
+    version="1",
+    semantic_enrichments=True,
+    attribute_provenance=True,
+)
+SEMANTIC_ISOLATED_V1 = CBoxFramePolicy(id="semantic-isolated", version="1")
+ROLE_ISOLATED_V1 = CBoxFramePolicy(id="role-isolated", version="1")
+ROUTING_ISOLATED_V1 = CBoxFramePolicy(
+    id="routing-isolated",
+    version="1",
+    scope_routing=False,
+    reference_routing=False,
+)
+SUBJECT_ISOLATED_V1 = CBoxFramePolicy(id="subject-isolated", version="1", primary_subject=False)
+
 
 APPLICABILITY_MINIMAL_V1 = CBoxFramePolicy(
     id="applicability-minimal",
@@ -88,6 +108,11 @@ _CBOX_FRAME_POLICIES = {
     cbox_frame_key(policy): policy
     for policy in (
         FULL_CONTEXT_V1,
+        EFFECTIVE_CONTEXT_V1,
+        SEMANTIC_ISOLATED_V1,
+        ROLE_ISOLATED_V1,
+        ROUTING_ISOLATED_V1,
+        SUBJECT_ISOLATED_V1,
         APPLICABILITY_MINIMAL_V1,
         APPLICABILITY_ISOLATED_V1,
     )
@@ -164,6 +189,19 @@ def frame_cbox_context(
         subject = _frame_subject_context(_mapping(context.get("subject_context")))
         if subject:
             values["subject_context"] = subject
+
+    if policy.semantic_enrichments:
+        # Only the canonical projection decides whether a value is known.
+        semantic = _mapping(context.get("semantic"))
+        if semantic:
+            values["semantic"] = dict(semantic)
+    if policy.attribute_provenance:
+        sources = _mapping(context.get("attribute_sources"))
+        if sources:
+            # Evidence/rationale are local audit material, not prompt instructions.
+            values["attribute_sources"] = {
+                path: _frame_attribute_source(_mapping(source)) for path, source in sources.items()
+            }
 
     return FramedCBoxContext(
         policy_id=policy.id,
@@ -324,3 +362,45 @@ def _sequence(value: Any) -> Sequence[Any]:
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return value
     return ()
+
+
+def _frame_attribute_source(source: Mapping[str, Any]) -> dict[str, Any]:
+    result = _selected(source, "availability", "origin")
+    generated = _mapping(source.get("generated"))
+    if generated:
+        result["generator"] = generated.get("generator")
+        result["method"] = generated.get("method")
+        decision = _selected(
+            _mapping(generated.get("decision")),
+            "rule",
+            "stage",
+            "valid_votes",
+            "supporting_votes",
+            "source_sha256",
+        )
+        if decision:
+            result["decision"] = decision
+    confirmed = _mapping(source.get("confirmed"))
+    if confirmed:
+        result["authority"] = confirmed.get("authority")
+    return result
+
+
+def frame_qualification_context(
+    context: Mapping[str, Any],
+    policy: CBoxFramePolicy = FULL_CONTEXT_V1,
+    *,
+    task: str = "",
+) -> FramedCBoxContext:
+    """An experimental frame never opts a qualification back into its target labels.
+
+    All semantic enrichment is masked, even for an unknown/new task. Routing and
+    subject tasks also hide their own contextual outputs. The original context
+    may be archived separately, but is never expanded into template variables.
+    """
+    isolated = replace(policy, semantic_enrichments=False, attribute_provenance=False)
+    if "routing" in task:
+        isolated = replace(isolated, scope_routing=False, reference_routing=False)
+    if "subject" in task:
+        isolated = replace(isolated, primary_subject=False)
+    return frame_cbox_context(context, isolated)

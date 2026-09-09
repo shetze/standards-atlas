@@ -67,6 +67,21 @@ unaddressed tags. The persisted-attribute merge reuses the same coupled-group se
 explicit confirmations, and rejects contradictory explicit authorities. Separately recorded empty
 details retain their provenance even when the corresponding presence decision is negative.
 
+## Effective context consumption (CBox contract 1.0)
+
+A shared read-only application projection exposes accepted canonical attributes together
+with availability and origin. Corpus, workbench and local post-import reporting use this
+projection. Persisted predictions are not recycled as structural priors. A versioned frame
+selects the information available to a consumer; renderer prose has independent versioning.
+Qualification imposes a second target-isolation boundary even on an effective downstream
+frame. Audit metadata may retain the unframed local input, but it is not a prompt variable.
+
+Model-free knowledge workflows explicitly orchestrate adoption, AtlasData export, reimport
+and inspection through the existing services. Ordinary qualification does not publish or
+accept results implicitly. Optional companion restoration precedes contextual processing.
+Reuse is based on source/configuration and selected-fact fingerprints, not merely output
+existence. Canonical schema 9 and the AtlasData companion 1.0 contract are unchanged.
+
 ## Consequences
 The canonical document contains everything needed to inspect its accepted document-centered state and to reproduce downstream semantic projections without conflating origin, authority, and inference method. Community-maintained AtlasData can progressively replace generated assertions with authoritative knowledge without requiring every extraction or inference algorithm to reach perfect accuracy.
 

@@ -20,6 +20,10 @@ from standards_atlas.application.workflow import (
     WorkflowTask,
     parse_manifest_options,
 )
+from standards_atlas.application.workflow.knowledge_plan import (
+    knowledge_plan,
+    with_knowledge_restore,
+)
 from standards_atlas.application.workspace import WorkspaceLayout
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import catalog_app, workflow_app
@@ -130,6 +134,18 @@ def plan_workflow(
     qualification_output: Annotated[
         Path, typer.Option("--qualification-output", file_okay=False)
     ] = Path(".atlas/data/evaluation/qualification"),
+    adopt_run: Annotated[
+        Path | None, typer.Option("--adopt-run", exists=True, help="Archive to adopt.")
+    ] = None,
+    publish_enrichments: Annotated[
+        bool, typer.Option("--publish-enrichments", help="Public export in the knowledge task.")
+    ] = False,
+    restore_enrichments: Annotated[
+        bool, typer.Option("--restore-enrichments", help="Restore persisted attributes before use.")
+    ] = False,
+    strict_evidence: Annotated[
+        bool, typer.Option("--strict-evidence", help="Require private evidence when restoring.")
+    ] = False,
 ) -> None:
     """Plan either document publication or the full qualification workflow."""
     plan = _build_task_plan(
@@ -152,6 +168,10 @@ def plan_workflow(
         knowledge_domain=knowledge_domain,
         corpus_output=corpus_output,
         qualification_output=qualification_output,
+        adopt_run=adopt_run,
+        publish_enrichments=publish_enrichments,
+        restore_enrichments=restore_enrichments,
+        strict_evidence=strict_evidence,
     )
     for step in plan.steps:
         gate = " [manual review gate]" if step.manual_gate else ""
@@ -256,6 +276,18 @@ def run_workflow(
     qualification_output: Annotated[
         Path, typer.Option("--qualification-output", file_okay=False)
     ] = Path(".atlas/data/evaluation/qualification"),
+    adopt_run: Annotated[
+        Path | None, typer.Option("--adopt-run", exists=True, help="Archive to adopt.")
+    ] = None,
+    publish_enrichments: Annotated[
+        bool, typer.Option("--publish-enrichments", help="Public export in the knowledge task.")
+    ] = False,
+    restore_enrichments: Annotated[
+        bool, typer.Option("--restore-enrichments", help="Restore persisted attributes before use.")
+    ] = False,
+    strict_evidence: Annotated[
+        bool, typer.Option("--strict-evidence", help="Require private evidence when restoring.")
+    ] = False,
 ) -> None:
     """Execute either document publication or the full qualification workflow."""
     plan = _build_task_plan(
@@ -278,6 +310,10 @@ def run_workflow(
         knowledge_domain=knowledge_domain,
         corpus_output=corpus_output,
         qualification_output=qualification_output,
+        adopt_run=adopt_run,
+        publish_enrichments=publish_enrichments,
+        restore_enrichments=restore_enrichments,
+        strict_evidence=strict_evidence,
     )
     # Keep cross-invocation workflow checkpoints so an interrupted workflow can
     # resume from the first incomplete step. Other scratch state is disposable.
@@ -331,7 +367,27 @@ def _build_task_plan(
     knowledge_domain: str,
     corpus_output: Path,
     qualification_output: Path,
+    adopt_run: Path | None = None,
+    publish_enrichments: bool = False,
+    restore_enrichments: bool = False,
+    strict_evidence: bool = False,
 ) -> WorkflowPlan:
+    if (adopt_run is not None or publish_enrichments) and task is not WorkflowTask.KNOWLEDGE:
+        raise typer.BadParameter("--adopt-run/--publish-enrichments require --task knowledge")
+    if strict_evidence and not (restore_enrichments or publish_enrichments):
+        raise typer.BadParameter("--strict-evidence requires restore or publication")
+    if task is WorkflowTask.KNOWLEDGE and (
+        force
+        or overwrite
+        or fresh
+        or fresh_applicability_policy
+        or regenerate_docling
+        or keep
+        or limit is not None
+    ):
+        raise typer.BadParameter("knowledge task does not accept qualification/force options")
+    if adopt_run is not None and adopt_run.resolve().is_relative_to(Path(".atlas/work").resolve()):
+        raise typer.BadParameter("--adopt-run must be outside disposable .atlas/work")
     if force and overwrite:
         raise typer.BadParameter("--force and --overwrite are mutually exclusive")
     if keep and not overwrite:
@@ -369,14 +425,39 @@ def _build_task_plan(
         if hierarchy is not None
         else _select_manifest_families(model, family, profile, all_families)
     )
+    if task is WorkflowTask.KNOWLEDGE:
+        try:
+            return knowledge_plan(
+                model,
+                family_keys=keys,
+                catalog_root=Path.cwd(),
+                manifest=standards_manifest,
+                adopt_run=adopt_run,
+                restore=restore_enrichments,
+                publish=publish_enrichments,
+                strict_evidence=strict_evidence,
+                knowledge_domain=knowledge_domain,
+            )
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc)) from exc
     if task is WorkflowTask.DOCUMENTS:
-        return EndToEndWorkflowService().plan(
+        plan = EndToEndWorkflowService().plan(
             model,
             family_keys=keys,
             catalog_root=Path.cwd(),
             force=force or overwrite,
             keep_stages=keep,
             hierarchy_key=hierarchy,
+        )
+        return (
+            with_knowledge_restore(
+                plan,
+                manifest=standards_manifest,
+                strict_evidence=strict_evidence,
+                knowledge_domain=knowledge_domain,
+            )
+            if restore_enrichments
+            else plan
         )
 
     assert qualification_manifest is not None
@@ -399,12 +480,22 @@ def _build_task_plan(
         corpus_output=corpus_output,
         qualification_output=qualification_output,
     )
-    return WorkflowPlan(
+    plan = WorkflowPlan(
         families=qualification.document_plan.families,
         steps=qualification.steps,
         force=qualification.document_plan.force,
         kept_stages=qualification.document_plan.kept_stages,
         fresh_repetition_stages=qualification.fresh_repetition_stages,
+    )
+    return (
+        with_knowledge_restore(
+            plan,
+            manifest=standards_manifest,
+            strict_evidence=strict_evidence,
+            knowledge_domain=knowledge_domain,
+        )
+        if restore_enrichments
+        else plan
     )
 
 

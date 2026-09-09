@@ -7,6 +7,7 @@ shape, so this module renders only stable, task-relevant contextual evidence.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -15,6 +16,8 @@ from standards_atlas.application.semantic_qualification.context_framing import (
     FramedCBoxContext,
     frame_cbox_context,
 )
+
+CBOX_RENDERER_VERSION = "2"
 
 
 def project_cbox_context(context: Mapping[str, Any]) -> str:
@@ -105,6 +108,24 @@ def render_cbox_context(frame: FramedCBoxContext) -> str:
         if references:
             lines.append("The clause contains references to " + "; ".join(references) + ".")
 
+    semantic = _mapping(context.get("semantic"))
+    if semantic:
+        lines.append("Accepted canonical enrichment (generated values are contextual hints):")
+        sources = _mapping(context.get("attribute_sources"))
+        for field, value in sorted(semantic.items()):
+            if isinstance(value, bool):
+                rendered = "true" if value else "false"
+            elif value is None:
+                rendered = "no primary value"
+            elif isinstance(value, str):
+                rendered = value
+            elif not value:
+                rendered = "[] (evaluated empty)"
+            else:
+                rendered = json.dumps(value, ensure_ascii=False, sort_keys=True)
+            source = _mapping(sources.get("enrichments.semantic." + field))
+            origin = _text(source.get("origin")) or "unspecified origin"
+            lines.append(f"{field}: {rendered} [{origin}].")
     return "\n".join(lines) if lines else "No additional contextual evidence is available."
 
 

@@ -12,6 +12,7 @@ from standards_atlas.adapters.filesystem.document_repository import (
     CURRENT_DOCUMENT_SCHEMA_VERSION,
 )
 from standards_atlas.application.ports import ExtractionState
+from standards_atlas.application.workflow.knowledge_plan import KNOWLEDGE_STAGES
 from standards_atlas.application.workflow.models import WorkflowPlan, WorkflowStage, WorkflowStep
 
 
@@ -35,13 +36,24 @@ class FileSystemWorkflowArtifactStore:
         return repository.extraction_state(document_key, source)
 
     def outputs_exist(self, step: WorkflowStep, project_root: Path) -> bool:
+        if step.stage in KNOWLEDGE_STAGES:
+            return False  # Always validate against the current source and accepted state.
         if not step.output_paths and not step.output_globs:
             return False
         paths_exist = all(
             self._output_is_current(project_root / path, path, step) for path in step.output_paths
         )
         globs_exist = all(any(project_root.glob(pattern)) for pattern in step.output_globs)
-        return paths_exist and globs_exist
+        if not (paths_exist and globs_exist):
+            return False
+        fingerprint = _tracked_input_fingerprint(step, project_root)
+        if fingerprint is None:
+            return True
+        try:
+            stored = json.loads(_input_marker(step, project_root).read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            return False
+        return isinstance(stored, dict) and stored.get("fingerprint") == fingerprint
 
     @staticmethod
     def _output_is_current(path: Path, relative_path: str, step: WorkflowStep) -> bool:
@@ -58,6 +70,11 @@ class FileSystemWorkflowArtifactStore:
         return True
 
     def record_completion(self, step: WorkflowStep, project_root: Path) -> None:
+        fingerprint = _tracked_input_fingerprint(step, project_root)
+        if fingerprint is not None:
+            marker = _input_marker(step, project_root)
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(json.dumps({"schema_version": 1, "fingerprint": fingerprint}) + "\n")
         for relative_path in step.output_paths:
             if not relative_path.startswith(".atlas/work/workflow/"):
                 continue
@@ -76,6 +93,7 @@ class FileSystemWorkflowArtifactStore:
             )
 
     def remove_outputs(self, step: WorkflowStep, project_root: Path) -> None:
+        _input_marker(step, project_root).unlink(missing_ok=True)
         targets = [project_root / path for path in step.output_paths]
         for pattern in step.output_globs:
             targets.extend(project_root.glob(pattern))
@@ -218,3 +236,92 @@ def _workflow_marker_is_current(path: Path, step: WorkflowStep) -> bool:
         and payload.get("schema_version") == 1
         and payload.get("step_fingerprint") == _workflow_step_fingerprint(step)
     )
+
+
+_TRACKED_INPUT_STAGES = {
+    WorkflowStage.CORPUS_BUILD,
+    WorkflowStage.CONTEXT_ENRICHMENT,
+    WorkflowStage.QUALIFICATION_MATRIX,
+}
+
+
+def _input_marker(step: WorkflowStep, root: Path) -> Path:
+    return root / ".atlas/work/workflow/input-state" / (_workflow_step_fingerprint(step) + ".json")
+
+
+def _option(step: WorkflowStep, flag: str, default: str) -> str:
+    try:
+        return step.command[step.command.index(flag) + 1]
+    except (ValueError, IndexError):
+        return default
+
+
+def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
+    """Hash live inputs, not file existence. Context writes exclude their own outputs
+    in other documents so the repository-wide vocabulary does not cause a loop.
+    Renderer code is deliberately not an inference input.
+    """
+    if step.stage not in _TRACKED_INPUT_STAGES:
+        return None
+    entries = {}
+    workspace = root / _option(step, "--workspace", ".atlas/data")
+    if step.stage in {WorkflowStage.CORPUS_BUILD, WorkflowStage.CONTEXT_ENRICHMENT}:
+        for path in sorted((workspace / "documents").glob("*.json")):
+            content = path.read_bytes()
+            if step.stage is WorkflowStage.CONTEXT_ENRICHMENT:
+                try:
+                    payload = json.loads(content)
+                    document = payload["document"]
+                    for clause in document.get("clauses", ()):
+                        # Only the processed document's accepted contextual output
+                        # is tracked, so restoration can invalidate its checkpoint.
+                        if path.stem == step.document:
+                            clause["enrichments"] = {
+                                key: value
+                                for key, value in clause.get("enrichments", {}).items()
+                                if key in {"subject_context", "context_routing"}
+                            }
+                        else:
+                            clause.pop("enrichments", None)
+                        clause.pop("provenance", None)
+                    content = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+                except (ValueError, TypeError, KeyError):
+                    pass  # Hash invalid bytes too; the command itself reports schema errors.
+            entries[str(path)] = hashlib.sha256(content).hexdigest()
+    files: set[Path] = set()
+    resources = root / "src/standards_atlas/resources"
+    if step.stage is WorkflowStage.CORPUS_BUILD:
+        files.add(root / "src/standards_atlas/application/context/canonical_cbox.py")
+        files.add(root / "src/standards_atlas/application/semantic_qualification/eligibility.py")
+        files.update((resources / "semantic/tasks").rglob("*"))
+    if step.stage is WorkflowStage.CONTEXT_ENRICHMENT:
+        files.add(root / _option(step, "--context-config", "cfg/context-enrichment.yaml"))
+        files.update((resources / "semantic/prompts/context-routing-enrichment").rglob("*"))
+        files.update((root / "src/standards_atlas/application/context").glob("subject*.py"))
+        files.add(root / "src/standards_atlas/application/services/context_enrichment_service.py")
+    if step.stage is WorkflowStage.QUALIFICATION_MATRIX:
+        policy_root = root / "src/standards_atlas/application/semantic_qualification"
+        for name in ("context_framing.py", "request_builder.py", "adaptive_interview.py"):
+            files.add(policy_root / name)
+        files.add(root / _option(step, "--manifest", "manifests/qualification.yaml"))
+        corpus = root / _option(step, "--corpus-root", ".atlas/data/evaluation/corpora")
+        files.update(corpus.rglob("dataset.json"))
+        files.update(corpus.rglob("corpus.yaml"))
+        files.update((resources / "semantic").rglob("*"))
+        files.update((resources / "ontologies").rglob("*"))
+    for path in sorted(files):
+        if path.is_file() and "__pycache__" not in path.parts:
+            entries[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
+        elif not path.exists():
+            entries[str(path)] = "missing"
+    return hashlib.sha256(
+        json.dumps(
+            {
+                "contract": "workflow-cbox-inputs-v1",
+                "step": _workflow_step_fingerprint(step),
+                "inputs": entries,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()

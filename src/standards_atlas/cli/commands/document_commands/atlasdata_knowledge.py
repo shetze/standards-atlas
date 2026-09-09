@@ -9,12 +9,14 @@ from typing import Annotated
 import typer
 import yaml
 
+from standards_atlas.adapters.atlasdata.knowledge_contract import AtlasDataKnowledgeReport
 from standards_atlas.adapters.atlasdata.knowledge_evidence import atomic_write
 from standards_atlas.adapters.atlasdata.knowledge_transfer import AtlasDataKnowledgeService
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.application.catalog.atlasdata_binding import atlasdata_bindings
 from standards_atlas.cli.apps import atlasdata_app
+from standards_atlas.domain.model import DocumentKey
 
 ManifestOption = Annotated[Path, typer.Option("--manifest", help="Standards manifest.")]
 RootOption = Annotated[
@@ -61,6 +63,7 @@ def _run(
     dimensions: Sequence[str] = (),
     clause_ids: Sequence[str] = (),
     strict_evidence: bool = False,
+    available_only: bool = False,
 ) -> None:
     try:
         root = root.resolve()
@@ -91,7 +94,32 @@ def _run(
             bindings=bindings,
             evidence_root=evidence_root,
         )
-        if exporting:
+        if set(selected) - bindings.keys():
+            raise ValueError("selected keys must identify manifest-owned physical documents")
+        missing = set()
+        if available_only:
+            requested = selected or set(bindings)
+            available = {
+                key
+                for key in requested
+                if (
+                    service.documents.exists(DocumentKey(value=key))
+                    if exporting
+                    else bindings[key].enrichments_path.is_file()
+                )
+            }
+            missing = requested - available
+            selected = available
+        if available_only and not selected:
+            report = AtlasDataKnowledgeReport(
+                operation="export" if exporting else "import",
+                write_requested=write,
+                document_keys=(),
+                changed_targets=(),
+                written_targets=(),
+                status_counts={},
+            )
+        elif exporting:
             report = service.export(
                 document_keys=tuple(sorted(selected)),
                 write=write,
@@ -102,6 +130,17 @@ def _run(
             report = service.import_(
                 document_keys=tuple(sorted(selected)), write=write, strict_evidence=strict_evidence
             )
+        if missing:
+            report = report.model_copy(
+                update={
+                    "status_counts": {
+                        **report.status_counts,
+                        "missing_document_or_companion": len(missing),
+                    }
+                }
+            )
+            for key in sorted(missing):
+                typer.echo(f"Missing selected source  : {key}")
         if output is not None:
             atomic_write(output, (report.model_dump_json(indent=2) + "\n").encode(), private=True)
     except (OSError, ValueError, KeyError, yaml.YAMLError) as exc:
@@ -149,6 +188,9 @@ def export_enrichments(
             help="Clause ID; repeatable, requires one selected document.",
         ),
     ] = None,
+    available_only: Annotated[
+        bool, typer.Option("--available-only", help="Skip missing selected documents/companions.")
+    ] = False,
 ) -> None:
     """Export selected canonical attributes beside their manifest-owned AtlasData sources."""
     _run(
@@ -163,6 +205,7 @@ def export_enrichments(
         write=write,
         dimensions=dimension or (),
         clause_ids=clause or (),
+        available_only=available_only,
     )
 
 
@@ -183,6 +226,9 @@ def import_enrichments(
             help="Abort preflight when a referenced private value or raw evidence is missing.",
         ),
     ] = False,
+    available_only: Annotated[
+        bool, typer.Option("--available-only", help="Skip missing selected documents/companions.")
+    ] = False,
 ) -> None:
     """Restore into existing documents or rebuild physical skeletons from AtlasData."""
     _run(
@@ -196,4 +242,5 @@ def import_enrichments(
         output=output,
         write=write,
         strict_evidence=strict_evidence,
+        available_only=available_only,
     )

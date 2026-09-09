@@ -768,3 +768,77 @@ def test_v25_presence_only_contract_runs_as_one_shared_generation(tmp_path: Path
     assert response["value"]["applicability_present"] is True
     assert "applicability_functions" not in response["value"]
     assert "primary_applicability_function" not in response["value"]
+
+
+def test_reuse_requires_current_input_and_not_only_an_evaluation_file(tmp_path, monkeypatch):
+    from standards_atlas.application.semantic_qualification import request_builder
+
+    corpus_root = _single_example_corpus(tmp_path)
+    dataset_path = corpus_root / "statement-function-classification/1.0.0/dataset.json"
+    config = ProposalRunConfig(
+        corpus_id="test",
+        task="statement-function-classification",
+        task_version="1.0.0",
+        dataset_version="1.0.0",
+        prompt_version="structure-aware-v1",
+        provider="fake",
+        model="test-model",
+    )
+    generator = BaselineProposalGenerator(FakeGateway())
+    kwargs = {
+        "resources": Path("src/standards_atlas/resources/semantic"),
+        "corpus_root": corpus_root,
+        "output_root": tmp_path / "evaluation",
+    }
+    assert generator.run(config, **kwargs).generated == 1
+    monkeypatch.setattr(request_builder, "render_cbox_context", lambda _: "Rendering only")
+    assert generator.run(config, **kwargs).reused_predictions == 1
+    payload = json.loads(dataset_path.read_text())
+    payload["examples"][0]["input"]["context"]["semantic"] = {"applicability_present": True}
+    dataset_path.write_text(json.dumps(payload))
+    assert generator.run(config, **kwargs).reused_predictions == 1
+    payload["examples"][0]["input"]["content"]["text"] += " Changed."
+    dataset_path.write_text(json.dumps(payload))
+    rerun = generator.run(config, **kwargs)
+    assert rerun.generated == 1
+    assert rerun.reused_predictions == 0
+    stored_request = rerun.run_directory / "clause-1/request.json"
+    request = json.loads(stored_request.read_text())
+    del request["metadata"]["qualification_input_fingerprint"]
+    stored_request.write_text(json.dumps(request))
+    assert generator.run(config, **kwargs).generated == 1  # legacy request revalidated once
+    assert generator.run(config, **kwargs).reused_predictions == 1
+
+
+def test_failed_replacement_cannot_reuse_an_old_success(tmp_path):
+    from standards_atlas.application.ports.llm_gateway import LlmUnavailableError
+
+    class BrokenGateway:
+        def generate_structured(self, request):
+            raise LlmUnavailableError("offline test")
+
+    corpus_root = _single_example_corpus(tmp_path)
+    config = ProposalRunConfig(
+        corpus_id="test",
+        task="statement-function-classification",
+        task_version="1.0.0",
+        dataset_version="1.0.0",
+        prompt_version="structure-aware-v1",
+        provider="fake",
+        model="test-model",
+        retry_attempts=1,
+    )
+    kwargs = {
+        "resources": Path("src/standards_atlas/resources/semantic"),
+        "corpus_root": corpus_root,
+        "output_root": tmp_path / "evaluation",
+    }
+    original = BaselineProposalGenerator(FakeGateway()).run(config, **kwargs)
+    assert original.generated == 1
+    changed = config.model_copy(update={"temperature": 0.3})
+    failed = BaselineProposalGenerator(BrokenGateway()).run(changed, **kwargs)
+    assert failed.failed == 1
+    assert not (failed.run_directory / "clause-1/evaluation.yaml").exists()
+    repaired = BaselineProposalGenerator(FakeGateway()).run(changed, **kwargs)
+    assert repaired.generated == 1
+    assert repaired.reused_predictions == 0

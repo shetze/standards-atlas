@@ -2,6 +2,20 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Effective CBox consumption and explicit knowledge workflows (2026-09-09)
+
+- Share accepted canonical CBox values, attribute availability and provenance across corpus
+  projection, Prompt Workbench and a private `document cbox-report` inspection command.
+- Add an opt-in effective frame and explicit task-isolated frames; qualification always
+  masks stored target labels, including alternate template variables and adaptive questions.
+- Add the model-free `workflow --task knowledge` path for explicit adoption, public export,
+  reimport and reporting. Optional restoration in document/qualification workflows precedes
+  context enrichment and downstream consumers; default workflows do not publish knowledge.
+- Validate live inputs for corpus/context/matrix checkpoints and proposal reuse; preserve
+  renderer-independent semantic reuse while rejecting changed source/model/prompt inputs.
+- Reuse restored context-routing results by their input identity without new gateway calls;
+  retain confirmation protection and versioned existing persistence contracts.
+
 ## Unreleased — AtlasData knowledge roundtrip (2026-09-09)
 
 - Added explicit `atlasdata export-enrichments` / `import-enrichments` with default dry-run,
@@ -15,7 +29,8 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
   export only bounded public views and references. Missing private values defer restoration,
   or fail preflight with `--strict-evidence`; protected source text is never reconstructed.
 - Keep canonical schema 9 and reviewed TOC semantics unchanged. Automatic CBox/workflow
-  consumption and missing process-function qualification remain separate follow-up slices.
+  consumption is provided by the subsequent slice above; process-function qualification
+  remains separate.
 
 ## Unreleased — Canonical knowledge adoption (2026-09-08)
 

@@ -793,3 +793,252 @@ def test_manifest_mapping_keeps_parts_supplements_and_unspecified_years_distinct
     assert bindings["IEC61508-3-1"].selection_part is None
     assert bindings["IEC61508-3-1"].publication_year is None
     assert bindings["IEC61508-3-1"].source == root / "data/IEC61508-3-1"
+
+
+def test_effective_cbox_roundtrip_matches_workbench_report_and_fresh_projection(world):
+    from standards_atlas.adapters.evaluation.engineering_document_clause_provider import (
+        EngineeringDocumentClauseProvider,
+    )
+    from standards_atlas.application.context.canonical_cbox import project_clause_enrichments
+    from standards_atlas.application.prompt_workbench.context import ClausePromptContextAssembler
+    from standards_atlas.application.services.cbox_report_service import CBoxReportService
+
+    root, repository, service, binding, document = world
+    document = patch_clause(
+        document,
+        fields={
+            "applicability_present": True,
+            "applicability_functions": [],
+            "role_semantics_present": False,
+            "knowledge_kinds": [],
+        },
+        unknown=("primary_function",),
+        context=contexts(document.clauses[0].id.value),
+    )
+    repository.save(document)
+    provider = EngineeringDocumentClauseProvider(root / ".atlas/data")
+    before = CBoxReportService(provider).build(document_keys=(binding.document_key,))
+    # Clause order is stable by identity, not TOC order; locate the patched clause.
+    record = next(
+        item for item in before.clauses if item["clause_id"] == document.clauses[0].id.value
+    )
+    sources = record["canonical"]["attribute_sources"]
+    assert sources[S + "primary_function"]["availability"] == "unknown"
+    assert sources[S + "process_functions"]["availability"] == "not_evaluated"
+    assert record["framed"]["semantic"]["applicability_present"] is True
+    assert record["framed"]["semantic"]["role_semantics_present"] is False
+    assert record["framed"]["semantic"]["knowledge_kinds"] == []
+    assert "primary_function" not in record["framed"]["semantic"]
+    descriptor = next(item for item in provider.list_clauses() if item.id == record["clause_id"])
+    workbench = ClausePromptContextAssembler().assemble(
+        descriptor,
+        variant_id="effective-context-v1",
+    )
+    assert workbench.canonical_context == record["canonical"]
+    assert dict(workbench.selected_context) == record["framed"]
+    assert workbench.context_text == record["rendered"]
+    service.export(write=True)
+    for path in (root / ".atlas/data/documents").glob("*.json"):
+        path.unlink()
+    service.import_(write=True, strict_evidence=True)
+    restored = repository.load(document.key)
+    assert project_clause_enrichments(restored.clauses[0]) == project_clause_enrichments(
+        document.clauses[0]
+    )
+    after = CBoxReportService(EngineeringDocumentClauseProvider(root / ".atlas/data")).build(
+        document_keys=(binding.document_key,)
+    )
+    assert before == after
+
+
+def test_cbox_report_cli_is_local_read_only_and_stable(world, monkeypatch):
+    import json
+
+    root, repository, _, _, document = world
+    monkeypatch.chdir(root)
+    runner = CliRunner()
+    before = {p: p.read_bytes() for p in (root / ".atlas/data/documents").glob("*.json")}
+    output = root / "local/review/cbox.json"
+    args = ["document", "cbox-report", "--document", "EXAMPLE", "--output", str(output)]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 0, result.output
+    payload = json.loads(output.read_text())
+    assert payload["clause_count"] == len(document.clauses)
+    assert payload["frame"] == "effective-context-v1"
+    first_mtime = output.stat().st_mtime_ns
+    assert runner.invoke(app, args).exit_code == 0
+    assert output.stat().st_mtime_ns == first_mtime
+    assert {p: p.read_bytes() for p in before} == before
+    result = runner.invoke(app, [*args[:-1], str(root / "data/public.json")])
+    assert result.exit_code != 0
+    assert not (root / "data/public.json").exists()
+
+
+def test_available_only_empty_companion_selection_never_imports_all(world, monkeypatch):
+    import json
+
+    root, _, _, _, _ = world
+    monkeypatch.chdir(root)
+    report = root / "local/import.json"
+    result = CliRunner().invoke(
+        app,
+        [
+            "atlasdata",
+            "import-enrichments",
+            "--document",
+            "EXAMPLE",
+            "--available-only",
+            "--output",
+            str(report),
+            "--write",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(report.read_text())
+    assert not payload["written_targets"]
+    assert payload["status_counts"]["missing_document_or_companion"] == 1
+    result = CliRunner().invoke(
+        app,
+        [
+            "atlasdata",
+            "import-enrichments",
+            "--document",
+            "UNKNOWN",
+            "--available-only",
+        ],
+    )
+    assert result.exit_code != 0
+
+
+def test_cbox_not_evaluated_and_confirmed_false_are_not_confused(world):
+    from standards_atlas.application.context.canonical_cbox import project_clause_enrichments
+
+    _, _, _, _, document = world
+    original = document.clauses[0]
+    # The source type may carry deterministic values, but unused presence is not negative gold.
+    unknown = {item.path: item for item in project_clause_enrichments(original).attributes}
+    assert unknown[S + "applicability_present"].availability == "not_evaluated"
+    confirmed = original.confirm_authoritative(S + "applicability_present")
+    projected = {item.path: item for item in project_clause_enrichments(confirmed).attributes}
+    value = projected[S + "applicability_present"]
+    assert value.availability == "known"
+    assert value.origin == "confirmed"
+    assert value.value is False
+
+
+def test_partial_context_confirmation_does_not_publish_the_whole_object(world):
+    from standards_atlas.application.context.canonical_cbox import project_clause_enrichments
+
+    _, _, _, _, document = world
+    clause = document.clauses[0].confirm_authoritative(
+        "enrichments.subject_context.primary_subject"
+    )
+    record = next(
+        item
+        for item in project_clause_enrichments(clause).attributes
+        if item.path == "enrichments.subject_context"
+    )
+    assert record.availability == "partial"
+    assert record.value is None
+
+
+def test_explicit_knowledge_workflow_runs_real_cli_commands_and_revalidates(world, monkeypatch):
+    import json
+
+    from standards_atlas.adapters.catalog import YamlStandardCatalogReader
+    from standards_atlas.adapters.workflow import FileSystemWorkflowArtifactStore
+    from standards_atlas.application.workflow import WorkflowExecutor, WorkflowRecovery
+    from standards_atlas.application.workflow.knowledge_plan import knowledge_plan
+
+    root, repository, _, _, document = world
+    monkeypatch.chdir(root)
+    repository.save(patch_clause(document, fields={"applicability_present": True}))
+    manifest = root / "manifests/standards.yaml"
+    plan = knowledge_plan(
+        YamlStandardCatalogReader().read(manifest),
+        family_keys=("EXAMPLE",),
+        catalog_root=root,
+        manifest=manifest,
+        publish=True,
+        strict_evidence=True,
+    )
+
+    class Runner:
+        def __init__(self):
+            self.commands = []
+
+        def run(self, command, cwd):
+            assert cwd == root
+            self.commands.append(command)
+            result = CliRunner().invoke(app, list(command[3:]))
+            assert result.exit_code == 0, (result.output, result.exception)
+
+    runner = Runner()
+    executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
+    first = executor.execute(plan, project_root=root, runner=runner)
+    assert first.completed
+    assert len(first.executed_steps) == 3
+    report = json.loads((root / plan.steps[-1].output_paths[0]).read_text())
+    assert report["clause_count"] == 3
+    assert any(
+        item["framed"].get("semantic", {}).get("applicability_present") is True
+        for item in report["clauses"]
+    )
+    public = {
+        p: (p.read_bytes(), p.stat().st_mtime_ns) for p in (root / "data").rglob("*") if p.is_file()
+    }
+    second = executor.execute(plan, project_root=root, runner=runner)
+    assert second.completed
+    assert len(second.executed_steps) == 3  # inspect current inputs, not a stale success marker
+    assert {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in public} == public
+
+
+def test_corpus_and_workbench_share_canonical_ancestor_and_attribute_values(world):
+    import json
+
+    from standards_atlas.adapters.evaluation.engineering_document_clause_provider import (
+        EngineeringDocumentClauseProvider,
+    )
+    from standards_atlas.application.prompt_workbench.context import ClausePromptContextAssembler
+    from standards_atlas.application.semantic_qualification.workflow import (
+        CorpusBuildConfig,
+        EvaluationCorpusBuilder,
+    )
+
+    root, repository, _, _, document = world
+    parent, child, other = document.clauses
+    parent = parent.with_baseline_updates(content=(TextBlock(id="parent", text="Parent content."),))
+    child = child.with_baseline_updates(content=(TextBlock(id="child", text="Child content."),))
+    child = child.with_baseline_updates(parent_id=parent.id)
+    document = document.model_copy(update={"clauses": (parent, child, other)})
+    document = patch_clause(document, index=1, fields={"applicability_present": False})
+    repository.save(document)
+    provider = EngineeringDocumentClauseProvider(root / ".atlas/data")
+    built = EvaluationCorpusBuilder(provider).build(
+        CorpusBuildConfig(
+            task="statement-function-classification",
+            version="1.0.0",
+            count=2,
+            exclude_context_meta=False,
+            knowledge_domain="functional-safety",
+        ),
+        root / "corpus",
+    )
+    examples = json.loads(built.dataset_path.read_text())["examples"]
+    for example in examples:
+        workbench = ClausePromptContextAssembler().assemble(
+            provider.get_clause(example["id"]),
+            variant_id="effective-context-v1",
+        )
+        actual = dict(example["input"]["context"])
+        actual.pop("eligibility")
+        assert actual == workbench.canonical_context
+    descriptor = provider.get_clause(child.id.value)
+    assert descriptor.ancestor_headings == (
+        {
+            "clause_id": parent.id.value,
+            "reference": parent.reference.clause,
+            "heading": parent.heading,
+        },
+    )
+    assert not workbench.canonical_context["structural_roles"]

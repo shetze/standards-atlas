@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.application.context.canonical_cbox import project_clause_enrichments
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseContentProfile,
@@ -40,7 +41,7 @@ class EngineeringDocumentClauseProvider:
         for document in self._documents():
             for clause in document.clauses:
                 if clause.id.value == clause_id:
-                    return self._clause_descriptor(document, clause)
+                    return self._clause_descriptor(document, clause, _ancestor_index(document))
         raise KeyError(f"Unknown clause id: {clause_id}")
 
     def list_clauses(
@@ -117,8 +118,9 @@ class EngineeringDocumentClauseProvider:
                 continue
             if filters.document_types and document.document_type not in filters.document_types:
                 continue
+            ancestor_index = _ancestor_index(document)
             for clause in document.clauses:
-                descriptor = self._clause_descriptor(document, clause)
+                descriptor = self._clause_descriptor(document, clause, ancestor_index)
                 if filters.clause_types and descriptor.clause_type not in filters.clause_types:
                     continue
                 if filters.statement_functions and not set(filters.statement_functions).issubset(
@@ -148,7 +150,11 @@ class EngineeringDocumentClauseProvider:
         )
 
     @staticmethod
-    def _clause_descriptor(document: EngineeringDocument, clause: Clause) -> ClauseDescriptor:
+    def _clause_descriptor(
+        document: EngineeringDocument,
+        clause: Clause,
+        ancestors: dict[str, tuple[dict[str, str], ...]] | None = None,
+    ) -> ClauseDescriptor:
         table_count, table_length, non_table_length = _content_metrics(clause.content)
         total_length = table_length + non_table_length
         table_dominant = (
@@ -158,6 +164,8 @@ class EngineeringDocumentClauseProvider:
             and table_length / total_length >= 0.60
         )
         return ClauseDescriptor(
+            enrichment_context=project_clause_enrichments(clause),
+            ancestor_headings=(ancestors or _ancestor_index(document))[clause.id.value],
             id=clause.id.value,
             document_key=document.key.value,
             reference=clause.reference.as_text(),
@@ -263,3 +271,29 @@ def _content_metrics(content: tuple[ContentBlock, ...]) -> tuple[int, int, int]:
         else:
             non_table_length += rendered_length
     return table_count, table_length, non_table_length
+
+
+def _ancestor_index(document: EngineeringDocument) -> dict[str, tuple[dict[str, str], ...]]:
+    """Nearest-first source headings, shared by every consumer of a descriptor."""
+    clauses = {clause.id.value: clause for clause in document.clauses}
+    result = {}
+    for clause in document.clauses:
+        parent_id = clause.parent_id.value if clause.parent_id else None
+        seen = {clause.id.value}
+        headings = []
+        while parent_id and parent_id not in seen:
+            seen.add(parent_id)
+            parent = clauses.get(parent_id)
+            if parent is None:
+                break
+            if parent.heading and parent.heading.strip():
+                headings.append(
+                    {
+                        "clause_id": parent.id.value,
+                        "reference": parent.reference.clause,
+                        "heading": parent.heading.strip(),
+                    }
+                )
+            parent_id = parent.parent_id.value if parent.parent_id else None
+        result[clause.id.value] = tuple(headings)
+    return result

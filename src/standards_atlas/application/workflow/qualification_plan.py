@@ -145,6 +145,7 @@ class QualificationWorkflowPlanner:
         ]
         if limit is not None:
             matrix_command.extend(("--limit", str(limit)))
+        matrix_command.extend(("--corpus-root", str(corpus_output)))
         matrix_command.append("--no-create-archive")
         if overwrite:
             matrix_command.append("--overwrite")

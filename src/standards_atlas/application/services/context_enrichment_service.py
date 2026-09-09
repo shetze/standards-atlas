@@ -14,6 +14,7 @@ from standards_atlas.application.context import (
     DeterministicSubjectIdentifier,
     SubjectCandidateVocabularyBuilder,
 )
+from standards_atlas.application.context.canonical_cbox import context_fingerprint
 from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.application.ports.llm_gateway import (
@@ -42,6 +43,7 @@ from standards_atlas.domain.model.enrichment_patch import (
     ClauseEnrichmentPatch,
     merge_generated_enrichments,
 )
+from standards_atlas.domain.model.knowledge_state import DecisionSupport
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,7 @@ class ContextEnrichmentResult(BaseModel):
     subjects_identified: int = 0
     subjects_ambiguous: int = 0
     context_enrichment_failures: int = 0
+    routing_reused: int = 0
 
 
 class LlmContextRoutingEnricher:
@@ -99,7 +102,12 @@ class LlmContextRoutingEnricher:
         model = self._model or "default-model"
         return f"{self._prompt.task}/{self._prompt.version}@{model}"
 
-    def enrich(self, *, clause: Clause, document: EngineeringDocument) -> ContextRouting:
+    def _request(
+        self,
+        *,
+        clause: Clause,
+        document: EngineeringDocument,
+    ) -> StructuredGenerationRequest:
         structural = clause.structural_context
         if structural is None:
             raise ValueError(
@@ -134,7 +142,7 @@ class LlmContextRoutingEnricher:
                 f"context enrichment prompt references unavailable field: {exc.args[0]}"
             ) from exc
 
-        request = StructuredGenerationRequest(
+        return StructuredGenerationRequest(
             task=self._prompt.task,
             system_prompt=self._prompt.system_prompt,
             user_prompt=user_prompt,
@@ -146,6 +154,24 @@ class LlmContextRoutingEnricher:
             max_tokens=self._max_tokens,
             reasoning_enabled=False,
         )
+
+    def input_fingerprint(self, *, clause: Clause, document: EngineeringDocument) -> str:
+        request = self._request(clause=clause, document=document)
+        return context_fingerprint(
+            {
+                "contract": "context-routing-input-v1",
+                "generator": self.generator_id,
+                "system": request.system_prompt,
+                "prompt": request.user_prompt,
+                "schema": dict(request.output_schema),
+                "model": request.model,
+                "max_tokens": request.max_tokens,
+                "retry_max_tokens": self._retry_max_tokens,
+            }
+        )
+
+    def enrich(self, *, clause: Clause, document: EngineeringDocument) -> ContextRouting:
+        request = self._request(clause=clause, document=document)
         try:
             result = self._gateway.generate_structured(request)
         except LlmResponseError as error:
@@ -256,6 +282,7 @@ class ContextEnrichmentService:
         updated = []
         enriched_ids: set[str] = set()
         failures = 0
+        reused = 0
         current = 0
         total = len(candidates)
 
@@ -285,6 +312,41 @@ class ContextEnrichmentService:
                 updated.append(contextual_clause)
                 continue
             current += 1
+            path = "enrichments.context_routing"
+            fingerprint_fn = getattr(self._enricher, "input_fingerprint", None)
+            fingerprint = (
+                fingerprint_fn(clause=contextual_clause, document=document)
+                if callable(fingerprint_fn)
+                else None
+            )
+            previous = next(
+                (item for item in clause.provenance.generated_attributes if item.path == path), None
+            )
+            reusable = (
+                fingerprint is not None
+                and previous is not None
+                and previous.availability == "known"
+                and previous.decision is not None
+                and previous.decision.rule == "context-routing-input-v1"
+                and previous.decision.source_sha256 == fingerprint
+            )
+            if clause.provenance.protection(path) or reusable:
+                updated.append(contextual_clause)
+                reused += 1
+                if self._progress is not None:
+                    self._progress(
+                        ContextEnrichmentProgress(
+                            current=current,
+                            total=total,
+                            document_key=document.key.value,
+                            clause_id=clause.id.value,
+                            clause_reference=clause.reference.clause,
+                            clause_title=clause.heading,
+                            state="reused",
+                            elapsed_seconds=0.0,
+                        )
+                    )
+                continue
             if self._progress is not None:
                 self._progress(
                     ContextEnrichmentProgress(
@@ -314,6 +376,15 @@ class ContextEnrichmentService:
                             generator=self._enricher.generator_id,
                             method=GenerationMethod.LLM,
                             evidence=_source_evidence(clause),
+                            decision=(
+                                DecisionSupport(
+                                    rule="context-routing-input-v1",
+                                    source_artifact="canonical-context-input",
+                                    source_sha256=fingerprint,
+                                )
+                                if fingerprint is not None
+                                else None
+                            ),
                         ),
                     ),
                 ).clause
@@ -336,8 +407,10 @@ class ContextEnrichmentService:
                 )
 
         result = document.model_copy(update={"clauses": tuple(updated)})
-        self._documents.save(result)
+        if result != document:
+            self._documents.save(result)
         return ContextEnrichmentResult(
+            routing_reused=reused,
             document=result,
             candidates=total,
             clauses_enriched=len(enriched_ids),

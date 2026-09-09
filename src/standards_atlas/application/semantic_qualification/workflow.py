@@ -13,6 +13,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.context.canonical_cbox import canonical_cbox_context
 from standards_atlas.application.evaluation.models import EvaluationDataset, EvaluationRun
 from standards_atlas.application.evaluation.repository import (
     EvaluationDatasetRepository,
@@ -169,29 +170,11 @@ class EvaluationCorpusBuilder:
             item_input: dict[str, Any] = {
                 "content": {"hash": clause.content_hash},
                 "context": {
-                    "knowledge_domain": config.knowledge_domain,
-                    "document_key": clause.document_key,
-                    "clause_id": clause.id,
-                    "reference": clause.clause_reference,
-                    "heading": clause.heading,
-                    "parent_id": clause.parent_id,
-                    "ancestor_headings": _ancestor_headings(clause, clause_index),
-                    "structural_roles": [role.value for role in clause.statement_functions],
-                    "clause_type": clause.clause_type.value,
-                    "canonical_section": (
-                        clause.canonical_section.value if clause.canonical_section else None
+                    **canonical_cbox_context(
+                        clause,
+                        knowledge_domain=config.knowledge_domain,
+                        ancestor_headings=_ancestor_headings(clause, clause_index),
                     ),
-                    "document_categories": list(clause.document_categories),
-                    "domain_categories": list(clause.domain_categories),
-                    "semantic_sections": [
-                        section.model_dump(mode="json") for section in clause.semantic_sections
-                    ],
-                    "structural_context": clause.structural_context,
-                    "reference_mentions": list(clause.reference_mentions),
-                    "context_routing": clause.context_routing,
-                    "subject_context": clause.subject_context,
-                    "content_profile": clause.content_profile.value,
-                    "table_block_count": clause.table_block_count,
                     "eligibility": policy.evaluate_clause(clause).model_dump(mode="json"),
                 },
             }

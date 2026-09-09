@@ -18,6 +18,7 @@ from standards_atlas.adapters.evaluation.qualification_knowledge_source import (
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.application.catalog.atlasdata_binding import atlasdata_bindings
+from standards_atlas.application.context.canonical_cbox import project_clause_enrichments
 from standards_atlas.application.services.knowledge_adoption_service import KnowledgeAdoptionService
 from standards_atlas.domain.model import DocumentKey, TextBlock
 
@@ -84,6 +85,12 @@ def test_run074_atlasdata_roundtrip_uses_real_physical_identifiers(tmp_path):
         for clause in document.clauses
         if (document.key.value, clause.id.value) in selected
     }
+    cbox_original = {
+        (document.key.value, clause.id.value): project_clause_enrichments(clause)
+        for document in repo.list()
+        for clause in document.clauses
+        if (document.key.value, clause.id.value) in selected
+    }
     structures = {b.source: b.source.read_bytes() for b in bindings.values()}
     result = service.export(write=True)
     public = {
@@ -103,6 +110,7 @@ def test_run074_atlasdata_roundtrip_uses_real_physical_identifiers(tmp_path):
             coordinate = (document.key.value, clause.id.value)
             if coordinate in selected:
                 assert original[coordinate] == (clause.enrichments, clause.provenance)
+                assert project_clause_enrichments(clause) == cbox_original[coordinate]
                 assert (
                     clause.provenance.availability("enrichments.semantic.applicability_present")
                     == "known"
@@ -122,13 +130,16 @@ def test_run074_atlasdata_roundtrip_uses_real_physical_identifiers(tmp_path):
         json.dumps(
             {
                 "adopted_clauses": len(selected),
+                "effective_cbox_attribute_roundtrips": len(cbox_original),
                 "positive": counts[True],
                 "negative": counts[False],
                 "physical_documents": len(public),
                 "distinct_source_headings": changed_headings,
                 "public_files_changed_on_replay": 0,
                 "llm_calls": 0,
-                "scope": "isolated full AtlasData skeletons with archive-matched local source evidence",
+                "scope": (
+                    "isolated full AtlasData skeletons with archive-matched local source evidence"
+                ),
                 "source_content_not_reconstructed_from_public_atlasdata": True,
                 "export_status_counts": result.status_counts,
             },

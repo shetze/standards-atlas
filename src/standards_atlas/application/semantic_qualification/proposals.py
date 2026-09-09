@@ -53,7 +53,7 @@ from standards_atlas.application.semantic_qualification.batch import (
     ProposalItemOutcome,
 )
 from standards_atlas.application.semantic_qualification.context_framing import (
-    frame_cbox_context,
+    frame_qualification_context,
     resolve_cbox_frame_policy,
 )
 from standards_atlas.application.semantic_qualification.context_projection import (
@@ -309,9 +309,11 @@ class BaselineProposalGenerator:
                 continue
             evaluation_path = case_dir / "evaluation.yaml"
             if evaluation_path.exists() and not config.overwrite:
-                skipped += 1
-                reused_predictions += 1
-                continue
+                current_request = build_proposal_request(config, prompt, example.input, task)
+                if _proposal_inputs_match(case_dir, current_request):
+                    skipped += 1
+                    reused_predictions += 1
+                    continue
             pending.append(example)
             if config.limit is not None and len(pending) >= config.limit:
                 break
@@ -323,6 +325,9 @@ class BaselineProposalGenerator:
             started_at = time.monotonic()
             case_dir = run_dir / _safe(example.id)
             case_dir.mkdir(parents=True, exist_ok=True)
+            # Never leave a formerly successful but now stale evaluation visible
+            # if the replacement request fails or the process is interrupted.
+            (case_dir / "evaluation.yaml").unlink(missing_ok=True)
             request = build_proposal_request(config, prompt, example.input, task)
             request_payload = serialize_generation_request(request)
             request_diagnostics = _request_diagnostics(request_payload)
@@ -582,8 +587,8 @@ def _run_adaptive_interview(
     )
     context = full_context if uses_context else {}
     frame_policy = resolve_cbox_frame_policy(config.cbox_frame)
-    framed_context = frame_cbox_context(context, frame_policy)
-    interview_input = {**dict(item_input), "context": context}
+    framed_context = frame_qualification_context(context, frame_policy, task=config.task)
+    interview_input = {**dict(item_input), "context": dict(framed_context.values)}
     plan = AdaptiveInterviewPlanner().plan(interview_input)
     answers: list[dict[str, Any]] = []
     last_result = None
@@ -967,3 +972,13 @@ def _safe(value: str) -> str:
     return "".join(
         character if character.isalnum() or character in "-_." else "_" for character in value
     )
+
+
+def _proposal_inputs_match(case_dir: Path, request: StructuredGenerationRequest) -> bool:
+    """Older requests without a verified input fingerprint are recomputed once."""
+    try:
+        stored = json.loads((case_dir / "request.json").read_text(encoding="utf-8"))
+        fingerprint = stored["metadata"]["qualification_input_fingerprint"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+    return fingerprint == request.metadata["qualification_input_fingerprint"]

@@ -9,6 +9,7 @@ from enum import StrEnum
 class WorkflowTask(StrEnum):
     DOCUMENTS = "documents"
     QUALIFICATION = "qualification"
+    KNOWLEDGE = "knowledge"
 
 
 class ArtifactPolicy(StrEnum):
@@ -32,6 +33,10 @@ class WorkflowStage(StrEnum):
     MARKDOWN = "markdown"
     DOORSTOP = "doorstop"
     DOORSTOP_PUBLISH = "doorstop-publish"
+    KNOWLEDGE_RESTORE = "knowledge-restore"
+    KNOWLEDGE_ADOPT = "knowledge-adopt"
+    KNOWLEDGE_PUBLISH = "knowledge-publish"
+    CBOX_REPORT = "cbox-report"
     CORPUS_BUILD = "corpus-build"
     QUALIFICATION_MATRIX = "qualification-matrix"
     APPLICABILITY_DETAIL_ENRICHMENT = "applicability-detail-enrichment"

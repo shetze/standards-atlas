@@ -36,3 +36,13 @@ fresh; enable it explicitly when deterministic reuse is useful.
 
 The workbench does not persist experiments or write enrichments back to EngineeringDocuments
 in this slice.
+
+## Accepted canonical attributes
+
+`effective-context-v1` displays persisted semantic hints and origin/support metadata through
+the same canonical projection used by corpus construction and `document cbox-report`.
+Generated hints, confirmed values, unknown and not-evaluated attributes remain distinct.
+Explicit isolated frames also constrain alternate metadata/heading template variables.
+The workbench still permits deliberate downstream experiments with an effective frame;
+qualification itself always imposes its additional target-isolation boundary. See
+[Canonical CBox](canonical-cbox.md) for frame, reuse and privacy contracts.

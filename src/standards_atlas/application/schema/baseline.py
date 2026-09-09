@@ -7,6 +7,10 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "cbox-enrichments": SchemaPolicy(
+        "cbox-enrichments", "1.0", ("1.0",), "clause-descriptor.enrichment_context"
+    ),
+    "cbox-report": SchemaPolicy("cbox-report", "1.0", ("1.0",), "local/**/cbox*.json"),
     "atlasdata-enrichments": SchemaPolicy(
         "atlasdata-enrichments", "1.0", ("1.0",), "data/enrichments/*.yaml"
     ),
