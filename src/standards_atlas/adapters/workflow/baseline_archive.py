@@ -310,8 +310,9 @@ def _markdown(payload: dict) -> str:
         [
             "",
             "The archive is private and can contain licensed source text and rejected answers.",
-            "It excludes source PDFs, Docling inputs, model weights, environment secrets and caches.",
-            "Use manifest.json to verify every payload before comparison or manual restore.",
+            "It excludes source PDFs, Docling inputs, model weights, environment secrets and ",
+            "caches. Use manifest.json to verify every payload before comparison or ",
+            "manual restore.",
             "",
         ]
     )

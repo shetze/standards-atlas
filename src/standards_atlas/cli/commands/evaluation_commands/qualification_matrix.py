@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import sys
 import time
 from collections import Counter
 from dataclasses import replace
@@ -80,6 +81,9 @@ from standards_atlas.application.services.evaluation import (
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
+from standards_atlas.cli.commands.evaluation_commands.runtime_cleanup import (
+    cleanup_qualification_runtime,
+)
 from standards_atlas.cli.runtime_managers import managed_mcp_server
 
 
@@ -490,8 +494,9 @@ def qualify_model_prompt_matrix(
             base_config = LlmConfig.load(config)
             if not llm_cache_enabled:
                 base_config = replace(base_config, cache_directory=None)
-            active_server = RamaLamaServerManager(base_config)
-            active_server.stop()
+            initial_server = RamaLamaServerManager(base_config)
+            initial_server.stop()
+            active_server = initial_server
             active_reasoning_modes = tuple(
                 reasoning
                 for reasoning in manifest.reasoning_modes
@@ -546,8 +551,8 @@ def qualify_model_prompt_matrix(
                     gateway = None
                     if run_mode != "recompute":
                         if active_server is not None:
-                            active_server.stop()
-                            active_server = None
+                            previous_server, active_server = active_server, None
+                            previous_server.stop()
                         if model.provider == "ramalama":
                             model_config = replace(
                                 base_config,
@@ -1093,10 +1098,11 @@ def qualify_model_prompt_matrix(
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
     finally:
-        if active_server is not None:
-            active_server.stop()
-        if active_mcp_lease is not None:
-            active_mcp_lease.__exit__(None, None, None)
+        cleanup_qualification_runtime(
+            active_server,
+            active_mcp_lease,
+            primary_error=sys.exception(),
+        )
     typer.echo(f"Matrix result            : {'PASS' if report.passed else 'FAIL'}")
     typer.echo(f"Candidates               : {len(report.candidates)}")
     typer.echo(f"Pareto front             : {', '.join(report.pareto_front) or 'none'}")

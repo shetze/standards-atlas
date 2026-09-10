@@ -53,7 +53,13 @@ class EnrichmentsWorkflowPlanner:
         restore_enrichments: bool = False,
         strict_evidence: bool = False,
         fail_on_context_failure: bool = False,
+        resume_after_context: bool = False,
     ) -> WorkflowPlan:
+        if resume_after_context and (overwrite or regenerate_docling or restore_enrichments):
+            raise ValueError(
+                "--resume-after-context cannot be combined with --overwrite, "
+                "--regenerate-docling or --restore-enrichments"
+            )
         if len(family_keys) != len(set(family_keys)):
             raise ValueError("enrichments family selection must not contain duplicates")
         manifest = QualificationMatrixManifest.load(qualification_manifest)
@@ -192,13 +198,28 @@ class EnrichmentsWorkflowPlanner:
                     output_paths=(str(receipt),),
                 )
             steps.append(step)
+        if resume_after_context:
+            boundary = next(
+                index
+                for index, step in enumerate(steps)
+                if step.stage is WorkflowStage.CONTEXT_BASELINE
+            )
+            verification = replace(
+                steps[boundary],
+                command=(*steps[boundary].command, "--verify-existing"),
+            )
+            steps = [verification, *steps[boundary + 1 :]]
         plan = WorkflowPlan(
             families=qualification.document_plan.families,
             steps=tuple(steps),
             force=qualification.document_plan.force,
             kept_stages=qualification.document_plan.kept_stages,
             fresh_repetition_stages=(
-                *((WorkflowStage.CONTEXT_ENRICHMENT,) if fresh else ()),
+                *(
+                    (WorkflowStage.CONTEXT_ENRICHMENT,)
+                    if fresh and not resume_after_context
+                    else ()
+                ),
                 *qualification.fresh_repetition_stages,
             ),
         )

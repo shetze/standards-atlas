@@ -452,3 +452,50 @@ def test_completed_fresh_baseline_repeats_context_but_not_normalization(tmp_path
     assert stages.count(WorkflowStage.CONTEXT_ENRICHMENT) == 2
     assert WorkflowStage.NORMALIZE not in stages
     assert _baseline_receipt(tmp_path, plan, "context")["summary"]["succeeded"] == 2
+
+
+def test_runtime_failure_resumes_after_frozen_partial_context_without_another_model_call(
+    tmp_path,
+    monkeypatch,
+):
+    manifest = project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    initial = workflow(tmp_path, manifest, fresh=True)
+
+    class InterruptedRunner(BoundaryRunner):
+        def run(self, command, cwd):
+            step = next(s for s in self.plan.steps if s.command == command)
+            if step.stage is WorkflowStage.QUALIFICATION_MATRIX:
+                raise RuntimeError("RamaLama endpoint remained available after shutdown")
+            return super().run(command, cwd)
+
+    runner = InterruptedRunner(initial, monkeypatch, tmp_path)
+    provider = FailingRoutingProvider()
+    _use_provider(monkeypatch, provider)
+    service = build_workflow_service(tmp_path)
+    with pytest.raises(RuntimeError, match="endpoint remained available"):
+        service.execute(initial, project_root=tmp_path, runner=runner)
+    assert provider.calls == ["EXAMPLEA", "EXAMPLEB"]
+    baseline = _baseline_receipt(tmp_path, initial, "context")
+    original_archive = Path(baseline["archive"]).read_bytes()
+    assert baseline["summary"]["failed"] == 1
+    context_receipt = next(s for s in initial.steps if s.stage is WorkflowStage.CONTEXT_BASELINE)
+    original_receipt = (tmp_path / context_receipt.output_paths[0]).read_bytes()
+
+    resumed = workflow(tmp_path, manifest, fresh=True, resume_after_context=True)
+    runner = BoundaryRunner(resumed, monkeypatch, tmp_path)
+    provider.calls.clear()
+    _use_provider(monkeypatch, provider)
+    result = service.execute(resumed, project_root=tmp_path, runner=runner)
+    assert result.completed
+    assert provider.calls == []  # Even the previously failed clause is not repeated.
+    assert result.executed_steps[0].stage is WorkflowStage.CONTEXT_BASELINE
+    assert "--verify-existing" in result.executed_steps[0].command
+    assert Path(baseline["archive"]).read_bytes() == original_archive
+    assert (tmp_path / context_receipt.output_paths[0]).read_bytes() == original_receipt
+    published = _baseline_receipt(tmp_path, resumed, "published")
+    assert published["summary"]["failed"] == 1  # Resume is not semantic approval.
+    for key in ("EXAMPLEA", "EXAMPLEB"):
+        assert (tmp_path / f"data/enrichments/{key}.yaml").exists()
+    with ZipFile(published["archive"]) as archive:
+        assert archive.read("reports/workflow/context-baseline.json") == original_receipt

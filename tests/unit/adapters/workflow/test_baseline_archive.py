@@ -185,3 +185,114 @@ def test_corrupt_private_evidence_or_qualification_is_fatal(tmp_path):
     with pytest.raises(ValueError, match="checksum"):
         archive_enrichment_baseline(**args)
     assert not args["output"].exists()
+
+
+def _resume_args(args):
+    return {
+        key: value
+        for key, value in {
+            **args,
+            "receipt": args["output"],
+        }.items()
+        if key not in {"phase", "reports_root", "output"}
+    }
+
+
+def test_resume_validates_partial_context_without_changing_any_bytes(tmp_path):
+    from standards_atlas.adapters.workflow.baseline_resume import verify_context_baseline
+
+    args = setup_project(tmp_path)
+    original = archive_enrichment_baseline(**args)
+    before = {str(p): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    verified = verify_context_baseline(**_resume_args(args))
+    assert verified == original
+    assert verified["summary"]["failed"] == 1
+    assert before == {str(p): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ".atlas/data/documents/EXAMPLE.json",
+        ".atlas/data/evaluation/context-routing/EXAMPLE-run.json",
+        ".atlas/data/evaluation/context-routing/EXAMPLE-failures.json",
+        ".atlas/data/evaluation/context-routing/EXAMPLE-unresolved-targets.json",
+        "manifests/standards.yaml",
+        "data/EXAMPLE",
+        "cfg/context-enrichment.yaml",
+    ],
+)
+def test_resume_rejects_drift_instead_of_recomputing_context(tmp_path, path):
+    from standards_atlas.adapters.workflow.baseline_resume import verify_context_baseline
+
+    args = setup_project(tmp_path)
+    archive_enrichment_baseline(**args)
+    target = tmp_path / path
+    target.write_bytes(target.read_bytes() + b"\n")
+    with pytest.raises(ValueError, match="input changed or missing"):
+        verify_context_baseline(**_resume_args(args))
+
+
+def test_resume_allows_downstream_code_fix_but_keeps_original_code_archive(tmp_path):
+    from standards_atlas.adapters.workflow.baseline_resume import verify_context_baseline
+
+    args = setup_project(tmp_path)
+    baseline = archive_enrichment_baseline(**args)
+    (tmp_path / "src/standards_atlas/dummy.py").write_text("# corrected shutdown\n")
+    verify_context_baseline(**_resume_args(args))
+    with ZipFile(baseline["archive"]) as archive:
+        assert archive.read("code/src/standards_atlas/dummy.py") == b"# frozen code\n"
+
+
+@pytest.mark.parametrize(
+    "changes, message",
+    [
+        ({"strict_context": True}, "strict context policy"),
+        ({"selection": "other"}, "another phase or selection"),
+        ({"document_keys": ("OTHER",)}, "document selection"),
+        ({"corpus_count": 50}, "sampling settings"),
+        ({"limit": 50}, "sampling settings"),
+    ],
+)
+def test_resume_rejects_different_selection_or_strict_failure_policy(tmp_path, changes, message):
+    from standards_atlas.adapters.workflow.baseline_resume import verify_context_baseline
+
+    args = setup_project(tmp_path)
+    archive_enrichment_baseline(**args)
+    with pytest.raises(ValueError, match=message):
+        verify_context_baseline(**{**_resume_args(args), **changes})
+
+
+def test_resume_detects_corrupt_archive_and_forged_summary(tmp_path):
+    from standards_atlas.adapters.workflow.baseline_resume import verify_context_baseline
+
+    args = setup_project(tmp_path)
+    baseline = archive_enrichment_baseline(**args)
+    target = Path(baseline["archive"])
+    original = target.read_bytes()
+    target.write_bytes(original + b"changed")
+    with pytest.raises(ValueError, match="archive checksum"):
+        verify_context_baseline(**_resume_args(args))
+    target.write_bytes(original)
+    baseline["summary"]["failed"] = 0
+    (tmp_path / args["output"]).write_text(json.dumps(baseline))
+    with pytest.raises(ValueError, match="receipt does not match"):
+        verify_context_baseline(**_resume_args(args))
+
+
+def test_resume_detects_modified_member_even_with_updated_archive_receipt(tmp_path):
+    from standards_atlas.adapters.workflow.baseline_resume import verify_context_baseline
+
+    args = setup_project(tmp_path)
+    baseline = archive_enrichment_baseline(**args)
+    target = Path(baseline["archive"])
+    with ZipFile(target) as archive:
+        contents = {name: archive.read(name) for name in archive.namelist()}
+    contents["documents/EXAMPLE.json"] = b"changed"
+    with ZipFile(target, "w") as archive:
+        for name, data in contents.items():
+            archive.writestr(name, data)
+    baseline["archive_sha256"] = hashlib.sha256(target.read_bytes()).hexdigest()
+    (tmp_path / args["output"]).write_text(json.dumps(baseline))
+    with pytest.raises(ValueError, match="corrupt context baseline member"):
+        verify_context_baseline(**_resume_args(args))

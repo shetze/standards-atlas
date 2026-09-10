@@ -176,6 +176,9 @@ def test_stop_removes_pid_file_when_shutdown_fails(
         Mock(side_effect=RamaLamaServerError("shutdown failed")),
     )
     monkeypatch.setattr(manager, "_stop_named_container", Mock())
+    monkeypatch.setattr(manager, "_remove_owned_runtime_container", Mock(return_value=False))
+    monkeypatch.setattr(manager, "_containers_publishing_port", Mock(return_value=()))
+    monkeypatch.setattr(manager, "_inspect_container", Mock(return_value=None))
     monkeypatch.setattr(manager, "_wait_until_process_stopped", Mock(return_value=False))
 
     with pytest.raises(RamaLamaServerError, match="shutdown failed"):
@@ -419,6 +422,7 @@ def test_stop_requires_endpoint_to_disappear_without_live_pid(tmp_path: Path) ->
     with (
         patch.object(manager, "_read_pid", return_value=None),
         patch.object(manager, "_stop_named_container"),
+        patch.object(manager, "_containers_publishing_port", return_value=()),
         patch.object(manager, "_remove_named_container"),
         patch.object(manager, "_wait_for_endpoint_shutdown") as wait_for_shutdown,
     ):
@@ -545,6 +549,19 @@ def test_stop_removes_container_from_shared_ownership_across_profiles(tmp_path: 
     with (
         patch.object(qualification_manager, "_read_pid", return_value=None),
         patch.object(qualification_manager, "_remove_container") as remove_container,
+        patch.object(
+            qualification_manager,
+            "_inspect_container",
+            return_value={
+                "Id": "phi4-id",
+                "Name": "standards-atlas-context-enrichment",
+                "NetworkSettings": {"Ports": {"8080/tcp": [{"HostPort": "8080"}]}},
+            },
+        ),
+        patch(
+            "standards_atlas.adapters.llm.ramalama_server.OpenAICompatibleLlmGateway.health",
+            return_value=LlmHealth(available=False),
+        ),
         patch.object(qualification_manager, "_wait_for_endpoint_shutdown"),
     ):
         qualification_manager.stop()

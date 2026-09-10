@@ -151,6 +151,13 @@ def plan_workflow(
     strict_evidence: Annotated[
         bool, typer.Option("--strict-evidence", help="Require private evidence when restoring.")
     ] = False,
+    resume_after_context: Annotated[
+        bool,
+        typer.Option(
+            "--resume-after-context",
+            help="Enrichments only: verify saved context baseline and skip context inference.",
+        ),
+    ] = False,
     fail_on_context_failure: Annotated[
         bool,
         typer.Option(
@@ -188,6 +195,7 @@ def plan_workflow(
         restore_enrichments=restore_enrichments,
         strict_evidence=strict_evidence,
         fail_on_context_failure=fail_on_context_failure,
+        resume_after_context=resume_after_context,
     )
     for step in plan.steps:
         gate = " [manual review gate]" if step.manual_gate else ""
@@ -307,6 +315,13 @@ def run_workflow(
     strict_evidence: Annotated[
         bool, typer.Option("--strict-evidence", help="Require private evidence when restoring.")
     ] = False,
+    resume_after_context: Annotated[
+        bool,
+        typer.Option(
+            "--resume-after-context",
+            help="Enrichments only: verify saved context baseline and skip context inference.",
+        ),
+    ] = False,
     fail_on_context_failure: Annotated[
         bool,
         typer.Option(
@@ -344,6 +359,7 @@ def run_workflow(
         restore_enrichments=restore_enrichments,
         strict_evidence=strict_evidence,
         fail_on_context_failure=fail_on_context_failure,
+        resume_after_context=resume_after_context,
     )
     # Keep cross-invocation workflow checkpoints so an interrupted workflow can
     # resume from the first incomplete step. Other scratch state is disposable.
@@ -405,7 +421,11 @@ def _build_task_plan(
     restore_enrichments: bool = False,
     strict_evidence: bool = False,
     fail_on_context_failure: bool = False,
+    resume_after_context: bool = False,
 ) -> WorkflowPlan:
+    if resume_after_context and task is not WorkflowTask.ENRICHMENTS:
+        raise typer.BadParameter("--resume-after-context is only available for --task enrichments")
+
     if fail_on_context_failure and task is not WorkflowTask.ENRICHMENTS:
         raise typer.BadParameter("--fail-on-context-failure requires --task enrichments")
     if (adopt_run is not None or publish_enrichments) and task is not WorkflowTask.KNOWLEDGE:
@@ -493,6 +513,7 @@ def _build_task_plan(
                 restore_enrichments=restore_enrichments,
                 strict_evidence=strict_evidence,
                 fail_on_context_failure=fail_on_context_failure,
+                resume_after_context=resume_after_context,
             )
         except ValueError as exc:
             raise typer.BadParameter(str(exc)) from exc
@@ -607,11 +628,31 @@ def archive_baseline(
     corpus_count: Annotated[int | None, typer.Option("--corpus-count", min=1)] = None,
     limit: Annotated[int | None, typer.Option("--limit", min=1)] = None,
     strict_context: Annotated[bool, typer.Option("--strict-context")] = False,
+    verify_existing: Annotated[bool, typer.Option("--verify-existing")] = False,
 ) -> None:
     """Freeze a private baseline; context quality failures are recorded, not suppressed."""
     from standards_atlas.adapters.workflow.baseline_archive import archive_enrichment_baseline
 
     try:
+        if verify_existing:
+            from standards_atlas.adapters.workflow.baseline_resume import verify_context_baseline
+
+            if phase != "context":
+                raise ValueError("only the context baseline can be resumed")
+            result = verify_context_baseline(
+                project_root=Path.cwd(),
+                workspace=workspace,
+                document_keys=tuple(document),
+                manifest_paths=tuple(manifest),
+                selection=selection,
+                receipt=output,
+                corpus_count=corpus_count,
+                limit=limit,
+                strict_context=strict_context,
+            )
+            typer.echo(f"Context baseline reused: {result['archive']}")
+            typer.echo("Context inference skipped; failed clauses remain recorded in the baseline.")
+            return
         result = archive_enrichment_baseline(
             project_root=Path.cwd(),
             workspace=workspace,

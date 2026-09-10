@@ -361,3 +361,66 @@ def test_old_or_partial_context_checkpoints_are_not_complete(tmp_path):
     assert store.outputs_exist(step, tmp_path)
     strict = replace(step, command=(*step.command, "--fail-on-failure"))
     assert not store.outputs_exist(strict, tmp_path)
+
+
+def test_resume_after_context_starts_with_verified_baseline_and_keeps_downstream_paths():
+    normal = plan(fresh=True)
+    resumed = plan(fresh=True, resume_after_context=True)
+    stages = [step.stage for step in resumed.steps]
+    assert stages[:2] == [WorkflowStage.CONTEXT_BASELINE, WorkflowStage.CORPUS_BUILD]
+    assert WorkflowStage.CONTEXT_ENRICHMENT not in stages
+    assert WorkflowStage.NORMALIZE not in stages
+    assert "--verify-existing" in resumed.steps[0].command
+    assert WorkflowStage.CONTEXT_ENRICHMENT not in resumed.fresh_repetition_stages
+    boundary = next(i for i, s in enumerate(normal.steps) if s.stage is WorkflowStage.CORPUS_BUILD)
+    assert resumed.steps[1:] == normal.steps[boundary:]
+
+
+@pytest.mark.parametrize("option", ["overwrite", "regenerate_docling", "restore_enrichments"])
+def test_resume_rejects_options_that_would_replace_context_baseline(option):
+    with pytest.raises(ValueError, match="cannot be combined"):
+        plan(resume_after_context=True, **{option: True})
+
+
+def test_resume_plan_cli_has_no_context_commands_and_keeps_fresh_qualification():
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "plan",
+            "--task",
+            "enrichments",
+            "--manifests",
+            f"{MANIFEST},{MATRIX}",
+            "--hierarchy",
+            "functional-safety",
+            "--knowledge-domain",
+            "functional-safety",
+            "--resume-after-context",
+            "--fresh",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "enrich-context" not in result.output
+    assert "--verify-existing" in result.output
+    assert "qualification-matrix" in result.output
+    assert "25695765154b" in result.output
+
+
+def test_resume_option_is_rejected_for_other_tasks():
+    result = CliRunner().invoke(
+        app,
+        [
+            "workflow",
+            "plan",
+            "--task",
+            "documents",
+            "--manifests",
+            str(MANIFEST),
+            "--family",
+            "EN50716",
+            "--resume-after-context",
+        ],
+    )
+    assert result.exit_code == 2
+    assert "only available for --task" in result.output and "enrichments" in result.output

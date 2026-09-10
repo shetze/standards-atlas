@@ -72,6 +72,13 @@ class RamaLamaServerManager:
 
         status = self.status()
         if status.running:
+            # A previous CLI invocation may have left a valid runtime without a
+            # shared ownership receipt. Reconcile only identifiable project
+            # containers; a matching model alone does not establish ownership.
+            candidates = self._containers_publishing_port(self._port())
+            if len(candidates) == 1:
+                container_id, name = candidates[0]
+                self._record_runtime_ownership(container_id=container_id, container_name=name)
             return
         if status.endpoint_available:
             raise RamaLamaServerError(status.detail or "LLM endpoint serves an unexpected model")
@@ -155,7 +162,9 @@ class RamaLamaServerManager:
 
         pid = self._read_pid()
         removed_container = self._remove_owned_runtime_container()
-        if not removed_container:
+        if not removed_container or OpenAICompatibleLlmGateway(self._config).health().available:
+            # Reconcile the actual endpoint even when a stale receipt named a
+            # different, successfully removed container.
             # Compatibility for containers created before ownership persistence
             # existed.  Only project-owned containers publishing this manager's
             # inference port may be taken over.
@@ -163,7 +172,7 @@ class RamaLamaServerManager:
         if not removed_container:
             # Still clean the configured name in case the container exists but is
             # stopped and therefore absent from ``podman ps`` discovery.
-            self._remove_named_container()
+            self._remove_named_container(only_stopped=True)
 
         try:
             if pid is not None and self._pid_is_running(pid):
@@ -179,6 +188,9 @@ class RamaLamaServerManager:
             self._config.server.pid_file.unlink(missing_ok=True)
 
         self._wait_for_endpoint_shutdown(self._config.server.shutdown_timeout_seconds)
+        ownership = self._read_runtime_ownership()
+        if ownership is None or ownership.get("port") == self._port():
+            self._clear_runtime_ownership()
 
     @contextmanager
     def paused_for_exclusive_accelerator(self) -> Iterator[None]:
@@ -203,9 +215,15 @@ class RamaLamaServerManager:
         expected = _canonical_model_identity(self._config.server.model)
         return any(_canonical_model_identity(model) == expected for model in advertised_models)
 
-    def _record_runtime_ownership(self) -> None:
+    def _record_runtime_ownership(
+        self,
+        *,
+        container_id: str | None = None,
+        container_name: str | None = None,
+    ) -> None:
         """Persist the actual project-owned container behind the shared endpoint."""
-        container_id = self._container_id_for_name(self._config.server.name)
+        container_name = container_name or self._config.server.name
+        container_id = container_id or self._container_id_for_name(container_name)
         if container_id is None:
             raise RamaLamaServerError(
                 "RamaLama endpoint became ready but its managed container could not "
@@ -215,7 +233,7 @@ class RamaLamaServerManager:
         ownership_file.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "container_id": container_id,
-            "container_name": self._config.server.name,
+            "container_name": container_name,
             "model": self._config.server.model,
             "port": self._port(),
         }
@@ -237,14 +255,22 @@ class RamaLamaServerManager:
         ownership = self._read_runtime_ownership()
         if ownership is None:
             return False
+        if ownership.get("port") != self._port():
+            return False  # A shared receipt is not permission to stop another port.
         container_id = str(ownership.get("container_id") or "").strip()
         container_name = str(ownership.get("container_name") or "").strip()
         target = container_id or container_name
         if not target:
             self._clear_runtime_ownership()
             return False
-        self._remove_container(target)
-        self._clear_runtime_ownership()
+        inspected = self._inspect_container(target)
+        if inspected is None:
+            return False  # Stale receipt: discover the actual endpoint instead.
+        actual_name = str(inspected.get("Name", "")).lstrip("/")
+        if actual_name != container_name or not _container_serves_port(inspected, self._port()):
+            return False  # Never trust a recycled name or an unrelated port.
+        self._remove_container(str(inspected.get("Id") or target))
+        # Retain the receipt if endpoint verification subsequently fails.
         return True
 
     def _remove_project_container_on_port(self) -> bool:
@@ -268,30 +294,78 @@ class RamaLamaServerManager:
         return True
 
     def _containers_publishing_port(self, port: int) -> tuple[tuple[str, str], ...]:
+        """Discover project runtimes using portable ps + inspect, not publish filters.
+
+        Podman rejects Docker's ``ps --filter publish=...``. Command failures
+        must remain distinguishable from an empty inventory. An exposed port
+        alone is not a published host port and cannot authorize a container stop.
+        """
+        result = self._run_container_query("ps", "--format", "{{.ID}}\t{{.Names}}")
+        if result.returncode != 0:
+            raise RamaLamaServerError(
+                f"Could not list RamaLama containers: {(result.stderr or result.stdout).strip()}"
+            )
+        containers: list[tuple[str, str]] = []
+        for line in result.stdout.splitlines():
+            container_id, separator, name = line.partition("\t")
+            if not separator or not container_id.strip() or not name.strip():
+                raise RamaLamaServerError("Invalid container inventory row; refusing model switch")
+            name = name.strip()
+            if name != self._config.server.name and not name.startswith("standards-atlas-"):
+                continue
+            inspected = self._inspect_container(container_id.strip())
+            if inspected is None:  # Container exited between ps and inspect.
+                continue
+            if str(inspected.get("Name", "")).lstrip("/") != name:
+                raise RamaLamaServerError("Container identity changed during runtime discovery")
+            if _container_serves_port(inspected, port):
+                containers.append((str(inspected.get("Id") or container_id.strip()), name))
+        return tuple(containers)
+
+    def _run_container_query(self, *arguments: str) -> subprocess.CompletedProcess[str]:
         engine = self._container_engine()
         try:
-            result = subprocess.run(  # noqa: S603
-                (
-                    engine,
-                    "ps",
-                    "--filter",
-                    f"publish={port}",
-                    "--format",
-                    "{{.ID}}\t{{.Names}}",
-                ),
+            return subprocess.run(  # noqa: S603
+                (engine, *arguments),
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=10.0,
             )
-        except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
-            return ()
-        containers: list[tuple[str, str]] = []
-        for line in result.stdout.splitlines():
-            container_id, separator, name = line.partition("\t")
-            if separator and container_id.strip() and name.strip():
-                containers.append((container_id.strip(), name.strip()))
-        return tuple(containers)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RamaLamaServerError(
+                f"Could not query container engine {engine!r}: {exc}"
+            ) from exc
+
+    def _inspect_container(self, target: str) -> dict[str, object] | None:
+        result = self._run_container_query("container", "inspect", target)
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            # Both engines report disappearance explicitly. Other failures (e.g.
+            # permissions or daemon connectivity) are not an empty inventory.
+            if any(
+                text in detail.lower()
+                for text in (
+                    "no such container",
+                    "no such object",
+                    "no container with name or id",
+                )
+            ):
+                return None
+            raise RamaLamaServerError(f"Could not inspect RamaLama container {target!r}: {detail}")
+        try:
+            payload = json.loads(result.stdout)
+            if (
+                not isinstance(payload, list)
+                or len(payload) != 1
+                or not isinstance(payload[0], dict)
+            ):
+                raise ValueError("expected one container object")
+            return payload[0]
+        except (ValueError, TypeError) as exc:
+            raise RamaLamaServerError(
+                f"Invalid container inspection for {target!r}: {exc}"
+            ) from exc
 
     def _container_id_for_name(self, name: str) -> str | None:
         engine = self._container_engine()
@@ -345,7 +419,10 @@ class RamaLamaServerManager:
         models = ", ".join(health.models) if health.models else "<unknown>"
         raise RamaLamaServerError(
             "RamaLama endpoint remained available after shutdown; refusing model switch "
-            f"because it still advertises: {models}"
+            f"because it still advertises: {models}. "
+            f"Endpoint: {self._config.base_url}; engine: {self._container_engine()}; "
+            f"ownership: {self._config.server.ownership_file}. "
+            "No foreign or ambiguously identified runtime will be terminated."
         )
 
     def _port(self) -> int:
@@ -430,8 +507,14 @@ class RamaLamaServerManager:
             except ProcessLookupError:
                 return
 
-    def _remove_named_container(self) -> None:
-        """Best-effort removal of a stale container with the configured name."""
+    def _remove_named_container(self, *, only_stopped: bool = False) -> None:
+        """Remove stale configured state, without stopping an unrelated live port."""
+        if only_stopped:
+            inspected = self._inspect_container(self._config.server.name)
+            if inspected is None or (inspected.get("State") or {}).get("Running") is not False:
+                return
+            self._remove_container(str(inspected.get("Id") or self._config.server.name))
+            return
         engine = self._container_engine()
         try:
             subprocess.run(  # noqa: S603
@@ -533,3 +616,37 @@ def _canonical_model_identity(model: str) -> str:
     if "/" in value:
         return "hf:" + value
     return value
+
+
+def _container_serves_port(container: dict[str, object], port: int) -> bool:
+    """Match actual TCP host bindings or an explicit host-network server port."""
+    network = container.get("NetworkSettings") or {}
+    host = container.get("HostConfig") or {}
+    if not isinstance(network, dict) or not isinstance(host, dict):
+        return False
+    bindings = network.get("Ports") or host.get("PortBindings") or {}
+    if isinstance(bindings, dict):
+        for address, values in bindings.items():
+            if not address.endswith("/tcp") or not isinstance(values, list):
+                continue
+            for binding in values:
+                if (
+                    isinstance(binding, dict)
+                    and str(binding.get("HostPort")) == str(port)
+                    and binding.get("HostIp", "") in {"", "0.0.0.0", "::", "127.0.0.1", "::1"}
+                ):
+                    return True
+    if host.get("NetworkMode") != "host":
+        return False
+    # Host networking has no published mapping. Require a recognizable server
+    # executable with an explicit port; never guess from the model/name alone.
+    command = [str(container.get("Path", "")), *(container.get("Args") or [])]
+    if Path(command[0]).name not in {"llama-server", "llama-server-main", "vllm"}:
+        return False
+    return any(
+        item == f"--port={port}"
+        or item == "--port"
+        and i + 1 < len(command)
+        and command[i + 1] == str(port)
+        for i, item in enumerate(command)
+    )

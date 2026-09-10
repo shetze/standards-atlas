@@ -146,6 +146,45 @@ not silently replaced with the most recently numbered archive.
 explicit task selection and adopts its own completed archive. To adopt an already existing archive
 without document processing or new inference, continue using the separate `knowledge` task.
 
+## Resume a frozen context baseline after a downstream runtime failure
+
+After `context-baseline.json` has been written, an inference-server or qualification startup error
+must not require another context pass. Use the **same selection, knowledge domain, seed, corpus
+size and limit** with `--resume-after-context`:
+
+```bash
+uv run standards-atlas workflow run \
+  --task enrichments \
+  --manifests manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml \
+  --hierarchy functional-safety \
+  --knowledge-domain functional-safety \
+  --resume-after-context \
+  --fresh
+```
+
+`workflow plan` accepts the same option. The first executed step verifies the existing context
+receipt, whole ZIP hash and every inventory member. Selected canonical documents, per-document
+ledgers/diagnostics, AtlasData inputs, manifests and context configurations must still match the
+archived bytes. Missing or changed inputs cause an error **before qualification**, without
+restoring, overwriting or silently re-running context. A runtime code fix is allowed: the original
+context code remains recorded in the original archive, while later publication archives the code
+used for the continuation. Neither the context ZIP nor its receipt is replaced.
+
+The remaining chain starts at corpus construction/reuse and proceeds through qualification,
+adoption, publication and the published baseline. With this option `--fresh` affects only the
+remaining inference stages; there are **no context-inference calls**, including for failed clauses.
+Omit `--fresh` when existing qualification proposals should be reused. Unresolved targets and
+failed-context counts remain part of the development baseline; they are not relabelled successes.
+`--fail-on-context-failure` still rejects a saved baseline containing context failures.
+
+This mode cannot be combined with `--overwrite`, `--regenerate-docling` or
+`--restore-enrichments`, and is available only for `--task enrichments`. It does not automatically
+rewind documents changed by an already executed adoption or publication. For an intentional new
+context pass, run the ordinary workflow without `--resume-after-context` instead.
+
+The underlying read-only check is `workflow archive-baseline --phase context --verify-existing`
+with the same documents, manifests, selection and receipt arguments. It never creates an archive.
+
 ## Artifacts and archive handoff
 
 The selection fingerprint includes document keys, matrix identity, corpus size/limit, strategy,

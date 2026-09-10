@@ -16,6 +16,13 @@ uv run standards-atlas workflow run --help
 - `workflow plan`, `workflow run`: plan or execute a typed-manifest workflow. The supported workflow tasks are `documents`, `qualification`, and `enrichments`; `documents` is the default. Qualification workflows accept `--limit` for a shared execution slice and `--fresh` to bypass proposal reuse and LLM response caches across matrix and semantic-extraction inference. For `enrichments`, `--fresh` also recomputes generated context routing without its LLM response cache while preserving confirmed routing.
 
 
+For `--task enrichments`, `--resume-after-context` verifies the saved context baseline and
+continues at corpus construction/reuse without document preparation or context inference.
+It requires unchanged archived inputs and selection, permits downstream-only `--fresh`, and
+rejects `--overwrite`, `--regenerate-docling` and `--restore-enrichments`. Partial context results
+remain recorded. The context archive and receipt are not replaced. See the
+[continuation guide](../user-guide/enrichments-workflow.md#resume-a-frozen-context-baseline-after-a-downstream-runtime-failure).
+
 ### Workflow manifest contract
 
 `workflow plan` and `workflow run` accept workflow configuration through `--manifests`. The option may be repeated and each occurrence may also contain comma-separated paths. The workflow loader selects inputs by each file's `manifest_type`, not by filename or argument order.

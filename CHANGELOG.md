@@ -4,6 +4,15 @@ This changelog summarizes the architectural refactoring of Standards Atlas. It i
 
 ## 0.8.7 — Enrichment publication and reference resolution (2026-09-09)
 
+- Correct context-to-qualification runtime handoff with portable container inventory and exact
+  host-port inspection; surface engine errors, reconcile reused/stale ownership and preserve the
+  endpoint shutdown guard. Do not terminate foreign, ambiguous or other-port runtimes.
+- Preserve primary qualification failures during cleanup and always release MCP resources; do not
+  repeat a failed initial/model-switch stop from the finalizer.
+- Add `--resume-after-context` for a checksum-verified continuation from a saved context baseline,
+  including partial ones, without rerunning context or replacing the baseline archive/receipt.
+  Reject changed canonical inputs, diagnostics, manifests and context configuration before inference.
+
 - Default end-to-end enrichments to complete baseline collection despite individual invalid context
   responses; retain explicit `--fail-on-context-failure`, strict validation and technical/review gates.
 - Record per-clause context outcomes, including failed attempts retaining older values. Revisit
