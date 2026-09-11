@@ -28,6 +28,7 @@ from .import_pipeline import AtlasDataImportPipeline
 from .knowledge_contract import (
     ALL_PATHS,
     DIMENSION_PATHS,
+    UNPUBLISHED_APPLICABILITY_PATHS,
     UNPUBLISHED_ROLE_PATHS,
     AtlasDataKnowledge,
     AtlasDataKnowledgeReport,
@@ -270,7 +271,7 @@ def read_knowledge(path: Path) -> AtlasDataKnowledge:
     return result
 
 
-def _omit_unpublished_role_details(
+def _omit_unpublished_details(
     manifest: AtlasDataKnowledge,
 ) -> tuple[AtlasDataKnowledge, list[TransferChange]]:
     """Remove deferred public fields, not canonical values or private evidence.
@@ -279,14 +280,16 @@ def _omit_unpublished_role_details(
     export, so retained old records cannot leak fields outside publication policy.
     Attribute fingerprints are serialized from the remaining records only.
     """
+    unpublished_paths = UNPUBLISHED_APPLICABILITY_PATHS | UNPUBLISHED_ROLE_PATHS
     clauses = []
     changes = []
     for clause in manifest.clauses:
         attributes = []
         for item in clause.attributes:
-            if item.path not in UNPUBLISHED_ROLE_PATHS:
+            if item.path not in unpublished_paths:
                 attributes.append(item)
                 continue
+            dimension = "applicability" if item.path in UNPUBLISHED_APPLICABILITY_PATHS else "role"
             changes.append(
                 TransferChange(
                     document_key=manifest.document_key,
@@ -295,7 +298,8 @@ def _omit_unpublished_role_details(
                     status="omitted",
                     before=item.value,
                     reason=(
-                        "role detail publication is deferred; only role presence is published; "
+                        f"{dimension} detail publication is deferred; "
+                        f"only {dimension} presence is published; "
                         "canonical values and private evidence are unchanged"
                     ),
                 )
@@ -310,7 +314,7 @@ def _omit_unpublished_role_details(
 def knowledge_bytes(manifest: AtlasDataKnowledge) -> bytes:
     # Revalidate model_copy updates as well as normally constructed objects.
     manifest = AtlasDataKnowledge.model_validate(manifest.model_dump(mode="json"))
-    manifest, _ = _omit_unpublished_role_details(manifest)
+    manifest, _ = _omit_unpublished_details(manifest)
     for clause in manifest.clauses:
         _validate_semantics(clause.attributes)
         for attribute in clause.attributes:
@@ -629,7 +633,8 @@ class AtlasDataKnowledgeService:
             if dimensions
             else ALL_PATHS
         )
-        paths = tuple(path for path in paths if path not in UNPUBLISHED_ROLE_PATHS)
+        unpublished_paths = UNPUBLISHED_APPLICABILITY_PATHS | UNPUBLISHED_ROLE_PATHS
+        paths = tuple(path for path in paths if path not in unpublished_paths)
         store = KnowledgeEvidenceStore(self.evidence_root)
         pending: dict[Path, bytes] = {}
         changes = []
@@ -655,7 +660,7 @@ class AtlasDataKnowledgeService:
             for old in existing.clauses:
                 _check_clause(old, structural_clauses.get(old.clause_id), key=key, structural=True)
                 _check_atlasdata_md5(old, atlasdata_md5s, key=key)
-            existing, omitted = _omit_unpublished_role_details(existing)
+            existing, omitted = _omit_unpublished_details(existing)
             changes.extend(omitted)
             records = {item.clause_id: item for item in existing.clauses}
             # Other unselected clauses and dimensions keep their existing state.

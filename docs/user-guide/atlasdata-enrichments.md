@@ -59,12 +59,13 @@ An explicitly requested local report is still produced. `--write` is the only mu
 `--dimension` restricts export to complete coupled attribute groups and is repeatable:
 `statement_functions`, `knowledge_kinds`, `process_functions`, `applicability`, `role_semantics`,
 `subject_context`, `context_routing`. With exactly one selected document, repeatable
-`--clause <clause-id>` restricts the update further. `role_semantics` currently publishes only
+`--clause <clause-id>` restricts the update further. `applicability` currently publishes only
+`enrichments.semantic.applicability_present`; `role_semantics` publishes only
 `enrichments.semantic.role_semantics_present`. Unselected clauses and dimensions already
-in the companion are retained, except for the explicitly deferred role-detail fields below.
+in the companion are retained, except for the explicitly deferred detail fields below.
 An unknown input cannot erase known knowledge; omission is not an explicit empty set or a negative
 result. Existing protected values are reported as `protected`.
-There is deliberately no blind overwrite/force flag. The narrow role-detail publication cleanup
+There is deliberately no blind overwrite/force flag. The narrow detail-publication cleanup
 below does not delete canonical assertions or private evidence.
 
 Use `--root /path/to/project` when invoking outside the checkout. All relative manifest, workspace,
@@ -75,8 +76,37 @@ cannot be redirected by guessing a filename suffix.
 ## Public values versus private evidence
 
 Public categorical fields include statement, knowledge and process functions and their primary
-labels, Applicability presence/functions, and role presence. Presence-only, explicit negatives and
-unknown assessments are supported. Vote counts describe support, not measured correctness.
+labels, Applicability presence, and role presence. Presence-only, explicit negatives and unknown
+assessments are supported. Vote counts describe support, not measured correctness.
+
+Applicability publication is presence-only: `enrichments.semantic.applicability_functions` is not
+emitted, including its attribute fingerprints. The current qualification policy adopts only the
+final presence decision and explicitly marks functions as not evaluated. Detail-enrichment reports
+can contain function proposals, but those are not independently accepted function classifications.
+Negative presence clears canonical dependent functions to an empty set for internal consistency;
+that derived empty set is not an extraction result and is not published as one.
+
+This restriction applies even to nonempty or confirmed local function values. Their canonical
+values, provenance, reviewed AtlasData `AF` tags and existing private evidence remain intact.
+The reader still accepts existing schema-1.2 companions containing functions. A fresh workspace
+restores presence, not unpublished positive function details; keep canonical data to retain those
+local values. Negative presence can regenerate empty dependents on import without republishing them.
+
+Re-export existing companions to remove the obsolete function entries without a new LLM run:
+
+```bash
+uv run standards-atlas atlasdata export-enrichments \
+  --manifest manifests/standards.yaml \
+  --workspace .atlas/data \
+  --dimension applicability \
+  --write
+```
+
+Omit `--write` for a preview. Each removed attribute is reported as `omitted`. Cleanup removes its
+fingerprints too and covers the whole selected companion even on dimension/clause-limited exports.
+Other attributes and their ordering are preserved. Empty public clause records are dropped, not
+canonical clauses. Export and direct serialization both enforce the restriction; re-export is
+idempotent. No schema or qualification-policy change is required.
 
 Role-detail publication is temporarily deferred: `enrichments.semantic.role_relations` and
 `enrichments.semantic.role_relation_types` are never emitted, even when a local value is nonempty

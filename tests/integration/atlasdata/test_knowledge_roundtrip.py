@@ -543,7 +543,8 @@ def test_generated_update_cannot_overwrite_confirmation_in_companion(world):
     document = patch_clause(world[4], fields={"applicability_present": False})
     save(world, document)
     result = export(world)
-    assert result.status_counts["protected"] == 2
+    # Only the published presence is addressed, not its unpublished empty dependent.
+    assert result.status_counts["protected"] == 1
     assert world[3].enrichments_path.read_bytes() == original
 
 
@@ -916,7 +917,17 @@ def test_negative_confirmation_preserves_private_authority_and_blocks_regenerati
     repo.delete(document.key)
     service.import_(write=True, strict_evidence=True)
     imported = repo.load(document.key)
-    assert imported.clauses[0].provenance == confirmed.provenance
+    restored = imported.clauses[0]
+    assert restored.provenance.confirmed_attributes == confirmed.provenance.confirmed_attributes
+    assert restored.enrichments.semantic.applicability_functions == ()
+    # The omitted dependent is derived on import, not restored as a model result.
+    assert restored.provenance.generated_attributes == (
+        GeneratedAttribute(
+            path=S + "applicability_functions",
+            generator="atlasdata-roundtrip",
+            method=GenerationMethod.IMPORTED,
+        ),
+    )
     regenerated = patch_clause(imported, fields={"applicability_present": True})
     assert regenerated.clauses[0].semantic_classification.applicability_present is False
 
@@ -991,7 +1002,6 @@ def test_effective_cbox_roundtrip_matches_workbench_report_and_fresh_projection(
         document,
         fields={
             "applicability_present": True,
-            "applicability_functions": [],
             "role_semantics_present": False,
             "knowledge_kinds": [],
         },
@@ -1603,3 +1613,194 @@ def test_information_scope_repair_survives_public_private_roundtrip(world):
     assert restored.references[0].evidence == (text,)
     assert service.export(write=True).written_targets == ()
     assert binding.enrichments_path.read_bytes() == before
+
+
+@pytest.mark.parametrize("dimensions", [(), ("applicability",)])
+@pytest.mark.parametrize("presence", [True, False, None])
+def test_public_applicability_projection_is_presence_only(world, dimensions, presence):
+    fields = {} if presence is None else {"applicability_present": presence}
+    if presence is True:
+        fields["applicability_functions"] = ("inclusion",)
+    document = patch_clause(
+        world[4],
+        fields=fields,
+        unknown=("applicability_present",) if presence is None else (),
+        secret=True,
+    )
+    save(world, document)
+    canonical_path = world[0] / ".atlas/data/documents/EXAMPLE.json"
+    canonical_before = canonical_path.read_bytes()
+
+    export(world, dimensions=dimensions)
+
+    published = record(world).clauses[0]
+    assert [item.path for item in published.attributes] == [S + "applicability_present"]
+    assert published.attributes[0].value is presence
+    assert published.attributes[0].availability == ("unknown" if presence is None else "known")
+    assert S + "applicability_functions" not in world[3].enrichments_path.read_text()
+    assert SECRET not in world[3].enrichments_path.read_text()
+    assert canonical_path.read_bytes() == canonical_before
+    assert all(
+        yaml.safe_load(path.read_text())["path"] != S + "applicability_functions"
+        for path in world[2].evidence_root.glob("*.json")
+    )
+    assert export(world, dimensions=dimensions).written_targets == ()
+
+
+@pytest.mark.parametrize("authority", ["generated", "confirmed", "unattributed"])
+def test_applicability_publication_preserves_local_values_and_legacy_import(
+    world, monkeypatch, authority
+):
+    import standards_atlas.adapters.atlasdata.knowledge_transfer as transfer
+    from standards_atlas.domain.model.knowledge_state import KnowledgeStateProvenance
+
+    document = patch_clause(
+        world[4],
+        fields={"applicability_present": True, "applicability_functions": ("inclusion",)},
+    )
+    clause = document.clauses[0]
+    if authority == "confirmed":
+        for field in ("applicability_present", "applicability_functions"):
+            clause = clause.confirm_authoritative(S + field, authority="local-review")
+    elif authority == "unattributed":
+        clause = clause.model_copy(
+            update={
+                "provenance": KnowledgeStateProvenance(
+                    unattributed_attributes=(
+                        S + "applicability_functions",
+                        S + "applicability_present",
+                    )
+                )
+            }
+        )
+    document = document.model_copy(update={"clauses": (clause, *document.clauses[1:])})
+    save(world, document)
+    # The reader and canonical model still accept existing schema-1.2 details.
+    with monkeypatch.context() as old_policy:
+        old_policy.setattr(transfer, "UNPUBLISHED_APPLICABILITY_PATHS", frozenset())
+        export(world)
+    assert S + "applicability_functions" in world[3].enrichments_path.read_text()
+    world[1].delete(document.key)
+    world[2].import_(write=True, strict_evidence=True)
+    assert world[1].load(document.key) == document
+
+    report = export(world)
+
+    assert report.status_counts["omitted"] == 1
+    assert [item.path for item in record(world).clauses[0].attributes] == [
+        S + "applicability_present"
+    ]
+    assert world[1].load(document.key) == document
+    world[2].import_(write=True, strict_evidence=True)
+    assert world[1].load(document.key) == document
+    # Public-only restore cannot recreate deliberately unpublished positive details.
+    world[1].delete(document.key)
+    world[2].import_(write=True, strict_evidence=True)
+    restored = world[1].load(document.key).clauses[0]
+    assert restored.enrichments.semantic.applicability_present is True
+    assert restored.enrichments.semantic.applicability_functions == ()
+    assert restored.provenance.availability(S + "applicability_functions") == "not_evaluated"
+
+
+@pytest.mark.parametrize("limited", [False, True])
+def test_reexport_removes_applicability_details_and_fingerprints(world, monkeypatch, limited):
+    import standards_atlas.adapters.atlasdata.knowledge_transfer as transfer
+
+    root, repo, service, binding, document = world
+    document = patch_clause(
+        document,
+        fields={"applicability_present": False, "knowledge_kinds": ("process",)},
+        secret=True,
+    )
+    document = patch_clause(
+        document,
+        1,
+        fields={"applicability_present": True, "applicability_functions": ("inclusion",)},
+        secret=True,
+    )
+    save(world, document)
+    with monkeypatch.context() as old_policy:
+        old_policy.setattr(transfer, "UNPUBLISHED_APPLICABILITY_PATHS", frozenset())
+        export(world)
+    before = binding.enrichments_path.read_bytes()
+    original = record(world)
+    canonical_path = root / ".atlas/data/documents/EXAMPLE.json"
+    canonical_before = canonical_path.read_bytes()
+    private_before = {p.name: p.read_bytes() for p in service.evidence_root.glob("*.json")}
+    selection = (
+        {"dimensions": ("knowledge_kinds",), "clause_ids": (document.clauses[2].id.value,)}
+        if limited
+        else {}
+    )
+
+    preview = service.export(**selection)
+
+    assert preview.status_counts["omitted"] == 2
+    assert not preview.written_targets
+    assert binding.enrichments_path.read_bytes() == before
+    applied = service.export(write=True, **selection)
+    assert applied.status_counts["omitted"] == 2
+    assert all("applicability" in c.reason for c in applied.changes if c.status == "omitted")
+    assert canonical_path.read_bytes() == canonical_before
+    assert {p.name: p.read_bytes() for p in service.evidence_root.glob("*.json")} == private_before
+    cleaned = record(world)
+    assert [c.clause_id for c in cleaned.clauses] == [c.clause_id for c in original.clauses]
+    for old, new in zip(original.clauses, cleaned.clauses, strict=True):
+        assert new.attributes == tuple(
+            item for item in old.attributes if item.path != S + "applicability_functions"
+        )
+    assert S + "applicability_functions" not in binding.enrichments_path.read_text()
+    assert service.export(write=True, **selection).written_targets == ()
+    repo.delete(document.key)
+    service.import_(write=True, strict_evidence=True)
+    restored = repo.load(document.key)
+    assert restored.clauses[0].enrichments.semantic.applicability_present is False
+    assert restored.clauses[0].enrichments.semantic.applicability_functions == ()
+    assert restored.clauses[1].enrichments.semantic.applicability_present is True
+    assert service.export(write=True).written_targets == ()
+
+
+def test_serializer_omits_applicability_details_without_mutating_input(world, monkeypatch):
+    import standards_atlas.adapters.atlasdata.knowledge_transfer as transfer
+
+    save(world, patch_clause(world[4], fields={"applicability_present": False}))
+    with monkeypatch.context() as old_policy:
+        old_policy.setattr(transfer, "UNPUBLISHED_APPLICABILITY_PATHS", frozenset())
+        export(world)
+    previous = record(world)
+    assert len(previous.clauses[0].attributes) == 2
+
+    serialized = transfer.knowledge_bytes(previous).decode()
+
+    assert S + "applicability_present" in serialized
+    assert S + "applicability_functions" not in serialized
+    assert len(previous.clauses[0].attributes) == 2
+
+
+def test_applicability_cleanup_drops_only_empty_public_record(world, monkeypatch):
+    import standards_atlas.adapters.atlasdata.knowledge_transfer as transfer
+
+    document = save(world, patch_clause(world[4], fields={"applicability_present": False}))
+    with monkeypatch.context() as old_policy:
+        old_policy.setattr(transfer, "UNPUBLISHED_APPLICABILITY_PATHS", frozenset())
+        export(world)
+
+    def only_details(payload):
+        clause = payload["clauses"][0]
+        clause["attributes"] = [
+            item for item in clause["attributes"] if item["path"] == S + "applicability_functions"
+        ]
+        clause["fingerprints"]["attributes"].pop(S + "applicability_present", None)
+
+    replace_record(world, only_details)
+    assert len(record(world).clauses[0].attributes) == 1
+
+    report = export(world, dimensions=("context_routing",))
+
+    assert report.status_counts == {"omitted": 1}
+    assert record(world).clauses == ()
+    assert world[1].load(document.key) == document
+    export(world, dimensions=("applicability",))
+    assert [item.path for item in record(world).clauses[0].attributes] == [
+        S + "applicability_present"
+    ]

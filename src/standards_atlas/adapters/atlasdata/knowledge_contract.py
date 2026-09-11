@@ -53,9 +53,11 @@ DIMENSION_PATHS.update(
     }
 )
 ALL_PATHS = tuple(path for paths in DIMENSION_PATHS.values() for path in paths)
-# Keep the transport/read paths and canonical merge groups intact. Role-detail
+# Keep the transport/read paths and canonical merge groups intact. Detail
 # publication is deferred independently of whether a local value is populated;
-# the public companion currently publishes only role_semantics_present.
+# these dimensions publish only their accepted presence decisions. Dependent
+# empty sets from a negative presence are not independently evaluated details.
+UNPUBLISHED_APPLICABILITY_PATHS = frozenset({"enrichments.semantic.applicability_functions"})
 UNPUBLISHED_ROLE_PATHS = frozenset(
     {
         "enrichments.semantic.role_relation_types",
