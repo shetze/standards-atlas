@@ -23,18 +23,30 @@ clauses:
       scopes:
       - source_clause_id: clause-7d9d76c2671b
         reaches:
-        - kind: subtree
+        - kind: document
           document_key: IEC61508-3-1
-          part: Scope
-          clause_id: clause-7d9d76c2671b
-          reference: IEC 61508-3§1:2016 1
-        conditions: 1
+          part: null
+          clause_id: null
+          reference: null
+        conditions: 0
         exclusions: 0
-        qualifications: 1
+        qualifications: 0
       references: []
     generated:
-      generator: context-routing-enrichment/context-routing-v1@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
       method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.subject_context
     origin: generated
     value:
@@ -49,10 +61,11 @@ clauses:
     content: sha256:223fdd89ffb434d0d2716f4fe56107cf06b21946c7edd52cc5c9f0cefdcdc2ef
     attributes:
       enrichments.context_routing:
-        private_value: sha256:0ade59463a6cd240b8599f697633a5d5632d7556c60888da5ec385f334797c36
-        private_provenance: sha256:ac6b0ec619d89479ac1bce364478d9b2d2249b1be7a9298891838e3785300d62
+        private_value: sha256:b4eb1b6aee09b3a4f9c49643fe1fcb2462ef41c0707b50acfa07f5cf9b4d0c92
+        private_provenance: sha256:819097e2f195ce9cbce9257adeae431ad1f4f3b9a0e6c1023b59ac884844090c
         evidence:
         - sha256:b073f6c68ef8721107fd9815b19b2c35ec111d526b75c2123d1111ba64424000
+        decision_source: sha256:b7dcffe8a750f0b8c981b0db43db2ffae04c0dfbd380d934e8d5b989494e47b2
       enrichments.subject_context:
         private_value: sha256:417ec2e99d6a1c3a04150b8436a242d274b147561b19417982db1a0d3bd6eaa4
         private_provenance: sha256:816160dd78364e23bbbf3b321d4e047afa399f0e885c99bde8dd5707462f107b
@@ -103,7 +116,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -122,7 +135,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -142,7 +155,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -166,7 +179,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -191,7 +204,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -207,6 +220,57 @@ clauses:
           process: 1
           technique_or_measure: 3
         category: majority_consensus
+  - path: enrichments.semantic.primary_process_function
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 2
+        abstained_votes: 0
+        label_votes:
+          decision: 1
+          none: 2
+          objective: 1
+        category: disputed
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 2
+        abstained_votes: 0
+        label_votes:
+          decision: 1
+          objective: 1
+        category: disputed
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -215,7 +279,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -239,7 +303,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -257,25 +321,62 @@ clauses:
           recommendation: 2
           warning: 1
         category: strong_consensus
+  - path: enrichments.subject_context
+    origin: generated
+    value:
+      normalized_label: null
+      confidence: null
+    generated:
+      generator: subject-identification/1.0
+      method: deterministic
   fingerprints:
     heading: sha256:db6dd52a102a86f396e37a60eb0f233e1451b3415afbb44f4a5faba4cea466d9
     atlasdata_heading: sha256:ecdd3e4a16f4cd304b166ab546e96844bf8f04ac41c8a0db88d27f26e23fe11f
     content: sha256:68e845b83d056cd5ecfb77c7efc2766a338678da797e6ba3b4575f593d62a6f2
     attributes:
       enrichments.semantic.applicability_functions:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.subject_context:
+        private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43
+- clause_id: clause-62fdceb6b9e1
+  atlasdata_md5: 64ec00f3bf8bae4e0cc1ab40ffb6f9bf
+  reference:
+    standard: IEC 61508
+    part: 3§1
+    year: 2016
+    clause: '4'
+  heading: Requirements
+  attributes:
+  - path: enrichments.subject_context
+    origin: generated
+    value:
+      normalized_label: null
+      confidence: null
+    generated:
+      generator: subject-identification/1.0
+      method: deterministic
+  fingerprints:
+    heading: sha256:e0cdd07f6a270b8269217510822daa4ace573309134278f75f5e16ed59a3583b
+    atlasdata_heading: sha256:ecdd3e4a16f4cd304b166ab546e96844bf8f04ac41c8a0db88d27f26e23fe11f
+    attributes:
+      enrichments.subject_context:
+        private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43
 - clause_id: clause-cb94f7bdc270
   atlasdata_md5: ebce470c669878f42b01d85203d5a5cd
   reference:
@@ -285,6 +386,56 @@ clauses:
     clause: '4.1'
   heading: Notes 1 to 4 below apply to the entire Clause 4 (4.2 to 4.9).
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-cb94f7bdc270
+        reaches:
+        - kind: clause
+          document_key: IEC61508-3
+          part: null
+          clause_id: clause-7c79f280c5c1
+          reference: IEC 61508-3:2010 7.2
+        - kind: subtree
+          document_key: IEC61508-3-1
+          part: null
+          clause_id: clause-964c87cbf2f6
+          reference: IEC 61508-3§1:2016 4.2
+        - kind: subtree
+          document_key: IEC61508-3-1
+          part: null
+          clause_id: clause-fe4d91b4af27
+          reference: IEC 61508-3§1:2016 4.7
+        conditions: 1
+        exclusions: 1
+        qualifications: 1
+      references:
+      - source_clause_id: clause-cb94f7bdc270
+        document_key: IEC61508-3-1
+        clause_id: null
+        reference: IEC 61508-3§1:2016 4.1
+        role: other
+      - source_clause_id: clause-cb94f7bdc270
+        document_key: IEC61508-3
+        clause_id: null
+        reference: IEC 61508-3:2010 7.2
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_functions
     origin: generated
     value: []
@@ -293,7 +444,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -312,7 +463,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -332,7 +483,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -345,13 +496,14 @@ clauses:
         - ministral-3-8b-instruct-2512-q4-k-m
         - mistral-small-3.2-24b-instruct-q4-k-m
         - qwen3-14b-q4-k-m
-        valid_votes: 8
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
         supporting_votes: null
         abstained_votes: 0
         label_votes:
           artifact: 1
           concept: 2
-          process: 7
+          process: 8
           technique_or_measure: 5
         category: majority_consensus
   - path: enrichments.semantic.primary_function
@@ -362,7 +514,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -370,11 +522,13 @@ clauses:
         - granite-3.3-8b-instruct-q4-k-m
         - llama-3.1-8b-instruct-q4-k-m
         - ministral-3-8b-instruct-2512-q4-k-m
-        valid_votes: 3
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
         supporting_votes: 0
         abstained_votes: 0
         label_votes:
           explanation: 2
+          note: 1
           warning: 1
         category: strong_consensus
   - path: enrichments.semantic.primary_knowledge_kind
@@ -385,7 +539,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -393,12 +547,81 @@ clauses:
         - granite-3.3-8b-instruct-q4-k-m
         - llama-3.1-8b-instruct-q4-k-m
         - ministral-3-8b-instruct-2512-q4-k-m
-        valid_votes: 3
-        supporting_votes: 2
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 3
         abstained_votes: 0
         label_votes:
-          process: 2
+          process: 3
           technique_or_measure: 1
+        category: majority_consensus
+  - path: enrichments.semantic.primary_process_function
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
+        supporting_votes: 0
+        abstained_votes: 0
+        label_votes:
+          assumption: 2
+          input: 1
+          objective: 3
+          prerequisite: 3
+        category: disputed
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    value:
+    - assumption
+    - decision
+    - prerequisite
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
+        stage: efficient-local
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 0
+        abstained_votes: 0
+        label_votes:
+          activity: 1
+          assumption: 3
+          branch: 1
+          completion_criterion: 2
+          decision: 3
+          input: 2
+          objective: 1
+          option: 2
+          output: 2
+          prerequisite: 3
+          sequence: 1
         category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
@@ -408,7 +631,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -421,24 +644,24 @@ clauses:
         - ministral-3-8b-instruct-2512-q4-k-m
         - mistral-small-3.2-24b-instruct-q4-k-m
         - qwen3-14b-q4-k-m
-        valid_votes: 8
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
         supporting_votes: 7
         abstained_votes: 0
         label_votes:
           'False': 7
-          'True': 1
-        category: strong_consensus
+          'True': 2
+        category: majority_consensus
   - path: enrichments.semantic.statement_functions
     origin: generated
     value:
     - requirement
-    - definition
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -451,14 +674,15 @@ clauses:
         - ministral-3-8b-instruct-2512-q4-k-m
         - mistral-small-3.2-24b-instruct-q4-k-m
         - qwen3-14b-q4-k-m
-        valid_votes: 8
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
         supporting_votes: null
         abstained_votes: 0
         label_votes:
           definition: 5
           description: 1
           explanation: 7
-          note: 2
+          note: 3
           recommendation: 2
           warning: 3
         category: strong_consensus
@@ -475,20 +699,32 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:894b3de2721d9174975558cf18a22d002c52bace89115771c02f05053efd1b2f
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:c7a08430d041655fba5dddad7739d39fd9b2bf95173a412078e4bebb6b63ca18
+        private_provenance: sha256:1348ff2dabb4beadb594af7a0624ad3606f611f735bcfa6c4c1e284401cc323c
+        evidence:
+        - sha256:32a33a4c8962feabe5ea9a051d29536b6ed24a8e1ad5651cf4b4f8187ebceda4
+        - sha256:2912aa729c973b7d68a2deda6cb5595fdb1e0368cffffaf6a8c135cdea63c83d
+        - sha256:db7dc8ce07623b4654a57d0ad29200bdcf4eff470334d40dae8a2675a165372a
+        decision_source: sha256:9655bb9605fb0593e09c932b238bf091f0feb309fecdc52d73f0637ae90142ca
       enrichments.semantic.applicability_functions:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:b421ded9ca22e7c16fda08bd6fbe7eee22c1dcdde78192dbf824165aad57112e
         private_provenance: sha256:37ce68c09c8221705fec4086855ae7a5ebfb8cfcfd70327984c8b33799771242
@@ -504,6 +740,51 @@ clauses:
     clause: '4.2'
   heading: 'An element shall only be regarded as proven-in-use when:'
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-964c87cbf2f6
+        reaches:
+        - kind: clause
+          document_key: IEC61508-3
+          part: null
+          clause_id: clause-7c79f280c5c1
+          reference: IEC 61508-3:2010 7.2
+        conditions: 0
+        exclusions: 0
+        qualifications: 0
+      references:
+      - source_clause_id: clause-964c87cbf2f6
+        document_key: IEC61508-3-1
+        clause_id: clause-1c82b6f3b07b
+        reference: IEC 61508-3§1:2016 4.8
+        role: other
+      - source_clause_id: clause-964c87cbf2f6
+        document_key: IEC61508-3-1
+        clause_id: clause-7d9d76c2671b
+        reference: IEC 61508-3§1:2016 1
+        role: other
+      - source_clause_id: clause-964c87cbf2f6
+        document_key: IEC61508-3-1
+        clause_id: clause-964c87cbf2f6
+        reference: IEC 61508-3§1:2016 4.2
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_functions
     origin: generated
     value: []
@@ -512,7 +793,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -531,7 +812,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -551,7 +832,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -577,7 +858,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/intermediate-escalation/consensus-report.json
+        source_artifact: qualification-run-078/cascade/intermediate-escalation/consensus-report.json
         stage: intermediate-escalation
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -602,7 +883,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -615,6 +896,74 @@ clauses:
         label_votes:
           process: 2
         category: insufficient_evidence
+  - path: enrichments.semantic.primary_process_function
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        valid_votes: 6
+        supporting_votes: 0
+        abstained_votes: 0
+        label_votes:
+          completion_criterion: 1
+          objective: 3
+          prerequisite: 2
+        category: disputed
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    value:
+    - activity
+    - completion_criterion
+    - input
+    - output
+    - prerequisite
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        valid_votes: 6
+        supporting_votes: 1
+        abstained_votes: 0
+        label_votes:
+          activity: 5
+          assumption: 2
+          branch: 1
+          completion_criterion: 6
+          decision: 2
+          input: 5
+          objective: 3
+          option: 1
+          output: 5
+          prerequisite: 5
+          sequence: 3
+        category: strong_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -623,7 +972,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -650,7 +999,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -684,20 +1033,32 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:29e099fecb2b30c431ef49c7c06c04ca0debd4f5c73fe1e62921ff43d69f4b39
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:fda60c42448fe5f75f8e53e0375dbfb923491edb19f6e667175f4451a8488a02
+        private_provenance: sha256:05c077c4bf4b23d1e123fee22810763674cf0e6d5f3c30446e331fbdc8274889
+        evidence:
+        - sha256:32a33a4c8962feabe5ea9a051d29536b6ed24a8e1ad5651cf4b4f8187ebceda4
+        - sha256:ff2804d1f8c7f27d340ae5a73f80b6bfa279ad5021d7e6346091a5c317069178
+        - sha256:2912aa729c973b7d68a2deda6cb5595fdb1e0368cffffaf6a8c135cdea63c83d
+        decision_source: sha256:5b465d7e0418ecf7751b3550835667294d96ffaa04f98dad55d980363cb516dd
       enrichments.semantic.applicability_functions:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:eef7564a4cbfdf8238ec6080bc67ebf5e54c656776a49d2a631337875bed6853
+        decision_source: sha256:8bd662788b16044cb57eb31d64f1e7f30717e0c04552d66ea6573831f00be4ff
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:c6e605497c8ad6f476e5f7d21122b1f0d37382da32e22e641605353ee612c740
         private_provenance: sha256:5004d3d23db611a3c1b1296d0bea3d800157630f5a46d1abbb36e000e511ef64
@@ -712,6 +1073,41 @@ clauses:
     clause: '4.3'
   heading: The documentary evidence required by 4.2 shall
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-5f27f414d6e1
+        reaches:
+        - kind: clause
+          document_key: IEC61508-3
+          part: null
+          clause_id: clause-e70e07e3c34a
+          reference: IEC 61508-3:2010 7.4.2.12
+        conditions: 1
+        exclusions: 0
+        qualifications: 0
+      references:
+      - source_clause_id: clause-5f27f414d6e1
+        document_key: IEC61508-3
+        clause_id: null
+        reference: IEC 61508-3:2010 7.4.2.12
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_functions
     origin: generated
     value: []
@@ -720,7 +1116,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -739,7 +1135,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -759,7 +1155,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -788,7 +1184,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -813,7 +1209,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -834,15 +1230,16 @@ clauses:
           process: 5
           technique_or_measure: 4
         category: disputed
-  - path: enrichments.semantic.role_semantics_present
+  - path: enrichments.semantic.primary_process_function
     origin: generated
-    value: false
+    availability: unknown
+    value: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
       decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -857,11 +1254,79 @@ clauses:
         - qwen3-14b-q4-k-m
         - smollm3-3b-q4-k-m
         valid_votes: 9
-        supporting_votes: 5
+        supporting_votes: 1
         abstained_votes: 0
         label_votes:
-          'False': 5
-          'True': 4
+          completion_criterion: 1
+          decision: 2
+          none: 1
+          objective: 4
+          prerequisite: 1
+        category: disputed
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
+        supporting_votes: 1
+        abstained_votes: 0
+        label_votes:
+          activity: 5
+          assumption: 1
+          completion_criterion: 3
+          decision: 2
+          input: 5
+          objective: 4
+          output: 3
+          prerequisite: 3
+        category: disputed
+  - path: enrichments.semantic.role_semantics_present
+    origin: generated
+    value: false
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: final-cascade-selection
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
+        supporting_votes: 4
+        abstained_votes: 0
+        label_votes:
+          'False': 4
+          'True': 5
         category: disputed
   - path: enrichments.semantic.statement_functions
     origin: generated
@@ -872,7 +1337,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -910,20 +1375,30 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:5dc44ae30d462b5b1161ee510760c1a460cb93c846e0d1d25319ee89b58fa958
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:570ddc52dbb2f19e0988abdc64416c44f89975f54283bd228059a4e4b1a047ed
+        private_provenance: sha256:fa6c33ca0ba700e14f5e0f7960ce0b0c37be4792cf4b1c9d203943c860ca6b5b
+        evidence:
+        - sha256:d40e321157be790883382669bb241209baaf00cdce3b8a8d6056135b3e53b76c
+        decision_source: sha256:2b2e6bfa758f14ed027b09b88653cb086ede136f57333834510a352ae23bc3c8
       enrichments.semantic.applicability_functions:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:c264b433872d8759a14949cd35dd34b8b63d463c98252a3a5f3a5214d1f59fc6
         private_provenance: sha256:6e625f4f3601f4974fd15439a074251a86e6655ae3bd0599b65340522064e1b0
@@ -938,6 +1413,41 @@ clauses:
     clause: '4.4'
   heading: REQUIREMENT
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-9aea13ce8267
+        reaches:
+        - kind: subtree
+          document_key: IEC61508-3-1
+          part: null
+          clause_id: clause-964c87cbf2f6
+          reference: IEC 61508-3§1:2016 4.2
+        conditions: 0
+        exclusions: 0
+        qualifications: 0
+      references:
+      - source_clause_id: clause-9aea13ce8267
+        document_key: IEC61508-3-1
+        clause_id: clause-964c87cbf2f6
+        reference: IEC 61508-3§1:2016 4.2
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_functions
     origin: generated
     value: []
@@ -946,7 +1456,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -965,7 +1475,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -985,7 +1495,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1016,7 +1526,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1040,7 +1550,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1061,6 +1571,70 @@ clauses:
           process: 5
           technique_or_measure: 4
         category: disputed
+  - path: enrichments.semantic.primary_process_function
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
+        supporting_votes: 5
+        abstained_votes: 0
+        label_votes:
+          activity: 1
+          decision: 2
+          none: 1
+          objective: 5
+        category: disputed
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
+        stage: efficient-local
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 1
+        abstained_votes: 0
+        label_votes:
+          activity: 3
+          branch: 1
+          completion_criterion: 2
+          decision: 4
+          input: 2
+          objective: 2
+          output: 3
+          prerequisite: 2
+          sequence: 1
+        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -1069,7 +1643,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1099,7 +1673,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1137,20 +1711,30 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:61e6b93e0947c400e330acd0ee790646cf14dab6005e33bded11f1fa5b89b83b
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:312be52c90952193f4d349bdf1a03010882226db5833ae5313244ee0776e1eda
+        private_provenance: sha256:66481e95ec903482401848769c44b25adc62da8429b5811222d5ef4787b7036b
+        evidence:
+        - sha256:2912aa729c973b7d68a2deda6cb5595fdb1e0368cffffaf6a8c135cdea63c83d
+        decision_source: sha256:942e59c94293a51e496353c6f9feba110fdf142759ba4c895620f762858a0980
       enrichments.semantic.applicability_functions:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:fc753434104396ff630752d13b0f14ef177e0ca0d8a512270f844b8d0d2d8ef7
         private_provenance: sha256:a89bbcf9f4b3a104833973a28b8f97b9e5bdc97752d18d19043117f2e309efb5
@@ -1165,6 +1749,41 @@ clauses:
     clause: '4.5'
   heading: REQUIREMENT
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-9e95940910cc
+        reaches:
+        - kind: clause
+          document_key: IEC61508-3-1
+          part: null
+          clause_id: clause-5f27f414d6e1
+          reference: IEC 61508-3§1:2016 4.3
+        conditions: 1
+        exclusions: 0
+        qualifications: 1
+      references:
+      - source_clause_id: clause-9e95940910cc
+        document_key: IEC61508-3-1
+        clause_id: clause-5f27f414d6e1
+        reference: IEC 61508-3§1:2016 4.3
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_functions
     origin: generated
     value: []
@@ -1173,7 +1792,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -1192,7 +1811,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -1212,7 +1831,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1241,7 +1860,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1265,7 +1884,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1280,15 +1899,16 @@ clauses:
         label_votes:
           process: 4
         category: unanimous
-  - path: enrichments.semantic.role_semantics_present
+  - path: enrichments.semantic.primary_process_function
     origin: generated
-    value: false
+    availability: unknown
+    value: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
       decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1306,8 +1926,71 @@ clauses:
         supporting_votes: 5
         abstained_votes: 0
         label_votes:
-          'False': 5
-          'True': 4
+          activity: 1
+          decision: 2
+          none: 1
+          objective: 5
+        category: disputed
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
+        stage: efficient-local
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 1
+        abstained_votes: 0
+        label_votes:
+          activity: 3
+          branch: 1
+          completion_criterion: 2
+          decision: 4
+          input: 1
+          objective: 2
+          output: 3
+          prerequisite: 2
+          sequence: 1
+        category: majority_consensus
+  - path: enrichments.semantic.role_semantics_present
+    origin: generated
+    value: false
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: final-cascade-selection
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
+        supporting_votes: 4
+        abstained_votes: 0
+        label_votes:
+          'False': 4
+          'True': 5
         category: disputed
   - path: enrichments.semantic.statement_functions
     origin: generated
@@ -1318,7 +2001,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1357,20 +2040,30 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:d65726ff5e1a6f1d9d530caf72d4f6419f8cd56a5edc7d94b04281a2c32c89d5
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:29d2156f2e0f165bf92a0af9cb242fdb39da6e45975c1a25157ea80a618dd315
+        private_provenance: sha256:a1bc4dbd3c788bdfcf88b2beef8c47732ee2737563a2f1b49f3f323393cf156b
+        evidence:
+        - sha256:cf0cdaad3303f6f430f548897210bf2b1e58b4ba51475c5236a16cbf145b2723
+        decision_source: sha256:decd4bf7a3083c292ab292ed365a3408d6ee118fd930d97b06d5c58143cb52db
       enrichments.semantic.applicability_functions:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:9176bfcee7ea6845a913c7e115ead7ae055fd3189df3476814f6a10485abe3ce
         private_provenance: sha256:6b70af5c82109ed5ebe3563ab8f393a9513a42c80cd5dd6d088e09b0d06e1b6a
@@ -1385,6 +2078,51 @@ clauses:
     clause: '4.6'
   heading: REQUIREMENT
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-4a08825ec0c9
+        reaches:
+        - kind: clause
+          document_key: IEC61508-3
+          part: null
+          clause_id: clause-7c79f280c5c1
+          reference: IEC 61508-3:2010 7.2
+        - kind: subtree
+          document_key: IEC61508-3-1
+          part: null
+          clause_id: clause-5f27f414d6e1
+          reference: IEC 61508-3§1:2016 4.3
+        conditions: 0
+        exclusions: 0
+        qualifications: 0
+      references:
+      - source_clause_id: clause-4a08825ec0c9
+        document_key: IEC61508-3-1
+        clause_id: null
+        reference: IEC 61508-3:2010 7.2
+        role: other
+      - source_clause_id: clause-4a08825ec0c9
+        document_key: IEC61508-3-1
+        clause_id: clause-5f27f414d6e1
+        reference: IEC 61508-3§1:2016 4.3
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_functions
     origin: generated
     value: []
@@ -1393,7 +2131,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -1412,7 +2150,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -1432,7 +2170,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1462,7 +2200,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1476,7 +2214,7 @@ clauses:
         abstained_votes: 0
         label_votes:
           condemnation: 1
-          prohibition: 1
+          prerequisite: 1
           recommendation: 1
           requirement: 1
         category: strong_consensus
@@ -1488,7 +2226,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1509,15 +2247,16 @@ clauses:
           process: 5
           technique_or_measure: 4
         category: disputed
-  - path: enrichments.semantic.role_semantics_present
+  - path: enrichments.semantic.primary_process_function
     origin: generated
-    value: false
+    availability: unknown
+    value: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
       decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1532,11 +2271,73 @@ clauses:
         - qwen3-14b-q4-k-m
         - smollm3-3b-q4-k-m
         valid_votes: 9
-        supporting_votes: 4
+        supporting_votes: 7
         abstained_votes: 0
         label_votes:
-          'False': 4
-          'True': 5
+          activity: 1
+          objective: 7
+          prerequisite: 1
+        category: majority_consensus
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
+        stage: efficient-local
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 0
+        abstained_votes: 0
+        label_votes:
+          activity: 3
+          branch: 1
+          completion_criterion: 2
+          decision: 3
+          input: 2
+          objective: 2
+          output: 2
+          prerequisite: 3
+          sequence: 1
+        category: majority_consensus
+  - path: enrichments.semantic.role_semantics_present
+    origin: generated
+    value: false
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: final-cascade-selection
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
+        supporting_votes: 5
+        abstained_votes: 0
+        label_votes:
+          'False': 5
+          'True': 4
         category: disputed
   - path: enrichments.semantic.statement_functions
     origin: generated
@@ -1547,7 +2348,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1569,6 +2370,7 @@ clauses:
           definition: 1
           description: 1
           objective: 1
+          prerequisite: 1
           prohibition: 1
           recommendation: 5
           requirement: 6
@@ -1587,20 +2389,31 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:0cf6b3ab1dc843bf90bf9bfd25364ccac536717f0dfb5be5e6ec769206eeb093
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:450807c3479555487936ed46f5665f83aa0840c75460013798006c158721688f
+        private_provenance: sha256:d9832340a453fdabfdf48d1595012fbfdb4425928b9c245416cbec682afe50e5
+        evidence:
+        - sha256:cf0cdaad3303f6f430f548897210bf2b1e58b4ba51475c5236a16cbf145b2723
+        - sha256:32a33a4c8962feabe5ea9a051d29536b6ed24a8e1ad5651cf4b4f8187ebceda4
+        decision_source: sha256:3f614278ee30d88a2eae3452bcf5d34e6075ddba0ee29dea3ddd9fa9e9caaced
       enrichments.semantic.applicability_functions:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:d0c0196b6f407eb5f0821a58c62c4ea1a316f873c9fa5f3bf3d49e78ac48960a
         private_provenance: sha256:4b384a2c5ad34d960ec56350d33264ae6ac969f4d23695910de6c983c29b37f3
@@ -1616,6 +2429,41 @@ clauses:
     clause: '4.7'
   heading: REQUIREMENT
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-fe4d91b4af27
+        reaches:
+        - kind: clause
+          document_key: IEC61508-3
+          part: null
+          clause_id: null
+          reference: IEC 61508-3 2010, Annexes A and B
+        conditions: 1
+        exclusions: 0
+        qualifications: 0
+      references:
+      - source_clause_id: clause-fe4d91b4af27
+        document_key: IEC61508-3
+        clause_id: null
+        reference: IEC 61508-3 2010, Annexes A and B
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: true
@@ -1624,7 +2472,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: rescue+confirmation
         prompt_id: null
         reasoning_mode_id: null
@@ -1644,7 +2492,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1672,7 +2520,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1698,7 +2546,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1714,6 +2562,54 @@ clauses:
           process: 3
           technique_or_measure: 1
         category: majority_consensus
+  - path: enrichments.semantic.primary_process_function
+    origin: generated
+    value: prerequisite
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
+        stage: efficient-local
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 3
+        abstained_votes: 0
+        label_votes:
+          none: 1
+          prerequisite: 3
+        category: majority_consensus
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    value:
+    - prerequisite
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
+        stage: efficient-local
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 3
+        abstained_votes: 0
+        label_votes:
+          prerequisite: 3
+        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -1722,7 +2618,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1750,7 +2646,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1786,18 +2682,28 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:e3c91b66c0efd2886a33ecf579e5b971c1dc6c6db470a0b3851d9543a2386c2f
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:be5958eaa403b3050ac38f374bf2b25db9e5aa32da1da34bf2b456a547d9d187
+        private_provenance: sha256:694d82110ab5a001b1a68f3c4be5d8c7db5d9cce05aed72914a9570a8e15a11a
+        evidence:
+        - sha256:1cf0cee2e05231046306078cd8ab4105a2eb4beee5b6e424548bfec68fc5f67a
+        decision_source: sha256:46e67afbf19df8b2152da9b44c72ee7ce2cdff2f515e1028018094161e1dbbca
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
+      enrichments.semantic.process_functions:
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:5c9e92ebe1faed79c78eb36e7a36ab3f4548604f584f0d4d3cdf7173b7c403e8
         private_provenance: sha256:7a7a7c8aaa12d71f8b0d50ce2056f139b64a7ae946fa42323a7b8a60a861c38d
@@ -1812,6 +2718,61 @@ clauses:
     clause: '4.8'
   heading: REQUIREMENT
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-1c82b6f3b07b
+        reaches:
+        - kind: clause
+          document_key: IEC61508-3-1
+          part: null
+          clause_id: clause-964c87cbf2f6
+          reference: IEC 61508-3§1:2016 4.2
+        - kind: clause
+          document_key: IEC61508-3-1
+          part: null
+          clause_id: clause-5f27f414d6e1
+          reference: IEC 61508-3§1:2016 4.3
+        - kind: clause
+          document_key: IEC61508-3-1
+          part: null
+          clause_id: clause-9aea13ce8267
+          reference: IEC 61508-3§1:2016 4.4
+        conditions: 1
+        exclusions: 1
+        qualifications: 0
+      references:
+      - source_clause_id: clause-1c82b6f3b07b
+        document_key: IEC61508-3-1
+        clause_id: clause-964c87cbf2f6
+        reference: IEC 61508-3§1:2016 4.2
+        role: other
+      - source_clause_id: clause-1c82b6f3b07b
+        document_key: IEC61508-3-1
+        clause_id: clause-5f27f414d6e1
+        reference: IEC 61508-3§1:2016 4.3
+        role: other
+      - source_clause_id: clause-1c82b6f3b07b
+        document_key: IEC61508-3-1
+        clause_id: clause-9aea13ce8267
+        reference: IEC 61508-3§1:2016 4.4
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_functions
     origin: generated
     value: []
@@ -1820,7 +2781,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -1839,7 +2800,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: final-policy
         prompt_id: null
         reasoning_mode_id: null
@@ -1859,7 +2820,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1889,7 +2850,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1914,7 +2875,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1936,15 +2897,16 @@ clauses:
           process: 4
           technique_or_measure: 4
         category: disputed
-  - path: enrichments.semantic.role_semantics_present
+  - path: enrichments.semantic.primary_process_function
     origin: generated
-    value: false
+    availability: unknown
+    value: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
       decision:
-        rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -1959,11 +2921,75 @@ clauses:
         - qwen3-14b-q4-k-m
         - smollm3-3b-q4-k-m
         valid_votes: 9
-        supporting_votes: 5
+        supporting_votes: 0
         abstained_votes: 0
         label_votes:
-          'False': 5
-          'True': 4
+          completion_criterion: 1
+          decision: 1
+          objective: 4
+          prerequisite: 2
+          sequence: 1
+        category: disputed
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    value:
+    - decision
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
+        stage: efficient-local
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 1
+        abstained_votes: 0
+        label_votes:
+          activity: 1
+          branch: 1
+          completion_criterion: 2
+          decision: 3
+          input: 2
+          objective: 1
+          output: 2
+          prerequisite: 2
+          sequence: 2
+        category: majority_consensus
+  - path: enrichments.semantic.role_semantics_present
+    origin: generated
+    value: false
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: final-cascade-selection
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
+        supporting_votes: 4
+        abstained_votes: 0
+        label_votes:
+          'False': 4
+          'True': 5
         category: disputed
   - path: enrichments.semantic.statement_functions
     origin: generated
@@ -1974,7 +3000,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -2012,20 +3038,30 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:b6f66cfd0b398f497986ecf8401965ddd779951a4624a3ca93b9ef781b1400af
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:c1123d79f4115a054e20c8bf08a28f5a32cbc130152090f13b9a1cba68984e9e
+        private_provenance: sha256:726ab73a1b53d806c293f581a979ab44ab1611d7e5501f1c478141a559657aad
+        evidence:
+        - sha256:ca8f370574df00163557eaf94e09c5d8968cb3709108fda3121a9defcf06f02e
+        decision_source: sha256:f7e469e724a4d6cc556ace096b34fed7c527d71807bd249b3e74f8a422504f2c
       enrichments.semantic.applicability_functions:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:6010f92a6695ab8731a3be06c4d32c76c800705f9760ad74fe90aae29dae248d
         private_provenance: sha256:3774a6cfdea2ce77db356a9eb27944946a910f55cdcf142c3b069f61b04cab14
@@ -2042,6 +3078,46 @@ clauses:
     clause: '4.9'
   heading: REQUIREMENT
   attributes:
+  - path: enrichments.context_routing
+    origin: generated
+    value:
+      scopes:
+      - source_clause_id: clause-a17c5d49beb0
+        reaches:
+        - kind: clause
+          document_key: IEC61508-3
+          part: null
+          clause_id: clause-22057fa0f093
+          reference: IEC 61508-3:2010 7.8
+        conditions: 0
+        exclusions: 0
+        qualifications: 0
+      references:
+      - source_clause_id: clause-a17c5d49beb0
+        document_key: IEC61508-2
+        clause_id: null
+        reference: IEC 61508-2:2010
+        role: other
+      - source_clause_id: clause-a17c5d49beb0
+        document_key: IEC61508-4
+        clause_id: null
+        reference: IEC 61508-4:2010
+        role: other
+    generated:
+      generator: context-routing-enrichment/context-routing-v3@hf.co/bartowski/phi-4-GGUF:Q4_K_M
+      method: llm
+      decision:
+        rule: context-routing-input-v1
+        source_artifact: canonical-context-input
+        stage: null
+        prompt_id: null
+        reasoning_mode_id: null
+        model_ids: []
+        valid_votes: null
+        supporting_votes: null
+        abstained_votes: 0
+        label_votes: {}
+        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: true
@@ -2050,7 +3126,7 @@ clauses:
       method: imported
       decision:
         rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-074/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
+        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
         stage: primary
         prompt_id: null
         reasoning_mode_id: null
@@ -2070,7 +3146,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -2101,7 +3177,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection+structural-prior
-        source_artifact: qualification-run-074/cascade/efficient-local/consensus-report.json
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
         stage: efficient-local
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -2125,7 +3201,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -2146,6 +3222,73 @@ clauses:
           process: 5
           technique_or_measure: 4
         category: disputed
+  - path: enrichments.semantic.primary_process_function
+    origin: generated
+    availability: unknown
+    value: null
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-primary-majority
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
+        stage: cumulative-consensus
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - exaone-3.5-32b-instruct-q4-k-m
+        - gemma-3-12b-it-q4-k-m
+        - glm-4-9b-chat-q4-k-m
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - mistral-small-3.2-24b-instruct-q4-k-m
+        - qwen3-14b-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 9
+        supporting_votes: 0
+        abstained_votes: 0
+        label_votes:
+          completion_criterion: 2
+          decision: 1
+          objective: 1
+          prerequisite: 4
+          sequence: 1
+        category: disputed
+  - path: enrichments.semantic.process_functions
+    origin: generated
+    value:
+    - sequence
+    generated:
+      generator: canonical-knowledge-adoption-v1
+      method: imported
+      decision:
+        rule: process-label-majority
+        source_artifact: qualification-run-078/cascade/efficient-local/consensus-report.json
+        stage: efficient-local
+        prompt_id: applicability-presence
+        reasoning_mode_id: disabled
+        model_ids:
+        - granite-3.3-8b-instruct-q4-k-m
+        - llama-3.1-8b-instruct-q4-k-m
+        - ministral-3-8b-instruct-2512-q4-k-m
+        - smollm3-3b-q4-k-m
+        valid_votes: 4
+        supporting_votes: 1
+        abstained_votes: 0
+        label_votes:
+          activity: 1
+          assumption: 1
+          branch: 2
+          completion_criterion: 2
+          decision: 2
+          input: 1
+          objective: 1
+          option: 1
+          output: 1
+          prerequisite: 2
+          sequence: 3
+        category: majority_consensus
   - path: enrichments.semantic.role_semantics_present
     origin: generated
     value: false
@@ -2154,7 +3297,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -2184,7 +3327,7 @@ clauses:
       method: imported
       decision:
         rule: final-cascade-selection
-        source_artifact: qualification-run-074/inputs/applicability-policy/final-consensus-report.json
+        source_artifact: qualification-run-078/inputs/applicability-policy/final-consensus-report.json
         stage: cumulative-consensus
         prompt_id: applicability-presence
         reasoning_mode_id: disabled
@@ -2223,18 +3366,29 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:f07cf40c4c27d9f4b8ef424686e4e6a76454ea30234ccdc756413ce4635c41fb
     attributes:
+      enrichments.context_routing:
+        private_value: sha256:8888e5bf9ef35522de7559777203a6589e998900183d58dad559c5e391758e0d
+        private_provenance: sha256:6f134a6473e0478db503b2a8a97521bdf022ddbb0eaba987bd6eb64d73d9f97b
+        evidence:
+        - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
+        - sha256:f3ce49d774624ffc291c3fd8349274cea3c044f7b714cb23918ba2b830efbca0
+        decision_source: sha256:45cb66ea666df84d2af5f30c820631ee862c4bd3181d341d7a4c09ec791e10c2
       enrichments.semantic.applicability_present:
-        decision_source: sha256:5ab4a2542a6a89238e2ffe999cb5641fe04e527fff4b9b52c96cd7c6b0598aa9
+        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.primary_function:
-        decision_source: sha256:cda477ee17436b32f5bdd3d74f50e003c0e3b0d4bb36143f7b0188f679d5eaa1
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.primary_knowledge_kind:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.primary_process_function:
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
+      enrichments.semantic.process_functions:
+        decision_source: sha256:864c8f63b636ef5c00a7ae5898c8f03f33ed574273f8088a9c535fa4842bc51e
       enrichments.semantic.role_semantics_present:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.semantic.statement_functions:
-        decision_source: sha256:464e1aca2eb1f85fc6ca357b0c6541d6f1040df5d4e9d1c690576937898cebb1
+        decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
       enrichments.subject_context:
         private_value: sha256:dc639627f9b7164814144eb5a377103e01f15c0d72d400a1aced5fcd14cbe61b
         private_provenance: sha256:baf5a536b77144b36d84f468af11b80789418cd493e15540856237efdb3113ee
