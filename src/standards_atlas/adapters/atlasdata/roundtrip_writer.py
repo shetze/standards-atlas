@@ -9,6 +9,7 @@ from pathlib import Path
 from standards_atlas.adapters.atlasdata.parser import (
     InitializationRecord,
     parse_initialization_records,
+    render_initialization_records,
 )
 from standards_atlas.adapters.atlasdata.toc_generator import (
     generate_public_initialization_records,
@@ -132,7 +133,7 @@ class AtlasDataRoundTripWriter:
         original_text: str,
         records: list[InitializationRecord],
     ) -> str:
-        rendered_records = "\n".join(_render_record(record) for record in records)
+        rendered_records = render_initialization_records(records)
 
         if DATA_MARKER in original_text:
             head, _ = original_text.split(DATA_MARKER, 1)
@@ -161,16 +162,3 @@ def _validate_public_records(
 
     if forbidden:
         raise ValueError(f"Round-trip writer received non-public record kinds: {forbidden}")
-
-
-def _render_record(record: InitializationRecord) -> str:
-    rendered = (
-        f"{record.kind};"
-        f"{record.hash_value};"
-        f"{record.reference};"
-        f"{record.content};"
-        f"{record.type_marker}"
-    )
-    if record.semantic_tags:
-        return f"{rendered};{','.join(record.semantic_tags)}"
-    return rendered

@@ -1,7 +1,15 @@
 """Create deterministic derived views of persisted engineering documents."""
 
 from standards_atlas.application.ports import EngineeringDocumentRepository
-from standards_atlas.domain.model import DocumentKey, EngineeringDocument, Standard, StandardKey
+from standards_atlas.domain.model import (
+    ClauseId,
+    DocumentKey,
+    DocumentTable,
+    EngineeringDocument,
+    Standard,
+    StandardKey,
+    TableIndexEntry,
+)
 
 
 class DocumentSelectionError(ValueError):
@@ -56,6 +64,7 @@ class DocumentSelectionService:
         title: str,
     ) -> EngineeringDocument:
         clause_ids = {clause.id for clause in clauses}
+        tables, table_index = _select_table_structure(source, clause_ids)
         annotations = tuple(
             annotation for annotation in source.annotations if annotation.clause_id in clause_ids
         )
@@ -68,6 +77,8 @@ class DocumentSelectionService:
                     "parent_key": StandardKey(value=source.key.value),
                     "clauses": clauses,
                     "annotations": annotations,
+                    "tables": tables,
+                    "table_index": table_index,
                 }
             )
         else:
@@ -77,6 +88,8 @@ class DocumentSelectionService:
                     "title": title,
                     "clauses": clauses,
                     "annotations": annotations,
+                    "tables": tables,
+                    "table_index": table_index,
                 }
             )
         self._target_documents.save(derived)
@@ -103,11 +116,14 @@ def select_document_part(
         for clause in clauses
     )
     clause_ids = {clause.id for clause in clauses}
+    tables, table_index = _select_table_structure(source, clause_ids)
     updates = {
         "key": DocumentKey(value=target_key),
         "title": title or root_title,
         "clauses": clauses,
         "annotations": tuple(a for a in source.annotations if a.clause_id in clause_ids),
+        "tables": tables,
+        "table_index": table_index,
     }
     if isinstance(source, Standard):
         updates.update(
@@ -116,3 +132,18 @@ def select_document_part(
             parent_key=StandardKey(value=source.key.value),
         )
     return source.model_copy(update=updates)
+
+
+def _select_table_structure(
+    source: EngineeringDocument,
+    clause_ids: set[ClauseId],
+) -> tuple[tuple[DocumentTable, ...], tuple[TableIndexEntry, ...]]:
+    """Select related tables by parent identity, never by a part-local label.
+
+    Unassigned tables and unlinked index entries remain in the master; without
+    a parent identity there is no safe basis for assigning them to a part.
+    """
+    tables = tuple(table for table in source.tables if table.parent_clause_id in clause_ids)
+    table_ids = {table.id for table in tables}
+    table_index = tuple(entry for entry in source.table_index if entry.table_id in table_ids)
+    return tables, table_index

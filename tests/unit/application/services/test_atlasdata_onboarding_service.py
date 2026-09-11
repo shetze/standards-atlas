@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from standards_atlas.adapters.atlasdata import AtlasDataImporter
+from standards_atlas.adapters.atlasdata.parser import TABLE_RECORD_LAYOUT
 from standards_atlas.application.services import AtlasDataOnboardingService
 from standards_atlas.application.services.atlasdata_onboarding_service import (
     AtlasDataOnboardingError,
@@ -334,7 +335,8 @@ def test_refuses_to_overwrite_reviewed_atlasdata(tmp_path: Path) -> None:
         )
 
 
-def test_discovers_tables_and_list_of_tables_as_public_structure(tmp_path: Path) -> None:
+@pytest.mark.parametrize("caption", ["Techniques and measures", "7.1", "A"])
+def test_discovers_tables_and_list_of_tables_as_public_structure(tmp_path: Path, caption: str):
     source = tmp_path / "tables.json"
     output = tmp_path / "IEC61508"
     source.write_text(
@@ -350,7 +352,7 @@ def test_discovers_tables_and_list_of_tables_as_public_structure(tmp_path: Path)
                     {
                         "self_ref": "#/texts/1",
                         "label": "text",
-                        "text": "Table A.1 — Techniques and measures",
+                        "text": f"Table A.1 — {caption}",
                     },
                     {
                         "self_ref": "#/texts/2",
@@ -360,7 +362,7 @@ def test_discovers_tables_and_list_of_tables_as_public_structure(tmp_path: Path)
                     {
                         "self_ref": "#/texts/3",
                         "label": "caption",
-                        "text": "Table A.1 — Techniques and measures",
+                        "text": f"Table A.1 — {caption}",
                     },
                 ],
                 "tables": [
@@ -399,11 +401,19 @@ def test_discovers_tables_and_list_of_tables_as_public_structure(tmp_path: Path)
     assert "TABLE;" in text
     assert "TABLEINDEX;" in text
     assert "IEC61508-3:2010 Table A.1" in text
+    assert TABLE_RECORD_LAYOUT in text
+    table_row = next(line.split(";") for line in text.splitlines() if line.startswith("TABLE;"))
+    assert table_row[3:] == ["A", caption]
+    index_row = next(
+        line.split(";") for line in text.splitlines() if line.startswith("TABLEINDEX;")
+    )
+    assert index_row[3:] == [caption, "i"]
 
     imported = AtlasDataImporter().import_document(output)
     assert len(imported.tables) == 1
     assert imported.tables[0].reference == "A.1"
     assert imported.tables[0].parent_clause_reference == "A"
+    assert imported.tables[0].title == caption
     assert imported.tables[0].listed_in_table_index is True
     assert imported.table_index[0].reference == "A.1"
     assert imported.table_index[0].table_id == imported.tables[0].id

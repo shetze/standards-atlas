@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from dataclasses import replace
 from pathlib import Path
 
 from standards_atlas.adapters.atlasdata.parser import (
@@ -512,24 +513,27 @@ def _map_table_records(
     clauses_by_reference: dict[tuple[str | None, str], Clause],
 ) -> tuple[tuple[DocumentTable, ...], tuple[TableIndexEntry, ...]]:
     declared: dict[tuple[str | None, str], DocumentTable] = {}
-    listed: dict[tuple[str | None, str], str | None] = {}
+    table_items = [
+        item for item in atlas_data.structure_items if item.item_type is AtlasItemType.TABLE
+    ]
+    reference_aliases = {
+        (item.volume, item.visible_reference): (
+            item.volume,
+            _table_reference_from_structure(item.visible_reference),
+        )
+        for item in table_items
+    }
+    table_records = _canonical_table_records(atlas_data, "TABLE", reference_aliases)
+    listed = {
+        key: record.content.strip() or None
+        for key, record in _canonical_table_records(
+            atlas_data, "TABLEINDEX", reference_aliases
+        ).items()
+    }
 
-    table_records: dict[tuple[str | None, str], InitializationRecord] = {}
-    for record in atlas_data.initialization_records:
-        if record.kind not in {"TABLE", "TABLEINDEX"}:
-            continue
-        identity = _extract_table_identity(record.reference, atlas_data.metadata.name)
-        if identity is None:
-            continue
-        if record.kind == "TABLEINDEX":
-            listed[identity] = record.content.strip() or None
-        else:
-            table_records[identity] = record
-
-    for item in atlas_data.structure_items:
-        if item.item_type is not AtlasItemType.TABLE:
-            continue
-        key = (item.volume, item.visible_reference)
+    for item in table_items:
+        key = reference_aliases[(item.volume, item.visible_reference)]
+        _, table_reference = key
         record = table_records.pop(key, None)
         title = record.content.strip() or None if record is not None else None
         parent_reference = record.type_marker.strip() or None if record is not None else None
@@ -549,9 +553,9 @@ def _map_table_records(
                 standard_name=atlas_data.metadata.name,
                 year=item.publication_year or atlas_data.metadata.official_year,
                 volume=item.volume,
-                table_reference=item.visible_reference,
+                table_reference=table_reference,
             ),
-            reference=item.visible_reference,
+            reference=table_reference,
             title=title,
             parent_clause_id=parent.id if parent is not None else None,
             parent_clause_reference=parent_reference,
@@ -602,6 +606,66 @@ def _map_table_records(
         for _, reference in (key,)
     )
     return tables, index_entries
+
+
+def _table_reference_from_structure(reference: str) -> str:
+    """Separate a declared table number from its structural location.
+
+    The final component of a ``b`` token is the table number within its part
+    (main body) or annex, not an ordinal within the containing clause. Keep
+    that explicit number, including zero or gaps in partial declarations.
+    """
+    components = reference.split(".")
+    if len(components) > 1 and components[0].isalpha():
+        return f"{components[0]}.{components[-1]}"
+    return components[-1]
+
+
+def _canonical_table_records(
+    atlas_data: AtlasStandardData,
+    kind: str,
+    reference_aliases: dict[tuple[str | None, str], tuple[str | None, str]],
+) -> dict[tuple[str | None, str], InitializationRecord]:
+    """Bind old structure-path records and current labels to the same table.
+
+    Only aliases proven by a ``b`` declaration are rewritten, within the same
+    part. Explicit records without such a declaration keep their identity.
+    Canonical records take precedence over legacy aliases; empty fields fall
+    back to existing metadata so migration does not discard public captions
+    or explicitly maintained parent references.
+    """
+    source_records: dict[tuple[str | None, str], InitializationRecord] = {}
+    for record in atlas_data.initialization_records:
+        if record.kind != kind:
+            continue
+        identity = _extract_table_identity(record.reference, atlas_data.metadata.name)
+        if identity is not None:
+            source_records[identity] = record
+
+    candidates: dict[tuple[str | None, str], list[tuple[bool, InitializationRecord]]] = {}
+    for identity, record in source_records.items():
+        key = reference_aliases.get(identity, identity)
+        candidates.setdefault(key, []).append((identity == key, record))
+
+    result: dict[tuple[str | None, str], InitializationRecord] = {}
+    for key, values in candidates.items():
+        # Process canonical spellings last regardless of their order in the file.
+        # Duplicate spellings already follow the last-record-wins rule above;
+        # dict insertion order preserves List-of-Tables ordering.
+        for _, record in sorted(values, key=lambda value: value[0]):
+            previous = result.get(key)
+            result[key] = (
+                replace(
+                    record,
+                    content=record.content if record.content.strip() else previous.content,
+                    type_marker=(
+                        record.type_marker if record.type_marker.strip() else previous.type_marker
+                    ),
+                )
+                if previous is not None
+                else record
+            )
+    return result
 
 
 def _nearest_parent_clause_reference(

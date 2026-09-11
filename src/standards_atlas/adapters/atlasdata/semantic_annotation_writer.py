@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from standards_atlas.adapters.atlasdata.parser import (
     InitializationRecord,
     parse_initialization_records,
+    render_initialization_records,
 )
 from standards_atlas.adapters.atlasdata.semantic_tags import (
     canonical_semantic_profile,
@@ -188,17 +189,9 @@ class AtlasDataSemanticAnnotationService:
         )
 
 
-def _render_record(record: InitializationRecord) -> str:
-    base = (
-        f"{record.kind};{record.hash_value};{record.reference};"
-        f"{record.content};{record.type_marker}"
-    )
-    return f"{base};{','.join(record.semantic_tags)}" if record.semantic_tags else base
-
-
 def _replace_data_section(text: str, records: list[InitializationRecord]) -> str:
     head = text.split(_DATA_MARKER, 1)[0].rstrip()
-    body = "\n".join(_render_record(record) for record in records)
+    body = render_initialization_records(records)
     return f"{head}\n\n{_DATA_MARKER}\n{body}\n"
 
 

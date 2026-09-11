@@ -558,6 +558,8 @@ class AtlasDataOnboardingService:
                 "#---data---#",
             ]
         )
+        if any(part.tables for part in parts):
+            metadata.append("# table-record-layout: parent-caption")
 
         for part in parts:
             standard_ref = (
@@ -599,8 +601,8 @@ class AtlasDataOnboardingService:
                             "TABLE",
                             digest,
                             table_reference,
-                            _sanitize_field(table.title or ""),
                             table.parent_clause_reference or "",
+                            _sanitize_field(table.title or ""),
                         ]
                     )
                 )

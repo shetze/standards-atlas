@@ -188,6 +188,107 @@ Currently recognized type prefixes are:
 
 If no type prefix is present, the item is treated as a generic table-of-contents item.
 
+### Table numbering and structural location
+
+For a `b` token, the final index component is the declared table number, not
+an ordinal local to its containing clause. Main-body table labels use that
+number alone within each physical part. Annex table labels combine the annex
+letter with that final number. Intermediate components retain the structural
+location used to resolve the containing clause.
+
+| Structure token | Public table reference | Structural parent |
+| --- | --- | --- |
+| `1-b7.1.2.2.1` | `IEC 61508-1:2010 Table 1` | `7.1.2.2` |
+| `1-b8.2.18.5` | `IEC 61508-1:2010 Table 5` | `8.2.18` |
+| `2-b9:A.2.14` | `IEC 61508-2:2010 Table A.14` | `A.2` |
+| `2-b9:A.3.15` | `IEC 61508-2:2010 Table A.15` | `A.3` |
+| `2-b10:B.{1..6}` | `IEC 61508-2:2010 Table B.1` through `B.6` | `B` |
+
+The examples assume that the indicated parent clauses are declared. Import
+otherwise resolves the nearest existing structural ancestor, unless a `TABLE`
+record explicitly supplies a parent. It does not infer the parent from the
+shortened public table label.
+
+The final number is preserved rather than recomputed from encounter order.
+This supports partial declarations and numbering gaps. An index of `0`, such
+as `b9:A.0`, denotes a table without a caption and without a List-of-Tables
+entry. Keep its `b` declaration and structural parent for normalization and
+alignment; an empty caption is not a reason to discard it. A `TABLE` record
+may represent it, with an empty caption field. No `TABLEINDEX` record is
+inferred from the declaration. The enumeration prefix (`9:` or `10:` above) is not part of
+the public table number. Different parts can each declare `Table 1`, and
+different annexes can each start their own sequence.
+
+`TABLE` and `TABLEINDEX` records use these public labels. `TABLE` stores the
+containing clause reference in **field 4**, followed by the optional,
+human-reviewed caption in **field 5**. `TABLEINDEX` retains its existing
+caption-in-field-4 and `i`-in-field-5 layout. For example:
+
+```text
+TABLE;<hash>;IEC 61508-1:2010 Table 1;7.1.2.2;<caption>
+TABLE;<hash>;IEC 61508-2:2010 Table A.15;A.3;<caption>
+TABLEINDEX;<hash>;IEC 61508-2:2010 Table A.15;<caption>;i
+```
+
+#### TABLE field layout and migration
+
+```text
+TABLE;<hash>;<table-reference>;<parent-clause-reference>;<caption>
+```
+
+The parent is a local clause reference within the table's physical part, not
+a heading. Both fields may be empty. Captions can be entered at the end of the
+record without editing generated parent metadata. Internally,
+`InitializationRecord.content` still means the caption and `type_marker` still
+means the parent for `TABLE`; the shared parser/serializer owns the field-order
+conversion. Domain models, table IDs and reference-derived hashes do not change
+because of the column swap.
+
+Writers add this comment inside the data section when it contains `TABLE` records:
+
+```text
+# table-record-layout: parent-caption
+```
+
+Keep the generated comment. It makes reimport unambiguous even when the caption
+itself looks like a reference (for example `7.1` or `A`) or the parent is empty.
+The comment applies only to `TABLE`; other record types and optional semantic
+fields keep their previous layout. Both TOC refresh and semantic-annotation
+updates use this serializer; Docling onboarding emits the same layout and comment.
+
+For unmarked files the importer accepts the old `caption;parent` and new
+`parent;caption` layouts: a sole reference-shaped field is interpreted as the
+parent, and a sole free-text field as the caption. Two populated fields that
+are both reference-shaped, or neither reference-shaped, are ambiguous and are
+rejected rather than silently swapped. Before migrating an unmarked legacy
+file with reference-shaped captions (including captions with no parent), add:
+
+```text
+# table-record-layout: caption-parent
+```
+
+A new-format hand-maintained file can instead declare `parent-caption`.
+`atlasdata generate-toc --write` then emits the canonical layout and comment,
+with the existing numbered-backup behavior. Do not mix column layouts under
+one explicit layout comment. In ordinary generated legacy records such as
+`TABLE;...;...;;7.1.2.2`, no preparatory edit is required.
+
+#### Table reference aliases
+
+Existing records using the old complete structure path are recognized as
+aliases only where a matching `b` declaration in the same part proves the
+mapping. Import merges them with any already-canonical records; canonical
+non-empty fields take precedence, while empty fields preserve available
+legacy captions and explicit parents. Records without a matching declaration
+are preserved, not guessed or renumbered. Regenerating with `atlasdata
+generate-toc --write` writes canonical references and recomputes their hashes.
+
+Table IDs are derived from standard, part, edition and canonical table number,
+not from the containing clause. A physical-part projection selects tables by
+parent clause ID and linked List-of-Tables entries by table ID, never by a
+potentially repeated table label. Unassigned tables and unlinked index entries
+remain in the family master rather than being assigned to a part by guesswork.
+
 ### Enumeration Prefix
 
 Annexes and other non-numeric sections may be mapped into the numeric identifier space using an enumeration prefix:
@@ -309,6 +410,8 @@ The item initialization section starts after:
 ```
 
 Each following non-empty, non-comment line is a semicolon-separated record.
+The following generic layout applies to text/TOC records and `TABLEINDEX`;
+`TABLE` uses the parent-before-caption layout documented above.
 
 ```text
 <KIND>;<HASH>;<REFERENCE>;<CONTENT>;<TYPE>
