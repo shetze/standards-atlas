@@ -19,6 +19,7 @@ return 0;
 #      actual standard documents, which are copyright protected by Cenelec and available at www.cenelec.eu
 #
 ####
+
 #---data---#
 TOC;44d1cf377dc91798141c1fca214c6e39;EN 50716:2023 1;Scope;u
 TOC;5de72db660a7456ea1a0dc41221cd922;EN 50716:2023 2;Normative references;u
@@ -561,76 +562,76 @@ TOC;f3289b4ba7564f8273ddc9475676ef82;EN 50716:2023 C.3;Artificial Intelligence a
 TOC;4dc369ac418a82e6b7c900c9b78961f8;EN 50716:2023 C.3.1;General;u
 TOC;b0b97ba83bc0a4f6f6724194019eeb39;EN 50716:2023 C.3.2;Usage of AI and ML withing EN 50716;u
 TOC;884065bdd4a5fd2dd92cfd5a831d4197;EN 50716:2023 C.3.3;Challenges to the use of AI and ML withing EN 50716;u
-TOC;a4f98a2fbcc1a1564341b9dacd238895;EN 50716:2023 D;Bibliography of techniques;u
-TOC;fb9bbe4951eb767931024f13db97ef39;EN 50716:2023 D.1;Intentionally left blank;u
-TOC;2e00014897137f6f98874165cf01daef;EN 50716:2023 D.2;Analysable programs;u
-TOC;c8b1e8528537e32bd52ab017c7249321;EN 50716:2023 D.3;Avalanche/stress testing;u
-TOC;4b18d367426a0e7dbec45648dbea88a8;EN 50716:2023 D.4;Boundary value analysis;u
-TOC;e0c0b441e17a4a5beca498387968313a;EN 50716:2023 D.5;Backward recovery;u
-TOC;3609d77c417ac60976761bb1007fdc2f;EN 50716:2023 D.6;Cause consequence diagrams;u
-TOC;09fda2bc6020c9fef97694654e94b34b;EN 50716:2023 D.7;Checklists;u
-TOC;f8e3c19fa0a149c652530895abf10b02;EN 50716:2023 D.8;Control flow analysis;u
-TOC;67b2e8801447c754285fc6d04b09d550;EN 50716:2023 D.9;Intentionally left blank;u
-TOC;4f383bbc434d7cb1d5339b277b74b3ac;EN 50716:2023 D.10;Data flow analysis;u
-TOC;ec4ecbd2dfc546bafcd68cd22412cab3;EN 50716:2023 D.11;Data flow diagrams;u
-TOC;7213bfc19993220889233fba6d39a91b;EN 50716:2023 D.12;Data recording and analysis;u
-TOC;8a5b52bcc77504566894b2592e637edb;EN 50716:2023 D.13;Decision tables and truth tables;u
-TOC;f89a9102b64cda3d0b9a75ddf0fbe47b;EN 50716:2023 D.14;Defensive programming;u
-TOC;80a54c4d6db5aac41b97c2eb20aeaa0f;EN 50716:2023 D.15;Coding standards and style guide;u
-TOC;8c1a521f4523412166ffc37715af38e8;EN 50716:2023 D.16;Diverse programming;u
-TOC;05979e8a6f5e0f90a955120849c301e4;EN 50716:2023 D.17;Dynamic reconfiguration;u
-TOC;0aea5823e715a7f2c047ea6106252162;EN 50716:2023 D.18;Equivalence classes and input partition testing;u
-TOC;cb6b18d12494849b7311fc5c03c0724f;EN 50716:2023 D.19;Error detecting and correcting codes;u
-TOC;63b904bf8bd7f2ea3e33e64d842db2b6;EN 50716:2023 D.20;Error guessing;u
-TOC;c21a9314fb731b7639b6e9838c419c16;EN 50716:2023 D.21;Error seeding;u
-TOC;9ce67680b33428ddf67fcc1987fbdd7c;EN 50716:2023 D.22;Event tree analysis;u
-TOC;3a652c594832fa0a78053b45d80dab51;EN 50716:2023 D.23;Fagan inspections;u
-TOC;dd37672133a6e92d0a3a2c034b96d1e9;EN 50716:2023 D.24;Failure assertion programming;u
-TOC;bfbc427ae6453b974e4e28902b52589b;EN 50716:2023 D.25;SEEA - Software Error Effect Analysis;u
-TOC;4f88d537af0841e08eae78aea5dbddc7;EN 50716:2023 D.26;Fault detection and diagnosis;u
-TOC;3f848f45caf618fd343089a0834c88fc;EN 50716:2023 D.27;Finite state machines/state transition diagrams;u
-TOC;be957ea20e747f81b22b07c0f9d3903b;EN 50716:2023 D.28;Formal methods;u
-TOC;cb29dda4323c92af3aaed23205f61a80;EN 50716:2023 D.29;Formal proof;u
-TOC;882bce3621d7a0a7db29560a39638fa5;EN 50716:2023 D.30;Forward recovery;u
-TOC;7ee47c8c9baaa733204d60dfd8872cd0;EN 50716:2023 D.31;Graceful degradation;u
-TOC;5ab6937c8763908ae0b14a8275c6eded;EN 50716:2023 D.32;Impact analysis;u
-TOC;7d2e71f83f64f2d1aeefd987df6eee34;EN 50716:2023 D.33;Information hiding / encapsulation;u
-TOC;301af055278b3394cadb6621397d8881;EN 50716:2023 D.34;Interface testing;u
-TOC;ec481f1aebd7790556a0de7cf0f6f89e;EN 50716:2023 D.35;Intentionally left blank;u
-TOC;e66ee6443ce5a16ed3c658717789cb28;EN 50716:2023 D.36;Memorizing executed cases;u
-TOC;9a2cde2e5d1276a2753b00029d8b570d;EN 50716:2023 D.37;Metrics;u
-TOC;0a1d0270a1610d33f95b67f48fb8a2fb;EN 50716:2023 D.38;Modular approach;u
-TOC;36b1588d13674f4ceccec4bd696e077f;EN 50716:2023 D.39;Performance modelling;u
-TOC;ce11f60e2101adf5e6d6dc6d0a1410f1;EN 50716:2023 D.40;Performance requirements;u
-TOC;cf57f80b6563f68934f583c405f3af63;EN 50716:2023 D.41;Intentionally left blank;u
-TOC;86a680c58a08edb0b33f922b7a10c10a;EN 50716:2023 D.42;Process simulation;u
-TOC;cfdaf63331d3bbb8502d2d0ffa21248b;EN 50716:2023 D.43;Prototyping / animation;u
-TOC;20dd03009f4e3d5690bf5212d77aad9a;EN 50716:2023 D.44;Recovery block;u
-TOC;e53f9b707f23b435da44974fa20c05ad;EN 50716:2023 D.45;Response timing and memory contraints;u
-TOC;2fbb256170b43c3d5b5a4e90218fc858;EN 50716:2023 D.46;Re-try fault recovery mechanisms;u
-TOC;cfb515eb3c2b38bb794fd433772c4ae7;EN 50716:2023 D.47;Safety bag;u
-TOC;787f4d511c1998a56d11af8f48918fa1;EN 50716:2023 D.48;Software configuration management;u
-TOC;0172bf1167721ef67c5cc61934ecd12c;EN 50716:2023 D.49;Intentionally left blank;u
-TOC;a9d81ebe8fe00cb96ffd2341dec4e17a;EN 50716:2023 D.50;Structure based testing;u
-TOC;218d6868f301d30372d0a4c2b6d59512;EN 50716:2023 D.51;Structure diagrams;u
-TOC;354807e64f0c39760a31c887cf513399;EN 50716:2023 D.52;Structured methodology;u
-TOC;49af1aabc89b67e4cd5d6b4b712f5a19;EN 50716:2023 D.53;Structured programming;u
-TOC;75f3a1a9bc3070b6b3288dc32054c1a8;EN 50716:2023 D.54;Suitable progamming languages;u
-TOC;05e47c35104a04871e346cef7ba91e25;EN 50716:2023 D.55;Petri nets;u
-TOC;40507dc5af3c4d4d1760ab9413b9a57f;EN 50716:2023 D.56;Walkthroughs / design reviews;u
-TOC;918d6886828dbc45b09be4f4568a4516;EN 50716:2023 D.57;Intentionally left blank;u
-TOC;1c3c6cfead2e4aee3596101534072a0d;EN 50716:2023 D.58;Traceability;u
-TOC;8a686054c4cb7548f26c02294176b2bc;EN 50716:2023 D.59;Intentionally left blank;u
-TOC;794b4cd0a120977468ea981cfb69f85b;EN 50716:2023 D.60;Intentionally left blank;u
-TOC;cfb8138ad1f7765c728be04c1871fd51;EN 50716:2023 D.61;Intentionally left blank;u
-TOC;e4afb7c75c7f4d42ea9d9cdef63640cf;EN 50716:2023 D.62;Intentionally left blank;u
-TOC;fe9b8a2b7b6df12a5b7fd204f6df00ed;EN 50716:2023 D.63;Intentionally left blank;u
-TOC;be0b22e3c745f2531c20014e17f15a08;EN 50716:2023 D.64;Intentionally left blank;u
-TOC;2a5d500fa017d56da2624af55dcbd187;EN 50716:2023 D.65;Data modelling;u
-TOC;9672fb941ba7c7779b94be4799f59060;EN 50716:2023 D.66;Control flow diagram/control flow graph;u
-TOC;8e0160da5be1ec9c48d1093e82517500;EN 50716:2023 D.67;Sequence diagram;u
-TOC;bd6b442fe2753402753c0797c2991b71;EN 50716:2023 D.68;Tabular specification methods;u
-TOC;04ecb00d1a2132f87a6a1cf67a2f343d;EN 50716:2023 D.69;Intentionally left blank;u
-TOC;b8c5b94dd5fb5af32392105d141fdf63;EN 50716:2023 D.70;Intentionally left blank;u
-TOC;66db7195f73c983a6ba75f465e7bd987;EN 50716:2023 D.71;Domain specific languages;u
+TOC;a4f98a2fbcc1a1564341b9dacd238895;EN 50716:2023 D;Bibliography of techniques;m
+TOC;fb9bbe4951eb767931024f13db97ef39;EN 50716:2023 D.1;Intentionally left blank;m
+TOC;2e00014897137f6f98874165cf01daef;EN 50716:2023 D.2;Analysable programs;m
+TOC;c8b1e8528537e32bd52ab017c7249321;EN 50716:2023 D.3;Avalanche/stress testing;m
+TOC;4b18d367426a0e7dbec45648dbea88a8;EN 50716:2023 D.4;Boundary value analysis;m
+TOC;e0c0b441e17a4a5beca498387968313a;EN 50716:2023 D.5;Backward recovery;m
+TOC;3609d77c417ac60976761bb1007fdc2f;EN 50716:2023 D.6;Cause consequence diagrams;m
+TOC;09fda2bc6020c9fef97694654e94b34b;EN 50716:2023 D.7;Checklists;m
+TOC;f8e3c19fa0a149c652530895abf10b02;EN 50716:2023 D.8;Control flow analysis;m
+TOC;67b2e8801447c754285fc6d04b09d550;EN 50716:2023 D.9;Intentionally left blank;m
+TOC;4f383bbc434d7cb1d5339b277b74b3ac;EN 50716:2023 D.10;Data flow analysis;m
+TOC;ec4ecbd2dfc546bafcd68cd22412cab3;EN 50716:2023 D.11;Data flow diagrams;m
+TOC;7213bfc19993220889233fba6d39a91b;EN 50716:2023 D.12;Data recording and analysis;m
+TOC;8a5b52bcc77504566894b2592e637edb;EN 50716:2023 D.13;Decision tables and truth tables;m
+TOC;f89a9102b64cda3d0b9a75ddf0fbe47b;EN 50716:2023 D.14;Defensive programming;m
+TOC;80a54c4d6db5aac41b97c2eb20aeaa0f;EN 50716:2023 D.15;Coding standards and style guide;m
+TOC;8c1a521f4523412166ffc37715af38e8;EN 50716:2023 D.16;Diverse programming;m
+TOC;05979e8a6f5e0f90a955120849c301e4;EN 50716:2023 D.17;Dynamic reconfiguration;m
+TOC;0aea5823e715a7f2c047ea6106252162;EN 50716:2023 D.18;Equivalence classes and input partition testing;m
+TOC;cb6b18d12494849b7311fc5c03c0724f;EN 50716:2023 D.19;Error detecting and correcting codes;m
+TOC;63b904bf8bd7f2ea3e33e64d842db2b6;EN 50716:2023 D.20;Error guessing;m
+TOC;c21a9314fb731b7639b6e9838c419c16;EN 50716:2023 D.21;Error seeding;m
+TOC;9ce67680b33428ddf67fcc1987fbdd7c;EN 50716:2023 D.22;Event tree analysis;m
+TOC;3a652c594832fa0a78053b45d80dab51;EN 50716:2023 D.23;Fagan inspections;m
+TOC;dd37672133a6e92d0a3a2c034b96d1e9;EN 50716:2023 D.24;Failure assertion programming;m
+TOC;bfbc427ae6453b974e4e28902b52589b;EN 50716:2023 D.25;SEEA - Software Error Effect Analysis;m
+TOC;4f88d537af0841e08eae78aea5dbddc7;EN 50716:2023 D.26;Fault detection and diagnosis;m
+TOC;3f848f45caf618fd343089a0834c88fc;EN 50716:2023 D.27;Finite state machines/state transition diagrams;m
+TOC;be957ea20e747f81b22b07c0f9d3903b;EN 50716:2023 D.28;Formal methods;m
+TOC;cb29dda4323c92af3aaed23205f61a80;EN 50716:2023 D.29;Formal proof;m
+TOC;882bce3621d7a0a7db29560a39638fa5;EN 50716:2023 D.30;Forward recovery;m
+TOC;7ee47c8c9baaa733204d60dfd8872cd0;EN 50716:2023 D.31;Graceful degradation;m
+TOC;5ab6937c8763908ae0b14a8275c6eded;EN 50716:2023 D.32;Impact analysis;m
+TOC;7d2e71f83f64f2d1aeefd987df6eee34;EN 50716:2023 D.33;Information hiding / encapsulation;m
+TOC;301af055278b3394cadb6621397d8881;EN 50716:2023 D.34;Interface testing;m
+TOC;ec481f1aebd7790556a0de7cf0f6f89e;EN 50716:2023 D.35;Intentionally left blank;m
+TOC;e66ee6443ce5a16ed3c658717789cb28;EN 50716:2023 D.36;Memorizing executed cases;m
+TOC;9a2cde2e5d1276a2753b00029d8b570d;EN 50716:2023 D.37;Metrics;m
+TOC;0a1d0270a1610d33f95b67f48fb8a2fb;EN 50716:2023 D.38;Modular approach;m
+TOC;36b1588d13674f4ceccec4bd696e077f;EN 50716:2023 D.39;Performance modelling;m
+TOC;ce11f60e2101adf5e6d6dc6d0a1410f1;EN 50716:2023 D.40;Performance requirements;m
+TOC;cf57f80b6563f68934f583c405f3af63;EN 50716:2023 D.41;Intentionally left blank;m
+TOC;86a680c58a08edb0b33f922b7a10c10a;EN 50716:2023 D.42;Process simulation;m
+TOC;cfdaf63331d3bbb8502d2d0ffa21248b;EN 50716:2023 D.43;Prototyping / animation;m
+TOC;20dd03009f4e3d5690bf5212d77aad9a;EN 50716:2023 D.44;Recovery block;m
+TOC;e53f9b707f23b435da44974fa20c05ad;EN 50716:2023 D.45;Response timing and memory contraints;m
+TOC;2fbb256170b43c3d5b5a4e90218fc858;EN 50716:2023 D.46;Re-try fault recovery mechanisms;m
+TOC;cfb515eb3c2b38bb794fd433772c4ae7;EN 50716:2023 D.47;Safety bag;m
+TOC;787f4d511c1998a56d11af8f48918fa1;EN 50716:2023 D.48;Software configuration management;m
+TOC;0172bf1167721ef67c5cc61934ecd12c;EN 50716:2023 D.49;Intentionally left blank;m
+TOC;a9d81ebe8fe00cb96ffd2341dec4e17a;EN 50716:2023 D.50;Structure based testing;m
+TOC;218d6868f301d30372d0a4c2b6d59512;EN 50716:2023 D.51;Structure diagrams;m
+TOC;354807e64f0c39760a31c887cf513399;EN 50716:2023 D.52;Structured methodology;m
+TOC;49af1aabc89b67e4cd5d6b4b712f5a19;EN 50716:2023 D.53;Structured programming;m
+TOC;75f3a1a9bc3070b6b3288dc32054c1a8;EN 50716:2023 D.54;Suitable progamming languages;m
+TOC;05e47c35104a04871e346cef7ba91e25;EN 50716:2023 D.55;Petri nets;m
+TOC;40507dc5af3c4d4d1760ab9413b9a57f;EN 50716:2023 D.56;Walkthroughs / design reviews;m
+TOC;918d6886828dbc45b09be4f4568a4516;EN 50716:2023 D.57;Intentionally left blank;m
+TOC;1c3c6cfead2e4aee3596101534072a0d;EN 50716:2023 D.58;Traceability;m
+TOC;8a686054c4cb7548f26c02294176b2bc;EN 50716:2023 D.59;Intentionally left blank;m
+TOC;794b4cd0a120977468ea981cfb69f85b;EN 50716:2023 D.60;Intentionally left blank;m
+TOC;cfb8138ad1f7765c728be04c1871fd51;EN 50716:2023 D.61;Intentionally left blank;m
+TOC;e4afb7c75c7f4d42ea9d9cdef63640cf;EN 50716:2023 D.62;Intentionally left blank;m
+TOC;fe9b8a2b7b6df12a5b7fd204f6df00ed;EN 50716:2023 D.63;Intentionally left blank;m
+TOC;be0b22e3c745f2531c20014e17f15a08;EN 50716:2023 D.64;Intentionally left blank;m
+TOC;2a5d500fa017d56da2624af55dcbd187;EN 50716:2023 D.65;Data modelling;m
+TOC;9672fb941ba7c7779b94be4799f59060;EN 50716:2023 D.66;Control flow diagram/control flow graph;m
+TOC;8e0160da5be1ec9c48d1093e82517500;EN 50716:2023 D.67;Sequence diagram;m
+TOC;bd6b442fe2753402753c0797c2991b71;EN 50716:2023 D.68;Tabular specification methods;m
+TOC;04ecb00d1a2132f87a6a1cf67a2f343d;EN 50716:2023 D.69;Intentionally left blank;m
+TOC;b8c5b94dd5fb5af32392105d141fdf63;EN 50716:2023 D.70;Intentionally left blank;m
+TOC;66db7195f73c983a6ba75f465e7bd987;EN 50716:2023 D.71;Domain specific languages;m
 TOC;d4fa348835a2eb2dced52b09ac2251db;EN 50716:2023 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive (EU) 2016/797 aimed to be covered;u
