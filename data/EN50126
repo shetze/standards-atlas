@@ -8,8 +8,8 @@ oyr=2017
 lifecycle_status="published"
 
 structure=(
- "2017 1-0 1-1 1-2 1-3 1-t3.{1..83} 1-4 1-5 1-5.1 1-5.2 1-5.2.{1..3} 1-5.3 1-5.3.{1..3} 1-5.{4..6} 1-5.6.{1..4} 1-5.7 1-5.7.{1..2} 1-5.{8..9} 1-5.9.{1..3} 1-6 1-6.{1..4} 1-6.4.{1..2} 1-6.5 1-6.5.{1..4} 1-6.6 1-6.7 1-6.7.{1..3} 1-6.8 1-6.8.{1..2} 1-7 1-7.1 1-7.2 1-7.2.{1..3} 1-7.3 1-7.3.{1..2} 1-7.3.2.{1..3} 1-7.3.3 1-7.4 1-7.4.{1..2} 1-7.4.2.{1..2} 1-7.4.3 1-7.5 1-7.5.{1..4} 1-7.6 1-7.6.{1..3} 1-7.7 1-7.7.{1..4} 1-7.8 1-7.8.{1..3} 1-7.9 1-7.9.{1..4} 1-7.10 1-7.10.{1..3} 1-7.11 1-7.11.{1..3} 1-7.12 1-7.12.{1..4} 1-7.13 1-7.13.{1..3} 1-8 1-8.{1..2} 1-9:A 1-9:A.{1..4} 1-10:B 1-10:B.{1..6} 1-11:C 1-11:C.{1..4} 1-12:D 1-12:D.{1..3} 1-12:D.3.{1..3} 1-12:D.{4..5} 1-13:ZZ"
- "2017 2-0 2-{1..5} 2-5.{1..2} 2-5.2.{1..2} 2-5.{3..6} 2-6 2-6.{1..6} 2-7 2-7.{1..4} 2-8 2-8.{1..2} 2-8.2.{1..4} 2-8.3 2-8.3.{1..3} 2-8.4 2-8.4.1 2-8.4.1.{1..4} 2-8.4.2 2-8.4.2.{1..4} 2-8.4.3 2-9 2-9.{1..3} 2-9.3.{1..4} 2-10 2-10.{1..2} 2-10.2.{1..12} 2-10.3 2-11 2-11.{1..4} 2-12:A 2-12:A.{1..2} 2-12:A.2.{1..2} 2-12:A.3 2-12:A.3.{1..2} 2-12:A.3.2.{1..4} 2-12:A.4 2-13:B 2-14:C 2-15:D 2-15:D.{1..2} 2-15:D.2.{1..2} 2-15:D.3 2-15:D.3.{1..5} 2-16:E 2-16:E.{1..3} 2-17:F 2-18:G 2-19:ZZ"
+ "2017 1-0 1-1 1-2 1-3 1-t3.{1..83} 1-4 1-5 1-5.1 1-5.2 1-5.2.{1..3} 1-5.3 1-5.3.{1..3} 1-5.{4..6} 1-5.6.{1..4} 1-5.7 1-5.7.{1..2} 1-5.{8..9} 1-5.9.{1..3} 1-6 1-6.{1..2} 1-b6.2.1 1-6.{3..4} 1-6.4.{1..2} 1-6.5 1-6.5.{1..4} 1-6.6 1-6.7 1-6.7.{1..3} 1-6.8 1-6.8.{1..2} 1-7 1-7.1 1-7.2 1-7.2.{1..3} 1-7.3 1-7.3.{1..2} 1-7.3.2.{1..3} 1-7.3.3 1-7.4 1-7.4.{1..2} 1-7.4.2.{1..2} 1-7.4.3 1-7.5 1-7.5.{1..4} 1-7.6 1-7.6.{1..3} 1-7.7 1-7.7.{1..4} 1-7.8 1-7.8.{1..3} 1-7.9 1-7.9.{1..4} 1-7.10 1-7.10.{1..3} 1-7.11 1-7.11.{1..3} 1-7.12 1-7.12.{1..4} 1-7.13 1-7.13.{1..3} 1-8 1-8.{1..2} 1-9:A 1-9:A.{1..3} 1-b9:A.3.1 1-9:A.4 1-10:B 1-10:B.{1..2} 1-b10:B.2.1 1-10:B.3 1-b10:B.3.2 1-10:B.4 1-b10:B.4.3 1-10:B.5 1-b10:B.5.4 1-10:B.6 1-b10:B.6.5 1-11:C 1-11:C.{1..2} 1-b11:C.2.{1..2} 1-11:C.3 1-b11:C.3.{3..6} 1-11:C.4 1-b11:C.4.{7..9} 1-12:D 1-12:D.{1..3} 1-12:D.3.{1..3} 1-b12:D.3.3.1 1-12:D.{4..5} 1-13:ZZ 1-b13:ZZ.{1..4}"
+ "2017 2-0 2-{1..5} 2-5.{1..2} 2-5.2.{1..2} 2-5.{3..6} 2-6 2-6.{1..6} 2-7 2-7.{1..4} 2-8 2-8.{1..2} 2-8.2.{1..2} 2-b8.2.2.1 2-8.2.{3..4} 2-8.3 2-8.3.{1..3} 2-8.4 2-8.4.1 2-8.4.1.{1..4} 2-8.4.2 2-8.4.2.{1..4} 2-8.4.3 2-9 2-9.{1..3} 2-9.3.{1..4} 2-10 2-10.{1..2} 2-10.2.{1..7} 2-b10.2.7.2 2-10.2.{8..12} 2-10.3 2-11 2-11.{1..4} 2-12:A 2-12:A.1 2-b12:A.1.1 2-12:A.2 2-12:A.2.{1..2} 2-12:A.3 2-12:A.3.{1..2} 2-12:A.3.2.{1..4} 2-12:A.4 2-13:B 2-14:C 2-15:D 2-15:D.{1..2} 2-15:D.2.{1..2} 2-b15:D.2.2.{1..4} 2-15:D.3 2-15:D.3.{1..5} 2-16:E 2-16:E.{1..3} 2-17:F 2-b17:F.{1..2} 2-18:G 2-b18:G.{1..5} 2-19:ZZ 2-b19:ZZ.{1..4}"
 )
 
 return 0;
@@ -22,6 +22,7 @@ return 0;
 ####
 
 #---data---#
+# table-record-layout: parent-caption
 TOC;2f9c06c1291df2420cdd2ee4ff8b2143;EN 50126-1:2017 0;Generic RAMS Process;u
 TOC;3038e5ff31b4c5dc35876c205afbb0fb;EN 50126-1:2017 1;Scope;u
 TOC;da680234a4869cd66b4d978452be8d02;EN 50126-1:2017 2;Normative references;u
@@ -355,3 +356,42 @@ TOC;b239ecc0f4690b712edb8ca3ab4cb7b2;EN 50126-2:2017 E.3;Using formulas out of t
 TOC;c290306b7a421fb0410abf345763a1d2;EN 50126-2:2017 F;Techniques/methods for safety analysis;u
 TOC;d3ae71641dec442b1c51ec24541acd0f;EN 50126-2:2017 G;Key system safety roles and responsibilities;u
 TOC;31d019d2288baad977dbf96e3e1d2b88;EN 50126-2:2017 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive 2008/57/EC;u
+TABLE;e12783b133bff9197fdc87b8db68da85;EN 50126-1:2017 Table 1;6.2;RAMS tasks along life-cycle phases (1 of 4)
+TABLE;5fd56eff8151b436271b48ab9460413a;EN 50126-1:2017 Table A.1;A.3;Example of a basic RAMS plan outline (part 1 of 2)
+TABLE;77b9f17c58f6c6222b55572aa7a788d0;EN 50126-1:2017 Table B.1;B.2;Examples of reliability parameters
+TABLE;977c764c8e7e0023e2670cfc68a63a45;EN 50126-1:2017 Table B.2;B.3;Examples of maintainability parameters
+TABLE;5d6222c581578e163db20916ab92b9db;EN 50126-1:2017 Table B.3;B.4;Examples of availability parameters
+TABLE;5e10eccf7f53febe8c778bed1264a577;EN 50126-1:2017 Table B.4;B.5;Examples of logistic support parameters
+TABLE;32d668e343541d78d4e3fe7416ee4cd7;EN 50126-1:2017 Table B.5;B.6;Examples of safety performance parameters
+TABLE;60b5afbfdddd0dbcdd15089bf504a20b;EN 50126-1:2017 Table C.1;C.2;Frequency of occurrence of hazardous events with examples for quantification (time based)
+TABLE;378ec7e726ef88f8ff38c32931390137;EN 50126-1:2017 Table C.2;C.2;Frequency of occurrence of events with examples for quantification (distance based)
+TABLE;a7e771b991a9ef58458759579522c683;EN 50126-1:2017 Table C.3;C.3;Severity categories (example related to RAM)
+TABLE;6be955e059f42833381e2ecc915817ad;EN 50126-1:2017 Table C.4;C.3;Severity categories (example 1 related to RAMS)
+TABLE;e3a280c053357a2b75a6136675565d22;EN 50126-1:2017 Table C.5;C.3;Severity categories (example 2 related to Safety)
+TABLE;6a5198b6d17565ea00cee333c45c922e;EN 50126-1:2017 Table C.6;C.3;Financial severity categories (example)
+TABLE;cac4fd1d6374e35064b6fd43d766bf1b;EN 50126-1:2017 Table C.7;C.4;Risk acceptance categories (example 1 for binary decisions)
+TABLE;31dfcc4883b850def0cbd77f91ea595b;EN 50126-1:2017 Table C.8;C.4;Risk acceptance categories (example 2)
+TABLE;00a1f443ae938e79d4e17cfde7db05d1;EN 50126-1:2017 Table C.9;C.4;Risk acceptance categories (example related to safety)
+TABLE;692e2e9b16c33834e793ae3a7530e172;EN 50126-1:2017 Table D.1;D.3.3;Typical examples for a functional breakdown
+TABLE;ebf4c1a610eb4e904e9777a317409985;EN 50126-1:2017 Table ZZ.1;ZZ;Correspondence between this European Standard, the TSI “Control-Command and Signalling” (COMMISSION REGULATION (EU) 2016/919 of 27 May 2016) and Directive 2008/57/EC
+TABLE;1fbb8a1ec9cc517c5d3eb9b752f38e65;EN 50126-1:2017 Table ZZ.2;ZZ;Correspondence between this European Standard, the TSI “Locomotives and Passenger Rolling Stock” (REGULATION (EU) No 1302/2014 of 18 November 2014) and Directive 2008/57/EC
+TABLE;0812736e4e600812c5648e2aee6e8c38;EN 50126-1:2017 Table ZZ.3;ZZ;Correspondence between this European Standard, the TSI “Energy” (REGULATION (EU) No 1301/2014 of 18 November 2014) and Directive 2008/57/EC
+TABLE;7288c57c0380ddba0166aa8931344cc0;EN 50126-1:2017 Table ZZ.4;ZZ;Correspondence between this European Standard, the TSI “Infrastructure” (REGULATION (EU) No 1299/2014 of 18 November 2014) and Directive 2008/57/EC
+TABLE;56e4e56d280fb332e6e41b96d9197be1;EN 50126-2:2017 Table 1;8.2.2;Examples of hazards
+TABLE;3a7610e2e9efab796a3f8019d02679b5;EN 50126-2:2017 Table 2;10.2.7;SIL quantitative and qualitative measures
+TABLE;61d5e94098029009ccfa779b7610e93e;EN 50126-2:2017 Table A.1;A.1;Overview of ALARP, GAME, MEM
+TABLE;88af07149d180d63d659de28e0cd1a22;EN 50126-2:2017 Table D.1;D.2.2;Efficiency based on the component’s failures
+TABLE;f2678c59188746817e0806903d518462;EN 50126-2:2017 Table D.2;D.2.2;Efficiency based on the component’s knowledge
+TABLE;6bcb2f3ba143bce909a4d4904a30a0d4;EN 50126-2:2017 Table D.3;D.2.2;Efficiency based on the use of the component
+TABLE;dddff3dafaa31337a4de10377f2d83c9;EN 50126-2:2017 Table D.4;D.2.2;Efficiency based on the maintenance of the component
+TABLE;f0d431ca4fa3596570db30a87978f6c6;EN 50126-2:2017 Table F.1;F;Techniques / Methods for safety analysis
+TABLE;a8033c89aa460ddf7c9ec3ca54532e49;EN 50126-2:2017 Table F.2;F;Techniques / Methods for BI and SILs
+TABLE;81879a3631331f418f61fe2d3e61a22b;EN 50126-2:2017 Table G.1;G;Role specification for Designer
+TABLE;da6c564f64757cd5b67abfb7aab26290;EN 50126-2:2017 Table G.2;G;Role specification for Verifier
+TABLE;7c249a6c2a47a059a7ae447c2d8266f7;EN 50126-2:2017 Table G.3;G;Role specification for Validator
+TABLE;e9d0f833b3741f7afdac4ef76c2ec6c6;EN 50126-2:2017 Table G.4;G;Role specification for Independent Safety Assessor
+TABLE;d2a5214b320c2aec58d0b642f4daa2db;EN 50126-2:2017 Table G.5;G;Role specification for Project Manager
+TABLE;ddce1ff5cd335637f13e665652fffa60;EN 50126-2:2017 Table ZZ.1;ZZ;Correspondence between this European Standard, the TSI “Control-Command and Signalling” (COMMISSION REGULATION (EU) 2016/919 of 27 May 2016) and Directive 2008/57/EC
+TABLE;957cd0218335f2b838e8e31703541570;EN 50126-2:2017 Table ZZ.2;ZZ;Correspondence between this European Standard, the TSI “Locomotives and Passenger Rolling Stock” (REGULATION (EU) No 1302/2014 of 18 November 2014) and Directive 2008/57/EC
+TABLE;41c0bc027309f1ac160e9fdea8a2cbee;EN 50126-2:2017 Table ZZ.3;ZZ;Correspondence between this European Standard, the TSI “Energy” (REGULATION (EU) No 1301/2014 of 18 November 2014) and Directive 2008/57/EC
+TABLE;aef77d8c5bd9ee53e14dfaec126c55c8;EN 50126-2:2017 Table ZZ.4;ZZ;Correspondence between this European Standard, the TSI “Infrastructure” (REGULATION (EU) No 1299/2014 of 18 November 2014) and Directive 2008/57/EC
