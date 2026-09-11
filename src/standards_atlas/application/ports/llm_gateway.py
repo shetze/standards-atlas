@@ -38,6 +38,10 @@ class LlmResponseError(LlmGatewayError):
         self.finish_reason = finish_reason
 
 
+class LlmContextWindowError(LlmResponseError):
+    """An explicitly reported context limit; a larger corrective prompt cannot help."""
+
+
 @dataclass(frozen=True)
 class StructuredGenerationRequest:
     """Provider-independent request for schema-constrained text generation."""

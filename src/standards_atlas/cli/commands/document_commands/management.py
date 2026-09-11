@@ -376,18 +376,55 @@ def repair_document_context_routing(
     report: Annotated[
         Path | None, typer.Option("--report", help="Private JSON diagnostics output.")
     ] = None,
+    reference_targets_only: Annotated[
+        bool,
+        typer.Option(
+            "--reference-targets-only",
+            help="Only fill allowlisted external IDs; preserve all other canonical values.",
+        ),
+    ] = False,
+    allowlist: Annotated[
+        Path | None, typer.Option("--allowlist", help="Versioned, source-bound target allowlist.")
+    ] = None,
     write: Annotated[
         bool, typer.Option("--write", help="Back up and persist the repaired canonical document.")
     ] = False,
 ) -> None:
     """Repair canonical references without an LLM; default is a dry run."""
+    from standards_atlas.application.context.reference_target_repair import (
+        ReferenceTargetRepairAllowlist,
+    )
     from standards_atlas.application.services.context_routing_repair import repair_context_routing
     from standards_atlas.domain.model import DocumentKey
 
     try:
         repository = FileSystemEngineeringDocumentRepository(workspace)
         document = repository.load(DocumentKey(value=document_key))
-        result = repair_context_routing(document, documents=repository.list())
+        if reference_targets_only and write and report is None:
+            raise ValueError(
+                "--reference-targets-only --write requires --report for resolver proof"
+            )
+        if reference_targets_only and report is not None:
+            if allowlist is not None and report.resolve() == allowlist.resolve():
+                raise ValueError("repair report must not overwrite its allowlist")
+            ledger_directory = (workspace / "evaluation/context-routing").resolve()
+            if report.resolve().is_relative_to(ledger_directory) and report.name.endswith(
+                ("-run.json", "-failures.json", "-unresolved-targets.json", "-corrections.json")
+            ):
+                raise ValueError("repair report must not overwrite context run diagnostics")
+        selection = (
+            ReferenceTargetRepairAllowlist.model_validate_json(
+                allowlist.read_text(encoding="utf-8")
+            )
+            if allowlist is not None
+            else None
+        )
+        result = repair_context_routing(
+            document,
+            documents=repository.list(),
+            reference_targets_only=reference_targets_only,
+            allowlist=selection,
+        )
         if report is not None:
             if report.resolve().is_relative_to((workspace / "documents").resolve()):
                 raise ValueError("repair report must be outside the canonical documents directory")

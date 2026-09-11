@@ -116,3 +116,29 @@ def test_different_coordinate_groups_are_not_merged_across_standards():
         "IEC 61508-3 Figure 3",
         "IEC 61508-1 Clause 8",
     ]
+
+
+def test_scientific_values_are_not_bare_clause_mentions():
+    text = "5.0E-08; 2.5e-07; 1.0E+09; -3.0e-04; 1.2e10; see 7.4 and 7.5."
+    mentions = extract_reference_mentions(text)
+    assert [m.surface_text for m in mentions] == ["7.4 and 7.5"]
+    assert all(text[m.start_offset : m.end_offset] == m.surface_text for m in mentions)
+
+
+def test_explicit_scientific_looking_citations_are_not_filtered():
+    from standards_atlas.application.references.extractor import reference_extraction_version
+
+    for text in ("Clause 5.0E-08", "Table 5.0E-08", "IEC 61508-2 5.0E-08"):
+        assert extract_reference_mentions(text)
+        assert reference_extraction_version(text) == "reference-mention-extractor/v3"
+
+
+def test_extractor_version_only_invalidates_changed_mentions():
+    from standards_atlas.application.references.extractor import reference_extraction_version
+
+    assert reference_extraction_version("See 7.4.2 and Table A.1.") == (
+        "reference-mention-extractor/v3"
+    )
+    assert reference_extraction_version("Value: 5.0E-08. See Clause 7.4.") == (
+        "reference-mention-extractor/v4"
+    )

@@ -17,6 +17,7 @@ from standards_atlas.application.references.resolution import (
     canonical_reference,
     reference_key,
 )
+from standards_atlas.application.references.syntax import strip_document_qualifier
 from standards_atlas.domain.model import EngineeringDocument, ScopeReach, ScopeReachKind
 from standards_atlas.shared.hashing import sha256_json
 
@@ -211,10 +212,7 @@ class ScopeTargetResolver:
         qualified = [
             item
             for item in self.addresses
-            if any(
-                key.startswith(alias + " ") or key.endswith(" of " + alias)
-                for alias in item.aliases
-            )
+            if any(strip_document_qualifier(key, alias) is not None for alias in item.aliases)
         ]
         if len(qualified) > 1:
             raise ValueError(f"ambiguous scope citation {text!r}; specify its edition")
@@ -223,15 +221,16 @@ class ScopeTargetResolver:
         if qualified:
             address = qualified[0]
             target_document = self.documents[address.key]
-            prefixes = [alias for alias in address.aliases if key.startswith(alias + " ")]
-            if prefixes:
-                alias = max(prefixes, key=len)
-                target_text = key[len(alias) + 1 :]
-            else:
-                alias = max(
-                    (alias for alias in address.aliases if key.endswith(" of " + alias)), key=len
-                )
-                target_text = key[: -len(" of " + alias)]
+            alias = max(
+                (
+                    alias
+                    for alias in address.aliases
+                    if strip_document_qualifier(key, alias) is not None
+                ),
+                key=len,
+            )
+            target_text = strip_document_qualifier(key, alias)
+            assert target_text is not None
         index = DocumentReferenceIndex(target_document)
         target_source = (
             source_clause_id

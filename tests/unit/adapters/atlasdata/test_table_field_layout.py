@@ -66,10 +66,7 @@ def test_ambiguous_unmarked_populated_fields_require_an_explicit_layout(fields):
 
 
 def test_explicit_legacy_layout_can_migrate_a_numeric_caption_without_parent():
-    text = (
-        "#---data---#\n# table-record-layout: caption-parent\n"
-        "TABLE;h;Example Table 1;7.1;\n"
-    )
+    text = "#---data---#\n# table-record-layout: caption-parent\nTABLE;h;Example Table 1;7.1;\n"
     record = parse_initialization_records(text)[0]
     assert record.content == "7.1"
     assert record.type_marker == ""

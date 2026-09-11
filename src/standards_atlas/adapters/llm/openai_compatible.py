@@ -17,6 +17,7 @@ from jsonschema import Draft202012Validator
 
 from standards_atlas.adapters.llm.config import LlmConfig
 from standards_atlas.application.ports.llm_gateway import (
+    LlmContextWindowError,
     LlmGatewayError,
     LlmHealth,
     LlmResponseError,
@@ -148,7 +149,26 @@ class OpenAICompatibleLlmGateway:
                 decoded = json.loads(response.read().decode("utf-8"))
         except HTTPError as error:
             detail = error.read().decode("utf-8", errors="replace")
-            raise LlmResponseError(f"LLM endpoint returned HTTP {error.code}: {detail}") from error
+            try:
+                provider_response = json.loads(detail)
+            except json.JSONDecodeError:
+                provider_response = detail
+            provider_error = (
+                provider_response.get("error", {}) if isinstance(provider_response, Mapping) else {}
+            )
+            context_limit = isinstance(provider_error, Mapping) and any(
+                provider_error.get(field)
+                in {"exceed_context_size_error", "context_length_exceeded"}
+                for field in ("type", "code")
+                if isinstance(provider_error.get(field), str)
+            )
+            error_type = LlmContextWindowError if context_limit else LlmResponseError
+            raise error_type(
+                f"LLM endpoint returned HTTP {error.code}: {detail}",
+                raw_response=(
+                    provider_response if isinstance(provider_response, (Mapping, str)) else detail
+                ),
+            ) from error
         except TimeoutError as error:
             raise LlmTimeoutError(
                 f"LLM request timed out after {self._config.timeout_seconds:g}s"

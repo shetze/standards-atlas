@@ -2,6 +2,22 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Bounded context-enrichment baseline fixes (2026-09-10)
+
+- Add source-bound, allowlisted external single-target ID completion to the existing
+  model-free repair command. Preserve all other canonical values, protected routing,
+  provenance and last-run outcomes; require a separate resolver report for writes.
+- Diagnose unresolved targets by reason without replacing existing counters or
+  equating whole-document/object addresses with failed inference.
+- Exclude bare scientific-number reference matches, retain unchanged request input
+  fingerprints, and stop non-recoverable context-window retries while recording the
+  complete first-to-last failure chain and provider counters.
+- Align repeated object range labels, separator commas after exact norm editions,
+  and labelled multi-letter object coordinates. Keep object/clause namespaces,
+  complete-group requirements and semantic scope safeguards unchanged.
+- Add bounded-regression and CLI coverage, a 452-entry baseline allowlist, and
+  offline qualification results. Do not replay rejected answers into canonical data.
+
 ## 0.8.7 — Enrichment publication and reference resolution (2026-09-09)
 
 - Correct context-to-qualification runtime handoff with portable container inventory and exact

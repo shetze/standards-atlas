@@ -1,0 +1,1314 @@
+{
+  "contract": "context-enrichment-fixes-validation-v1",
+  "date": "2026-09-10",
+  "sources": [
+    {
+      "file": "standards-atlas-current-202609100800.zip",
+      "sha256": "a9b248f1b7961fe4356fe2eddb1f0f17c8b1b26b57dfef9b10c771c27736b819"
+    },
+    {
+      "file": "context-20260910T025523849669Z-7ead9437.zip",
+      "sha256": "29f99e35a1590ec526de5c2e8d3aff9baca8e185b73a4802a381437b038b3d88"
+    }
+  ],
+  "test_runs": [
+    {
+      "command": "python -m pytest -q tests/unit tests/architecture",
+      "passed": 1651,
+      "skipped": 3,
+      "warnings": 4
+    },
+    {
+      "command": "python -m pytest -q tests/integration/atlasdata tests/integration/workflows/test_context_scope_transport.py tests/integration/workflows/test_information_routing_pipeline.py tests/integration/workflows/test_enrichments_end_to_end.py tests/contract",
+      "passed": 98,
+      "skipped": 0
+    }
+  ],
+  "new_llm_calls": 0,
+  "persisted_rejected_answers": 0,
+  "limits": [
+    "No live model or end-to-end inference measurement.",
+    "Unfiltered pytest attempt timed out; only the listed completed selections are claimed.",
+    "Ruff and mypy were not run."
+  ],
+  "slice_1": {
+    "allowed_entries": 452,
+    "ids_completed": 452,
+    "reasons": {
+      "allowlisted_verbatim_single_target": 452
+    },
+    "idempotent": true,
+    "all_other_fields_unchanged": true,
+    "documents": [
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "EN50126-1",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 6,
+        "routing_clauses_changed": 6,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 70,
+        "scopes_after": 70,
+        "references_before": 162,
+        "references_after": 162,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 6,
+        "unresolved_references_after": 81,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 15
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 2,
+          "document_reference": 8,
+          "object_not_indexed": 27,
+          "target_document_not_loaded": 36,
+          "unresolved_clause": 8
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "EN50126-2",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 4,
+        "routing_clauses_changed": 4,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 58,
+        "scopes_after": 58,
+        "references_before": 114,
+        "references_after": 114,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 4,
+        "unresolved_references_after": 58,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 22
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 1,
+          "document_key_mismatch": 1,
+          "document_reference": 8,
+          "object_not_indexed": 38,
+          "target_document_not_loaded": 9,
+          "unresolved_clause": 1
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "EN50128",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 0,
+        "routing_clauses_changed": 0,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 190,
+        "scopes_after": 190,
+        "references_before": 582,
+        "references_after": 582,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 0,
+        "unresolved_references_after": 60,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 37
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 3,
+          "document_reference": 3,
+          "object_not_indexed": 48,
+          "target_document_not_loaded": 5,
+          "unresolved_clause": 1
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "EN50129",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 2,
+        "routing_clauses_changed": 2,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 75,
+        "scopes_after": 75,
+        "references_before": 225,
+        "references_after": 225,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 2,
+        "unresolved_references_after": 157,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 35,
+          "unresolved_clause": 1
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 3,
+          "document_reference": 16,
+          "object_not_indexed": 76,
+          "target_document_not_loaded": 56,
+          "unresolved_clause": 6
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "EN50657",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 11,
+        "routing_clauses_changed": 11,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 237,
+        "scopes_after": 237,
+        "references_before": 615,
+        "references_after": 615,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 11,
+        "unresolved_references_after": 128,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 42
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 24,
+          "document_reference": 30,
+          "object_not_indexed": 64,
+          "target_document_not_loaded": 5,
+          "unresolved_clause": 5
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "EN50716",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 3,
+        "routing_clauses_changed": 3,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 208,
+        "scopes_after": 208,
+        "references_before": 585,
+        "references_after": 585,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 3,
+        "unresolved_references_after": 116,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 60
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 2,
+          "document_reference": 7,
+          "object_not_indexed": 75,
+          "target_document_not_loaded": 28,
+          "unresolved_clause": 4
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-0",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 1,
+        "routing_clauses_changed": 1,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 6,
+        "scopes_after": 6,
+        "references_before": 21,
+        "references_after": 21,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 1,
+        "unresolved_references_after": 16,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 1
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 7,
+          "document_reference": 4,
+          "object_not_indexed": 5
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-1",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 11,
+        "routing_clauses_changed": 11,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 146,
+        "scopes_after": 146,
+        "references_before": 323,
+        "references_after": 323,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 18,
+        "unresolved_references_after": 149,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 27
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 8,
+          "document_key_mismatch": 2,
+          "document_reference": 47,
+          "object_not_indexed": 61,
+          "target_document_not_loaded": 19,
+          "unresolved_clause": 12
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-2",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 30,
+        "routing_clauses_changed": 30,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 129,
+        "scopes_after": 129,
+        "references_before": 300,
+        "references_after": 300,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 38,
+        "unresolved_references_after": 134,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 25,
+          "unresolved_clause": 1
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 38,
+          "document_key_mismatch": 2,
+          "document_reference": 23,
+          "object_not_indexed": 58,
+          "target_document_not_loaded": 8,
+          "unresolved_clause": 5
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-3",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 37,
+        "routing_clauses_changed": 37,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 124,
+        "scopes_after": 124,
+        "references_before": 258,
+        "references_after": 258,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 49,
+        "unresolved_references_after": 75,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 8,
+          "unresolved_clause": 2
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 17,
+          "document_reference": 2,
+          "object_not_indexed": 40,
+          "target_document_not_loaded": 3,
+          "unresolved_clause": 13
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-3-1",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 2,
+        "routing_clauses_changed": 2,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 10,
+        "scopes_after": 10,
+        "references_before": 16,
+        "references_after": 16,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 2,
+        "unresolved_references_after": 5,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "unresolved_clause": 1
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 1,
+          "document_key_mismatch": 1,
+          "document_reference": 2,
+          "unresolved_clause": 1
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-4",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 9,
+        "routing_clauses_changed": 9,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 39,
+        "scopes_after": 39,
+        "references_before": 82,
+        "references_after": 82,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 12,
+        "unresolved_references_after": 28,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 11
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 3,
+          "document_key_mismatch": 1,
+          "object_not_indexed": 11,
+          "target_document_not_loaded": 9,
+          "unresolved_clause": 4
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-5",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 6,
+        "routing_clauses_changed": 6,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 51,
+        "scopes_after": 51,
+        "references_before": 102,
+        "references_after": 102,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 9,
+        "unresolved_references_after": 62,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 32
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 6,
+          "document_key_mismatch": 2,
+          "document_reference": 1,
+          "object_not_indexed": 46,
+          "target_document_not_loaded": 6,
+          "unresolved_clause": 1
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-6",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 8,
+        "routing_clauses_changed": 8,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 54,
+        "scopes_after": 54,
+        "references_before": 156,
+        "references_after": 156,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 13,
+        "unresolved_references_after": 114,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 46
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 10,
+          "document_key_mismatch": 3,
+          "document_reference": 1,
+          "object_not_indexed": 94,
+          "target_document_not_loaded": 6
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "IEC61508-7",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 11,
+        "routing_clauses_changed": 11,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 202,
+        "scopes_after": 202,
+        "references_before": 319,
+        "references_after": 319,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 13,
+        "unresolved_references_after": 278,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 195
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 7,
+          "document_key_mismatch": 7,
+          "document_reference": 8,
+          "object_not_indexed": 173,
+          "target_document_not_loaded": 39,
+          "unresolved_clause": 44
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-1",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 2,
+        "routing_clauses_changed": 2,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 204,
+        "scopes_after": 204,
+        "references_before": 517,
+        "references_after": 517,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 2,
+        "unresolved_references_after": 34,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 4
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 5,
+          "document_reference": 17,
+          "object_not_indexed": 11,
+          "target_document_not_loaded": 1
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-10",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 21,
+        "routing_clauses_changed": 21,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 78,
+        "scopes_after": 78,
+        "references_before": 182,
+        "references_after": 182,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 38,
+        "unresolved_references_after": 108,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 27
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 19,
+          "document_key_mismatch": 6,
+          "document_reference": 15,
+          "object_not_indexed": 66,
+          "target_document_not_loaded": 1,
+          "unresolved_clause": 1
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-11",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 21,
+        "routing_clauses_changed": 21,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 159,
+        "scopes_after": 159,
+        "references_before": 437,
+        "references_after": 437,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 35,
+        "unresolved_references_after": 243,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 78,
+          "unresolved_clause": 2
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 27,
+          "document_key_mismatch": 28,
+          "document_reference": 17,
+          "object_not_indexed": 150,
+          "target_document_not_loaded": 1,
+          "unresolved_clause": 20
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-12",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 13,
+        "routing_clauses_changed": 13,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 61,
+        "scopes_after": 61,
+        "references_before": 128,
+        "references_after": 128,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 16,
+        "unresolved_references_after": 65,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 24
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 37,
+          "document_reference": 2,
+          "object_not_indexed": 21,
+          "unresolved_clause": 5
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-2",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 24,
+        "routing_clauses_changed": 24,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 116,
+        "scopes_after": 116,
+        "references_before": 249,
+        "references_after": 249,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 27,
+        "unresolved_references_after": 72,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 14,
+          "unresolved_clause": 1
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 22,
+          "document_key_mismatch": 6,
+          "document_reference": 12,
+          "object_not_indexed": 17,
+          "target_document_not_loaded": 15
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-3",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 10,
+        "routing_clauses_changed": 10,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 52,
+        "scopes_after": 52,
+        "references_before": 94,
+        "references_after": 94,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 12,
+        "unresolved_references_after": 23,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 27
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 1,
+          "document_reference": 4,
+          "object_not_indexed": 17,
+          "unresolved_clause": 1
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-4",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 22,
+        "routing_clauses_changed": 22,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 96,
+        "scopes_after": 96,
+        "references_before": 125,
+        "references_after": 125,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 28,
+        "unresolved_references_after": 43,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 20
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 15,
+          "document_key_mismatch": 2,
+          "document_reference": 3,
+          "object_not_indexed": 19,
+          "unresolved_clause": 4
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-5",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 27,
+        "routing_clauses_changed": 27,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 181,
+        "scopes_after": 181,
+        "references_before": 292,
+        "references_after": 292,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 33,
+        "unresolved_references_after": 93,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 66
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 12,
+          "document_key_mismatch": 4,
+          "document_reference": 3,
+          "object_not_indexed": 60,
+          "target_document_not_loaded": 8,
+          "unresolved_clause": 6
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-6",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 20,
+        "routing_clauses_changed": 20,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 116,
+        "scopes_after": 116,
+        "references_before": 284,
+        "references_after": 284,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 26,
+        "unresolved_references_after": 85,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 21
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 22,
+          "document_key_mismatch": 7,
+          "document_reference": 20,
+          "object_not_indexed": 35,
+          "unresolved_clause": 1
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-8",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 20,
+        "routing_clauses_changed": 20,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 141,
+        "scopes_after": 141,
+        "references_before": 225,
+        "references_after": 225,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 22,
+        "unresolved_references_after": 53,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 21,
+          "unresolved_clause": 1
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 27,
+          "object_not_indexed": 21,
+          "target_document_not_loaded": 3,
+          "unresolved_clause": 2
+        }
+      },
+      {
+        "contract": "context-routing-reference-target-repair-v1",
+        "resolver": "source-verified-external-single-target/v1",
+        "mode": "reference_targets_only",
+        "document_key": "ISO26262-9",
+        "allowlist_sha256": "844f7fb9fbd7cffc4998c9bc338d24dbf97f859ba193aaac3603d489d0660bbe",
+        "baseline_archive": "context-20260910T025523849669Z-7ead9437.zip",
+        "clauses_changed": 14,
+        "routing_clauses_changed": 14,
+        "baseline_clauses_refreshed": 0,
+        "scopes_before": 47,
+        "scopes_after": 47,
+        "references_before": 86,
+        "references_after": 86,
+        "reference_roles_corrected": 0,
+        "informational_scopes_reclassified": 0,
+        "reference_ids_completed": 32,
+        "unresolved_references_after": 26,
+        "requires_review": 0,
+        "protected_clauses": 0,
+        "target_diagnostics_contract": "context-target-diagnostics-v1",
+        "unresolved_scope_reasons": {
+          "object_not_indexed": 2
+        },
+        "unresolved_reference_reasons": {
+          "addressable_clause": 14,
+          "document_reference": 6,
+          "object_not_indexed": 6
+        }
+      }
+    ]
+  },
+  "slice_2": {
+    "removed_scientific_mentions": 1368,
+    "changed_clauses": [
+      {
+        "document_key": "EN50126-2",
+        "clause_id": "clause-224e82051b35",
+        "reference": "EN 50126-2:2017 E.2",
+        "before": 3,
+        "after": 2,
+        "removed": 1,
+        "before_prompt_chars": 6396,
+        "after_prompt_chars": 6045
+      },
+      {
+        "document_key": "IEC61508-6",
+        "clause_id": "clause-25c79cba2d68",
+        "reference": "IEC 61508-6:2010 B.3.3.3",
+        "before": 1330,
+        "after": 4,
+        "removed": 1326,
+        "before_prompt_chars": 488398,
+        "after_prompt_chars": 24422
+      },
+      {
+        "document_key": "IEC61508-6",
+        "clause_id": "clause-a098bcd10c18",
+        "reference": "IEC 61508-6:2010 B.4.4.2",
+        "before": 125,
+        "after": 85,
+        "removed": 40,
+        "before_prompt_chars": 55901,
+        "after_prompt_chars": 42461
+      },
+      {
+        "document_key": "ISO26262-11",
+        "clause_id": "clause-d59bff763f00",
+        "reference": "ISO 26262-11:2018 D.1",
+        "before": 43,
+        "after": 42,
+        "removed": 1,
+        "before_prompt_chars": 45728,
+        "after_prompt_chars": 45373
+      }
+    ],
+    "all_other_mentions_and_offsets_unchanged": true,
+    "unchanged_input_fingerprints": 5708,
+    "new_llm_calls": 0
+  },
+  "slice_3": {
+    "previously_resolved_queries_unchanged": {
+      "mention": 3925,
+      "reference": 3772,
+      "scope": 3905
+    },
+    "source_clauses_with_changed_extraction": [
+      {
+        "document_key": "EN50126-1",
+        "clause_id": "clause-bb95fa0e038b",
+        "reference": "EN 50126-1:2017 C.1",
+        "old_mentions": 5,
+        "new_mentions": 5
+      },
+      {
+        "document_key": "EN50126-1",
+        "clause_id": "clause-fc74b28c7dd7",
+        "reference": "EN 50126-1:2017 ZZ",
+        "old_mentions": 46,
+        "new_mentions": 54
+      },
+      {
+        "document_key": "EN50126-2",
+        "clause_id": "clause-224e82051b35",
+        "reference": "EN 50126-2:2017 E.2",
+        "old_mentions": 3,
+        "new_mentions": 2
+      },
+      {
+        "document_key": "EN50126-2",
+        "clause_id": "clause-656a6f350236",
+        "reference": "EN 50126-2:2017 ZZ",
+        "old_mentions": 51,
+        "new_mentions": 59
+      },
+      {
+        "document_key": "EN50128",
+        "clause_id": "clause-d40a2a09f8ae",
+        "reference": "EN 50128:2011 A",
+        "old_mentions": 5,
+        "new_mentions": 5
+      },
+      {
+        "document_key": "EN50129",
+        "clause_id": "clause-a3c6fd44fe4e",
+        "reference": "EN 50129:2018 ZZ",
+        "old_mentions": 19,
+        "new_mentions": 21
+      },
+      {
+        "document_key": "EN50657",
+        "clause_id": "clause-8abde909162e",
+        "reference": "EN 50657:2017 A.1",
+        "old_mentions": 17,
+        "new_mentions": 17
+      },
+      {
+        "document_key": "EN50657",
+        "clause_id": "clause-9be663840f38",
+        "reference": "EN 50657:2017 ZZ",
+        "old_mentions": 7,
+        "new_mentions": 9
+      },
+      {
+        "document_key": "EN50716",
+        "clause_id": "clause-fb05e0e21d1f",
+        "reference": "EN 50716:2023 A.1",
+        "old_mentions": 19,
+        "new_mentions": 19
+      },
+      {
+        "document_key": "EN50716",
+        "clause_id": "clause-ec9feb1d6276",
+        "reference": "EN 50716:2023 ZZ",
+        "old_mentions": 15,
+        "new_mentions": 19
+      },
+      {
+        "document_key": "IEC61508-1",
+        "clause_id": "clause-218b39a43fbe",
+        "reference": "IEC 61508-1:2010 7.15.2.4",
+        "old_mentions": 5,
+        "new_mentions": 5
+      },
+      {
+        "document_key": "IEC61508-6",
+        "clause_id": "clause-25c79cba2d68",
+        "reference": "IEC 61508-6:2010 B.3.3.3",
+        "old_mentions": 1330,
+        "new_mentions": 4
+      },
+      {
+        "document_key": "IEC61508-6",
+        "clause_id": "clause-a098bcd10c18",
+        "reference": "IEC 61508-6:2010 B.4.4.2",
+        "old_mentions": 125,
+        "new_mentions": 85
+      },
+      {
+        "document_key": "ISO26262-11",
+        "clause_id": "clause-74ccfb298cf0",
+        "reference": "ISO 26262-11:2018 4.7.1",
+        "old_mentions": 5,
+        "new_mentions": 5
+      },
+      {
+        "document_key": "ISO26262-11",
+        "clause_id": "clause-3e39fa4c86d7",
+        "reference": "ISO 26262-11:2018 5.2.4",
+        "old_mentions": 20,
+        "new_mentions": 20
+      },
+      {
+        "document_key": "ISO26262-11",
+        "clause_id": "clause-d59bff763f00",
+        "reference": "ISO 26262-11:2018 D.1",
+        "old_mentions": 43,
+        "new_mentions": 42
+      },
+      {
+        "document_key": "ISO26262-4",
+        "clause_id": "clause-4d83315564d8",
+        "reference": "ISO 26262-4:2018 7.4.2.1.1",
+        "old_mentions": 1,
+        "new_mentions": 1
+      }
+    ],
+    "newly_parseable_queries": [
+      {
+        "document_key": "EN50126-1",
+        "source_clause_id": "clause-bb95fa0e038b",
+        "kind": "mention",
+        "reference": "Table C.3 to Table C.6",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "EN50126-1",
+        "source_clause_id": "clause-bb95fa0e038b",
+        "kind": "reference",
+        "reference": "Table C.3 to Table C.6",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "EN50128",
+        "source_clause_id": "clause-d40a2a09f8ae",
+        "kind": "mention",
+        "reference": "Table A.1 to Table A.11",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "EN50128",
+        "source_clause_id": "clause-d40a2a09f8ae",
+        "kind": "mention",
+        "reference": "Table A.12 to Table A.23",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "EN50657",
+        "source_clause_id": "clause-8abde909162e",
+        "kind": "mention",
+        "reference": "Table A.1 to Table A.11",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "EN50657",
+        "source_clause_id": "clause-8abde909162e",
+        "kind": "mention",
+        "reference": "Table A.12 to Table A.23",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "EN50716",
+        "source_clause_id": "clause-fb05e0e21d1f",
+        "kind": "mention",
+        "reference": "Table A.1 to Table A.11",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "EN50716",
+        "source_clause_id": "clause-fb05e0e21d1f",
+        "kind": "mention",
+        "reference": "Table A.12 to Table A.21",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "IEC61508-1",
+        "source_clause_id": "clause-218b39a43fbe",
+        "kind": "mention",
+        "reference": "Figure 8\n\nTo Figure 8",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "ISO26262-11",
+        "source_clause_id": "clause-74ccfb298cf0",
+        "kind": "mention",
+        "reference": "Table 21 to Table 26",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "ISO26262-11",
+        "source_clause_id": "clause-74ccfb298cf0",
+        "kind": "reference",
+        "reference": "Table 21 to Table 26",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "ISO26262-11",
+        "source_clause_id": "clause-3e39fa4c86d7",
+        "kind": "mention",
+        "reference": "Table 37 to Table 40",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "ISO26262-11",
+        "source_clause_id": "clause-3e39fa4c86d7",
+        "kind": "reference",
+        "reference": "Table 37 to Table 40",
+        "new_status": "unresolved"
+      },
+      {
+        "document_key": "ISO26262-4",
+        "source_clause_id": "clause-384c1d6067e6",
+        "kind": "reference",
+        "reference": "ISO 26262-4:2018, Clause 6",
+        "new_status": "resolved"
+      },
+      {
+        "document_key": "ISO26262-4",
+        "source_clause_id": "clause-4d83315564d8",
+        "kind": "mention",
+        "reference": "Table 4 to Table 8",
+        "new_status": "unresolved"
+      }
+    ],
+    "archived_failure_replay": [
+      {
+        "reference": "EN 50126-2:2017 ZZ",
+        "subcategory": "multi_letter_annex",
+        "result": "transport_valid_only",
+        "error": null
+      },
+      {
+        "reference": "EN 50128:2011 A",
+        "subcategory": "repeated_label_range",
+        "result": "transport_valid_only",
+        "error": null
+      },
+      {
+        "reference": "EN 50657:2017 A.1",
+        "subcategory": "repeated_label_range",
+        "result": "transport_valid_only",
+        "error": null
+      },
+      {
+        "reference": "EN 50716:2023 A.1",
+        "subcategory": "repeated_label_range",
+        "result": "transport_valid_only",
+        "error": null
+      },
+      {
+        "reference": "ISO 26262-10:2018 11.2",
+        "subcategory": "comma_after_standard",
+        "result": "transport_valid_only",
+        "error": null
+      },
+      {
+        "reference": "ISO 26262-11:2018 5.3.4",
+        "subcategory": "comma_after_standard",
+        "result": "transport_valid_only",
+        "error": null
+      },
+      {
+        "reference": "ISO 26262-11:2018 5.5.3.3",
+        "subcategory": "comma_after_standard",
+        "result": "transport_valid_only",
+        "error": null
+      },
+      {
+        "reference": "ISO 26262-4:2018 7.4.2.1.1",
+        "subcategory": "repeated_label_range",
+        "result": "transport_valid_only",
+        "error": null
+      },
+      {
+        "reference": "ISO 26262-9:2018 5.2",
+        "subcategory": "comma_after_standard",
+        "result": "transport_valid_only",
+        "error": null
+      }
+    ],
+    "persisted_rejected_answers": 0,
+    "new_llm_calls": 0
+  },
+  "cumulative_input_fingerprints": {
+    "unchanged": 5695,
+    "changed": [
+      {
+        "document_key": "EN50126-1",
+        "clause_id": "clause-bb95fa0e038b",
+        "reference": "EN 50126-1:2017 C.1"
+      },
+      {
+        "document_key": "EN50126-1",
+        "clause_id": "clause-fc74b28c7dd7",
+        "reference": "EN 50126-1:2017 ZZ"
+      },
+      {
+        "document_key": "EN50126-2",
+        "clause_id": "clause-224e82051b35",
+        "reference": "EN 50126-2:2017 E.2"
+      },
+      {
+        "document_key": "EN50126-2",
+        "clause_id": "clause-656a6f350236",
+        "reference": "EN 50126-2:2017 ZZ"
+      },
+      {
+        "document_key": "EN50128",
+        "clause_id": "clause-d40a2a09f8ae",
+        "reference": "EN 50128:2011 A"
+      },
+      {
+        "document_key": "EN50129",
+        "clause_id": "clause-a3c6fd44fe4e",
+        "reference": "EN 50129:2018 ZZ"
+      },
+      {
+        "document_key": "EN50657",
+        "clause_id": "clause-8abde909162e",
+        "reference": "EN 50657:2017 A.1"
+      },
+      {
+        "document_key": "EN50657",
+        "clause_id": "clause-9be663840f38",
+        "reference": "EN 50657:2017 ZZ"
+      },
+      {
+        "document_key": "EN50716",
+        "clause_id": "clause-fb05e0e21d1f",
+        "reference": "EN 50716:2023 A.1"
+      },
+      {
+        "document_key": "EN50716",
+        "clause_id": "clause-ec9feb1d6276",
+        "reference": "EN 50716:2023 ZZ"
+      },
+      {
+        "document_key": "IEC61508-1",
+        "clause_id": "clause-218b39a43fbe",
+        "reference": "IEC 61508-1:2010 7.15.2.4"
+      },
+      {
+        "document_key": "IEC61508-6",
+        "clause_id": "clause-25c79cba2d68",
+        "reference": "IEC 61508-6:2010 B.3.3.3"
+      },
+      {
+        "document_key": "IEC61508-6",
+        "clause_id": "clause-a098bcd10c18",
+        "reference": "IEC 61508-6:2010 B.4.4.2"
+      },
+      {
+        "document_key": "ISO26262-11",
+        "clause_id": "clause-74ccfb298cf0",
+        "reference": "ISO 26262-11:2018 4.7.1"
+      },
+      {
+        "document_key": "ISO26262-11",
+        "clause_id": "clause-3e39fa4c86d7",
+        "reference": "ISO 26262-11:2018 5.2.4"
+      },
+      {
+        "document_key": "ISO26262-11",
+        "clause_id": "clause-d59bff763f00",
+        "reference": "ISO 26262-11:2018 D.1"
+      },
+      {
+        "document_key": "ISO26262-4",
+        "clause_id": "clause-4d83315564d8",
+        "reference": "ISO 26262-4:2018 7.4.2.1.1"
+      }
+    ],
+    "new_llm_calls": 0
+  }
+}

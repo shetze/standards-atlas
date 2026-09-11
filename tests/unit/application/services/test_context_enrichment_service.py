@@ -651,3 +651,129 @@ def test_pending_failure_forces_retry_despite_same_retained_input_fingerprint(tm
     ).enrich(docs.document.key.value)
     assert retried.routing_outcomes[0]["status"] == "succeeded"
     assert provider.calls == 3
+
+
+class _ErrorsGateway(_Gateway):
+    def __init__(self, errors):
+        super().__init__()
+        self.errors = list(errors)
+
+    def generate_structured(self, request):
+        if self.errors:
+            self.requests.append(request)
+            raise self.errors.pop(0)
+        return super().generate_structured(request)
+
+
+def _context_limit_error():
+    from standards_atlas.application.ports.llm_gateway import LlmContextWindowError
+
+    return LlmContextWindowError(
+        "request exceeds available context size",
+        raw_response={
+            "error": {"type": "exceed_context_size_error", "n_prompt_tokens": 20000, "n_ctx": 16384}
+        },
+    )
+
+
+def test_initial_context_limit_has_no_retry_and_remains_a_reported_failure():
+    gateway = _ErrorsGateway([_context_limit_error()])
+    doc = _document()
+    result = ContextEnrichmentService(
+        documents=_Documents(doc),
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt()),
+    ).enrich(doc.key.value)
+    assert len(gateway.requests) == 1
+    assert result.context_enrichment_failures == 1
+    assert result.routing_outcomes[0]["status"] == "failed"
+    failure = result.routing_failures[0]
+    assert failure["first_error_kind"] == failure["last_error_kind"] == "context_window_exceeded"
+    chain = failure["attempts"]["failure_chain"]
+    assert len(chain) == 1
+    assert chain[0]["provider_response"]["error"]["n_prompt_tokens"] == 20000
+    assert chain[0]["provider_response"]["error"]["n_ctx"] == 16384
+
+
+def test_truncation_then_context_limit_preserves_both_errors_without_invariant_retry():
+    from standards_atlas.application.ports.llm_gateway import LlmResponseError
+
+    gateway = _ErrorsGateway(
+        [
+            LlmResponseError(
+                "truncated",
+                finish_reason="length",
+                raw_content='{"partial":',
+                raw_response={"usage": {"completion_tokens": 1024}},
+            ),
+            _context_limit_error(),
+        ]
+    )
+    doc = _document()
+    result = ContextEnrichmentService(
+        documents=_Documents(doc),
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt()),
+    ).enrich(doc.key.value)
+    assert len(gateway.requests) == 2
+    assert gateway.requests[1].metadata["corrective_retry"] == "truncation-v1"
+    failure = result.routing_failures[0]
+    assert failure["first_error_kind"] == "output_truncated"
+    assert failure["last_error_kind"] == "context_window_exceeded"
+    assert failure["attempts"]["first_error"] == "truncated"
+    assert failure["attempts"]["first_response"] == '{"partial":'
+    assert failure["attempts"]["last_error"] == "request exceeds available context size"
+    chain = failure["attempts"]["failure_chain"]
+    assert [entry["error_kind"] for entry in chain] == [
+        "output_truncated",
+        "context_window_exceeded",
+    ]
+    assert chain[0]["rejected_content"] == '{"partial":'
+    assert chain[1]["parent_stage"] == "initial"
+
+
+def test_invariant_retry_context_limit_keeps_the_original_invalid_response():
+    from standards_atlas.application.ports.llm_gateway import LlmResponseError
+
+    gateway = _ErrorsGateway(
+        [LlmResponseError("invalid schema", raw_content='{"bad":true}'), _context_limit_error()]
+    )
+    doc = _document()
+    result = ContextEnrichmentService(
+        documents=_Documents(doc),
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt()),
+    ).enrich(doc.key.value)
+    assert len(gateway.requests) == 2
+    assert gateway.requests[1].metadata["corrective_retry"] == "routing-invariants-v1"
+    chain = result.routing_failures[0]["attempts"]["failure_chain"]
+    assert [entry["error_kind"] for entry in chain] == [
+        "invalid_response",
+        "context_window_exceeded",
+    ]
+    assert chain[0]["rejected_content"] == '{"bad":true}'
+
+
+def test_ordinary_truncation_still_retries_successfully():
+    from standards_atlas.application.ports.llm_gateway import LlmResponseError
+
+    gateway = _ErrorsGateway([LlmResponseError("truncated", finish_reason="length")])
+    doc = _document()
+    result = ContextEnrichmentService(
+        documents=_Documents(doc),
+        enricher=LlmContextRoutingEnricher(gateway, prompt=_prompt()),
+    ).enrich(doc.key.value)
+    assert len(gateway.requests) == 2
+    assert result.context_enrichment_failures == 0
+
+
+def test_failure_chain_is_reset_for_the_next_clause():
+    import pytest
+
+    from standards_atlas.application.ports.llm_gateway import LlmContextWindowError
+
+    gateway = _ErrorsGateway([_context_limit_error(), _context_limit_error()])
+    doc = _document()
+    enricher = LlmContextRoutingEnricher(gateway, prompt=_prompt())
+    for _ in range(2):
+        with pytest.raises(LlmContextWindowError) as captured:
+            enricher.enrich(clause=doc.clauses[0], document=doc)
+        assert len(captured.value.raw_response["failure_chain"]) == 1
+    assert len(gateway.requests) == 2

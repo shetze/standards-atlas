@@ -10,6 +10,7 @@ from standards_atlas.adapters.llm.config import (
 from standards_atlas.adapters.llm.formal_semantic_extractor import OntologyGuidedLlmExtractor
 from standards_atlas.adapters.llm.managed_ramalama import ManagedRamaLamaGateway
 from standards_atlas.adapters.llm.openai_compatible import (
+    LlmContextWindowError,
     LlmGatewayError,
     LlmResponseError,
     LlmTimeoutError,
@@ -30,6 +31,7 @@ __all__ = [
     "LlmRuntime",
     "LlmGatewayError",
     "LlmResponseError",
+    "LlmContextWindowError",
     "LlmTimeoutError",
     "LlmUnavailableError",
     "ManagedRamaLamaGateway",

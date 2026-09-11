@@ -332,3 +332,11 @@ uv run standards-atlas atlasdata export-enrichments \
 Unselected dimensions are preserved. Neither existing canonical documents nor private evidence
 should be deleted. If both literal citation and usable evidence/source are lost, review or restore
 source-backed routing instead of treating the incorrect canonical self-link as proof.
+
+## Baseline-specific ID-only repair
+
+For the conservative external single-target repair of the 2026-09-10 baseline,
+use `--reference-targets-only` with its source-bound allowlist. Unlike the general
+repair above, it does not refresh baselines or run semantic corrections. See
+[bounded context-enrichment fixes](context-enrichment-baseline-fixes.md) for
+dry-run/write commands, diagnostic categories and receipt/checksum cautions.

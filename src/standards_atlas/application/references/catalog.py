@@ -9,6 +9,7 @@ from standards_atlas.application.references.resolution import (
     canonical_reference,
     reference_key,
 )
+from standards_atlas.application.references.syntax import strip_document_qualifier
 from standards_atlas.domain.model import EngineeringDocument, ReferenceTarget
 
 
@@ -50,7 +51,7 @@ class ReferenceDocumentCatalog:
                 aliases := [
                     alias
                     for alias in all_aliases
-                    if key.startswith(alias + " ") or key.endswith(" of " + alias)
+                    if strip_document_qualifier(key, alias) is not None
                 ]
             )
         }
@@ -61,18 +62,19 @@ class ReferenceDocumentCatalog:
         if matches:
             document_key, alias = next(iter(matches.items()))
             document = self.documents[document_key]
-            coordinate = (
-                key[len(alias) + 1 :]
-                if key.startswith(alias + " ")
-                else key[: -len(" of " + alias)]
-            )
+            coordinate = strip_document_qualifier(key, alias)
+            assert coordinate is not None
         if document.key.value not in self._indexes:
             self._indexes[document.key.value] = DocumentReferenceIndex(document)
         index = self._indexes[document.key.value]
         # The local index rejects foreign designations rather than interpreting
         # their numeric components as local coordinates.
         source = (
-            source_clause_id if document.key == self.document.key else document.clauses[0].id.value
+            source_clause_id
+            if document.key == self.document.key
+            else document.clauses[0].id.value
+            if document.clauses
+            else ""
         )
         result = index.resolve_group(coordinate, source)
         if result.status == "resolved":

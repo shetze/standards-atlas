@@ -243,3 +243,44 @@ def test_discards_schema_invalid_cached_response_and_regenerates(tmp_path: Path)
     assert urlopen.call_count == 1
     assert not second.cached
     assert second.value == first.value
+
+
+def test_http_context_limit_is_typed_and_keeps_provider_token_counters(tmp_path):
+    import io
+    from urllib.error import HTTPError
+
+    import pytest
+
+    from standards_atlas.application.ports.llm_gateway import LlmContextWindowError
+
+    gateway = OpenAICompatibleLlmGateway(LlmConfig(cache_directory=tmp_path / "cache"))
+    for tag in ("exceed_context_size_error", "context_length_exceeded"):
+        payload = {"error": {"type": tag, "n_prompt_tokens": 177924, "n_ctx": 16384}}
+        error = HTTPError(
+            "http://localhost", 400, "Bad request", {}, io.BytesIO(json.dumps(payload).encode())
+        )
+        with patch("standards_atlas.adapters.llm.openai_compatible.urlopen", side_effect=error):
+            with pytest.raises(LlmContextWindowError) as captured:
+                gateway.generate_structured(_request())
+        assert captured.value.raw_response == payload
+    assert not list((tmp_path / "cache").glob("*.json"))
+
+
+def test_other_http_400_errors_are_not_context_window_errors(tmp_path):
+    import io
+    from urllib.error import HTTPError
+
+    import pytest
+
+    from standards_atlas.application.ports.llm_gateway import LlmContextWindowError
+
+    gateway = OpenAICompatibleLlmGateway(LlmConfig(cache_directory=tmp_path / "cache"))
+    payload = {"error": {"type": "invalid_request_error", "message": "Bad schema"}}
+    error = HTTPError(
+        "http://localhost", 400, "Bad request", {}, io.BytesIO(json.dumps(payload).encode())
+    )
+    with patch("standards_atlas.adapters.llm.openai_compatible.urlopen", side_effect=error):
+        with pytest.raises(LlmResponseError) as captured:
+            gateway.generate_structured(_request())
+    assert not isinstance(captured.value, LlmContextWindowError)
+    assert captured.value.raw_response == payload

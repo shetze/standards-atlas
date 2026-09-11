@@ -5,10 +5,16 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from standards_atlas.application.references.syntax import (
+    MULTI_LETTER_OBJECT_COORDINATE,
+    OBJECT_PREFIX,
+    strip_document_prefix,
+)
 from standards_atlas.domain.model import Clause, ClauseType, EngineeringDocument
 
 _COORDINATE = r"(?:\d+(?:\.\d+)*[a-z]?|[a-z](?:\.\d+)*)"
 _SINGLE = re.compile(rf"{_COORDINATE}\Z", re.I)
+_OBJECT_COORDINATE = rf"(?:{_COORDINATE}|{MULTI_LETTER_OBJECT_COORDINATE})"
 _PREFIX = re.compile(
     r"^(clauses?|subclauses?|sections?|paragraphs?|annex(?:es)?|appendi(?:x|ces)|"
     r"tables?|figures?|figs?\.?)\s+",
@@ -97,6 +103,11 @@ class DocumentReferenceIndex:
 
     def _candidates(self, text: str, source_clause_id: str) -> tuple[Clause, ...]:
         key = reference_key(text)
+        for prefix in sorted(self.prefixes, key=len, reverse=True):
+            coordinate = strip_document_prefix(key, prefix)
+            if coordinate is not None:
+                key = f"{prefix} {coordinate}"
+                break
         source = self.clauses.get(source_clause_id)
         if key in _SELF:
             return (source,) if source else ()
@@ -119,8 +130,9 @@ class DocumentReferenceIndex:
         key = reference_key(text)
         standard = ""
         for prefix in sorted(self.prefixes, key=len, reverse=True):
-            if key.startswith(prefix + " "):
-                standard, key = prefix + " ", key[len(prefix) + 1 :]
+            coordinate = strip_document_prefix(key, prefix)
+            if coordinate is not None:
+                standard, key = prefix + " ", coordinate
                 break
         # A foreign edition/part must never fall through to local bare coordinates.
         if not standard and _STANDARD.search(key):
@@ -144,11 +156,17 @@ class DocumentReferenceIndex:
                 kind = _object_prefix(member_prefix.group(1))
                 member = member[member_prefix.end() :].strip()
             member_kind = kind
+            coordinate_pattern = _OBJECT_COORDINATE if member_kind else _COORDINATE
             bounds = re.fullmatch(
-                rf"({_COORDINATE})\s*(?:to|through|–|—|-)\s*({_COORDINATE})", member, re.I
+                rf"({coordinate_pattern})\s*(?:to|through|–|—|-)\s*"
+                rf"(?:({OBJECT_PREFIX})\s+)?({coordinate_pattern})",
+                member,
+                re.I,
             )
             if bounds:
-                first, last = bounds.groups()
+                first, end_prefix, last = bounds.groups()
+                if end_prefix and (not member_kind or _object_prefix(end_prefix) != member_kind):
+                    return ()
                 start, _, a = first.rpartition(".")
                 end, _, b = last.rpartition(".")
                 if start != end or not a.isdigit() or not b.isdigit():
@@ -157,7 +175,7 @@ class DocumentReferenceIndex:
                 if hi < lo or hi - lo > 200:
                     return ()
                 coordinates = [f"{start + '.' if start else ''}{n}" for n in range(lo, hi + 1)]
-            elif _SINGLE.fullmatch(member):
+            elif re.fullmatch(coordinate_pattern, member, re.I):
                 coordinates = [member]
             else:
                 return ()

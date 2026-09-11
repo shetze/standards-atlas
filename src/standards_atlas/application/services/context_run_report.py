@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from standards_atlas import __version__
+from standards_atlas.application.references.diagnostics import TARGET_DIAGNOSTICS_CONTRACT
 from standards_atlas.application.services.context_enrichment_service import ContextEnrichmentResult
 
 
@@ -30,7 +31,7 @@ def write_context_run_report(
     key = result.document.key.value
     outcomes = list(getattr(result, "routing_outcomes", ()))
     counts = Counter(item["status"] for item in outcomes)
-    summary = {
+    summary: dict[str, object] = {
         name: counts[name]
         for name in (
             "succeeded",
@@ -52,10 +53,20 @@ def write_context_run_report(
     summary["unresolved_reference_targets"] = len(
         getattr(result, "unresolved_reference_targets", ())
     )
+    for kind in ("scope", "reference"):
+        summary[f"unresolved_{kind}_reasons"] = dict(
+            sorted(
+                Counter(
+                    item.get("reason", "unspecified")
+                    for item in getattr(result, f"unresolved_{kind}_targets", ())
+                ).items()
+            )
+        )
     summary["routing_corrections"] = len(getattr(result, "routing_corrections", ()))
     canonical = workspace / "documents" / f"{key}.json"
     payload = {
         "schema_version": 1,
+        "target_diagnostics_contract": TARGET_DIAGNOSTICS_CONTRACT,
         "document_key": key,
         "completed_at": datetime.now(UTC).isoformat(),
         "standards_atlas_version": __version__,

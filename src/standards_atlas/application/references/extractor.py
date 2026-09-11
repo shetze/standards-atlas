@@ -8,6 +8,10 @@ from standards_atlas.application.references.resolution import (
     DocumentReferenceIndex,
     canonical_reference,
 )
+from standards_atlas.application.references.syntax import (
+    MULTI_LETTER_OBJECT_COORDINATE,
+    OBJECT_PREFIX,
+)
 from standards_atlas.domain.model import EngineeringDocument
 from standards_atlas.domain.model.reference_mention import (
     ReferenceMention,
@@ -16,7 +20,8 @@ from standards_atlas.domain.model.reference_mention import (
     ReferenceTarget,
 )
 
-REFERENCE_EXTRACTOR_VERSION = "reference-mention-extractor/v3"
+REFERENCE_EXTRACTOR_VERSION = "reference-mention-extractor/v4"
+_LEGACY_EXTRACTOR_VERSION = "reference-mention-extractor/v3"
 
 _NUMBER = r"\d+(?:\.\d+){0,7}(?:[a-z])?"
 _ANNEX = r"[A-Z](?:\.\d+){0,7}"
@@ -44,6 +49,7 @@ _SUFFIX_QUALIFIED = re.compile(
 )
 _EXPLICIT = re.compile(rf"\b{_PREFIX}\s+{_ITEM}{_TAIL}\b", re.I)
 _BARE = re.compile(rf"(?<![\w.:/-])\d+(?:\.\d+){{1,7}}[a-z]?{_TAIL}\b", re.I)
+_SCIENTIFIC_NUMBER = re.compile(r"(?<![\w.])[+-]?\d+(?:\.\d+)?[eE][+-]?\d+(?![\w]|\.\d)")
 _CONTEXTUAL = re.compile(
     r"\b(?:(?P<this>this)\s+(?:(?:sub)?clause|section)|"
     r"(?:the\s+)?(?P<following>following)\s+(?:sub)?clauses?|"
@@ -53,12 +59,87 @@ _CONTEXTUAL = re.compile(
 _RANGE = re.compile(rf"({_ITEM})\s*(?:to|through|–|—|-)\s*({_ITEM})\b", re.I)
 
 
+# Keep the exact previous grammar for per-input fingerprint compatibility checks.
+_LEGACY_QUALIFIED, _LEGACY_SUFFIX_QUALIFIED = _QUALIFIED, _SUFFIX_QUALIFIED
+_LEGACY_EXPLICIT, _LEGACY_RANGE = _EXPLICIT, _RANGE
+_OBJECT_ITEM = rf"(?:{_ITEM}|{MULTI_LETTER_OBJECT_COORDINATE})"
+_LABELLED_START = rf"(?:{OBJECT_PREFIX}\s+{_OBJECT_ITEM}|{_PREFIX}\s+{_ITEM})"
+_MODERN_TAIL = (
+    rf"(?:\s*(?:to|through|–|—|-|,\s*(?:and\s+)?|\band\b|&)"
+    rf"\s*(?:{_PREFIX}\s+)?{_OBJECT_ITEM})*"
+)
+_QUALIFIED = re.compile(
+    rf"\b(?P<standard>{_STANDARD})\s*[,;]?\s+"
+    rf"(?P<coordinate>(?:{_LABELLED_START}|{_ITEM}){_MODERN_TAIL})\b",
+    re.I,
+)
+_SUFFIX_QUALIFIED = re.compile(
+    rf"\b(?P<coordinate>(?:{_LABELLED_START}|{_ITEM}){_MODERN_TAIL})\s+of\s+"
+    rf"(?P<standards>{_STANDARD_LIST})\b",
+    re.I,
+)
+_EXPLICIT = re.compile(rf"\b{_LABELLED_START}{_MODERN_TAIL}\b", re.I)
+_RANGE = re.compile(
+    rf"({_OBJECT_ITEM})\s*(?:to|through|–|—|-)\s*"
+    rf"(?:{OBJECT_PREFIX}\s+)?({_OBJECT_ITEM})\b",
+    re.I,
+)
+_COORDINATE_MEMBERS = re.compile(
+    rf"\b(?:(?P<label>{_PREFIX})\s+)?(?P<coordinate>{_OBJECT_ITEM})\b", re.I
+)
+
+
+def _labelled_multi_objects_only(coordinate: str) -> bool:
+    object_label = False
+    for match in _COORDINATE_MEMBERS.finditer(coordinate):
+        if match.group("label"):
+            object_label = bool(re.fullmatch(OBJECT_PREFIX, match.group("label"), re.I))
+        if (
+            re.fullmatch(MULTI_LETTER_OBJECT_COORDINATE, match.group("coordinate"), re.I)
+            and not object_label
+        ):
+            return False
+    return True
+
+
 def extract_reference_mentions(text: str) -> tuple[ReferenceMention, ...]:
+    return _extract_reference_mentions(text)
+
+
+def reference_extraction_version(
+    text: str, *, mentions: tuple[ReferenceMention, ...] | None = None
+) -> str:
+    """Keep unchanged model inputs reusable across a source-local extractor fix.
+
+    The v3 compatibility label is used only after exact mention equality, including
+    source spans. Changed extraction receives the new version and a new input hash.
+    """
+    current = extract_reference_mentions(text) if mentions is None else mentions
+    if _extract_reference_mentions(text, legacy=True) == current:
+        return _LEGACY_EXTRACTOR_VERSION
+    return REFERENCE_EXTRACTOR_VERSION
+
+
+def _extract_reference_mentions(text: str, *, legacy: bool = False) -> tuple[ReferenceMention, ...]:
     mentions: list[ReferenceMention] = []
     occupied: list[tuple[int, int]] = []
+    scientific_spans = [match.span() for match in _SCIENTIFIC_NUMBER.finditer(text)]
     # Protect standalone standard designations too (e.g. their edition numbers).
     standard_spans = [match.span() for match in re.finditer(_STANDARD, text, re.I)]
-    for pattern in (_QUALIFIED, _SUFFIX_QUALIFIED, _EXPLICIT, _BARE):
+    patterns = (
+        (_LEGACY_QUALIFIED, _LEGACY_SUFFIX_QUALIFIED, _LEGACY_EXPLICIT, _BARE)
+        if legacy
+        else (
+            _QUALIFIED,
+            _LEGACY_QUALIFIED,
+            _SUFFIX_QUALIFIED,
+            _LEGACY_SUFFIX_QUALIFIED,
+            _EXPLICIT,
+            _LEGACY_EXPLICIT,
+            _BARE,
+        )
+    )
+    for pattern in patterns:
         for match in pattern.finditer(text):
             if any(a < match.end() and match.start() < b for a, b in occupied):
                 continue
@@ -66,16 +147,24 @@ def extract_reference_mentions(text: str) -> tuple[ReferenceMention, ...]:
                 a < match.end() and match.start() < b for a, b in standard_spans
             ):
                 continue
+            if (
+                not legacy
+                and pattern is _BARE
+                and any(a <= match.start() and match.end() <= b for a, b in scientific_spans)
+            ):
+                # Only bare tokens contained in a complete scientific number.
+                # Explicit Clause/Table/Figure and qualified citations take priority.
+                continue
             surface = match.group(0)
             coordinate = surface
             references = (surface,)
-            if pattern is _SUFFIX_QUALIFIED:
+            if pattern in (_SUFFIX_QUALIFIED, _LEGACY_SUFFIX_QUALIFIED):
                 coordinate = match.group("coordinate")
                 references = tuple(
                     f"{standard.group(0)} {coordinate}"
                     for standard in re.finditer(_STANDARD, match.group("standards"), re.I)
                 )
-            elif pattern is _QUALIFIED:
+            elif pattern in (_QUALIFIED, _LEGACY_QUALIFIED):
                 coordinate = match.group("coordinate")
                 references = (f"{match.group('standard')} {coordinate}",)
             elif re.fullmatch(
@@ -84,7 +173,9 @@ def extract_reference_mentions(text: str) -> tuple[ReferenceMention, ...]:
                 references = (surface.split()[-1],)
             # Standard designators (61508-5, 26262-3:2018, ...) are identities,
             # never coordinate ranges. Lists do not become ranges either.
-            bounds = _RANGE.search(coordinate)
+            if not legacy and not _labelled_multi_objects_only(coordinate):
+                continue
+            bounds = (_LEGACY_RANGE if legacy else _RANGE).search(coordinate)
             for reference in references:
                 mentions.append(
                     ReferenceMention(

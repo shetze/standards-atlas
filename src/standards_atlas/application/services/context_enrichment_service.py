@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
 
 from pydantic import BaseModel, ConfigDict
@@ -24,14 +24,16 @@ from standards_atlas.application.context.scope_targets import ScopeTargetResolve
 from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.application.ports.llm_gateway import (
+    LlmContextWindowError,
     LlmGateway,
     LlmResponseError,
     StructuredGenerationRequest,
     StructuredGenerationResult,
 )
+from standards_atlas.application.references.diagnostics import TargetDiagnostics
 from standards_atlas.application.references.extractor import (
-    REFERENCE_EXTRACTOR_VERSION,
     extract_reference_mentions,
+    reference_extraction_version,
     refresh_document_references,
     resolve_reference_mentions,
 )
@@ -119,6 +121,7 @@ class LlmContextRoutingEnricher:
         self._retry_max_tokens = retry_max_tokens
         self._scope_documents = scope_documents
         self.semantic_diagnostics: tuple[dict, ...] = ()
+        self._failure_chain: list[dict] = []
 
     @property
     def generator_id(self) -> str:
@@ -138,8 +141,9 @@ class LlmContextRoutingEnricher:
             )
         # Rebuild the bounded citation context from source text: older baseline
         # mentions may predate annex/list/range support or contain stale targets.
+        raw_mentions = extract_reference_mentions(clause.plain_text)
         mentions = resolve_reference_mentions(
-            extract_reference_mentions(clause.plain_text),
+            raw_mentions,
             clause.id.value,
             DocumentReferenceIndex(document),
         )
@@ -165,7 +169,9 @@ class LlmContextRoutingEnricher:
             "subject_context": clause.subject_context.model_dump(mode="json"),
         }
         metadata = {
-            "reference_extraction": REFERENCE_EXTRACTOR_VERSION,
+            "reference_extraction": reference_extraction_version(
+                clause.plain_text, mentions=raw_mentions
+            ),
             "routing_semantics": INFORMATION_ROUTING_POLICY,
         }
         if self._prompt.version == "context-routing-v3":
@@ -217,11 +223,18 @@ class LlmContextRoutingEnricher:
 
     def enrich(self, *, clause: Clause, document: EngineeringDocument) -> ContextRouting:
         self.semantic_diagnostics = ()
+        self._failure_chain = []
         request = self._request(clause=clause, document=document)
         try:
-            result = self._generate_with_truncation_retry(request)
-            routing = self._routing(clause, document, result.value)
+            routing = self._attempt(request, clause, document)
         except LlmResponseError as first_error:
+            if isinstance(first_error, LlmContextWindowError):
+                raise LlmContextWindowError(
+                    str(first_error),
+                    raw_content=first_error.raw_content,
+                    raw_response=self._failure_details(first_error),
+                    finish_reason=first_error.finish_reason,
+                ) from first_error
             retry_hint = (
                 "Scope reaches have only reference and include_descendants. Preserve the complete "
                 "target citation, including an explicit Parts label for part lists. Never emit "
@@ -254,22 +267,87 @@ class LlmContextRoutingEnricher:
                 metadata={**request.metadata, "corrective_retry": "routing-invariants-v1"},
             )
             try:
-                result = self._generate_with_truncation_retry(retry_request)
-                routing = self._routing(clause, document, result.value)
+                routing = self._attempt(retry_request, clause, document)
             except LlmResponseError as retry_error:
-                raise LlmResponseError(
+                error_type = (
+                    LlmContextWindowError
+                    if isinstance(retry_error, LlmContextWindowError)
+                    else LlmResponseError
+                )
+                raise error_type(
                     "context enrichment response remains invalid after corrective retry: "
                     f"{retry_error}",
                     raw_content=retry_error.raw_content,
-                    raw_response={
-                        "first_error": str(first_error),
-                        "first_response": first_error.raw_content,
-                        "retry_error": str(retry_error),
-                        "retry_response": retry_error.raw_content,
-                    },
+                    raw_response=self._failure_details(first_error, retry_error),
                     finish_reason=retry_error.finish_reason,
                 ) from retry_error
         return normalize_context_routing_targets(routing, document)
+
+    def _attempt(
+        self, request: StructuredGenerationRequest, clause: Clause, document: EngineeringDocument
+    ) -> ContextRouting:
+        result = self._generate_with_truncation_retry(request)
+        try:
+            return self._routing(clause, document, result.value)
+        except LlmResponseError as error:
+            self._record_failure(error, request, phase="routing_validation")
+            raise
+
+    def _record_failure(
+        self, error: LlmResponseError, request: StructuredGenerationRequest, *, phase: str
+    ) -> None:
+        kind = (
+            "context_window_exceeded"
+            if isinstance(error, LlmContextWindowError)
+            else "output_truncated"
+            if error.finish_reason == "length"
+            else "routing_invariant_violation"
+            if phase == "routing_validation"
+            else "invalid_response"
+        )
+        self._failure_chain.append(
+            {
+                "error_kind": kind,
+                "phase": phase,
+                "stage": request.metadata.get("corrective_retry", "initial"),
+                "parent_stage": request.metadata.get("retry_parent"),
+                "error": str(error),
+                "finish_reason": error.finish_reason,
+                "rejected_content": error.raw_content,
+                "provider_response": error.raw_response,
+                "request_max_tokens": request.max_tokens,
+                "request_characters": len(request.system_prompt) + len(request.user_prompt),
+            }
+        )
+
+    def _failure_details(
+        self, first_error: LlmResponseError, retry_error: LlmResponseError | None = None
+    ) -> dict:
+        # Preserve legacy first/retry fields, plus every intermediate truncation
+        # and provider payload (including context/token counters).
+        first = self._failure_chain[0]
+        last = self._failure_chain[-1]
+        details = {
+            "contract": "context-routing-failure-chain-v1",
+            "first_error": first["error"],
+            "first_response": first["rejected_content"],
+            "first_error_kind": first["error_kind"],
+            "last_error": last["error"],
+            "last_response": last["rejected_content"],
+            "last_error_kind": last["error_kind"],
+            "initial_attempt_error": str(first_error),
+            "failure_chain": list(self._failure_chain),
+        }
+        if retry_error is not None:
+            details.update(retry_error=str(retry_error), retry_response=retry_error.raw_content)
+        return details
+
+    def _generate(self, request: StructuredGenerationRequest) -> StructuredGenerationResult:
+        try:
+            return self._gateway.generate_structured(request)
+        except LlmResponseError as error:
+            self._record_failure(error, request, phase="generation")
+            raise
 
     def _routing(
         self, clause: Clause, document: EngineeringDocument, payload: Mapping[str, object]
@@ -294,11 +372,11 @@ class LlmContextRoutingEnricher:
         self, request: StructuredGenerationRequest
     ) -> StructuredGenerationResult:
         try:
-            return self._gateway.generate_structured(request)
+            return self._generate(request)
         except LlmResponseError as error:
-            if error.finish_reason != "length":
+            if isinstance(error, LlmContextWindowError) or error.finish_reason != "length":
                 raise
-            return self._gateway.generate_structured(
+            return self._generate(
                 replace(
                     request,
                     system_prompt=(
@@ -307,7 +385,11 @@ class LlmContextRoutingEnricher:
                         "object required by the schema, with no explanations or extra fields."
                     ),
                     max_tokens=self._retry_max_tokens,
-                    metadata={**request.metadata, "corrective_retry": "truncation-v1"},
+                    metadata={
+                        **request.metadata,
+                        "corrective_retry": "truncation-v1",
+                        "retry_parent": request.metadata.get("corrective_retry", "initial"),
+                    },
                 )
             )
 
@@ -636,6 +718,16 @@ class ContextEnrichmentService:
                         "error": str(error),
                         "rejected_content": error.raw_content,
                         "attempts": error.raw_response,
+                        "first_error_kind": (
+                            error.raw_response.get("first_error_kind")
+                            if isinstance(error.raw_response, Mapping)
+                            else None
+                        ),
+                        "last_error_kind": (
+                            error.raw_response.get("last_error_kind")
+                            if isinstance(error.raw_response, Mapping)
+                            else None
+                        ),
                     }
                 )
             else:
@@ -694,18 +786,21 @@ class ContextEnrichmentService:
             subjects_ambiguous=subject_report.analysis.ambiguous_clauses,
             context_enrichment_failures=failures,
             routing_failures=tuple(routing_failures),
-            unresolved_scope_targets=_unresolved_scope_targets(result),
-            unresolved_reference_targets=_unresolved_reference_targets(result),
+            unresolved_scope_targets=_unresolved_scope_targets(result, documents=documents),
+            unresolved_reference_targets=_unresolved_reference_targets(result, documents=documents),
             routing_corrections=tuple(routing_corrections),
         )
 
 
-def _unresolved_scope_targets(document: EngineeringDocument) -> tuple[dict[str, object], ...]:
+def _unresolved_scope_targets(
+    document: EngineeringDocument, *, documents: Iterable[EngineeringDocument] = ()
+) -> tuple[dict[str, object], ...]:
     """Report retained literal target groups separately from invalid generation.
 
     Include reused/protected state too: an unchanged value is not proof that its
     targets have become addressable. Evidence stays in this private report only.
     """
+    classifier = TargetDiagnostics(document, documents)
     return tuple(
         {
             "source_clause_id": scope.source_clause_id,
@@ -714,6 +809,9 @@ def _unresolved_scope_targets(document: EngineeringDocument) -> tuple[dict[str, 
             "reach_index": reach_index,
             "document_key": reach.document_key or document.key.value,
             "kind": reach.kind.value,
+            "reason": classifier.reason(
+                reach.reference, reach.document_key, scope.source_clause_id
+            ),
             "reference": reach.reference,
             "clause_id": None,
             "status": "unresolved",
@@ -729,7 +827,10 @@ def _unresolved_scope_targets(document: EngineeringDocument) -> tuple[dict[str, 
     )
 
 
-def _unresolved_reference_targets(document: EngineeringDocument) -> tuple[dict[str, object], ...]:
+def _unresolved_reference_targets(
+    document: EngineeringDocument, *, documents: Iterable[EngineeringDocument] = ()
+) -> tuple[dict[str, object], ...]:
+    classifier = TargetDiagnostics(document, documents)
     return tuple(
         {
             "source_clause_id": edge.source_clause_id,
@@ -740,6 +841,9 @@ def _unresolved_reference_targets(document: EngineeringDocument) -> tuple[dict[s
             "clause_id": None,
             "status": "unresolved",
             "role": edge.role.value,
+            "reason": classifier.reason(
+                edge.target.reference, edge.target.document_key, edge.source_clause_id
+            ),
             "evidence": edge.evidence,
         }
         for clause in document.clauses

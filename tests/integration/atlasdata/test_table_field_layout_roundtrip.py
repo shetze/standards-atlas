@@ -31,8 +31,7 @@ from standards_atlas.application.model import (
 from standards_atlas.cli import app
 from standards_atlas.domain.model import TableCell, TableRow
 
-
-LEGACY_SOURCE = '''name="Example"
+LEGACY_SOURCE = """name="Example"
 digits=8
 oyr=2025
 semanticProfile="functional-safety:1.0.0"
@@ -46,7 +45,7 @@ TOC;annex;Example-1:2025 A.2;Annex heading;u
 TABLE;37281310f3247573e93a60a784399e9a;Example-1:2025 Table 1;Reviewed caption;7.1
 TABLE;zero;Example-1:2025 Table A.0;;A.2
 TABLEINDEX;index;Example-1:2025 Table 1;Listed caption;i
-'''
+"""
 
 
 def _table_lines(source: Path) -> list[list[str]]:
@@ -106,7 +105,7 @@ def test_semantic_annotation_writer_uses_the_same_table_layout(tmp_path, start_w
     manifest.write_text(
         'schema_version: "2.0"\nsemantic_profile: "functional-safety:1.0.0"\n'
         'annotations:\n  - reference: "Example-1:2025 7.1"\n'
-        '    primary_statement_function: requirement\n',
+        "    primary_statement_function: requirement\n",
         encoding="utf-8",
     )
     service = AtlasDataSemanticAnnotationService()
@@ -168,31 +167,47 @@ def test_zero_table_survives_roundtrip_and_captionless_content_stays_aligned(
         source_id="EXAMPLE-1",
         items=(
             NormalizedHeading(
-                id="heading", sequence_number=0, source_item_ids=("heading",),
+                id="heading",
+                sequence_number=0,
+                source_item_ids=("heading",),
                 text=f"{parent} Heading",
             ),
             NormalizedTable(
-                id="uncaptioned", sequence_number=1, source_item_ids=("uncaptioned",),
-                caption=None, rows=(TableRow(cells=(TableCell(text="Synthetic cell"),)),),
+                id="uncaptioned",
+                sequence_number=1,
+                source_item_ids=("uncaptioned",),
+                caption=None,
+                rows=(TableRow(cells=(TableCell(text="Synthetic cell"),)),),
             ),
         ),
         metadata=NormalizationMetadata(
-            normalizer_version="test", source_extraction_hash="synthetic",
-            created_at=timestamp, options=NormalizationOptions(),
+            normalizer_version="test",
+            source_extraction_hash="synthetic",
+            created_at=timestamp,
+            options=NormalizationOptions(),
             statistics=NormalizationStatistics(input_items=2, output_items=2),
         ),
     )
     candidates = ReferenceCandidateDocument(
         source_id="EXAMPLE-1",
-        candidates=(ReferenceCandidate(
-            item_id="heading", sequence_number=0, raw_reference=parent,
-            normalized_reference=parent, title_remainder="Heading",
-            match_kind=ReferenceMatchKind.EXACT, status=ReferenceCandidateStatus.EXPECTED,
-            confidence=1.0, expected_clause_ids=(after.clauses[0].id.value,),
-        ),),
+        candidates=(
+            ReferenceCandidate(
+                item_id="heading",
+                sequence_number=0,
+                raw_reference=parent,
+                normalized_reference=parent,
+                title_remainder="Heading",
+                match_kind=ReferenceMatchKind.EXACT,
+                status=ReferenceCandidateStatus.EXPECTED,
+                confidence=1.0,
+                expected_clause_ids=(after.clauses[0].id.value,),
+            ),
+        ),
         metadata=ReferenceDetectionMetadata(
-            detector_version="test", source_normalization_hash="synthetic",
-            expected_structure_hash="synthetic", created_at=timestamp,
+            detector_version="test",
+            source_normalization_hash="synthetic",
+            expected_structure_hash="synthetic",
+            created_at=timestamp,
             statistics=ReferenceDetectionStatistics(candidates=1),
         ),
     )
