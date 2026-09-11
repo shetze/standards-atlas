@@ -28,6 +28,7 @@ return 0;
 ####
 
 #---data---#
+# table-record-layout: parent-caption
 TOC;57cc1360cb46ac51016ebb686a6b99d6;IEC 61508-0:2005 0;Functional safety and IEC 61508;u
 TOC;60dd0d2143028c31cfaa4f6724e2e85d;IEC 61508-0:2005 1;Scope;u
 TOC;b0717acf2a81e095c55b47dda729b896;IEC 61508-0:2005 2;Normative references;u
@@ -1309,218 +1310,155 @@ TOC;a4a48ec831ab9827e845cec7df7f958e;IEC 61508-7:2010 E.45;Functional quality pa
 TOC;3f1829e2465a27cb28a3b201efe9a88a;IEC 61508-7:2010 E.46;Quality standards;m
 TOC;a4891c092e2308cf991c9ecec191ac48;IEC 61508-7:2010 F;Definitions of properties of software lifecycle phases;u
 TOC;6c45989957c31bd73b618df6d83a7d9b;IEC 61508-7:2010 G;Guidance for the development of safety-related object oriented software;u
-TABLE;54e8dc8798a0a91e666c275a5e9b453a;IEC 61508-1:2010 Table 7.1.2.2.1;;7.1.2.2
-TABLE;bdbe1b80aa930aed5d1de5f3747e0acc;IEC 61508-1:2010 Table 7.6.2.9.2;;7.6.2.9
-TABLE;a49f0ce9e86a9c7e3c28db88074e61da;IEC 61508-1:2010 Table 7.6.2.9.3;;7.6.2.9
-TABLE;48e10f80a0ecbe403b5d36a8ef83b23d;IEC 61508-1:2010 Table 8.2.18.4;;8.2.18
-TABLE;391a3906aceadc57a10d86f4d3facb86;IEC 61508-1:2010 Table 8.2.18.5;;8.2.18
-TABLE;0e421b295cdec6d61c7e676a7015ff34;IEC 61508-1:2010 Table A.1;;A
-TABLE;1b266de213ebce33281710a42b1c74d6;IEC 61508-1:2010 Table A.2;;A
-TABLE;53f230ccf555566f6e26968b0ba3809c;IEC 61508-1:2010 Table A.3;;A
-TABLE;3f34c61cb8eb74c5dde8999a9730a0c7;IEC 61508-2:2010 Table 7.1.3.5.1;;7.1.3.5
-TABLE;8aaebd3c94043cc62073337be3666435;IEC 61508-2:2010 Table 7.4.4.2.2.2;;7.4.4.2.2
-TABLE;023a77e2fe7469780e2707ae247614ea;IEC 61508-2:2010 Table 7.4.4.2.2.3;;7.4.4.2.2
-TABLE;ddb17e41cb495f18cbfc5873dccb4a44;IEC 61508-2:2010 Table A.2.1;;A.2
-TABLE;3a9a98734b7534fbad116ba8c1c2b861;IEC 61508-2:2010 Table A.2.2;;A.2
-TABLE;721f156eb20fdc49746b4c1bbaed3134;IEC 61508-2:2010 Table A.2.3;;A.2
-TABLE;05efd71493f899d41245bab11f355a49;IEC 61508-2:2010 Table A.2.4;;A.2
-TABLE;c7e80c2d80183173f6a8d408c275c378;IEC 61508-2:2010 Table A.2.5;;A.2
-TABLE;cb9791be1bf3be40b5e24cd173ea9a07;IEC 61508-2:2010 Table A.2.6;;A.2
-TABLE;eeae77ea26ccd6e1711f464be52ae137;IEC 61508-2:2010 Table A.2.7;;A.2
-TABLE;6477ba185e5a005b7ea768062111073e;IEC 61508-2:2010 Table A.2.8;;A.2
-TABLE;ce264815796042b7ef3831a41fb9cfc5;IEC 61508-2:2010 Table A.2.9;;A.2
-TABLE;1299f4ac7a7a1e4874f7a8f7ed6a27f2;IEC 61508-2:2010 Table A.2.10;;A.2
-TABLE;7f789cb21cdaf0a1eb19323ede1bf0f7;IEC 61508-2:2010 Table A.2.11;;A.2
-TABLE;4e80d13d6a4467933339c14f83c3b1b6;IEC 61508-2:2010 Table A.2.12;;A.2
-TABLE;b463ee5f8ad059cf014a04f377942bcb;IEC 61508-2:2010 Table A.2.13;;A.2
-TABLE;44eabd8de9170a086fc6e96eafa7d9cd;IEC 61508-2:2010 Table A.2.14;;A.2
-TABLE;16e3ae98f03f2cc83b98535d37cf71b1;IEC 61508-2:2010 Table A.3.15;;A.3
-TABLE;bb1d384af9cc4d4fcd7b612524437947;IEC 61508-2:2010 Table A.3.16;;A.3
-TABLE;290f275dd8139ca296afc8ed54dcba7b;IEC 61508-2:2010 Table A.3.17;;A.3
-TABLE;f32de83d66e8df91037418941c33d2ef;IEC 61508-2:2010 Table A.3.18;;A.3
-TABLE;5b9b60950e90d262b7697c77ed0dd678;IEC 61508-2:2010 Table B.1;;B
-TABLE;0fed13e33397ba361c4e9debdb65e636;IEC 61508-2:2010 Table B.2;;B
-TABLE;06e05a9fa84e8d5716329a1ccc298778;IEC 61508-2:2010 Table B.3;;B
-TABLE;1e5287b35f03ebf916944f9f23d99b14;IEC 61508-2:2010 Table B.4;;B
-TABLE;e163ee4ddd6076c06be2104f37699e25;IEC 61508-2:2010 Table B.5;;B
-TABLE;bd3c15ef3e09b4d6225b4a9325e24535;IEC 61508-2:2010 Table B.6;;B
-TABLE;00a7b5e19f5ccb6c936a583e96cee167;IEC 61508-2:2010 Table E.3.1;;E.3
-TABLE;51bcb47cc13d41767c0e10d0b1997503;IEC 61508-2:2010 Table E.3.2;;E.3
-TABLE;1d8855a551366eab74c9f4ad9bcdff69;IEC 61508-2:2010 Table F.2.1;;F.2
-TABLE;e331cb5258ce7f0c560b534c836a1c6d;IEC 61508-2:2010 Table F.2.2;;F.2
-TABLE;cd72f57cf7d1fd6a23a1c29b88532037;IEC 61508-3:2010 Table 7.1.2.9.1;;7.1.2.9
-TABLE;6418ed8229a53177da25d5ebe14ba7b0;IEC 61508-3:2010 Table A.0;;A
-TABLE;1740e38288599fd75364ab8de36d4fa8;IEC 61508-3:2010 Table A.1;Table;A
-TABLE;15e1eee79fb05e044e6657d653163730;IEC 61508-3:2010 Table A.2;Table;A
-TABLE;a7c6ae6a2d386c07f785edde8df8a6bf;IEC 61508-3:2010 Table A.3;Table;A
-TABLE;3c829c4dfe4c344cae2a20c9341b3382;IEC 61508-3:2010 Table A.4;Table;A
-TABLE;b718121bf72cfc688c2ec7eec2558cdc;IEC 61508-3:2010 Table A.5;Table;A
-TABLE;e6a4cdaf91228e47ad22cfe82d7360fb;IEC 61508-3:2010 Table A.6;Table;A
-TABLE;35a62a681867041cf289ebd63c89f896;IEC 61508-3:2010 Table A.7;Table;A
-TABLE;492875fe60af5a7aa2439167a57e0007;IEC 61508-3:2010 Table A.8;Table;A
-TABLE;02369460e75af31483d0176b5d0cb00d;IEC 61508-3:2010 Table A.9;Table;A
-TABLE;e9bda00bee904ecdfb9b64b1f9761a71;IEC 61508-3:2010 Table A.10;Table;A
-TABLE;94d02c007eb65a079b358f2749ddadb6;IEC 61508-3:2010 Table B.1;Table;B
-TABLE;3b8fc879829a3d5c5fea61d8a6b4f40b;IEC 61508-3:2010 Table B.2;Table;B
-TABLE;1f1df9d47b1aa007dc099e98a1215adf;IEC 61508-3:2010 Table B.3;Table;B
-TABLE;3ce68ff5f2bc8011df4f65c7ed16d51b;IEC 61508-3:2010 Table B.4;Table;B
-TABLE;e0236417480e3a35b70c2629a5acba46;IEC 61508-3:2010 Table B.5;Table;B
-TABLE;fcd0ff7d64704353c6a09441b374f801;IEC 61508-3:2010 Table B.6;Table;B
-TABLE;6d5b6cee1a4d2a55df9cfbddef6836e9;IEC 61508-3:2010 Table B.7;Table;B
-TABLE;2278ad7f62b9d30d73b6281b9a220e80;IEC 61508-3:2010 Table B.8;Table;B
-TABLE;8dd72033dbb7a97451ca9630f0861deb;IEC 61508-3:2010 Table B.9;Table;B
-TABLE;4af3793595974b410f05e4b6d36f9222;IEC 61508-3:2010 Table C.2.1;;C.2
-TABLE;068a58ae50e2cbae6e311cc627b48337;IEC 61508-3:2010 Table C.2.2;;C.2
-TABLE;45a3eaac3025f410f956f107e07cc444;IEC 61508-3:2010 Table C.2.3;;C.2
-TABLE;fdd89b5f926678b373afe7a648ca0126;IEC 61508-3:2010 Table C.2.4;;C.2
-TABLE;ff827c04443493f39ac8a8fca250eaef;IEC 61508-3:2010 Table C.2.5;;C.2
-TABLE;857b13199d414dc91587dca2cf80a4d3;IEC 61508-3:2010 Table C.2.6;;C.2
-TABLE;f0c92fb4378a63fce5eda679befa62e0;IEC 61508-3:2010 Table C.2.7;;C.2
-TABLE;0719ce4439c241297d99e1d3ba6c1389;IEC 61508-3:2010 Table C.2.8;;C.2
-TABLE;42af34283507095aa3b67c6f444e5cfb;IEC 61508-3:2010 Table C.2.9;;C.2
-TABLE;b890d16915ef6248f81a271f6a4898fe;IEC 61508-3:2010 Table C.2.10;;C.2
-TABLE;d24c74e8c31dc3c42b11527b89f1c7b8;IEC 61508-3:2010 Table C.2.11;;C.2
-TABLE;9c46fb42e984a347bfc293a378c4f1eb;IEC 61508-3:2010 Table C.2.12;;C.2
-TABLE;93ea37bfb439a0d2cf78c71476702ff6;IEC 61508-3:2010 Table C.2.13;;C.2
-TABLE;ecfd0f1e9e1cb07b1b5c7053be577240;IEC 61508-3:2010 Table C.2.14;;C.2
-TABLE;38300b8768567c3a25cd9e9b1f2c9c38;IEC 61508-3:2010 Table C.2.15;;C.2
-TABLE;3376df1a18404e0c66b2265557246f5b;IEC 61508-3:2010 Table C.2.16;;C.2
-TABLE;936f5fa108f558f3187a88a8b15f361b;IEC 61508-3:2010 Table C.2.17;;C.2
-TABLE;d36a3e6a30ecbbae2896e8dbd33adc64;IEC 61508-3:2010 Table C.2.18;;C.2
-TABLE;09083cb976f89d734f5a30f01df11803;IEC 61508-3:2010 Table C.2.19;;C.2
-TABLE;c638ebf95f9b0b663d36c5787f0b2bf1;IEC 61508-3:2010 Table E.1;Table;E
-TABLE;44501f03eb4c9ce3c5824f36fa9fd54a;IEC 61508-3:2010 Table E.2;Table;E
-TABLE;9d25b3184cf30612285273d4b27654e5;IEC 61508-3:2010 Table F.7.1;;F.7
-TABLE;fe58fd7b7e2b7472830d77e19dc2e603;IEC 61508-3:2010 Table F.7.2;;F.7
-TABLE;67d5f9ba64201865be68baa96a7daf30;IEC 61508-4:2010 Table 3.1;;3
-TABLE;634ff8497b564f42086939f61258c61a;IEC 61508-5:2010 Table C.2.2.1;;C.2.2
-TABLE;00159a6a6aac0e72ba9e8821775a475b;IEC 61508-5:2010 Table C.2.2.2;;C.2.2
-TABLE;2933d93f2e2c7d8cd2c057df95e575ad;IEC 61508-5:2010 Table E.6.1;;E.6
-TABLE;93544331a418fba061c210d851f55e8f;IEC 61508-5:2010 Table E.6.2;;E.6
-TABLE;d3e3d72c8d7aa075a435f7ed3bc777b7;IEC 61508-5:2010 Table F.5.1;;F.5
-TABLE;f374eef639e8ec1b700cf8714ee4e417;IEC 61508-6:2010 Table B.3.1.1;;B.3.1
-TABLE;c9b9d76bd0b7866957a77b262a9dcc5b;IEC 61508-6:2010 Table B.3.2.2.6.2;;B.3.2.2.6
-TABLE;a573b98ad7389a73b9696acdc88fbc67;IEC 61508-6:2010 Table B.3.2.2.6.3;;B.3.2.2.6
-TABLE;21fed39f5ec4fac834b53314075aa3aa;IEC 61508-6:2010 Table B.3.2.2.6.4;;B.3.2.2.6
-TABLE;ad54e3d535798d93dbf421b072403311;IEC 61508-6:2010 Table B.3.2.2.6.5;;B.3.2.2.6
-TABLE;b66c374d9b4ff6eef84f829ab29fe27a;IEC 61508-6:2010 Table B.3.2.4.6;;B.3.2.4
-TABLE;e906fbd53e3ca91d918da2230858b4f8;IEC 61508-6:2010 Table B.3.2.4.7;;B.3.2.4
-TABLE;9c71586431146b6eb273b9b9fc604159;IEC 61508-6:2010 Table B.3.2.4.8;;B.3.2.4
-TABLE;1f7892210f8139e4b8fe4e801edd0857;IEC 61508-6:2010 Table B.3.2.5.9;;B.3.2.5
-TABLE;0c5a8112c7443e7e3e9ee19e2b3414ca;IEC 61508-6:2010 Table B.3.3.3.10;;B.3.3.3
-TABLE;1e3a432b276d1cd60414a9423281094b;IEC 61508-6:2010 Table B.3.3.3.11;;B.3.3.3
-TABLE;49c176c39477fd78f465088f2cb4a913;IEC 61508-6:2010 Table B.3.3.3.12;;B.3.3.3
-TABLE;a2e105809937cd380825c55f9d30d140;IEC 61508-6:2010 Table B.3.3.3.13;;B.3.3.3
-TABLE;5f15605880c44bf8935534e05d30e5cf;IEC 61508-6:2010 Table B.3.3.4.14;;B.3.3.4
-TABLE;7c275dc880a806593d8eb43fb9490dd2;IEC 61508-6:2010 Table B.3.3.4.15;;B.3.3.4
-TABLE;d64033ab0929b4ac969a5621982f55be;IEC 61508-6:2010 Table B.3.3.4.16;;B.3.3.4
-TABLE;b145a3b0921d4b639e2ed9ae5cca430f;IEC 61508-6:2010 Table C.1;;C
-TABLE;cd3f8458c47742fd8ffc9554ae811bcf;IEC 61508-6:2010 Table C.2;;C
-TABLE;9835190dfa058358254d204d640cec56;IEC 61508-6:2010 Table D.5.1;;D.5
-TABLE;408e6d567e72472535c1ec2de8014c44;IEC 61508-6:2010 Table D.5.2;;D.5
-TABLE;9e65cd0314e529df09f148b2809b1031;IEC 61508-6:2010 Table D.5.3;;D.5
-TABLE;2a3799997faaaf0db9ac1348b3dbfa27;IEC 61508-6:2010 Table D.5.4;;D.5
-TABLE;7f0073f91f341660be9736cf04ba1d4a;IEC 61508-6:2010 Table D.5.5;;D.5
-TABLE;ad519226dd26436f3f92643f42ddb57f;IEC 61508-6:2010 Table D.6.6;;D.6
-TABLE;8ced250212b83291fcff791be26d9345;IEC 61508-6:2010 Table E.2.1;;E.2
-TABLE;b6cbb2ae2a3112f7b6c27cd2962cfe20;IEC 61508-6:2010 Table E.2.2;;E.2
-TABLE;e372e22a1d058a88b93b5dc38fbaa40b;IEC 61508-6:2010 Table E.2.3;;E.2
-TABLE;1c0d11e7cc0a0c61306fb6eb784f24a5;IEC 61508-6:2010 Table E.2.4;;E.2
-TABLE;ea2984e5c3870f7cae63cc6d057a9859;IEC 61508-6:2010 Table E.2.5;;E.2
-TABLE;161d40175c6f44c48c2575e35d61c4b0;IEC 61508-6:2010 Table E.2.6;;E.2
-TABLE;72c253dd20a73dabfbb5463ea7a29ba6;IEC 61508-6:2010 Table E.2.7;;E.2
-TABLE;a9789f3de131c8ac007e2c4670205b4e;IEC 61508-6:2010 Table E.2.8;;E.2
-TABLE;60959d06dee56fba0238d3c91df66814;IEC 61508-6:2010 Table E.2.9;;E.2
-TABLE;d20428057089d0359fdb645b7675219a;IEC 61508-6:2010 Table E.2.10;;E.2
-TABLE;df9bd8c9efdeecdb40f1ae547307e98f;IEC 61508-6:2010 Table E.3.11;;E.3
-TABLE;bd7451f8203d2ec1b865e0338a0d9e29;IEC 61508-6:2010 Table E.3.12;;E.3
-TABLE;befc8ab2a28ff5bb73db692df89d516d;IEC 61508-6:2010 Table E.3.13;;E.3
-TABLE;bbcdbfbb7f029ee7b8428679a75a6ab1;IEC 61508-6:2010 Table E.3.14;;E.3
-TABLE;2e6aaaf49db2b43bb1622a4e1686f11f;IEC 61508-6:2010 Table E.3.15;;E.3
-TABLE;87fe86af8040c9bf17c97c0445c969b5;IEC 61508-6:2010 Table E.3.16;;E.3
-TABLE;c98cec7dd016cef3dbdcc955db6d67db;IEC 61508-6:2010 Table E.3.17;;E.3
-TABLE;56c0510602d0cdf7bd38ac7340760f92;IEC 61508-6:2010 Table E.3.18;;E.3
-TABLE;8d60ddcae396d983a0ae546f363231ca;IEC 61508-6:2010 Table E.3.19;;E.3
-TABLE;d7f6e1ce8843129e7f8deb8a8418ec56;IEC 61508-6:2010 Table E.3.20;;E.3
-TABLE;b288e21de1f49611a0dbcf23ee873015;IEC 61508-7:2010 Table C.4.5.1;;C.4.5
-TABLE;437226253c6e7fef9a6954c4ae66e1c3;IEC 61508-7:2010 Table D.1;;D
-TABLE;52dda2fc36b44e8d1f358f5736e4bb5c;IEC 61508-7:2010 Table D.2.1.3.2;;D.2.1.3
-TABLE;5b38580b5b3c0d1797d458d1e9986d87;IEC 61508-7:2010 Table D.2.2.2.3;;D.2.2.2
-TABLE;e8d8dbd6257dc8b81e5b6419b7a8a3d4;IEC 61508-7:2010 Table D.2.3.3.4;;D.2.3.3
-TABLE;a16c859ead154a1a3b31d68587f4ba3e;IEC 61508-7:2010 Table D.2.4.3.5;;D.2.4.3
-TABLE;5bb91136df617a716056e33666156f99;IEC 61508-7:2010 Table F.1;;F
-TABLE;49d6711219d26e99cdedc28b6b35cc9a;IEC 61508-7:2010 Table F.2;;F
-TABLE;3a28773f22615924567a90e7fea69bdd;IEC 61508-7:2010 Table F.3;;F
-TABLE;dfd817c4e43c31e61207cfed5b999409;IEC 61508-7:2010 Table F.4;;F
-TABLE;87c9e367aad37a533d57da8720219fee;IEC 61508-7:2010 Table F.5;;F
-TABLE;be19036924e125e46bec7502a6cc4144;IEC 61508-7:2010 Table F.6;;F
-TABLE;f4837914758399b3d2e024ccb64c21f0;IEC 61508-7:2010 Table F.7;;F
-TABLE;a328fd93c25c686f63582841b7828d87;IEC 61508-7:2010 Table F.8;;F
-TABLE;5e3f847dace71887f0d2bb15411be095;IEC 61508-7:2010 Table F.9;;F
-TABLE;ab85be7471ab23c4badaeee7550f9b32;IEC 61508-7:2010 Table F.10;;F
-TABLE;a1b3eced41103be1375be7f853772672;IEC 61508-7:2010 Table G.1;;G
-TABLE;f675967bb2c4d8de72dbfffcefbc3408;IEC 61508-7:2010 Table G.2;;G
-TABLE;c2d3239f3065ff9c6d1851f8ca7707d6;IEC 61508-7:2010 Table G.3;;G
-TABLE;c21e0c657d13fd0706dbc58eac96847c;IEC 61508:2005 Table A.1;Table;
-TABLE;5f62ccfe77a85c29e2407883af3ab790;IEC 61508:2005 Table A.2;Table;
-TABLE;85e02220f2ce5ebd93e21e077c43f499;IEC 61508:2005 Table A.3;Table;
-TABLE;6f2d75ea7aa558303080fb06e14dead6;IEC 61508:2005 Table A.4;Table;
-TABLE;753244887906958bf4d4abcb4ef6122f;IEC 61508:2005 Table A.5;Table;
-TABLE;34316faadff9a40b29d8ade806edda3d;IEC 61508:2005 Table A.6;Table;
-TABLE;1ad9c8865e96c415e84537b580b35527;IEC 61508:2005 Table A.7;Table;
-TABLE;44cabfadb5f6d86962c5bd4bc08dc836;IEC 61508:2005 Table A.8;Table;
-TABLE;d0b81d434b04fba561556b1d909449f4;IEC 61508:2005 Table A.9;Table;
-TABLE;c999a799965114750b51685672877d4c;IEC 61508:2005 Table A.10;Table;
-TABLE;ce6273bce8dce80caabb50390cb23818;IEC 61508:2005 Table B.1;Table;
-TABLE;abbd02b4420d331ad873b07b33086359;IEC 61508:2005 Table B.2;Table;
-TABLE;b086598773f84ef701d968efa9d8ffbb;IEC 61508:2005 Table B.3;Table;
-TABLE;92a89124706fc1f29aea0281e0ee9637;IEC 61508:2005 Table B.4;Table;
-TABLE;11f7b84649b8b595409bbea554183706;IEC 61508:2005 Table B.5;Table;
-TABLE;1fa902d9c4331d37557872f041df744f;IEC 61508:2005 Table B.6;Table;
-TABLE;fda948a6613731434c123f31b70d3360;IEC 61508:2005 Table B.7;Table;
-TABLE;1d483ee9da010f443ec079f016555954;IEC 61508:2005 Table B.8;Table;
-TABLE;c39f782f3574f29e52bd0c984f88837d;IEC 61508:2005 Table B.9;Table;
-TABLE;013a1c7b69040949b36a9f943c242bf0;IEC 61508:2005 Table C.1;Table;
-TABLE;80f1e7ead7ed82352d9b72d162dcad78;IEC 61508:2005 Table C.2;Table;
-TABLE;251631dde1c67c246614c37db5fee081;IEC 61508:2005 Table C.3;Table;
-TABLE;93ea7ec6b7715336f8f1640529a5d00e;IEC 61508:2005 Table C.4;Table;
-TABLE;cdfbbbef8c00d20519712cd573c753d5;IEC 61508:2005 Table C.5;Table;
-TABLE;cdc6906b98a1a176b7a57feb78357bff;IEC 61508:2005 Table C.6;Table;
-TABLE;23c1a35524c844c8d89e37395d5c1543;IEC 61508:2005 Table C.7;Table;
-TABLE;23b2acd0cb52de8886983ecdb75dc6b0;IEC 61508:2005 Table C.8;Table;
-TABLE;cf830617dc29fe8ed3290c1135bc2b3a;IEC 61508:2005 Table C.9;Table;
-TABLE;6cd0f1193a362fa59e6b5ebe3852ca68;IEC 61508:2005 Table C.10;Table;
-TABLE;a8c03f13bc9fc5c71d19bb4bce37e082;IEC 61508:2005 Table C.11;Table;
-TABLE;8d04db0207ebb2471215b60d1ed58084;IEC 61508:2005 Table C.12;Table;
-TABLE;139bc79644521b43bf1c3a3f96fac900;IEC 61508:2005 Table C.13;Table;
-TABLE;a2e7813dd49e4eade2c96fd1e74d1612;IEC 61508:2005 Table C.14;Table;
-TABLE;043495d71aa1834ac1cc37fa4d75527d;IEC 61508:2005 Table C.15;Table;
-TABLE;47f1f97d32afbb2b2bd7bb80bfa9222c;IEC 61508:2005 Table C.16;Table;
-TABLE;c91f3aa66fc21f340c3bb9e623c2c395;IEC 61508:2005 Table C.17;Table;
-TABLE;76af0db70b3958ff83dd1a777810eaa5;IEC 61508:2005 Table C.18;Table;
-TABLE;779b9bc7207877c5941f6c463afcf14a;IEC 61508:2005 Table C.19;Table;
-TABLE;536c9f76eb36e1b9a514b26d471ebc3f;IEC 61508:2005 Table E.1;Table;
-TABLE;d044206d1e378eed8ba8f1e939419e20;IEC 61508:2005 Table E.2;Table;
-TABLE;98ec950c55e03c3475666cd2ab8409d5;IEC 61508:2005 Table F.1;Introduction;
-TABLE;40c7a56ffab2181f2377d139158c69ae;IEC 61508:2005 Table F.2;Domains of behaviour;
-TABLE;599cf063bb6c8444d817c4dc57237780;IEC 61508-3:2010 Table C.1;Introduction;C
-TABLE;fe22d9bae4ec4ea607bfba95ef6ceb47;IEC 61508-3:2010 Table C.2;Properties for systematic safety integrity;C
-TABLE;d06fd2ee3faedd91619a81c6c6b96143;IEC 61508-3:2010 Table C.3;Properties for systematic safety integrity - Detailed tables;C
-TABLE;2935a8542e9ecca008d244ba00e9df41;IEC 61508-3:2010 Table C.4;Table;C
-TABLE;a4485802511f7cd1a869c5eb51e06585;IEC 61508-3:2010 Table C.5;Table;C
-TABLE;adfe0eff87a408c8bb60a3afdfe2d326;IEC 61508-3:2010 Table C.6;Table;C
-TABLE;b4dd4c3bc1180a396f61fb66e9ae952b;IEC 61508-3:2010 Table C.7;Table;C
-TABLE;cca1f8f3da727cdb7bfb238b12fec9d0;IEC 61508-3:2010 Table C.8;Table;C
-TABLE;64ea63c177dd306a1357c1b99259deef;IEC 61508-3:2010 Table C.9;Table;C
-TABLE;0100f517fda1ca286bc0e1cc2b5ed63e;IEC 61508-3:2010 Table C.10;Table;C
-TABLE;9286460b6d1ba94df73e3c383033b34e;IEC 61508-3:2010 Table C.11;Table;C
-TABLE;28a52e250af1bd3f4305d88b1bd33459;IEC 61508-3:2010 Table C.12;Table;C
-TABLE;305ab3b6838b4d6288a9ed4a8160e90f;IEC 61508-3:2010 Table C.13;Table;C
-TABLE;0e2ed2d7a7f141a89d082263a6d13b8b;IEC 61508-3:2010 Table C.14;Table;C
-TABLE;96f399c4f32a015b7c4e70ffb961e773;IEC 61508-3:2010 Table C.15;Table;C
-TABLE;2e618c1e746e10ff1fa10c8a65cba7c0;IEC 61508-3:2010 Table C.16;Table;C
-TABLE;d75ff6aa80a6e4db98b2830bbce48317;IEC 61508-3:2010 Table C.17;Table;C
-TABLE;516d874833cace6bfa477278ba482cca;IEC 61508-3:2010 Table C.18;Table;C
-TABLE;13777d45d33fdace27d6f4ab88d2eb75;IEC 61508-3:2010 Table C.19;Table;C
-TABLE;300e8e3b56165525ad821123bbd72f39;IEC 61508-3:2010 Table F.1;Introduction;F
-TABLE;fca02ec2b4a494b88d5c917c52abecd1;IEC 61508-3:2010 Table F.2;Domains of behaviour;F
+TABLE;37d941042e64e949cb78ba5928eda9bd;IEC 61508-1:2010 Table 1;7.1.2.2;Overall safety lifecycle – overview
+TABLE;eded1a6727f5f75359ed06d2a3fe63bc;IEC 61508-1:2010 Table 2;7.6.2.9;Safety integrity levels – target failure measures for a safety function operating in low demand mode of operation
+TABLE;d6402972b32486353698c829fb125b0e;IEC 61508-1:2010 Table 3;7.6.2.9;Safety integrity levels – target failure measures for a safety function operating in high demand mode of operation or continuous mode of operation
+TABLE;98eecca81d74ed63d4a6b9cd462f51ba;IEC 61508-1:2010 Table 4;8.2.18;Minimum levels of independence of those carrying out functional safety assessment (overall safety lifecycle phases 1 to 8 and 12 to 16 inclusive (see Figure 2))
+TABLE;9c07c9f1911987eb27ff4afa37c8da53;IEC 61508-1:2010 Table 5;8.2.18;Minimum levels of independence of those carrying out functional safety assessment (overall safety lifecycle phases 9 and 10, including all phases of E/E/PE system and software safety lifecycles (see Figures 2, 3 and 4))
+TABLE;0e421b295cdec6d61c7e676a7015ff34;IEC 61508-1:2010 Table A.1;A;Table A.1 – Example of a documentation structure for information related to the overall safety lifecycle
+TABLE;1b266de213ebce33281710a42b1c74d6;IEC 61508-1:2010 Table A.2;A;Example of a documentation structure for information related to the E/E/PE system safety lifecycle
+TABLE;53f230ccf555566f6e26968b0ba3809c;IEC 61508-1:2010 Table A.3;A;Example of a documentation structure for information related to the software safety lifecycle
+TABLE;d38907821861bcf2cfd6c5538eba030f;IEC 61508-2:2010 Table 1;7.1.3.5;Overview – realisation phase of the E/E/PE system safety lifecycle
+TABLE;f2de2e5ff703167e5e4bf4d5dba54b18;IEC 61508-2:2010 Table 2;7.4.4.2.2;Maximum allowable safety integrity level for a safety function carried out by a type A safety-related element or subsystem
+TABLE;1e0256f4787670bbc0be977891e4e12e;IEC 61508-2:2010 Table 3;7.4.4.2.2;Maximum allowable safety integrity level for a safety function carried out by a type B safety-related element or subsystem
+TABLE;c7c675246b2892b02e5cb2bc51d7214d;IEC 61508-2:2010 Table A.1;A.2;Faults or failures to be assumed when quantifying the effect of random hardware failures or to be taken into account in the derivation of safe failure fraction
+TABLE;da1746df22005d000c8638ab36296622;IEC 61508-2:2010 Table A.2;A.2;Electrical components
+TABLE;454a9c698e356662ab4139ace8902ba6;IEC 61508-2:2010 Table A.3;A.2;Electronic components
+TABLE;f0e10031082c53496c608d16ccf06c7c;IEC 61508-2:2010 Table A.4;A.2;Processing units
+TABLE;3a622e413f300be26a9638d2df7d2fd4;IEC 61508-2:2010 Table A.5;A.2;Invariable memory ranges
+TABLE;e5e02d31cfd04e864e7c5e9382a2eceb;IEC 61508-2:2010 Table A.6;A.2;Variable memory ranges
+TABLE;b9759f5ffcadf3149208f9aa2b98f21e;IEC 61508-2:2010 Table A.7;A.2;I/O units and interface (external communication)
+TABLE;f6bff0e8e4a4055578c31adb7485fed4;IEC 61508-2:2010 Table A.8;A.2;Data paths (internal communication)
+TABLE;f10a1cd5e0293d903359474141438bf7;IEC 61508-2:2010 Table A.9;A.2;Power supply
+TABLE;7aa2da760059e786267c2e6ca11a7b2d;IEC 61508-2:2010 Table A.10;A.2;Program sequence (watch-dog)
+TABLE;e41202f30562264d4d2c8691ba8d1f09;IEC 61508-2:2010 Table A.11;A.2;Clock
+TABLE;e8148179a1637ef6e0d607c29c0a35d3;IEC 61508-2:2010 Table A.12;A.2;Communication and mass-storage
+TABLE;3b243a1ac2de5da3daa7521b25243684;IEC 61508-2:2010 Table A.13;A.2;Sensors
+TABLE;0252c16c4bca82c4c5805e83dbb3556b;IEC 61508-2:2010 Table A.14;A.2;Final elements (actuators)
+TABLE;bf513827eb7bdfc09e0459a86a476421;IEC 61508-2:2010 Table A.15;A.3;Techniques and measures to control systematic failures caused by hardware design
+TABLE;1ddf9961d5887e29b2cb3bd1babc950f;IEC 61508-2:2010 Table A.16;A.3;Techniques and measures to control systematic failures caused by environmental stress or influences
+TABLE;d9b7d7aea51a5b573166bddb042a6e0a;IEC 61508-2:2010 Table A.17;A.3;Techniques and measures to control systematic operational failures
+TABLE;0066fbdd719016d0b66e682828756b04;IEC 61508-2:2010 Table A.18;A.3;Effectiveness of techniques and measures to control systematic failures
+TABLE;5b9b60950e90d262b7697c77ed0dd678;IEC 61508-2:2010 Table B.1;B;Techniques and measures to avoid mistakes during specification of E/E/PE system design requirements (see 7.2)
+TABLE;0fed13e33397ba361c4e9debdb65e636;IEC 61508-2:2010 Table B.2;B;Techniques and measures to avoid introducing faults during E/E/PE system design and development (see 7.4)
+TABLE;06e05a9fa84e8d5716329a1ccc298778;IEC 61508-2:2010 Table B.3;B;Techniques and measures to avoid faults during E/E/PE system integration (see 7.5)
+TABLE;1e5287b35f03ebf916944f9f23d99b14;IEC 61508-2:2010 Table B.4;B;Techniques and measures to avoid faults and failures during E/E/PE system operation and maintenance procedures (see 7.6)
+TABLE;e163ee4ddd6076c06be2104f37699e25;IEC 61508-2:2010 Table B.5;B;Techniques and measures to avoid faults during E/E/PE system safety validation (see 7.7)
+TABLE;bd3c15ef3e09b4d6225b4a9325e24535;IEC 61508-2:2010 Table B.6;B;Effectiveness of techniques and measures to avoid systematic failures
+TABLE;21eee4372f8c4ab2bae147b1dba43243;IEC 61508-2:2010 Table E.1;E.3;Techniques and measures that increase β B-IC
+TABLE;bdb540c1646a25970bc9a95993b2f7d2;IEC 61508-2:2010 Table E.2;E.3;Techniques and measures that decrease β B-IC
+TABLE;ed7004c080c8a72998df48ea1bbcb1ab;IEC 61508-2:2010 Table F.1;F.2;Techniques and measures to avoid introducing faults during ASIC’s design and development – full and semi-custom digital ASICs (see 7.4.6.7)
+TABLE;7f72d07bbc823d718b75012039357eff;IEC 61508-2:2010 Table F.2;F.2;Techniques and measures to avoid introducing faults during ASIC design and development: User programmable ICs (FPGA/PLD/CPLD) (see 7.4.6.7)
+TABLE;9c21b80a57accb95b170cbb054a62c35;IEC 61508-3:2010 Table 1;7.1.2.9;Software safety lifecycle – overview
+TABLE;6418ed8229a53177da25d5ebe14ba7b0;IEC 61508-3:2010 Table A.0;A;
+TABLE;1740e38288599fd75364ab8de36d4fa8;IEC 61508-3:2010 Table A.1;A;Software safety requirements specification
+TABLE;15e1eee79fb05e044e6657d653163730;IEC 61508-3:2010 Table A.2;A;Software design and development – software architecture design
+TABLE;a7c6ae6a2d386c07f785edde8df8a6bf;IEC 61508-3:2010 Table A.3;A;Software design and development – support tools and programming language
+TABLE;3c829c4dfe4c344cae2a20c9341b3382;IEC 61508-3:2010 Table A.4;A;Software design and development – detailed design
+TABLE;b718121bf72cfc688c2ec7eec2558cdc;IEC 61508-3:2010 Table A.5;A;Software design and development – software module testing and integration
+TABLE;e6a4cdaf91228e47ad22cfe82d7360fb;IEC 61508-3:2010 Table A.6;A;Programmable electronics integration (hardware and software)
+TABLE;35a62a681867041cf289ebd63c89f896;IEC 61508-3:2010 Table A.7;A;Software aspects of system safety validation
+TABLE;492875fe60af5a7aa2439167a57e0007;IEC 61508-3:2010 Table A.8;A;Modification
+TABLE;02369460e75af31483d0176b5d0cb00d;IEC 61508-3:2010 Table A.9;A;Software verification
+TABLE;e9bda00bee904ecdfb9b64b1f9761a71;IEC 61508-3:2010 Table A.10;A;Functional safety assessment
+TABLE;94d02c007eb65a079b358f2749ddadb6;IEC 61508-3:2010 Table B.1;B;Design and coding standards
+TABLE;3b8fc879829a3d5c5fea61d8a6b4f40b;IEC 61508-3:2010 Table B.2;B;Dynamic analysis and testing
+TABLE;1f1df9d47b1aa007dc099e98a1215adf;IEC 61508-3:2010 Table B.3;B;Functional and black-box testing
+TABLE;3ce68ff5f2bc8011df4f65c7ed16d51b;IEC 61508-3:2010 Table B.4;B;Failure analysis
+TABLE;e0236417480e3a35b70c2629a5acba46;IEC 61508-3:2010 Table B.5;B;Modelling
+TABLE;fcd0ff7d64704353c6a09441b374f801;IEC 61508-3:2010 Table B.6;B;Performance testing
+TABLE;6d5b6cee1a4d2a55df9cfbddef6836e9;IEC 61508-3:2010 Table B.7;B;Semi-formal methods
+TABLE;2278ad7f62b9d30d73b6281b9a220e80;IEC 61508-3:2010 Table B.8;B;Static analysis
+TABLE;8dd72033dbb7a97451ca9630f0861deb;IEC 61508-3:2010 Table B.9;B;Modular approach
+TABLE;599cf063bb6c8444d817c4dc57237780;IEC 61508-3:2010 Table C.1;C.2;Properties for systematic safety integrity – Software safety requirements specification
+TABLE;fe22d9bae4ec4ea607bfba95ef6ceb47;IEC 61508-3:2010 Table C.2;C.2;Properties for systematic safety integrity – Software design and development – software Architecture Design
+TABLE;d06fd2ee3faedd91619a81c6c6b96143;IEC 61508-3:2010 Table C.3;C.2;Properties for systematic safety integrity – Software design and development – support tools and programming language
+TABLE;2935a8542e9ecca008d244ba00e9df41;IEC 61508-3:2010 Table C.4;C.2;Properties for systematic safety integrity – Software design and development – detailed design (includes software system design, software module design and coding)
+TABLE;a4485802511f7cd1a869c5eb51e06585;IEC 61508-3:2010 Table C.5;C.2;Properties for systematic safety integrity – Software design and development – software module testing and integration
+TABLE;adfe0eff87a408c8bb60a3afdfe2d326;IEC 61508-3:2010 Table C.6;C.2;Properties for systematic safety integrity – Programmable electronics integration (hardware and software)
+TABLE;b4dd4c3bc1180a396f61fb66e9ae952b;IEC 61508-3:2010 Table C.7;C.2;Properties for systematic safety integrity – Software aspects of system safety validation
+TABLE;cca1f8f3da727cdb7bfb238b12fec9d0;IEC 61508-3:2010 Table C.8;C.2;Properties for systematic safety integrity – Software modification
+TABLE;64ea63c177dd306a1357c1b99259deef;IEC 61508-3:2010 Table C.9;C.2;Properties for systematic safety integrity – Software verification
+TABLE;0100f517fda1ca286bc0e1cc2b5ed63e;IEC 61508-3:2010 Table C.10;C.2;Properties for systematic safety integrity – Functional safety assessment
+TABLE;9286460b6d1ba94df73e3c383033b34e;IEC 61508-3:2010 Table C.11;C.2;Detailed properties – Design and coding standards
+TABLE;28a52e250af1bd3f4305d88b1bd33459;IEC 61508-3:2010 Table C.12;C.2;Detailed properties – Dynamic analysis and testing
+TABLE;305ab3b6838b4d6288a9ed4a8160e90f;IEC 61508-3:2010 Table C.13;C.2;Detailed properties – Functional and black-box testing
+TABLE;0e2ed2d7a7f141a89d082263a6d13b8b;IEC 61508-3:2010 Table C.14;C.2;Detailed properties – Failure analysis
+TABLE;96f399c4f32a015b7c4e70ffb961e773;IEC 61508-3:2010 Table C.15;C.2;Detailed properties – Modelling
+TABLE;2e618c1e746e10ff1fa10c8a65cba7c0;IEC 61508-3:2010 Table C.16;C.2;Detailed properties – Performance testing
+TABLE;d75ff6aa80a6e4db98b2830bbce48317;IEC 61508-3:2010 Table C.17;C.2;Detailed properties – Semi-formal methods
+TABLE;516d874833cace6bfa477278ba482cca;IEC 61508-3:2010 Table C.18;C.2;Properties for systematic safety integrity – Static analysis
+TABLE;13777d45d33fdace27d6f4ab88d2eb75;IEC 61508-3:2010 Table C.19;C.2;Detailed properties – Modular approach
+TABLE;c638ebf95f9b0b663d36c5787f0b2bf1;IEC 61508-3:2010 Table E.1;E;Categories of IEC 61508-2 requirements
+TABLE;44501f03eb4c9ce3c5824f36fa9fd54a;IEC 61508-3:2010 Table E.2;E;Requirements of IEC 61508-2 for software and their typical relevance to certain types of software
+TABLE;300e8e3b56165525ad821123bbd72f39;IEC 61508-3:2010 Table F.1;F.7;Module coupling – definition of terms
+TABLE;fca02ec2b4a494b88d5c917c52abecd1;IEC 61508-3:2010 Table F.2;F.7;Types of module coupling
+TABLE;bc1dafe33f026e3d6405afba476803ce;IEC 61508-4:2010 Table 1;3;Abbreviations used in this standard
+TABLE;2c79c72da2b52c6d6e39372f368f7ed0;IEC 61508-5:2010 Table C.1;C.2.2;Example of risk classification of accidents
+TABLE;258f5c8e7d5d3f973866b854c3597971;IEC 61508-5:2010 Table C.2;C.2.2;Interpretation of risk classes
+TABLE;9c626b9d1ed2f86a123428a5e437a5e7;IEC 61508-5:2010 Table E.1;E.6;Example of data relating to risk graph (Figure E.2)
+TABLE;66e9feee462ef1246c0125095e38da0a;IEC 61508-5:2010 Table E.2;E.6;Example of calibration of the general purpose risk graph
+TABLE;1b5bf8c41b3ad2c2938d6f924869fa07;IEC 61508-5:2010 Table F.1;F.5;LOPA report
+TABLE;09b1afd8264977a2d63ea87f7400ec70;IEC 61508-6:2010 Table B.1;B.3.1;Terms and their ranges used in this annex (applies to 1oo1, 1oo2, 2oo2, 1oo2D, 1oo3 and 2oo3)
+TABLE;2064796a1c513ca58e3ddd0f0376d98f;IEC 61508-6:2010 Table B.2;B.3.2.2.6;Average probability of failure on demand for a proof test interval of six months and a mean time to restoration of 8 h
+TABLE;4f398944576a0494b9f7a096bbd742cf;IEC 61508-6:2010 Table B.3;B.3.2.2.6;Average probability of failure on demand for a proof test interval of one year and mean time to restoration of 8 h
+TABLE;893779dc4ab4b49129fefaf8c3c43dd2;IEC 61508-6:2010 Table B.4;B.3.2.2.6;Average probability of failure on demand for a proof test interval of two years and a mean time to restoration of 8 h
+TABLE;ed991531068ed984acfacc966f669b45;IEC 61508-6:2010 Table B.5;B.3.2.2.6;Average probability of failure on demand for a proof test interval of ten years and a mean time to restoration of 8 h
+TABLE;bba888489f5bc5ab84d12b3d5eedcc51;IEC 61508-6:2010 Table B.6;B.3.2.4;Average probability of failure on demand for the sensor subsystem in the example for low demand mode of operation (one year proof test interval and 8 h MTTR)
+TABLE;676bee49fe12d412133fc58f7d69683f;IEC 61508-6:2010 Table B.7;B.3.2.4;Average probability of failure on demand for the logic subsystem in the example for low demand mode of operation (one year proof test interval and 8 h MTTR)
+TABLE;db438b5abb11f8e41c15a7939c128053;IEC 61508-6:2010 Table B.8;B.3.2.4;Average probability of failure on demand for the final element subsystem in the example for low demand mode of operation (one year proof test interval and 8 h MTTR)
+TABLE;78573d0349a0e3c3c56fc846aec92ba1;IEC 61508-6:2010 Table B.9;B.3.2.5;Example for a non-perfect proof test
+TABLE;e1a1f6c1f8c60f184c7262ec87543634;IEC 61508-6:2010 Table B.10;B.3.3.3;Average frequency of a dangerous failure (in high demand or continuous mode of operation) for a proof test interval of one month and a mean time to restoration of 8 h
+TABLE;b024437c305e39b81959a32ddf985139;IEC 61508-6:2010 Table B.11;B.3.3.3;Average frequency of a dangerous failure (in high demand or continuous mode of operation) for a proof test interval of three month and a mean time to restoration of 8 h
+TABLE;f93fe1dda3c084dbf87dbb47c63453d1;IEC 61508-6:2010 Table B.12;B.3.3.3;Average frequency of a dangerous failure (in high demand or continuous mode of operation) for a proof test interval of six month and a mean time to restoration of 8 h
+TABLE;b2176d320424b1b14d5b8a741d44d98f;IEC 61508-6:2010 Table B.13;B.3.3.3;Average frequency of a dangerous failure (in high demand or continuous mode of operation) for a proof test interval of one year and a mean time to restoration of 8 h
+TABLE;4247cdb56842de70cc7f812e06da96de;IEC 61508-6:2010 Table B.14;B.3.3.4;Average frequency of a dangerous failure for the sensor subsystem in the example for high demand or continuous mode of operation (six month proof test interval and 8 h MTTR)
+TABLE;9fec327be4d5fc179b63177c014afa43;IEC 61508-6:2010 Table B.15;B.3.3.4;Average frequency of a dangerous failure for the logic subsystem in the example for high demand or continuous mode of operation (six month proof test interval and 8 h MTTR)
+TABLE;ebc1ce902eb10d4db9a5e14fa3e4d1e7;IEC 61508-6:2010 Table B.16;B.3.3.4;Average frequency of a dangerous failure for the final element subsystem in the example for high demand or continuous mode of operation (six month proof test interval and 8 h MTTR)
+TABLE;b145a3b0921d4b639e2ed9ae5cca430f;IEC 61508-6:2010 Table C.1;C;Example calculations for diagnostic coverage and safe failure fraction
+TABLE;cd3f8458c47742fd8ffc9554ae811bcf;IEC 61508-6:2010 Table C.2;C;Diagnostic coverage and effectiveness for different elements
+TABLE;695fb3246c51bf02ad71d9b23ec13d99;IEC 61508-6:2010 Table D.1;D.5;Scoring programmable electronics or sensors/final elements
+TABLE;285408c543b97683e5d2a99d5d2e2e8d;IEC 61508-6:2010 Table D.2;D.5;Value of Z – programmable electronics
+TABLE;03ca6671dc240b3e54518ba7f4cd5b89;IEC 61508-6:2010 Table D.3;D.5;Value of Z – sensors or final elements
+TABLE;39daaa30a6f625c641fc320c68cd67ae;IEC 61508-6:2010 Table D.4;D.5;Calculation of β int or β D int
+TABLE;3380903cb36ffd3804f2d98ecff7f96e;IEC 61508-6:2010 Table D.5;D.5;Calculation of β for systems with levels of redundancy greater than 1oo2
+TABLE;7f2ffe028547049e2518022b65ef0c45;IEC 61508-6:2010 Table D.6;D.6;Example values for programmable electronics
+TABLE;4f241a472e427fc775b064e2584bb236;IEC 61508-6:2010 Table E.1;E.2;Software safety requirements specification
+TABLE;5eb42ab43c4a235241ee8224645e0a55;IEC 61508-6:2010 Table E.2;E.2;Software design and development – software architecture design
+TABLE;43dc5affa7b246f6311fff1a95867c59;IEC 61508-6:2010 Table E.3;E.2;Software design and development – support tools and programming language
+TABLE;d6b1cd6d128e3b6695db60b0ef638ff0;IEC 61508-6:2010 Table E.4;E.2;Software design and development – detailed design
+TABLE;3343c1619039ba0307936965fa14e853;IEC 61508-6:2010 Table E.5;E.2;Software design and development – software module testing and integration
+TABLE;18bc3941d485eb95cc089836735f3e93;IEC 61508-6:2010 Table E.6;E.2;Programmable electronics integration (hardware and software)
+TABLE;707399e967fc62a8ef07bdc0888ec946;IEC 61508-6:2010 Table E.7;E.2;Software aspects of system safety validation
+TABLE;4922cdce11b39f0793c7736ea8f22353;IEC 61508-6:2010 Table E.8;E.2;Modification
+TABLE;558f15cdf87ad873f9376c38f65a0651;IEC 61508-6:2010 Table E.9;E.2;Software verification
+TABLE;65edf8251af8275653ac3f2cd672be41;IEC 61508-6:2010 Table E.10;E.2;Functional safety assessment
+TABLE;9e8254df1caf8b9511e6c80889f2aa31;IEC 61508-6:2010 Table E.11;E.3;Software safety requirements specification
+TABLE;d5ead92ad4d62bb4bef18bafdf7179b3;IEC 61508-6:2010 Table E.12;E.3;Software design and development – software architecture design
+TABLE;dd12b601c3d4442df7dd19f72ad29df6;IEC 61508-6:2010 Table E.13;E.3;Software design and development – support tools and programming language
+TABLE;3de3095d30591b210e8504bc4710ae80;IEC 61508-6:2010 Table E.14;E.3;Software design and development – detailed design
+TABLE;6d1b8c901cd0423d3624c45d407b8f6a;IEC 61508-6:2010 Table E.15;E.3;Software design and development – software module testing and integration
+TABLE;08f7028583b119c920ccb90cda6aa91d;IEC 61508-6:2010 Table E.16;E.3;Programmable electronics integration (hardware and software)
+TABLE;8a4237495ef61d787ce9cba781c0e00c;IEC 61508-6:2010 Table E.17;E.3;Software aspects of system safety validation
+TABLE;09921f69653d2721dd5b3d1f450104d2;IEC 61508-6:2010 Table E.18;E.3;Modification
+TABLE;b6bc4f1f2f6316296a5d4316aef4e484;IEC 61508-6:2010 Table E.19;E.3;Software verification
+TABLE;a87301cb9f5b974241a8d7eb429105a8;IEC 61508-6:2010 Table E.20;E.3;Functional safety assessment
+TABLE;7102179c8d84c4afbc355b2f90b9b97b;IEC 61508-7:2010 Table C.1;C.4.5;Recommendations for specific programming languages
+TABLE;437226253c6e7fef9a6954c4ae66e1c3;IEC 61508-7:2010 Table D.1;D;Necessary history for confidence to safety integrity levels
+TABLE;52a35aea03b1096e8efcf242243610b4;IEC 61508-7:2010 Table D.2;D.2.1.3;Probabilities of failure for low demand mode of operation
+TABLE;52548c315bf1b51c9090f59717cb7235;IEC 61508-7:2010 Table D.3;D.2.2.2;Mean distances of two test points
+TABLE;05b623c928edc23530df6c00f5d5e57c;IEC 61508-7:2010 Table D.4;D.2.3.3;Probabilities of failure for high demand or continuous mode of operation
+TABLE;c5367079834aff485e01e29439b0f2c0;IEC 61508-7:2010 Table D.5;D.2.4.3;Probability of testing all program properties
+TABLE;5bb91136df617a716056e33666156f99;IEC 61508-7:2010 Table F.1;F;Software Safety Requirements Specification
+TABLE;49d6711219d26e99cdedc28b6b35cc9a;IEC 61508-7:2010 Table F.2;F;Software design and development: software architecture design
+TABLE;3a28773f22615924567a90e7fea69bdd;IEC 61508-7:2010 Table F.3;F;Software design and development: support tools and programming language
+TABLE;dfd817c4e43c31e61207cfed5b999409;IEC 61508-7:2010 Table F.4;F;Software design and development: detailed design
+TABLE;87c9e367aad37a533d57da8720219fee;IEC 61508-7:2010 Table F.5;F;Software design and development: software module testing and integration
+TABLE;be19036924e125e46bec7502a6cc4144;IEC 61508-7:2010 Table F.6;F;Programmable electronics integration (hardware and software)
+TABLE;f4837914758399b3d2e024ccb64c21f0;IEC 61508-7:2010 Table F.7;F;Software aspects of system safety validation
+TABLE;a328fd93c25c686f63582841b7828d87;IEC 61508-7:2010 Table F.8;F;Software modification
+TABLE;5e3f847dace71887f0d2bb15411be095;IEC 61508-7:2010 Table F.9;F;Software verification
+TABLE;ab85be7471ab23c4badaeee7550f9b32;IEC 61508-7:2010 Table F.10;F;Functional safety assessment
+TABLE;a1b3eced41103be1375be7f853772672;IEC 61508-7:2010 Table G.1;G;Object Oriented Software Architecture
+TABLE;f675967bb2c4d8de72dbfffcefbc3408;IEC 61508-7:2010 Table G.2;G;Object Oriented Detailed Design
+TABLE;c2d3239f3065ff9c6d1851f8ca7707d6;IEC 61508-7:2010 Table G.3;G;Some Oriented Detailed terms
