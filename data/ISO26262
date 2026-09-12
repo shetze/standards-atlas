@@ -2166,13 +2166,13 @@ TOC;9c9f054c30651d1f1dad7bfe48b3d4ac;ISO 26262-12:2018 C.3;Evaluating controllab
 TOC;4d5d4ae21c3f5ddf69e0c177d434f403;ISO 26262-12:2018 C.4;Expert riders;m
 TOC;2ef77a8aa78f254ab1643f9a8989206b;ISO 26262-12:2018 C.5;Controllability evaluation techniques;m
 TOC;92547eb58ac4e18d1f909eac267a68f7;ISO 26262-12:2018 C.6;Evaluating Controllability;m
-TABLE;675ea9c1ba6acf2ac9015eaee45802e8;ISO 26262-2:2018 Table 1;6.4.9.1;
-TABLE;d181be524901583d192d99cb335c4ab0;ISO 26262-2:2018 Table A.1;A;
-TABLE;88b8e86d4c72ff33eb84f649a124e6f3;ISO 26262-2:2018 Table B.1;B;
-TABLE;cdaeac67e4c36dcfdc1d5dd173046195;ISO 26262-3:2018 Table 1;6.4.3.2;
-TABLE;09d9f13860f6faa67990ee463fbff53b;ISO 26262-3:2018 Table 2;6.4.3.5;
-TABLE;3aefc68be01aa4efc6857530e12ec06a;ISO 26262-3:2018 Table 3;6.4.3.8;
-TABLE;020223b3cd09ecd58bb45e86f19157c5;ISO 26262-3:2018 Table 4;6.4.3.10;
+TABLE;675ea9c1ba6acf2ac9015eaee45802e8;ISO 26262-2:2018 Table 1;6.4.9.1;Required confirmation measures, including the required level of independence
+TABLE;d181be524901583d192d99cb335c4ab0;ISO 26262-2:2018 Table A.1;A;Functional safety management: overview
+TABLE;88b8e86d4c72ff33eb84f649a124e6f3;ISO 26262-2:2018 Table B.1;B;Examples for evaluating a safety culture
+TABLE;cdaeac67e4c36dcfdc1d5dd173046195;ISO 26262-3:2018 Table 1;6.4.3.2;Classes of severity
+TABLE;09d9f13860f6faa67990ee463fbff53b;ISO 26262-3:2018 Table 2;6.4.3.5;Classes of probability of exposure regarding operational situations
+TABLE;3aefc68be01aa4efc6857530e12ec06a;ISO 26262-3:2018 Table 3;6.4.3.8;Classes of controllability
+TABLE;020223b3cd09ecd58bb45e86f19157c5;ISO 26262-3:2018 Table 4;6.4.3.10;ASIL determination
 TABLE;ea9709815d6a2ba34a953f2e87beb3c2;ISO 26262-3:2018 Table A.1;A;
 TABLE;8b02cace91de1aea90b83d71a8b2b6f0;ISO 26262-3:2018 Table B.1;B.2.2;
 TABLE;94e2b54d8ca7551e44451a48d6366c39;ISO 26262-3:2018 Table B.2;B.3;

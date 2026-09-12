@@ -8,7 +8,7 @@ oyr=2023
 lifecycle_status="published"
 
 structure=(
- "2023 {1..3} s1.{1..10} 3.1 t3.1.{1..44} 3.2 4 4.{1..11} 5 5.1 5.1.{1..2} r5.1.2.{1..12} 5.2 5.2.{1..2} r5.2.2.{1..5} 5.3 5.3.1 o5.3.1.{1..2} 5.3.2 r5.3.2.{1..14} 6 6.1 6.1.{1..4} r6.1.4.{1..5} 6.2 6.2.{1..4} r6.2.4.{1..13} 6.3 6.3.1 o6.3.1.{1..2} 6.3.{2..4} r6.3.4.{1..14} 6.4 6.4.1 o6.4.1.{1..2} 6.4.{2..4} r6.4.4.{1..17} 6.5 6.5.1 o6.5.1.{1..2} 6.5.{2..4} r6.5.4.{1..18} 6.6 6.6.1 o6.6.1.{1..2} 6.6.{2..4} r6.6.4.{1..2} 6.7 6.7.{1..4} r6.7.4.{1..12} 7 7.1 7.1.{1..2} r7.1.2.{1..2} 7.2 7.2.1 o7.2.1.{1..2} 7.2.{2..4} r7.2.4.{1..22} 7.3 7.3.1 o7.3.1.{1..5} 7.3.{2..4} r7.3.4.{1..44} 7.4 7.4.1 o7.4.1.{1..2} 7.4.{2..4} r7.4.4.{1..13} 7.5 7.5.{1..4} r7.5.4.{1..10} 7.6 7.6.1 o7.6.1.{1..2} 7.6.{2..4} r7.6.4.{1..13} 7.7 7.7.{1..4} r7.7.4.{1..12} 8 8.1 o8.1.{1..3} 8.{2..4} 8.4.1 r8.4.1.{1..14} 8.4.2 r8.4.2.{1..5} 8.4.{3..4} r8.4.4.{1..8} 8.4.5 r8.4.5.{1..7} 8.4.{6..7} r8.4.7.{1..9} 9 9.1 9.1.{1..4} r9.1.4.{1..20} 9.2 9.2.{1..4} r9.2.4.{1..20} 10:A 10:A.{1..3} 11:B 12:C 12:C.1 12:C.1.{1..3} 12:C.2 12:C.2.{1..4} 12:C.2.4.{1..4} 12:C.2.{5..6} 12:C.2.6.{1..7} 12:C.3 12:C.3.{1..3} 13:mD 13:mD.{1..71} 14:ZZ"
+ "2023 {1..3} s1.{1..10} 3.1 t3.1.{1..44} 3.2 4 4.{1..11} 5 5.1 5.1.{1..2} r5.1.2.{1..12} 5.2 5.2.{1..2} r5.2.2.{1..5} 5.3 5.3.1 o5.3.1.{1..2} 5.3.2 r5.3.2.{1..14} 6 6.1 6.1.{1..4} r6.1.4.{1..5} 6.2 6.2.{1..4} r6.2.4.{1..13} 6.3 6.3.1 o6.3.1.{1..2} 6.3.{2..4} r6.3.4.{1..14} 6.4 6.4.1 o6.4.1.{1..2} 6.4.{2..4} r6.4.4.{1..17} 6.5 6.5.1 o6.5.1.{1..2} 6.5.{2..4} r6.5.4.{1..18} 6.6 6.6.1 o6.6.1.{1..2} 6.6.{2..4} r6.6.4.{1..2} 6.7 6.7.{1..4} r6.7.4.{1..12} b6.7.4.12.1 7 7.1 7.1.{1..2} r7.1.2.{1..2} 7.2 7.2.1 o7.2.1.{1..2} 7.2.{2..4} r7.2.4.{1..22} 7.3 7.3.1 o7.3.1.{1..5} 7.3.{2..4} r7.3.4.{1..44} 7.4 7.4.1 o7.4.1.{1..2} 7.4.{2..4} r7.4.4.{1..13} 7.5 7.5.{1..4} r7.5.4.{1..10} 7.6 7.6.1 o7.6.1.{1..2} 7.6.{2..4} r7.6.4.{1..13} 7.7 7.7.{1..4} r7.7.4.{1..12} 8 8.1 o8.1.{1..3} 8.{2..4} 8.4.1 r8.4.1.{1..14} 8.4.2 r8.4.2.{1..5} 8.4.{3..4} r8.4.4.{1..8} 8.4.5 r8.4.5.{1..7} 8.4.{6..7} r8.4.7.{1..9} 9 9.1 9.1.{1..4} r9.1.4.{1..20} 9.2 9.2.{1..4} r9.2.4.{1..20} 10:A 10:A.{1..2} b10:A.2.{1..11} 10:A.3 b10:A.3.{12..21} 11:B b11:B.{1..9} 12:C 12:C.1 12:C.1.{1..3} 12:C.2 12:C.2.{1..4} 12:C.2.4.{1..4} 12:C.2.{5..6} 12:C.2.6.{1..3} b12:C.2.6.3.1 12:C.2.6.{4..5} b12:C.2.6.5.{2..3} 12:C.2.6.{6..7} 12:C.3 12:C.3.{1..3} 13:mD 13:mD.{1..71} 14:ZZ b14:ZZ.{1..2}"
 )
 
 return 0;
@@ -21,6 +21,7 @@ return 0;
 ####
 
 #---data---#
+# table-record-layout: parent-caption
 TOC;44d1cf377dc91798141c1fca214c6e39;EN 50716:2023 1;Scope;u
 TOC;5de72db660a7456ea1a0dc41221cd922;EN 50716:2023 2;Normative references;u
 TOC;e8db093dbf30cdc7a36df25690cb4d11;EN 50716:2023 3;Terms,definitions and abbreviations;u
@@ -635,3 +636,39 @@ TOC;04ecb00d1a2132f87a6a1cf67a2f343d;EN 50716:2023 D.69;Intentionally left blank
 TOC;b8c5b94dd5fb5af32392105d141fdf63;EN 50716:2023 D.70;Intentionally left blank;m
 TOC;66db7195f73c983a6ba75f465e7bd987;EN 50716:2023 D.71;Domain specific languages;m
 TOC;d4fa348835a2eb2dced52b09ac2251db;EN 50716:2023 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive (EU) 2016/797 aimed to be covered;u
+TABLE;8d4b8336abdea051b94f09f3464cbfd7;EN 50716:2023 Table 1;6.7.4.12;Relation between tool class and applicable subclauses
+TABLE;8cfec8f360c810c1228c181b7e1ece65;EN 50716:2023 Table A.1;A.2;Lifecycle issues and documentation (5.3)
+TABLE;de7e9788bfe89bb80ad9b767230d393d;EN 50716:2023 Table A.2;A.2;Software Requirements Specification (7.2)
+TABLE;b6e9f9630b50e66942bbbe7c0c6e6b96;EN 50716:2023 Table A.3;A.2;Software architecture (7.3)
+TABLE;eb27da250fdbcb8cad37c9cd2905aaa1;EN 50716:2023 Table A.4;A.2;Software design and implementation (7.3, 7.4 and 7.5)
+TABLE;b6172d21abcffd53be57beb55c111b1d;EN 50716:2023 Table A.5;A.2;Software component analysis and testing (6.2 and 7.4)
+TABLE;957e66bdd80b7663170e31862d156561;EN 50716:2023 Table A.6;A.2;Software integration analysis and testing (7.3 and 7.6)
+TABLE;6d3392cdd98ad6bbd880214c781826af;EN 50716:2023 Table A.7;A.2;Overall software analysis and testing (6.2 and 7.2)
+TABLE;e399ba93ce5566f0c10f45e601bac9d3;EN 50716:2023 Table A.8;A.2;Intentionally left blank
+TABLE;7c85f904847cd4bfbaf2555892870447;EN 50716:2023 Table A.9;A.2;Software quality assurance (6.5)
+TABLE;1b71ca02c2d48d0c03423f91789c1b06;EN 50716:2023 Table A.10;A.2;Software maintenance (9.2)
+TABLE;08bea8638722b98185d403f1b7a301d5;EN 50716:2023 Table A.11;A.2;Data preparation techniques (8.4)
+TABLE;f3ce11c7165ffcc61716c49cef98c135;EN 50716:2023 Table A.12;A.3;Coding standards
+TABLE;293fd2d2c7eac155305630df4d974a56;EN 50716:2023 Table A.13;A.3;Dynamic analysis and testing
+TABLE;9c0e538214d8dfc9e39ca3a1b2752e78;EN 50716:2023 Table A.14;A.3;Intentionally left blank
+TABLE;368a5ade8f9b2ea2dbe7d67f37671469;EN 50716:2023 Table A.15;A.3;Suitable Programming Languages
+TABLE;8f54d8146c4f3f77643157952bbe9b0d;EN 50716:2023 Table A.16;A.3;Intentionally left blank
+TABLE;9c271f110e4682eb1c3e81963ff99720;EN 50716:2023 Table A.17;A.3;Modelling
+TABLE;a5b77d21a4e20755e64af6e92eb5052b;EN 50716:2023 Table A.18;A.3;Performance testing
+TABLE;1f5a2868ce23e9279ffc8cd967d26972;EN 50716:2023 Table A.19;A.3;Static analysis
+TABLE;d0b689d40c6239adc746c8f91ffb8d93;EN 50716:2023 Table A.20;A.3;Components
+TABLE;fcaecbd44c8d3339d1abf162ad9171ff;EN 50716:2023 Table A.21;A.3;Test coverage for code
+TABLE;f39711cae03d48f9add8a096f11f522d;EN 50716:2023 Table B.1;B;Requirements Manager role specification
+TABLE;76da35004cc3d05f35631d292def231a;EN 50716:2023 Table B.2;B;Designer role specification
+TABLE;db58ec4a8c0dd88ca3b879d16b35e23d;EN 50716:2023 Table B.3;B;Implementer role specification
+TABLE;9ec2a56906c989addc87db48c7d781f2;EN 50716:2023 Table B.4;B;Tester role specification
+TABLE;ad5998ff44a892759c9946879743fedb;EN 50716:2023 Table B.5;B;Verifier role specification
+TABLE;fa0585ed3163ab46ed82c8532e677872;EN 50716:2023 Table B.6;B;Validator role specification
+TABLE;ebfe4361c249be1fd4cafeea65d2205d;EN 50716:2023 Table B.7;B;Assessor role specification
+TABLE;8ab36122c51fd2bddb5303fea7a2a595;EN 50716:2023 Table B.8;B;Project Manager role specification
+TABLE;d3b1e50e51528854d9a71a536f65fa86;EN 50716:2023 Table B.9;B;Configuration Manager role specification
+TABLE;a86d8cd3f38df625ea71aa01af52598e;EN 50716:2023 Table C.1;C.2.6.3;Architecture and design typical adaptation for modelling
+TABLE;d872b3e19fc87a359ea49d6f8e1b557b;EN 50716:2023 Table C.2;C.2.6.5;Component implementation and testing typical adaptation for modelling
+TABLE;d6036b44f2b6847ebbe86a43d80c998f;EN 50716:2023 Table C.3;C.2.6.5;Coding standards techniques / measures typical adaptation for modelling
+TABLE;48a9bdfa4f451bd9eee46d31b58c3a7c;EN 50716:2023 Table ZZ.1;ZZ;Correspondence between this European Standard, Commission Regulation 2016/919 concerning the technical specification for interoperability relating to the ‘control- command and signalling’ subsystems of the rail system in the European Union* and Directive (EU) 2016/797
+TABLE;ad10f6e7595661fa068f8d370cd2c6b0;EN 50716:2023 Table ZZ.2;ZZ;Correspondence between this European Standard, Commission Regulation 2016/919 concerning the technical specification for interoperability relating to the ‘control- command and signalling’ subsystems of the rail system in the European Union* and Directive (EU) 2016/797

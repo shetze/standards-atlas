@@ -8,7 +8,7 @@ oyr=2011
 lifecycle_status="published"
 
 structure=(
- "2011 0 1 s1.{1..9} 2 3 3.1 t3.1.{1..49} 3.2 4 o4.{1..10} 5 5.1 5.1.1 o5.1.1.1 5.1.2 r5.1.2.{1..14} 5.2 5.2.1 o5.2.1.1 5.2.2 r5.2.2.{1..4} 5.3 5.3.1 o5.3.1.{1..2} 5.3.2 r5.3.2.{1..14} 6 6.1 6.1.1 o6.1.1.1 6.1.{2..4} r6.1.4.{1..5} 6.2 6.2.1 o6.2.1.1 6.2.{2..4} r6.2.4.{1..13} 6.3 6.3.1 o6.3.1.{1..2} 6.3.{2..4} r6.3.4.{1..17} 6.4 6.4.1 o6.4.1.{1..2} 6.4.{2..4} r6.4.4.{1..19} 6.5 6.5.1 o6.5.1.{1..2} 6.5.{2..4} r6.5.4.{1..17} 6.6 6.6.1 o6.6.1.{1..2} 6.6.{2..4} r6.6.4.{1..2} 6.7 6.7.1 o6.7.1.1 6.7.{2..4} r6.7.4.{1..12} 7 7.1 7.1.1 o7.1.1.1 7.1.2 r7.1.2.{1..2} 7.2 7.2.1 o7.2.1.{1..2} 7.2.{2..4} r7.2.4.{1..22} 7.3 7.3.1 o7.3.1.{1..5} 7.3.{2..4} r7.3.4.{1..43} 7.4 7.4.1 o7.4.1.{1..2} 7.4.{2..4} r7.4.4.{1..13} 7.5 7.5.1 o7.5.1.1 7.5.{2..4} r7.5.4.{1..10} 7.6 7.6.1 o7.6.1.{1..2} 7.6.{2..4} r7.6.4.{1..13} 7.7 7.7.1 o7.7.1.1 7.7.{2..4} r7.7.4.{1..12} 8 8.1 o8.1.{1..3} 8.{2..4} 8.4.1 r8.4.1.{1..14} 8.4.2 r8.4.2.{1..5} 8.4.{3..4} r8.4.4.{1..8} 8.4.5 r8.4.5.{1..5} 8.4.{6..7} r8.4.7.{1..6} 8.4.8 r8.4.8.{1..8} 9 9.1 9.1.1 o9.1.1.1 9.1.{2..4} r9.1.4.{1..20} 9.2 9.2.1 o9.2.1.1 9.2.{2..4} r9.2.4.{1..20} 10:A 10:A.{1..2} 11:B 12:C 13:D 13:D.{1..28} 13:D.28.{1..10} 13:D.{29..71}"
+ "2011 0 1 s1.{1..9} 2 3 3.1 t3.1.{1..49} 3.2 4 o4.{1..10} 5 5.1 5.1.1 o5.1.1.1 5.1.2 r5.1.2.{1..14} 5.2 5.2.1 o5.2.1.1 5.2.2 r5.2.2.{1..4} 5.3 5.3.1 o5.3.1.{1..2} 5.3.2 r5.3.2.{1..14} 6 6.1 6.1.1 o6.1.1.1 6.1.{2..4} r6.1.4.{1..5} 6.2 6.2.1 o6.2.1.1 6.2.{2..4} r6.2.4.{1..13} 6.3 6.3.1 o6.3.1.{1..2} 6.3.{2..4} r6.3.4.{1..17} 6.4 6.4.1 o6.4.1.{1..2} 6.4.{2..4} r6.4.4.{1..19} 6.5 6.5.1 o6.5.1.{1..2} 6.5.{2..4} r6.5.4.{1..17} 6.6 6.6.1 o6.6.1.{1..2} 6.6.{2..4} r6.6.4.{1..2} 6.7 6.7.1 o6.7.1.1 6.7.{2..4} r6.7.4.{1..12} b6.7.4.12.1 7 7.1 7.1.1 o7.1.1.1 7.1.2 r7.1.2.{1..2} 7.2 7.2.1 o7.2.1.{1..2} 7.2.{2..4} r7.2.4.{1..22} 7.3 7.3.1 o7.3.1.{1..5} 7.3.{2..4} r7.3.4.{1..43} 7.4 7.4.1 o7.4.1.{1..2} 7.4.{2..4} r7.4.4.{1..13} 7.5 7.5.1 o7.5.1.1 7.5.{2..4} r7.5.4.{1..10} 7.6 7.6.1 o7.6.1.{1..2} 7.6.{2..4} r7.6.4.{1..13} 7.7 7.7.1 o7.7.1.1 7.7.{2..4} r7.7.4.{1..12} 8 8.1 o8.1.{1..3} 8.{2..4} 8.4.1 r8.4.1.{1..14} 8.4.2 r8.4.2.{1..5} 8.4.{3..4} r8.4.4.{1..8} 8.4.5 r8.4.5.{1..5} 8.4.{6..7} r8.4.7.{1..6} 8.4.8 r8.4.8.{1..8} 9 9.1 9.1.1 o9.1.1.1 9.1.{2..4} r9.1.4.{1..20} 9.2 9.2.1 o9.2.1.1 9.2.{2..4} r9.2.4.{1..20} 10:A 10:A.1 b10:A.1.{1..11} 10:A.2 b10:A.2.{12..23} 11:B b11:B.{1..10} 12:C b12:C.1 13:D 13:D.{1..28} 13:D.28.{1..10} 13:D.{29..71}"
 )
 
 return 0;
@@ -21,6 +21,7 @@ return 0;
 ####
 
 #---data---#
+# table-record-layout: parent-caption
 TOC;0f2998b33615d8c37c322e2f4f8b7b7e;EN 50128:2011 0;Software for railway control and protection systems;u
 TOC;2f47eccdd00095d81df0bf34547849e9;EN 50128:2011 1;Scope;u
 TOC;3d0c960a49e4bd455e314996e47d98d2;EN 50128:2011 1.1;SCOPE;s
@@ -639,3 +640,38 @@ TOC;c0021c5a9f6ceb200f25df2249fd3314;EN 50128:2011 D.68;Tabular Specification Me
 TOC;d6844be9a47478464cd59ee9bd7053d9;EN 50128:2011 D.69;Application specific language;u
 TOC;36c607da98c822136d40fd5de8f06b3a;EN 50128:2011 D.70;UML (Unified Modelling Language);u
 TOC;dd99289e3822d173044e6bde2242cb13;EN 50128:2011 D.71;Domain specific languages;u
+TABLE;9bc491fd0127df8c98021e91200ef18e;EN 50128:2011 Table 1;6.7.4.12;Relation between tool class and applicable sub-clauses
+TABLE;a1807368fead2b780d01f3bc27c8fe44;EN 50128:2011 Table A.1;A.1;Lifecycle Issues and Documentation (5.3)
+TABLE;d66626c8755c7e2e436c1eb2b6d0f985;EN 50128:2011 Table A.2;A.1;Software Requirements Specification (7.2)
+TABLE;837a0b19ff5e1bab74bf44854fce3353;EN 50128:2011 Table A.3;A.1;Software Architecture (7.3)
+TABLE;b9f3bbc1a05459f103dae7c984b43835;EN 50128:2011 Table A.4;A.1;Software Design and Implementation (7.4)
+TABLE;c15a30e5ab89eb346703538a7c0b9938;EN 50128:2011 Table A.5;A.1;Verification and Testing (6.2 and 7.3)
+TABLE;d73e5d4663188c8c8099f1a2f38e9f7b;EN 50128:2011 Table A.6;A.1;Integration (7.6)
+TABLE;95656ee42aef3ec8ac5c9ff35c3127c8;EN 50128:2011 Table A.7;A.1;Overall Software Testing (6.2 and 7.7)
+TABLE;682431a6a3a59aba59dcd332a4923065;EN 50128:2011 Table A.8;A.1;Software Analysis Techniques (6.3)
+TABLE;f9c93af8cd763c02988ae6f28025f23d;EN 50128:2011 Table A.9;A.1;Software Quality Assurance (6.5)
+TABLE;527bb60fa9f1b16061c94111298619ed;EN 50128:2011 Table A.10;A.1;Software Maintenance (9.2)
+TABLE;3f51ae481c1ff8dc3a6acb99d9eb0cd1;EN 50128:2011 Table A.11;A.1;Data Preparation Techniques (8.4)
+TABLE;1733a5bd608acecf71aaa0e1b960137f;EN 50128:2011 Table A.12;A.2;Coding Standards
+TABLE;78dba39346a2dc556d9748149282edcd;EN 50128:2011 Table A.13;A.2;Dynamic Analysis and Testing
+TABLE;54c44798af98bf1e9b52e039687572f8;EN 50128:2011 Table A.14;A.2;Functional/Black Box Test
+TABLE;583caf79ca7309b73a1383989e0d4a99;EN 50128:2011 Table A.15;A.2;Textual Programming Languages
+TABLE;da3d0f4a0382b4827d9fd2fc5bdd1281;EN 50128:2011 Table A.16;A.2;Diagrammatic Languages for Application Algorithms
+TABLE;01029bf9ecbc6db92601304115dd5494;EN 50128:2011 Table A.17;A.2;Modelling
+TABLE;c67ea277cec8bbe87c04d5e89abdb480;EN 50128:2011 Table A.18;A.2;Performance Testing
+TABLE;b351df1e2f0825c8ff8779957d231b4b;EN 50128:2011 Table A.19;A.2;Static Analysis
+TABLE;e4148b560925e8c22b726a8e3b0b3997;EN 50128:2011 Table A.20;A.2;Components
+TABLE;865b05a863fd32eedf57ba7ce0ceab74;EN 50128:2011 Table A.21;A.2;Test Coverage for Code
+TABLE;a2412a596a0c0322b6702dedc7a225fb;EN 50128:2011 Table A.22;A.2;Object Oriented Software Architecture
+TABLE;b5299b57bd54d9de71804afcc64cc10e;EN 50128:2011 Table A.23;A.2;Object Oriented Detailed Design
+TABLE;c2edfbdca89cf8b75229472b131669c3;EN 50128:2011 Table B.1;B;Requirements Manager Role Specification
+TABLE;8eba553b624ab087a439f55e2531e073;EN 50128:2011 Table B.2;B;Designer Role Specification
+TABLE;cac9545961e223f5acec6d4e0c5615c1;EN 50128:2011 Table B.3;B;Implementer Role Specification
+TABLE;855814ec2f38ee4c9aff0ac466827750;EN 50128:2011 Table B.4;B;Tester Role Specification
+TABLE;8e7876f78db4e99471c5901c18128d34;EN 50128:2011 Table B.5;B;Verifier Role Specification
+TABLE;c02d5f8d812f396aee86072675bb92f0;EN 50128:2011 Table B.6;B;Integrator Role Specification
+TABLE;f15206e72cec4ec96882a5076ee3cf52;EN 50128:2011 Table B.7;B;Validator Role Specification
+TABLE;53c49756d5a5f59a6cc07d07524778cc;EN 50128:2011 Table B.8;B;Assessor Role Specification
+TABLE;01b655cbaada48642753298ec47bcf92;EN 50128:2011 Table B.9;B;Project Manager Role Specification
+TABLE;1bf3cc2d237a0fdeea3b2b958926ac3c;EN 50128:2011 Table B.10;B;Configuration Manager Role Specification
+TABLE;92302f680f2e181ffadf4a78ea0d0fe2;EN 50128:2011 Table C.1;C;Documents Control Summary

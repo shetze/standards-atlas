@@ -8,7 +8,7 @@ oyr=2017
 lifecycle_status="published"
 
 structure=(
- "2017 1 s1.{1..10} 2 3 3.1 t3.1.{1..49} 3.2 4 o4.{1..10} 5 5.1 5.1.{1..2} r5.1.2.{1..14} 5.2 5.2.{1..2} r5.2.2.{1..4} 5.3 5.3.1 o5.3.1.{1..2} 5.3.2 r5.3.2.{1..14} 6 6.1 6.1.{1..4} r6.1.4.{1..5} 6.2 6.2.{1..4} r6.2.4.{1..13} 6.3 6.3.1 o6.3.1.{1..2} 6.3.{2..4} r6.3.4.{1..17} 6.4 6.4.1 o6.4.1.{1..2} 6.4.{2..4} r6.4.4.{1..19} 6.5 6.5.1 o6.5.1.{1..2} 6.5.{2..4} r6.5.4.{1..18} 6.6 6.6.1 o6.6.1.{1..2} 6.6.{2..4} r6.6.4.{1..2} 6.7 6.7.{1..4} r6.7.4.{1..12} 7 7.1 7.1.{1..2} r7.1.2.{1..2} 7.2 7.2.1 o7.2.1.{1..2} 7.2.{2..4} r7.2.4.{1..22} 7.3 7.3.1 o7.3.1.{1..5} 7.3.{2..4} r7.3.4.{1..43} 7.4 7.4.1 o7.4.1.{1..2} 7.4.{2..4} r7.4.4.{1..13} 7.5 7.5.{1..4} r7.5.4.{1..10} 7.6 7.6.{1..4} o7.6.1.{1..2} r7.6.4.{1..13} 7.7 7.7.{1..4} r7.7.4.{1..12} 7.8 7.8.{1..2} r7.8.2.{1..7} 8 8.1 o8.1.{1..3} 8.{2..4} 8.4.1 r8.4.1.{1..14} 8.4.2 r8.4.2.{1..5} 8.4.{3..4} r8.4.4.{1..8} 8.4.5 r8.4.5.{1..5} 8.4.{6..7} r8.4.7.{1..6} 9 9.1 9.1.{1..4} r9.1.4.{1..20} 9.2 9.2.{1..4} r9.2.4.{1..20} 10:A 10:A.{1..3} 11:B 12:C 13:mD 13:mD.{1..28} 13:mD.28.{1..11} 13:mD.{29..72} 14:E 15:ZZ"
+ "2017 1 s1.{1..10} 2 3 3.1 t3.1.{1..49} 3.2 4 o4.{1..10} 5 5.1 5.1.{1..2} r5.1.2.{1..14} 5.2 5.2.{1..2} r5.2.2.{1..4} 5.3 5.3.1 o5.3.1.{1..2} 5.3.2 r5.3.2.{1..14} 6 6.1 6.1.{1..4} r6.1.4.{1..5} 6.2 6.2.{1..4} r6.2.4.{1..13} 6.3 6.3.1 o6.3.1.{1..2} 6.3.{2..4} r6.3.4.{1..17} 6.4 6.4.1 o6.4.1.{1..2} 6.4.{2..4} r6.4.4.{1..19} 6.5 6.5.1 o6.5.1.{1..2} 6.5.{2..4} r6.5.4.{1..18} 6.6 6.6.1 o6.6.1.{1..2} 6.6.{2..4} r6.6.4.{1..2} 6.7 6.7.{1..4} r6.7.4.{1..12} b6.7.4.12.1 7 7.1 7.1.{1..2} r7.1.2.{1..2} 7.2 7.2.1 o7.2.1.{1..2} 7.2.{2..4} r7.2.4.{1..22} 7.3 7.3.1 o7.3.1.{1..5} 7.3.{2..4} r7.3.4.{1..43} 7.4 7.4.1 o7.4.1.{1..2} 7.4.{2..4} r7.4.4.{1..13} 7.5 7.5.{1..4} r7.5.4.{1..10} 7.6 7.6.{1..4} o7.6.1.{1..2} r7.6.4.{1..13} 7.7 7.7.{1..4} r7.7.4.{1..12} 7.8 7.8.{1..2} r7.8.2.{1..7} 8 8.1 o8.1.{1..3} 8.{2..4} 8.4.1 r8.4.1.{1..14} 8.4.2 r8.4.2.{1..5} 8.4.{3..4} r8.4.4.{1..8} 8.4.5 r8.4.5.{1..5} 8.4.{6..7} r8.4.7.{1..6} 9 9.1 9.1.{1..4} r9.1.4.{1..20} 9.2 9.2.{1..4} r9.2.4.{1..20} 10:A 10:A.{1..2} b10:A.2.{1..11} 10:A.3 b10:A.3.{12..23} 11:B b11:B.{1..10} 12:C b12:C.1 13:mD 13:mD.{1..28} 13:mD.28.{1..11} 13:mD.{29..72} 14:E b14:E.1 15:ZZ b15:ZZ.1"
 )
 
 return 0;
@@ -19,7 +19,9 @@ return 0;
 #      actual standard documents, which are copyright protected by Cenelec and available at www.cenelec.eu
 #
 ####
+
 #---data---#
+# table-record-layout: parent-caption
 TOC;558c553e5e7db2f4daf107f79c03fc28;EN 50657:2017 1;Scope;u
 TOC;84c663151bf8649d7fd3083756c970af;EN 50657:2017 1.1;SCOPE;s
 TOC;bd719452324793acdb53bdbb72c06ff6;EN 50657:2017 1.2;SCOPE;s
@@ -549,89 +551,126 @@ TOC;627d48e7ebfe5d22a8eb869a4b9e59ad;EN 50657:2017 A.2;Clauses tables;u
 TOC;49645d5eceefda9957355887ff273620;EN 50657:2017 A.3;Detailed tables;u
 TOC;8058ca2252b08c12d23c23d849e29128;EN 50657:2017 B;Key software rules and responsibilities;u
 TOC;0b61cb7e0f5de29a4301ad0f897a214b;EN 50657:2017 C;Documents Control Summary;u
-TOC;809864530759c8521ca7eecffda9e762;EN 50657:2017 D;Bibliography of techniques;u
-TOC;a6800032fe52235744add6e4f7fc2747;EN 50657:2017 D.1;Artificial Intelligence Fault Correction;u
-TOC;dae2d9ed135ed14573f95d476b3f2293;EN 50657:2017 D.2;Analysable Programs;u
-TOC;6ba28bc3edd1f55603adf99112ca6814;EN 50657:2017 D.3;Avalanche/Stress Testing;u
-TOC;c3d595f43981e9ed6fcc063f19b28e90;EN 50657:2017 D.4;Boundary Value Analysis;u
-TOC;14c7da8d1cf6659cd80f2a662f1b4fbc;EN 50657:2017 D.5;Backward Recovery;u
-TOC;c84846f5f42bf6b09fb7a6d491de10fe;EN 50657:2017 D.6;Cause Consequence Diagrams;u
-TOC;d0ef91b80a9fde6b5edb7e8801f9dc14;EN 50657:2017 D.7;Checklists;u
-TOC;cea995fc49350115667a51e1e2e2d95b;EN 50657:2017 D.8;Control Flow Analysis;u
-TOC;d1bcdf6bebd6e122ee8a0da06af45098;EN 50657:2017 D.9;Common Cause Failure Analysis;u
-TOC;bbd016763c3db7a5b8825d57203a7fd3;EN 50657:2017 D.10;Data Flow Analysis;u
-TOC;41c4dda37434d881a76bf2d4eb720e52;EN 50657:2017 D.11;Data Flow Diagrams;u
-TOC;6c8e79be351946e1a35e720541036310;EN 50657:2017 D.12;Data Recording and Analysis;u
-TOC;0aded797c6452a48b21473d1372e127a;EN 50657:2017 D.13;Decision Tables and Truth Tables;u
-TOC;49ada3a0f7e667f667842df539ee8388;EN 50657:2017 D.14;Defensive Programming;u
-TOC;fa090909282a5ba1ca4126389237c71b;EN 50657:2017 D.15;Coding Standards and Style Guide;u
-TOC;7711b16d1d43fef63b0fd3e4071a6e43;EN 50657:2017 D.16;Diverse Programming;u
-TOC;9333783df189b52eea0587d1cdc3d0f4;EN 50657:2017 D.17;Dynamic Reconfiguration;u
-TOC;665c7632bb840bb4d889e7e548422035;EN 50657:2017 D.18;Equivalence Classes and Input Partition Testing;u
-TOC;687bd3c98b4b4159fc00d1cf7a6b23e8;EN 50657:2017 D.19;Error Detecting and Correcting Codes;u
-TOC;67e89574a2b535a01c3f191a2b516e9e;EN 50657:2017 D.20;Error Guessing;u
-TOC;bbd4b5720f701f06bbf6ec6479ad6f8a;EN 50657:2017 D.21;Error Seeding;u
-TOC;89f2301b6c8f8862d6195dfbc4778897;EN 50657:2017 D.22;Event Tree Analysis;u
-TOC;7b459dd989d6b67cfd6ef87fa4228799;EN 50657:2017 D.23;Fagan Inspections;u
-TOC;5eb4f33118cca97c677291c630872d34;EN 50657:2017 D.24;Failure Assertion Programming;u
-TOC;04425ceb8ba4fe0c4fbb5a11850bce7a;EN 50657:2017 D.25;SEEA – Software Error Effect Analysis;u
-TOC;8fcd1a2d167c53a6f41c840992389bc1;EN 50657:2017 D.26;Fault Detection and Diagnosis;u
-TOC;b8d914ec33c607e11828287fe72f8a92;EN 50657:2017 D.27;Finite State Machines/State Transition Diagrams;u
-TOC;025fddc6b6ce9bcd2997be2f15a932d3;EN 50657:2017 D.28;Formal Methods;u
-TOC;27caf53431f0addccace333622f4c973;EN 50657:2017 D.28.1;General;u
-TOC;29fe848abef910f38f2a8e1591d8a6ee;EN 50657:2017 D.28.2;CSP - Communicating Sequential Processes;u
-TOC;213cc4b74acf4e65369232b0de6cafee;EN 50657:2017 D.28.3;CCS - Calculus of Communicating Systems;u
-TOC;64dcb94b704088f1182e5544dcadce47;EN 50657:2017 D.28.4;HOL - Higher Order Logic;u
-TOC;1fb5d9dc93faee1b83264a50a3d6f922;EN 50657:2017 D.28.5;LOTOS;u
-TOC;c235e0d9f6f914d8887382b256606868;EN 50657:2017 D.28.6;OBJ;u
-TOC;6ca1b399f771aa61e60791bea40bddea;EN 50657:2017 D.28.7;Temporal logic;u
-TOC;6a1b5ea8f9f34ac4e238fb8ab8726372;EN 50657:2017 D.28.8;VDM - Vienna Development Method;u
-TOC;964cccfa4fa44766bef0b1ca5f764533;EN 50657:2017 D.28.9;Z method;u
-TOC;76593652dad6b62dd41876b8b5f15339;EN 50657:2017 D.28.10;B method;u
-TOC;d055b068a1de0013240599e7143f0106;EN 50657:2017 D.28.11;Model Checking;u
-TOC;c55fdbdc0a8c9f99719fcaa4acabca20;EN 50657:2017 D.29;Formal Proof;u
-TOC;3e857f6b2c4019e103be3399a55f43bd;EN 50657:2017 D.30;Forward Recovery;u
-TOC;c0a8be5ebe175a302fcdf59675f51115;EN 50657:2017 D.31;Graceful Degradation;u
-TOC;a6502f7ee4052fc20d7e263b580d42d8;EN 50657:2017 D.32;Impact Analysis;u
-TOC;ccfe7c81f859e33a07fb719da3e0a3a3;EN 50657:2017 D.33;Information Hiding / Encapsulation;u
-TOC;134c6f8c7c0ef8562297e309744551a1;EN 50657:2017 D.34;Interface Testing;u
-TOC;09d064b7dcd0d64b8c3daf07d0e0edc2;EN 50657:2017 D.35;Language Subset;u
-TOC;68f2d45a88666806d08f08321058c31b;EN 50657:2017 D.36;Memorizing Executed Cases;u
-TOC;5ebaefdea61001f1f9a51bafb5bae575;EN 50657:2017 D.37;Metrics;u
-TOC;4026cd4e9666f90291e2ba663b8e2507;EN 50657:2017 D.38;Modular Approach;u
-TOC;136477cfc167ec0655446f195924db19;EN 50657:2017 D.39;Performance Modelling;u
-TOC;9d7a0f35d0459740ce25e8c0137e24f5;EN 50657:2017 D.40;Performance Requirements;u
-TOC;d0261e7081a551972453701402382e0d;EN 50657:2017 D.41;Probabilistic Testing;u
-TOC;5642d058501682b72ecabfe3a1f6ac88;EN 50657:2017 D.42;Process Simulation;u
-TOC;93538fcccc2fb030f007acb8542f358b;EN 50657:2017 D.43;Prototyping / Animation;u
-TOC;540a4d2ce235d0804a4af0056abc42af;EN 50657:2017 D.44;Recovery Block;u
-TOC;54ee67f9a2b30653df8440a361386d7f;EN 50657:2017 D.45;Response Timing and Memory Constraints;u
-TOC;92cd3eae4c277c41ca4fe99ae45993ad;EN 50657:2017 D.46;Re-Try Fault Recovery Mechanisms;u
-TOC;f166ab3f6f675932903530bfc202359d;EN 50657:2017 D.47;Safety Bag;u
-TOC;59f4cf01b9b2da04771e2f7da266c2c2;EN 50657:2017 D.48;Software Configuration Management;u
-TOC;f67fb49d3a5c3138c29275dc0dd0d707;EN 50657:2017 D.49;Strongly Typed Programming Languages;u
-TOC;61e7be46cbee1c7e9eb6204096ae36c5;EN 50657:2017 D.50;Structure Based Testing;u
-TOC;9f9de4d92c67f5e09cbd879991d71e6f;EN 50657:2017 D.51;Structure Diagrams;u
-TOC;195f9a12edb44bc8e7c875d4fc1effe5;EN 50657:2017 D.52;Structured Methodology;u
-TOC;5c52c42ed2c6236b2d8daf7c93ea54bb;EN 50657:2017 D.53;Structured Programming;u
-TOC;9455f8106b886b4f8cbae4c8d44d460a;EN 50657:2017 D.54;Suitable Programming languages;u
-TOC;62e73cc7802645104b3733416f279a34;EN 50657:2017 D.55;Time Petri Nets;u
-TOC;d1d8ab9e3e448f71e832bd6b985ae116;EN 50657:2017 D.56;Walkthroughs / Design Reviews;u
-TOC;e391f034cd48f5cce62d806a610d9c5d;EN 50657:2017 D.57;Object Oriented Programming;u
-TOC;284addd47c8850afc37a2ce282290430;EN 50657:2017 D.58;Traceability;u
-TOC;28caac1a29f3fef5efe554035743011e;EN 50657:2017 D.59;Metaprogramming;u
-TOC;683e5c4afcf9df4b62628537d765c489;EN 50657:2017 D.60;Procedural programming;u
-TOC;b58a24f52a3725c7285349d113701fe4;EN 50657:2017 D.61;Clause intentionally left empty;u
-TOC;4749b8c3635f80ed753ee8437f8d833a;EN 50657:2017 D.62;Clause intentionally left empty;u
-TOC;bf1efdab108160df95119461c165167e;EN 50657:2017 D.63;Clause intentionally left empty;u
-TOC;cef4d2148c61d89f86c2ba682ea852cf;EN 50657:2017 D.64;Clause intentionally left empty;u
-TOC;ff65c02c1ea23cbacccfdd8fe17ab9b7;EN 50657:2017 D.65;Data modelling;u
-TOC;be67bdb52a613af3f7d5c39d388a27b5;EN 50657:2017 D.66;Control Flow Diagram/Control Flow Graph;u
-TOC;535860ee777ed7e1b31925cf70244b59;EN 50657:2017 D.67;Sequence diagram;u
-TOC;7e2dbb2522d71b3e453a71367ed38fce;EN 50657:2017 D.68;Tabular Specification Methods;u
-TOC;b32462b5360bf821f8d3a205bc0ef8a1;EN 50657:2017 D.69;Application specific language;u
-TOC;6c6927c77ab6272469ceed07dc1b27ec;EN 50657:2017 D.70;UML (Unified Modelling Language);u
-TOC;21a0c9d74a96260f7011505bba1ee508;EN 50657:2017 D.71;Domain specific languages;u
-TOC;da7c2ccdd528a654c099bb228a3bf28a;EN 50657:2017 D.72;Segregation;u
+TOC;809864530759c8521ca7eecffda9e762;EN 50657:2017 D;Bibliography of techniques;m
+TOC;a6800032fe52235744add6e4f7fc2747;EN 50657:2017 D.1;Artificial Intelligence Fault Correction;m
+TOC;dae2d9ed135ed14573f95d476b3f2293;EN 50657:2017 D.2;Analysable Programs;m
+TOC;6ba28bc3edd1f55603adf99112ca6814;EN 50657:2017 D.3;Avalanche/Stress Testing;m
+TOC;c3d595f43981e9ed6fcc063f19b28e90;EN 50657:2017 D.4;Boundary Value Analysis;m
+TOC;14c7da8d1cf6659cd80f2a662f1b4fbc;EN 50657:2017 D.5;Backward Recovery;m
+TOC;c84846f5f42bf6b09fb7a6d491de10fe;EN 50657:2017 D.6;Cause Consequence Diagrams;m
+TOC;d0ef91b80a9fde6b5edb7e8801f9dc14;EN 50657:2017 D.7;Checklists;m
+TOC;cea995fc49350115667a51e1e2e2d95b;EN 50657:2017 D.8;Control Flow Analysis;m
+TOC;d1bcdf6bebd6e122ee8a0da06af45098;EN 50657:2017 D.9;Common Cause Failure Analysis;m
+TOC;bbd016763c3db7a5b8825d57203a7fd3;EN 50657:2017 D.10;Data Flow Analysis;m
+TOC;41c4dda37434d881a76bf2d4eb720e52;EN 50657:2017 D.11;Data Flow Diagrams;m
+TOC;6c8e79be351946e1a35e720541036310;EN 50657:2017 D.12;Data Recording and Analysis;m
+TOC;0aded797c6452a48b21473d1372e127a;EN 50657:2017 D.13;Decision Tables and Truth Tables;m
+TOC;49ada3a0f7e667f667842df539ee8388;EN 50657:2017 D.14;Defensive Programming;m
+TOC;fa090909282a5ba1ca4126389237c71b;EN 50657:2017 D.15;Coding Standards and Style Guide;m
+TOC;7711b16d1d43fef63b0fd3e4071a6e43;EN 50657:2017 D.16;Diverse Programming;m
+TOC;9333783df189b52eea0587d1cdc3d0f4;EN 50657:2017 D.17;Dynamic Reconfiguration;m
+TOC;665c7632bb840bb4d889e7e548422035;EN 50657:2017 D.18;Equivalence Classes and Input Partition Testing;m
+TOC;687bd3c98b4b4159fc00d1cf7a6b23e8;EN 50657:2017 D.19;Error Detecting and Correcting Codes;m
+TOC;67e89574a2b535a01c3f191a2b516e9e;EN 50657:2017 D.20;Error Guessing;m
+TOC;bbd4b5720f701f06bbf6ec6479ad6f8a;EN 50657:2017 D.21;Error Seeding;m
+TOC;89f2301b6c8f8862d6195dfbc4778897;EN 50657:2017 D.22;Event Tree Analysis;m
+TOC;7b459dd989d6b67cfd6ef87fa4228799;EN 50657:2017 D.23;Fagan Inspections;m
+TOC;5eb4f33118cca97c677291c630872d34;EN 50657:2017 D.24;Failure Assertion Programming;m
+TOC;04425ceb8ba4fe0c4fbb5a11850bce7a;EN 50657:2017 D.25;SEEA – Software Error Effect Analysis;m
+TOC;8fcd1a2d167c53a6f41c840992389bc1;EN 50657:2017 D.26;Fault Detection and Diagnosis;m
+TOC;b8d914ec33c607e11828287fe72f8a92;EN 50657:2017 D.27;Finite State Machines/State Transition Diagrams;m
+TOC;025fddc6b6ce9bcd2997be2f15a932d3;EN 50657:2017 D.28;Formal Methods;m
+TOC;27caf53431f0addccace333622f4c973;EN 50657:2017 D.28.1;General;m
+TOC;29fe848abef910f38f2a8e1591d8a6ee;EN 50657:2017 D.28.2;CSP - Communicating Sequential Processes;m
+TOC;213cc4b74acf4e65369232b0de6cafee;EN 50657:2017 D.28.3;CCS - Calculus of Communicating Systems;m
+TOC;64dcb94b704088f1182e5544dcadce47;EN 50657:2017 D.28.4;HOL - Higher Order Logic;m
+TOC;1fb5d9dc93faee1b83264a50a3d6f922;EN 50657:2017 D.28.5;LOTOS;m
+TOC;c235e0d9f6f914d8887382b256606868;EN 50657:2017 D.28.6;OBJ;m
+TOC;6ca1b399f771aa61e60791bea40bddea;EN 50657:2017 D.28.7;Temporal logic;m
+TOC;6a1b5ea8f9f34ac4e238fb8ab8726372;EN 50657:2017 D.28.8;VDM - Vienna Development Method;m
+TOC;964cccfa4fa44766bef0b1ca5f764533;EN 50657:2017 D.28.9;Z method;m
+TOC;76593652dad6b62dd41876b8b5f15339;EN 50657:2017 D.28.10;B method;m
+TOC;d055b068a1de0013240599e7143f0106;EN 50657:2017 D.28.11;Model Checking;m
+TOC;c55fdbdc0a8c9f99719fcaa4acabca20;EN 50657:2017 D.29;Formal Proof;m
+TOC;3e857f6b2c4019e103be3399a55f43bd;EN 50657:2017 D.30;Forward Recovery;m
+TOC;c0a8be5ebe175a302fcdf59675f51115;EN 50657:2017 D.31;Graceful Degradation;m
+TOC;a6502f7ee4052fc20d7e263b580d42d8;EN 50657:2017 D.32;Impact Analysis;m
+TOC;ccfe7c81f859e33a07fb719da3e0a3a3;EN 50657:2017 D.33;Information Hiding / Encapsulation;m
+TOC;134c6f8c7c0ef8562297e309744551a1;EN 50657:2017 D.34;Interface Testing;m
+TOC;09d064b7dcd0d64b8c3daf07d0e0edc2;EN 50657:2017 D.35;Language Subset;m
+TOC;68f2d45a88666806d08f08321058c31b;EN 50657:2017 D.36;Memorizing Executed Cases;m
+TOC;5ebaefdea61001f1f9a51bafb5bae575;EN 50657:2017 D.37;Metrics;m
+TOC;4026cd4e9666f90291e2ba663b8e2507;EN 50657:2017 D.38;Modular Approach;m
+TOC;136477cfc167ec0655446f195924db19;EN 50657:2017 D.39;Performance Modelling;m
+TOC;9d7a0f35d0459740ce25e8c0137e24f5;EN 50657:2017 D.40;Performance Requirements;m
+TOC;d0261e7081a551972453701402382e0d;EN 50657:2017 D.41;Probabilistic Testing;m
+TOC;5642d058501682b72ecabfe3a1f6ac88;EN 50657:2017 D.42;Process Simulation;m
+TOC;93538fcccc2fb030f007acb8542f358b;EN 50657:2017 D.43;Prototyping / Animation;m
+TOC;540a4d2ce235d0804a4af0056abc42af;EN 50657:2017 D.44;Recovery Block;m
+TOC;54ee67f9a2b30653df8440a361386d7f;EN 50657:2017 D.45;Response Timing and Memory Constraints;m
+TOC;92cd3eae4c277c41ca4fe99ae45993ad;EN 50657:2017 D.46;Re-Try Fault Recovery Mechanisms;m
+TOC;f166ab3f6f675932903530bfc202359d;EN 50657:2017 D.47;Safety Bag;m
+TOC;59f4cf01b9b2da04771e2f7da266c2c2;EN 50657:2017 D.48;Software Configuration Management;m
+TOC;f67fb49d3a5c3138c29275dc0dd0d707;EN 50657:2017 D.49;Strongly Typed Programming Languages;m
+TOC;61e7be46cbee1c7e9eb6204096ae36c5;EN 50657:2017 D.50;Structure Based Testing;m
+TOC;9f9de4d92c67f5e09cbd879991d71e6f;EN 50657:2017 D.51;Structure Diagrams;m
+TOC;195f9a12edb44bc8e7c875d4fc1effe5;EN 50657:2017 D.52;Structured Methodology;m
+TOC;5c52c42ed2c6236b2d8daf7c93ea54bb;EN 50657:2017 D.53;Structured Programming;m
+TOC;9455f8106b886b4f8cbae4c8d44d460a;EN 50657:2017 D.54;Suitable Programming languages;m
+TOC;62e73cc7802645104b3733416f279a34;EN 50657:2017 D.55;Time Petri Nets;m
+TOC;d1d8ab9e3e448f71e832bd6b985ae116;EN 50657:2017 D.56;Walkthroughs / Design Reviews;m
+TOC;e391f034cd48f5cce62d806a610d9c5d;EN 50657:2017 D.57;Object Oriented Programming;m
+TOC;284addd47c8850afc37a2ce282290430;EN 50657:2017 D.58;Traceability;m
+TOC;28caac1a29f3fef5efe554035743011e;EN 50657:2017 D.59;Metaprogramming;m
+TOC;683e5c4afcf9df4b62628537d765c489;EN 50657:2017 D.60;Procedural programming;m
+TOC;b58a24f52a3725c7285349d113701fe4;EN 50657:2017 D.61;Clause intentionally left empty;m
+TOC;4749b8c3635f80ed753ee8437f8d833a;EN 50657:2017 D.62;Clause intentionally left empty;m
+TOC;bf1efdab108160df95119461c165167e;EN 50657:2017 D.63;Clause intentionally left empty;m
+TOC;cef4d2148c61d89f86c2ba682ea852cf;EN 50657:2017 D.64;Clause intentionally left empty;m
+TOC;ff65c02c1ea23cbacccfdd8fe17ab9b7;EN 50657:2017 D.65;Data modelling;m
+TOC;be67bdb52a613af3f7d5c39d388a27b5;EN 50657:2017 D.66;Control Flow Diagram/Control Flow Graph;m
+TOC;535860ee777ed7e1b31925cf70244b59;EN 50657:2017 D.67;Sequence diagram;m
+TOC;7e2dbb2522d71b3e453a71367ed38fce;EN 50657:2017 D.68;Tabular Specification Methods;m
+TOC;b32462b5360bf821f8d3a205bc0ef8a1;EN 50657:2017 D.69;Application specific language;m
+TOC;6c6927c77ab6272469ceed07dc1b27ec;EN 50657:2017 D.70;UML (Unified Modelling Language);m
+TOC;21a0c9d74a96260f7011505bba1ee508;EN 50657:2017 D.71;Domain specific languages;m
+TOC;da7c2ccdd528a654c099bb228a3bf28a;EN 50657:2017 D.72;Segregation;m
 TOC;b5026fc0d8a52bb1805943832e9ec381;EN 50657:2017 E;Changes in this European Standard compared to EN 50128:2011;u
 TOC;52bfc9f71b428ec5b16223fa08fe074a;EN 50657:2017 ZZ;Relationship between this European Standard and the Essential Requirements of EU Directive 2008/57/EC;u
+TABLE;98b273b64a0e41956037c5ef42eebe4c;EN 50657:2017 Table 1;6.7.4.12;Relation between tool class and applicable numbered entries
+TABLE;1393b288f5a420ebf632119191aaea21;EN 50657:2017 Table A.1;A.2;Lifecycle Issues and Documentation (5.3)
+TABLE;b4219b37a7d6d0786bd905c20d98108b;EN 50657:2017 Table A.2;A.2;Software Requirements Specification (7.2)
+TABLE;2dec77ddfd9629bc272af88041e413fc;EN 50657:2017 Table A.3;A.2;Software Architecture (7.3)
+TABLE;783fcdf2d769e13983716609ea13659b;EN 50657:2017 Table A.4;A.2;Software Design and Implementation (7.3 and 7.4)
+TABLE;9a2c9ee8be5ff96b329431ea4d4da38d;EN 50657:2017 Table A.5;A.2;Verification and Testing (6.2, 7.3 and 7.4)
+TABLE;758f99793378eb66e6e8553943cc7a27;EN 50657:2017 Table A.6;A.2;Integration (7.6)
+TABLE;ed7c6a3feb484fc55d1ddf02ebe4cdcb;EN 50657:2017 Table A.7;A.2;Overall Software Testing (6.2 and 7.7)
+TABLE;9dc4047a0f198a5615fa0477b2862488;EN 50657:2017 Table A.8;A.2;Software Analysis Techniques (6.3)
+TABLE;25d993b7b596975e179b7f6f81ae89fc;EN 50657:2017 Table A.9;A.2;Software Quality Assurance (6.5)
+TABLE;2db3713d8ea9ec9347f15ae3b093007c;EN 50657:2017 Table A.10;A.2;Software Maintenance (9.2)
+TABLE;d28c49cc6a1aa58d498ec00d5b84eee5;EN 50657:2017 Table A.11;A.2;Data Preparation Techniques (8.4)
+TABLE;b3d4ad45f9bf24240293a9be25c047f9;EN 50657:2017 Table A.12;A.3;Coding Standards
+TABLE;a82e2c3ca4e7b62f000f546db2fa726a;EN 50657:2017 Table A.13;A.3;Dynamic Analysis and Testing
+TABLE;af4ef434c40f1557e36b8057683a179d;EN 50657:2017 Table A.14;A.3;Functional/Black Box Test
+TABLE;7242a76821e7586d388d52774deb15e5;EN 50657:2017 Table A.15;A.3;Intentionally left empty
+TABLE;04994fc6bb24407e4042e18d650b244f;EN 50657:2017 Table A.16;A.3;Intentionally left empty
+TABLE;44cb819261b79ca009ae56139096fd32;EN 50657:2017 Table A.17;A.3;Modelling
+TABLE;4bcfe3b6dd3913b524bdee60d4b8eb1b;EN 50657:2017 Table A.18;A.3;Performance Testing
+TABLE;2365f51b065f855b2b37f845b202ab76;EN 50657:2017 Table A.19;A.3;Static Analysis
+TABLE;0877e0916e983b0b667dd2d9b63a0fbe;EN 50657:2017 Table A.20;A.3;Components
+TABLE;08e68c9aeb01b77ad0efcff6eee21c51;EN 50657:2017 Table A.21;A.3;Test Coverage for Code
+TABLE;f8bf7ae74662cec12c437594941fc101;EN 50657:2017 Table A.22;A.3;Object Oriented Software Architecture
+TABLE;a85aebee39e11834096455cf71842c68;EN 50657:2017 Table A.23;A.3;Object Oriented Detailed Design
+TABLE;0be0f903844a4ba8171be7eb895f2b83;EN 50657:2017 Table B.1;B;Requirements Manager Role Specification
+TABLE;8a43a4d04c01db36b607f76d3d4f1d75;EN 50657:2017 Table B.2;B;Designer Role Specification
+TABLE;c273bf9fbb7934d744662c3189344d86;EN 50657:2017 Table B.3;B;Implementer Role Specification
+TABLE;dbc8b6fbbcc9238db1de89ae319ae741;EN 50657:2017 Table B.4;B;Tester Role Specification
+TABLE;db7f4ee7e21ee04a0ce350cf8218ddfb;EN 50657:2017 Table B.5;B;Verifier Role Specification
+TABLE;ca4a9ff0984336613a2b2885ddf01bda;EN 50657:2017 Table B.6;B;Integrator Role Specification
+TABLE;c9456dd6ebb7e0f820360ea3645b86ef;EN 50657:2017 Table B.7;B;Validator Role Specification
+TABLE;c1635ace268a48c1763d9dfc579179f0;EN 50657:2017 Table B.8;B;Assessor Role Specification
+TABLE;62480104b1de104119786d55bb852a00;EN 50657:2017 Table B.9;B;Project Manager Role Specification
+TABLE;6907a00b193304c551d3b5007748585e;EN 50657:2017 Table B.10;B;Configuration Manager Role Specification
+TABLE;74b2edef40d14597805b422c990ead28;EN 50657:2017 Table C.1;C;Documents Control Summary
+TABLE;fd1da2faefc44c2d91adb2d15efde3e0;EN 50657:2017 Table E.1;E;Correspondence between this European Standard and EN 50128:2011
+TABLE;f3b91e144e5687a17064ec2fc2baebef;EN 50657:2017 Table ZZ.1;ZZ;Correspondence between this European Standard, the TSI “Locomotives and Passenger Rolling Stock” (REGULATION (EU) No 1302/2014 of 18 November 2014) and Directive 2008/57/EC

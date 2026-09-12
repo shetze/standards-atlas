@@ -8,7 +8,7 @@ oyr=2018
 lifecycle_status="published"
 
 structure=(
- "2018 1 2 3 3.1 t3.1.{1..60} 3.2 4 5 5.{1..3} 5.3.{1..4} 5.3.4.{1..2} 5.3.{5..15} 6 6.{1..2} 6.2.{1..3} 6.{3..4} 7 7.{1..5} 8 8.{1..4} 9:A 9:A.{1..4} 9:A.4.{1..2} 9:A.4.2.{1..4} 9:A.4.3 9:A.4.3.{1..6} 9:A.4.4 9:A.5 9:A.5.{1..2} 10:B 10:B.{1..2} 10:B.2.{1..2} 10:B.3 10:B.3.{1..2} 10:B.3.2.{1..4} 10:B.3.3 10:B.3.3.{1..3} 10:B.3.{4..5} 10:B.3.5.{1..2} 10:B.3.6 11:C 11:C.{1..5} 12:D 13:E 13:E.{1..2} 14:F 14:F.1 14:F.1.{1..2} 14:F.2 14:F.2.{1..11} 14:F.3 14:F.3.{1..3} 14:F.3.3.{1..3} 15:G 16:ZZ"
+ "2018 1 2 3 3.1 t3.1.{1..60} 3.2 4 5 5.{1..3} 5.3.{1..4} 5.3.4.{1..2} 5.3.{5..15} 6 6.{1..2} 6.2.{1..3} 6.{3..4} 7 7.{1..5} 8 8.{1..4} 9:A 9:A.{1..4} 9:A.4.{1..2} 9:A.4.2.{1..4} 9:A.4.3 9:A.4.3.{1..6} 9:A.4.4 9:A.5 9:A.5.{1..2} 10:B 10:B.{1..2} 10:B.2.{1..2} 10:B.3 10:B.3.{1..2} 10:B.3.2.{1..4} 10:B.3.3 10:B.3.3.{1..3} 10:B.3.{4..5} 10:B.3.5.{1..2} b10:B.3.5.2.1 10:B.3.6 11:C 11:C.{1..5} b11:C.5.{1..15} 12:D 13:E 13:E.{1..2} b13:E.2.{1..9} 14:F 14:F.1 14:F.1.{1..2} 14:F.2 14:F.2.1 b14:F.2.1.1 14:F.2.{2..11} 14:F.3 14:F.3.{1..3} 14:F.3.3.{1..2} b14:F.3.3.2.2 14:F.3.3.3 b14:F.3.3.3.{3..8} 15:G b15:G.{1..2} 16:ZZ b16:ZZ.1"
 )
 
 return 0;
@@ -21,6 +21,7 @@ return 0;
 ####
 
 #---data---#
+# table-record-layout: parent-caption
 TOC;4f7a4ad445137cd4bbea776dc646fbb6;EN 50129:2018 1;Scope;u
 TOC;5987814f8bb245c1a0117c9e8fcd91b2;EN 50129:2018 2;Normative references;u
 TOC;ecfe460ba886d87faac8eac1393fe552;EN 50129:2018 3;Terms, definitions and abbreviations;u
@@ -205,3 +206,39 @@ TOC;47b487ac53db887507510955e19192d6;EN 50129:2018 F.3.3.2;Techniques and measur
 TOC;c64bac0b6d4a1e46251e7b4ecfbbf93a;EN 50129:2018 F.3.3.3;Techniques and measures for complex UPIC;u
 TOC;d9dec4fc074b969c859fc09d6bf20c24;EN 50129:2018 G;Changes at this document compared to EN 50129:2003;u
 TOC;029d4d0b82b09a12b4d204cccd631f76;EN 50129:2018 ZZ;Relationship between this European standard and the essential requirements of EU Directive 2008/57/EC [2008 OJ L191] aimed to be covered;u
+TABLE;fb1b9fd2f8aa4e0f81839fcb4f8baaf6;EN 50129:2018 Table B.1;B.3.5.2;Measures to detect faults in integrated circuits by means of periodic online testing
+TABLE;90319d6e6c24d1059009f2614bcc7e73;EN 50129:2018 Table C.1;C.5;Resistors
+TABLE;764c9bd074739b458cdaa115d38030b5;EN 50129:2018 Table C.2;C.5;Capacitors
+TABLE;175774ca6938d6a60e235e6f9599fb48;EN 50129:2018 Table C.3;C.5;Electromagnetic components
+TABLE;eab841623113a3b8692f7619a242faa9;EN 50129:2018 Table C.4;C.5;Diodes
+TABLE;811b42332d356e6227e991d570042dba;EN 50129:2018 Table C.5;C.5;Transistors
+TABLE;6c1695208651726ed51cb801d27efa1e;EN 50129:2018 Table C.6;C.5;Controlled rectifiers
+TABLE;aa1faa210fe5fc87a83e9f6c677da1f2;EN 50129:2018 Table C.7;C.5;Surge Suppressors
+TABLE;91f5f1ad9d64f139c0e4644235b78865;EN 50129:2018 Table C.8;C.5;Opto-electronic components
+TABLE;74b30277f8530851ca13faee937c737f;EN 50129:2018 Table C.9;C.5;Filters
+TABLE;1d0159ab204a1597cf2fcb2a3a8a4d0d;EN 50129:2018 Table C.10;C.5;Interconnection assemblies
+TABLE;9b2bd397bd59e6c721260e0bca084c34;EN 50129:2018 Table C.11;C.5;Fuses
+TABLE;1cae32689dfe985f2a8794fe87d7a2c7;EN 50129:2018 Table C.12;C.5;Switches and push/pull buttons
+TABLE;e0fde9cdb50039636f10c325bbadac38;EN 50129:2018 Table C.13;C.5;Lamps
+TABLE;91e94509f343a2a1d6de22e5980e22db;EN 50129:2018 Table C.14;C.5;Batteries
+TABLE;e101fd03836e3fcab3f25dccd9140067;EN 50129:2018 Table C.15;C.5;Transducers/sensors (excluding those with internal electronic circuitry)
+TABLE;76f4b8a3ff9e589aaaab844dcae51623;EN 50129:2018 Table E.1;E.2;Safety planning and quality assurance activities
+TABLE;4cf37ad3a9d8cd0aa77d12a57bd36563;EN 50129:2018 Table E.2;E.2;Safety requirements specification
+TABLE;c23047c5fded707ca04841821a37201a;EN 50129:2018 Table E.3;E.2;Safety Organization
+TABLE;75b05b41aadb1f0ec41bedbc4b4f9c1e;EN 50129:2018 Table E.4;E.2;Architecture of system, subsystem or equipment
+TABLE;a2b0e023c756a67f6c8a1380079fb723;EN 50129:2018 Table E.5;E.2;Design features
+TABLE;77d60f3060f21c0a24b4af2cdad77c9e;EN 50129:2018 Table E.6;E.2;Failure and hazard analysis methods
+TABLE;ad67e3c24bf2fec65492d77dd9774856;EN 50129:2018 Table E.7;E.2;Design and development of system, subsystem or equipment
+TABLE;563b1c163f9edfb5e157efe3f2bb2b5f;EN 50129:2018 Table E.8;E.2;Safety verification and validation of the system, subsystem or equipment
+TABLE;4c8f32e6ba9ffdbd3e55e0f261b16c52;EN 50129:2018 Table E.9;E.2;Application, operation and maintenance
+TABLE;33bab4b5ae0c828612046556705206bb;EN 50129:2018 Table F.1;F.2.1;Example of documentation generated during each phase
+TABLE;8d9a73bda32735a064efce7e7172f05d;EN 50129:2018 Table F.2;F.3.3.2;Simplified techniques/measures for protection against systematic failures
+TABLE;8593529446d3b8283a4e134267ac10ec;EN 50129:2018 Table F.3;F.3.3.3;Design and Verification (including all activities before synthesis)
+TABLE;7e43822f11b7a008d31f49d95656984e;EN 50129:2018 Table F.4;F.3.3.3;Synthesis
+TABLE;84228e6b8950cbe129142692cd093e65;EN 50129:2018 Table F.5;F.3.3.3;Placement, routing and layout generation
+TABLE;a9972d1bc693eff0e8e54575cfc8fde0;EN 50129:2018 Table F.6;F.3.3.3;Description of techniques for design
+TABLE;f51e8774fd56a66cd584850620de7b7a;EN 50129:2018 Table F.7;F.3.3.3;Description of techniques for synthesis
+TABLE;7bffc736e15b9fed64a2b96cb04b2992;EN 50129:2018 Table F.8;F.3.3.3;Description of techniques for placement, routing and layout generation
+TABLE;8b63937b95bcb063d2fbc02e9fa31232;EN 50129:2018 Table G.1;G;Clauses and subclauses — correspondence with EN 50129:2003
+TABLE;41a782b18239dcd71d786da9cbd99a66;EN 50129:2018 Table G.2;G;Figures and tables — correspondence with EN 50129:2003
+TABLE;19d8d7ff91c7196779de1cada534a39b;EN 50129:2018 Table ZZ.1;ZZ;Correspondence between this European Standard, the CCS TSI (COMMISSION REGULATION (EU) 2016/919 of 27 May 2016) and Directive 2008/57/EC
