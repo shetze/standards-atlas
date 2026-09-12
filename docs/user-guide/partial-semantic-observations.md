@@ -111,6 +111,75 @@ new output and disable the RamaLama cache through the existing configuration, fo
 `STANDARDS_ATLAS_LLM_CACHE_DIRECTORY=''` before the command. This is not a substitute for
 the later repeated end-to-end qualification.
 
+## Response model identity and offline recovery
+
+The configured model reference remains the cache/request/voter identity. The raw server
+label is retained separately, never rewritten to impersonate the requested model. The
+same `hf-response-identity-v1` check applies to fresh results, successful resume and
+Slice-5 archive verification/adoption. It accepts exact labels and recognised Hugging
+Face transport spellings for the same repository and selector. A RamaLama response such
+as `ibm-granite/granite-3.3-8b-instruct-GGUF` may identify a request for
+`hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M`; it does **not** verify the selected
+quantization. The diagnostic explicitly records `selector_check: not_reported` and
+`runtime_artifact_verified: false`. Even an exact label is not a model-byte attestation.
+
+Different repositories, explicitly conflicting quantizations, ambiguous local aliases,
+unsupported revision/filename spellings, and different prompt versions remain errors.
+No selector is dropped from request fingerprints or voter keys. An adapter result that
+contradicts the raw provider model is rejected. The requested routing provider (e.g.
+`ramalama`) and adapter provider (e.g. `openai-compatible`) are reported separately.
+
+Every case with a saved response now includes `response_identity` in its report, including
+requested and reported model/prompt values, match rule and verification limits. This is a
+derived diagnostic, not a trusted input to consensus. `accepted` in this subobject means
+**identity association only**, not that the response schema or semantics were accepted.
+
+To revalidate responses rejected by the old exact-string check, repeat your **original**
+`partial-proposals` command with the same source, model, limit, attributes, generation
+options and output directory, remove `--execute`, and add:
+
+```bash
+--revalidate-responses
+```
+
+For the example above (only when these are the original parameters):
+
+```bash
+uv run standards-atlas evaluation partial-proposals \
+  --run local/evaluation/qualification-run-078.zip \
+  --model 'hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M' \
+  --output local/evaluation/taxonomy-efficient/slice-4/run-078-granite \
+  --limit 50 \
+  --revalidate-responses
+```
+
+Without `--execute` this does not create a gateway, read runtime configuration, retry
+failed requests or contact a model. It verifies the immutable run, source/plan and full
+stored request, the existing response checksum, current identity policy, complete schema
+and primary/set/role constraints. Missing or still-invalid evidence stays failed. A
+corrupted response or changed request fails safely instead of silently overwriting it.
+A grouped schema error, including duplicate `knowledge_kinds`, is not repaired by this fix.
+
+Recovered observations keep the original request fingerprint, model/voter key and response
+checksum. `new_observation_count` and current invocation request timing remain zero;
+`revalidated_observation_count` reports recovered answers separately from reused successes.
+`response_revalidation` in each case distinguishes recovery, missing evidence and any
+current validation error. A still-failed observation retains its original error artifact;
+consult `response_revalidation.error` for a new schema/identity failure exposed by recovery.
+
+Raw `response.json` and recorded executions/attempts remain unchanged. Before recovery,
+the original failed observation is copied byte-for-byte under the case's
+`revalidations/<id>/previous-observation.json`; the new decision and its audit are separate
+from inference timing. Before refreshing the run report, its previous bytes are retained
+under `report-history/<sha256>.json`. No additional model votes or inference costs are
+invented. Repeating revalidation of an already accepted observation is ordinary reuse.
+
+Adding **both** `--revalidate-responses` and `--execute` first revalidates saved responses
+and then infers only still-pending cases. Existing failed-case execution without the new
+flag keeps its previous retry behavior. These flags belong to `partial-proposals`;
+`partial-cascade` shares the fixed identity validation but does not expose this recovery
+flag. Revalidation never edits a qualification ZIP or publishes canonical enrichments.
+
 ## Artifacts and interpretation
 
 The output directory is immutable in identity, but resumable in execution:

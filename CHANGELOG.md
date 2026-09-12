@@ -2,6 +2,17 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Partial response identity and recovery (2026-09-12)
+
+- Use one conservative model/prompt label policy for partial execution, successful resume
+  and archive verification; retain requested cache/voter identity and raw response labels.
+- Accept recognised HF repository/transport labels without pretending to verify omitted
+  quantization; reject explicit selector, repository, prompt and raw-envelope conflicts.
+- Add explicit model-free revalidation of saved failed responses with full request/checksum
+  and schema checks, immutable failure/report history and separate recovery accounting.
+- Keep prompts, model/quantization selection, semantic schemas, retries, consensus thresholds,
+  Applicability policy and public enrichment output unchanged.
+
 ## Unreleased — Taxonomy-backed partial cascade and adoption (2026-09-12)
 
 - Add opt-in `evaluation partial-cascade` with source-backed and attribute-specific model

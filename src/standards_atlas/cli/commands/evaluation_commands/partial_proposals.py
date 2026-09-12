@@ -76,6 +76,13 @@ def propose_partial_semantics(
             "--execute", help="Actually infer pending questions; default is model-free planning."
         ),
     ] = False,
+    revalidate_responses: Annotated[
+        bool,
+        typer.Option(
+            "--revalidate-responses",
+            help="Revalidate saved failed responses; no inference unless --execute is also set.",
+        ),
+    ] = False,
     provider: Annotated[str, typer.Option("--provider")] = "ramalama",
     config: Annotated[Path, typer.Option("--config")] = defaults.DEFAULT_LLM_CONFIG,
     mcp_config: Annotated[Path, typer.Option("--mcp-config")] = defaults.DEFAULT_MCP_CONFIG,
@@ -147,6 +154,7 @@ def propose_partial_semantics(
                 examples=source_selection.examples,
                 source_fingerprints=source_selection.fingerprints,
                 execute=execute,
+                revalidate_responses=revalidate_responses,
                 gateway_factory=gateway_factory,
                 progress=lambda text: typer.echo(text),
             )
@@ -166,6 +174,7 @@ def propose_partial_semantics(
     )
     typer.echo(f"Grouped requests planned : {report['planned_request_count']}")
     typer.echo(f"Gateway calls this time  : {report['request_timing']['request_count']}")
+    typer.echo(f"Revalidated responses    : {report['revalidated_observation_count']}")
     typer.echo(f"Status counts            : {report['status_counts']}")
     typer.echo(f"Report                   : {output / 'partial-run-report.json'}")
     typer.echo("Experimental only; no production consensus, early exits or publication.")

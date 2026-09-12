@@ -5,6 +5,16 @@ attribute acceptance, early exits, archive verification and explicit knowledge a
 It is an **opt-in operational path**. The existing full-output qualification workflow and
 its manifests keep their behavior. This command is not a completed fresh-repeat qualification.
 
+## Model labels
+
+Execution, successful resume and archive verification use the same model/prompt identity
+policy as [partial observations](partial-semantic-observations.md#response-model-identity-and-offline-recovery).
+The requested reference remains the voter/cache key; a recognised HF repository label
+from RamaLama is retained as reported, not treated as a new model or silently rewritten.
+An absent quantization selector is explicitly unverified; a contradictory selector,
+different repository or prompt is rejected. Raw response hashes remain unchanged.
+The policy does not attest runtime model bytes and does not change acceptance thresholds.
+
 ## Acceptance and completion
 
 The command uses the models, stages, generation budgets, confidence thresholds and

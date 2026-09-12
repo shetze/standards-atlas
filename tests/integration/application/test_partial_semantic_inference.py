@@ -144,3 +144,78 @@ def test_adapter_schema_failure_cannot_be_published_as_negative(tmp_path, monkey
     assert PartialObservation.model_validate_json(record.read_text()).model_evidence() == {}
     attempt = next((tmp_path / "out").rglob("attempt-001.json"))
     assert json.loads(attempt.read_text())["error"]["raw_content"] == "{}"
+
+
+@pytest.mark.parametrize(
+    "reported,status",
+    [
+        ("ibm-granite/granite-3.3-8b-instruct-GGUF", "evaluated"),
+        ("ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M", "evaluated"),
+        ("ibm-granite/granite-3.3-8b-instruct-GGUF:Q5_K_M", "failed"),
+        ("other/model-GGUF", "failed"),
+    ],
+)
+def test_real_adapter_keeps_reported_label_and_requested_cache_identity(
+    tmp_path,
+    monkeypatch,
+    reported,
+    status,
+):
+    requested = "hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M"
+    clause = descriptor()
+    item = EvaluationExample(
+        id=clause.id,
+        expected={},
+        input={
+            "content": {"text": clause.text, "hash": clause.content_hash},
+            "context": canonical_cbox_context(clause),
+        },
+    )
+    cfg = PartialProposalConfig(
+        corpus_id="test",
+        dataset_version="1",
+        provider="ramalama",
+        model=requested,
+        selected_attributes=("applicability_present",),
+    )
+    gateway = OpenAICompatibleLlmGateway(
+        LlmConfig(
+            model=requested,
+            cache_directory=tmp_path / "cache",
+        )
+    )
+    calls = []
+
+    def reply(method, endpoint, payload=None):
+        calls.append(payload)
+        assert payload["model"] == requested
+        return {
+            "model": reported,
+            "choices": [
+                {"message": {"content": '{"applicability_present":false}'}, "finish_reason": "stop"}
+            ],
+        }
+
+    monkeypatch.setattr(gateway, "_request_json", reply)
+    for folder in ("first", "second"):
+        report = run_partial_proposals(
+            cfg,
+            resources=RESOURCES,
+            output_directory=tmp_path / folder,
+            examples=(item,),
+            execute=True,
+            gateway_factory=lambda: gateway,
+        )
+        assert report["status_counts"] == {status: 1}
+        assert report["logical_model_observation_count"] == int(status == "evaluated")
+        directory = next((tmp_path / folder / "cases").iterdir())
+        response = json.loads((directory / "response.json").read_bytes())
+        observation = PartialObservation.model_validate_json(
+            (directory / "partial-observation.json").read_bytes(),
+        )
+        assert response["model"] == response["raw_response"]["model"] == reported
+        assert observation.model == requested
+        assert report["cases"][0]["response_identity"]["runtime_artifact_verified"] is False
+    assert len(calls) == 1
+    assert report["request_timing"]["cached_response_count"] == 1
+    assert report["request_timing"]["fresh_response_count"] == 0

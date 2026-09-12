@@ -53,6 +53,9 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
     QualificationMatrixManifest,
     cascade_unresolved_clause_ids,
 )
+from standards_atlas.application.semantic_qualification.response_identity import (
+    require_response_identity,
+)
 from standards_atlas.application.semantic_qualification.taxonomy_decisions import (
     load_taxonomy_rules,
 )
@@ -168,10 +171,14 @@ def read_partial_observations(
             if (
                 structure_fingerprint(response) != obs.response_sha256
                 or response.get("value") != obs.values
-                or response.get("model") != config.model
-                or response.get("prompt_version") != config.prompt_version
             ):
                 raise ValueError("partial response differs from observation or model identity")
+            require_response_identity(
+                response,
+                requested_model=config.model,
+                prompt_version=config.prompt_version,
+                provider=config.provider,
+            )
             validate_partial_response(obs.values, prepared.request.output_schema, prepared.plan)
         results.append(
             StagedPartialObservation(

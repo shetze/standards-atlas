@@ -46,6 +46,11 @@ from standards_atlas.application.semantic_qualification.performance import (
 from standards_atlas.application.semantic_qualification.request_builder import (
     serialize_generation_request,
 )
+from standards_atlas.application.semantic_qualification.response_identity import (
+    RESPONSE_IDENTITY_POLICY,
+    require_response_identity,
+    response_identity,
+)
 from standards_atlas.application.semantic_qualification.retry import generate_with_retry
 
 
@@ -113,6 +118,21 @@ def _atomic_json(path: Path, payload: Any) -> None:
             temporary.unlink(missing_ok=True)
 
 
+def _preserve_bytes(path: Path, content: bytes) -> None:
+    """Write an immutable copy before replacing a derived report/observation."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_symlink():
+        raise ValueError(f"refusing history symlink: {path}")
+    if path.exists():
+        if path.read_bytes() != content:
+            raise ValueError("stored revalidation history differs from original bytes")
+        return
+    with path.open("xb") as stream:
+        stream.write(content)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
 def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -166,32 +186,138 @@ class _RecordingGateway:
             _atomic_json(self.directory / f"attempt-{len(self.records):03d}.json", record)
 
 
+def _recover_observation(
+    directory: Path,
+    prepared: PreparedPartialRequest,
+    config: PartialProposalConfig,
+    observation: PartialObservation,
+) -> tuple[PartialObservation, bool, dict[str, Any]]:
+    """Explicitly revalidate saved responses, retaining original failed evidence.
+
+    No gateway is involved. The response must already be bound to the exact
+    request/plan and the failed observation's checksum. Invalid responses remain
+    failed; incomplete or corrupted provenance is never silently repaired.
+    """
+    response_path = directory / "response.json"
+    if not observation.response_sha256 or not response_path.is_file():
+        return (
+            observation,
+            False,
+            {
+                "status": "unavailable",
+                "reason": "missing saved response or response checksum",
+                "gateway_request_count": 0,
+            },
+        )
+    response = _read_json(response_path)
+    if structure_fingerprint(response) != observation.response_sha256:
+        raise ValueError("partial response checksum mismatch during revalidation")
+    try:
+        identity = require_response_identity(
+            response,
+            requested_model=config.model,
+            prompt_version=config.prompt_version,
+            provider=config.provider,
+        )
+        value = validate_partial_response(
+            response["value"], prepared.request.output_schema, prepared.plan
+        )
+    except (ValueError, KeyError, TypeError) as exc:
+        return (
+            observation,
+            False,
+            {
+                "status": "failed",
+                "error": f"{type(exc).__name__}: {exc}",
+                "gateway_request_count": 0,
+            },
+        )
+    recovered = PartialObservation.model_validate(
+        {
+            **observation.model_dump(mode="json"),
+            "outcome": "evaluated",
+            "states": observation_states(prepared.plan, "evaluated"),
+            "values": value,
+            "provided_fields": tuple(sorted(value)),
+            "error": None,
+        }
+    )
+    original = (directory / "partial-observation.json").read_bytes()
+    audit = (
+        directory
+        / "revalidations"
+        / structure_fingerprint(
+            {
+                "previous": hashlib.sha256(original).hexdigest(),
+                "response": observation.response_sha256,
+                "policy": RESPONSE_IDENTITY_POLICY,
+            }
+        )
+    )
+    audit.mkdir(parents=True, exist_ok=True)
+    _preserve_bytes(audit / "previous-observation.json", original)
+    _atomic_json(
+        audit / "revalidation.json",
+        {
+            "policy": RESPONSE_IDENTITY_POLICY,
+            "identity": identity,
+            "request_fingerprint": prepared.fingerprint,
+            "response_sha256": observation.response_sha256,
+            "previous_observation_sha256": hashlib.sha256(original).hexdigest(),
+            "gateway_request_count": 0,
+        },
+    )
+    _atomic_json(audit / "partial-observation.json", recovered.model_dump(mode="json"))
+    _atomic_json(directory / "partial-observation.json", recovered.model_dump(mode="json"))
+    return (
+        recovered,
+        True,
+        {
+            "status": "evaluated",
+            "audit_directory": audit.relative_to(directory).as_posix(),
+            "gateway_request_count": 0,
+        },
+    )
+
+
 def _resume_observation(
-    directory: Path, prepared: PreparedPartialRequest, config: PartialProposalConfig
-) -> PartialObservation | None:
+    directory: Path,
+    prepared: PreparedPartialRequest,
+    config: PartialProposalConfig,
+    *,
+    revalidate_responses: bool = False,
+) -> tuple[PartialObservation | None, bool, dict[str, Any] | None]:
     path = directory / "partial-observation.json"
     if not path.is_file():
-        return None
+        return None, False, None
     payload = _read_json(path)
     require_supported_schema("partial-semantic-observation", payload.get("schema_version"))
     result = PartialObservation.model_validate(payload)
     if (
-        result.plan.fingerprint != prepared.plan.fingerprint
+        result.plan != prepared.plan
         or result.request_fingerprint != prepared.fingerprint
         or result.provider != config.provider
         or result.model != config.model
     ):
         raise ValueError("stored partial observation has a different input identity")
     if result.outcome == "failed":
-        return None
+        if revalidate_responses:
+            return _recover_observation(directory, prepared, config, result)
+        return None, False, None
     if result.outcome == "evaluated":
         response = _read_json(directory / "response.json")
         if structure_fingerprint(response) != result.response_sha256:
             raise ValueError("partial response checksum mismatch")
         if response["value"] != result.values:
             raise ValueError("partial observation differs from its stored response")
+        require_response_identity(
+            response,
+            requested_model=config.model,
+            prompt_version=config.prompt_version,
+            provider=config.provider,
+        )
         validate_partial_response(result.values, prepared.request.output_schema, prepared.plan)
-    return result
+    return result, False, None
 
 
 def _execute_case(
@@ -225,8 +351,12 @@ def _execute_case(
         _atomic_json(directory / "response.json", response)
         response_sha256 = structure_fingerprint(response)
         provided_fields = tuple(sorted(result.value))
-        if result.model != config.model or result.prompt_version != config.prompt_version:
-            raise ValueError("provider response model or prompt identity differs from request")
+        require_response_identity(
+            response,
+            requested_model=config.model,
+            prompt_version=config.prompt_version,
+            provider=config.provider,
+        )
         value = validate_partial_response(
             result.value, prepared.request.output_schema, prepared.plan
         )
@@ -261,6 +391,7 @@ def run_partial_proposals(
     examples: tuple[EvaluationExample, ...],
     source_fingerprints: dict[str, str] | None = None,
     execute: bool = False,
+    revalidate_responses: bool = False,
     gateway_factory: Callable[[], LlmGateway] | None = None,
     progress: Callable[[str], None] | None = None,
     accepted_decisions: dict[str, dict[str, Any]] | None = None,
@@ -271,6 +402,7 @@ def run_partial_proposals(
     The output identity is immutable. Changed rules, context, attributes, prompts
     or generation settings require another output directory, never stale reuse.
     Existing complete proposals are intentionally neither searched nor imported.
+    Revalidation is explicit and model-free unless execute is also requested.
     """
     task_resources = PartialTaskResources.load(resources, config)
     eligibility_policy = SemanticTaskEligibilityPolicy.from_task(task_resources.task)
@@ -352,6 +484,7 @@ def run_partial_proposals(
         directories: dict[str, Path] = {}
         pending = []
         reused = 0
+        revalidated_count = 0
         for item in prepared:
             directory = root / "cases" / structure_fingerprint({"example_id": item.example_id})
             if not directory.resolve().is_relative_to(root):
@@ -380,6 +513,8 @@ def run_partial_proposals(
                         raise ValueError("stored partial request fingerprint mismatch")
                     if stored_request.get("output_schema") != dict(item.request.output_schema):
                         raise ValueError("stored partial request schema mismatch")
+                    if stored_request != serialize_generation_request(item.request):
+                        raise ValueError("stored partial request differs from regenerated request")
                 _atomic_json(request_path, serialize_generation_request(item.request))
             case = {
                 "example_id": item.example_id,
@@ -394,10 +529,24 @@ def run_partial_proposals(
             if not eligibility[item.example_id].eligible:
                 case["status"] = "ineligible"
                 continue
-            observation = _resume_observation(directory, item, config)
-            if observation is not None:
-                reused += int(observation.outcome == "evaluated")
-                case.update(status=observation.outcome, reused=True)
+            observation, revalidated, revalidation = _resume_observation(
+                directory,
+                item,
+                config,
+                revalidate_responses=revalidate_responses,
+            )
+            revalidated_count += int(revalidated)
+            if revalidation is not None:
+                case["response_revalidation"] = revalidation
+            if observation is not None and observation.outcome != "failed":
+                reused += int(observation.outcome == "evaluated" and not revalidated)
+                case.update(status=observation.outcome, reused=not revalidated)
+                if revalidated:
+                    case["revalidated"] = True
+            elif observation is not None and observation.outcome == "failed":
+                case.update(status="failed", error=observation.error)
+                if execute:
+                    pending.append(item)
             elif item.request is None:
                 observation = PartialObservation(
                     schema_version=item.plan.schema_version,
@@ -431,6 +580,8 @@ def run_partial_proposals(
             cases[item.example_id]["status"] = observation.outcome
             if observation.error:
                 cases[item.example_id]["error"] = observation.error
+            else:
+                cases[item.example_id].pop("error", None)
             return ProposalItemOutcome(
                 generated=observation.outcome == "evaluated",
                 error=observation.error,
@@ -442,6 +593,15 @@ def run_partial_proposals(
 
         batch = ProposalBatchExecutor().execute(pending, process)
         timing = batch.request_timing or RequestTiming()
+        for item in prepared:
+            response_path = directories[item.example_id] / "response.json"
+            if response_path.is_file():
+                cases[item.example_id]["response_identity"] = response_identity(
+                    _read_json(response_path),
+                    requested_model=config.model,
+                    prompt_version=config.prompt_version,
+                    provider=config.provider,
+                )
         counts = Counter(item["status"] for item in cases.values())
         report = {
             "schema_version": "1.0",
@@ -456,8 +616,11 @@ def run_partial_proposals(
                 p.plan.request_count for p in prepared if eligibility[p.example_id].eligible
             ),
             "new_observation_count": batch.generated,
-            "failed_observation_count": batch.failed,
+            "failed_observation_count": counts["failed"],
             "reused_observation_count": reused,
+            "revalidated_observation_count": revalidated_count,
+            "response_revalidation_requested": revalidate_responses,
+            "response_identity_policy": RESPONSE_IDENTITY_POLICY,
             "request_timing": timing.model_dump(mode="json"),
             "request_timing_scope": "current invocation; prior execution files are retained",
             "logical_model_observation_count": counts["evaluated"],
@@ -465,5 +628,13 @@ def run_partial_proposals(
             "production_note": "Experimental task only; no consensus, routing or publication.",
             "cases": list(cases.values()),
         }
-        _atomic_json(root / "partial-run-report.json", report)
+        report_path = root / "partial-run-report.json"
+        if revalidate_responses and report_path.is_file():
+            previous_report = report_path.read_bytes()
+            if previous_report != _json_bytes(report):
+                _preserve_bytes(
+                    root / "report-history" / f"{hashlib.sha256(previous_report).hexdigest()}.json",
+                    previous_report,
+                )
+        _atomic_json(report_path, report)
         return report
