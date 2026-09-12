@@ -2,6 +2,19 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Partial cascade readiness and diagnosis (2026-09-12)
+
+- Bind explicit partial prompts through cascade planning, requests, resume and archive
+  verification while preserving the v2 default and historical request identities.
+- Separate planned from observed report metrics (report schema 1.1); expose effective
+  configuration, required blockers, accepting evidence and empty/nonempty value counts.
+- Add immutable `partial-cascade-audit` for full stored runs, model rejection causes,
+  voter support, active/retired revisions, retries and recorded request reconciliation.
+- Add source-bound taxonomy readiness pilots and an optional pre-inference fixed-decision
+  guard, with clearly synthetic integration controls rather than invented source review.
+- Add controlled Process Function prompt candidates and pinned regression sentinels.
+  Keep pending rules, grouped validation, confidence thresholds and public omissions unchanged.
+
 ## Unreleased — Partial response contract diagnostics (2026-09-12)
 
 - Add an immutable `evaluation partial-audit` for original responses, failed gateway

@@ -1,0 +1,5 @@
+{
+  "task": "semantic-attribute-observation",
+  "version": "taxonomy-partial-v3-no-process-null",
+  "description": "Controlled v3 ablation: remove only the process null shape example; not qualified."
+}

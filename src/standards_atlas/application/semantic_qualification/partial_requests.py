@@ -38,6 +38,14 @@ from standards_atlas.application.semantic_qualification.taxonomy_decisions impor
     derive_clause_decision_plan,
 )
 
+PartialPromptVersion = Literal[
+    "taxonomy-partial-v1",
+    "taxonomy-partial-v2",
+    "taxonomy-partial-v3",
+    "taxonomy-partial-v3-no-process-null",
+    "taxonomy-partial-v4",
+]
+
 
 class PartialProposalConfig(ProposalRunConfig):
     """Separate opt-in task; full-task versions cannot enter this path."""
@@ -46,9 +54,7 @@ class PartialProposalConfig(ProposalRunConfig):
 
     task: Literal["semantic-attribute-observation"] = PARTIAL_TASK
     task_version: Literal["1.0.0"] = PARTIAL_TASK_VERSION
-    prompt_version: Literal["taxonomy-partial-v1", "taxonomy-partial-v2", "taxonomy-partial-v3"] = (
-        PARTIAL_PROMPT
-    )
+    prompt_version: PartialPromptVersion = PARTIAL_PROMPT
     cbox_frame: Literal["taxonomy-grounded-v1"] = "taxonomy-grounded-v1"
     adaptive_interview: Literal[False] = False
     overwrite: Literal[False] = False
@@ -128,10 +134,8 @@ def prepare_partial_request(
         if key in selected and key not in fixed
     }
     if accepted:
-        if config.prompt_version not in {"taxonomy-partial-v2", "taxonomy-partial-v3"}:
-            raise ValueError(
-                "carried acceptance requires taxonomy-partial-v2 or taxonomy-partial-v3 prompt"
-            )
+        if config.prompt_version == "taxonomy-partial-v1":
+            raise ValueError("carried acceptance requires a taxonomy-partial-v2 or later prompt")
         errors = list(Draft202012Validator(resources.schema).iter_errors(accepted))
         if errors:
             raise ValueError(f"invalid carried acceptance: {errors[0].message}")

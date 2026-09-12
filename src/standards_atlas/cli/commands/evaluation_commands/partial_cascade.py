@@ -65,6 +65,17 @@ def run_partial_cascade_command(
     output: Annotated[Path, typer.Option("--output", file_okay=False)],
     run: Annotated[Path | None, typer.Option("--run", exists=True)] = None,
     dataset: Annotated[Path | None, typer.Option("--dataset", exists=True, dir_okay=False)] = None,
+    prompt: Annotated[
+        str,
+        typer.Option("--prompt", help="Partial prompt; default v2 preserves existing runs."),
+    ] = "taxonomy-partial-v2",
+    require_taxonomy_decisions: Annotated[
+        bool,
+        typer.Option(
+            "--require-taxonomy-decisions",
+            help="Fail before inference when the source/rule plan has no fixed attributes.",
+        ),
+    ] = False,
     execute: Annotated[
         bool,
         typer.Option("--execute", help="Infer open attributes and run the existing detail policy."),
@@ -114,6 +125,8 @@ def run_partial_cascade_command(
             gateway_context=gateway,
             source_fingerprints=source.fingerprints,
             progress=typer.echo,
+            prompt_version=prompt,
+            require_taxonomy_decisions=require_taxonomy_decisions,
         )
         if execute:
             with _run_lock(output):
@@ -151,9 +164,10 @@ def run_partial_cascade_command(
     ) as exc:
         typer.echo(f"Partial cascade failed: {exc}", err=True)
         raise typer.Exit(code=2) from exc
+    typer.echo(f"Mode: {result['run_mode']}; prompt: {prompt}")
     typer.echo(f"Clause accounting / required decisions: {result['metrics']}")
     calls = result["request_timing_current_invocation"]["request_count"]
-    typer.echo(f"Fresh cascade gateway calls: {calls}")
+    typer.echo(f"Cascade gateway calls (current invocation): {calls}")
     typer.echo(f"Report: {output / 'partial-cascade-report.json'}")
     if archived is not None:
         typer.echo(f"Verified archive: {archived}")

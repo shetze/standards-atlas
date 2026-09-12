@@ -58,7 +58,7 @@ def test_default_planning_never_creates_a_gateway(tmp_path, monkeypatch):
     monkeypatch.setattr(_GATEWAY, never)
     result = CliRunner().invoke(app, arguments(tmp_path, path, dataset))
     assert result.exit_code == 0, result.output
-    assert "Fresh cascade gateway calls: 0" in result.output
+    assert "Cascade gateway calls (current invocation): 0" in result.output
     assert not (tmp_path / "run/policy").exists()
     assert not (tmp_path / "data").exists()
 

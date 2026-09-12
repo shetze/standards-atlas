@@ -53,6 +53,9 @@ from standards_atlas.cli.commands.evaluation_commands.partial_audit import (
 from standards_atlas.cli.commands.evaluation_commands.partial_cascade import (
     run_partial_cascade_command,
 )
+from standards_atlas.cli.commands.evaluation_commands.partial_cascade_audit import (
+    audit_partial_cascade_command,
+)
 from standards_atlas.cli.commands.evaluation_commands.partial_proposals import (
     propose_partial_semantics,
 )
@@ -66,6 +69,10 @@ from standards_atlas.cli.commands.evaluation_commands.qualification_matrix impor
 )
 from standards_atlas.cli.commands.evaluation_commands.semantic_extraction_qualification import (
     qualify_semantic_extraction,
+)
+from standards_atlas.cli.commands.evaluation_commands.semantic_readiness import (
+    semantic_readiness_evaluate_command,
+    taxonomy_pilot_command,
 )
 from standards_atlas.cli.commands.evaluation_commands.taxonomy_decisions import (
     diagnose_taxonomy_decisions_command,
@@ -96,6 +103,9 @@ __all__ = [
     "propose_evaluation_annotations",
     "propose_partial_semantics",
     "run_partial_cascade_command",
+    "semantic_readiness_evaluate_command",
+    "taxonomy_pilot_command",
+    "audit_partial_cascade_command",
     "publish_annotation_reviews",
     "publish_applicability_detail_disagreement_hitl",
     "replay_applicability_policy_command",

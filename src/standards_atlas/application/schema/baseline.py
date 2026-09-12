@@ -7,6 +7,42 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "partial-cascade-report": SchemaPolicy(
+        "partial-cascade-report",
+        "1.1",
+        ("1.0", "1.1"),
+        "**/partial-cascade-report.json",
+    ),
+    "partial-cascade-audit": SchemaPolicy(
+        "partial-cascade-audit",
+        "1.0",
+        ("1.0",),
+        "**/partial-cascade-audit.json",
+    ),
+    "taxonomy-pilot-readiness": SchemaPolicy(
+        "taxonomy-pilot-readiness",
+        "1.0",
+        ("1.0",),
+        "**/pilot-readiness.json",
+    ),
+    "taxonomy-readiness-cases": SchemaPolicy(
+        "taxonomy-readiness-cases",
+        "1.0",
+        ("1.0",),
+        "resources/semantic/qualification/taxonomy-readiness-v1/cases.yaml",
+    ),
+    "semantic-readiness-checks": SchemaPolicy(
+        "semantic-readiness-checks",
+        "1.0",
+        ("1.0",),
+        "**/readiness-checks.json",
+    ),
+    "semantic-readiness-evaluation": SchemaPolicy(
+        "semantic-readiness-evaluation",
+        "1.0",
+        ("1.0",),
+        "**/semantic-readiness.json",
+    ),
     "mixed-consensus": SchemaPolicy(
         "mixed-consensus", "1.0", ("1.0",), "**/mixed-consensus-report.json"
     ),

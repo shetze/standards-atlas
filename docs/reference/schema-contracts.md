@@ -90,3 +90,19 @@ this is read preservation, not a writer migration. New consensus evaluation alwa
 The review-only golden proposal uses 4.0. Missing legacy process observations are not replaced
 by empty votes. Canonical schema 9, companion 1.2, adoption 1.0 and archive layout 1.5 are
 unchanged. See [Process-function qualification](../user-guide/process-function-qualification.md).
+
+
+### Partial cascade readiness artifacts (Slice 5.1)
+
+`partial-cascade-report` is a separate family from the immutable `partial-cascade-run`
+plan. Current report version **1.1** explicitly binds run mode and effective configuration,
+and makes a planning-only completion rate `null`; **1.0** reports remain readable under
+legacy semantics. Plans and mixed-consensus contracts retain their existing versions.
+Verification recomputes the selected prompt/resources and the appropriate presentation
+metrics instead of trusting diagnostic counts as acceptance authority.
+
+The diagnostic families `partial-cascade-audit`, `taxonomy-pilot-readiness`,
+`taxonomy-readiness-cases`, `semantic-readiness-checks` and `semantic-readiness-evaluation`
+start at **1.0**. Their rules and constraints are registered in the central schema baseline
+and inventory. These reports/checks do not constitute semantic Golden data, a source
+confirmation, a taxonomy-rule release or canonical publication authority.

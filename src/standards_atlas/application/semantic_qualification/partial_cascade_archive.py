@@ -23,7 +23,10 @@ from standards_atlas.application.semantic_qualification.mixed_evidence import (
     MixedConsensusReport,
 )
 from standards_atlas.application.semantic_qualification.partial_cascade import (
+    DEFAULT_CASCADE_PROMPT,
     _source_resources,
+    cascade_prompt_version,
+    effective_cascade_configuration,
     model_run_prefix,
     partial_config_for_model,
     read_partial_observations,
@@ -48,12 +51,13 @@ def verify_partial_cascade(
     require_supported_schema("partial-cascade-run", plan.get("schema_version"))
     if plan.get("kind") != "partial-cascade-plan":
         raise ValueError("not a partial cascade plan")
+    prompt_version = cascade_prompt_version(plan.get("prompt_version", DEFAULT_CASCADE_PROMPT))
     manifest = QualificationMatrixManifest.model_validate(plan["manifest"])
     profile = CompletionProfile.model_validate(plan["completion_profile"])
     source_resources = json.loads(read("partial-cascade-resources.json"))
     if structure_fingerprint(source_resources) != plan["resources_sha256"]:
         raise ValueError("partial cascade resource checksum mismatch")
-    if source_resources != _source_resources(resources):
+    if source_resources != _source_resources(resources, prompt_version):
         raise ValueError(
             "archive source rules/task/prompt are not the installed supported versions"
         )
@@ -64,7 +68,7 @@ def verify_partial_cascade(
     if input_selection_fingerprint(examples) != plan["selection_sha256"]:
         raise ValueError("partial cascade source selection fingerprint mismatch")
     summary = json.loads(read("partial-cascade-report.json"))
-    require_supported_schema("partial-cascade-run", summary.get("schema_version"))
+    require_supported_schema("partial-cascade-report", summary.get("schema_version"))
     if summary.get("selection_sha256") != plan["selection_sha256"]:
         raise ValueError("partial cascade report belongs to another selection")
     previous = None
@@ -127,7 +131,9 @@ def verify_partial_cascade(
                     read=read,
                     names=names,
                     prefix=item["prefix"],
-                    config=partial_config_for_model(manifest, stage, model),
+                    config=partial_config_for_model(
+                        manifest, stage, model, prompt_version=prompt_version
+                    ),
                     examples=requested_examples,
                     resources=resources,
                     stage=stage.id,
@@ -168,8 +174,23 @@ def verify_partial_cascade(
     result = MixedConsensusReport.model_validate_json(read("mixed-consensus-report.json"))
     if result != previous or result.fingerprint != summary["consensus_sha256"]:
         raise ValueError("mixed final consensus differs from last verified stage")
+    from standards_atlas.application.semantic_qualification.cascade_diagnostics import (
+        presentation_metrics,
+    )
+
+    expected_metrics = result.metrics
+    if summary.get("schema_version") == "1.1":
+        if type(summary.get("executed")) is not bool:
+            raise ValueError("partial cascade executed flag must be explicit")
+        if summary.get("run_mode") != ("executed" if summary["executed"] else "planned"):
+            raise ValueError("partial cascade run mode differs from execution flag")
+        if summary.get("effective_configuration") != effective_cascade_configuration(
+            manifest, resources, prompt_version
+        ):
+            raise ValueError("partial cascade effective prompt/configuration differs from plan")
+        expected_metrics = presentation_metrics(result, execute=summary["executed"])
     if (
-        result.metrics != summary["metrics"]
+        expected_metrics != summary["metrics"]
         or result.matrix_id != plan["matrix_id"]
         or result.completion_profile.model_dump(mode="json") != summary["completion_profile"]
     ):
@@ -214,8 +235,10 @@ def archive_partial_cascade(*, root: Path, archive_directory: Path, resources: P
         task_version="1.0.0",
         repetitions=1,
     )
+    plan = json.loads((root / "partial-cascade-plan.json").read_bytes())
+    prompt_version = cascade_prompt_version(plan.get("prompt_version", DEFAULT_CASCADE_PROMPT))
     for prompt in executed_manifest["prompts"]:
-        prompt.update(prompt_version="taxonomy-partial-v2", cbox_frame="taxonomy-grounded-v1")
+        prompt.update(prompt_version=prompt_version, cbox_frame="taxonomy-grounded-v1")
     executed_manifest["review_imports"] = []
     path = root / "partial-cascade-matrix.yaml"
     path.write_text(yaml.safe_dump(executed_manifest, sort_keys=False), encoding="utf-8")

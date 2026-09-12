@@ -317,3 +317,14 @@ unknown value is made negative, and no secondary set is inferred. Optional
 rationale is explanatory text, not permission to accept inconsistent values.
 The semantic schema and acceptance policy are unchanged. Prompt quality and
 Early-Exit improvements still require a controlled inference comparison.
+
+
+## Process Function comparison (Slice 5.1)
+
+The opt-in prompts `taxonomy-partial-v3-no-process-null` and `taxonomy-partial-v4` keep the
+v3 answer schema. The first removes only the Process-null shape example; the second also
+clarifies that Process Functions are independent of the Knowledge Kind, using textual
+positive and negative examples. Neither is a qualified default. Use a new output per arm.
+[Partial cascade readiness](taxonomy-partial-readiness.md) documents source-bound sentinel
+checks that distinguish semantic regressions from formally valid JSON. Existing defaults,
+identity recovery, strict grouped acceptance and source-rule qualifications remain intact.

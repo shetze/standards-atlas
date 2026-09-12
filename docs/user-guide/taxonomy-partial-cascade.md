@@ -5,6 +5,15 @@ attribute acceptance, early exits, archive verification and explicit knowledge a
 It is an **opt-in operational path**. The existing full-output qualification workflow and
 its manifests keep their behavior. This command is not a completed fresh-repeat qualification.
 
+## Slice 5.1 configuration and diagnostics
+
+See [Partial cascade readiness](taxonomy-partial-readiness.md) for the explicit `--prompt`
+selection, read-only cascade audit, taxonomy pilot and Process Function regression checks.
+The default remains `taxonomy-partial-v2`; use a separate output for any candidate prompt.
+New reports use schema 1.1: an unexecuted plan has `completion_rate: null` and is not a
+measured benchmark. Historical report schema 1.0 and default-v2 request identities remain
+supported. `--require-taxonomy-decisions` optionally guards intended taxonomy-saving tests.
+
 ## Model labels
 
 Execution, successful resume and archive verification use the same model/prompt identity
