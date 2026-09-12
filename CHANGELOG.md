@@ -2,6 +2,19 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Experimental partial semantic observations (2026-09-12)
+
+- Add versioned partial request plans and sparse observations with explicit evaluated,
+  not-requested and failed attributes; never normalize omissions into semantic negatives.
+- Derive grouped requests from the source decision plan, keep primary/set questions separate,
+  and perform zero gateway calls when no selected work remains.
+- Add the current-presence/structured-roles task, a focused taxonomy prompt and opt-in
+  `evaluation partial-proposals` planning/execution with durable attempts and verified resume.
+- Bind reuse to source/rules, task/prompt/schema, attribute selection and generation settings;
+  use existing gateway, retry, batch and measured timing primitives without duplicate voters.
+- Keep production matrices, consensus, taxonomy rule qualifications, Applicability policy and
+  public enrichment exports unchanged; partial results cannot enter the full-answer generator.
+
 ## Unreleased — Taxonomy-grounded qualification inputs (2026-09-12)
 
 - Add opt-in `taxonomy-grounded-v1` CBox selection from source-bound structure, with

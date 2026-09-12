@@ -25,6 +25,8 @@ def build_proposal_request(
     prompt: PromptDefinition,
     item_input: Mapping[str, Any],
     task: Any,
+    *,
+    extra_template_values: Mapping[str, Any] | None = None,
 ) -> StructuredGenerationRequest:
     """Build one structured-generation request from a corpus item."""
     content = dict(item_input.get("content", {}))
@@ -62,6 +64,13 @@ def build_proposal_request(
             framed_context.values.get("structural_context", {}), sort_keys=True
         ),
     }
+    if extra_template_values:
+        collisions = set(values).intersection(extra_template_values)
+        if collisions:
+            raise ValueError(
+                "extra prompt fields cannot replace source fields: " + ", ".join(sorted(collisions))
+            )
+        values.update(extra_template_values)
     # Hash selected facts rather than their prose rendering. A renderer-only
     # change does not make accepted predictions stale; a changed prompt does.
     fields = {field for _, field, _, _ in Formatter().parse(prompt.user_template) if field}

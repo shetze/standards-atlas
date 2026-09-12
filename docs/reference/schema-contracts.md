@@ -28,6 +28,9 @@ Removed refactoring schemas are not recreated merely to fill the stable support 
 | Private knowledge evidence | persistence | `knowledge-evidence` (`1.0`) | content-addressed payload | `.atlas/data/knowledge-evidence/<sha256>.json` |
 | AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.0`) | — | `local/review/atlasdata-knowledge*.json` |
 | Standards manifest | process | `standards-manifest` | — | `manifests/standards*.yaml` |
+| Partial request plan (experimental) | persistence | `partial-request-plan` (1.0) | source/rule/task identities | `**/partial-request-plan.json` |
+| Partial semantic observation (experimental) | persistence | `partial-semantic-observation` (1.0) | model/prompt/request identities | `**/partial-observation.json` |
+| Partial experiment plan/report | persistence | `partial-proposal-run` (1.0) | frozen selection/configuration | `**/partial-run-*.json` |
 | Qualification consensus | persistence | `qualification-consensus` (write 5.0, read 4.0/5.0) | model/prompt/stage identity | `**/consensus-report.json` |
 | Golden corpus proposal | persistence | `golden-corpus-proposal` (4.0) | — | `**/golden-corpus-proposal.yaml` |
 | Qualification Matrix manifest | process | `qualification-matrix-manifest` | — | `manifests/*qualification*.yaml` |

@@ -1,0 +1,21 @@
+schema_version: 1
+task: semantic-attribute-observation
+version: 1.0.0
+description: Experimental partial semantic observations. Each request requires exactly
+  its open semantic attributes; unrequested fields are not observations. Not a production
+  consensus task.
+multi_label: true
+allow_unclassified: true
+supported_item_kinds:
+- clause
+excluded_content_profiles:
+- table_dominant
+alternative_tasks:
+  table_dominant: structured-table-interpretation
+semantic_profile:
+  id: functional-safety
+  version: 1.0.0
+profile_dimensions:
+- statement_functions
+- knowledge_kinds
+- process_functions

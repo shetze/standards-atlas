@@ -300,6 +300,8 @@ class BaselineProposalGenerator:
         output_root: Path,
         progress: ProposalProgressReporter | None = None,
     ) -> ProposalRunResult:
+        if config.task == "semantic-attribute-observation":
+            raise ValueError("experimental partial task must use evaluation partial-proposals")
         task, canonical_schema = SemanticTaskRepository(resources / "tasks").load(
             config.task, config.task_version
         )

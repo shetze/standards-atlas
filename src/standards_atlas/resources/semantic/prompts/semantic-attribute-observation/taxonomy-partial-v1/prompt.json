@@ -1,0 +1,5 @@
+{
+  "task": "semantic-attribute-observation",
+  "version": "taxonomy-partial-v1",
+  "description": "Experimental grouped questions for unresolved attributes with current presence and structured roles; no complete-answer defaults."
+}

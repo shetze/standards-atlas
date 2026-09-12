@@ -49,6 +49,30 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "partial-request-plan",
+        "**/partial-request-plan.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-request-plan",
+        "Experimental source-bound question plan; no synthetic model votes.",
+    ),
+    VersionedInterface(
+        "partial-semantic-observation",
+        "**/partial-observation.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-semantic-observation",
+        "Explicit evaluated, not_requested and failed attributes; sparse evidence only.",
+    ),
+    VersionedInterface(
+        "partial-proposal-run",
+        "**/partial-run-*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-proposal-run",
+        "Immutable experiment identity and measured execution report.",
+    ),
+    VersionedInterface(
         "source-structure",
         "clause-descriptor.source_structure",
         LifecycleBoundary.PROCESS,

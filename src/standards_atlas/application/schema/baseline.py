@@ -7,6 +7,15 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "partial-request-plan": SchemaPolicy(
+        "partial-request-plan", "1.0", ("1.0",), "**/partial-request-plan.json"
+    ),
+    "partial-semantic-observation": SchemaPolicy(
+        "partial-semantic-observation", "1.0", ("1.0",), "**/partial-observation.json"
+    ),
+    "partial-proposal-run": SchemaPolicy(
+        "partial-proposal-run", "1.0", ("1.0",), "**/partial-run-*.json"
+    ),
     "source-structure": SchemaPolicy(
         "source-structure", "1.0", ("1.0",), "clause-descriptor.source_structure"
     ),

@@ -1,0 +1,11 @@
+Requested semantic attributes:
+{requested_attributes}
+
+Fixed primary constraints (not requested outputs or votes):
+{fixed_primary_constraints}
+
+Normalized clause content (complete, including notes):
+{content}
+
+Source-grounded structural context:
+{context_text}

@@ -663,3 +663,11 @@ Slice 3 adds an opt-in source-only frame with a full-output prompt and separate 
 context-only and candidate matrices. It does not activate diagnostic taxonomy decisions
 or change the production cascade. See [Taxonomy-grounded qualification inputs](taxonomy-grounded-qualification.md)
 for field boundaries, request reuse and a controlled comparison on one fixed corpus.
+
+## Experimental partial observations
+
+`evaluation partial-proposals` plans source-grounded, attribute-specific requests without
+models by default; `--execute` explicitly runs pending questions. Results have sparse
+evaluated/not-requested/failed states and are isolated from production consensus and
+publication. See [Partial semantic observations](partial-semantic-observations.md) for
+selection, zero-request behavior, provenance, measured retries and safe resume.

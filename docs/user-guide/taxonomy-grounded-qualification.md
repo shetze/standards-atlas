@@ -145,3 +145,10 @@ semantic/golden values, stable fingerprints, complete notes/text, full-output ga
 execution and workbench/report consistency. They establish input-contract correctness,
 **not improved semantic accuracy or the 80% Efficient target**. Prompt length and actual
 model cost must be measured alongside decisions in the empirical comparison.
+
+## Next: isolated partial-observation experiments
+
+Slice 4 adds a separate [partial semantic observation task](partial-semantic-observations.md).
+It can omit source-fixed questions and execute grouped open questions without changing
+this full-output comparison or the production cascade. It is opt-in and is not yet a
+consensus/adoption path.
