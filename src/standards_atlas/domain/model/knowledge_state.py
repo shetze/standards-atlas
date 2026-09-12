@@ -148,3 +148,30 @@ class KnowledgeStateProvenance(BaseModel):
                 "confirmed_attributes": tuple(confirmed[path] for path in sorted(confirmed)),
             }
         )
+
+
+def sparse_semantic_validation_context(provenance: KnowledgeStateProvenance) -> dict:
+    """Allow a known primary with an unmeasured empty companion, not a known empty set.
+
+    Availability already belongs to canonical provenance. No set membership or
+    new completeness field is invented merely to store a primary decision.
+    """
+    return {
+        "unobserved_primary_sets": {
+            primary
+            for primary, collection in (
+                ("primary_function", "statement_functions"),
+                ("primary_knowledge_kind", "knowledge_kinds"),
+                ("primary_process_function", "process_functions"),
+            )
+            if provenance.availability(f"enrichments.semantic.{primary}") == "known"
+            and provenance.availability(f"enrichments.semantic.{collection}") != "known"
+        },
+        "unobserved_role_presence": (
+            provenance.availability("enrichments.semantic.role_semantics_present") != "known"
+            and any(
+                provenance.availability(f"enrichments.semantic.{field}") == "known"
+                for field in ("role_relations", "role_relation_types")
+            )
+        ),
+    }

@@ -31,6 +31,7 @@ This guide describes the supported user workflows for turning private standards 
 | Run the read-only MCP server | [MCP server](mcp-server.md) |
 | Connect Codex to MCP | [Codex integration](codex-integration.md) |
 | Build corpora and execute qualification matrices | [Evaluation and qualification](evaluation-and-qualification.md) |
+| Execute and adopt taxonomy-backed partial cascade decisions | [Partial cascade](taxonomy-partial-cascade.md) |
 | Compare source-grounded Efficient model inputs | [Taxonomy-grounded qualification](taxonomy-grounded-qualification.md) |
 | Inspect source-grounded Efficient predecisions without model calls | [Taxonomy decision diagnostics](taxonomy-decision-diagnostics.md) |
 | Accept qualified CBox attributes into canonical documents | [Knowledge adoption](knowledge-adoption.md) |

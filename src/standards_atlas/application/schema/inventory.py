@@ -49,6 +49,22 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "mixed-consensus",
+        "**/mixed-consensus-report.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "mixed-consensus",
+        "Attribute-specific acceptance without synthetic votes or semantic defaults.",
+    ),
+    VersionedInterface(
+        "partial-cascade-run",
+        "**/partial-cascade-*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-cascade-run",
+        "Frozen completion profile, source inputs and staged sparse evidence.",
+    ),
+    VersionedInterface(
         "partial-request-plan",
         "**/partial-request-plan.json",
         LifecycleBoundary.PERSISTENCE,

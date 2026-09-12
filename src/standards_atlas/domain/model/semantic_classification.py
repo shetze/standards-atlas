@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 
 
 class StatementFunction(StrEnum):
@@ -280,14 +280,16 @@ class SemanticClassification(BaseModel):
     domain_functions: tuple[DomainFunctionClassification, ...] = ()
 
     @model_validator(mode="after")
-    def dimensions_are_unique(self) -> SemanticClassification:
-        for primary, values in (
-            (self.primary_function, self.statement_functions),
-            (self.primary_knowledge_kind, self.knowledge_kinds),
-            (self.primary_process_function, self.process_functions),
+    def dimensions_are_unique(self, info: ValidationInfo) -> SemanticClassification:
+        unobserved = (info.context or {}).get("unobserved_primary_sets", set())
+        for field, primary, values in (
+            ("primary_function", self.primary_function, self.statement_functions),
+            ("primary_knowledge_kind", self.primary_knowledge_kind, self.knowledge_kinds),
+            ("primary_process_function", self.primary_process_function, self.process_functions),
         ):
             if primary is not None and primary not in values:
-                raise ValueError("primary classification must be included in its dimension")
+                if values or field not in unobserved:
+                    raise ValueError("primary classification must be included in its dimension")
         if len(self.statement_functions) != len(set(self.statement_functions)):
             raise ValueError("statement_functions must not contain duplicates")
         if len(self.knowledge_kinds) != len(set(self.knowledge_kinds)):
@@ -305,7 +307,11 @@ class SemanticClassification(BaseModel):
         ]
         if len(relation_keys) != len(set(relation_keys)):
             raise ValueError("role_relations must not contain duplicates")
-        if (self.role_relation_types or self.role_relations) and not self.role_semantics_present:
+        if (
+            (self.role_relation_types or self.role_relations)
+            and not self.role_semantics_present
+            and not (info.context or {}).get("unobserved_role_presence", False)
+        ):
             raise ValueError("role relation classifications require role_semantics_present=true")
         domains = [item.knowledge_domain for item in self.domain_functions]
         if len(domains) != len(set(domains)):

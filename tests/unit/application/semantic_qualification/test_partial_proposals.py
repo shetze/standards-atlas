@@ -388,8 +388,9 @@ def test_invalid_inputs_fail_before_writing_or_creating_gateway(tmp_path, case):
 
 
 def test_schema_inventory_registers_new_internal_contracts_without_document_bump():
-    for family in ("partial-request-plan", "partial-semantic-observation", "partial-proposal-run"):
-        assert SCHEMA_POLICIES[family].current == "1.0"
+    for family in ("partial-request-plan", "partial-semantic-observation"):
+        assert SCHEMA_POLICIES[family].current == "1.1"
+    assert SCHEMA_POLICIES["partial-proposal-run"].current == "1.0"
     assert SCHEMA_POLICIES["engineering-document"].current == 9
 
 

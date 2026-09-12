@@ -13,6 +13,7 @@ from standards_atlas.domain.model.knowledge_state import (
     GenerationMethod,
     KnowledgeStateProvenance,
     paths_overlap,
+    sparse_semantic_validation_context,
 )
 from standards_atlas.domain.model.semantic_classification import (
     ApplicabilityFunction,
@@ -151,8 +152,14 @@ def merge_generated_enrichments(
                     if path in updates and updates[path]:
                         raise ValueError("negative presence conflicts with supplied details")
                     if path not in updates:
+                        sparse = by_path[presence_path].generator == "taxonomy-partial-adoption-v1"
+                        if sparse and not get(path):
+                            # An already empty, unobserved dependency is not a new result.
+                            continue
                         updates[path] = ()
-                        by_path[path] = by_path[presence_path].model_copy(update={"path": path})
+                        by_path[path] = by_path[presence_path].model_copy(
+                            update={"path": path, **({"availability": "unknown"} if sparse else {})}
+                        )
                     if path not in addressed:
                         addressed.append(path)
         # A replaced set must not retain a stale primary not contained in it.
@@ -170,7 +177,10 @@ def merge_generated_enrichments(
             ):
                 if get(primary_path) not in updates[path]:
                     updates[primary_path] = None
-                    if primary == "primary_process_function":
+                    if (
+                        primary == "primary_process_function"
+                        or by_path[path].generator == "taxonomy-partial-adoption-v1"
+                    ):
                         # Clearing an invalidated primary is not a measured null
                         # decision. Retain an explicit unknown assessment when
                         # supplied; otherwise derive only its unavailability.
@@ -183,11 +193,37 @@ def merge_generated_enrichments(
                             update={"path": primary_path}
                         )
                     addressed.append(primary_path)
+        coupled_conflicts = []
+        # A new sparse primary cannot implicitly repair a stale complete set.
+        # Invalidate only unprotected older membership; never weaken authority.
+        for primary, members in (
+            ("primary_function", "statement_functions"),
+            ("primary_knowledge_kind", "knowledge_kinds"),
+            ("primary_process_function", "process_functions"),
+        ):
+            primary_path = f"enrichments.semantic.{primary}"
+            members_path = f"enrichments.semantic.{members}"
+            if (
+                primary_path in addressed
+                and updates[primary_path] is not None
+                and by_path[primary_path].generator == "taxonomy-partial-adoption-v1"
+                and members_path not in addressed
+                and updates[primary_path] not in get(members_path)
+            ):
+                if provenance.protection(members_path):
+                    coupled_conflicts.append(members_path)
+                elif get(members_path) or provenance.availability(members_path) == "known":
+                    updates[members_path] = ()
+                    by_path[members_path] = by_path[primary_path].model_copy(
+                        update={"path": members_path, "availability": "unknown"}
+                    )
+                    addressed.append(members_path)
         conflicts = [
             path
             for path in addressed
             if provenance.protection(path) and get(path) != _plain(updates[path])
         ]
+        conflicts.extend(coupled_conflicts)
         for path in addressed:
             before, after = get(path), _plain(updates[path])
             if conflicts:
@@ -213,7 +249,9 @@ def merge_generated_enrichments(
         if provenance.availability(path) != "known":
             provenance = provenance.mark_generated(item)
         changes.append(AttributeChange(path, "unknown", get(path), get(path), "no usable decision"))
-    enriched = ClauseEnrichments.model_validate(state)
+    enriched = ClauseEnrichments.model_validate(
+        state, context=sparse_semantic_validation_context(provenance)
+    )
     result = clause.model_copy(update={"enrichments": enriched, "provenance": provenance})
     return EnrichmentMergeResult(result, tuple(changes))
 

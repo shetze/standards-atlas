@@ -17,6 +17,7 @@ from standards_atlas.domain.model.identifiers import ClauseId, StandardReference
 from standards_atlas.domain.model.knowledge_state import (
     GeneratedAttribute,
     KnowledgeStateProvenance,
+    sparse_semantic_validation_context,
 )
 from standards_atlas.domain.model.reference_mention import ReferenceMention
 from standards_atlas.domain.model.semantic_classification import (
@@ -110,8 +111,10 @@ class Clause(BaseModel):
         migrates call sites; it is not a reader compatibility promise for older
         persisted schema versions.
         """
-        if not isinstance(data, dict) or "baseline" in data or "enrichments" in data:
+        if not isinstance(data, dict):
             return data
+        if "baseline" in data or "enrichments" in data:
+            return _validate_sparse_enrichments(data)
         payload = dict(data)
         baseline_fields = set(ClauseBaseline.model_fields)
         baseline = {name: payload.pop(name) for name in tuple(payload) if name in baseline_fields}
@@ -129,7 +132,7 @@ class Clause(BaseModel):
                 )
             payload["enrichments"] = {"semantic": semantic}
         payload["baseline"] = baseline
-        return payload
+        return _validate_sparse_enrichments(payload)
 
     @property
     def semantic_classification(self) -> SemanticClassification:
@@ -247,3 +250,15 @@ class Clause(BaseModel):
                 "provenance": self.provenance.confirm_authoritative(*paths, authority=authority)
             }
         )
+
+
+def _validate_sparse_enrichments(data: dict) -> dict:
+    """Use explicit canonical availability when reading partial primary decisions."""
+    value = data.get("enrichments")
+    if not isinstance(value, dict):
+        return data
+    provenance = KnowledgeStateProvenance.model_validate(data.get("provenance", {}))
+    context = sparse_semantic_validation_context(provenance)
+    if not context["unobserved_primary_sets"] and not context["unobserved_role_presence"]:
+        return data
+    return {**data, "enrichments": ClauseEnrichments.model_validate(value, context=context)}

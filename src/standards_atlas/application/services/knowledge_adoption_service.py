@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 
+from standards_atlas.application.context.source_structure import project_source_structure
 from standards_atlas.application.model.knowledge_adoption import (
     ClauseAdoptionResult,
     KnowledgeAdoptionBatch,
@@ -61,6 +62,28 @@ class KnowledgeAdoptionService:
                     raise ValueError(f"adoption clause heading changed: {coordinate}")
                 if normalized_content_hash(clause.plain_text) != item.content_hash:
                     raise ValueError(f"adoption clause content changed: {coordinate}")
+                if item.source_requirements:
+                    ancestors = []
+                    parent_id = clause.parent_id
+                    visited = {clause.id.value}
+                    while parent_id:
+                        parent = clauses.get(parent_id.value)
+                        if parent is None or parent.id.value in visited:
+                            raise ValueError(f"adoption source ancestry changed: {coordinate}")
+                        ancestors.append(parent)
+                        visited.add(parent.id.value)
+                        parent_id = parent.parent_id
+                    current_source = project_source_structure(
+                        clause,
+                        document_key=key,
+                        content_hash=item.content_hash,
+                        ancestors=tuple(ancestors),
+                    )
+                    available = {fact.fingerprint for fact in current_source.facts}
+                    if any(fact.fingerprint not in available for fact in item.source_requirements):
+                        raise ValueError(
+                            f"adoption taxonomy source/authority changed: {coordinate}"
+                        )
                 merged = merge_generated_enrichments(clause, item.patch, item.attributes)
                 clauses[item.clause_id] = merged.clause
                 results.append(

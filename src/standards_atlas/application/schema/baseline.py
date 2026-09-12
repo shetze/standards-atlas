@@ -7,11 +7,17 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "mixed-consensus": SchemaPolicy(
+        "mixed-consensus", "1.0", ("1.0",), "**/mixed-consensus-report.json"
+    ),
+    "partial-cascade-run": SchemaPolicy(
+        "partial-cascade-run", "1.0", ("1.0",), "**/partial-cascade-*.json"
+    ),
     "partial-request-plan": SchemaPolicy(
-        "partial-request-plan", "1.0", ("1.0",), "**/partial-request-plan.json"
+        "partial-request-plan", "1.1", ("1.0", "1.1"), "**/partial-request-plan.json"
     ),
     "partial-semantic-observation": SchemaPolicy(
-        "partial-semantic-observation", "1.0", ("1.0",), "**/partial-observation.json"
+        "partial-semantic-observation", "1.1", ("1.0", "1.1"), "**/partial-observation.json"
     ),
     "partial-proposal-run": SchemaPolicy(
         "partial-proposal-run", "1.0", ("1.0",), "**/partial-run-*.json"
@@ -64,7 +70,7 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         "engineering-document", 9, (8, 9), ".atlas/data/documents/*.json"
     ),
     "knowledge-adoption-batch": SchemaPolicy(
-        "knowledge-adoption-batch", "1.0", ("1.0",), "local/**/knowledge-adoption-batch.json"
+        "knowledge-adoption-batch", "1.1", ("1.0", "1.1"), "local/**/knowledge-adoption-batch.json"
     ),
     "knowledge-adoption-report": SchemaPolicy(
         "knowledge-adoption-report", "1.0", ("1.0",), "local/**/knowledge-adoption-report.json"

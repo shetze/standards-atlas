@@ -190,6 +190,12 @@ def cascade_escalation_reasons(
     clause: object, resolution: CascadeResolutionConfig
 ) -> tuple[str, ...]:
     """Return dimension-aware reasons why a clause must enter the next stage."""
+    if getattr(clause, "evidence_contract", None) == "taxonomy-partial-v1":
+        from standards_atlas.application.model.source_structure import structure_fingerprint
+
+        if clause.resolution_sha256 != structure_fingerprint(resolution.model_dump(mode="json")):
+            raise ValueError("mixed acceptance and routing resolutions differ")
+        return clause.escalation_reasons
     reasons: list[str] = []
     accepted = set(resolution.accepted_categories)
     if clause.participating_models < resolution.minimum_successful_models:
@@ -279,6 +285,9 @@ def cascade_stage_escalation_reasons(
     role relations continue to use cumulative evidence. Resolved dimensions
     never become unresolved again merely because later models disagree.
     """
+    if getattr(cumulative_clause, "evidence_contract", None) == "taxonomy-partial-v1":
+        return cascade_escalation_reasons(cumulative_clause, resolution)
+
     # A clause with no initial evidence has no accepted dimensions. Evaluate
     # all dimensions when it first acquires evidence, not just the sentinel.
     if "no_consensus_result" in previous_reasons:

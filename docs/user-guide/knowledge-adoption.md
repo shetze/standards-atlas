@@ -133,3 +133,12 @@ clauses, 45 positive and 452 negative Applicability decisions, three unqualified
 untouched, 26 changed documents and zero replay writes. It is not a fresh LLM qualification
 and not a test against the user's full production workspace. No standards text is embedded
 in the repository's test fixtures.
+
+## Taxonomy-backed sparse archives
+
+The explicit adoption command also verifies Slice-5 partial-cascade archives. It replays
+attribute acceptance from source rules and raw partial responses, retains original accepting
+stages, and checks consumed deterministic source facts against current canonical authority.
+Unknown sets do not become known empty sets, and a raw Applicability gate never substitutes
+for the final detail-policy result. See [Partial cascade](taxonomy-partial-cascade.md) for
+commands, schema compatibility, availability semantics and public omission boundaries.

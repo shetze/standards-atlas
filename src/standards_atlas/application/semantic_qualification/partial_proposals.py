@@ -235,6 +235,7 @@ def _execute_case(
         outcome, value = "failed", {}
         error = f"{type(exc).__name__}: {exc}"
     observation = PartialObservation(
+        schema_version=prepared.plan.schema_version,
         plan=prepared.plan,
         request_fingerprint=prepared.fingerprint,
         provider=config.provider,
@@ -262,6 +263,8 @@ def run_partial_proposals(
     execute: bool = False,
     gateway_factory: Callable[[], LlmGateway] | None = None,
     progress: Callable[[str], None] | None = None,
+    accepted_decisions: dict[str, dict[str, Any]] | None = None,
+    accepted_state_sha256: str | None = None,
 ) -> dict[str, Any]:
     """Plan by default; execute only explicit requests. The gateway is created lazily.
 
@@ -286,7 +289,15 @@ def run_partial_proposals(
     if not selected:
         raise ValueError("partial selection is empty")
     prepared = tuple(
-        prepare_partial_request(config, e.id, e.input, task_resources) for e in selected
+        prepare_partial_request(
+            config,
+            e.id,
+            e.input,
+            task_resources,
+            accepted_attributes=(accepted_decisions or {}).get(e.id),
+            accepted_state_sha256=accepted_state_sha256,
+        )
+        for e in selected
     )
     if len({p.plan.clause.key for p in prepared}) != len(prepared):
         raise ValueError("duplicate clause identity in partial dataset")
@@ -389,6 +400,7 @@ def run_partial_proposals(
                 case.update(status=observation.outcome, reused=True)
             elif item.request is None:
                 observation = PartialObservation(
+                    schema_version=item.plan.schema_version,
                     plan=item.plan,
                     request_fingerprint=item.fingerprint,
                     provider=config.provider,

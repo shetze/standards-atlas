@@ -671,3 +671,12 @@ models by default; `--execute` explicitly runs pending questions. Results have s
 evaluated/not-requested/failed states and are isolated from production consensus and
 publication. See [Partial semantic observations](partial-semantic-observations.md) for
 selection, zero-request behavior, provenance, measured retries and safe resume.
+
+## Opt-in taxonomy-backed partial cascade
+
+`evaluation partial-cascade` connects those observations to per-attribute acceptance,
+shared routing/review, verified archives and explicit adoption. It preserves the configured
+thresholds and final Applicability policy while keeping unknown fields out of votes and
+accepted values out of subsequent requests. The default full-output workflow is unchanged.
+See [Taxonomy-backed partial cascade](taxonomy-partial-cascade.md) for the completion profile,
+model-free planning, resume, measured costs and canonical/public persistence boundaries.

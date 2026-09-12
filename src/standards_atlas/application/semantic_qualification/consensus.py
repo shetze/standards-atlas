@@ -264,6 +264,14 @@ class ConsensusReport(BaseModel):
 class ModelConsensusService:
     """Build dimension-aware votes and apply priors, evidence gates and adjudication."""
 
+    def evaluate_partial(self, **kwargs):
+        """Opt-in sparse consensus; never coerce partial answers into ModelVotes."""
+        from standards_atlas.application.semantic_qualification.mixed_consensus import (
+            evaluate_mixed_consensus,
+        )
+
+        return evaluate_mixed_consensus(**kwargs)
+
     def evaluate(
         self,
         *,

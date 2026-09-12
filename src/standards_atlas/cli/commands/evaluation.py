@@ -47,6 +47,9 @@ from standards_atlas.cli.commands.evaluation_commands.corpus import (
     build_role_golden_corpus,
     evaluate_role_corpus,
 )
+from standards_atlas.cli.commands.evaluation_commands.partial_cascade import (
+    run_partial_cascade_command,
+)
 from standards_atlas.cli.commands.evaluation_commands.partial_proposals import (
     propose_partial_semantics,
 )
@@ -88,6 +91,7 @@ __all__ = [
     "import_complytime_feedback",
     "propose_evaluation_annotations",
     "propose_partial_semantics",
+    "run_partial_cascade_command",
     "publish_annotation_reviews",
     "publish_applicability_detail_disagreement_hitl",
     "replay_applicability_policy_command",

@@ -30,8 +30,9 @@ from cached semantic answers or golden labels. Only qualified, source-backed `fi
 attributes are omitted. `hint`, `open`, and `conflict` remain questions. Today the rules
 can fix a **confirmed term's primary definition function**; unreviewed objective and
 technique rules remain hints. Unattributed historical clause types are not promoted to
-confirmed facts. Incorporating accepted model decisions across cascade stages is part
-of Slice 5, not an implicit read from persisted enrichment here.
+confirmed facts. Accepted model decisions across cascade stages are handled by the explicit
+[Slice-5 partial cascade](taxonomy-partial-cascade.md), not an implicit read from persisted
+enrichment by this standalone command.
 
 A fixed primary does not determine its complete set. If the set is requested, its fixed
 primary is supplied as a separately identified constraint, not repeated as a requested

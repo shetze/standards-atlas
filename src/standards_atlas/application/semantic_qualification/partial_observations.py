@@ -2,7 +2,7 @@
 
 These contracts deliberately do not inherit StatementFunctionSelection. That
 legacy full-answer model materializes defaults and is not a partial observer.
-No conversion to ModelVote or published enrichment exists before Slice 5.
+Mixed consensus consumes these sparse records without converting them to ModelVote.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from typing import Any, Literal
 
 from jsonschema import Draft202012Validator
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.semantic_qualification.annotations import ClauseReference
@@ -47,7 +47,7 @@ class PartialRequestPlan(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.0", "1.1"] = "1.0"
     experimental_only: Literal[True] = True
     task: Literal["semantic-attribute-observation"] = PARTIAL_TASK
     task_version: Literal["1.0.0"] = PARTIAL_TASK_VERSION
@@ -56,6 +56,16 @@ class PartialRequestPlan(BaseModel):
     selected_attributes: tuple[DecisionAttribute, ...]
     requested_attributes: tuple[DecisionAttribute, ...]
     fixed_attributes: dict[str, str] = Field(default_factory=dict)
+    accepted_attributes: dict[str, Any] = Field(default_factory=dict)
+    accepted_state_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    @model_serializer(mode="wrap")
+    def preserve_v1_identity(self, handler):
+        payload = handler(self)
+        if self.schema_version == "1.0":
+            payload.pop("accepted_attributes", None)
+            payload.pop("accepted_state_sha256", None)
+        return payload
 
     @model_validator(mode="after")
     def source_and_partition(self) -> PartialRequestPlan:
@@ -76,8 +86,24 @@ class PartialRequestPlan(BaseModel):
         }
         if self.fixed_attributes != fixed:
             raise ValueError("fixed attributes must be exactly the selected source predecisions")
+        if self.schema_version == "1.0" and (
+            self.accepted_attributes or self.accepted_state_sha256
+        ):
+            raise ValueError("carried acceptance requires partial plan schema 1.1")
+        if self.accepted_attributes and not self.accepted_state_sha256:
+            raise ValueError("carried attributes need the accepting state fingerprint")
+        if set(self.accepted_attributes) - set(self.selected_attributes) or (
+            set(self.accepted_attributes) & set(fixed)
+        ):
+            raise ValueError("carried attributes must be selected, disjoint from structural fixes")
+        if any(
+            self.decision_plan.decision(key).state == "conflict" for key in self.accepted_attributes
+        ):
+            raise ValueError("a source conflict cannot inherit an accepted semantic value")
         if self.requested_attributes != tuple(
-            key for key in self.selected_attributes if key not in fixed
+            key
+            for key in self.selected_attributes
+            if key not in fixed and key not in self.accepted_attributes
         ):
             raise ValueError("selected attributes must partition into fixed and requested")
         return self
@@ -89,11 +115,19 @@ class PartialRequestPlan(BaseModel):
     @property
     def fixed_primary_constraints(self) -> dict[str, str]:
         """Only bind an open set to its fixed primary; never expose unrelated targets."""
-        return {
+        result = {
             primary: decision.value
             for primary, collection in PRIMARY_SET_FIELDS
             if collection in self.requested_attributes
             and (decision := self.decision_plan.decision(primary)).state == "fixed"
+        }
+        return {
+            **result,
+            **{
+                primary: self.accepted_attributes[primary]
+                for primary, collection in PRIMARY_SET_FIELDS
+                if collection in self.requested_attributes and primary in self.accepted_attributes
+            },
         }
 
     @property
@@ -106,7 +140,7 @@ class AttributeObservationState(BaseModel):
 
     attribute: DecisionAttribute
     status: Literal["evaluated", "not_requested", "failed"]
-    reason: Literal["model_response", "fixed", "outside_selection", "request_failed"]
+    reason: Literal["model_response", "fixed", "accepted", "outside_selection", "request_failed"]
 
 
 class PartialObservation(BaseModel):
@@ -114,7 +148,7 @@ class PartialObservation(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.0", "1.1"] = "1.0"
     experimental_only: Literal[True] = True
     plan: PartialRequestPlan
     request_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -130,6 +164,8 @@ class PartialObservation(BaseModel):
 
     @model_validator(mode="after")
     def observation_is_explicit(self) -> PartialObservation:
+        if self.schema_version != self.plan.schema_version:
+            raise ValueError("observation and partial plan schema versions must agree")
         if tuple(item.attribute for item in self.states) != PARTIAL_ATTRIBUTES:
             raise ValueError("observation must account for every current task attribute once")
         if self.provided_fields != tuple(sorted(set(self.provided_fields))):
@@ -149,6 +185,8 @@ class PartialObservation(BaseModel):
                     (
                         "fixed"
                         if state.attribute in self.plan.fixed_attributes
+                        else "accepted"
+                        if state.attribute in self.plan.accepted_attributes
                         else "outside_selection"
                     ),
                 )
@@ -199,7 +237,13 @@ def observation_states(
             status=outcome if key in plan.requested_attributes else "not_requested",
             reason=("model_response" if outcome == "evaluated" else "request_failed")
             if key in plan.requested_attributes
-            else ("fixed" if key in plan.fixed_attributes else "outside_selection"),
+            else (
+                "fixed"
+                if key in plan.fixed_attributes
+                else "accepted"
+                if key in plan.accepted_attributes
+                else "outside_selection"
+            ),
         )
         for key in PARTIAL_ATTRIBUTES
     )
@@ -217,11 +261,13 @@ def validate_partial_response(
     errors = sorted(Draft202012Validator(schema).iter_errors(candidate), key=lambda e: e.message)
     if errors:
         raise ValueError(f"partial response violates request schema: {errors[0].message}")
+    constraints = {**plan.accepted_attributes, **plan.fixed_primary_constraints}
+    combined = {**constraints, **candidate}
     for primary, collection in PRIMARY_SET_FIELDS:
-        primary_value = candidate.get(primary, plan.fixed_primary_constraints.get(primary))
-        if collection in candidate and primary_value is not None:
-            if primary_value not in candidate[collection]:
+        primary_value = combined.get(primary)
+        if collection in combined and primary_value is not None:
+            if primary_value not in combined[collection]:
                 raise ValueError(f"{primary} must belong to the explicitly evaluated {collection}")
-    if candidate.get("role_semantics_present") is False and candidate.get("role_relations"):
+    if combined.get("role_semantics_present") is False and combined.get("role_relations"):
         raise ValueError("nonempty role_relations conflict with evaluated negative role presence")
     return candidate

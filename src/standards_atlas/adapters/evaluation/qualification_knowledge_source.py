@@ -150,6 +150,12 @@ def load_qualification_knowledge(
         raise ValueError("unknown or empty adoption dimension selection")
     archive = _Archive(run)
     try:
+        if "partial-cascade-plan.json" in archive.names:
+            from standards_atlas.adapters.evaluation.mixed_qualification_knowledge_source import (
+                load_mixed_qualification_knowledge,
+            )
+
+            return load_mixed_qualification_knowledge(archive, dimensions)
         return _load(archive, dimensions)
     finally:
         archive.close()

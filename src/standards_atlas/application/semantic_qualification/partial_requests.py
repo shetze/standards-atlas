@@ -46,7 +46,7 @@ class PartialProposalConfig(ProposalRunConfig):
 
     task: Literal["semantic-attribute-observation"] = PARTIAL_TASK
     task_version: Literal["1.0.0"] = PARTIAL_TASK_VERSION
-    prompt_version: Literal["taxonomy-partial-v1"] = PARTIAL_PROMPT
+    prompt_version: Literal["taxonomy-partial-v1", "taxonomy-partial-v2"] = PARTIAL_PROMPT
     cbox_frame: Literal["taxonomy-grounded-v1"] = "taxonomy-grounded-v1"
     adaptive_interview: Literal[False] = False
     overwrite: Literal[False] = False
@@ -104,6 +104,9 @@ def prepare_partial_request(
     example_id: str,
     item_input: Mapping[str, Any],
     resources: PartialTaskResources,
+    *,
+    accepted_attributes: Mapping[str, Any] | None = None,
+    accepted_state_sha256: str | None = None,
 ) -> PreparedPartialRequest:
     """Derive fresh source rules; never trust persisted target labels or caller plans."""
     clause = build_clause_reference(item_input)
@@ -117,12 +120,28 @@ def prepare_partial_request(
         for key in selected
         if decision_plan.decision(key).state == "fixed"
     }
+    accepted = {
+        key: value
+        for key, value in (accepted_attributes or {}).items()
+        if key in selected and key not in fixed
+    }
+    if accepted:
+        if config.prompt_version != "taxonomy-partial-v2":
+            raise ValueError("carried acceptance requires taxonomy-partial-v2 prompt")
+        errors = list(Draft202012Validator(resources.schema).iter_errors(accepted))
+        if errors:
+            raise ValueError(f"invalid carried acceptance: {errors[0].message}")
     plan = PartialRequestPlan(
+        schema_version="1.1" if config.prompt_version == "taxonomy-partial-v2" else "1.0",
         clause=clause,
         decision_plan=decision_plan,
         selected_attributes=selected,
-        requested_attributes=tuple(key for key in selected if key not in fixed),
+        requested_attributes=tuple(
+            key for key in selected if key not in fixed and key not in accepted
+        ),
         fixed_attributes=fixed,
+        accepted_attributes=accepted,
+        accepted_state_sha256=accepted_state_sha256,
     )
     identity = {
         "contract": "qualification-partial-input-v1",
@@ -161,6 +180,7 @@ def prepare_partial_request(
         extra_template_values={
             "requested_attributes": json.dumps(list(plan.requested_attributes)),
             "fixed_primary_constraints": json.dumps(plan.fixed_primary_constraints, sort_keys=True),
+            "accepted_attribute_constraints": json.dumps(plan.accepted_attributes, sort_keys=True),
         },
     )
     identity["base_input"] = request.metadata["qualification_input_fingerprint"]

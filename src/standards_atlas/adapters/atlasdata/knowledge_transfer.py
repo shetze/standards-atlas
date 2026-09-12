@@ -336,7 +336,21 @@ def _validate_semantics(attributes: tuple[PublishedAttribute, ...]) -> None:
         and item.path != "enrichments.semantic.role_relations"
         and item.availability == "known"
     }
-    SemanticClassification.model_validate(fields)
+    # Presence in the public attribute list, not a constructor default, denotes
+    # an evaluated complete set. Sparse primaries must survive a roundtrip.
+    context = {
+        "unobserved_primary_sets": {
+            primary
+            for primary, members in (
+                ("primary_function", "statement_functions"),
+                ("primary_knowledge_kind", "knowledge_kinds"),
+                ("primary_process_function", "process_functions"),
+            )
+            if primary in fields and members not in fields
+        },
+        "unobserved_role_presence": "role_semantics_present" not in fields,
+    }
+    SemanticClassification.model_validate(fields, context=context)
 
 
 def structure_digest(document: EngineeringDocument) -> str:

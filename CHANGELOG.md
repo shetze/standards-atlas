@@ -2,6 +2,21 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Taxonomy-backed partial cascade and adoption (2026-09-12)
+
+- Add opt-in `evaluation partial-cascade` with source-backed and attribute-specific model
+  acceptance, shared review/routing decisions, frozen original support and explicit open fields.
+- Run only pending questions across existing configured stages; preserve full clause accounting,
+  immutable request identity, failed-case resume and content-addressed repaired-stage revisions.
+- Apply the unchanged selective Applicability detail policy only to accepted gates, preserve
+  unknowns, and report cascade/detail/combined execution costs separately from model votes.
+- Verify raw request/response evidence and replay accepted decisions before explicit archive
+  adoption. Revalidate structural authority and preserve protected local values.
+- Roundtrip sparse primary/set and Presence/relation availability without invented negatives;
+  retain existing public omissions for Applicability functions and detailed role attributes.
+- Version internal carry/adoption contracts while keeping public schemas, default full-output
+  workflows, model roster, thresholds and taxonomy rule qualifications unchanged.
+
 ## Unreleased — Experimental partial semantic observations (2026-09-12)
 
 - Add versioned partial request plans and sparse observations with explicit evaluated,
