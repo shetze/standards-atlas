@@ -1,0 +1,15 @@
+Requested semantic attributes:
+{requested_attributes}
+
+Fixed primary constraints (not requested outputs or votes):
+{fixed_primary_constraints}
+
+Accepted attribute constraints from the preceding verified cascade state
+(not source taxonomy, not new model votes, do not repeat as outputs):
+{accepted_attribute_constraints}
+
+Normalized clause content (complete, including notes):
+{content}
+
+Source-grounded structural context:
+{context_text}

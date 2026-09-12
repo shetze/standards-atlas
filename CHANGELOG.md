@@ -2,6 +2,17 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Partial response contract diagnostics (2026-09-12)
+
+- Add an immutable `evaluation partial-audit` for original responses, failed gateway
+  payloads, request bindings and independently replayed source decision plans.
+- Report all checkable schema and primary/set/role-presence contradictions with the
+  original values, distinguishing unavailable evidence from successful validation.
+- Add opt-in `taxonomy-partial-v3` with complete primary-inclusive-set examples and
+  sparse carried-constraint support; preserve v1/v2 request identities and defaults.
+- Explain source authority and pending-rule blockers in partial reports. Keep strict
+  grouped acceptance, source rule qualifications and public enrichment policy unchanged.
+
 ## Unreleased — Partial response identity and recovery (2026-09-12)
 
 - Use one conservative model/prompt label policy for partial execution, successful resume

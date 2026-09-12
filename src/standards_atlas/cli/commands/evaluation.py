@@ -47,6 +47,9 @@ from standards_atlas.cli.commands.evaluation_commands.corpus import (
     build_role_golden_corpus,
     evaluate_role_corpus,
 )
+from standards_atlas.cli.commands.evaluation_commands.partial_audit import (
+    audit_partial_experiment_command,
+)
 from standards_atlas.cli.commands.evaluation_commands.partial_cascade import (
     run_partial_cascade_command,
 )
@@ -72,6 +75,7 @@ from standards_atlas.cli.composition import build_golden_corpus_qualifier
 __all__ = [
     "_MatrixProposalProgress",
     "_format_duration",
+    "audit_partial_experiment_command",
     "build_applicability_detail_disagreement_hitl",
     "build_evaluation_corpus",
     "build_role_golden_corpus",

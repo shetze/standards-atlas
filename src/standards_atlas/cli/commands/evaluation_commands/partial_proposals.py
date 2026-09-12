@@ -20,6 +20,7 @@ from standards_atlas.adapters.llm import (
 )
 from standards_atlas.application.semantic_qualification.partial_observations import (
     PARTIAL_ATTRIBUTES,
+    PARTIAL_PROMPT,
     ordered_attributes,
 )
 from standards_atlas.application.semantic_qualification.partial_proposals import (
@@ -70,6 +71,10 @@ def propose_partial_semantics(
             "--attributes", help="Comma-separated current attributes; omitted means all nine."
         ),
     ] = None,
+    prompt: Annotated[
+        str,
+        typer.Option("--prompt", help="Versioned partial prompt; v3 clarifies complete sets."),
+    ] = PARTIAL_PROMPT,
     execute: Annotated[
         bool,
         typer.Option(
@@ -123,6 +128,7 @@ def propose_partial_semantics(
             dataset_version=source_selection.dataset_version,
             provider=provider,
             model=model,
+            prompt_version=prompt,
             selected_attributes=selected,
             limit=limit,
             max_tokens=max_tokens,

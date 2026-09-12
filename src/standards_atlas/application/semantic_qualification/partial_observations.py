@@ -249,25 +249,122 @@ def observation_states(
     )
 
 
-def validate_partial_response(
-    value: Mapping[str, Any], schema: Mapping[str, Any], plan: PartialRequestPlan
-) -> dict[str, Any]:
-    """Validate without coercion, deduplication, defaulting or invented set members.
+class PartialResponseIssue(BaseModel):
+    """A diagnostic of original values, never an instruction to repair them."""
 
-    A malformed grouped answer fails the group. Salvaging partial provider output
-    would need a separately qualified contract; it is not silently done here.
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    code: str
+    attributes: tuple[str, ...]
+    message: str
+    path: tuple[str | int, ...] = ()
+    observed_values: dict[str, Any] = Field(default_factory=dict)
+    constraint_values: dict[str, Any] = Field(default_factory=dict)
+
+
+class PartialResponseValidationError(ValueError):
+    """All independently checkable failures from the same grouped response."""
+
+    def __init__(self, issues: tuple[PartialResponseIssue, ...]):
+        self.issues = issues
+        super().__init__("; ".join(issue.message for issue in issues))
+
+
+def inspect_partial_response(
+    value: Any, schema: Mapping[str, Any], plan: PartialRequestPlan
+) -> tuple[PartialResponseIssue, ...]:
+    """Collect schema AND cross-attribute errors without accepting or editing values.
+
+    A malformed field does not prevent inspection of unrelated, well-shaped pairs.
+    Omission is not a negative; a null primary does not introduce a new nonempty-set
+    rule. Acceptance is unchanged from the original strict grouped contract.
     """
-    candidate = dict(value)
+    candidate = dict(value) if isinstance(value, Mapping) else value
     errors = sorted(Draft202012Validator(schema).iter_errors(candidate), key=lambda e: e.message)
-    if errors:
-        raise ValueError(f"partial response violates request schema: {errors[0].message}")
+    issues = []
+    for error in errors:
+        path = tuple(error.absolute_path)
+        fields = (str(path[0]),) if path else ()
+        issues.append(
+            PartialResponseIssue(
+                code=f"schema.{error.validator}",
+                attributes=fields,
+                path=path,
+                message=f"partial response violates request schema: {error.message}",
+                observed_values={key: candidate[key] for key in fields if key in candidate}
+                if isinstance(candidate, dict)
+                else {},
+            )
+        )
+    if not isinstance(candidate, dict):
+        return tuple(issues)
     constraints = {**plan.accepted_attributes, **plan.fixed_primary_constraints}
     combined = {**constraints, **candidate}
     for primary, collection in PRIMARY_SET_FIELDS:
         primary_value = combined.get(primary)
-        if collection in combined and primary_value is not None:
-            if primary_value not in combined[collection]:
-                raise ValueError(f"{primary} must belong to the explicitly evaluated {collection}")
-    if combined.get("role_semantics_present") is False and combined.get("role_relations"):
-        raise ValueError("nonempty role_relations conflict with evaluated negative role presence")
-    return candidate
+        collection_value = combined.get(collection)
+        # Invalid shapes are already reported by the schema. Do not let them mask
+        # another dimension or produce TypeError while comparing set membership.
+        if isinstance(primary_value, str) and isinstance(collection_value, list):
+            if primary_value not in collection_value:
+                fields = (primary, collection)
+                issues.append(
+                    PartialResponseIssue(
+                        code="primary_not_in_set",
+                        attributes=fields,
+                        message=f"{primary} must belong to the explicitly evaluated {collection}",
+                        observed_values={key: candidate[key] for key in fields if key in candidate},
+                        constraint_values={
+                            key: constraints[key] for key in fields if key in constraints
+                        },
+                    )
+                )
+    if (
+        combined.get("role_semantics_present") is False
+        and isinstance(combined.get("role_relations"), list)
+        and combined["role_relations"]
+    ):
+        fields = ("role_semantics_present", "role_relations")
+        issues.append(
+            PartialResponseIssue(
+                code="negative_presence_with_relations",
+                attributes=fields,
+                message="nonempty role_relations conflict with evaluated negative role presence",
+                observed_values={key: candidate[key] for key in fields if key in candidate},
+                constraint_values={key: constraints[key] for key in fields if key in constraints},
+            )
+        )
+    return tuple(issues)
+
+
+def partial_response_diagnostics(
+    value: Any, schema: Mapping[str, Any], plan: PartialRequestPlan
+) -> dict[str, Any]:
+    """Portable review evidence, not partial acceptance or additional model votes."""
+    issues = inspect_partial_response(value, schema, plan)
+    return {
+        "contract": "strict-grouped-v1",
+        "diagnostic_version": "all-errors-v1",
+        "valid": not issues,
+        "acceptance_changed": False,
+        "issues": [item.model_dump(mode="json") for item in issues],
+        "response_values": dict(value) if isinstance(value, Mapping) else value,
+        "provided_fields": sorted(value) if isinstance(value, Mapping) else [],
+        "requested_attributes": list(plan.requested_attributes),
+        "fixed_primary_constraints": plan.fixed_primary_constraints,
+        "accepted_attribute_constraints": plan.accepted_attributes,
+    }
+
+
+def validate_partial_response(
+    value: Mapping[str, Any], schema: Mapping[str, Any], plan: PartialRequestPlan
+) -> dict[str, Any]:
+    """Validate strictly; report all conflicts without coercion or invented members.
+
+    A malformed grouped answer still fails the group. Diagnostic values are not
+    salvaged into consensus; that would be a separate acceptance contract.
+    """
+    issues = inspect_partial_response(value, schema, plan)
+    if issues:
+        raise PartialResponseValidationError(issues)
+    return dict(value)

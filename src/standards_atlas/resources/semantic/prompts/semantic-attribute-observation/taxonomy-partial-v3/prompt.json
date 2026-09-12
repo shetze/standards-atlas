@@ -1,0 +1,5 @@
+{
+  "task": "semantic-attribute-observation",
+  "version": "taxonomy-partial-v3",
+  "description": "Full primary-inclusive sets with explicit positive, empty and sparse examples; strict unchanged output contract and carried constraints."
+}

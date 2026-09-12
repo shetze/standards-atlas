@@ -219,3 +219,96 @@ def test_real_adapter_keeps_reported_label_and_requested_cache_identity(
     assert len(calls) == 1
     assert report["request_timing"]["cached_response_count"] == 1
     assert report["request_timing"]["fresh_response_count"] == 0
+
+
+@pytest.mark.parametrize("duplicate", [False, True])
+def test_real_adapter_audit_keeps_all_primary_set_conflicts_and_raw_values(
+    tmp_path,
+    monkeypatch,
+    duplicate,
+):
+    from standards_atlas.application.semantic_qualification.partial_audit import (
+        audit_partial_experiment,
+    )
+
+    requested = "hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M"
+    clause = descriptor()
+    context = canonical_cbox_context(clause)
+    context.pop("source_structure", None)  # Explicit legacy fixture: no source fixes.
+    item = EvaluationExample(
+        id=clause.id,
+        expected={},
+        input={"content": {"text": clause.text, "hash": clause.content_hash}, "context": context},
+    )
+    cfg = PartialProposalConfig(
+        corpus_id="test",
+        dataset_version="1",
+        provider="ramalama",
+        model=requested,
+        prompt_version="taxonomy-partial-v3",
+    )
+    value = {
+        "primary_function": "requirement",
+        "statement_functions": ["description"],
+        "primary_knowledge_kind": "process",
+        "knowledge_kinds": ["artifact", "artifact"] if duplicate else ["artifact"],
+        "primary_process_function": "activity",
+        "process_functions": ["output"],
+        "applicability_present": False,
+        "role_semantics_present": False,
+        "role_relations": [
+            {"actor": "reviewer", "relation_class": "performance", "target": "review"}
+        ],
+    }
+    raw = json.dumps(value)
+    calls = []
+    gateway = OpenAICompatibleLlmGateway(LlmConfig(model=requested, cache_directory=None))
+
+    def reply(method, endpoint, payload=None):
+        calls.append(payload)
+        return {
+            "model": "ibm-granite/granite-3.3-8b-instruct-GGUF",
+            "choices": [{"message": {"content": raw}, "finish_reason": "stop"}],
+        }
+
+    monkeypatch.setattr(gateway, "_request_json", reply)
+    report = run_partial_proposals(
+        cfg,
+        resources=RESOURCES,
+        output_directory=tmp_path / "experiment",
+        examples=(item,),
+        execute=True,
+        gateway_factory=lambda: gateway,
+    )
+    assert report["status_counts"] == {"failed": 1}
+    assert report["logical_model_observation_count"] == 0
+    before = {
+        p.relative_to(tmp_path / "experiment"): p.read_bytes()
+        for p in (tmp_path / "experiment").rglob("*")
+        if p.is_file()
+    }
+    dataset = tmp_path / "dataset.json"
+    dataset.write_text(json.dumps({"examples": [{"id": item.id, "input": item.input}]}))
+    audited = audit_partial_experiment(
+        experiment=tmp_path / "experiment",
+        dataset=dataset,
+        output_directory=tmp_path / "audit",
+        resources=RESOURCES,
+    )
+    case = audited["cases"][0]
+    assert audited["integrity_error_case_count"] == 0
+    if duplicate:
+        findings = next(
+            a["response_validation"] for a in case["failed_attempts"] if a["status"] == "inspected"
+        )
+        assert audited["response_status_counts"] == {"unavailable": 1}
+    else:
+        findings = case["response_validation"]
+        assert case["response_identity"]["accepted"] is True
+    assert findings["response_values"] == value
+    assert sum(i["code"] == "primary_not_in_set" for i in findings["issues"]) == 3
+    assert len(findings["issues"]) == 4 + int(duplicate)
+    assert len(calls) == 1
+    assert all(
+        (tmp_path / "experiment" / name).read_bytes() == data for name, data in before.items()
+    )

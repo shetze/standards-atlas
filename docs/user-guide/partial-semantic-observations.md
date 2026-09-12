@@ -237,3 +237,83 @@ directories. After an external process kill, remove a stale `.partial-run.lock` 
 verifying that no writer is still using the output. Corrupted successful response checksums,
 mismatched plans or unsupported schema versions fail visibly rather than being silently
 reused. Per-clause inference failures are collected and do not stop later clauses.
+
+## Inspect saved responses and source decisions without inference
+
+Use `evaluation partial-audit` on the **whole experiment directory**, rather than
+only its status report. It reads `partial-run-plan.json` and the case-local
+`partial-request-plan.json`, `request.json`, `response.json`, and
+`partial-observation.json`. Failed gateway payloads retained under `executions/`
+are inspected separately. Nothing is repaired, accepted, or published.
+
+```bash
+uv run standards-atlas evaluation partial-audit \
+  --experiment local/evaluation/taxonomy-efficient/slice-4/run-078-granite \
+  --run local/evaluation/qualification-run-078.zip \
+  --output local/evaluation/taxonomy-efficient/slice-4/audit-078
+```
+
+Replace `--experiment` by the original output directory of the experiment. The
+output must be new and outside the experiment. The same command accepts a ZIP
+containing exactly one partial experiment, or a standalone `partial-run-report`
+JSON. Use `--dataset path/to/dataset.json` instead of `--run` for an experiment
+built from a source dataset. Neither source option is mandatory, but only with
+the matching source can the audit independently regenerate the source decisions
+and the complete request. No gateway, server, or `--execute` option is involved.
+
+The portable `partial-audit.json` contains original model values, **all**
+independently checkable schema and primary/set/role-presence conflicts, exact
+source/rule evidence, checksums, and missing artifacts. `partial-audit.md`
+summarizes the findings. Artifact issues are isolated per clause. The audit does
+not infer a raw response from an error string or from another task's proposals.
+A missing response is `unavailable`, never a successful validation.
+
+Decision-plan checks distinguish `source_verified` (stored plan matches source
+replay), `reconstructed_from_source` (report and source are available, but no
+original plan), `stored_only`, and `unavailable`/`not_verified`. A reconstructed
+plan does **not** prove the original prompt or response. `request_check` separately
+reports whether the complete saved request was regenerated or only bound to its
+saved plan. Stored hashes bind artifacts, not semantic accuracy, runtime model
+attestation, or the truth of a user-supplied source fact.
+
+The current rule profile only allows **confirmed term entries** to fix
+`primary_function=definition`. Requirements, objectives, local headings, and
+technique rules remain pending independent review. Merely rebuilding a corpus
+with `source_structure` is not enough: unconfirmed facts remain hints. A fixed
+primary does not determine the secondary set or the other dimensions. The audit
+reports these distinct blockers rather than suggesting all zero-fix runs are
+caused by missing structural context.
+
+## Versioned primary-inclusive-set prompt
+
+`--prompt taxonomy-partial-v3` is an opt-in comparison prompt. It says explicitly
+that each set is the **complete set including the primary**, not a list of only
+secondary labels. It supplies singleton, multi-member, empty, and partial-only
+examples for the current contract, including knowledge and process pairs. It
+supports verified carried constraints in the same manner as v2.
+
+```bash
+# Model-free plan first; choose a new output directory for a changed prompt.
+uv run standards-atlas evaluation partial-proposals \
+  --run local/evaluation/qualification-run-078.zip \
+  --model 'hf.co/ibm-granite/granite-3.3-8b-instruct-GGUF:Q4_K_M' \
+  --prompt taxonomy-partial-v3 \
+  --limit 50 \
+  --output local/evaluation/taxonomy-efficient/slice-4/run-078-granite-v3
+```
+
+An explicitly requested `--execute` runs that comparison; a new prompt cannot
+be tested by relabeling cached v1 responses. Historical v1/v2 resources and
+request identities are unchanged. The default Slice-4 prompt remains v1 so that
+existing directories can still resume with identical arguments. The partial
+cascade still selects v2; this change does not silently activate v3 in it.
+
+All versions now report every checkable violation in structured diagnostics.
+New partial reports include `response_validation`, original `response_values`,
+and `decision_plan_summary`. This does **not** relax grouped acceptance: an
+invalid pair still fails its grouped observation, and no independent field is
+silently salvaged. No missing primary is inserted, no duplicate is removed, no
+unknown value is made negative, and no secondary set is inferred. Optional
+rationale is explanatory text, not permission to accept inconsistent values.
+The semantic schema and acceptance policy are unchanged. Prompt quality and
+Early-Exit improvements still require a controlled inference comparison.

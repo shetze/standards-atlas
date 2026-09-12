@@ -46,7 +46,9 @@ class PartialProposalConfig(ProposalRunConfig):
 
     task: Literal["semantic-attribute-observation"] = PARTIAL_TASK
     task_version: Literal["1.0.0"] = PARTIAL_TASK_VERSION
-    prompt_version: Literal["taxonomy-partial-v1", "taxonomy-partial-v2"] = PARTIAL_PROMPT
+    prompt_version: Literal["taxonomy-partial-v1", "taxonomy-partial-v2", "taxonomy-partial-v3"] = (
+        PARTIAL_PROMPT
+    )
     cbox_frame: Literal["taxonomy-grounded-v1"] = "taxonomy-grounded-v1"
     adaptive_interview: Literal[False] = False
     overwrite: Literal[False] = False
@@ -126,13 +128,15 @@ def prepare_partial_request(
         if key in selected and key not in fixed
     }
     if accepted:
-        if config.prompt_version != "taxonomy-partial-v2":
-            raise ValueError("carried acceptance requires taxonomy-partial-v2 prompt")
+        if config.prompt_version not in {"taxonomy-partial-v2", "taxonomy-partial-v3"}:
+            raise ValueError(
+                "carried acceptance requires taxonomy-partial-v2 or taxonomy-partial-v3 prompt"
+            )
         errors = list(Draft202012Validator(resources.schema).iter_errors(accepted))
         if errors:
             raise ValueError(f"invalid carried acceptance: {errors[0].message}")
     plan = PartialRequestPlan(
-        schema_version="1.1" if config.prompt_version == "taxonomy-partial-v2" else "1.0",
+        schema_version="1.0" if config.prompt_version == "taxonomy-partial-v1" else "1.1",
         clause=clause,
         decision_plan=decision_plan,
         selected_attributes=selected,

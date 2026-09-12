@@ -28,9 +28,14 @@ from standards_atlas.application.semantic_qualification.eligibility import (
     SemanticTaskEligibilityPolicy,
     eligibility_from_input,
 )
+from standards_atlas.application.semantic_qualification.partial_diagnostics import (
+    describe_partial_plan,
+    summarize_partial_plans,
+)
 from standards_atlas.application.semantic_qualification.partial_observations import (
     PartialObservation,
     observation_states,
+    partial_response_diagnostics,
     validate_partial_response,
 )
 from standards_atlas.application.semantic_qualification.partial_requests import (
@@ -521,6 +526,7 @@ def run_partial_proposals(
                 "clause": item.plan.clause.model_dump(mode="json"),
                 "requested_attributes": list(item.plan.requested_attributes),
                 "fixed_attributes": dict(item.plan.fixed_attributes),
+                "decision_plan_summary": describe_partial_plan(item.plan),
                 "case_directory": directory.relative_to(root).as_posix(),
                 "status": "planned",
                 "reused": False,
@@ -602,6 +608,13 @@ def run_partial_proposals(
                     prompt_version=config.prompt_version,
                     provider=config.provider,
                 )
+                if item.request is not None:
+                    response = _read_json(response_path)
+                    cases[item.example_id]["response_validation"] = partial_response_diagnostics(
+                        response.get("value"),
+                        item.request.output_schema,
+                        item.plan,
+                    )
         counts = Counter(item["status"] for item in cases.values())
         report = {
             "schema_version": "1.0",
@@ -621,6 +634,14 @@ def run_partial_proposals(
             "revalidated_observation_count": revalidated_count,
             "response_revalidation_requested": revalidate_responses,
             "response_identity_policy": RESPONSE_IDENTITY_POLICY,
+            "decision_plan_summary": summarize_partial_plans([p.plan for p in prepared]),
+            "response_issue_counts": dict(
+                Counter(
+                    issue["code"]
+                    for case in cases.values()
+                    for issue in case.get("response_validation", {}).get("issues", [])
+                )
+            ),
             "request_timing": timing.model_dump(mode="json"),
             "request_timing_scope": "current invocation; prior execution files are retained",
             "logical_model_observation_count": counts["evaluated"],
