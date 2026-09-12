@@ -15,6 +15,7 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
     ApplicabilityDecisionPolicyConfig,
 )
+from standards_atlas.application.semantic_qualification.performance import RequestTiming
 from standards_atlas.application.semantic_qualification.process_cascade import (
     capture_process_dimensions,
     process_escalation_reasons,
@@ -251,16 +252,17 @@ def cascade_unresolved_clause_ids(
     stage_clause_ids: tuple[str, ...],
     resolution: CascadeResolutionConfig,
 ) -> tuple[tuple[str, ...], dict[str, tuple[str, ...]]]:
-    """Resolve only clauses that actually participated in the current cascade stage."""
-    stage_id_set = set(stage_clause_ids)
+    """Account for every selected clause, including missing consensus records."""
+    by_id = {clause.clause_id: clause for clause in clauses}
     escalation_reasons = {
-        clause.clause_id: cascade_escalation_reasons(clause, resolution)
-        for clause in clauses
-        if clause.clause_id in stage_id_set
+        clause_id: (
+            cascade_escalation_reasons(by_id[clause_id], resolution)
+            if clause_id in by_id
+            else ("no_consensus_result",)
+        )
+        for clause_id in stage_clause_ids
     }
-    unresolved = tuple(
-        clause_id for clause_id in stage_clause_ids if escalation_reasons.get(clause_id)
-    )
+    unresolved = tuple(clause_id for clause_id in stage_clause_ids if escalation_reasons[clause_id])
     return unresolved, escalation_reasons
 
 
@@ -277,6 +279,11 @@ def cascade_stage_escalation_reasons(
     role relations continue to use cumulative evidence. Resolved dimensions
     never become unresolved again merely because later models disagree.
     """
+    # A clause with no initial evidence has no accepted dimensions. Evaluate
+    # all dimensions when it first acquires evidence, not just the sentinel.
+    if "no_consensus_result" in previous_reasons:
+        return cascade_escalation_reasons(cumulative_clause, resolution)
+
     unresolved = set(previous_reasons)
     reasons: list[str] = []
 
@@ -284,9 +291,7 @@ def cascade_stage_escalation_reasons(
         if cumulative_clause.participating_models < resolution.minimum_successful_models:
             reasons.append("insufficient_models")
 
-    statement_unresolved = bool(
-        unresolved & {"consensus_category", "statement_function_confidence"}
-    )
+    statement_unresolved = bool(unresolved & _STATEMENT_REASONS)
     if statement_unresolved:
         if resolution.statement_function_resolution_mode == "stage_resolver":
             if (
@@ -390,17 +395,29 @@ def cascade_stage_unresolved_clause_ids(
     """Resolve one later cascade stage with dimension-level monotonicity."""
     cumulative_by_id = {clause.clause_id: clause for clause in cumulative_clauses}
     stage_by_id = {clause.clause_id: clause for clause in stage_clauses}
-    reasons = {
-        clause_id: cascade_stage_escalation_reasons(
-            cumulative_clause=cumulative_by_id[clause_id],
-            stage_clause=stage_by_id[clause_id],
-            previous_reasons=previous_reasons.get(clause_id, ()),
-            resolution=resolution,
+    reasons: dict[str, tuple[str, ...]] = {}
+    for clause_id in stage_clause_ids:
+        previous = previous_reasons.get(clause_id, ())
+        missing = tuple(
+            reason
+            for reason, available in (
+                ("missing_cumulative_consensus_result", clause_id in cumulative_by_id),
+                ("missing_stage_consensus_result", clause_id in stage_by_id),
+            )
+            if not available
         )
-        for clause_id in stage_clause_ids
-        if clause_id in cumulative_by_id and clause_id in stage_by_id
-    }
-    unresolved = tuple(clause_id for clause_id in stage_clause_ids if reasons.get(clause_id))
+        if missing:
+            # Retain the semantic work list across failures/resume. A later
+            # successful stage removes only the temporary missing-data markers.
+            reasons[clause_id] = tuple(dict.fromkeys((*previous, *missing)))
+        else:
+            reasons[clause_id] = cascade_stage_escalation_reasons(
+                cumulative_clause=cumulative_by_id[clause_id],
+                stage_clause=stage_by_id[clause_id],
+                previous_reasons=previous,
+                resolution=resolution,
+            )
+    unresolved = tuple(clause_id for clause_id in stage_clause_ids if reasons[clause_id])
     return unresolved, reasons
 
 
@@ -458,6 +475,12 @@ def _applicability_presence_threshold(
     return resolution.minimum_applicability_confidence if configured is None else configured
 
 
+_MISSING_CONSENSUS_REASONS = {
+    "no_consensus_result",
+    "missing_cumulative_consensus_result",
+    "missing_stage_consensus_result",
+}
+
 _STATEMENT_REASONS = {
     "consensus_category",
     "statement_function_confidence",
@@ -496,6 +519,14 @@ def capture_resolved_dimensions(
     previous = set(previous_reasons)
     remaining = set(remaining_reasons)
     result: dict[str, dict[str, Any]] = {}
+    if remaining & _MISSING_CONSENSUS_REASONS:
+        return result
+    # First evidence after an absent initial record must be captured just as
+    # initial-stage evidence. Nothing was frozen while the record was missing.
+    if "no_consensus_result" in previous:
+        initial_stage = True
+        stage_clause = cumulative_clause
+        process_stage_clause = cumulative_clause
 
     def resolved(reason_set: set[str]) -> bool:
         if initial_stage:
@@ -620,6 +651,13 @@ class MatrixObservation(BaseModel):
     qualification_report: Path
     run_directory: Path | None = None
     mean_duration_seconds: float | None = Field(default=None, ge=0.0)
+    # Explicit denominator differentiates new per-request measurements from
+    # historical automatically recorded batch sums.
+    inference_duration_seconds: float | None = Field(default=None, ge=0.0)
+    measured_request_count: int | None = Field(default=None, ge=0)
+    historical_inference_duration_seconds: float | None = Field(default=None, ge=0.0)
+    historical_measured_request_count: int | None = Field(default=None, ge=0)
+    request_timing: RequestTiming | None = None
     elapsed_duration_seconds: float | None = Field(default=None, ge=0.0)
     performance_measurement_source: str = "legacy"
     fresh_prediction_count: int | None = Field(default=None, ge=0)
@@ -1082,6 +1120,14 @@ class CandidateQualification(BaseModel):
     mean_json_validity_rate: float
     mean_truncation_rate: float
     mean_duration_seconds: float | None = None
+    inference_duration_seconds: float | None = None
+    measured_request_count: int | None = None
+    historical_inference_duration_seconds: float | None = None
+    historical_measured_request_count: int | None = None
+    elapsed_duration_seconds: float | None = None
+    request_timing: RequestTiming | None = None
+    request_timing_complete: bool = False
+    timing_observation_count: int = 0
     performance_measurement_source: str = "legacy"
     fresh_prediction_count: int | None = None
     cached_prediction_count: int = 0
@@ -1099,7 +1145,7 @@ class QualificationMatrixReport(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0", "1.1"] = "1.1"
     matrix_id: str
     corpus_id: str
     generated_at: datetime

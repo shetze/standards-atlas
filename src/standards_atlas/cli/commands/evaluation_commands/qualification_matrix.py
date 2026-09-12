@@ -39,8 +39,18 @@ from standards_atlas.application.semantic_qualification.applicability_framing im
 from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
     persist_applicability_prediction_snapshot,
 )
+from standards_atlas.application.semantic_qualification.cascade_metrics import (
+    resolution_counts as _resolution_counts,
+)
+from standards_atlas.application.semantic_qualification.cascade_metrics import (
+    stage_accounting,
+)
 from standards_atlas.application.semantic_qualification.challenger import (
     write_challenger_comparison,
+)
+from standards_atlas.application.semantic_qualification.performance import (
+    RequestTiming,
+    observation_performance_fields,
 )
 from standards_atlas.application.semantic_qualification.prompt_comparison import (
     build_prompt_comparison_report,
@@ -168,10 +178,10 @@ def _cascade_reason_dimensions(reasons: tuple[str, ...]) -> set[str]:
             dimensions.add("process_set")
         elif reason.startswith("knowledge_kind_"):
             dimensions.add("knowledge_kind")
-        elif reason.startswith("applicability_"):
+        elif reason.startswith(("applicability_", "insufficient_applicability_presence_")):
             dimensions.add("applicability")
         elif reason.startswith(("responsibility_", "role_relation_", "role_semantics_")):
-            dimensions.add("responsibility")
+            dimensions.add("role_relation")
     return dimensions
 
 
@@ -185,7 +195,7 @@ def _render_intermediate_resolution_summary(
         "process_function",
         "process_set",
         "applicability",
-        "responsibility",
+        "role_relation",
     ):
         candidates = {
             clause_id
@@ -203,23 +213,6 @@ def _render_intermediate_resolution_summary(
             f"Intermediate resolution  : {dimension}="
             f"{len(candidates - remaining)}/{len(candidates)}"
         )
-
-
-def _resolution_counts(
-    resolutions: dict[str, dict[str, dict[str, object]]],
-) -> dict[str, int]:
-    dimensions = (
-        "statement_function",
-        "knowledge_kind",
-        "process_function",
-        "process_set",
-        "applicability",
-        "responsibility",
-    )
-    return {
-        dimension: sum(dimension in clause for clause in resolutions.values())
-        for dimension in dimensions
-    }
 
 
 def _count_reasons(reasons: dict[str, tuple[str, ...]]) -> dict[str, int]:
@@ -530,6 +523,7 @@ def qualify_model_prompt_matrix(
             escalation_reasons: dict[str, tuple[str, ...]] = {}
             dimension_resolutions: dict[str, dict[str, dict[str, object]]] = {}
             for stage_index, stage in enumerate(execution_stages):
+                stage_started = time.monotonic()
                 stage_clause_ids = (
                     unresolved_clause_ids
                     if stage.apply_to == "unresolved"
@@ -654,6 +648,9 @@ def qualify_model_prompt_matrix(
                                 run_directory = proposal_run_directory(proposal_config, run_root)
                                 if not proposal_reuse_enabled and run_directory.exists():
                                     shutil.rmtree(run_directory)
+                                request_timing = (
+                                    RequestTiming() if run_mode == "recompute" else None
+                                )
                                 fresh_prediction_count = 0
                                 cached_prediction_count = 0
                                 reused_prediction_count = 0
@@ -687,6 +684,7 @@ def qualify_model_prompt_matrix(
                                     failed = result.failed
                                     skipped = result.skipped
                                     errors = result.errors
+                                    request_timing = getattr(result, "request_timing", None)
                                     fresh_prediction_count = result.fresh_predictions
                                     cached_prediction_count = result.cached_predictions
                                     reused_prediction_count = result.reused_predictions
@@ -728,23 +726,6 @@ def qualify_model_prompt_matrix(
                                         run_directory, list(stage_clause_ids)
                                     )
                                 )
-                                if fresh_prediction_count > 0 and not (
-                                    cached_prediction_count or reused_prediction_count
-                                ):
-                                    performance_source = "fresh"
-                                    inference_duration_seconds = (
-                                        result.fresh_inference_duration_seconds
-                                    )
-                                elif measured_predictions > 0:
-                                    performance_source = (
-                                        "recompute_historical"
-                                        if run_mode == "recompute"
-                                        else "historical_mixed"
-                                    )
-                                    inference_duration_seconds = measured_duration_seconds
-                                else:
-                                    performance_source = "not_measured"
-                                    inference_duration_seconds = None
                                 observation = MatrixObservation(
                                     prompt_id=prompt.id,
                                     model_id=model.id,
@@ -752,9 +733,13 @@ def qualify_model_prompt_matrix(
                                     repetition=repetition,
                                     qualification_report=qualification_path,
                                     run_directory=run_directory,
-                                    mean_duration_seconds=inference_duration_seconds,
-                                    elapsed_duration_seconds=elapsed_duration_seconds,
-                                    performance_measurement_source=performance_source,
+                                    **observation_performance_fields(
+                                        timing=request_timing,
+                                        historical_count=measured_predictions,
+                                        historical_seconds=measured_duration_seconds,
+                                        elapsed_seconds=elapsed_duration_seconds,
+                                        recompute=run_mode == "recompute",
+                                    ),
                                     fresh_prediction_count=fresh_prediction_count,
                                     cached_prediction_count=cached_prediction_count,
                                     reused_prediction_count=reused_prediction_count,
@@ -920,6 +905,12 @@ def qualify_model_prompt_matrix(
                             "stage_id": stage.id,
                             "configured_resolution": configured_resolution.model_dump(),
                             "effective_resolution": stage_resolution.model_dump(),
+                            **stage_accounting(
+                                clause_ids=stage_clause_ids,
+                                reasons=escalation_reasons,
+                                selected_count=len(selected_example_ids),
+                            ),
+                            "wall_duration_seconds": time.monotonic() - stage_started,
                             "entered_clause_count": len(stage_clause_ids),
                             "entered_clause_ids": list(stage_clause_ids),
                             "entry_reasons": {

@@ -71,6 +71,12 @@ from standards_atlas.application.semantic_qualification.eligibility import (
     SemanticTaskEligibilityPolicy,
     eligibility_from_input,
 )
+from standards_atlas.application.semantic_qualification.performance import (
+    MeasuredLlmGateway,
+    RequestTiming,
+    measured_seconds,
+    stored_request_timing,
+)
 from standards_atlas.application.semantic_qualification.progress import (
     ProposalProgress,
     ProposalProgressReporter,
@@ -224,6 +230,7 @@ class ProposalRunResult:
     reused_predictions: int = 0
     ineligible_predictions: int = 0
     fresh_inference_duration_seconds: float | None = None
+    request_timing: RequestTiming | None = None
 
 
 def proposal_run_directory(config: ProposalRunConfig, output_root: Path) -> Path:
@@ -251,17 +258,29 @@ def historical_inference_duration(
     measured = 0
     duration_seconds = 0.0
     for example_id in example_ids:
-        response_path = run_directory / _safe(example_id) / "response.json"
-        if not response_path.is_file():
-            continue
+        case_dir = run_directory / _safe(example_id)
+        timing_path = case_dir / "request-timing.json"
         try:
-            payload = json.loads(response_path.read_text(encoding="utf-8"))
-            duration_ms = payload.get("duration_ms")
-            if duration_ms is None:
+            if timing_path.is_file():
+                timing = stored_request_timing(timing_path)
+                measured += timing.measured_request_count
+                duration_seconds += timing.recorded_inference_duration_seconds or 0.0
                 continue
-            duration_seconds += float(duration_ms) / 1000.0
-            measured += 1
-        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            # Old adaptive reports expose only the final response, not a
+            # per-request total. Do not treat that as the entire interview.
+            if (case_dir / "interview.json").is_file():
+                continue
+            if (case_dir / "failure.json").is_file():
+                continue  # May retain a stale response from an older proposal.
+            response_path = case_dir / "response.json"
+            if not response_path.is_file():
+                continue
+            payload = json.loads(response_path.read_text(encoding="utf-8"))
+            value = measured_seconds(payload.get("duration_ms"))
+            if value is not None:
+                duration_seconds += value
+                measured += 1
+        except (OSError, TypeError, ValueError):
             continue
     return measured, duration_seconds if measured else None
 
@@ -331,9 +350,7 @@ class BaselineProposalGenerator:
             request = build_proposal_request(config, prompt, example.input, task)
             request_payload = serialize_generation_request(request)
             request_diagnostics = _request_diagnostics(request_payload)
-            fresh_predictions = 0
-            cached_predictions = 0
-            fresh_inference_duration_seconds = 0.0
+            measured_gateway = MeasuredLlmGateway(self._gateway)
             _write_json(case_dir / "request.json", request_payload)
             if progress is not None:
                 progress(
@@ -369,7 +386,7 @@ class BaselineProposalGenerator:
                 )
                 if use_adaptive_interview:
                     result, normalized_value, interview_payload = _run_adaptive_interview(
-                        self._gateway,
+                        measured_gateway,
                         config=config,
                         prompt=prompt,
                         item_input=example.input,
@@ -380,15 +397,9 @@ class BaselineProposalGenerator:
                         on_retry=report_retry,
                     )
                     _write_json(case_dir / "interview.json", interview_payload)
-                    execution = interview_payload.get("execution", {})
-                    fresh_predictions = int(execution.get("fresh_predictions", 0))
-                    cached_predictions = int(execution.get("cached_predictions", 0))
-                    fresh_inference_duration_seconds = float(
-                        execution.get("fresh_inference_duration_seconds", 0.0)
-                    )
                 else:
                     result = generate_with_retry(
-                        self._gateway,
+                        measured_gateway,
                         request,
                         attempts=config.retry_attempts,
                         backoff_seconds=config.retry_backoff_seconds,
@@ -400,11 +411,6 @@ class BaselineProposalGenerator:
                     normalized_value = _normalize_selection_payload(
                         result.value, required_fields=canonical_schema.get("required", ())
                     )
-                    if result.cached:
-                        cached_predictions = 1
-                    else:
-                        fresh_predictions = 1
-                        fresh_inference_duration_seconds = result.duration_ms / 1000.0
                 response_payload = {
                     "value": dict(result.value),
                     "provider": result.provider,
@@ -500,6 +506,10 @@ class BaselineProposalGenerator:
             else:
                 detail = None
             finally:
+                _write_json(
+                    case_dir / "request-timing.json",
+                    measured_gateway.timing.model_dump(mode="json"),
+                )
                 if progress is not None:
                     progress(
                         ProposalProgress(
@@ -515,12 +525,16 @@ class BaselineProposalGenerator:
             return ProposalItemOutcome(
                 status == "generated",
                 error_message,
-                fresh_predictions=fresh_predictions,
-                cached_predictions=cached_predictions,
-                fresh_inference_duration_seconds=fresh_inference_duration_seconds,
+                fresh_predictions=measured_gateway.timing.fresh_response_count,
+                cached_predictions=measured_gateway.timing.cached_response_count,
+                fresh_inference_duration_seconds=(
+                    measured_gateway.timing.fresh_inference_duration_seconds or 0.0
+                ),
+                request_timing=measured_gateway.timing,
             )
 
         batch = ProposalBatchExecutor().execute(pending, process_example)
+        execution_timing = batch.request_timing or RequestTiming()
         generated = batch.generated
         failed = batch.failed
         errors = list(batch.errors)
@@ -538,8 +552,9 @@ class BaselineProposalGenerator:
                     "reused_predictions": reused_predictions,
                     "ineligible_predictions": ineligible_predictions,
                     "fresh_inference_duration_seconds": (
-                        batch.fresh_inference_duration_seconds if batch.fresh_predictions else None
+                        execution_timing.fresh_inference_duration_seconds
                     ),
+                    "request_timing": execution_timing.model_dump(mode="json"),
                 },
             },
         )
@@ -553,9 +568,8 @@ class BaselineProposalGenerator:
             cached_predictions=batch.cached_predictions,
             reused_predictions=reused_predictions,
             ineligible_predictions=ineligible_predictions,
-            fresh_inference_duration_seconds=(
-                batch.fresh_inference_duration_seconds if batch.fresh_predictions else None
-            ),
+            fresh_inference_duration_seconds=(execution_timing.fresh_inference_duration_seconds),
+            request_timing=execution_timing,
         )
 
 

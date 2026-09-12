@@ -2,6 +2,32 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Correct cascade baseline and offline replay (2026-09-12)
+
+- Keep missing initial, cumulative and stage-local consensus records unresolved; preserve the
+  complete selection denominator and distinguish missing evidence from successful early exits.
+- Recheck statement resolver escalation reasons across stages before accepting or freezing a
+  decision; use canonical `role_relation` resolution counters.
+- Record actual gateway attempts, retries and failures; separate measured fresh inference,
+  historical cache/reuse timing and gateway/observation/stage wall time. Compute latency from
+  measured request counts, not batch sums, and keep unmeasured historical costs unknown.
+- Add read-only `evaluation cascade-replay` for historical inspection, corrected routing and
+  verified local-proposal recomputation, with immutable input checks and `requires_inference`.
+- Version the affected reporting contracts without changing prompts, ontologies, acceptance
+  thresholds, Applicability policy or public enrichment schemas. Preserve presence-only export.
+
+## Unreleased — Presence-only public Applicability (2026-09-11)
+
+- Omit `enrichments.semantic.applicability_functions` and its fingerprints from public
+  companions. The current policy adopts presence only; derived empty dependents and
+  detail-stage proposals are not independently accepted function classifications.
+- Clean existing selected companions on re-export, including unselected fields/clauses
+  in partial exports, with explicit `omitted` preview/write diagnostics.
+- Preserve presence true/false/unknown, canonical values and authority, reviewed `AF`
+  tags, private evidence and legacy schema-1.2 reads without a schema change.
+- Cover fresh export, legacy import, protected local details, cleanup, direct serialization
+  and idempotent re-export after negative presence recreates canonical empty dependents.
+
 ## Unreleased — Bounded context-enrichment baseline fixes (2026-09-10)
 
 - Add source-bound, allowlisted external single-target ID completion to the existing

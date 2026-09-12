@@ -37,6 +37,7 @@ from standards_atlas.cli.commands.evaluation_commands.benchmark import (
     run_evaluation_matrix,
     run_semantic_evaluation,
 )
+from standards_atlas.cli.commands.evaluation_commands.cascade_replay import replay_cascade_command
 from standards_atlas.cli.commands.evaluation_commands.challenger import qualify_challengers
 from standards_atlas.cli.commands.evaluation_commands.complytime_feedback import (
     import_complytime_feedback,
@@ -82,6 +83,7 @@ __all__ = [
     "publish_annotation_reviews",
     "publish_applicability_detail_disagreement_hitl",
     "replay_applicability_policy_command",
+    "replay_cascade_command",
     "run_applicability_policy_command",
     "qualify_challengers",
     "qualify_golden_corpus",

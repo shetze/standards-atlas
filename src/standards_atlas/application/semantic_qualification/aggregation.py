@@ -5,6 +5,8 @@ from __future__ import annotations
 from statistics import fmean, pstdev
 from typing import TYPE_CHECKING
 
+from .performance import aggregate_performance
+
 if TYPE_CHECKING:
     from standards_atlas.application.semantic_qualification.qualification import (
         AnnotationQualificationReport,
@@ -52,14 +54,8 @@ def aggregate_candidate(
     success_values = [report.reliability.prediction_success_rate for _, report in entries]
     json_values = [report.reliability.json_validity_rate for _, report in entries]
     truncation_values = [report.reliability.truncation_rate for _, report in entries]
-    durations = [
-        item.mean_duration_seconds
-        for item, _ in entries
-        if item.mean_duration_seconds is not None
-        and item.performance_measurement_source != "not_measured"
-    ]
+    performance = aggregate_performance([item for item, _ in entries])
     memory = [item.peak_memory_gb for item, _ in entries if item.peak_memory_gb is not None]
-    measurement_sources = {item.performance_measurement_source for item, _ in entries}
     fresh_prediction_counts = [item.fresh_prediction_count for item, _ in entries]
     fresh_prediction_count = (
         None
@@ -73,12 +69,8 @@ def aggregate_candidate(
     minimum_f1 = min(f1_values) if f1_values else None
     stddev = pstdev(f1_values) if len(f1_values) > 1 else (0.0 if f1_values else None)
     mean_coverage = fmean(coverage_values) if coverage_values else None
-    mean_duration = fmean(durations) if durations else None
+    mean_duration = performance["mean_duration_seconds"]
     peak_memory = max(memory) if memory else model.declared_memory_gb
-    if len(measurement_sources) == 1:
-        performance_measurement_source = next(iter(measurement_sources))
-    else:
-        performance_measurement_source = "mixed"
 
     if gold_available:
         assert mean_f1 is not None
@@ -162,8 +154,7 @@ def aggregate_candidate(
         mean_prediction_success_rate=mean_success,
         mean_json_validity_rate=mean_json,
         mean_truncation_rate=mean_truncation,
-        mean_duration_seconds=mean_duration,
-        performance_measurement_source=performance_measurement_source,
+        **performance,
         fresh_prediction_count=fresh_prediction_count,
         cached_prediction_count=cached_prediction_count,
         reused_prediction_count=reused_prediction_count,

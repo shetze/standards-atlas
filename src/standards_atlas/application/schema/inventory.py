@@ -49,6 +49,38 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "cascade-provenance",
+        "**/cascade-provenance.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "cascade-provenance",
+        "Explicit missing consensus outcomes and canonical role_relation counters.",
+    ),
+    VersionedInterface(
+        "cascade-replay",
+        "**/cascade-replay.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "cascade-replay",
+        "Offline historical, routing and verified-proposal audit; no model calls.",
+    ),
+    VersionedInterface(
+        "qualification-request-timing",
+        "**/request-timing.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "qualification-request-timing",
+        "Measured call wall times; fresh and cached provider durations remain separate.",
+    ),
+    VersionedInterface(
+        "qualification-matrix-report",
+        "**/qualification-matrix.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "qualification-matrix-report",
+        "Per-request performance denominator, totals and timing coverage.",
+    ),
+    VersionedInterface(
         "qualification-consensus",
         "**/consensus-report.json",
         LifecycleBoundary.PERSISTENCE,

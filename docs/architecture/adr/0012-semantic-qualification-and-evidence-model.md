@@ -29,5 +29,20 @@ Semantic evaluation is an evidence-producing subsystem with explicit corpora, pr
 - Completed run/suite artifacts are archived immutably with sequential identity, configuration/manifests, hashes, routing/context artifacts, and relevant metrics. Before archival, enabled sparse stages must be complete and still match the current source Selection, coverage, consensus, task, prompt, model, and configuration. Their exact resources and clause-level evidence are archived with the validated summary.
 - Human-facing review material belongs in local review/report locations; machine evidence belongs in workspace/evaluation storage.
 
+### Baseline accounting and offline replay
+
+Every selected clause remains in the cascade accounting, including missing initial or later
+stage observations. A missing record cannot certify a dimension or an early exit. Unresolved
+resolver reasons survive stage transitions until the existing acceptance rule is met.
+
+Offline replay is an audit operation over immutable inputs: historical inspection, routing
+against archived consensus, or consensus recomputation from verified local proposals. Missing
+observations are explicit inference requirements, not fabricated negative votes. A replay is
+not a fresh qualification and does not publish canonical or public enrichment changes.
+
+Performance evidence distinguishes actual gateway calls, measured provider durations, cached
+historical measurements and wall time. Per-request latency uses a measured-request denominator;
+unknown retry/failure provider time remains unknown even when its wall time is measured.
+
 ## Consequences
 Model changes can be compared without modifying canonical documents. Qualification results are reproducible and auditable, and accepted semantic evidence can be promoted deliberately into document context and formal knowledge projections without treating raw model output as truth.

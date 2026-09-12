@@ -49,3 +49,12 @@ The central schema registry owns lifecycle-crossing serialization contracts. Emb
 
 ## Consequences
 The refactoring can remove obsolete intermediate structures aggressively without discarding the mechanism required for bounded post-refactoring compatibility. New lifecycle-crossing interfaces must be added to the executable inventory and, when schema-versioned, to `SCHEMA_POLICIES`. Schema and resource versions can evolve independently. Runtime-only projections do not create unnecessary compatibility obligations.
+
+### Qualification baseline reporting contracts (2026-09-12)
+
+The executable inventory includes cascade provenance (writer `1.6`, readers `1.5`/`1.6`),
+qualification matrix reports (writer `1.1`, readers `1.0`/`1.1`), offline cascade replay
+(`1.0`) and persisted per-case request timing (`1.0`). New reporting fields do not change
+archive metadata, task, prompt, ontology, applicability policy or public enrichment schemas.
+Historical reporting formats remain historical evidence; accepting their schema is not a
+claim that an old ambiguous batch-time field is a measured per-request latency.

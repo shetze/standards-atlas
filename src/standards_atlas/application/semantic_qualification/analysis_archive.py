@@ -29,6 +29,7 @@ from standards_atlas.application.semantic_qualification.qualification_coverage i
 from standards_atlas.shared.hashing import sha256_file
 
 ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.5"
+CASCADE_PROVENANCE_SCHEMA_VERSION = "1.6"
 QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.5"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
@@ -47,7 +48,7 @@ def write_cascade_provenance(
     path = output_directory / matrix_id / "cascade-provenance.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "schema_version": ANALYSIS_ARCHIVE_SCHEMA_VERSION,
+        "schema_version": CASCADE_PROVENANCE_SCHEMA_VERSION,
         "matrix_id": matrix_id,
         "standards_atlas_version": __version__,
         "generated_at": datetime.now(UTC).isoformat(),
@@ -105,6 +106,12 @@ def build_analysis_metrics(
             "stages": [
                 {
                     "stage_id": stage["stage_id"],
+                    "selected_clause_count": stage.get("selected_clause_count"),
+                    "accounted_clause_count": stage.get("accounted_clause_count"),
+                    "completed_clause_count": stage.get("completed_clause_count"),
+                    "completed_fraction_of_selection": stage.get("completed_fraction_of_selection"),
+                    "missing_consensus_clause_count": stage.get("missing_consensus_clause_count"),
+                    "wall_duration_seconds": stage.get("wall_duration_seconds"),
                     "entered_clause_count": stage["entered_clause_count"],
                     "unresolved_clause_count": stage["unresolved_clause_count"],
                     "entry_reason_counts": stage["entry_reason_counts"],

@@ -128,6 +128,9 @@ def test_proposal_generation_persists_request_response_and_resumes(tmp_path: Pat
     assert resumed.generated == 0
     assert resumed.fresh_predictions == 0
     assert resumed.reused_predictions == 1
+    assert resumed.request_timing is not None
+    assert resumed.request_timing.request_count == 0
+    assert resumed.request_timing.fresh_inference_duration_seconds is None
     assert resumed.fresh_inference_duration_seconds is None
     measured, duration = historical_inference_duration(resumed.run_directory, ["clause-1"])
     assert measured == 1

@@ -38,7 +38,8 @@ def render_qualification_matrix_markdown(
         "",
         (
             "| Rank | Prompt | Model | Reasoning | Gold F1 | Stddev | "
-            "Coverage | Inference time | Perf source | Fresh/Cache/Reuse | Memory | Result |"
+            "Coverage | Mean / measured request | Perf source | Fresh/Cache/Reuse | Memory "
+            "| Result |"
         ),
         ("| ---: | --- | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | --- |"),
     ]
@@ -79,6 +80,34 @@ def render_qualification_matrix_markdown(
                 f"{item.completed_repetitions}/{item.expected_repetitions} |"
             )
 
+    lines.extend(
+        [
+            "",
+            "## Measured request costs",
+            "",
+            "Means use measured-request denominators, not batch counts. Historical/cache durations "
+            "are reference measurements, not fresh work. Gateway wall time includes failed attempts; "
+            "unknown provider time for those failures is not estimated. Observation wall time excludes "
+            "model startup; stage wall time is reported in cascade provenance.",
+            "",
+            "| Model | Prompt | Reasoning | Timed requests | Inference sum | Fresh inference | "
+            "Gateway calls / failed | Gateway wall | Observation wall |",
+            "| --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: |",
+        ]
+    )
+    for item in report.candidates:
+        timing = item.request_timing
+        measured = (
+            "n/a" if item.measured_request_count is None else str(item.measured_request_count)
+        )
+        calls = "n/a" if timing is None else f"{timing.request_count}/{timing.failed_request_count}"
+        lines.append(
+            f"| `{item.model_id}` | `{item.prompt_id}` | `{item.reasoning_mode_id}` | {measured} | "
+            f"{format_seconds(item.inference_duration_seconds)} | "
+            f"{format_seconds(timing.fresh_inference_duration_seconds if timing else None)} | "
+            f"{calls} | {format_seconds(timing.request_wall_seconds if timing else None)} | "
+            f"{format_seconds(item.elapsed_duration_seconds)} |"
+        )
     lines.extend(["", "## Regression diagnostics", ""])
     failures = [item for item in report.candidates if item.regressions]
     if not failures:

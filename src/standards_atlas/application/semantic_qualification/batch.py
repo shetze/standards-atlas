@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
+from .performance import RequestTiming
+
 
 @dataclass(frozen=True)
 class ProposalItemOutcome:
@@ -15,6 +17,7 @@ class ProposalItemOutcome:
     fresh_predictions: int = 0
     cached_predictions: int = 0
     fresh_inference_duration_seconds: float = 0.0
+    request_timing: RequestTiming | None = None
 
 
 @dataclass(frozen=True)
@@ -27,6 +30,7 @@ class ProposalBatchOutcome:
     fresh_predictions: int
     cached_predictions: int
     fresh_inference_duration_seconds: float
+    request_timing: RequestTiming | None = None
 
 
 class ProposalBatchExecutor[T]:
@@ -43,14 +47,19 @@ class ProposalBatchExecutor[T]:
         fresh_predictions = 0
         cached_predictions = 0
         fresh_inference_duration_seconds = 0.0
+        request_timing: RequestTiming | None = None
         total = len(items)
         for current, item in enumerate(items, start=1):
             outcome = handler(current, total, item)
+            # A returned response still cost inference if downstream schema
+            # validation failed. Do not discard those measured costs.
+            fresh_predictions += outcome.fresh_predictions
+            cached_predictions += outcome.cached_predictions
+            fresh_inference_duration_seconds += outcome.fresh_inference_duration_seconds
+            if outcome.request_timing is not None:
+                request_timing = (request_timing or RequestTiming()).plus(outcome.request_timing)
             if outcome.generated:
                 generated += 1
-                fresh_predictions += outcome.fresh_predictions
-                cached_predictions += outcome.cached_predictions
-                fresh_inference_duration_seconds += outcome.fresh_inference_duration_seconds
             else:
                 failed += 1
                 if outcome.error is not None:
@@ -62,4 +71,5 @@ class ProposalBatchExecutor[T]:
             fresh_predictions,
             cached_predictions,
             fresh_inference_duration_seconds,
+            request_timing,
         )

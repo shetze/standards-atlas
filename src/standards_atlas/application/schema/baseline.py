@@ -7,6 +7,16 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "cascade-provenance": SchemaPolicy(
+        "cascade-provenance", "1.6", ("1.5", "1.6"), "**/cascade-provenance.json"
+    ),
+    "cascade-replay": SchemaPolicy("cascade-replay", "1.0", ("1.0",), "**/cascade-replay.json"),
+    "qualification-request-timing": SchemaPolicy(
+        "qualification-request-timing", "1.0", ("1.0",), "**/request-timing.json"
+    ),
+    "qualification-matrix-report": SchemaPolicy(
+        "qualification-matrix-report", "1.1", ("1.0", "1.1"), "**/qualification-matrix.json"
+    ),
     "qualification-consensus": SchemaPolicy(
         "qualification-consensus", "5.0", ("4.0", "5.0"), "**/consensus-report.json"
     ),

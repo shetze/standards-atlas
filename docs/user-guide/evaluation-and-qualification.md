@@ -226,6 +226,14 @@ execution behavior itself. `--recompute` can rebuild derived metrics from persis
 observations, but it cannot retroactively change which clauses earlier runs sent to later
 model stages.
 
+## Model-free cascade diagnostics
+
+Use `evaluation cascade-replay` to inspect original decisions, recalculate routing against
+archived stage consensus, or recompute from verified local proposals. Outputs are separate
+from the original run; missing evidence remains `requires_inference`. The command never
+starts a model server or republishes enrichment data. See [Cascade replay](cascade-replay.md)
+for the three modes, input checks, schema boundaries and measured-request cost reporting.
+
 ## Plan or run the complete qualification workflow
 
 The workflow CLI has two operations, `plan` and `run`. Select the actual workflow with
