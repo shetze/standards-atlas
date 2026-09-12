@@ -203,25 +203,6 @@ clauses:
     clause: '3'
   heading: Terms and definitions
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -423,8 +404,6 @@ clauses:
     atlasdata_heading: sha256:db6dd52a102a86f396e37a60eb0f233e1451b3415afbb44f4a5faba4cea466d9
     content: sha256:44aa3632bb9c6aaaa93cef9a4a1cfcfa3abbf5fc47443d56f7e4e4d11281e6d7
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -525,25 +504,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -791,8 +751,6 @@ clauses:
         - sha256:720f29c31ca2031cbbb8d1fa3e7fd762e3777ec9a66ab16d097dc73194d716a1
         - sha256:56b9d3d7484e638437404acf398977975923fa2d6cc7d327a4834a80d2caf656
         decision_source: sha256:15627bd90a2fca3fc1db58b75c5d0be261e55a1919d39b4fb9b389876b2e2fe4
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -863,25 +821,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -1119,8 +1058,6 @@ clauses:
         - sha256:0fb418bc6b224cad46820d15c23eadb4ce2fc19a718992213ef4bc57591ed9cf
         - sha256:fbe419216d631bd118d23929771b03485c0b5e3d17b8b9c2185ff619f71f77c3
         decision_source: sha256:a68968e8b52f0f74690532f011aa80ebc479c97b9bca30163df435bdc888d408
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -1215,25 +1152,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -1501,8 +1419,6 @@ clauses:
         - sha256:030ed3568a18c5fcab4804cce7824bf30f5cb0cbe10dcd0d362ff9e7249e8489
         - sha256:7e31e7a6d009daaa129d4295cd5030a9b3645639bd8a8a9e6f2aaa36accde2af
         decision_source: sha256:0cd410026fe63fb2b044056a4c6a15ea2c72334adf63ce01d056df9e68aa900b
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -1609,25 +1525,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -1885,8 +1782,6 @@ clauses:
         - sha256:fdc9831dec5ce53a7998f33d188780808f0758de4b72c596ea344cc634095a81
         - sha256:da5d4d0fb433603c3f0fd3b113ada2a8aa6c5e9dcfee1eec2eb0ff1f3f8b1d19
         decision_source: sha256:6b2269cbe1e728e55a831b543361dffea6edd7e4c02b8bbcec1990740e632302
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -1943,25 +1838,6 @@ clauses:
     clause: 4.4.2.1
   heading: Control system description
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -2200,8 +2076,6 @@ clauses:
     atlasdata_heading: sha256:3b01a7e94741972874b24852b997c824bad5941f306bfc4fefa7d1bc96612741
     content: sha256:d0c51beed2e6d0c469756c614af86326a63f181a0768d9182cc87da1613734b0
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -2272,25 +2146,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -2540,8 +2395,6 @@ clauses:
         - sha256:da5d4d0fb433603c3f0fd3b113ada2a8aa6c5e9dcfee1eec2eb0ff1f3f8b1d19
         - sha256:bd3ddd51cdd93f299e1b63ec2e038820d13d09e9a4d3c4d906b04e4ef0288c44
         decision_source: sha256:62dae691f8f8e57dae4a9ae11faef4d9492e9219b4498a440d3ab6edcc588d9c
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -2602,25 +2455,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -2875,8 +2709,6 @@ clauses:
         evidence:
         - sha256:f5cad8a908aa757f2043449d15eca7f401541068b76a18c0f97546ac61b9e0bd
         decision_source: sha256:c4fc88dbb0c2fc464054f07791289da6ed753f6f26bab13c4502343c7d14304a
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -2973,25 +2805,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -3245,8 +3058,6 @@ clauses:
         - sha256:b0a40479fe62464caca0c368dd9ccf1330ccb9c3c7cf4eebef431d46d14f4552
         - sha256:968583cbf76dee61c759d1d0ad5f28049e0bf4fe45ba5e002c9b00e931c0f933
         decision_source: sha256:e16b704533055c9c22486b422cb88162111dbb65c0c6be68c9a2cc0a343cff68
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -3373,25 +3184,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -3630,8 +3422,6 @@ clauses:
         - sha256:f12f0e909843b2cd84b385a349a180481c37583e46b8204c96e9844f20a254ab
         - sha256:3aa4bd5f0b9c160946d0d4264c8da59e6e1aa86d7710963ac0f98d96d30fce9b
         decision_source: sha256:94170baee17e02d12b9860ae5ac7fab54d645f6648cbb0ea844f03f72f23f905
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -4065,25 +3855,6 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -4334,8 +4105,6 @@ clauses:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
         - sha256:ef000543bc3239e1ea4d155d9f7b14dd6fea42d41a0fa6a23032d99bc28ab6db
         decision_source: sha256:0c6a9360e675e2f5e1890cce3bf31cc4b385f2189164c912ee863227614ff155
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -4396,25 +4165,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -4663,8 +4413,6 @@ clauses:
         evidence:
         - sha256:c8b3288ce495d70cd27bc994babcdde87b3cc5642774e871bd8098d9b94702e0
         decision_source: sha256:19f8c3472acc759c4ff45e28aabcd17b96d7cdd23260a3bb68af5c46ff0172e4
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -4742,25 +4490,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -5010,8 +4739,6 @@ clauses:
         evidence:
         - sha256:918c2fb454386292d99af6c0cdbb0085fc0aca30135850542bc5ac7443d65ea3
         decision_source: sha256:104ae5f8301886fe099840c6fa709f2ba0bb9ad7234cb8d87fb0a76b71d22013
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -5074,25 +4801,6 @@ clauses:
     clause: 6.2.1
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -5348,8 +5056,6 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:640c983128858068cbf9191f46955b1ce1bb234e9811991f3f7f7c706b2caf4d
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -5410,25 +5116,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -5688,8 +5375,6 @@ clauses:
         evidence:
         - sha256:e9198c84081ecd6d4fb5d79ffdcffe5fc59c49b2278742fb7a3789465c8aa6ed
         decision_source: sha256:5d862fe1d65d535e6aa22986db6fc7f4819a636f01780e69633b6a32302c89a8
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -5760,25 +5445,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -6038,8 +5704,6 @@ clauses:
         evidence:
         - sha256:918c2fb454386292d99af6c0cdbb0085fc0aca30135850542bc5ac7443d65ea3
         decision_source: sha256:c084552dca3343c7c81d2502d8b4ff42894a9006501370baa3665c0ab87a9bec
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -6105,25 +5769,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -6374,8 +6019,6 @@ clauses:
         evidence:
         - sha256:38179a1d6aa04501ee32a19d34ff7efc58857e5ec549a842f57247ce12f37511
         decision_source: sha256:60cee839aad57bae2c3ba73c0ca853de0e7271076058417f092a4eb2e2915151
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -6463,25 +6106,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -6731,8 +6355,6 @@ clauses:
         evidence:
         - sha256:e9966115183cfdf7df45cca00b0a93da4808ed69515ff21c6cfdbabd4ebf9d7f
         decision_source: sha256:2b2eb8e524b8ec1f97311714304360d4194edb14a445861866339e9258ca6dee
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -6763,25 +6385,6 @@ clauses:
     clause: 6.4.2
   heading: Example of vehicle dependent external measures 1
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -7022,8 +6625,6 @@ clauses:
     atlasdata_heading: sha256:7841eca38076241c312a6eab84fb19194b989faffc5d99cc4d5fb1ce1a5df1ac
     content: sha256:8f9482f54f097cb388424e114ff11138b8f16d716e2b2c2c00e1cfe2ee4ecc41
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -7063,25 +6664,6 @@ clauses:
     clause: 6.4.3
   heading: Example of vehicle dependent external measures 2
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -7338,8 +6920,6 @@ clauses:
     atlasdata_heading: sha256:71e7ede17a9ba45d46b9f38e76da3f16d912db6d7819f69d4b20839185c9e7f0
     content: sha256:a9117ffec4c42d049e6d93d0d053836a458c196007ebd0670343ca1b3d20f95a
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -7432,25 +7012,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -7694,8 +7255,6 @@ clauses:
         evidence:
         - sha256:b91435268c5d89bacff454e44201dd0c9830a2af739a915e51e1af78548ec980
         decision_source: sha256:7651a8d77f91be90a5e27d5f24d2ceee1892720604c9e641880e2688518d3a08
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -7726,25 +7285,6 @@ clauses:
     clause: 6.5.2
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -7990,8 +7530,6 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:ea41e811d8d05797b632482bf587394265a270d455811c131700df6b4a7b31aa
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -8022,25 +7560,6 @@ clauses:
     clause: 6.5.3
   heading: Function definition
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -8282,8 +7801,6 @@ clauses:
     atlasdata_heading: sha256:359f669b1b1fcdfbf5854afa69c7d804891e27a7c26e22292de596c0f1a25800
     content: sha256:9cd66717c478ad4d7931da89913e4925d1a836ba128f215596b83bbdcc642ea0
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -8448,25 +7965,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -8712,8 +8210,6 @@ clauses:
         evidence:
         - sha256:ec9ba494b1c224c79726a1001cfd35d0e06041db4cff5061dd59f91a8dbc7522
         decision_source: sha256:f64d89a53600953276c48a61233c61077eac2cdae47cdea7f5dc62ed2dc7b048
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -8809,25 +8305,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -9078,8 +8555,6 @@ clauses:
         - sha256:32df29f9a28cf0a0927771672b2470447f5aaeb7caa2dde9a393c5d1765f6bbb
         - sha256:b725d483349cfa0e4c910513b67870b6939c251fbab3e7628f808a8cfe0b7109
         decision_source: sha256:fcf133ad29d68f6712b4c6c18ba6dea6423f280e9ff2c944a182153804f41e5d
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -9156,25 +8631,6 @@ clauses:
     clause: 8.1.1
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -9423,8 +8879,6 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:600cc8e160d6c6f6bdd7befb93a14dc18507b253f394fdafeca7c7cd09ceb6e9
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -9455,25 +8909,6 @@ clauses:
     clause: 8.1.2
   heading: Single-point fault
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -9731,8 +9166,6 @@ clauses:
     atlasdata_heading: sha256:710582a16988bd7ebb74f821d82917981fd5321cfa39c6efe5e878a4e96a239f
     content: sha256:5700bc17b772c5ea02c4bb3644b74278095395ed84fbffeb144d3820046eadb9
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -9763,25 +9196,6 @@ clauses:
     clause: 8.1.3
   heading: Residual fault
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -10026,8 +9440,6 @@ clauses:
     atlasdata_heading: sha256:49d783a214865e1e555f9f068d76c7b1da8240c5e087d17a22cf11ac52600c13
     content: sha256:9f1818663b176a770259d3f4ed63bea4e0fd735c8710525949c70fd668823ebc
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -10058,25 +9470,6 @@ clauses:
     clause: 8.1.4
   heading: Detected dual-point fault
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -10334,8 +9727,6 @@ clauses:
     atlasdata_heading: sha256:0581eb5635f65ac2fe3000af5e51fbfba63acce129e69ebc1e0cc53682be9d0b
     content: sha256:90e1e1635b103afded2c9d1f56d27687c859845db02bc0ac1db873bf7cd1c289
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -10366,25 +9757,6 @@ clauses:
     clause: 8.1.5
   heading: Perceived dual-point fault
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -10644,8 +10016,6 @@ clauses:
     atlasdata_heading: sha256:88656ab3a2c156701ebf35cd5b7f290e290c97e74e1d120ed1395f14ffad7acc
     content: sha256:de1360bb8f9298b64221c9b54a454a5b951962c1f329bc644659e835c0e4bbdb
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -10676,25 +10046,6 @@ clauses:
     clause: 8.1.6
   heading: Latent dual-point fault
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -10954,8 +10305,6 @@ clauses:
     atlasdata_heading: sha256:ff53d95e2c01e943672703284afa44e2b8dc561cb4da412d6840a421a2cb06f3
     content: sha256:1455d24d209eba12d1f6369d30489fb3c86d843119f20bea5a4fe5f0f109a2f3
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -10986,25 +10335,6 @@ clauses:
     clause: 8.1.7
   heading: Safe fault
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -11246,8 +10576,6 @@ clauses:
     atlasdata_heading: sha256:98237a1ddcf37d9ae8eba72700347a6136d504ebe06524e814afed65b165d90d
     content: sha256:9cad24517144828c959f09cabbd27acb100554b67a0fe24a2e6b2f9780a0682c
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -11333,25 +10661,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -11606,8 +10915,6 @@ clauses:
         - sha256:7b97e9ec34fc0960546c0834e6d0a9b5d4d4fe85689a73cece3183285978ac26
         - sha256:718c4df4ed5ae7621fd31774994abbb04b1082da20ee28dca788b67e55fb614b
         decision_source: sha256:a82b1248957a42803d39c5daa7cda981e4bb837fb6c27f5c616795530a291794
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -11639,25 +10946,6 @@ clauses:
   heading: How to consider the failure rate of multiple-point faults related to software-based safety
     mechanisms addressing random hardware failures
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -11892,8 +11180,6 @@ clauses:
     atlasdata_heading: sha256:048f639889be1523c0c185e7db9f40eba080537727dba8be8bb4ce580accdabe
     content: sha256:1e4cb46e428b69e4ed19c82c4683afe558dc6cc331ea10e542a587bb1500ffe2
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -11981,25 +11267,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -12249,8 +11516,6 @@ clauses:
         evidence:
         - sha256:a69345b43463b65e3f95032f3aa3205a639eb1da0824005f1a72e95cd5ecd7db
         decision_source: sha256:916404bc3531c842005593a07f71197a6e2eebdb2870b18cfb759c1e7727ec38
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -12315,25 +11580,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -12592,8 +11838,6 @@ clauses:
         evidence:
         - sha256:d4d2b54478acf57c987403471acb031113097a3169ad33d1c5776f72ab0647cf
         decision_source: sha256:f3429079df1e1ee86955c8477c26a89e4774536702f88eddde7e3f79b62d471e
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -12684,25 +11928,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -12931,8 +12156,6 @@ clauses:
         - sha256:130179b3c3c3ecad38754a9a3dc2e09fc84123f3375c23d32b617a0cff40e7b4
         - sha256:edf6c0987f3f6fcc7bfa996f0a55b93fb3fe61681fe0d884ab2c4e21b02d6f61
         decision_source: sha256:b526dd1fac85f44e9ba00882ede6860f437e6826189cfd5f494f4f137677487b
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -13030,25 +12253,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -13298,8 +12502,6 @@ clauses:
         - sha256:e24a9302a43f89bc89c08b43cbfb84949b9f9fff784dcb4fd9a21a6118885606
         - sha256:7e2c9d32a6fa07cd46332b5d739a3abf42364bc01d5003f6530c908ef3b61334
         decision_source: sha256:b7ea5f7939c011e25b215c2d5fcc1a3d064020a1be76ab3b999ebc7eee19ce3c
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -13368,25 +12570,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -13642,8 +12825,6 @@ clauses:
         - sha256:7e2c9d32a6fa07cd46332b5d739a3abf42364bc01d5003f6530c908ef3b61334
         - sha256:c2391ed4c1763a260e9518231f373566cbd0e617902282151aac89f8b30e878d
         decision_source: sha256:cbefd5eef4eedad446f044ac87397893074886e52ac7e74d82b30a84fb21b370
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -13719,25 +12900,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -13968,8 +13130,6 @@ clauses:
         evidence:
         - sha256:269180b7cf10d1a052683aa39bae7053d8482bc9b97958794ec6f5a1b57f2d1e
         decision_source: sha256:063f8e40228f44bb3947a5389e71c658718f842076565397c5a32282fc89cf20
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -14030,25 +13190,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -14297,8 +13438,6 @@ clauses:
         evidence:
         - sha256:be632ac93c2e6003e3413f3249111897821944ce5f684c364d0663b723a32b50
         decision_source: sha256:ede76e1d56ed42ebf8ec5cd9ff55e74723a6d692baebbcbac15e7d22d54451be
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -14329,25 +13468,6 @@ clauses:
     clause: 8.2.4.5
   heading: Final residual failure rate assessment
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -14603,8 +13723,6 @@ clauses:
     atlasdata_heading: sha256:8736aabb223e20f9d100f1285e037913a4bb4bd6cd01c1def78d59ff1a3c0862
     content: sha256:8d6db516c09c0831b4b36bed78b506de4c7a9963cd01636a8904797b24cdaddd
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -14665,25 +13783,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -14937,8 +14036,6 @@ clauses:
         evidence:
         - sha256:05b38a5c82d71910c24866a8f53e32100a73db5d700bab2e688f9dec0143445c
         decision_source: sha256:1f7af4a08fbd4878d5901ffbd42cb8cd43724ed9d6d2590e2cfffc5f92453b98
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -15024,25 +14121,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -15297,8 +14375,6 @@ clauses:
         evidence:
         - sha256:1dede2c0d6fb45103960f1dd04b69391ac98851ee2fa04ba98f4726f32ce9205
         decision_source: sha256:07602e203b65a03f3be9d48d2adadb24b689bdc84db3608dcef9f88fafc7645c
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -15385,25 +14461,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -15622,8 +14679,6 @@ clauses:
         evidence:
         - sha256:236f99243bb904f30805afa046b18f3ee84babeb7634613fb330a6b286e72992
         decision_source: sha256:8d5aef76b896a3dad3bd4b21cacf59f20eb3f4168a41a8acb429f79a609c3b32
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -15690,25 +14745,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -15960,8 +14996,6 @@ clauses:
         - sha256:a3d6b4f0d80f8fbe1b6c053e705f388621176a1653dc591d53705caa816ccd52
         - sha256:faf042f8c3133c6371b53f0609a38f0fc9b2876c3f56c2c80766c8701aa15853
         decision_source: sha256:5b015d2cc0e60b906ad5ca129e29cc72f494ac358193987baf00e8631d3e9401
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -16032,25 +15066,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -16303,8 +15318,6 @@ clauses:
         - sha256:3fd511ab2cfd1a18c0dc2b67b588c5c13922440a14c51f2622940bec324f99f6
         - sha256:f7b6a62f57f51061c861c894d0f14ec5e1c02085a187b0851a15cf092540e7af
         decision_source: sha256:7e0fbb8fd0d9368a8d995b89c76c3c3347f64c644d3a94cf7dbf87ca03e7c6b6
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -16405,25 +15418,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -16697,8 +15691,6 @@ clauses:
         - sha256:a46b30b02c870a62b5977ae2ef730145b1c60655274aa084372ecd5a879c4e67
         - sha256:c9c5c0634d192dd08620c6615ab3492038a781489f1bba1dd9cf57e83d9d34d2
         decision_source: sha256:0852d1f1c03d81718b4de9f5b771567856fc427aac4eee1ca73ce1ee30d53db2
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -16849,25 +15841,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -17129,8 +16102,6 @@ clauses:
         - sha256:a46b30b02c870a62b5977ae2ef730145b1c60655274aa084372ecd5a879c4e67
         - sha256:6799563954821b4bc1360e90603ea17907c8263552e44a273a489ac2d1cff1c3
         decision_source: sha256:3f9cf57ef046c2b93a7b06484d952b12bac2763af919b7a877c4e88f8ee90fa5
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -17381,25 +16352,6 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -17643,8 +16595,6 @@ clauses:
         - sha256:f54a1114225a442baedbe3d0a75ab932c9b33a5342580c5ca25a6f4d40b967b2
         - sha256:ef2d81387581f6b91cc3202005ccddae4a031c032e1a29f6dad4667807ba4ae6
         decision_source: sha256:de2c138dbd3982a375a3009c7410f97cbe9dd5835bad930538aae0f45236aca9
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -18369,25 +17319,6 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -18651,8 +17582,6 @@ clauses:
         - sha256:d3b35b1f83833a73de34a603849107cb4a9a0f1e13ec7b04d760c8c16a0e9ad6
         - sha256:05d7e2d87e2e3d32959c5b90a547600532e4e54f01dd855ef62c4f3768afa87a
         decision_source: sha256:5f242b49de1895e226102bafc7751849ed5a2ca22471f6998758cbf3fd92c6d5
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -18683,25 +17612,6 @@ clauses:
     clause: 9.2.3.3
   heading: Step 1a - Assumptions on technical safety requirements
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -18942,8 +17852,6 @@ clauses:
     atlasdata_heading: sha256:d122e25d56e07693f7a5012c98d0bdee6001e0a6f0851b0dedf9b6816436ef4c
     content: sha256:1334b2b72658c3301f9536edd21c0c02a8bc779500982981f35e8dd8bcec89b8
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -18974,25 +17882,6 @@ clauses:
     clause: 9.2.3.4
   heading: Step 1b - Assumptions on system level design
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -19247,8 +18136,6 @@ clauses:
     atlasdata_heading: sha256:1104a7530c12fc5daf5b3436f8f5af0b4b84d4d0aed9ff2d6f01d931977a2923
     content: sha256:e4a17b7669c0e8112b5f45ef204002eda3b8fb19859676d57c796cab53fcb850
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -19314,25 +18201,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -19590,8 +18458,6 @@ clauses:
         evidence:
         - sha256:d1fe4811c8fddeca6d81f9f781ba502ddd11c3966600623b4533b529959bd9a7
         decision_source: sha256:047ac5d9e8159b14a53b43b45a6f1f9b24ea5e1a32f04de0cfeb37dfabad616b
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -19622,25 +18488,6 @@ clauses:
     clause: 9.2.3.6
   heading: Step 3 - Work products
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -19892,8 +18739,6 @@ clauses:
     atlasdata_heading: sha256:65b1ff8a2225d65708df1c9645321dce20f948e7cd8fd70104756b8c82c61bd9
     content: sha256:f3eef5c047a797f369f2fa29b4e442059c82e38f93f37f3977f6d88c7836e3d8
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -19954,25 +18799,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -20228,8 +19054,6 @@ clauses:
         evidence:
         - sha256:499f89a41bfcebcda4331908f6e7a6b9383195a749b58062e85d402dcc19b9b8
         decision_source: sha256:101ddddafb3fba61db4c83c4a765499abfd4021ca202f7fc991127ca619c4743
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -20636,25 +19460,6 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -20916,8 +19721,6 @@ clauses:
         evidence:
         - sha256:382e3a657a6265aed5f0a4400b143559f2aec2c1ed5b5d2d417b1077799417cf
         decision_source: sha256:22c7bd397c99e1a773adcbab106f15d041b6bdb765a803e65e086e19cc8405f9
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -20948,25 +19751,6 @@ clauses:
     clause: 9.2.4.3
   heading: Step 1b - Assumptions on the safety requirements of the software component
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -21205,8 +19989,6 @@ clauses:
     atlasdata_heading: sha256:8bb317936461d435a94fc0818e108b8eaee5b958da7ecde38f547b809bc82b4d
     content: sha256:1e5f7e12499afc37fa59c973ddd40a71bdaeaabafd9fcc920d376a50632e6072
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -21237,25 +20019,6 @@ clauses:
     clause: 9.2.4.4
   heading: Step 2 - Development of the software component
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -21480,8 +20243,6 @@ clauses:
     atlasdata_heading: sha256:2b47b107b8bd70ed40611e4d06b0cb3f12c0974edf9591845f160f9ab216e4ad
     content: sha256:07b9bcd7e58f8297007c24952a3466ad4e82cd9f1b1e09ce1ac42da4f8bc8c58
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -21582,25 +20343,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -21848,8 +20590,6 @@ clauses:
         - sha256:499f89a41bfcebcda4331908f6e7a6b9383195a749b58062e85d402dcc19b9b8
         - sha256:e33594f62dd646daef91d75440dcb91e44696eb2d49ba681d596dde3d4df7fcc
         decision_source: sha256:811d6670f509b6e6ad7df92255b522fd5878d8309bdf6e7daecb02999106663b
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -21936,25 +20676,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -22214,8 +20935,6 @@ clauses:
         - sha256:6602bf4ecf7ce00fa8123a4ff6baf2552e0266e16eeddafb2591af33f1f7da92
         - sha256:a2494e3f1a22f7e5e10b598c21273f83a27eff44e5a926a770ca5d6fe1239fb8
         decision_source: sha256:424861ea7e073883e48bf8d5fb66f6baf6bb7bcf29381ed2d2cf32d27199e463
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -22246,25 +20965,6 @@ clauses:
     clause: '10.2'
   heading: Item definition and definition of the proven in use candidate
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -22514,8 +21214,6 @@ clauses:
     atlasdata_heading: sha256:98b51f677ad12f41c8cf0eb7af0796eb8395f91f6fa5f08377f75734c97eeb0e
     content: sha256:2e666e34e45d0f4790ef5a82642fa9210332caa08097cb1618dac68e80420134
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -22546,25 +21244,6 @@ clauses:
     clause: '10.3'
   heading: Change analysis
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -22807,8 +21486,6 @@ clauses:
     atlasdata_heading: sha256:79fac222bed672c094becd3dc8deb86f03e5878f23c909190fa7b351aac96a0c
     content: sha256:60c727e0ca932d30708dcc2b9099b98d24d8cef176ab0e4b4e8ece8b07276459
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -22879,25 +21556,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -23152,8 +21810,6 @@ clauses:
         - sha256:2378effa722860f33d25c7ecbe3148629b5422e50be530679e1481432ccdc5e2
         - sha256:6360c7cc20253d11f74f60fd328335e0fe1dc0f5b49e381d029233c29e3a2c41
         decision_source: sha256:4ef704cee5e527ec78cba4b21b0b51104eab71e3f8607a55bfb53cc3f576d67e
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -23210,25 +21866,6 @@ clauses:
     clause: '11.1'
   heading: Objective of ASIL decomposition
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -23433,8 +22070,6 @@ clauses:
     atlasdata_heading: sha256:87f5a9edfd84d57c895f2caa6fb7e686d25047c13b4b5ef36d9dfbd71ea9fbaa
     content: sha256:22c154ea7a337127b61539bf832d3fc6e4ecd7828a65383507539cc6a9ac5edb
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -23465,25 +22100,6 @@ clauses:
     clause: '11.2'
   heading: Description of ASIL decomposition
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -23744,8 +22360,6 @@ clauses:
     atlasdata_heading: sha256:c99fe04f080b93090bc7f8d9fbf58f4a216b0294963749a39e3e508d444d5797
     content: sha256:5dc2ba14763c9c486e8f57dccfa8f7686c1ef76c5a5009d2202c130a9b6db55f
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -23847,25 +22461,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -24106,8 +22701,6 @@ clauses:
         evidence:
         - sha256:6602bf4ecf7ce00fa8123a4ff6baf2552e0266e16eeddafb2591af33f1f7da92
         decision_source: sha256:fe504ad0cfbe5a8d9b455a578c0b266a64ca8d99a18214249ae142998bd82c51
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -24173,25 +22766,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -24448,8 +23022,6 @@ clauses:
         - sha256:736deaee089fc2c1a89846ce88173a7793b9341bcbb619778b741cc99dc2bfb9
         - sha256:46655c3d072df1042a2de9be6e3c6fe2e8c5f032111fb4eba06f3c2d039c89db
         decision_source: sha256:f970b3962b4a5c9c05d7d5e06b77d68d6dcdd20e1c95332c85c697a7525fcbf1
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -24480,25 +23052,6 @@ clauses:
     clause: 11.3.3
   heading: Hazard analysis and risk assessment
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -24744,8 +23297,6 @@ clauses:
     atlasdata_heading: sha256:de3cb2635a35ea509d083bed15c57108325956e21f4cc21fdc60e0d5d748bdde
     content: sha256:7e15799c42ac92dc76e6d7579b27368cd237a8824bde37e7b01f8249480e163d
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -24776,25 +23327,6 @@ clauses:
     clause: 11.3.4
   heading: Associated safety goal
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -25047,8 +23579,6 @@ clauses:
     atlasdata_heading: sha256:2c95a0f80ba03e05bcc703db3b396eea660b4574b9ed3a0423507c96566247fe
     content: sha256:c23d5eeb2ab61938767b369d93968d8192131c46e7fef885a0adea3705d5567f
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -25079,25 +23609,6 @@ clauses:
     clause: 11.3.5
   heading: System architectural design
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -25299,8 +23810,6 @@ clauses:
     atlasdata_heading: sha256:4606867ee154c2be2b1770af48652423b39dcb45425f459b90e55a74dd91b4c6
     content: sha256:4ce5dc0475da0056865f825301966b99fbdc832c4d0f7a29b30b37d54f39f399
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -25357,25 +23866,6 @@ clauses:
     clause: 11.3.6.1
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -25628,8 +24118,6 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:6418a8ff4649ce09b008db640eda93f37cbf29f833543c518b14e546bd59a8af
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -25695,25 +24183,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -25961,8 +24430,6 @@ clauses:
         - sha256:fa2c7d377db11ee8582878f464ee90691cc12e8794069c58d29b40dec915f63b
         - sha256:d238a9669d801c6495da7b423019394c01635634eaaf2c10e16f3945d75b660d
         decision_source: sha256:93ea9ca33db23b02213734a4f58c68e28ba1a9e857f4c30c9d6245beaf2bd1a5
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -26363,25 +24830,6 @@ clauses:
     clause: 12.2.1
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -26619,8 +25067,6 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:012c87a796a4532c9b7829188dd2b8119f6f23f07ad6ff491b4038b6638f86fb
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -27018,25 +25464,6 @@ clauses:
     clause: 12.2.3.1
   heading: Allowable time-span from the occurrence of a fault to completion of fault reaction
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -27285,8 +25712,6 @@ clauses:
     atlasdata_heading: sha256:4ea9f4e734b1c8baccda5ee20c900690228308b19f6509087f41c067f8f5586b
     content: sha256:6b179a69ac5d922b77f144c3b5f49dcc9796dd297e18b80e4e7f644b301616bb
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -27317,25 +25742,6 @@ clauses:
     clause: 12.2.3.2
   heading: Functions and performance to be maintained after fault reaction
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -27584,8 +25990,6 @@ clauses:
     atlasdata_heading: sha256:58bbd45d52b5014dca49b68c7377e661bbf09330c3d016f2916a76ebff7fe0f1
     content: sha256:e65a63da996cea7892c646efef52726823c1715440ba8884fbbfaaff95bbc111
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -27672,25 +26076,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -27945,8 +26330,6 @@ clauses:
         evidence:
         - sha256:0ed796196ad9fbb61ddc05eea5e557662640109b9bb4a655a1d3bd2372a202fd
         decision_source: sha256:b9ba61440f0e638d43f4a7684d88a0880835c57e8149ac1b43503ba37ac61d5d
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -28007,25 +26390,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -28291,8 +26655,6 @@ clauses:
         evidence:
         - sha256:bd79946f5d0362748be9eb254b7d55a7e781a5d23dd20a053352734fc1fa3d32
         decision_source: sha256:4425377c4aa262f33c335dcfa4ae2747094f11a347e3e8ff214ebe0a0b9e09b0
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -28353,25 +26715,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -28638,8 +26981,6 @@ clauses:
         - sha256:b61de363b2408706a177833f41dee1745cf7bf3d88a694fd59d1a0ce38c35e61
         - sha256:a3d6b4f0d80f8fbe1b6c053e705f388621176a1653dc591d53705caa816ccd52
         decision_source: sha256:c16bbcd6420f4deb96445366a22c0369a5bf4dfd621ba716527e457f69a4ab5b
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -28696,25 +27037,6 @@ clauses:
     clause: 12.2.5.1
   heading: Introduction
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -28965,8 +27287,6 @@ clauses:
     atlasdata_heading: sha256:b605350bc00209520b7cd8f546322663356ba630708f71bbf30aead6b3dd608e
     content: sha256:800ba278f82d32e013845ec1e8e9cd89a4cbbd6af6b6e3fe51614f730fd8c46b
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -28997,25 +27317,6 @@ clauses:
     clause: 12.2.5.2
   heading: Assumptions
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -29264,8 +27565,6 @@ clauses:
     atlasdata_heading: sha256:69ef1ef347b53ec36f7947b538b31cff1c0e284725fa16140630ddfacb55fe49
     content: sha256:16caa8e44c8919eb3e4d2304d75a1a1a902f9a7e7c90f347e732e4f05f502f7a
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -29326,25 +27625,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -29593,8 +27873,6 @@ clauses:
         evidence:
         - sha256:a8adf6372fafb801f95bca61c15ad0745240f6b3e0877102fd336305076e5953
         decision_source: sha256:237af7fdb59385cba06eec85d2bce2348cb6f2d2359ab53e481d379b13ccf06a
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -29655,25 +27933,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -29916,8 +28175,6 @@ clauses:
         - sha256:c308ebbf05fe8acc31771bd74a40b55aae57865f89cb9746c2261a39953a0cb9
         - sha256:cc4b3eb82f5eb96cbf5b959d19ff477508b32c4b6bc1e21432b48caa20d0270b
         decision_source: sha256:7e8ab6ef6863511576eb03b9b54717cbd5b8d080186c9c55be65660201ac885e
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -29993,25 +28250,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -30264,8 +28502,6 @@ clauses:
         - sha256:0402c03e4d8509721b32f200c06e607b1742e66e8adb3bdf7bfa9c361d0280aa
         - sha256:d56185e0e94640993405a710bf966a1883eb808f9937c2a8674c69e62bfd5903
         decision_source: sha256:f21f2866eb9beb5772992d0819c15e916e30e7c5d4420145cb85c553c63a38df
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -30740,25 +28976,6 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -30991,8 +29208,6 @@ clauses:
         - sha256:3ad92c860b90437809af4e5942dd93be7ae2f5c7874933ed9fede3faa32380d3
         - sha256:3e5c95f9c6615046f8320310cbd4d74dba1890ee69779a90e1e5a9194e57170b
         decision_source: sha256:1c92a4621753a4ec07be0df4195f6f1e35fd2b437d670632b8914d47e710e4ec
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -31083,25 +29298,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -31350,8 +29546,6 @@ clauses:
         - sha256:9b4daa3648e670f90add12e32fa66844fd8bf3ba02ffe355956a3fdf615f81f3
         - sha256:a3d6b4f0d80f8fbe1b6c053e705f388621176a1653dc591d53705caa816ccd52
         decision_source: sha256:289026e3424e446b7f71fba4b05cee255fe721ed78109a0dd58faaecc17c7fd3
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -32128,25 +30322,6 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -32405,8 +30580,6 @@ clauses:
         - sha256:b36bf0e016ceb524ef7cb28065b5be6661feecc746f825a93da0a6d23a3dc2e2
         - sha256:c4f06b428319591fe1ead88209c1e09f2049cdd4ccbb3d2f1307fa133b2f6f33
         decision_source: sha256:5e4c3c36c38c6d2374690b15281ce2ee00d6eb6395e3e900e24e5863d67f400e
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -32437,25 +30610,6 @@ clauses:
     clause: 12.4.2
   heading: Software fault avoidance
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -32692,8 +30846,6 @@ clauses:
     atlasdata_heading: sha256:c209718fdacc0b262ba4ced9e4bd988ba2759c26118e9b11f7fa5c7b303a679a
     content: sha256:76cc03deb57db1d24d6457560ee9aff03003cf0ff2b715b1ec66fa6b1521c120
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -32754,25 +30906,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -33021,8 +31154,6 @@ clauses:
         evidence:
         - sha256:695d86b7b5b948184226147093af01edc42b463a301b798f4488c510ca2f1907
         decision_source: sha256:53c5294caf172bc7d6aac821b63266f0852a51c3d12bc4d1b91bf4eb44756b6b
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -33103,25 +31234,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -33358,8 +31470,6 @@ clauses:
         - sha256:f75b33d7f39d0ab0fb49197f47e47f6954f88be0756b1cc5c6c7d71f2126f1c0
         - sha256:9bdc655b64989df58cbc7c5ee81d9b259edb577f021b7e75f5c16e0ad4af19df
         decision_source: sha256:90e8ba4affa3e50bd4ca2172f7fbbdecf5e0ef5fade3c51f5cdba9f58431f04e
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -33461,25 +31571,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -33715,8 +31806,6 @@ clauses:
         - sha256:349b453de64b61afc68b3c521b197e05b9de9f8b436e559b76ddf8132e414ac3
         - sha256:67e8b7a499bcbf0954a390d590effc77486112e87c0b5a50736198c56784fb08
         decision_source: sha256:8eb552b4b58bc8242b8020eae9b08de43001e83d8821be635d6a1bf950e591a9
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -33747,25 +31836,6 @@ clauses:
     clause: '14.2'
   heading: Identification of safety-related special characteristics
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -34009,8 +32079,6 @@ clauses:
     atlasdata_heading: sha256:61212080c1f890ae6a2bf187c44d176ac5c468c7ec49372eb68aab240040b254
     content: sha256:4ab8431c7428f91c448dd34f3877e31556bd713af7e3844abf840a62213b6389
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -34041,25 +32109,6 @@ clauses:
     clause: '14.3'
   heading: Specification of the control measures of safety-related special characteristics
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -34305,8 +32354,6 @@ clauses:
     atlasdata_heading: sha256:cfe8af7237ac3976e6842a4481527ac14e39772f8f7cd6454e2e3e6389a5eb27
     content: sha256:dbeb9c1afeb025e9082cdd5cbc0c78d254a7dc74cafd4588e160c7d896bc225c
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -34337,25 +32384,6 @@ clauses:
     clause: '14.4'
   heading: Monitoring of the safety-related special characteristics
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -34607,8 +32635,6 @@ clauses:
     atlasdata_heading: sha256:c56b7857c00d431722da5ba7afa17cf17e4ad2c383a97012ddd626159c6d1154
     content: sha256:cb23348e551c7841d36aa7cb2618438f88ad997c6bcbd2d2839a33f6d675cfc6
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -34639,25 +32665,6 @@ clauses:
     clause: A
   heading: Fault tree construction and applications
   attributes:
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
   - path: enrichments.semantic.applicability_present
     origin: generated
     value: false
@@ -34894,8 +32901,6 @@ clauses:
     atlasdata_heading: sha256:d420bbbfdf4604205e8557ef03087135fb80593b5341c9d1e4245776bced65ff
     content: sha256:d420bbbfdf4604205e8557ef03087135fb80593b5341c9d1e4245776bced65ff
     attributes:
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -34971,25 +32976,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -35249,8 +33235,6 @@ clauses:
         - sha256:d2c8b44df0ec7978de8b115164630bf0eeb855a57a9ce1b7a3f22578daccc1cb
         - sha256:74ca90021359cceb2e3242281aec3dd00a66fbd473d09faa9cfbef14f0593380
         decision_source: sha256:5c6ce4f1a60e5ce472ad58c41f84bd3de80a8d3e96a29690e9052df52a9bbf5d
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
@@ -35321,25 +33305,6 @@ clauses:
         prompt_id: null
         reasoning_mode_id: null
         model_ids: []
-        valid_votes: null
-        supporting_votes: null
-        abstained_votes: 0
-        label_votes: {}
-        category: null
-  - path: enrichments.semantic.applicability_functions
-    origin: generated
-    value: []
-    generated:
-      generator: canonical-knowledge-adoption-v1
-      method: imported
-      decision:
-        rule: mistral-v4-or-v3-and-v1:1.0.0
-        source_artifact: qualification-run-078/multidimensional-semantic-qualification-v6-applicability-presence/applicability-policy/applicability-policy-run.json
-        stage: final-policy
-        prompt_id: null
-        reasoning_mode_id: null
-        model_ids:
-        - mistral-small-3.2-24b-instruct-q4-k-m
         valid_votes: null
         supporting_votes: null
         abstained_votes: 0
@@ -35596,8 +33561,6 @@ clauses:
         - sha256:d84bdb34d4eeef4034d77e5403f850e35bc4a51b1143e3a83510e1aaad839748
         - sha256:863bae96e6e4d59e9e8642a74c6dc67b9190e1be4ee06b59e50d36efd2c5158d
         decision_source: sha256:4ae7bdc65d63630bb94ae1dcb8be1cc10576db58f9b9c15319bd54f16bc33d7f
-      enrichments.semantic.applicability_functions:
-        decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.applicability_present:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
