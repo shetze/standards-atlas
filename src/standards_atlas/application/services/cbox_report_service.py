@@ -58,7 +58,9 @@ class CBoxReportService:
             if clause_ids and clause.id not in clause_ids:
                 continue
             canonical = canonical_cbox_context(clause, knowledge_domain=knowledge_domain)
-            framed = frame_cbox_context(canonical, policy)
+            framed = frame_cbox_context(
+                canonical, policy, text=clause.text, content_hash=clause.content_hash
+            )
             availability.update(item.availability for item in clause.enrichment_context.attributes)
             records.append(
                 {

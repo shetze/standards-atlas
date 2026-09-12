@@ -64,6 +64,7 @@ The project follows four complementary documentation modes:
 5. [Evaluation clause access](architecture/evaluation-clause-access.md)
 6. [Testing and qualification](development/testing-and-qualification.md)
 7. [Taxonomy decision diagnostics](user-guide/taxonomy-decision-diagnostics.md)
+8. [Taxonomy-grounded qualification inputs](user-guide/taxonomy-grounded-qualification.md)
 
 ### Contributor onboarding
 

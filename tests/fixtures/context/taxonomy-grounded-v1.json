@@ -1,0 +1,60 @@
+{
+  "ancestor_headings": [
+    {
+      "distance": 1,
+      "heading": "Techniques and measures",
+      "origin": "unattributed",
+      "reference": "B.1"
+    },
+    {
+      "distance": 2,
+      "heading": "Informative annex",
+      "origin": "unattributed",
+      "reference": "B"
+    }
+  ],
+  "annex_status": "informative",
+  "canonical_section": "annex",
+  "clause_type": "clause",
+  "document_categories": [
+    {
+      "category": "supplementary_elements",
+      "taxonomy": "document.iec-directives-2",
+      "version": "1.0.0"
+    }
+  ],
+  "document_key": "TEST",
+  "heading": "Fault detection",
+  "node_kind": "leaf",
+  "reference": "B.1.1",
+  "semantic_sections": [
+    {
+      "end_offset": 20,
+      "label": "Aim",
+      "role": "aim",
+      "start_offset": 0
+    },
+    {
+      "end_offset": 61,
+      "label": "Description",
+      "role": "description",
+      "start_offset": 20
+    },
+    {
+      "end_offset": 132,
+      "label": "NOTE",
+      "role": "note",
+      "start_offset": 61
+    }
+  ],
+  "structure_origin": "canonical",
+  "structure_sources": {
+    "annex_status": "deterministic",
+    "canonical_section": "deterministic",
+    "clause_type": "deterministic",
+    "document_categories": "deterministic",
+    "heading": "confirmed",
+    "node_kind": "unattributed",
+    "semantic_sections": "deterministic"
+  }
+}

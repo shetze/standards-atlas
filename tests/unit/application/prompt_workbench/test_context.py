@@ -51,6 +51,7 @@ def test_lists_all_custom_and_versioned_cbox_variants() -> None:
         "routing-isolated-v1",
         "semantic-isolated-v1",
         "subject-isolated-v1",
+        "taxonomy-grounded-v1",
         "routing-source-v1",
         "structural-context-v1",
     ]

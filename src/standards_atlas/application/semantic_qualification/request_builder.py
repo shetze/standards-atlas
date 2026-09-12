@@ -31,7 +31,13 @@ def build_proposal_request(
     context = dict(item_input.get("context", {}))
     frame_name = getattr(config, "cbox_frame", "full-context-v1")
     frame_policy = resolve_cbox_frame_policy(frame_name)
-    framed_context = frame_qualification_context(context, frame_policy, task=config.task)
+    framed_context = frame_qualification_context(
+        context,
+        frame_policy,
+        task=config.task,
+        text=content.get("text", ""),
+        content_hash=content.get("hash"),
+    )
     values = {
         **dict(framed_context.values),
         "clause_id": context.get("clause_id", ""),

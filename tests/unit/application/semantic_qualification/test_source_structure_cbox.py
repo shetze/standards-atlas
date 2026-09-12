@@ -100,7 +100,11 @@ def test_provider_is_read_only_and_does_not_publish_a_source_plan(tmp_path):
 
 @pytest.mark.parametrize(
     "frame",
-    [f"{item.id}-v{item.version}" for item in list_cbox_frame_policies()],
+    [
+        f"{item.id}-v{item.version}"
+        for item in list_cbox_frame_policies()
+        if not item.source_structure  # Existing frames retain their exact inputs.
+    ],
 )
 def test_added_structure_contract_does_not_change_current_model_input_or_cache_fingerprint(frame):
     _, value = descriptor()

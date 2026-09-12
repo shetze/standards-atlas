@@ -8,6 +8,7 @@ import pytest
 
 from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.semantic_qualification import request_builder
+from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.semantic_qualification.context_framing import (
     frame_cbox_context,
     frame_qualification_context,
@@ -19,7 +20,10 @@ from standards_atlas.application.semantic_qualification.context_framing import (
 @pytest.fixture
 def inputs():
     return {
-        "content": {"text": "The supplier shall verify.", "hash": "sha256:" + "a" * 64},
+        "content": {
+            "text": "The supplier shall verify.",
+            "hash": normalized_content_hash("The supplier shall verify."),
+        },
         "context": {
             "document_key": "EXAMPLE",
             "clause_id": "clause-1",

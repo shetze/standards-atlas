@@ -1,0 +1,5 @@
+Normalized clause content (complete, including notes):
+{content}
+
+Source-grounded structural context:
+{context_text}

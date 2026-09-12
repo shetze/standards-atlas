@@ -97,7 +97,12 @@ class ClausePromptContextAssembler:
             )
             context_text = _pretty_json(selected)
         else:
-            framed = frame_cbox_context(canonical, resolve_cbox_frame_policy(variant_id))
+            framed = frame_cbox_context(
+                canonical,
+                resolve_cbox_frame_policy(variant_id),
+                text=clause.text,
+                content_hash=clause.content_hash,
+            )
             selected = dict(framed.values)
             context_text = render_cbox_context(framed)
 
@@ -106,6 +111,20 @@ class ClausePromptContextAssembler:
         else:
             template_structural_context = dict(selected.get("structural_context", {}))
 
+        source_bound = variant_id == "taxonomy-grounded-v1"
+        if source_bound:
+            # Alternate template variables must not reintroduce excluded fields.
+            metadata = {
+                key: selected[key]
+                for key in (
+                    "document_key",
+                    "reference",
+                    "heading",
+                    "clause_type",
+                    "canonical_section",
+                )
+                if key in selected
+            }
         if "isolated-v" in variant_id:
             # Explicit isolated frames also constrain alternate template variables.
             metadata = {
@@ -124,7 +143,7 @@ class ClausePromptContextAssembler:
             "clause_id": clause.id,
             "heading": (
                 str(selected.get("heading") or "")
-                if "isolated-v" in variant_id
+                if "isolated-v" in variant_id or source_bound
                 else clause.heading or ""
             ),
             "metadata": _compact_json(metadata),

@@ -1,0 +1,5 @@
+{
+  "description": "Opt-in source-grounded taxonomy comparison with complete multidimensional output; no automatic taxonomy acceptance or changed voting policy.",
+  "task": "statement-function-classification",
+  "version": "taxonomy-grounded-v1"
+}

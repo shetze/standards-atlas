@@ -16,8 +16,11 @@ from standards_atlas.application.semantic_qualification.context_framing import (
     FramedCBoxContext,
     frame_cbox_context,
 )
+from standards_atlas.application.semantic_qualification.taxonomy_context import (
+    render_taxonomy_context,
+)
 
-CBOX_RENDERER_VERSION = "2"
+CBOX_RENDERER_VERSION = "3"
 
 
 def project_cbox_context(context: Mapping[str, Any]) -> str:
@@ -27,6 +30,8 @@ def project_cbox_context(context: Mapping[str, Any]) -> str:
 
 def render_cbox_context(frame: FramedCBoxContext) -> str:
     """Render a previously framed CBox projection as concise deterministic prose."""
+    if frame.policy_id == "taxonomy-grounded":
+        return render_taxonomy_context(frame.values)
     context = frame.values
     lines: list[str] = []
 

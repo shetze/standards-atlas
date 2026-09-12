@@ -606,7 +606,13 @@ def _run_adaptive_interview(
     )
     context = full_context if uses_context else {}
     frame_policy = resolve_cbox_frame_policy(config.cbox_frame)
-    framed_context = frame_qualification_context(context, frame_policy, task=config.task)
+    framed_context = frame_qualification_context(
+        context,
+        frame_policy,
+        task=config.task,
+        text=content.get("text", ""),
+        content_hash=content.get("hash"),
+    )
     interview_input = {**dict(item_input), "context": dict(framed_context.values)}
     plan = AdaptiveInterviewPlanner().plan(interview_input)
     answers: list[dict[str, Any]] = []

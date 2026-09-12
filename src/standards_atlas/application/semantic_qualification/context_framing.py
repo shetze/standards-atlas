@@ -12,6 +12,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any
 
+from standards_atlas.application.semantic_qualification.taxonomy_context import (
+    select_taxonomy_context,
+)
+
 
 @dataclass(frozen=True, slots=True)
 class CBoxFramePolicy:
@@ -34,6 +38,8 @@ class CBoxFramePolicy:
     primary_subject: bool = True
     semantic_enrichments: bool = False
     attribute_provenance: bool = False
+    # Select the exclusive source-bound contract rather than compatibility fields.
+    source_structure: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,6 +105,20 @@ APPLICABILITY_ISOLATED_V1 = CBoxFramePolicy(
 )
 
 
+# Opt-in experiment: no persisted semantic answers, interpreted routing, domain
+# semantics or rule candidates. Existing frame definitions stay unchanged.
+TAXONOMY_GROUNDED_V1 = CBoxFramePolicy(
+    id="taxonomy-grounded",
+    version="1",
+    sibling_position=False,
+    scope_routing=False,
+    reference_routing=False,
+    reference_mentions=False,
+    primary_subject=False,
+    source_structure=True,
+)
+
+
 def cbox_frame_key(policy: CBoxFramePolicy) -> str:
     """Return the stable external identifier of a CBox frame policy."""
     return f"{policy.id}-v{policy.version}"
@@ -115,6 +135,7 @@ _CBOX_FRAME_POLICIES = {
         SUBJECT_ISOLATED_V1,
         APPLICABILITY_MINIMAL_V1,
         APPLICABILITY_ISOLATED_V1,
+        TAXONOMY_GROUNDED_V1,
     )
 }
 
@@ -136,8 +157,17 @@ def list_cbox_frame_policies() -> tuple[CBoxFramePolicy, ...]:
 def frame_cbox_context(
     context: Mapping[str, Any],
     policy: CBoxFramePolicy = FULL_CONTEXT_V1,
+    *,
+    text: str | None = None,
+    content_hash: str | None = None,
 ) -> FramedCBoxContext:
     """Select existing CBox facts according to ``policy`` without deriving facts."""
+    if policy.source_structure:
+        return FramedCBoxContext(
+            policy_id=policy.id,
+            policy_version=policy.version,
+            values=select_taxonomy_context(context, text=text, content_hash=content_hash),
+        )
     values: dict[str, Any] = {}
 
     if policy.identity:
@@ -391,6 +421,8 @@ def frame_qualification_context(
     policy: CBoxFramePolicy = FULL_CONTEXT_V1,
     *,
     task: str = "",
+    text: str | None = None,
+    content_hash: str | None = None,
 ) -> FramedCBoxContext:
     """An experimental frame never opts a qualification back into its target labels.
 
@@ -403,4 +435,4 @@ def frame_qualification_context(
         isolated = replace(isolated, scope_routing=False, reference_routing=False)
     if "subject" in task:
         isolated = replace(isolated, primary_subject=False)
-    return frame_cbox_context(context, isolated)
+    return frame_cbox_context(context, isolated, text=text, content_hash=content_hash)

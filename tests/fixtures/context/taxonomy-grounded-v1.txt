@@ -1,0 +1,16 @@
+Source-structure observations (contextual hints, not semantic answer labels).
+Confirmed means the source field was confirmed, not that a semantic decision was made.
+Unattributed observations have no independent authority; resolve ambiguity from the text.
+Enclosing headings describe location; inherited scope is not explicit applicability here.
+document_key: "TEST"
+reference: "B.1.1"
+structure_origin: "canonical"
+annex_status [source origin: deterministic]: "informative"
+canonical_section [source origin: deterministic]: "annex"
+clause_type [source origin: deterministic]: "clause"
+document_categories [source origin: deterministic]: [{"category": "supplementary_elements", "taxonomy": "document.iec-directives-2", "version": "1.0.0"}]
+heading [source origin: confirmed]: "Fault detection"
+node_kind [source origin: unattributed]: "leaf"
+semantic_sections [source origin: deterministic]: [{"end_offset": 20, "label": "Aim", "role": "aim", "start_offset": 0}, {"end_offset": 61, "label": "Description", "role": "description", "start_offset": 20}, {"end_offset": 132, "label": "NOTE", "role": "note", "start_offset": 61}]
+Enclosing section at distance 1 [source origin: unattributed]: "B.1", "Techniques and measures"
+Enclosing section at distance 2 [source origin: unattributed]: "B", "Informative annex"

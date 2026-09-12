@@ -2,6 +2,21 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Taxonomy-grounded qualification inputs (2026-09-12)
+
+- Add opt-in `taxonomy-grounded-v1` CBox selection from source-bound structure, with
+  explicit origins, bounded actual ancestor distances and validated section markers.
+- Exclude previous semantic/gold labels, interpreted routing/subjects and audit prose;
+  preserve complete clause text and notes and verify source/content identity before requests.
+- Add a full-output comparison prompt clarifying technique/objective/process boundaries
+  and normative Applicability versus Usability, without a carrier-type gate.
+- Add isolated control, context-only and candidate manifests with unchanged models,
+  generation, thresholds, review rules and Applicability detail policy.
+- Share source selection across qualification, the Prompt Workbench and CBox inspection;
+  cover leakage, input identity, schema parity, full-output resume and comparison contracts.
+- Preserve legacy prompt inputs, production priors, diagnostic-only decision plans and
+  presence-only public export. This slice neither activates early exits nor proves accuracy.
+
 ## Unreleased — Source-grounded taxonomy diagnostics (2026-09-12)
 
 - Add a source-only structural CBox/descriptor contract with actual baseline provenance,
