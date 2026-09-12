@@ -12,6 +12,13 @@ from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 
 
+def _value_key(value: Any) -> str:
+    # These attribute collections are semantic sets; keep JSON scalar types distinct.
+    if isinstance(value, list):
+        return json.dumps(sorted(_value_key(item) for item in value))
+    return json.dumps(value, sort_keys=True, allow_nan=False)
+
+
 def evaluate_semantic_readiness(
     *, audit: Path, checks: Path, output_directory: Path
 ) -> dict[str, Any]:
@@ -109,6 +116,53 @@ def evaluate_semantic_readiness(
                 if missing:
                     result["status"] = "failed"
                     result["reasons"].append("missing_process_labels:" + ",".join(sorted(missing)))
+        if "attribute_checks" in check:
+            from standards_atlas.application.semantic_qualification.partial_observations import (
+                PARTIAL_ATTRIBUTES,
+            )
+
+            predicates = check["attribute_checks"]
+            if not isinstance(predicates, dict) or not predicates:
+                raise ValueError("attribute checks must be a nonempty object")
+            inspected = {}
+            for attribute, expectation in predicates.items():
+                if attribute not in PARTIAL_ATTRIBUTES or not isinstance(expectation, dict):
+                    raise ValueError("unsupported semantic attribute check")
+                if set(expectation) != {"equals"}:
+                    raise ValueError("attribute checks require one explicit equals value")
+                actual = validation.get("response_values", {}).get(attribute)
+                invalid = any(
+                    attribute in issue["attributes"] for issue in validation.get("issues", [])
+                )
+                if (
+                    attribute not in validation.get("requested_attributes", [])
+                    or attribute not in validation.get("response_values", {})
+                    or invalid
+                ):
+                    status = "unavailable"
+                else:
+                    # JSON identity preserves false != 0 and null != missing.
+                    status = (
+                        "passed"
+                        if _value_key(actual) == _value_key(expectation["equals"])
+                        else "failed"
+                    )
+                inspected[attribute] = {
+                    "status": status,
+                    "value": actual,
+                    "expected": expectation["equals"],
+                }
+                if status == "failed":
+                    result["status"] = "failed"
+                    result["reasons"].append("unexpected_attribute:" + attribute)
+                elif status == "unavailable" and result["status"] != "failed":
+                    result["status"] = "unavailable"
+                    result["reasons"].append("attribute_missing_or_invalid:" + attribute)
+            result["attribute_checks"] = inspected
+        if not any(
+            key in check for key in ("expected_primary_state", "process_check", "attribute_checks")
+        ):
+            raise ValueError("readiness case contains no checkable expectation")
         cases.append(result)
     report = {
         "schema_version": "1.0",

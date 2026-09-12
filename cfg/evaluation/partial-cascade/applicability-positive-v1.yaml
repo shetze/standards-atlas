@@ -1,0 +1,6 @@
+schema_version: '1.0'
+manifest_type: partial-cascade-acceptance-profile
+version: 1.0.0
+qualification_status: experimental
+id: applicability-positive-v1
+applicability_gate_mode: positive_three_quarters

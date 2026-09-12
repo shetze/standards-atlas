@@ -44,6 +44,7 @@ PartialPromptVersion = Literal[
     "taxonomy-partial-v3",
     "taxonomy-partial-v3-no-process-null",
     "taxonomy-partial-v4",
+    "taxonomy-focused-v1",
 ]
 
 

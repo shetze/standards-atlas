@@ -1,0 +1,6 @@
+schema_version: '1.0'
+manifest_type: partial-cascade-acceptance-profile
+version: 1.0.0
+qualification_status: experimental
+id: statement-two-thirds-v1
+statement_two_thirds: true

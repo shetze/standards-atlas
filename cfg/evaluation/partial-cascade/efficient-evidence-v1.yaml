@@ -1,0 +1,8 @@
+schema_version: '1.0'
+manifest_type: partial-cascade-acceptance-profile
+version: 1.0.0
+qualification_status: experimental
+id: efficient-evidence-v1
+statement_two_thirds: true
+role_evidence_mode: anchored_minority
+applicability_gate_mode: positive_three_quarters

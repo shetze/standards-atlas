@@ -14,6 +14,14 @@ New reports use schema 1.1: an unexecuted plan has `completion_rate: null` and i
 measured benchmark. Historical report schema 1.0 and default-v2 request identities remain
 supported. `--require-taxonomy-decisions` optionally guards intended taxonomy-saving tests.
 
+## Slice 6 experimental resolution
+
+See [Partial-cascade resolution](taxonomy-partial-resolution.md) for opt-in acceptance
+profiles, bounded same-voter refinements, model-free first-stage profile comparisons and
+controlled comparisons across all Efficient models. `--acceptance-profile` is explicit;
+omitting it preserves the original rules described below. No new profile is released by
+its technical availability or by a higher completion count.
+
 ## Model labels
 
 Execution, successful resume and archive verification use the same model/prompt identity

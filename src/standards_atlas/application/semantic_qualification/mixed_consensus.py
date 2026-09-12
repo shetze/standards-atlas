@@ -9,12 +9,17 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from fractions import Fraction
 from typing import Any
 
 from jsonschema import Draft202012Validator
 
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.semantic_qualification.acceptance_profiles import (
+    assess_role_minority,
+    experimental_threshold,
+)
 from standards_atlas.application.semantic_qualification.mixed_evidence import (
     AttributeAcceptance,
     CompletionProfile,
@@ -180,7 +185,21 @@ def _model_decision(
         threshold = max(threshold, consensus.review_policy.applicability_min_confidence)
     if attribute == "role_semantics_present" and candidate is True:
         threshold = max(threshold, consensus.review_policy.role_relation_min_confidence)
-    if confidence < threshold:
+    exact_threshold, unanimity, profile_rules = experimental_threshold(
+        attribute=attribute,
+        candidate=candidate,
+        resolution=resolution,
+        majority_threshold=consensus.majority_threshold,
+        original_threshold=threshold,
+        unanimity=unanimity,
+    )
+    profile = getattr(resolution, "partial_acceptance", None)
+    below_threshold = (
+        Fraction(len(supporting), count) < exact_threshold
+        if profile is not None
+        else confidence < threshold
+    )
+    if below_threshold:
         reasons.append("decision_confidence")
     if unanimity and confidence < 1:
         reasons.append("disagreement")
@@ -197,6 +216,15 @@ def _model_decision(
         confidence=confidence,
         supporting_models=supporting,
         reasons=tuple(dict.fromkeys(reasons)),
+        diagnostics=(
+            (
+                *profile_rules,
+                f"vote_share:{len(supporting)}/{count}",
+                f"required_share:{exact_threshold.numerator}/{exact_threshold.denominator}",
+            )
+            if profile_rules
+            else ()
+        ),
     )
 
 
@@ -232,6 +260,11 @@ def evaluate_mixed_consensus(
         or previous.consensus_policy != consensus.model_dump(mode="json")
     ):
         raise ValueError("previous mixed consensus belongs to a different selection or policy")
+    active_profile = getattr(resolution, "partial_acceptance", None)
+    if previous and previous.resolution.get("partial_acceptance") != (
+        active_profile.model_dump(mode="json") if active_profile is not None else None
+    ):
+        raise ValueError("partial acceptance profile changed across stages")
     cfg = PartialProposalConfig(
         corpus_id=corpus_id, dataset_version="schema", provider="schema", model="schema"
     )
@@ -377,7 +410,34 @@ def evaluate_mixed_consensus(
                     consistency.append(reason)
         presence = choices["role_semantics_present"]
         tuple_evidence = choices["role_relations"].model_values
-        if presence.known and presence.value is False and any(tuple_evidence.values()):
+        profile = getattr(resolution, "partial_acceptance", None)
+        guarded = profile is not None and profile.role_evidence_mode == "anchored_minority"
+        guard = None
+        if guarded:
+            # Do not suppress earlier literal actor evidence merely because a
+            # later re-questioning changes the same voter's answer.
+            observed_relations: dict[str, list] = {}
+            for staged in by_example[example.id]:
+                obs = staged.observation
+                if "role_relations" in obs.model_evidence():
+                    observed_relations.setdefault(obs.voter_key, []).extend(
+                        obs.model_evidence()["role_relations"]
+                    )
+            guard = assess_role_minority(observed_relations, text=example.input["content"]["text"])
+            if guard["suggestion_count"]:
+                choices["role_semantics_present"] = presence = _changed(
+                    presence,
+                    diagnostics=tuple(
+                        dict.fromkeys(
+                            (
+                                *presence.diagnostics,
+                                "role_evidence_guard:" + json.dumps(guard, sort_keys=True),
+                            )
+                        )
+                    ),
+                )
+        veto = guard["protective_veto"] if guard is not None else any(tuple_evidence.values())
+        if presence.known and presence.value is False and veto:
             if old and old.decision("role_semantics_present").known:
                 choices["role_semantics_present"] = _changed(
                     presence,
@@ -391,7 +451,11 @@ def evaluate_mixed_consensus(
                     status="conflict",
                     value=None,
                     proposed_value=False,
-                    reasons=("role_semantics_evidence_conflict",),
+                    reasons=(
+                        "grounded_minority_role_evidence"
+                        if guarded
+                        else "role_semantics_evidence_conflict",
+                    ),
                 )
         context = example.input["context"]
         clauses.append(

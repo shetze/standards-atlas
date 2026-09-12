@@ -11,6 +11,10 @@ import yaml
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.semantic_qualification.acceptance_profiles import (
+    profile_from_plan,
+    with_acceptance_profile,
+)
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     create_analysis_archive,
 )
@@ -53,11 +57,12 @@ def verify_partial_cascade(
         raise ValueError("not a partial cascade plan")
     prompt_version = cascade_prompt_version(plan.get("prompt_version", DEFAULT_CASCADE_PROMPT))
     manifest = QualificationMatrixManifest.model_validate(plan["manifest"])
+    acceptance_profile = profile_from_plan(plan)
     profile = CompletionProfile.model_validate(plan["completion_profile"])
     source_resources = json.loads(read("partial-cascade-resources.json"))
     if structure_fingerprint(source_resources) != plan["resources_sha256"]:
         raise ValueError("partial cascade resource checksum mismatch")
-    if source_resources != _source_resources(resources, prompt_version):
+    if source_resources != _source_resources(resources, prompt_version, acceptance_profile):
         raise ValueError(
             "archive source rules/task/prompt are not the installed supported versions"
         )
@@ -74,6 +79,11 @@ def verify_partial_cascade(
     previous = None
     observations = []
     stages = summary["stages"]
+    limit = plan.get("stage_limit", len(manifest.execution.stages))
+    if type(limit) is not int or not 1 <= limit <= len(manifest.execution.stages):
+        raise ValueError("invalid configured stage limit")
+    if len(stages) > limit:
+        raise ValueError("recorded stages exceed configured stage limit")
     if not stages or len(stages) > len(manifest.execution.stages):
         raise ValueError("invalid partial cascade stage count")
     model_by_id = {item.id: item for item in manifest.models}
@@ -89,7 +99,9 @@ def verify_partial_cascade(
         selected = tuple(e for e in examples if e.id in open_ids)
         if recorded["selected_example_ids"] != [e.id for e in selected]:
             raise ValueError("partial cascade selection does not match unresolved decisions")
-        resolution = stage.resolution or manifest.execution.resolution
+        resolution = with_acceptance_profile(
+            stage.resolution or manifest.execution.resolution, acceptance_profile
+        )
         preflight = ModelConsensusService().evaluate_partial(
             matrix_id=manifest.matrix_id + "--taxonomy-partial-v1",
             corpus_id=manifest.corpus_id,
@@ -141,7 +153,9 @@ def verify_partial_cascade(
                     previous=previous,
                 )
             )
-        resolution = stage.resolution or manifest.execution.resolution
+        resolution = with_acceptance_profile(
+            stage.resolution or manifest.execution.resolution, acceptance_profile
+        )
         rebuilt = ModelConsensusService().evaluate_partial(
             matrix_id=manifest.matrix_id + "--taxonomy-partial-v1",
             corpus_id=manifest.corpus_id,
@@ -157,6 +171,55 @@ def verify_partial_cascade(
             ),
             previous=previous,
         )
+        use_focus = (
+            summary.get("executed")
+            and acceptance_profile is not None
+            and acceptance_profile.focused_resolution is not None
+            and index == 0
+        )
+        if use_focus:
+            from standards_atlas.application.semantic_qualification.focused_resolution import (
+                verify_focused_resolution,
+            )
+
+            focus_record = recorded.get("focused_resolution", {})
+            before_path = f"stages/{stage.id}/mixed-before-focus-report.json"
+            if (
+                focus_record.get("before_report") != before_path
+                or MixedConsensusReport.model_validate_json(read(before_path)) != rebuilt
+            ):
+                raise ValueError("focused base differs from verified stage evidence")
+            observations.extend(
+                verify_focused_resolution(
+                    read=read,
+                    names=names,
+                    manifest=manifest,
+                    stage=stage,
+                    before=rebuilt,
+                    examples=examples,
+                    selected_ids={e.id for e in selected},
+                    resources=resources,
+                    policy=acceptance_profile.focused_resolution,
+                    recorded=focus_record,
+                )
+            )
+            rebuilt = ModelConsensusService().evaluate_partial(
+                matrix_id=manifest.matrix_id + "--taxonomy-partial-v1",
+                corpus_id=manifest.corpus_id,
+                stage_id=stage.id,
+                examples=examples,
+                observations=tuple(observations),
+                resolution=resolution,
+                consensus=manifest.consensus,
+                resources=resources,
+                completion_profile=profile,
+                stage_model_count=len(
+                    {(model_by_id[k].provider, model_by_id[k].model_ref or k) for k in stage.models}
+                ),
+                previous=rebuilt,
+            )
+        elif recorded.get("focused_resolution") is not None:
+            raise ValueError("unexpected focused resolution outside its configured first stage")
         report_path = f"stages/{stage.id}/mixed-stage-report.json"
         if recorded["report"] != report_path:
             raise ValueError("partial stage report path differs from frozen stage")
@@ -185,7 +248,7 @@ def verify_partial_cascade(
         if summary.get("run_mode") != ("executed" if summary["executed"] else "planned"):
             raise ValueError("partial cascade run mode differs from execution flag")
         if summary.get("effective_configuration") != effective_cascade_configuration(
-            manifest, resources, prompt_version
+            manifest, resources, prompt_version, acceptance_profile, plan.get("stage_limit")
         ):
             raise ValueError("partial cascade effective prompt/configuration differs from plan")
         expected_metrics = presentation_metrics(result, execute=summary["executed"])
@@ -195,6 +258,14 @@ def verify_partial_cascade(
         or result.completion_profile.model_dump(mode="json") != summary["completion_profile"]
     ):
         raise ValueError("partial cascade metrics/profile differ from verified decisions")
+    if acceptance_profile and acceptance_profile.focused_resolution is not None:
+        from standards_atlas.application.semantic_qualification.focused_resolution import (
+            verify_global_focused_budget,
+        )
+
+        verify_global_focused_budget(
+            read=read, names=names, policy=acceptance_profile.focused_resolution
+        )
     return result, examples, manifest
 
 

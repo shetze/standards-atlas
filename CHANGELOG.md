@@ -2,6 +2,20 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Bounded partial-cascade resolution (2026-09-13)
+
+- Add explicit experimental acceptance profiles for exact Statement two-thirds support,
+  guarded Role-Presence minority evidence and conservative negative Applicability gates.
+- Bind profiles through requests, acceptance, resume, audit and archive replay without
+  changing existing default manifests, source authority or taxonomy rule qualifications.
+- Refine one unresolved group with existing Efficient voters under cross-resume case,
+  physical-request and output-token budgets; preserve strict grouped validation and
+  original support rather than counting repeated answers as independent votes.
+- Add verified model-free first-stage profile comparisons and controlled prompt comparisons
+  across all Efficient models, with source-bound semantic checks separate from format validity.
+- Keep the final Applicability policy, required completion profile and public omissions;
+  candidate availability is not a semantic release or an 80-percent qualification result.
+
 ## Unreleased — Partial cascade readiness and diagnosis (2026-09-12)
 
 - Bind explicit partial prompts through cascade planning, requests, resume and archive

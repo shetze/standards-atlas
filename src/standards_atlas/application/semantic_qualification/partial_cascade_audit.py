@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from standards_atlas.application.semantic_qualification.acceptance_profiles import profile_from_plan
 from standards_atlas.application.semantic_qualification.cascade_diagnostics import (
     describe_mixed_consensus,
     describe_model_run,
@@ -94,6 +95,20 @@ def audit_partial_cascade(
                     RequestTiming.model_validate(model["request_timing_all_executions_in_revision"])
                 )
                 models.append(model)
+            focused_models = []
+            for item in stage.get("focused_resolution", {}).get("jobs", []):
+                active_prefixes.append(item["prefix"])
+                model = describe_model_run(
+                    prefix=item["prefix"],
+                    model_id=item["model_id"],
+                    read=read,
+                    names=names,
+                )
+                model["same_voter_refinement"] = True
+                active_timing = active_timing.plus(
+                    RequestTiming.model_validate(model["request_timing_all_executions_in_revision"])
+                )
+                focused_models.append(model)
             stages.append(
                 {
                     "stage_id": stage["stage_id"],
@@ -108,6 +123,8 @@ def audit_partial_cascade(
                     "models": models,
                 }
             )
+            if "focused_resolution" in stage:
+                stages[-1]["focused_models"] = focused_models
         retired, detail = RequestTiming(), RequestTiming()
         for name in sorted(names):
             if not name.endswith("/request-timing.json") or "/executions/execution-" not in name:
@@ -119,7 +136,7 @@ def audit_partial_cascade(
             elif name.startswith(("policy/", "policy-history/")):
                 detail = detail.plus(RequestTiming.model_validate_json(read(name)))
         all_timing = active_timing.plus(retired)
-        models = [m for s in stages for m in s["models"]]
+        models = [m for s in stages for m in (*s["models"], *s.get("focused_models", []))]
         policy_names = sorted(
             n
             for n in names
@@ -139,6 +156,8 @@ def audit_partial_cascade(
                 manifest,
                 resources,
                 plan.get("prompt_version", DEFAULT_CASCADE_PROMPT),
+                profile_from_plan(plan),
+                plan.get("stage_limit"),
             ),
             "final": describe_mixed_consensus(final, include_cases=True),
             "stages": stages,
@@ -149,6 +168,9 @@ def audit_partial_cascade(
                 "applicability_detail": detail.model_dump(mode="json"),
                 "nominal_stage_model_clause_combinations": sum(
                     len(s["requested_example_ids"]) * len(s["models"]) for s in summary["stages"]
+                ),
+                "focused_planned_model_clause_combinations": sum(
+                    len(s.get("focused_resolution", {}).get("jobs", [])) for s in summary["stages"]
                 ),
                 "planned_nonempty_requests": sum(
                     m["plan_summary"]["plan_count"]

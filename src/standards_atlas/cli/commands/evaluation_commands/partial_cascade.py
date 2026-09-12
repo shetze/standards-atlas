@@ -16,6 +16,9 @@ from standards_atlas.adapters.llm import (
     OpenAICompatibleLlmGateway,
     RamaLamaServerManager,
 )
+from standards_atlas.application.semantic_qualification.acceptance_profiles import (
+    PartialAcceptanceProfile,
+)
 from standards_atlas.application.semantic_qualification.mixed_applicability import (
     run_mixed_applicability,
 )
@@ -69,6 +72,15 @@ def run_partial_cascade_command(
         str,
         typer.Option("--prompt", help="Partial prompt; default v2 preserves existing runs."),
     ] = "taxonomy-partial-v2",
+    acceptance_profile: Annotated[
+        Path | None,
+        typer.Option(
+            "--acceptance-profile",
+            exists=True,
+            dir_okay=False,
+            help="Experimental partial acceptance YAML; baseline unchanged if omitted.",
+        ),
+    ] = None,
     require_taxonomy_decisions: Annotated[
         bool,
         typer.Option(
@@ -127,6 +139,9 @@ def run_partial_cascade_command(
             progress=typer.echo,
             prompt_version=prompt,
             require_taxonomy_decisions=require_taxonomy_decisions,
+            acceptance_profile=(
+                PartialAcceptanceProfile.load(acceptance_profile) if acceptance_profile else None
+            ),
         )
         if execute:
             with _run_lock(output):

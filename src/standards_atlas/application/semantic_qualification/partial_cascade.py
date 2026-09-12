@@ -17,6 +17,10 @@ from typing import Any
 
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.semantic_qualification.acceptance_profiles import (
+    PartialAcceptanceProfile,
+    with_acceptance_profile,
+)
 from standards_atlas.application.semantic_qualification.consensus import ModelConsensusService
 from standards_atlas.application.semantic_qualification.eligibility import (
     SemanticTaskEligibilityPolicy,
@@ -217,7 +221,9 @@ def read_partial_observations(
 
 
 def _source_resources(
-    resources: Path, prompt_version: str = DEFAULT_CASCADE_PROMPT
+    resources: Path,
+    prompt_version: str = DEFAULT_CASCADE_PROMPT,
+    acceptance_profile: PartialAcceptanceProfile | None = None,
 ) -> dict[str, Any]:
     cfg = PartialProposalConfig(
         corpus_id="identity",
@@ -227,22 +233,39 @@ def _source_resources(
         prompt_version=cascade_prompt_version(prompt_version),
     )
     task = PartialTaskResources.load(resources, cfg)
-    return {
+    result = {
         "task": task.task.model_dump(mode="json"),
         "schema": dict(task.schema),
         "prompt": {"system": task.prompt.system_prompt, "template": task.prompt.user_template},
         "rules": load_taxonomy_rules().model_dump(mode="json"),
     }
+    if acceptance_profile and acceptance_profile.focused_resolution is not None:
+        from standards_atlas.application.semantic_qualification.focused_resolution import (
+            FOCUSED_PROMPT,
+        )
+
+        focused = PartialTaskResources.load(
+            resources, cfg.model_copy(update={"prompt_version": FOCUSED_PROMPT})
+        )
+        result["focused_prompt"] = {
+            "version": FOCUSED_PROMPT,
+            "system": focused.prompt.system_prompt,
+            "template": focused.prompt.user_template,
+            "schema": dict(focused.schema),
+        }
+    return result
 
 
 def effective_cascade_configuration(
     manifest: QualificationMatrixManifest,
     resources: Path,
     prompt_version: str = DEFAULT_CASCADE_PROMPT,
+    acceptance_profile: PartialAcceptanceProfile | None = None,
+    stage_limit: int | None = None,
 ) -> dict[str, Any]:
     """Describe the actual partial task, not the full-output control manifest prompt."""
-    source = _source_resources(resources, prompt_version)
-    return {
+    source = _source_resources(resources, prompt_version, acceptance_profile)
+    configuration = {
         "task": source["task"]["task"],
         "task_version": source["task"]["version"],
         "prompt_version": prompt_version,
@@ -265,6 +288,14 @@ def effective_cascade_configuration(
             for stage in manifest.execution.stages
         },
     }
+    if acceptance_profile is not None:
+        configuration["acceptance_profile"] = acceptance_profile.model_dump(mode="json")
+        configuration["acceptance_profile_sha256"] = acceptance_profile.fingerprint
+        configuration["profile_qualification_passed"] = False
+    if stage_limit is not None:
+        configuration["stage_limit"] = stage_limit
+        configuration["execution_scope"] = "configured_stage_prefix"
+    return configuration
 
 
 def _write_report(
@@ -348,6 +379,8 @@ def run_partial_cascade(
     completion_profile: CompletionProfile | None = None,
     prompt_version: PartialPromptVersion = DEFAULT_CASCADE_PROMPT,
     require_taxonomy_decisions: bool = False,
+    acceptance_profile: PartialAcceptanceProfile | None = None,
+    stage_limit: int | None = None,
 ) -> dict[str, Any]:
     """Execute the configured stage sequence with real per-attribute early exits.
 
@@ -355,6 +388,10 @@ def run_partial_cascade(
     claim. Full-output/adjudicator/challenger runs remain on the existing command.
     """
     prompt_version = cascade_prompt_version(prompt_version)
+    if stage_limit is not None and (
+        type(stage_limit) is not int or not 1 <= stage_limit <= len(manifest.execution.stages)
+    ):
+        raise ValueError("stage_limit must identify a nonempty prefix of the configured stages")
     if manifest.execution.mode != "cascade" or not manifest.execution.stages:
         raise ValueError("partial cascade requires explicit cascade stages")
     if manifest.consensus.adjudication.enabled or manifest.challenger_qualification.enabled:
@@ -403,14 +440,22 @@ def run_partial_cascade(
         "completion_profile": profile.model_dump(mode="json"),
         "selection_sha256": input_selection_fingerprint(examples),
         "source_fingerprints": source_fingerprints or {},
-        "resources_sha256": structure_fingerprint(_source_resources(resources, prompt_version)),
+        "resources_sha256": structure_fingerprint(
+            _source_resources(resources, prompt_version, acceptance_profile)
+        ),
         "operational_repetitions_per_model": 1,
         "fresh_repetition_qualification": False,
     }
     # Preserve legacy v2 plan bytes and all downstream request identities.
     if prompt_version != DEFAULT_CASCADE_PROMPT:
         definition["prompt_version"] = prompt_version
-    configuration = effective_cascade_configuration(manifest, resources, prompt_version)
+    if stage_limit is not None:
+        definition["stage_limit"] = stage_limit
+    if acceptance_profile is not None:
+        definition["acceptance_profile"] = acceptance_profile.model_dump(mode="json")
+    configuration = effective_cascade_configuration(
+        manifest, resources, prompt_version, acceptance_profile, stage_limit
+    )
     root = output_directory.resolve()
     for protected in (
         "data",
@@ -442,14 +487,17 @@ def run_partial_cascade(
             root / "partial-cascade-inputs.json", [{"id": e.id, "input": e.input} for e in examples]
         )
         _atomic_json(
-            root / "partial-cascade-resources.json", _source_resources(resources, prompt_version)
+            root / "partial-cascade-resources.json",
+            _source_resources(resources, prompt_version, acceptance_profile),
         )
         previous = None
         all_observations = []
         stages = []
         current_timing = RequestTiming()
-        for stage in manifest.execution.stages:
-            resolution = stage.resolution or manifest.execution.resolution
+        for stage in manifest.execution.stages[:stage_limit]:
+            resolution = with_acceptance_profile(
+                stage.resolution or manifest.execution.resolution, acceptance_profile
+            )
             pending = (
                 set(e.id for e in examples)
                 if previous is None
@@ -548,6 +596,49 @@ def run_partial_cascade(
                 ),
                 previous=previous,
             )
+            focused_record = None
+            if (
+                execute
+                and acceptance_profile is not None
+                and acceptance_profile.focused_resolution is not None
+                and stage.id == manifest.execution.stages[0].id
+            ):
+                from standards_atlas.application.semantic_qualification.focused_resolution import (
+                    execute_focused_resolution,
+                )
+
+                _atomic_json(
+                    root / f"stages/{stage.id}/mixed-before-focus-report.json",
+                    report.model_dump(mode="json"),
+                )
+                focused, focused_timing, focused_record = execute_focused_resolution(
+                    root=root,
+                    manifest=manifest,
+                    stage=stage,
+                    before=report,
+                    examples=examples,
+                    selected_ids={e.id for e in selected},
+                    resources=resources,
+                    execute=execute,
+                    gateway_context=gateway_context,
+                    progress=progress,
+                    policy=acceptance_profile.focused_resolution,
+                )
+                all_observations.extend(focused)
+                current_timing = current_timing.plus(focused_timing)
+                report = ModelConsensusService().evaluate_partial(
+                    matrix_id=matrix_id,
+                    corpus_id=manifest.corpus_id,
+                    stage_id=stage.id,
+                    examples=examples,
+                    observations=tuple(all_observations),
+                    resolution=resolution,
+                    consensus=manifest.consensus,
+                    resources=resources,
+                    completion_profile=profile,
+                    stage_model_count=stage_model_count,
+                    previous=report,
+                )
             unresolved, _ = cascade_unresolved_clause_ids(
                 report.clauses,
                 stage_clause_ids=tuple(c.clause_id for c in report.clauses),
@@ -584,6 +675,8 @@ def run_partial_cascade(
                     "diagnostics": stage_diagnostics,
                 }
             )
+            if focused_record is not None:
+                stages[-1]["focused_resolution"] = focused_record
             previous = report
             _write_report(
                 root,
@@ -630,5 +723,11 @@ def write_partial_cascade_costs(root: Path) -> dict[str, Any]:
         "applicability_detail": detail.model_dump(mode="json"),
         "total": cascade.plus(detail).model_dump(mode="json"),
     }
+    focused = RequestTiming()
+    for path in sorted(root.glob("stages/*/focused/**/executions/execution-*/request-timing.json")):
+        focused = focused.plus(RequestTiming.model_validate_json(path.read_bytes()))
+    if any(root.glob("stages/*/focused-plan.json")):
+        payload["focused_resolution"] = focused.model_dump(mode="json")
+        payload["focused_included_in_cascade_total"] = True
     _atomic_json(root / "partial-cascade-costs.json", payload)
     return payload

@@ -56,6 +56,10 @@ from standards_atlas.cli.commands.evaluation_commands.partial_cascade import (
 from standards_atlas.cli.commands.evaluation_commands.partial_cascade_audit import (
     audit_partial_cascade_command,
 )
+from standards_atlas.cli.commands.evaluation_commands.partial_comparison import (
+    compare_efficient_prompts_command,
+    compare_partial_profiles_command,
+)
 from standards_atlas.cli.commands.evaluation_commands.partial_proposals import (
     propose_partial_semantics,
 )
@@ -83,6 +87,8 @@ __all__ = [
     "_MatrixProposalProgress",
     "_format_duration",
     "audit_partial_experiment_command",
+    "compare_efficient_prompts_command",
+    "compare_partial_profiles_command",
     "build_applicability_detail_disagreement_hitl",
     "build_evaluation_corpus",
     "build_role_golden_corpus",
