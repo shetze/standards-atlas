@@ -2270,93 +2270,93 @@ TABLE;b1c029b7ceb0031d911ea2a5947bc998;ISO 26262-10:2018 Table 3;8.3.2.4;Example
 TABLE;7ca047fda5f5a9d95f0773aad81f6f90;ISO 26262-10:2018 Table 4;9.1;Categorization of the software components
 TABLE;891ead58ea35e3a6db509fd196c6841a;ISO 26262-10:2018 Table 5;11.3.6.2;Possible decompositions
 TABLE;d717a2f83d2202355a9e6ecdb0ec8ef3;ISO 26262-10:2018 Table 6;12.3.1.2;Example values, Equations (2) and (3)
-TABLE;7d05052b3dbf4ac207ac22f3fde3b850;ISO 26262-11:2018 Table 1;4.5.1.2;
-TABLE;02761f8810219c400caeb8e9ba099d40;ISO 26262-11:2018 Table 2;4.6.2.1.1.1;
-TABLE;80fef5ed08481ce7a15655f32ebb3068;ISO 26262-11:2018 Table 3;4.6.2.1.1.1;
-TABLE;8272287ff4021b03344a4c555e1d05c7;ISO 26262-11:2018 Table 4;4.6.2.1.1.1;
-TABLE;17abd84efa5d88707b6e792ab07b4e8f;ISO 26262-11:2018 Table 5;4.6.2.1.1.1;
-TABLE;4f320b4b443c226f07c5125b329ae57a;ISO 26262-11:2018 Table 6;4.6.2.1.1.3;
-TABLE;92cb346341593811b2d41d7801ff4159;ISO 26262-11:2018 Table 7;4.6.2.1.2.2;
-TABLE;b2c5d3ff0e6d4cf7e39721065743685d;ISO 26262-11:2018 Table 8;4.6.2.1.2.2;
-TABLE;b45cd3f1bfefff7900a844b127d4c96c;ISO 26262-11:2018 Table 9;4.6.2.1.2.3;
-TABLE;f8a72f48938ef903b4561757d503638d;ISO 26262-11:2018 Table 10;4.6.2.1.3;
-TABLE;81814d4c93bdc806ef30b4d1ecfb6ec2;ISO 26262-11:2018 Table 11;4.6.2.1.3;
-TABLE;04a0dd847e5ac65f31ad26605f7d3510;ISO 26262-11:2018 Table 12;4.6.2.1.3;
-TABLE;3fcdc7cf31850af78d4929245f5d39f7;ISO 26262-11:2018 Table 13;4.6.2.1.3;
-TABLE;9261942483b88fa2c64812af0c81d6e4;ISO 26262-11:2018 Table 14;4.6.2.1.3;
-TABLE;c6505d7d647f36cd8aee685605fba882;ISO 26262-11:2018 Table 15;4.6.2.1.3;
-TABLE;09a110f130ae1313b63792927c461dcd;ISO 26262-11:2018 Table 16;4.6.2.1.3;
-TABLE;a4b2dfc619ebdb15bf664f3c83bf462d;ISO 26262-11:2018 Table 17;4.6.2.1.3;
-TABLE;c00a1d508ee99d7c0902bcf4d93bea67;ISO 26262-11:2018 Table 18;4.6.2.2.2;
-TABLE;43422dcfcf253117c2008529621564ed;ISO 26262-11:2018 Table 19;4.6.2.2.2;
-TABLE;b7b2b25e55b9e7171652b0a86973c9d1;ISO 26262-11:2018 Table 20;4.6.2.2.2;
-TABLE;11fdcc8f5c6ba11298df985387fce874;ISO 26262-11:2018 Table 21;4.7.5.1;
-TABLE;6f577706399466d438406b2af53f366c;ISO 26262-11:2018 Table 22;4.7.5.1;
-TABLE;466088d233c208652de092d85e47bf1a;ISO 26262-11:2018 Table 23;4.7.5.1;
-TABLE;66c3b6e3b3716aac1526318168be4c9b;ISO 26262-11:2018 Table 24;4.7.5.1;
-TABLE;140ea5603f318ec98045b5a12c80f5da;ISO 26262-11:2018 Table 25;4.7.5.1;
-TABLE;c8eabf904372b6a94073856fd9d38385;ISO 26262-11:2018 Table 26;4.7.5.1;
-TABLE;3b7622f59506af89533a7ed11599beb9;ISO 26262-11:2018 Table 27;4.12;
-TABLE;c268a3f26728e0dab13478656fe4db73;ISO 26262-11:2018 Table 28;4.12;
-TABLE;70c92d969178450f81c1535fb213e106;ISO 26262-11:2018 Table 29;5.1.3;
-TABLE;579186747bea4d6df48649a57f9b24b7;ISO 26262-11:2018 Table 30;5.1.5;
-TABLE;d74deb89f665bb6539a308c793c3e033;ISO 26262-11:2018 Table 31;5.1.9;
-TABLE;75d53b61149c3dc114165f3413d1d5a7;ISO 26262-11:2018 Table 32;5.1.12;
-TABLE;d9130f7adf3800accb6f2d84a710f860;ISO 26262-11:2018 Table 33;5.1.12;
-TABLE;30e7bb0c22c63bde5851d841b25713fd;ISO 26262-11:2018 Table 34;5.1.12;
-TABLE;47e4838ac290cd0493e8da966ce39cb9;ISO 26262-11:2018 Table 35;5.1.12;
-TABLE;b753d5a4d3729a6a68610f6b7623581d;ISO 26262-11:2018 Table 36;5.2.2.1;
-TABLE;09d548f11f1c56e73d7c01ab573c700d;ISO 26262-11:2018 Table 37;5.2.4;
-TABLE;74e1d3cf040c9a0967debe2cdb3f5f85;ISO 26262-11:2018 Table 38;5.2.4;
-TABLE;bba93bffcc4db33e1fdae7a681e1c4c8;ISO 26262-11:2018 Table 39;5.2.4;
-TABLE;4cf1eea0143a94f72ce964a0269bf43d;ISO 26262-11:2018 Table 40;5.2.4;
-TABLE;4c13ee2eeacadb33899ae84f368b35e6;ISO 26262-11:2018 Table 41;5.2.5;
-TABLE;58fb45da6fd0f2576e731b49868882c3;ISO 26262-11:2018 Table 42;5.3.1.2;
-TABLE;418dc2bc685c7dbf370520da752c6ed1;ISO 26262-11:2018 Table 43;5.3.2;
-TABLE;e0520cbd73d0dc1a0d52f8a8cfabe03c;ISO 26262-11:2018 Table 44;5.3.3.1.1;
-TABLE;059439eb05163b577a2f3fe1e8d58df5;ISO 26262-11:2018 Table 45;5.3.3.1.1;
-TABLE;2197db6a4f6ce7bd1e6644afb3025cc5;ISO 26262-11:2018 Table 46;5.3.3.1.1;
-TABLE;64ca2b7f2a17ddc4a5011b5d037d494d;ISO 26262-11:2018 Table 47;5.3.3.1.3;
-TABLE;3166e64434affdf6227d419a85fa631e;ISO 26262-11:2018 Table 48;5.3.3.2;
-TABLE;b6941939c72d4f04baff3803f0fcfd88;ISO 26262-11:2018 Table 49;5.3.3.2;
-TABLE;064df0b0308307a154c27149c309399f;ISO 26262-11:2018 Table 50;5.3.3.2;
-TABLE;bac1e0054405bb5c367663e7fc3af44b;ISO 26262-11:2018 Table 51;5.3.4;
-TABLE;29a0538e9282cee344b6e0095feefeb3;ISO 26262-11:2018 Table 52;5.3.5.3;
-TABLE;9285610d1a59fa9e7ae22ca8127c3e71;ISO 26262-11:2018 Table 53;5.5.2;
-TABLE;9347ac6a686ce4a69ac587aba1ce6908;ISO 26262-11:2018 Table 54;5.5.2.1;
-TABLE;3c4f38c1a4a9445079c3a23292270b3f;ISO 26262-11:2018 Table 55;5.5.2.2;
-TABLE;fce6cfacc4115b956a41caf0f3377de5;ISO 26262-11:2018 Table 56;5.5.3.2;
-TABLE;4bf2c33001b5952d355ae638a560e413;ISO 26262-11:2018 Table 57;5.5.4;
-TABLE;40243b09b33f70c6d5ddcddfdf353d62;ISO 26262-11:2018 Table 58;5.5.5;
-TABLE;06645a18e6eb00eb1ddffc0cacd57f08;ISO 26262-11:2018 Table B.1;B.1.2;
-TABLE;0eec5d73a20a8b976b27bdb8681f5ba4;ISO 26262-11:2018 Table B.2;B.2.3;
-TABLE;4e1ace066480b1b18b568be939a65cdc;ISO 26262-11:2018 Table B.3;B.2.3;
-TABLE;33fa03f5fc89b6a52a416284ae9c3d66;ISO 26262-11:2018 Table D.1;D.1;
-TABLE;9c2ff3f59f4d01292ac33bfe94c99f57;ISO 26262-11:2018 Table D.2;D.1;
-TABLE;4ebad2b729f92ee1227246fa63475c5d;ISO 26262-11:2018 Table D.3;D.1;
-TABLE;fc4bef0d24b511bb8ceae6547b52a18a;ISO 26262-11:2018 Table D.4;D.1;
-TABLE;b4bf0bc8326990969b4f0a59bdcc538e;ISO 26262-11:2018 Table D.5;D.1;
-TABLE;c399a011370b05ce5c6190dd32dbcf58;ISO 26262-11:2018 Table D.6;D.1.1;
-TABLE;b7aa436430512ef70c846661f9f77aa6;ISO 26262-11:2018 Table D.7;D.1.1;
-TABLE;e42b69fb93a753ec59d4578405dbfbd4;ISO 26262-11:2018 Table E.1;E.2;
-TABLE;bb60cbd04c2fe93d48fc04162ee5ad55;ISO 26262-11:2018 Table E.2;E.3;
-TABLE;0011b3b5c8bdbae882b9a3da91b7da1d;ISO 26262-12:2018 Table 1;7.2.1;
-TABLE;ebb5832293ab9a7c9a0839ccf76c6039;ISO 26262-12:2018 Table 2;8.4.3.2;
-TABLE;b881089d20a40d90eec02490c381bc5f;ISO 26262-12:2018 Table 3;8.4.3.5;
-TABLE;6db150a2645411dcf42ab6eedad157cf;ISO 26262-12:2018 Table 4;8.4.3.8;
-TABLE;765ade8507319b8c9ab778c1af37b2f2;ISO 26262-12:2018 Table 5;8.4.3.10;
-TABLE;a6435707ae40825a355b09831dc2b1e7;ISO 26262-12:2018 Table 6;8.4.3.11;
-TABLE;a7a0ebb0de2e5b786b53bf2a77edcecb;ISO 26262-12:2018 Table 7;9.2.2.2;
-TABLE;92e7d1ee21a8b3fe02e2de5390347c7a;ISO 26262-12:2018 Table 8;9.2.2.3;
-TABLE;811c0b0e1466d45f46ae9cf9104c690e;ISO 26262-12:2018 Table 9;9.2.2.4;
-TABLE;4fae02049e950f957da3469ff5cc6200;ISO 26262-12:2018 Table 10;9.2.2.5;
-TABLE;4b9bd2c863a4b51f52ab9aafcea7e609;ISO 26262-12:2018 Table A.1;A.2;
-TABLE;2a8dbf3f340abaf763c917706224aed8;ISO 26262-12:2018 Table A.2;A.3;
-TABLE;876bdb5eb5d6ca65fbc177911e9bc81d;ISO 26262-12:2018 Table A.3;A.4;
-TABLE;c174070889349c66ea36d7a742d4c2ca;ISO 26262-12:2018 Table B.1;B.2.2;
-TABLE;a9cc5aafd341d292924a34fc060d9fea;ISO 26262-12:2018 Table B.2;B.3;
-TABLE;4c1bcc379a5617c759a73ff655311046;ISO 26262-12:2018 Table B.3;B.3;
-TABLE;aedcdcd2b6badb81c6091666ee1c084a;ISO 26262-12:2018 Table B.4;B.4;
-TABLE;0fb78ec73eaef8796b46964f5c31c59a;ISO 26262-12:2018 Table C.1;C.6;
-TABLE;380630a894a1af7ead417ebef009c3e4;ISO 26262-12:2018 Table C.2;C.6;
-TABLE;63f04249e68b3aaf118f5fa3fe704680;ISO 26262-12:2018 Table C.3;C.6;
+TABLE;7d05052b3dbf4ac207ac22f3fde3b850;ISO 26262-11:2018 Table 1;4.5.1.2;Types of IP
+TABLE;02761f8810219c400caeb8e9ba099d40;ISO 26262-11:2018 Table 2;4.6.2.1.1.1;Digital component example with summed λ2
+TABLE;80fef5ed08481ce7a15655f32ebb3068;ISO 26262-11:2018 Table 3;4.6.2.1.1.1;Mixed signal example with max of λ2
+TABLE;8272287ff4021b03344a4c555e1d05c7;ISO 26262-11:2018 Table 4;4.6.2.1.1.1;Composition of the example IC in BiCMOS technology
+TABLE;17abd84efa5d88707b6e792ab07b4e8f;ISO 26262-11:2018 Table 5;4.6.2.1.1.1;Digital component example with matching device type
+TABLE;4f320b4b443c226f07c5125b329ae57a;ISO 26262-11:2018 Table 6;4.6.2.1.1.3;Package base failure rate calculation example
+TABLE;92cb346341593811b2d41d7801ff4159;ISO 26262-11:2018 Table 7;4.6.2.1.2.2;Parameters required for failure rate calculation example with SN 29500
+TABLE;b2c5d3ff0e6d4cf7e39721065743685d;ISO 26262-11:2018 Table 8;4.6.2.1.2.2;Digital component failure rate calculation example with SN 29500
+TABLE;b45cd3f1bfefff7900a844b127d4c96c;ISO 26262-11:2018 Table 9;4.6.2.1.2.3;SN 29500 failure rate calculation with or without non-operating phases
+TABLE;f8a72f48938ef903b4561757d503638d;ISO 26262-11:2018 Table 10;4.6.2.1.3;Base failure rate of the die from UTE FIDES
+TABLE;81814d4c93bdc806ef30b4d1ecfb6ec2;ISO 26262-11:2018 Table 11;4.6.2.1.3;Base failure rate of the package from UTE FIDES
+TABLE;04a0dd847e5ac65f31ad26605f7d3510;ISO 26262-11:2018 Table 12;4.6.2.1.3;Simplified mission profile example
+TABLE;3fcdc7cf31850af78d4929245f5d39f7;ISO 26262-11:2018 Table 13;4.6.2.1.3;Die base failure rate with temperature de-rating factor
+TABLE;9261942483b88fa2c64812af0c81d6e4;ISO 26262-11:2018 Table 14;4.6.2.1.3;Package base failure rate with temperature cycling de-rating factor
+TABLE;c6505d7d647f36cd8aee685605fba882;ISO 26262-11:2018 Table 15;4.6.2.1.3;Elaborated mission profile example
+TABLE;09a110f130ae1313b63792927c461dcd;ISO 26262-11:2018 Table 16;4.6.2.1.3;Effective failure rate
+TABLE;a4b2dfc619ebdb15bf664f3c83bf462d;ISO 26262-11:2018 Table 17;4.6.2.1.3;Package and solder joints failure rate
+TABLE;c00a1d508ee99d7c0902bcf4d93bea67;ISO 26262-11:2018 Table 18;4.6.2.2.2;Mission profile and equivalent junction temperature Tj,eq
+TABLE;43422dcfcf253117c2008529621564ed;ISO 26262-11:2018 Table 19;4.6.2.2.2;Calculation of failure rate per mm2 at reference temperature Tref
+TABLE;b7b2b25e55b9e7171652b0a86973c9d1;ISO 26262-11:2018 Table 20;4.6.2.2.2;Final chip failure rate calculation
+TABLE;11fdcc8f5c6ba11298df985387fce874;ISO 26262-11:2018 Table 21;4.7.5.1;Dependent failure initiators due to random hardware faults of shared resources
+TABLE;6f577706399466d438406b2af53f366c;ISO 26262-11:2018 Table 22;4.7.5.1;Dependent failures initiators due to random physical root causes
+TABLE;466088d233c208652de092d85e47bf1a;ISO 26262-11:2018 Table 23;4.7.5.1;Systematic dependent failure initiators due to environmental conditions
+TABLE;66c3b6e3b3716aac1526318168be4c9b;ISO 26262-11:2018 Table 24;4.7.5.1;Systematic dependent failure initiators due to development faults
+TABLE;140ea5603f318ec98045b5a12c80f5da;ISO 26262-11:2018 Table 25;4.7.5.1;Systematic dependent failure initiators due to manufacturing faults
+TABLE;c8eabf904372b6a94073856fd9d38385;ISO 26262-11:2018 Table 26;4.7.5.1;Systematic dependent failure initiators due to installation faults
+TABLE;3b7622f59506af89533a7ed11599beb9;ISO 26262-11:2018 Table 27;4.12;Methods for deriving test cases for hardware integration testing at semiconductor level
+TABLE;c268a3f26728e0dab13478656fe4db73;ISO 26262-11:2018 Table 28;4.12;Hardware integration tests to verify the completeness and correctness of the implementation of the hardware safety requirements at semiconductor level
+TABLE;70c92d969178450f81c1535fb213e106;ISO 26262-11:2018 Table 29;5.1.3;fault models of memory elements
+TABLE;579186747bea4d6df48649a57f9b24b7;ISO 26262-11:2018 Table 30;5.1.5;Example of failure modes for digital components
+TABLE;d74deb89f665bb6539a308c793c3e033;ISO 26262-11:2018 Table 31;5.1.9;Example of techniques or measures to achieve compliance with ISO 26262‑5 requirements during the development of a digital component
+TABLE;75d53b61149c3dc114165f3413d1d5a7;ISO 26262-11:2018 Table 32;5.1.12;Non-volatile memory
+TABLE;d9130f7adf3800accb6f2d84a710f860;ISO 26262-11:2018 Table 33;5.1.12;Volatile memory
+TABLE;30e7bb0c22c63bde5851d841b25713fd;ISO 26262-11:2018 Table 34;5.1.12;Combinatorial and sequential logic
+TABLE;47e4838ac290cd0493e8da966ce39cb9;ISO 26262-11:2018 Table 35;5.1.12;On-chip communication
+TABLE;b753d5a4d3729a6a68610f6b7623581d;ISO 26262-11:2018 Table 36;5.2.2.1;Possible failure modes of analogue and mixed signal parts and subparts
+TABLE;09d548f11f1c56e73d7c01ab573c700d;ISO 26262-11:2018 Table 37;5.2.4;Power supply
+TABLE;74e1d3cf040c9a0967debe2cdb3f5f85;ISO 26262-11:2018 Table 38;5.2.4;Analogue I/O
+TABLE;bba93bffcc4db33e1fdae7a681e1c4c8;ISO 26262-11:2018 Table 39;5.2.4;Miscellaneous analogue components
+TABLE;4cf1eea0143a94f72ce964a0269bf43d;ISO 26262-11:2018 Table 40;5.2.4;Analogue to Digital converter
+TABLE;4c13ee2eeacadb33899ae84f368b35e6;ISO 26262-11:2018 Table 41;5.2.5;Examples of measures to avoid systematic failures in analogue and mixed signal components
+TABLE;58fb45da6fd0f2576e731b49868882c3;ISO 26262-11:2018 Table 42;5.3.1.2;Commonly used PLD types
+TABLE;418dc2bc685c7dbf370520da752c6ed1;ISO 26262-11:2018 Table 43;5.3.2;Example of failure mode for PLD
+TABLE;e0520cbd73d0dc1a0d52f8a8cfabe03c;ISO 26262-11:2018 Table 44;5.3.3.1.1;PLD resource overview
+TABLE;059439eb05163b577a2f3fe1e8d58df5;ISO 26262-11:2018 Table 45;5.3.3.1.1;Example of the computation of the failure rates for the PLD
+TABLE;2197db6a4f6ce7bd1e6644afb3025cc5;ISO 26262-11:2018 Table 46;5.3.3.1.1;Example of user design resource usage and failure rate calculation
+TABLE;64ca2b7f2a17ddc4a5011b5d037d494d;ISO 26262-11:2018 Table 47;5.3.3.1.3;Example of approaches for PLD failure modes distribution computation at PLD user level
+TABLE;3166e64434affdf6227d419a85fa631e;ISO 26262-11:2018 Table 48;5.3.3.2;Specificities of DFA for PLD manufacturers and PLD users with respect to 4.7
+TABLE;b6941939c72d4f04baff3803f0fcfd88;ISO 26262-11:2018 Table 49;5.3.3.2;Specificities of DFI for PLD manufacturer and PLD user with respect to 4.7
+TABLE;064df0b0308307a154c27149c309399f;ISO 26262-11:2018 Table 50;5.3.3.2;Countermeasures related to DFI for PLD manufacturer and PLD user
+TABLE;bac1e0054405bb5c367663e7fc3af44b;ISO 26262-11:2018 Table 51;5.3.4;Mapping of PLD safety mechanisms with ISO 26262-5:2018, Annex D
+TABLE;29a0538e9282cee344b6e0095feefeb3;ISO 26262-11:2018 Table 52;5.3.5.3;Examples of measures to avoid systematic failures for PLD users
+TABLE;9285610d1a59fa9e7ae22ca8127c3e71;ISO 26262-11:2018 Table 53;5.5.2;Example of transducer failure modes (electrical)
+TABLE;9347ac6a686ce4a69ac587aba1ce6908;ISO 26262-11:2018 Table 54;5.5.2.1;Sensor Anomalies which can be introduced during Production Processes
+TABLE;3c4f38c1a4a9445079c3a23292270b3f;ISO 26262-11:2018 Table 55;5.5.2.2;Examples of Root Causes & Associated Modes of MEMS Transducer Failures[45]
+TABLE;fce6cfacc4115b956a41caf0f3377de5;ISO 26262-11:2018 Table 56;5.5.3.2;DFI for sensors and transducers
+TABLE;4bf2c33001b5952d355ae638a560e413;ISO 26262-11:2018 Table 57;5.5.4;Example of Safety Mechanisms for Sensors/Transducers
+TABLE;40243b09b33f70c6d5ddcddfdf353d62;ISO 26262-11:2018 Table 58;5.5.5;Example of techniques or measures to achieve compliance with ISO 26262‑5:2018 requirements during the development of a sensors or transducers
+TABLE;06645a18e6eb00eb1ddffc0cacd57f08;ISO 26262-11:2018 Table B.1;B.1.2;DFA for microcontroller example
+TABLE;0eec5d73a20a8b976b27bdb8681f5ba4;ISO 26262-11:2018 Table B.2;B.2.3;Example of identified relevant coupling mechanisms
+TABLE;4e1ace066480b1b18b568be939a65cdc;ISO 26262-11:2018 Table B.3;B.2.3;Examples for the mitigation of coupling effects
+TABLE;33fa03f5fc89b6a52a416284ae9c3d66;ISO 26262-11:2018 Table D.1;D.1;Safety mechanisms considered in the example and related coverage for hardware element
+TABLE;9c2ff3f59f4d01292ac33bfe94c99f57;ISO 26262-11:2018 Table D.2;D.1;Example of quantitative analysis — mission parts
+TABLE;4ebad2b729f92ee1227246fa63475c5d;ISO 26262-11:2018 Table D.3;D.1;Example of quantitative analysis — safety mechanisms
+TABLE;fc4bef0d24b511bb8ceae6547b52a18a;ISO 26262-11:2018 Table D.4;D.1;Safety mechanisms considered in the example with the new safety requirement
+TABLE;b4bf0bc8326990969b4f0a59bdcc538e;ISO 26262-11:2018 Table D.5;D.1;Example of quantitative analysis in the case of fine granularity — mission parts
+TABLE;c399a011370b05ce5c6190dd32dbcf58;ISO 26262-11:2018 Table D.6;D.1.1;Base failure rate allocation based on area
+TABLE;b7aa436430512ef70c846661f9f77aa6;ISO 26262-11:2018 Table D.7;D.1.1;Failure rate for each part/subpart
+TABLE;e42b69fb93a753ec59d4578405dbfbd4;ISO 26262-11:2018 Table E.1;E.2;Example of a PLD safety analysis in the case of PLD external measures
+TABLE;bb60cbd04c2fe93d48fc04162ee5ad55;ISO 26262-11:2018 Table E.2;E.3;Example framework for quantitative analysis of scenario 2
+TABLE;0011b3b5c8bdbae882b9a3da91b7da1d;ISO 26262-12:2018 Table 1;7.2.1;Required confirmation measures, including the required level of independence
+TABLE;ebb5832293ab9a7c9a0839ccf76c6039;ISO 26262-12:2018 Table 2;8.4.3.2;Classes of severity
+TABLE;b881089d20a40d90eec02490c381bc5f;ISO 26262-12:2018 Table 3;8.4.3.5;Classes of probability of exposure regarding operational situations
+TABLE;6db150a2645411dcf42ab6eedad157cf;ISO 26262-12:2018 Table 4;8.4.3.8;Classes of controllability
+TABLE;765ade8507319b8c9ab778c1af37b2f2;ISO 26262-12:2018 Table 5;8.4.3.10;MSIL determination
+TABLE;a6435707ae40825a355b09831dc2b1e7;ISO 26262-12:2018 Table 6;8.4.3.11;Mapping of MSIL to ASIL
+TABLE;a7a0ebb0de2e5b786b53bf2a77edcecb;ISO 26262-12:2018 Table 7;9.2.2.2;Correct implementation of the functional safety requirements at the vehicle level
+TABLE;92e7d1ee21a8b3fe02e2de5390347c7a;ISO 26262-12:2018 Table 8;9.2.2.3;Correct functional performance, accuracy and timing of safety mechanisms at the vehicle level
+TABLE;811c0b0e1466d45f46ae9cf9104c690e;ISO 26262-12:2018 Table 9;9.2.2.4;Correct implementation of internal and external interfaces at the vehicle level
+TABLE;4fae02049e950f957da3469ff5cc6200;ISO 26262-12:2018 Table 10;9.2.2.5;Level of robustness at the vehicle level
+TABLE;4b9bd2c863a4b51f52ab9aafcea7e609;ISO 26262-12:2018 Table A.1;A.2;Overview of Functional safety management
+TABLE;2a8dbf3f340abaf763c917706224aed8;ISO 26262-12:2018 Table A.2;A.3;Overview of concept phase
+TABLE;876bdb5eb5d6ca65fbc177911e9bc81d;ISO 26262-12:2018 Table A.3;A.4;Overview of and workflow of product development at the system level for motorcycles
+TABLE;c174070889349c66ea36d7a742d4c2ca;ISO 26262-12:2018 Table B.1;B.2.2;Examples of severity classification
+TABLE;a9cc5aafd341d292924a34fc060d9fea;ISO 26262-12:2018 Table B.2;B.3;Classes of probability of exposure regarding duration in operational situations
+TABLE;4c1bcc379a5617c759a73ff655311046;ISO 26262-12:2018 Table B.3;B.3;Classes of probability of exposure regarding frequency in operational situations
+TABLE;aedcdcd2b6badb81c6091666ee1c084a;ISO 26262-12:2018 Table B.4;B.4;Examples of possibly controllable hazardous events by the rider or by the persons potentially at risk
+TABLE;0fb78ec73eaef8796b46964f5c31c59a;ISO 26262-12:2018 Table C.1;C.6;Vehicle response and performance
+TABLE;380630a894a1af7ead417ebef009c3e4;ISO 26262-12:2018 Table C.2;C.6;Awareness
+TABLE;63f04249e68b3aaf118f5fa3fe704680;ISO 26262-12:2018 Table C.3;C.6;Control behaviour
