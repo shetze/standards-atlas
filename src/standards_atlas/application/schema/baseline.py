@@ -7,6 +7,21 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "source-structure": SchemaPolicy(
+        "source-structure", "1.0", ("1.0",), "clause-descriptor.source_structure"
+    ),
+    "clause-decision-plan": SchemaPolicy(
+        "clause-decision-plan", "1.0", ("1.0",), "**/taxonomy-decision-plans.json"
+    ),
+    "taxonomy-decision-report": SchemaPolicy(
+        "taxonomy-decision-report", "1.0", ("1.0",), "**/taxonomy-decision-report.json"
+    ),
+    "taxonomy-decision-rules": SchemaPolicy(
+        "taxonomy-decision-rules", 1, (1,), "resources/semantic/taxonomy-decisions/**/rules.yaml"
+    ),
+    "taxonomy-decision-review": SchemaPolicy(
+        "taxonomy-decision-review", 1, (1,), "resources/semantic/taxonomy-decisions/**/review.yaml"
+    ),
     "cascade-provenance": SchemaPolicy(
         "cascade-provenance", "1.6", ("1.5", "1.6"), "**/cascade-provenance.json"
     ),

@@ -86,9 +86,9 @@ def render_qualification_matrix_markdown(
             "## Measured request costs",
             "",
             "Means use measured-request denominators, not batch counts. Historical/cache durations "
-            "are reference measurements, not fresh work. Gateway wall time includes failed attempts; "
-            "unknown provider time for those failures is not estimated. Observation wall time excludes "
-            "model startup; stage wall time is reported in cascade provenance.",
+            "are reference measurements, not fresh work. Gateway wall time includes failed "
+            "attempts; unknown provider time for those failures is not estimated. Observation wall "
+            "time excludes model startup; stage wall time is reported in cascade provenance.",
             "",
             "| Model | Prompt | Reasoning | Timed requests | Inference sum | Fresh inference | "
             "Gateway calls / failed | Gateway wall | Observation wall |",

@@ -2,6 +2,19 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Source-grounded taxonomy diagnostics (2026-09-12)
+
+- Add a source-only structural CBox/descriptor contract with actual baseline provenance,
+  ancestor coordinates and named/versioned taxonomy categories; never recycle semantic targets.
+- Derive attribute-specific `fixed`, `hint`, `open` and `conflict` decision plans with versioned
+  rule/source fingerprints. Keep unreviewed rules and historical unattributed observations hints.
+- Evaluate canonical `heading` and legacy read aliases conservatively; distinguish term entries,
+  requirements, objective/work-product conflicts and technique catalogue/segment patterns.
+- Add read-only `evaluation taxonomy-decisions` for immutable run selections or standalone
+  datasets, with per-rule/document diagnostics and pending review artifacts, without LLM calls.
+- Pin production structural priors to the existing `legacy-v1` baseline; keep current prompts,
+  cache input fingerprints, acceptance rules, Applicability policy and public exports unchanged.
+
 ## Unreleased — Correct cascade baseline and offline replay (2026-09-12)
 
 - Keep missing initial, cumulative and stage-local consensus records unresolved; preserve the

@@ -8,6 +8,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.model.cbox import CBoxEnrichments
+from standards_atlas.application.model.source_structure import SourceStructure
 from standards_atlas.domain.model import (
     CanonicalDocumentSection,
     ClauseType,
@@ -74,6 +75,7 @@ class ClauseDescriptor(BaseModel):
     subject_context: dict[str, Any] | None = None
     enrichment_context: CBoxEnrichments = CBoxEnrichments()
     ancestor_headings: tuple[dict[str, str], ...] | None = None
+    source_structure: SourceStructure | None = None
 
 
 class ClauseFilter(BaseModel):

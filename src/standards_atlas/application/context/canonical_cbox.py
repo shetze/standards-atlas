@@ -102,6 +102,11 @@ def canonical_cbox_context(
     # clause_type/profile are carried separately; no semantic-label feedback here.
     return {
         "canonical_cbox_version": CBOX_CONTRACT_VERSION,
+        **(
+            {"source_structure": clause.source_structure.model_dump(mode="json")}
+            if clause.source_structure is not None
+            else {}
+        ),
         "knowledge_domain": knowledge_domain,
         "document_key": clause.document_key,
         "clause_id": clause.id,

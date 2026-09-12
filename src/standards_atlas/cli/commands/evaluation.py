@@ -58,6 +58,9 @@ from standards_atlas.cli.commands.evaluation_commands.qualification_matrix impor
 from standards_atlas.cli.commands.evaluation_commands.semantic_extraction_qualification import (
     qualify_semantic_extraction,
 )
+from standards_atlas.cli.commands.evaluation_commands.taxonomy_decisions import (
+    diagnose_taxonomy_decisions_command,
+)
 from standards_atlas.cli.composition import build_golden_corpus_qualifier
 
 __all__ = [
@@ -68,6 +71,7 @@ __all__ = [
     "build_role_golden_corpus",
     "build_golden_corpus_qualifier",
     "compare_applicability_detail_runs",
+    "diagnose_taxonomy_decisions_command",
     "compare_applicability_detail_model_matrix",
     "enrich_applicability_details",
     "evaluate_applicability_detail_disagreement_hitl",

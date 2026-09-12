@@ -385,7 +385,9 @@ class ModelConsensusService:
 
             prior = (
                 derive_structural_evidence(
-                    context, confidence=float(prior_cfg.get("confidence", 0.95))
+                    context,
+                    confidence=float(prior_cfg.get("confidence", 0.95)),
+                    policy="legacy-v1",
                 ).as_dict()
                 if prior_cfg.get("enabled", True)
                 else {}

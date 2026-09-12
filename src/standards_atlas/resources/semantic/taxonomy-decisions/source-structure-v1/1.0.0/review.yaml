@@ -1,0 +1,200 @@
+schema_version: 1
+id: source-structure-rule-review
+version: 1.0.0
+review_status: pending
+purpose: Synthetic contract examples for independent review; not semantic gold or qualification evidence.
+rules_id: source-structure-v1
+rules_version: 1.0.0
+cases:
+- id: term-process
+  text: A sequence of activities transforming inputs into outputs.
+  context:
+    clause_type: term
+    heading: process
+  review_status: pending
+  expected_primary_candidates:
+  - definition
+  must_remain_open:
+  - primary_knowledge_kind
+  - applicability_present
+  - statement_functions
+- id: term-role
+  text: Person who performs an independent assessment.
+  context:
+    clause_type: term
+    heading: assessor
+  review_status: pending
+  expected_primary_candidates:
+  - definition
+  must_remain_open:
+  - primary_knowledge_kind
+  - role_semantics_present
+- id: term-technique
+  text: A technique for investigating potential component failures.
+  context:
+    clause_type: term
+    heading: failure analysis
+  review_status: pending
+  expected_primary_candidates:
+  - definition
+  must_remain_open:
+  - primary_knowledge_kind
+  - knowledge_kinds
+- id: requirements-on-objectives
+  text: The objectives shall be documented.
+  context:
+    clause_type: requirement
+    heading: Requirements on objectives
+  review_status: pending
+  expected_primary_candidates:
+  - requirement
+  must_remain_open:
+  - applicability_present
+- id: objective-work-products
+  text: Verification report from the verification activities.
+  context:
+    clause_type: objective
+    heading: Work products
+  review_status: pending
+  expected_primary_state: conflict
+  must_remain_open:
+  - primary_knowledge_kind
+- id: objective-nearest-work-products
+  text: Verification report.
+  context:
+    clause_type: objective
+    heading: Verification report
+    ancestor_headings:
+    - clause_id: parent
+      reference: '6.5'
+      heading: Work products
+  review_status: pending
+  expected_primary_state: conflict
+  must_remain_open:
+  - applicability_present
+- id: matching-objective
+  text: The objective is to obtain a consistent specification.
+  context:
+    clause_type: objective
+    heading: Objectives
+  review_status: pending
+  expected_primary_candidates:
+  - objective
+  expected_primary_state: hint
+  must_remain_open:
+  - applicability_present
+  - statement_functions
+- id: conflicting-direct-markers
+  text: An explanatory observation.
+  context:
+    clause_type: requirement
+    heading: Notes
+  review_status: pending
+  expected_primary_state: conflict
+  must_remain_open:
+  - applicability_present
+- id: local-term-under-objectives
+  text: A sequence of related activities.
+  context:
+    clause_type: term
+    heading: process
+    ancestor_headings:
+    - clause_id: parent
+      reference: '2'
+      heading: Objectives
+  review_status: pending
+  expected_primary_candidates:
+  - definition
+  - objective
+  expected_primary_state: hint
+  must_remain_open:
+  - primary_knowledge_kind
+- id: normative-note-in-technique
+  text: 'NOTE: The requirements of clause 7 do not apply to this class of systems.'
+  context:
+    clause_type: misc
+    heading: Analysis technique
+  review_status: pending
+  must_remain_open:
+  - applicability_present
+  - knowledge_kinds
+- id: technique-usability
+  text: This method is suitable for the analysis of discrete systems.
+  context:
+    clause_type: misc
+    heading: Analysis technique
+  review_status: pending
+  must_remain_open:
+  - applicability_present
+  - role_semantics_present
+- id: inherited-scope
+  text: The supplier shall retain the records.
+  context:
+    clause_type: requirement
+    ancestor_headings:
+    - clause_id: parent
+      reference: '1'
+      heading: Scope
+  review_status: pending
+  expected_primary_candidates:
+  - requirement
+  must_remain_open:
+  - applicability_present
+- id: technique-catalogue-with-normative-note
+  text: 'Aim: Analyse failures.
+
+
+    Description: A systematic method.
+
+
+    NOTE: Clause 7 is not applicable.'
+  context:
+    clause_type: misc
+    heading: Analysis technique
+    ancestor_headings:
+    - clause_id: parent
+      reference: C
+      heading: Overview of techniques and measures for software safety
+    structural_context: &id001
+      node_kind: leaf
+      child_clause_ids: []
+    semantic_sections: &id002
+    - label: Aim
+      role: aim
+      start_offset: 0
+      end_offset: 24
+    - label: Description
+      role: description
+      start_offset: 24
+      end_offset: 92
+  review_status: pending
+  expected_knowledge_candidates:
+  - technique_or_measure
+  expected_knowledge_state: hint
+  must_remain_open:
+  - primary_function
+  - applicability_present
+  - knowledge_kinds
+  - role_semantics_present
+- id: technique-segments-without-catalogue
+  text: 'Aim: Analyse failures.
+
+
+    Description: A systematic method.
+
+
+    NOTE: Clause 7 is not applicable.'
+  context:
+    clause_type: misc
+    heading: Analysis technique
+    structural_context: *id001
+    semantic_sections: *id002
+  review_status: pending
+  expected_knowledge_candidates:
+  - technique_or_measure
+  expected_knowledge_state: hint
+  must_remain_open:
+  - primary_function
+  - applicability_present
+  - knowledge_kinds
+  - role_semantics_present

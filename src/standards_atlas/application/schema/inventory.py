@@ -49,6 +49,41 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "source-structure",
+        "clause-descriptor.source_structure",
+        LifecycleBoundary.PROCESS,
+        (VersionAxis.SCHEMA,),
+        "source-structure",
+    ),
+    VersionedInterface(
+        "clause-decision-plan",
+        "**/taxonomy-decision-plans.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "clause-decision-plan",
+    ),
+    VersionedInterface(
+        "taxonomy-decision-report",
+        "**/taxonomy-decision-report.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "taxonomy-decision-report",
+    ),
+    VersionedInterface(
+        "taxonomy-decision-rules",
+        "resources/semantic/taxonomy-decisions/**/rules.yaml",
+        LifecycleBoundary.PACKAGED_RESOURCE,
+        (VersionAxis.SCHEMA, VersionAxis.RESOURCE),
+        "taxonomy-decision-rules",
+    ),
+    VersionedInterface(
+        "taxonomy-decision-review",
+        "resources/semantic/taxonomy-decisions/**/review.yaml",
+        LifecycleBoundary.PACKAGED_RESOURCE,
+        (VersionAxis.SCHEMA, VersionAxis.RESOURCE),
+        "taxonomy-decision-review",
+    ),
+    VersionedInterface(
         "cascade-provenance",
         "**/cascade-provenance.json",
         LifecycleBoundary.PERSISTENCE,

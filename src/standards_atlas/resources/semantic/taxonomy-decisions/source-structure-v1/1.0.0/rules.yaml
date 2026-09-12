@@ -1,0 +1,69 @@
+schema_version: 1
+id: source-structure-v1
+version: 1.0.0
+mode: diagnostic
+rules:
+  - id: term-definition
+    version: 1.0.0
+    qualification: structural-contract
+    maximum_state: fixed
+    description: A confirmed term entry determines only the primary definition function.
+  - id: requirement-character
+    version: 1.0.0
+    qualification: pending-review
+    maximum_state: hint
+    description: Requirement marking does not by itself resolve prohibition or mixed statements.
+  - id: objective-section
+    version: 1.0.0
+    qualification: pending-review
+    maximum_state: hint
+    description: Matching local type and exact objective section; not Work products.
+  - id: local-heading
+    version: 1.0.0
+    qualification: pending-review
+    maximum_state: hint
+    description: Exact local section roles are hints until independently reviewed.
+  - id: broad-heading
+    version: 1.0.0
+    qualification: pending-review
+    maximum_state: hint
+    description: Keywords about objectives/examples are not binding statement functions.
+  - id: enclosing-section
+    version: 1.0.0
+    qualification: pending-review
+    maximum_state: hint
+    description: An enclosing heading is context, not unbounded function inheritance.
+  - id: technique-entry
+    version: 1.0.0
+    qualification: pending-review
+    maximum_state: hint
+    description: Catalogue context, leaf boundary and valid Aim/Description segments together.
+  - id: technique-segments
+    version: 1.0.0
+    qualification: pending-review
+    maximum_state: hint
+    description: Aim/Description without a verified catalogue boundary is only a hint.
+  - id: structural-conflict
+    version: 1.0.0
+    qualification: structural-contract
+    maximum_state: hint
+    description: Preserve contradicting source observations without selecting a winning label.
+exact_headings:
+  objectives: objective
+  objective: objective
+  requirements: requirement
+  terms and definitions: definition
+  definitions: definition
+  example: example
+  examples: example
+  guidance: guideline
+  guidelines: guideline
+  rationale: rationale
+  assumptions: assumption
+  prerequisites: prerequisite
+  note: note
+  notes: note
+  warning: warning
+  warnings: warning
+catalogue_heading_pattern: '^(?:overview|catalogue|catalog) of techniques and measures\b'
+maximum_catalogue_distance: 8

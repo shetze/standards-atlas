@@ -9,6 +9,7 @@ from pathlib import Path
 
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.application.context.canonical_cbox import project_clause_enrichments
+from standards_atlas.application.context.source_structure import project_source_structure
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseContentProfile,
@@ -119,8 +120,9 @@ class EngineeringDocumentClauseProvider:
             if filters.document_types and document.document_type not in filters.document_types:
                 continue
             ancestor_index = _ancestor_index(document)
+            clause_index = {item.id.value: item for item in document.clauses}
             for clause in document.clauses:
-                descriptor = self._clause_descriptor(document, clause, ancestor_index)
+                descriptor = self._clause_descriptor(document, clause, ancestor_index, clause_index)
                 if filters.clause_types and descriptor.clause_type not in filters.clause_types:
                     continue
                 if filters.statement_functions and not set(filters.statement_functions).issubset(
@@ -154,6 +156,7 @@ class EngineeringDocumentClauseProvider:
         document: EngineeringDocument,
         clause: Clause,
         ancestors: dict[str, tuple[dict[str, str], ...]] | None = None,
+        clause_index: dict[str, Clause] | None = None,
     ) -> ClauseDescriptor:
         table_count, table_length, non_table_length = _content_metrics(clause.content)
         total_length = table_length + non_table_length
@@ -163,17 +166,40 @@ class EngineeringDocumentClauseProvider:
             and total_length > 0
             and table_length / total_length >= 0.60
         )
+        text = clause.plain_text
+        content_hash = normalized_content_hash(text)
+        index = (
+            clause_index
+            if clause_index is not None
+            else {item.id.value: item for item in document.clauses}
+        )
+        parents = []
+        parent_id = clause.parent_id.value if clause.parent_id else None
+        seen = {clause.id.value}
+        while parent_id and parent_id not in seen:
+            seen.add(parent_id)
+            parent = index.get(parent_id)
+            if parent is None:
+                break
+            parents.append(parent)
+            parent_id = parent.parent_id.value if parent.parent_id else None
         return ClauseDescriptor(
+            source_structure=project_source_structure(
+                clause,
+                document_key=document.key.value,
+                content_hash=content_hash,
+                ancestors=tuple(parents),
+            ),
             enrichment_context=project_clause_enrichments(clause),
             ancestor_headings=(ancestors or _ancestor_index(document))[clause.id.value],
             id=clause.id.value,
             document_key=document.key.value,
             reference=clause.reference.as_text(),
             clause_reference=clause.reference.clause,
-            content_hash=normalized_content_hash(clause.plain_text),
+            content_hash=content_hash,
             clause_type=clause.clause_type,
             heading=clause.heading,
-            text=clause.plain_text,
+            text=text,
             parent_id=clause.parent_id.value if clause.parent_id else None,
             statement_functions=clause.semantic_classification.statement_functions,
             canonical_section=(

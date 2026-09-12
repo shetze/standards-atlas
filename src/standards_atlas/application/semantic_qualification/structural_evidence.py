@@ -4,9 +4,14 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from standards_atlas.domain.model import StatementFunction
+
+if TYPE_CHECKING:
+    from standards_atlas.application.semantic_qualification.taxonomy_decisions import (
+        ClauseDecisionPlan,
+    )
 
 
 @dataclass(frozen=True)
@@ -34,7 +39,7 @@ class StructuralEvidence:
 
 
 def derive_structural_evidence(
-    context: dict[str, object], *, confidence: float = 0.95
+    context: dict[str, object], *, confidence: float = 0.95, policy: str = "legacy-v1"
 ) -> StructuralEvidence:
     """Derive conservative priors from normalized structure and explicit wording.
 
@@ -43,6 +48,11 @@ def derive_structural_evidence(
     are used so that deterministic evidence does not become a second language model.
     """
 
+    # Slice 2 is diagnostic-only. Keep the old baseline, including its title
+    # read boundary, explicitly pinned until a qualified policy is activated.
+    # New code must use taxonomy_structural_evidence(), backed by DecisionPlan.
+    if policy != "legacy-v1":
+        raise ValueError("production structural priors remain pinned to legacy-v1")
     title = str(context.get("title") or "").strip().lower()
     text = str(context.get("text") or "").strip().lower()
     values = {
@@ -139,3 +149,22 @@ def derive_structural_evidence(
         confidence=confidence if functions or scope_context else 0.0,
         evidence=tuple(dict.fromkeys(evidence)),
     )
+
+
+def taxonomy_structural_evidence(plan: ClauseDecisionPlan) -> dict[str, Any]:
+    """Project the shared rule plan, without confidence or synthetic model votes.
+
+    Both pre-inference diagnostics and future post-inference consumers use this
+    exact projection. The legacy production baseline above is not activated by it.
+    """
+    return {
+        "policy": f"{plan.rules_id}@{plan.rules_version}",
+        "rules_sha256": plan.rules_sha256,
+        "source_sha256": plan.source_sha256,
+        "plan_sha256": plan.fingerprint,
+        "diagnostic_only": True,
+        "attributes": {
+            item.attribute: item.model_dump(mode="json", exclude={"attribute"})
+            for item in plan.decisions
+        },
+    }
