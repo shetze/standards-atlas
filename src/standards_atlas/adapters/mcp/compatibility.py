@@ -9,13 +9,26 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from standards_atlas.application.schema import SCHEMA_POLICIES
+
 DEFAULT_PROTOCOL_VERSION = "2025-11-25"
 REQUIRED_TOOLS = (
+    "get_server_info",
     "list_standards",
     "get_clause",
     "list_clauses",
     "search_clauses",
     "sample_clauses",
+)
+
+FORMULA_TOOLS = (
+    "list_untranscribed_formulas",
+    "get_formula",
+    "submit_formula_transcription",
+)
+RESTART_HINT = (
+    "Restart the MCP server from the updated checkout/environment "
+    "(managed HTTP: standards-atlas mcp restart --config <server-config>)."
 )
 
 
@@ -43,6 +56,7 @@ class CompatibilityReport:
     server_version: str | None
     protocol_version: str | None
     checks: tuple[CompatibilityCheck, ...]
+    runtime: dict[str, Any] | None = None
 
     @property
     def passed(self) -> bool:
@@ -56,6 +70,7 @@ class CompatibilityReport:
                 "version": self.server_version,
             },
             "protocol_version": self.protocol_version,
+            "runtime": self.runtime,
             "checks": [
                 {"name": check.name, "passed": check.passed, "detail": check.detail}
                 for check in self.checks
@@ -142,10 +157,12 @@ class McpCompatibilityProbe:
         *,
         protocol_version: str = DEFAULT_PROTOCOL_VERSION,
         required_tools: tuple[str, ...] = REQUIRED_TOOLS,
+        document_keys: tuple[str, ...] = (),
     ) -> None:
         self.transport = transport
         self.protocol_version = protocol_version
         self.required_tools = required_tools
+        self.document_keys = tuple(sorted(set(document_keys)))
 
     def run(self) -> CompatibilityReport:
         checks: list[CompatibilityCheck] = []
@@ -179,7 +196,10 @@ class McpCompatibilityProbe:
         tools_response = self.transport.request("tools/list", {}, 2)
         tools = tools_response.get("result", {}).get("tools", [])
         tool_names = {tool.get("name") for tool in tools if isinstance(tool, dict)}
-        missing = sorted(set(self.required_tools) - tool_names)
+        required = set(self.required_tools)
+        if self.document_keys:
+            required.update(FORMULA_TOOLS)
+        missing = sorted(required - tool_names)
         checks.append(
             CompatibilityCheck(
                 "required_tools",
@@ -188,23 +208,17 @@ class McpCompatibilityProbe:
             )
         )
 
-        standards_response = self.transport.request(
-            "tools/call",
-            {"name": "list_standards", "arguments": {}},
-            3,
-        )
-        call_result = standards_response.get("result", {})
-        is_error = bool(call_result.get("isError", False))
-        content = call_result.get("content", [])
-        checks.append(
-            CompatibilityCheck(
-                "list_standards",
-                not is_error and isinstance(content, list),
-                "tool call returned MCP content" if not is_error else "tool returned isError=true",
-            )
-        )
+        schema_check, runtime = self._check_runtime(tool_names)
+        checks.append(schema_check)
 
-        resources_response = self.transport.request("resources/list", {}, 4)
+        try:
+            self._call_tool("list_standards", {}, 4)
+            check = CompatibilityCheck("list_standards", True, "tool call returned MCP content")
+        except (OSError, RuntimeError, ValueError) as exc:
+            check = CompatibilityCheck("list_standards", False, str(exc))
+        checks.append(check)
+
+        resources_response = self.transport.request("resources/list", {}, 5)
         resources = resources_response.get("result", {}).get("resources", [])
         resource_uris = {
             str(resource.get("uri")) for resource in resources if isinstance(resource, dict)
@@ -222,12 +236,102 @@ class McpCompatibilityProbe:
             )
         )
 
+        if self.document_keys:
+            checks.append(self._check_formulas(tool_names))
+
         return CompatibilityReport(
             server_name=server_name,
             server_version=server_version,
             protocol_version=negotiated_protocol,
             checks=tuple(checks),
+            runtime=runtime,
         )
+
+    def _call_tool(self, name: str, arguments: dict[str, Any], request_id: int) -> dict[str, Any]:
+        response = self.transport.request(
+            "tools/call", {"name": name, "arguments": arguments}, request_id
+        )
+        if "error" in response:
+            raise RuntimeError(f"{name}: MCP JSON-RPC error: {response['error']}")
+        result = response.get("result")
+        if not isinstance(result, dict) or not isinstance(result.get("content"), list):
+            raise RuntimeError(f"{name}: malformed MCP tool result")
+        if result.get("isError"):
+            detail = " ".join(
+                item["text"]
+                for item in result["content"]
+                if isinstance(item, dict) and isinstance(item.get("text"), str)
+            )
+            raise RuntimeError(f"{name}: {detail[:2000] or 'tool returned isError=true'}")
+        return result
+
+    def _check_runtime(
+        self, tool_names: set[str]
+    ) -> tuple[CompatibilityCheck, dict[str, Any] | None]:
+        if "get_server_info" not in tool_names:
+            return (
+                CompatibilityCheck(
+                    "engineering_document_schema",
+                    False,
+                    f"Server does not expose loaded runtime/schema information. {RESTART_HINT}",
+                ),
+                None,
+            )
+        try:
+            result = self._call_tool("get_server_info", {}, 3)
+            runtime = _runtime_payload(result)
+            schema = runtime.get("engineering_document_schema", {})
+            if not isinstance(schema, dict):
+                raise ValueError("malformed engineering_document_schema metadata")
+            expected = SCHEMA_POLICIES["engineering-document"].current
+            readable = schema.get("readable")
+            compatible = (
+                schema.get("current") == expected
+                and schema.get("writer") == expected
+                and isinstance(readable, list)
+                and expected in readable
+            )
+            detail = (
+                f"server current={schema.get('current')!r}, writer={schema.get('writer')!r}, "
+                f"readable={readable!r}; local writer={expected!r}"
+            )
+            if not compatible:
+                detail += f". {RESTART_HINT}"
+            return CompatibilityCheck("engineering_document_schema", compatible, detail), runtime
+        except (OSError, RuntimeError, ValueError) as exc:
+            return (
+                CompatibilityCheck("engineering_document_schema", False, f"{exc}. {RESTART_HINT}"),
+                None,
+            )
+
+    def _check_formulas(self, tool_names: set[str]) -> CompatibilityCheck:
+        name = "list_untranscribed_formulas"
+        if name not in tool_names:
+            return CompatibilityCheck(name, False, f"formula listing tool missing. {RESTART_HINT}")
+        try:
+            self._call_tool(name, {"document_keys": list(self.document_keys), "limit": 1}, 6)
+            # Never copy source images, clause text or transcription artifacts into the report.
+            return CompatibilityCheck(
+                name, True, f"formula listing succeeded: {self.document_keys!r}"
+            )
+        except (OSError, RuntimeError, ValueError) as exc:
+            return CompatibilityCheck(name, False, str(exc))
+
+
+def _runtime_payload(result: dict[str, Any]) -> dict[str, Any]:
+    """Accept both MCP structured content and the standard JSON text fallback."""
+    structured = result.get("structuredContent")
+    if isinstance(structured, dict):
+        return structured
+    for item in result["content"]:
+        if isinstance(item, dict) and isinstance(item.get("text"), str):
+            try:
+                payload = json.loads(item["text"])
+            except ValueError:
+                continue
+            if isinstance(payload, dict):
+                return payload
+    raise ValueError("get_server_info returned no runtime JSON object")
 
 
 def token_from_environment(variable: str) -> str | None:

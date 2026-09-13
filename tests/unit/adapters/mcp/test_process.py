@@ -151,3 +151,70 @@ def test_pid_is_running_treats_zombie_as_stopped(
     )
 
     assert not McpServerProcessManager._pid_is_running(123)
+
+
+def test_restart_stops_before_starting_current_code(tmp_path, monkeypatch) -> None:
+    config = McpServerConfig(
+        transport="streamable-http", process={"state_directory": tmp_path / "runtime"}
+    )
+    manager = McpServerProcessManager(config, tmp_path / "mcp.yaml")
+    calls = []
+    monkeypatch.setattr(manager, "stop", lambda: calls.append("stop"))
+    monkeypatch.setattr(manager, "start", lambda: calls.append("start"))
+
+    manager.restart()
+
+    assert calls == ["stop", "start"]
+
+
+def test_restart_does_not_start_after_failed_stop(tmp_path, monkeypatch) -> None:
+    config = McpServerConfig(
+        transport="streamable-http", process={"state_directory": tmp_path / "runtime"}
+    )
+    manager = McpServerProcessManager(config, tmp_path / "mcp.yaml")
+    start = Mock()
+    monkeypatch.setattr(manager, "stop", Mock(side_effect=McpServerProcessError("cannot stop")))
+    monkeypatch.setattr(manager, "start", start)
+
+    with pytest.raises(McpServerProcessError, match="cannot stop"):
+        manager.restart()
+
+    start.assert_not_called()
+
+
+def test_start_remains_idempotent_and_does_not_replace_running_server(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    config = McpServerConfig(
+        transport="streamable-http", process={"state_directory": tmp_path / "runtime"}
+    )
+    manager = McpServerProcessManager(config, tmp_path / "mcp.yaml")
+    spawn = Mock()
+    monkeypatch.setattr(manager, "status", Mock(return_value=McpServerProcessStatus(True, 123)))
+    monkeypatch.setattr("subprocess.Popen", spawn)
+
+    manager.start()
+
+    spawn.assert_not_called()
+
+
+def test_start_refuses_unmanaged_listener_without_spawning_or_killing(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    config = McpServerConfig(
+        transport="streamable-http", process={"state_directory": tmp_path / "runtime"}
+    )
+    manager = McpServerProcessManager(config, tmp_path / "mcp.yaml")
+    spawn, terminate = Mock(), Mock()
+    monkeypatch.setattr(manager, "_endpoint_available", Mock(return_value=True))
+    monkeypatch.setattr(manager, "_terminate_process", terminate)
+    monkeypatch.setattr("subprocess.Popen", spawn)
+
+    with pytest.raises(McpServerProcessError, match="occupied without a managed PID"):
+        manager.restart()
+
+    spawn.assert_not_called()
+    terminate.assert_not_called()
+    assert not config.process.pid_file.exists()

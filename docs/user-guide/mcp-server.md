@@ -148,4 +148,80 @@ mcp:
     formula_transcription: true
 ```
 
-Every accepted submission is saved under `.atlas/enrichments/formula-transcriptions/` with actor, provider/model, confidence and source-image hash before the corresponding `FormulaBlock` is changed to `machine_transcribed`. The visual source remains attached to the block for later review.
+With the default workspace, every accepted submission is saved under `.atlas/data/enrichments/formula-transcriptions/` with actor, provider/model, confidence and source-image hash before the corresponding `FormulaBlock` is changed to `machine_transcribed`. The visual source remains attached to the block for later review.
+
+## Recovering a stale MCP runtime after a schema update
+
+The current canonical writer emits EngineeringDocument schema **9**; readers support
+**8 and 9**. A tool error such as
+
+```text
+Unsupported engineering document schema version: 9; readable versions are 8, current is 8
+```
+
+therefore identifies an older loaded reader, not a need to downgrade the document.
+An already running MCP process retains its imported Python modules when a checkout is
+updated. A server launched from another installation/environment can have the same
+symptom. `mcp start` is idempotent: it does **not** reload an existing healthy process.
+Do not edit the persisted `schema_version` or rebuild documents to conceal the mismatch.
+
+After applying the updated files, explicitly restart a **managed HTTP** process from the
+intended project checkout, with the same configuration used to start it:
+
+```bash
+uv run standards-atlas mcp restart --config cfg/mcp.yaml
+```
+
+The existing bearer-token environment variable must still be set. Restart stops the owned
+process before starting a replacement, and does not start a second process if stopping
+fails. An endpoint occupied without a managed PID is rejected rather than reported as a
+successful startup. A foreground `mcp serve`, container or externally managed service must
+instead be stopped/restarted using its original launcher (and rebuilt when its installed
+code is outdated). Reconnect the Codex MCP session after replacing the server.
+
+### Verify the server that actually answers requests
+
+The read-only `get_server_info` tool reports the **loaded** Standards Atlas application
+version, document reader/writer versions and the formula-writing capability. It does not
+read documents or expose tokens, source paths or workspace paths. The MCP initialize
+`server.version` field alone is not evidence of a supported EngineeringDocument schema.
+
+`mcp probe` now checks this runtime information in addition to its protocol/catalog checks.
+An older server without `get_server_info`, or with incompatible reader/writer versions,
+produces a failed check with a restart hint. `--document-key` additionally exercises the
+actual formula-listing path; it may be repeated for several documents:
+
+```bash
+uv run standards-atlas mcp probe \
+  --url http://192.168.0.77:8765/mcp/ \
+  --token-env STANDARDS_ATLAS_MCP_TOKEN \
+  --document-key IEC61508-3 \
+  --output local/evaluation/mcp-schema-formulas.json
+```
+
+The report should include:
+
+```json
+"engineering_document_schema": {
+  "current": 9,
+  "readable": [8, 9],
+  "writer": 9
+}
+```
+
+Both `engineering_document_schema` and `list_untranscribed_formulas` checks must pass.
+An empty formula list is a valid read result; the probe never submits transcriptions and
+does not include source images or clause text in its report. Formula tool errors retain
+their diagnostic message instead of becoming a false-positive success. The catalog check
+still validates the general inventory, independently of the scoped formula check.
+
+A scoped formula request loads only the selected/allowlisted documents, in stable key order.
+Unrelated unsupported or malformed files no longer block it. Unsupported selected files
+remain errors; an unfiltered inventory is still strict rather than silently incomplete.
+
+Writing remains opt-in. The supplied `cfg/mcp.yaml` defaults to
+`mcp.capabilities.formula_transcription: false`; explicitly enable it in the configuration
+used by the server before restarting for a trusted transcription session. A read-only
+probe can pass with writing disabled; inspect `runtime.capabilities.formula_transcription`
+before asking Codex to submit. Submissions continue to preserve the source image and record
+actor, provider/model and source-image hash in the separate transcription artifact.

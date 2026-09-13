@@ -184,3 +184,21 @@ def test_v9_roundtrip_preserves_known_false_unknown_and_primary(tmp_path: Path) 
     assert provenance.availability("enrichments.semantic.applicability_present") == "known"
     assert provenance.availability("enrichments.semantic.role_semantics_present") == "unknown"
     assert provenance.availability("enrichments.semantic.process_functions") == "not_evaluated"
+
+
+def test_writer_version_matches_central_reader_policy() -> None:
+    from standards_atlas.application.schema import SCHEMA_POLICIES
+
+    policy = SCHEMA_POLICIES["engineering-document"]
+    assert CURRENT_DOCUMENT_SCHEMA_VERSION == policy.current == 9
+    assert policy.readable == (8, 9)
+    policy.require_readable(CURRENT_DOCUMENT_SCHEMA_VERSION)
+
+
+def test_readable_inventory_keeps_v9_documents_and_skips_unsupported_schemas(tmp_path) -> None:
+    repository = FileSystemEngineeringDocumentRepository(tmp_path)
+    document = _document()
+    repository.save(document)
+    (tmp_path / "documents" / "obsolete.json").write_text('{"schema_version": 7, "document": {}}')
+
+    assert repository.list_readable() == (document,)

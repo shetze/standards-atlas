@@ -31,9 +31,14 @@ class FormulaTranscriptionService:
     ) -> list[dict[str, Any]]:
         allowed = set(document_keys or ())
         results: list[dict[str, Any]] = []
-        for document in self._documents.list():
-            if allowed and document.key.value not in allowed:
-                continue
+        # Load only requested documents: an unrelated obsolete artifact must not
+        # block a scoped transcription request. Unfiltered inventory stays strict.
+        documents = (
+            (self._documents.load(DocumentKey(value=key)) for key in sorted(allowed))
+            if allowed
+            else self._documents.list()
+        )
+        for document in documents:
             for clause in document.clauses:
                 for index, block in enumerate(clause.content):
                     if (

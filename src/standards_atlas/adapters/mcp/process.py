@@ -59,6 +59,11 @@ class McpServerProcessManager:
             return
         if status.pid is not None:
             raise McpServerProcessError(status.detail or "MCP process is not healthy")
+        if self._endpoint_available():
+            raise McpServerProcessError(
+                "MCP endpoint is already occupied without a managed PID; stop the foreground "
+                "server, container or other service before starting this managed server"
+            )
 
         process_config = self._config.process
         process_config.state_directory.mkdir(parents=True, exist_ok=True)
@@ -101,6 +106,11 @@ class McpServerProcessManager:
         self._terminate_process(pid)
         self._wait_for_process_exit(pid)
         self._config.process.pid_file.unlink(missing_ok=True)
+
+    def restart(self) -> None:
+        """Explicitly replace the owned process so updated code/configuration is loaded."""
+        self.stop()
+        self.start()
 
     @contextmanager
     def ensure_running(

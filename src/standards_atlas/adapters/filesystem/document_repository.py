@@ -10,10 +10,11 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import SCHEMA_POLICIES, require_supported_schema
 from standards_atlas.domain.model import DocumentKey, DocumentType, EngineeringDocument, Standard
 
-CURRENT_DOCUMENT_SCHEMA_VERSION = 9
+# Keep writer envelopes and reader compatibility on one canonical version policy.
+CURRENT_DOCUMENT_SCHEMA_VERSION = SCHEMA_POLICIES["engineering-document"].current
 
 _DOCUMENT_MODELS: dict[
     DocumentType,

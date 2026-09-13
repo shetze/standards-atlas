@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from standards_atlas import __version__
 from standards_atlas.adapters.filesystem import (
     FileSystemEngineeringDocumentRepository,
     FileSystemFormulaTranscriptionRepository,
     FileSystemKnowledgeTableRepository,
 )
 from standards_atlas.adapters.mcp.configuration import McpServerConfig
+from standards_atlas.application.schema import SCHEMA_POLICIES
 from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseFilter,
     SamplingStrategy,
@@ -38,6 +40,25 @@ class McpClauseService:
             FileSystemEngineeringDocumentRepository(config.workspace),
             FileSystemFormulaTranscriptionRepository(config.workspace),
         )
+
+    def get_server_info(self) -> dict[str, Any]:
+        """Report the loaded runtime, not SDK metadata or files changed after startup."""
+        from standards_atlas.adapters.filesystem.document_repository import (
+            CURRENT_DOCUMENT_SCHEMA_VERSION,
+        )
+
+        policy = SCHEMA_POLICIES["engineering-document"]
+        return {
+            "application": {"name": "standards-atlas", "version": __version__},
+            "engineering_document_schema": {
+                "current": policy.current,
+                "readable": list(policy.readable),
+                "writer": CURRENT_DOCUMENT_SCHEMA_VERSION,
+            },
+            "capabilities": {
+                "formula_transcription": self._config.capabilities.formula_transcription,
+            },
+        }
 
     def list_documents(self) -> list[dict[str, Any]]:
         documents = self._provider.list_documents()

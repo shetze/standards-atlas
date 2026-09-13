@@ -148,6 +148,22 @@ def start_mcp(
     typer.echo("MCP server started.")
 
 
+@mcp_app.command("restart")
+def restart_mcp(
+    config: Annotated[
+        Path,
+        typer.Option("--config", exists=True, readable=True, help="MCP YAML configuration."),
+    ] = cli_defaults.DEFAULT_MCP_CONFIG,
+) -> None:
+    """Restart the managed MCP HTTP server to load updated code and configuration."""
+    try:
+        managed_mcp_server(config).restart()
+    except (OSError, RuntimeError, ValueError, McpServerProcessError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo("MCP server restarted.")
+
+
 @mcp_app.command("stop")
 def stop_mcp(
     config: Annotated[
@@ -217,8 +233,15 @@ def probe_mcp(
         Path | None,
         typer.Option("--output", help="Optional JSON report path."),
     ] = cli_defaults.DEFAULT_NONE,
+    document_keys: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--document-key",
+            help="Also probe formula listing for this document (repeatable; never writes).",
+        ),
+    ] = cli_defaults.DEFAULT_NONE,
 ) -> None:
-    """Run an interoperable MCP handshake and read-only contract probe."""
+    """Verify MCP interoperability, loaded document schemas and optional formula reads."""
     import os
 
     token = os.environ.get(token_environment_variable)
@@ -228,7 +251,7 @@ def probe_mcp(
         timeout_seconds=timeout_seconds,
     )
     try:
-        report = McpCompatibilityProbe(transport).run()
+        report = McpCompatibilityProbe(transport, document_keys=tuple(document_keys or ())).run()
     except (OSError, RuntimeError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc

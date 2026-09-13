@@ -69,6 +69,7 @@ def test_registers_tools_and_resources() -> None:
     templates = asyncio.run(server.list_resource_templates())
 
     assert {tool.name for tool in tools} == {
+        "get_server_info",
         "list_standards",
         "get_clause",
         "list_clauses",

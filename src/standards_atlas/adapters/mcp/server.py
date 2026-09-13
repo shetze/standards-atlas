@@ -39,14 +39,19 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
     def tool_call(operation: Any, *args: Any, **kwargs: Any) -> Any:
         try:
             return operation(*args, **kwargs)
-        except (KeyError, ValueError) as exc:
+        except (KeyError, ValueError, FileNotFoundError) as exc:
             message = exc.args[0] if exc.args else str(exc)
             raise ToolError(str(message)) from exc
 
     @mcp.tool()
+    def get_server_info() -> dict[str, Any]:
+        """Read the loaded application version, document schema policy and write capabilities."""
+        return clause_service.get_server_info()
+
+    @mcp.tool()
     def list_standards() -> list[dict[str, Any]]:
         """List standards available to this server, including clause counts."""
-        return clause_service.list_documents()
+        return tool_call(clause_service.list_documents)
 
     @mcp.tool()
     def get_clause(clause_id: str) -> dict[str, Any]:
