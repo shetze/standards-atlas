@@ -59,6 +59,13 @@ be added. Holdout cannot overlap Golden, development or engineering-sentinel cas
 
 ### Reviewed semantic suites
 
+The [source-bound review-package workflow](partial-review-packages.md) now generates both
+suite files from explicit human decisions, with original text, structure, fixed identifiers
+and automated hash handling. Use it before campaign preparation instead of hand-authoring
+reference YAML. Its source/context/rules evidence is copied into new campaign artifacts;
+legacy unbound suites remain supported without that additional assurance.
+
+
 The example has `semantic_suites: []` on purpose: it can be prepared and explored, but it
 **cannot qualify for full-baseline execution or activation** without reviewed semantic
 coverage. Configure reviewed development and holdout suites before freezing the campaign.

@@ -77,6 +77,12 @@ from standards_atlas.cli.commands.evaluation_commands.qualification_matrix impor
     _MatrixProposalProgress,
     qualify_model_prompt_matrix,
 )
+from standards_atlas.cli.commands.evaluation_commands.review_package import (
+    build_partial_review_command,
+    decide_partial_review_command,
+    import_partial_review_command,
+    show_partial_review_command,
+)
 from standards_atlas.cli.commands.evaluation_commands.semantic_extraction_qualification import (
     qualify_semantic_extraction,
 )
@@ -90,6 +96,10 @@ from standards_atlas.cli.commands.evaluation_commands.taxonomy_decisions import 
 from standards_atlas.cli.composition import build_golden_corpus_qualifier
 
 __all__ = [
+    "build_partial_review_command",
+    "decide_partial_review_command",
+    "import_partial_review_command",
+    "show_partial_review_command",
     "activate_qualification_command",
     "evaluate_qualification_command",
     "prepare_qualification_command",

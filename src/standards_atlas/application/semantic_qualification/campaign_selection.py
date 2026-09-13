@@ -9,8 +9,6 @@ from collections import Counter, defaultdict
 from dataclasses import asdict
 from pathlib import Path
 
-import yaml
-
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.schema import require_supported_schema
@@ -206,10 +204,21 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
     source = load_partial_inputs(run=spec.run, dataset=spec.dataset)
     examples = tuple(sorted(source.examples, key=lambda e: e.id))
     golden = ApplicabilityGoldenCorpus.load(spec.golden)
-    suites = tuple(
-        SemanticReferenceSuite.model_validate(yaml.safe_load(p.read_bytes()))
-        for p in spec.semantic_suites
+    from standards_atlas.application.semantic_qualification.review_package.publication import (
+        load_bound_suite,
+        verify_campaign_bindings,
     )
+
+    loaded_suites = [
+        load_bound_suite(p, examples, resources=resources) for p in spec.semantic_suites
+    ]
+    suites = tuple(suite for suite, _ in loaded_suites)
+    review_bindings = {
+        binding.evidence_sha256: binding.model_dump(mode="json")
+        for _, binding in loaded_suites
+        if binding is not None
+    }
+    verify_campaign_bindings(suites, list(review_bindings.values()), examples, resources)
     sentinels = tuple(json.loads(p.read_bytes()) for p in spec.sentinel_suites)
     if len({s.id for s in suites}) != len(suites):
         raise ValueError("semantic suite ids must be unique")
@@ -263,11 +272,15 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
         "inputs/sentinel-suites.json": list(sentinels),
         "selection.json": selection,
     }
+    if review_bindings:
+        payloads["inputs/semantic-review-bindings.json"] = [
+            review_bindings[key] for key in sorted(review_bindings)
+        ]
     files = {
         name: hashlib.sha256(_json_bytes(payload)).hexdigest() for name, payload in payloads.items()
     }
     definition = {
-        "schema_version": "1.0",
+        "schema_version": "1.1" if review_bindings else "1.0",
         "kind": "partial-qualification-campaign",
         "specification": spec.model_dump(mode="json"),
         "variants": variants,
@@ -357,7 +370,8 @@ def load_campaign(root: Path, resources: Path):
         "inputs/sentinel-suites.json",
         "selection.json",
     }
-    if set(files) != expected_names:
+    review_name = "inputs/semantic-review-bindings.json"
+    if set(files) not in (expected_names, expected_names | {review_name}):
         raise ValueError("campaign evidence inventory differs from contract")
     payloads = {}
     for name, digest in files.items():
@@ -378,6 +392,18 @@ def load_campaign(root: Path, resources: Path):
     suites = tuple(
         SemanticReferenceSuite.model_validate(s) for s in payloads["inputs/semantic-suites.json"]
     )
+    from standards_atlas.application.semantic_qualification.review_package.publication import (
+        verify_campaign_bindings,
+    )
+
+    has_review_bindings = any(
+        (s.review_reference or "").startswith("atlas-review:") for s in suites
+    )
+    if has_review_bindings != (review_name in payloads):
+        raise ValueError("campaign review evidence inventory differs from bound suites")
+    if has_review_bindings != (definition["schema_version"] == "1.1"):
+        raise ValueError("source-bound review evidence requires campaign artifact schema 1.1")
+    verify_campaign_bindings(suites, payloads.get(review_name, []), population, resources)
     expected = build_cohorts(
         population,
         golden,
@@ -425,8 +451,12 @@ def verify_prepared_campaign(*, manifest: Path, campaign: Path, resources: Path)
         or ApplicabilityGoldenCorpus.load(requested.golden) != golden
     ):
         raise ValueError("workflow source or Golden corpus changed after campaign preparation")
+    from standards_atlas.application.semantic_qualification.review_package.publication import (
+        load_bound_suite,
+    )
+
     current_suites = tuple(
-        SemanticReferenceSuite.model_validate(yaml.safe_load(p.read_bytes()))
+        load_bound_suite(p, source.examples, resources=resources)[0]
         for p in requested.semantic_suites
     )
     current_sentinels = tuple(json.loads(p.read_bytes()) for p in requested.sentinel_suites)

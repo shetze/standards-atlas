@@ -2,17 +2,33 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
-## Unreleased — MCP runtime schema recovery (2026-09-13)
+## Unreleased — Source-bound human review packages (2026-09-13)
 
-- Add explicit managed `mcp restart` for reloading updated code/configuration; refuse
-  unmanaged occupied endpoints instead of claiming a successful startup.
-- Expose loaded application/schema/capability metadata through read-only `get_server_info`.
-  Extend `mcp probe` with runtime schema checks and repeatable `--document-key` formula reads;
-  retain actual tool errors and never submit transcriptions during diagnostics.
-- Derive the canonical writer version from the central reader/writer policy, and limit
-  scoped formula discovery to requested documents so unrelated stale artifacts cannot block it.
-- Keep schema 9, bounded schema-8 migration, formula write opt-in and document allowlists;
-  verify image/context reads and provenance-preserving LaTeX submission across schemas 8/9.
+- Add versioned review packages/profiles with complete corpus text, stable source identities,
+  separately bound source structure and frozen annotation rules; retain known Development
+  cases and select a reproducible Holdout outside Golden/Sentinel/content-duplicate groups.
+- Keep historical/model/engineering suggestions separate from revision-bound human decisions;
+  preserve explicit false/null/empty values, deferred/rejected tasks and decision history.
+- Add local build/show/decide/import commands without manual hash or annotation-YAML editing;
+  validate source drift, coverage, typed predicates, contradictions and publication provenance.
+- Publish both existing-format semantic suites and their review evidence atomically and
+  idempotently. Carry source/context bindings into campaign artifact 1.1 while retaining
+  legacy artifact 1.0 and all existing qualification/activation gates.
+- Leave intelligent MCP selection and paginated Web review to later slices; no model
+  self-approval endpoints, production labels, taxonomy authority or default-policy changes.
+
+## Unreleased — Evidence-gated partial qualification (2026-09-13)
+
+- Freeze source-only proportional selections, all published Applicability Golden cases,
+  engineering sentinels and separately declared development/holdout review suites.
+- Run independently identified, cache-disabled End-to-End and fixed-gate detail repetitions
+  through the existing cascade; bind physical events, raw responses, settings and final policy.
+- Recompute release gates from verified evidence, keep missing/unknown cases and report
+  semantic quality, request/token costs and the 80-percent objective separately.
+- Add explicit quality-gated full-population baselines, existing-format evidence archives
+  and reviewed activation bundles without promoting experimental defaults or source rules.
+- Expose the campaign through the existing qualification workflow with verified resume;
+  retain historic artifacts and require real evidence rather than replay or copied results.
 
 ## Unreleased — Bounded partial-cascade resolution (2026-09-13)
 

@@ -1,0 +1,25 @@
+# Optional predeclared review policy, not supplied human labels or an approval.
+schema_version: '1.0'
+kind: partial-review-profile
+id: partial-semantic-reference-v1
+version: '1.0.0'
+attributes:
+  - primary_function
+  - primary_knowledge_kind
+  - role_semantics_present
+  - process_functions
+minimum_cases_per_split: 1
+# The default is a technical completeness floor, not a balanced sample claim.
+# Freeze use-case-specific class/stratum requirements BEFORE starting the review.
+coverage: []
+# Example of an additional requirement (replace coverage: [] above):
+# coverage:
+#   - split: holdout
+#     attribute: role_semantics_present
+#     minimum: 1
+#     predicate: {equals: true}
+#   - split: holdout
+#     attribute: role_semantics_present
+#     minimum: 1
+#     predicate: {equals: false}
+# Rules can also constrain document_key and clause_type.

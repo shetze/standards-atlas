@@ -7,8 +7,20 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "partial-review-package": SchemaPolicy(
+        "partial-review-package", "1.0", ("1.0",), "**/review-package.json"
+    ),
+    "partial-review-state": SchemaPolicy(
+        "partial-review-state", "1.0", ("1.0",), "**/review-state.json"
+    ),
+    "partial-review-profile": SchemaPolicy(
+        "partial-review-profile", "1.0", ("1.0",), "**/review-profile.yaml"
+    ),
+    "partial-review-publication": SchemaPolicy(
+        "partial-review-publication", "1.0", ("1.0",), "**/review-evidence.json"
+    ),
     "partial-qualification-campaign": SchemaPolicy(
-        "partial-qualification-campaign", "1.0", ("1.0",), "**/campaign-plan.json"
+        "partial-qualification-campaign", "1.1", ("1.0", "1.1"), "**/campaign-plan.json"
     ),
     "partial-qualification-repeat": SchemaPolicy(
         "partial-qualification-repeat", "1.0", ("1.0",), "**/repeat.json"
