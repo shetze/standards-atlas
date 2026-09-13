@@ -29,6 +29,9 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     _canonical_sha256,
     build_applicability_detail_selection,
 )
+from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
+    ApplicabilityPolicyQualificationMode,
+)
 from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
     ApplicabilityPolicyRunReport,
     _normalized_results,
@@ -154,8 +157,10 @@ def run_mixed_applicability(
     root: Path,
     resources: Path,
     gateway_context: Callable,
+    qualification_mode: str = "operational",
 ):
     """Run/reuse existing detail services, including their normal three-valued failures."""
+    qualification_mode = ApplicabilityPolicyQualificationMode(qualification_mode)
     if not manifest.applicability_decision_policy.enabled:
         return None
     directory = root / "policy"
@@ -249,6 +254,8 @@ def run_mixed_applicability(
                 existing_confirmation=existing["confirmation"],
                 checkpoint=checkpoint,
                 request_count=lambda: measured.timing.request_count,
+                qualification_mode=qualification_mode,
+                fresh_requested=qualification_mode != "operational",
             )
         finally:
             executions = directory / "executions"

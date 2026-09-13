@@ -2,6 +2,19 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Evidence-gated partial qualification (2026-09-13)
+
+- Freeze source-only proportional selections, all published Applicability Golden cases,
+  engineering sentinels and separately declared development/holdout review suites.
+- Run independently identified, cache-disabled End-to-End and fixed-gate detail repetitions
+  through the existing cascade; bind physical events, raw responses, settings and final policy.
+- Recompute release gates from verified evidence, keep missing/unknown cases and report
+  semantic quality, request/token costs and the 80-percent objective separately.
+- Add explicit quality-gated full-population baselines, existing-format evidence archives
+  and reviewed activation bundles without promoting experimental defaults or source rules.
+- Expose the campaign through the existing qualification workflow with verified resume;
+  retain historic artifacts and require real evidence rather than replay or copied results.
+
 ## Unreleased — Bounded partial-cascade resolution (2026-09-13)
 
 - Add explicit experimental acceptance profiles for exact Statement two-thirds support,

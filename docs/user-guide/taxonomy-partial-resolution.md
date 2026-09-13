@@ -206,3 +206,9 @@ Checks must come from review; the command does not manufacture Golden labels or 
 Before release retain the agreed complete Applicability Golden corpus, fixed-presence and
 end-to-end fresh repetitions, and separate reviewed Role/Knowledge/Process tests. No 80%
 Efficient completion claim or semantic release follows from the unit tests or profile replay.
+
+## Final qualification and activation
+
+See [the final qualification campaign](taxonomy-partial-qualification.md) for pinned
+cohorts, independent fresh repetitions, explicit full baselines and reviewed activation.
+Candidate availability or a passing integration test alone never promotes a profile.

@@ -469,6 +469,33 @@ def _build_task_plan(
 
     try:
         resolved = WorkflowManifestLoader().load(parse_manifest_options(manifests))
+        partial_manifest = resolved.optional(WorkflowManifestType.PARTIAL_QUALIFICATION)
+        if partial_manifest is not None:
+            if task is not WorkflowTask.QUALIFICATION or len(resolved.paths) != 1:
+                raise ValueError(
+                    "partial_qualification requires --task qualification and its sole manifest"
+                )
+            if (
+                family
+                or profile is not None
+                or all_families
+                or hierarchy is not None
+                or regenerate_docling
+                or overwrite
+                or fresh
+                or fresh_applicability_policy
+                or keep
+                or limit is not None
+                or corpus_count is not None
+            ):
+                raise ValueError(
+                    "campaign population, repetitions and sampling are frozen in its manifest"
+                )
+            from standards_atlas.application.workflow.partial_qualification_plan import (
+                plan_partial_qualification,
+            )
+
+            return plan_partial_qualification(partial_manifest, qualification_output)
         standards_manifest = resolved.require(WorkflowManifestType.STANDARDS)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc

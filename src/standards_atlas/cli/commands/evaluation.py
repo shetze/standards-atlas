@@ -66,6 +66,12 @@ from standards_atlas.cli.commands.evaluation_commands.partial_proposals import (
 from standards_atlas.cli.commands.evaluation_commands.qualification_archive import (
     finalize_qualification_archive,
 )
+from standards_atlas.cli.commands.evaluation_commands.qualification_campaign import (
+    activate_qualification_command,
+    evaluate_qualification_command,
+    prepare_qualification_command,
+    run_qualification_command,
+)
 from standards_atlas.cli.commands.evaluation_commands.qualification_matrix import (
     _format_duration,
     _MatrixProposalProgress,
@@ -84,6 +90,10 @@ from standards_atlas.cli.commands.evaluation_commands.taxonomy_decisions import 
 from standards_atlas.cli.composition import build_golden_corpus_qualifier
 
 __all__ = [
+    "activate_qualification_command",
+    "evaluate_qualification_command",
+    "prepare_qualification_command",
+    "run_qualification_command",
     "_MatrixProposalProgress",
     "_format_duration",
     "audit_partial_experiment_command",

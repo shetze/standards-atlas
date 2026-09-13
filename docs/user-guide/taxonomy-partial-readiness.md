@@ -193,3 +193,9 @@ settings. Generate its `partial-audit` and evaluate the same checks. Prefer the 
 first-50 historical comparison plus these checks over selecting only favourable examples.
 The synthetic pilot can additionally use its own separate readiness-checks file. A formal
 fresh-repeat semantic qualification remains a later step.
+
+## Final qualification and activation
+
+See [the final qualification campaign](taxonomy-partial-qualification.md) for pinned
+cohorts, independent fresh repetitions, explicit full baselines and reviewed activation.
+Candidate availability or a passing integration test alone never promotes a profile.

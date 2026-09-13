@@ -1,0 +1,38 @@
+# Opt-in final qualification, not an approval of the candidate.
+# Paths are relative to the project working directory, as with existing CLI inputs.
+manifest_type: partial_qualification
+schema_version: '1.0'
+id: taxonomy-final-qualification-v1
+run: local/evaluation/qualification-run-078.zip
+golden: local/review/applicability/3.0.0/applicability-golden-corpus.yaml
+sample_size: 200
+seed: 20260913
+repetitions: 3
+minimum_published_golden_cases: 116
+baseline: control-v2
+candidate: evidence-v4
+variants:
+  - id: control-v2
+    matrix: manifests/multidimensional-semantic-qualification-v7-taxonomy-grounded-v1.yaml
+    prompt: taxonomy-partial-v2
+    change: Existing partial B3 control, unchanged acceptance.
+  - id: evidence-v4
+    matrix: manifests/multidimensional-semantic-qualification-v7-taxonomy-grounded-v1.yaml
+    prompt: taxonomy-partial-v4
+    acceptance_profile: cfg/evaluation/partial-cascade/efficient-evidence-v1.yaml
+    change: Partial B4 candidate; combined prompt/profile comparison, not a causal ablation.
+# Supply independent reviewed development and holdout suites BEFORE preparing.
+# Empty review inputs intentionally block activation; no synthetic gold is invented.
+semantic_suites: []
+sentinel_suites:
+  - src/standards_atlas/resources/semantic/qualification/process-functions-sentinels-v1/checks.json
+required_semantic_attributes:
+  - primary_function
+  - primary_knowledge_kind
+  - role_semantics_present
+  - process_functions
+max_semantic_errors: 0
+max_semantic_unavailable: 0
+# This explicit engineering guard is a request budget, not a latency claim.
+max_request_ratio: 1.10
+efficient_target: 0.8

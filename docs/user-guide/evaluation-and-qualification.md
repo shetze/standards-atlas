@@ -680,3 +680,8 @@ thresholds and final Applicability policy while keeping unknown fields out of vo
 accepted values out of subsequent requests. The default full-output workflow is unchanged.
 See [Taxonomy-backed partial cascade](taxonomy-partial-cascade.md) for the completion profile,
 model-free planning, resume, measured costs and canonical/public persistence boundaries.
+
+## Final partial-cascade qualification
+
+A final opt-in campaign freezes source cohorts and independently reviewed references, executes fresh repetitions through the existing engines and separates semantic eligibility from the 80% Efficient objective.
+See [final qualification and controlled activation](taxonomy-partial-qualification.md).

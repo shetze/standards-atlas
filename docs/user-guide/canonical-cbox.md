@@ -224,3 +224,8 @@ The optional archive test runs against isolated physical AtlasData skeletons and
 archive-derived evidence, not the user's live workspace. It checks all 497 accepted
 attribute projections after persistence/restoration. Process-function qualification and
 further model-quality work remain separate; no missing classification is fabricated.
+
+## Final partial-cascade qualification
+
+Final campaigns freeze the source-only CBox inputs and resource identities. Reviewed labels never become model context. Historical source hints are not promoted to confirmed taxonomy facts by qualification.
+See [final qualification and controlled activation](taxonomy-partial-qualification.md).

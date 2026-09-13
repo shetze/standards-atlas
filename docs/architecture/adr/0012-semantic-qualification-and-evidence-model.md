@@ -46,3 +46,22 @@ unknown retry/failure provider time remains unknown even when its wall time is m
 
 ## Consequences
 Model changes can be compared without modifying canonical documents. Qualification results are reproducible and auditable, and accepted semantic evidence can be promoted deliberately into document context and formal knowledge projections without treating raw model output as truth.
+
+### Evidence-gated partial campaigns (Slice 7)
+
+An opt-in campaign is orchestration around the existing engines, not a parallel consensus
+implementation. It pins resources and sources, runs three independent End-to-End and three
+fixed-gate fresh detail repetitions per declared variant, and replays original evidence before
+qualification. Final D4/D3/D1 policy results, not gates, are compared to all published Golden
+cases. Reference checks use accepted attribute values and keep unavailable cases visible.
+
+Physical-call ledgers and isolated directories distinguish recorded new work, cache, retries
+and resumed work. They do not attest runtime model weights or certify independent human review.
+A holdout declaration is checked for overlap with development/Golden/sentinels, not inferred
+from model agreement. Existing B0/B1 replays and B2 full-output controls are not relabelled as
+fresh partial-campaign experiments.
+
+The full source-population phase is explicit and quality-gated. Activation rechecks that
+phase and all candidate gates, exports a scoped recommendation and never rewrites defaults.
+The 80% Efficient objective is separate from semantic quality. An explicit below-target
+acknowledgement cannot bypass semantic, freshness, source or cost requirements.

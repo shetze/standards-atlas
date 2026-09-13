@@ -200,3 +200,9 @@ provenance properties. They do not establish semantic accuracy, the 80% Efficien
 reduced total cost. The new path requires controlled comparison and the agreed fresh
 Applicability qualification before it replaces the default workflow. No threshold changes,
 newly qualified taxonomy rules or targeted Slice-6 resolver experiments are activated here.
+
+## Final qualification and activation
+
+See [the final qualification campaign](taxonomy-partial-qualification.md) for pinned
+cohorts, independent fresh repetitions, explicit full baselines and reviewed activation.
+Candidate availability or a passing integration test alone never promotes a profile.

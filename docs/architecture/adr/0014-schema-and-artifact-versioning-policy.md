@@ -58,3 +58,17 @@ qualification matrix reports (writer `1.1`, readers `1.0`/`1.1`), offline cascad
 archive metadata, task, prompt, ontology, applicability policy or public enrichment schemas.
 Historical reporting formats remain historical evidence; accepting their schema is not a
 claim that an old ambiguous batch-time field is a measured per-request latency.
+
+### Final qualification artifact contracts (Slice 7)
+
+New schema-1.0 families are registered for `partial-qualification-campaign`,
+`partial-qualification-repeat`, `partial-qualification-evaluation`,
+`partial-semantic-reference`, `partial-qualified-activation`,
+`qualification-request-event` and `partial-qualification-execution`. Unsupported versions
+are rejected at their reader boundaries. Existing partial, public AtlasData, EngineeringDocument
+and standard Qualification archive schema families are unchanged.
+
+A frozen campaign hashes exact source/reference files and effective task/prompt/frame/rule
+configuration. Each independent repetition has its own bound execution identity and sealed
+inventory; transported activation files have a separate scoped identity. Hashes protect
+integrity but do not prove semantic truth, human authorship or runtime binary identity.

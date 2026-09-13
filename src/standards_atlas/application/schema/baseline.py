@@ -7,6 +7,27 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "partial-qualification-campaign": SchemaPolicy(
+        "partial-qualification-campaign", "1.0", ("1.0",), "**/campaign-plan.json"
+    ),
+    "partial-qualification-repeat": SchemaPolicy(
+        "partial-qualification-repeat", "1.0", ("1.0",), "**/repeat.json"
+    ),
+    "partial-qualification-evaluation": SchemaPolicy(
+        "partial-qualification-evaluation", "1.0", ("1.0",), "**/qualification-evaluation.json"
+    ),
+    "partial-semantic-reference": SchemaPolicy(
+        "partial-semantic-reference", "1.0", ("1.0",), "**/semantic-reference.json"
+    ),
+    "partial-qualified-activation": SchemaPolicy(
+        "partial-qualified-activation", "1.0", ("1.0",), "**/activation.json"
+    ),
+    "qualification-request-event": SchemaPolicy(
+        "qualification-request-event", "1.0", ("1.0",), "**/qualification-events/*.json"
+    ),
+    "partial-qualification-execution": SchemaPolicy(
+        "partial-qualification-execution", "1.0", ("1.0",), "**/execution-report.json"
+    ),
     "partial-cascade-report": SchemaPolicy(
         "partial-cascade-report",
         "1.1",

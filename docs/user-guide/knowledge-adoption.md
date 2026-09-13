@@ -142,3 +142,8 @@ stages, and checks consumed deterministic source facts against current canonical
 Unknown sets do not become known empty sets, and a raw Applicability gate never substitutes
 for the final detail-policy result. See [Partial cascade](taxonomy-partial-cascade.md) for
 commands, schema compatibility, availability semantics and public omission boundaries.
+
+## Final partial-cascade qualification
+
+A campaign activation bundle is a scoped configuration recommendation, not canonical adoption. Only the candidate full-run Partial-Cascade archive is passed to the existing explicit document adopt-qualification path; protected local values and public omissions still apply.
+See [final qualification and controlled activation](taxonomy-partial-qualification.md).

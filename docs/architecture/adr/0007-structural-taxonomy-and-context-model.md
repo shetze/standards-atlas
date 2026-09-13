@@ -39,3 +39,11 @@ attributes remain authoritative. Public projections still carry no literal evide
 Qualified citations separate standard identity from coordinate lists/ranges. Shared coordinates
 produce separate targets but retain the full original text span; target identity remains exact,
 physical-document- and edition-aware, and unresolvable groups are never partly fabricated.
+
+### Final qualification source cohorts (Slice 7)
+
+Campaigns freeze source structure independently of reference labels. Deterministic source
+facts, hints and unresolved conflicts retain their existing authority. Proportional document/
+clause-type samples and overrepresented Golden/development/holdout cases are distinct cohorts.
+A new source format or a successful campaign cannot qualify a pending taxonomy rule. Synthetic
+`fixture:` authority is integration evidence only, not a production qualification source.

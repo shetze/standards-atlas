@@ -49,6 +49,55 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "partial-qualification-campaign",
+        "**/campaign-plan.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-qualification-campaign",
+    ),
+    VersionedInterface(
+        "partial-qualification-repeat",
+        "**/repeat.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-qualification-repeat",
+    ),
+    VersionedInterface(
+        "partial-qualification-evaluation",
+        "**/qualification-evaluation.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-qualification-evaluation",
+    ),
+    VersionedInterface(
+        "partial-semantic-reference",
+        "**/semantic-reference.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-semantic-reference",
+    ),
+    VersionedInterface(
+        "partial-qualified-activation",
+        "**/activation.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-qualified-activation",
+    ),
+    VersionedInterface(
+        "qualification-request-event",
+        "**/qualification-events/*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "qualification-request-event",
+    ),
+    VersionedInterface(
+        "partial-qualification-execution",
+        "**/execution-report.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-qualification-execution",
+    ),
+    VersionedInterface(
         "partial-cascade-report",
         "**/partial-cascade-report.json",
         LifecycleBoundary.PERSISTENCE,

@@ -40,7 +40,7 @@ from standards_atlas.cli.runtime_managers import managed_mcp_server
 
 
 @contextmanager
-def partial_gateway_context(model, *, config: Path, mcp_config: Path):
+def partial_gateway_context(model, *, config: Path, mcp_config: Path, disable_cache: bool = False):
     """Use the same lazy, bounded model lifecycle as partial-proposals."""
     with ExitStack() as stack:
         if model.provider == "codex":
@@ -49,6 +49,8 @@ def partial_gateway_context(model, *, config: Path, mcp_config: Path):
             yield CodexCliLlmGateway(CodexCliConfig())
         elif model.provider == "ramalama":
             base = LlmConfig.load(config)
+            if disable_cache:
+                base = replace(base, cache_directory=None)
             reference = model.model_ref or model.id
             configured = replace(
                 base, model=reference, server=replace(base.server, model=reference)
