@@ -1,3 +1,4 @@
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -49,3 +50,20 @@ def test_write_refuses_to_replace_existing_file(tmp_path: Path) -> None:
     config.write(target, overwrite=True)
 
     assert target.read_text(encoding="utf-8") == config.render_toml()
+
+
+def test_review_tool_allowlist_requires_explicit_opt_in() -> None:
+    from standards_atlas.adapters.mcp.codex import REVIEW_PREPARATION_TOOLS
+    from standards_atlas.adapters.mcp.compatibility import REQUIRED_TOOLS
+
+    def tools(config):
+        server = tomllib.loads(config.render_toml())["mcp_servers"]["standards-atlas"]
+        return server["enabled_tools"]
+
+    default = tools(CodexMcpConfig(url="http://localhost:8765/mcp"))
+    enabled = tools(CodexMcpConfig(url="http://localhost:8765/mcp", review_preparation=True))
+    assert tuple(default) == REQUIRED_TOOLS
+    assert tuple(enabled) == ("get_server_info", *REVIEW_PREPARATION_TOOLS)
+    assert "get_clause" not in enabled
+    assert len(enabled) == len(set(enabled))
+    assert not any("confirm" in name or "publish" in name for name in enabled)

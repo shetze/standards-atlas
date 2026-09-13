@@ -249,6 +249,11 @@ def test_runtime_info_is_independent_of_document_readability_and_omits_private_p
     assert info == {
         "application": {"name": "standards-atlas", "version": __version__},
         "engineering_document_schema": {"current": 9, "readable": [8, 9], "writer": 9},
-        "capabilities": {"formula_transcription": False},
+        "capabilities": {
+            "formula_transcription": False,
+            "review_read": False,
+            "review_preparation": False,
+            "review_holdout_assistance": False,
+        },
     }
     assert str(tmp_path) not in json.dumps(info)

@@ -225,3 +225,16 @@ used by the server before restarting for a trusted transcription session. A read
 probe can pass with writing disabled; inspect `runtime.capabilities.formula_transcription`
 before asking Codex to submit. Submissions continue to preserve the source image and record
 actor, provider/model and source-image hash in the separate transcription artifact.
+
+## Optional source-bound review preparation
+
+The [review preparation guide](partial-review-preparation.md) describes the five optional
+read tools and two model-only write tools. They are disabled by default. Enable
+`mcp.review.enabled` for reads and additionally `mcp.capabilities.review_preparation` for
+selection/annotation proposals. Configure `mcp.review.workspace` explicitly and restart the
+server after changing configuration. Holdout assistance remains separately opt-in.
+
+`mcp codex-config --review-preparation` renders a dedicated review-only allowlist, avoiding
+bypasses through generic corpus readers. No tool can confirm human decisions, materialize
+selections, publish suites or activate releases. Authentication, disclosure and request limits
+still apply; source hashes and evidence positions are handled by Atlas.

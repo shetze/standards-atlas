@@ -90,3 +90,13 @@ The Codex integration is a read-only client integration. It does not grant
 Codex filesystem access through MCP, does not expose write tools, and does not
 persist the bearer token. Normal MCP host, origin, TLS, audit, and request-size
 controls remain in force.
+
+## Dedicated review preparation session
+
+Use `standards-atlas mcp codex-config --url <endpoint> --review-preparation` to render a
+review-only allowlist (seven optional review tools plus server information). Apply the
+fragment, not merely the separately printed endpoint registration command. Configure the
+server's optional review capability independently. Avoid simultaneous unrestricted Atlas
+connections when relying on Holdout isolation. The default generator without this flag is
+unchanged. See [candidate indexing and MCP preparation](partial-review-preparation.md) for
+the complete selection, local materialization and model-only annotation workflow.

@@ -7,6 +7,15 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "partial-review-candidates": SchemaPolicy(
+        "partial-review-candidates", "1.0", ("1.0",), "**/preparation/indexes/*/index.json"
+    ),
+    "partial-review-selection-proposal": SchemaPolicy(
+        "partial-review-selection-proposal",
+        "1.0",
+        ("1.0",),
+        "**/preparation/selections/*/selection.json",
+    ),
     "partial-review-package": SchemaPolicy(
         "partial-review-package", "1.0", ("1.0",), "**/review-package.json"
     ),

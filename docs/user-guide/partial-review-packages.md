@@ -2,11 +2,11 @@
 
 A review package prepares human reference decisions **before** freezing a partial
 qualification campaign. It is not a model run, a Golden publication, a taxonomy-rule
-approval or a release activation. CLI, future MCP preparation and the future Web
-workbench share the application contract in `semantic_qualification/review_package`.
-This slice supplies the contract, local human CLI and validated suite import. Intelligent
-Codex ranking, qualification-history indexing and the paginated HTML interface follow
-in separate slices. No server permissions or endpoints change here.
+approval or a release activation. The human CLI and optional MCP preparation adapter share
+the application contract in `semantic_qualification/review_package`. This guide describes
+the Slice-1 foundation: package construction, human decisions and validated suite import.
+[Candidate indexing and MCP preparation](partial-review-preparation.md) are available in
+Slice 2; the paginated HTML workbench remains Slice 3.
 
 ## Build from the existing corpus
 
@@ -126,7 +126,7 @@ the previous decision in history. A new model proposal never replaces an accepte
 value. Confirmation always binds to the specified proposal revision, not to whichever
 proposal happened to be added most recently.
 
-The application already supports source-bound evidence quotes for later MCP/Web adapters:
+The application already supports source-bound evidence quotes used by the MCP preparation adapter:
 exact quotation, optional prefix/suffix, support/counterevidence/context purpose and a
 `text` or `fact:<index>` target. Atlas resolves unique Unicode-code-point offsets and
 rejects missing or ambiguous quotations. There is no agent-provided HTML and no HTML
@@ -170,7 +170,7 @@ The declaration is an actual provenance statement by the responsible person, not
 phrase proving independence. Check unrecorded development use, near-duplicates and
 translations; the exact-content check cannot settle them. Reviewer names, timestamps and
 hashes provide traceability, not cryptographic proof of human identity or a security boundary
-against an actor able to rewrite the local filesystem. Future MCP tools must not expose
+against an actor able to rewrite the local filesystem. MCP preparation tools must not expose
 `record_decision` or the publication operation as model self-approval capabilities.
 
 The new output directory contains:

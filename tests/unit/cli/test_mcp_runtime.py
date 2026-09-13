@@ -90,3 +90,20 @@ def test_probe_help_exposes_document_key() -> None:
 
     assert result.exit_code == 0, result.output
     assert "--document-key" in result.output
+
+
+def test_codex_config_can_opt_in_to_model_only_review_tools() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "mcp",
+            "codex-config",
+            "--url",
+            "http://localhost:8765/mcp",
+            "--review-preparation",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert '"submit_review_selection"' in result.output
+    assert '"submit_review_annotations"' in result.output
+    assert "apply the fragment above" in result.output

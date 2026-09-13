@@ -57,6 +57,17 @@ class McpClauseService:
             },
             "capabilities": {
                 "formula_transcription": self._config.capabilities.formula_transcription,
+                "review_read": self._config.review.enabled and self._config.expose.clause_text,
+                "review_preparation": (
+                    self._config.review.enabled
+                    and self._config.expose.clause_text
+                    and self._config.capabilities.review_preparation
+                ),
+                "review_holdout_assistance": (
+                    self._config.review.enabled
+                    and self._config.expose.clause_text
+                    and self._config.review.allow_holdout_assistance
+                ),
             },
         }
 

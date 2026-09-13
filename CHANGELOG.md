@@ -2,6 +2,21 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Candidate indexing and MCP review preparation (2026-09-13)
+
+- Index frozen corpus sources, bound Golden/reference inputs and completed clause-level
+  qualification reports without inference; separate genuine semantic disagreement, missing
+  reference coverage and technical failures, preserving original source and artifact bindings.
+- Add deterministic budgeted Development selection proposals and immutable local materialization;
+  retain known cases, unchanged Holdout, human decisions and a reproducible review queue.
+- Expose five optional reads and two closed, model-only MCP submission tools with exact evidence
+  resolution, atomic/idempotent batches, revision guards, registry/document/exposure limits and
+  separately opt-in Holdout assistance. Keep default server capabilities disabled.
+- Add index/candidates/apply-selection CLI and a dedicated Codex review-only allowlist;
+  preserve existing suite/review formats and all qualification/publication/activation gates.
+- Leave the paginated HTML workbench to Slice 3. No new human labels, automatic confirmations,
+  model invocation, policy relaxation or claimed production qualification results.
+
 ## Unreleased — Source-bound human review packages (2026-09-13)
 
 - Add versioned review packages/profiles with complete corpus text, stable source identities,

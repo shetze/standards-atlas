@@ -8,6 +8,16 @@ from pathlib import Path
 
 from standards_atlas.adapters.mcp.compatibility import REQUIRED_TOOLS
 
+REVIEW_PREPARATION_TOOLS = (
+    "list_review_packages",
+    "get_review_package",
+    "list_review_candidates",
+    "get_review_case",
+    "list_review_cases",
+    "submit_review_selection",
+    "submit_review_annotations",
+)
+
 _SERVER_NAME_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 _ENVIRONMENT_VARIABLE_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -22,6 +32,7 @@ class CodexMcpConfig:
     startup_timeout_sec: int = 10
     tool_timeout_sec: int = 60
     required: bool = True
+    review_preparation: bool = False
 
     def __post_init__(self) -> None:
         if not self.url.startswith(("http://", "https://")):
@@ -39,7 +50,13 @@ class CodexMcpConfig:
 
     def render_toml(self) -> str:
         """Render a token-free Codex config.toml fragment."""
-        tools = ", ".join(f'"{tool}"' for tool in REQUIRED_TOOLS)
+        # A dedicated review client must not bypass Holdout policy through generic readers.
+        enabled = (
+            ("get_server_info", *REVIEW_PREPARATION_TOOLS)
+            if self.review_preparation
+            else (REQUIRED_TOOLS)
+        )
+        tools = ", ".join(f'"{tool}"' for tool in enabled)
         required = str(self.required).lower()
         return (
             f"[mcp_servers.{self.server_name}]\n"
@@ -53,7 +70,7 @@ class CodexMcpConfig:
         )
 
     def codex_add_command(self) -> tuple[str, ...]:
-        """Return the equivalent official Codex CLI registration command."""
+        """Return endpoint registration; allowlists still require the configuration fragment."""
         return (
             "codex",
             "mcp",

@@ -280,6 +280,13 @@ def render_codex_mcp_config(
             help="Environment variable containing the bearer token.",
         ),
     ] = cli_defaults.DEFAULT_MCP_TOKEN_ENVIRONMENT_VARIABLE,
+    review_preparation: Annotated[
+        bool,
+        typer.Option(
+            "--review-preparation",
+            help="Use a review-only tool allowlist plus server information for a dedicated client.",
+        ),
+    ] = cli_defaults.DEFAULT_FALSE,
     output: Annotated[
         Path | None,
         typer.Option("--output", help="Optional config fragment path."),
@@ -295,6 +302,7 @@ def render_codex_mcp_config(
             url=url,
             server_name=server_name,
             bearer_token_env_var=token_environment_variable,
+            review_preparation=review_preparation,
         )
         if output is not None:
             config.write(output, overwrite=overwrite)
@@ -303,5 +311,5 @@ def render_codex_mcp_config(
         raise typer.Exit(code=2) from exc
 
     typer.echo(config.render_toml())
-    typer.echo("Equivalent registration command:", err=True)
+    typer.echo("Endpoint registration (apply the fragment above for tool allowlists):", err=True)
     typer.echo(" ".join(config.codex_add_command()), err=True)

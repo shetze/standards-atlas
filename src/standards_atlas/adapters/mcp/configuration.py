@@ -23,6 +23,7 @@ class McpCapabilityConfig(BaseModel):
 
     model_config = ConfigDict(frozen=True)
     formula_transcription: bool = False
+    review_preparation: bool = False
 
 
 class McpLimitConfig(BaseModel):
@@ -90,6 +91,15 @@ class McpProcessConfig(BaseModel):
         return self.state_directory / "server.log"
 
 
+class McpReviewConfig(BaseModel):
+    """Explicit local package registry. Holdout assistance is separately opt-in."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    enabled: bool = False
+    workspace: Path = Path("local/review/partial-semantic")
+    allow_holdout_assistance: bool = False
+
+
 class McpServerConfig(BaseModel):
     """Runtime configuration for the MCP inbound adapter."""
 
@@ -105,6 +115,7 @@ class McpServerConfig(BaseModel):
     auth: McpAuthConfig = McpAuthConfig()
     audit: McpAuditConfig = McpAuditConfig()
     process: McpProcessConfig = McpProcessConfig()
+    review: McpReviewConfig = McpReviewConfig()
 
     @model_validator(mode="after")
     def validate_remote_configuration(self) -> McpServerConfig:

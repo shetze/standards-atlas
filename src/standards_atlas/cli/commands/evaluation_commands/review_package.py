@@ -161,3 +161,81 @@ def import_partial_review_command(
     _show(result)
     if not result["importable"]:
         raise typer.Exit(code=1)
+
+
+@evaluation_app.command("partial-review-index")
+def index_partial_review_command(
+    package: Annotated[Path, typer.Option("--package", exists=True, file_okay=False)],
+    history: Annotated[list[Path] | None, typer.Option("--history", exists=True)] = None,
+    reference: Annotated[
+        list[Path] | None, typer.Option("--reference", exists=True, dir_okay=False)
+    ] = None,
+    additional_development_budget: Annotated[
+        int, typer.Option("--additional-development-budget", min=0, max=1000)
+    ] = 20,
+) -> None:
+    """Index frozen sources, Golden references and historical per-clause results; no LLM calls."""
+    from standards_atlas.application.semantic_qualification.review_package.candidates import (
+        build_candidate_index,
+    )
+
+    with _errors():
+        result = build_candidate_index(
+            package,
+            histories=tuple(history or ()),
+            references=tuple(reference or ()),
+            additional_development_budget=additional_development_budget,
+        )
+    _show(result)
+
+
+@evaluation_app.command("partial-review-candidates")
+def candidates_partial_review_command(
+    package: Annotated[Path, typer.Option("--package", exists=True, file_okay=False)],
+    index: Annotated[str, typer.Option("--index")],
+    limit: Annotated[int, typer.Option("--limit", min=1, max=1000)] = 20,
+    offset: Annotated[int, typer.Option("--offset", min=0)] = 0,
+    membership: Annotated[str | None, typer.Option("--membership")] = None,
+    document_key: Annotated[str | None, typer.Option("--document-key")] = None,
+    clause_type: Annotated[str | None, typer.Option("--clause-type")] = None,
+    reason: Annotated[str | None, typer.Option("--reason")] = None,
+    query: Annotated[str | None, typer.Option("--query")] = None,
+) -> None:
+    """Show deterministic candidate pages; Holdout is not a Development selection pool."""
+    from standards_atlas.application.semantic_qualification.review_package.candidates import (
+        candidate_page,
+    )
+
+    with _errors():
+        result = candidate_page(
+            package,
+            index,
+            limit=limit,
+            offset=offset,
+            membership=membership,
+            document_key=document_key,
+            clause_type_filter=clause_type,
+            reason=reason,
+            query=query,
+        )
+    _show(result)
+
+
+@evaluation_app.command("partial-review-apply-selection")
+def apply_partial_review_selection_command(
+    package: Annotated[Path, typer.Option("--package", exists=True, file_okay=False)],
+    selection: Annotated[str, typer.Option("--selection")],
+    output: Annotated[Path, typer.Option("--output", file_okay=False)],
+    review_id: Annotated[str, typer.Option("--id")],
+    version: Annotated[str, typer.Option("--version")] = "1.0.0",
+) -> None:
+    """Materialize an agent selection as a new package, preserving all Holdout and human reviews."""
+    from standards_atlas.application.semantic_qualification.review_package.selection import (
+        apply_selection,
+    )
+
+    with _errors():
+        result = apply_selection(
+            package, selection_sha256=selection, output=output, review_id=review_id, version=version
+        )
+    _show(result)

@@ -49,6 +49,20 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "partial-review-candidates",
+        "**/preparation/indexes/*/index.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-review-candidates",
+    ),
+    VersionedInterface(
+        "partial-review-selection-proposal",
+        "**/preparation/selections/*/selection.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-review-selection-proposal",
+    ),
+    VersionedInterface(
         "partial-review-package",
         "**/review-package.json",
         LifecycleBoundary.PERSISTENCE,

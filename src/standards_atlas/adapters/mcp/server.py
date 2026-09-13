@@ -220,6 +220,11 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             raise ValueError(str(message)) from exc
         return json.dumps(payload, ensure_ascii=False, indent=2)
 
+    if config.review.enabled:
+        from standards_atlas.adapters.mcp.review_tools import register_review_tools
+
+        register_review_tools(mcp, config, tool_call)
+
     return mcp
 
 
