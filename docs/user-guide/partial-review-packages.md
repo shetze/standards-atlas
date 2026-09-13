@@ -211,3 +211,11 @@ working files. Historical unbound suites remain supported but do not gain this n
 Locks are fail-closed. After an actual process crash, inspect the owning process and artifacts
 before removing `.review.lock` or a sibling `.<output-name>.review-write.lock`. Do not remove
 a lock held by an active writer. Canonical/public data paths are not valid output targets.
+
+
+## Browser-based human review
+
+The [Review workbench](review-workbench.md) uses this same source/decision contract with typed
+editors, atomic per-case batches, revision-bound confirmations and a source-first Holdout view.
+The existing CLI commands and import rules remain supported; no manual schema conversion is
+needed to open a package built before the Web UI was introduced.

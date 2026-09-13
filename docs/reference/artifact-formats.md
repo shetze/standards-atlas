@@ -74,3 +74,12 @@ structured provider responses can supply missing observations during explicit re
 Free-text rationale and old synthesized interview defaults are not evidence for this purpose.
 The human-review golden proposal is now schema 4.0; the qualification archive layout stays 1.5.
 See [Process-function qualification](../user-guide/process-function-qualification.md).
+
+
+## Review workbench state
+
+`<review-package>/workbench/state.json` uses the registered `review-workbench-state` 1.0
+contract. It binds reviewer bookmarks and explicit Holdout exposure records to one frozen
+review package, with its own content fingerprint and append-preserved prior states. These
+records are navigation/audit metadata, not semantic annotations or suite publication authority.
+See [Review workbench persistence](../user-guide/review-workbench.md#persistence-security-and-recovery).

@@ -278,3 +278,11 @@ def build_prompt_workbench_web_app(
         ),
         http_config,
     )
+
+
+def build_review_workbench_web_app(*, review_workspace: Path, http_config):
+    """Compose the human-only workbench without any LLM runtime or corpus adapter."""
+    from standards_atlas.adapters.web import create_review_workbench_app
+    from standards_atlas.application.review_workbench import ReviewWorkbenchService
+
+    return create_review_workbench_app(ReviewWorkbenchService(review_workspace), http_config)

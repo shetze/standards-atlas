@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Standards Atlas · Review Workbench</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <script type="module" src="/assets/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#caseArea">Zur aktuellen Klausel</a>
+  <header class="topbar">
+    <div><p class="eyebrow">Standards Atlas · Human in the loop</p><h1>Review Workbench</h1></div>
+    <span class="badge">Lokaler Review · keine Modellaufrufe</span>
+  </header>
+  <main>
+    <form id="setup" class="setup panel">
+      <label>Reviewer <input id="reviewer" required maxlength="200" autocomplete="name" placeholder="Vor- und Nachname / eindeutige Kennung"></label>
+      <label>Reviewpaket <select id="packageSelect" required><option value="">Pakete werden geladen …</option></select></label>
+      <button class="primary" id="openPackage" type="submit">Paket öffnen / fortsetzen</button>
+      <p class="muted full">Die Reviewer-Kennung ist eine Selbstauskunft, keine Anmeldung. Nur ausdrücklich gespeicherte Entscheidungen werden übernommen.</p>
+    </form>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <div id="error" class="error" role="alert" hidden></div>
+    <section id="overview" hidden>
+      <div id="coverage" class="coverage"></div>
+      <details class="panel rules"><summary>Abdeckung, Quellenbindung und eingefrorene Annotationsregeln</summary><div id="report"></div><div id="rules"></div></details>
+    </section>
+    <section id="workbench" class="workbench" hidden>
+      <aside class="panel queue" aria-label="Priorisierte Review-Warteschlange">
+        <div class="section-head"><h2>Warteschlange</h2><span id="queueCount" class="badge"></span></div>
+        <p class="muted">Feste Reihenfolge aus dem Paket. Filter ändern keine Mitgliedschaft.</p>
+        <form id="filters" class="filters">
+          <label>Bestand <select id="split"><option value="all">Development + Holdout</option><option value="development">Development</option><option value="holdout">Holdout</option></select></label>
+          <label>Bearbeitungsstand <select id="status"><option value="all">Alle Fälle</option><option value="open">Noch nicht vollständig bestätigt</option><option value="complete">Vollständig bestätigt</option><option value="deferred">Mit zurückgestellten Attributen</option><option value="conflict">Mit fachlichen Widersprüchen</option></select></label>
+          <label>Offenes Attribut <select id="attribute"><option value="">Alle Attribute</option></select></label>
+          <label>Dokument <select id="document"><option value="">Alle Dokumente</option></select></label>
+          <label>Suche <input id="query" type="search" maxlength="500" placeholder="Referenz, Kennung oder Originaltext"></label>
+          <label>Fälle pro Seite <select id="pageSize"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option></select></label>
+          <button type="submit">Filter anwenden</button>
+        </form>
+        <nav id="caseList" aria-label="Reviewfälle"></nav>
+        <div class="pager"><button id="prevPage" type="button">← Seite</button><span id="pageNumber"></span><button id="nextPage" type="button">Seite →</button></div>
+      </aside>
+      <section id="caseArea" class="case-area" aria-label="Aktueller Reviewfall" tabindex="-1">
+        <div id="empty" class="panel empty">Ein Paket öffnen und einen Reviewfall auswählen.</div>
+        <div id="caseContent" hidden>
+          <header class="panel case-header">
+            <div class="section-head"><span id="casePosition" class="eyebrow"></span><span id="splitBadge" class="badge"></span></div>
+            <h2 id="reference"></h2><p id="priority" class="muted"></p>
+            <div class="case-tools"><button type="button" id="prevCase">← Vorheriger Fall</button><button type="button" id="nextCase">Nächster Fall →</button><button type="button" id="reloadCase">Aktualisieren</button></div>
+          </header>
+          <div id="conflicts" class="error" hidden></div>
+          <div class="review-columns">
+            <section class="panel source-panel" aria-labelledby="sourceHeading">
+              <div class="section-head"><h3 id="sourceHeading">Originaltext &amp; Struktur</h3><span class="badge verified">Vollständig · quellengebunden</span></div>
+              <label class="inline"><input id="showEvidence" type="checkbox" checked> Evidenz der ausgewählten Vorschläge hervorheben</label>
+              <p class="legend"><span class="support">Stützende Evidenz</span><span class="counterevidence">Gegenindiz</span><span class="context">Kontext</span></p>
+              <div id="sourceText" class="source-text"></div>
+              <details open><summary>Gebundener Strukturkontext</summary><div id="sourceFacts"></div></details>
+              <details><summary>Feste Quellenkennungen und Hashes</summary><dl id="sourceIds" class="key-values"></dl></details>
+            </section>
+            <section class="annotation-panel" aria-label="Vorschläge und menschliche Entscheidungen">
+              <div id="blindPanel" class="panel blind" hidden>
+                <h3>Holdout: zunächst ohne Vorannotation</h3>
+                <p>Text und Struktur sind vollständig sichtbar. Empfehlungen und ihre Markierungen bleiben bis zu deiner eigenen Ersteinschätzung verborgen. Historische Kandidatenantworten bleiben auch danach ausgeblendet.</p>
+                <label>Eigene Ersteinschätzung <textarea id="assessment" rows="4" maxlength="20000" placeholder="Welche fachliche Einordnung ergibt sich für dich aus Text und Struktur? Wo bleibt eine Frage offen?"></textarea></label>
+                <button type="button" id="reveal">Ersteinschätzung protokollieren &amp; Empfehlungen einblenden</button>
+                <p class="muted">Dies speichert keine semantische Sollentscheidung. Du kannst auch ohne Empfehlungen direkt annotieren.</p>
+              </div>
+              <div id="exposureHistory"></div>
+              <div class="section-head"><h3>Vorschlag ≠ Bestätigung</h3><button id="selectSuggested" type="button">Offene sichtbare Vorschläge vormerken</button></div>
+              <p class="muted">Vormerken speichert nichts. Bestätigte Attribute bleiben unverändert, solange du keine neue Entscheidung auswählst.</p>
+              <div id="attributes"></div>
+              <details class="panel"><summary>Revisionen der menschlichen Entscheidungen</summary><div id="reviewHistory"></div></details>
+            </section>
+          </div>
+          <footer class="panel savebar">
+            <label class="attestation"><input id="attested" type="checkbox"> Ich habe den vollständigen Klauseltext und den relevanten Strukturkontext geprüft; die ausgewählten Entscheidungen sind meine fachliche Beurteilung.</label>
+            <p id="dirtyStatus" class="muted">Keine ungespeicherten Entscheidungen.</p>
+            <div class="save-actions"><button id="save" class="primary" type="button">Entscheidungen speichern</button><button id="saveNext" type="button">Speichern &amp; weiter →</button></div>
+            <small>Strg/⌘ + Enter: speichern · Alt + ←/→: Fall wechseln · Keine Suiteveröffentlichung im Web.</small>
+          </footer>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

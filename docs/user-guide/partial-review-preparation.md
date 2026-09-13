@@ -250,7 +250,7 @@ not a complete semantic per-case exposure ledger. An agent with unrestricted she
 other corpus-tool access is outside this MCP-only isolation boundary.
 
 Actor/model fields are declared provenance, not cryptographic identity verification. Human
-review uses the separate local human adapter (and later Web UI); only its explicit decisions
+review uses the separate local CLI or [review workbench](review-workbench.md); only its explicit decisions
 can be imported by `partial-review-import`. Tool-call permission is not semantic approval.
 All previous source, coverage, overlap, qualification and activation gates remain intact.
 
@@ -278,3 +278,11 @@ schema inventory. Existing review-package and suite formats are unchanged. Entri
 stable source identities; proposed review priority never becomes a semantic reference value.
 The queue is a total fixed order: a difficult-first partial review cannot silently count as
 complete Holdout coverage. Continue with the existing human-review and import workflow.
+
+
+## Continue in the human review workbench
+
+After local selection materialization and model recommendation submission, open the selected
+package through [Review workbench](review-workbench.md). Its page order is the bound queue,
+its evidence rendering uses the stored quotations, and only explicit human saves create
+review decisions. No additional model call or qualification rerun is needed for the HTML UI.

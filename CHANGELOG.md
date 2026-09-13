@@ -2,6 +2,21 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Source-bound HTML review workbench (2026-09-13)
+
+- Add the opt-in `review-workbench` chat-service type over existing local review packages,
+  without LLM startup or a second qualification engine; retain prompt-workbench behavior.
+- Present fixed, paginated review queues, full source text, origin-labelled structure,
+  source-bound colored evidence, typed human editors and separate Development/Holdout coverage.
+- Record explicit per-attribute human actions in atomic, revision-bound batches; leave unreviewed,
+  deferred and rejected fields unresolved, and retain exact false/null/empty predicates.
+- Withhold Holdout recommendations until a recorded human assessment and explicit reveal;
+  retain per-reviewer bookmarks/exposure records separately from semantic review authority.
+- Enforce loopback/same-origin/CSRF/view-receipt boundaries and safe literal text rendering.
+  Add API, CLI, import-compatibility and optional browser interaction regression tests.
+- Keep suite publication and release gates outside the Web UI. End-to-end workflow/archival
+  integration is reserved for the next slice; no production annotations are supplied.
+
 ## Unreleased — Candidate indexing and MCP review preparation (2026-09-13)
 
 - Index frozen corpus sources, bound Golden/reference inputs and completed clause-level

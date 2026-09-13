@@ -46,6 +46,9 @@ The unified `--manifests` interface belongs to the workflow envelope. Direct low
 ## Local chat services
 
 - `chat serve --service prompt-workbench`: run the local prompt experimentation UI.
+- `chat serve --service review-workbench --review-workspace <directory>`: run the human
+  review UI over immediate review-package children, without an LLM runtime. The default
+  registry is `local/review/partial-semantic`. See [Review workbench](../user-guide/review-workbench.md).
 
 The required `--service` option (alias `--service-type`) keeps the command family extensible;
 there is no implicit service implementation. The prompt workbench binds to `127.0.0.1:8765`

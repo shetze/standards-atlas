@@ -10,6 +10,7 @@ from standards_atlas.application.semantic_qualification.partial_proposals import
 
 from .model import (
     EvidenceQuote,
+    HumanDecisionInput,
     ReviewDecision,
     ReviewPackage,
     ReviewProposal,
@@ -116,49 +117,91 @@ def record_decision(
     predicate: SemanticPredicate | None = None,
     comment: str = "",
 ) -> ReviewState:
-    """Human-only adapter operation. Actor identity is declared, not authenticated by this API."""
+    """Single-decision compatibility entry point for the local human CLI."""
+    return record_decisions(
+        root,
+        expected_revision=expected_revision,
+        reviewer=reviewer,
+        decisions=(
+            HumanDecisionInput(
+                example_id=example_id,
+                attribute=attribute,
+                status=status,
+                proposal_sha256=proposal_sha256,
+                predicate=predicate,
+                comment=comment,
+            ),
+        ),
+    )
+
+
+def record_decisions(
+    root: Path,
+    *,
+    expected_revision: int,
+    reviewer: str,
+    decisions: tuple[HumanDecisionInput, ...],
+    expected_package_sha256: str | None = None,
+) -> ReviewState:
+    """Atomically commit explicit human decisions; invalid batches leave no partial reviews.
+
+    Reviewer identity is declared, not authenticated. Web view/CSRF/attestation guards
+    are enforced by its separate adapter. No model or MCP tool calls this operation.
+    """
+    if type(expected_revision) is not int or expected_revision < 0:
+        raise ValueError("expected review revision must be a nonnegative integer")
+    keys = [(item.example_id, item.attribute) for item in decisions]
+    if not keys or len(keys) != len(set(keys)):
+        raise ValueError("human decision batch must be nonempty and unique per attribute")
     with review_lock(root / ".review.lock"):
         package, state = load_review(root)
+        if expected_package_sha256 and package.package_sha256 != expected_package_sha256:
+            raise ValueError("human decisions belong to a different review package")
         if state.revision != expected_revision:
             raise ValueError("stale review revision; reload before deciding")
-        proposal = next((p for p in state.proposals if p.proposal_sha256 == proposal_sha256), None)
-        if status == "confirmed":
-            if proposal is None or predicate is not None:
-                raise ValueError("confirm requires a stored proposal, not a replacement predicate")
-            predicate = proposal.predicate
-        prior = active_decisions(state).get((example_id, attribute))
-        decision = seal(
-            ReviewDecision,
-            {
-                "revision": state.revision + 1,
-                "example_id": example_id,
-                "attribute": attribute,
-                "status": status,
-                "predicate": predicate_data(predicate) if predicate else None,
-                "proposal_sha256": proposal_sha256,
-                "supersedes": prior.decision_sha256 if prior else None,
-                "reviewer": reviewer,
-                "reviewed_at": datetime.now(UTC),
-                "comment": comment,
-            },
-            "decision_sha256",
-        )
-        result = seal(
-            ReviewState,
-            {
-                **state.model_dump(mode="json"),
-                "revision": decision.revision,
-                "decisions": [
-                    *(d.model_dump(mode="json") for d in state.decisions),
-                    decision.model_dump(mode="json"),
-                ],
-            },
-            "state_sha256",
-        )
-        verify_state(package, result)
-        # Contradictions can remain visible during partial review, but block publication.
+        result = state
+        for item in decisions:
+            result = _add_human_decision(package, result, item, reviewer)
+        # All entries must validate before the single atomic write and history snapshot.
         write_state(root, state, result)
         return result
+
+
+def _add_human_decision(package, state, item: HumanDecisionInput, reviewer: str) -> ReviewState:
+    proposal = next((p for p in state.proposals if p.proposal_sha256 == item.proposal_sha256), None)
+    predicate = item.predicate
+    if item.status == "confirmed":
+        if proposal is None or predicate is not None:
+            raise ValueError("confirm requires a stored proposal, not a replacement predicate")
+        predicate = proposal.predicate
+    prior = active_decisions(state).get((item.example_id, item.attribute))
+    decision = seal(
+        ReviewDecision,
+        {
+            **item.model_dump(mode="json"),
+            "revision": state.revision + 1,
+            "predicate": predicate_data(predicate) if predicate else None,
+            "supersedes": prior.decision_sha256 if prior else None,
+            "reviewer": reviewer,
+            "reviewed_at": datetime.now(UTC),
+        },
+        "decision_sha256",
+    )
+    result = seal(
+        ReviewState,
+        {
+            **state.model_dump(mode="json"),
+            "revision": decision.revision,
+            "decisions": [
+                *(d.model_dump(mode="json") for d in state.decisions),
+                decision.model_dump(mode="json"),
+            ],
+        },
+        "state_sha256",
+    )
+    verify_state(package, result)
+    # Cross-attribute conflicts stay visible during review but block publication.
+    return result
 
 
 def describe_review(root: Path, *, example_id: str | None = None) -> dict:

@@ -49,6 +49,14 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "review-workbench-state",
+        "**/workbench/state.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-workbench-state",
+        notes="Navigation and Holdout exposure, never semantic confirmation authority.",
+    ),
+    VersionedInterface(
         "partial-review-candidates",
         "**/preparation/indexes/*/index.json",
         LifecycleBoundary.PERSISTENCE,

@@ -179,6 +179,17 @@ class ReviewDecision(CampaignModel):
         return self
 
 
+class HumanDecisionInput(CampaignModel):
+    """Explicit human intent for one attribute; never a model submission contract."""
+
+    example_id: NonBlank
+    attribute: NonBlank
+    status: Literal["confirmed", "corrected", "deferred", "rejected"]
+    proposal_sha256: Digest | None = None
+    predicate: SemanticPredicate | None = None
+    comment: str = ""
+
+
 class ReviewState(CampaignModel):
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-state"] = "partial-review-state"
