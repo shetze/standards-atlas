@@ -593,7 +593,7 @@ def test_selection_artifact_tamper_fails(tmp_path):
         )
 
 
-def legacy_history(path, item, **changes):
+def consensus_history(path, item, **changes):
     clause = {
         "clause_id": item.input["context"]["clause_id"],
         "document_key": item.input["context"]["document_key"],
@@ -623,10 +623,10 @@ def legacy_history(path, item, **changes):
     return data
 
 
-def test_legacy_unobserved_defaults_do_not_create_negative_votes_or_disagreements(tmp_path):
+def test_historical_unobserved_defaults_do_not_create_negative_votes_or_disagreements(tmp_path):
     root, _, items, _ = make_review(tmp_path)
     history = tmp_path / "consensus-report.json"
-    legacy_history(history, items[0])
+    consensus_history(history, items[0])
     result = build_candidate_index(root, histories=(history,))
     _, _, index = load_candidate_index(root, result["index_sha256"])
     row = next(e for e in index.entries if e.example_id == items[0].id)
@@ -636,7 +636,7 @@ def test_legacy_unobserved_defaults_do_not_create_negative_votes_or_disagreement
     assert not row.unresolved_attributes and not row.disagreement_attributes
 
 
-def test_legacy_actual_model_disagreement_is_preserved(tmp_path):
+def test_historical_actual_model_disagreement_is_preserved(tmp_path):
     root, _, items, _ = make_review(tmp_path)
     history = tmp_path / "consensus-report.json"
     model_votes = [
@@ -653,7 +653,7 @@ def test_legacy_actual_model_disagreement_is_preserved(tmp_path):
             "stability": 1.0,
         },
     ]
-    legacy_history(
+    consensus_history(
         history,
         items[0],
         votes=model_votes,
@@ -670,10 +670,10 @@ def test_legacy_actual_model_disagreement_is_preserved(tmp_path):
 
 
 @pytest.mark.parametrize("change", ["count", "duplicate"])
-def test_legacy_inconsistent_identity_counts_rejected(tmp_path, change):
+def test_historical_inconsistent_identity_counts_rejected(tmp_path, change):
     root, _, items, _ = make_review(tmp_path)
     history = tmp_path / "consensus-report.json"
-    data = legacy_history(history, items[0])
+    data = consensus_history(history, items[0])
     data["clause_count"] = 2
     if change == "duplicate":
         data["clauses"] *= 2

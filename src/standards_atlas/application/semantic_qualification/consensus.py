@@ -11,15 +11,14 @@ from statistics import median
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
+from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
 )
 from standards_atlas.application.semantic_qualification.process_functions import (
-    PROCESS_CLAUSE_FIELDS,
-    PROCESS_VOTE_FIELDS,
     apply_process_overrides,
     process_report_metrics,
     process_vote,
@@ -209,9 +208,9 @@ class ClauseConsensus(BaseModel):
 
 
 class ConsensusReport(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, revalidate_instances="always")
 
-    schema_version: Literal["4.0", "5.0"] = "5.0"
+    schema_version: Literal["5.0"]
     matrix_id: str
     corpus_id: str
     prompt_id: str
@@ -233,32 +232,6 @@ class ConsensusReport(BaseModel):
     role_qualification_metrics: dict[str, Any] = Field(default_factory=dict)
     clauses: tuple[ClauseConsensus, ...]
     process_function_metrics: dict[str, Any] = Field(default_factory=dict)
-
-    @model_validator(mode="after")
-    def legacy_reports_cannot_claim_process_observations(self) -> ConsensusReport:
-        if self.schema_version == "4.0" and any(
-            item.process_set_evaluated
-            or item.process_primary_evaluated
-            or any(vote.process_functions is not None for vote in item.votes)
-            for item in self.clauses
-        ):
-            raise ValueError("process observations require consensus schema 5.0")
-        return self
-
-    @model_serializer(mode="wrap")
-    def preserve_legacy_fingerprints(self, handler: Any) -> dict[str, Any]:
-        payload = handler(self)
-        if self.schema_version == "4.0":
-            # Existing policy selections hash the canonical 4.0 serialization.
-            # Reading must not add default fields and invalidate those hashes.
-            payload.pop("process_function_metrics", None)
-            for clause in payload.get("clauses", ()):
-                for field in PROCESS_CLAUSE_FIELDS:
-                    clause.pop(field, None)
-                for vote in clause.get("votes", ()):
-                    for field in PROCESS_VOTE_FIELDS:
-                        vote.pop(field, None)
-        return payload
 
 
 class ModelConsensusService:
@@ -481,6 +454,7 @@ class ModelConsensusService:
         participation_counts = [item.participating_models for item in clauses]
         participation_distribution = Counter(participation_counts)
         report = ConsensusReport(
+            schema_version="5.0",
             matrix_id=matrix_id,
             corpus_id=corpus_id,
             prompt_id=prompt_id,
@@ -1116,6 +1090,8 @@ def _role_relation_evidence_is_valid(vote: ModelVote) -> bool:
 def _write_outputs(
     report: ConsensusReport, output_directory: Path
 ) -> tuple[ConsensusReport, Path, Path, Path]:
+    report = ConsensusReport.model_validate(report)
+    require_current_schema("qualification-consensus", report.schema_version)
     output_directory.mkdir(parents=True, exist_ok=True)
     json_path = output_directory / "consensus-report.json"
     yaml_path = output_directory / "golden-corpus-proposal.yaml"

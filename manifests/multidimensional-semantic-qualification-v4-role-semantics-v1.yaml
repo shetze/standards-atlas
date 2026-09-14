@@ -1,5 +1,5 @@
 manifest_type: qualification_matrix
-schema_version: "1.5"
+schema_version: '1.6'
 matrix_id: multidimensional-semantic-qualification-v4-role-semantics
 corpus_id: semantic-profile-v1
 task: semantic-profile-classification

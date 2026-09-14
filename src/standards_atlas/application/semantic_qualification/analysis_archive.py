@@ -15,6 +15,15 @@ from typing import Any
 import yaml
 
 from standards_atlas import __version__
+from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.semantic_qualification.artifact_contracts import (
+    QUALIFICATION_ARTIFACT_NAMES,
+    validate_qualification_artifact,
+)
+from standards_atlas.application.semantic_qualification.cascade_provenance import (
+    CASCADE_PROVENANCE_SCHEMA_VERSION,
+    validate_cascade_provenance,
+)
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.diagnostics import (
     build_qualification_diagnostics,
@@ -29,7 +38,6 @@ from standards_atlas.application.semantic_qualification.qualification_coverage i
 from standards_atlas.shared.hashing import sha256_file
 
 ANALYSIS_ARCHIVE_SCHEMA_VERSION = "1.5"
-CASCADE_PROVENANCE_SCHEMA_VERSION = "1.6"
 QUALIFICATION_RUN_METADATA_SCHEMA_VERSION = "1.5"
 QUALIFICATION_RUN_INDEX_SCHEMA_VERSION = "1.0"
 _QUALIFICATION_RUN_RE = re.compile(r"^qualification-run-(\d+)\.zip$")
@@ -46,7 +54,7 @@ def write_cascade_provenance(
 ) -> Path:
     """Persist clause-level stage entry/exit reasons and resolution deltas."""
     path = output_directory / matrix_id / "cascade-provenance.json"
-    path.parent.mkdir(parents=True, exist_ok=True)
+    require_current_schema("cascade-provenance", CASCADE_PROVENANCE_SCHEMA_VERSION)
     payload = {
         "schema_version": CASCADE_PROVENANCE_SCHEMA_VERSION,
         "matrix_id": matrix_id,
@@ -58,6 +66,8 @@ def write_cascade_provenance(
         "execution_policy": execution_policy,
         "stages": stages,
     }
+    validate_cascade_provenance(payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
 
@@ -403,6 +413,12 @@ def create_analysis_archive(
 
     deduplicated: dict[str, Path] = {}
     for path, member in members:
+        # Validate before deduplication: an obsolete input must not be hidden by an alias.
+        if Path(member).name in QUALIFICATION_ARTIFACT_NAMES:
+            validate_qualification_artifact(member, path.read_bytes())
+        previous = deduplicated.get(member)
+        if previous is not None and previous != path and sha256_file(previous) != sha256_file(path):
+            raise ValueError(f"conflicting qualification archive member: {member}")
         deduplicated.setdefault(member, path)
 
     file_entries = [

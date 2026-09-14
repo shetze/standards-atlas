@@ -41,17 +41,18 @@ def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -
     from standards_atlas.cli.commands.evaluation_commands.semantic_extraction_qualification import (
         _load_qualification_eligibility_contexts,
     )
-    from standards_atlas.domain.model import ApplicabilityFunction, KnowledgeKind
+    from standards_atlas.domain.model import KnowledgeKind
 
     (tmp_path / "cascade" / "efficient-local").mkdir(parents=True)
     (tmp_path / "cascade" / "escalation").mkdir(parents=True)
     (tmp_path / "cascade-provenance.json").write_text(
         json.dumps(
             {
+                "schema_version": "1.6",
                 "stages": [
                     {"stage_id": "efficient-local"},
                     {"stage_id": "escalation"},
-                ]
+                ],
             }
         ),
         encoding="utf-8",
@@ -59,8 +60,21 @@ def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -
     (tmp_path / "cascade" / "efficient-local" / "consensus-report.json").write_text(
         json.dumps(
             {
+                "schema_version": "5.0",
+                "matrix_id": "synthetic",
+                "corpus_id": "synthetic",
+                "prompt_id": "p",
+                "reasoning_mode_id": "disabled",
+                "generated_at": "2026-09-14T00:00:00Z",
+                "model_count": 1,
+                "clause_count": 2,
+                "categories": {},
+                "review_count": 1,
                 "clauses": [
                     {
+                        "category": "insufficient_evidence",
+                        "confidence": 0.0,
+                        "participating_models": 1,
                         "document_key": "DOC",
                         "clause_id": "c1",
                         "proposed_knowledge_kinds": ["artifact"],
@@ -68,13 +82,16 @@ def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -
                         "role_semantics_present": False,
                     },
                     {
+                        "category": "insufficient_evidence",
+                        "confidence": 0.0,
+                        "participating_models": 1,
                         "document_key": "DOC",
                         "clause_id": "c2",
                         "primary_knowledge_kind": "process",
                         "applicability_present": False,
                         "role_semantics_present": False,
                     },
-                ]
+                ],
             }
         ),
         encoding="utf-8",
@@ -82,16 +99,28 @@ def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -
     (tmp_path / "cascade" / "escalation" / "consensus-report.json").write_text(
         json.dumps(
             {
+                "schema_version": "5.0",
+                "matrix_id": "synthetic",
+                "corpus_id": "synthetic",
+                "prompt_id": "p",
+                "reasoning_mode_id": "disabled",
+                "generated_at": "2026-09-14T00:00:00Z",
+                "model_count": 1,
+                "clause_count": 1,
+                "categories": {},
+                "review_count": 1,
                 "clauses": [
                     {
+                        "category": "insufficient_evidence",
+                        "confidence": 0.0,
+                        "participating_models": 1,
                         "document_key": "DOC",
                         "clause_id": "c1",
                         "proposed_knowledge_kinds": ["technique_or_measure"],
                         "applicability_present": True,
-                        "proposed_applicability_functions": ["inclusion"],
                         "role_semantics_present": True,
                     }
-                ]
+                ],
             }
         ),
         encoding="utf-8",
@@ -101,7 +130,8 @@ def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -
 
     assert contexts[("DOC", "c1")].knowledge_kinds == (KnowledgeKind.TECHNIQUE_OR_MEASURE,)
     assert contexts[("DOC", "c1")].applicability_present is True
-    assert contexts[("DOC", "c1")].applicability_functions == (ApplicabilityFunction.INCLUSION,)
+    # Current consensus carries Presence, not unqualified Applicability functions.
+    assert contexts[("DOC", "c1")].applicability_functions == ()
     assert contexts[("DOC", "c1")].role_semantics_present is True
     assert contexts[("DOC", "c2")].knowledge_kinds == (KnowledgeKind.PROCESS,)
 

@@ -15,6 +15,7 @@ from standards_atlas.application.model.knowledge_adoption import (
     ClauseKnowledgeCandidate,
     KnowledgeAdoptionBatch,
 )
+from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.mixed_applicability import (
     verify_mixed_applicability,
 )
@@ -171,6 +172,7 @@ def load_mixed_qualification_knowledge(
                 ),
             )
         )
+    require_current_schema("knowledge-adoption-batch", "1.1")
     return KnowledgeAdoptionBatch(
         schema_version="1.1",
         source_id=archive.id,

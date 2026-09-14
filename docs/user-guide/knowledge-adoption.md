@@ -64,7 +64,7 @@ document files. Reports may describe existing semantic values and belong in igno
 | Knowledge kinds and explicit primary | Final cascade selection; insufficient decisions are recorded as unknown. |
 | Applicability presence | Only `applicability-policy-run.json` `cases[].final_present`, never the pre-policy gate. |
 | Role-semantics presence | Final presence decision; no automatically accepted exact role tuples. |
-| Process functions and explicit primary | New consensus 5.0 observations, with separate primary/set support and stage sources; legacy 4.0 remains not evaluated. |
+| Process functions and explicit primary | Consensus 5.0 observations, with separate primary/set support and stage sources; obsolete 4.0 reports are rejected. |
 | Applicability functions/polarity | No new detail inferred. Presence is usable without details; negative presence clears incompatible generated details. |
 | Subject and routing context | Existing canonical enrichment remains untouched by adoption. |
 
@@ -86,11 +86,18 @@ recomputation and opt-in escalation.
 
 ## Authority and compatibility
 
-Canonical documents now write schema **9**. Schema **8** is read with a deprecation warning;
-loading alone does not rewrite it. Generated markers are retained. Populated unmarked v8
-enrichments are protected as `unattributed_attributes`, because the old serialization cannot
-prove whether they were imported from reviewed AtlasData or created without provenance.
-Empty defaults remain unassessed. No default field is blanket-locked as authoritative.
+Canonical documents read and write only schema **9**. Schema **8** is rejected without
+modifying the source; there is no automatic upgrade or authority inference from unmarked
+values. Current generated, confirmed and unattributed provenance is preserved on roundtrip.
+An obsolete file in a live repository is an error even for optional inventories, not a
+silently omitted source. Preserve historical files outside the active input repository;
+regenerate derived sources explicitly and retain reviewed evidence for a source-bound review.
+
+Adoption batches require schema **1.1** with an explicit marker. `source_requirements` is
+serialized even when empty, and existing source requirements are checked before any writes.
+Schema-1.0 batches and old Consensus 4.0 archives (including original Run 074) are not accepted.
+Never repair them by changing a marker or reusing a hash. See
+[Remaining schema refactoring R3](remaining-schema-refactoring.md).
 
 An explicit domain confirmation, for example
 `clause.confirm_authoritative("enrichments.semantic.applicability_present", authority="review")`,

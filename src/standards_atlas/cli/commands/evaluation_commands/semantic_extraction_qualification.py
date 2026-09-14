@@ -25,6 +25,10 @@ from standards_atlas.application.semantic_extraction import (
     SemanticExtractionService,
     extraction_eligibility,
 )
+from standards_atlas.application.semantic_qualification.cascade_provenance import (
+    validate_cascade_provenance,
+)
+from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
     QUALIFICATION_COVERAGE_FILENAME,
     load_qualification_coverage,
@@ -398,6 +402,7 @@ def _load_qualification_eligibility_contexts(
     if not provenance_path.is_file():
         return {}
     provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    validate_cascade_provenance(provenance)
     stage_ids = [
         str(stage["stage_id"])
         for stage in provenance.get("stages", [])
@@ -409,6 +414,7 @@ def _load_qualification_eligibility_contexts(
         if not report_path.is_file():
             continue
         report = json.loads(report_path.read_text(encoding="utf-8"))
+        ConsensusReport.model_validate(report)
         for clause in report.get("clauses", []):
             if not isinstance(clause, dict):
                 continue

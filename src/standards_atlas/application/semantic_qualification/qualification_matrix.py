@@ -9,6 +9,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
     ApplicabilityDetailEnrichmentConfig,
 )
@@ -818,10 +819,10 @@ class ChallengerQualificationConfig(BaseModel):
 class QualificationMatrixManifest(BaseModel):
     """Versioned contract for Slice 5.4.6 qualification."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, revalidate_instances="always")
 
     manifest_type: Literal["qualification_matrix"] = "qualification_matrix"
-    schema_version: Literal["1.5", "1.6"] = "1.6"
+    schema_version: Literal["1.6"]
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)
     task: str = Field(default="semantic-profile-classification", min_length=1)
@@ -1152,9 +1153,9 @@ class CandidateQualification(BaseModel):
 class QualificationMatrixReport(BaseModel):
     """Machine-readable comparison and acceptance result."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, revalidate_instances="always")
 
-    schema_version: Literal["1.0", "1.1"] = "1.1"
+    schema_version: Literal["1.1"]
     matrix_id: str
     corpus_id: str
     generated_at: datetime
@@ -1173,6 +1174,7 @@ class ModelPromptQualificationService:
         manifest: QualificationMatrixManifest,
         output_directory: Path,
     ) -> tuple[QualificationMatrixReport, Path, Path]:
+        manifest = QualificationMatrixManifest.model_validate(manifest)
         grouped: dict[
             tuple[str, str, str],
             list[tuple[MatrixObservation, AnnotationQualificationReport]],
@@ -1241,6 +1243,7 @@ class ModelPromptQualificationService:
         )
         ranking = rank_candidates(candidates)
         report = QualificationMatrixReport(
+            schema_version="1.1",
             matrix_id=manifest.matrix_id,
             corpus_id=manifest.corpus_id,
             generated_at=datetime.now(UTC),
@@ -1254,6 +1257,7 @@ class ModelPromptQualificationService:
             candidates=candidates,
             diagnostics=tuple(diagnostics),
         )
+        require_current_schema("qualification-matrix-report", report.schema_version)
         output_directory.mkdir(parents=True, exist_ok=True)
         json_path = output_directory / "qualification-matrix.json"
         markdown_path = output_directory / "qualification-matrix.md"

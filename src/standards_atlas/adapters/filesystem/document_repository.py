@@ -6,11 +6,14 @@ import hashlib
 import json
 import os
 import tempfile
-from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from standards_atlas.application.schema import SCHEMA_POLICIES, require_supported_schema
+from standards_atlas.application.schema import (
+    SCHEMA_POLICIES,
+    require_current_schema,
+    require_supported_schema,
+)
 from standards_atlas.domain.model import DocumentKey, DocumentType, EngineeringDocument, Standard
 
 # Keep writer envelopes and reader compatibility on one canonical version policy.
@@ -37,6 +40,9 @@ class FileSystemEngineeringDocumentRepository:
 
     def save(self, document: EngineeringDocument) -> None:
         """Persist a document using the current private schema version."""
+        require_current_schema("engineering-document", CURRENT_DOCUMENT_SCHEMA_VERSION)
+        if type(CURRENT_DOCUMENT_SCHEMA_VERSION) is not int:
+            raise ValueError("engineering document schema version must be an integer")
         path = self._path_for_key(document.key)
         payload = {
             "schema_version": CURRENT_DOCUMENT_SCHEMA_VERSION,
@@ -96,26 +102,12 @@ class FileSystemEngineeringDocumentRepository:
         return tuple(sorted(documents, key=lambda document: document.key.value))
 
     def list_readable(self) -> tuple[EngineeringDocument, ...]:
-        """Return documents whose persisted schema is currently readable.
+        """Return a strict inventory; obsolete sources must not silently disappear.
 
-        Unsupported schema versions are ignored so optional repository-wide
-        consumers such as publication cross-reference indexing do not fail on
-        unrelated stale artifacts. Malformed payloads and invalid documents
-        remain hard errors.
+        This entry point is also used by cross-reference consumers. During
+        refactoring it has the same current-only contract as ``list``/``load``.
         """
-        documents = []
-        for path in sorted(self._documents_dir.glob("*.json")):
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            if not isinstance(payload, dict):
-                raise ValueError("Persisted engineering document must be a JSON object")
-            if "schema_version" not in payload:
-                raise ValueError("Persisted engineering document is missing 'schema_version'")
-            try:
-                require_supported_schema("engineering-document", payload["schema_version"])
-            except ValueError:
-                continue
-            documents.append(_document_from_payload(payload))
-        return tuple(sorted(documents, key=lambda document: document.key.value))
+        return self.list()
 
     def _path_for_key(self, key: DocumentKey) -> Path:
         safe_key = _safe_filename(key.value)
@@ -135,48 +127,14 @@ def _extract_document_data(payload: Any) -> dict[str, Any]:
 
     if "schema_version" not in payload:
         raise ValueError("Persisted engineering document is missing 'schema_version'")
+    if type(payload["schema_version"]) is not int:
+        raise ValueError("engineering document schema version must be an integer")
     require_supported_schema("engineering-document", payload["schema_version"])
 
     document = payload.get("document")
     if not isinstance(document, dict):
         raise ValueError("Versioned engineering document payload is missing 'document'")
-    if payload["schema_version"] == 8:
-        document = _upgrade_v8(document)
     return document
-
-
-def _upgrade_v8(document: dict[str, Any]) -> dict[str, Any]:
-    """Preserve populated unmarked v8 enrichments without inventing authority.
-
-    The old schema cannot distinguish reviewed AtlasData tags from unmarked
-    enrichment. Keep those values protected until explicitly confirmed. Empty
-    defaults remain unassessed; generated records remain generated.
-    """
-    from standards_atlas.domain.model.clause import ClauseEnrichments
-    from standards_atlas.domain.model.knowledge_state import paths_overlap
-
-    result = deepcopy(document)
-    defaults = ClauseEnrichments().model_dump(mode="json")
-    for clause in result.get("clauses", []):
-        provenance = clause.setdefault("provenance", {})
-        marked = [item["path"] for item in provenance.get("generated_attributes", [])]
-        marked.extend(item["path"] for item in provenance.get("confirmed_attributes", []))
-        unknown = set(provenance.get("unattributed_attributes", []))
-        enrichments = clause.get("enrichments", {})
-        for field, value in enrichments.get("semantic", {}).items():
-            path = f"enrichments.semantic.{field}"
-            if value != defaults["semantic"].get(field) and not any(
-                paths_overlap(path, item) for item in marked
-            ):
-                unknown.add(path)
-        for field in ("context_routing", "subject_context"):
-            path = f"enrichments.{field}"
-            if enrichments.get(field, defaults[field]) != defaults[field] and not any(
-                paths_overlap(path, item) for item in marked
-            ):
-                unknown.add(path)
-        provenance["unattributed_attributes"] = sorted(unknown)
-    return result
 
 
 def _safe_filename(value: str) -> str:

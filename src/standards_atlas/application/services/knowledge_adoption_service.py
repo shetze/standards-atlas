@@ -11,6 +11,7 @@ from standards_atlas.application.model.knowledge_adoption import (
     KnowledgeAdoptionReport,
 )
 from standards_atlas.application.ports import EngineeringDocumentRepository
+from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.domain.model import DocumentKey, EngineeringDocument
 from standards_atlas.domain.model.enrichment_patch import merge_generated_enrichments
@@ -34,6 +35,8 @@ class KnowledgeAdoptionService:
         document_keys: tuple[str, ...] = (),
         write: bool = False,
     ) -> KnowledgeAdoptionReport:
+        batch = KnowledgeAdoptionBatch.model_validate(batch)
+        require_current_schema("knowledge-adoption-batch", batch.schema_version)
         known = {item.document_key for item in batch.candidates}
         if set(document_keys) - known:
             raise ValueError("requested documents are not represented by qualified candidates")

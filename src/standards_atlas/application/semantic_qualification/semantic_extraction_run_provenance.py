@@ -7,6 +7,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from standards_atlas.application.semantic_qualification.cascade_provenance import (
+    validate_cascade_provenance,
+)
+from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
 )
@@ -57,6 +61,7 @@ def _cascade_context_sha256(run_directory: Path) -> str:
     members: list[dict[str, Any]] = []
     if provenance_path.is_file():
         provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+        validate_cascade_provenance(provenance)
         members.append({"path": "cascade-provenance.json", "payload": provenance})
         for stage in provenance.get("stages", []):
             if not isinstance(stage, dict) or not stage.get("stage_id"):
@@ -64,10 +69,12 @@ def _cascade_context_sha256(run_directory: Path) -> str:
             stage_id = str(stage["stage_id"])
             report_path = run_directory / "cascade" / stage_id / "consensus-report.json"
             if report_path.is_file():
+                payload = json.loads(report_path.read_text(encoding="utf-8"))
+                ConsensusReport.model_validate(payload)
                 members.append(
                     {
                         "path": f"cascade/{stage_id}/consensus-report.json",
-                        "payload": json.loads(report_path.read_text(encoding="utf-8")),
+                        "payload": payload,
                     }
                 )
     return _canonical_sha256(members)

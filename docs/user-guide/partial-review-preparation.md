@@ -70,7 +70,7 @@ in the review package remain separate and are carried forward unchanged.
 
 Technical failures have their own count; they are neither negative labels nor semantic
 conflicts. Missing, ineligible and not-evaluated observations do not manufacture default
-`false`, `null` or empty selections. Legacy reports retain actual explicitly reported votes;
+`false`, `null` or empty selections. Current-contract historical reports retain actual explicitly reported votes;
 zero-vote insufficient-evidence defaults do not raise semantic disagreement priority.
 
 ### Reproducible priority, not a confidence estimate
@@ -296,3 +296,12 @@ selection/index lineage, human decisions and Workbench exposure records with bot
 A further Development materialization retains the parent Workbench history and rebinds its
 identities automatically; it cannot reset a previously exposed Holdout to an unexposed state.
 No additional MCP approval or publication capability is introduced.
+
+### Obsolete historical formats (R3)
+
+Consensus history requires schema 5.0. A rejected report includes the source/member identity
+and aborts index preparation before a new index is published. There is no compatibility
+conversion, inferred negative, or empty "clean history" result. Existing membership and
+human decisions remain unchanged. Full archives can contain other opaque artifacts, but
+recognized qualification evidence is checked when consumed. See
+[Remaining schema refactoring R3](remaining-schema-refactoring.md).

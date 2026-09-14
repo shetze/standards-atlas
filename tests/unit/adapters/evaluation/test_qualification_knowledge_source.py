@@ -139,6 +139,7 @@ def _members(
         for i in range(3)
     )
     consensus = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix",
         corpus_id="test",
         prompt_id="prompt",

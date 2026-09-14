@@ -204,7 +204,7 @@ The report should include:
 ```json
 "engineering_document_schema": {
   "current": 9,
-  "readable": [8, 9],
+  "readable": [9],
   "writer": 9
 }
 ```

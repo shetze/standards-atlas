@@ -23,7 +23,7 @@ def _write_manifest(path: Path) -> None:
         "\n".join(
             (
                 "manifest_type: qualification_matrix",
-                'schema_version: "1.3"',
+                'schema_version: "1.6"',
                 "matrix_id: matrix-v1",
                 "corpus_id: corpus-v1",
                 "task_version: 2.1.0",
@@ -87,7 +87,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
             "dataset_version": "2.1.0",
             "id": "matrix-v1",
             "manifest_type": "qualification_matrix",
-            "schema_version": "1.3",
+            "schema_version": "1.6",
             "task_version": "2.1.0",
         }
         assert metadata["corpus"]["id"] == "corpus-v1"
@@ -167,6 +167,7 @@ def test_analysis_metrics_omit_removed_applicability_structural_conflicts() -> N
         ),
     )
     report = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v1",
         corpus_id="corpus-v1",
         prompt_id="content-only",
@@ -224,6 +225,7 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
         ),
     )
     report = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v1",
         corpus_id="corpus-v1",
         prompt_id="content-only",
@@ -360,6 +362,7 @@ def test_analysis_metrics_report_selection_coverage_counts() -> None:
         requires_review=False,
     )
     report = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v1",
         corpus_id="corpus-v1",
         prompt_id="content-only",

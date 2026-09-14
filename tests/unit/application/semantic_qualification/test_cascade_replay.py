@@ -56,6 +56,7 @@ def _report(path: Path, values: dict[str, float]) -> None:
         for key, value in values.items()
     )
     report = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix",
         corpus_id="corpus",
         prompt_id="content-only",

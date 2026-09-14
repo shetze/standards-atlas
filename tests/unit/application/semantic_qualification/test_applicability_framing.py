@@ -75,6 +75,7 @@ def _write(run: Path, annotation: ClauseEvaluationAnnotation) -> None:
 
 def _manifest(tmp_path: Path, full: Path, minimal: Path) -> QualificationMatrixManifest:
     return QualificationMatrixManifest(
+        schema_version="1.6",
         matrix_id="applicability-framing-test",
         corpus_id="semantic-profile-v1",
         prompts=(

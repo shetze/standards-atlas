@@ -15,6 +15,7 @@ from standards_atlas.application.model.knowledge_adoption import (
     ClauseKnowledgeCandidate,
     KnowledgeAdoptionBatch,
 )
+from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.annotations import (
     EvaluationCorpusManifest,
     normalized_content_hash,
@@ -25,6 +26,9 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 )
 from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
     ApplicabilityPolicyRunReport,
+)
+from standards_atlas.application.semantic_qualification.artifact_contracts import (
+    validate_qualification_artifact,
 )
 from standards_atlas.application.semantic_qualification.consensus import (
     ClauseConsensus,
@@ -123,6 +127,7 @@ class _Archive:
             or len(data) != entry["size_bytes"]
         ):
             raise ValueError(f"qualification artifact checksum mismatch: {name}")
+        validate_qualification_artifact(name, data)
         self.verified.add(name)
         return data
 
@@ -438,7 +443,9 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
                 not_evaluated=tuple(not_evaluated),
             )
         )
+    require_current_schema("knowledge-adoption-batch", "1.1")
     return KnowledgeAdoptionBatch(
+        schema_version="1.1",
         source_id=archive.id,
         source_sha256=archive.digest,
         selected_clause_count=selection.selected_clause_count,

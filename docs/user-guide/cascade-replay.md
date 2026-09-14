@@ -118,5 +118,7 @@ Do not add historical reference measurements to fresh execution costs.
 Old automatically recorded matrix batch sums lack the required denominator and are not
 used as per-request latency. Where individual old response files have trustworthy timing,
 it can be reconstructed. Old adaptive-interview aggregates and old failures without
-per-call measurements remain unknown. Explicit legacy user-declared means remain readable
-and labelled separately, but are not silently mixed with measured request averages.
+per-call measurements remain unknown. Explicit user-declared means in a current-format
+manifest remain labelled separately and are not silently mixed with measured request averages.
+These timing distinctions do not permit reading removed report or manifest schema versions;
+R3 requires the current contracts before timing reconstruction or replay.

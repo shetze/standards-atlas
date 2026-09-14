@@ -10,10 +10,13 @@ from zipfile import ZipFile
 
 import yaml
 
+from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     ChallengerQualificationConfig,
     MatrixExecutionConfig,
     QualificationMatrixManifest,
+    QualificationMatrixReport,
 )
 
 
@@ -48,6 +51,7 @@ def load_hard_case_selection(
         if consensus_name is None:
             raise ValueError("qualification archive has no final consensus report")
         report = json.loads(archive.read(consensus_name))
+        ConsensusReport.model_validate(report)
 
     clause_ids = tuple(
         clause["clause_id"]
@@ -86,9 +90,10 @@ def _sha256(path: Path) -> str:
 
 def _has_applicability_disagreement(votes: list[dict[str, Any]]) -> bool:
     presence = {
-        bool(vote.get("applicability_present"))
+        vote["applicability_present"]
         for vote in votes
-        if bool(vote.get("applicability_presence_eligible", True))
+        if type(vote.get("applicability_present")) is bool
+        and vote.get("applicability_presence_eligible", True)
     }
     return len(presence) > 1
 
@@ -97,6 +102,7 @@ def build_challenger_manifest(
     manifest: QualificationMatrixManifest,
 ) -> QualificationMatrixManifest:
     """Derive an isolated full-matrix run without mutating the production cascade."""
+    manifest = QualificationMatrixManifest.model_validate(manifest)
     config = manifest.challenger_qualification
     if not config.enabled:
         raise ValueError("challenger qualification is not enabled in the manifest")
@@ -140,6 +146,8 @@ def write_challenger_manifest(*, manifest: QualificationMatrixManifest, path: Pa
             )
         }
     )
+    derived = QualificationMatrixManifest.model_validate(derived)
+    require_current_schema("qualification-matrix-manifest", derived.schema_version)
     payload = derived.model_dump(mode="json", exclude_none=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
@@ -154,6 +162,7 @@ def write_challenger_comparison(
     matrix_path = run_directory / "qualification-matrix.json"
     metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
     matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
+    QualificationMatrixReport.model_validate(matrix)
     fitness = {
         item["model_id"]: item
         for item in metrics.get("diagnostics", {}).get("applicability_model_fitness", [])

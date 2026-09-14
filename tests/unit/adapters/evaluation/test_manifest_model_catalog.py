@@ -29,7 +29,7 @@ def _manifest(path: Path, *, model_ref: str, include_codex: bool = False) -> Non
         yaml.safe_dump(
             {
                 "manifest_type": "qualification_matrix",
-                "schema_version": "1.5",
+                "schema_version": "1.6",
                 "matrix_id": path.stem,
                 "corpus_id": "corpus",
                 "prompts": [{"id": "one"}, {"id": "two"}],

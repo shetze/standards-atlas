@@ -95,6 +95,7 @@ def _manifest(tmp_path: Path, baseline_run: Path, context_run: Path) -> Qualific
         ),
     )
     return QualificationMatrixManifest(
+        schema_version="1.6",
         matrix_id="prompt-delta-test",
         corpus_id="roles-v1",
         prompts=prompts,

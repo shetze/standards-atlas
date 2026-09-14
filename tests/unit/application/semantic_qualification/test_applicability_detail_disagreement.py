@@ -550,6 +550,7 @@ def test_evaluate_uses_presence_then_hitl_detail(monkeypatch, tmp_path: Path) ->
     )
 
     presence = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v6",
         corpus_id="semantic-profile-v1",
         prompt_id="presence",

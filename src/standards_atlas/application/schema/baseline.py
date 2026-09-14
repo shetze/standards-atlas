@@ -131,17 +131,17 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         "taxonomy-decision-review", 1, (1,), "resources/semantic/taxonomy-decisions/**/review.yaml"
     ),
     "cascade-provenance": SchemaPolicy(
-        "cascade-provenance", "1.6", ("1.5", "1.6"), "**/cascade-provenance.json"
+        "cascade-provenance", "1.6", ("1.6",), "**/cascade-provenance.json"
     ),
     "cascade-replay": SchemaPolicy("cascade-replay", "1.0", ("1.0",), "**/cascade-replay.json"),
     "qualification-request-timing": SchemaPolicy(
         "qualification-request-timing", "1.0", ("1.0",), "**/request-timing.json"
     ),
     "qualification-matrix-report": SchemaPolicy(
-        "qualification-matrix-report", "1.1", ("1.0", "1.1"), "**/qualification-matrix.json"
+        "qualification-matrix-report", "1.1", ("1.1",), "**/qualification-matrix.json"
     ),
     "qualification-consensus": SchemaPolicy(
-        "qualification-consensus", "5.0", ("4.0", "5.0"), "**/consensus-report.json"
+        "qualification-consensus", "5.0", ("5.0",), "**/consensus-report.json"
     ),
     "golden-corpus-proposal": SchemaPolicy(
         "golden-corpus-proposal", "4.0", ("4.0",), "**/golden-corpus-proposal.yaml"
@@ -160,17 +160,17 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         "atlasdata-knowledge-report", "1.0", ("1.0",), "local/**/atlasdata-knowledge*.json"
     ),
     "engineering-document": SchemaPolicy(
-        "engineering-document", 9, (8, 9), ".atlas/data/documents/*.json"
+        "engineering-document", 9, (9,), ".atlas/data/documents/*.json"
     ),
     "knowledge-adoption-batch": SchemaPolicy(
-        "knowledge-adoption-batch", "1.1", ("1.0", "1.1"), "local/**/knowledge-adoption-batch.json"
+        "knowledge-adoption-batch", "1.1", ("1.1",), "local/**/knowledge-adoption-batch.json"
     ),
     "knowledge-adoption-report": SchemaPolicy(
         "knowledge-adoption-report", "1.0", ("1.0",), "local/**/knowledge-adoption-report.json"
     ),
     "standards-manifest": SchemaPolicy("standards-manifest", 2, (2,), "manifests/*.yaml"),
     "qualification-matrix-manifest": SchemaPolicy(
-        "qualification-matrix-manifest", "1.6", ("1.5", "1.6"), "manifests/*.yaml"
+        "qualification-matrix-manifest", "1.6", ("1.6",), "manifests/*.yaml"
     ),
     "semantic-task-resource": SchemaPolicy(
         "semantic-task-resource", 1, (1,), "resources/semantic/tasks/**/task.yaml"

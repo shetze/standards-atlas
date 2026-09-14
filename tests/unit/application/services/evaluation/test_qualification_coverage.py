@@ -55,6 +55,7 @@ def _report(*clause_ids: str) -> ConsensusReport:
         for clause_id in clause_ids
     )
     return ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v1",
         corpus_id="semantic-profile-v1",
         prompt_id="content-only",

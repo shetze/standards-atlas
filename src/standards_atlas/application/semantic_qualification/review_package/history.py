@@ -118,27 +118,31 @@ class HistoryReader:
         data = yaml.safe_load(raw) if location.suffix in {".yaml", ".yml"} else json.loads(raw)
         if not isinstance(data, dict):
             raise ValueError("historical input must be a report mapping")
-        kind = data.get("kind")
-        if kind == "partial-semantic-reference":
-            self._suite(data, digest)
-            detected = "semantic-suite"
-        elif kind == "mixed-consensus-report":
-            self._mixed(data, digest)
-            detected = "mixed"
-        elif "matrix_id" in data and "clauses" in data:
-            self._consensus(data, digest)
-            detected = "consensus"
-        elif "plan" in data and "states" in data and "outcome" in data:
-            self._observation(data, digest)
-            detected = "observation"
-        elif data.get("schema_version") == "3.0" and "cases" in data:
-            self._golden(data, digest)
-            detected = "golden"
-        else:
-            raise ValueError(
-                "unsupported history: need Golden 3.0, semantic suite, mixed/consensus report "
-                "or partial observation; aggregate evaluation JSON has no bound clause evidence"
-            )
+        try:
+            kind = data.get("kind")
+            if kind == "partial-semantic-reference":
+                self._suite(data, digest)
+                detected = "semantic-suite"
+            elif kind == "mixed-consensus-report":
+                self._mixed(data, digest)
+                detected = "mixed"
+            elif "matrix_id" in data and "clauses" in data:
+                self._consensus(data, digest)
+                detected = "consensus"
+            elif "plan" in data and "states" in data and "outcome" in data:
+                self._observation(data, digest)
+                detected = "observation"
+            elif data.get("schema_version") == "3.0" and "cases" in data:
+                self._golden(data, digest)
+                detected = "golden"
+            else:
+                raise ValueError(
+                    "unsupported history: need Golden 3.0, semantic suite, mixed/consensus report "
+                    "or partial observation; aggregate evaluation JSON has no bound clause evidence"
+                )
+        except ValueError as exc:
+            identity = f"{location}!{member}" if member else str(location)
+            raise ValueError(f"invalid review history {identity}: {exc}") from exc
         self.artifacts.append(
             HistoryArtifact(
                 location=str(location.resolve()),
@@ -240,11 +244,11 @@ class HistoryReader:
                 )
 
     def _consensus(self, data, digest):
-        # Validate supported report versions, but inspect raw keys to avoid default-valued votes.
+        # Validate the current report contract, but inspect raw keys to avoid default-valued votes.
         report = ConsensusReport.model_validate(data)
         coordinates = [(c.document_key, c.clause_id) for c in report.clauses]
         if report.clause_count != len(coordinates) or len(set(coordinates)) != len(coordinates):
-            raise ValueError("legacy consensus count or clause identities are inconsistent")
+            raise ValueError("consensus count or clause identities are inconsistent")
         fields = {
             "primary_function": "statement_function_category",
             "primary_knowledge_kind": "knowledge_primary_category",
@@ -262,7 +266,7 @@ class HistoryReader:
                 continue
             votes = case.get("votes", [])
             if len({vote["model_id"] for vote in votes}) != len(votes):
-                raise ValueError("legacy consensus has duplicate model votes")
+                raise ValueError("consensus has duplicate model votes")
             for attribute, category_field in fields.items():
                 if attribute not in case or category_field not in case:
                     continue
@@ -271,8 +275,8 @@ class HistoryReader:
                 ):
                     continue
                 category = case[category_field]
-                values = self._legacy_values(votes, attribute)
-                status = self._legacy_status(category, values)
+                values = self._explicit_vote_values(votes, attribute)
+                status = self._observation_status(category, values)
                 self._add(
                     source,
                     digest,
@@ -284,8 +288,8 @@ class HistoryReader:
                     model_values=values,
                 )
             if case.get("process_set_evaluated") and "proposed_process_functions" in case:
-                values = self._legacy_values(votes, "process_functions")
-                status = self._legacy_status(case.get("process_set_category"), values)
+                values = self._explicit_vote_values(votes, "process_functions")
+                status = self._observation_status(case.get("process_set_category"), values)
                 self._add(
                     source,
                     digest,
@@ -298,7 +302,7 @@ class HistoryReader:
                 )
 
     @staticmethod
-    def _legacy_values(votes, attribute):
+    def _explicit_vote_values(votes, attribute):
         values = {}
         for vote in votes:
             if attribute not in vote:
@@ -317,7 +321,7 @@ class HistoryReader:
         return values
 
     @staticmethod
-    def _legacy_status(category, values):
+    def _observation_status(category, values):
         if category in {None, "insufficient_evidence"} and not values:
             return "not_evaluated"
         if category in {None, "disputed", "insufficient_evidence"}:

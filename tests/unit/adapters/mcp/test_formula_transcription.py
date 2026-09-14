@@ -1,7 +1,6 @@
 """Schema/read-path regressions using real repositories and the MCP service boundary."""
 
 import json
-from contextlib import nullcontext
 from pathlib import Path
 
 import pytest
@@ -15,7 +14,6 @@ from standards_atlas.adapters.filesystem import (
 from standards_atlas.adapters.mcp import McpClauseService, McpServerConfig
 from standards_atlas.application.schema import (
     SCHEMA_POLICIES,
-    SchemaDeprecationWarning,
     SchemaPolicy,
 )
 from standards_atlas.domain.model import (
@@ -74,41 +72,35 @@ def _service(workspace: Path, *, enabled=True, allowed=()) -> McpClauseService:
     )
 
 
-@pytest.mark.parametrize("schema_version", [8, 9])
 def test_mcp_formula_roundtrip_reads_supported_schemas_and_writes_v9_with_provenance(
     tmp_path: Path,
-    schema_version: int,
 ) -> None:
     documents = FileSystemEngineeringDocumentRepository(tmp_path)
     documents.save(_document())
     path = tmp_path / "documents" / f"{KEY.value}.json"
     payload = json.loads(path.read_text())
-    payload["schema_version"] = schema_version
-    if schema_version == 8:
-        payload["document"]["clauses"][0]["provenance"] = {"generated_attributes": []}
     path.write_text(json.dumps(payload))
     before = path.read_bytes()
     service = _service(tmp_path)
 
-    with pytest.warns(SchemaDeprecationWarning) if schema_version == 8 else nullcontext():
-        formulas = service.list_untranscribed_formulas(document_keys=[KEY.value], limit=20)
-        assert len(formulas) == 1
-        formula_id = formulas[0]["formula_id"]
-        formula = service.get_formula(formula_id)
-        assert formula["image"]["data_uri"] == IMAGE
-        assert formula["context"] == {
-            "preceding_text": "For the diagnostic interval:",
-            "following_text": "where T is measured in seconds.",
-        }
-        assert path.read_bytes() == before  # Listing/getting must not migrate the file on disk.
-        artifact = service.submit_formula_transcription(
-            formula_id,
-            latex=r"T_D = T_1 + T_2",
-            actor="codex",
-            provider="openai",
-            model="test-model",
-            confidence=0.93,
-        )
+    formulas = service.list_untranscribed_formulas(document_keys=[KEY.value], limit=20)
+    assert len(formulas) == 1
+    formula_id = formulas[0]["formula_id"]
+    formula = service.get_formula(formula_id)
+    assert formula["image"]["data_uri"] == IMAGE
+    assert formula["context"] == {
+        "preceding_text": "For the diagnostic interval:",
+        "following_text": "where T is measured in seconds.",
+    }
+    assert path.read_bytes() == before  # Listing/getting must not migrate the file on disk.
+    artifact = service.submit_formula_transcription(
+        formula_id,
+        latex=r"T_D = T_1 + T_2",
+        actor="codex",
+        provider="openai",
+        model="test-model",
+        confidence=0.93,
+    )
 
     persisted = FileSystemFormulaTranscriptionRepository(tmp_path).load(formula_id)
     assert persisted.provenance.actor == "codex"
@@ -248,7 +240,7 @@ def test_runtime_info_is_independent_of_document_readability_and_omits_private_p
 
     assert info == {
         "application": {"name": "standards-atlas", "version": __version__},
-        "engineering_document_schema": {"current": 9, "readable": [8, 9], "writer": 9},
+        "engineering_document_schema": {"current": 9, "readable": [9], "writer": 9},
         "capabilities": {
             "formula_transcription": False,
             "review_read": False,

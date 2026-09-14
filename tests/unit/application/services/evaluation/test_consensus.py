@@ -269,6 +269,7 @@ def test_responsibility_requires_actor_and_action_evidence(tmp_path: Path) -> No
 
 def test_review_sorts_disputed_clauses_before_other_review_categories() -> None:
     report = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v1",
         corpus_id="semantic-roles-v1",
         prompt_id="content-only",
@@ -868,6 +869,7 @@ def test_high_role_relation_confidence_does_not_mask_missing_statement_function(
 
 def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> None:
     report = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v1",
         corpus_id="semantic-roles-v1",
         prompt_id="structure-aware",
@@ -938,6 +940,7 @@ def test_review_prefills_reliable_dimensions_and_leaves_unresolved_blank() -> No
 
 def test_review_prefills_unanimous_absent_secondary_dimensions() -> None:
     report = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v1",
         corpus_id="semantic-roles-v1",
         prompt_id="structure-aware",

@@ -51,6 +51,9 @@ from standards_atlas.application.semantic_qualification.applicability_policy_qua
 from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
     ApplicabilityPolicyRunReport,
 )
+from standards_atlas.application.semantic_qualification.cascade_provenance import (
+    validate_cascade_provenance,
+)
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
     QUALIFICATION_COVERAGE_FILENAME,
@@ -58,6 +61,7 @@ from standards_atlas.application.semantic_qualification.qualification_coverage i
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
+    QualificationMatrixReport,
 )
 from standards_atlas.application.semantic_qualification.run_selection import (
     QUALIFICATION_SELECTION_FILENAME,
@@ -203,6 +207,7 @@ def finalize_qualification_archive(
     matrix_passed = None
     if matrix_report_path.is_file():
         matrix_report = json.loads(matrix_report_path.read_text(encoding="utf-8"))
+        QualificationMatrixReport.model_validate(matrix_report)
         matrix_passed = matrix_report.get("passed")
 
     detail_summary: dict[str, Any] | None = None
@@ -485,6 +490,7 @@ def finalize_qualification_archive(
     provenance_path = run_directory / "cascade-provenance.json"
     if provenance_path.is_file():
         provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+        validate_cascade_provenance(provenance)
         policy = provenance.get("execution_policy")
         if isinstance(policy, dict):
             execution_policy = policy

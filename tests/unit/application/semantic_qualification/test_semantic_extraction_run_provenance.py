@@ -36,18 +36,32 @@ def _selection() -> QualificationRunSelection:
 def _write_cascade(root: Path, *, present: bool) -> None:
     (root / "cascade" / "efficient-local").mkdir(parents=True, exist_ok=True)
     (root / "cascade-provenance.json").write_text(
-        json.dumps({"stages": [{"stage_id": "efficient-local"}]}), encoding="utf-8"
+        json.dumps({"schema_version": "1.6", "stages": [{"stage_id": "efficient-local"}]}),
+        encoding="utf-8",
     )
     (root / "cascade" / "efficient-local" / "consensus-report.json").write_text(
         json.dumps(
             {
+                "schema_version": "5.0",
+                "matrix_id": "synthetic",
+                "corpus_id": "synthetic",
+                "prompt_id": "p",
+                "reasoning_mode_id": "disabled",
+                "generated_at": "2026-09-14T00:00:00Z",
+                "model_count": 1,
+                "clause_count": 1,
+                "categories": {},
+                "review_count": 1,
                 "clauses": [
                     {
+                        "category": "insufficient_evidence",
+                        "confidence": 0.0,
+                        "participating_models": 1,
                         "document_key": "DOC",
                         "clause_id": "c1",
                         "applicability_present": present,
                     }
-                ]
+                ],
             }
         ),
         encoding="utf-8",

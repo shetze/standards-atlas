@@ -204,6 +204,7 @@ class BoundaryRunner:
         with ZipFile(archive, "w") as zipped:
             zipped.writestr("archive-manifest.json", json.dumps({"matrix_id": matrix_id}))
         self.sealed_batches[archive.resolve()] = KnowledgeAdoptionBatch(
+            schema_version="1.1",
             source_id="synthetic-workflow",
             source_sha256=sha256_file(archive),
             selected_clause_count=2,

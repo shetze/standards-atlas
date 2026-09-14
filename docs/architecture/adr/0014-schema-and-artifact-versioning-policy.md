@@ -92,3 +92,20 @@ Old artifacts remain unchanged historical files; no migration, hash alias or upg
 read is provided. This supersedes the earlier Slice-7/Slice-4 reader-window decisions for
 these three families only. R1's current-only policies and the future generic Stable policy
 remain unchanged. Other families are left to R3/R4.
+
+### Remaining concrete compatibility removal R3 (2026-09-14)
+
+The historical reporting windows listed above are superseded for current execution:
+`cascade-provenance` is 1.6 only, `qualification-matrix-report` 1.1 only,
+`qualification-consensus` 5.0 only, `engineering-document` 9 only,
+`knowledge-adoption-batch` 1.1 only, and `qualification-matrix-manifest` 1.6 only.
+Direct models, repository and model-catalog entry points, recognized embedded artifacts,
+replay, history and qualification consumers reject obsolete/missing markers. Document
+inventories do not silently skip unsupported sources. There is no automatic v8 upgrade or
+fingerprint-preserving old serializer. Human authority and explicit observation availability
+are independent of serialization age and remain protected.
+
+Only schema markers change in the four older shipped matrix manifests. Matrix/prompt/model/
+resource identities and qualification thresholds are not revised. Historical raw data in a
+current contract remains historical, not fresh confirmation or evidence of Holdout independence.
+The generic Stable-phase policy remains untouched; global phase/inventory guards belong to R4.

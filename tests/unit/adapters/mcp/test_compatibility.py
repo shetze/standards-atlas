@@ -34,7 +34,7 @@ def _runtime(current: int = 9) -> dict[str, Any]:
         "application": {"name": "standards-atlas", "version": "0.8.7"},
         "engineering_document_schema": {
             "current": current,
-            "readable": [8, 9] if current == 9 else [8],
+            "readable": [current],
             "writer": current,
         },
         "capabilities": {"formula_transcription": False},

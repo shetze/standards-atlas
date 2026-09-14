@@ -116,7 +116,7 @@ def test_repository_rejects_obsolete_schema_version(tmp_path: Path) -> None:
         repository.load(DocumentKey(value="DOC"))
 
 
-def test_v8_nondefault_unmarked_values_are_preserved_without_invented_authority(
+def test_v8_nondefault_unmarked_values_are_rejected_without_mutation(
     tmp_path: Path,
 ) -> None:
     document = _document()
@@ -133,15 +133,9 @@ def test_v8_nondefault_unmarked_values_are_preserved_without_invented_authority(
     payload["document"]["clauses"][0]["provenance"] = {"generated_attributes": []}
     path.write_text(json.dumps(payload))
     before = path.read_bytes()
-    from standards_atlas.application.schema.policy import SchemaDeprecationWarning
-
-    with pytest.warns(SchemaDeprecationWarning):
-        loaded = FileSystemEngineeringDocumentRepository(tmp_path).load(document.key)
+    with pytest.raises(ValueError, match="Unsupported engineering document schema version"):
+        FileSystemEngineeringDocumentRepository(tmp_path).load(document.key)
     assert path.read_bytes() == before
-    provenance = loaded.clauses[0].provenance
-    assert provenance.protection("enrichments.semantic.applicability_present") == "unattributed"
-    assert provenance.confirmed_attributes == ()
-    assert provenance.availability("enrichments.semantic.role_semantics_present") == "not_evaluated"
 
 
 def test_v9_roundtrip_preserves_known_false_unknown_and_primary(tmp_path: Path) -> None:
@@ -191,14 +185,15 @@ def test_writer_version_matches_central_reader_policy() -> None:
 
     policy = SCHEMA_POLICIES["engineering-document"]
     assert CURRENT_DOCUMENT_SCHEMA_VERSION == policy.current == 9
-    assert policy.readable == (8, 9)
+    assert policy.readable == (9,)
     policy.require_readable(CURRENT_DOCUMENT_SCHEMA_VERSION)
 
 
-def test_readable_inventory_keeps_v9_documents_and_skips_unsupported_schemas(tmp_path) -> None:
+def test_readable_inventory_does_not_hide_unsupported_schemas(tmp_path) -> None:
     repository = FileSystemEngineeringDocumentRepository(tmp_path)
     document = _document()
     repository.save(document)
     (tmp_path / "documents" / "obsolete.json").write_text('{"schema_version": 7, "document": {}}')
 
-    assert repository.list_readable() == (document,)
+    with pytest.raises(ValueError, match="Unsupported engineering document schema version"):
+        repository.list_readable()

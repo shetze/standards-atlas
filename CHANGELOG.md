@@ -2,6 +2,19 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Remaining-schema refactoring R3 (2026-09-14)
+
+- Read/write only cascade provenance 1.6, matrix report 1.1, consensus 5.0,
+  EngineeringDocument 9, adoption batch 1.1 and matrix manifest 1.6.
+- Require explicit markers in direct/nested models, repositories, MCP, replay and history;
+  remove v8 upgrades and old consensus/adoption serialization without migrating evidence.
+- Validate recognized embedded artifacts before archive use/publication; reject conflicting
+  member aliases and make obsolete historical inputs visible rather than silently omitting them.
+- Preserve explicit false/null/empty versus missing observations, timing availability,
+  source requirements, existing human authority and unchanged qualification thresholds.
+- Update only schema markers in shipped matrices, current fixtures, rejection tests and docs.
+  Keep R1/R2/Handoff contracts and resource versions; leave global policy enforcement to R4.
+
 ## Unreleased — Review-schema refactoring R2 (2026-09-14)
 
 - Require current manifest/publication schema 1.1 at direct, nested and file boundaries;

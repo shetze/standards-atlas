@@ -175,6 +175,7 @@ def _write_archive(tmp_path: Path, *, omit_selected_index: int | None = None) ->
         7: True,  # false positive, retained by detail
     }
     consensus = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v6",
         corpus_id="semantic-profile-v1",
         prompt_id="applicability-presence",

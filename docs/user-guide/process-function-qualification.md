@@ -145,9 +145,10 @@ when selecting only process functions. Then use the existing
 [AtlasData export/import](atlasdata-enrichments.md) or explicit
 [knowledge workflow](canonical-cbox.md). No new publication happens implicitly.
 
-Run 074 remains a valid old input: its process dimension is **not evaluated**, while its
-497 Applicability decisions remain 45 positive and 452 negative. The three unqualified
-cases are untouched. This is legacy compatibility, not a new process-quality evaluation.
+Original Run 074 is historical evidence, not a readable current-contract input. R3 rejects
+its obsolete consensus rather than converting it or inventing process observations. Preserve
+that archive unchanged; use a newly qualified current-schema archive for adoption. Missing
+process observations in current reports still remain **not evaluated**, never empty votes.
 
 ## Tests
 
@@ -158,6 +159,7 @@ explicit empty/null, absent fields, support, protected values and idempotent rep
 performs no external inference and makes no claim about real-model classification accuracy.
 
 Unit tests cover different prompts, repeat abstentions, raw-response recovery, independent
-stage/resolver snapshots, conflicts, schema-4 hash preservation and human-review retention.
-The existing opt-in Run 074 tests exercise the legacy archive against isolated source-matching
-documents; no protected standards text is embedded in repository test fixtures.
+stage/resolver snapshots, conflicts, obsolete-schema rejection and human-review retention.
+The opt-in original Run 074 tests now assert rejection without modifying the archive or
+writing canonical/public data. Current-schema end-to-end tests retain positive/negative/empty
+observation, protected-state, source-binding and roundtrip coverage without private fixtures.

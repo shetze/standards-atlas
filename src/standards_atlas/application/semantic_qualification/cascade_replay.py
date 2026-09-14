@@ -15,11 +15,13 @@ from pathlib import Path
 from typing import Any
 
 from standards_atlas import __version__
-from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.semantic_qualification.cascade_metrics import (
     reason_counts,
     resolution_counts,
     stage_accounting,
+)
+from standards_atlas.application.semantic_qualification.cascade_provenance import (
+    validate_cascade_provenance,
 )
 from standards_atlas.application.semantic_qualification.cascade_replay_proposals import (
     ProposalReplay,
@@ -72,7 +74,7 @@ def replay_cascade(
         ):
             raise ValueError("qualification selection does not match the manifest")
         provenance = json.loads(source.required(suffix="cascade-provenance.json"))
-        require_supported_schema("cascade-provenance", provenance.get("schema_version"))
+        validate_cascade_provenance(provenance)
         if provenance["matrix_id"] != manifest.matrix_id:
             raise ValueError("cascade provenance matrix does not match manifest")
         ids = tuple(item.clause_id for item in selection.clauses)

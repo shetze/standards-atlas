@@ -321,8 +321,9 @@ def test_missing_process_prompt_never_falls_back_to_another_prompt(tmp_path):
     assert report.process_function_metrics["set_evaluated"] == 1
 
 
-def test_legacy_consensus_serialization_preserves_fingerprint_payload():
+def test_obsolete_consensus_cannot_be_loaded_or_rehashed():
     report = ConsensusReport(
+        schema_version="5.0",
         matrix_id="m",
         corpus_id="c",
         prompt_id="p",
@@ -347,13 +348,15 @@ def test_legacy_consensus_serialization_preserves_fingerprint_payload():
         for model_vote in item["votes"]:
             for field in PROCESS_VOTE_FIELDS:
                 model_vote.pop(field)
-    loaded = ConsensusReport.model_validate(legacy)
+    with pytest.raises(ValueError, match="5.0"):
+        ConsensusReport.model_validate(legacy)
+    loaded = ConsensusReport.model_validate_json(report.model_dump_json())
     assert not loaded.clauses[0].process_set_evaluated
-    assert loaded.model_dump(mode="json") == legacy
+    assert loaded == report
     positive = report.model_dump(mode="python")
     positive["schema_version"] = "4.0"
     positive["clauses"] = (clause([vote("a"), vote("b")]),)
-    with pytest.raises(ValueError, match="schema 5.0"):
+    with pytest.raises(ValueError, match="5.0"):
         ConsensusReport.model_validate(positive)
 
 

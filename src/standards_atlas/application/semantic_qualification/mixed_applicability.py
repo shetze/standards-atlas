@@ -17,6 +17,7 @@ from pathlib import Path
 
 from standards_atlas.application.evaluation.repository import PromptRepository
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.applicability_decision_policy import (
     confirmation_is_required,
     rescue_is_required,
@@ -93,6 +94,7 @@ def mixed_policy_inputs(report, examples, *, task_version="2.0.0", generated_at=
         )
     counts = dict(Counter(c.category.value for c in clauses))
     projection = ConsensusReport(
+        schema_version="5.0",
         matrix_id=report.matrix_id,
         corpus_id=report.corpus_id,
         prompt_id="taxonomy-partial-v2",
@@ -188,6 +190,8 @@ def run_mixed_applicability(
         directory.rename(revision)
         directory.mkdir()
 
+    projection = ConsensusReport.model_validate(projection)
+    require_current_schema("qualification-consensus", projection.schema_version)
     _atomic_json(projection_path, projection.model_dump(mode="json"))
     _atomic_json(directory / "known-gate-coverage.json", coverage.model_dump(mode="json"))
     _atomic_json(

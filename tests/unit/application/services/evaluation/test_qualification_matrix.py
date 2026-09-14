@@ -76,6 +76,7 @@ def _manifest(tmp_path: Path) -> Path:
                     }
                 )
     payload = {
+        "schema_version": "1.6",
         "matrix_id": "semantic-role-v1",
         "corpus_id": "roles-v1",
         "repetitions": 2,

@@ -12,6 +12,7 @@ from standards_atlas.adapters.docling import DoclingArtifactRepository
 from standards_atlas.adapters.evaluation.archive_receipt import resolve_archive_receipt
 from standards_atlas.adapters.filesystem.document_repository import (
     CURRENT_DOCUMENT_SCHEMA_VERSION,
+    _extract_document_data,
 )
 from standards_atlas.application.ports import ExtractionState
 from standards_atlas.application.workflow.knowledge_plan import KNOWLEDGE_STAGES
@@ -87,7 +88,8 @@ class FileSystemWorkflowArtifactStore:
             normalized.startswith(".atlas/data/documents/")
             or normalized.startswith(".atlas/work/family-sources/documents/")
         ) and normalized.endswith(".json"):
-            return _json_schema_version(path) == CURRENT_DOCUMENT_SCHEMA_VERSION
+            version = _json_schema_version(path)
+            return type(version) is int and version == CURRENT_DOCUMENT_SCHEMA_VERSION
         return True
 
     def record_completion(self, step: WorkflowStep, project_root: Path) -> None:
@@ -299,6 +301,9 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
             if selected and path.stem not in selected:
                 continue
             content = path.read_bytes()
+            # Check the envelope before pruning outputs or comparing checkpoints.
+            # Obsolete inputs must not become reusable through a matching hash.
+            _extract_document_data(json.loads(content))
             if step.stage is WorkflowStage.CORPUS_BUILD and "--source-only-context" in step.command:
                 try:
                     payload = json.loads(content)

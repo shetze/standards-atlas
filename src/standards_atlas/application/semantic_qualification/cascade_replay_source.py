@@ -10,6 +10,9 @@ from typing import Any
 
 import yaml
 
+from standards_atlas.application.semantic_qualification.artifact_contracts import (
+    validate_qualification_artifact,
+)
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
@@ -58,6 +61,7 @@ class CascadeReplaySource:
         digest = hashlib.sha256(data).hexdigest()
         if name in self.expected and digest != self.expected[name]:
             raise ValueError(f"qualification artifact checksum mismatch: {name}")
+        validate_qualification_artifact(name, data)
         self.fingerprints[name] = digest
         return data
 

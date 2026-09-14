@@ -133,6 +133,7 @@ def _consensus(*presence: bool) -> ConsensusReport:
         for index, value in enumerate(presence, start=1)
     )
     return ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v1",
         corpus_id="semantic-profile-v1",
         prompt_id="applicability-presence",

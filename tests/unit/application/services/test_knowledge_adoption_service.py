@@ -61,6 +61,7 @@ def candidate(key="DOC"):
 
 def batch(*candidates):
     return KnowledgeAdoptionBatch(
+        schema_version="1.1",
         source_id="run",
         source_sha256="a" * 64,
         selected_clause_count=len(candidates) + 1,

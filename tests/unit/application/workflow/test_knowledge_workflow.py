@@ -157,7 +157,14 @@ def input_step(stage):
 def test_source_changes_invalidate_existing_markers(tmp_path, stage):
     source = tmp_path / ".atlas/data/documents/EXAMPLE.json"
     source.parent.mkdir(parents=True)
-    source.write_text(json.dumps({"document": {"clauses": [{"baseline": {"heading": "old"}}]}}))
+    source.write_text(
+        json.dumps(
+            {
+                "schema_version": 9,
+                "document": {"clauses": [{"baseline": {"heading": "old"}}]},
+            }
+        )
+    )
     step = input_step(stage)
     store = FileSystemWorkflowArtifactStore()
     store.record_completion(step, tmp_path)
@@ -172,11 +179,12 @@ def test_context_checkpoint_ignores_other_document_enrichment_not_its_baseline(t
     source = tmp_path / ".atlas/data/documents/OTHER.json"
     source.parent.mkdir(parents=True)
     content = {
+        "schema_version": 9,
         "document": {
             "clauses": [
                 {"baseline": {"heading": "term"}, "enrichments": {"context_routing": "old"}}
             ]
-        }
+        },
     }
     source.write_text(json.dumps(content))
     step = input_step(WorkflowStage.CONTEXT_ENRICHMENT)

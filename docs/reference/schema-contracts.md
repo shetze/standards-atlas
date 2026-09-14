@@ -23,7 +23,7 @@ Removed refactoring schemas are not recreated merely to fill the stable support 
 
 | Interface | Boundary | Schema axis | Resource axis | Location |
 | --- | --- | --- | --- | --- |
-| Engineering Document | persistence | `engineering-document` | — | `.atlas/data/documents/*.json` |
+| Engineering Document | persistence | `engineering-document` (9, current-only) | — | `.atlas/data/documents/*.json` |
 | AtlasData enrichments | public contract | `atlasdata-enrichments` (`1.2`) | retained decision identities | `<AtlasData parent>/enrichments/<physical-key>.yaml` |
 | Private knowledge evidence | persistence | `knowledge-evidence` (`1.0`) | content-addressed payload | `.atlas/data/knowledge-evidence/<sha256>.json` |
 | AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.0`) | — | `local/review/atlasdata-knowledge*.json` |
@@ -31,9 +31,9 @@ Removed refactoring schemas are not recreated merely to fill the stable support 
 | Partial request plan (experimental) | persistence | `partial-request-plan` (1.1, current-only) | source/rule/task identities | `**/partial-request-plan.json` |
 | Partial semantic observation (experimental) | persistence | `partial-semantic-observation` (1.1, current-only) | model/prompt/request identities | `**/partial-observation.json` |
 | Partial experiment plan/report | persistence | `partial-proposal-run` (1.0) | frozen selection/configuration | `**/partial-run-*.json` |
-| Qualification consensus | persistence | `qualification-consensus` (write 5.0, read 4.0/5.0) | model/prompt/stage identity | `**/consensus-report.json` |
+| Qualification consensus | persistence | `qualification-consensus` (5.0, current-only) | model/prompt/stage identity | `**/consensus-report.json` |
 | Golden corpus proposal | persistence | `golden-corpus-proposal` (4.0) | — | `**/golden-corpus-proposal.yaml` |
-| Qualification Matrix manifest | process | `qualification-matrix-manifest` | — | `manifests/*qualification*.yaml` |
+| Qualification Matrix manifest | process | `qualification-matrix-manifest` (1.6, current-only) | — | `manifests/*qualification*.yaml` |
 | Semantic task | packaged resource | `semantic-task-resource` | task version | `resources/semantic/tasks/<id>/<version>/task.yaml` |
 | Semantic profile | packaged resource | `semantic-profile-resource` | profile version | `resources/semantic/profiles/<id>/<version>/profile.yaml` |
 | Semantic ontology/vocabulary | packaged resource | `ontology-resource` | ontology version | `resources/ontologies/<id>/<version>/ontology.yaml` |
@@ -82,14 +82,32 @@ Standards Atlas does not promise in-place migration of generated artifacts. Comp
 
 See [ADR 0014](../architecture/adr/0014-schema-and-artifact-versioning-policy.md) for the normative policy.
 
-## Process-function qualification compatibility
+## Remaining qualification contracts (refactoring R3)
 
-Consensus 5.0 adds explicitly measured process primary/set votes and decisions. Schema 4.0
-remains readable with the original normalized serialization for existing policy fingerprints;
-this is read preservation, not a writer migration. New consensus evaluation always writes 5.0.
-The review-only golden proposal uses 4.0. Missing legacy process observations are not replaced
-by empty votes. Canonical schema 9, companion 1.2, adoption 1.0 and archive layout 1.5 are
-unchanged. See [Process-function qualification](../user-guide/process-function-qualification.md).
+| Schema family | Sole readable/writable version |
+| --- | --- |
+| `cascade-provenance` | 1.6 |
+| `qualification-matrix-report` | 1.1 |
+| `qualification-consensus` | 5.0 |
+| `engineering-document` | 9 (integer marker) |
+| `knowledge-adoption-batch` | 1.1 |
+| `qualification-matrix-manifest` | 1.6 |
+
+Markers are explicit. There is no v8 document upgrade, schema-4 consensus hash-preserving
+serializer, or schema-1.0 adoption batch. Current adoption serialization always includes
+`source_requirements`, including an explicit empty list. Repository inventories do not hide
+obsolete documents. Named embedded evidence is validated before archive publication or use;
+conflicting archive member aliases are rejected instead of choosing one silently.
+
+Historical **current-contract** reports remain useful: raw missing vote keys remain
+unobserved, explicit `false`/`null`/empty selections remain explicit, and measurements do not
+become zero just because they are unavailable. Historical **obsolete-contract** inputs are
+rejected, not migrated or treated as proof of an unexposed Holdout.
+
+The review-only golden proposal remains its separate schema **4.0**. Archive layout/metadata
+**1.5**, prompt/task/resource identities, timing semantics, and public enrichment companion
+**1.2** are unchanged. All R1/R2 and Handoff families retain their contracts.
+See [Remaining schema refactoring R3](../user-guide/remaining-schema-refactoring.md).
 
 
 ### Partial cascade readiness artifacts (Slice 5.1)

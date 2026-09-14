@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -7,8 +8,11 @@ from standards_atlas.application.semantic_qualification.challenger import (
     write_challenger_comparison,
     write_challenger_manifest,
 )
+from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
+    CandidateQualification,
     QualificationMatrixManifest,
+    QualificationMatrixReport,
 )
 
 MANIFEST = Path("manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml")
@@ -97,6 +101,37 @@ def test_challenger_comparison_ignores_ineligible_candidates(tmp_path: Path) -> 
             },
         ]
     }
+    matrix = QualificationMatrixReport(
+        schema_version="1.1",
+        matrix_id=source.matrix_id,
+        corpus_id=source.corpus_id,
+        generated_at=datetime(2026, 9, 14, tzinfo=UTC),
+        passed=False,
+        ranking=(),
+        pareto_front=(),
+        candidates=tuple(
+            CandidateQualification(
+                prompt_id="test",
+                provider="test",
+                reasoning_mode_id="disabled",
+                reasoning_optional=False,
+                expected_repetitions=1,
+                completed_repetitions=1,
+                status="complete",
+                mean_gold_f1=None,
+                min_gold_f1=None,
+                gold_f1_stddev=None,
+                mean_gold_coverage=None,
+                mean_silver_f1=0,
+                mean_structure_f1=0,
+                mean_json_validity_rate=1,
+                mean_truncation_rate=0,
+                passed=False,
+                **item,
+            )
+            for item in matrix["candidates"]
+        ),
+    ).model_dump(mode="json")
     import json
 
     (tmp_path / "qualification-analysis-metrics.json").write_text(
@@ -140,8 +175,8 @@ def test_loads_applicability_hard_cases_from_qualification_archive(tmp_path: Pat
         {
             "clause_id": "presence-conflict",
             "votes": [
-                {"applicability_present": True, "applicability_function": "inclusion"},
-                {"applicability_present": False, "applicability_function": None},
+                {"applicability_present": True},
+                {"applicability_present": False},
             ],
         },
         {
@@ -160,16 +195,42 @@ def test_loads_applicability_hard_cases_from_qualification_archive(tmp_path: Pat
         {
             "clause_id": "stable",
             "votes": [
-                {"applicability_present": True, "applicability_function": "inclusion"},
-                {"applicability_present": True, "applicability_function": "inclusion"},
+                {"applicability_present": True},
+                {"applicability_present": True},
             ],
         },
     ]
+    report = ConsensusReport(
+        schema_version="5.0",
+        matrix_id=source.matrix_id,
+        corpus_id=source.corpus_id,
+        prompt_id="test",
+        reasoning_mode_id="disabled",
+        generated_at=datetime(2026, 9, 14, tzinfo=UTC),
+        model_count=2,
+        clause_count=len(clauses),
+        categories={},
+        review_count=1,
+        clauses=tuple(
+            {
+                **clause,
+                "document_key": "DOC",
+                "category": "disputed",
+                "confidence": 0,
+                "participating_models": 2,
+                "votes": tuple(
+                    {**vote, "model_id": f"m{i}", "repetitions": 1, "stability": 1}
+                    for i, vote in enumerate(clause["votes"])
+                ),
+            }
+            for clause in clauses
+        ),
+    )
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("qualification-run-metadata.json", json.dumps(metadata))
         archive.writestr(
-            f"../../consensus/{source.matrix_id}/consensus-report.json",
-            json.dumps({"clauses": clauses}),
+            f"consensus/{source.matrix_id}/consensus-report.json",
+            report.model_dump_json(),
         )
 
     clause_ids, selection = load_hard_case_selection(

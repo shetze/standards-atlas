@@ -234,6 +234,7 @@ def _report(
 def _fixture(tmp_path: Path) -> tuple[ApplicabilityGoldenCorpus, Path, Path]:
     presence = {1: True, 2: True, 3: True, 4: True, 5: True, 6: False}
     consensus = ConsensusReport(
+        schema_version="5.0",
         matrix_id="matrix-v6",
         corpus_id="semantic-profile-v1",
         prompt_id="applicability-presence",
