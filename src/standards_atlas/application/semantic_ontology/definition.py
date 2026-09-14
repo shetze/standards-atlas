@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Protocol
+from typing import Any, ClassVar, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 
-class OntologyDefinition(BaseModel):
+
+class OntologyDefinition(SchemaBoundModel):
     """One independently versioned semantic ontology dimension."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "ontology-resource"
 
     model_config = ConfigDict(frozen=True)
 

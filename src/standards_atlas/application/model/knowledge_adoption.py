@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.model.source_structure import SourceStructureFact
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model.enrichment_patch import AttributeChange, ClauseEnrichmentPatch
 from standards_atlas.domain.model.knowledge_state import GeneratedAttribute
 
@@ -25,7 +26,9 @@ class ClauseKnowledgeCandidate(BaseModel):
     source_requirements: tuple[SourceStructureFact, ...] = ()
 
 
-class KnowledgeAdoptionBatch(BaseModel):
+class KnowledgeAdoptionBatch(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "knowledge-adoption-batch"
+
     model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always")
 
     schema_version: Literal["1.1"]
@@ -55,7 +58,9 @@ class ClauseAdoptionResult(BaseModel):
     not_evaluated: tuple[str, ...] = ()
 
 
-class KnowledgeAdoptionReport(BaseModel):
+class KnowledgeAdoptionReport(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "knowledge-adoption-report"
+
     model_config = ConfigDict(frozen=True)
 
     schema_version: Literal["1.0"] = "1.0"

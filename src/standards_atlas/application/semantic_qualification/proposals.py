@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -28,6 +28,7 @@ from standards_atlas.application.ports.llm_gateway import (
     StructuredGenerationRequest,
 )
 from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_classification import (
     ResourceSemanticProfileRepository,
     SemanticProfileReference,
@@ -89,8 +90,10 @@ from standards_atlas.application.semantic_qualification.request_builder import (
 from standards_atlas.application.semantic_qualification.retry import generate_with_retry
 
 
-class SemanticTaskDefinition(BaseModel):
+class SemanticTaskDefinition(SchemaBoundModel):
     """Versioned semantic task contract."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "semantic-task-resource"
 
     model_config = ConfigDict(frozen=True)
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.domain.model import DocumentSemanticExtraction
 
 CURRENT_SEMANTIC_EXTRACTION_SCHEMA_VERSION = 1
@@ -21,6 +21,8 @@ class FileSystemSemanticExtractionRepository:
             "schema_version": CURRENT_SEMANTIC_EXTRACTION_SCHEMA_VERSION,
             "extraction": extraction.model_dump(mode="json"),
         }
+        require_current_payload("semantic-extraction", payload)
+        require_current_payload("semantic-extraction", payload["extraction"])
         self._path(extraction.source_document_key).write_text(
             json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
             encoding="utf-8",
@@ -35,6 +37,7 @@ class FileSystemSemanticExtractionRepository:
         data = payload.get("extraction")
         if not isinstance(data, dict):
             raise ValueError("semantic extraction payload is missing extraction")
+        require_supported_schema("semantic-extraction", data.get("schema_version"))
         return DocumentSemanticExtraction.model_validate(data)
 
     def _path(self, document_key: str) -> Path:

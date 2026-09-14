@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
-from .policy import SchemaPolicy
+from . import policy as compatibility
+from .policy import CompatibilityPhase, SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "partial-review-workbench-evidence": SchemaPolicy(
@@ -198,16 +200,60 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     ),
 }
 
-# Compatibility alias for code/docs created by the baseline slice.
-SCHEMA_BASELINES = SCHEMA_POLICIES
-SchemaBaseline = SchemaPolicy
+
+def validate_schema_registry(
+    policies: Mapping[str, SchemaPolicy] | None = None,
+    *,
+    phase: CompatibilityPhase | None = None,
+) -> None:
+    """Check the concrete registry, never widen it to fill a future Stable window."""
+    policies = SCHEMA_POLICIES if policies is None else policies
+    phase = compatibility.CURRENT_COMPATIBILITY_PHASE if phase is None else phase
+    if not isinstance(phase, CompatibilityPhase):
+        raise ValueError("registry requires an explicit CompatibilityPhase")
+    if not policies:
+        raise ValueError("schema registry cannot be empty")
+    for family, policy in policies.items():
+        _validate_registration(family, policy, phase)
+
+
+def _validate_registration(family: str, policy: SchemaPolicy, phase: CompatibilityPhase) -> None:
+    if not isinstance(policy, SchemaPolicy) or family != policy.family:
+        raise ValueError(f"schema registry key differs from policy family: {family!r}")
+    # Recheck frozen instances, including invalid object-level mutations in callers/tests.
+    policy.__post_init__()
+    if policy.phase is not phase:
+        raise ValueError(f"schema registry phase differs for {family!r}: expected {phase.value}")
+
+
+def _registered_policy(family: str) -> SchemaPolicy:
+    try:
+        policy = SCHEMA_POLICIES[family]
+    except KeyError as exc:
+        raise ValueError(f"unregistered schema family: {family!r}") from exc
+    _validate_registration(family, policy, compatibility.CURRENT_COMPATIBILITY_PHASE)
+    return policy
 
 
 def require_supported_schema(family: str, value: Any) -> None:
-    """Validate that ``value`` is inside the bounded reader support window."""
-    SCHEMA_POLICIES[family].require_readable(value)
+    """Validate an explicit, type-exact marker against the active reader policy."""
+    _registered_policy(family).require_readable(value)
 
 
 def require_current_schema(family: str, value: Any) -> None:
-    """Validate writer-side current schema output."""
-    SCHEMA_POLICIES[family].require_current_for_write(value)
+    """Validate actual writer output; never normalize or replace its version."""
+    _registered_policy(family).require_current_for_write(value)
+
+
+def require_current_payload(family: str, payload: Mapping[str, Any]) -> None:
+    """Guard a serialized envelope before any write, retaining its exact hash input.
+
+    This checks only this family's marker. Nested independent contracts must be
+    guarded explicitly; arbitrary attachments are not recursively 'certified'.
+    """
+    if not isinstance(payload, Mapping) or "schema_version" not in payload:
+        raise ValueError(f"{family} writer payload requires an explicit schema_version")
+    require_current_schema(family, payload["schema_version"])
+
+
+validate_schema_registry()

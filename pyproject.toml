@@ -102,6 +102,9 @@ addopts = [
     "--strict-markers",
 ]
 xfail_strict = true
+filterwarnings = [
+    "error::standards_atlas.application.schema.policy.SchemaDeprecationWarning",
+]
 testpaths = [
     "tests",
 ]

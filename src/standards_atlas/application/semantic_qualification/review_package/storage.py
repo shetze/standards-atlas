@@ -43,12 +43,14 @@ def write_state(root: Path, previous, state) -> None:
     # Called under review_lock; old revisions survive interruption and later corrections.
     if (root / "history").is_symlink():
         raise ValueError("unsafe review history symlink")
+    previous_bytes = _json_bytes(previous.model_dump(mode="json"))
+    state_payload = state.model_dump(mode="json")
     _preserve_bytes(
         root / "history" / f"{previous.state_sha256}.json",
-        _json_bytes(previous.model_dump(mode="json")),
+        previous_bytes,
     )
     _sync_directory(root / "history")
-    _atomic_json(root / "review-state.json", state.model_dump(mode="json"))
+    _atomic_json(root / "review-state.json", state_payload)
     _sync_directory(root)
 
 

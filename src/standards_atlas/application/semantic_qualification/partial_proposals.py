@@ -16,7 +16,11 @@ from typing import Any
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.ports.llm_gateway import LlmGateway
-from standards_atlas.application.schema import require_current_schema, require_supported_schema
+from standards_atlas.application.schema import (
+    require_current_payload,
+    require_current_schema,
+    require_supported_schema,
+)
 from standards_atlas.application.semantic_qualification.batch import (
     ProposalBatchExecutor,
     ProposalItemOutcome,
@@ -468,6 +472,7 @@ def run_partial_proposals(
             for p in prepared
         ],
     }
+    require_current_payload("partial-proposal-run", manifest)
     root = output_directory.resolve()
     if any(
         root.is_relative_to(Path(name).resolve())
@@ -659,6 +664,7 @@ def run_partial_proposals(
             "production_note": "Experimental task only; no consensus, routing or publication.",
             "cases": list(cases.values()),
         }
+        require_current_payload("partial-proposal-run", report)
         report_path = root / "partial-run-report.json"
         if revalidate_responses and report_path.is_file():
             previous_report = report_path.read_bytes()

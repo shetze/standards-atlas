@@ -27,7 +27,7 @@ Semantic tasks, profiles, semantic ontologies, structural taxonomies, and formal
 
 ### Refactoring transition
 
-The project-wide compatibility phase is explicitly `REFACTORING`. During this phase there is no general backward-compatibility obligation for obsolete intermediate schemas. Writers emit only the current schema and concrete readers may intentionally accept only that current schema. Unsupported versions fail clearly.
+The project-wide compatibility phase is explicitly `REFACTORING`. During this phase there is no general backward-compatibility obligation for obsolete intermediate schemas. All concrete readers and writers must accept only their current schema: `readable == (current,)`. This is enforced when constructing/registering policies and at active family boundaries. Unsupported or incorrectly typed markers fail clearly.
 
 The generic bounded-reader infrastructure remains active. The stable reader-window width is fixed at three, but removed refactoring schemas are not reintroduced merely to fill that window.
 
@@ -109,3 +109,23 @@ Only schema markers change in the four older shipped matrix manifests. Matrix/pr
 resource identities and qualification thresholds are not revised. Historical raw data in a
 current contract remains historical, not fresh confirmation or evidence of Holdout independence.
 The generic Stable-phase policy remains untouched; global phase/inventory guards belong to R4.
+
+
+### Global enforcement R4 (2026-09-14)
+
+All 57 registered families now have enforced current-only policies. No concrete schema
+version changes in R4. Generic Stable tests explicitly opt into a synthetic Stable phase;
+a Stable policy cannot widen an active Refactoring family. Marker types are exact to avoid
+Python's boolean/integer/float equality from accepting a different serialized type.
+
+The separate executable `schema.bindings` inventory maps families to opt-in model guards,
+actual dictionary-envelope writers and shipped resource patterns without importing adapters
+into the core. Architecture tests check complete coverage and current defaults. Shared model
+serialization checks actual copied/constructed values, not a registry-derived substitute.
+Dictionary guards precede publication and do not normalize payloads or arbitrary attachments.
+
+Unexpected Atlas schema warnings fail tests. Old baseline API aliases are removed. Synthetic
+end-to-end tests retain source-bound MCP suggestions, human Web decisions, independent Holdout
+membership and archived Handoff evidence through campaign preparation. No warning suppression,
+new compatibility layer, implicit confirmation, automatic migration or relaxed quality gate is
+introduced. See the [R4 guide](../../user-guide/schema-refactoring-guards.md).

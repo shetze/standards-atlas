@@ -74,6 +74,19 @@ Prefer small unit tests over large integration tests.
 
 A good pull request typically adds tests together with the implementation.
 
+### Schema refactoring checks
+
+During Refactoring, every registered family must read/write only its current schema. Add or
+change its policy, executable interface/boundary binding and concrete writer/reader tests
+in one change. Resource versions remain independent. Do not derive output markers from the
+registry to relabel unchanged structures, or put obsolete schemas into ordinary fixtures.
+Unexpected `SchemaDeprecationWarning` fails the test run; explicit synthetic Stable-policy
+tests must assert their expected warnings.
+
+Run `uv run ruff check .` as well as the tests. See
+[global schema guards](docs/user-guide/schema-refactoring-guards.md) for the required
+inventory, failure-before-publication and current-contract round-trip checks.
+
 ## Architecture Decisions
 
 Significant architectural changes should be documented using Architecture Decision Records (ADRs).

@@ -6,7 +6,7 @@ A serialization `schema_version` answers: **can this payload be deserialized saf
 
 ## Current compatibility phase
 
-The project is currently in the explicit `REFACTORING` compatibility phase. Concrete policies may read only their current schema because obsolete intermediate refactoring contracts are intentionally unsupported. Writers always emit only the current schema.
+The project is currently in the explicit `REFACTORING` compatibility phase. Every registered policy must read and write only its current schema (`readable == (current,)`). Obsolete intermediate refactoring contracts are unsupported. Registry and concrete writer checks enforce this rule; marker types are exact, not coerced.
 
 The stable policy is already encoded as a bounded maximum reader window of three versions. Once the refactoring is declared complete and the project enters `STABLE`, each subsequent real schema revision retains up to the two immediately preceding real predecessor contracts:
 
@@ -18,6 +18,24 @@ The stable policy is already encoded as a bounded maximum reader window of three
 | older | never emit | reject |
 
 Removed refactoring schemas are not recreated merely to fill the stable support window.
+
+## Enforced boundary bindings (R4)
+
+`standards_atlas.application.schema.bindings` connects the lifecycle inventory to 35 guarded
+model classes, 21 dictionary-writer functions and 12 resource patterns. Architecture tests
+cover all 57 registered families, concrete defaults/Literals, actual-envelope writer guards,
+and every matched shipped resource variant. The registry versions themselves are unchanged.
+
+`SchemaBoundModel` validates supplied marker types, requires explicit JSON markers (including
+nested contracts), and checks actual serialized instance markers.
+`require_current_payload()` checks dictionary envelopes without inserting or normalizing
+versions. Invalid state serialization is checked before review history persistence. Unknown
+families and phase/window drift fail at the registry boundary. Unexpected Atlas schema
+warnings are pytest errors; only explicitly synthetic Stable tests expect deprecations.
+
+The compatibility aliases `SCHEMA_BASELINES` and `SchemaBaseline` have been removed.
+See [global schema guards](../user-guide/schema-refactoring-guards.md) for extension rules,
+artifact handling and the end-to-end regression scope.
 
 ## Lifecycle-crossing interface inventory
 
@@ -78,7 +96,7 @@ A new profile such as `1.1.0` can still use schema `1`; conversely a future prof
 
 ## Generated data
 
-Standards Atlas does not promise in-place migration of generated artifacts. Compatibility is a reader concern: a supported old payload may deserialize into the current model, while writers emit only the current schema. Derived `.atlas/cache` and `.atlas/work` data are not compatibility contracts and may be invalidated freely.
+Standards Atlas does not promise in-place migration of generated artifacts. During Refactoring, obsolete generated payloads are rejected rather than upgraded on read. A future explicit Stable transition may introduce bounded readers for real predecessor contracts; it does not recreate removed Refactoring formats. Derived `.atlas/cache` and `.atlas/work` data are not compatibility contracts and may be invalidated freely.
 
 See [ADR 0014](../architecture/adr/0014-schema-and-artifact-versioning-policy.md) for the normative policy.
 

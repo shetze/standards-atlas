@@ -12,7 +12,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import (
+    require_current_payload,
+    require_current_schema,
+    require_supported_schema,
+)
 from standards_atlas.application.semantic_qualification.acceptance_profiles import (
     PartialAcceptanceProfile,
 )
@@ -74,6 +78,7 @@ class FreshLedgerGateway:
             "request": serialize_generation_request(request),
             "started_at": datetime.now(UTC).isoformat(),
         }
+        require_current_payload("qualification-request-event", event)
         start = time.monotonic()
         try:
             result = self.gateway.generate_structured(request)
@@ -280,6 +285,7 @@ def run_campaign(
     Sealed repetitions are replay-verified, never regenerated as extra evidence.
     An interrupted job resumes within the same independent repetition and ledger.
     """
+    require_current_schema("partial-qualification-repeat", "1.0")
     campaign = campaign.resolve()
     loaded = load_campaign(campaign, resources)
     definition, spec, population, *_rest, selection = loaded
@@ -314,6 +320,7 @@ def run_campaign(
         "run_mode": "executed" if execute else "planned",
         "jobs": [],
     }
+    require_current_payload("partial-qualification-execution", report)
     if not execute:
         report["jobs"] = [
             {"job": job_key(v.id, mode, rep), "status": "planned"} for v, mode, rep in jobs
@@ -427,6 +434,7 @@ def run_campaign(
                     "wall_seconds_last_invocation": time.monotonic() - started,
                     "files": _receipt_hashes(root),
                 }
+                require_current_payload("partial-qualification-repeat", receipt)
                 _atomic_json(root / "repeat.json", receipt)
                 verify_job(campaign=campaign, key=key, resources=resources, loaded=loaded)
                 if mode == "full_baseline":

@@ -17,28 +17,52 @@ def test_project_is_explicitly_in_refactoring_compatibility_phase() -> None:
 
 
 def test_policy_accepts_current_without_warning() -> None:
-    policy = SchemaPolicy("example", 3, (1, 2, 3), "example/*.json")
+    policy = SchemaPolicy(
+        "example",
+        3,
+        (1, 2, 3),
+        "example/*.json",
+        phase=CompatibilityPhase.STABLE,
+    )
 
     with warnings_not_emitted():
         policy.require_readable(3)
 
 
 def test_policy_warns_for_previous_schema() -> None:
-    policy = SchemaPolicy("example", 3, (1, 2, 3), "example/*.json")
+    policy = SchemaPolicy(
+        "example",
+        3,
+        (1, 2, 3),
+        "example/*.json",
+        phase=CompatibilityPhase.STABLE,
+    )
 
     with pytest.warns(SchemaDeprecationWarning, match="deprecated"):
         policy.require_readable(2)
 
 
 def test_policy_marks_oldest_supported_schema() -> None:
-    policy = SchemaPolicy("example", 3, (1, 2, 3), "example/*.json")
+    policy = SchemaPolicy(
+        "example",
+        3,
+        (1, 2, 3),
+        "example/*.json",
+        phase=CompatibilityPhase.STABLE,
+    )
 
     with pytest.warns(SchemaDeprecationWarning, match="oldest supported"):
         policy.require_readable(1)
 
 
 def test_policy_rejects_schema_outside_window() -> None:
-    policy = SchemaPolicy("example", 3, (1, 2, 3), "example/*.json")
+    policy = SchemaPolicy(
+        "example",
+        3,
+        (1, 2, 3),
+        "example/*.json",
+        phase=CompatibilityPhase.STABLE,
+    )
 
     with pytest.raises(ValueError, match="Unsupported example schema version"):
         policy.require_readable(0)
@@ -46,11 +70,17 @@ def test_policy_rejects_schema_outside_window() -> None:
 
 def test_policy_rejects_more_than_stable_three_version_window() -> None:
     with pytest.raises(ValueError, match="three-version reader window"):
-        SchemaPolicy("example", 4, (1, 2, 3, 4), "example/*.json")
+        SchemaPolicy("example", 4, (1, 2, 3, 4), "example/*.json", phase=CompatibilityPhase.STABLE)
 
 
 def test_writer_accepts_only_current_schema() -> None:
-    policy = SchemaPolicy("example", 3, (1, 2, 3), "example/*.json")
+    policy = SchemaPolicy(
+        "example",
+        3,
+        (1, 2, 3),
+        "example/*.json",
+        phase=CompatibilityPhase.STABLE,
+    )
 
     policy.require_current_for_write(3)
     with pytest.raises(ValueError, match="writers may only emit current schema"):

@@ -8,12 +8,13 @@ Mixed consensus consumes these sparse records without converting them to ModelVo
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from jsonschema import Draft202012Validator
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import ClauseReference
 from standards_atlas.application.semantic_qualification.taxonomy_decisions import (
     DECISION_ATTRIBUTES,
@@ -45,8 +46,10 @@ def ordered_attributes(values: tuple[str, ...] | list[str]) -> tuple[DecisionAtt
     return tuple(name for name in PARTIAL_ATTRIBUTES if name in values)
 
 
-class PartialRequestPlan(BaseModel):
+class PartialRequestPlan(SchemaBoundModel):
     """An explicit, source-bound question plan; fixed values are NOT observations."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "partial-request-plan"
 
     model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always")
 
@@ -136,8 +139,10 @@ class AttributeObservationState(BaseModel):
     reason: Literal["model_response", "fixed", "accepted", "outside_selection", "request_failed"]
 
 
-class PartialObservation(BaseModel):
+class PartialObservation(SchemaBoundModel):
     """One logical model observation, regardless of retries, cache or resumption."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "partial-semantic-observation"
 
     model_config = ConfigDict(
         frozen=True, extra="forbid", allow_inf_nan=False, revalidate_instances="always"

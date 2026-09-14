@@ -8,13 +8,14 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from statistics import median
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
-from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.schema import require_current_payload, require_current_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
 )
@@ -207,7 +208,9 @@ class ClauseConsensus(BaseModel):
     resolution_sources: dict[str, str] = Field(default_factory=dict)
 
 
-class ConsensusReport(BaseModel):
+class ConsensusReport(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "qualification-consensus"
+
     model_config = ConfigDict(frozen=True, revalidate_instances="always")
 
     schema_version: Literal["5.0"]
@@ -1090,13 +1093,13 @@ def _role_relation_evidence_is_valid(vote: ModelVote) -> bool:
 def _write_outputs(
     report: ConsensusReport, output_directory: Path
 ) -> tuple[ConsensusReport, Path, Path, Path]:
+    require_current_schema("golden-corpus-proposal", "4.0")
     report = ConsensusReport.model_validate(report)
     require_current_schema("qualification-consensus", report.schema_version)
     output_directory.mkdir(parents=True, exist_ok=True)
     json_path = output_directory / "consensus-report.json"
     yaml_path = output_directory / "golden-corpus-proposal.yaml"
     review_path = output_directory / "consensus-review.md"
-    json_path.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
     payload = {
         "schema_version": "4.0",
         "kind": "golden_corpus_proposal",
@@ -1205,6 +1208,8 @@ def _write_outputs(
             for item in report.clauses
         ],
     }
+    require_current_payload("golden-corpus-proposal", payload)
+    json_path.write_text(report.model_dump_json(indent=2) + "\n", encoding="utf-8")
     yaml_path.write_text(
         yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8"
     )

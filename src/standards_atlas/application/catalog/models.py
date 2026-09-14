@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
 class RelationType(StrEnum):
@@ -266,7 +268,9 @@ class DoorstopHierarchyDefinition(BaseModel):
         return self
 
 
-class StandardCatalog(BaseModel):
+class StandardCatalog(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "standards-manifest"
+
     model_config = ConfigDict(frozen=True)
     manifest_type: Literal["standards"] = "standards"
     schema_version: Literal[2] = 2

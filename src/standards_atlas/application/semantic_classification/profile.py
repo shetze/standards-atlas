@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import ClassVar, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_ontology.definition import OntologyReference
 
 
@@ -21,8 +22,10 @@ class SemanticProfileReference(BaseModel):
         return f"{self.id}:{self.version}"
 
 
-class SemanticProfile(BaseModel):
+class SemanticProfile(SchemaBoundModel):
     """Versioned composition of ontology dimensions defining published semantic tags."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "semantic-profile-resource"
 
     model_config = ConfigDict(frozen=True)
 

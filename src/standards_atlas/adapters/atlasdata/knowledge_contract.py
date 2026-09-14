@@ -7,10 +7,11 @@ source text travel by content-addressed reference with a bounded public view.
 from __future__ import annotations
 
 import json
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, TypeAdapter, model_validator
+from pydantic import ConfigDict, Field, JsonValue, TypeAdapter, model_validator
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model.context_routing import ScopeReach
 from standards_atlas.domain.model.enrichment_patch import SemanticEnrichmentPatch
 from standards_atlas.domain.model.identifiers import StandardReference
@@ -75,7 +76,7 @@ PRIVATE_PATHS = {
 }
 
 
-class _Strict(BaseModel):
+class _Strict(SchemaBoundModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
@@ -190,6 +191,8 @@ class ClauseKnowledge(_Strict):
 
 
 class AtlasDataKnowledge(_Strict):
+    SCHEMA_FAMILY: ClassVar[str] = "atlasdata-enrichments"
+
     manifest_type: Literal["atlasdata-enrichments"] = "atlasdata-enrichments"
     schema_version: Literal["1.2"] = "1.2"
     document_key: SafeKey
@@ -210,6 +213,8 @@ class AtlasDataKnowledge(_Strict):
 
 
 class EvidenceBlob(_Strict):
+    SCHEMA_FAMILY: ClassVar[str] = "knowledge-evidence"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["value", "generated", "confirmed"]
     path: AttributePath
@@ -227,6 +232,8 @@ class TransferChange(_Strict):
 
 
 class AtlasDataKnowledgeReport(_Strict):
+    SCHEMA_FAMILY: ClassVar[str] = "atlasdata-knowledge-report"
+
     schema_version: Literal["1.0"] = "1.0"
     operation: Literal["export", "import"]
     write_requested: bool

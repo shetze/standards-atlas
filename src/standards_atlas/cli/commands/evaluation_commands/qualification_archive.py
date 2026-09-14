@@ -14,6 +14,7 @@ from standards_atlas.adapters.filesystem import FileSystemSemanticExtractionRepo
 from standards_atlas.application.formal_semantics.resource_repository import (
     ResourceFormalOntologyRepository,
 )
+from standards_atlas.application.schema import require_current_payload
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     collect_qualification_input_members,
     create_analysis_archive,
@@ -548,9 +549,12 @@ def finalize_qualification_archive(
                 .replace(" ", "_")
             )
             snapshot = snapshot_root / f"{safe}.json"
+            payload = {"schema_version": 1, "extraction": filtered.model_dump(mode="json")}
+            require_current_payload("semantic-extraction", payload)
+            require_current_payload("semantic-extraction", payload["extraction"])
             snapshot.write_text(
                 json.dumps(
-                    {"schema_version": 1, "extraction": filtered.model_dump(mode="json")},
+                    payload,
                     indent=2,
                     ensure_ascii=False,
                     sort_keys=True,

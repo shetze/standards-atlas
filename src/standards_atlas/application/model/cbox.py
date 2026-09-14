@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model.knowledge_state import ConfirmedAttribute, GeneratedAttribute
 
 
@@ -20,8 +21,10 @@ class CBoxAttribute(BaseModel):
     confirmed: ConfirmedAttribute | None = None
 
 
-class CBoxEnrichments(BaseModel):
+class CBoxEnrichments(SchemaBoundModel):
     """Local, potentially protected projection of accepted canonical knowledge."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "cbox-enrichments"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -29,7 +32,9 @@ class CBoxEnrichments(BaseModel):
     attributes: tuple[CBoxAttribute, ...] = ()
 
 
-class CBoxReport(BaseModel):
+class CBoxReport(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "cbox-report"
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: Literal["1.0"] = "1.0"

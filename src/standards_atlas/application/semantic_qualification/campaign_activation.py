@@ -10,6 +10,7 @@ from pathlib import Path
 import yaml
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema import require_current_payload, require_current_schema
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     create_analysis_archive,
 )
@@ -65,6 +66,7 @@ def activate_campaign(
     allow_below_target: bool = False,
 ) -> dict:
     """Export an immutable explicit run configuration; never overwrite project defaults."""
+    require_current_schema("partial-qualified-activation", "1.0")
     output = output.resolve()
     _output_is_separate(output, (campaign,))
     if output.exists():
@@ -129,6 +131,7 @@ def activate_campaign(
             "not certification for arbitrary new corpora"
         ),
     }
+    require_current_payload("partial-qualified-activation", payload)
     payload["activation_sha256"] = structure_fingerprint(payload)
     _atomic_json(output / "activation.json", payload)
     (output / "README.md").write_text(

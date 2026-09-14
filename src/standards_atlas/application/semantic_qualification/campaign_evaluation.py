@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema import require_current_payload
 from standards_atlas.application.semantic_qualification.applicability_policy_evaluation import (
     evaluate_applicability_policy,
 )
@@ -414,6 +415,7 @@ def evaluate_campaign(*, campaign: Path, resources: Path, write: bool = True):
             "full baseline is accounted even when individual clauses remain unresolved",
         ],
     }
+    require_current_payload("partial-qualification-evaluation", result)
     result["evaluation_sha256"] = structure_fingerprint(result)
     if write:
         output = campaign / "evaluations" / result["evaluation_sha256"]

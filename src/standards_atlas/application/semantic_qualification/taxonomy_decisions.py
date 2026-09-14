@@ -11,7 +11,7 @@ import re
 from collections.abc import Mapping
 from functools import lru_cache
 from importlib.resources import files
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -23,6 +23,7 @@ from standards_atlas.application.model.source_structure import (
     structure_fingerprint,
 )
 from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.domain.model import KnowledgeKind, StatementFunction
 
@@ -70,7 +71,9 @@ class TaxonomyRule(BaseModel):
         return self
 
 
-class TaxonomyRuleProfile(BaseModel):
+class TaxonomyRuleProfile(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "taxonomy-decision-rules"
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: Literal[1] = 1
@@ -163,7 +166,9 @@ class AttributeDecision(BaseModel):
         return self
 
 
-class ClauseDecisionPlan(BaseModel):
+class ClauseDecisionPlan(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "clause-decision-plan"
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: Literal["1.0"] = "1.0"

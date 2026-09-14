@@ -14,6 +14,7 @@ This section explains how the Standards Atlas codebase maps to the documented ar
 | Docling adapter implementation | [Docling adapter](docling-adapter.md) |
 | Documentation ownership and style | [Documentation style guide](documentation-style-guide.md) |
 | Release preparation and contract versioning | [Release and versioning](release-and-versioning.md) |
+| Current-only schema guards and executable boundary coverage | [Schema refactoring R4](../user-guide/schema-refactoring-guards.md) |
 
 ## Essential companion references
 

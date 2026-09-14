@@ -11,7 +11,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 import yaml
 from pydantic import Field
@@ -73,6 +73,8 @@ MEMBERS = frozenset(
 
 
 class ReviewHandoff(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-handoff"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-handoff"] = "partial-review-handoff"
     project_root: NonBlank

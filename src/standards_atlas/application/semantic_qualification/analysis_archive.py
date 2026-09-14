@@ -15,7 +15,7 @@ from typing import Any
 import yaml
 
 from standards_atlas import __version__
-from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.schema import require_current_payload, require_current_schema
 from standards_atlas.application.semantic_qualification.artifact_contracts import (
     QUALIFICATION_ARTIFACT_NAMES,
     validate_qualification_artifact,
@@ -66,6 +66,7 @@ def write_cascade_provenance(
         "execution_policy": execution_policy,
         "stages": stages,
     }
+    require_current_payload("cascade-provenance", payload)
     validate_cascade_provenance(payload)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")

@@ -17,7 +17,7 @@ from typing import Any
 
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
-from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.schema import require_current_payload, require_current_schema
 from standards_atlas.application.semantic_qualification.acceptance_profiles import (
     PartialAcceptanceProfile,
     with_acceptance_profile,
@@ -342,6 +342,7 @@ def _write_report(
         "cascade_request_timing_all_executions": total_timing.model_dump(mode="json"),
         "applicability_gate_is_final_policy": False,
     }
+    require_current_payload("partial-cascade-report", payload)
     require_partial_cascade_report(payload)
     _atomic_json(root / "mixed-consensus-report.json", report.model_dump(mode="json"))
     _atomic_json(root / "partial-cascade-report.json", payload)
@@ -457,6 +458,7 @@ def run_partial_cascade(
         "operational_repetitions_per_model": 1,
         "fresh_repetition_qualification": False,
     }
+    require_current_payload("partial-cascade-run", definition)
     # Preserve legacy v2 plan bytes and all downstream request identities.
     if prompt_version != DEFAULT_CASCADE_PROMPT:
         definition["prompt_version"] = prompt_version

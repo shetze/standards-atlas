@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.applicability_detail_enrichment import (
     ApplicabilityDetailEnrichmentConfig,
 )
@@ -816,8 +817,10 @@ class ChallengerQualificationConfig(BaseModel):
         return tuple(result)
 
 
-class QualificationMatrixManifest(BaseModel):
+class QualificationMatrixManifest(SchemaBoundModel):
     """Versioned contract for Slice 5.4.6 qualification."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "qualification-matrix-manifest"
 
     model_config = ConfigDict(frozen=True, revalidate_instances="always")
 
@@ -1150,8 +1153,10 @@ class CandidateQualification(BaseModel):
     top_failure_messages: tuple[str, ...] = ()
 
 
-class QualificationMatrixReport(BaseModel):
+class QualificationMatrixReport(SchemaBoundModel):
     """Machine-readable comparison and acceptance result."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "qualification-matrix-report"
 
     model_config = ConfigDict(frozen=True, revalidate_instances="always")
 

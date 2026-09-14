@@ -14,9 +14,9 @@ mcp:
     internal_metadata: false
   capabilities:
     formula_transcription: false
-    review_preparation: false
+    review_preparation: true
   review:
-    enabled: false
+    enabled: true
     workspace: local/review/partial-semantic
     allow_holdout_assistance: false
   http:

@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from standards_atlas import __version__
+from standards_atlas.application.schema import require_current_payload
 from standards_atlas.application.semantic_qualification.cascade_metrics import (
     reason_counts,
     resolution_counts,
@@ -164,6 +165,7 @@ def replay_cascade(
                     "Applicability detail policy and public enrichments are not modified or rerun.",
                 ],
             }
+            require_current_payload("cascade-replay", payload)
             destination.mkdir(parents=True)
             if proposals is not None:
                 shutil.copytree(workspace / "consensus", destination / "consensus")

@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from standards_atlas.application.schema import require_current_payload
 from standards_atlas.application.semantic_qualification.acceptance_profiles import profile_from_plan
 from standards_atlas.application.semantic_qualification.cascade_diagnostics import (
     describe_mixed_consensus,
@@ -207,6 +208,7 @@ def audit_partial_cascade(
                 "Stored hashes bind evidence, not runtime model attestation.",
             ],
         }
+        require_current_payload("partial-cascade-audit", result)
         # Detect concurrent mutation even without a cooperating writer lock.
         fingerprints = dict(source.fingerprints)
         for name, expected in fingerprints.items():

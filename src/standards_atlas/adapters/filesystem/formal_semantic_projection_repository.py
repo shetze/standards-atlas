@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.domain.model import FormalSemanticProjection
 
 CURRENT_FORMAL_SEMANTIC_PROJECTION_SCHEMA_VERSION = 1
@@ -23,6 +23,8 @@ class FileSystemFormalSemanticProjectionRepository:
             "schema_version": CURRENT_FORMAL_SEMANTIC_PROJECTION_SCHEMA_VERSION,
             "projection": projection.model_dump(mode="json"),
         }
+        require_current_payload("formal-semantic-projection", payload)
+        require_current_payload("formal-semantic-projection", payload["projection"])
         self._path(projection.source_document_key).write_text(
             json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
             encoding="utf-8",
@@ -39,6 +41,7 @@ class FileSystemFormalSemanticProjectionRepository:
         data = payload.get("projection")
         if not isinstance(data, dict):
             raise ValueError("formal semantic projection payload is missing projection")
+        require_supported_schema("formal-semantic-projection", data.get("schema_version"))
         return FormalSemanticProjection.model_validate(data)
 
     def _path(self, document_key: str) -> Path:

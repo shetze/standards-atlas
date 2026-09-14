@@ -34,9 +34,7 @@ from standards_atlas.application.semantic_qualification import analysis_archive
 from standards_atlas.application.semantic_qualification.artifact_contracts import (
     validate_qualification_artifact,
 )
-from standards_atlas.application.semantic_qualification.campaign_selection import (
-    prepare_campaign,
-)
+from standards_atlas.application.semantic_qualification.campaign_selection import prepare_campaign
 from standards_atlas.application.semantic_qualification.cascade_provenance import (
     validate_cascade_provenance,
 )
@@ -471,7 +469,8 @@ def test_real_writers_enforce_registry_current_before_output(tmp_path, monkeypat
         ),
     )
     target = tmp_path / "output"
-    with pytest.raises(ValueError, match="writers may only emit"):
+    # R4 may reject already at model input, before a writer can emit anything.
+    with pytest.raises(ValueError, match="writers may only emit|Unsupported .* schema version"):
         if family == "cascade-provenance":
             manifest = tmp_path / "matrix.yaml"
             manifest.write_text(yaml.safe_dump(payload("qualification-matrix-manifest")))

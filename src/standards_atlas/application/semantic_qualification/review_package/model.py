@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
 from jsonschema import Draft202012Validator
 from pydantic import (
@@ -58,6 +58,8 @@ class CoverageRequirement(CampaignModel):
 
 
 class ReviewProfile(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-profile"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-profile"] = "partial-review-profile"
     id: NonBlank = "partial-semantic-reference-v1"
@@ -101,6 +103,8 @@ class ReviewCase(CampaignModel):
 
 
 class ReviewPackage(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-package"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-package"] = "partial-review-package"
     id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
@@ -198,6 +202,8 @@ class HumanDecisionInput(CampaignModel):
 
 
 class ReviewState(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-state"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-state"] = "partial-review-state"
     package_sha256: Digest
@@ -248,6 +254,8 @@ class HoldoutExposure(CampaignModel):
 
 
 class WorkbenchState(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "review-workbench-state"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["review-workbench-state"] = "review-workbench-state"
     package_sha256: Digest
@@ -258,6 +266,8 @@ class WorkbenchState(CampaignModel):
 
 
 class WorkbenchEvidence(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-workbench-evidence"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-workbench-evidence"] = "partial-review-workbench-evidence"
     journal_present: bool = Field(strict=True)
@@ -270,6 +280,8 @@ REVIEW_PUBLICATION_SCHEMA_VERSION = "1.1"
 
 
 class ReviewPublication(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-publication"
+
     model_config = ConfigDict(revalidate_instances="always")
 
     schema_version: Literal["1.1"]

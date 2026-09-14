@@ -1,11 +1,16 @@
 """Metadata contract for versioned formal ontology resources."""
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from typing import ClassVar
 
+from pydantic import ConfigDict, Field, model_validator
+
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import FORMAL_SEMANTIC_NAMESPACE, FORMAL_SEMANTIC_PREFIX
 
 
-class FormalOntologyDefinition(BaseModel):
+class FormalOntologyDefinition(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "formal-ontology-resource"
+
     model_config = ConfigDict(frozen=True)
 
     schema_version: int = 1

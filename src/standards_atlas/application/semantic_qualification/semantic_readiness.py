@@ -8,7 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 
 
@@ -185,6 +185,7 @@ def evaluate_semantic_readiness(
         "evidence_scope": "provided source-verified audit; original runtime not reattested",
         "cases": cases,
     }
+    require_current_payload("semantic-readiness-evaluation", report)
     output.mkdir(parents=True)
     (output / "semantic-readiness.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n",

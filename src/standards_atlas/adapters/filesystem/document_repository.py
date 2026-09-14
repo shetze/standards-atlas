@@ -11,6 +11,7 @@ from typing import Any
 
 from standards_atlas.application.schema import (
     SCHEMA_POLICIES,
+    require_current_payload,
     require_current_schema,
     require_supported_schema,
 )
@@ -48,6 +49,7 @@ class FileSystemEngineeringDocumentRepository:
             "schema_version": CURRENT_DOCUMENT_SCHEMA_VERSION,
             "document": document.model_dump(mode="json"),
         }
+        require_current_payload("engineering-document", payload)
 
         descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
         try:

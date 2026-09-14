@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
+
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 StructureField = Literal[
     "clause_type",
@@ -122,8 +124,10 @@ class SourceStructureFact(BaseModel):
         return structure_fingerprint(self.model_dump(mode="json"))
 
 
-class SourceStructure(BaseModel):
+class SourceStructure(SchemaBoundModel):
     """The reader can audit exactly which canonical structural facts were observed."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "source-structure"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

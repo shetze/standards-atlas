@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import Field, model_validator
 
@@ -70,6 +70,8 @@ class CandidateEntry(CampaignModel):
 
 
 class CandidateIndex(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-candidates"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-candidates"] = "partial-review-candidates"
     package_sha256: Digest
@@ -111,6 +113,8 @@ class SelectionRequest(CampaignModel):
 
 
 class SelectionProposal(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-selection-proposal"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-selection-proposal"] = "partial-review-selection-proposal"
     package_sha256: Digest

@@ -6,9 +6,9 @@ import json
 import math
 import time
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
 from standards_atlas.application.ports.llm_gateway import (
     LlmGateway,
@@ -16,15 +16,18 @@ from standards_atlas.application.ports.llm_gateway import (
     StructuredGenerationRequest,
     StructuredGenerationResult,
 )
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
-class RequestTiming(BaseModel):
+class RequestTiming(SchemaBoundModel):
     """Costs of actual gateway calls, including retries and failed attempts.
 
     Provider inference durations exist only for returned, timed responses.
     An exception has measured wall time, NOT an inferred provider duration.
     Cache entries carry historical inference time, never fresh inference cost.
     """
+
+    SCHEMA_FAMILY: ClassVar[str] = "qualification-request-timing"
 
     model_config = ConfigDict(frozen=True, allow_inf_nan=False)
 

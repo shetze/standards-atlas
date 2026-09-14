@@ -16,7 +16,7 @@ import tempfile
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import Field
 
@@ -35,11 +35,7 @@ from .service import load_review
 from .sources import fingerprint
 from .storage import _sync_directory, review_lock
 from .validation import review_report, seal, verify_package, verify_state
-from .workbench import (
-    verify_workbench_evidence,
-    workbench_from_files,
-    workbench_summary,
-)
+from .workbench import verify_workbench_evidence, workbench_from_files, workbench_summary
 
 MAX_MEMBER_BYTES = 64 * 1024 * 1024
 MAX_ARCHIVE_BYTES = 512 * 1024 * 1024
@@ -53,6 +49,8 @@ class ArchiveMember(CampaignModel):
 
 
 class ReviewArchiveManifest(CampaignModel):
+    SCHEMA_FAMILY: ClassVar[str] = "partial-review-archive"
+
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["partial-review-archive"] = "partial-review-archive"
     package_root: NonBlank

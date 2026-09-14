@@ -7,7 +7,7 @@ when a member is missing. This module does not grant qualification or release.
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -48,6 +48,8 @@ class CampaignReviewEvidence(CampaignModel):
 
 class QualificationCampaignArtifact(CampaignModel):
     """Explicit version markers also apply to direct/nested model validation."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "partial-qualification-campaign"
 
     model_config = ConfigDict(revalidate_instances="always")
 

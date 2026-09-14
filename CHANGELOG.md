@@ -2,6 +2,20 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Global schema enforcement R4 (2026-09-14)
+
+- Enforce current-only reader/writer policies across all 57 registered families in
+  Refactoring; retain explicit synthetic Stable-window tests without old production formats.
+- Reject wrongly typed markers and invalid registry windows; remove deprecated baseline aliases.
+- Guard actual model serialization and dictionary output, including unchecked copies and nested
+  repository envelopes, without replacing markers or changing existing artifact identities.
+- Bind the executable inventory to concrete models, writers and all shipped resource variants;
+  treat unexpected Atlas schema deprecations as test errors instead of filtering them away.
+- Exercise the complete synthetic MCP/Web/Handoff/frozen-evidence path and failure-before-write
+  boundaries; preserve human authority, Holdout membership, source bindings and release gates.
+- Keep all R1–R3, review, archive, prompt/resource and qualification versions unchanged. No
+  migrations, automatic approvals, production model runs or new compatibility obligations.
+
 ## Unreleased — Remaining-schema refactoring R3 (2026-09-14)
 
 - Read/write only cascade provenance 1.6, matrix report 1.1, consensus 5.0,

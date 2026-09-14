@@ -30,9 +30,7 @@ from standards_atlas.application.semantic_qualification.campaign_contract import
     CampaignReviewEvidence,
     QualificationCampaignArtifact,
 )
-from standards_atlas.application.semantic_qualification.campaign_evaluation import (
-    evaluate_campaign,
-)
+from standards_atlas.application.semantic_qualification.campaign_evaluation import evaluate_campaign
 from standards_atlas.application.semantic_qualification.campaign_selection import (
     load_campaign,
     prepare_campaign,
@@ -382,24 +380,16 @@ def test_obsolete_bound_publication_rejected_with_unchanged_suites(fixtures, tmp
 
 @pytest.mark.parametrize("family", FAMILIES)
 def test_writer_checks_registry_before_creating_output(fixtures, tmp_path, monkeypatch, family):
-    current = FAMILIES[family]
-    monkeypatch.setitem(
-        SCHEMA_POLICIES, family, SchemaPolicy(family, "9.9", (current, "9.9"), "test")
-    )
+    # R4 does not permit synthetic legacy windows in the concrete registry.
+    monkeypatch.setitem(SCHEMA_POLICIES, family, SchemaPolicy(family, "9.9", ("9.9",), "test"))
     folder, manifest, _, _ = fixtures["atlas_publication"]
     output = tmp_path / "output"
-    if family == "partial-qualification-campaign":
-        # The current readable version warning is intentional only in this artificial policy.
-        with pytest.raises(ValueError, match="writers may only emit current"):
+    with pytest.raises(ValueError, match="writers may only emit|Unsupported .* schema version"):
+        if family == "partial-qualification-campaign":
             prepare_campaign(manifest=manifest, output=output, resources=RESOURCES)
-    elif family == "partial-review-publication":
-        with pytest.raises(ValueError, match="writers may only emit current"):
+        elif family == "partial-review-publication":
             publish(folder / "review", output)
-    else:
-        with (
-            pytest.warns(UserWarning),
-            pytest.raises(ValueError, match="writers may only emit current"),
-        ):
+        else:
             create_review_handoff(
                 package=folder / "review",
                 manifest=manifest,

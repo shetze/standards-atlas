@@ -340,7 +340,7 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "qualification-consensus",
-        "Measured process primary/set; legacy 4.0 preserves policy fingerprints.",
+        "Current-only measured process primary/set; no legacy fingerprint serializer.",
     ),
     VersionedInterface(
         "golden-corpus-proposal",

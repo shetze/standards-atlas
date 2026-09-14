@@ -13,7 +13,7 @@ import yaml
 
 from standards_atlas.application.context.source_structure import project_source_structure
 from standards_atlas.application.evaluation.models import EvaluationExample
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.semantic_qualification.partial_diagnostics import (
     describe_partial_plan,
@@ -204,6 +204,9 @@ def build_taxonomy_pilot(
             for e, p, d in zip(selected, plans, descriptions, strict=True)
         ],
     }
+    require_current_payload("taxonomy-pilot-readiness", report)
+    if checks is not None:
+        require_current_payload("semantic-readiness-checks", checks)
     output.mkdir(parents=True)
     (output / "dataset.json").write_text(
         json.dumps(

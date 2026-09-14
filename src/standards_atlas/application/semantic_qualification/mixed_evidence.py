@@ -7,11 +7,12 @@ are distinct, explicitly represented properties.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.partial_observations import (
     PARTIAL_ATTRIBUTES,
     PartialObservation,
@@ -180,7 +181,9 @@ class StagedPartialObservation(BaseModel):
     applicability_eligible: bool = True
 
 
-class MixedConsensusReport(BaseModel):
+class MixedConsensusReport(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "mixed-consensus"
+
     model_config = ConfigDict(frozen=True, extra="forbid")
     schema_version: Literal["1.0"] = "1.0"
     kind: Literal["mixed-consensus-report"] = "mixed-consensus-report"

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from standards_atlas.application.evaluation.models import EvaluationExample
+from standards_atlas.application.schema import require_current_payload
 from standards_atlas.application.semantic_qualification.cascade_replay_source import (
     CascadeReplaySource,
 )
@@ -151,6 +152,7 @@ def diagnose_taxonomy_decisions(
             "Legacy comparison is the pinned structural rule baseline, not a rerun of consensus.",
         ],
     }
+    require_current_payload("taxonomy-decision-report", report)
     # Finish all computation before creating any output; immutable inputs are never replaced.
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(
@@ -164,6 +166,7 @@ def diagnose_taxonomy_decisions(
             "diagnostic_only": True,
             "plans": [plan.model_dump(mode="json") for plan in plans],
         }
+        require_current_payload("clause-decision-plan", plan_payload)
         _write_json(staging / "taxonomy-decision-plans.json", plan_payload)
         _write_json(staging / "taxonomy-decision-report.json", report)
         resource = files("standards_atlas.resources").joinpath(RESOURCE_DIRECTORY)
