@@ -11,7 +11,7 @@ change thresholds, or implement the global R4 policy guards.
 | Cascade provenance | 1.6 | Explicit marker checked by writer and all consuming projections/replays. |
 | Qualification matrix report | 1.1 | Explicit model marker, writer guard and archive/Challenger readers. |
 | Qualification consensus | 5.0 | Required marker; no schema-4 serializer or fingerprint preservation. |
-| EngineeringDocument envelope | 9 (integer) | No v8 upgrade; strict load/list/inventory and MCP reads. |
+| EngineeringDocument envelope | 1 (integer) | Clean-break reset; no reader or migration for older envelopes. |
 | Knowledge adoption batch | 1.1 | Required marker; explicit source requirements, including empty lists. |
 | Qualification matrix manifest | 1.6 | Required marker at model/YAML/workflow/archive entry points. |
 
@@ -30,7 +30,7 @@ reuse old execution identities as a migration. Obsolete request/report/campaign 
 be regenerated into **new output directories** from current source/configuration contracts.
 A current valid artifact remains readable; its age alone is not a rejection criterion.
 
-Canonical EngineeringDocument 8 files are not silently upgraded or skipped in inventories.
+Pre-reset EngineeringDocument files are not upgraded or skipped in inventories; `.atlas` is regenerated under schema 1.
 Back up and relocate obsolete files outside the active repository. Rebuild derived documents
 through the current source workflow. Do not discard human-reviewed information: preserve
 its original evidence for an explicit source-bound review/transfer. There is no automatic

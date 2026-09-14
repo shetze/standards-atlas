@@ -178,7 +178,7 @@ def test_source_changes_invalidate_existing_markers(tmp_path, stage):
     source.write_text(
         json.dumps(
             {
-                "schema_version": 9,
+                "schema_version": 1,
                 "document": {"clauses": [{"baseline": {"heading": "old"}}]},
             }
         )
@@ -197,7 +197,7 @@ def test_context_checkpoint_ignores_other_document_enrichment_not_its_baseline(t
     source = tmp_path / ".atlas/data/documents/OTHER.json"
     source.parent.mkdir(parents=True)
     content = {
-        "schema_version": 9,
+        "schema_version": 1,
         "document": {
             "clauses": [
                 {"baseline": {"heading": "term"}, "enrichments": {"context_routing": "old"}}

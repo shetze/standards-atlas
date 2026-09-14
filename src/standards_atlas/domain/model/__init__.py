@@ -5,6 +5,10 @@ from standards_atlas.domain.model.annotation import (
     AnnotationVisibility,
     ClauseAnnotation,
 )
+from standards_atlas.domain.model.applicability import (
+    ApplicabilityPolarity,
+    ClauseApplicability,
+)
 from standards_atlas.domain.model.artifact_lineage import (
     ArtifactKind,
     ArtifactLineage,
@@ -41,6 +45,19 @@ from standards_atlas.domain.model.context_routing import (
     ScopeReachKind,
 )
 from standards_atlas.domain.model.document import DocumentType, EngineeringDocument
+from standards_atlas.domain.model.document_knowledge import (
+    DOCUMENT_KNOWLEDGE_SCHEMA_VERSION,
+    AssertionObject,
+    DocumentKnowledge,
+    EntityAssertionObject,
+    EvidenceAnchor,
+    KnowledgeDerivationMethod,
+    KnowledgeEntity,
+    KnowledgeProvenance,
+    LiteralAssertionObject,
+    NormativeAssertion,
+    NormativeForce,
+)
 from standards_atlas.domain.model.doorstop_attributes import (
     DoorstopItemAttributes,
     DoorstopReference,
@@ -191,6 +208,19 @@ from standards_atlas.domain.model.table_structure import (
 )
 
 __all__ = [
+    "ApplicabilityPolarity",
+    "ClauseApplicability",
+    "DOCUMENT_KNOWLEDGE_SCHEMA_VERSION",
+    "AssertionObject",
+    "DocumentKnowledge",
+    "EntityAssertionObject",
+    "EvidenceAnchor",
+    "KnowledgeDerivationMethod",
+    "KnowledgeEntity",
+    "KnowledgeProvenance",
+    "LiteralAssertionObject",
+    "NormativeAssertion",
+    "NormativeForce",
     "ClauseBaseline",
     "ClauseSubjectContext",
     "PrimarySubjectContext",

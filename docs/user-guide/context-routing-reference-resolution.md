@@ -96,7 +96,7 @@ includes descendants. Schema/coordinate validation does not prove semantic extra
 
 The repository composition supplies the available physical-document catalogue. Catalogue identity
 and target structure participate in input/cache fingerprints; unrelated generated attributes do
-not. Canonical schema 9 and public companion schema 1.2 are unchanged. Nothing is deleted from
+not. Canonical EngineeringDocument schema 1 is the clean-break contract; the public companion remains schema 1.2. Nothing is deleted from
 existing documents or companions and confirmed routing remains protected.
 
 ### Figure/table citations and unresolved identities
@@ -317,7 +317,7 @@ Review the report's `requires_review`, `protected_clauses` and
 | `corrected` / `source_verified_information_only` | Unsupported informational role or address corrected. |
 | `requires_review` / `informational_evidence_in_mixed_or_unverified_context` | Offline repair preserved an uncertain scope instead of deleting it. |
 
-No schema migration is needed: canonical schema 9, companion schema 1.2 and evidence schema 1.0
+No old canonical schema is migrated: regenerate `.atlas` with EngineeringDocument schema 1; companion schema 1.2 and evidence schema 1.0
 remain unchanged. Re-export generated routing after canonical repair:
 
 ```bash

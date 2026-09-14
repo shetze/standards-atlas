@@ -18,11 +18,13 @@ The application architecture is intentionally shown in a separate UML diagram. I
 
 `EngineeringDocument` is the canonical representation of one normalized standard, standard part, regulatory publication, or engineering document. It identifies the source document and owns an ordered clause hierarchy. Multi-part outputs are composed explicitly rather than by treating an export format as the aggregate.
 
-A `Clause` contains a stable `ClauseId` and human-readable reference plus three explicit knowledge-state blocks:
+A `Clause` contains a stable `ClauseId` and human-readable reference plus source/structure state:
 
 - `ClauseBaseline` owns source-derived and deterministic facts: structured `ContentBlock` values, hierarchy, source token, structural profile/context, reference mentions and resolved reference relations, normative/structural classification, and optional publication attributes;
-- `ClauseEnrichments` owns interpretative derived knowledge, currently the ontology-owned `SemanticClassification`;
-- `KnowledgeStateProvenance` records every attribute that is still generated rather than authoritatively confirmed, including the responsible generator and generation method.
+- `ClauseEnrichments` owns accepted clause-level interpretation context. During Slice 1 the legacy `SemanticClassification` remains temporarily present until the context/applicability cut-over;
+- `KnowledgeStateProvenance` records generated clause-context attributes that are not yet authoritatively confirmed.
+
+At document level, `DocumentKnowledge` owns accepted engineering-domain knowledge as evidence-backed `KnowledgeEntity` and `NormativeAssertion` objects. Its `EvidenceAnchor`s point back to canonical clauses or bounded character ranges without duplicating protected source text. Assertions carry their own normative force and adoption provenance.
 
 `baseline` describes the kind of processing, not certainty. A deterministic structural or reference result can remain `generated` until community-curated AtlasData confirms it. Plain text is derived from `baseline.content` through `render_content_as_plain_text`; it is not a second authoritative representation.
 
@@ -56,9 +58,11 @@ ontology classifier that a statement structurally reaches the next sibling, a su
 current clause, but whether that statement expresses an applicability condition remains an
 ontology decision.
 
-## Semantic classification
+## Assertion-centred semantic knowledge
 
-`SemanticClassification` is the semantic enrichment block of a clause. Automatic assignment of statement functions, knowledge kinds, process functions, applicability functions, and role-relation types is owned exclusively by the `SEMANTIC_ENRICHMENT` stage. Structural evidence remains in `ClauseBaseline` and is supplied through `StructuralProfile` and `StructuralContext`; it is evidence for semantic classification, not semantic truth. Deterministically resolved document references likewise remain in the baseline rather than being mixed with inferred semantic relations.
+The target semantic unit is an explicit engineering assertion, not a classification label for an entire clause. `DocumentKnowledge` schema 1 contains normalized entities, text-safe evidence anchors and subject/predicate/object assertions. Each assertion records assertion-local normative force and provenance, allowing one clause to contribute several independently qualified engineering statements.
+
+`ClauseApplicability` is the minimal context contract for applicability: explicit presence plus optional `included`/`excluded` polarity. Structural evidence, references and subject context stay separate from engineering-domain assertions. The previous `SemanticClassification` block is transitional in Slice 1 and is removed in later refactoring slices rather than migrated into the new model.
 
 ## Evidence and provenance
 
@@ -82,7 +86,7 @@ See [Table semantics](table-semantics.md) for the projection and evaluation boun
 
 ## Knowledge extension points
 
-`ClauseAnnotation` adds reviewed or generated explanatory knowledge with explicit visibility. `Relation` and semantic relation objects connect clauses and documents. These types are the basis for the planned cross-standard relationship graph. Candidate model runs and qualification proposals remain external evaluation artifacts; once accepted, their semantic knowledge may be incorporated into `ClauseEnrichments` with explicit authority/provenance.
+`ClauseAnnotation` adds reviewed or generated explanatory knowledge with explicit visibility. `Relation` and semantic relation objects connect clauses and documents. These types are the basis for the planned cross-standard relationship graph. Candidate model runs and qualification proposals remain external evaluation artifacts; once accepted, engineering-domain knowledge is adopted into `DocumentKnowledge` with evidence anchors and provenance. Clause enrichments are reserved for interpretation context.
 
 ## Relationship to application architecture
 
@@ -95,20 +99,16 @@ The separate application-architecture class diagram shows representative applica
 - Export-specific metadata is isolated and optional.
 - Internal references resolve against known clauses before Markdown publication.
 - Structural dimensions and inherited context are materialized only by the deterministic taxonomy stage.
-- Automatic ontology dimensions are assigned only by the semantic classification stage or imported as explicit reviewed/public annotations.
+- Accepted engineering assertions are evidence-backed and adopted explicitly; proposal runs never become canonical merely because an analyzer emitted them.
 - No domain model depends on storage paths or external SDK types.
 
 
 ## Formal semantic and context projection
 
-`EngineeringDocument` remains canonical. Formal semantics are represented as a rebuildable `FormalSemanticProjection` containing provider-neutral TBox, RBox, ABox, and CBox assertions. The projection records its projection-rule version and formal-ontology versions. The CBox carries semantic, structural, and epistemic context sourced from Knowledge Domains, taxonomies, structural context, and lineage rather than folding those concerns into the formal ontology itself. Slice 3 deterministically materializes these projections without copying protected clause body text.
+`EngineeringDocument` remains canonical. Formal semantics are represented as a rebuildable `FormalSemanticProjection` containing provider-neutral TBox, RBox, ABox, and CBox assertions. ABox facts are projected from accepted `DocumentKnowledge`; CBox facts describe interpretation context sourced from structure, references, applicability and provenance. Projection never copies protected clause body text.
 
 The stable Standards Atlas namespace is `http://lunetix.org/standards-atlas#` with prefix `stat`. No RDF framework, graph database, or GraphRAG implementation is part of the domain model. See [Formal Semantic & Context Model](formal-semantic-context-model.md).
 
 ## Engineering knowledge ontology
 
-`SemanticClassification.knowledge_kinds` identifies what engineering knowledge a clause
-represents independently from how the statement is phrased. The central vocabulary is
-`technique`, `measure`, `method`, `process`, `artifact`, `role`, `evidence`, and `concept`.
-For example, a clause can simultaneously be an informative `description` and a
-`technique`. Domain-specific refinements remain in versioned `domain_functions`.
+Ontology classes and predicates type `KnowledgeEntity` objects and `NormativeAssertion` relations. Artifact/evidence semantics are relational: an engineering artifact may `providesEvidenceFor` a claim without becoming an intrinsic `EvidenceArtifact` kind. Artifact contracts, cross-domain matching and qualification cases are downstream views planned on top of accepted assertions rather than additional clause-classification dimensions.

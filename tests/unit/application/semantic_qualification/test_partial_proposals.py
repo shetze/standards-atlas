@@ -391,7 +391,7 @@ def test_schema_inventory_registers_new_internal_contracts_without_document_bump
     for family in ("partial-request-plan", "partial-semantic-observation"):
         assert SCHEMA_POLICIES[family].current == "1.1"
     assert SCHEMA_POLICIES["partial-proposal-run"].current == "1.0"
-    assert SCHEMA_POLICIES["engineering-document"].current == 9
+    assert SCHEMA_POLICIES["engineering-document"].current == 1
 
 
 def write_dataset(tmp_path, **options):

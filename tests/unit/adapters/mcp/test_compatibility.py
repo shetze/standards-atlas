@@ -29,7 +29,7 @@ class FakeTransport:
         return self.responses[method]
 
 
-def _runtime(current: int = 9) -> dict[str, Any]:
+def _runtime(current: int = 1) -> dict[str, Any]:
     return {
         "application": {"name": "standards-atlas", "version": "0.8.7"},
         "engineering_document_schema": {
@@ -99,17 +99,17 @@ def test_probe_reports_missing_required_tool() -> None:
 
 def test_probe_rejects_old_server_schema_even_with_successful_handshake() -> None:
     transport = _transport()
-    transport.tool_responses["get_server_info"]["result"]["structuredContent"] = _runtime(8)
+    transport.tool_responses["get_server_info"]["result"]["structuredContent"] = _runtime(9)
 
     report = McpCompatibilityProbe(transport).run()
 
     assert not report.passed
     schema = next(check for check in report.checks if check.name == "engineering_document_schema")
     assert not schema.passed
-    assert "server current=8" in schema.detail
-    assert "local writer=9" in schema.detail
+    assert "server current=9" in schema.detail
+    assert "local writer=1" in schema.detail
     assert "mcp restart" in schema.detail
-    assert report.runtime == _runtime(8)
+    assert report.runtime == _runtime(9)
     assert next(check for check in report.checks if check.name == "initialize").passed
 
 
@@ -131,7 +131,7 @@ def test_probe_reads_runtime_json_text_fallback() -> None:
         {"content": []},
         {"content": [{"type": "text", "text": "not JSON"}]},
         {"content": [], "structuredContent": {"engineering_document_schema": None}},
-        {"content": [], "structuredContent": {"engineering_document_schema": {"current": "9"}}},
+        {"content": [], "structuredContent": {"engineering_document_schema": {"current": "1"}}},
     ],
 )
 def test_probe_does_not_accept_missing_or_malformed_runtime(result) -> None:
@@ -170,7 +170,7 @@ def test_probe_checks_formula_listing_without_writing_or_reporting_source_images
 
 def test_probe_reports_formula_schema_error_verbatim() -> None:
     error = (
-        "Unsupported engineering document schema version: 9; readable versions are 8, current is 8"
+        "Unsupported engineering document schema version: 9; readable versions are 1, current is 1"
     )
     transport = _transport()
     transport.tool_responses["list_untranscribed_formulas"] = {

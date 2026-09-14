@@ -61,7 +61,7 @@ variants.
 Canonical adoption and public export are separate stages:
 
 ```text
-Qualification results -> explicit canonical adoption -> EngineeringDocument (schema 9)
+Qualification results -> explicit canonical adoption -> EngineeringDocument (schema 1)
   -> AtlasData enrichment companion (schema 1.2, public values and references)
   + private knowledge-evidence blobs (schema 1.0, source-bearing values/provenance)
   -> manifest-bound AtlasData physical import -> canonical attribute-group merge

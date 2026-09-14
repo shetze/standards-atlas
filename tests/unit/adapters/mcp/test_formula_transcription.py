@@ -72,7 +72,7 @@ def _service(workspace: Path, *, enabled=True, allowed=()) -> McpClauseService:
     )
 
 
-def test_mcp_formula_roundtrip_reads_supported_schemas_and_writes_v9_with_provenance(
+def test_mcp_formula_roundtrip_reads_supported_schema_and_writes_schema1_with_provenance(
     tmp_path: Path,
 ) -> None:
     documents = FileSystemEngineeringDocumentRepository(tmp_path)
@@ -108,7 +108,7 @@ def test_mcp_formula_roundtrip_reads_supported_schemas_and_writes_v9_with_proven
     assert persisted.provenance.model == "test-model"
     assert persisted.source_content_hash == "sha256:abc"
     assert persisted.model_dump(mode="json") == artifact
-    assert json.loads(path.read_text())["schema_version"] == 9
+    assert json.loads(path.read_text())["schema_version"] == 1
     assert service.list_untranscribed_formulas(document_keys=[KEY.value]) == []
     block = documents.load(KEY).clauses[0].content[1]
     assert isinstance(block, FormulaBlock)
@@ -118,7 +118,7 @@ def test_mcp_formula_roundtrip_reads_supported_schemas_and_writes_v9_with_proven
     assert block.embedded_data_uri == IMAGE
 
 
-def test_v9_transcription_preserves_semantic_authority_and_availability(tmp_path) -> None:
+def test_schema1_transcription_preserves_semantic_authority_and_availability(tmp_path) -> None:
     document = _document()
     clause = (
         document.clauses[0]
@@ -201,13 +201,13 @@ def test_reproduces_reported_failure_only_with_old_reader_policy(tmp_path, monke
         old_runtime.setitem(
             SCHEMA_POLICIES,
             "engineering-document",
-            SchemaPolicy("engineering-document", 8, (8,), ".atlas/data/documents/*.json"),
+            SchemaPolicy("engineering-document", 9, (9,), ".atlas/data/documents/*.json"),
         )
         with pytest.raises(ValueError) as exc:
             service.list_untranscribed_formulas(document_keys=[KEY.value], limit=20)
         assert str(exc.value) == (
-            "Unsupported engineering document schema version: 9; "
-            "readable versions are 8, current is 8"
+            "Unsupported engineering document schema version: 1; "
+            "readable versions are 9, current is 9"
         )
 
     assert len(service.list_untranscribed_formulas(document_keys=[KEY.value], limit=20)) == 1
@@ -240,7 +240,7 @@ def test_runtime_info_is_independent_of_document_readability_and_omits_private_p
 
     assert info == {
         "application": {"name": "standards-atlas", "version": __version__},
-        "engineering_document_schema": {"current": 9, "readable": [9], "writer": 9},
+        "engineering_document_schema": {"current": 1, "readable": [1], "writer": 1},
         "capabilities": {
             "formula_transcription": False,
             "review_read": False,

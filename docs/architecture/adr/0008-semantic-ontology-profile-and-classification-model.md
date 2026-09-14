@@ -1,33 +1,43 @@
-# ADR 0008: Semantic Ontology, Profile, and Classification Model
+# ADR 0008: Assertion-Centred Semantic Knowledge Model
 
 ## Status
 Accepted
 
 ## Goal alignment
-LLMs are **qualified and replaceable analysis components** used where deterministic methods are insufficient; they are not the architectural core of Standards Atlas. Semantic classification captures abstract functions and interpretation context that can contribute to the CBox. It must remain distinguishable from domain knowledge extracted into ABox assertions.
+Standards Atlas extracts **explicit engineering assertions** from technical standards instead of treating clause classification as the end product. LLMs remain qualified, replaceable analysis components; they propose evidence-backed knowledge that is adopted only through explicit qualification or human review.
 
-Task contracts, qualification evidence, and provenance make model-assisted analysis substitutable and auditable across model and prompt changes.
+The canonical semantic unit is therefore an assertion about engineering entities, not a label attached to an entire clause.
 
 ## Context
-Engineering semantics are multidimensional and evolve at different rates. Earlier flat `SemanticRole`/responsibility classifications coupled taxonomies, prompts, tasks, and profile versions too tightly.
+The earlier multidimensional `SemanticClassification` model combined statement functions, knowledge kinds, process functions, applicability and role semantics. That model was useful for exploring the corpus, but several dimensions mix different semantic levels. In particular, `input`/`output` are usually relations between an engineering artifact and an activity, while `evidence` is a function an artifact serves for a claim rather than an intrinsic kind of artifact.
+
+For cross-domain Functional Safety work, the important reusable knowledge is instead the set of explicit claims a standard makes about engineering entities such as specifications, plans, reports, activities, requirements, techniques and other work products.
 
 ## Decision
-Semantic inference is modeled through three separate concepts:
+The intended semantic architecture has three distinct layers:
 
-1. **Semantic ontologies/vocabularies** define versioned controlled dimensions such as statement functions, knowledge kinds, process functions, applicability, and role-relation types.
-2. A **SemanticProfile** composes compatible ontology dimensions for a knowledge domain and is versioned independently.
-3. **Classification/extraction tasks** are versioned inference implementations that produce one or more profile dimensions.
+1. **Document context** contains deterministic structure, references, subject context and accepted applicability semantics. It explains how a source statement must be interpreted.
+2. **Document knowledge** contains accepted `KnowledgeEntity` and `NormativeAssertion` objects embedded in the canonical `EngineeringDocument` through `DocumentKnowledge`.
+3. **Formal semantic projections** map accepted document knowledge into TBox/RBox/ABox/CBox representations as rebuildable consumers.
 
-Role semantics use grounded role relations rather than a `responsibility_functions` dimension. Role relevance/presence and relation tuple extraction are separate tasks.
+`DocumentKnowledge` schema 1 contains:
 
-Semantic classification uses canonical content plus deterministic structural context. Accepted production results are materialized as clause-level semantic/context enrichments in the canonical `EngineeringDocument`, while qualification candidates remain separate evaluation artifacts until explicitly accepted. Formal domain assertions derived from those enrichments are projected into the ABox rather than becoming canonical document structure. Semantic enrichments remain distinct from the deterministic baseline and canonical document structure.
+- `EvidenceAnchor`: a text-safe reference to a canonical clause or character range; protected source text is not copied into the knowledge record;
+- `KnowledgeEntity`: a normalized engineering entity with an ontology class and one or more source anchors;
+- `NormativeAssertion`: an evidence-backed subject/predicate/object statement with assertion-local normative force and adoption provenance.
 
-The term *semantic ontology* here means a controlled classification vocabulary. Formal OWL TBox/RBox ontologies are defined separately by ADR 0009.
+Normative force belongs to the individual assertion (`requirement`, `recommendation`, `permission`, `prohibition`, `informative`, or `unspecified`). A clause may therefore contribute several assertions with different functions instead of receiving one global statement-function label.
+
+Accepted knowledge is local to its source document. Assertions reference entities and evidence anchors from the same `DocumentKnowledge` aggregate. Cross-document equivalence and transfer decisions are derived later and never alter the originating normative assertion.
+
+Roles are ordinary engineering entities when a source statement explicitly requires them; there is no architectural requirement for a separate role-classification dimension.
+
+Applicability remains context rather than domain knowledge. The new `ClauseApplicability` contract intentionally contains only explicit presence plus optional `included`/`excluded` polarity. Conditions, exceptions and technique usability are not folded into this core contract.
 
 ## Refactoring transition
-During the current architectural refactoring, intermediate semantic ontology, profile, task, prompt, and payload versions have no backward-compatibility guarantee. Obsolete transition contracts may be removed instead of being carried as permanent migration code. In particular, removed `SemanticRole` and `responsibility_functions` representations are not readable contracts.
+Slice 1 introduces the target `DocumentKnowledge` and `ClauseApplicability` contracts while the existing `SemanticClassification` implementation remains temporarily operational. Slice 2 cuts context/applicability consumers over to the new boundary. Slice 3 removes the obsolete classification dimensions, resources, workflows and tests rather than preserving compatibility adapters.
 
-This exception is temporary. Before the refactoring is declared complete, the project compatibility phase in ADR 0014 must be changed from `REFACTORING` to `STABLE`. Subsequent real schema revisions then retain the current schema and up to two real predecessor contracts. Resource versions remain independent of that serialization window.
+No persisted `.atlas` or `local` data is migrated. The canonical EngineeringDocument persistence contract restarts at schema 1 and accepts only schema 1.
 
 ## Consequences
-Dimensions, profiles, prompts, and inference implementations can evolve independently. Semantic profile, ontology, task, and prompt resource versions are distinct from their serialization schemas and must not be coupled to them. During refactoring only intentionally retained contracts need to be supported; stable releases follow ADR 0014's bounded compatibility policy.
+Semantic qualification can operate at assertion granularity: an efficient extractor may propose several assertions from one clause and independent verification can accept some while escalating only disputed assertions. The resulting knowledge is directly usable for artifact-contract compilation, cross-domain comparison, MCP engineering workflows and evidence binding without treating classification labels as the final knowledge representation.

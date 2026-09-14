@@ -792,6 +792,11 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         reason="embedded provenance record owned by its containing artifact schema",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.domain.model.document_knowledge:DocumentKnowledge",
+        SchemaMarkerDisposition.LOCAL,
+        reason="embedded accepted knowledge owned by the EngineeringDocument schema",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.domain.model.formal_semantics:FormalSemanticProjection",
         SchemaMarkerDisposition.CENTRAL,
         "formal-semantic-projection",

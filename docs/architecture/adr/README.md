@@ -6,7 +6,7 @@ Each ADR is deliberately broad enough to represent a durable architectural bound
 
 ## Architectural orientation
 
-All ADRs are interpreted against the project purpose: **Standards Atlas transforms strongly structured technical documents into a traceable, machine-processable Engineering Knowledge Base.** `EngineeringDocument` is the canonical document representation. Deterministic taxonomy and accepted abstract semantic functions provide interpretation context (CBox); domain ontologies provide TBox/RBox semantics; qualified clause-level extraction provides ABox knowledge. Retrieval technologies such as RAG and GraphRAG, interfaces such as Chat and MCP, and applications such as Doorstop export or heatmaps are replaceable consumers rather than the project purpose.
+All ADRs are interpreted against the project purpose: **Standards Atlas transforms strongly structured technical documents into a traceable, machine-processable Engineering Knowledge Base.** `EngineeringDocument` is the canonical document representation. Deterministic structure, references, subject context and applicability provide interpretation context (CBox); accepted evidence-backed `DocumentKnowledge` provides engineering assertions that can be projected into the ABox; domain ontologies provide TBox/RBox semantics. Retrieval technologies such as RAG and GraphRAG, interfaces such as Chat and MCP, and applications such as Doorstop export or heatmaps are replaceable consumers rather than the project purpose.
 
 LLMs are qualified, replaceable analysis components for semantic work that cannot be derived reliably through deterministic processing. Every accepted derived assertion must remain traceable through provenance and qualification to its clause, canonical document, and source evidence.
 
@@ -19,7 +19,7 @@ LLMs are qualified, replaceable analysis components for semantic work that canno
 | [0005](0005-atlasdata-onboarding-and-physical-document-identity.md) | AtlasData onboarding and physical document identity |
 | [0006](0006-multipart-families-and-publication-views.md) | Multipart families and publication views |
 | [0007](0007-structural-taxonomy-and-context-model.md) | Structural taxonomy and context model |
-| [0008](0008-semantic-ontology-profile-and-classification-model.md) | Semantic ontology, profile, and classification model |
+| [0008](0008-semantic-ontology-profile-and-classification-model.md) | Assertion-centred semantic knowledge model |
 | [0009](0009-formal-semantic-model-and-owl-projection.md) | Formal semantic model and OWL projection |
 | [0010](0010-first-class-tables-and-structured-knowledge.md) | First-class tables and structured knowledge |
 | [0011](0011-workflow-orchestration-and-stage-boundaries.md) | Workflow orchestration and stage boundaries |
@@ -33,8 +33,8 @@ LLMs are qualified, replaceable analysis components for semantic work that canno
 The review found no architectural decision that must be reversed, but it exposed several wording-level tensions that are resolved by this revision:
 
 - **Canonical document vs. knowledge base:** ADR 0002 previously described `EngineeringDocument` as the complete engineering knowledge state. It is now explicitly the canonical **document-centered** state; integrated OWL knowledge is a derived, cross-document view.
-- **Semantic enrichments vs. ABox knowledge:** ADR 0008 now distinguishes accepted clause-level semantic/context enrichment from formal domain assertions. The former may be persisted with the canonical document; the latter belongs to the derived ABox/knowledge layer.
-- **CBox vs. ABox:** ADRs 0007–0009 now state explicitly that structural taxonomy and abstract semantic functions describe interpretation context, whereas ABox assertions describe engineering-domain knowledge.
+- **Context vs. engineering knowledge:** ADR 0008 separates clause interpretation context from accepted `DocumentKnowledge`. Formal ABox knowledge is rebuilt from accepted assertions rather than from clause-classification labels.
+- **CBox vs. ABox:** ADRs 0007–0009 state explicitly that structure, references, subject context and applicability describe interpretation context, whereas accepted assertions describe engineering-domain knowledge.
 - **Qualification vs. production:** ADR 0011 previously risked making semantic work appear evaluation-only. Qualification remains the trust boundary for model-assisted inference, but accepted results feed a downstream knowledge-projection/serving stage.
 - **Interfaces/applications vs. purpose:** Doorstop, Markdown, heatmaps, RAG/GraphRAG, Chat, and MCP are consistently treated as projections, retrieval mechanisms, interfaces, or applications rather than canonical models or fixed project goals.
 

@@ -116,29 +116,7 @@ def test_repository_rejects_obsolete_schema_version(tmp_path: Path) -> None:
         repository.load(DocumentKey(value="DOC"))
 
 
-def test_v8_nondefault_unmarked_values_are_rejected_without_mutation(
-    tmp_path: Path,
-) -> None:
-    document = _document()
-    clause = document.clauses[0].with_semantic_classification(
-        SemanticClassification(
-            applicability_present=True,
-        )
-    )
-    document = document.model_copy(update={"clauses": (clause,)})
-    path = tmp_path / "documents" / "DOC.json"
-    path.parent.mkdir()
-    payload = {"schema_version": 8, "document": document.model_dump(mode="json")}
-    # Reproduce the older payload; no v9 authority or availability fields existed.
-    payload["document"]["clauses"][0]["provenance"] = {"generated_attributes": []}
-    path.write_text(json.dumps(payload))
-    before = path.read_bytes()
-    with pytest.raises(ValueError, match="Unsupported engineering document schema version"):
-        FileSystemEngineeringDocumentRepository(tmp_path).load(document.key)
-    assert path.read_bytes() == before
-
-
-def test_v9_roundtrip_preserves_known_false_unknown_and_primary(tmp_path: Path) -> None:
+def test_schema1_roundtrip_preserves_known_false_unknown_and_primary(tmp_path: Path) -> None:
     from standards_atlas.domain.model.knowledge_state import GeneratedAttribute, GenerationMethod
 
     document = _document()
@@ -184,8 +162,8 @@ def test_writer_version_matches_central_reader_policy() -> None:
     from standards_atlas.application.schema import SCHEMA_POLICIES
 
     policy = SCHEMA_POLICIES["engineering-document"]
-    assert CURRENT_DOCUMENT_SCHEMA_VERSION == policy.current == 9
-    assert policy.readable == (9,)
+    assert CURRENT_DOCUMENT_SCHEMA_VERSION == policy.current == 1
+    assert policy.readable == (1,)
     policy.require_readable(CURRENT_DOCUMENT_SCHEMA_VERSION)
 
 

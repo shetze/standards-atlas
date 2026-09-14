@@ -95,7 +95,7 @@ FAMILIES = {
     "cascade-provenance": "1.6",
     "qualification-matrix-report": "1.1",
     "qualification-consensus": "5.0",
-    "engineering-document": 9,
+    "engineering-document": 1,
     "knowledge-adoption-batch": "1.1",
     "qualification-matrix-manifest": "1.6",
 }
@@ -109,7 +109,7 @@ OLD = {
     "cascade-provenance": "1.5",
     "qualification-matrix-report": "1.0",
     "qualification-consensus": "4.0",
-    "engineering-document": 8,
+    "engineering-document": 9,
     "knowledge-adoption-batch": "1.0",
     "qualification-matrix-manifest": "1.5",
 }
@@ -240,14 +240,14 @@ def test_r3_model_boundaries_reject_invalid_versions(family, wire, bad):
                 model.model_validate(unchecked)
 
 
-@pytest.mark.parametrize("bad", ("old", "missing", None, True, 9.0, "9", 99))
+@pytest.mark.parametrize("bad", ("old", "missing", None, True, 1.0, "1", 99))
 @pytest.mark.parametrize("reader", ("direct", "load", "list", "list_readable", "mcp"))
 def test_document_envelopes_are_not_upgraded_or_silently_hidden(tmp_path, bad, reader):
     data = payload("engineering-document")
     if bad == "missing":
         del data["schema_version"]
     else:
-        data["schema_version"] = 8 if bad == "old" else bad
+        data["schema_version"] = 9 if bad == "old" else bad
     path = tmp_path / "documents/R3.json"
     path.parent.mkdir()
     path.write_text(json.dumps(data))
@@ -463,7 +463,7 @@ def test_consensus_writer_rejects_unchecked_old_copy_before_overwrite(tmp_path):
 @pytest.mark.parametrize("family", FAMILIES)
 def test_real_writers_enforce_registry_current_before_output(tmp_path, monkeypatch, family):
     old_policy = SCHEMA_POLICIES[family]
-    next_version = 10 if family == "engineering-document" else "99.0"
+    next_version = 2 if family == "engineering-document" else "99.0"
     monkeypatch.setitem(
         SCHEMA_POLICIES,
         family,

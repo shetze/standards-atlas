@@ -4,85 +4,50 @@
 Accepted
 
 ## Goal alignment
-The `EngineeringDocument` is the **canonical document-centered representation**, not the knowledge base itself. It preserves source evidence, deterministic context, and accepted clause-level semantic enrichments needed to reproduce and audit downstream knowledge projections. Cross-document knowledge integration belongs to the formal semantic/knowledge layer defined by ADR 0009.
-
-This separation prevents OWL, GraphRAG, Doorstop, or any other consumer-specific representation from becoming a second document source of truth.
+`EngineeringDocument` is the canonical document-centred representation. It preserves source content, deterministic context, accepted contextual enrichments and accepted engineering knowledge required to reproduce downstream projections. Cross-document integration, retrieval indexes and OWL graphs remain rebuildable consumers.
 
 ## Context
-Extraction and publication formats are unsuitable as the long-lived engineering representation. The project needs one canonical document model that preserves the complete auditable document-centered state of a physical source document while keeping source-derived facts, deterministic interpretation, accepted semantic context, model-assisted enrichment, and community-curated authority distinguishable. Cross-document formal knowledge is a derived layer rather than part of canonical document identity.
+Extraction and publication formats are unsuitable as long-lived engineering representations. Standards Atlas needs one canonical model that keeps source-derived facts, deterministic interpretation, accepted model-assisted results and their provenance distinguishable without turning a retrieval or graph format into a second source of truth.
 
-Deterministic processing is not equivalent to certainty. Source extraction, structural classification, scope detection, and reference resolution can all be imperfect even when their algorithms are reproducible. AtlasData provides a community-curated authoritative overlay that can confirm or correct these generated properties over time.
+The current refactoring does not require compatibility with persisted `.atlas` or `local` data. Those workspaces are regenerated from source, so obsolete intermediate schemas and migration code would only increase complexity.
 
 ## Decision
-`EngineeringDocument` is the canonical representation of one **physical source document or standard part** and contains the accepted document-centered evidence and enrichments required to reproduce and audit downstream knowledge projections.
+`EngineeringDocument` represents one physical source document or standard part and owns four relevant knowledge boundaries:
 
-Knowledge-bearing clause data is explicitly separated into:
+- `ClauseBaseline`: source-derived and deterministic/classical facts such as structured content, hierarchy, structural profile/context, reference evidence and publication attributes;
+- `ClauseEnrichments`: accepted clause-level interpretation context. During Slice 1 the former `SemanticClassification` remains temporarily present until the context/applicability cut-over in Slice 2 and removal in Slice 3;
+- `DocumentKnowledge`: accepted assertion-centred engineering knowledge consisting of `EvidenceAnchor`, `KnowledgeEntity` and `NormativeAssertion` objects;
+- `KnowledgeStateProvenance`: attribute-level provenance for generated clause context that is not yet authoritatively confirmed.
 
-- `ClauseBaseline`: source-derived and deterministic/classical facts such as structured content, headings, hierarchy, structural profile/context, scope/reference evidence, resolved reference relations, and publication attributes;
-- `ClauseEnrichments`: interpretative and model-assisted derived knowledge such as semantic classification, applicability, role relations, and other semantic/ontological enrichment;
-- `KnowledgeStateProvenance`: attribute-level provenance for facts that are still generated rather than authoritatively confirmed.
+`baseline` describes ownership and processing, not certainty. Deterministic outputs may still carry generated provenance until reviewed or replaced by an authoritative source.
 
-`baseline` means that a property belongs to the source/structural interpretation of the document. It does **not** mean that the property is infallible or community-confirmed.
+`DocumentKnowledge` follows stricter rules:
 
-Generated attributes are addressed by stable paths such as `baseline.structural_context` or `enrichments.semantic.statement_functions` and record the generator and generation method. A generated marker means "not yet confirmed by an authoritative source", not "unreliable".
+- only accepted knowledge belongs in the canonical aggregate;
+- model proposals, disagreements and rejected candidates remain external evaluation artifacts;
+- every entity is grounded in one or more `EvidenceAnchor`s;
+- every assertion has a source clause, subject, predicate, object, assertion-local normative force, evidence anchors and adoption provenance;
+- evidence anchors reference the canonical clause text by identity and optional character range and may bind a SHA-256 hash without copying protected text;
+- document validation rejects unknown clauses, invalid ranges and supplied hashes that do not match canonical content;
+- cross-document equivalence and transfer decisions are derived later and never rewrite source assertions.
 
-AtlasData is the primary community-curated authoritative source for document structure, tags, and accepted semantic confirmations. Values imported from authoritative AtlasData do not require a generated marker. When processing creates or replaces an unconfirmed property, that property is marked generated until AtlasData or another explicitly authoritative source confirms it.
+A standard family is not represented by a synthetic canonical `EngineeringDocument`; family composition remains a derived view.
 
-Canonical construction follows these rules:
+## Clean-break persistence contract
+The EngineeringDocument persistence envelope restarts at **schema 1**. During the current refactoring:
 
-- normalized/extracted evidence is losslessly attributable to source locations;
-- clause content is constructed from aligned, bounded content ranges rather than unconstrained text inference;
-- page starts, terms, headings, list structure, tables, figures, formulas, references, and structural context retain source anchors when available;
-- deterministic transformations record lineage/configuration identity and mark newly generated attributes;
-- deterministic reference relations belong to the baseline, not to semantic classification;
-- accepted clause-level semantic/context enrichments may remain inside the `EngineeringDocument` under the enrichment boundary with generation provenance; formal OWL ABox assertions and cross-document graph integration remain derived knowledge projections;
-- model-run candidates, qualification evidence, disagreements, and rejected proposals remain evaluation/run artifacts until accepted into the canonical knowledge state.
+- writers emit schema 1 only;
+- readers accept schema 1 only;
+- there is no reader, upgrader or migration path for previous EngineeringDocument schemas;
+- `.atlas` and `local` are deleted before rebuilding and testing the new state;
+- schema 1 remains the current marker until a deliberate future compatibility policy is adopted.
 
-A standard family is **not** represented by a synthetic canonical `EngineeringDocument`; family composition is a derived publication view defined by ADR 0006.
+`DocumentKnowledge` is embedded in EngineeringDocument and likewise starts at schema 1. Its marker documents the internal contract but does not create a second independently persisted canonical artifact.
 
-## Attribute acceptance and confirmation (schema 9)
+## Acceptance and provenance
+Qualification is not canonical adoption by itself. A model-assisted result becomes canonical knowledge only when an explicit adoption path records suitable `KnowledgeProvenance`; future slices may use qualified automatic acceptance, human review, deterministic derivation or controlled import as distinct methods.
 
-Qualification remains read-only. `KnowledgeAdoptionService` may explicitly accept selected
-final results as generated enrichment; this is not community confirmation. The same typed
-attribute merge is used by semantic and context enrichment writers. Confirmed values and
-coupled groups are protected; unrelated accepted attributes can still change. Omitted
-fields never clear existing values. Negative presence clears incompatible generated details.
-
-`KnowledgeStateProvenance` now records explicit confirmations in addition to generated
-attributes. Absence of a generated marker alone is not proof of authority: a default may
-never have been evaluated. Generated assessments distinguish `known` and `unknown`;
-no assessment is `not_evaluated`. Vote support describes the identified decision inputs,
-not a measured probability of correctness. Explicit primary labels are separate from sets.
-
-Canonical writers emit schema 9. Schema 8 remains readable within the bounded compatibility
-window, with a deprecation warning. Populated unmarked v8 enrichments are retained as
-protected `unattributed_attributes`, not silently labeled generated or authoritative.
-An explicit confirmation resolves that uncertainty. Loading does not rewrite the source.
-
-Canonical adoption does not publish anything. Explicit AtlasData export/import commands provide a
-versioned transport of selected canonical attributes beside their structural source, as described
-in ADR 0005. This does not promote generated classifications into curated TOC tags. The existing
-public-annotation path remains an explicitly reviewed boundary; its `--merge` option preserves
-unaddressed tags. The persisted-attribute merge reuses the same coupled-group semantics, restores
-explicit confirmations, and rejects contradictory explicit authorities. Separately recorded empty
-details retain their provenance even when the corresponding presence decision is negative.
-
-## Effective context consumption (CBox contract 1.0)
-
-A shared read-only application projection exposes accepted canonical attributes together
-with availability and origin. Corpus, workbench and local post-import reporting use this
-projection. Persisted predictions are not recycled as structural priors. A versioned frame
-selects the information available to a consumer; renderer prose has independent versioning.
-Qualification imposes a second target-isolation boundary even on an effective downstream
-frame. Audit metadata may retain the unframed local input, but it is not a prompt variable.
-
-Model-free knowledge workflows explicitly orchestrate adoption, AtlasData export, reimport
-and inspection through the existing services. Ordinary qualification does not publish or
-accept results implicitly. Optional companion restoration precedes contextual processing.
-Reuse is based on source/configuration and selected-fact fingerprints, not merely output
-existence. Canonical schema 9 is unchanged; the AtlasData companion contract is schema 1.2.
+Generated clause-context attributes remain protected by the existing `KnowledgeStateProvenance` rules until Slice 2/3 simplify that boundary. This slice deliberately does not reinterpret existing classification results as `DocumentKnowledge`.
 
 ## Consequences
-The canonical document contains everything needed to inspect its accepted document-centered state and to reproduce downstream semantic projections without conflating origin, authority, and inference method. Community-maintained AtlasData can progressively replace generated assertions with authoritative knowledge without requiring every extraction or inference algorithm to reach perfect accuracy.
-
-The schema is more explicit and carries additional provenance metadata. This is intentional: auditability and progressive community curation take precedence over a flatter serialized representation.
+Standards Atlas has a canonical place for engineering-domain assertions without conflating them with clause classification or formal graph projections. The clean schema reset eliminates compatibility code for disposable refactoring workspaces. Later slices can replace the old semantic classifier incrementally while keeping deterministic document processing operational.

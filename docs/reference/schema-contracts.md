@@ -41,7 +41,7 @@ artifact handling and the end-to-end regression scope.
 
 | Interface | Boundary | Schema axis | Resource axis | Location |
 | --- | --- | --- | --- | --- |
-| Engineering Document | persistence | `engineering-document` (9, current-only) | — | `.atlas/data/documents/*.json` |
+| Engineering Document | persistence | `engineering-document` (1, current-only) | — | `.atlas/data/documents/*.json` |
 | AtlasData enrichments | public contract | `atlasdata-enrichments` (`1.2`) | retained decision identities | `<AtlasData parent>/enrichments/<physical-key>.yaml` |
 | Private knowledge evidence | persistence | `knowledge-evidence` (`1.0`) | content-addressed payload | `.atlas/data/knowledge-evidence/<sha256>.json` |
 | AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.1`) | — | `local/review/atlasdata-knowledge*.json` |
@@ -75,7 +75,7 @@ AtlasData is authored, Git-published, community-curated input and therefore has 
 
 The optional `atlasdata-enrichments` companion has an explicit `schema_version: "1.2"` and
 `manifest_type: atlasdata-enrichments`. It is a versioned transport of selected canonical attributes,
-not a second canonical model. It does not change the existing text grammar or canonical schema 9.
+not a second canonical model. It does not change the existing text grammar or canonical EngineeringDocument schema 1.
 See [AtlasData format](atlas-data-format.md#accepted-enrichment-companions-schema-12).
 
 ## Packaged resource rule
@@ -107,7 +107,7 @@ See [ADR 0014](../architecture/adr/0014-schema-and-artifact-versioning-policy.md
 | `cascade-provenance` | 1.6 |
 | `qualification-matrix-report` | 1.1 |
 | `qualification-consensus` | 5.0 |
-| `engineering-document` | 9 (integer marker) |
+| `engineering-document` | 1 (integer marker) |
 | `knowledge-adoption-batch` | 1.1 |
 | `qualification-matrix-manifest` | 1.6 |
 

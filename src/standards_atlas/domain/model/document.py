@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.domain.model.annotation import ClauseAnnotation
 from standards_atlas.domain.model.artifact_lineage import ArtifactLineage
 from standards_atlas.domain.model.clause import Clause
+from standards_atlas.domain.model.document_knowledge import DocumentKnowledge
 from standards_atlas.domain.model.identifiers import ClauseId, DocumentKey
 from standards_atlas.domain.model.table_structure import DocumentTable, TableIndexEntry
 
@@ -49,7 +51,37 @@ class EngineeringDocument(BaseModel):
     tables: tuple[DocumentTable, ...] = ()
     table_index: tuple[TableIndexEntry, ...] = ()
     annotations: tuple[ClauseAnnotation, ...] = ()
+    knowledge: DocumentKnowledge = DocumentKnowledge()
     lineage: ArtifactLineage | None = None
+
+    @model_validator(mode="after")
+    def knowledge_is_bound_to_document_clauses(self) -> EngineeringDocument:
+        """Require every accepted knowledge anchor to resolve inside this document."""
+        clauses = {clause.id.value: clause for clause in self.clauses}
+        for anchor in self.knowledge.evidence_anchors:
+            clause = clauses.get(anchor.clause_id.value)
+            if clause is None:
+                raise ValueError(
+                    f"document knowledge anchor {anchor.id!r} references unknown clause "
+                    f"{anchor.clause_id.value!r}"
+                )
+            text = clause.plain_text
+            if anchor.start_offset is None:
+                evidence_text = text
+            else:
+                assert anchor.end_offset is not None
+                if anchor.end_offset > len(text):
+                    raise ValueError(
+                        f"document knowledge anchor {anchor.id!r} exceeds clause text length"
+                    )
+                evidence_text = text[anchor.start_offset : anchor.end_offset]
+            if anchor.content_hash is not None:
+                actual_hash = hashlib.sha256(evidence_text.encode("utf-8")).hexdigest()
+                if actual_hash != anchor.content_hash:
+                    raise ValueError(
+                        f"document knowledge anchor {anchor.id!r} content hash does not match"
+                    )
+        return self
 
     def annotations_for_clause(
         self,

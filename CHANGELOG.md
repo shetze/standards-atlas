@@ -1,6 +1,19 @@
 # Changelog
 
 
+## Unreleased — Assertion-centred semantic core Slice 1 (2026-09-14)
+
+- Introduce schema-1 `DocumentKnowledge` with evidence-backed `KnowledgeEntity` and
+  `NormativeAssertion` contracts plus assertion-local normative force and adoption provenance.
+- Add text-safe `EvidenceAnchor` binding to canonical clause ranges and validate optional SHA-256
+  hashes against the actual EngineeringDocument content.
+- Add minimal schema-free `ClauseApplicability` context with explicit presence and optional
+  included/excluded polarity; keep the existing classifier operational only as a transition.
+- Embed accepted document knowledge in `EngineeringDocument` and reset its disposable refactoring
+  persistence envelope from schema 9 to current-only schema 1, with no migration or legacy reader.
+- Replace obsolete v8/v9 compatibility expectations with clean schema-1 tests and remove the
+  superseded R3 validation record. Later slices perform the context cut-over and legacy removal.
+
 ## Unreleased — AtlasData enrichment structural rebind (2026-09-14)
 
 - Add an explicit dry-run-first `atlasdata rebind-enrichments` migration for enrichment sidecars

@@ -16,7 +16,7 @@ Standards Atlas transforms standards, technical specifications, and other highly
 
 The project is deliberately use-case open. Doorstop traceability, cross-standard relationship heatmaps, conversational exploration, and MCP integrations are applications of the knowledge base rather than hard-coded purposes of Standards Atlas.
 
-Structure and domain knowledge are modeled separately. Deterministically derived taxonomy, abstract semantic functions, Knowledge Domain, source identity, provenance, and qualification evidence form an explicit **context layer (CBox)**. Domain-specific **OWL TBoxes** define the concepts and relations used to derive clause-level **ABox** assertions. Every derived semantic assertion must remain traceable through its extraction and qualification evidence to the originating clause and source document.
+Structure, interpretation context, and engineering-domain knowledge are modeled separately. Deterministically derived taxonomy, references, subject context, applicability, source identity and provenance form an explicit **context layer (CBox)**. Accepted `DocumentKnowledge` stores evidence-backed engineering entities and assertions; domain-specific **OWL TBoxes** define concepts and relations used for rebuildable **ABox** projections. Every accepted assertion remains traceable to its originating clause and adoption evidence.
 
 LLMs are qualified analysis components for semantic tasks that cannot be derived reliably by deterministic processing or pattern matching; they are not the canonical model or the architectural center of the system. Other analysis techniques may implement the same semantic contracts. OWL projections are likewise derived knowledge representations: `EngineeringDocument` remains the canonical document model.
 
@@ -31,7 +31,7 @@ The resulting knowledge base can be indexed through lexical, vector, RAG, or Gra
 | **Reference detection and alignment** | Candidate detection, automatic matching against AtlasData baselines, confidence information, and a human review gate. |
 | **Traceable engineering documents** | Canonical documents, content blocks, transformation evidence, source lineage, and durable workspace artefacts. |
 | **Structural taxonomy** | Deterministic hierarchy, topic, lifecycle, sequence, contextual-node, and structural-reference evidence materialized before semantic interpretation. |
-| **Semantic ontology** | Qualified LLM classification of modular ontology dimensions using clause content plus explicit structural context. |
+| **Semantic knowledge** | Evidence-backed engineering entities and assertions, with qualified model-assisted proposals kept separate until adoption. |
 | **Semantic evaluation** | Reproducible local corpora, versioned prompt/model matrices, protected-content-safe reports, and regression evidence. |
 | **MCP access** | Read-only clause tools and resources over stdio or secured Streamable HTTP, with an automated compatibility probe. |
 | **Reusable publications** | Markdown and Doorstop outputs generated from canonical models rather than treated as internal source formats. |

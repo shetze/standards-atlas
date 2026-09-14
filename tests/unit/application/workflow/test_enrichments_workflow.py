@@ -243,7 +243,7 @@ def test_new_corpus_checkpoint_ignores_output_feedback_and_unselected_docs(tmp_p
     source = tmp_path / ".atlas/data/documents/EN50716.json"
     source.parent.mkdir(parents=True)
     payload = {
-        "schema_version": 9,
+        "schema_version": 1,
         "document": {
             "clauses": [
                 {

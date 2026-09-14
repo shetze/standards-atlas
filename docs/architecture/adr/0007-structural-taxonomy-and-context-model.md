@@ -4,7 +4,7 @@
 Accepted
 
 ## Goal alignment
-Deterministic taxonomy is the first semantic-context stage of the knowledge-engineering pipeline. It captures reproducible document and interpretation context without claiming domain knowledge. Together with accepted abstract semantic functions, this context contributes to the CBox used by later knowledge extraction; domain assertions themselves belong to the ABox defined by ADR 0009.
+Deterministic taxonomy is the first semantic-context stage of the knowledge-engineering pipeline. It captures reproducible document and interpretation context without claiming domain knowledge. Together with references, subject context and accepted applicability, this structure contributes to the CBox used by later knowledge extraction; accepted engineering assertions belong to `DocumentKnowledge` and can be projected into the ABox defined by ADR 0009.
 
 ## Context
 Document structure determines the context in which semantic statements are interpreted. A single flat semantic-role field cannot represent headings, scopes, structural roles, and inherited context.

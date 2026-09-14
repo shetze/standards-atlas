@@ -739,7 +739,7 @@ This is reported as `omitted`, with the normal dry-run and explicit-write safegu
 attributes and their authority remain subject to the existing merge. Empty public records are
 omitted, but canonical clauses, role values, provenance and private blobs are not deleted. Role
 presence keeps its true/false/unknown distinction; missing positive details must not be interpreted
-as a completed negative extraction. Canonical schema 9, companion schema 1.2 and private evidence
+as a completed negative extraction. Canonical EngineeringDocument schema 1, companion schema 1.2 and private evidence
 schema 1.0 are unchanged. Reviewed `RR` TOC tags are unaffected.
 
 ### Restore and preservation

@@ -97,7 +97,7 @@ remain unchanged. Other families are left to R3/R4.
 
 The historical reporting windows listed above are superseded for current execution:
 `cascade-provenance` is 1.6 only, `qualification-matrix-report` 1.1 only,
-`qualification-consensus` 5.0 only, `engineering-document` 9 only,
+`qualification-consensus` 5.0 only, `engineering-document` 1 only,
 `knowledge-adoption-batch` 1.1 only, and `qualification-matrix-manifest` 1.6 only.
 Direct models, repository and model-catalog entry points, recognized embedded artifacts,
 replay, history and qualification consumers reject obsolete/missing markers. Document
@@ -152,3 +152,13 @@ compatibility.
 The source inventory distinguishes lifecycle contracts from genuinely embedded or temporary
 records. Local exceptions are therefore reviewable architecture decisions rather than gaps in
 the registry. The generic future `STABLE` reader-window policy is unchanged.
+
+
+### Assertion-centred semantic core reset (2026-09-14)
+
+The active refactoring treats `.atlas` and `local` as disposable generated workspaces. The
+EngineeringDocument persistence contract therefore restarts at integer schema **1** and is
+current-only. No schema-8/9 reader, migration or compatibility fixture is retained for this
+reset. `DocumentKnowledge` is an embedded schema-1 contract owned by EngineeringDocument; it
+does not create an independent persistence family. Schema 1 remains the marker for the new
+canonical core until a deliberate future compatibility decision requires another revision.

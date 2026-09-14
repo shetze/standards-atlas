@@ -162,7 +162,7 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         "atlasdata-knowledge-report", "1.1", ("1.1",), "local/**/atlasdata-knowledge*.json"
     ),
     "engineering-document": SchemaPolicy(
-        "engineering-document", 9, (9,), ".atlas/data/documents/*.json"
+        "engineering-document", 1, (1,), ".atlas/data/documents/*.json"
     ),
     "knowledge-adoption-batch": SchemaPolicy(
         "knowledge-adoption-batch", "1.1", ("1.1",), "local/**/knowledge-adoption-batch.json"

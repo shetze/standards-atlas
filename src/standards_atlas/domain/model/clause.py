@@ -106,7 +106,7 @@ class Clause(BaseModel):
     def normalize_constructor_shape(cls, data: Any) -> Any:
         """Normalize in-process flat construction to the canonical nested shape.
 
-        Persisted EngineeringDocument schema v9 only writes the nested shape.
+        Persisted EngineeringDocument schema 1 writes only the nested shape.
         This normalizer keeps Python construction concise while the refactoring
         migrates call sites; it is not a reader compatibility promise for older
         persisted schema versions.
