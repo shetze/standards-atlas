@@ -120,23 +120,38 @@ confirmation, a taxonomy-rule release or canonical publication authority.
 ## Human review and qualification handoff
 
 The review package/state, Workbench state and semantic reference suites keep schema 1.0.
-New review publication **1.1** includes a replay-validated Workbench-evidence envelope (1.0),
-with explicit journal presence, exact exposure/proposal bindings and every recorded revision.
-Legacy publication 1.0 retains its original serialization and fingerprint, without an implied
-exposure-history claim.
+Review publication **1.1** is current-only and requires a replay-validated Workbench-evidence
+envelope (1.0), with explicit journal presence, exact exposure/proposal bindings and every
+recorded revision. Missing evidence is rejected; no legacy serializer preserves 1.0 identities.
+An explicit `journal_present: false` means not recorded, not proof of no earlier exposure.
 
-`partial-review-archive` and `partial-review-handoff` begin at **1.0** and declare closed
-member inventories. A review archive includes the frozen source package, event histories,
-preparation lineage, Workbench history and all package-bound inputs. A handoff binds that
-archive to the published Development/Holdout pair and its generated campaign manifest.
+`partial-review-archive` and `partial-review-handoff` remain **1.0** with closed member
+inventories. The frozen review package, review/preparation histories, Workbench history and
+all package-bound inputs stay in the archive. A handoff binds that archive to the confirmed
+Development/Holdout pair and its generated campaign manifest.
 
-`partial-qualification-manifest` is now an independent family (read 1.0/1.1). Manifest 1.1
-adds `review_bundle`, a pointer resolved relative to the owning manifest. It is mutually
-exclusive with a manually supplied `semantic_suites` list. The existing project-relative
-semantics of other input fields do not change.
+`partial-qualification-manifest` **1.1** is current-only with a required version marker.
+`review_bundle` remains a manifest-relative pointer, mutually exclusive with
+`semantic_suites`. Other input fields keep their existing project-relative semantics.
+The supplied source manifest and standard test fixtures use 1.1; a Handoff does not
+silently upgrade its input manifest.
 
-Handoff-backed campaign **artifacts** use `partial-qualification-campaign` **1.2**, retaining
-both semantic review bindings and the ZIP in the checksummed input inventory. Artifacts
-1.0/1.1 stay readable, and the existing non-handoff preparation path retains its old contracts.
-A handoff specification without its archive cannot be accepted by downgrading the artifact
-version. Review labels and disclosure metadata are evidence inputs, never model request data.
+Every `partial-qualification-campaign` artifact uses **2.0** with mandatory
+`review_evidence.kind`:
+
+| Kind | Required additional frozen inputs | Meaning |
+| --- | --- | --- |
+| `external_suites` | None | External suite provenance, no Atlas review-binding claim |
+| `atlas_publication` | `inputs/semantic-review-bindings.json` | Complete Atlas publication pairs; external suites may coexist |
+| `archived_handoff` | The binding file plus `inputs/review-package.zip` | Exactly one published review snapshot with its full archive |
+
+The kind is derived from verified inputs during creation and explicitly checked on every
+read. Exact manifest/physical inventories, suite references, source/context/rules bindings,
+publication replay and archive replay must agree. There is no missing-file fallback, and
+changing the kind cannot remove a Handoff's archive requirement. Evidence fields are part
+of the campaign fingerprint, never part of model requests or an automatic release decision.
+
+Obsolete manifests/publications 1.0 and campaign artifacts 1.0/1.1/1.2 are rejected, including
+nested/direct reads. Writer guards run before output publication. Refactoring does not
+rewrite existing archives, preserve superseded campaign hashes or alias old execution
+results to new campaigns. See [Review schema refactoring R2](../user-guide/review-schema-refactoring.md).

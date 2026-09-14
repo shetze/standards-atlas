@@ -130,7 +130,7 @@ def source_files(root, *, count=4, reviews=False):
             )
             suite_paths.append(str(path))
     spec = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "manifest_type": "partial_qualification",
         "id": "campaign-test",
         "dataset": str(root / "dataset.json"),

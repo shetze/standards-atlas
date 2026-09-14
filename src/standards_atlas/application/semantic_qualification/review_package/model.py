@@ -5,7 +5,14 @@ from __future__ import annotations
 from typing import Annotated, Any, Literal
 
 from jsonschema import Draft202012Validator
-from pydantic import AwareDatetime, Field, StringConstraints, model_serializer, model_validator
+from pydantic import (
+    AwareDatetime,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    model_serializer,
+    model_validator,
+)
 
 from standards_atlas.application.model.source_structure import SourceStructure
 from standards_atlas.application.semantic_qualification.partial_observations import (
@@ -259,8 +266,13 @@ class WorkbenchEvidence(CampaignModel):
     audit_sha256: Digest
 
 
+REVIEW_PUBLICATION_SCHEMA_VERSION = "1.1"
+
+
 class ReviewPublication(CampaignModel):
-    schema_version: Literal["1.0", "1.1"] = "1.1"
+    model_config = ConfigDict(revalidate_instances="always")
+
+    schema_version: Literal["1.1"]
     kind: Literal["partial-review-publication"] = "partial-review-publication"
     package: ReviewPackage
     state: ReviewState
@@ -268,18 +280,4 @@ class ReviewPublication(CampaignModel):
     holdout_declaration: NonBlank | None = None
     report: dict[str, Any]
     evidence_sha256: Digest
-    workbench: WorkbenchEvidence | None = None
-
-    @model_validator(mode="after")
-    def versioned_workbench_evidence(self):
-        if (self.schema_version == "1.1") != (self.workbench is not None):
-            raise ValueError("publication 1.1 requires Workbench evidence; 1.0 cannot carry it")
-        return self
-
-    @model_serializer(mode="wrap")
-    def preserve_legacy_fingerprint(self, handler):
-        # Do not add a null field when replaying an already signed Slice-1/2/3 publication.
-        data = handler(self)
-        if self.schema_version == "1.0":
-            data.pop("workbench", None)
-        return data
+    workbench: WorkbenchEvidence

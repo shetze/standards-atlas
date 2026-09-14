@@ -1,7 +1,7 @@
 # Opt-in final qualification, not an approval of the candidate.
 # Paths are relative to the project working directory, as with existing CLI inputs.
 manifest_type: partial_qualification
-schema_version: '1.0'
+schema_version: '1.1'
 id: taxonomy-final-qualification-v1
 run: local/evaluation/qualification-run-078.zip
 golden: local/review/applicability/3.0.0/applicability-golden-corpus.yaml
@@ -24,7 +24,7 @@ variants:
 # Source manifest for partial-review-build and partial-review-handoff.
 # The handoff generates campaign.yaml plus both suites and their review archive;
 # use that generated manifest for the qualification workflow (no manual hash/path editing).
-# The explicit semantic_suites interface below remains supported for legacy callers.
+# The explicit semantic_suites interface is also current (external or Atlas publication).
 # Supply independent reviewed development and holdout suites BEFORE preparing.
 # Empty review inputs intentionally block activation; no synthetic gold is invented.
 semantic_suites: []

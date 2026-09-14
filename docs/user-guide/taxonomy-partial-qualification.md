@@ -63,13 +63,15 @@ The [source-bound review-package workflow](partial-review-packages.md) now gener
 suite files from explicit human decisions, with original text, structure, fixed identifiers
 and automated hash handling. Use it before campaign preparation instead of hand-authoring
 reference YAML. Its source/context/rules evidence is copied into new campaign artifacts;
-legacy unbound suites remain supported without that additional assurance.
+external unbound suites remain a current input mode without that additional assurance.
 
 The [archived review handoff](partial-review-handoff.md) now generates the complete suite pair,
 review ZIP and a ready manifest. Use its `campaign.yaml` with the qualification workflow; a
-review preflight runs before preparation and pins the archive in campaign artifact 1.2. No
-manual copying of source hashes or suite paths is necessary. The explicit-suite example
-below remains a supported legacy interface, not the recommended authoring procedure.
+review preflight runs before preparation and pins the archive in campaign artifact 2.0,
+with `review_evidence.kind: archived_handoff`. No manual copying of source hashes or suite
+paths is necessary. The explicit-suite example below remains a current input mode, not
+the recommended authoring procedure. All manifests require schema 1.1; see
+[Review schema refactoring R2](review-schema-refactoring.md) for regeneration boundaries.
 
 
 The example has `semantic_suites: []` on purpose: it can be prepared and explored, but it

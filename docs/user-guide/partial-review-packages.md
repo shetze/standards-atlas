@@ -186,7 +186,8 @@ review-report.json
 Both suite files use the existing `partial-semantic-reference` schema 1.0. Only current
 explicitly `confirmed`/`corrected` human attributes are included. `review-evidence.json`
 preserves source/context/rules bindings, complete review history, the source-bound Workbench exposure journal/history and the
-recomputable coverage report. New publications use schema 1.1; schema 1.0 remains readable. All four files are committed together using one same-filesystem directory
+recomputable coverage report. Publication schema 1.1 is required; obsolete 1.0 publications
+are rejected. All four files are committed together using one same-filesystem directory
 rename on the supported local POSIX filesystem. Exact repeated imports are idempotent;
 changed content never overwrites an existing publication. Corrections are exported into
 a new output directory. Review state history remains intact.
@@ -204,12 +205,14 @@ review; an inclusive Process sentinel is not counted as proof of an exact set or
 Use [the atomic handoff](partial-review-handoff.md) to generate both suites, the review
 archive and the ready campaign manifest without editing paths. The existing manual route
 (adding generated suite paths to `semantic_suites`) is still supported. No new qualification engine or automatic activation is
-introduced. The original manifest schema 1.0 remains readable. Handoff manifests use 1.1 and their
-campaign artifacts use 1.2, retaining the review ZIP as well as semantic review bindings.
-The earlier explicit-suite route still produces bound artifact 1.1 or legacy artifact 1.0;
-these remain readable. Source context, suite pair and bound rules are checked at preparation,
-resume and frozen-campaign load. Frozen execution does not depend on mutable external review
-working files. Historical unbound suites remain supported but do not gain this new assurance.
+introduced. Every manifest uses current schema 1.1; every campaign artifact uses schema 2.0.
+The artifact's `review_evidence.kind` explicitly distinguishes `external_suites`,
+`atlas_publication` and `archived_handoff`. The last form retains the full review ZIP.
+Old manifest/publication/campaign formats are not read or automatically migrated.
+Source context, suite pair and bound rules are checked at preparation, resume and
+frozen-campaign load. Frozen execution does not depend on mutable external review working
+files. External suites remain a current input option, without an Atlas context/archive claim.
+See [Review schema refactoring R2](review-schema-refactoring.md) before reusing older outputs.
 
 Locks are fail-closed. After an actual process crash, inspect the owning process and artifacts
 before removing `.review.lock` or a sibling `.<output-name>.review-write.lock`. Do not remove

@@ -167,8 +167,9 @@ in one atomic operation after the explicit human review is complete.
 Workbench metadata is separately hashed and bound to the package. It does not confer
 semantic authority and is not folded into the immutable package hash. Keep the **whole review
 package directory**, including `workbench/`, for continued review. New publication 1.1
-includes the checked Workbench journal and all recorded revisions; older publication 1.0
-does not retrospectively gain this evidence. The [qualification handoff](partial-review-handoff.md)
+requires the checked Workbench journal envelope and all recorded revisions. Obsolete
+publication 1.0 is rejected, not retroactively supplied with this evidence; see
+[R2 current contracts](review-schema-refactoring.md). The [qualification handoff](partial-review-handoff.md)
 exports the suite pair, full review ZIP and ready campaign manifest together, and keeps that
 snapshot in the frozen qualification campaign and its final evidence archive. The suite YAML
 alone is still not an exposure ledger; retain its bound evidence and archive.

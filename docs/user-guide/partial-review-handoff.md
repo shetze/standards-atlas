@@ -113,7 +113,8 @@ uv run standards-atlas evaluation partial-qualification-prepare \
   --output local/evaluation/taxonomy-reviewed-v1/campaign
 ```
 
-Handoff-backed campaign artifacts use schema **1.2** and pin
+All campaign artifacts use schema **2.0**. Handoff campaigns declare
+`review_evidence.kind: archived_handoff` and pin
 `inputs/semantic-review-bindings.json` plus `inputs/review-package.zip`. Original text,
 source context, human decisions, exact proposal revisions and the recorded Holdout exposure
 history therefore survive deletion or movement of the live review workspace. Model datasets
@@ -172,12 +173,13 @@ compression methods are rejected. These limits fail explicitly, without truncati
 omitting decisions. Review packages include source text and reviewer details; treat the
 resulting archives with the same access restrictions as the source corpus.
 
-## 5. Holdout disclosure, lineage and compatibility
+## 5. Holdout disclosure, lineage and current contracts
 
 Publication schema **1.1** contains a checked Workbench snapshot with all recorded revisions.
-The summary distinguishes `recorded` from `not-recorded`; legacy publication **1.0** is read
-without adding a new null field or changing its fingerprint, and is described as
-`legacy-not-captured`. None of these states proves the absence of earlier external access.
+The summary distinguishes `recorded` from `not-recorded`. The Workbench evidence envelope
+is mandatory; obsolete publication 1.0 and absent/null evidence are rejected. An explicit
+`journal_present: false` remains valid but does not prove the absence of earlier exposure.
+Neither recorded nor unrecorded histories prove the absence of earlier external access.
 The explicit human Holdout-use declaration remains mandatory for publication.
 
 Materializing a further Development selection retains every existing Holdout member, human
@@ -188,9 +190,10 @@ make already revealed Holdout suggestions appear unexposed.
 
 Review package/state, Workbench state and semantic-suite schemas remain **1.0**. The archive,
 Workbench-evidence and handoff envelopes start at **1.0**. Manifest schema **1.1** and campaign
-artifact schema **1.2** are separate version families. Existing manifest 1.0, publication 1.0
-and campaign artifacts 1.0/1.1 remain readable. The old explicit `semantic_suites` preparation
-path is retained; it does not gain a complete review-archive claim merely by being loaded.
+artifact schema **2.0** are separate, current-only version families. Obsolete manifest 1.0,
+publication 1.0 and campaign artifacts 1.0/1.1/1.2 are rejected. The explicit `semantic_suites`
+path remains current as `external_suites` or `atlas_publication`; it does not gain an archive
+claim merely by being loaded. See [R2 regeneration boundaries](review-schema-refactoring.md).
 The independent `partial-review-import` command also now captures Workbench evidence when
 exporting new publications, without requiring a campaign handoff.
 

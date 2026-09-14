@@ -38,13 +38,13 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         "partial-review-profile", "1.0", ("1.0",), "**/review-profile.yaml"
     ),
     "partial-review-publication": SchemaPolicy(
-        "partial-review-publication", "1.1", ("1.0", "1.1"), "**/review-evidence.json"
+        "partial-review-publication", "1.1", ("1.1",), "**/review-evidence.json"
     ),
     "partial-qualification-manifest": SchemaPolicy(
-        "partial-qualification-manifest", "1.1", ("1.0", "1.1"), "**/campaign.yaml"
+        "partial-qualification-manifest", "1.1", ("1.1",), "**/campaign.yaml"
     ),
     "partial-qualification-campaign": SchemaPolicy(
-        "partial-qualification-campaign", "1.2", ("1.0", "1.1", "1.2"), "**/campaign-plan.json"
+        "partial-qualification-campaign", "2.0", ("2.0",), "**/campaign-plan.json"
     ),
     "partial-qualification-repeat": SchemaPolicy(
         "partial-qualification-repeat", "1.0", ("1.0",), "**/repeat.json"

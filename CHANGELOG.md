@@ -2,6 +2,21 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Review-schema refactoring R2 (2026-09-14)
+
+- Require current manifest/publication schema 1.1 at direct, nested and file boundaries;
+  remove legacy publication serialization and keep Workbench evidence mandatory.
+- Emit all qualification campaigns as schema 2.0 with explicit `review_evidence.kind`:
+  external suites, Atlas publication pairs, or a fully archived Handoff.
+- Replay the same source/context/rules/publication/archive bindings at preparation and load;
+  reject missing, additional or inconsistent frozen inputs without evidence-level fallback.
+- Keep external suites and direct Atlas publication input as current functional modes,
+  without granting Handoff assurance, semantic acceptance or release authority.
+- Update the shipped manifest and normal fixtures; add current-contract, rejection,
+  inventory, writer-guard and evidence-tampering regression tests and regeneration guidance.
+- Do not migrate or overwrite existing artifacts, reuse superseded campaign identities,
+  reopen R1 reader windows or change the other schema families and qualification gates.
+
 ## Unreleased — Partial-schema refactoring R1 (2026-09-14)
 
 - Restrict partial request plans, semantic observations and cascade reports to schema 1.1;

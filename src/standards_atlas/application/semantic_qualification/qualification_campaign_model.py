@@ -27,10 +27,15 @@ class CampaignVariant(CampaignModel):
     require_taxonomy_decisions: bool = Field(default=False, strict=True)
 
 
+QUALIFICATION_MANIFEST_SCHEMA_VERSION = "1.1"
+
+
 class QualificationCampaign(CampaignModel):
     """Plan the comparisons first; never pick a winning policy after seeing labels."""
 
-    schema_version: Literal["1.0", "1.1"] = "1.0"
+    model_config = ConfigDict(revalidate_instances="always")
+
+    schema_version: Literal["1.1"]
     manifest_type: Literal["partial_qualification"] = "partial_qualification"
     id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
     run: Path | None = None
@@ -44,7 +49,7 @@ class QualificationCampaign(CampaignModel):
     repetitions: int = Field(default=3, ge=3, strict=True)
     minimum_published_golden_cases: int = Field(default=116, ge=116, strict=True)
     semantic_suites: tuple[Path, ...] = ()
-    # Manifest 1.1: relative to THIS manifest, unlike the legacy project-root paths.
+    # Relative to THIS manifest; other input paths remain project-root relative.
     review_bundle: Path | None = None
     sentinel_suites: tuple[Path, ...] = ()
     required_semantic_attributes: tuple[str, ...] = (
@@ -60,10 +65,8 @@ class QualificationCampaign(CampaignModel):
 
     @model_validator(mode="after")
     def valid_campaign(self):
-        if self.review_bundle is not None and (
-            self.schema_version != "1.1" or self.semantic_suites
-        ):
-            raise ValueError("review_bundle requires manifest 1.1 and replaces semantic_suites")
+        if self.review_bundle is not None and self.semantic_suites:
+            raise ValueError("review_bundle replaces semantic_suites")
         if (self.run is None) == (self.dataset is None):
             raise ValueError("campaign requires exactly one source: run or dataset")
         names = [v.id for v in self.variants]
@@ -95,7 +98,7 @@ class QualificationCampaign(CampaignModel):
         if not isinstance(data, dict):
             raise ValueError("qualification campaign manifest must contain a mapping")
         require_supported_schema("partial-qualification-manifest", data.get("schema_version"))
-        # Only the new handoff pointer is manifest-relative; legacy inputs stay project-relative.
+        # Only the handoff pointer is manifest-relative; other inputs stay project-relative.
         if data.get("review_bundle") is not None:
             pointer = Path(data["review_bundle"])
             data["review_bundle"] = str((path.parent / pointer).absolute())

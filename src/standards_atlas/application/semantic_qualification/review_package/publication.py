@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_schema, require_supported_schema
 from standards_atlas.application.semantic_qualification.partial_comparison import (
     _output_is_separate,
 )
@@ -15,7 +15,7 @@ from standards_atlas.application.semantic_qualification.qualification_campaign_m
     SemanticReferenceSuite,
 )
 
-from .model import ReviewPublication, predicate_data
+from .model import REVIEW_PUBLICATION_SCHEMA_VERSION, ReviewPublication, predicate_data
 from .service import load_review
 from .sources import fingerprint, freeze_population, verify_current_sources
 from .storage import new_directory, review_lock
@@ -26,6 +26,7 @@ REVIEW_REFERENCE_PREFIX = "atlas-review:sha256:"
 
 
 def publication_suites(publication: ReviewPublication) -> tuple[SemanticReferenceSuite, ...]:
+    publication = ReviewPublication.model_validate(publication)
     package, state = publication.package, publication.state
     confirmed = confirmed_decisions(state)
     sources = {s.example_id: s for s in package.population}
@@ -73,10 +74,10 @@ def publication_suites(publication: ReviewPublication) -> tuple[SemanticReferenc
 
 def verify_publication(publication: ReviewPublication, examples=None) -> tuple:
     require_supported_schema("partial-review-publication", publication.schema_version)
+    publication = ReviewPublication.model_validate(publication)
     if fingerprint(publication, "evidence_sha256") != publication.evidence_sha256:
         raise ValueError("review publication fingerprint mismatch")
-    if publication.workbench is not None:
-        verify_workbench_evidence(publication.workbench, publication.package, publication.state)
+    verify_workbench_evidence(publication.workbench, publication.package, publication.state)
     expected_report = review_report(publication.package, publication.state)
     if expected_report != publication.report:
         raise ValueError("review publication coverage/report differs from verified decisions")
@@ -105,7 +106,7 @@ def load_bound_suite(path: Path, examples, *, resources: Path | None = None) -> 
     suite = SemanticReferenceSuite.model_validate(yaml.safe_load(path.read_bytes()))
     reference = suite.review_reference or ""
     if not reference.startswith("atlas-review:"):
-        return suite, None  # Explicit legacy provenance, without a new context-binding claim.
+        return suite, None  # External review provenance, without an Atlas context-binding claim.
     if not reference.startswith(REVIEW_REFERENCE_PREFIX):
         raise ValueError("unsupported Atlas review reference")
     evidence_path = path.parent / "review-evidence.json"
@@ -191,9 +192,11 @@ def compile_publication(
     }
     if blockers:
         return result, None
+    require_current_schema("partial-review-publication", REVIEW_PUBLICATION_SCHEMA_VERSION)
     publication = seal(
         ReviewPublication,
         {
+            "schema_version": REVIEW_PUBLICATION_SCHEMA_VERSION,
             "package": contract.model_dump(mode="json"),
             "state": state.model_dump(mode="json"),
             "status": "published" if publish else "draft",
@@ -208,6 +211,7 @@ def compile_publication(
 
 
 def publication_files(publication: ReviewPublication, result: dict) -> dict[str, bytes]:
+    require_current_schema("partial-review-publication", publication.schema_version)
     files = {
         f"{suite.split}.yaml": yaml.safe_dump(
             suite.model_dump(mode="json", exclude_unset=True),

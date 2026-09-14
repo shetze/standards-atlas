@@ -162,7 +162,7 @@ def test_publication_captures_reveals_and_distinguishes_absent_journal(tmp_path)
     assert verify_publication(original)  # Later live reveals cannot modify a published snapshot.
 
 
-def test_legacy_publication_fingerprint_and_absent_evidence_are_preserved(tmp_path):
+def test_obsolete_publication_cannot_be_revived_by_rehashing_without_evidence(tmp_path):
     root, *_ = make_review(tmp_path)
     complete(root)
     output = tmp_path / "published"
@@ -173,10 +173,8 @@ def test_legacy_publication_fingerprint_and_absent_evidence_are_preserved(tmp_pa
     raw["evidence_sha256"] = structure_fingerprint(
         {k: v for k, v in raw.items() if k != "evidence_sha256"}
     )
-    legacy = ReviewPublication.model_validate(raw)
-    assert legacy.model_dump(mode="json") == raw
-    assert verify_publication(legacy)
-    assert workbench_summary(legacy.workbench)["status"] == "legacy-not-captured"
+    with pytest.raises(ValueError):
+        ReviewPublication.model_validate(raw)
 
 
 @pytest.mark.parametrize("change", ["missing-state", "missing-history", "source", "proposal"])
@@ -511,7 +509,8 @@ def test_frozen_campaign_is_independent_of_live_review_and_contains_no_labels_in
         output=campaign,
         resources=RESOURCES,
     )
-    assert definition["schema_version"] == "1.2"
+    assert definition["schema_version"] == "2.0"
+    assert definition["review_evidence"] == {"kind": "archived_handoff"}
     assert "inputs/review-package.zip" in definition["files"]
     frozen_bytes = (campaign / "inputs/review-package.zip").read_bytes()
     assert verify_archive_bytes(frozen_bytes).workbench.state.exposures
@@ -734,7 +733,7 @@ def test_rehashed_handoff_cannot_silently_change_comparison_or_quality_policy(
         load_review_handoff(output)
 
 
-@pytest.mark.parametrize("schema", ["1.0", "1.1"])
+@pytest.mark.parametrize("schema", ["1.0", "1.1", "1.2"])
 def test_downgrade_cannot_discard_frozen_review_archive(tmp_path, schema):
     _, _, output, *_ = ready(tmp_path)
     campaign = tmp_path / "campaign"

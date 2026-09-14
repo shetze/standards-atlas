@@ -72,3 +72,23 @@ A frozen campaign hashes exact source/reference files and effective task/prompt/
 configuration. Each independent repetition has its own bound execution identity and sealed
 inventory; transported activation files have a separate scoped identity. Hashes protect
 integrity but do not prove semantic truth, human authorship or runtime binary identity.
+
+
+### Review contract refactoring R2 (2026-09-14)
+
+During refactoring, `partial-qualification-manifest` and `partial-review-publication` accept
+only 1.1. Publication evidence is mandatory, including an explicit recorded/unrecorded
+Workbench state. Legacy serializers and defaulted version markers are removed.
+
+`partial-qualification-campaign` is current-only 2.0. The former schema 1.0/1.1/1.2 selection
+based on available review material is replaced by the independently validated
+`review_evidence.kind`: `external_suites`, `atlas_publication`, or `archived_handoff`.
+These are current functional input modes, not compatibility levels or release grades.
+The exact frozen inventory and semantic bindings must agree with the declared kind; a
+missing archive never changes the evidence level. All modes use the same current writer
+and reader; Handoff and publication validation share the existing source/evidence replay.
+
+Old artifacts remain unchanged historical files; no migration, hash alias or upgrade on
+read is provided. This supersedes the earlier Slice-7/Slice-4 reader-window decisions for
+these three families only. R1's current-only policies and the future generic Stable policy
+remain unchanged. Other families are left to R3/R4.

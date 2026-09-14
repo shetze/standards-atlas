@@ -16,7 +16,7 @@ from typing import Literal
 import yaml
 from pydantic import Field
 
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_schema, require_supported_schema
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
     ApplicabilityGoldenCorpus,
 )
@@ -29,6 +29,7 @@ from standards_atlas.application.semantic_qualification.partial_proposals import
     load_partial_inputs,
 )
 from standards_atlas.application.semantic_qualification.qualification_campaign_model import (
+    QUALIFICATION_MANIFEST_SCHEMA_VERSION,
     CampaignModel,
     QualificationCampaign,
     SemanticReferenceSuite,
@@ -110,7 +111,7 @@ class ReviewHandoffSnapshot:
 
 
 def _canonical_specification(spec: QualificationCampaign, base: Path) -> dict:
-    """Normalize legacy project-relative inputs without depending on external file contents."""
+    """Normalize project-relative inputs without depending on external file contents."""
     data = spec.model_dump(mode="json")
 
     def absolute(value):
@@ -131,7 +132,10 @@ def _handoff_specification(raw: bytes, base: Path, campaign_id: str) -> dict:
     if original.review_bundle is not None:
         raise ValueError("build a new handoff from the source manifest, not an existing handoff")
     data = _canonical_specification(original, base)
-    data.update(schema_version="1.1", id=campaign_id, semantic_suites=[], review_bundle=".")
+    require_current_schema("partial-qualification-manifest", QUALIFICATION_MANIFEST_SCHEMA_VERSION)
+    data.update(id=campaign_id, semantic_suites=[], review_bundle=".")
+    # The source must already be current; never rewrite a version marker as an upgrade.
+    require_current_schema("partial-qualification-manifest", data["schema_version"])
     # Model validation catches any invalid source/variant/quality-policy input before writing.
     return QualificationCampaign.model_validate(data).model_dump(mode="json")
 
@@ -231,7 +235,7 @@ def _verify_files(
         raise ValueError("requested campaign differs from the immutable review handoff")
     publication = ReviewPublication.model_validate_json(files["review/review-evidence.json"])
     suites = verify_publication(publication)
-    if publication.schema_version != "1.1" or publication.status != "published":
+    if publication.status != "published":
         raise ValueError("handoff requires a published suite pair with captured Workbench evidence")
     for suite in suites:
         supplied = SemanticReferenceSuite.model_validate(

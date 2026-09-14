@@ -11,13 +11,21 @@ from pathlib import Path
 
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_schema, require_supported_schema
 from standards_atlas.application.semantic_qualification.acceptance_profiles import (
     PartialAcceptanceProfile,
 )
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
     ApplicabilityGoldenCorpus,
+)
+from standards_atlas.application.semantic_qualification.campaign_contract import (
+    CAMPAIGN_SCHEMA_VERSION,
+    REVIEW_ARCHIVE_NAME,
+    REVIEW_BINDINGS_NAME,
+    QualificationCampaignArtifact,
+    classify_review_evidence,
+    verify_review_evidence,
 )
 from standards_atlas.application.semantic_qualification.mixed_consensus import (
     input_selection_fingerprint,
@@ -216,6 +224,7 @@ def _review_inputs(spec, examples, resources):
 
 def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
     spec = QualificationCampaign.load(manifest)
+    require_current_schema("partial-qualification-manifest", spec.schema_version)
     output = output.resolve()
     source_path = spec.run or spec.dataset
     inputs = (manifest, source_path, spec.golden, *spec.semantic_suites, *spec.sentinel_suites)
@@ -227,10 +236,6 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
     source = load_partial_inputs(run=spec.run, dataset=spec.dataset)
     examples = tuple(sorted(source.examples, key=lambda e: e.id))
     golden = ApplicabilityGoldenCorpus.load(spec.golden)
-    from standards_atlas.application.semantic_qualification.review_package.publication import (
-        verify_campaign_bindings,
-    )
-
     loaded_suites, review_archive = _review_inputs(spec, examples, resources)
     suites = tuple(suite for suite, _ in loaded_suites)
     review_bindings = {
@@ -238,7 +243,18 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
         for _, binding in loaded_suites
         if binding is not None
     }
-    verify_campaign_bindings(suites, list(review_bindings.values()), examples, resources)
+    evidence = classify_review_evidence(
+        spec, suites, has_bindings=bool(review_bindings), has_archive=review_archive is not None
+    )
+    verify_review_evidence(
+        evidence=evidence,
+        spec=spec,
+        suites=suites,
+        bindings=list(review_bindings.values()),
+        archive=review_archive,
+        examples=examples,
+        resources=resources,
+    )
     sentinels = tuple(json.loads(p.read_bytes()) for p in spec.sentinel_suites)
     if len({s.id for s in suites}) != len(suites):
         raise ValueError("semantic suite ids must be unique")
@@ -293,17 +309,15 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
         "selection.json": selection,
     }
     if review_bindings:
-        payloads["inputs/semantic-review-bindings.json"] = [
-            review_bindings[key] for key in sorted(review_bindings)
-        ]
+        payloads[REVIEW_BINDINGS_NAME] = [review_bindings[key] for key in sorted(review_bindings)]
     serialized = {name: _json_bytes(payload) for name, payload in payloads.items()}
     if review_archive is not None:
-        serialized["inputs/review-package.zip"] = review_archive
+        serialized[REVIEW_ARCHIVE_NAME] = review_archive
     files = {name: hashlib.sha256(raw).hexdigest() for name, raw in serialized.items()}
+    require_current_schema("partial-qualification-campaign", CAMPAIGN_SCHEMA_VERSION)
     definition = {
-        "schema_version": "1.2"
-        if review_archive is not None
-        else ("1.1" if review_bindings else "1.0"),
+        "schema_version": CAMPAIGN_SCHEMA_VERSION,
+        "review_evidence": evidence.model_dump(mode="json"),
         "kind": "partial-qualification-campaign",
         "specification": spec.model_dump(mode="json"),
         "variants": variants,
@@ -314,6 +328,7 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
         "default_workflow_changed": False,
     }
     definition["campaign_sha256"] = structure_fingerprint(definition)
+    QualificationCampaignArtifact.model_validate(definition)
     output.mkdir(parents=True)
     for name, raw in serialized.items():
         path = output / name
@@ -375,34 +390,48 @@ def safe_files(root: Path) -> dict[str, str]:
     return hashes
 
 
+def _verify_input_inventory(root: Path, expected_names: frozenset[str]) -> None:
+    """Do not allow removed manifest entries to hide remaining frozen evidence files.
+
+    Execution outputs/datasets live outside inputs and are not part of this closed
+    inventory. Parent symlinks and special files inside inputs are never followed.
+    """
+    inputs = root / "inputs"
+    if inputs.is_symlink() or not inputs.is_dir():
+        raise ValueError("unsafe or missing campaign inputs")
+    names = set()
+    for path in inputs.rglob("*"):
+        if path.is_symlink():
+            raise ValueError("unsafe campaign input symlink")
+        if path.is_dir():
+            continue
+        if not path.is_file():
+            raise ValueError("unsafe campaign input")
+        names.add(path.relative_to(root).as_posix())
+    if names != {n for n in expected_names if n.startswith("inputs/")}:
+        raise ValueError("campaign evidence inventory differs from frozen input files")
+
+
 def load_campaign(root: Path, resources: Path):
     root = root.resolve()
-    definition = json.loads((root / "campaign-plan.json").read_bytes())
+    plan_path = root / "campaign-plan.json"
+    if plan_path.is_symlink():
+        raise ValueError("unsafe campaign plan")
+    definition = json.loads(plan_path.read_bytes())
+    if not isinstance(definition, dict):
+        raise ValueError("qualification campaign artifact must contain a mapping")
     require_supported_schema("partial-qualification-campaign", definition.get("schema_version"))
-    if definition.get("kind") != "partial-qualification-campaign":
-        raise ValueError("invalid qualification campaign artifact kind")
+    artifact = QualificationCampaignArtifact.model_validate(definition)
     claimed = definition["campaign_sha256"]
     if claimed != structure_fingerprint(
         {k: v for k, v in definition.items() if k != "campaign_sha256"}
     ):
         raise ValueError("campaign plan fingerprint mismatch")
-    spec = QualificationCampaign.model_validate(definition["specification"])
+    spec = artifact.specification
     files = definition["files"]
-    expected_names = {
-        "inputs/population.json",
-        "inputs/golden.json",
-        "inputs/semantic-suites.json",
-        "inputs/sentinel-suites.json",
-        "selection.json",
-    }
-    review_name = "inputs/semantic-review-bindings.json"
-    archive_name = "inputs/review-package.zip"
-    if set(files) not in (
-        expected_names,
-        expected_names | {review_name},
-        expected_names | {review_name, archive_name},
-    ):
-        raise ValueError("campaign evidence inventory differs from contract")
+    review_name = REVIEW_BINDINGS_NAME
+    archive_name = REVIEW_ARCHIVE_NAME
+    _verify_input_inventory(root, artifact.review_evidence.input_names)
     payloads = {}
     for name, digest in files.items():
         path = root / name
@@ -422,37 +451,15 @@ def load_campaign(root: Path, resources: Path):
     suites = tuple(
         SemanticReferenceSuite.model_validate(s) for s in payloads["inputs/semantic-suites.json"]
     )
-    from standards_atlas.application.semantic_qualification.review_package.publication import (
-        verify_campaign_bindings,
+    verify_review_evidence(
+        evidence=artifact.review_evidence,
+        spec=spec,
+        suites=suites,
+        bindings=payloads.get(review_name, []),
+        archive=payloads.get(archive_name),
+        examples=population,
+        resources=resources,
     )
-
-    has_review_bindings = any(
-        (s.review_reference or "").startswith("atlas-review:") for s in suites
-    )
-    if has_review_bindings != (review_name in payloads):
-        raise ValueError("campaign review evidence inventory differs from bound suites")
-    if has_review_bindings != (definition["schema_version"] in {"1.1", "1.2"}):
-        raise ValueError("source-bound review evidence requires campaign artifact schema 1.1/1.2")
-    has_archive = archive_name in payloads
-    if has_archive != (definition["schema_version"] == "1.2") or has_archive != (
-        spec.review_bundle is not None
-    ):
-        raise ValueError("review handoff requires the archived snapshot and campaign artifact 1.2")
-    verify_campaign_bindings(suites, payloads.get(review_name, []), population, resources)
-    if has_archive:
-        from standards_atlas.application.semantic_qualification.review_package.handoff import (
-            verify_archive_publication,
-        )
-        from standards_atlas.application.semantic_qualification.review_package.model import (
-            ReviewPublication,
-        )
-
-        bindings = payloads[review_name]
-        if len(bindings) != 1:
-            raise ValueError("review handoff must bind exactly one published review snapshot")
-        verify_archive_publication(
-            payloads[archive_name], ReviewPublication.model_validate(bindings[0])
-        )
     expected = build_cohorts(
         population,
         golden,
@@ -503,7 +510,7 @@ def verify_prepared_campaign(*, manifest: Path, campaign: Path, resources: Path)
     loaded_suites, current_archive = _review_inputs(requested, source.examples, resources)
     current_suites = tuple(suite for suite, _ in loaded_suites)
     if current_archive is not None and hashlib.sha256(current_archive).hexdigest() != (
-        definition["files"].get("inputs/review-package.zip")
+        definition["files"].get(REVIEW_ARCHIVE_NAME)
     ):
         raise ValueError("workflow review archive changed after preparation")
     current_sentinels = tuple(json.loads(p.read_bytes()) for p in requested.sentinel_suites)

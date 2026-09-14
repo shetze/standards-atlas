@@ -146,9 +146,7 @@ def rebound_workbench(evidence: WorkbenchEvidence, package, state) -> dict[str, 
     return files
 
 
-def workbench_summary(evidence: WorkbenchEvidence | None) -> dict:
-    if evidence is None:
-        return {"status": "legacy-not-captured", "independence_proven": False}
+def workbench_summary(evidence: WorkbenchEvidence) -> dict:
     return {
         "status": "recorded" if evidence.journal_present else "not-recorded",
         "audit_sha256": evidence.audit_sha256,

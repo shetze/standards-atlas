@@ -125,7 +125,9 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "partial-qualification-manifest",
-        notes="Manifest 1.1 adds the review handoff; campaign artifact versions are separate.",
+        notes=(
+            "Current-only manifest 1.1; campaign artifact 2.0 declares review evidence separately."
+        ),
     ),
     VersionedInterface(
         "partial-qualification-campaign",
@@ -133,6 +135,7 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "partial-qualification-campaign",
+        notes="Current-only 2.0: external_suites, atlas_publication or archived_handoff.",
     ),
     VersionedInterface(
         "partial-qualification-repeat",

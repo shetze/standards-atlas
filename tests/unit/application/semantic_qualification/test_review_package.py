@@ -835,7 +835,8 @@ def test_campaign_manifest_hand_off_does_not_prevent_idempotent_reimport(tmp_pat
     manifest.write_text(yaml.safe_dump(spec))
     assert publish(root, output)["importable"]
     plan = prepare_campaign(manifest=manifest, output=tmp_path / "campaign", resources=RESOURCES)
-    assert plan["schema_version"] == "1.1"
+    assert plan["schema_version"] == "2.0"
+    assert plan["review_evidence"] == {"kind": "atlas_publication"}
 
 
 def test_campaign_additional_dimensions_are_inherited_by_default_review_profile(tmp_path):
