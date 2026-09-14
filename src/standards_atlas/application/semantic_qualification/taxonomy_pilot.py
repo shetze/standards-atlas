@@ -108,6 +108,7 @@ def synthetic_pilot(resources: Path, *, dataset_version: str) -> tuple[PartialIn
         "qualification_status": "synthetic-smoke-not-domain-gold",
         "cases": expectations,
     }
+    require_current_payload("semantic-readiness-checks", suite)
     return PartialInputSelection(tuple(examples), {}, "source-dataset", dataset_version), suite
 
 

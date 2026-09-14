@@ -6,11 +6,12 @@ import json
 from collections import Counter
 from hashlib import sha256
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.shared.artifacts import write_json
 
 GemaraResult = Literal[
@@ -126,8 +127,10 @@ class EvaluationFeedbackSummary(BaseModel):
     assessment_results: dict[str, int]
 
 
-class EvaluationFeedbackManifest(BaseModel):
+class EvaluationFeedbackManifest(SchemaBoundModel):
     """Read-only feedback projection from a Gemara EvaluationLog."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "complytime-evaluation-feedback-manifest"
 
     model_config = ConfigDict(frozen=True)
 

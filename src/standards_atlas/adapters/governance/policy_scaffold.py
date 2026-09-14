@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
 from standards_atlas.adapters.gemara import GemaraControlMapper, GemaraGuidanceMapper
 from standards_atlas.adapters.gemara.contract import (
@@ -29,6 +30,7 @@ from standards_atlas.adapters.gemara.models import (
     GemaraRaci,
 )
 from standards_atlas.application.model import PublicationDocument
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import (
     GovernanceCandidateAnalysis,
     GovernanceCandidateDecision,
@@ -39,8 +41,10 @@ from standards_atlas.domain.model import (
 from standards_atlas.shared.artifacts import write_json, write_yaml
 
 
-class GovernancePolicyScaffoldManifest(BaseModel):
+class GovernancePolicyScaffoldManifest(SchemaBoundModel):
     """Sidecar preserving selection state and clause-local policy provenance."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "governance-policy-scaffold"
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 

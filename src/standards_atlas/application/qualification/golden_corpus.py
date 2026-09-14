@@ -5,12 +5,13 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict
 
 from standards_atlas.application.normalization.document_normalizer import DocumentNormalizer
 from standards_atlas.application.ports import DoclingDocumentReader
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
 class GoldenInvariant(BaseModel):
@@ -20,7 +21,9 @@ class GoldenInvariant(BaseModel):
     expected: Any = None
 
 
-class GoldenCaseManifest(BaseModel):
+class GoldenCaseManifest(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "normalization-golden-case"
+
     model_config = ConfigDict(frozen=True)
     schema_version: int = 1
     id: str

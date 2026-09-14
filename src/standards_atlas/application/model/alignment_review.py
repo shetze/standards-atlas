@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from standards_atlas.application.model.reference_candidates import CandidateRemainderKind
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
 class OverrideAction(StrEnum):
@@ -90,7 +91,9 @@ AlignmentOverride = Annotated[
 ]
 
 
-class AlignmentOverrideDocument(BaseModel):
+class AlignmentOverrideDocument(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "alignment-overrides"
+
     model_config = ConfigDict(frozen=True)
 
     schema_version: Literal[1] = 1

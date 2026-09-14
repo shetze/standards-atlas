@@ -12,12 +12,13 @@ import re
 from collections import defaultdict
 from fractions import Fraction
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     CascadeResolutionConfig,
 )
@@ -34,8 +35,10 @@ class FocusedResolutionPolicy(BaseModel):
     models_per_case: int = Field(default=2, ge=1, le=2)
 
 
-class PartialAcceptanceProfile(BaseModel):
+class PartialAcceptanceProfile(SchemaBoundModel):
     """Versioned opt-in policy; empirical release is a separate qualification."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "partial-acceptance-profile"
 
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
     schema_version: Literal["1.0"] = "1.0"

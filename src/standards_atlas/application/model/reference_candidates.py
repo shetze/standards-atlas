@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
 class ReferenceMatchKind(StrEnum):
@@ -68,7 +70,9 @@ class ReferenceDetectionStatistics(BaseModel):
     annex_matches: int = 0
 
 
-class ReferenceDetectionMetadata(BaseModel):
+class ReferenceDetectionMetadata(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "reference-candidate-document"
+
     model_config = ConfigDict(frozen=True)
 
     schema_version: Literal[2] = 2

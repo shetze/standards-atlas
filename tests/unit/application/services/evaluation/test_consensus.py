@@ -35,6 +35,7 @@ def _run(
     case = run / clause_id
     case.mkdir(parents=True)
     payload = {
+        "schema_version": "1.0",
         "run": {
             "task": "statement-function-classification",
             "dataset_version": "1.0.0",

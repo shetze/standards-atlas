@@ -50,7 +50,7 @@ def test_repository_detects_current_and_stale_extractions(tmp_path: Path) -> Non
     document = repository.document_path("STD")
     document.parent.mkdir(parents=True)
     document.write_text("{}", encoding="utf-8")
-    repository.save_metadata("STD", {"source_sha256": sha256_file(source)})
+    repository.save_metadata("STD", {"schema_version": 1, "source_sha256": sha256_file(source)})
 
     assert repository.extraction_state("STD", source) is ExtractionState.CURRENT
     assert repository.is_current("STD", source) is True

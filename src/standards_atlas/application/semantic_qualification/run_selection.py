@@ -7,12 +7,14 @@ import json
 from collections.abc import Iterable
 from dataclasses import asdict
 from pathlib import Path
+from typing import ClassVar
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.evaluation.models import EvaluationDataset, EvaluationExample
 from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import (
     CorpusManifestRepository,
     EvaluationCorpusManifest,
@@ -35,8 +37,10 @@ class QualificationSelectionClause(BaseModel):
     clause_id: str = Field(min_length=1)
 
 
-class QualificationRunSelection(BaseModel):
+class QualificationRunSelection(SchemaBoundModel):
     """Immutable declaration of the clauses selected for one qualification run."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "qualification-run-selection"
 
     model_config = ConfigDict(frozen=True)
 

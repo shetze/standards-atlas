@@ -7,6 +7,7 @@ from importlib.resources import files
 import yaml
 from pydantic import ValidationError
 
+from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.domain.model import GovernanceSubjectGroupProfile
 
 
@@ -27,7 +28,8 @@ class ResourceGovernanceSubjectGroupProfileRepository:
         payload = yaml.safe_load(resource.read_text(encoding="utf-8")) or {}
         try:
             profile = GovernanceSubjectGroupProfile.model_validate(payload)
-        except ValidationError as exc:
+            require_supported_schema("governance-subject-group-profile", profile.schema_version)
+        except (ValidationError, ValueError) as exc:
             raise ValueError(
                 f"invalid subject-group profile resource: {profile_id}@{version}: {exc}"
             ) from exc

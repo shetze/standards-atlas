@@ -11,7 +11,11 @@ from pathlib import Path
 
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
-from standards_atlas.application.schema import require_current_schema, require_supported_schema
+from standards_atlas.application.schema import (
+    require_current_payload,
+    require_current_schema,
+    require_supported_schema,
+)
 from standards_atlas.application.semantic_qualification.acceptance_profiles import (
     PartialAcceptanceProfile,
 )
@@ -328,6 +332,7 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
         "default_workflow_changed": False,
     }
     definition["campaign_sha256"] = structure_fingerprint(definition)
+    require_current_payload("partial-qualification-campaign", definition)
     QualificationCampaignArtifact.model_validate(definition)
     output.mkdir(parents=True)
     for name, raw in serialized.items():

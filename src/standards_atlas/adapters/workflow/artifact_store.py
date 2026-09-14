@@ -15,6 +15,7 @@ from standards_atlas.adapters.filesystem.document_repository import (
     _extract_document_data,
 )
 from standards_atlas.application.ports import ExtractionState
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.workflow.knowledge_plan import KNOWLEDGE_STAGES
 from standards_atlas.application.workflow.models import WorkflowPlan, WorkflowStage, WorkflowStep
 
@@ -51,6 +52,7 @@ class FileSystemWorkflowArtifactStore:
             if report.exists() or any(path.endswith("-run.json") for path in step.output_paths):
                 try:
                     payload = json.loads(report.read_text(encoding="utf-8"))
+                    require_supported_schema("context-run-report", payload.get("schema_version"))
                     if payload["summary"]["failed"] or payload["document_key"] != step.document:
                         return False  # Service reuses successful clauses of partial documents.
                 except (OSError, ValueError, TypeError, KeyError):
@@ -73,6 +75,7 @@ class FileSystemWorkflowArtifactStore:
             return True
         try:
             stored = json.loads(_input_marker(step, project_root).read_text(encoding="utf-8"))
+            require_supported_schema("workflow-input-marker", stored.get("schema_version"))
         except (OSError, ValueError, TypeError):
             return False
         return isinstance(stored, dict) and stored.get("fingerprint") == fingerprint
@@ -97,21 +100,21 @@ class FileSystemWorkflowArtifactStore:
         if fingerprint is not None:
             marker = _input_marker(step, project_root)
             marker.parent.mkdir(parents=True, exist_ok=True)
-            marker.write_text(json.dumps({"schema_version": 1, "fingerprint": fingerprint}) + "\n")
+            payload = {"schema_version": 1, "fingerprint": fingerprint}
+            require_current_payload("workflow-input-marker", payload)
+            marker.write_text(json.dumps(payload) + "\n")
         for relative_path in step.output_paths:
             if not relative_path.startswith(".atlas/work/workflow/"):
                 continue
             marker = project_root / relative_path
             marker.parent.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "schema_version": 1,
+                "step_fingerprint": _workflow_step_fingerprint(step),
+            }
+            require_current_payload("workflow-step-marker", payload)
             marker.write_text(
-                json.dumps(
-                    {
-                        "schema_version": 1,
-                        "step_fingerprint": _workflow_step_fingerprint(step),
-                    },
-                    sort_keys=True,
-                )
-                + "\n",
+                json.dumps(payload, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
 
@@ -224,15 +227,13 @@ def _fresh_repetition_in_progress_marker(plan: WorkflowPlan, project_root: Path)
 
 def _write_fresh_repetition_marker(path: Path, plan: WorkflowPlan) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": 1,
+        "plan_fingerprint": _fresh_repetition_fingerprint(plan),
+    }
+    require_current_payload("workflow-fresh-repetition-marker", payload)
     path.write_text(
-        json.dumps(
-            {
-                "schema_version": 1,
-                "plan_fingerprint": _fresh_repetition_fingerprint(plan),
-            },
-            sort_keys=True,
-        )
-        + "\n",
+        json.dumps(payload, sort_keys=True) + "\n",
         encoding="utf-8",
     )
 
@@ -242,11 +243,13 @@ def _fresh_repetition_marker_is_current(path: Path, plan: WorkflowPlan) -> bool:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         return False
-    return (
-        isinstance(payload, dict)
-        and payload.get("schema_version") == 1
-        and payload.get("plan_fingerprint") == _fresh_repetition_fingerprint(plan)
-    )
+    try:
+        require_supported_schema("workflow-fresh-repetition-marker", payload.get("schema_version"))
+    except (AttributeError, ValueError):
+        return False
+    return isinstance(payload, dict) and payload.get(
+        "plan_fingerprint"
+    ) == _fresh_repetition_fingerprint(plan)
 
 
 def _workflow_marker_is_current(path: Path, step: WorkflowStep) -> bool:
@@ -254,11 +257,13 @@ def _workflow_marker_is_current(path: Path, step: WorkflowStep) -> bool:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         return False
-    return (
-        isinstance(payload, dict)
-        and payload.get("schema_version") == 1
-        and payload.get("step_fingerprint") == _workflow_step_fingerprint(step)
-    )
+    try:
+        require_supported_schema("workflow-step-marker", payload.get("schema_version"))
+    except (AttributeError, ValueError):
+        return False
+    return isinstance(payload, dict) and payload.get(
+        "step_fingerprint"
+    ) == _workflow_step_fingerprint(step)
 
 
 _TRACKED_INPUT_STAGES = {

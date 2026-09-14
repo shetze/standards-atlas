@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
 class ConstructionDiagnostic(BaseModel):
@@ -34,8 +36,10 @@ class ConstructionCoverage(BaseModel):
     unassigned_items: int = 0
 
 
-class EngineeringConstructionContract(BaseModel):
+class EngineeringConstructionContract(SchemaBoundModel):
     """Persistable proof that EngineeringDocument construction was validated."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "engineering-construction-contract"
 
     model_config = ConfigDict(frozen=True)
 

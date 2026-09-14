@@ -282,9 +282,10 @@ def test_missing_process_prompt_never_falls_back_to_another_prompt(tmp_path):
         (case / "evaluation.yaml").write_text(
             yaml.safe_dump(
                 {
+                    "schema_version": "1.0",
                     "annotation_candidate": annotation(
                         ("activity",), "activity", model=model
-                    ).model_dump(mode="json", exclude_none=True)
+                    ).model_dump(mode="json", exclude_none=True),
                 }
             )
         )

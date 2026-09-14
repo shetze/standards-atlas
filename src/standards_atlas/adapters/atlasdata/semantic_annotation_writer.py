@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+from typing import ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -19,6 +20,8 @@ from standards_atlas.adapters.atlasdata.semantic_tags import (
     decode_semantic_tags,
     encode_semantic_tags,
 )
+from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     DocumentStructure,
@@ -72,9 +75,11 @@ class PublicSemanticAnnotation(BaseModel):
         )
 
 
-class PublicSemanticAnnotationManifest(BaseModel):
+class PublicSemanticAnnotationManifest(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "public-semantic-annotation-manifest"
+
     model_config = ConfigDict(extra="forbid")
-    schema_version: str = "1.0"
+    schema_version: Literal["2.0"] = "2.0"
     semantic_profile: str = Field(min_length=1)
     annotations: tuple[PublicSemanticAnnotation, ...] = ()
 
@@ -101,6 +106,9 @@ class AtlasDataSemanticAnnotationService:
         merge: bool = False,
     ) -> AtlasDataSemanticAnnotationResult:
         payload = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+        require_supported_schema(
+            "public-semantic-annotation-manifest", payload.get("schema_version")
+        )
         manifest = PublicSemanticAnnotationManifest.model_validate(payload)
         semantic_profile = canonical_semantic_profile(manifest.semantic_profile)
 

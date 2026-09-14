@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
 class FormulaTranscriptionProvenance(BaseModel):
@@ -20,8 +22,10 @@ class FormulaTranscriptionProvenance(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
-class FormulaTranscriptionArtifact(BaseModel):
+class FormulaTranscriptionArtifact(SchemaBoundModel):
     """Persisted enrichment independent of the canonical EngineeringDocument."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "formula-transcription"
 
     model_config = ConfigDict(frozen=True)
 

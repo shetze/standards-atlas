@@ -7,11 +7,13 @@ import shutil
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import (
     ApplicabilityFunction,
     KnowledgeKind,
@@ -163,8 +165,10 @@ class AnnotationReview(BaseModel):
     comment: str | None = None
 
 
-class ClauseEvaluationAnnotation(BaseModel):
+class ClauseEvaluationAnnotation(SchemaBoundModel):
     """Versioned proposal and optional reviewed annotation for one clause."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "clause-evaluation-annotation"
 
     model_config = ConfigDict(frozen=True)
 
@@ -216,8 +220,10 @@ class CorpusPopulationStatistics(BaseModel):
     selected_dimensions: dict[str, dict[str, int]] = Field(default_factory=dict)
 
 
-class EvaluationCorpusManifest(BaseModel):
+class EvaluationCorpusManifest(SchemaBoundModel):
     """Versioned declaration of a content-safe evaluation corpus."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "evaluation-corpus"
 
     model_config = ConfigDict(frozen=True)
 
@@ -289,6 +295,7 @@ class ClauseAnnotationRepository:
 
     def load_path(self, path: Path) -> ClauseEvaluationAnnotation:
         payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+        require_supported_schema("clause-evaluation-annotation", payload.get("schema_version"))
         return ClauseEvaluationAnnotation.model_validate(payload)
 
     def load(self, corpus_id: str, clause: ClauseReference) -> ClauseEvaluationAnnotation | None:
@@ -315,6 +322,7 @@ class CorpusManifestRepository:
 
     def load(self, corpus_id: str) -> EvaluationCorpusManifest:
         payload = yaml.safe_load(self.path_for(corpus_id).read_text(encoding="utf-8"))
+        require_supported_schema("evaluation-corpus", payload.get("schema_version"))
         return EvaluationCorpusManifest.model_validate(payload)
 
 

@@ -15,7 +15,11 @@ from typing import Any
 import yaml
 
 from standards_atlas import __version__
-from standards_atlas.application.schema import require_current_payload, require_current_schema
+from standards_atlas.application.schema import (
+    require_current_payload,
+    require_current_schema,
+    require_supported_schema,
+)
 from standards_atlas.application.semantic_qualification.artifact_contracts import (
     QUALIFICATION_ARTIFACT_NAMES,
     validate_qualification_artifact,
@@ -84,7 +88,7 @@ def build_analysis_metrics(
         reason for clause in report.clauses for reason in clause.review_reasons
     )
     diagnostics = build_qualification_diagnostics(report=report, cascade_stages=cascade_stages)
-    return {
+    payload = {
         "schema_version": ANALYSIS_ARCHIVE_SCHEMA_VERSION,
         "matrix_id": report.matrix_id,
         "corpus_id": report.corpus_id,
@@ -135,12 +139,15 @@ def build_analysis_metrics(
             ],
         },
     }
+    require_current_payload("qualification-analysis-metrics", payload)
+    return payload
 
 
 def write_analysis_metrics(
     *, output_directory: Path, matrix_id: str, metrics: dict[str, Any]
 ) -> Path:
     path = output_directory / matrix_id / "qualification-analysis-metrics.json"
+    require_current_payload("qualification-analysis-metrics", metrics)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(metrics, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
@@ -447,6 +454,8 @@ def create_analysis_archive(
         "files": sorted(file_entries, key=lambda item: item["path"]),
     }
 
+    require_current_payload("qualification-analysis-archive-manifest", archive_manifest)
+
     with zipfile.ZipFile(archive_path, "x", compression=zipfile.ZIP_DEFLATED) as archive:
         for member, path in sorted(deduplicated.items()):
             archive.write(path, member)
@@ -518,7 +527,7 @@ def _build_run_metadata(
             "dimension_categories": analysis_metrics.get("dimension_categories"),
             "overall_statuses": analysis_metrics.get("overall_statuses"),
         }
-    return {
+    payload = {
         "schema_version": QUALIFICATION_RUN_METADATA_SCHEMA_VERSION,
         "analysis_archive_schema_version": ANALYSIS_ARCHIVE_SCHEMA_VERSION,
         "archive_id": archive_id,
@@ -551,6 +560,8 @@ def _build_run_metadata(
         "applicability_decision_policy": applicability_decision_policy,
         "semantic_extraction_qualification": semantic_extraction_qualification,
     }
+    require_current_payload("qualification-run-metadata", payload)
+    return payload
 
 
 def _update_run_index(
@@ -563,6 +574,7 @@ def _update_run_index(
     archives: list[dict[str, Any]] = []
     if index_path.exists():
         current = json.loads(index_path.read_text(encoding="utf-8"))
+        require_supported_schema("qualification-run-index", current.get("schema_version"))
         current_archives = current.get("archives", []) if isinstance(current, dict) else []
         if isinstance(current_archives, list):
             archives.extend(item for item in current_archives if isinstance(item, dict))
@@ -600,6 +612,7 @@ def _update_run_index(
         "latest": sequence_number,
         "archives": archives,
     }
+    require_current_payload("qualification-run-index", payload)
     temp_path = index_path.with_suffix(".json.tmp")
     temp_path.write_bytes(_json_bytes(payload))
     temp_path.replace(index_path)

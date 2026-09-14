@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
     ApplicabilityGoldenCorpus,
     ApplicabilityModelMetrics,
@@ -42,8 +43,10 @@ class ApplicabilityPolicyEvaluationCase(BaseModel):
         return self
 
 
-class ApplicabilityPolicyEvaluationReport(BaseModel):
+class ApplicabilityPolicyEvaluationReport(SchemaBoundModel):
     """Error-budget qualification result for one replay and one golden corpus."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-policy-evaluation-report"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

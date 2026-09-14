@@ -28,7 +28,7 @@ def test_repository_enriches_from_persisted_source_pdf_path(tmp_path: Path) -> N
     artifacts = DoclingArtifactRepository(tmp_path / ".atlas")
     source_pdf = tmp_path / "source.pdf"
     source_pdf.write_bytes(b"%PDF-stub")
-    artifacts.save_metadata("STD", {"source_path": str(source_pdf)})
+    artifacts.save_metadata("STD", {"schema_version": 1, "source_path": str(source_pdf)})
     document = ExtractedDocument(
         source_id="STD",
         metadata=ExtractionMetadata(converter="docling"),
@@ -48,7 +48,9 @@ def test_repository_enriches_from_persisted_source_pdf_path(tmp_path: Path) -> N
 
 def test_repository_skips_visual_enrichment_when_source_is_unavailable(tmp_path: Path) -> None:
     artifacts = DoclingArtifactRepository(tmp_path / ".atlas")
-    artifacts.save_metadata("STD", {"source_path": str(tmp_path / "missing.pdf")})
+    artifacts.save_metadata(
+        "STD", {"schema_version": 1, "source_path": str(tmp_path / "missing.pdf")}
+    )
     document = ExtractedDocument(
         source_id="STD",
         metadata=ExtractionMetadata(converter="docling"),

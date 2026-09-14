@@ -15,6 +15,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema import require_current_payload
 from standards_atlas.application.semantic_qualification.partial_diagnostics import (
     describe_partial_plan,
     summarize_partial_plans,
@@ -425,6 +426,7 @@ def audit_partial_experiment(
         }
     finally:
         source.close()
+    require_current_payload("partial-experiment-audit", audit)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".partial-audit-", dir=destination.parent) as temporary:
         staging = Path(temporary) / "audit"

@@ -17,6 +17,7 @@ from standards_atlas.adapters.docling.options import (
     DoclingConversionOptions,
 )
 from standards_atlas.adapters.docling.repository import sha256_file
+from standards_atlas.application.schema import require_current_payload
 
 
 class DoclingPdfConverter:
@@ -67,7 +68,7 @@ class DoclingPdfConverter:
             version = importlib.metadata.version("docling")
         except importlib.metadata.PackageNotFoundError:
             version = None
-        return {
+        payload = {
             "schema_version": 1,
             "converter": "docling",
             "converter_version": version,
@@ -77,6 +78,8 @@ class DoclingPdfConverter:
             "source_size": source.stat().st_size,
             "options": self._options.as_metadata(),
         }
+        require_current_payload("docling-conversion-metadata", payload)
+        return payload
 
 
 def _create_document_converter(options: DoclingConversionOptions) -> Any:

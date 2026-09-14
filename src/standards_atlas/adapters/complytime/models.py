@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from pydantic import BaseModel, ConfigDict, Field
+
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
 class GovernanceBundleArtifact(BaseModel):
@@ -26,8 +30,10 @@ class GovernanceBundleSource(BaseModel):
     version: str = Field(min_length=1)
 
 
-class GovernanceBundleManifest(BaseModel):
+class GovernanceBundleManifest(SchemaBoundModel):
     """Machine-readable hand-off contract for downstream ComplyTime authoring."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "governance-bundle-manifest"
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 
@@ -40,8 +46,10 @@ class GovernanceBundleManifest(BaseModel):
     traceability: GovernanceBundleArtifact
 
 
-class GovernanceBundleTraceability(BaseModel):
+class GovernanceBundleTraceability(SchemaBoundModel):
     """Consolidated traceability for the GuidanceCatalog and ControlCatalog."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "governance-bundle-traceability"
 
     model_config = ConfigDict(frozen=True)
 

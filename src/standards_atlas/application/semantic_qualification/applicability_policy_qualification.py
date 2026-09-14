@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.applicability_decision_policy import (
     POLICY_ID,
     POLICY_MODEL_ID,
@@ -95,12 +96,14 @@ class ApplicabilityDecisionPolicyConfig(BaseModel):
         return self
 
 
-class ApplicabilityPolicyRunState(BaseModel):
+class ApplicabilityPolicyRunState(SchemaBoundModel):
     """Persistent execution state shared by fresh and resumed policy invocations."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-policy-run-state"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["1.0", "1.1"] = "1.1"
+    schema_version: Literal["1.1"] = "1.1"
     policy_id: Literal[POLICY_ID] = POLICY_ID
     policy_version: Literal[POLICY_VERSION] = POLICY_VERSION
     source_selection_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.adapters.gemara.mapper import _external_version, gemara_id
 from standards_atlas.adapters.gemara.models import GemaraGuidanceCatalog
 from standards_atlas.application.model import PublicationDocument
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import RelationScope
 
 
@@ -40,7 +41,9 @@ class GemaraTraceabilityRelation(BaseModel):
     rationale: str | None = None
 
 
-class GemaraTraceabilityManifest(BaseModel):
+class GemaraTraceabilityManifest(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "gemara-traceability"
+
     model_config = ConfigDict(frozen=True)
 
     schema_version: Literal["1.0"] = "1.0"

@@ -354,10 +354,14 @@ def test_old_or_partial_context_checkpoints_are_not_complete(tmp_path):
     store.record_completion(step, tmp_path)
     assert not store.outputs_exist(step, tmp_path)
     ledger = tmp_path / ".atlas/data/evaluation/context-routing/EN50716-run.json"
-    ledger.write_text(json.dumps({"document_key": "EN50716", "summary": {"failed": 1}}))
+    ledger.write_text(
+        json.dumps({"schema_version": 1, "document_key": "EN50716", "summary": {"failed": 1}})
+    )
     store.record_completion(step, tmp_path)
     assert not store.outputs_exist(step, tmp_path)
-    ledger.write_text(json.dumps({"document_key": "EN50716", "summary": {"failed": 0}}))
+    ledger.write_text(
+        json.dumps({"schema_version": 1, "document_key": "EN50716", "summary": {"failed": 0}})
+    )
     store.record_completion(step, tmp_path)
     assert store.outputs_exist(step, tmp_path)
     strict = replace(step, command=(*step.command, "--fail-on-failure"))

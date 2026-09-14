@@ -20,6 +20,7 @@ from standards_atlas.adapters.atlasdata.knowledge_evidence import atomic_write
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.evaluation.archive_receipt import resolve_archive_receipt
 from standards_atlas.application.catalog.atlasdata_binding import atlasdata_bindings
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.workflow.report import WorkflowRunReporter
 
 _COUNTERS = (
@@ -184,6 +185,7 @@ def archive_enrichment_baseline(
     # Include nondefault context profiles explicitly recorded by document commands.
     for key in document_keys:
         report = json.loads((workspace / f"evaluation/context-routing/{key}-run.json").read_text())
+        require_supported_schema("context-run-report", report.get("schema_version"))
         path = root / report["config"]
         add(f"inputs/context-config/{key}.yaml", path)
         if _digest(path) != report["config_sha256"]:
@@ -230,6 +232,7 @@ def archive_enrichment_baseline(
         "summary": {"documents": len(documents), **totals},
         "documents": documents,
     }
+    require_current_payload("enrichment-baseline", summary)
     folder = workspace / "evaluation/baselines/enrichments" / selection
     folder.mkdir(parents=True, exist_ok=True)
     target = folder / f"{run_id}.zip"
@@ -251,27 +254,24 @@ def archive_enrichment_baseline(
                 inventory.append({"path": name, "size": size, "sha256": digest.hexdigest()})
             archive.writestr("baseline.json", _json_bytes(summary))
             archive.writestr("README.md", _markdown(summary))
-            archive.writestr(
-                "manifest.json",
-                _json_bytes(
+            archive_manifest = {
+                "schema_version": 1,
+                "files": [
+                    *inventory,
                     {
-                        "schema_version": 1,
-                        "files": [
-                            *inventory,
-                            {
-                                "path": "baseline.json",
-                                "size": len(_json_bytes(summary)),
-                                "sha256": hashlib.sha256(_json_bytes(summary)).hexdigest(),
-                            },
-                            {
-                                "path": "README.md",
-                                "size": len(_markdown(summary).encode()),
-                                "sha256": hashlib.sha256(_markdown(summary).encode()).hexdigest(),
-                            },
-                        ],
-                    }
-                ),
-            )
+                        "path": "baseline.json",
+                        "size": len(_json_bytes(summary)),
+                        "sha256": hashlib.sha256(_json_bytes(summary)).hexdigest(),
+                    },
+                    {
+                        "path": "README.md",
+                        "size": len(_markdown(summary).encode()),
+                        "sha256": hashlib.sha256(_markdown(summary).encode()).hexdigest(),
+                    },
+                ],
+            }
+            require_current_payload("enrichment-baseline-manifest", archive_manifest)
+            archive.writestr("manifest.json", _json_bytes(archive_manifest))
         # Exclusive publication: even a colliding run ID cannot replace a baseline.
         os.link(temporary, target)
     finally:

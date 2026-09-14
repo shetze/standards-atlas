@@ -8,6 +8,7 @@ import subprocess
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
+from typing import ClassVar
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -15,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from standards_atlas.adapters.artifact_lineage import write_directory_lineage_manifest
 from standards_atlas.adapters.complytime.exporter import ComplyTimeGovernanceBundleExporter
 from standards_atlas.application.model import PublicationDocument
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.shared.artifacts import write_yaml
 
 _COMPLYPACK_FILE = "complypack.yaml"
@@ -87,8 +89,10 @@ class ComplyPackConfig(BaseModel):
         return value
 
 
-class ComplyPackWorkspaceManifest(BaseModel):
+class ComplyPackWorkspaceManifest(SchemaBoundModel):
     """Deterministic hand-off manifest for one ComplyPack authoring workspace."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "complypack-workspace-manifest"
 
     model_config = ConfigDict(frozen=True, populate_by_name=True)
 

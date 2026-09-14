@@ -53,6 +53,7 @@ def test_apply_semantic_annotations_rejects_unknown_reference(tmp_path: Path) ->
     )
     manifest = tmp_path / "annotations.yaml"
     manifest.write_text(
+        'schema_version: "2.0"\n'
         'semantic_profile: "functional-safety:1.0.0"\n'
         'annotations:\n  - reference: "Example:2025 2"\n',
         encoding="utf-8",

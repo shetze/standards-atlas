@@ -10,6 +10,7 @@ from pathlib import Path
 
 from standards_atlas import __version__
 from standards_atlas.application.references.diagnostics import TARGET_DIAGNOSTICS_CONTRACT
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.services.context_enrichment_service import ContextEnrichmentResult
 
 
@@ -84,6 +85,7 @@ def write_context_run_report(
         "summary": summary,
         "clauses": outcomes,
     }
+    require_current_payload("context-run-report", payload)
     target = workspace / "evaluation/context-routing" / f"{key}-run.json"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -104,6 +106,7 @@ def failed_context_clause_ids(workspace: Path, document_key: str) -> tuple[str, 
             raise ValueError(f"invalid context failure report: {legacy}")
         return tuple(item["clause_id"] for item in previous.get("failures", ()))
     payload = json.loads(path.read_text(encoding="utf-8"))
-    if payload.get("document_key") != document_key or payload.get("schema_version") != 1:
+    require_supported_schema("context-run-report", payload.get("schema_version"))
+    if payload.get("document_key") != document_key:
         raise ValueError(f"invalid context run report: {path}")
     return tuple(item["clause_id"] for item in payload["clauses"] if item["status"] == "failed")

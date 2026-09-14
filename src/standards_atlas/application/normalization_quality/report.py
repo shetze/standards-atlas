@@ -11,6 +11,7 @@ from standards_atlas.application.normalization_quality.models import (
     NormalizationQualityRun,
     QualityStatus,
 )
+from standards_atlas.application.schema import require_current_payload
 
 
 class NormalizationQualityReporter:
@@ -31,6 +32,7 @@ class NormalizationQualityReporter:
             "models": [run.to_dict() for run in runs],
             "comparison": _comparison(runs),
         }
+        require_current_payload("normalization-quality-report", payload)
         json_path.write_text(
             json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
         )

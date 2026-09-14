@@ -6,12 +6,14 @@ import csv
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 from zipfile import ZipFile
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
 )
@@ -45,46 +47,15 @@ class ApplicabilityPredictionObservation(BaseModel):
     predictions: tuple[ApplicabilityPrediction, ...]
 
 
-class ApplicabilityPredictionSnapshot(BaseModel):
+class ApplicabilityPredictionSnapshot(SchemaBoundModel):
     """Current presence-only prediction snapshot written to qualification archives."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-prediction-snapshot"
 
     schema_version: Literal["2.0"] = "2.0"
     matrix_id: str
     observations: tuple[ApplicabilityPredictionObservation, ...]
-
-
-class _LegacyApplicabilityPrediction(BaseModel):
-    """Polarity-era snapshot item accepted only for retrospective projection."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    clause_key: str
-    document_key: str
-    clause_id: str
-    present: bool
-    polarity: Literal["included", "excluded"] | None = None
-    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-
-
-class _LegacyApplicabilityPredictionObservation(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    prompt_id: str
-    cbox_frame: str
-    model_id: str
-    reasoning_mode_id: str
-    repetition: int = Field(ge=1)
-    predictions: tuple[_LegacyApplicabilityPrediction, ...]
-
-
-class _LegacyApplicabilityPredictionSnapshot(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    schema_version: Literal["1.0"] = "1.0"
-    matrix_id: str
-    observations: tuple[_LegacyApplicabilityPredictionObservation, ...]
 
 
 class PresenceHardCase(BaseModel):
@@ -153,42 +124,11 @@ class PresenceHardCaseArtifacts(BaseModel):
 
 
 def load_applicability_prediction_snapshot(payload: bytes | str) -> ApplicabilityPredictionSnapshot:
-    """Load current snapshots and project polarity-era schema 1.0 to presence only."""
+    """Load only the current presence-only prediction snapshot contract."""
 
     raw = json.loads(payload)
-    schema_version = str(raw.get("schema_version") or "")
-    if schema_version == "2.0":
-        return ApplicabilityPredictionSnapshot.model_validate(raw)
-    if schema_version != "1.0":
-        raise ValueError(
-            "unsupported applicability prediction snapshot schema "
-            f"{schema_version!r}; readable versions are '1.0' and '2.0'"
-        )
-
-    legacy = _LegacyApplicabilityPredictionSnapshot.model_validate(raw)
-    return ApplicabilityPredictionSnapshot(
-        matrix_id=legacy.matrix_id,
-        observations=tuple(
-            ApplicabilityPredictionObservation(
-                prompt_id=observation.prompt_id,
-                cbox_frame=observation.cbox_frame,
-                model_id=observation.model_id,
-                reasoning_mode_id=observation.reasoning_mode_id,
-                repetition=observation.repetition,
-                predictions=tuple(
-                    ApplicabilityPrediction(
-                        clause_key=prediction.clause_key,
-                        document_key=prediction.document_key,
-                        clause_id=prediction.clause_id,
-                        present=prediction.present,
-                        confidence=prediction.confidence,
-                    )
-                    for prediction in observation.predictions
-                ),
-            )
-            for observation in legacy.observations
-        ),
-    )
+    require_supported_schema("applicability-prediction-snapshot", raw.get("schema_version"))
+    return ApplicabilityPredictionSnapshot.model_validate(raw)
 
 
 def persist_applicability_prediction_snapshot(
@@ -208,6 +148,7 @@ def persist_applicability_prediction_snapshot(
         )
         for path in sorted(paths):
             payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            require_supported_schema("semantic-evaluation", payload.get("schema_version"))
             annotation = ClauseEvaluationAnnotation.model_validate(payload["annotation_candidate"])
             selection = annotation.proposal
             predictions.append(

@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.model.extracted_document import LayoutEvidence, VisualAsset
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import ArtifactLineage, SourceEvidence, TableRow
 
 
@@ -241,7 +242,9 @@ class NormalizationStatistics(BaseModel):
     excluded_pages: int = 0
 
 
-class NormalizationMetadata(BaseModel):
+class NormalizationMetadata(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "normalized-document"
+
     model_config = ConfigDict(frozen=True)
 
     schema_version: Literal[10] = 10
@@ -251,8 +254,10 @@ class NormalizationMetadata(BaseModel):
     statistics: NormalizationStatistics
 
 
-class NormalizationRunMetadata(BaseModel):
+class NormalizationRunMetadata(SchemaBoundModel):
     """Non-deterministic audit metadata stored outside the document payload."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "normalization-run"
 
     model_config = ConfigDict(frozen=True)
 

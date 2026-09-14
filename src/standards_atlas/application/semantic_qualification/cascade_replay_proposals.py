@@ -11,6 +11,7 @@ import yaml
 
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.evaluation.repository import PromptRepository
+from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.semantic_qualification.consensus import ModelConsensusService
 from standards_atlas.application.semantic_qualification.proposals import (
     ProposalRunConfig,
@@ -148,6 +149,9 @@ class ProposalReplay:
                                 )
                             continue
                         payload = yaml.safe_load(evaluation.read_text(encoding="utf-8"))
+                        require_supported_schema(
+                            "semantic-evaluation", payload.get("schema_version")
+                        )
                         annotation = payload.get("annotation_candidate", {})
                         coordinate = annotation.get("clause", {})
                         expected = example.input.get("context", {})

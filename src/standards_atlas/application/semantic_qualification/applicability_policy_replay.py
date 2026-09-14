@@ -5,10 +5,11 @@ from __future__ import annotations
 import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.applicability_decision_policy import (
     POLICY_ID,
     POLICY_VERSION,
@@ -92,8 +93,10 @@ class ApplicabilityPolicyReplayCase(BaseModel):
         return self
 
 
-class ApplicabilityPolicyReplayReport(BaseModel):
+class ApplicabilityPolicyReplayReport(SchemaBoundModel):
     """Complete offline replay over the archived final Presence consensus."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-policy-replay-report"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

@@ -27,7 +27,7 @@ from standards_atlas.application.ports.llm_gateway import (
     LlmUnavailableError,
     StructuredGenerationRequest,
 )
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_classification import (
     ResourceSemanticProfileRepository,
@@ -470,6 +470,7 @@ class BaselineProposalGenerator:
                     },
                     "annotation_candidate": annotation.model_dump(mode="json", exclude_none=True),
                 }
+                require_current_payload("semantic-evaluation", evaluation_payload)
                 (case_dir / "evaluation.yaml").write_text(
                     yaml.safe_dump(evaluation_payload, sort_keys=False, allow_unicode=True),
                     encoding="utf-8",

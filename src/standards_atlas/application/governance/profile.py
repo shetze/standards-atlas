@@ -7,6 +7,7 @@ from pathlib import Path
 import yaml
 from pydantic import ValidationError
 
+from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.domain.model.governance_selection import GovernanceSelectionProfile
 
 
@@ -29,8 +30,10 @@ def load_governance_selection_profile(path: Path) -> GovernanceSelectionProfile:
             f"Governance selection profile must contain a YAML mapping: {path}"
         )
     try:
-        return GovernanceSelectionProfile.model_validate(payload)
-    except ValidationError as exc:
+        profile = GovernanceSelectionProfile.model_validate(payload)
+        require_supported_schema("governance-selection-profile", profile.schema_version)
+        return profile
+    except (ValidationError, ValueError) as exc:
         raise GovernanceSelectionProfileError(
             f"Invalid governance selection profile: {path}: {exc}"
         ) from exc

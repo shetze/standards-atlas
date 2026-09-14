@@ -8,7 +8,7 @@ import random
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -20,6 +20,8 @@ from standards_atlas.application.evaluation.repository import (
     PromptRepository,
 )
 from standards_atlas.application.evaluation.runner import EvaluationRunner
+from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseReference,
     CorpusClause,
@@ -61,8 +63,10 @@ class CorpusBuildConfig(BaseModel):
     resources: Path = Path("src/standards_atlas/resources/semantic")
 
 
-class BenchmarkManifest(BaseModel):
+class BenchmarkManifest(SchemaBoundModel):
     """Versioned definition of a complete prompt/model benchmark matrix."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "benchmark-manifest"
 
     model_config = ConfigDict(frozen=True)
 
@@ -87,6 +91,7 @@ class BenchmarkManifest(BaseModel):
     @classmethod
     def load(cls, path: Path) -> BenchmarkManifest:
         payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        require_supported_schema("benchmark-manifest", payload.get("schema_version"))
         return cls.model_validate(payload)
 
     def fingerprint(self) -> str:

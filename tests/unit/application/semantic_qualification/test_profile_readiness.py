@@ -32,7 +32,15 @@ def check(
         },
     }
     audit = tmp_path / "audit.json"
-    audit.write_text(json.dumps({"kind": "partial-experiment-audit", "cases": [row]}))
+    audit.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "kind": "partial-experiment-audit",
+                "cases": [row],
+            }
+        )
+    )
     checks = tmp_path / "checks.json"
     checks.write_text(
         json.dumps(

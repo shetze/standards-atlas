@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,6 +12,7 @@ from standards_atlas.application.model.reference_candidates import (
     CandidateRemainderKind,
     ReferenceMatchKind,
 )
+from standards_atlas.application.schema.model import SchemaBoundModel
 
 
 class AlignmentStatus(StrEnum):
@@ -89,7 +90,9 @@ class AlignmentOptions(BaseModel):
     title_similarity_threshold: float = Field(default=0.55, ge=0.0, le=1.0)
 
 
-class AlignmentMetadata(BaseModel):
+class AlignmentMetadata(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "alignment-result"
+
     model_config = ConfigDict(frozen=True)
 
     schema_version: Literal[2] = 2

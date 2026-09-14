@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.semantic_qualification.acceptance_profiles import (
     FocusedResolutionPolicy,
 )
@@ -120,7 +121,7 @@ def plan_focused_resolution(*, manifest, stage, before, selected_ids, policy) ->
             used += 1
         if used:
             selected.add(example_id)
-    return {
+    plan = {
         "schema_version": "1.0",
         "kind": "focused-resolution-plan",
         "before_consensus_sha256": before.fingerprint,
@@ -135,6 +136,8 @@ def plan_focused_resolution(*, manifest, stage, before, selected_ids, policy) ->
         "new_independent_voters": 0,
         "semantic_qualification_passed": False,
     }
+    require_current_payload("focused-resolution-plan", plan)
+    return plan
 
 
 class _LazyFocusedGateway:
@@ -283,9 +286,11 @@ def verify_focused_resolution(
         manifest=manifest, stage=stage, before=before, selected_ids=selected_ids, policy=policy
     )
     expected_path = f"stages/{stage.id}/focused-plan.json"
+    stored_plan = json.loads(read(expected_path))
+    require_supported_schema("focused-resolution-plan", stored_plan.get("schema_version"))
     if (
         recorded.get("plan") != expected_path
-        or json.loads(read(expected_path)) != plan
+        or stored_plan != plan
         or recorded.get("plan_sha256") != structure_fingerprint(plan)
     ):
         raise ValueError("focused plan differs from source-bound open questions or budget")

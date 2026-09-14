@@ -8,11 +8,12 @@ import json
 from collections import Counter
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 from zipfile import ZipFile
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
     ApplicabilityGoldenCase,
     ApplicabilityGoldenCorpus,
@@ -139,8 +140,10 @@ class ApplicabilityDetailHitlConsensusCase(BaseModel):
         return self
 
 
-class ApplicabilityDetailHitlConsensusReport(BaseModel):
+class ApplicabilityDetailHitlConsensusReport(SchemaBoundModel):
     """HITL-aware consensus across two exact-selection applicability-detail arms."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-detail-hitl-consensus"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

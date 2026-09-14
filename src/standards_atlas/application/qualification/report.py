@@ -12,6 +12,7 @@ from pathlib import Path
 
 from standards_atlas import __version__
 from standards_atlas.application.qualification.golden_corpus import GoldenCorpusReport
+from standards_atlas.application.schema import require_current_payload
 
 
 class QualificationRunReporter:
@@ -59,6 +60,7 @@ class QualificationRunReporter:
             },
             "cases": [case.model_dump(mode="json") for case in report.cases],
         }
+        require_current_payload("normalization-qualification-run-report", payload)
         json_path = run_dir / "report.json"
         json_path.write_text(self._canonical_json(payload) + "\n", encoding="utf-8")
         markdown_path = run_dir / "report.md"

@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from standards_atlas import __version__
+from standards_atlas.application.schema import require_current_payload
 from standards_atlas.application.workflow.models import (
     WorkflowExecutionResult,
     WorkflowPlan,
@@ -115,6 +116,7 @@ class WorkflowRunReporter:
                         "semantically_verified",
                     )
                 }
+        require_current_payload("workflow-run-report", payload)
         report_json = run_dir / "report.json"
         report_json.write_text(self._canonical_json(payload) + "\n", encoding="utf-8")
         report_md = run_dir / "report.md"

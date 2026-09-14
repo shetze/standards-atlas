@@ -5,15 +5,18 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 from zipfile import ZipFile
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.shared.hashing import sha256_file
 
 
-class QualificationArchiveReceipt(BaseModel):
+class QualificationArchiveReceipt(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "qualification-archive-receipt"
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: Literal["1.0"] = "1.0"

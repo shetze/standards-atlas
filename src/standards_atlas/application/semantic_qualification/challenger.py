@@ -10,7 +10,11 @@ from zipfile import ZipFile
 
 import yaml
 
-from standards_atlas.application.schema import require_current_schema
+from standards_atlas.application.schema import (
+    require_current_payload,
+    require_current_schema,
+    require_supported_schema,
+)
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     ChallengerQualificationConfig,
@@ -28,6 +32,7 @@ def load_hard_case_selection(
         raise ValueError(f"unsupported challenger sample: {sample}")
     with ZipFile(run_archive) as archive:
         metadata = json.loads(archive.read("qualification-run-metadata.json"))
+        require_supported_schema("qualification-run-metadata", metadata.get("schema_version"))
         corpus = metadata.get("corpus", {})
         if corpus.get("id") != source_manifest.corpus_id:
             raise ValueError(
@@ -71,6 +76,7 @@ def load_hard_case_selection(
         "clause_count": len(clause_ids),
         "clause_ids": list(clause_ids),
     }
+    require_current_payload("challenger-sample-selection", selection)
     return clause_ids, selection
 
 
@@ -161,6 +167,7 @@ def write_challenger_comparison(
     metrics_path = run_directory / "qualification-analysis-metrics.json"
     matrix_path = run_directory / "qualification-matrix.json"
     metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    require_supported_schema("qualification-analysis-metrics", metrics.get("schema_version"))
     matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
     QualificationMatrixReport.model_validate(matrix)
     fitness = {
@@ -210,6 +217,7 @@ def write_challenger_comparison(
         "challenger_matrix_id": f"{source_manifest.matrix_id}-challengers",
         "groups": groups,
     }
+    require_current_payload("challenger-comparison", payload)
     json_path = run_directory / "challenger-comparison.json"
     json_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     md_path = run_directory / "challenger-comparison.md"

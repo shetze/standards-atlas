@@ -7,12 +7,14 @@ import hashlib
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 from zipfile import ZipFile
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.applicability_hard_cases import (
     PREDICTION_SNAPSHOT_FILENAME,
     ApplicabilityPrediction,
@@ -68,10 +70,11 @@ class ApplicabilityGoldenCase(BaseModel):
         return self
 
 
-class ApplicabilityGoldenCorpus(BaseModel):
+class ApplicabilityGoldenCorpus(SchemaBoundModel):
     """Incremental presence-only applicability hard-case golden corpus."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-golden-corpus"
 
     schema_version: Literal["3.0"] = "3.0"
     corpus_id: str = "applicability-hard-cases"
@@ -88,11 +91,7 @@ class ApplicabilityGoldenCorpus(BaseModel):
     @classmethod
     def load(cls, path: Path) -> ApplicabilityGoldenCorpus:
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        if isinstance(raw, dict) and raw.get("schema_version") == "2.1":
-            raise ValueError(
-                "applicability golden corpus schema 2.1 must be migrated to presence-only "
-                "schema 3.0 with `standards-atlas evaluation applicability-corpus-migrate`"
-            )
+        require_supported_schema("applicability-golden-corpus", raw.get("schema_version"))
         return cls.model_validate(raw)
 
 

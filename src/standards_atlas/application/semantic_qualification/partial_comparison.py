@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.semantic_qualification.acceptance_profiles import (
     PartialAcceptanceProfile,
     with_acceptance_profile,
@@ -186,6 +187,7 @@ def compare_partial_profiles(
         }
     finally:
         source.close()
+    require_current_payload("partial-profile-comparison", result)
     output.mkdir(parents=True)
     _atomic_json(output / "partial-profile-comparison.json", result)
     for row, mixed in zip(rows, reports, strict=True):
@@ -243,8 +245,14 @@ def compare_efficient_prompts(
         "checks_sha256": hashlib.sha256(checks.read_bytes()).hexdigest() if checks else None,
         "require_taxonomy_decisions": require_taxonomy_decisions,
     }
+    require_current_payload("efficient-comparison-plan", definition)
     marker = output / "efficient-comparison-plan.json"
-    if output.exists() and (not marker.is_file() or json.loads(marker.read_bytes()) != definition):
+    stored_definition = json.loads(marker.read_bytes()) if marker.is_file() else None
+    if stored_definition is not None:
+        require_supported_schema(
+            "efficient-comparison-plan", stored_definition.get("schema_version")
+        )
+    if output.exists() and (not marker.is_file() or stored_definition != definition):
         raise ValueError("comparison identity changed; use a new output directory")
     output.mkdir(parents=True, exist_ok=True)
     with _run_lock(output):
@@ -323,5 +331,6 @@ def compare_efficient_prompts(
                 "qualification_passed": False,
                 "variants": rows,
             }
+            require_current_payload("efficient-prompt-comparison", report)
             _atomic_json(output / "efficient-comparison.json", report)
     return report

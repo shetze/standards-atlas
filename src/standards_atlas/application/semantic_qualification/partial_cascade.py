@@ -743,5 +743,6 @@ def write_partial_cascade_costs(root: Path) -> dict[str, Any]:
     if any(root.glob("stages/*/focused-plan.json")):
         payload["focused_resolution"] = focused.model_dump(mode="json")
         payload["focused_included_in_cascade_total"] = True
+    require_current_payload("partial-cascade-costs", payload)
     _atomic_json(root / "partial-cascade-costs.json", payload)
     return payload

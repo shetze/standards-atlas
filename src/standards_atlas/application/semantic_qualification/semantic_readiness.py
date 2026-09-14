@@ -36,6 +36,7 @@ def evaluate_semantic_readiness(
             raise ValueError("readiness output must be separate from canonical/public data")
     audit_bytes, checks_bytes = audit.read_bytes(), checks.read_bytes()
     evidence, suite = json.loads(audit_bytes), json.loads(checks_bytes)
+    require_supported_schema("partial-experiment-audit", evidence.get("schema_version"))
     if evidence.get("kind") != "partial-experiment-audit":
         raise ValueError("readiness needs a partial-audit result, not only a run summary")
     require_supported_schema("semantic-readiness-checks", suite.get("schema_version"))

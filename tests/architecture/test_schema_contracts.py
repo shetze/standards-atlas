@@ -1,4 +1,4 @@
-"""R4 executable inventory: no schema drift hidden by defaults, copies or resources."""
+"""R5 executable inventory: no schema drift hidden by models, envelopes or resources."""
 
 from __future__ import annotations
 
@@ -12,14 +12,19 @@ import yaml
 from pydantic_core import PydanticUndefined
 
 from standards_atlas.application.schema import (
+    SCHEMA_ENVELOPE_DECISIONS,
+    SCHEMA_ENVELOPE_MARKER_COUNTS,
+    SCHEMA_MARKER_DECISIONS,
     SCHEMA_POLICIES,
     VERSIONED_INTERFACES,
     CompatibilityPhase,
+    SchemaMarkerDisposition,
     require_current_payload,
     require_current_schema,
     validate_schema_registry,
 )
 from standards_atlas.application.schema.bindings import (
+    SCHEMA_MARKER_BINDINGS,
     SCHEMA_MODEL_BINDINGS,
     SCHEMA_RESOURCE_BINDINGS,
     SCHEMA_WRITER_BINDINGS,
@@ -45,9 +50,25 @@ def test_refactoring_registry_inventory_and_boundary_coverage_are_complete():
     assert len(interfaces) == len(set(interfaces))
     assert len({i.id for i in VERSIONED_INTERFACES}) == len(VERSIONED_INTERFACES)
     assert set(interfaces) == set(SCHEMA_POLICIES)
-    bindings = (*SCHEMA_MODEL_BINDINGS, *SCHEMA_WRITER_BINDINGS, *SCHEMA_RESOURCE_BINDINGS)
-    assert {b.family for b in bindings} == set(SCHEMA_POLICIES)
-    for entries in (SCHEMA_MODEL_BINDINGS, SCHEMA_WRITER_BINDINGS, SCHEMA_RESOURCE_BINDINGS):
+    bindings = (
+        *SCHEMA_MARKER_BINDINGS,
+        *SCHEMA_MODEL_BINDINGS,
+        *SCHEMA_WRITER_BINDINGS,
+        *SCHEMA_RESOURCE_BINDINGS,
+    )
+    envelope_families = {
+        family
+        for decision in SCHEMA_ENVELOPE_DECISIONS
+        if decision.disposition is SchemaMarkerDisposition.CENTRAL
+        for family in decision.schema_families
+    }
+    assert {b.family for b in bindings} | envelope_families == set(SCHEMA_POLICIES)
+    for entries in (
+        SCHEMA_MARKER_BINDINGS,
+        SCHEMA_MODEL_BINDINGS,
+        SCHEMA_WRITER_BINDINGS,
+        SCHEMA_RESOURCE_BINDINGS,
+    ):
         assert len(set(entries)) == len(entries)
 
 
@@ -75,7 +96,8 @@ def test_model_literal_default_and_serialization_guard_match_registry(binding):
     # published output schema even while normal model_dump tests still pass.
     output_schema = cls.model_json_schema(mode="serialization")
     assert output_schema.get("type") == "object"
-    assert "schema_version" in output_schema.get("properties", {})
+    serialized_name = field.serialization_alias or field.alias or "schema_version"
+    assert serialized_name in output_schema.get("properties", {})
 
 
 @pytest.mark.parametrize("binding", SCHEMA_WRITER_BINDINGS, ids=lambda b: b.family)
@@ -156,3 +178,216 @@ def test_obsolete_aliases_are_not_exported():
     for module in (schema, baseline):
         assert not hasattr(module, "SCHEMA_BASELINES")
         assert not hasattr(module, "SchemaBaseline")
+
+
+def _class_schema_markers() -> dict[str, str | None]:
+    markers: dict[str, str | None] = {}
+    for path in (ROOT / "src/standards_atlas").rglob("*.py"):
+        tree = ast.parse(path.read_text())
+        module = ".".join(path.relative_to(ROOT / "src").with_suffix("").parts)
+        for node in tree.body:
+            if not isinstance(node, ast.ClassDef):
+                continue
+            has_schema_version = any(
+                isinstance(item, (ast.Assign, ast.AnnAssign))
+                and any(
+                    isinstance(target, ast.Name) and target.id == "schema_version"
+                    for target in (item.targets if isinstance(item, ast.Assign) else (item.target,))
+                )
+                for item in node.body
+            )
+            if not has_schema_version:
+                continue
+            family = None
+            for item in node.body:
+                if (
+                    isinstance(item, ast.AnnAssign)
+                    and isinstance(item.target, ast.Name)
+                    and item.target.id == "SCHEMA_FAMILY"
+                    and isinstance(item.value, ast.Constant)
+                ):
+                    family = item.value.value
+                    break
+            markers[f"{module}:{node.name}"] = family
+    return markers
+
+
+def test_every_class_schema_marker_has_an_explicit_architecture_decision_or_binding():
+    markers = _class_schema_markers()
+    decisions = {item.reference: item for item in SCHEMA_MARKER_DECISIONS}
+    model_bindings = {item.reference: item.family for item in SCHEMA_MODEL_BINDINGS}
+    marker_bindings = {item.reference: item.family for item in SCHEMA_MARKER_BINDINGS}
+
+    assert len(decisions) == len(SCHEMA_MARKER_DECISIONS)
+    assert set(decisions) <= set(markers)
+
+    for reference, family in markers.items():
+        decision = decisions.get(reference)
+        if family is not None:
+            assert model_bindings.get(reference) == family, reference
+            if decision is not None:
+                assert decision.disposition.value == "central"
+                assert decision.schema_family == family
+            continue
+
+        assert decision is not None, reference
+        if decision.disposition.value == "central":
+            assert marker_bindings.get(reference) == decision.schema_family, reference
+            assert decision.schema_family in SCHEMA_POLICIES
+        else:
+            assert decision.reason
+            assert reference not in marker_bindings
+
+
+def _schema_version_subscript(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Subscript)
+        and isinstance(node.slice, ast.Constant)
+        and node.slice.value == "schema_version"
+    )
+
+
+class _SchemaEnvelopeVisitor(ast.NodeVisitor):
+    """Collect raw mapping schema markers by their nearest function scope."""
+
+    def __init__(self, module: str) -> None:
+        self.module = module
+        self.scope: list[str] = []
+        self.counts: dict[str, int] = {}
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        self.scope.append(node.name)
+        self.generic_visit(node)
+        self.scope.pop()
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self.scope.append(node.name)
+        self.generic_visit(node)
+        self.scope.pop()
+
+    visit_AsyncFunctionDef = visit_FunctionDef
+
+    def _record_marker(self) -> None:
+        reference = f"{self.module}:{'.'.join(self.scope)}"
+        self.counts[reference] = self.counts.get(reference, 0) + 1
+
+    def visit_Dict(self, node: ast.Dict) -> None:
+        if any(
+            isinstance(key, ast.Constant) and key.value == "schema_version"
+            for key in node.keys
+            if key is not None
+        ):
+            self._record_marker()
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        if (
+            isinstance(node.func, ast.Name)
+            and node.func.id == "dict"
+            and any(keyword.arg == "schema_version" for keyword in node.keywords)
+        ):
+            self._record_marker()
+        self.generic_visit(node)
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        if any(_schema_version_subscript(target) for target in node.targets):
+            self._record_marker()
+        self.generic_visit(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if _schema_version_subscript(node.target):
+            self._record_marker()
+        self.generic_visit(node)
+
+
+def _schema_envelope_marker_counts_for_source(source: str, module: str) -> dict[str, int]:
+    visitor = _SchemaEnvelopeVisitor(module)
+    visitor.visit(ast.parse(source))
+    return visitor.counts
+
+
+def _schema_envelope_marker_counts() -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for path in (ROOT / "src/standards_atlas").rglob("*.py"):
+        module = ".".join(path.relative_to(ROOT / "src").with_suffix("").parts)
+        discovered = _schema_envelope_marker_counts_for_source(path.read_text(), module)
+        for reference, count in discovered.items():
+            counts[reference] = counts.get(reference, 0) + count
+    return counts
+
+
+def _scope_node(reference: str) -> ast.AST:
+    module, symbol = reference.split(":")
+    path = ROOT / "src" / Path(*module.split(".")).with_suffix(".py")
+    scope: list[ast.stmt] = ast.parse(path.read_text()).body
+    node: ast.AST | None = None
+    for part in symbol.split("."):
+        node = next(
+            item
+            for item in scope
+            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+            and item.name == part
+        )
+        scope = node.body
+    assert node is not None
+    return node
+
+
+def _current_payload_guard_families(node: ast.AST) -> set[str]:
+    return {
+        call.args[0].value
+        for call in ast.walk(node)
+        if isinstance(call, ast.Call)
+        and isinstance(call.func, ast.Name)
+        and call.func.id == "require_current_payload"
+        and len(call.args) >= 2
+        and isinstance(call.args[0], ast.Constant)
+        and isinstance(call.args[0].value, str)
+    }
+
+
+def test_raw_schema_envelope_inventory_matches_all_source_markers_exactly():
+    actual = _schema_envelope_marker_counts()
+    expected = dict(SCHEMA_ENVELOPE_MARKER_COUNTS)
+    assert len(expected) == len(SCHEMA_ENVELOPE_MARKER_COUNTS)
+    assert actual == expected
+
+
+def test_every_raw_schema_envelope_scope_is_bound_or_explicitly_classified():
+    actual = _schema_envelope_marker_counts()
+    writer_scopes = {binding.reference for binding in SCHEMA_WRITER_BINDINGS}
+    decisions = {decision.reference: decision for decision in SCHEMA_ENVELOPE_DECISIONS}
+
+    assert len(decisions) == len(SCHEMA_ENVELOPE_DECISIONS)
+    assert set(decisions) <= set(actual)
+    assert set(actual) == writer_scopes | set(decisions)
+
+    for reference, decision in decisions.items():
+        assert decision.marker_count == actual[reference]
+        if decision.disposition is SchemaMarkerDisposition.LOCAL:
+            assert decision.reason
+            continue
+        assert set(decision.schema_families) <= set(SCHEMA_POLICIES)
+        guards = _current_payload_guard_families(_scope_node(reference))
+        assert set(decision.schema_families) <= guards, (
+            reference,
+            set(decision.schema_families) - guards,
+        )
+
+
+def test_unclassified_raw_schema_envelope_is_detectable_by_discovery_guard():
+    discovered = _schema_envelope_marker_counts_for_source(
+        (
+            "def publish():\n"
+            '    payload = {"schema_version": 1}\n'
+            "    alternate = dict(schema_version=1)\n"
+            '    payload["schema_version"] = 1\n'
+            "    return payload, alternate\n"
+        ),
+        "synthetic.module",
+    )
+    assert discovered == {"synthetic.module:publish": 3}
+    writer_scopes = {binding.reference for binding in SCHEMA_WRITER_BINDINGS}
+    decisions = {decision.reference for decision in SCHEMA_ENVELOPE_DECISIONS}
+    unclassified = set(discovered) - writer_scopes - decisions
+    assert unclassified == {"synthetic.module:publish"}

@@ -9,11 +9,13 @@ import re
 from collections import Counter
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.clause_access import (
     ClauseDescriptor,
     ClauseProvider,
@@ -38,8 +40,10 @@ class RoleCorpusCategory(StrEnum):
     STRUCTURED_TABLE = "structured_table"
 
 
-class RoleCorpusBuildManifest(BaseModel):
+class RoleCorpusBuildManifest(SchemaBoundModel):
     """Versioned recipe for reproducible role-corpus candidate selection."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "role-corpus-build-manifest"
 
     model_config = ConfigDict(frozen=True)
 
@@ -65,7 +69,9 @@ class RoleCorpusBuildManifest(BaseModel):
 
     @classmethod
     def load(cls, path: Path) -> RoleCorpusBuildManifest:
-        return cls.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")) or {})
+        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        require_supported_schema("role-corpus-build-manifest", payload.get("schema_version"))
+        return cls.model_validate(payload)
 
 
 class RoleGoldenExpected(BaseModel):
@@ -105,8 +111,10 @@ class RoleGoldenCase(BaseModel):
         return self
 
 
-class RoleGoldenCorpus(BaseModel):
+class RoleGoldenCorpus(SchemaBoundModel):
     """Focused, reviewable role golden corpus."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "role-golden-corpus"
 
     model_config = ConfigDict(frozen=True)
 
@@ -126,7 +134,9 @@ class RoleGoldenCorpus(BaseModel):
 
     @classmethod
     def load(cls, path: Path) -> RoleGoldenCorpus:
-        return cls.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")) or {})
+        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        require_supported_schema("role-golden-corpus", payload.get("schema_version"))
+        return cls.model_validate(payload)
 
 
 class RoleCorpusBuildResult(BaseModel):

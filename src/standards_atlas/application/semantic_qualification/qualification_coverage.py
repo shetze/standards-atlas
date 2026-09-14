@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
@@ -29,8 +29,10 @@ class QualificationCoverageClause(BaseModel):
     reason: str | None = None
 
 
-class QualificationCoverage(BaseModel):
+class QualificationCoverage(SchemaBoundModel):
     """Complete accounting of one persisted qualification selection."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "qualification-coverage"
 
     model_config = ConfigDict(frozen=True)
 
@@ -97,4 +99,4 @@ def persist_qualification_coverage(
 
 def load_qualification_coverage(path: Path) -> QualificationCoverage:
     """Load one persisted qualification coverage contract."""
-    return QualificationCoverage.model_validate(json.loads(path.read_text(encoding="utf-8")))
+    return QualificationCoverage.model_validate_json(path.read_text(encoding="utf-8"))

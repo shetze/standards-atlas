@@ -14,6 +14,7 @@ from standards_atlas.application.model.normalized_document import (
     NormalizationRunMetadata,
     NormalizedExtractedDocument,
 )
+from standards_atlas.application.schema import require_current_payload
 
 
 class NormalizationState(StrEnum):
@@ -43,18 +44,18 @@ class NormalizationArtifactRepository:
         path = self.document_path(document_key)
         path.parent.mkdir(parents=True, exist_ok=True)
         _atomic_write(path, canonical_json(document))
+        method_index = {
+            "schema_version": 1,
+            "document_key": document_key,
+            "candidates": [
+                candidate.model_dump(mode="json")
+                for candidate in document.method_technique_candidates
+            ],
+        }
+        require_current_payload("method-technique-index", method_index)
         _atomic_write(
             self.method_technique_index_path(document_key),
-            canonical_json(
-                {
-                    "schema_version": 1,
-                    "document_key": document_key,
-                    "candidates": [
-                        candidate.model_dump(mode="json")
-                        for candidate in document.method_technique_candidates
-                    ],
-                }
-            ),
+            canonical_json(method_index),
         )
         run = NormalizationRunMetadata(
             created_at=datetime.now(UTC),

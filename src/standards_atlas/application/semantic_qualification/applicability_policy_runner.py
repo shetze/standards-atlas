@@ -5,11 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Literal, Protocol
+from typing import ClassVar, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.evaluation.models import EvaluationExample
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.applicability_decision_policy import (
     POLICY_EXPRESSION,
     POLICY_ID,
@@ -159,12 +160,14 @@ class ApplicabilityPolicyRunCase(BaseModel):
         return self
 
 
-class ApplicabilityPolicyRunReport(BaseModel):
+class ApplicabilityPolicyRunReport(SchemaBoundModel):
     """Persistable result of one selective policy inference run."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-policy-run-report"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal["1.0", "1.1"] = "1.1"
+    schema_version: Literal["1.1"] = "1.1"
     task: Literal["applicability-policy-run"] = "applicability-policy-run"
     policy_id: Literal[POLICY_ID] = POLICY_ID
     policy_version: Literal[POLICY_VERSION] = POLICY_VERSION

@@ -138,6 +138,7 @@ def test_persist_prediction_snapshot_projects_presence_only(tmp_path: Path) -> N
     run = tmp_path / "run" / "c1"
     run.mkdir(parents=True)
     payload = {
+        "schema_version": "1.0",
         "annotation_candidate": {
             "schema_version": "1.0",
             "task": "semantic-profile-classification",
@@ -160,7 +161,7 @@ def test_persist_prediction_snapshot_projects_presence_only(tmp_path: Path) -> N
                 "prompt_id": "applicability-clean-full",
                 "generated_at": "2026-08-31T00:00:00Z",
             },
-        }
+        },
     }
     (run / "evaluation.yaml").write_text(yaml.safe_dump(payload), encoding="utf-8")
     manifest = SimpleNamespace(
@@ -186,36 +187,17 @@ def test_persist_prediction_snapshot_projects_presence_only(tmp_path: Path) -> N
     assert "polarity" not in raw
 
 
-def test_legacy_prediction_snapshot_is_projected_to_presence_only() -> None:
+def test_legacy_prediction_snapshot_is_rejected_in_refactoring_phase() -> None:
     legacy = {
         "schema_version": "1.0",
         "matrix_id": "legacy",
-        "observations": [
-            {
-                "prompt_id": "old",
-                "cbox_frame": "full-context-v1",
-                "model_id": "model-a",
-                "reasoning_mode_id": "disabled",
-                "repetition": 1,
-                "predictions": [
-                    {
-                        "clause_key": "functional-safety:DOC:c1",
-                        "document_key": "DOC",
-                        "clause_id": "c1",
-                        "present": True,
-                        "polarity": "excluded",
-                        "confidence": 0.8,
-                    }
-                ],
-            }
-        ],
+        "observations": [],
     }
 
-    projected = load_applicability_prediction_snapshot(json.dumps(legacy))
-
-    assert projected.schema_version == "2.0"
-    assert projected.observations[0].predictions[0].present is True
-    assert "polarity" not in projected.model_dump_json()
+    with pytest.raises(
+        ValueError, match="Unsupported applicability prediction snapshot schema version"
+    ):
+        load_applicability_prediction_snapshot(json.dumps(legacy))
 
 
 def test_current_prediction_contract_rejects_polarity() -> None:
@@ -244,7 +226,9 @@ def test_explicitly_ineligible_presence_models_are_not_projected(tmp_path: Path)
 
 
 def test_unknown_prediction_snapshot_schema_is_rejected() -> None:
-    with pytest.raises(ValueError, match="unsupported applicability prediction snapshot schema"):
+    with pytest.raises(
+        ValueError, match="Unsupported applicability prediction snapshot schema version"
+    ):
         load_applicability_prediction_snapshot(
             json.dumps(
                 {

@@ -69,6 +69,7 @@ def test_v4_prompts_define_normalized_confidence_contract() -> None:
 def test_challenger_comparison_ignores_ineligible_candidates(tmp_path: Path) -> None:
     source = QualificationMatrixManifest.load(MANIFEST)
     metrics = {
+        "schema_version": "1.5",
         "diagnostics": {
             "applicability_model_fitness": [
                 {
@@ -83,7 +84,7 @@ def test_challenger_comparison_ignores_ineligible_candidates(tmp_path: Path) -> 
                     "presence_reference_agreement_rate": 0.5,
                 }
             ]
-        }
+        },
     }
     matrix = {
         "candidates": [
@@ -165,6 +166,7 @@ def test_loads_applicability_hard_cases_from_qualification_archive(tmp_path: Pat
     source = QualificationMatrixManifest.load(MANIFEST)
     archive_path = tmp_path / "qualification-run.zip"
     metadata = {
+        "schema_version": "1.5",
         "corpus": {
             "id": source.corpus_id,
             "dataset_version": source.dataset_version,
@@ -256,6 +258,7 @@ def test_hard_case_archive_must_match_dataset_version(tmp_path: Path) -> None:
     source = QualificationMatrixManifest.load(MANIFEST)
     archive_path = tmp_path / "qualification-run.zip"
     metadata = {
+        "schema_version": "1.5",
         "corpus": {"id": source.corpus_id, "dataset_version": "different"},
         "qualification_matrix": {"id": source.matrix_id},
     }

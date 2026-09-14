@@ -14,7 +14,7 @@ from standards_atlas.adapters.filesystem import FileSystemSemanticExtractionRepo
 from standards_atlas.application.formal_semantics.resource_repository import (
     ResourceFormalOntologyRepository,
 )
-from standards_atlas.application.schema import require_current_payload
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     collect_qualification_input_members,
     create_analysis_archive,
@@ -125,6 +125,9 @@ def finalize_qualification_archive(
         if not metrics_path.is_file():
             raise typer.BadParameter(f"qualification analysis metrics not found: {metrics_path}")
         analysis_metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+        require_supported_schema(
+            "qualification-analysis-metrics", analysis_metrics.get("schema_version")
+        )
     selection_path = run_directory / QUALIFICATION_SELECTION_FILENAME
     if not selection_path.is_file():
         raise typer.BadParameter(f"qualification clause selection not found: {selection_path}")

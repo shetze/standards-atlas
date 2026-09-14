@@ -8,8 +8,14 @@ from .baseline import (
     validate_schema_registry,
 )
 from .inventory import (
+    SCHEMA_ENVELOPE_DECISIONS,
+    SCHEMA_ENVELOPE_MARKER_COUNTS,
+    SCHEMA_MARKER_DECISIONS,
     VERSIONED_INTERFACES,
     LifecycleBoundary,
+    SchemaEnvelopeDecision,
+    SchemaMarkerDecision,
+    SchemaMarkerDisposition,
     VersionAxis,
     VersionedInterface,
     schema_managed_interfaces,
@@ -24,12 +30,18 @@ from .policy import (
 
 __all__ = [
     "CURRENT_COMPATIBILITY_PHASE",
+    "SCHEMA_ENVELOPE_DECISIONS",
+    "SCHEMA_ENVELOPE_MARKER_COUNTS",
+    "SCHEMA_MARKER_DECISIONS",
     "SCHEMA_POLICIES",
     "STABLE_READER_WINDOW",
     "VERSIONED_INTERFACES",
     "CompatibilityPhase",
     "LifecycleBoundary",
     "SchemaDeprecationWarning",
+    "SchemaEnvelopeDecision",
+    "SchemaMarkerDecision",
+    "SchemaMarkerDisposition",
     "SchemaPolicy",
     "VersionAxis",
     "VersionedInterface",

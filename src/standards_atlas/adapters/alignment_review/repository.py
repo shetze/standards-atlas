@@ -11,6 +11,7 @@ import yaml
 
 from standards_atlas.application.model.alignment import AlignmentResult
 from standards_atlas.application.model.alignment_review import AlignmentOverrideDocument
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 
 
 class AlignmentReviewRepository:
@@ -81,6 +82,7 @@ class AlignmentReviewRepository:
 
     def load_overrides(self, document_key: str) -> AlignmentOverrideDocument:
         payload = yaml.safe_load(self.overrides_path(document_key).read_text(encoding="utf-8"))
+        require_supported_schema("alignment-overrides", payload.get("schema_version"))
         return AlignmentOverrideDocument.model_validate(payload)
 
     def save_reviewed(
@@ -99,6 +101,7 @@ class AlignmentReviewRepository:
             "reviewed_alignment_hash": self.hash_alignment(result),
             "automatic_alignment_hash": automatic_alignment_hash,
         }
+        require_current_payload("reviewed-alignment-integrity", integrity)
         self._atomic_write(
             self.reviewed_integrity_path(document_key),
             json.dumps(integrity, indent=2, sort_keys=True) + "\n",
@@ -113,6 +116,7 @@ class AlignmentReviewRepository:
             return False, "Reviewed alignment has no integrity manifest."
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
+            require_supported_schema("reviewed-alignment-integrity", payload.get("schema_version"))
             reviewed = self.load_reviewed(document_key)
         except (OSError, ValueError, json.JSONDecodeError):
             return False, "Reviewed alignment integrity manifest is invalid."

@@ -7,11 +7,13 @@ import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
+from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationContractError,
     AnnotationLifecycleStatus,
@@ -33,8 +35,10 @@ _REVIEW_BLOCK = re.compile(
 )
 
 
-class ReviewForm(BaseModel):
+class ReviewForm(SchemaBoundModel):
     """Editable data embedded in a local Markdown review document."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "annotation-review-form"
 
     model_config = ConfigDict(extra="forbid")
 
@@ -361,6 +365,7 @@ def _parse_review(path: Path) -> ReviewForm:
         raise AnnotationContractError(f"missing embedded semantic review data: {path}")
     try:
         payload = yaml.safe_load(match.group(1))
+        require_supported_schema("annotation-review-form", payload.get("schema_version"))
         return ReviewForm.model_validate(payload)
     except (ValueError, yaml.YAMLError) as exc:
         raise AnnotationContractError(f"invalid embedded review data in {path}: {exc}") from exc

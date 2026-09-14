@@ -768,7 +768,7 @@ def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
     root.mkdir(parents=True)
     (root / "document.json").write_text("{}\n", encoding="utf-8")
     (root / "conversion.json").write_text(
-        '{"source_sha256": "' + sha256_file(source) + '"}\n',
+        '{"schema_version": 1, "source_sha256": "' + sha256_file(source) + '"}\n',
         encoding="utf-8",
     )
     step = WorkflowStep(

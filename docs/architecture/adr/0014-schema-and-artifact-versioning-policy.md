@@ -129,3 +129,26 @@ end-to-end tests retain source-bound MCP suggestions, human Web decisions, indep
 membership and archived Handoff evidence through campaign preparation. No warning suppression,
 new compatibility layer, implicit confirmation, automatic migration or relaxed quality gate is
 introduced. See the [R4 guide](../../user-guide/schema-refactoring-guards.md).
+
+### Lifecycle schema discovery R5 (2026-09-14)
+
+R4's binding checks are extended from the then-registered families to discovery of the
+serialization markers that actually exist in source. Class-level `schema_version` markers and
+raw JSON/YAML envelope markers are inventoried independently. Every discovered marker must be
+owned by a central `SchemaPolicy` family or have an explicit local/embedded classification with
+a reason. Adding an unclassified marker therefore fails the architecture suite even when no
+registry entry was added for it.
+
+Lifecycle-crossing contracts found by this discovery are registered current-only for the active
+`REFACTORING` phase. This includes previously local pipeline metadata, qualification/run
+metadata, workflow checkpoints, evaluation envelopes and other independently read artifacts.
+Reader and writer boundaries validate the explicit current marker instead of defaulting,
+normalizing or transparently projecting an obsolete persisted schema. In particular, the
+current applicability golden corpus is schema 3.0 and the current applicability prediction
+snapshot is schema 2.0; prediction schema 1.0 is no longer projected automatically on read.
+The dedicated, explicitly invoked golden-corpus migration remains separate from normal reader
+compatibility.
+
+The source inventory distinguishes lifecycle contracts from genuinely embedded or temporary
+records. Local exceptions are therefore reviewable architecture decisions rather than gaps in
+the registry. The generic future `STABLE` reader-window policy is unchanged.

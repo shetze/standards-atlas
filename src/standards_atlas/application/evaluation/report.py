@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from standards_atlas.application.evaluation.models import EvaluationRun
+from standards_atlas.application.schema import require_current_payload
 
 
 class EvaluationReporter:
@@ -90,6 +91,7 @@ class EvaluationReporter:
                 )
             ],
         }
+        require_current_payload("evaluation-matrix-summary", payload)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return output

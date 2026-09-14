@@ -9,7 +9,7 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -20,6 +20,7 @@ from standards_atlas.application.ports.llm_gateway import (
     StructuredGenerationRequest,
     StructuredGenerationResult,
 )
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
     QualificationCoverage,
@@ -92,8 +93,10 @@ class ApplicabilityDetailSelectionClause(BaseModel):
     presence_resolution_source: str = Field(min_length=1)
 
 
-class ApplicabilityDetailSelection(BaseModel):
+class ApplicabilityDetailSelection(SchemaBoundModel):
     """Deterministic projection of final Presence-positive clauses."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-detail-selection"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -286,8 +289,10 @@ class ApplicabilityDetailRunStatistics(BaseModel):
     cached_prediction_count: int = Field(ge=0)
 
 
-class ApplicabilityDetailEnrichmentReport(BaseModel):
+class ApplicabilityDetailEnrichmentReport(SchemaBoundModel):
     """Complete sparse detail-enrichment result for one Presence selection."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-detail-enrichment-report"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -361,8 +366,10 @@ class ApplicabilityDetailCompletionSummary(BaseModel):
     complete: bool = True
 
 
-class ApplicabilityDetailFailureReport(BaseModel):
+class ApplicabilityDetailFailureReport(SchemaBoundModel):
     """Compact retry and review view over failed detail clauses."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "applicability-detail-failure-report"
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

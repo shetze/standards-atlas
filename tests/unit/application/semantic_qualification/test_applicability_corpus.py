@@ -48,7 +48,6 @@ def _run_archive(path: Path, *, include_candidate_prompt: bool = False) -> Path:
                     "document_key": "DOC",
                     "clause_id": clause_id,
                     "present": values[index][0],
-                    "polarity": values[index][1],
                     "confidence": 0.9,
                 }
                 for index, (clause_id, _) in enumerate(clauses)
@@ -71,7 +70,6 @@ def _run_archive(path: Path, *, include_candidate_prompt: bool = False) -> Path:
                         "document_key": "DOC",
                         "clause_id": clause_id,
                         "present": candidate_values[index][0],
-                        "polarity": candidate_values[index][1],
                         "confidence": 0.8,
                     }
                     for index, (clause_id, _) in enumerate(clauses)
@@ -80,7 +78,7 @@ def _run_archive(path: Path, *, include_candidate_prompt: bool = False) -> Path:
             for model_id in predictions
         )
     snapshot = {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "matrix_id": "applicability-test-matrix",
         "observations": observations,
     }
@@ -395,7 +393,7 @@ def test_schema_21_load_requires_explicit_migration(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="applicability-corpus-migrate"):
+    with pytest.raises(ValueError, match="Unsupported applicability golden corpus schema version"):
         ApplicabilityGoldenCorpus.load(source)
 
 

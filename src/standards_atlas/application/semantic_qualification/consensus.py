@@ -14,7 +14,11 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
-from standards_atlas.application.schema import require_current_payload, require_current_schema
+from standards_atlas.application.schema import (
+    require_current_payload,
+    require_current_schema,
+    require_supported_schema,
+)
 from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
@@ -308,6 +312,7 @@ class ModelConsensusService:
             run_directory = Path(observation.run_directory)
             for evaluation_path in sorted(run_directory.glob("*/evaluation.yaml")):
                 payload = yaml.safe_load(evaluation_path.read_text(encoding="utf-8")) or {}
+                require_supported_schema("semantic-evaluation", payload.get("schema_version"))
                 annotation = ClauseEvaluationAnnotation.model_validate(
                     payload["annotation_candidate"]
                 )
@@ -1536,6 +1541,7 @@ def _load_clause_contexts(
         if evaluation_path is None:
             continue
         payload = yaml.safe_load(evaluation_path.read_text(encoding="utf-8")) or {}
+        require_supported_schema("semantic-evaluation", payload.get("schema_version"))
         run = payload.get("run") or {}
         task = run.get("task")
         dataset_version = run.get("dataset_version")

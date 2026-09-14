@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from standards_atlas.application.ports.workflow_artifacts import ExtractionState
+from standards_atlas.application.schema import require_current_payload, require_supported_schema
 
 
 class DoclingArtifactRepository:
@@ -36,6 +37,7 @@ class DoclingArtifactRepository:
         """Atomically persist conversion metadata."""
         path = self.metadata_path(document_key)
         path.parent.mkdir(parents=True, exist_ok=True)
+        require_current_payload("docling-conversion-metadata", metadata)
         _atomic_write_json(path, metadata)
         return path
 
@@ -45,6 +47,7 @@ class DoclingArtifactRepository:
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError(f"Conversion metadata must contain an object: {path}")
+        require_supported_schema("docling-conversion-metadata", payload.get("schema_version"))
         return payload
 
     def extraction_state(self, document_key: str, source: Path) -> ExtractionState:

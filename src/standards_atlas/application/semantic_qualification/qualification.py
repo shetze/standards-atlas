@@ -7,11 +7,12 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import ClassVar, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationLifecycleStatus,
     AnnotationResolutionSource,
@@ -130,8 +131,10 @@ class ReliabilityMetrics(BaseModel):
     top_failure_messages: tuple[FailureMessageCount, ...] = ()
 
 
-class AnnotationQualificationReport(BaseModel):
+class AnnotationQualificationReport(SchemaBoundModel):
     """Machine-readable result of Slice 5.4.5 qualification."""
+
+    SCHEMA_FAMILY: ClassVar[str] = "annotation-qualification-report"
 
     model_config = ConfigDict(frozen=True)
 

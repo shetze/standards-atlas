@@ -484,6 +484,7 @@ def run_partial_proposals(
         )
     ):
         raise ValueError("partial output must not be a canonical or public data directory")
+    require_current_payload("partial-proposal-run", manifest)
     manifest_path = root / "partial-run-plan.json"
     existed = root.exists()
     if existed and not manifest_path.is_file():
