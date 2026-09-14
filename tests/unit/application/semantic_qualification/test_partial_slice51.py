@@ -116,7 +116,7 @@ def test_invalid_or_constraint_incapable_prompt_rejected_before_writes(tmp_path,
     assert not root.exists()
 
 
-def test_v2_keeps_legacy_plan_identity_and_v1_point_requests_stay_supported(tmp_path):
+def test_run_plan_keeps_its_own_schema_and_v1_point_requests_stay_supported(tmp_path):
     root = tmp_path / "run"
     result, _ = execute(root, execute=False)
     plan = json.loads((root / "partial-cascade-plan.json").read_bytes())
@@ -126,7 +126,7 @@ def test_v2_keeps_legacy_plan_identity_and_v1_point_requests_stay_supported(tmp_
     assert prepared(cfg=config()).request.prompt_version == "taxonomy-partial-v1"
 
 
-def test_planned_completion_is_not_measured_zero_and_legacy_report_remains_readable(tmp_path):
+def test_planned_completion_is_not_measured_zero_and_obsolete_report_is_rejected(tmp_path):
     root = tmp_path / "run"
     result, gateways = execute(root, execute=False)
     assert result["metrics"]["completion_rate"] is None
@@ -140,7 +140,8 @@ def test_planned_completion_is_not_measured_zero_and_legacy_report_remains_reada
     result["schema_version"] = "1.0"
     result["metrics"] = mixed.metrics
     (root / "partial-cascade-report.json").write_text(json.dumps(result))
-    cascade_fixture.verify(root)
+    with pytest.raises(ValueError, match="Unsupported partial cascade report schema"):
+        cascade_fixture.verify(root)
     assert not gateways.started
 
 

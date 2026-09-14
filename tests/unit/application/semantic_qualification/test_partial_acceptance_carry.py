@@ -33,11 +33,12 @@ def prepare(
     )
 
 
-def test_old_v1_payload_retains_old_wire_fields_and_version():
-    old = prepare(prompt="taxonomy-partial-v1", state=None)
-    payload = old.plan.model_dump(mode="json")
-    assert payload["schema_version"] == "1.0"
-    assert "accepted_attributes" not in payload and "accepted_state_sha256" not in payload
+def test_v1_prompt_uses_current_plan_with_explicit_empty_acceptance():
+    request = prepare(prompt="taxonomy-partial-v1", state=None)
+    payload = request.plan.model_dump(mode="json")
+    assert payload["schema_version"] == "1.1"
+    assert payload["accepted_attributes"] == {}
+    assert payload["accepted_state_sha256"] is None
 
 
 def test_v2_declares_schema_even_without_any_prior_acceptance():

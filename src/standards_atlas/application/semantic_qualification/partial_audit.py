@@ -20,6 +20,7 @@ from standards_atlas.application.semantic_qualification.partial_diagnostics impo
     summarize_partial_plans,
 )
 from standards_atlas.application.semantic_qualification.partial_observations import (
+    PARTIAL_REQUEST_SCHEMA_VERSION,
     PartialObservation,
     PartialRequestPlan,
     ordered_attributes,
@@ -129,6 +130,7 @@ def _load_plan(source, case, example):
             fixed = case.get("fixed_attributes", {})
             selected = ordered_attributes(list(case["requested_attributes"]) + list(fixed))
             plan = PartialRequestPlan(
+                schema_version=PARTIAL_REQUEST_SCHEMA_VERSION,
                 clause=clause,
                 decision_plan=derived,
                 selected_attributes=selected,

@@ -35,6 +35,9 @@ from standards_atlas.application.semantic_qualification.partial_cascade import (
     partial_config_for_model,
     read_partial_observations,
 )
+from standards_atlas.application.semantic_qualification.partial_cascade_contract import (
+    require_partial_cascade_report,
+)
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
 )
@@ -55,6 +58,8 @@ def verify_partial_cascade(
     require_supported_schema("partial-cascade-run", plan.get("schema_version"))
     if plan.get("kind") != "partial-cascade-plan":
         raise ValueError("not a partial cascade plan")
+    summary = json.loads(read("partial-cascade-report.json"))
+    require_partial_cascade_report(summary)
     prompt_version = cascade_prompt_version(plan.get("prompt_version", DEFAULT_CASCADE_PROMPT))
     manifest = QualificationMatrixManifest.model_validate(plan["manifest"])
     acceptance_profile = profile_from_plan(plan)
@@ -72,8 +77,6 @@ def verify_partial_cascade(
     examples = tuple(EvaluationExample(id=e["id"], input=e["input"], expected={}) for e in payload)
     if input_selection_fingerprint(examples) != plan["selection_sha256"]:
         raise ValueError("partial cascade source selection fingerprint mismatch")
-    summary = json.loads(read("partial-cascade-report.json"))
-    require_supported_schema("partial-cascade-report", summary.get("schema_version"))
     if summary.get("selection_sha256") != plan["selection_sha256"]:
         raise ValueError("partial cascade report belongs to another selection")
     previous = None
@@ -241,17 +244,11 @@ def verify_partial_cascade(
         presentation_metrics,
     )
 
-    expected_metrics = result.metrics
-    if summary.get("schema_version") == "1.1":
-        if type(summary.get("executed")) is not bool:
-            raise ValueError("partial cascade executed flag must be explicit")
-        if summary.get("run_mode") != ("executed" if summary["executed"] else "planned"):
-            raise ValueError("partial cascade run mode differs from execution flag")
-        if summary.get("effective_configuration") != effective_cascade_configuration(
-            manifest, resources, prompt_version, acceptance_profile, plan.get("stage_limit")
-        ):
-            raise ValueError("partial cascade effective prompt/configuration differs from plan")
-        expected_metrics = presentation_metrics(result, execute=summary["executed"])
+    if summary["effective_configuration"] != effective_cascade_configuration(
+        manifest, resources, prompt_version, acceptance_profile, plan.get("stage_limit")
+    ):
+        raise ValueError("partial cascade effective prompt/configuration differs from plan")
+    expected_metrics = presentation_metrics(result, execute=summary["executed"])
     if (
         expected_metrics != summary["metrics"]
         or result.matrix_id != plan["matrix_id"]

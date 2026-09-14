@@ -83,6 +83,7 @@ def prepared(*, cfg=None, item=None):
 
 def observation(item, values, outcome="evaluated", **overrides):
     return PartialObservation(
+        schema_version="1.1",
         plan=item.plan,
         request_fingerprint=item.fingerprint,
         provider="fake",
@@ -302,6 +303,7 @@ def test_role_tuples_alone_do_not_materialize_presence():
 def test_failed_group_provides_no_evidence_even_for_present_response_fields():
     item = prepared(cfg=config(selected_attributes=("applicability_present",)))
     result = PartialObservation(
+        schema_version="1.1",
         plan=item.plan,
         request_fingerprint=item.fingerprint,
         provider="fake",

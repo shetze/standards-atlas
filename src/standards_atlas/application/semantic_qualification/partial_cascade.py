@@ -17,6 +17,7 @@ from typing import Any
 
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
+from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.acceptance_profiles import (
     PartialAcceptanceProfile,
     with_acceptance_profile,
@@ -35,9 +36,14 @@ from standards_atlas.application.semantic_qualification.mixed_evidence import (
     MixedConsensusReport,
     StagedPartialObservation,
 )
+from standards_atlas.application.semantic_qualification.partial_cascade_contract import (
+    PARTIAL_CASCADE_REPORT_SCHEMA_VERSION,
+    require_partial_cascade_report,
+)
 from standards_atlas.application.semantic_qualification.partial_observations import (
     PARTIAL_ATTRIBUTES,
     PartialObservation,
+    PartialRequestPlan,
     ordered_attributes,
     validate_partial_response,
 )
@@ -167,7 +173,9 @@ def read_partial_observations(
         plan_path = f"{directory}/partial-request-plan.json"
         if plan_path not in names:
             raise ValueError("missing planned partial case in cascade artifacts")
-        if json.loads(read(plan_path)) != prepared.plan.model_dump(mode="json"):
+        saved_plan = json.loads(read(plan_path))
+        PartialRequestPlan.model_validate(saved_plan)
+        if saved_plan != prepared.plan.model_dump(mode="json"):
             raise ValueError("partial plan differs from verified cascade source or acceptance")
         path = f"{directory}/partial-observation.json"
         if path in names and not eligibility_from_input(policy, dict(example.input)).eligible:
@@ -307,7 +315,7 @@ def _write_report(
     timing: RequestTiming,
     configuration: dict[str, Any],
 ) -> dict:
-    _atomic_json(root / "mixed-consensus-report.json", report.model_dump(mode="json"))
+    require_current_schema("partial-cascade-report", PARTIAL_CASCADE_REPORT_SCHEMA_VERSION)
     total_timing = RequestTiming()
     for path in sorted(root.glob("stages/**/executions/execution-*/request-timing.json")):
         total_timing = total_timing.plus(RequestTiming.model_validate_json(path.read_bytes()))
@@ -317,7 +325,7 @@ def _write_report(
     )
 
     payload = {
-        "schema_version": "1.1",
+        "schema_version": PARTIAL_CASCADE_REPORT_SCHEMA_VERSION,
         "kind": "partial-cascade-report",
         "run_mode": "executed" if execute else "planned",
         "effective_configuration": configuration,
@@ -334,6 +342,8 @@ def _write_report(
         "cascade_request_timing_all_executions": total_timing.model_dump(mode="json"),
         "applicability_gate_is_final_policy": False,
     }
+    require_partial_cascade_report(payload)
+    _atomic_json(root / "mixed-consensus-report.json", report.model_dump(mode="json"))
     _atomic_json(root / "partial-cascade-report.json", payload)
     lines = [
         "# Taxonomy partial cascade",
@@ -387,6 +397,7 @@ def run_partial_cascade(
     This is an explicit opt-in operational run, not a fresh-repeat qualification
     claim. Full-output/adjudicator/challenger runs remain on the existing command.
     """
+    require_current_schema("partial-cascade-report", PARTIAL_CASCADE_REPORT_SCHEMA_VERSION)
     prompt_version = cascade_prompt_version(prompt_version)
     if stage_limit is not None and (
         type(stage_limit) is not int or not 1 <= stage_limit <= len(manifest.execution.stages)
@@ -473,15 +484,16 @@ def run_partial_cascade(
         if marker.exists() and json.loads(marker.read_bytes()) != definition:
             raise ValueError("partial cascade identity changed; choose a new output directory")
         saved_summary = root / "partial-cascade-report.json"
-        if (
-            not execute
-            and saved_summary.is_file()
-            and json.loads(saved_summary.read_bytes()).get("executed")
-        ):
-            raise ValueError(
-                "planning must not replace executed results; use partial-cascade-audit "
-                "or a new output directory"
-            )
+        if saved_summary.is_file():
+            stored_summary = json.loads(saved_summary.read_bytes())
+            require_partial_cascade_report(stored_summary)
+            if stored_summary["effective_configuration"] != configuration:
+                raise ValueError("stored partial cascade effective configuration differs from plan")
+            if not execute and stored_summary["executed"]:
+                raise ValueError(
+                    "planning must not replace executed results; use partial-cascade-audit "
+                    "or a new output directory"
+                )
         _atomic_json(marker, definition)
         _atomic_json(
             root / "partial-cascade-inputs.json", [{"id": e.id, "input": e.input} for e in examples]

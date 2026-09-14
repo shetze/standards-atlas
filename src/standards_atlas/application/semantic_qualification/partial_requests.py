@@ -16,9 +16,11 @@ from standards_atlas.application.evaluation.models import PromptDefinition
 from standards_atlas.application.evaluation.repository import PromptRepository
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.ports.llm_gateway import StructuredGenerationRequest
+from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.partial_observations import (
     PARTIAL_ATTRIBUTES,
     PARTIAL_PROMPT,
+    PARTIAL_REQUEST_SCHEMA_VERSION,
     PARTIAL_TASK,
     PARTIAL_TASK_VERSION,
     PartialRequestPlan,
@@ -118,6 +120,7 @@ def prepare_partial_request(
     accepted_state_sha256: str | None = None,
 ) -> PreparedPartialRequest:
     """Derive fresh source rules; never trust persisted target labels or caller plans."""
+    require_current_schema("partial-request-plan", PARTIAL_REQUEST_SCHEMA_VERSION)
     clause = build_clause_reference(item_input)
     context, content = item_input["context"], item_input["content"]
     decision_plan = derive_clause_decision_plan(
@@ -141,7 +144,7 @@ def prepare_partial_request(
         if errors:
             raise ValueError(f"invalid carried acceptance: {errors[0].message}")
     plan = PartialRequestPlan(
-        schema_version="1.0" if config.prompt_version == "taxonomy-partial-v1" else "1.1",
+        schema_version=PARTIAL_REQUEST_SCHEMA_VERSION,
         clause=clause,
         decision_plan=decision_plan,
         selected_attributes=selected,

@@ -200,16 +200,22 @@ cases/<identity-hash>/
     partial-observation.json  historical execution outcome, when completed
 ```
 
-Independent internal schema families (`partial-request-plan`,
-`partial-semantic-observation`, `partial-proposal-run`) start at **1.0**. They do not
-change EngineeringDocument, consensus, or AtlasData schemas.
+The independent `partial-request-plan` and `partial-semantic-observation` families use
+**1.1 only**. Both require an explicit `schema_version`, including the plan embedded in an
+observation. All supported prompts, including `taxonomy-partial-v1`, use the same current
+format with explicit `accepted_attributes` and `accepted_state_sha256` fields. A prompt's
+carry capability is separate: v1 still cannot carry previously accepted values.
+
+`partial-proposal-run` remains at its own current version **1.0**. EngineeringDocument,
+consensus and AtlasData schemas are unchanged. Obsolete request/observation formats are
+rejected rather than migrated; see [R1 regeneration guidance](partial-schema-refactoring.md).
 
 For every current task attribute, `partial-observation.json` records:
 
 | State | Meaning | Model evidence |
 |---|---|---|
 | `evaluated` | Requested and successfully validated | Only the explicitly returned value |
-| `not_requested` | Fixed or outside the explicit selection | None, not `false` or `[]` |
+| `not_requested` | Structurally fixed, already accepted or outside the selection | None, not `false` or `[]` |
 | `failed` | Requested group failed inference/schema/consistency checks | None; raw attempt retained |
 
 `values` contains only a valid group's actual fields, and `provided_fields` records the

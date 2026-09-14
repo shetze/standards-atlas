@@ -16,7 +16,7 @@ from typing import Any
 from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.ports.llm_gateway import LlmGateway
-from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.schema import require_current_schema, require_supported_schema
 from standards_atlas.application.semantic_qualification.batch import (
     ProposalBatchExecutor,
     ProposalItemOutcome,
@@ -33,6 +33,7 @@ from standards_atlas.application.semantic_qualification.partial_diagnostics impo
     summarize_partial_plans,
 )
 from standards_atlas.application.semantic_qualification.partial_observations import (
+    PARTIAL_OBSERVATION_SCHEMA_VERSION,
     PartialObservation,
     observation_states,
     partial_response_diagnostics,
@@ -121,6 +122,15 @@ def _atomic_json(path: Path, payload: Any) -> None:
             temporary.replace(path)
         finally:
             temporary.unlink(missing_ok=True)
+
+
+def _write_observation(path: Path, observation: PartialObservation) -> None:
+    """Publish only current, validated observations and their independent plan contract."""
+    payload = observation.model_dump(mode="json")
+    require_current_schema("partial-semantic-observation", payload["schema_version"])
+    require_current_schema("partial-request-plan", payload["plan"]["schema_version"])
+    PartialObservation.model_validate(payload)
+    _atomic_json(path, payload)
 
 
 def _preserve_bytes(path: Path, content: bytes) -> None:
@@ -272,8 +282,8 @@ def _recover_observation(
             "gateway_request_count": 0,
         },
     )
-    _atomic_json(audit / "partial-observation.json", recovered.model_dump(mode="json"))
-    _atomic_json(directory / "partial-observation.json", recovered.model_dump(mode="json"))
+    _write_observation(audit / "partial-observation.json", recovered)
+    _write_observation(directory / "partial-observation.json", recovered)
     return (
         recovered,
         True,
@@ -370,7 +380,7 @@ def _execute_case(
         outcome, value = "failed", {}
         error = f"{type(exc).__name__}: {exc}"
     observation = PartialObservation(
-        schema_version=prepared.plan.schema_version,
+        schema_version=PARTIAL_OBSERVATION_SCHEMA_VERSION,
         plan=prepared.plan,
         request_fingerprint=prepared.fingerprint,
         provider=config.provider,
@@ -383,8 +393,8 @@ def _execute_case(
         error=error,
     )
     _atomic_json(staging / "request-timing.json", measured.timing.model_dump(mode="json"))
-    _atomic_json(staging / "partial-observation.json", observation.model_dump(mode="json"))
-    _atomic_json(directory / "partial-observation.json", observation.model_dump(mode="json"))
+    _write_observation(staging / "partial-observation.json", observation)
+    _write_observation(directory / "partial-observation.json", observation)
     return observation, measured.timing
 
 
@@ -409,6 +419,7 @@ def run_partial_proposals(
     Existing complete proposals are intentionally neither searched nor imported.
     Revalidation is explicit and model-free unless execute is also requested.
     """
+    require_current_schema("partial-semantic-observation", PARTIAL_OBSERVATION_SCHEMA_VERSION)
     task_resources = PartialTaskResources.load(resources, config)
     eligibility_policy = SemanticTaskEligibilityPolicy.from_task(task_resources.task)
     if not examples or len({e.id for e in examples}) != len(examples):
@@ -498,6 +509,7 @@ def run_partial_proposals(
             directories[item.example_id] = directory
             plan_path = directory / "partial-request-plan.json"
             plan_payload = item.plan.model_dump(mode="json")
+            require_current_schema("partial-request-plan", plan_payload["schema_version"])
             if plan_path.is_file():
                 stored_plan = _read_json(plan_path)
                 require_supported_schema("partial-request-plan", stored_plan.get("schema_version"))
@@ -555,7 +567,7 @@ def run_partial_proposals(
                     pending.append(item)
             elif item.request is None:
                 observation = PartialObservation(
-                    schema_version=item.plan.schema_version,
+                    schema_version=PARTIAL_OBSERVATION_SCHEMA_VERSION,
                     plan=item.plan,
                     request_fingerprint=item.fingerprint,
                     provider=config.provider,
@@ -563,9 +575,7 @@ def run_partial_proposals(
                     outcome="not_requested",
                     states=observation_states(item.plan, "not_requested"),
                 )
-                _atomic_json(
-                    directory / "partial-observation.json", observation.model_dump(mode="json")
-                )
+                _write_observation(directory / "partial-observation.json", observation)
                 case["status"] = "not_requested"
             elif execute:
                 pending.append(item)

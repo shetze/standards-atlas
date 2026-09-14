@@ -17,6 +17,7 @@ from standards_atlas.application.semantic_qualification.acceptance_profiles impo
     FocusedResolutionPolicy,
 )
 from standards_atlas.application.semantic_qualification.partial_observations import (
+    PartialRequestPlan,
     ordered_attributes,
 )
 from standards_atlas.application.semantic_qualification.partial_proposals import (
@@ -157,8 +158,10 @@ def _consumed(root: Path) -> tuple[int, set[str]]:
     for path in attempts:
         # .../cases/<hash>/executions/execution-x/attempt-001.json
         case_root = path.parents[2]
-        plan = json.loads((case_root / "partial-request-plan.json").read_bytes())
-        cases.add(plan["clause"]["clause_id"])
+        plan = PartialRequestPlan.model_validate_json(
+            (case_root / "partial-request-plan.json").read_bytes()
+        )
+        cases.add(plan.clause.clause_id)
     return len(attempts), cases
 
 
@@ -334,7 +337,9 @@ def verify_global_focused_budget(*, read, names, policy: FocusedResolutionPolicy
     for name in attempts:
         case_root = name.split("/executions/execution-", 1)[0]
         case_ids.add(
-            json.loads(read(case_root + "/partial-request-plan.json"))["clause"]["clause_id"]
+            PartialRequestPlan.model_validate_json(
+                read(case_root + "/partial-request-plan.json")
+            ).clause.clause_id
         )
     if (
         len(attempts) > policy.max_requests

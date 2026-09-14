@@ -40,9 +40,9 @@ Without `--execute` this only plans the first stage. Every comparison prompt req
 **new output directory**. Keep the same clause selection and model/generation settings.
 The prompt and its actual resources bind planning, requests, cache identities, resume,
 stage revisions and archive/adoption verification. Changing a prompt in an existing run
-is rejected before inference. Existing default-v2 plan/request identities are unchanged;
-a missing prompt field in an old plan explicitly means v2, never the newest installed
-prompt. The matrix suffix `--taxonomy-partial-v1` names the engine, not the prompt.
+is rejected before inference. Unchanged schema-1.1 default-v2 requests retain their
+identities. In the independent cascade-run plan contract, an omitted prompt field means
+v2, never the newest installed prompt; it does not authorize obsolete request schemas. The matrix suffix `--taxonomy-partial-v1` names the engine, not the prompt.
 
 Use the ordinary archive option after a successful execution; archive verification
 reconstructs the selected prompt and rejects mismatching requests/resources. A plain
@@ -51,8 +51,9 @@ below to inspect an executed run without retrying failures.
 
 ## Read planning metrics correctly
 
-The new `partial-cascade-report` schema is 1.1; schema 1.0 remains readable. The plan and
-mixed consensus retain their existing versions and fingerprints. New reports include:
+The `partial-cascade-report` schema is **1.1 only**. Schema 1.0 is rejected on replay,
+archiving and resume; there is no legacy metrics fallback. The independent cascade-run
+and mixed-consensus families retain their versions. Every current report includes:
 
 - `run_mode`: `planned` or `executed`, plus the existing `executed` flag;
 - `effective_configuration`: actual task, prompt, frame, source-rule/resource fingerprints,
@@ -63,7 +64,8 @@ mixed consensus retain their existing versions and fingerprints. New reports inc
 - accepted `null`, `false`, empty sets and nonempty values counted separately.
 
 `--execute` describes the invoked operational mode, not a fresh repetition guarantee.
-A resumed execution may use old observations. `fresh_repetition_qualification` stays false.
+A resumed execution may reuse observations with the current contract and exactly matching
+source/request identity, not observations in obsolete formats. `fresh_repetition_qualification` stays false.
 A synthetic fixture pilot is never benchmark-eligible even if its mock/inferred responses
 complete every clause. Counts of accepted attributes are not counts of nonempty values.
 

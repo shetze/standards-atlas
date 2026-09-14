@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from typing import Any, Literal
 
 from jsonschema import Draft202012Validator
-from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.semantic_qualification.annotations import ClauseReference
@@ -33,6 +33,9 @@ PRIMARY_SET_FIELDS = (
 PARTIAL_TASK = "semantic-attribute-observation"
 PARTIAL_TASK_VERSION = "1.0.0"
 PARTIAL_PROMPT = "taxonomy-partial-v1"
+# Separate serialization axes: neither inherits a prompt or another family's version.
+PARTIAL_REQUEST_SCHEMA_VERSION = "1.1"
+PARTIAL_OBSERVATION_SCHEMA_VERSION = "1.1"
 
 
 def ordered_attributes(values: tuple[str, ...] | list[str]) -> tuple[DecisionAttribute, ...]:
@@ -45,9 +48,9 @@ def ordered_attributes(values: tuple[str, ...] | list[str]) -> tuple[DecisionAtt
 class PartialRequestPlan(BaseModel):
     """An explicit, source-bound question plan; fixed values are NOT observations."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always")
 
-    schema_version: Literal["1.0", "1.1"] = "1.0"
+    schema_version: Literal["1.1"]
     experimental_only: Literal[True] = True
     task: Literal["semantic-attribute-observation"] = PARTIAL_TASK
     task_version: Literal["1.0.0"] = PARTIAL_TASK_VERSION
@@ -58,14 +61,6 @@ class PartialRequestPlan(BaseModel):
     fixed_attributes: dict[str, str] = Field(default_factory=dict)
     accepted_attributes: dict[str, Any] = Field(default_factory=dict)
     accepted_state_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
-
-    @model_serializer(mode="wrap")
-    def preserve_v1_identity(self, handler):
-        payload = handler(self)
-        if self.schema_version == "1.0":
-            payload.pop("accepted_attributes", None)
-            payload.pop("accepted_state_sha256", None)
-        return payload
 
     @model_validator(mode="after")
     def source_and_partition(self) -> PartialRequestPlan:
@@ -86,10 +81,6 @@ class PartialRequestPlan(BaseModel):
         }
         if self.fixed_attributes != fixed:
             raise ValueError("fixed attributes must be exactly the selected source predecisions")
-        if self.schema_version == "1.0" and (
-            self.accepted_attributes or self.accepted_state_sha256
-        ):
-            raise ValueError("carried acceptance requires partial plan schema 1.1")
         if self.accepted_attributes and not self.accepted_state_sha256:
             raise ValueError("carried attributes need the accepting state fingerprint")
         if set(self.accepted_attributes) - set(self.selected_attributes) or (
@@ -105,7 +96,9 @@ class PartialRequestPlan(BaseModel):
             for key in self.selected_attributes
             if key not in fixed and key not in self.accepted_attributes
         ):
-            raise ValueError("selected attributes must partition into fixed and requested")
+            raise ValueError(
+                "selected attributes must partition into fixed, accepted and requested"
+            )
         return self
 
     @property
@@ -146,9 +139,11 @@ class AttributeObservationState(BaseModel):
 class PartialObservation(BaseModel):
     """One logical model observation, regardless of retries, cache or resumption."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", allow_inf_nan=False, revalidate_instances="always"
+    )
 
-    schema_version: Literal["1.0", "1.1"] = "1.0"
+    schema_version: Literal["1.1"]
     experimental_only: Literal[True] = True
     plan: PartialRequestPlan
     request_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -164,8 +159,6 @@ class PartialObservation(BaseModel):
 
     @model_validator(mode="after")
     def observation_is_explicit(self) -> PartialObservation:
-        if self.schema_version != self.plan.schema_version:
-            raise ValueError("observation and partial plan schema versions must agree")
         if tuple(item.attribute for item in self.states) != PARTIAL_ATTRIBUTES:
             raise ValueError("observation must account for every current task attribute once")
         if self.provided_fields != tuple(sorted(set(self.provided_fields))):
