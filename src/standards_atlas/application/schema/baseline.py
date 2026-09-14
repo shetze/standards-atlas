@@ -67,7 +67,7 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "partial-cascade-report": SchemaPolicy(
         "partial-cascade-report",
         "1.1",
-        ("1.0", "1.1"),
+        ("1.1",),
         "**/partial-cascade-report.json",
     ),
     "partial-cascade-audit": SchemaPolicy(
@@ -107,10 +107,10 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         "partial-cascade-run", "1.0", ("1.0",), "**/partial-cascade-*.json"
     ),
     "partial-request-plan": SchemaPolicy(
-        "partial-request-plan", "1.1", ("1.0", "1.1"), "**/partial-request-plan.json"
+        "partial-request-plan", "1.1", ("1.1",), "**/partial-request-plan.json"
     ),
     "partial-semantic-observation": SchemaPolicy(
-        "partial-semantic-observation", "1.1", ("1.0", "1.1"), "**/partial-observation.json"
+        "partial-semantic-observation", "1.1", ("1.1",), "**/partial-observation.json"
     ),
     "partial-proposal-run": SchemaPolicy(
         "partial-proposal-run", "1.0", ("1.0",), "**/partial-run-*.json"

@@ -2,6 +2,21 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Partial-schema refactoring R1 (2026-09-14)
+
+- Restrict partial request plans, semantic observations and cascade reports to schema 1.1;
+  reject missing/obsolete markers in direct, nested, resume and replay reads.
+- Decouple serialization from prompt choice and observation versions from plan versions;
+  retain v1 point requests without granting v1 acceptance-carry capability.
+- Remove the legacy identity serializer and report-metrics fallback; enforce current-family
+  writer guards, explicit run mode/configuration and source-bound response reuse.
+- Reject obsolete cascade reports before resume can overwrite them. Preserve unexecuted
+  completion as null and keep model suggestions, human decisions and release authority separate.
+- Add current-contract/rejection regressions and regeneration guidance. Do not migrate old
+  artifacts, change prompts/thresholds or extend this slice to the remaining schema families.
+- Restore the current-only registry after integrating the audited review handoff;
+  retain its new families and contracts. Keep the existing R1 rejection tests unchanged.
+
 ## Unreleased — Audited review-to-qualification handoff (2026-09-13)
 
 - Add atomic human-reviewed handoff bundles containing both confirmed reference suites,

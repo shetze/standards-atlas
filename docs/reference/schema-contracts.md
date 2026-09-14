@@ -28,8 +28,8 @@ Removed refactoring schemas are not recreated merely to fill the stable support 
 | Private knowledge evidence | persistence | `knowledge-evidence` (`1.0`) | content-addressed payload | `.atlas/data/knowledge-evidence/<sha256>.json` |
 | AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.0`) | — | `local/review/atlasdata-knowledge*.json` |
 | Standards manifest | process | `standards-manifest` | — | `manifests/standards*.yaml` |
-| Partial request plan (experimental) | persistence | `partial-request-plan` (1.0) | source/rule/task identities | `**/partial-request-plan.json` |
-| Partial semantic observation (experimental) | persistence | `partial-semantic-observation` (1.0) | model/prompt/request identities | `**/partial-observation.json` |
+| Partial request plan (experimental) | persistence | `partial-request-plan` (1.1, current-only) | source/rule/task identities | `**/partial-request-plan.json` |
+| Partial semantic observation (experimental) | persistence | `partial-semantic-observation` (1.1, current-only) | model/prompt/request identities | `**/partial-observation.json` |
 | Partial experiment plan/report | persistence | `partial-proposal-run` (1.0) | frozen selection/configuration | `**/partial-run-*.json` |
 | Qualification consensus | persistence | `qualification-consensus` (write 5.0, read 4.0/5.0) | model/prompt/stage identity | `**/consensus-report.json` |
 | Golden corpus proposal | persistence | `golden-corpus-proposal` (4.0) | — | `**/golden-corpus-proposal.yaml` |
@@ -96,10 +96,19 @@ unchanged. See [Process-function qualification](../user-guide/process-function-q
 
 `partial-cascade-report` is a separate family from the immutable `partial-cascade-run`
 plan. Current report version **1.1** explicitly binds run mode and effective configuration,
-and makes a planning-only completion rate `null`; **1.0** reports remain readable under
-legacy semantics. Plans and mixed-consensus contracts retain their existing versions.
-Verification recomputes the selected prompt/resources and the appropriate presentation
-metrics instead of trusting diagnostic counts as acceptance authority.
+and makes a planning-only completion rate `null`. Since refactoring slice R1, **1.0**
+reports are rejected, including on resume; no legacy metrics path remains. The independent
+cascade-run and mixed-consensus contracts retain their existing versions. Verification
+always recomputes the selected prompt/resources and presentation metrics instead of
+trusting diagnostic counts as acceptance authority.
+
+R1 also restricts `partial-request-plan` and `partial-semantic-observation` to **1.1**.
+Each marker is mandatory and validated independently, including nested plans and direct
+model reads. Prompt variants share the current serialization contract; a prompt's ability
+to carry accepted decisions remains a separate capability. Writers check their own
+family's current version before publication. No serializer preserves old 1.0 identities.
+See [Partial schema refactoring R1](../user-guide/partial-schema-refactoring.md) for
+regeneration and same-contract resume rules. Other schema families are unchanged by R1.
 
 The diagnostic families `partial-cascade-audit`, `taxonomy-pilot-readiness`,
 `taxonomy-readiness-cases`, `semantic-readiness-checks` and `semantic-readiness-evaluation`
