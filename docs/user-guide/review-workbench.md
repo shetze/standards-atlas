@@ -60,12 +60,15 @@ cross-attribute conflicts. Filtering never changes Development or Holdout member
 The case display separates three kinds of information:
 
 - **Source:** the complete frozen clause text, source identifiers and structural context.
+  Part normalization preserves the canonical AtlasData root title, so the outermost heading
+  remains semantically meaningful instead of being replaced by a synthetic `Part N` label.
   Ancestor headings, the local heading and other available facts are shown ahead of absent
   structural fields. Original fact indices are retained for evidence binding. Structural
   origin/authority remains explicit; extracted or unattributed context is not promoted to
   a confirmed structural fact.
 - **Preparation:** selectable proposal revisions with their exact predicates, reasons,
-  producer/model, provenance and evidence quotations. These are not human labels.
+  producer/model, provenance and evidence quotations. `producer_kind=engineering` identifies the
+  current normalized semantic enrichment being challenged; it is not a human label or Gold value.
 - **Decision:** an explicit action per attribute, the current human decision and an append-only
   human revision history. Confirmed fields are left unchanged unless deliberately superseded.
 
@@ -112,16 +115,17 @@ there is no draft autosave that could be mistaken for approval.
 ## Holdout: source first, assistance second
 
 Holdout membership remains frozen. On first inspection, the server withholds model proposals,
-their evidence segments and candidate ranking rationales. This is response filtering, not
-merely hidden HTML. The human can enter decisions without seeing recommendations.
+current EngineeringDocument enrichment candidates, their evidence segments and candidate ranking
+rationales. This is response filtering, not merely hidden HTML. The human can enter decisions without seeing recommendations.
 
 To request assistance, first write a source-based initial assessment and explicitly choose
 “Ersteinschätzung protokollieren & Empfehlungen einblenden”. Atlas records the assessment,
-reviewer, time, source/rules binding, review revision and exact disclosed model-proposal hashes
-in the local workbench journal. This records an exposure, **not a semantic decision**. Historical
-candidate/reference proposals remain withheld even after model assistance is revealed. Newer
-model proposals require another explicit reveal and are not automatically added to an earlier
-exposure. The reveal is remembered per reviewer, not globally for everybody using the package.
+reviewer, time, source/rules binding, review revision and the exact disclosed model/engineering
+proposal hashes in the local workbench journal. This records an exposure, **not a semantic
+decision**. Historical/reference proposals remain withheld even after assistance is revealed.
+Newer model or engineering proposals require another explicit reveal and are not automatically
+added to an earlier exposure. The reveal is remembered per reviewer, not globally for everybody
+using the package.
 
 The blind gate concerns machine proposals. Existing human decisions remain visible as review
 history; the UI is not a blinded multi-rater experiment or an authenticated separation between

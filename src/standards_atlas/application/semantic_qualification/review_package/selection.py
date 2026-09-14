@@ -10,6 +10,7 @@ import hashlib
 from pathlib import Path
 
 from standards_atlas.application.schema import require_supported_schema
+from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
 from standards_atlas.application.semantic_qualification.partial_comparison import (
     _output_is_separate,
 )
@@ -18,7 +19,12 @@ from standards_atlas.application.semantic_qualification.partial_proposals import
 from .candidates import _digest, index_path, load_candidate_index, safe_read
 from .model import ReviewPackage, ReviewState
 from .preparation_model import SelectionProposal, SelectionRequest
-from .sources import duplicate_key, fingerprint, verify_current_sources
+from .sources import (
+    canonical_enrichment_suggestions,
+    duplicate_key,
+    fingerprint,
+    verify_current_sources,
+)
 from .storage import new_directory, review_lock
 from .validation import review_report, seal, verify_package, verify_state
 from .workbench import capture_workbench, rebound_workbench
@@ -104,7 +110,13 @@ def load_selection(root: Path, digest: str):
 
 
 def apply_selection(
-    root: Path, *, selection_sha256: str, output: Path, review_id: str, version: str = "1.0.0"
+    root: Path,
+    *,
+    selection_sha256: str,
+    output: Path,
+    review_id: str,
+    version: str = "1.0.0",
+    clause_provider: ClauseProvider | None = None,
 ) -> dict:
     """Local packaging operation, intentionally not an MCP tool. No manual hash work."""
     _output_is_separate(output.resolve(), (root,))
@@ -189,6 +201,20 @@ def apply_selection(
             "state_sha256",
         )
         verify_package(derived)
+        if clause_provider is not None:
+            from .service import add_proposal
+
+            existing = {
+                (proposal.example_id, proposal.attribute)
+                for proposal in rebound.proposals
+                if proposal.producer_kind == "engineering"
+                and proposal.producer == "canonical-engineering-document"
+            }
+            for suggestion in canonical_enrichment_suggestions(derived, clause_provider):
+                key = (suggestion["example_id"], suggestion["attribute"])
+                if key not in existing:
+                    rebound = add_proposal(derived, rebound, **suggestion)
+                    existing.add(key)
         verify_state(derived, rebound)
         files.update(
             {

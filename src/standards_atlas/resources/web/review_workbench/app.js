@@ -254,7 +254,7 @@ function renderCase() {
   $("attributes").replaceChildren();
   data.case.attributes.forEach(attribute => {const card = attributeCard(attribute); S.cards.push(card); $("attributes").append(card.root);});
   renderSource();
-  $("blindPanel").hidden = data.case.split !== "holdout" || (!data.holdout.blind && !data.holdout.unrevealed_model_count);
+  $("blindPanel").hidden = data.case.split !== "holdout" || (!data.holdout.blind && !data.holdout.unrevealed_recommendation_count);
   $("assessment").value = ""; S.assessmentDirty = false;
   $("exposureHistory").replaceChildren();
   if (data.holdout.assessments.length) {

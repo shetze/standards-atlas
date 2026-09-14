@@ -16,7 +16,13 @@ from standards_atlas.application.semantic_qualification.review_package.candidate
     build_candidate_index,
     load_candidate_index,
 )
-from standards_atlas.application.semantic_qualification.review_package.service import load_review
+from standards_atlas.application.semantic_qualification.review_package.model import (
+    SemanticPredicate,
+)
+from standards_atlas.application.semantic_qualification.review_package.service import (
+    load_review,
+    record_proposal,
+)
 
 
 def service_fixture(tmp_path, *, write=True, holdout=False, **config_overrides):
@@ -173,6 +179,34 @@ def test_holdout_read_write_and_order_require_local_optin(tmp_path):
         batch=annotation_batch(package, case=case),
     )
     assert load_review(root)[1].decisions == ()
+
+
+def test_development_exposes_engineering_candidate_but_holdout_withholds_it(tmp_path):
+    root, service = service_fixture(tmp_path, holdout=True)
+    package, state = load_review(root)
+    development = next(c for c in package.cases if c.split == "development")
+    holdout = next(c for c in package.cases if c.split == "holdout")
+
+    for case in (development, holdout):
+        state = record_proposal(
+            root,
+            expected_revision=state.revision,
+            example_id=case.example_id,
+            attribute="primary_function",
+            predicate=SemanticPredicate(equals="description"),
+            producer="canonical-engineering-document",
+            producer_kind="engineering",
+            rationale="Current normalized enrichment under review.",
+            provenance="enrichments.semantic.primary_function",
+        )
+
+    development_detail = service.get_case(root.name, development.example_id)
+    assert any(p["producer_kind"] == "engineering" for p in development_detail["proposals"])
+    assert "candidate to challenge" in development_detail["proposal_semantics"]["engineering"]
+
+    holdout_detail = service.get_case(root.name, holdout.example_id)
+    assert holdout_detail["holdout_prior_results_withheld"]
+    assert not any(p["producer_kind"] == "engineering" for p in holdout_detail["proposals"])
 
 
 def test_model_can_submit_selection_then_annotations_without_approving(tmp_path):

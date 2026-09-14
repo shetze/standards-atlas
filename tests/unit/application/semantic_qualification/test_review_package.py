@@ -4,6 +4,7 @@ import copy
 import json
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -11,6 +12,7 @@ from test_partial_observations import RESOURCES
 from test_qualification_campaign import source_files
 from typer.testing import CliRunner
 
+from standards_atlas.application.model.cbox import CBoxAttribute, CBoxEnrichments
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.semantic_qualification.campaign_selection import (
@@ -44,6 +46,7 @@ from standards_atlas.application.semantic_qualification.review_package.service i
     record_proposal,
 )
 from standards_atlas.application.semantic_qualification.review_package.sources import (
+    canonical_enrichment_suggestions,
     duplicate_key,
     resolve_evidence,
 )
@@ -962,3 +965,46 @@ def test_review_rule_inventory_cannot_escape_resource_root(tmp_path):
     changed = seal(ReviewPackage, raw, "package_sha256")
     with pytest.raises(ValueError, match="closed contract"):
         verify_package(changed)
+
+
+def test_canonical_engineering_enrichments_are_review_candidates_not_gold(tmp_path):
+    root, _, _, _ = make_review(tmp_path)
+    package, _ = load_review(root)
+    case = next(c for c in package.cases if c.split == "development")
+    source = next(s for s in package.population if s.example_id == case.example_id)
+    values = {
+        "primary_function": "description",
+        "primary_knowledge_kind": "process",
+        "role_semantics_present": False,
+        "process_functions": ["activity", "decision"],
+    }
+    context = CBoxEnrichments(
+        attributes=tuple(
+            CBoxAttribute(
+                path=f"enrichments.semantic.{attribute}",
+                availability="known",
+                origin="unattributed",
+                value=value,
+            )
+            for attribute, value in values.items()
+        )
+    )
+
+    class Provider:
+        def get_clause(self, clause_id):
+            assert clause_id == source.clause_id
+            return SimpleNamespace(
+                id=source.clause_id,
+                document_key=source.document_key,
+                clause_reference=source.reference,
+                content_hash=source.content_hash,
+                source_structure=source.structure,
+                enrichment_context=context,
+            )
+
+    suggestions = canonical_enrichment_suggestions(
+        package, Provider(), example_ids={case.example_id}
+    )
+    assert {item["attribute"]: item["predicate"].equals for item in suggestions} == values
+    assert all(item["producer_kind"] == "engineering" for item in suggestions)
+    assert all("under review" in item["rationale"] for item in suggestions)

@@ -59,7 +59,12 @@ def register_review_tools(mcp: Any, config: Any, tool_call: Any) -> None:
 
     @mcp.tool(annotations=read)
     def get_review_case(handle: str, example_id: str) -> dict[str, Any]:
-        """Read the complete frozen source/context and separate proposals/reviews. No truncation."""
+        """Read complete source/context and separate proposals/reviews, without truncation.
+
+        Development may include producer_kind=engineering proposals: these are current
+        normalized enrichments to challenge critically, not gold labels. Holdout keeps such
+        prior candidates withheld so the model recommendation remains independent.
+        """
         return tool_call(service.get_case, handle, example_id)
 
     @mcp.tool(annotations=read)

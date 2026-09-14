@@ -108,10 +108,18 @@ def select_document_part(
         raise DocumentSelectionError(
             f"Document {source.key.value!r} contains no clauses for volume {part!r}."
         )
-    root_title = f"Part {part.replace('§', '-')}"
+    root_clause = next(
+        (clause for clause in clauses if clause.reference.clause.strip() == "0"),
+        None,
+    )
+    root_title = (
+        root_clause.heading.strip()
+        if root_clause is not None and root_clause.heading and root_clause.heading.strip()
+        else (title.strip() if title and title.strip() else f"Part {part.replace('§', '-')}")
+    )
     clauses = tuple(
         clause.with_baseline_updates(heading=root_title)
-        if clause.reference.clause.strip() == "0"
+        if clause.reference.clause.strip() == "0" and clause.heading != root_title
         else clause
         for clause in clauses
     )
@@ -119,7 +127,7 @@ def select_document_part(
     tables, table_index = _select_table_structure(source, clause_ids)
     updates = {
         "key": DocumentKey(value=target_key),
-        "title": title or root_title,
+        "title": root_title,
         "clauses": clauses,
         "annotations": tuple(a for a in source.annotations if a.clause_id in clause_ids),
         "tables": tables,
@@ -128,7 +136,7 @@ def select_document_part(
     if isinstance(source, Standard):
         updates.update(
             key=StandardKey(value=target_key),
-            name=title or root_title,
+            name=root_title,
             parent_key=StandardKey(value=source.key.value),
         )
     return source.model_copy(update=updates)

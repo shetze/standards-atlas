@@ -254,7 +254,8 @@ class ReviewWorkbenchService:
         visible = [
             p
             for p in all_proposals
-            if not holdout or (p.producer_kind == "model" and p.proposal_sha256 in exposed)
+            if not holdout
+            or (p.producer_kind in {"model", "engineering"} and p.proposal_sha256 in exposed)
         ]
         active = active_decisions(state)
         current = [d for (i, _), d in active.items() if i == example_id]
@@ -287,8 +288,9 @@ class ReviewWorkbenchService:
             "holdout": {
                 "blind": holdout and not exposures,
                 "historical_proposals_withheld": holdout,
-                "unrevealed_model_count": sum(
-                    p.producer_kind == "model" and p.proposal_sha256 not in exposed
+                "unrevealed_recommendation_count": sum(
+                    p.producer_kind in {"model", "engineering"}
+                    and p.proposal_sha256 not in exposed
                     for p in all_proposals
                 )
                 if holdout

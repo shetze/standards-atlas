@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import unicodedata
 from dataclasses import dataclass
@@ -12,9 +13,84 @@ from standards_atlas.application.context.source_structure import read_source_str
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.semantic_qualification.campaign_selection import stratified_sample
+from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
 from standards_atlas.application.semantic_qualification.partial_proposals import load_partial_inputs
 
-from .model import EvidenceQuote, EvidenceSpan, ReviewPackage, ReviewSource
+from .model import EvidenceQuote, EvidenceSpan, ReviewPackage, ReviewSource, SemanticPredicate
+
+
+def canonical_enrichment_suggestions(
+    package: ReviewPackage, provider: ClauseProvider, *, example_ids: set[str] | None = None
+) -> list[dict]:
+    """Expose canonical semantic enrichments as review candidates, never as gold.
+
+    Qualification inputs deliberately strip semantic answers. Review preparation
+    re-opens the normalized EngineeringDocument through the existing ClauseProvider.
+    The provider is also used to detect a stale corpus whose canonical structure no
+    longer matches the normalized document.
+    """
+    sources = {source.example_id: source for source in package.population}
+    selected = [
+        case
+        for case in package.cases
+        if example_ids is None or case.example_id in example_ids
+    ]
+    suggestions: list[dict] = []
+    for case in selected:
+        source = sources[case.example_id]
+        descriptor = provider.get_clause(source.clause_id)
+        if (
+            descriptor.id != source.clause_id
+            or descriptor.document_key != source.document_key
+            or descriptor.clause_reference != source.reference
+            or descriptor.content_hash != source.content_hash
+        ):
+            raise ValueError(
+                f"canonical EngineeringDocument source drift for review case: {source.example_id}"
+            )
+        if (
+            source.structure.origin == "canonical"
+            and descriptor.source_structure is not None
+            and descriptor.source_structure != source.structure
+        ):
+            raise ValueError(
+                "canonical EngineeringDocument structure drift for review case: "
+                f"{source.example_id}; "
+                "regenerate the qualification corpus/review package after normalization"
+            )
+        attributes = {item.path: item for item in descriptor.enrichment_context.attributes}
+        for attribute in case.attributes:
+            item = attributes.get(f"enrichments.semantic.{attribute}")
+            if item is None or item.availability != "known":
+                continue
+            provenance = {
+                "path": item.path,
+                "origin": item.origin,
+                "generated": (
+                    item.generated.model_dump(mode="json") if item.generated is not None else None
+                ),
+                "confirmed": (
+                    item.confirmed.model_dump(mode="json") if item.confirmed is not None else None
+                ),
+            }
+            suggestions.append(
+                {
+                    "example_id": source.example_id,
+                    "attribute": attribute,
+                    "predicate": SemanticPredicate(equals=item.value),
+                    "producer": "canonical-engineering-document",
+                    "producer_kind": "engineering",
+                    "rationale": (
+                        "Current normalized EngineeringDocument enrichment under review; "
+                        "critically assess it against the complete clause and structure, "
+                        "and add evidence with an independent recommendation."
+                    ),
+                    "provenance": json.dumps(
+                        provenance, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                    ),
+                }
+            )
+    return suggestions
 
 
 def fingerprint(model, field: str) -> str:

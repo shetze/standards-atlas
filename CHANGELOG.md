@@ -1,5 +1,17 @@
 # Changelog
 
+
+## Unreleased — Review context and enrichment candidates (2026-09-14)
+
+- Preserve the canonical AtlasData part title when deriving normalized part documents instead of
+  replacing the root heading with a synthetic `Part N` label or shortened manifest title.
+- Reuse the normalized `EngineeringDocument` through the existing `ClauseProvider` to seed current
+  semantic enrichments as `engineering` review proposals; never promote them to human gold.
+- Expose those candidates to Codex and HITL for Development so they can be challenged with explicit
+  evidence; keep them hidden for Holdout until the reviewer's recorded first assessment/reveal.
+- Revalidate clause identity, content hash and canonical source structure so stale review packages
+  are rejected after normalization changes rather than mixing old context with current enrichments.
+
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
 ## Unreleased — Global schema enforcement R4 (2026-09-14)

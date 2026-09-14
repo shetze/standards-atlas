@@ -196,6 +196,20 @@ and selection rather than quietly applying an obsolete proposal.
 The new directory is automatically discoverable in the registry. Use its handle and package
 revision for the next phase. An index is optional for annotation of already materialized cases.
 
+## Existing enrichments are review candidates
+
+When the normalized `EngineeringDocument` exists in `.atlas/data/documents`, review build and
+selection materialization read it through the normal `ClauseProvider`. Current values under
+`enrichments.semantic` for the review profile attributes are stored as proposals with
+`producer_kind=engineering`. They are **candidate answers under review**, not Golden labels or
+human confirmations. Codex receives them for Development cases and should explicitly agree,
+disagree or refine them using the complete frozen source and evidence quotes.
+
+The provider must match the frozen clause identity, text hash and canonical structure. A mismatch
+means the corpus/review package predates the current normalization and must be rebuilt; Atlas does
+not silently attach current enrichments to stale source context. Holdout cases deliberately
+withhold these engineering candidates from Codex so its recommendation remains independent.
+
 ## 4. Return recommendations and exact evidence
 
 For each selected case, Codex sends attribute, typed predicate, rationale and evidence quotes.
@@ -228,9 +242,11 @@ respect the additional-case budget. Compare historical disagreements with publis
 reference hints, cover different clause structures and include clear controls.
 Inspect full original sources before proposing annotation evidence. Submit a
 source-bound selection with explicit rationales; do not alter Holdout membership.
-After the selected package is materialized locally, submit model recommendations
-with exact evidence quotes and meaningful counterarguments. Report your actor and
-actual model identity. Do not submit HTML or claim any human confirmation.
+After the selected package is materialized locally, inspect any
+`producer_kind=engineering` proposals as current enrichments under review. Challenge them
+explicitly instead of treating them as Gold, then submit your own model recommendations with
+exact supporting/counter evidence. Report your actor and actual model identity. Do not submit
+HTML or claim any human confirmation.
 ```
 
 ## Holdout and trust boundaries

@@ -45,7 +45,7 @@ def verify_workbench_state(journal: WorkbenchState, package, review_state) -> No
             if (
                 proposal is None
                 or proposal.example_id != exposure.example_id
-                or proposal.producer_kind != "model"
+                or proposal.producer_kind not in {"model", "engineering"}
                 or proposal.revision > exposure.review_revision
             ):
                 raise ValueError("invalid Holdout exposure proposal binding")

@@ -91,7 +91,7 @@ def reveal(root: Path, *, view: dict, assessment: str) -> None:
             proposal_sha256s=tuple(
                 p.proposal_sha256
                 for p in state.proposals
-                if p.example_id == case.example_id and p.producer_kind == "model"
+                if p.example_id == case.example_id and p.producer_kind in {"model", "engineering"}
             ),
             revealed_at=datetime.now(UTC),
         )

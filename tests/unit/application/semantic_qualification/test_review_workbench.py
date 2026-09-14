@@ -233,6 +233,18 @@ def test_holdout_reveal_requires_assessment_keeps_history_hidden_and_records_exp
     package, original = load_review(root)
     example_id = next(c.example_id for c in package.cases if c.split == "holdout")
     model_proposal(root, example_id)
+    package, state = load_review(root)
+    record_proposal(
+        root,
+        expected_revision=state.revision,
+        example_id=example_id,
+        attribute="primary_knowledge_kind",
+        predicate=SemanticPredicate(equals="process"),
+        producer="canonical-engineering-document",
+        producer_kind="engineering",
+        rationale="Current normalized enrichment under review.",
+        provenance="synthetic engineering state",
+    )
     before = (root / "review-state.json").read_bytes()
     data = view(client, example_id)
     assert (
@@ -255,7 +267,7 @@ def test_holdout_reveal_requires_assessment_keeps_history_hidden_and_records_exp
     assert response.status_code == 200, response.text
     updated = view(client, example_id)
     assert updated["holdout"]["blind"] is False
-    assert all(p["producer_kind"] == "model" for p in updated["proposals"])
+    assert {p["producer_kind"] for p in updated["proposals"]} == {"model", "engineering"}
     assert "SENTINEL-MODEL-RATIONALE" in json.dumps(updated)
     assert view(client, example_id, reviewer="Another human")["proposals"] == []
     assert (root / "review-state.json").read_bytes() == before
@@ -264,8 +276,9 @@ def test_holdout_reveal_requires_assessment_keeps_history_hidden_and_records_exp
     assert journal.exposures[0].proposal_sha256s
     model_proposal(root, example_id, value=False)
     newer = view(client, example_id)
-    assert len(newer["proposals"]) == 1
-    assert newer["holdout"]["unrevealed_model_count"] == 1
+    assert len(newer["proposals"]) == 2
+    assert {p["producer_kind"] for p in newer["proposals"]} == {"model", "engineering"}
+    assert newer["holdout"]["unrevealed_recommendation_count"] == 1
 
 
 def test_repeated_identical_reveal_is_idempotent(tmp_path):

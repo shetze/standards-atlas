@@ -60,6 +60,15 @@ def build_partial_review_command(
     ),
 ) -> None:
     """Freeze Development, source-only disjoint holdout, original text, context and rules."""
+    from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvider
+
+    documents = defaults.DEFAULT_WORKSPACE / "documents"
+    clause_provider = (
+        EngineeringDocumentClauseProvider(defaults.DEFAULT_WORKSPACE)
+        if documents.is_dir()
+        else None
+    )
+
     with _errors():
         result = build_review_package(
             manifest=manifest,
@@ -73,6 +82,7 @@ def build_partial_review_command(
             development_suites=tuple(development_suite or ()),
             profile_path=profile,
             instructions=instructions,
+            clause_provider=clause_provider,
         )
     _show(result)
 
@@ -234,9 +244,22 @@ def apply_partial_review_selection_command(
         apply_selection,
     )
 
+    from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvider
+
+    documents = defaults.DEFAULT_WORKSPACE / "documents"
+    clause_provider = (
+        EngineeringDocumentClauseProvider(defaults.DEFAULT_WORKSPACE)
+        if documents.is_dir()
+        else None
+    )
     with _errors():
         result = apply_selection(
-            package, selection_sha256=selection, output=output, review_id=review_id, version=version
+            package,
+            selection_sha256=selection,
+            output=output,
+            review_id=review_id,
+            version=version,
+            clause_provider=clause_provider,
         )
     _show(result)
 

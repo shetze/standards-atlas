@@ -15,6 +15,7 @@ from standards_atlas.application.semantic_qualification.annotations import norma
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
     ApplicabilityGoldenCorpus,
 )
+from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
 from standards_atlas.application.semantic_qualification.partial_comparison import (
     _output_is_separate,
 )
@@ -30,9 +31,15 @@ from standards_atlas.application.semantic_qualification.qualification_campaign_m
 
 from .model import ReviewPackage, ReviewProfile, SemanticPredicate, predicate_data
 from .service import add_proposal, empty_state
-from .sources import freeze_population, population_hash, select_holdout
+from .sources import (
+    canonical_enrichment_suggestions,
+    freeze_population,
+    population_hash,
+    select_holdout,
+)
 from .storage import new_directory
 from .validation import review_report, seal, verify_package
+
 
 
 def build_review_package(
@@ -48,6 +55,7 @@ def build_review_package(
     development_suites: tuple[Path, ...] = (),
     profile_path: Path | None = None,
     instructions: Path | None = None,
+    clause_provider: ClauseProvider | None = None,
 ) -> dict:
     spec = QualificationCampaign.load(manifest)
     if spec.review_bundle is not None:
@@ -223,6 +231,8 @@ def build_review_package(
         "package_sha256",
     )
     verify_package(package)
+    if clause_provider is not None:
+        suggestions.extend(canonical_enrichment_suggestions(package, clause_provider))
     state = empty_state(package)
     for suggestion in suggestions:
         state = add_proposal(package, state, **suggestion, created_at=now)

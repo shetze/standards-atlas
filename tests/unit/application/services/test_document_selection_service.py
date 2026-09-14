@@ -88,4 +88,42 @@ def test_derive_by_volume_preserves_clause_zero_part_root(tmp_path):
     )
 
     assert [item.reference.clause for item in derived.clauses] == ["0", "1"]
-    assert derived.clauses[0].heading == "Part 8"
+    assert derived.clauses[0].heading == "ISO 26262-8"
+    assert derived.title == "ISO 26262-8"
+
+
+def test_derive_by_volume_prefers_atlasdata_root_title_over_manifest_short_title(tmp_path):
+    workspace = tmp_path / ".atlas"
+    anchor = Clause(
+        id=ClauseId(value="part-11-anchor"),
+        reference=StandardReference(standard="ISO 26262", clause="0", part="11", year=2018),
+        clause_type=ClauseType.CLAUSE,
+        heading="Guidelines on application of ISO 26262 to semiconductors",
+    )
+    child = Clause(
+        id=ClauseId(value="part-11-child"),
+        reference=StandardReference(standard="ISO 26262", clause="4.7.6.4", part="11", year=2018),
+        clause_type=ClauseType.CLAUSE,
+        parent_id=anchor.id,
+    )
+    repository = FileSystemEngineeringDocumentRepository(workspace)
+    repository.save(
+        Standard(
+            key=StandardKey(value="ISO26262"),
+            title="ISO 26262",
+            name="ISO 26262",
+            clauses=(anchor, child),
+        )
+    )
+
+    derived = build_document_selection_service(workspace).derive_by_volume(
+        "ISO26262",
+        "ISO26262-11",
+        "11",
+        "Guidelines on application to semiconductors",
+    )
+
+    expected = "Guidelines on application of ISO 26262 to semiconductors"
+    assert derived.title == expected
+    assert derived.name == expected
+    assert derived.clauses[0].heading == expected

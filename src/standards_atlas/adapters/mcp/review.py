@@ -237,6 +237,14 @@ class McpReviewService:
             "provenance_references_redacted": not self.config.expose.source_paths,
             "case": case.model_dump(mode="json") if case else None,
             "proposals": proposals,
+            "proposal_semantics": {
+                "engineering": (
+                    "Current normalized EngineeringDocument enrichment under review; "
+                    "treat it as a candidate to challenge, not as gold."
+                ),
+                "model": "Independent model recommendation; never a human confirmation.",
+                "historical": "Prior reference/history; provenance only, not a new confirmation.",
+            },
             "human_reviews": decisions,
             "holdout_prior_results_withheld": holdout,
         }
