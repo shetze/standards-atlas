@@ -193,11 +193,34 @@ def _detail_resources(resources: Path, matrix) -> dict[str, str]:
     return bound
 
 
+def _review_inputs(spec, examples, resources):
+    from standards_atlas.application.semantic_qualification.review_package.publication import (
+        load_bound_suite,
+        publication_suites,
+    )
+
+    if spec.review_bundle is not None:
+        from standards_atlas.application.semantic_qualification.review_package.handoff import (
+            load_review_handoff,
+        )
+
+        handoff = load_review_handoff(
+            spec.review_bundle, requested=spec, examples=examples, resources=resources
+        )
+        return (
+            [(suite, handoff.publication) for suite in publication_suites(handoff.publication)],
+            handoff.archive,
+        )
+    return [load_bound_suite(p, examples, resources=resources) for p in spec.semantic_suites], None
+
+
 def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
     spec = QualificationCampaign.load(manifest)
     output = output.resolve()
     source_path = spec.run or spec.dataset
     inputs = (manifest, source_path, spec.golden, *spec.semantic_suites, *spec.sentinel_suites)
+    if spec.review_bundle is not None:
+        inputs += (spec.review_bundle,)
     _output_is_separate(output, inputs)
     if output.exists():
         raise ValueError("campaign preparation needs a new output; run resumes frozen campaigns")
@@ -205,13 +228,10 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
     examples = tuple(sorted(source.examples, key=lambda e: e.id))
     golden = ApplicabilityGoldenCorpus.load(spec.golden)
     from standards_atlas.application.semantic_qualification.review_package.publication import (
-        load_bound_suite,
         verify_campaign_bindings,
     )
 
-    loaded_suites = [
-        load_bound_suite(p, examples, resources=resources) for p in spec.semantic_suites
-    ]
+    loaded_suites, review_archive = _review_inputs(spec, examples, resources)
     suites = tuple(suite for suite, _ in loaded_suites)
     review_bindings = {
         binding.evidence_sha256: binding.model_dump(mode="json")
@@ -276,11 +296,14 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
         payloads["inputs/semantic-review-bindings.json"] = [
             review_bindings[key] for key in sorted(review_bindings)
         ]
-    files = {
-        name: hashlib.sha256(_json_bytes(payload)).hexdigest() for name, payload in payloads.items()
-    }
+    serialized = {name: _json_bytes(payload) for name, payload in payloads.items()}
+    if review_archive is not None:
+        serialized["inputs/review-package.zip"] = review_archive
+    files = {name: hashlib.sha256(raw).hexdigest() for name, raw in serialized.items()}
     definition = {
-        "schema_version": "1.1" if review_bindings else "1.0",
+        "schema_version": "1.2"
+        if review_archive is not None
+        else ("1.1" if review_bindings else "1.0"),
         "kind": "partial-qualification-campaign",
         "specification": spec.model_dump(mode="json"),
         "variants": variants,
@@ -292,8 +315,10 @@ def prepare_campaign(*, manifest: Path, output: Path, resources: Path) -> dict:
     }
     definition["campaign_sha256"] = structure_fingerprint(definition)
     output.mkdir(parents=True)
-    for name, payload in payloads.items():
-        _atomic_json(output / name, payload)
+    for name, raw in serialized.items():
+        path = output / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(raw)
     _atomic_json(output / "campaign-plan.json", definition)
     by_id = {e.id: e for e in examples}
     for cohort in ("evaluation_union", "representative", "golden"):
@@ -371,7 +396,12 @@ def load_campaign(root: Path, resources: Path):
         "selection.json",
     }
     review_name = "inputs/semantic-review-bindings.json"
-    if set(files) not in (expected_names, expected_names | {review_name}):
+    archive_name = "inputs/review-package.zip"
+    if set(files) not in (
+        expected_names,
+        expected_names | {review_name},
+        expected_names | {review_name, archive_name},
+    ):
         raise ValueError("campaign evidence inventory differs from contract")
     payloads = {}
     for name, digest in files.items():
@@ -381,7 +411,7 @@ def load_campaign(root: Path, resources: Path):
         raw = path.read_bytes()
         if hashlib.sha256(raw).hexdigest() != digest:
             raise ValueError(f"campaign input changed: {name}")
-        payloads[name] = json.loads(raw)
+        payloads[name] = raw if name == archive_name else json.loads(raw)
     population = tuple(
         EvaluationExample(id=e["id"], input=e["input"], expected={})
         for e in payloads["inputs/population.json"]
@@ -401,9 +431,28 @@ def load_campaign(root: Path, resources: Path):
     )
     if has_review_bindings != (review_name in payloads):
         raise ValueError("campaign review evidence inventory differs from bound suites")
-    if has_review_bindings != (definition["schema_version"] == "1.1"):
-        raise ValueError("source-bound review evidence requires campaign artifact schema 1.1")
+    if has_review_bindings != (definition["schema_version"] in {"1.1", "1.2"}):
+        raise ValueError("source-bound review evidence requires campaign artifact schema 1.1/1.2")
+    has_archive = archive_name in payloads
+    if has_archive != (definition["schema_version"] == "1.2") or has_archive != (
+        spec.review_bundle is not None
+    ):
+        raise ValueError("review handoff requires the archived snapshot and campaign artifact 1.2")
     verify_campaign_bindings(suites, payloads.get(review_name, []), population, resources)
+    if has_archive:
+        from standards_atlas.application.semantic_qualification.review_package.handoff import (
+            verify_archive_publication,
+        )
+        from standards_atlas.application.semantic_qualification.review_package.model import (
+            ReviewPublication,
+        )
+
+        bindings = payloads[review_name]
+        if len(bindings) != 1:
+            raise ValueError("review handoff must bind exactly one published review snapshot")
+        verify_archive_publication(
+            payloads[archive_name], ReviewPublication.model_validate(bindings[0])
+        )
     expected = build_cohorts(
         population,
         golden,
@@ -451,14 +500,12 @@ def verify_prepared_campaign(*, manifest: Path, campaign: Path, resources: Path)
         or ApplicabilityGoldenCorpus.load(requested.golden) != golden
     ):
         raise ValueError("workflow source or Golden corpus changed after campaign preparation")
-    from standards_atlas.application.semantic_qualification.review_package.publication import (
-        load_bound_suite,
-    )
-
-    current_suites = tuple(
-        load_bound_suite(p, source.examples, resources=resources)[0]
-        for p in requested.semantic_suites
-    )
+    loaded_suites, current_archive = _review_inputs(requested, source.examples, resources)
+    current_suites = tuple(suite for suite, _ in loaded_suites)
+    if current_archive is not None and hashlib.sha256(current_archive).hexdigest() != (
+        definition["files"].get("inputs/review-package.zip")
+    ):
+        raise ValueError("workflow review archive changed after preparation")
     current_sentinels = tuple(json.loads(p.read_bytes()) for p in requested.sentinel_suites)
     if current_suites != suites or list(current_sentinels) != sentinels:
         raise ValueError("workflow semantic reference suite changed after preparation")

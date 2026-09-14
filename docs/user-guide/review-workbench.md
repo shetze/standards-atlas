@@ -149,6 +149,8 @@ Publication still needs `--output`, `--publish` and a truthful `--holdout-declar
 explained in [the review-package guide](partial-review-packages.md). A new model suggestion,
 page visit or initial assessment does not enter the suites. There is no publish endpoint in
 the workbench. Existing suite formats and qualification/activation thresholds are unchanged.
+The [handoff command](partial-review-handoff.md) performs publication and campaign packaging
+in one atomic operation after the explicit human review is complete.
 
 ## Persistence, security and recovery
 
@@ -164,10 +166,12 @@ the workbench. Existing suite formats and qualification/activation thresholds ar
 
 Workbench metadata is separately hashed and bound to the package. It does not confer
 semantic authority and is not folded into the immutable package hash. Keep the **whole review
-package directory**, including `workbench/`, as the local audit record. In this slice the
-existing suite publication contains its established semantic review evidence, not an embedded
-copy of the additional workbench exposure journal. End-to-end archival integration remains
-part of the subsequent workflow slice; do not treat the suite alone as an exposure ledger.
+package directory**, including `workbench/`, for continued review. New publication 1.1
+includes the checked Workbench journal and all recorded revisions; older publication 1.0
+does not retrospectively gain this evidence. The [qualification handoff](partial-review-handoff.md)
+exports the suite pair, full review ZIP and ready campaign manifest together, and keeps that
+snapshot in the frozen qualification campaign and its final evidence archive. The suite YAML
+alone is still not an exposure ledger; retain its bound evidence and archive.
 
 Both metadata and human reviews use the existing package writer lock and crash-safe writes.
 A stale lock must be investigated before manual recovery, as in the existing package workflow.

@@ -40,7 +40,11 @@ def archive_campaign(*, campaign: Path, output: Path, resources: Path) -> Path:
         output_directory=campaign,
         matrix_id=spec.id + "--qualification-campaign",
         manifest_path=manifest,
-        core_paths=tuple(campaign / n for n in names if not n.endswith(".zip")),
+        core_paths=tuple(
+            campaign / n
+            for n in names
+            if not n.endswith(".zip") or n == "inputs/review-package.zip"
+        ),
         archive_directory=output,
         analysis_metrics={
             "clause_count": evaluation["selection"]["source_population_count"],

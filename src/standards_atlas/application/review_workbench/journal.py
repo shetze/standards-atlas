@@ -7,7 +7,6 @@ prior exposure outside this UI. It is deliberately separate from review-state.js
 from datetime import UTC, datetime
 from pathlib import Path
 
-from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.semantic_qualification.partial_proposals import (
     _atomic_json,
     _json_bytes,
@@ -15,12 +14,14 @@ from standards_atlas.application.semantic_qualification.partial_proposals import
 )
 from standards_atlas.application.semantic_qualification.review_package.candidates import safe_read
 from standards_atlas.application.semantic_qualification.review_package.service import load_review
-from standards_atlas.application.semantic_qualification.review_package.sources import fingerprint
 from standards_atlas.application.semantic_qualification.review_package.storage import (
     _sync_directory,
     review_lock,
 )
 from standards_atlas.application.semantic_qualification.review_package.validation import seal
+from standards_atlas.application.semantic_qualification.review_package.workbench import (
+    verify_workbench_state,
+)
 
 from .model import HoldoutExposure, WorkbenchState
 
@@ -30,39 +31,11 @@ def load_journal(root: Path, package, review_state) -> WorkbenchState:
     if path.is_symlink() or path.parent.is_symlink():
         raise ValueError("unsafe workbench journal symlink")
     if not path.exists():
+        if (path.parent / "history").exists():
+            raise ValueError("Workbench history exists without its current journal")
         return seal(WorkbenchState, {"package_sha256": package.package_sha256}, "workbench_sha256")
     journal = WorkbenchState.model_validate_json(safe_read(path))
-    require_supported_schema("review-workbench-state", journal.schema_version)
-    if (
-        journal.package_sha256 != package.package_sha256
-        or fingerprint(journal, "workbench_sha256") != journal.workbench_sha256
-    ):
-        raise ValueError("workbench journal/package fingerprint mismatch")
-    sources = {s.example_id: s for s in package.population}
-    cases = {c.example_id: c for c in package.cases}
-    proposals = {p.proposal_sha256: p for p in review_state.proposals}
-    if any(not name.strip() or case not in cases for name, case in journal.bookmarks.items()):
-        raise ValueError("invalid workbench bookmark")
-    for exposure in journal.exposures:
-        case = cases.get(exposure.example_id)
-        if (
-            case is None
-            or case.split != "holdout"
-            or exposure.source_sha256 != sources[exposure.example_id].source_sha256
-            or exposure.rules_sha256 != package.rules_sha256
-            or exposure.review_revision > review_state.revision
-            or len(set(exposure.proposal_sha256s)) != len(exposure.proposal_sha256s)
-        ):
-            raise ValueError("invalid Holdout exposure source/revision binding")
-        for digest in exposure.proposal_sha256s:
-            proposal = proposals.get(digest)
-            if (
-                proposal is None
-                or proposal.example_id != exposure.example_id
-                or proposal.producer_kind != "model"
-                or proposal.revision > exposure.review_revision
-            ):
-                raise ValueError("invalid Holdout exposure proposal binding")
+    verify_workbench_state(journal, package, review_state)
     return journal
 
 

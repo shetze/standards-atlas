@@ -2,6 +2,22 @@
 
 This changelog summarizes the architectural refactoring of Standards Atlas. It intentionally consolidates the detailed Git history into a compact record of the major design transitions and externally relevant capabilities. Individual fixes, test-only changes, data corrections, and intermediate refactoring commits are represented by the milestone in which they became part of the architecture.
 
+## Unreleased — Audited review-to-qualification handoff (2026-09-13)
+
+- Add atomic human-reviewed handoff bundles containing both confirmed reference suites,
+  a portable review archive and a generated qualification manifest; preserve the original
+  comparison, source inputs and quality/release policy without manual hash or YAML maintenance.
+- Capture full Workbench disclosure history in publication 1.1, distinguish unrecorded history
+  from absence of exposure, and preserve prior Holdout reveals during selection materialization.
+- Archive complete or unfinished review packages with bounded offline integrity replay, fixed ZIP
+  metadata, bound inputs and preparation lineage; reject unsafe paths, symlinks and writer locks.
+- Insert an always-validated handoff preflight before qualification preparation; freeze the
+  review ZIP in campaign artifact 1.2 and retain it in the final qualification evidence archive.
+- Separate manifest 1.1 from campaign-artifact versioning; retain older manifests/publications/
+  artifacts and keep model requests free of review targets, assessments and disclosure metadata.
+- Add synthetic end-to-end HTTP-review/preparation/CLI/campaign tests and source, archive,
+  exposure, resume and policy-boundary regressions. No production annotations or automatic release.
+
 ## Unreleased — Source-bound HTML review workbench (2026-09-13)
 
 - Add the opt-in `review-workbench` chat-service type over existing local review packages,

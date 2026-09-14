@@ -239,3 +239,81 @@ def apply_partial_review_selection_command(
             package, selection_sha256=selection, output=output, review_id=review_id, version=version
         )
     _show(result)
+
+
+@evaluation_app.command("partial-review-archive")
+def archive_partial_review_command(
+    package: Annotated[Path, typer.Option("--package", exists=True, file_okay=False)],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Snapshot even an unfinished review into an immutable ZIP; never publish or add decisions."""
+    from standards_atlas.application.semantic_qualification.review_package.archive import (
+        archive_review_package,
+    )
+
+    with _errors():
+        result = archive_review_package(package=package, output=output)
+    _show(result)
+
+
+@evaluation_app.command("partial-review-verify-archive")
+def verify_partial_review_archive_command(
+    archive: Annotated[Path, typer.Option("--archive", exists=True, dir_okay=False)],
+) -> None:
+    """Verify frozen source, decisions, exposure history and input bindings without live files."""
+    from standards_atlas.application.semantic_qualification.review_package.archive import (
+        verify_review_archive,
+    )
+
+    with _errors():
+        result = verify_review_archive(archive)
+    _show(result)
+
+
+@evaluation_app.command("partial-review-handoff")
+def handoff_partial_review_command(
+    package: Annotated[Path, typer.Option("--package", exists=True, file_okay=False)],
+    manifest: Annotated[Path, typer.Option("--manifest", exists=True, dir_okay=False)],
+    output: Annotated[Path | None, typer.Option("--output", file_okay=False)] = None,
+    holdout_declaration: Annotated[str | None, typer.Option("--holdout-declaration")] = None,
+    campaign_id: Annotated[str | None, typer.Option("--campaign-id")] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+    resources: Annotated[Path, typer.Option("--resources", file_okay=False)] = (
+        defaults.DEFAULT_EVALUATION_RESOURCES
+    ),
+) -> None:
+    """Atomically publish confirmed suites, a review archive and a ready campaign manifest."""
+    from standards_atlas.application.semantic_qualification.review_package.handoff import (
+        create_review_handoff,
+    )
+
+    with _errors():
+        result = create_review_handoff(
+            package=package,
+            manifest=manifest,
+            output=output,
+            resources=resources,
+            holdout_declaration=holdout_declaration,
+            campaign_id=campaign_id,
+            dry_run=dry_run,
+        )
+    _show(result)
+    if not result["importable"]:
+        raise typer.Exit(code=1)
+
+
+@evaluation_app.command("partial-review-check-handoff")
+def check_partial_review_handoff_command(
+    bundle: Annotated[Path, typer.Option("--bundle", exists=True, file_okay=False)],
+    resources: Annotated[Path, typer.Option("--resources", file_okay=False)] = (
+        defaults.DEFAULT_EVALUATION_RESOURCES
+    ),
+) -> None:
+    """Preflight the immutable handoff and live sources before qualification preparation."""
+    from standards_atlas.application.semantic_qualification.review_package.handoff import (
+        load_review_handoff,
+    )
+
+    with _errors():
+        result = load_review_handoff(bundle, resources=resources, live=True)
+    _show(result.summary(live=True))

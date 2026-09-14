@@ -20,6 +20,7 @@ from .service import load_review
 from .sources import fingerprint, freeze_population, verify_current_sources
 from .storage import new_directory, review_lock
 from .validation import confirmed_decisions, review_report, seal
+from .workbench import capture_workbench, verify_workbench_evidence, workbench_summary
 
 REVIEW_REFERENCE_PREFIX = "atlas-review:sha256:"
 
@@ -74,6 +75,8 @@ def verify_publication(publication: ReviewPublication, examples=None) -> tuple:
     require_supported_schema("partial-review-publication", publication.schema_version)
     if fingerprint(publication, "evidence_sha256") != publication.evidence_sha256:
         raise ValueError("review publication fingerprint mismatch")
+    if publication.workbench is not None:
+        verify_workbench_evidence(publication.workbench, publication.package, publication.state)
     expected_report = review_report(publication.package, publication.state)
     if expected_report != publication.report:
         raise ValueError("review publication coverage/report differs from verified decisions")
@@ -152,6 +155,72 @@ def verify_campaign_bindings(suites, bindings: list[dict], examples, resources: 
             )
 
 
+def compile_publication(
+    root: Path,
+    contract,
+    state,
+    *,
+    publish: bool,
+    holdout_declaration: str | None,
+    run: Path | None = None,
+    dataset: Path | None = None,
+) -> tuple[dict, ReviewPublication | None]:
+    """Shared locked snapshot for CLI import and atomic workflow handoff; never adds labels."""
+    verify_current_sources(contract, run=run, dataset=dataset)
+    workbench = capture_workbench(root, contract, state)
+    report = review_report(contract, state)
+    if holdout_declaration is not None and not holdout_declaration.strip():
+        raise ValueError("holdout declaration cannot be blank")
+    blockers = []
+    if report["conflicts"]:
+        blockers.append("contradictory confirmed decisions")
+    for split, coverage in report["splits"].items():
+        if not coverage["confirmed_attributes"]:
+            blockers.append(f"no confirmed decisions in {split}")
+    if publish and not report["ready_for_publication"]:
+        blockers.append("selected review tasks/coverage are incomplete")
+    if publish and not holdout_declaration:
+        blockers.append("publication needs an explicit human holdout-use declaration")
+    result = {
+        **report,
+        "live_sources_verified": True,
+        "importable": not blockers,
+        "import_blockers": blockers,
+        "requested_status": "published" if publish else "draft",
+        "workbench": workbench_summary(workbench),
+    }
+    if blockers:
+        return result, None
+    publication = seal(
+        ReviewPublication,
+        {
+            "package": contract.model_dump(mode="json"),
+            "state": state.model_dump(mode="json"),
+            "status": "published" if publish else "draft",
+            "holdout_declaration": holdout_declaration,
+            "report": report,
+            "workbench": workbench.model_dump(mode="json"),
+        },
+        "evidence_sha256",
+    )
+    verify_publication(publication)
+    return result, publication
+
+
+def publication_files(publication: ReviewPublication, result: dict) -> dict[str, bytes]:
+    files = {
+        f"{suite.split}.yaml": yaml.safe_dump(
+            suite.model_dump(mode="json", exclude_unset=True),
+            allow_unicode=True,
+            sort_keys=False,
+        ).encode("utf-8")
+        for suite in verify_publication(publication)
+    }
+    files["review-evidence.json"] = _json_bytes(publication.model_dump(mode="json"))
+    files["review-report.json"] = _json_bytes(result)
+    return files
+
+
 def import_review_package(
     *,
     package: Path,
@@ -162,34 +231,22 @@ def import_review_package(
     run: Path | None = None,
     dataset: Path | None = None,
 ) -> dict:
-    # Reading and compiling a publication holds the same lock as human writes.
+    # Reading and compiling a publication holds the same lock as human writes and reveals.
     with review_lock(package / ".review.lock"):
         contract, state = load_review(package)
-        verify_current_sources(contract, run=run, dataset=dataset)
-        report = review_report(contract, state)
-        if holdout_declaration is not None and not holdout_declaration.strip():
-            raise ValueError("holdout declaration cannot be blank")
-        blockers = []
-        if report["conflicts"]:
-            blockers.append("contradictory confirmed decisions")
-        for split, coverage in report["splits"].items():
-            if not coverage["confirmed_attributes"]:
-                blockers.append(f"no confirmed decisions in {split}")
-        if publish and not report["ready_for_publication"]:
-            blockers.append("selected review tasks/coverage are incomplete")
-        if publish and not holdout_declaration:
-            blockers.append("publication needs an explicit human holdout-use declaration")
-        result = {
-            **report,
-            "live_sources_verified": True,
-            "importable": not blockers,
-            "import_blockers": blockers,
-            "requested_status": "published" if publish else "draft",
-        }
+        result, publication = compile_publication(
+            package,
+            contract,
+            state,
+            publish=publish,
+            holdout_declaration=holdout_declaration,
+            run=run,
+            dataset=dataset,
+        )
         if dry_run:
             return result
-        if blockers:
-            raise ValueError("review import blocked: " + "; ".join(blockers))
+        if publication is None:
+            raise ValueError("review import blocked: " + "; ".join(result["import_blockers"]))
         if output is None:
             raise ValueError("review import requires a new output directory")
         _output_is_separate(
@@ -200,27 +257,5 @@ def import_review_package(
                 *(Path(p) for p in contract.source_location.values()),
             ),
         )
-        publication = seal(
-            ReviewPublication,
-            {
-                "package": contract.model_dump(mode="json"),
-                "state": state.model_dump(mode="json"),
-                "status": "published" if publish else "draft",
-                "holdout_declaration": holdout_declaration,
-                "report": report,
-            },
-            "evidence_sha256",
-        )
-        suites = verify_publication(publication)
-        files = {
-            f"{suite.split}.yaml": yaml.safe_dump(
-                suite.model_dump(mode="json", exclude_unset=True),
-                allow_unicode=True,
-                sort_keys=False,
-            ).encode("utf-8")
-            for suite in suites
-        }
-        files["review-evidence.json"] = _json_bytes(publication.model_dump(mode="json"))
-        files["review-report.json"] = _json_bytes(result)
-        new_directory(output, files, idempotent=True)
+        new_directory(output, publication_files(publication, result), idempotent=True)
         return result

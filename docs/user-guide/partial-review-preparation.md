@@ -286,3 +286,13 @@ After local selection materialization and model recommendation submission, open 
 package through [Review workbench](review-workbench.md). Its page order is the bound queue,
 its evidence rendering uses the stored quotations, and only explicit human saves create
 review decisions. No additional model call or qualification rerun is needed for the HTML UI.
+
+
+## Preserve preparation in the qualification handoff
+
+After completing the [HTML review](review-workbench.md), use the
+[archived qualification handoff](partial-review-handoff.md) to preserve the fixed queue,
+selection/index lineage, human decisions and Workbench exposure records with both suites.
+A further Development materialization retains the parent Workbench history and rebinds its
+identities automatically; it cannot reset a previously exposed Holdout to an unexposed state.
+No additional MCP approval or publication capability is introduced.

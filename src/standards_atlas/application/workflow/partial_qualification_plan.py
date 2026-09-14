@@ -17,9 +17,26 @@ def plan_partial_qualification(manifest: Path, output: Path) -> WorkflowPlan:
     spec = QualificationCampaign.load(manifest)
     root = output / spec.id
     prefix = ("uv", "run", "standards-atlas", "evaluation")
+    review_steps = ()
+    if spec.review_bundle is not None:
+        review_steps = (
+            WorkflowStep(
+                family="evaluation",
+                document=spec.id,
+                stage=WorkflowStage.REVIEW,
+                command=(
+                    *prefix,
+                    "partial-review-check-handoff",
+                    "--bundle",
+                    str(spec.review_bundle),
+                ),
+                artifact_policy=ArtifactPolicy.REVIEW,
+            ),
+        )
     return WorkflowPlan(
         families=("evaluation",),
         steps=(
+            *review_steps,
             WorkflowStep(
                 family="evaluation",
                 document=spec.id,

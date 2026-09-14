@@ -31,6 +31,7 @@ This guide describes the supported user workflows for turning private standards 
 | Review prepared Development/Holdout cases in the browser | [Review workbench](review-workbench.md) |
 | Build source-bound HITL packages and import confirmed decisions | [Review packages](partial-review-packages.md) |
 | Prepare intelligent selections and evidence using Codex/MCP | [Review preparation](partial-review-preparation.md) |
+| Hand reviewed suites and portable evidence to qualification | [Review handoff](partial-review-handoff.md) |
 | Run the read-only MCP server | [MCP server](mcp-server.md) |
 | Connect Codex to MCP | [Codex integration](codex-integration.md) |
 | Build corpora and execute qualification matrices | [Evaluation and qualification](evaluation-and-qualification.md) |

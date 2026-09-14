@@ -49,6 +49,27 @@ class VersionedInterface:
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
+        "partial-review-workbench-evidence",
+        "**/review-evidence.json#workbench",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-review-workbench-evidence",
+    ),
+    VersionedInterface(
+        "partial-review-archive",
+        "**/review-package.zip#archive-manifest.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-review-archive",
+    ),
+    VersionedInterface(
+        "partial-review-handoff",
+        "**/review-handoff.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-review-handoff",
+    ),
+    VersionedInterface(
         "review-workbench-state",
         "**/workbench/state.json",
         LifecycleBoundary.PERSISTENCE,
@@ -97,6 +118,14 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "partial-review-publication",
+    ),
+    VersionedInterface(
+        "partial-qualification-manifest",
+        "**/campaign.yaml",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "partial-qualification-manifest",
+        notes="Manifest 1.1 adds the review handoff; campaign artifact versions are separate.",
     ),
     VersionedInterface(
         "partial-qualification-campaign",

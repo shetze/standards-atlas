@@ -7,6 +7,15 @@ from typing import Any
 from .policy import SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
+    "partial-review-workbench-evidence": SchemaPolicy(
+        "partial-review-workbench-evidence", "1.0", ("1.0",), "**/review-evidence.json#workbench"
+    ),
+    "partial-review-archive": SchemaPolicy(
+        "partial-review-archive", "1.0", ("1.0",), "**/review-package.zip#archive-manifest.json"
+    ),
+    "partial-review-handoff": SchemaPolicy(
+        "partial-review-handoff", "1.0", ("1.0",), "**/review-handoff.json"
+    ),
     "review-workbench-state": SchemaPolicy(
         "review-workbench-state", "1.0", ("1.0",), "**/workbench/state.json"
     ),
@@ -29,10 +38,13 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         "partial-review-profile", "1.0", ("1.0",), "**/review-profile.yaml"
     ),
     "partial-review-publication": SchemaPolicy(
-        "partial-review-publication", "1.0", ("1.0",), "**/review-evidence.json"
+        "partial-review-publication", "1.1", ("1.0", "1.1"), "**/review-evidence.json"
+    ),
+    "partial-qualification-manifest": SchemaPolicy(
+        "partial-qualification-manifest", "1.1", ("1.0", "1.1"), "**/campaign.yaml"
     ),
     "partial-qualification-campaign": SchemaPolicy(
-        "partial-qualification-campaign", "1.1", ("1.0", "1.1"), "**/campaign-plan.json"
+        "partial-qualification-campaign", "1.2", ("1.0", "1.1", "1.2"), "**/campaign-plan.json"
     ),
     "partial-qualification-repeat": SchemaPolicy(
         "partial-qualification-repeat", "1.0", ("1.0",), "**/repeat.json"

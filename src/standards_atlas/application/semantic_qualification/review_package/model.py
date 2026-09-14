@@ -221,8 +221,46 @@ def validate_predicate(attribute: str, predicate: SemanticPredicate, schema: dic
         raise ValueError(f"invalid review predicate for {attribute}: {errors[0].message}")
 
 
-class ReviewPublication(CampaignModel):
+Reviewer = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+Assessment = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20_000)
+]
+
+
+class HoldoutExposure(CampaignModel):
+    """A recorded reveal is provenance, never a semantic confirmation or independence proof."""
+
+    example_id: NonBlank
+    reviewer: Reviewer
+    assessment: Assessment
+    source_sha256: Digest
+    rules_sha256: Digest
+    review_revision: int = Field(ge=0, strict=True)
+    proposal_sha256s: tuple[Digest, ...]
+    revealed_at: AwareDatetime
+
+
+class WorkbenchState(CampaignModel):
     schema_version: Literal["1.0"] = "1.0"
+    kind: Literal["review-workbench-state"] = "review-workbench-state"
+    package_sha256: Digest
+    revision: int = Field(default=0, ge=0, strict=True)
+    bookmarks: dict[str, str] = Field(default_factory=dict)
+    exposures: tuple[HoldoutExposure, ...] = ()
+    workbench_sha256: Digest
+
+
+class WorkbenchEvidence(CampaignModel):
+    schema_version: Literal["1.0"] = "1.0"
+    kind: Literal["partial-review-workbench-evidence"] = "partial-review-workbench-evidence"
+    journal_present: bool = Field(strict=True)
+    state: WorkbenchState
+    history: tuple[WorkbenchState, ...] = ()
+    audit_sha256: Digest
+
+
+class ReviewPublication(CampaignModel):
+    schema_version: Literal["1.0", "1.1"] = "1.1"
     kind: Literal["partial-review-publication"] = "partial-review-publication"
     package: ReviewPackage
     state: ReviewState
@@ -230,3 +268,18 @@ class ReviewPublication(CampaignModel):
     holdout_declaration: NonBlank | None = None
     report: dict[str, Any]
     evidence_sha256: Digest
+    workbench: WorkbenchEvidence | None = None
+
+    @model_validator(mode="after")
+    def versioned_workbench_evidence(self):
+        if (self.schema_version == "1.1") != (self.workbench is not None):
+            raise ValueError("publication 1.1 requires Workbench evidence; 1.0 cannot carry it")
+        return self
+
+    @model_serializer(mode="wrap")
+    def preserve_legacy_fingerprint(self, handler):
+        # Do not add a null field when replaying an already signed Slice-1/2/3 publication.
+        data = handler(self)
+        if self.schema_version == "1.0":
+            data.pop("workbench", None)
+        return data

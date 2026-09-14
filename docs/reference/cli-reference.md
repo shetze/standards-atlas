@@ -180,3 +180,17 @@ Each document writes a private `<key>-run.json` ledger. The planner adds `workfl
 stages after context and after publication, storing persistent, immutable comparison ZIPs and
 aggregate receipts. Corpus `--count`/`--all-clauses` and adoption `--run`/`--run-receipt`
 are mutually exclusive pairs.
+
+
+### Human review handoff and archive
+
+| Command | Purpose |
+| --- | --- |
+| `evaluation partial-review-handoff` | Validate confirmed decisions; atomically export suites, review ZIP and ready campaign manifest. |
+| `evaluation partial-review-check-handoff` | Recheck handoff, live source/context/rules and overlap before qualification preparation. |
+| `evaluation partial-review-archive` | Preserve a complete or unfinished review snapshot without publication. |
+| `evaluation partial-review-verify-archive` | Verify a review ZIP offline without extracting it or loading the original corpus. |
+
+See [Review handoff](../user-guide/partial-review-handoff.md) for examples, exit codes, limits
+and the separate explicit-human publication boundary. No model or release is started by
+these four commands.

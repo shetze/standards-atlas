@@ -30,7 +30,7 @@ class CampaignVariant(CampaignModel):
 class QualificationCampaign(CampaignModel):
     """Plan the comparisons first; never pick a winning policy after seeing labels."""
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["1.0", "1.1"] = "1.0"
     manifest_type: Literal["partial_qualification"] = "partial_qualification"
     id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
     run: Path | None = None
@@ -44,6 +44,8 @@ class QualificationCampaign(CampaignModel):
     repetitions: int = Field(default=3, ge=3, strict=True)
     minimum_published_golden_cases: int = Field(default=116, ge=116, strict=True)
     semantic_suites: tuple[Path, ...] = ()
+    # Manifest 1.1: relative to THIS manifest, unlike the legacy project-root paths.
+    review_bundle: Path | None = None
     sentinel_suites: tuple[Path, ...] = ()
     required_semantic_attributes: tuple[str, ...] = (
         "primary_function",
@@ -58,6 +60,10 @@ class QualificationCampaign(CampaignModel):
 
     @model_validator(mode="after")
     def valid_campaign(self):
+        if self.review_bundle is not None and (
+            self.schema_version != "1.1" or self.semantic_suites
+        ):
+            raise ValueError("review_bundle requires manifest 1.1 and replaces semantic_suites")
         if (self.run is None) == (self.dataset is None):
             raise ValueError("campaign requires exactly one source: run or dataset")
         names = [v.id for v in self.variants]
@@ -88,7 +94,11 @@ class QualificationCampaign(CampaignModel):
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             raise ValueError("qualification campaign manifest must contain a mapping")
-        require_supported_schema("partial-qualification-campaign", data.get("schema_version"))
+        require_supported_schema("partial-qualification-manifest", data.get("schema_version"))
+        # Only the new handoff pointer is manifest-relative; legacy inputs stay project-relative.
+        if data.get("review_bundle") is not None:
+            pointer = Path(data["review_bundle"])
+            data["review_bundle"] = str((path.parent / pointer).absolute())
         # Relative paths intentionally follow existing matrix/CLI project-root semantics.
         return cls.model_validate(data)
 

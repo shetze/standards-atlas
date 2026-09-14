@@ -21,6 +21,7 @@ from .preparation_model import SelectionProposal, SelectionRequest
 from .sources import duplicate_key, fingerprint, verify_current_sources
 from .storage import new_directory, review_lock
 from .validation import review_report, seal, verify_package, verify_state
+from .workbench import capture_workbench, rebound_workbench
 
 
 def selection_path(root: Path, digest: str) -> Path:
@@ -110,6 +111,7 @@ def apply_selection(
     with review_lock(root / ".review.lock"):
         package, state, index, selection = load_selection(root, selection_sha256)
         verify_current_sources(package)
+        workbench = capture_workbench(root, package, state)
         additions = set(selection.request.additional_development_ids)
         known = set(package.known_development_ids) | additions
         holdout = set(selection.holdout_ids)
@@ -143,8 +145,13 @@ def apply_selection(
             "preparation-selection.json": _json_bytes(selection.model_dump(mode="json")),
             "preparation-index.json": safe_read(index_path(root, index.index_sha256)),
             "preparation-parent-state.json": _json_bytes(state.model_dump(mode="json")),
+            "preparation-parent-package.json": _json_bytes(package.model_dump(mode="json")),
             "review-queue.json": _json_bytes(queue),
         }
+        if workbench.journal_present:
+            files["preparation-parent-workbench.json"] = _json_bytes(
+                workbench.model_dump(mode="json")
+            )
         data = package.model_dump(mode="json")
         old = {case.example_id: case for case in package.cases}
         data.update(
@@ -191,10 +198,11 @@ def apply_selection(
                     b"# Selected review package\n\n"
                     b"Development was extended; original Holdout and review events are preserved.\n"
                     b"review-queue.json is a bound presentation order, not a source of labels.\n"
-                    b"Use MCP submission only for suggestions; use the human adapter for decisions.\n"
+                    b"Use MCP only for suggestions; use the human adapter for decisions.\n"
                 ),
             }
         )
+        files.update(rebound_workbench(workbench, derived, rebound))
         new_directory(output, files, idempotent=True)
     return {
         **review_report(derived, rebound),

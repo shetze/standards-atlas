@@ -50,6 +50,10 @@ def build_review_package(
     instructions: Path | None = None,
 ) -> dict:
     spec = QualificationCampaign.load(manifest)
+    if spec.review_bundle is not None:
+        raise ValueError(
+            "build review packages from the source campaign manifest, not a frozen handoff"
+        )
     if output.exists():
         raise ValueError("review output exists; a rebuild never overwrites started reviews")
     profile = (
@@ -122,7 +126,9 @@ def build_review_package(
                         predicate=SemanticPredicate.model_validate(predicate_data(predicate)),
                         producer=suite.reviewed_by or suite.id,
                         producer_kind="historical",
-                        rationale="Existing reference; reconfirm against frozen text/context/rules.",
+                        rationale=(
+                            "Existing reference; reconfirm against frozen text/context/rules."
+                        ),
                         provenance=f"{path}: {suite.id}@{suite.version}; {suite.status}; "
                         f"review_reference={suite.review_reference}",
                     )

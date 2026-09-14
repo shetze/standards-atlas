@@ -6,7 +6,8 @@ approval or a release activation. The human CLI and optional MCP preparation ada
 the application contract in `semantic_qualification/review_package`. This guide describes
 the Slice-1 foundation: package construction, human decisions and validated suite import.
 [Candidate indexing and MCP preparation](partial-review-preparation.md) are available in
-Slice 2; the paginated HTML workbench remains Slice 3.
+Slice 2; the [HTML Workbench](review-workbench.md) and
+[archived qualification handoff](partial-review-handoff.md) complete the workflow.
 
 ## Build from the existing corpus
 
@@ -184,8 +185,8 @@ review-report.json
 
 Both suite files use the existing `partial-semantic-reference` schema 1.0. Only current
 explicitly `confirmed`/`corrected` human attributes are included. `review-evidence.json`
-preserves source/context/rules bindings, complete review history and the recomputable
-coverage report. All four files are committed together using one same-filesystem directory
+preserves source/context/rules bindings, complete review history, the source-bound Workbench exposure journal/history and the
+recomputable coverage report. New publications use schema 1.1; schema 1.0 remains readable. All four files are committed together using one same-filesystem directory
 rename on the supported local POSIX filesystem. Exact repeated imports are idempotent;
 changed content never overwrites an existing publication. Corrections are exported into
 a new output directory. Review state history remains intact.
@@ -200,11 +201,13 @@ documents and clause types, for example both true and false Role Presence refere
 See `cfg/evaluation/partial-cascade/review-profile-v1.yaml`. Declare requirements before
 review; an inclusive Process sentinel is not counted as proof of an exact set or negative.
 
-Add both generated suite paths to the campaign's `semantic_suites`, then run the existing
-`partial-qualification-prepare`. No new qualification engine or automatic activation is
-introduced. The manifest schema remains 1.0. Bound campaign **artifacts** use schema 1.1 and
-copy `inputs/semantic-review-bindings.json`; ordinary legacy campaigns retain artifact 1.0.
-Both are readable. Source context, suite pair and bound rules are checked at preparation,
+Use [the atomic handoff](partial-review-handoff.md) to generate both suites, the review
+archive and the ready campaign manifest without editing paths. The existing manual route
+(adding generated suite paths to `semantic_suites`) is still supported. No new qualification engine or automatic activation is
+introduced. The original manifest schema 1.0 remains readable. Handoff manifests use 1.1 and their
+campaign artifacts use 1.2, retaining the review ZIP as well as semantic review bindings.
+The earlier explicit-suite route still produces bound artifact 1.1 or legacy artifact 1.0;
+these remain readable. Source context, suite pair and bound rules are checked at preparation,
 resume and frozen-campaign load. Frozen execution does not depend on mutable external review
 working files. Historical unbound suites remain supported but do not gain this new assurance.
 

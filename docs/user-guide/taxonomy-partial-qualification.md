@@ -65,6 +65,12 @@ and automated hash handling. Use it before campaign preparation instead of hand-
 reference YAML. Its source/context/rules evidence is copied into new campaign artifacts;
 legacy unbound suites remain supported without that additional assurance.
 
+The [archived review handoff](partial-review-handoff.md) now generates the complete suite pair,
+review ZIP and a ready manifest. Use its `campaign.yaml` with the qualification workflow; a
+review preflight runs before preparation and pins the archive in campaign artifact 1.2. No
+manual copying of source hashes or suite paths is necessary. The explicit-suite example
+below remains a supported legacy interface, not the recommended authoring procedure.
+
 
 The example has `semantic_suites: []` on purpose: it can be prepared and explored, but it
 **cannot qualify for full-baseline execution or activation** without reviewed semantic

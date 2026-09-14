@@ -106,3 +106,28 @@ The diagnostic families `partial-cascade-audit`, `taxonomy-pilot-readiness`,
 start at **1.0**. Their rules and constraints are registered in the central schema baseline
 and inventory. These reports/checks do not constitute semantic Golden data, a source
 confirmation, a taxonomy-rule release or canonical publication authority.
+
+
+## Human review and qualification handoff
+
+The review package/state, Workbench state and semantic reference suites keep schema 1.0.
+New review publication **1.1** includes a replay-validated Workbench-evidence envelope (1.0),
+with explicit journal presence, exact exposure/proposal bindings and every recorded revision.
+Legacy publication 1.0 retains its original serialization and fingerprint, without an implied
+exposure-history claim.
+
+`partial-review-archive` and `partial-review-handoff` begin at **1.0** and declare closed
+member inventories. A review archive includes the frozen source package, event histories,
+preparation lineage, Workbench history and all package-bound inputs. A handoff binds that
+archive to the published Development/Holdout pair and its generated campaign manifest.
+
+`partial-qualification-manifest` is now an independent family (read 1.0/1.1). Manifest 1.1
+adds `review_bundle`, a pointer resolved relative to the owning manifest. It is mutually
+exclusive with a manually supplied `semantic_suites` list. The existing project-relative
+semantics of other input fields do not change.
+
+Handoff-backed campaign **artifacts** use `partial-qualification-campaign` **1.2**, retaining
+both semantic review bindings and the ZIP in the checksummed input inventory. Artifacts
+1.0/1.1 stay readable, and the existing non-handoff preparation path retains its old contracts.
+A handoff specification without its archive cannot be accepted by downgrading the artifact
+version. Review labels and disclosure metadata are evidence inputs, never model request data.
