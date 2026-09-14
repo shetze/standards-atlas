@@ -6,7 +6,7 @@ atlasdata_file: IEC61508
 selection_part: '5'
 publication_year: 2010
 fingerprints:
-  structure: sha256:39a249cfb249c8332484c3b51f8a56e4fcf1279587e61ed3d1c4cca73a1a9393
+  structure: sha256:46bd6d710bdf91fb2b048c489c4371d87854d0140b9ee611880ba92c665405a0
 clauses:
 - clause_id: clause-36c5ef3c52b6
   atlasdata_md5: a3a4fd5036e6b6197424a56595fb490a
@@ -15,7 +15,7 @@ clauses:
     part: '5'
     year: 2010
     clause: '0'
-  heading: Part 5
+  heading: Examples of methods for the determination of safety integrity levels
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:eb80eead5d3df05f3a39ee29aa51ad4341904e79100930089553ccee386028e7
-    atlasdata_heading: sha256:eb80eead5d3df05f3a39ee29aa51ad4341904e79100930089553ccee386028e7
+    heading: sha256:2cde5e8e0360f6ea38ff5eb9f9d1cc101971ec6402b67ded8d2d78551fa440bd
+    atlasdata_heading: sha256:2cde5e8e0360f6ea38ff5eb9f9d1cc101971ec6402b67ded8d2d78551fa440bd
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

@@ -214,6 +214,56 @@ from v1. The repair/export commands above do not invoke either prompt.
 See [canonical reference repair](context-routing-reference-resolution.md) for resolution boundaries
 and interpretation of the diagnostic report.
 
+## Rebind after the canonical part-title normalization fix
+
+The 2026-09-14 normalization correction stopped replacing multipart clause `0` headings with a
+synthetic `Part N` label and now preserves the canonical AtlasData title. Existing enrichment
+companions remain semantically valid, but their structural fingerprint intentionally refers to the
+old projection and therefore cannot be restored directly. Do **not** edit those hashes by hand.
+
+Preview the deterministic rebind first:
+
+```bash
+uv run standards-atlas atlasdata rebind-enrichments \
+  --manifest manifests/standards.yaml \
+  --available-only \
+  --output local/review/atlasdata-enrichment-rebind-preview.json
+```
+
+The command accepts a stale sidecar only if the current AtlasData skeleton, with its clause `0`
+heading changed back to the exact historical `Part N` value, reproduces the stored
+`fingerprints.structure`. It also verifies document/family/part/year identity, all published
+AtlasData MD5 foreign keys, every clause reference, and every non-root structural heading. If any
+other structural change is present, the whole selected operation fails before any sidecar is
+written.
+
+Apply after reviewing the preview:
+
+```bash
+uv run standards-atlas atlasdata rebind-enrichments \
+  --manifest manifests/standards.yaml \
+  --available-only \
+  --output local/review/atlasdata-enrichment-rebind.json \
+  --write
+```
+
+Only the global structure fingerprint and, when a root clause has published attributes, its
+`heading`, `heading` fingerprint and `atlasdata_heading` fingerprint are rebound. Attribute values,
+origin, generated/confirmed provenance, evidence references, private-value references and content
+fingerprints are preserved. Re-running the command on an already rebound companion is a no-op.
+
+Afterward the normal strict restore can run unchanged:
+
+```bash
+uv run standards-atlas workflow run \
+  --task knowledge \
+  --manifests manifests/standards.yaml \
+  --hierarchy functional-safety \
+  --knowledge-domain functional-safety \
+  --restore-enrichments \
+  --strict-evidence
+```
+
 ## Restore, including into a fresh workspace
 
 ```bash

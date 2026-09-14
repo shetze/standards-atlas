@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '8'
 publication_year: 2018
 fingerprints:
-  structure: sha256:a8381acad3c5a13285c130e24c7118c37481d8b62e8b433f5357aebf7baa2dfd
+  structure: sha256:242974055083e34532fd772ed621ebe04a4f2dca73568879dfe495873296bb2d
 clauses:
 - clause_id: clause-abcd70087c24
   atlasdata_md5: 4c718cbe8fe14d7046cd6e49a013d35d
@@ -15,7 +15,7 @@ clauses:
     part: '8'
     year: 2018
     clause: '0'
-  heading: Part 8
+  heading: Supporting processes
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:dddf4d48602fa126ff15f5b24624dd5472c31a63f8b6ccd347615c12348783a4
-    atlasdata_heading: sha256:dddf4d48602fa126ff15f5b24624dd5472c31a63f8b6ccd347615c12348783a4
+    heading: sha256:fcc379a619d1eba1b969dadb9cf2da1497e7e43fddc337d352df8a54aa3e7173
+    atlasdata_heading: sha256:fcc379a619d1eba1b969dadb9cf2da1497e7e43fddc337d352df8a54aa3e7173
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

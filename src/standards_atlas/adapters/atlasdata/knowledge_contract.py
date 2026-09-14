@@ -234,8 +234,8 @@ class TransferChange(_Strict):
 class AtlasDataKnowledgeReport(_Strict):
     SCHEMA_FAMILY: ClassVar[str] = "atlasdata-knowledge-report"
 
-    schema_version: Literal["1.0"] = "1.0"
-    operation: Literal["export", "import"]
+    schema_version: Literal["1.1"] = "1.1"
+    operation: Literal["export", "import", "rebind"]
     write_requested: bool
     document_keys: tuple[str, ...]
     changed_targets: tuple[str, ...]

@@ -6,7 +6,7 @@ atlasdata_file: EN50126
 selection_part: '2'
 publication_year: 2017
 fingerprints:
-  structure: sha256:3d7069834022c80a0177768a75a9be6bc6d6853597a75849a8332d4a4c21360a
+  structure: sha256:10c92ea779417dc90354796d16d75399105e38000833248d8b2a8c56a9ff64a5
 clauses:
 - clause_id: clause-b350335b20d6
   atlasdata_md5: d1cc110c90adf6dbb76b89a0e81aa06a
@@ -15,7 +15,7 @@ clauses:
     part: '2'
     year: 2017
     clause: '0'
-  heading: Part 2
+  heading: Systems Approach to Safety
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:5e9b00ff6f836175958c03bcc1bb795d04eb3c0d4685214f428772d125368aeb
-    atlasdata_heading: sha256:5e9b00ff6f836175958c03bcc1bb795d04eb3c0d4685214f428772d125368aeb
+    heading: sha256:5514d3e07922d3694bc711921597339ac26814282691bf7078f1c023ad5007ac
+    atlasdata_heading: sha256:5514d3e07922d3694bc711921597339ac26814282691bf7078f1c023ad5007ac
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

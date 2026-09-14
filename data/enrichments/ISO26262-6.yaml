@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '6'
 publication_year: 2018
 fingerprints:
-  structure: sha256:b95ae6eb1c26b1d16587e13e1a935099d12b5a85a12e9e5accba09736c4b6cfe
+  structure: sha256:9bd1070f16cba8cb98a56ddc477199b79fc926122e7caed75d77eaf1728c22e9
 clauses:
 - clause_id: clause-a18c077ec6ba
   atlasdata_md5: f9ae733dde2f0590a9da51f9e23b5413
@@ -15,7 +15,7 @@ clauses:
     part: '6'
     year: 2018
     clause: '0'
-  heading: Part 6
+  heading: Product development at the software level
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:00e8345d53e2b1418687b3c35de960d72a0182e40fd6c80200ca2d90e1abc0c8
-    atlasdata_heading: sha256:00e8345d53e2b1418687b3c35de960d72a0182e40fd6c80200ca2d90e1abc0c8
+    heading: sha256:1411d353fe3f1acc121d9f85825dc682555445bcddd0b1291dcb39e15005fa9c
+    atlasdata_heading: sha256:1411d353fe3f1acc121d9f85825dc682555445bcddd0b1291dcb39e15005fa9c
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

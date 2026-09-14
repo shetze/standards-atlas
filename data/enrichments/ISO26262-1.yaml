@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '1'
 publication_year: 2018
 fingerprints:
-  structure: sha256:e564fa98fe18c82c6e09ee32c2287678003e8dd66f56934ea78f17463457eca1
+  structure: sha256:154db0f34145f4e4ac9b06a16ad1ea6034684bdb1047f1205bec7dec5ddf0562
 clauses:
 - clause_id: clause-abda32dca709
   atlasdata_md5: 622a5cca149c2c722aea5652b83767a7
@@ -15,7 +15,7 @@ clauses:
     part: '1'
     year: 2018
     clause: '0'
-  heading: Part 1
+  heading: Vocabluary
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:98b815e9f6693ff28bbea4963d6f1f597b09d3eb948701852eb07a44c817bfb6
-    atlasdata_heading: sha256:98b815e9f6693ff28bbea4963d6f1f597b09d3eb948701852eb07a44c817bfb6
+    heading: sha256:076e2c93c3bfcf687e1ff34020b990719181e929f9f6d7532f8da319553cc281
+    atlasdata_heading: sha256:076e2c93c3bfcf687e1ff34020b990719181e929f9f6d7532f8da319553cc281
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

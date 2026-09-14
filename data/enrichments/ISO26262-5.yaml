@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '5'
 publication_year: 2018
 fingerprints:
-  structure: sha256:866f9a4e95b6331af9c5c476b33ed38451a4a1a6831562e9b2a5dd4c608ed9f5
+  structure: sha256:80637561efadd08b55fd54e3ed3e82e5079b26f2edf8104428f8ab2a80c57e19
 clauses:
 - clause_id: clause-b6b6d8faed70
   atlasdata_md5: 8b358b0f2149cf0b086ea0802ac932c9
@@ -15,7 +15,7 @@ clauses:
     part: '5'
     year: 2018
     clause: '0'
-  heading: Part 5
+  heading: Product Development at the hardware level
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:eb80eead5d3df05f3a39ee29aa51ad4341904e79100930089553ccee386028e7
-    atlasdata_heading: sha256:eb80eead5d3df05f3a39ee29aa51ad4341904e79100930089553ccee386028e7
+    heading: sha256:14cc1c4d271cd980f1f169642cf205e8046ede1ea3f1f764d2c4643cefbca0b6
+    atlasdata_heading: sha256:14cc1c4d271cd980f1f169642cf205e8046ede1ea3f1f764d2c4643cefbca0b6
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

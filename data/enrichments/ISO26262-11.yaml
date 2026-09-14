@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '11'
 publication_year: 2018
 fingerprints:
-  structure: sha256:eb7c0bb49a654eddc5637558cc7cd247e30f1afb044dcd026205c23e0fff6114
+  structure: sha256:7101c10e82b714a06982a380a9c9d4320ace8267d7dd09482b00d579bf6c7c0a
 clauses:
 - clause_id: clause-0ec3d8863acc
   atlasdata_md5: 9927c7d83a4e3901b1f4e2e55ad03ed5
@@ -15,7 +15,7 @@ clauses:
     part: '11'
     year: 2018
     clause: '0'
-  heading: Part 11
+  heading: Guidelines on application of ISO 26262 to semiconductors
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:c28ea2962e6e60854579330bf5f3ffd3a8f74b6e80f8f5cf624e180629eee023
-    atlasdata_heading: sha256:c28ea2962e6e60854579330bf5f3ffd3a8f74b6e80f8f5cf624e180629eee023
+    heading: sha256:1a777d14e2897304c644329bdb336f3a9723985dec6ef5661bb95b02a6b2469a
+    atlasdata_heading: sha256:1a777d14e2897304c644329bdb336f3a9723985dec6ef5661bb95b02a6b2469a
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

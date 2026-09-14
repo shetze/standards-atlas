@@ -6,7 +6,7 @@ atlasdata_file: IEC61508
 selection_part: '0'
 publication_year: 2005
 fingerprints:
-  structure: sha256:fc678d86079fd4f237d47123cf6704a75dcebb4d0713b86381e9bf471778d774
+  structure: sha256:8f2290086d13280b3ee280f2755ad62ff51861c1c0c755ff3a81b4465aff3195
 clauses:
 - clause_id: clause-6c5d2e4e8eb0
   atlasdata_md5: 57cc1360cb46ac51016ebb686a6b99d6
@@ -15,7 +15,7 @@ clauses:
     part: '0'
     year: 2005
     clause: '0'
-  heading: Part 0
+  heading: Functional safety and IEC 61508
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:3a5678d354ade843b321b0e6ca524a230c80fba2cfc48c5a42fb8a2701d9e292
-    atlasdata_heading: sha256:3a5678d354ade843b321b0e6ca524a230c80fba2cfc48c5a42fb8a2701d9e292
+    heading: sha256:06ea6cf6e2cc84b02e82ace0a5fbd1de305650260eed1cf54f9b606028a526fb
+    atlasdata_heading: sha256:06ea6cf6e2cc84b02e82ace0a5fbd1de305650260eed1cf54f9b606028a526fb
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

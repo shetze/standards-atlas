@@ -6,7 +6,7 @@ atlasdata_file: IEC61508
 selection_part: '6'
 publication_year: 2010
 fingerprints:
-  structure: sha256:0ca06ecde004c501b4d98ffbdc15a31f8954c7f557732fe7557b75f45e595a15
+  structure: sha256:2e247b2f56db0274bd1e837dd3807a3d0db26a216acde5a1fed9fb5fb13beb44
 clauses:
 - clause_id: clause-39b22ede0d11
   atlasdata_md5: 366981af0d53c2c6c1ae2242b38ae287
@@ -15,7 +15,7 @@ clauses:
     part: '6'
     year: 2010
     clause: '0'
-  heading: Part 6
+  heading: Guidelines on the application of IEC 61508-2 and IEC 61508-3
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:00e8345d53e2b1418687b3c35de960d72a0182e40fd6c80200ca2d90e1abc0c8
-    atlasdata_heading: sha256:00e8345d53e2b1418687b3c35de960d72a0182e40fd6c80200ca2d90e1abc0c8
+    heading: sha256:8b09458237b5af01e93a442404d32e8f1717bada7361ab90b5cb30d372c8e5f1
+    atlasdata_heading: sha256:8b09458237b5af01e93a442404d32e8f1717bada7361ab90b5cb30d372c8e5f1
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

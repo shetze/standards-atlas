@@ -6,7 +6,7 @@ atlasdata_file: EN50126
 selection_part: '1'
 publication_year: 2017
 fingerprints:
-  structure: sha256:790a8fac943fb1247d915681482439557b6c96f4954c515d8963355275190791
+  structure: sha256:bb12f7074d9c37d1c8b3d4ba9cf999137b6f8c88191d8e890eee20ce36b45b93
 clauses:
 - clause_id: clause-e23c9f10055e
   atlasdata_md5: 2f9c06c1291df2420cdd2ee4ff8b2143
@@ -15,7 +15,7 @@ clauses:
     part: '1'
     year: 2017
     clause: '0'
-  heading: Part 1
+  heading: Generic RAMS Process
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:98b815e9f6693ff28bbea4963d6f1f597b09d3eb948701852eb07a44c817bfb6
-    atlasdata_heading: sha256:98b815e9f6693ff28bbea4963d6f1f597b09d3eb948701852eb07a44c817bfb6
+    heading: sha256:8930d7975b457b50ab86b6e2817cccb78b31d4d8b29b7a5e384f0b2c82d5681c
+    atlasdata_heading: sha256:8930d7975b457b50ab86b6e2817cccb78b31d4d8b29b7a5e384f0b2c82d5681c
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

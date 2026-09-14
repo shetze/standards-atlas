@@ -159,7 +159,7 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         "knowledge-evidence", "1.0", ("1.0",), ".atlas/data/knowledge-evidence/*.json"
     ),
     "atlasdata-knowledge-report": SchemaPolicy(
-        "atlasdata-knowledge-report", "1.0", ("1.0",), "local/**/atlasdata-knowledge*.json"
+        "atlasdata-knowledge-report", "1.1", ("1.1",), "local/**/atlasdata-knowledge*.json"
     ),
     "engineering-document": SchemaPolicy(
         "engineering-document", 9, (9,), ".atlas/data/documents/*.json"

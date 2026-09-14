@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '2'
 publication_year: 2018
 fingerprints:
-  structure: sha256:b214bcf4e9177723edc2ec87cccaada87e5cb4b47c975dba6845926c87d6aaf7
+  structure: sha256:a8895f0692e69ef53af99a3340c05f826ce42a5665042be96f1731b0a711f6bf
 clauses:
 - clause_id: clause-1cf9b781b321
   atlasdata_md5: af12fb720771eafc0d05369a66b1cba6
@@ -15,7 +15,7 @@ clauses:
     part: '2'
     year: 2018
     clause: '0'
-  heading: Part 2
+  heading: Management of functional safety
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:5e9b00ff6f836175958c03bcc1bb795d04eb3c0d4685214f428772d125368aeb
-    atlasdata_heading: sha256:5e9b00ff6f836175958c03bcc1bb795d04eb3c0d4685214f428772d125368aeb
+    heading: sha256:0e12519ea86354dc99f50d6d7ed201f5c59790795249943954ce326973613377
+    atlasdata_heading: sha256:0e12519ea86354dc99f50d6d7ed201f5c59790795249943954ce326973613377
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

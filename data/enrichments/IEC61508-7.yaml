@@ -6,7 +6,7 @@ atlasdata_file: IEC61508
 selection_part: '7'
 publication_year: 2010
 fingerprints:
-  structure: sha256:f1f6a3ee0a9be2bf10b2373e99263c6780955f8d404fab1142d97bac935056dc
+  structure: sha256:bbf140770b65744b87fd480df85bac53728f1e86b47b254eede31ae897859a0f
 clauses:
 - clause_id: clause-80907327d98f
   atlasdata_md5: 31e7a04efb1c855a7c9c60e5eca71474
@@ -15,7 +15,7 @@ clauses:
     part: '7'
     year: 2010
     clause: '0'
-  heading: Part 7
+  heading: Overview of techniques and measures
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:53f77e7a56bcb5b4008c076294b517ce533dcc50abcf839beaa2e1bc6532d1f8
-    atlasdata_heading: sha256:53f77e7a56bcb5b4008c076294b517ce533dcc50abcf839beaa2e1bc6532d1f8
+    heading: sha256:862e50565e7eb7291d1ec53a2c5e1d93b9decb9eae29f6480456293492a347e9
+    atlasdata_heading: sha256:862e50565e7eb7291d1ec53a2c5e1d93b9decb9eae29f6480456293492a347e9
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

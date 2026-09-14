@@ -163,6 +163,128 @@ def _run(
     typer.echo("No LLM calls. Structural AtlasData and its lifecycle status remain unchanged.")
 
 
+def _run_rebind(
+    *,
+    manifest: Path,
+    root: Path,
+    workspace: Path,
+    document: Sequence[str] | None,
+    family: Sequence[str] | None,
+    evidence_root: Path | None,
+    output: Path | None,
+    write: bool,
+    available_only: bool,
+) -> None:
+    try:
+        root = root.resolve()
+        manifest = (root / manifest).resolve()
+        workspace = (root / workspace).resolve()
+        evidence_root = (
+            (root / evidence_root).resolve() if evidence_root else workspace / "knowledge-evidence"
+        )
+        catalog = YamlStandardCatalogReader().read(manifest)
+        bindings = atlasdata_bindings(catalog, root=root)
+        selected = set(document or ())
+        for key in family or ():
+            members = {name for name, binding in bindings.items() if binding.family_key == key}
+            if not members:
+                raise ValueError(f"family has no declared AtlasData physical documents: {key}")
+            selected.update(members)
+        if set(selected) - bindings.keys():
+            raise ValueError("selected keys must identify manifest-owned physical documents")
+        if output is not None:
+            output = (root / output).resolve()
+            forbidden = [(workspace / "documents").resolve(), evidence_root]
+            forbidden.extend(binding.source.parent for binding in bindings.values())
+            if output == manifest or any(output.is_relative_to(path) for path in forbidden):
+                raise ValueError(
+                    "report must not overwrite manifests, public AtlasData, "
+                    "canonical documents or evidence"
+                )
+        service = AtlasDataKnowledgeService(
+            documents=FileSystemEngineeringDocumentRepository(workspace),
+            bindings=bindings,
+            evidence_root=evidence_root,
+        )
+        missing = set()
+        if available_only:
+            requested = selected or set(bindings)
+            available = {key for key in requested if bindings[key].enrichments_path.is_file()}
+            missing = requested - available
+            selected = available
+        if available_only and not selected:
+            report = AtlasDataKnowledgeReport(
+                operation="rebind",
+                write_requested=write,
+                document_keys=(),
+                changed_targets=(),
+                written_targets=(),
+                status_counts={},
+            )
+        else:
+            report = service.rebind_root_titles(
+                document_keys=tuple(sorted(selected)),
+                write=write,
+            )
+        if missing:
+            report = report.model_copy(
+                update={
+                    "status_counts": {
+                        **report.status_counts,
+                        "missing_document_or_companion": len(missing),
+                    }
+                }
+            )
+            for key in sorted(missing):
+                typer.echo(f"Missing selected source  : {key}")
+        if output is not None:
+            atomic_write(output, (report.model_dump_json(indent=2) + "\n").encode(), private=True)
+    except (OSError, ValueError, KeyError, yaml.YAMLError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(f"Operation                : {report.operation}")
+    typer.echo(f"Physical documents       : {len(report.document_keys)}")
+    typer.echo(f"Changed targets          : {len(report.changed_targets)}")
+    typer.echo(f"Written targets          : {len(report.written_targets)}")
+    for status, count in report.status_counts.items():
+        typer.echo(f"Changes {status:<23}: {count}")
+    for target in report.changed_targets:
+        typer.echo(f"Target                   : {target}")
+    if output:
+        typer.echo(f"Change report            : {output}")
+    if not write:
+        typer.echo("Dry run only. Use --write to persist the selected structural rebinds.")
+    typer.echo("No LLM calls. Semantic values and private evidence are not reinterpreted.")
+
+
+@atlasdata_app.command("rebind-enrichments")
+def rebind_enrichments(
+    manifest: ManifestOption = Path("manifests/standards.yaml"),
+    root: RootOption = Path("."),
+    workspace: WorkspaceOption = Path(".atlas/data"),
+    document: DocumentsOption = None,
+    family: FamiliesOption = None,
+    evidence_root: EvidenceOption = None,
+    output: ReportOption = None,
+    write: WriteOption = False,
+    available_only: Annotated[
+        bool, typer.Option("--available-only", help="Skip missing selected enrichment companions.")
+    ] = False,
+) -> None:
+    """Rebind sidecars after the reviewed Part-N root-title normalization fix."""
+    _run_rebind(
+        manifest=manifest,
+        root=root,
+        workspace=workspace,
+        document=document,
+        family=family,
+        evidence_root=evidence_root,
+        output=output,
+        write=write,
+        available_only=available_only,
+    )
+
+
 @atlasdata_app.command("export-enrichments")
 def export_enrichments(
     manifest: ManifestOption = Path("manifests/standards.yaml"),

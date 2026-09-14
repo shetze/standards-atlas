@@ -44,7 +44,7 @@ artifact handling and the end-to-end regression scope.
 | Engineering Document | persistence | `engineering-document` (9, current-only) | — | `.atlas/data/documents/*.json` |
 | AtlasData enrichments | public contract | `atlasdata-enrichments` (`1.2`) | retained decision identities | `<AtlasData parent>/enrichments/<physical-key>.yaml` |
 | Private knowledge evidence | persistence | `knowledge-evidence` (`1.0`) | content-addressed payload | `.atlas/data/knowledge-evidence/<sha256>.json` |
-| AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.0`) | — | `local/review/atlasdata-knowledge*.json` |
+| AtlasData transfer report | persistence | `atlasdata-knowledge-report` (`1.1`) | — | `local/review/atlasdata-knowledge*.json` |
 | Standards manifest | process | `standards-manifest` | — | `manifests/standards*.yaml` |
 | Partial request plan (experimental) | persistence | `partial-request-plan` (1.1, current-only) | source/rule/task identities | `**/partial-request-plan.json` |
 | Partial semantic observation (experimental) | persistence | `partial-semantic-observation` (1.1, current-only) | model/prompt/request identities | `**/partial-observation.json` |

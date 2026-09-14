@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '12'
 publication_year: 2018
 fingerprints:
-  structure: sha256:bf62252df93883cdad08cd54015fbde8a877c64449fa5988ce7cc68677b4b9d0
+  structure: sha256:416a3894fcc0dfaffb0324e939e30e7f63ccf535f26a55c94036c5fd09531897
 clauses:
 - clause_id: clause-8bc9c22f5be4
   atlasdata_md5: af21b7b03a8b406c61a06f693ccfe9f2
@@ -15,7 +15,7 @@ clauses:
     part: '12'
     year: 2018
     clause: '0'
-  heading: Part 12
+  heading: Adaption of ISO 26262 for motocycles
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:c684e29eda29e8f37e499c5260cd32351d6089c61f47bd541436ed4413c0bae2
-    atlasdata_heading: sha256:c684e29eda29e8f37e499c5260cd32351d6089c61f47bd541436ed4413c0bae2
+    heading: sha256:c1234c26942254296764fbd004be7355a587fbf03fd49a0c443e999d36f98d84
+    atlasdata_heading: sha256:c1234c26942254296764fbd004be7355a587fbf03fd49a0c443e999d36f98d84
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

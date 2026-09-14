@@ -1164,7 +1164,7 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "atlasdata-knowledge-report",
-        "Explicit export/import preflight reports.",
+        "Explicit export/import/rebind preflight reports.",
     ),
     VersionedInterface(
         "knowledge-adoption-batch",

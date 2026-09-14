@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '3'
 publication_year: 2018
 fingerprints:
-  structure: sha256:60165b0e9aee0a8da32de38c9f4f91b1cc2f83a7154eb0929bc7ed8fd5964029
+  structure: sha256:c955ce8020fa91a89f4eb258446090370b49ce9dddbb3de793593e52a6a90066
 clauses:
 - clause_id: clause-e0085da50e8d
   atlasdata_md5: 5e7327db57223c013f1a5576b13fd215
@@ -15,7 +15,7 @@ clauses:
     part: '3'
     year: 2018
     clause: '0'
-  heading: Part 3
+  heading: Concept phase
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:ede549d0ce3ab32bd0fd2cc346cdafc4555a820977617db19825986f39f94625
-    atlasdata_heading: sha256:ede549d0ce3ab32bd0fd2cc346cdafc4555a820977617db19825986f39f94625
+    heading: sha256:0854597f95d41b288e7696927a3e3a819d8f2a4193a3a49661f3093ad612ee41
+    atlasdata_heading: sha256:0854597f95d41b288e7696927a3e3a819d8f2a4193a3a49661f3093ad612ee41
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

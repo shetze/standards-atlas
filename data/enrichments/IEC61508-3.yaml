@@ -6,7 +6,7 @@ atlasdata_file: IEC61508
 selection_part: '3'
 publication_year: 2010
 fingerprints:
-  structure: sha256:1daabaa01a6bcdd04ffb9a997248ed480084a1d5b1f58e2814576d6e7def2dfc
+  structure: sha256:3c5cec8e3afb137c5a09659444e17e997daeac13ec676fa3003f4608ef702832
 clauses:
 - clause_id: clause-499ea452d5ec
   atlasdata_md5: 50cfc2a7f5b172012141c1e72d97c02b
@@ -15,7 +15,7 @@ clauses:
     part: '3'
     year: 2010
     clause: '0'
-  heading: Part 3
+  heading: Software requirements
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:ede549d0ce3ab32bd0fd2cc346cdafc4555a820977617db19825986f39f94625
-    atlasdata_heading: sha256:ede549d0ce3ab32bd0fd2cc346cdafc4555a820977617db19825986f39f94625
+    heading: sha256:3e3ce9bfbeb962589f8295fdf00492ce40ebec777bc4211cf26c830a3311e0a8
+    atlasdata_heading: sha256:3e3ce9bfbeb962589f8295fdf00492ce40ebec777bc4211cf26c830a3311e0a8
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

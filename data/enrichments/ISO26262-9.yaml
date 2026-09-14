@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '9'
 publication_year: 2018
 fingerprints:
-  structure: sha256:5c82eba4fd1bca692d7f93f885e77af45849295d54a29719fe3d1641181d2797
+  structure: sha256:f2375ee41bd85f81e5c955e9a5b6e2d5d3265a5a9286758a34cb71dc94dfc303
 clauses:
 - clause_id: clause-7c1183385567
   atlasdata_md5: 47adb770dd5302412f17b025dcdb6814
@@ -15,7 +15,7 @@ clauses:
     part: '9'
     year: 2018
     clause: '0'
-  heading: Part 9
+  heading: ASIL-oriented and safety-oriented analyses
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:f895dfffa2955451572be6cefcc8628713cece3dcc76663033e95ba36dea46ac
-    atlasdata_heading: sha256:f895dfffa2955451572be6cefcc8628713cece3dcc76663033e95ba36dea46ac
+    heading: sha256:93461830f07359debd2a1ee8d67a95e19de4ec7ba26a8441a22de56b49ac9c88
+    atlasdata_heading: sha256:93461830f07359debd2a1ee8d67a95e19de4ec7ba26a8441a22de56b49ac9c88
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '10'
 publication_year: 2018
 fingerprints:
-  structure: sha256:bdf3ec43a5c9ef66210fdbfb465961093fa7c2830501ed8c6123bc2520cd8371
+  structure: sha256:9d0f907d2f564b646ec1d64e1233aaea3b7e83d6c3c6afc24effcc55c35c8db1
 clauses:
 - clause_id: clause-265998192dca
   atlasdata_md5: 25e791e7b21895f563695dd88b56a869
@@ -15,7 +15,7 @@ clauses:
     part: '10'
     year: 2018
     clause: '0'
-  heading: Part 10
+  heading: Guidelines on ISO 26262
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:7f89b08d466cae3b7d0a3fc77130c7a4bd1b7bfc6b6e94dade590988b7f1f2bf
-    atlasdata_heading: sha256:7f89b08d466cae3b7d0a3fc77130c7a4bd1b7bfc6b6e94dade590988b7f1f2bf
+    heading: sha256:cc5f27dbee71e661436673c1043adefa6027e72df1beb1e8ff04ce901f9ba595
+    atlasdata_heading: sha256:cc5f27dbee71e661436673c1043adefa6027e72df1beb1e8ff04ce901f9ba595
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

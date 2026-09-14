@@ -6,7 +6,7 @@ atlasdata_file: ISO26262
 selection_part: '4'
 publication_year: 2018
 fingerprints:
-  structure: sha256:1cff1425329df244c9508cb4759d3f2b051d5900492e4fce9aa40267c0230189
+  structure: sha256:a2318596c3b03160631e1e844df35a438154ec01cf07db81b17acafc74888120
 clauses:
 - clause_id: clause-e9d945e244ae
   atlasdata_md5: 5b9961271e3d5c8b981471503c2428e2
@@ -15,7 +15,7 @@ clauses:
     part: '4'
     year: 2018
     clause: '0'
-  heading: Part 4
+  heading: Product development at the system level
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:1bdd44dca48f879160969059c56a7819ed82e6a999a364a4b71d0567c77cabc2
-    atlasdata_heading: sha256:1bdd44dca48f879160969059c56a7819ed82e6a999a364a4b71d0567c77cabc2
+    heading: sha256:0d31d967ee84f6114314a342114ac9a3cd4bb19827ec3f542d394148d9df2fc0
+    atlasdata_heading: sha256:0d31d967ee84f6114314a342114ac9a3cd4bb19827ec3f542d394148d9df2fc0
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

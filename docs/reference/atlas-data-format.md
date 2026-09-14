@@ -761,6 +761,6 @@ without private evidence when its exact blob digest verifies that value.
 
 Commands default to dry-run. Explicit writes use all-document preflight, atomic replacement per
 file and deterministic output; this is not an all-files transaction. An optional local JSON
-`atlasdata-knowledge-report` schema `1.0` gives selected keys, changed/written targets, source-content
-verification counts and per-attribute changes. It does not embed private values. Operational
+`atlasdata-knowledge-report` schema `1.1` gives selected keys, changed/written targets, source-content
+verification counts and export/import/rebind changes. It does not embed private values. Operational
 commands and backup/restore instructions are in [AtlasData enrichments](../user-guide/atlasdata-enrichments.md).

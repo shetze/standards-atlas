@@ -9,6 +9,7 @@ from standards_atlas.cli.commands.document_commands.atlasdata import (
 from standards_atlas.cli.commands.document_commands.atlasdata_knowledge import (
     export_enrichments,
     import_enrichments,
+    rebind_enrichments,
 )
 from standards_atlas.cli.commands.document_commands.cbox import cbox_report
 from standards_atlas.cli.commands.document_commands.exports import (
@@ -32,6 +33,7 @@ __all__ = [
     "adopt_qualification",
     "export_enrichments",
     "import_enrichments",
+    "rebind_enrichments",
     "enrich_document_context",
     "derive_document_part",
     "derive_document_view",

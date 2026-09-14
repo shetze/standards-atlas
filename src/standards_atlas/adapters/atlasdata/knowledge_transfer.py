@@ -390,6 +390,36 @@ def _check_header(manifest: AtlasDataKnowledge, expected: AtlasDataKnowledge) ->
         raise ValueError(f"AtlasData identity/edition/structure mismatch: {manifest.document_key}")
 
 
+def _check_header_identity(manifest: AtlasDataKnowledge, expected: AtlasDataKnowledge) -> None:
+    """Check immutable source identity while allowing an explicitly migrated structure hash."""
+    excluded = {"clauses", "structure_sha256"}
+    if manifest.model_dump(exclude=excluded) != expected.model_dump(exclude=excluded):
+        raise ValueError(f"AtlasData identity/edition mismatch: {manifest.document_key}")
+
+
+def _legacy_part_root_title(part: str) -> str:
+    """Return the synthetic root heading used before canonical AtlasData titles were preserved."""
+    return f"Part {part.replace('§', '-')}"
+
+
+def _with_root_heading(document: EngineeringDocument, heading: str) -> EngineeringDocument:
+    roots = tuple(clause for clause in document.clauses if clause.reference.clause.strip() == "0")
+    if len(roots) != 1:
+        raise ValueError(
+            f"expected exactly one part root clause for structural rebind: {document.key.value}"
+        )
+    return document.model_copy(
+        update={
+            "clauses": tuple(
+                clause.with_baseline_updates(heading=heading)
+                if clause.reference.clause.strip() == "0"
+                else clause
+                for clause in document.clauses
+            )
+        }
+    )
+
+
 def _clauses(document: EngineeringDocument) -> dict[str, Clause]:
     result = {clause.id.value: clause for clause in document.clauses}
     references = {clause.reference.as_text() for clause in document.clauses}
@@ -730,6 +760,151 @@ class AtlasDataKnowledgeService:
             for path, data in pending.items():
                 atomic_write(path, data)
         return self._report("export", keys, pending, changes, write, verified, unverified)
+
+    def rebind_root_titles(
+        self,
+        *,
+        document_keys: tuple[str, ...] = (),
+        write: bool = False,
+    ) -> AtlasDataKnowledgeReport:
+        """Rebind sidecars after the deterministic Part-N -> AtlasData-title normalization fix.
+
+        This migration is intentionally narrow. It accepts a stale structure fingerprint only
+        when the current AtlasData skeleton, with its root heading changed back to the exact
+        historical ``Part N`` value, reproduces the stored fingerprint. Clause identities,
+        AtlasData MD5s and every non-root structural heading must still match. Attribute values
+        and provenance are copied without reinterpretation.
+        """
+        keys = self._select(document_keys, exporting=False)
+        pending: dict[Path, bytes] = {}
+        changes: list[TransferChange] = []
+        sources: dict[Path, EngineeringDocument] = {}
+        for key in keys:
+            binding = self.bindings[key]
+            destination = binding.enrichments_path
+            if destination.is_symlink():
+                raise ValueError(f"enrichment destination must not be a symlink: {destination}")
+            manifest = read_knowledge(destination)
+            skeleton = self._skeleton(binding, sources)
+            expected = _head(binding, skeleton)
+            _check_header_identity(manifest, expected)
+
+            if manifest.structure_sha256 == expected.structure_sha256:
+                continue
+            if binding.selection_part is None:
+                raise ValueError(
+                    f"unsupported AtlasData structure drift for rebind: {binding.document_key}"
+                )
+
+            legacy_heading = _legacy_part_root_title(binding.selection_part)
+            current_roots = tuple(
+                clause for clause in skeleton.clauses if clause.reference.clause.strip() == "0"
+            )
+            if len(current_roots) != 1:
+                raise ValueError(
+                    "expected exactly one current AtlasData root clause for rebind: "
+                    f"{binding.document_key}"
+                )
+            current_root = current_roots[0]
+            if not current_root.heading or current_root.heading == legacy_heading:
+                raise ValueError(
+                    f"unsupported AtlasData structure drift for rebind: {binding.document_key}"
+                )
+
+            legacy_skeleton = _with_root_heading(skeleton, legacy_heading)
+            if structure_digest(legacy_skeleton) != manifest.structure_sha256:
+                raise ValueError(
+                    "stored structure is not the deterministic legacy Part-N projection: "
+                    f"{binding.document_key}"
+                )
+
+            atlasdata_md5s = self._atlasdata_md5s(binding, skeleton)
+            current_clauses = _clauses(skeleton)
+            old_heading_sha256 = _heading_digest(legacy_heading)
+            new_heading_sha256 = _heading_digest(current_root.heading)
+            rebound_records = []
+            for record in manifest.clauses:
+                _check_atlasdata_md5(record, atlasdata_md5s, key=key)
+                current = current_clauses.get(record.clause_id)
+                if current is None:
+                    raise ValueError(f"missing AtlasData clause: {key}/{record.clause_id}")
+                if record.reference != current.reference:
+                    raise ValueError(
+                        "AtlasData clause reference mismatch during rebind: "
+                        f"{key}/{record.clause_id}"
+                    )
+                if current.reference.clause.strip() != "0":
+                    _check_clause(record, current, key=key, structural=True)
+                    rebound_records.append(record)
+                    continue
+                if (
+                    record.heading != legacy_heading
+                    or record.heading_sha256 != old_heading_sha256
+                    or record.atlasdata_heading_sha256 != old_heading_sha256
+                ):
+                    raise ValueError(
+                        "root record is not bound to the deterministic legacy Part-N heading: "
+                        f"{key}/{record.clause_id}"
+                    )
+                rebound_records.append(
+                    record.model_copy(
+                        update={
+                            "heading": current_root.heading,
+                            "heading_sha256": new_heading_sha256,
+                            "atlasdata_heading_sha256": new_heading_sha256,
+                        }
+                    )
+                )
+                changes.append(
+                    TransferChange(
+                        document_key=key,
+                        clause_id=record.clause_id,
+                        path="structure.root_heading",
+                        status="rebound",
+                        before=legacy_heading,
+                        after=current_root.heading,
+                        reason=(
+                            "deterministic normalization fix: synthetic Part-N root replaced "
+                            "by AtlasData title"
+                        ),
+                    )
+                )
+
+            rebound = manifest.model_copy(
+                update={
+                    "structure_sha256": expected.structure_sha256,
+                    "clauses": tuple(rebound_records),
+                }
+            )
+            # Revalidate the new structural binding before any selected sidecar is written.
+            _check_header(rebound, expected)
+            for record in rebound.clauses:
+                current = current_clauses[record.clause_id]
+                _check_clause(record, current, key=key, structural=True)
+                _check_atlasdata_md5(record, atlasdata_md5s, key=key)
+            data = knowledge_bytes(rebound)
+            if destination.read_bytes() != data:
+                pending[destination] = data
+                if not any(change.document_key == key for change in changes):
+                    changes.append(
+                        TransferChange(
+                            document_key=key,
+                            clause_id=current_root.id.value,
+                            path="structure.root_heading",
+                            status="rebound",
+                            before=legacy_heading,
+                            after=current_root.heading,
+                            reason=(
+                                "deterministic normalization fix; no published root attributes "
+                                "required a clause-record update"
+                            ),
+                        )
+                    )
+
+        if write:
+            for path, data in pending.items():
+                atomic_write(path, data)
+        return self._report("rebind", keys, pending, changes, write, 0, 0)
 
     def import_(
         self,

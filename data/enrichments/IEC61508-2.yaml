@@ -6,7 +6,7 @@ atlasdata_file: IEC61508
 selection_part: '2'
 publication_year: 2010
 fingerprints:
-  structure: sha256:23e6c5589b4f1b2b549e806f58b90cbd3e4ef6d87b33b11845f8cbd61df217f7
+  structure: sha256:dd9f4eed8d0b5b4f4a1ebd0e07088604951b76afb4e363f9197e5c61338eb5fb
 clauses:
 - clause_id: clause-7c10f12f0eb3
   atlasdata_md5: 2cb9c029730b98312f3cf260d5d07421
@@ -15,7 +15,7 @@ clauses:
     part: '2'
     year: 2010
     clause: '0'
-  heading: Part 2
+  heading: Requirements for electrical/electronic/programmable electronic safety-related systems
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:5e9b00ff6f836175958c03bcc1bb795d04eb3c0d4685214f428772d125368aeb
-    atlasdata_heading: sha256:5e9b00ff6f836175958c03bcc1bb795d04eb3c0d4685214f428772d125368aeb
+    heading: sha256:c62a8937fa14ef4539056aa72bd3199a8c7a39a7b18c0ace3ce45421c5c32beb
+    atlasdata_heading: sha256:c62a8937fa14ef4539056aa72bd3199a8c7a39a7b18c0ace3ce45421c5c32beb
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43

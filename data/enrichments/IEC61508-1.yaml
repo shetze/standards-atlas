@@ -6,7 +6,7 @@ atlasdata_file: IEC61508
 selection_part: '1'
 publication_year: 2010
 fingerprints:
-  structure: sha256:ce4410090b5936ab71ccfeda6d8f6b2d65795da89eb579bdcc53346d399f00ec
+  structure: sha256:20892815f9d384ec47e734850d86d22704148ae1409a23d331f4c8fd352923c8
 clauses:
 - clause_id: clause-333a2556f6ed
   atlasdata_md5: b5f2631ed16da90a5aae411dff74e0c9
@@ -15,7 +15,7 @@ clauses:
     part: '1'
     year: 2010
     clause: '0'
-  heading: Part 1
+  heading: General Requirements
   attributes:
   - path: enrichments.subject_context
     origin: generated
@@ -26,8 +26,8 @@ clauses:
       generator: subject-identification/1.0
       method: deterministic
   fingerprints:
-    heading: sha256:98b815e9f6693ff28bbea4963d6f1f597b09d3eb948701852eb07a44c817bfb6
-    atlasdata_heading: sha256:98b815e9f6693ff28bbea4963d6f1f597b09d3eb948701852eb07a44c817bfb6
+    heading: sha256:62af9a5d79fadae2ead32861d2151432bcdd4a1df71bf4189247fb6d0d9a2e2e
+    atlasdata_heading: sha256:62af9a5d79fadae2ead32861d2151432bcdd4a1df71bf4189247fb6d0d9a2e2e
     attributes:
       enrichments.subject_context:
         private_value: sha256:41c05ead4021760b2687cbaf59b973530bb752e8f4759940b50f17be4dc7bc43
