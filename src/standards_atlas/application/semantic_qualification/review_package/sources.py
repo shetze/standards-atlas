@@ -31,9 +31,7 @@ def canonical_enrichment_suggestions(
     """
     sources = {source.example_id: source for source in package.population}
     selected = [
-        case
-        for case in package.cases
-        if example_ids is None or case.example_id in example_ids
+        case for case in package.cases if example_ids is None or case.example_id in example_ids
     ]
     suggestions: list[dict] = []
     for case in selected:

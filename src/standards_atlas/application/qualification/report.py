@@ -5,12 +5,12 @@ from __future__ import annotations
 import hashlib
 import json
 import platform
-import subprocess
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
 from standards_atlas import __version__
+from standards_atlas.application.ports import RepositoryIdentityProvider
 from standards_atlas.application.qualification.golden_corpus import GoldenCorpusReport
 from standards_atlas.application.schema import require_current_payload
 
@@ -19,6 +19,9 @@ class QualificationRunReporter:
     """Persist machine-readable and human-readable golden-corpus evidence."""
 
     schema_version = 1
+
+    def __init__(self, repository_identity: RepositoryIdentityProvider) -> None:
+        self._repository_identity = repository_identity
 
     def write(
         self,
@@ -42,6 +45,7 @@ class QualificationRunReporter:
             suffix += 1
         run_dir.mkdir(parents=True)
 
+        repository_identity = self._repository_identity.identify(root)
         payload = {
             "schema_version": self.schema_version,
             "run_id": run_dir.name,
@@ -49,7 +53,10 @@ class QualificationRunReporter:
             "completed_at": timestamp.isoformat().replace("+00:00", "Z"),
             "standards_atlas_version": __version__,
             "python_version": platform.python_version(),
-            "git": self._git_identity(root),
+            "git": {
+                "revision": repository_identity.revision,
+                "dirty": repository_identity.dirty,
+            },
             "corpus": self._relative(corpus, root),
             "corpus_version": report.corpus_version,
             "corpus_sha256": corpus_hash,
@@ -89,20 +96,6 @@ class QualificationRunReporter:
             return path.relative_to(root).as_posix()
         except ValueError:
             return path.as_posix()
-
-    @staticmethod
-    def _git_identity(root: Path) -> dict[str, object]:
-        def command(*args: str) -> str | None:
-            try:
-                return subprocess.run(
-                    ("git", *args), cwd=root, check=True, capture_output=True, text=True
-                ).stdout.strip()
-            except (OSError, subprocess.CalledProcessError):
-                return None
-
-        revision = command("rev-parse", "HEAD")
-        status = command("status", "--porcelain")
-        return {"revision": revision, "dirty": bool(status) if status is not None else None}
 
     @staticmethod
     def _markdown(payload: dict[str, object]) -> str:

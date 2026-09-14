@@ -3,13 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 import platform
-import subprocess
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
 from standards_atlas import __version__
+from standards_atlas.application.ports import RepositoryIdentityProvider
 from standards_atlas.application.schema import require_current_payload
 from standards_atlas.application.workflow.models import (
     WorkflowExecutionResult,
@@ -31,7 +31,10 @@ class ArtifactDigest:
 class WorkflowRunReporter:
     """Persist an auditable derivation record for a completed workflow run."""
 
-    schema_version = 3
+    schema_version = 4
+
+    def __init__(self, repository_identity: RepositoryIdentityProvider) -> None:
+        self._repository_identity = repository_identity
 
     def write(
         self,
@@ -82,7 +85,7 @@ class WorkflowRunReporter:
             "completed_at": timestamp.isoformat().replace("+00:00", "Z"),
             "standards_atlas_version": __version__,
             "python_version": platform.python_version(),
-            "git": self._git_identity(root),
+            "git": asdict(self._repository_identity.identify(root)),
             "manifests": [self._relative(manifest, root) for manifest in manifests],
             "task": task.value,
             "hierarchy": hierarchy_key,
@@ -131,7 +134,7 @@ class WorkflowRunReporter:
             "stage": step.stage.value,
             "artifact_policy": step.artifact_policy.value,
             "manual_gate": step.manual_gate,
-            "command": list(step.command),
+            "operation": step.operation.to_payload(),
             "declared_output_paths": list(step.output_paths),
             "declared_output_globs": list(step.output_globs),
         }
@@ -174,20 +177,6 @@ class WorkflowRunReporter:
     @classmethod
     def _json_hash(cls, payload: object) -> str:
         return hashlib.sha256(cls._canonical_json(payload).encode()).hexdigest()
-
-    @staticmethod
-    def _git_identity(root: Path) -> dict[str, object]:
-        def command(*args: str) -> str | None:
-            try:
-                return subprocess.run(
-                    ("git", *args), cwd=root, check=True, capture_output=True, text=True
-                ).stdout.strip()
-            except (OSError, subprocess.CalledProcessError):
-                return None
-
-        revision = command("rev-parse", "HEAD")
-        status = command("status", "--porcelain")
-        return {"revision": revision, "dirty": bool(status) if status is not None else None}
 
     @staticmethod
     def _markdown(payload: dict[str, object]) -> str:

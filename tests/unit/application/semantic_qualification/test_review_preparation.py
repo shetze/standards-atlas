@@ -33,7 +33,7 @@ from standards_atlas.application.semantic_qualification.review_package.selection
     submit_selection,
 )
 from standards_atlas.application.semantic_qualification.review_package.service import load_review
-from standards_atlas.cli import app
+from standards_atlas.cli import app, defaults
 
 
 def indexed(tmp_path, **kwargs):
@@ -515,7 +515,8 @@ def test_selection_after_changed_state_is_not_applied(tmp_path):
     assert not (tmp_path / "changed").exists()
 
 
-def test_cli_index_candidates_and_apply_selection(tmp_path):
+def test_cli_index_candidates_and_apply_selection(tmp_path, monkeypatch):
+    monkeypatch.setattr(defaults, "DEFAULT_WORKSPACE", tmp_path / ".atlas/data")
     root, _, _, _ = make_review(tmp_path)
     runner = CliRunner()
     result = runner.invoke(

@@ -45,6 +45,11 @@ from standards_atlas.application.ports.workflow_artifacts import (
     ExtractionState,
     WorkflowArtifactStore,
 )
+from standards_atlas.application.ports.workflow_execution import (
+    RepositoryIdentity,
+    RepositoryIdentityProvider,
+    WorkflowOperationRunner,
+)
 
 __all__ = [
     "PublicationDocumentProvider",
@@ -75,5 +80,8 @@ __all__ = [
     "NormalizationRepository",
     "NormalizedDocumentRepository",
     "ReferenceCandidateStore",
+    "RepositoryIdentity",
+    "RepositoryIdentityProvider",
+    "WorkflowOperationRunner",
     "WorkflowArtifactStore",
 ]

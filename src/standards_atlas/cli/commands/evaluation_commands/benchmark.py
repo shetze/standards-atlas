@@ -13,6 +13,7 @@ from standards_atlas.adapters.llm import (
     RamaLamaServerError,
     RamaLamaServerManager,
 )
+from standards_atlas.adapters.workflow import GitRepositoryIdentityProvider
 from standards_atlas.application.qualification import QualificationRunReporter
 from standards_atlas.application.semantic_qualification.workflow import (
     BenchmarkManifest,
@@ -145,7 +146,7 @@ def qualify_golden_corpus(
     from standards_atlas.cli.commands import evaluation as evaluation_facade
 
     report = evaluation_facade.build_golden_corpus_qualifier().run(corpus)
-    report_json, report_md = QualificationRunReporter().write(
+    report_json, report_md = QualificationRunReporter(GitRepositoryIdentityProvider()).write(
         report,
         corpus_root=corpus,
         project_root=Path.cwd(),

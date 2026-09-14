@@ -1,11 +1,18 @@
 from pathlib import Path
 
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
+from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     QualificationMatrixManifest,
 )
 from standards_atlas.application.workflow import QualificationWorkflowPlanner, WorkflowStage
+
+_RENDERER = CliWorkflowOperationRenderer()
+
+
+def _command(step) -> tuple[str, ...]:
+    return _RENDERER.render(step.operation)
 
 
 def test_v5_manifest_enables_semantic_extraction_qualification() -> None:
@@ -40,7 +47,7 @@ def test_v5_limit_is_propagated_to_semantic_extraction_qualification() -> None:
         step for step in plan.steps if step.stage is WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION
     )
 
-    assert extraction.command[extraction.command.index("--limit") + 1] == "50"
+    assert _command(extraction)[_command(extraction).index("--limit") + 1] == "50"
 
 
 def test_v5_workflow_defers_archive_until_after_semantic_extraction() -> None:
@@ -64,9 +71,9 @@ def test_v5_workflow_defers_archive_until_after_semantic_extraction() -> None:
         step for step in plan.steps if step.stage.value == "semantic-extraction-qualification"
     )
     archive = next(step for step in plan.steps if step.stage.value == "qualification-archive")
-    assert "--no-create-archive" in matrix.command
+    assert "--no-create-archive" in _command(matrix)
     assert plan.steps.index(matrix) < plan.steps.index(extraction) < plan.steps.index(archive)
-    assert archive.command[-2:] == ("--limit", "50")
+    assert _command(archive)[-2:] == ("--limit", "50")
 
 
 def test_v5_workflow_treats_semantic_extraction_failure_as_quality_result() -> None:
@@ -88,7 +95,7 @@ def test_v5_workflow_treats_semantic_extraction_failure_as_quality_result() -> N
         step for step in plan.steps if step.stage is WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION
     )
 
-    assert "--no-fail-on-qualification-failure" in extraction.command
+    assert "--no-fail-on-qualification-failure" in _command(extraction)
 
 
 def test_v5_fresh_is_propagated_to_matrix_and_semantic_extraction() -> None:
@@ -113,9 +120,9 @@ def test_v5_fresh_is_propagated_to_matrix_and_semantic_extraction() -> None:
         step for step in plan.steps if step.stage is WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION
     )
 
-    assert "--overwrite" in matrix.command
-    assert "--fresh" in matrix.command
-    assert "--fresh" in extraction.command
+    assert "--overwrite" in _command(matrix)
+    assert "--fresh" in _command(matrix)
+    assert "--fresh" in _command(extraction)
 
 
 def test_corpus_step_tracks_dataset_version_output() -> None:

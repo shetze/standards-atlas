@@ -1,11 +1,8 @@
 """Workflow planning, execution, recovery, and reporting."""
 
+from standards_atlas.application.ports import WorkflowOperationRunner
 from standards_atlas.application.workflow.enrichments_plan import EnrichmentsWorkflowPlanner
-from standards_atlas.application.workflow.executor import (
-    CommandRunner,
-    SubprocessCommandRunner,
-    WorkflowExecutor,
-)
+from standards_atlas.application.workflow.executor import WorkflowExecutor
 from standards_atlas.application.workflow.manifest_registry import (
     WorkflowManifestLoader,
     WorkflowManifestSet,
@@ -15,6 +12,8 @@ from standards_atlas.application.workflow.manifest_registry import (
 from standards_atlas.application.workflow.models import (
     ArtifactPolicy,
     WorkflowExecutionResult,
+    WorkflowOperation,
+    WorkflowOperationKind,
     WorkflowPlan,
     WorkflowStage,
     WorkflowStep,
@@ -31,12 +30,11 @@ from standards_atlas.application.workflow.service import EndToEndWorkflowService
 
 __all__ = [
     "ArtifactPolicy",
-    "CommandRunner",
+    "WorkflowOperationRunner",
     "EndToEndWorkflowService",
     "EnrichmentsWorkflowPlanner",
     "QualificationWorkflowPlan",
     "QualificationWorkflowPlanner",
-    "SubprocessCommandRunner",
     "WorkflowExecutionResult",
     "WorkflowManifestLoader",
     "WorkflowManifestSet",
@@ -48,6 +46,8 @@ __all__ = [
     "WorkflowRunReporter",
     "WorkflowStage",
     "WorkflowStep",
+    "WorkflowOperation",
+    "WorkflowOperationKind",
     "WorkflowTask",
     "parse_manifest_options",
 ]

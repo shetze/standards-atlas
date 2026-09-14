@@ -17,6 +17,7 @@ from test_review_preparation import selected
 from test_review_workbench import correction, fixture, model_proposal, submit, view
 from typer.testing import CliRunner
 
+from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.review_workbench.journal import reveal
 from standards_atlas.application.semantic_qualification.campaign_activation import (
@@ -113,6 +114,13 @@ def ready(tmp_path, *, exposures=False):
 def archive_members(raw):
     with ZipFile(io.BytesIO(raw)) as archive:
         return {name: archive.read(name) for name in archive.namelist()}
+
+
+_RENDERER = CliWorkflowOperationRenderer()
+
+
+def _command(step) -> tuple[str, ...]:
+    return _RENDERER.render(step.operation)
 
 
 def test_unfinished_review_can_be_archived_but_never_handed_off(tmp_path):
@@ -478,7 +486,7 @@ def test_source_and_reference_drift_block_handoff_before_campaign_start(tmp_path
 def test_workflow_preflight_precedes_freeze_and_never_runs_an_approval_command(tmp_path):
     _, manifest, output, *_ = ready(tmp_path)
     plan = plan_partial_qualification(output / "campaign.yaml", tmp_path / "evaluations")
-    commands = [step.command[4] for step in plan.steps]
+    commands = [_command(step)[4] for step in plan.steps]
     assert commands == [
         "partial-review-check-handoff",
         "partial-qualification-prepare",

@@ -14,9 +14,12 @@ from standards_atlas.adapters.evaluation.archive_receipt import (
     write_archive_receipt,
 )
 from standards_atlas.adapters.workflow import FileSystemWorkflowArtifactStore
+from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.workflow import (
     EnrichmentsWorkflowPlanner,
     WorkflowExecutor,
+    WorkflowOperation,
+    WorkflowOperationKind,
     WorkflowRecovery,
     WorkflowStage,
 )
@@ -40,6 +43,13 @@ def step_for(stage, **options):
     return next(step for step in plan(**options).steps if step.stage is stage)
 
 
+_RENDERER = CliWorkflowOperationRenderer()
+
+
+def _command(step) -> tuple[str, ...]:
+    return _RENDERER.render(step.operation)
+
+
 def test_complete_explicit_chain_and_exact_archive_handoff():
     steps = plan().steps
     stages = [step.stage for step in steps]
@@ -55,23 +65,23 @@ def test_complete_explicit_chain_and_exact_archive_handoff():
         WorkflowStage.ENRICHMENTS_BASELINE,
     ]
     corpus = step_for(WorkflowStage.CORPUS_BUILD)
-    assert "--all-clauses" in corpus.command and "--count" not in corpus.command
-    assert "--source-only-context" in corpus.command
-    assert corpus.command[corpus.command.index("--document") + 1] == "EN50716"
+    assert "--all-clauses" in _command(corpus) and "--count" not in _command(corpus)
+    assert "--source-only-context" in _command(corpus)
+    assert _command(corpus)[_command(corpus).index("--document") + 1] == "EN50716"
     archive, adopt = steps[-6:-4]
-    receipt = archive.command[archive.command.index("--receipt") + 1]
-    assert adopt.command[adopt.command.index("--run-receipt") + 1] == receipt
-    assert "--run" not in adopt.command
+    receipt = _command(archive)[_command(archive).index("--receipt") + 1]
+    assert _command(adopt)[_command(adopt).index("--run-receipt") + 1] == receipt
+    assert "--run" not in _command(adopt)
     for step in steps[-3:]:
-        assert "--available-only" not in step.command  # Cannot silently skip publication.
+        assert "--available-only" not in _command(step)  # Cannot silently skip publication.
 
 
 def test_fresh_enrichments_run_also_refreshes_context_routing():
     normal = step_for(WorkflowStage.CONTEXT_ENRICHMENT)
     fresh = step_for(WorkflowStage.CONTEXT_ENRICHMENT, fresh=True)
-    assert "--fresh" not in normal.command
-    assert "--fresh" in fresh.command
-    assert "--fail-on-failure" not in fresh.command
+    assert "--fresh" not in _command(normal)
+    assert "--fresh" in _command(fresh)
+    assert "--fail-on-failure" not in _command(fresh)
 
 
 def test_context_runs_after_all_selected_document_taxonomies():
@@ -83,8 +93,10 @@ def test_context_runs_after_all_selected_document_taxonomies():
 
 def test_physical_parts_not_family_skeleton_are_corpus_and_publication_targets():
     corpus = step_for(WorkflowStage.CORPUS_BUILD, family_keys=("ISO26262",))
-    assert "ISO26262-11" in corpus.command and "ISO26262" not in corpus.command
-    selected = [corpus.command[i + 1] for i, c in enumerate(corpus.command) if c == "--document"]
+    assert "ISO26262-11" in _command(corpus) and "ISO26262" not in _command(corpus)
+    selected = [
+        _command(corpus)[i + 1] for i, c in enumerate(_command(corpus)) if c == "--document"
+    ]
     assert len(selected) == 11  # Physical parts declared by this snapshot.
     assert selected == sorted(set(selected))
 
@@ -92,7 +104,7 @@ def test_physical_parts_not_family_skeleton_are_corpus_and_publication_targets()
 def test_sample_run_is_isolated_from_full_population():
     full = step_for(WorkflowStage.CORPUS_BUILD)
     sample = step_for(WorkflowStage.CORPUS_BUILD, corpus_count=50, limit=10)
-    assert sample.command[sample.command.index("--count") + 1] == "50"
+    assert _command(sample)[_command(sample).index("--count") + 1] == "50"
     assert sample.output_paths != full.output_paths
     full_matrix = step_for(WorkflowStage.QUALIFICATION_MATRIX)
     sample_matrix = step_for(WorkflowStage.QUALIFICATION_MATRIX, corpus_count=50, limit=10)
@@ -108,7 +120,7 @@ def test_regenerate_docling_and_restore_remain_explicit():
     assert stages.index(WorkflowStage.KNOWLEDGE_RESTORE) < stages.index(
         WorkflowStage.CONTEXT_ENRICHMENT
     )
-    assert "--strict-evidence" in p.steps[-3].command
+    assert "--strict-evidence" in _command(p.steps[-3])
 
 
 def test_manifest_without_final_policy_is_rejected():
@@ -146,14 +158,14 @@ def test_global_tail_waits_for_an_open_alignment_gate(tmp_path):
     commands = []
 
     class Runner:
-        def run(self, command, cwd):
-            commands.append(command)
+        def run(self, operation, cwd):
+            commands.append(_RENDERER.render(operation))
 
     result = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore())).execute(
         p, project_root=tmp_path, runner=Runner()
     )
     assert not result.completed
-    assert commands == [review.command]
+    assert commands == [_command(review)]
 
 
 def archive(tmp_path, matrix="matrix"):
@@ -208,11 +220,11 @@ def test_adoption_rejects_ambiguous_handoff_and_corrupt_archive(tmp_path):
 
 def test_archive_checkpoint_reuses_only_unchanged_verified_inputs(tmp_path):
     step = step_for(WorkflowStage.QUALIFICATION_ARCHIVE)
-    receipt = tmp_path / step.command[step.command.index("--receipt") + 1]
+    receipt = tmp_path / _command(step)[_command(step).index("--receipt") + 1]
     matrix = step.document.removesuffix("-archive")
     path = archive(tmp_path, matrix)
     write_archive_receipt(receipt, archive=path, matrix_id=matrix)
-    run = tmp_path / step.command[step.command.index("--output") + 1] / matrix
+    run = tmp_path / _command(step)[_command(step).index("--output") + 1] / matrix
     run.mkdir(parents=True)
     source = run / "final-consensus-report.json"
     source.write_text("before")
@@ -263,21 +275,16 @@ def test_in_process_execution_does_not_use_cli_subprocesses(tmp_path, monkeypatc
 
     import typer
 
-    from standards_atlas.cli.workflow_runner import InProcessWorkflowCommandRunner
+    from standards_atlas.cli.workflow_runner import InProcessWorkflowOperationRunner
 
     def forbidden(*args, **kwargs):
         raise AssertionError("unexpected CLI subprocess")
 
     monkeypatch.setattr(subprocess, "run", forbidden)
     before = Path.cwd()
-    InProcessWorkflowCommandRunner().run(
-        ("uv", "run", "standards-atlas", "catalog", "validate", str(MANIFEST.resolve())), tmp_path
-    )
-    assert Path.cwd() == before
+    missing = WorkflowOperation.create(WorkflowOperationKind.NORMALIZE_DOCUMENT, document="MISSING")
     with pytest.raises(typer.Exit) as exc:
-        InProcessWorkflowCommandRunner().run(
-            ("uv", "run", "standards-atlas", "normalize", "run", "MISSING"), tmp_path
-        )
+        InProcessWorkflowOperationRunner().run(missing, tmp_path)
     assert exc.value.exit_code == 2
     assert Path.cwd() == before
 
@@ -309,9 +316,9 @@ def test_context_failures_are_fatal_only_with_explicit_workflow_policy(tmp_path,
     assert CliRunner().invoke(app, args).exit_code == 0
     failure = CliRunner().invoke(app, [*args, "--fail-on-failure"])
     assert failure.exit_code == 2 and "incomplete" in failure.output
-    assert "--fail-on-failure" not in step_for(WorkflowStage.CONTEXT_ENRICHMENT).command
+    assert "--fail-on-failure" not in _command(step_for(WorkflowStage.CONTEXT_ENRICHMENT))
     strict = step_for(WorkflowStage.CONTEXT_ENRICHMENT, fail_on_context_failure=True)
-    assert "--fail-on-failure" in strict.command
+    assert "--fail-on-failure" in _command(strict)
 
 
 def test_baseline_stages_are_ordered_around_qualification_and_publication():
@@ -322,10 +329,10 @@ def test_baseline_stages_are_ordered_around_qualification_and_publication():
         < stages.index(WorkflowStage.CORPUS_BUILD)
     )
     assert stages[-1] is WorkflowStage.ENRICHMENTS_BASELINE
-    assert "--strict-context" not in step_for(WorkflowStage.CONTEXT_BASELINE).command
+    assert "--strict-context" not in _command(step_for(WorkflowStage.CONTEXT_BASELINE))
     sample = step_for(WorkflowStage.CONTEXT_BASELINE, corpus_count=50, limit=50)
-    assert sample.command[sample.command.index("--corpus-count") + 1] == "50"
-    assert sample.command[sample.command.index("--limit") + 1] == "50"
+    assert _command(sample)[_command(sample).index("--corpus-count") + 1] == "50"
+    assert _command(sample)[_command(sample).index("--limit") + 1] == "50"
 
 
 def test_cli_default_and_explicit_strict_context_policy():
@@ -364,7 +371,7 @@ def test_old_or_partial_context_checkpoints_are_not_complete(tmp_path):
     )
     store.record_completion(step, tmp_path)
     assert store.outputs_exist(step, tmp_path)
-    strict = replace(step, command=(*step.command, "--fail-on-failure"))
+    strict = replace(step, operation=step.operation.with_parameters(fail_on_failure=True))
     assert not store.outputs_exist(strict, tmp_path)
 
 
@@ -375,7 +382,7 @@ def test_resume_after_context_starts_with_verified_baseline_and_keeps_downstream
     assert stages[:2] == [WorkflowStage.CONTEXT_BASELINE, WorkflowStage.CORPUS_BUILD]
     assert WorkflowStage.CONTEXT_ENRICHMENT not in stages
     assert WorkflowStage.NORMALIZE not in stages
-    assert "--verify-existing" in resumed.steps[0].command
+    assert "--verify-existing" in _command(resumed.steps[0])
     assert WorkflowStage.CONTEXT_ENRICHMENT not in resumed.fresh_repetition_stages
     boundary = next(i for i, s in enumerate(normal.steps) if s.stage is WorkflowStage.CORPUS_BUILD)
     assert resumed.steps[1:] == normal.steps[boundary:]

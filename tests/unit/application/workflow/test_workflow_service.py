@@ -2,15 +2,24 @@ from pathlib import Path
 
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.workflow import FileSystemWorkflowArtifactStore
+from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.workflow import (
     ArtifactPolicy,
     EndToEndWorkflowService,
     WorkflowExecutor,
+    WorkflowOperation,
+    WorkflowOperationKind,
     WorkflowPlan,
     WorkflowRecovery,
     WorkflowStage,
     WorkflowStep,
 )
+
+_RENDERER = CliWorkflowOperationRenderer()
+
+
+def _command(step) -> tuple[str, ...]:
+    return _RENDERER.render(step.operation)
 
 
 def test_plans_multipart_family_with_one_family_export() -> None:
@@ -32,8 +41,8 @@ def test_documents_plan_is_deterministic_and_contains_no_llm_classification() ->
 
     assert WorkflowStage.TAXONOMY in {step.stage for step in plan.steps}
     assert WorkflowStage.CONTEXT_ENRICHMENT not in {step.stage for step in plan.steps}
-    assert all("enrich-context" not in step.command for step in plan.steps)
-    assert all("--context-config" not in step.command for step in plan.steps)
+    assert all("enrich-context" not in _command(step) for step in plan.steps)
+    assert all("--context-config" not in _command(step) for step in plan.steps)
 
 
 def test_context_enrichment_is_explicit_planner_opt_in() -> None:
@@ -46,7 +55,7 @@ def test_context_enrichment_is_explicit_planner_opt_in() -> None:
     )
 
     semantic = next(step for step in plan.steps if step.stage is WorkflowStage.CONTEXT_ENRICHMENT)
-    assert semantic.command[-4:] == (
+    assert _command(semantic)[-4:] == (
         "enrich-context",
         "EN50716",
         "--context-config",
@@ -69,16 +78,16 @@ def test_multipart_family_without_atlasdata_uses_docling_onboarding() -> None:
     onboarding_steps = [step for step in plan.steps if step.stage == WorkflowStage.ATLASDATA]
     assert len(onboarding_steps) == 1
     onboarding = onboarding_steps[0]
-    assert onboarding.command[:5] == (
+    assert _command(onboarding)[:5] == (
         "uv",
         "run",
         "standards-atlas",
         "atlasdata",
         "onboard-docling-parts",
     )
-    assert "1=.atlas/data/docling/IEC11889-1/document.json" in onboarding.command
-    assert "2=.atlas/data/docling/IEC11889-2/document.json" in onboarding.command
-    assert onboarding.command[5] == "local/proposed/IEC11889"
+    assert "1=.atlas/data/docling/IEC11889-1/document.json" in _command(onboarding)
+    assert "2=.atlas/data/docling/IEC11889-2/document.json" in _command(onboarding)
+    assert _command(onboarding)[5] == "local/proposed/IEC11889"
     assert onboarding.manual_gate is True
     assert plan.steps[-1] == onboarding
 
@@ -101,10 +110,10 @@ def test_references_detect_uses_no_override_option() -> None:
     reference_steps = [step for step in plan.steps if step.stage == WorkflowStage.REFERENCES]
 
     assert reference_steps
-    assert all("--override" not in step.command for step in reference_steps)
-    assert all("--overwrite" not in step.command for step in reference_steps)
+    assert all("--override" not in _command(step) for step in reference_steps)
+    assert all("--overwrite" not in _command(step) for step in reference_steps)
     assert all(
-        step.command[-3:] == ("references", "detect", step.document) for step in reference_steps
+        _command(step)[-3:] == ("references", "detect", step.document) for step in reference_steps
     )
 
 
@@ -117,19 +126,21 @@ def test_align_review_export_uses_no_overwrite_option() -> None:
     review_steps = [step for step in plan.steps if step.stage == WorkflowStage.REVIEW]
 
     assert review_steps
-    assert all("--overwrite" not in step.command for step in review_steps)
-    assert all("--override" not in step.command for step in review_steps)
+    assert all("--overwrite" not in _command(step) for step in review_steps)
+    assert all("--override" not in _command(step) for step in review_steps)
     assert all(
-        step.command[-3:] == ("align", "review-export", step.document) for step in review_steps
+        _command(step)[-3:] == ("align", "review-export", step.document) for step in review_steps
     )
 
 
 class RecordingRunner:
     def __init__(self) -> None:
+        self.operations: list[WorkflowOperation] = []
         self.commands: list[tuple[str, ...]] = []
 
-    def run(self, command: tuple[str, ...], cwd: Path) -> None:
-        self.commands.append(command)
+    def run(self, operation: WorkflowOperation, cwd: Path) -> None:
+        self.operations.append(operation)
+        self.commands.append(_RENDERER.render(operation))
 
 
 def test_execute_collects_all_review_gates_instead_of_stopping_at_first(tmp_path: Path) -> None:
@@ -192,10 +203,11 @@ def test_enrich_content_uses_no_overwrite_option() -> None:
     enrich_steps = [step for step in plan.steps if step.stage == WorkflowStage.ENRICH]
 
     assert enrich_steps
-    assert all("--overwrite" not in step.command for step in enrich_steps)
-    assert all("--override" not in step.command for step in enrich_steps)
+    assert all("--overwrite" not in _command(step) for step in enrich_steps)
+    assert all("--override" not in _command(step) for step in enrich_steps)
     assert all(
-        step.command[-3:] == ("document", "enrich-content", step.document) for step in enrich_steps
+        _command(step)[-3:] == ("document", "enrich-content", step.document)
+        for step in enrich_steps
     )
 
 
@@ -212,10 +224,10 @@ def test_force_only_replaces_supported_derived_artifacts() -> None:
     for step in plan.steps:
         if step.stage in replaceable:
             assert step.artifact_policy is ArtifactPolicy.DERIVED
-            assert "--overwrite" in step.command
+            assert "--overwrite" in _command(step)
         else:
-            assert "--overwrite" not in step.command
-            assert "--override" not in step.command
+            assert "--overwrite" not in _command(step)
+            assert "--override" not in _command(step)
 
 
 def test_force_never_overwrites_docling_source_artifacts() -> None:
@@ -231,7 +243,7 @@ def test_force_never_overwrites_docling_source_artifacts() -> None:
 
     assert docling_steps
     assert all(step.artifact_policy is ArtifactPolicy.SOURCE for step in docling_steps)
-    assert all("--overwrite" not in step.command for step in docling_steps)
+    assert all("--overwrite" not in _command(step) for step in docling_steps)
 
 
 def test_force_adds_overwrite_to_atlasdata_onboarding_only() -> None:
@@ -245,7 +257,7 @@ def test_force_adds_overwrite_to_atlasdata_onboarding_only() -> None:
 
     onboarding = [step for step in plan.steps if step.stage == WorkflowStage.ATLASDATA]
     assert len(onboarding) == 1
-    assert onboarding[0].command[-1] == "--overwrite"
+    assert _command(onboarding[0])[-1] == "--overwrite"
 
 
 def test_normal_plan_contains_no_unnecessary_overwrite_options() -> None:
@@ -256,8 +268,8 @@ def test_normal_plan_contains_no_unnecessary_overwrite_options() -> None:
         catalog_root=Path.cwd(),
     )
 
-    assert all("--overwrite" not in step.command for step in plan.steps)
-    assert all("--override" not in step.command for step in plan.steps)
+    assert all("--overwrite" not in _command(step) for step in plan.steps)
+    assert all("--override" not in _command(step) for step in plan.steps)
 
 
 def test_review_exports_are_protected_artifacts() -> None:
@@ -273,7 +285,7 @@ def test_review_exports_are_protected_artifacts() -> None:
 
     assert review_steps
     assert all(step.artifact_policy is ArtifactPolicy.REVIEW for step in review_steps)
-    assert all("--overwrite" not in step.command for step in review_steps)
+    assert all("--overwrite" not in _command(step) for step in review_steps)
 
 
 def test_iec61508_normalization_uses_catalog_page_selection() -> None:
@@ -282,7 +294,9 @@ def test_iec61508_normalization_uses_catalog_page_selection() -> None:
         catalog, family_keys=("IEC61508",), catalog_root=Path.cwd()
     )
     normalize_steps = {
-        step.document: step.command for step in plan.steps if step.stage == WorkflowStage.NORMALIZE
+        step.document: _command(step)
+        for step in plan.steps
+        if step.stage == WorkflowStage.NORMALIZE
     }
 
     assert normalize_steps["IEC61508-0"][-2:] == (
@@ -311,21 +325,18 @@ def test_catalog_source_paths_are_below_local_sources() -> None:
 def test_content_selection_emits_page_list_and_exclusions() -> None:
     from standards_atlas.application.catalog import ContentSelection, PageRange
 
-    args = EndToEndWorkflowService._content_selection_args(
+    parameters = EndToEndWorkflowService._content_selection_parameters(
         ContentSelection(
             page_ranges=(PageRange(start=1, end=20),),
             exclude_page_ranges=(PageRange(start=2, end=4),),
             page_list="1,3,5,11-13,15",
         )
     )
-    assert args == (
-        "--page-range",
-        "1:20",
-        "--exclude-page-range",
-        "2:4",
-        "--page-list",
-        "1,3,5,11-13,15",
-    )
+    assert parameters == {
+        "page_ranges": ("1:20",),
+        "exclude_page_ranges": ("2:4",),
+        "page_list": "1,3,5,11-13,15",
+    }
 
 
 def test_iec61508_supplement_is_planned_as_own_document() -> None:
@@ -347,7 +358,9 @@ def test_iec61508_supplement_is_planned_as_own_document() -> None:
         WorkflowStage.REVIEW,
         WorkflowStage.ENRICH,
     }
-    assert any("iec61508-3-1{ed1.0}en.pdf" in argument for argument in supplement_steps[0].command)
+    assert any(
+        "iec61508-3-1{ed1.0}en.pdf" in argument for argument in _command(supplement_steps[0])
+    )
 
 
 def test_parts_are_derived_but_supplement_with_own_atlasdata_is_imported() -> None:
@@ -359,7 +372,7 @@ def test_parts_are_derived_but_supplement_with_own_atlasdata_is_imported() -> No
     )
 
     derive_steps = [step for step in plan.steps if step.stage == WorkflowStage.DERIVE]
-    derive_commands = {step.document: step.command for step in derive_steps}
+    derive_commands = {step.document: _command(step) for step in derive_steps}
 
     assert derive_commands["IEC61508-3"][:7] == (
         "uv",
@@ -377,8 +390,8 @@ def test_parts_are_derived_but_supplement_with_own_atlasdata_is_imported() -> No
         for step in plan.steps
         if step.document == "IEC61508-3-1" and step.stage == WorkflowStage.IMPORT
     )
-    assert supplement_import.command[:5] == ("uv", "run", "standards-atlas", "document", "import")
-    assert supplement_import.command[-1].endswith("data/IEC61508-3-1")
+    assert _command(supplement_import)[:5] == ("uv", "run", "standards-atlas", "document", "import")
+    assert _command(supplement_import)[-1].endswith("data/IEC61508-3-1")
 
 
 def test_supplement_is_imported_before_reference_detection() -> None:
@@ -416,8 +429,8 @@ def test_multi_part_family_is_composed_on_demand_by_exports() -> None:
         if step.document == "IEC61508" and step.stage == WorkflowStage.IMPORT
     )
     assert family_import.output_paths == (".atlas/work/family-sources/documents/IEC61508.json",)
-    assert "--workspace" in family_import.command
-    assert ".atlas/work/family-sources" in family_import.command
+    assert "--workspace" in _command(family_import)
+    assert ".atlas/work/family-sources" in _command(family_import)
     assert all(
         ".atlas/data/documents/IEC61508.json" not in path
         for step in plan.steps
@@ -431,9 +444,9 @@ def test_multi_part_family_is_composed_on_demand_by_exports() -> None:
     ]
     assert exports
     for export in exports:
-        assert export.command.count("--part") >= 2
-        assert "--title" in export.command
-        assert "IEC 61508" in export.command
+        assert _command(export).count("--part") >= 2
+        assert "--title" in _command(export)
+        assert "IEC 61508" in _command(export)
 
 
 def test_doorstop_parent_prefers_specific_catalog_relationships() -> None:
@@ -455,8 +468,8 @@ def test_doorstop_parent_prefers_specific_catalog_relationships() -> None:
             for step in plan.steps
             if step.stage == WorkflowStage.DOORSTOP and step.family == family
         )
-        parent_index = export.command.index("--parent")
-        assert export.command[parent_index + 1] == expected_parent
+        parent_index = _command(export).index("--parent")
+        assert _command(export)[parent_index + 1] == expected_parent
 
 
 def _write_alignment_statistics(
@@ -486,23 +499,27 @@ def test_clean_alignment_exports_review_and_continues_automatically(tmp_path: Pa
         families=("FAMILY",),
         steps=(
             WorkflowStep(
-                "FAMILY",
-                "CLEAN",
-                WorkflowStage.REVIEW,
-                ("review-export", "CLEAN"),
-                ArtifactPolicy.REVIEW,
-                True,
+                family="FAMILY",
+                document="CLEAN",
+                stage=WorkflowStage.REVIEW,
+                operation=WorkflowOperation.create(
+                    WorkflowOperationKind.ALIGN_REVIEW_EXPORT, document="CLEAN"
+                ),
+                artifact_policy=ArtifactPolicy.REVIEW,
+                manual_gate=True,
                 output_paths=(
                     "local/review/alignment/CLEAN/review.generated.md",
                     "local/review/alignment/CLEAN/review.edited.md",
                 ),
             ),
             WorkflowStep(
-                "FAMILY",
-                "CLEAN",
-                WorkflowStage.ENRICH,
-                ("enrich", "CLEAN"),
-                ArtifactPolicy.DERIVED,
+                family="FAMILY",
+                document="CLEAN",
+                stage=WorkflowStage.ENRICH,
+                operation=WorkflowOperation.create(
+                    WorkflowOperationKind.DOCUMENT_ENRICH_CONTENT, document="CLEAN"
+                ),
+                artifact_policy=ArtifactPolicy.DERIVED,
             ),
         ),
     )
@@ -514,7 +531,7 @@ def test_clean_alignment_exports_review_and_continues_automatically(tmp_path: Pa
 
     assert result.completed is True
     assert result.blocked_documents == ()
-    assert runner.commands == [("review-export", "CLEAN"), ("enrich", "CLEAN")]
+    assert runner.operations == [step.operation for step in plan.steps]
 
 
 def test_only_missing_or_conflicting_documents_block_their_pipeline(tmp_path: Path) -> None:
@@ -528,19 +545,23 @@ def test_only_missing_or_conflicting_documents_block_their_pipeline(tmp_path: Pa
         steps.extend(
             (
                 WorkflowStep(
-                    "FAMILY",
-                    document,
-                    WorkflowStage.REVIEW,
-                    ("review-export", document),
-                    ArtifactPolicy.REVIEW,
-                    True,
+                    family="FAMILY",
+                    document=document,
+                    stage=WorkflowStage.REVIEW,
+                    operation=WorkflowOperation.create(
+                        WorkflowOperationKind.ALIGN_REVIEW_EXPORT, document=document
+                    ),
+                    artifact_policy=ArtifactPolicy.REVIEW,
+                    manual_gate=True,
                 ),
                 WorkflowStep(
-                    "FAMILY",
-                    document,
-                    WorkflowStage.ENRICH,
-                    ("enrich", document),
-                    ArtifactPolicy.DERIVED,
+                    family="FAMILY",
+                    document=document,
+                    stage=WorkflowStage.ENRICH,
+                    operation=WorkflowOperation.create(
+                        WorkflowOperationKind.DOCUMENT_ENRICH_CONTENT, document=document
+                    ),
+                    artifact_policy=ArtifactPolicy.DERIVED,
                 ),
             )
         )
@@ -552,10 +573,19 @@ def test_only_missing_or_conflicting_documents_block_their_pipeline(tmp_path: Pa
     ).execute(plan, project_root=tmp_path, runner=runner)
 
     assert result.blocked_documents == ("CONFLICT", "MISSING")
-    assert ("enrich", "CLEAN") in runner.commands
-    assert ("enrich", "MISSING") not in runner.commands
-    assert ("enrich", "CONFLICT") not in runner.commands
-    assert sum(command[0] == "review-export" for command in runner.commands) == 3
+    enriched = {
+        operation.parameter("document")
+        for operation in runner.operations
+        if operation.kind is WorkflowOperationKind.DOCUMENT_ENRICH_CONTENT
+    }
+    assert enriched == {"CLEAN"}
+    assert (
+        sum(
+            operation.kind is WorkflowOperationKind.ALIGN_REVIEW_EXPORT
+            for operation in runner.operations
+        )
+        == 3
+    )
 
 
 def test_existing_step_outputs_are_not_generated_again(tmp_path: Path) -> None:
@@ -565,11 +595,13 @@ def test_existing_step_outputs_are_not_generated_again(tmp_path: Path) -> None:
     output.parent.mkdir(parents=True)
     output.write_text("existing\n", encoding="utf-8")
     step = WorkflowStep(
-        "FAMILY",
-        "DOC",
-        WorkflowStage.NORMALIZE,
-        ("normalize", "DOC"),
-        ArtifactPolicy.DERIVED,
+        family="FAMILY",
+        document="DOC",
+        stage=WorkflowStage.NORMALIZE,
+        operation=WorkflowOperation.create(
+            WorkflowOperationKind.NORMALIZE_DOCUMENT, document="DOC", overwrite=True
+        ),
+        artifact_policy=ArtifactPolicy.DERIVED,
         output_paths=(".atlas/data/normalized/DOC/document.json",),
     )
     runner = RecordingRunner()
@@ -599,18 +631,20 @@ def test_force_removes_existing_outputs_before_regeneration(tmp_path: Path) -> N
         def __init__(self) -> None:
             self.called = False
 
-        def run(self, command: tuple[str, ...], cwd: Path) -> None:
+        def run(self, operation: WorkflowOperation, cwd: Path) -> None:
             self.called = True
             assert not output.exists()
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text("new\n", encoding="utf-8")
 
     step = WorkflowStep(
-        "FAMILY",
-        "DOC",
-        WorkflowStage.NORMALIZE,
-        ("normalize", "DOC"),
-        ArtifactPolicy.DERIVED,
+        family="FAMILY",
+        document="DOC",
+        stage=WorkflowStage.NORMALIZE,
+        operation=WorkflowOperation.create(
+            WorkflowOperationKind.NORMALIZE_DOCUMENT, document="DOC", overwrite=True
+        ),
+        artifact_policy=ArtifactPolicy.DERIVED,
         output_paths=(".atlas/data/normalized/DOC/document.json",),
     )
     runner = ReplacingRunner()
@@ -640,11 +674,13 @@ def test_overwrite_can_keep_existing_docling_output(tmp_path: Path) -> None:
     # Use a non-Docling step here to isolate the stage-preservation policy from
     # Docling repository metadata validation.
     step = WorkflowStep(
-        "FAMILY",
-        "DOC",
-        WorkflowStage.DOCLING,
-        ("noop",),
-        ArtifactPolicy.DERIVED,
+        family="FAMILY",
+        document="DOC",
+        stage=WorkflowStage.DOCLING,
+        operation=WorkflowOperation.create(
+            WorkflowOperationKind.DOCUMENT_ENRICH_CONTENT, document="DOC"
+        ),
+        artifact_policy=ArtifactPolicy.DERIVED,
         output_paths=(".atlas/data/docling/DOC/document.json",),
     )
     runner = RecordingRunner()
@@ -678,7 +714,7 @@ def test_force_resets_editable_review_exports() -> None:
 
     review = next(step for step in plan.steps if step.stage == WorkflowStage.REVIEW)
 
-    assert review.command[-1] == "--reset-edited"
+    assert _command(review)[-1] == "--reset-edited"
     assert review.output_paths == (
         "local/review/alignment/EN50716/review.generated.md",
         "local/review/alignment/EN50716/review.edited.md",
@@ -700,7 +736,7 @@ def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> N
     )
 
     assert plan.steps[-1].stage == WorkflowStage.DOORSTOP_PUBLISH
-    assert plan.steps[-1].command[-2:] == ("--template", "atlas-clean")
+    assert _command(plan.steps[-1])[-2:] == ("--template", "atlas-clean")
     assert plan.steps[-1].output_paths == ("local/exports/doorstop/functional-safety",)
     doorstop_steps = [step for step in plan.steps if step.stage == WorkflowStage.DOORSTOP]
     assert doorstop_steps
@@ -708,7 +744,7 @@ def test_functional_safety_hierarchy_includes_iso26262_and_publishes_last() -> N
         step.output_paths[0].startswith(".atlas/work/doorstop/functional-safety/")
         for step in doorstop_steps
     )
-    assert all("--no-validate" in step.command for step in doorstop_steps)
+    assert all("--no-validate" in _command(step) for step in doorstop_steps)
     markdown_steps = [step for step in plan.steps if step.stage == WorkflowStage.MARKDOWN]
     assert markdown_steps
     assert all(
@@ -727,15 +763,8 @@ def test_incomplete_docling_extraction_is_repaired_with_overwrite(tmp_path: Path
         family="TEST",
         document="TEST",
         stage=WorkflowStage.DOCLING,
-        command=(
-            "uv",
-            "run",
-            "standards-atlas",
-            "docling",
-            "convert",
-            "-d",
-            "TEST",
-            str(source),
+        operation=WorkflowOperation.create(
+            WorkflowOperationKind.DOCLING_CONVERT, document="TEST", source=str(source)
         ),
         artifact_policy=ArtifactPolicy.SOURCE,
         output_paths=(
@@ -756,7 +785,7 @@ def test_incomplete_docling_extraction_is_repaired_with_overwrite(tmp_path: Path
     )
 
     assert result.completed is True
-    assert runner.commands == [(*step.command, "--overwrite")]
+    assert runner.commands == [(*_command(step), "--overwrite")]
 
 
 def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
@@ -775,15 +804,8 @@ def test_current_docling_extraction_is_reused(tmp_path: Path) -> None:
         family="TEST",
         document="TEST",
         stage=WorkflowStage.DOCLING,
-        command=(
-            "uv",
-            "run",
-            "standards-atlas",
-            "docling",
-            "convert",
-            "-d",
-            "TEST",
-            str(source),
+        operation=WorkflowOperation.create(
+            WorkflowOperationKind.DOCLING_CONVERT, document="TEST", source=str(source)
         ),
         artifact_policy=ArtifactPolicy.SOURCE,
         output_paths=(
@@ -816,17 +838,17 @@ def test_stale_engineering_document_output_is_rebuilt(tmp_path: Path) -> None:
     output.write_text('{"schema_version": 5, "document": {}}\n', encoding="utf-8")
 
     step = WorkflowStep(
-        "FAMILY",
-        "DOC",
-        WorkflowStage.IMPORT,
-        ("replace-document",),
-        ArtifactPolicy.DERIVED,
+        family="FAMILY",
+        document="DOC",
+        stage=WorkflowStage.IMPORT,
+        operation=WorkflowOperation.create(WorkflowOperationKind.DOCUMENT_IMPORT, source="unused"),
+        artifact_policy=ArtifactPolicy.DERIVED,
         output_paths=(".atlas/data/documents/DOC.json",),
     )
 
     class SchemaReplacingRunner:
-        def run(self, command: tuple[str, ...], cwd: Path) -> None:
-            assert command == ("replace-document",)
+        def run(self, operation: WorkflowOperation, cwd: Path) -> None:
+            assert operation is step.operation
             output.write_text('{"schema_version": 6, "document": {}}\n', encoding="utf-8")
 
     result = EndToEndWorkflowService(

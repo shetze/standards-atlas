@@ -428,8 +428,8 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     ),
     "workflow-run-report": SchemaPolicy(
         "workflow-run-report",
-        3,
-        (3,),
+        4,
+        (4,),
         ".atlas/work/workflow/**/report.json",
     ),
     "reviewed-alignment-integrity": SchemaPolicy(

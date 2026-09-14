@@ -63,7 +63,13 @@ from standards_atlas.application.semantic_qualification.semantic_extraction_run_
 )
 from standards_atlas.application.services.knowledge_adoption_service import KnowledgeAdoptionService
 from standards_atlas.application.workflow.manifest_registry import WorkflowManifestLoader
-from standards_atlas.application.workflow.models import ArtifactPolicy, WorkflowStage, WorkflowStep
+from standards_atlas.application.workflow.models import (
+    ArtifactPolicy,
+    WorkflowOperation,
+    WorkflowOperationKind,
+    WorkflowStage,
+    WorkflowStep,
+)
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -573,12 +579,17 @@ def test_empty_source_requirements_are_explicit_and_adoption_keeps_confirmed_val
 def test_obsolete_document_cannot_be_checkpointed_or_reused(tmp_path, version, stage):
     repo = FileSystemEngineeringDocumentRepository(tmp_path / ".atlas/data")
     repo.save(document())
+    operation = (
+        WorkflowOperation.create(WorkflowOperationKind.EVALUATION_CORPUS_BUILD, documents=("R3",))
+        if stage is WorkflowStage.CORPUS_BUILD
+        else WorkflowOperation.create(WorkflowOperationKind.DOCUMENT_ENRICH_CONTEXT, document="R3")
+    )
     step = WorkflowStep(
-        "R3",
-        "R3",
-        stage,
-        ("uv", "run", "standards-atlas", "synthetic"),
-        ArtifactPolicy.DERIVED,
+        family="R3",
+        document="R3",
+        stage=stage,
+        operation=operation,
+        artifact_policy=ArtifactPolicy.DERIVED,
         output_paths=(".atlas/work/workflow/r3.complete",),
     )
     store = FileSystemWorkflowArtifactStore()
@@ -605,11 +616,11 @@ def test_workflow_output_cannot_coerce_a_document_schema_marker(tmp_path, versio
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps({"schema_version": version, "document": {}}))
     step = WorkflowStep(
-        "R3",
-        "R3",
-        WorkflowStage.IMPORT,
-        ("synthetic",),
-        ArtifactPolicy.DERIVED,
+        family="R3",
+        document="R3",
+        stage=WorkflowStage.IMPORT,
+        operation=WorkflowOperation.create(WorkflowOperationKind.DOCUMENT_IMPORT, source="unused"),
+        artifact_policy=ArtifactPolicy.DERIVED,
         output_paths=(relative,),
     )
     assert not FileSystemWorkflowArtifactStore().outputs_exist(step, tmp_path)

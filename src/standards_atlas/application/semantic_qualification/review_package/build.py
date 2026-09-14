@@ -41,7 +41,6 @@ from .storage import new_directory
 from .validation import review_report, seal, verify_package
 
 
-
 def build_review_package(
     *,
     manifest: Path,

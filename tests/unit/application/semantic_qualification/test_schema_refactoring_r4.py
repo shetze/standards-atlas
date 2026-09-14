@@ -21,6 +21,7 @@ from standards_atlas.adapters.mcp.configuration import McpServerConfig
 from standards_atlas.adapters.mcp.review_tools import register_review_tools
 from standards_atlas.adapters.web.review_security import ReviewWorkbenchHttpConfig
 from standards_atlas.adapters.web.review_workbench import create_review_workbench_app
+from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.review_workbench import ReviewWorkbenchService
 from standards_atlas.application.schema import SCHEMA_POLICIES, SchemaPolicy
 from standards_atlas.application.semantic_qualification.campaign_activation import archive_campaign
@@ -62,6 +63,13 @@ def hashes(root):
         for p in root.rglob("*")
         if p.is_file()
     }
+
+
+_RENDERER = CliWorkflowOperationRenderer()
+
+
+def _command(step) -> tuple[str, ...]:
+    return _RENDERER.render(step.operation)
 
 
 class ToolRegistry:
@@ -178,8 +186,8 @@ def test_full_current_review_workflow_preserves_authority_and_archived_evidence(
     assert hashes(selected) == before
     load_review_handoff(handoff, resources=RESOURCES)
     workflow = plan_partial_qualification(handoff / "campaign.yaml", tmp_path / "campaigns")
-    assert "partial-review-check-handoff" in workflow.steps[0].command
-    assert "partial-qualification-prepare" in workflow.steps[1].command
+    assert "partial-review-check-handoff" in _command(workflow.steps[0])
+    assert "partial-qualification-prepare" in _command(workflow.steps[1])
     campaign = tmp_path / "campaign"
     definition = prepare_campaign(
         manifest=handoff / "campaign.yaml",

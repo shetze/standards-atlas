@@ -20,13 +20,19 @@ from typer.testing import CliRunner
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.evaluation.archive_receipt import write_archive_receipt
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
+from standards_atlas.adapters.workflow import GitRepositoryIdentityProvider
+from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.model.knowledge_adoption import (
     ClauseKnowledgeCandidate,
     KnowledgeAdoptionBatch,
 )
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.services.context_enrichment_service import ContextEnrichmentService
-from standards_atlas.application.workflow import EnrichmentsWorkflowPlanner, WorkflowStage
+from standards_atlas.application.workflow import (
+    EnrichmentsWorkflowPlanner,
+    WorkflowOperationKind,
+    WorkflowStage,
+)
 from standards_atlas.cli import app
 from standards_atlas.cli.commands.document_commands import knowledge, management
 from standards_atlas.cli.composition import build_workflow_service
@@ -40,6 +46,13 @@ from standards_atlas.shared.hashing import sha256_file
 
 ROOT = Path(__file__).resolve().parents[3]
 MATRIX = "multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml"
+
+
+_RENDERER = CliWorkflowOperationRenderer()
+
+
+def _command(step) -> tuple[str, ...]:
+    return _RENDERER.render(step.operation)
 
 
 class EmptyRoutingProvider:
@@ -144,9 +157,10 @@ class BoundaryRunner:
     def read_batch(self, path, **kwargs):
         return self.sealed_batches[path.resolve()]
 
-    def run(self, command, cwd):
+    def run(self, operation, cwd):
+        command = _RENDERER.render(operation)
         self.commands.append(command)
-        step = next(s for s in self.plan.steps if s.command == command)
+        step = next(s for s in self.plan.steps if s.operation == operation)
         if step.stage in {
             WorkflowStage.QUALIFICATION_MATRIX,
             WorkflowStage.APPLICABILITY_DECISION_POLICY,
@@ -211,7 +225,7 @@ class BoundaryRunner:
             unqualified_clause_count=0,
             candidates=tuple(candidates),
         )
-        receipt = cwd / step.command[step.command.index("--receipt") + 1]
+        receipt = cwd / _command(step)[_command(step).index("--receipt") + 1]
         write_archive_receipt(receipt, archive=archive, matrix_id=matrix_id)
 
 
@@ -365,7 +379,7 @@ def test_partial_document_does_not_block_later_documents_or_publication(tmp_path
     from standards_atlas.application.workflow import WorkflowTask
     from standards_atlas.application.workflow.report import WorkflowRunReporter
 
-    report_path, markdown = WorkflowRunReporter().write(
+    report_path, markdown = WorkflowRunReporter(GitRepositoryIdentityProvider()).write(
         plan,
         result,
         project_root=tmp_path,
@@ -422,10 +436,10 @@ def test_context_archive_survives_a_technical_qualification_failure(tmp_path, mo
     runner = BoundaryRunner(plan, monkeypatch, tmp_path)
     original = runner.run
 
-    def fail_qualification(command, cwd):
-        if "qualification-matrix" in command:
+    def fail_qualification(operation, cwd):
+        if operation.kind is WorkflowOperationKind.EVALUATION_QUALIFICATION_MATRIX:
             raise OSError("qualification disk failure")
-        return original(command, cwd)
+        return original(operation, cwd)
 
     runner.run = fail_qualification
     with pytest.raises(OSError, match="disk failure"):
@@ -464,11 +478,11 @@ def test_runtime_failure_resumes_after_frozen_partial_context_without_another_mo
     initial = workflow(tmp_path, manifest, fresh=True)
 
     class InterruptedRunner(BoundaryRunner):
-        def run(self, command, cwd):
-            step = next(s for s in self.plan.steps if s.command == command)
+        def run(self, operation, cwd):
+            step = next(s for s in self.plan.steps if s.operation == operation)
             if step.stage is WorkflowStage.QUALIFICATION_MATRIX:
                 raise RuntimeError("RamaLama endpoint remained available after shutdown")
-            return super().run(command, cwd)
+            return super().run(operation, cwd)
 
     runner = InterruptedRunner(initial, monkeypatch, tmp_path)
     provider = FailingRoutingProvider()
@@ -491,7 +505,7 @@ def test_runtime_failure_resumes_after_frozen_partial_context_without_another_mo
     assert result.completed
     assert provider.calls == []  # Even the previously failed clause is not repeated.
     assert result.executed_steps[0].stage is WorkflowStage.CONTEXT_BASELINE
-    assert "--verify-existing" in result.executed_steps[0].command
+    assert "--verify-existing" in _command(result.executed_steps[0])
     assert Path(baseline["archive"]).read_bytes() == original_archive
     assert (tmp_path / context_receipt.output_paths[0]).read_bytes() == original_receipt
     published = _baseline_receipt(tmp_path, resumed, "published")

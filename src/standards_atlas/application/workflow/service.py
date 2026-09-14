@@ -5,10 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from standards_atlas.application.catalog import StandardCatalog
-from standards_atlas.application.workflow.executor import (
-    CommandRunner,
-    WorkflowExecutor,
-)
+from standards_atlas.application.ports import WorkflowOperationRunner
+from standards_atlas.application.workflow.executor import WorkflowExecutor
 from standards_atlas.application.workflow.models import (
     WorkflowExecutionResult,
     WorkflowPlan,
@@ -21,7 +19,7 @@ class EndToEndWorkflowService:
     """Compose planner, executor, and recovery while preserving the public API."""
 
     _doorstop_parent = staticmethod(WorkflowPlanner._doorstop_parent)
-    _content_selection_args = staticmethod(WorkflowPlanner._content_selection_args)
+    _content_selection_parameters = staticmethod(WorkflowPlanner._content_selection_parameters)
     _apply_force_policy = staticmethod(WorkflowPlanner._apply_force_policy)
 
     def __init__(
@@ -56,7 +54,7 @@ class EndToEndWorkflowService:
         plan: WorkflowPlan,
         *,
         project_root: Path,
-        runner: CommandRunner | None = None,
+        runner: WorkflowOperationRunner | None = None,
         continue_after_review: bool = False,
     ) -> WorkflowExecutionResult:
         if self.executor is None:

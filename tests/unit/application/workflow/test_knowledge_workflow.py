@@ -8,9 +8,12 @@ from typer.testing import CliRunner
 
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.workflow import FileSystemWorkflowArtifactStore
+from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.workflow import (
     ArtifactPolicy,
     EndToEndWorkflowService,
+    WorkflowOperation,
+    WorkflowOperationKind,
     WorkflowStage,
     WorkflowStep,
 )
@@ -26,6 +29,13 @@ def catalog():
     return YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
 
 
+_RENDERER = CliWorkflowOperationRenderer()
+
+
+def _command(step) -> tuple[str, ...]:
+    return _RENDERER.render(step.operation)
+
+
 def test_knowledge_report_only_is_default_and_no_llm_is_planned(catalog):
     plan = knowledge_plan(
         catalog,
@@ -35,9 +45,9 @@ def test_knowledge_report_only_is_default_and_no_llm_is_planned(catalog):
     )
     assert len(plan.steps) == 1
     assert plan.steps[0].stage is WorkflowStage.CBOX_REPORT
-    assert "--write" not in plan.steps[0].command
-    assert "ISO26262-11" in plan.steps[0].command
-    assert "ISO26262" not in plan.steps[0].command  # family is not a physical document
+    assert "--write" not in _command(plan.steps[0])
+    assert "ISO26262-11" in _command(plan.steps[0])
+    assert "ISO26262" not in _command(plan.steps[0])  # family is not a physical document
 
 
 def test_publication_adoption_restore_are_explicit_and_ordered(catalog):
@@ -58,11 +68,11 @@ def test_publication_adoption_restore_are_explicit_and_ordered(catalog):
         WorkflowStage.KNOWLEDGE_RESTORE,
         WorkflowStage.CBOX_REPORT,
     ]
-    assert all("--available-only" in item.command for item in plan.steps)
+    assert all("--available-only" in _command(item) for item in plan.steps)
     for step in plan.steps:
-        assert "--write" in step.command or step.stage is WorkflowStage.CBOX_REPORT
+        assert "--write" in _command(step) or step.stage is WorkflowStage.CBOX_REPORT
         assert not any(
-            token in step.command for token in ("qualification-matrix", "enrich-context")
+            token in _command(step) for token in ("qualification-matrix", "enrich-context")
         )
         assert not FileSystemWorkflowArtifactStore().outputs_exist(step, Path.cwd())
 
@@ -143,12 +153,20 @@ def test_knowledge_cli_plan_has_physical_source_selection():
 
 
 def input_step(stage):
+    kinds = {
+        WorkflowStage.CORPUS_BUILD: WorkflowOperationKind.EVALUATION_CORPUS_BUILD,
+        WorkflowStage.CONTEXT_ENRICHMENT: WorkflowOperationKind.DOCUMENT_ENRICH_CONTEXT,
+        WorkflowStage.QUALIFICATION_MATRIX: WorkflowOperationKind.EVALUATION_QUALIFICATION_MATRIX,
+    }
+    parameters = {"documents": ("EXAMPLE",)} if stage is WorkflowStage.CORPUS_BUILD else {}
+    if stage is WorkflowStage.CONTEXT_ENRICHMENT:
+        parameters = {"document": "EXAMPLE"}
     return WorkflowStep(
-        "EXAMPLE",
-        "EXAMPLE",
-        stage,
-        ("uv", "run", "standards-atlas", "test"),
-        ArtifactPolicy.DERIVED,
+        family="EXAMPLE",
+        document="EXAMPLE",
+        stage=stage,
+        operation=WorkflowOperation.create(kinds[stage], **parameters),
+        artifact_policy=ArtifactPolicy.DERIVED,
         output_paths=(".atlas/work/workflow/example.complete",),
     )
 

@@ -10,13 +10,13 @@ from standards_atlas.application.catalog.atlasdata_binding import atlasdata_bind
 from standards_atlas.application.context.canonical_cbox import context_fingerprint
 from standards_atlas.application.workflow.models import (
     ArtifactPolicy,
+    WorkflowOperation,
+    WorkflowOperationKind,
     WorkflowPlan,
     WorkflowStage,
     WorkflowStep,
 )
 
-# Re-run preflight on every invocation. Idempotence is provided by the canonical
-# merge/transfer services, never by assuming an old marker authorizes a write.
 KNOWLEDGE_STAGES = frozenset(
     {
         WorkflowStage.KNOWLEDGE_RESTORE,
@@ -27,21 +27,41 @@ KNOWLEDGE_STAGES = frozenset(
 )
 
 
-def _command(
+def _step(
     family: str,
     document: str,
     stage: WorkflowStage,
-    tokens: tuple[str, ...],
+    operation: WorkflowOperation,
     output: Path,
 ) -> WorkflowStep:
     return WorkflowStep(
         family,
         document,
         stage,
-        ("uv", "run", "standards-atlas", *tokens, "--output", str(output)),
+        operation,
         ArtifactPolicy.DERIVED,
         output_paths=(str(output),),
     )
+
+
+def _transfer_operation(
+    kind: WorkflowOperationKind,
+    *,
+    manifest: Path,
+    documents: tuple[str, ...],
+    output: Path,
+    strict_evidence: bool = False,
+) -> WorkflowOperation:
+    parameters: dict[str, str | bool | tuple[str, ...]] = {
+        "manifest": str(manifest),
+        "documents": documents,
+        "available_only": True,
+        "write": True,
+        "output": str(output),
+    }
+    if kind is WorkflowOperationKind.ATLASDATA_IMPORT_ENRICHMENTS:
+        parameters["strict_evidence"] = strict_evidence
+    return WorkflowOperation.create(kind, **parameters)
 
 
 def knowledge_plan(
@@ -62,73 +82,88 @@ def knowledge_plan(
         raise ValueError("knowledge workflow requires manifest-owned physical AtlasData documents")
     selection = context_fingerprint(list(keys))[:12]
     report_root = Path("local/review/knowledge-workflow") / selection
-    selector = tuple(value for key in keys for value in ("--document", key))
-    transfer = ("--manifest", str(manifest), *selector, "--available-only", "--write")
-    evidence = ("--strict-evidence",) if strict_evidence else ()
     steps = []
     if restore:
+        output = report_root / "restore.json"
         steps.append(
-            _command(
+            _step(
                 "knowledge",
                 selection,
                 WorkflowStage.KNOWLEDGE_RESTORE,
-                ("atlasdata", "import-enrichments", *transfer, *evidence),
-                report_root / "restore.json",
+                _transfer_operation(
+                    WorkflowOperationKind.ATLASDATA_IMPORT_ENRICHMENTS,
+                    manifest=manifest,
+                    documents=keys,
+                    output=output,
+                    strict_evidence=strict_evidence,
+                ),
+                output,
             )
         )
     if adopt_run is not None:
+        output = report_root / "adopt.json"
         steps.append(
-            _command(
+            _step(
                 "knowledge",
                 selection,
                 WorkflowStage.KNOWLEDGE_ADOPT,
-                (
-                    "document",
-                    "adopt-qualification",
-                    "--run",
-                    str(adopt_run),
-                    *selector,
-                    "--available-only",
-                    "--write",
+                WorkflowOperation.create(
+                    WorkflowOperationKind.DOCUMENT_ADOPT_QUALIFICATION,
+                    run=str(adopt_run),
+                    documents=keys,
+                    available_only=True,
+                    write=True,
+                    output=str(output),
                 ),
-                report_root / "adopt.json",
+                output,
             )
         )
     if publish:
+        output = report_root / "export.json"
         steps.append(
-            _command(
+            _step(
                 "knowledge",
                 selection,
                 WorkflowStage.KNOWLEDGE_PUBLISH,
-                ("atlasdata", "export-enrichments", *transfer),
-                report_root / "export.json",
+                _transfer_operation(
+                    WorkflowOperationKind.ATLASDATA_EXPORT_ENRICHMENTS,
+                    manifest=manifest,
+                    documents=keys,
+                    output=output,
+                ),
+                output,
             )
         )
-        # A second process re-reads the public files and private evidence, rather
-        # than displaying the pre-export in-memory objects as a roundtrip result.
+        output = report_root / "reimport.json"
         steps.append(
-            _command(
+            _step(
                 "knowledge",
                 selection,
                 WorkflowStage.KNOWLEDGE_RESTORE,
-                ("atlasdata", "import-enrichments", *transfer, *evidence),
-                report_root / "reimport.json",
+                _transfer_operation(
+                    WorkflowOperationKind.ATLASDATA_IMPORT_ENRICHMENTS,
+                    manifest=manifest,
+                    documents=keys,
+                    output=output,
+                    strict_evidence=strict_evidence,
+                ),
+                output,
             )
         )
+    output = report_root / "cbox.json"
     steps.append(
-        _command(
+        _step(
             "knowledge",
             selection,
             WorkflowStage.CBOX_REPORT,
-            (
-                "document",
-                "cbox-report",
-                *selector,
-                "--available-only",
-                "--knowledge-domain",
-                knowledge_domain,
+            WorkflowOperation.create(
+                WorkflowOperationKind.DOCUMENT_CBOX_REPORT,
+                documents=keys,
+                available_only=True,
+                knowledge_domain=knowledge_domain,
+                output=str(output),
             ),
-            report_root / "cbox.json",
+            output,
         )
     )
     return WorkflowPlan(families=family_keys, steps=tuple(steps))
@@ -150,42 +185,38 @@ def with_knowledge_restore(
         steps.append(step)
         root = Path("local/review/knowledge-workflow/documents") / step.document
         if step.stage is WorkflowStage.TAXONOMY:
+            output = root / "restore.json"
             steps.append(
-                _command(
+                _step(
                     step.family,
                     step.document,
                     WorkflowStage.KNOWLEDGE_RESTORE,
-                    (
-                        "atlasdata",
-                        "import-enrichments",
-                        "--manifest",
-                        str(manifest),
-                        "--document",
-                        step.document,
-                        "--available-only",
-                        "--write",
-                        *(("--strict-evidence",) if strict_evidence else ()),
+                    _transfer_operation(
+                        WorkflowOperationKind.ATLASDATA_IMPORT_ENRICHMENTS,
+                        manifest=manifest,
+                        documents=(step.document,),
+                        output=output,
+                        strict_evidence=strict_evidence,
                     ),
-                    root / "restore.json",
+                    output,
                 )
             )
         if step.stage is WorkflowStage.CONTEXT_ENRICHMENT or (
             step.stage is WorkflowStage.TAXONOMY and step.document not in contextual
         ):
+            output = root / "cbox.json"
             steps.append(
-                _command(
+                _step(
                     step.family,
                     step.document,
                     WorkflowStage.CBOX_REPORT,
-                    (
-                        "document",
-                        "cbox-report",
-                        "--document",
-                        step.document,
-                        "--knowledge-domain",
-                        knowledge_domain,
+                    WorkflowOperation.create(
+                        WorkflowOperationKind.DOCUMENT_CBOX_REPORT,
+                        documents=(step.document,),
+                        knowledge_domain=knowledge_domain,
+                        output=str(output),
                     ),
-                    root / "cbox.json",
+                    output,
                 )
             )
     return replace(plan, steps=tuple(steps))

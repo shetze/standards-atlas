@@ -11,6 +11,8 @@ from standards_atlas.application.catalog import (
 )
 from standards_atlas.application.workflow.models import (
     ArtifactPolicy,
+    WorkflowOperation,
+    WorkflowOperationKind,
     WorkflowPlan,
     WorkflowStage,
     WorkflowStep,
@@ -54,15 +56,10 @@ class WorkflowPlanner:
                     hierarchy.key,
                     hierarchy.key,
                     WorkflowStage.DOORSTOP_PUBLISH,
-                    (
-                        "uv",
-                        "run",
-                        "standards-atlas",
-                        "doorstop",
-                        "publish",
-                        hierarchy.key,
-                        "--template",
-                        hierarchy.template,
+                    WorkflowOperation.create(
+                        WorkflowOperationKind.DOORSTOP_PUBLISH,
+                        hierarchy=hierarchy.key,
+                        template=hierarchy.template,
                     ),
                     ArtifactPolicy.DERIVED,
                     output_paths=(f"local/exports/doorstop/{hierarchy.key}",),
@@ -118,15 +115,10 @@ class WorkflowPlanner:
                     family.key,
                     key,
                     WorkflowStage.DOCLING,
-                    (
-                        "uv",
-                        "run",
-                        "standards-atlas",
-                        "docling",
-                        "convert",
-                        "-d",
-                        key,
-                        pdf,
+                    WorkflowOperation.create(
+                        WorkflowOperationKind.DOCLING_CONVERT,
+                        document=key,
+                        source=pdf,
                     ),
                     ArtifactPolicy.SOURCE,
                     output_paths=(
@@ -140,22 +132,16 @@ class WorkflowPlanner:
             output = f"local/proposed/{family.key}"
             year = str(family.publication_year or 0)
             if family.source is not None:
-                command = (
-                    "uv",
-                    "run",
-                    "standards-atlas",
-                    "atlasdata",
-                    "onboard-docling",
-                    f".atlas/data/docling/{family.key}/document.json",
-                    output,
-                    "--name",
-                    family.name,
-                    "--year",
-                    year,
+                operation = WorkflowOperation.create(
+                    WorkflowOperationKind.ATLASDATA_ONBOARD_DOCLING,
+                    source=f".atlas/data/docling/{family.key}/document.json",
+                    output=output,
+                    name=family.name,
+                    year=year,
                 )
             else:
-                part_args = tuple(
-                    value
+                parts = tuple(
+                    f"{identifier}=.atlas/data/docling/{document_key}/document.json"
                     for part in family.parts
                     for identifier, document_key in (
                         (part.part, part.key),
@@ -164,23 +150,13 @@ class WorkflowPlanner:
                             for supplement in part.supplements
                         ),
                     )
-                    for value in (
-                        "--part",
-                        f"{identifier}=.atlas/data/docling/{document_key}/document.json",
-                    )
                 )
-                command = (
-                    "uv",
-                    "run",
-                    "standards-atlas",
-                    "atlasdata",
-                    "onboard-docling-parts",
-                    output,
-                    *part_args,
-                    "--name",
-                    family.name,
-                    "--year",
-                    year,
+                operation = WorkflowOperation.create(
+                    WorkflowOperationKind.ATLASDATA_ONBOARD_DOCLING_PARTS,
+                    output=output,
+                    parts=parts,
+                    name=family.name,
+                    year=year,
                 )
             steps.append(
                 WorkflowStep(
@@ -188,10 +164,9 @@ class WorkflowPlanner:
                     family.key,
                     WorkflowStage.ATLASDATA,
                     self._apply_force_policy(
-                        command,
+                        operation,
                         policy=ArtifactPolicy.DERIVED,
                         force=force,
-                        option="--overwrite",
                     ),
                     ArtifactPolicy.DERIVED,
                     True,
@@ -201,13 +176,13 @@ class WorkflowPlanner:
             return steps
 
         atlas_path = str((root / family.atlasdata.path).resolve())
-        import_command = ("uv", "run", "standards-atlas", "document", "import", atlas_path)
+        import_operation = WorkflowOperation.create(
+            WorkflowOperationKind.DOCUMENT_IMPORT, source=atlas_path
+        )
         import_output = f".atlas/data/documents/{family.key}.json"
         if family.source is None:
-            import_command = (
-                *import_command,
-                "--workspace",
-                ".atlas/work/family-sources",
+            import_operation = import_operation.with_parameters(
+                workspace=".atlas/work/family-sources"
             )
             import_output = f".atlas/work/family-sources/documents/{family.key}.json"
         steps.append(
@@ -215,7 +190,7 @@ class WorkflowPlanner:
                 family.key,
                 family.key,
                 WorkflowStage.IMPORT,
-                import_command,
+                import_operation,
                 ArtifactPolicy.DERIVED,
                 output_paths=(import_output,),
             )
@@ -228,19 +203,13 @@ class WorkflowPlanner:
                         family.key,
                         part.key,
                         WorkflowStage.DERIVE,
-                        (
-                            "uv",
-                            "run",
-                            "standards-atlas",
-                            "document",
-                            "derive-part",
-                            family.key,
-                            part.part,
-                            "--key",
-                            part.key,
-                            "--source-workspace",
-                            ".atlas/work/family-sources",
-                            *(("--title", part.title) if part.title else ()),
+                        WorkflowOperation.create(
+                            WorkflowOperationKind.DOCUMENT_DERIVE_PART,
+                            family=family.key,
+                            part=part.part,
+                            key=part.key,
+                            source_workspace=".atlas/work/family-sources",
+                            title=part.title,
                         ),
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/data/documents/{part.key}.json",),
@@ -254,13 +223,9 @@ class WorkflowPlanner:
                                 family.key,
                                 supplement.key,
                                 WorkflowStage.IMPORT,
-                                (
-                                    "uv",
-                                    "run",
-                                    "standards-atlas",
-                                    "document",
-                                    "import",
-                                    supplement_atlas_path,
+                                WorkflowOperation.create(
+                                    WorkflowOperationKind.DOCUMENT_IMPORT,
+                                    source=supplement_atlas_path,
                                 ),
                                 ArtifactPolicy.DERIVED,
                                 output_paths=(f".atlas/data/documents/{supplement.key}.json",),
@@ -272,19 +237,13 @@ class WorkflowPlanner:
                                 family.key,
                                 supplement.key,
                                 WorkflowStage.DERIVE,
-                                (
-                                    "uv",
-                                    "run",
-                                    "standards-atlas",
-                                    "document",
-                                    "derive-part",
-                                    family.key,
-                                    f"{part.part}-{supplement.supplement}",
-                                    "--key",
-                                    supplement.key,
-                                    "--source-workspace",
-                                    ".atlas/work/family-sources",
-                                    *(("--title", supplement.title) if supplement.title else ()),
+                                WorkflowOperation.create(
+                                    WorkflowOperationKind.DOCUMENT_DERIVE_PART,
+                                    family=family.key,
+                                    part=f"{part.part}-{supplement.supplement}",
+                                    key=supplement.key,
+                                    source_workspace=".atlas/work/family-sources",
+                                    title=supplement.title,
                                 ),
                                 ArtifactPolicy.DERIVED,
                                 output_paths=(f".atlas/data/documents/{supplement.key}.json",),
@@ -299,18 +258,13 @@ class WorkflowPlanner:
                         key,
                         WorkflowStage.NORMALIZE,
                         self._apply_force_policy(
-                            (
-                                "uv",
-                                "run",
-                                "standards-atlas",
-                                "normalize",
-                                "run",
-                                key,
-                                *self._content_selection_args(content_selection),
+                            WorkflowOperation.create(
+                                WorkflowOperationKind.NORMALIZE_DOCUMENT,
+                                document=key,
+                                **self._content_selection_parameters(content_selection),
                             ),
                             policy=ArtifactPolicy.DERIVED,
                             force=force,
-                            option="--overwrite",
                         ),
                         ArtifactPolicy.DERIVED,
                         output_paths=(
@@ -322,7 +276,9 @@ class WorkflowPlanner:
                         family.key,
                         key,
                         WorkflowStage.REFERENCES,
-                        ("uv", "run", "standards-atlas", "references", "detect", key),
+                        WorkflowOperation.create(
+                            WorkflowOperationKind.REFERENCES_DETECT, document=key
+                        ),
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/data/reference-candidates/{key}/document.json",),
                     ),
@@ -331,10 +287,11 @@ class WorkflowPlanner:
                         key,
                         WorkflowStage.ALIGN,
                         self._apply_force_policy(
-                            ("uv", "run", "standards-atlas", "align", "run", key),
+                            WorkflowOperation.create(
+                                WorkflowOperationKind.ALIGN_DOCUMENT, document=key
+                            ),
                             policy=ArtifactPolicy.DERIVED,
                             force=force,
-                            option="--overwrite",
                         ),
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/data/alignments/{key}/alignment.json",),
@@ -343,14 +300,10 @@ class WorkflowPlanner:
                         family.key,
                         key,
                         WorkflowStage.REVIEW,
-                        (
-                            "uv",
-                            "run",
-                            "standards-atlas",
-                            "align",
-                            "review-export",
-                            key,
-                            *(("--reset-edited",) if force else ()),
+                        WorkflowOperation.create(
+                            WorkflowOperationKind.ALIGN_REVIEW_EXPORT,
+                            document=key,
+                            reset_edited=force,
                         ),
                         ArtifactPolicy.REVIEW,
                         True,
@@ -363,7 +316,9 @@ class WorkflowPlanner:
                         family.key,
                         key,
                         WorkflowStage.ENRICH,
-                        ("uv", "run", "standards-atlas", "document", "enrich-content", key),
+                        WorkflowOperation.create(
+                            WorkflowOperationKind.DOCUMENT_ENRICH_CONTENT, document=key
+                        ),
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/work/workflow/enrich/{key}.complete",),
                     ),
@@ -371,7 +326,9 @@ class WorkflowPlanner:
                         family.key,
                         key,
                         WorkflowStage.TAXONOMY,
-                        ("uv", "run", "standards-atlas", "document", "classify-taxonomy", key),
+                        WorkflowOperation.create(
+                            WorkflowOperationKind.DOCUMENT_CLASSIFY_TAXONOMY, document=key
+                        ),
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/work/workflow/taxonomy/{key}.complete",),
                     ),
@@ -383,15 +340,10 @@ class WorkflowPlanner:
                         family.key,
                         key,
                         WorkflowStage.CONTEXT_ENRICHMENT,
-                        (
-                            "uv",
-                            "run",
-                            "standards-atlas",
-                            "document",
-                            "enrich-context",
-                            key,
-                            "--context-config",
-                            "cfg/context-enrichment.yaml",
+                        WorkflowOperation.create(
+                            WorkflowOperationKind.DOCUMENT_ENRICH_CONTEXT,
+                            document=key,
+                            context_config="cfg/context-enrichment.yaml",
                         ),
                         ArtifactPolicy.DERIVED,
                         output_paths=(f".atlas/work/workflow/context-enrichment/{key}.complete",),
@@ -404,18 +356,12 @@ class WorkflowPlanner:
                     family.key,
                     family.key,
                     WorkflowStage.MARKDOWN,
-                    (
-                        "uv",
-                        "run",
-                        "standards-atlas",
-                        "document",
-                        "export",
-                        "markdown",
-                        family.key,
-                        "--target",
-                        f"local/exports/markdown/{hierarchy_key or family.key}",
-                        *(value for key in part_keys for value in ("--part", key)),
-                        *(("--title", family.name) if part_keys else ()),
+                    WorkflowOperation.create(
+                        WorkflowOperationKind.DOCUMENT_EXPORT_MARKDOWN,
+                        document=family.key,
+                        target=f"local/exports/markdown/{hierarchy_key or family.key}",
+                        parts=part_keys,
+                        title=family.name if part_keys else None,
                     ),
                     ArtifactPolicy.DERIVED,
                     output_paths=(f".atlas/work/workflow/markdown/{family.key}.complete",),
@@ -431,23 +377,16 @@ class WorkflowPlanner:
                     family.key,
                     family.key,
                     WorkflowStage.DOORSTOP,
-                    (
-                        "uv",
-                        "run",
-                        "standards-atlas",
-                        "document",
-                        "export",
-                        "doorstop",
-                        family.key,
-                        "--digits",
-                        str(family.exports.doorstop.identifier.width),
-                        *(("--parent", doorstop_parent) if doorstop_parent else ()),
-                        "--target",
-                        f".atlas/work/doorstop/{hierarchy_key or family.key}/{family.key}",
-                        *(value for key in part_keys for value in ("--part", key)),
-                        *(("--title", family.name) if part_keys else ()),
-                        "--no-init-git",
-                        *(("--no-validate",) if hierarchy_key else ()),
+                    WorkflowOperation.create(
+                        WorkflowOperationKind.DOCUMENT_EXPORT_DOORSTOP,
+                        document=family.key,
+                        digits=family.exports.doorstop.identifier.width,
+                        parent=doorstop_parent,
+                        target=f".atlas/work/doorstop/{hierarchy_key or family.key}/{family.key}",
+                        parts=part_keys,
+                        title=family.name if part_keys else None,
+                        skip_git_init=True,
+                        skip_validation=hierarchy_key is not None,
                     ),
                     ArtifactPolicy.DERIVED,
                     output_paths=(
@@ -480,38 +419,28 @@ class WorkflowPlanner:
         return None
 
     @staticmethod
-    def _content_selection_args(
+    def _content_selection_parameters(
         selection: ContentSelection | None,
-    ) -> tuple[str, ...]:
+    ) -> dict[str, str | tuple[str, ...] | None]:
         if selection is None:
-            return ()
-        arguments: list[str] = []
-        for page_range in selection.page_ranges:
-            arguments.extend(
-                (
-                    "--page-range",
-                    f"{page_range.start}:{page_range.end or ''}",
-                )
-            )
-        for page_range in selection.exclude_page_ranges:
-            arguments.extend(
-                (
-                    "--exclude-page-range",
-                    f"{page_range.start}:{page_range.end or ''}",
-                )
-            )
-        if selection.page_list:
-            arguments.extend(("--page-list", selection.page_list))
-        return tuple(arguments)
+            return {}
+        return {
+            "page_ranges": tuple(
+                f"{item.start}:{item.end or ''}" for item in selection.page_ranges
+            ),
+            "exclude_page_ranges": tuple(
+                f"{item.start}:{item.end or ''}" for item in selection.exclude_page_ranges
+            ),
+            "page_list": selection.page_list or None,
+        }
 
     @staticmethod
     def _apply_force_policy(
-        command: tuple[str, ...],
+        operation: WorkflowOperation,
         *,
         policy: ArtifactPolicy,
         force: bool,
-        option: str | None = None,
-    ) -> tuple[str, ...]:
-        if not force or policy is not ArtifactPolicy.DERIVED or option is None:
-            return command
-        return (*command, option)
+    ) -> WorkflowOperation:
+        if not force or policy is not ArtifactPolicy.DERIVED:
+            return operation
+        return operation.with_parameters(overwrite=True)

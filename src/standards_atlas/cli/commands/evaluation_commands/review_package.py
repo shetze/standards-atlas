@@ -240,11 +240,10 @@ def apply_partial_review_selection_command(
     version: Annotated[str, typer.Option("--version")] = "1.0.0",
 ) -> None:
     """Materialize an agent selection as a new package, preserving all Holdout and human reviews."""
+    from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvider
     from standards_atlas.application.semantic_qualification.review_package.selection import (
         apply_selection,
     )
-
-    from standards_atlas.adapters.evaluation import EngineeringDocumentClauseProvider
 
     documents = defaults.DEFAULT_WORKSPACE / "documents"
     clause_provider = (

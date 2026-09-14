@@ -289,8 +289,7 @@ class ReviewWorkbenchService:
                 "blind": holdout and not exposures,
                 "historical_proposals_withheld": holdout,
                 "unrevealed_recommendation_count": sum(
-                    p.producer_kind in {"model", "engineering"}
-                    and p.proposal_sha256 not in exposed
+                    p.producer_kind in {"model", "engineering"} and p.proposal_sha256 not in exposed
                     for p in all_proposals
                 )
                 if holdout

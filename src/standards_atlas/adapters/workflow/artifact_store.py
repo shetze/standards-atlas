@@ -28,12 +28,11 @@ class FileSystemWorkflowArtifactStore:
     ) -> ExtractionState | None:
         if step.stage is not WorkflowStage.DOCLING:
             return None
-        try:
-            document_option = step.command.index("-d")
-            document_key = step.command[document_option + 1]
-            source = Path(step.command[document_option + 2])
-        except (ValueError, IndexError):
+        document_key = step.operation.parameter("document")
+        source_value = step.operation.parameter("source")
+        if not isinstance(document_key, str) or not isinstance(source_value, str):
             return None
+        source = Path(source_value)
         if not source.is_absolute():
             source = project_root / source
         repository = DoclingArtifactRepository(project_root / ".atlas" / "data")
@@ -47,7 +46,7 @@ class FileSystemWorkflowArtifactStore:
         }:
             return False  # Always validate against the current source and accepted state.
         if step.stage is WorkflowStage.CONTEXT_ENRICHMENT:
-            workspace = project_root / _option(step, "--workspace", ".atlas/data")
+            workspace = project_root / _parameter(step, "workspace", ".atlas/data")
             report = workspace / "evaluation/context-routing" / f"{step.document}-run.json"
             if report.exists() or any(path.endswith("-run.json") for path in step.output_paths):
                 try:
@@ -65,9 +64,12 @@ class FileSystemWorkflowArtifactStore:
         globs_exist = all(any(project_root.glob(pattern)) for pattern in step.output_globs)
         if not (paths_exist and globs_exist):
             return False
-        if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE and "--receipt" in step.command:
+        if (
+            step.stage is WorkflowStage.QUALIFICATION_ARCHIVE
+            and step.operation.parameter("receipt") is not None
+        ):
             try:
-                resolve_archive_receipt(project_root / _option(step, "--receipt", ""))
+                resolve_archive_receipt(project_root / _parameter(step, "receipt", ""))
             except (OSError, ValueError, KeyError, BadZipFile):
                 return False
         fingerprint = _tracked_input_fingerprint(step, project_root)
@@ -178,7 +180,7 @@ def _workflow_step_fingerprint(step: WorkflowStep) -> str:
         "family": step.family,
         "document": step.document,
         "stage": step.stage.value,
-        "command": list(step.command),
+        "operation": step.operation.to_payload(),
         "artifact_policy": step.artifact_policy.value,
         "manual_gate": step.manual_gate,
         "output_paths": list(step.output_paths),
@@ -277,11 +279,9 @@ def _input_marker(step: WorkflowStep, root: Path) -> Path:
     return root / ".atlas/work/workflow/input-state" / (_workflow_step_fingerprint(step) + ".json")
 
 
-def _option(step: WorkflowStep, flag: str, default: str) -> str:
-    try:
-        return step.command[step.command.index(flag) + 1]
-    except (ValueError, IndexError):
-        return default
+def _parameter(step: WorkflowStep, name: str, default: str) -> str:
+    value = step.operation.parameter(name)
+    return value if isinstance(value, str) else default
 
 
 def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
@@ -290,18 +290,16 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
     Renderer code is deliberately not an inference input.
     """
     archive_handoff = (
-        step.stage is WorkflowStage.QUALIFICATION_ARCHIVE and "--receipt" in step.command
+        step.stage is WorkflowStage.QUALIFICATION_ARCHIVE
+        and step.operation.parameter("receipt") is not None
     )
     if step.stage not in _TRACKED_INPUT_STAGES and not archive_handoff:
         return None
     entries = {}
-    workspace = root / _option(step, "--workspace", ".atlas/data")
+    workspace = root / _parameter(step, "workspace", ".atlas/data")
     if step.stage in {WorkflowStage.CORPUS_BUILD, WorkflowStage.CONTEXT_ENRICHMENT}:
-        selected = {
-            step.command[index + 1]
-            for index, token in enumerate(step.command[:-1])
-            if token == "--document"
-        }
+        documents = step.operation.parameter("documents", ())
+        selected = set(documents) if isinstance(documents, tuple) else set()
         for path in sorted((workspace / "documents").glob("*.json")):
             if selected and path.stem not in selected:
                 continue
@@ -309,7 +307,10 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
             # Check the envelope before pruning outputs or comparing checkpoints.
             # Obsolete inputs must not become reusable through a matching hash.
             _extract_document_data(json.loads(content))
-            if step.stage is WorkflowStage.CORPUS_BUILD and "--source-only-context" in step.command:
+            if (
+                step.stage is WorkflowStage.CORPUS_BUILD
+                and step.operation.parameter("source_only_context") is True
+            ):
                 try:
                     payload = json.loads(content)
                     for clause in payload["document"].get("clauses", ()):
@@ -352,7 +353,7 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
         files.add(root / "src/standards_atlas/application/semantic_qualification/eligibility.py")
         files.update((resources / "semantic/tasks").rglob("*"))
     if step.stage is WorkflowStage.CONTEXT_ENRICHMENT:
-        files.add(root / _option(step, "--context-config", "cfg/context-enrichment.yaml"))
+        files.add(root / _parameter(step, "context_config", "cfg/context-enrichment.yaml"))
         files.update((resources / "semantic/prompts/context-routing-enrichment").rglob("*"))
         files.update((root / "src/standards_atlas/application/context").glob("subject*.py"))
         files.add(root / "src/standards_atlas/application/services/context_enrichment_service.py")
@@ -360,17 +361,17 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
         policy_root = root / "src/standards_atlas/application/semantic_qualification"
         for name in ("context_framing.py", "request_builder.py", "adaptive_interview.py"):
             files.add(policy_root / name)
-        files.add(root / _option(step, "--manifest", "manifests/qualification.yaml"))
-        corpus = root / _option(step, "--corpus-root", ".atlas/data/evaluation/corpora")
+        files.add(root / _parameter(step, "manifest", "manifests/qualification.yaml"))
+        corpus = root / _parameter(step, "corpus_root", ".atlas/data/evaluation/corpora")
         files.update(corpus.rglob("dataset.json"))
         files.update(corpus.rglob("corpus.yaml"))
         files.update((resources / "semantic").rglob("*"))
         files.update((resources / "ontologies").rglob("*"))
     if archive_handoff:
-        output = root / _option(step, "--output", ".atlas/data/evaluation/qualification")
+        output = root / _parameter(step, "output", ".atlas/data/evaluation/qualification")
         files.update((output / step.document.removesuffix("-archive")).rglob("*"))
-        files.add(root / _option(step, "--manifest", "manifests/qualification.yaml"))
-        corpus = root / _option(step, "--corpus-root", ".atlas/data/evaluation/corpora")
+        files.add(root / _parameter(step, "manifest", "manifests/qualification.yaml"))
+        corpus = root / _parameter(step, "corpus_root", ".atlas/data/evaluation/corpora")
         files.update(corpus.rglob("dataset.json"))
         files.update(corpus.rglob("corpus.yaml"))
     for path in sorted(files):

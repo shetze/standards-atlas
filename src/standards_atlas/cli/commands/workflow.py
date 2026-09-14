@@ -8,6 +8,10 @@ from typing import Annotated
 import typer
 
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
+from standards_atlas.adapters.workflow import (
+    CliWorkflowOperationRenderer,
+    GitRepositoryIdentityProvider,
+)
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 from standards_atlas.application.workflow import (
     EndToEndWorkflowService,
@@ -29,7 +33,7 @@ from standards_atlas.application.workspace import WorkspaceLayout
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import catalog_app, workflow_app
 from standards_atlas.cli.composition import build_workflow_service
-from standards_atlas.cli.workflow_runner import InProcessWorkflowCommandRunner
+from standards_atlas.cli.workflow_runner import InProcessWorkflowOperationRunner
 
 
 @catalog_app.command("validate")
@@ -197,9 +201,11 @@ def plan_workflow(
         fail_on_context_failure=fail_on_context_failure,
         resume_after_context=resume_after_context,
     )
+    renderer = CliWorkflowOperationRenderer()
     for step in plan.steps:
         gate = " [manual review gate]" if step.manual_gate else ""
-        typer.echo(f"{step.family:20} {step.stage.value:20} {' '.join(step.command)}{gate}")
+        command = renderer.render(step.operation)
+        typer.echo(f"{step.family:20} {step.stage.value:20} {' '.join(command)}{gate}")
 
 
 @workflow_app.command("run")
@@ -370,11 +376,13 @@ def run_workflow(
         project_root=Path.cwd(),
         continue_after_review=continue_after_review,
         **(
-            {"runner": InProcessWorkflowCommandRunner()} if task is WorkflowTask.ENRICHMENTS else {}
+            {"runner": InProcessWorkflowOperationRunner()}
+            if task is WorkflowTask.ENRICHMENTS
+            else {}
         ),
     )
     if result.completed:
-        report_json, report_md = WorkflowRunReporter().write(
+        report_json, report_md = WorkflowRunReporter(GitRepositoryIdentityProvider()).write(
             plan,
             result,
             project_root=Path.cwd(),

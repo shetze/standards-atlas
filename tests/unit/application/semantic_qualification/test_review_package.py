@@ -56,7 +56,7 @@ from standards_atlas.application.semantic_qualification.review_package.validatio
     seal,
     verify_package,
 )
-from standards_atlas.cli import app
+from standards_atlas.cli import app, defaults
 
 
 def inputs(tmp_path, *, count=10):
@@ -720,7 +720,8 @@ def test_cross_attribute_contradiction_blocks_even_draft_import(tmp_path):
         import_review_package(package=root, output=tmp_path / "draft")
 
 
-def test_cli_build_show_decide_and_dry_run(tmp_path):
+def test_cli_build_show_decide_and_dry_run(tmp_path, monkeypatch):
+    monkeypatch.setattr(defaults, "DEFAULT_WORKSPACE", tmp_path / ".atlas/data")
     runner = CliRunner()
     manifest, _, _ = inputs(tmp_path)
     root = tmp_path / "review"

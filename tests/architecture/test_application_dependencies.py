@@ -143,6 +143,32 @@ def test_domain_and_application_do_not_import_infrastructure_frameworks() -> Non
     )
 
 
+def test_application_does_not_execute_subprocesses_directly() -> None:
+    """Process execution is infrastructure and must stay behind application ports."""
+
+    _assert_no_imports(
+        _python_files(SOURCE_ROOT / "application"),
+        ("subprocess",),
+    )
+
+
+def test_workflow_application_contract_does_not_encode_cli_commands() -> None:
+    """Workflow planning exposes typed operations, never Standards Atlas CLI command tuples."""
+
+    offenders: list[str] = []
+    for path in _python_files(SOURCE_ROOT / "application" / "workflow"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and node.value == "standards-atlas":
+                offenders.append(f"{path.relative_to(PROJECT_ROOT)}:{node.lineno}")
+    assert not offenders, "application workflow encodes CLI commands:\n" + "\n".join(offenders)
+
+    from standards_atlas.application.workflow.models import WorkflowStep
+
+    assert "operation" in WorkflowStep.__dataclass_fields__
+    assert "command" not in WorkflowStep.__dataclass_fields__
+
+
 def test_generic_evaluation_does_not_depend_on_semantic_qualification() -> None:
     """Generic evaluation infrastructure must remain reusable outside standards semantics."""
 

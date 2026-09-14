@@ -19,9 +19,9 @@ from standards_atlas import __version__
 from standards_atlas.adapters.atlasdata.knowledge_evidence import atomic_write
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.evaluation.archive_receipt import resolve_archive_receipt
+from standards_atlas.adapters.workflow.repository_identity import GitRepositoryIdentityProvider
 from standards_atlas.application.catalog.atlasdata_binding import atlasdata_bindings
 from standards_atlas.application.schema import require_current_payload, require_supported_schema
-from standards_atlas.application.workflow.report import WorkflowRunReporter
 
 _COUNTERS = (
     "candidates",
@@ -208,6 +208,7 @@ def archive_enrichment_baseline(
     totals = {key: sum(doc["summary"][key] for doc in documents) for key in _COUNTERS}
     timestamp = datetime.now(UTC)
     run_id = f"{phase}-{timestamp:%Y%m%dT%H%M%S%fZ}-{uuid.uuid4().hex[:8]}"
+    repository_identity = GitRepositoryIdentityProvider().identify(root)
     summary = {
         "schema_version": 1,
         "run_id": run_id,
@@ -218,7 +219,10 @@ def archive_enrichment_baseline(
         "semantically_verified": False,
         "standards_atlas_version": __version__,
         "python_version": platform.python_version(),
-        "git": WorkflowRunReporter._git_identity(root),
+        "git": {
+            "revision": repository_identity.revision,
+            "dirty": repository_identity.dirty,
+        },
         "context_failure_policy": "strict" if strict_context else "report_and_continue",
         "counting_basis": "last recorded per-document context invocation; see timestamps",
         "coverage": {

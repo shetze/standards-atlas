@@ -5,7 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from standards_atlas.application.ports import ExtractionState, WorkflowArtifactStore
-from standards_atlas.application.workflow.models import WorkflowPlan, WorkflowStage, WorkflowStep
+from standards_atlas.application.workflow.models import (
+    WorkflowOperation,
+    WorkflowPlan,
+    WorkflowStage,
+    WorkflowStep,
+)
 
 
 class WorkflowRecovery:
@@ -20,17 +25,13 @@ class WorkflowRecovery:
         return self._artifacts.docling_extraction_state(step, project_root)
 
     @staticmethod
-    def execution_command(
+    def execution_operation(
         step: WorkflowStep, docling_state: ExtractionState | None
-    ) -> tuple[str, ...]:
+    ) -> WorkflowOperation:
         """Add repair semantics only for an incomplete Docling extraction."""
-        if (
-            step.stage is WorkflowStage.DOCLING
-            and docling_state is ExtractionState.INCOMPLETE
-            and "--overwrite" not in step.command
-        ):
-            return (*step.command, "--overwrite")
-        return step.command
+        if step.stage is WorkflowStage.DOCLING and docling_state is ExtractionState.INCOMPLETE:
+            return step.operation.with_parameters(overwrite=True)
+        return step.operation
 
     def outputs_exist(self, step: WorkflowStep, project_root: Path) -> bool:
         return self._artifacts.outputs_exist(step, project_root)

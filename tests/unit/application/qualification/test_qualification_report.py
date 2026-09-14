@@ -2,6 +2,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+from standards_atlas.application.ports import RepositoryIdentity
 from standards_atlas.application.qualification import (
     GoldenCaseResult,
     GoldenCorpusReport,
@@ -25,12 +26,21 @@ def _report(*, passed: bool = True) -> GoldenCorpusReport:
     )
 
 
+class StaticRepositoryIdentityProvider:
+    def identify(self, root: Path) -> RepositoryIdentity:
+        return RepositoryIdentity(revision=None, dirty=None)
+
+
+def reporter() -> QualificationRunReporter:
+    return QualificationRunReporter(StaticRepositoryIdentityProvider())
+
+
 def test_reporter_writes_auditable_json_and_markdown(tmp_path: Path) -> None:
     corpus = tmp_path / "corpus"
     corpus.mkdir()
     (corpus / "corpus.json").write_text('{"version":"1.2.3"}\n', encoding="utf-8")
 
-    report_json, report_md = QualificationRunReporter().write(
+    report_json, report_md = reporter().write(
         _report(),
         corpus_root=corpus,
         project_root=tmp_path,
@@ -50,7 +60,7 @@ def test_reporter_records_failures_without_suppressing_evidence(tmp_path: Path) 
     corpus.mkdir()
     (corpus / "input.json").write_text("{}\n", encoding="utf-8")
 
-    report_json, report_md = QualificationRunReporter().write(
+    report_json, report_md = reporter().write(
         _report(passed=False),
         corpus_root=corpus,
         project_root=tmp_path,
@@ -74,6 +84,6 @@ def test_corpus_hash_is_independent_of_file_creation_order(tmp_path: Path) -> No
     (second / "b").write_text("B", encoding="utf-8")
     (second / "a").write_text("A", encoding="utf-8")
 
-    reporter = QualificationRunReporter()
+    reporter = QualificationRunReporter(StaticRepositoryIdentityProvider())
 
     assert reporter._directory_hash(first) == reporter._directory_hash(second)

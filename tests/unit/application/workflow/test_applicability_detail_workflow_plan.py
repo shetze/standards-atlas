@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
+from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 from standards_atlas.application.workflow import QualificationWorkflowPlanner, WorkflowStage
 
@@ -33,6 +34,13 @@ def _plan(
     )
 
 
+_RENDERER = CliWorkflowOperationRenderer()
+
+
+def _command(step) -> tuple[str, ...]:
+    return _RENDERER.render(step.operation)
+
+
 def test_v6_workflow_runs_applicability_policy_between_matrix_and_archive() -> None:
     plan = _plan()
     matrix = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_MATRIX)
@@ -42,18 +50,18 @@ def test_v6_workflow_runs_applicability_policy_between_matrix_and_archive() -> N
     archive = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE)
 
     assert plan.steps.index(matrix) < plan.steps.index(policy) < plan.steps.index(archive)
-    assert policy.command[:5] == (
+    assert _command(policy)[:5] == (
         "uv",
         "run",
         "standards-atlas",
         "evaluation",
         "applicability-policy-run",
     )
-    assert policy.command[policy.command.index("--manifest") + 1] == str(V6_MANIFEST)
-    assert policy.command[policy.command.index("--run") + 1].endswith(
+    assert _command(policy)[_command(policy).index("--manifest") + 1] == str(V6_MANIFEST)
+    assert _command(policy)[_command(policy).index("--run") + 1].endswith(
         "/multidimensional-semantic-qualification-v6-applicability-presence"
     )
-    assert "--limit" not in policy.command
+    assert "--limit" not in _command(policy)
     assert any(
         path.endswith("/applicability-policy-selection.json") for path in policy.output_paths
     )
@@ -74,8 +82,10 @@ def test_fresh_qualification_marks_policy_as_fresh_end_to_end() -> None:
         step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DECISION_POLICY
     )
 
-    assert "--fresh" in policy.command
-    assert policy.command[policy.command.index("--qualification-mode") + 1] == "fresh_end_to_end"
+    assert "--fresh" in _command(policy)
+    assert (
+        _command(policy)[_command(policy).index("--qualification-mode") + 1] == "fresh_end_to_end"
+    )
     assert plan.fresh_repetition_stages == (
         WorkflowStage.QUALIFICATION_MATRIX,
         WorkflowStage.APPLICABILITY_DECISION_POLICY,
@@ -89,10 +99,10 @@ def test_fresh_policy_only_keeps_matrix_nonfresh() -> None:
         step for step in plan.steps if step.stage is WorkflowStage.APPLICABILITY_DECISION_POLICY
     )
 
-    assert "--fresh" not in matrix.command
-    assert "--fresh" in policy.command
+    assert "--fresh" not in _command(matrix)
+    assert "--fresh" in _command(policy)
     assert (
-        policy.command[policy.command.index("--qualification-mode") + 1]
+        _command(policy)[_command(policy).index("--qualification-mode") + 1]
         == "fresh_detail_fixed_presence"
     )
     assert plan.fresh_repetition_stages == (WorkflowStage.APPLICABILITY_DECISION_POLICY,)
@@ -106,8 +116,8 @@ def test_custom_corpus_root_is_shared_by_policy_and_archive_stages() -> None:
     )
     archive = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE)
 
-    assert policy.command[policy.command.index("--corpus-root") + 1] == str(corpus_root)
-    assert archive.command[archive.command.index("--corpus-root") + 1] == str(corpus_root)
+    assert _command(policy)[_command(policy).index("--corpus-root") + 1] == str(corpus_root)
+    assert _command(archive)[_command(archive).index("--corpus-root") + 1] == str(corpus_root)
 
 
 def test_manifests_without_detail_policy_keep_the_existing_workflow_shape() -> None:

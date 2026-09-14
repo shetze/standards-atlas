@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
-from typing import Protocol
 
-from standards_atlas.application.ports import ExtractionState
+from standards_atlas.application.ports import ExtractionState, WorkflowOperationRunner
 from standards_atlas.application.workflow.models import (
     WorkflowExecutionResult,
     WorkflowPlan,
@@ -16,28 +14,24 @@ from standards_atlas.application.workflow.models import (
 from standards_atlas.application.workflow.recovery import WorkflowRecovery
 
 
-class CommandRunner(Protocol):
-    def run(self, command: tuple[str, ...], cwd: Path) -> None: ...
-
-
-class SubprocessCommandRunner:
-    def run(self, command: tuple[str, ...], cwd: Path) -> None:
-        subprocess.run(command, cwd=cwd, check=True)  # noqa: S603
-
-
 class WorkflowExecutor:
-    def __init__(self, recovery: WorkflowRecovery) -> None:
+    def __init__(
+        self, recovery: WorkflowRecovery, runner: WorkflowOperationRunner | None = None
+    ) -> None:
         self._recovery = recovery
+        self._runner = runner
 
     def execute(
         self,
         plan: WorkflowPlan,
         *,
         project_root: Path,
-        runner: CommandRunner | None = None,
+        runner: WorkflowOperationRunner | None = None,
         continue_after_review: bool = False,
     ) -> WorkflowExecutionResult:
-        command_runner = runner or SubprocessCommandRunner()
+        operation_runner = runner or self._runner
+        if operation_runner is None:
+            raise RuntimeError("Workflow execution requires an injected operation runner")
         executed: list[WorkflowStep] = []
         blocked_documents: set[str] = set()
         blocked_families: set[str] = set()
@@ -90,8 +84,8 @@ class WorkflowExecutor:
                 outputs_exist = False
 
             if not outputs_exist:
-                command = self._recovery.execution_command(step, docling_state)
-                command_runner.run(command, project_root)
+                operation = self._recovery.execution_operation(step, docling_state)
+                operation_runner.run(operation, project_root)
                 self._recovery.record_completion(step, project_root)
                 executed.append(step)
 

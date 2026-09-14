@@ -31,6 +31,8 @@ from standards_atlas.application.semantic_qualification.run_selection import (
 )
 from standards_atlas.application.workflow.models import (
     ArtifactPolicy,
+    WorkflowOperation,
+    WorkflowOperationKind,
     WorkflowPlan,
     WorkflowStage,
     WorkflowStep,
@@ -102,31 +104,17 @@ class QualificationWorkflowPlanner:
             family="evaluation",
             document=manifest.corpus_id,
             stage=WorkflowStage.CORPUS_BUILD,
-            command=(
-                "uv",
-                "run",
-                "standards-atlas",
-                "evaluation",
-                "corpus-build",
-                "--task",
-                manifest.task,
-                "--version",
-                manifest.dataset_version,
-                "--corpus-id",
-                manifest.corpus_id,
-                "--knowledge-domain",
-                knowledge_domain,
-                *(
-                    ("--count", str(corpus_count))
-                    if corpus_count is not None
-                    else ("--all-clauses",)
-                ),
-                "--strategy",
-                corpus_strategy.value,
-                "--seed",
-                str(corpus_seed),
-                "--output",
-                str(corpus_output),
+            operation=WorkflowOperation.create(
+                WorkflowOperationKind.EVALUATION_CORPUS_BUILD,
+                task=manifest.task,
+                version=manifest.dataset_version,
+                corpus_id=manifest.corpus_id,
+                knowledge_domain=knowledge_domain,
+                count=corpus_count,
+                all_clauses=corpus_count is None,
+                strategy=corpus_strategy.value,
+                seed=corpus_seed,
+                output=str(corpus_output),
             ),
             artifact_policy=ArtifactPolicy.DERIVED,
             output_paths=(
@@ -134,31 +122,21 @@ class QualificationWorkflowPlanner:
                 str(corpus_output / manifest.corpus_id / "corpus.yaml"),
             ),
         )
-        matrix_command = [
-            "uv",
-            "run",
-            "standards-atlas",
-            "evaluation",
-            "qualification-matrix",
-            "--manifest",
-            str(manifest_path),
-            "--output",
-            str(qualification_output),
-            "--no-fail-on-matrix-failure",
-        ]
-        if limit is not None:
-            matrix_command.extend(("--limit", str(limit)))
-        matrix_command.extend(("--corpus-root", str(corpus_output)))
-        matrix_command.append("--no-create-archive")
-        if overwrite:
-            matrix_command.append("--overwrite")
-        if fresh:
-            matrix_command.append("--fresh")
         matrix_step = WorkflowStep(
             family="evaluation",
             document=manifest.matrix_id,
             stage=WorkflowStage.QUALIFICATION_MATRIX,
-            command=tuple(matrix_command),
+            operation=WorkflowOperation.create(
+                WorkflowOperationKind.EVALUATION_QUALIFICATION_MATRIX,
+                manifest=str(manifest_path),
+                output=str(qualification_output),
+                continue_on_matrix_failure=True,
+                limit=limit,
+                corpus_root=str(corpus_output),
+                skip_archive_creation=True,
+                overwrite=overwrite,
+                fresh=fresh,
+            ),
             artifact_policy=ArtifactPolicy.DERIVED,
             output_paths=(
                 str(qualification_output / manifest.matrix_id),
@@ -183,29 +161,22 @@ class QualificationWorkflowPlanner:
             policy_output = (
                 qualification_output / manifest.matrix_id / APPLICABILITY_POLICY_ARTIFACT_DIRECTORY
             )
-            policy_command = [
-                "uv",
-                "run",
-                "standards-atlas",
-                "evaluation",
-                "applicability-policy-run",
-                "--manifest",
-                str(manifest_path),
-                "--run",
-                str(qualification_output / manifest.matrix_id),
-                "--corpus-root",
-                str(corpus_output),
-                "--output-directory",
-                str(policy_output),
-            ]
+            policy_mode = None
             if fresh or fresh_applicability_policy:
-                policy_command.append("--fresh")
-                mode = (
+                policy_mode = (
                     ApplicabilityPolicyQualificationMode.FRESH_END_TO_END
                     if fresh
                     else ApplicabilityPolicyQualificationMode.FRESH_DETAIL_FIXED_PRESENCE
-                )
-                policy_command.extend(("--qualification-mode", mode.value))
+                ).value
+            policy_operation = WorkflowOperation.create(
+                WorkflowOperationKind.EVALUATION_APPLICABILITY_POLICY,
+                manifest=str(manifest_path),
+                run=str(qualification_output / manifest.matrix_id),
+                corpus_root=str(corpus_output),
+                output_directory=str(policy_output),
+                fresh=fresh or fresh_applicability_policy,
+                qualification_mode=policy_mode,
+            )
             policy_outputs = [
                 str(policy_output / APPLICABILITY_POLICY_SELECTION_FILENAME),
                 str(policy_output / APPLICABILITY_POLICY_STATE_FILENAME),
@@ -226,32 +197,24 @@ class QualificationWorkflowPlanner:
                 family="evaluation",
                 document=f"{manifest.matrix_id}-applicability-policy",
                 stage=WorkflowStage.APPLICABILITY_DECISION_POLICY,
-                command=tuple(policy_command),
+                operation=policy_operation,
                 artifact_policy=ArtifactPolicy.DERIVED,
                 output_paths=tuple(policy_outputs),
             )
             steps = (*steps, policy_step)
         elif detail_config.enabled:
-            detail_command = [
-                "uv",
-                "run",
-                "standards-atlas",
-                "evaluation",
-                "applicability-detail-enrich",
-                "--manifest",
-                str(manifest_path),
-                "--run",
-                str(qualification_output / manifest.matrix_id),
-                "--corpus-root",
-                str(corpus_output),
-            ]
-            if fresh or fresh_applicability_policy:
-                detail_command.append("--fresh")
+            detail_operation = WorkflowOperation.create(
+                WorkflowOperationKind.EVALUATION_APPLICABILITY_DETAIL,
+                manifest=str(manifest_path),
+                run=str(qualification_output / manifest.matrix_id),
+                corpus_root=str(corpus_output),
+                fresh=fresh or fresh_applicability_policy,
+            )
             detail_step = WorkflowStep(
                 family="evaluation",
                 document=f"{manifest.matrix_id}-applicability-detail",
                 stage=WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT,
-                command=tuple(detail_command),
+                operation=detail_operation,
                 artifact_policy=ArtifactPolicy.DERIVED,
                 output_paths=(
                     str(
@@ -283,27 +246,19 @@ class QualificationWorkflowPlanner:
             steps = (*steps, detail_step)
         extraction_config = manifest.semantic_extraction_qualification
         if extraction_config.enabled:
-            extraction_command = [
-                "uv",
-                "run",
-                "standards-atlas",
-                "evaluation",
-                "semantic-extraction-qualification",
-                "--manifest",
-                str(manifest_path),
-                "--output",
-                str(qualification_output / manifest.matrix_id),
-                "--no-fail-on-qualification-failure",
-            ]
-            if limit is not None:
-                extraction_command.extend(("--limit", str(limit)))
-            if fresh:
-                extraction_command.append("--fresh")
+            extraction_operation = WorkflowOperation.create(
+                WorkflowOperationKind.EVALUATION_SEMANTIC_EXTRACTION,
+                manifest=str(manifest_path),
+                output=str(qualification_output / manifest.matrix_id),
+                continue_on_qualification_failure=True,
+                limit=limit,
+                fresh=fresh,
+            )
             extraction_step = WorkflowStep(
                 family="evaluation",
                 document=f"{manifest.matrix_id}-semantic-extraction",
                 stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
-                command=tuple(extraction_command),
+                operation=extraction_operation,
                 artifact_policy=ArtifactPolicy.DERIVED,
                 output_paths=(
                     str(
@@ -318,26 +273,18 @@ class QualificationWorkflowPlanner:
                 ),
             )
             steps = (*steps, extraction_step)
-        archive_command = [
-            "uv",
-            "run",
-            "standards-atlas",
-            "evaluation",
-            "qualification-archive",
-            "--manifest",
-            str(manifest_path),
-            "--output",
-            str(qualification_output),
-            "--corpus-root",
-            str(corpus_output),
-        ]
-        if limit is not None:
-            archive_command.extend(("--limit", str(limit)))
+        archive_operation = WorkflowOperation.create(
+            WorkflowOperationKind.EVALUATION_QUALIFICATION_ARCHIVE,
+            manifest=str(manifest_path),
+            output=str(qualification_output),
+            corpus_root=str(corpus_output),
+            limit=limit,
+        )
         archive_step = WorkflowStep(
             family="evaluation",
             document=f"{manifest.matrix_id}-archive",
             stage=WorkflowStage.QUALIFICATION_ARCHIVE,
-            command=tuple(archive_command),
+            operation=archive_operation,
             artifact_policy=ArtifactPolicy.REVIEW,
             output_paths=("local/evaluation/qualification-run-*.zip",),
         )
@@ -363,12 +310,11 @@ class QualificationWorkflowPlanner:
     def _docling_policy(step: WorkflowStep, regenerate: bool) -> WorkflowStep:
         if step.stage is not WorkflowStage.DOCLING or not regenerate:
             return step
-        command = step.command if "--overwrite" in step.command else (*step.command, "--overwrite")
         return WorkflowStep(
             family=step.family,
             document=step.document,
             stage=step.stage,
-            command=command,
+            operation=step.operation.with_parameters(overwrite=True),
             artifact_policy=step.artifact_policy,
             manual_gate=step.manual_gate,
             output_paths=step.output_paths,

@@ -15,6 +15,8 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
 from standards_atlas.application.workflow.knowledge_plan import with_knowledge_restore
 from standards_atlas.application.workflow.models import (
     ArtifactPolicy,
+    WorkflowOperation,
+    WorkflowOperationKind,
     WorkflowPlan,
     WorkflowStage,
     WorkflowStep,
@@ -92,7 +94,6 @@ class EnrichmentsWorkflowPlanner:
         corpus_output = corpus_output / suffix
         reports = Path("local/review/enrichments-workflow") / selection
         receipt = reports / "archive.json"
-        selector = tuple(value for key in keys for value in ("--document", key))
         qualification = QualificationWorkflowPlanner().plan(
             catalog,
             family_keys=family_keys,
@@ -120,34 +121,22 @@ class EnrichmentsWorkflowPlanner:
                 else WorkflowStage.ENRICHMENTS_BASELINE
             )
             output = reports / f"{phase}-baseline.json"
-            command = (
-                "uv",
-                "run",
-                "standards-atlas",
-                "workflow",
-                "archive-baseline",
-                "--phase",
-                phase,
-                "--selection",
-                selection,
-                "--manifest",
-                str(standards_manifest),
-                "--manifest",
-                str(qualification_manifest),
-                "--reports-root",
-                str(reports),
-                "--output",
-                str(output),
-                *selector,
-                *(("--corpus-count", str(corpus_count)) if corpus_count is not None else ()),
-                *(("--limit", str(limit)) if limit is not None else ()),
-                *(("--strict-context",) if fail_on_context_failure else ()),
-            )
             return WorkflowStep(
                 "baseline",
                 selection,
                 stage,
-                command,
+                WorkflowOperation.create(
+                    WorkflowOperationKind.WORKFLOW_ARCHIVE_BASELINE,
+                    phase=phase,
+                    selection=selection,
+                    manifests=(str(standards_manifest), str(qualification_manifest)),
+                    reports_root=str(reports),
+                    output=str(output),
+                    documents=keys,
+                    corpus_count=corpus_count,
+                    limit=limit,
+                    strict_context=fail_on_context_failure,
+                ),
                 ArtifactPolicy.DERIVED,
                 output_paths=(str(output),),
             )
@@ -178,10 +167,9 @@ class EnrichmentsWorkflowPlanner:
                             *step.output_paths,
                             f".atlas/data/evaluation/context-routing/{step.document}-run.json",
                         ),
-                        command=(
-                            *step.command,
-                            *(("--fail-on-failure",) if fail_on_context_failure else ()),
-                            *(("--fresh",) if fresh else ()),
+                        operation=step.operation.with_parameters(
+                            fail_on_failure=fail_on_context_failure,
+                            fresh=fresh,
                         ),
                     )
                 )
@@ -190,11 +178,16 @@ class EnrichmentsWorkflowPlanner:
                 # Vocabulary/routing sees every selected document after normalization.
                 steps.extend(context_steps)
                 steps.append(baseline_step("context"))
-                step = replace(step, command=(*step.command, *selector, "--source-only-context"))
+                step = replace(
+                    step,
+                    operation=step.operation.with_parameters(
+                        documents=keys, source_only_context=True
+                    ),
+                )
             if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE:
                 step = replace(
                     step,
-                    command=(*step.command, "--receipt", str(receipt)),
+                    operation=step.operation.with_parameters(receipt=str(receipt)),
                     output_paths=(str(receipt),),
                 )
             steps.append(step)
@@ -206,7 +199,7 @@ class EnrichmentsWorkflowPlanner:
             )
             verification = replace(
                 steps[boundary],
-                command=(*steps[boundary].command, "--verify-existing"),
+                operation=steps[boundary].operation.with_parameters(verify_existing=True),
             )
             steps = [verification, *steps[boundary + 1 :]]
         plan = WorkflowPlan(
@@ -230,38 +223,54 @@ class EnrichmentsWorkflowPlanner:
                 strict_evidence=strict_evidence,
                 knowledge_domain=knowledge_domain,
             )
-        transfer = ("--manifest", str(standards_manifest), *selector, "--write")
-        evidence = ("--strict-evidence",) if strict_evidence else ()
         tail = (
             (
                 WorkflowStage.KNOWLEDGE_ADOPT,
-                (
-                    "document",
-                    "adopt-qualification",
-                    "--run-receipt",
-                    str(receipt),
-                    *selector,
-                    "--available-only",
-                    "--write",
+                WorkflowOperation.create(
+                    WorkflowOperationKind.DOCUMENT_ADOPT_QUALIFICATION,
+                    run_receipt=str(receipt),
+                    documents=keys,
+                    available_only=True,
+                    write=True,
+                    output=str(reports / "adopt.json"),
                 ),
                 "adopt.json",
             ),
             (
                 WorkflowStage.KNOWLEDGE_PUBLISH,
-                ("atlasdata", "export-enrichments", *transfer),
+                WorkflowOperation.create(
+                    WorkflowOperationKind.ATLASDATA_EXPORT_ENRICHMENTS,
+                    manifest=str(standards_manifest),
+                    documents=keys,
+                    write=True,
+                    output=str(reports / "export.json"),
+                ),
                 "export.json",
             ),
             (
                 WorkflowStage.KNOWLEDGE_RESTORE,
-                ("atlasdata", "import-enrichments", *transfer, *evidence),
+                WorkflowOperation.create(
+                    WorkflowOperationKind.ATLASDATA_IMPORT_ENRICHMENTS,
+                    manifest=str(standards_manifest),
+                    documents=keys,
+                    write=True,
+                    strict_evidence=strict_evidence,
+                    output=str(reports / "reimport.json"),
+                ),
                 "reimport.json",
             ),
             (
                 WorkflowStage.CBOX_REPORT,
-                ("document", "cbox-report", *selector, "--knowledge-domain", knowledge_domain),
+                WorkflowOperation.create(
+                    WorkflowOperationKind.DOCUMENT_CBOX_REPORT,
+                    documents=keys,
+                    knowledge_domain=knowledge_domain,
+                    output=str(reports / "cbox.json"),
+                ),
                 "cbox.json",
             ),
         )
+
         return replace(
             plan,
             steps=(
@@ -271,7 +280,7 @@ class EnrichmentsWorkflowPlanner:
                         "knowledge",
                         selection,
                         stage,
-                        ("uv", "run", "standards-atlas", *tokens, "--output", str(reports / name)),
+                        operation,
                         ArtifactPolicy.DERIVED,
                         output_paths=(
                             str(reports / name),
@@ -282,7 +291,7 @@ class EnrichmentsWorkflowPlanner:
                             ),
                         ),
                     )
-                    for stage, tokens, name in tail
+                    for stage, operation, name in tail
                 ),
                 baseline_step("published"),
             ),

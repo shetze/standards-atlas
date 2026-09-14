@@ -1139,7 +1139,10 @@ def test_explicit_knowledge_workflow_runs_real_cli_commands_and_revalidates(worl
     import json
 
     from standards_atlas.adapters.catalog import YamlStandardCatalogReader
-    from standards_atlas.adapters.workflow import FileSystemWorkflowArtifactStore
+    from standards_atlas.adapters.workflow import (
+        CliWorkflowOperationRenderer,
+        FileSystemWorkflowArtifactStore,
+    )
     from standards_atlas.application.workflow import WorkflowExecutor, WorkflowRecovery
     from standards_atlas.application.workflow.knowledge_plan import knowledge_plan
 
@@ -1159,9 +1162,11 @@ def test_explicit_knowledge_workflow_runs_real_cli_commands_and_revalidates(worl
     class Runner:
         def __init__(self):
             self.commands = []
+            self.renderer = CliWorkflowOperationRenderer()
 
-        def run(self, command, cwd):
+        def run(self, operation, cwd):
             assert cwd == root
+            command = self.renderer.render(operation)
             self.commands.append(command)
             result = CliRunner().invoke(app, list(command[3:]))
             assert result.exit_code == 0, (result.output, result.exception)

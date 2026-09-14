@@ -14,7 +14,10 @@ from standards_atlas.adapters.filesystem import (
 from standards_atlas.adapters.markdown import MarkdownExporter
 from standards_atlas.adapters.normalization import NormalizationArtifactRepository
 from standards_atlas.adapters.pdf import FormulaVisualExtractor
-from standards_atlas.adapters.workflow import FileSystemWorkflowArtifactStore
+from standards_atlas.adapters.workflow import (
+    FileSystemWorkflowArtifactStore,
+    SubprocessWorkflowOperationRunner,
+)
 from standards_atlas.application.services import (
     DocumentNormalizationService,
     MarkdownExportService,
@@ -51,7 +54,9 @@ def build_markdown_export_service(workspace: Path) -> MarkdownExportService:
 
 def build_workflow_service(project_root: Path) -> EndToEndWorkflowService:
     recovery = WorkflowRecovery(FileSystemWorkflowArtifactStore())
-    return EndToEndWorkflowService(executor=WorkflowExecutor(recovery))
+    return EndToEndWorkflowService(
+        executor=WorkflowExecutor(recovery, SubprocessWorkflowOperationRunner())
+    )
 
 
 def build_alignment_service(workspace: Path):
