@@ -48,3 +48,30 @@ The following are no longer production semantic dimensions:
 - role-semantics presence and role relations.
 
 Old manifests, prompts, qualification campaigns, CLI commands and tests for these dimensions are intentionally not supported or migrated.
+
+## Assertion auto-adoption eligibility
+
+Slice 7C evaluates whether assertion candidates are eligible for later automatic adoption without
+writing canonical knowledge. The command requires a versioned policy, Development and Holdout
+golden suites plus their Slice-7A reports, the exact Slice-7B cascade report, and the exact efficient
+proposal artifact. Supply the escalation proposal as well when the cascade contains escalated
+clauses.
+
+```bash
+uv run standards-atlas evaluation assertion-auto-adoption \
+  --policy cfg/evaluation/assertion-auto-adoption-policy.yaml \
+  --development-golden local/review/assertions/development/assertion-golden-suite.yaml \
+  --development-report local/evaluation/assertion-development.json \
+  --holdout-golden local/review/assertions/holdout/assertion-golden-suite.yaml \
+  --holdout-report local/evaluation/assertion-holdout.json \
+  --cascade-report local/evaluation/assertion-cascade.json \
+  --efficient-proposal .atlas/data/knowledge-proposals/efficient-run/DOC.json \
+  --escalation-proposal .atlas/data/knowledge-proposals/escalation-run/DOC.json \
+  --output local/evaluation/assertion-auto-adoption.json
+```
+
+The report distinguishes `auto_adoption_eligible` from `review_required`. A passing global gate still requires exact production assertion/entity evidence anchors and never
+makes escalated assertions automatically eligible: escalation output has not been independently
+re-verified in Slice 7B. Applying eligible decisions to `EngineeringDocument.knowledge` is a Slice-8
+operation.
+

@@ -295,6 +295,9 @@ class AssertionQualificationProposalSource(BaseModel):
     proposal_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     extractor: str
     extractor_version: str
+    model: str | None = None
+    provider: str | None = None
+    prompt_version: str | None = None
 
 
 class AssertionQualificationReport(SchemaBoundModel):

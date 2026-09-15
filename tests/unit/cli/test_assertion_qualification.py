@@ -102,3 +102,17 @@ def test_assertion_cascade_help_is_registered() -> None:
     assert "--verifier-model" in result.stdout
     assert "--escalation-model" in result.stdout
     assert "--ontology-version" in result.stdout
+
+
+def test_assertion_auto_adoption_help_is_registered() -> None:
+    result = runner.invoke(app, ["evaluation", "assertion-auto-adoption", "--help"])
+    assert result.exit_code == 0
+    assert "--policy" in result.stdout
+    assert "--development-golden" in result.stdout
+    assert "--development-report" in result.stdout
+    assert "--holdout-golden" in result.stdout
+    assert "--holdout-report" in result.stdout
+    assert "--cascade-report" in result.stdout
+    assert "--efficient-proposal" in result.stdout
+    assert "--escalation-proposal" in result.stdout
+    assert "--output" in result.stdout

@@ -64,6 +64,9 @@ class AssertionQualificationEvaluator:
                 proposal_hash=proposal_hashes[key],
                 extractor=proposal.proposal_provenance.extractor,
                 extractor_version=proposal.proposal_provenance.extractor_version,
+                model=proposal.proposal_provenance.model,
+                provider=proposal.proposal_provenance.provider,
+                prompt_version=proposal.proposal_provenance.prompt_version,
             )
             for key, proposal in sorted(by_document.items())
         )

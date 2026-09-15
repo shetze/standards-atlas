@@ -113,6 +113,18 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         "local/evaluation/**/assertion-cascade*.json",
     ),
+    "assertion-auto-adoption-policy": SchemaPolicy(
+        "assertion-auto-adoption-policy",
+        1,
+        (1,),
+        "cfg/evaluation/assertion-auto-adoption-policy.{yaml,yml,json}",
+    ),
+    "assertion-auto-adoption-report": SchemaPolicy(
+        "assertion-auto-adoption-report",
+        1,
+        (1,),
+        "local/evaluation/**/assertion-auto-adoption*.json",
+    ),
     "structural-taxonomy-resource": SchemaPolicy(
         "structural-taxonomy-resource",
         1,

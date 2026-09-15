@@ -66,7 +66,18 @@ once and must also inspect the complete eligible clause for missing source-extra
 assertions. Efficient failures/violations, verifier errors, rejected/uncertain candidates, and
 missing-item signals route only that clause to the escalation extractor. The report persists these
 routes, verifier evidence, stage-local failures/violations and exact proposal hashes, but it still
-has no pass/fail or adoption policy. Holdout and automatic-adoption policy remain Slice 7C.
+has no pass/fail or adoption policy.
+
+Slice 7C adds a separate schema-1 `AssertionAutoAdoptionPolicy` and
+`AssertionAutoAdoptionReport`. The policy evaluates Development and protected Holdout reports
+independently, requires their golden assertion source clauses to be disjoint, and binds both
+qualified runs to the same Efficient extractor/model/provider/prompt identity used by the production
+cascade. Only assertions from `efficient_accepted` clauses whose candidate and dependent entities
+were independently marked `supported` and whose production evidence anchors are exact can become
+`auto_adoption_eligible`. Escalation output is
+always `review_required` because the 7B escalation stage is not independently re-verified. The 7C
+report is an eligibility artifact only: it cannot populate `EngineeringDocument.knowledge` or the
+ABox. Slice 8 owns canonical adoption.
 
 ## Artifact separation
 

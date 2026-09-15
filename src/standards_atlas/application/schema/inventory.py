@@ -454,6 +454,18 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "assertion-qualification-cascade-report",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.policy_models:"
+        "AssertionAutoAdoptionPolicy",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-auto-adoption-policy",
+    ),
+    SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.policy_models:"
+        "AssertionAutoAdoptionReport",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-auto-adoption-report",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.application.qualification.golden_corpus:GoldenCorpusReport",
         SchemaMarkerDisposition.LOCAL,
         reason=("in-memory qualification result; persisted envelope is owned by run reporter"),
@@ -979,6 +991,22 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (VersionAxis.SCHEMA,),
         "assertion-qualification-cascade-report",
         "Threshold-free Slice-7B Efficient → Verify → Escalate routing evidence.",
+    ),
+    VersionedInterface(
+        "assertion-auto-adoption-policy",
+        "cfg/evaluation/assertion-auto-adoption-policy.{yaml,yml,json}",
+        LifecycleBoundary.PUBLIC_CONTRACT,
+        (VersionAxis.SCHEMA,),
+        "assertion-auto-adoption-policy",
+        "Project-owned Development/Holdout thresholds for assertion auto-adoption eligibility.",
+    ),
+    VersionedInterface(
+        "assertion-auto-adoption-report",
+        "local/evaluation/**/assertion-auto-adoption*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "assertion-auto-adoption-report",
+        "Slice-7C quality gates and per-assertion eligibility decisions without adoption.",
     ),
     VersionedInterface(
         "complypack-workspace-manifest",

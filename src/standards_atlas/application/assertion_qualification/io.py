@@ -14,6 +14,10 @@ from standards_atlas.application.assertion_qualification.models import (
     AssertionGoldenSuite,
     AssertionQualificationReport,
 )
+from standards_atlas.application.assertion_qualification.policy_models import (
+    AssertionAutoAdoptionPolicy,
+    AssertionAutoAdoptionReport,
+)
 from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.domain.model import DocumentKnowledgeProposal
 
@@ -38,6 +42,38 @@ def load_document_knowledge_proposal(path: Path) -> DocumentKnowledgeProposal:
         proposal_payload.get("schema_version"),
     )
     return DocumentKnowledgeProposal.model_validate(proposal_payload)
+
+
+def load_assertion_qualification_report(path: Path) -> AssertionQualificationReport:
+    payload = _load_mapping(path)
+    require_supported_schema("assertion-qualification-report", payload.get("schema_version"))
+    return AssertionQualificationReport.model_validate(payload)
+
+
+def load_assertion_auto_adoption_policy(path: Path) -> AssertionAutoAdoptionPolicy:
+    payload = _load_mapping(path)
+    require_supported_schema("assertion-auto-adoption-policy", payload.get("schema_version"))
+    return AssertionAutoAdoptionPolicy.model_validate(payload)
+
+
+def load_assertion_auto_adoption_report(path: Path) -> AssertionAutoAdoptionReport:
+    payload = _load_mapping(path)
+    require_supported_schema("assertion-auto-adoption-report", payload.get("schema_version"))
+    return AssertionAutoAdoptionReport.model_validate(payload)
+
+
+def write_assertion_auto_adoption_report(
+    report: AssertionAutoAdoptionReport,
+    path: Path,
+) -> Path:
+    payload = report.model_dump(mode="json")
+    require_current_payload("assertion-auto-adoption-report", payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return path
 
 
 def write_assertion_qualification_report(

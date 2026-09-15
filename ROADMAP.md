@@ -19,8 +19,9 @@ introduce typed assertion/table corpora and dedicated qualification without weak
 qualification, and adoption boundary. Slice 7A adds versioned development/holdout assertion
 golden suites plus deterministic entity/assertion, normative-force, and grounding metrics. Slice 7B
 now adds threshold-free Efficient → Verify → Escalate execution with exhaustive independent missing
-assertion detection and targeted clause escalation. Next, introduce explicit holdout and
-automatic-adoption policy in Slice 7C.
+assertion detection and targeted clause escalation. Slice 7C now adds explicit Development/Holdout
+quality gates, runtime-identity binding, and per-assertion auto-adoption eligibility while keeping
+canonical adoption deferred to Slice 8.
 
 ### Qualify existing standards
 

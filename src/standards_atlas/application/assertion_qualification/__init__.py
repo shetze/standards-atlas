@@ -1,4 +1,4 @@
-"""Assertion-centred qualification metrics and Slice-7B cascade contracts."""
+"""Assertion-centred qualification metrics, cascade and Slice-7C eligibility contracts."""
 
 from .cascade import (
     AssertionQualificationCascadeResult,
@@ -22,9 +22,13 @@ from .evaluation import (
     proposal_sha256,
 )
 from .io import (
+    load_assertion_auto_adoption_policy,
+    load_assertion_auto_adoption_report,
     load_assertion_golden_suite,
     load_assertion_qualification_cascade_report,
+    load_assertion_qualification_report,
     load_document_knowledge_proposal,
+    write_assertion_auto_adoption_report,
     write_assertion_qualification_cascade_report,
     write_assertion_qualification_report,
 )
@@ -44,8 +48,43 @@ from .models import (
     GoldenKnowledgeEntity,
     GoldenNormativeAssertion,
 )
+from .policy import (
+    AssertionAutoAdoptionPolicyEvaluator,
+    auto_adoption_policy_sha256,
+    cascade_report_sha256,
+    qualification_report_sha256,
+)
+from .policy_models import (
+    ASSERTION_AUTO_ADOPTION_POLICY_SCHEMA_VERSION,
+    ASSERTION_AUTO_ADOPTION_REPORT_SCHEMA_VERSION,
+    AssertionAutoAdoptionDecision,
+    AssertionAutoAdoptionDisposition,
+    AssertionAutoAdoptionPolicy,
+    AssertionAutoAdoptionReason,
+    AssertionAutoAdoptionReport,
+    AssertionPartitionQualityGate,
+    AssertionPipelineIdentityGate,
+    AssertionProposalRuntimeIdentity,
+    AssertionQualityGateCheck,
+    AssertionQualityGateOperator,
+    AssertionQualityThresholds,
+)
 
 __all__ = [
+    "ASSERTION_AUTO_ADOPTION_POLICY_SCHEMA_VERSION",
+    "ASSERTION_AUTO_ADOPTION_REPORT_SCHEMA_VERSION",
+    "AssertionAutoAdoptionDecision",
+    "AssertionAutoAdoptionDisposition",
+    "AssertionAutoAdoptionPolicy",
+    "AssertionAutoAdoptionPolicyEvaluator",
+    "AssertionAutoAdoptionReason",
+    "AssertionAutoAdoptionReport",
+    "AssertionPartitionQualityGate",
+    "AssertionPipelineIdentityGate",
+    "AssertionProposalRuntimeIdentity",
+    "AssertionQualityGateCheck",
+    "AssertionQualityGateOperator",
+    "AssertionQualityThresholds",
     "ASSERTION_QUALIFICATION_CASCADE_REPORT_SCHEMA_VERSION",
     "AssertionCandidateVerification",
     "AssertionCascadeClauseReport",
@@ -74,10 +113,17 @@ __all__ = [
     "GoldenKnowledgeEntity",
     "GoldenNormativeAssertion",
     "golden_suite_sha256",
+    "load_assertion_auto_adoption_policy",
+    "load_assertion_auto_adoption_report",
+    "load_assertion_qualification_report",
     "load_assertion_golden_suite",
     "load_assertion_qualification_cascade_report",
     "load_document_knowledge_proposal",
     "proposal_sha256",
+    "write_assertion_auto_adoption_report",
     "write_assertion_qualification_cascade_report",
     "write_assertion_qualification_report",
+    "auto_adoption_policy_sha256",
+    "cascade_report_sha256",
+    "qualification_report_sha256",
 ]

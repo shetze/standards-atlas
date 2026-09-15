@@ -25,6 +25,7 @@ from standards_atlas.cli.commands.evaluation_commands.applicability_policy impor
     run_applicability_policy_command,
 )
 from standards_atlas.cli.commands.evaluation_commands.assertion_qualification import (
+    evaluate_assertion_auto_adoption,
     evaluate_assertion_proposals,
     run_assertion_qualification_cascade,
 )
@@ -58,6 +59,7 @@ from standards_atlas.cli.commands.evaluation_commands.review_package import (
 from standards_atlas.cli.composition import build_golden_corpus_qualifier
 
 __all__ = [
+    "evaluate_assertion_auto_adoption",
     "evaluate_assertion_proposals",
     "run_assertion_qualification_cascade",
     "build_review_command",

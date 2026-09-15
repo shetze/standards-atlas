@@ -83,6 +83,14 @@ reports bind the normalized golden-suite hash and every evaluated proposal hash,
 acceptance thresholds or adoption authority. Development and Holdout use the same schema while
 remaining different suite partitions.
 
+### Assertion auto-adoption contracts Slice 7C (2026-09-15)
+
+`assertion-auto-adoption-policy` and `assertion-auto-adoption-report` are current-only schema-1
+families during refactoring. Policies are explicit project-owned quality gates and reports bind the
+policy hash, Development/Holdout qualification evidence, cascade-report hash and exact proposal
+identities. The report records eligibility, not canonical adoption authority; Slice 8 remains the
+only boundary allowed to construct accepted `DocumentKnowledge`.
+
 ### Review contract refactoring R2 (2026-09-14)
 
 During refactoring, `partial-qualification-manifest` and `partial-review-publication` accept

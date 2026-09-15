@@ -88,6 +88,13 @@ artifact. It records per-clause Efficient/Verify/Escalate routing, exact proposa
 verifier decisions. It deliberately contains no accepted assertion set; canonical `DocumentKnowledge`
 remains unchanged until the explicit Slice 8 adoption boundary.
 
+Slice 7C adds `AssertionAutoAdoptionPolicy` and `AssertionAutoAdoptionReport` as non-canonical
+qualification contracts. A policy carries explicit Development/Holdout thresholds; a report binds
+those gates to exact golden-suite/report hashes, the production cascade/proposal hashes, and the
+qualified Efficient runtime identity. Per-assertion decisions are eligibility only. They include the
+source proposal/run, required entity IDs and evidence-anchor IDs needed by a later adoption service,
+but they do not create `KnowledgeEntity`, `NormativeAssertion`, or `DocumentKnowledge` values.
+
 ## Table-derived knowledge
 
 `KnowledgeTable` identifies one structured table within a clause and owns ordered

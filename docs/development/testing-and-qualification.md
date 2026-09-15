@@ -186,4 +186,10 @@ corpus foundations. The next improvements should be risk-driven:
 
 Slice 5C removes the former semantic-extraction qualification command, manifest block, persisted schema family and qualification-archive inputs. Current model-generated engineering knowledge is represented only as run-scoped `DocumentKnowledgeProposal` artifacts with exact source grounding.
 
-These proposals are intentionally separate from the applicability qualification workflow. Slice 7A introduces assertion-centred entity/assertion matching and grounding metrics. Slice 7B adds Efficient → Verify → Escalate execution with exhaustive missing-assertion checks and targeted clause escalation. Both artifacts remain non-canonical: neither the metric report nor the cascade report can populate `EngineeringDocument.knowledge` or the ABox. Automatic acceptance policy is deferred to Slice 7C.
+These proposals are intentionally separate from the applicability qualification workflow. Slice 7A introduces assertion-centred entity/assertion matching and grounding metrics. Slice 7B adds Efficient → Verify → Escalate execution with exhaustive missing-assertion checks and targeted clause escalation. Both artifacts remain non-canonical: neither the metric report nor the cascade report can populate
+`EngineeringDocument.knowledge` or the ABox. Slice 7C adds explicit Development/Holdout policy
+gates and a per-assertion eligibility report. Development and Holdout source clauses must be
+disjoint, both partitions must pass the configured thresholds, and the qualified Efficient runtime
+identity must match production. Only verifier-supported `efficient_accepted` assertions with exact production grounding are eligible
+for automatic adoption; escalation output remains review-only. The actual write into canonical
+`DocumentKnowledge` remains Slice 8.

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from standards_atlas.application.assertion_qualification import (
+    AssertionAutoAdoptionReport,
     AssertionQualificationCascadeReport,
     AssertionQualificationReport,
 )
@@ -32,3 +33,13 @@ def test_slice_7b_cascade_report_has_no_acceptance_or_adoption_policy() -> None:
     assert "accepted_assertions" not in fields
     assert "threshold" not in fields
     assert "adoption" not in fields
+
+
+def test_slice_7c_auto_adoption_report_is_eligibility_only() -> None:
+    fields = set(AssertionAutoAdoptionReport.model_fields)
+    assert "adopted_assertions" not in fields
+    assert "document_knowledge" not in fields
+    assert "canonical_knowledge" not in fields
+    assert "engineering_document" not in fields
+    assert "auto_adoption_eligible_assertions" in fields
+    assert "qualification_gate_passed" in fields

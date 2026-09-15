@@ -18,10 +18,15 @@ from standards_atlas.adapters.llm import (
     OpenAICompatibleLlmGateway,
 )
 from standards_atlas.application.assertion_qualification import (
+    AssertionAutoAdoptionPolicyEvaluator,
     AssertionQualificationCascadeService,
     AssertionQualificationEvaluator,
+    load_assertion_auto_adoption_policy,
     load_assertion_golden_suite,
+    load_assertion_qualification_cascade_report,
+    load_assertion_qualification_report,
     load_document_knowledge_proposal,
+    write_assertion_auto_adoption_report,
     write_assertion_qualification_cascade_report,
     write_assertion_qualification_report,
 )
@@ -175,4 +180,138 @@ def run_assertion_qualification_cascade(
     typer.echo(f"Document                : {result.report.source_document_key}")
     typer.echo(f"Efficient accepted      : {result.report.efficient_accepted_clauses}")
     typer.echo(f"Escalated               : {result.report.escalated_clauses}")
+    typer.echo(f"Report                  : {report_path}")
+
+
+@evaluation_app.command("assertion-auto-adoption")
+def evaluate_assertion_auto_adoption(
+    policy: Annotated[
+        Path,
+        typer.Option(
+            "--policy",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Versioned assertion auto-adoption policy YAML or JSON.",
+        ),
+    ],
+    development_golden: Annotated[
+        Path,
+        typer.Option(
+            "--development-golden",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Development assertion golden suite used by the qualification report.",
+        ),
+    ],
+    development_report: Annotated[
+        Path,
+        typer.Option(
+            "--development-report",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Development assertion qualification report.",
+        ),
+    ],
+    holdout_golden: Annotated[
+        Path,
+        typer.Option(
+            "--holdout-golden",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Protected holdout assertion golden suite used by the qualification report.",
+        ),
+    ],
+    holdout_report: Annotated[
+        Path,
+        typer.Option(
+            "--holdout-report",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Holdout assertion qualification report.",
+        ),
+    ],
+    cascade_report: Annotated[
+        Path,
+        typer.Option(
+            "--cascade-report",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Slice-7B cascade report for the production candidate document.",
+        ),
+    ],
+    efficient_proposal: Annotated[
+        Path,
+        typer.Option(
+            "--efficient-proposal",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Exact efficient-stage proposal artifact referenced by the cascade report.",
+        ),
+    ],
+    escalation_proposal: Annotated[
+        Path | None,
+        typer.Option(
+            "--escalation-proposal",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Exact escalation proposal artifact when the cascade escalated clauses.",
+        ),
+    ] = None,
+    output: Annotated[
+        Path,
+        typer.Option(
+            "--output",
+            dir_okay=False,
+            help="Destination Slice-7C auto-adoption eligibility report.",
+        ),
+    ] = Path("local/evaluation/assertion-auto-adoption.json"),
+) -> None:
+    """Evaluate Development/Holdout gates and per-assertion auto-adoption eligibility."""
+    try:
+        policy_contract = load_assertion_auto_adoption_policy(policy)
+        development_suite = load_assertion_golden_suite(development_golden)
+        development_metrics = load_assertion_qualification_report(development_report)
+        holdout_suite = load_assertion_golden_suite(holdout_golden)
+        holdout_metrics = load_assertion_qualification_report(holdout_report)
+        cascade = load_assertion_qualification_cascade_report(cascade_report)
+        efficient = load_document_knowledge_proposal(efficient_proposal)
+        escalation = (
+            load_document_knowledge_proposal(escalation_proposal)
+            if escalation_proposal is not None
+            else None
+        )
+        report = AssertionAutoAdoptionPolicyEvaluator().evaluate(
+            policy=policy_contract,
+            development_suite=development_suite,
+            development_report=development_metrics,
+            holdout_suite=holdout_suite,
+            holdout_report=holdout_metrics,
+            cascade_report=cascade,
+            efficient_proposal=efficient,
+            escalation_proposal=escalation,
+        )
+        report_path = write_assertion_auto_adoption_report(report, output)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Policy                  : {report.policy_id}@{report.policy_version}")
+    typer.echo(f"Development gate        : {'PASS' if report.development_gate.passed else 'FAIL'}")
+    typer.echo(f"Holdout gate            : {'PASS' if report.holdout_gate.passed else 'FAIL'}")
+    typer.echo(
+        f"Pipeline identity       : {'PASS' if report.pipeline_identity_gate.passed else 'FAIL'}"
+    )
+    typer.echo(
+        f"Qualification gate      : {'PASS' if report.qualification_gate_passed else 'FAIL'}"
+    )
+    typer.echo(f"Auto-adoption eligible  : {report.auto_adoption_eligible_assertions}")
+    typer.echo(f"Review required         : {report.review_required_assertions}")
     typer.echo(f"Report                  : {report_path}")

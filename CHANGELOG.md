@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased — Assertion auto-adoption policy Slice 7C (2026-09-15)
+
+- Add schema-1 Development/Holdout assertion auto-adoption policy with explicit minimum quality
+  thresholds, optional FP/FN caps, and zero-by-default proposal failure/violation limits.
+- Require Development and Holdout reports to bind exact golden-suite hashes and disjoint source-clause
+  assertion partitions before either can contribute to an automatic-adoption gate.
+- Pin production eligibility to the same Efficient extractor/model/provider/prompt identity qualified in
+  both partitions and bind policy, reports, cascade evidence, and proposal artifacts by SHA-256/run ID.
+- Mark only independently verified `efficient_accepted` assertions with exact assertion/entity
+  grounding as `auto_adoption_eligible`; all escalation output remains `review_required` because
+  Slice 7B does not re-verify escalation results.
+- Add `standards-atlas evaluation assertion-auto-adoption` to emit an auditable per-assertion
+  eligibility report. No canonical `DocumentKnowledge` or ABox mutation is performed in Slice 7C.
+
+
 ## Unreleased — Assertion qualification cascade Slice 7B (2026-09-15)
 
 - Add a threshold-free Efficient → Verify → Escalate cascade for assertion-centred knowledge
