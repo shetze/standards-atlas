@@ -102,12 +102,12 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.formal_semantics.ontology_definition:FormalOntologyDefinition",
     ),
     ModelBinding(
-        "knowledge-adoption-batch",
-        "standards_atlas.application.model.knowledge_adoption:KnowledgeAdoptionBatch",
+        "context-adoption-batch",
+        "standards_atlas.application.model.context_adoption:ContextAdoptionBatch",
     ),
     ModelBinding(
-        "knowledge-adoption-report",
-        "standards_atlas.application.model.knowledge_adoption:KnowledgeAdoptionReport",
+        "context-adoption-report",
+        "standards_atlas.application.model.context_adoption:ContextAdoptionReport",
     ),
     ModelBinding(
         "knowledge-evidence",

@@ -3,7 +3,7 @@
 The CBox is a read-only projection of the accepted `EngineeringDocument`, not a second
 knowledge repository. Corpus construction, Prompt Workbench and `document cbox-report`
 use the same projection. Neither old qualification reports nor Golden labels are read
-by these consumers. Use [knowledge adoption](knowledge-adoption.md) to accept a result,
+by these consumers. Use [context adoption](context-adoption.md) to accept a result,
 and [AtlasData enrichments](atlasdata-enrichments.md) to persist or restore it.
 
 ## Inspect the effective post-policy or post-import state

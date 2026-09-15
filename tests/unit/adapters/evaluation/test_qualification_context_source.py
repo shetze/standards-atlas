@@ -11,14 +11,14 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import pytest
 from typer.testing import CliRunner
 
-from standards_atlas.adapters.evaluation.qualification_knowledge_source import (
-    load_qualification_knowledge,
+from standards_atlas.adapters.evaluation.qualification_context_source import (
+    load_qualification_context,
 )
 from standards_atlas.adapters.filesystem.document_repository import (
     FileSystemEngineeringDocumentRepository,
 )
 from standards_atlas.application.evaluation.models import EvaluationDataset, EvaluationExample
-from standards_atlas.application.model.knowledge_adoption import KnowledgeAdoptionBatch
+from standards_atlas.application.model.context_adoption import ContextAdoptionBatch
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseReference,
     CorpusClause,
@@ -45,7 +45,7 @@ from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
     QualificationSelectionClause,
 )
-from standards_atlas.application.services.knowledge_adoption_service import KnowledgeAdoptionService
+from standards_atlas.application.services.context_adoption_service import ContextAdoptionService
 from standards_atlas.cli import app
 from standards_atlas.domain.model import (
     Clause,
@@ -257,7 +257,7 @@ def _documents(workspace: Path) -> FileSystemEngineeringDocumentRepository:
 
 
 def test_policy_result_materializes_only_applicability(tmp_path: Path) -> None:
-    batch = load_qualification_knowledge(_archive(tmp_path, _members()))
+    batch = load_qualification_context(_archive(tmp_path, _members()))
     assert (batch.selected_clause_count, batch.unqualified_clause_count) == (2, 1)
     candidate = batch.candidates[0]
     assert candidate.patch.applicability.present is False
@@ -266,19 +266,19 @@ def test_policy_result_materializes_only_applicability(tmp_path: Path) -> None:
 
 
 def test_batch_roundtrip_and_replay_are_idempotent(tmp_path: Path) -> None:
-    batch = load_qualification_knowledge(_archive(tmp_path, _members()))
-    restored = KnowledgeAdoptionBatch.model_validate_json(batch.model_dump_json())
+    batch = load_qualification_context(_archive(tmp_path, _members()))
+    restored = ContextAdoptionBatch.model_validate_json(batch.model_dump_json())
     assert restored == batch
     repository = _documents(tmp_path / "workspace")
-    service = KnowledgeAdoptionService(documents=repository)
+    service = ContextAdoptionService(documents=repository)
     assert service.apply(restored, write=True).written_document_keys == ("TEST",)
     assert service.apply(restored, write=True).written_document_keys == ()
 
 
 def test_unknown_policy_is_not_materialized_as_negative(tmp_path: Path) -> None:
-    batch = load_qualification_knowledge(_archive(tmp_path, _members(unknown=True)))
+    batch = load_qualification_context(_archive(tmp_path, _members(unknown=True)))
     repository = _documents(tmp_path / "workspace")
-    KnowledgeAdoptionService(documents=repository).apply(batch, write=True)
+    ContextAdoptionService(documents=repository).apply(batch, write=True)
     provenance = repository.load(DocumentKey(value="TEST")).clauses[0].provenance
     assert provenance.availability("enrichments.applicability") == "unknown"
 
@@ -287,7 +287,7 @@ def test_missing_policy_does_not_fall_back_to_gate(tmp_path: Path) -> None:
     members = _members()
     del members["applicability-policy/applicability-policy-run.json"]
     with pytest.raises(ValueError, match="exactly one applicability-policy-run"):
-        load_qualification_knowledge(_archive(tmp_path, members))
+        load_qualification_context(_archive(tmp_path, members))
 
 
 def test_manifest_checksum_mismatch_is_rejected(tmp_path: Path) -> None:
@@ -298,7 +298,7 @@ def test_manifest_checksum_mismatch_is_rejected(tmp_path: Path) -> None:
     report = extracted / PREFIX / "final-consensus-report.json"
     report.write_text(report.read_text() + " ")
     with pytest.raises(ValueError, match="checksum mismatch"):
-        load_qualification_knowledge(extracted)
+        load_qualification_context(extracted)
 
 
 def test_zip_and_extracted_archive_have_identical_identity(tmp_path: Path) -> None:
@@ -306,7 +306,7 @@ def test_zip_and_extracted_archive_have_identical_identity(tmp_path: Path) -> No
     extracted = tmp_path / "extracted"
     with ZipFile(path) as archive:
         archive.extractall(extracted)
-    assert load_qualification_knowledge(path) == load_qualification_knowledge(extracted)
+    assert load_qualification_context(path) == load_qualification_context(extracted)
 
 
 def test_cli_preview_and_write(tmp_path: Path) -> None:

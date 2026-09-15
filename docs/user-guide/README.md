@@ -37,7 +37,7 @@ This guide describes the supported user workflows for turning private standards 
 | Build corpora and execute qualification matrices | [Evaluation and qualification](evaluation-and-qualification.md) |
 | Compare source-grounded Efficient model inputs | [Taxonomy-grounded qualification](taxonomy-grounded-qualification.md) |
 | Inspect source-grounded Efficient predecisions without model calls | [Taxonomy decision diagnostics](taxonomy-decision-diagnostics.md) |
-| Accept qualified CBox attributes into canonical documents | [Knowledge adoption](knowledge-adoption.md) |
+| Accept qualified CBox attributes into canonical documents | [Context adoption](context-adoption.md) |
 | Persist and restore accepted CBox attributes through AtlasData | [AtlasData enrichments](atlasdata-enrichments.md) |
 | Inspect effective CBox values and run explicit knowledge workflows | [Canonical CBox](canonical-cbox.md) |
 | Qualify process sets and primary functions through persistence | [Process-function qualification](process-function-qualification.md) |

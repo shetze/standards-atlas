@@ -10,10 +10,10 @@ from typing import Any
 
 import yaml
 
-from standards_atlas.application.semantic_qualification.artifact_contracts import (
+from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
+from standards_atlas.application.semantic_qualification.qualification_artifact_validation import (
     validate_qualification_artifact,
 )
-from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
 from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
     examples_for_persisted_selection,

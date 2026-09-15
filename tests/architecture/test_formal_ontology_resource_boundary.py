@@ -1,4 +1,4 @@
-"""Architecture guards for Slice-2 formal ontology resources."""
+"""Architecture guards for the clean-break Formal Ontology 2.0 resources."""
 
 from pathlib import Path
 
@@ -6,14 +6,14 @@ ROOT = Path("src/standards_atlas/resources/formal_ontologies")
 NAMESPACE = "http://lunetix.org/standards-atlas#"
 
 
-def test_formal_ontologies_are_versioned_packaged_resources() -> None:
+def test_only_formal_ontology_2_0_resources_are_packaged() -> None:
     expected = {
-        ROOT / "standards-atlas-core" / "1.0.0" / "ontology.ttl",
-        ROOT / "functional-safety" / "1.0.0" / "ontology.ttl",
-        ROOT / "standards-atlas-core" / "1.1.0" / "ontology.ttl",
-        ROOT / "functional-safety" / "1.1.0" / "ontology.ttl",
+        ROOT / "standards-atlas-core" / "2.0.0" / "ontology.ttl",
+        ROOT / "standards-atlas-core" / "2.0.0" / "ontology.yaml",
+        ROOT / "functional-safety" / "2.0.0" / "ontology.ttl",
+        ROOT / "functional-safety" / "2.0.0" / "ontology.yaml",
     }
-    assert all(path.is_file() for path in expected)
+    assert {path for path in ROOT.glob("*/*/*") if path.is_file()} == expected
 
 
 def test_formal_ontologies_share_the_stable_stat_namespace() -> None:

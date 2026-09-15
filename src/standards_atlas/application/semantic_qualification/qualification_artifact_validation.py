@@ -11,7 +11,7 @@ from pathlib import PurePosixPath
 
 import yaml
 
-from standards_atlas.application.model.knowledge_adoption import KnowledgeAdoptionBatch
+from standards_atlas.application.model.context_adoption import ContextAdoptionBatch
 from standards_atlas.application.semantic_qualification.cascade_provenance import (
     validate_cascade_provenance,
 )
@@ -28,7 +28,7 @@ QUALIFICATION_ARTIFACT_NAMES = frozenset(
         "known-gate-consensus.json",
         "qualification-matrix.json",
         "cascade-provenance.json",
-        "knowledge-adoption-batch.json",
+        "context-adoption-batch.json",
         "qualification-manifest.yaml",
     }
 )
@@ -48,8 +48,8 @@ def validate_qualification_artifact(name: str, raw: bytes) -> None:
             QualificationMatrixReport.model_validate_json(raw)
         elif filename == "cascade-provenance.json":
             validate_cascade_provenance(json.loads(raw))
-        elif filename == "knowledge-adoption-batch.json":
-            KnowledgeAdoptionBatch.model_validate_json(raw)
+        elif filename == "context-adoption-batch.json":
+            ContextAdoptionBatch.model_validate_json(raw)
         elif filename == "qualification-manifest.yaml":
             QualificationMatrixManifest.model_validate(yaml.safe_load(raw))
     except ValueError as exc:

@@ -76,8 +76,8 @@ class OntologyGuidedLlmExtractor:
         gateway: LlmGateway,
         *,
         model: str | None = None,
-        prompt_version: str = "ontology-guided-v3",
-        extractor_version: str = "1.2.0",
+        prompt_version: str = "ontology-guided-v4",
+        extractor_version: str = "2.0.0",
     ) -> None:
         self._gateway = gateway
         self._model = model
@@ -111,13 +111,14 @@ class OntologyGuidedLlmExtractor:
                 "class and property entailed by the clause. EngineeringEntity and "
                 "EngineeringConcept are last-resort fallback classes; use them only when no more "
                 "specific allowed class fits. Prefer System, Subsystem, Element, "
-                "HardwareComponent, SoftwareElement, Requirement, Specification, "
-                "InterfaceSpecification, EngineeringQuantity, Metric, Parameter, Rate, "
+                "HardwareComponent, SoftwareElement, Requirement, Criterion, EngineeringArtifact, "
+                "WorkProduct, Specification, InterfaceSpecification, Plan, Report, "
+                "EngineeringRecord, EngineeringQuantity, Metric, Parameter, Rate, "
                 "TimeInterval, TechniqueOrMeasure, Fault, Error, Failure, SafetyMechanism, or "
-                "SafetyState when applicable. Use containsClause only for document structure "
-                "where a StandardsEntity contains a Clause; use hasPart/partOf for engineering "
-                "composition. Use describes only as a final relation fallback when no more "
-                "specific allowed property is entailed. Never materialize ontology class names "
+                "SafetyState when applicable. Use hasPart/partOf only for engineering "
+                "composition. Structural, projection, and extraction-provenance predicates are "
+                "not part of the allowed source-extraction vocabulary. Never materialize "
+                "ontology class names "
                 "or schema placeholders as source entities unless the clause itself explicitly "
                 "refers to that concept. The entities array is ordered; relations MUST reference "
                 "entities only by zero-based subject_index and object_index into that array. "

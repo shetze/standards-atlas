@@ -22,9 +22,9 @@ from standards_atlas.adapters.evaluation.archive_receipt import write_archive_re
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
 from standards_atlas.adapters.workflow import GitRepositoryIdentityProvider
 from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
-from standards_atlas.application.model.knowledge_adoption import (
-    ClauseKnowledgeCandidate,
-    KnowledgeAdoptionBatch,
+from standards_atlas.application.model.context_adoption import (
+    ClauseContextCandidate,
+    ContextAdoptionBatch,
 )
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
 from standards_atlas.application.services.context_enrichment_service import ContextEnrichmentService
@@ -34,7 +34,7 @@ from standards_atlas.application.workflow import (
     WorkflowStage,
 )
 from standards_atlas.cli import app
-from standards_atlas.cli.commands.document_commands import knowledge, management
+from standards_atlas.cli.commands.document_commands import context_adoption, management
 from standards_atlas.cli.composition import build_workflow_service
 from standards_atlas.domain.model import ClauseApplicability, ContextRouting
 from standards_atlas.domain.model.enrichment_patch import ClauseEnrichmentPatch
@@ -137,7 +137,7 @@ class BoundaryRunner:
         self.root = root
         self.commands = []
         self.sealed_batches = {}
-        monkeypatch.setattr(knowledge, "load_qualification_knowledge", self.read_batch)
+        monkeypatch.setattr(context_adoption, "load_qualification_context", self.read_batch)
         monkeypatch.setattr(
             management, "managed_llm_server", lambda *_: SimpleNamespace(start=lambda: None)
         )
@@ -190,7 +190,7 @@ class BoundaryRunner:
         for doc in repo.list():
             for clause in doc.clauses:
                 candidates.append(
-                    ClauseKnowledgeCandidate(
+                    ClauseContextCandidate(
                         document_key=doc.key.value,
                         clause_id=clause.id.value,
                         reference=clause.reference.as_text(),
@@ -213,7 +213,7 @@ class BoundaryRunner:
         matrix_id = step.document.removesuffix("-archive")
         with ZipFile(archive, "w") as zipped:
             zipped.writestr("archive-manifest.json", json.dumps({"matrix_id": matrix_id}))
-        self.sealed_batches[archive.resolve()] = KnowledgeAdoptionBatch(
+        self.sealed_batches[archive.resolve()] = ContextAdoptionBatch(
             schema_version=1,
             source_id="synthetic-workflow",
             source_sha256=sha256_file(archive),

@@ -23,7 +23,7 @@ def test_augmenter_adds_entity_assertions_and_epistemic_context() -> None:
         clauses=(
             ClauseSemanticExtraction(
                 clause_id="C1",
-                ontology_versions=("functional-safety@1.1.0",),
+                ontology_versions=("functional-safety@2.0.0",),
                 entities=(entity,),
                 provenance=ExtractionProvenance(
                     extractor="test",

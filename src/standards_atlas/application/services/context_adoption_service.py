@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 
 from standards_atlas.application.context.source_structure import project_source_structure
-from standards_atlas.application.model.knowledge_adoption import (
-    ClauseAdoptionResult,
-    KnowledgeAdoptionBatch,
-    KnowledgeAdoptionReport,
+from standards_atlas.application.model.context_adoption import (
+    ClauseContextAdoptionResult,
+    ContextAdoptionBatch,
+    ContextAdoptionReport,
 )
 from standards_atlas.application.ports import EngineeringDocumentRepository
 from standards_atlas.application.schema import require_current_schema
@@ -17,7 +17,7 @@ from standards_atlas.domain.model import DocumentKey, EngineeringDocument
 from standards_atlas.domain.model.enrichment_patch import merge_generated_enrichments
 
 
-class KnowledgeAdoptionService:
+class ContextAdoptionService:
     """Validate the entire target selection before any repository write.
 
     Qualification stays read-only. This service alone accepts candidates into
@@ -30,13 +30,13 @@ class KnowledgeAdoptionService:
 
     def apply(
         self,
-        batch: KnowledgeAdoptionBatch,
+        batch: ContextAdoptionBatch,
         *,
         document_keys: tuple[str, ...] = (),
         write: bool = False,
-    ) -> KnowledgeAdoptionReport:
-        batch = KnowledgeAdoptionBatch.model_validate(batch)
-        require_current_schema("knowledge-adoption-batch", batch.schema_version)
+    ) -> ContextAdoptionReport:
+        batch = ContextAdoptionBatch.model_validate(batch)
+        require_current_schema("context-adoption-batch", batch.schema_version)
         known = {item.document_key for item in batch.candidates}
         if set(document_keys) - known:
             raise ValueError("requested documents are not represented by qualified candidates")
@@ -90,7 +90,7 @@ class KnowledgeAdoptionService:
                 merged = merge_generated_enrichments(clause, item.patch, item.attributes)
                 clauses[item.clause_id] = merged.clause
                 results.append(
-                    ClauseAdoptionResult(
+                    ClauseContextAdoptionResult(
                         document_key=key,
                         clause_id=item.clause_id,
                         changes=merged.changes,
@@ -113,7 +113,7 @@ class KnowledgeAdoptionService:
                 self._documents.save(document)
         counts = Counter(change.status for item in results for change in item.changes)
         counts["not_evaluated"] = sum(len(item.not_evaluated) for item in results)
-        return KnowledgeAdoptionReport(
+        return ContextAdoptionReport(
             source_id=batch.source_id,
             source_sha256=batch.source_sha256,
             write_requested=write,

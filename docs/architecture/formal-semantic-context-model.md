@@ -99,28 +99,30 @@ The CBox allows candidate retrieval and assessment to distinguish assertions tha
 
 ## Versioned formal ontologies
 
-Slice 2 adds two packaged OWL/Turtle resources under `resources/formal_ontologies/`:
+The active clean-break ontology set is packaged under `resources/formal_ontologies/`:
 
-- `standards-atlas-core/1.0.0` provides the reusable standards, engineering, assertion and context vocabulary;
-- `functional-safety/1.0.0` imports the core ontology and provides the small Functional Safety upper ontology.
+- `standards-atlas-core/2.0.0` defines standards/projection vocabulary plus the reusable Engineering Knowledge TBox/RBox;
+- `functional-safety/2.0.0` imports Core 2.0 and adds the small Functional Safety extension.
 
-The formal ontology resource family is deliberately separate from `resources/ontologies/`, which continues to hold controlled semantic-classification vocabularies. A versioned YAML descriptor identifies each formal ontology resource without making an RDF framework a production dependency.
+Core 2.0 replaces the generic `Artifact`/`EvidenceArtifact` hierarchy with `EngineeringArtifact` and `WorkProduct`. `Specification`, `Plan`, `Report` and `EngineeringRecord` are work products. Evidence is relational: an artifact may `providesEvidenceFor` an engineering entity or claim without acquiring an intrinsic evidence-artifact type. The engineering RBox includes the small, reusable relation vocabulary `specifies`, `plans`, `records`, `reportsOn`, `producedBy`, `usedBy`, `derivedFrom`, `refines`, `implements`, `tracesTo`, `providesEvidenceFor`, `dependsOn`, `responsibleFor`, and related composition/applicability relations.
 
-The vocabulary namespace remains stable while ontology IRIs are versioned. Concrete standards and clauses are not embedded in these TBox/RBox resources.
+The formal ontology resource family is deliberately separate from `resources/ontologies/`, which holds controlled context vocabularies. A versioned YAML descriptor identifies each formal ontology resource without making an RDF framework a production dependency. The descriptor also declares an explicit `extraction_vocabulary`: only those classes and properties may be offered to source-text extractors. Structural RDF terms, CBox serialization properties and extraction-provenance properties remain valid formal vocabulary but are not exposed as engineering source-extraction candidates. Repository loading rejects extraction-view terms that are not declared by the accompanying Turtle.
+
+The vocabulary namespace remains stable while ontology IRIs are versioned. Concrete standards and clauses are not embedded in these TBox/RBox resources. The pre-2.0 formal ontology resources were removed during the destructive refactoring window rather than retained as compatibility inputs.
 
 ## Slice boundaries
 
-Slice 3 adds deterministic ABox/CBox projection from `EngineeringDocument`. The projection materializes only facts already present in the canonical document, semantic classification, structural context and lineage; it does not infer new engineering concepts and does not duplicate protected clause body text.
+Slice 3 adds deterministic ABox/CBox projection from `EngineeringDocument`. The projection materializes only facts already present in the canonical document, including structure, references, applicability, subject context and lineage; it does not infer new engineering concepts and does not duplicate protected clause body text.
 
-The current projection uses `standards-atlas-core@1.2.0` and, when Functional Safety context is present, `functional-safety@1.2.0`. The core CBox vocabulary includes deterministic `primarySubject`, `subjectConfidence`, and `subjectEvidenceKind` facets. A Turtle adapter emits direct RDF triples plus reified `stat:SemanticAssertion` and explicit context-facet resources. The provider-neutral projection can also be persisted as versioned JSON under `.atlas/data/formal-semantic-projections/`.
+Slice 4A establishes Formal Ontology 2.0 and the explicit source-extraction vocabulary boundary. The current projection uses `standards-atlas-core@2.0.0` and, when Functional Safety context is present, `functional-safety@2.0.0`. The core CBox vocabulary includes deterministic `primarySubject`, `subjectConfidence`, and `subjectEvidenceKind` facets. A Turtle adapter emits direct RDF triples plus reified `stat:SemanticAssertion` and explicit context-facet resources. The provider-neutral projection can also be persisted as versioned JSON under `.atlas/data/formal-semantic-projections/`.
 
-Slice 4 adds ontology-guided concept and relation extraction as a separate, rebuildable artifact. Existing Knowledge Domain and semantic-taxonomy results act as deterministic eligibility signals. Extractors are constrained to classes and properties declared by the selected formal ontologies, while each inferred assertion carries an epistemic CBox context with confidence and extraction provenance. `EngineeringDocument` remains unchanged. Unknown classes or properties returned by an extractor are rejected non-fatally and retained as extraction violations for qualification; rejected terms never enter the ABox. The extraction prompt receives the selected ontology classes and properties as closed vocabularies, but runtime validation remains authoritative.
+Slice 4B will project accepted `EngineeringDocument.knowledge` deterministically into the ABox and remove the remaining proposal-to-ABox augmentation path. Slice 5 will then replace the transitional `DocumentSemanticExtraction` contract with assertion-centred `DocumentKnowledgeProposal` extraction. Until that cut-over, the existing extractor is constrained to the explicit Ontology 2.0 extraction vocabulary; unknown or non-extractable classes/properties are rejected non-fatally and retained as qualification violations.
 
-Qualification feedback may refine the current ontology resources during the destructive refactoring window. The current Core 1.1.0 vocabulary distinguishes engineering composition (`stat:hasPart` / `stat:partOf`) from document containment (`stat:containsClause`), and adds intermediate classes for requirements/specifications, system composition, and engineering quantities. Functional Safety 1.1.0 adds explicit fault/error/failure, safety mechanism/state, and hazardous-event concepts. These refinements are deliberately small: undeclared model terms are not promoted into OWL merely because the extractor produced them.
+Qualification feedback may refine Ontology 2.0 during the destructive refactoring window. Engineering composition (`stat:hasPart` / `stat:partOf`) remains distinct from document containment (`stat:containsClause`), while source extractors receive only the explicit engineering extraction view. Undeclared or non-extractable model terms are not promoted into OWL merely because an extractor produced them.
 
 Entity identity and response-local relation references are deliberately separated. The LLM returns an ordered entity array and relations refer to zero-based entity indexes; it does not generate persistent or response-local entity identifiers. The adapter derives stable `stat:` entity IRIs from document key, internal clause ID, normalized label, and ontology class. Extraction artifacts and qualification diagnostics retain both the stable internal clause ID and the human-readable standard clause reference (plus title when available).
 
-Slice 4 still does **not** introduce:
+Slice 4A still does **not** introduce:
 
 - SHACL validation;
 - a triple store or SPARQL service;

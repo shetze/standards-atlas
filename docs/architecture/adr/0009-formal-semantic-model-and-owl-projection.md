@@ -20,11 +20,13 @@ Formal semantics use versioned ontology resources and an explicit TBox/RBox/ABox
 - Proposal runs, disagreements and rejected model outputs remain separate evaluation artifacts and do not enter the ABox merely because an extractor produced them.
 - Every projected assertion retains links to its canonical `EvidenceAnchor`, originating clause and adoption provenance.
 - Cross-document matching, equivalence and domain-transfer relations are derived views. They do not rewrite source-document assertions.
+- The active formal ontology set is `standards-atlas-core@2.0.0` plus optional `functional-safety@2.0.0`. Core 2.0 models `EngineeringArtifact`/`WorkProduct`; evidence is expressed by `providesEvidenceFor`, not by an `EvidenceArtifact` class.
+- Formal ontology descriptors expose an explicit source-extraction vocabulary. Technical structure, projection, CBox and provenance properties stay outside that view even though they remain valid formal terms.
 
 The integrated formal projections form the Engineering Knowledge Base. RAG, GraphRAG, vector indexes and graph-query stores are replaceable serving adapters over canonical or formal projections. Chat, MCP, Doorstop, heatmaps and assurance workflows consume those layers; they do not define them.
 
 ## Refactoring transition
-The existing `DocumentSemanticExtraction` contract remains a proposal artifact during the staged refactoring. Slice 1 does not yet replace its extractor. Later slices will align extraction output with the assertion-centred canonical model and qualification boundary.
+The existing `DocumentSemanticExtraction` contract remains a transitional proposal artifact after Slice 4A. Slice 4B first establishes canonical `DocumentKnowledge` projection; Slice 5 then replaces the transitional extractor with the assertion-centred proposal model and qualification boundary.
 
 ## Consequences
 Formal reasoning, cross-standard artifact comparison and graph retrieval become possible without making OWL canonical. Evidence-backed `DocumentKnowledge` provides a stable adoption boundary between probabilistic extraction and formal projection, while the CBox/ABox distinction prevents interpretation context from being mistaken for domain knowledge.

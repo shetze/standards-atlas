@@ -24,7 +24,7 @@ def test_relations_must_reference_entities_from_same_extraction() -> None:
     with pytest.raises(ValueError, match="unknown extracted entities"):
         ClauseSemanticExtraction(
             clause_id="C1",
-            ontology_versions=("standards-atlas-core@1.1.0",),
+            ontology_versions=("standards-atlas-core@2.0.0",),
             entities=(entity,),
             relations=(
                 ExtractedRelation(

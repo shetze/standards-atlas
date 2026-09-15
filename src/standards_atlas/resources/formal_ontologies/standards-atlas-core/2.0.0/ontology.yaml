@@ -1,0 +1,56 @@
+schema_version: 1
+id: standards-atlas-core
+version: 2.0.0
+ontology_iri: http://lunetix.org/standards-atlas/core
+version_iri: http://lunetix.org/standards-atlas/core/2.0.0
+namespace: http://lunetix.org/standards-atlas#
+prefix: stat
+resource: ontology.ttl
+imports: []
+extraction_vocabulary:
+  classes:
+    - EngineeringEntity
+    - EngineeringConcept
+    - Requirement
+    - Criterion
+    - EngineeringQuantity
+    - Metric
+    - Parameter
+    - Rate
+    - TimeInterval
+    - Process
+    - Activity
+    - EngineeringArtifact
+    - WorkProduct
+    - Specification
+    - InterfaceSpecification
+    - Plan
+    - Report
+    - EngineeringRecord
+    - Role
+    - TechniqueOrMeasure
+    - SystemEntity
+    - System
+    - Subsystem
+    - Element
+    - HardwareComponent
+    - SoftwareElement
+    - IntegrityLevel
+  properties:
+    - hasPart
+    - partOf
+    - requires
+    - specifies
+    - plans
+    - records
+    - reportsOn
+    - producedBy
+    - usedBy
+    - appliesTo
+    - derivedFrom
+    - refines
+    - implements
+    - tracesTo
+    - providesEvidenceFor
+    - dependsOn
+    - responsibleFor

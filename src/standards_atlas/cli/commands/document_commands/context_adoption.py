@@ -10,12 +10,12 @@ from zipfile import BadZipFile
 import typer
 
 from standards_atlas.adapters.evaluation.archive_receipt import resolve_archive_receipt
-from standards_atlas.adapters.evaluation.qualification_knowledge_source import (
-    ADOPTION_DIMENSIONS,
-    load_qualification_knowledge,
+from standards_atlas.adapters.evaluation.qualification_context_source import (
+    CONTEXT_ADOPTION_DIMENSIONS,
+    load_qualification_context,
 )
 from standards_atlas.adapters.filesystem import FileSystemEngineeringDocumentRepository
-from standards_atlas.application.services.knowledge_adoption_service import KnowledgeAdoptionService
+from standards_atlas.application.services.context_adoption_service import ContextAdoptionService
 from standards_atlas.cli.apps import document_app
 
 
@@ -78,11 +78,11 @@ def adopt_qualification(
                 raise ValueError("adoption report cannot overwrite source archive artifacts")
             if target.is_relative_to(documents_dir):
                 raise ValueError("adoption report cannot overwrite canonical documents")
-        batch = load_qualification_knowledge(
+        batch = load_qualification_context(
             run,
-            dimensions=tuple(dimension) if dimension else ADOPTION_DIMENSIONS,
+            dimensions=tuple(dimension) if dimension else CONTEXT_ADOPTION_DIMENSIONS,
         )
-        service = KnowledgeAdoptionService(
+        service = ContextAdoptionService(
             documents=FileSystemEngineeringDocumentRepository(workspace),
         )
         selected = tuple(document or ())

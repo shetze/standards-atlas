@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from standards_atlas.adapters.evaluation.qualification_knowledge_source import (
-    load_qualification_knowledge,
+from standards_atlas.adapters.evaluation.qualification_context_source import (
+    load_qualification_context,
 )
 
 
@@ -20,6 +20,6 @@ def test_run074_obsolete_consensus_is_rejected_without_rewriting_evidence() -> N
     with archive.open("rb") as stream:
         before = hashlib.file_digest(stream, "sha256").hexdigest()
     with pytest.raises(ValueError, match="5.0"):
-        load_qualification_knowledge(archive)
+        load_qualification_context(archive)
     with archive.open("rb") as stream:
         assert hashlib.file_digest(stream, "sha256").hexdigest() == before

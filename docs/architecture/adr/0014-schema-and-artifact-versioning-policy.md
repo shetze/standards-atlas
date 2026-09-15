@@ -98,7 +98,7 @@ remain unchanged. Other families are left to R3/R4.
 The historical reporting windows listed above are superseded for current execution:
 `cascade-provenance` is 1.6 only, `qualification-matrix-report` 1.1 only,
 `qualification-consensus` 5.0 only, `engineering-document` 1 only,
-`knowledge-adoption-batch` 1.1 only, and `qualification-matrix-manifest` 1.6 only.
+`context-adoption-batch` 1 only, and `qualification-matrix-manifest` 1.6 only.
 Direct models, repository and model-catalog entry points, recognized embedded artifacts,
 replay, history and qualification consumers reject obsolete/missing markers. Document
 inventories do not silently skip unsupported sources. There is no automatic v8 upgrade or

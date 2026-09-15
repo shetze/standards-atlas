@@ -109,11 +109,11 @@ See [ADR 0014](../architecture/adr/0014-schema-and-artifact-versioning-policy.md
 | `qualification-matrix-report` | 1.1 |
 | `qualification-consensus` | 5.0 |
 | `engineering-document` | 1 (integer marker) |
-| `knowledge-adoption-batch` | 1.1 |
+| `context-adoption-batch` | 1 |
 | `qualification-matrix-manifest` | 1.6 |
 
 Markers are explicit. There is no v8 document upgrade, schema-4 consensus hash-preserving
-serializer, or schema-1.0 adoption batch. Current adoption serialization always includes
+serializer, or schema-1 context adoption batch. Current adoption serialization always includes
 `source_requirements`, including an explicit empty list. Repository inventories do not hide
 obsolete documents. Named embedded evidence is validated before archive publication or use;
 conflicting archive member aliases are rejected instead of choosing one silently.

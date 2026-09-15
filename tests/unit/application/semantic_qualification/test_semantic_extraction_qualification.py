@@ -39,7 +39,7 @@ def test_semantic_extraction_qualification_scores_ontology_conformance() -> None
         clauses=(
             ClauseSemanticExtraction(
                 clause_id="c1",
-                ontology_versions=("standards-atlas-core@1.1.0",),
+                ontology_versions=("standards-atlas-core@2.0.0",),
                 entities=(entity_a, entity_b),
                 relations=(relation,),
                 provenance=ExtractionProvenance(extractor="test", extractor_version="1.0.0"),
@@ -50,8 +50,8 @@ def test_semantic_extraction_qualification_scores_ontology_conformance() -> None
         (extraction,),
         SemanticExtractionQualificationConfig(
             ontology_versions=(
-                "standards-atlas-core@1.1.0",
-                "functional-safety@1.1.0",
+                "standards-atlas-core@2.0.0",
+                "functional-safety@2.0.0",
             )
         ),
     )
@@ -67,8 +67,8 @@ def test_semantic_extraction_qualification_fails_when_selected_input_produces_no
         (),
         SemanticExtractionQualificationConfig(
             ontology_versions=(
-                "standards-atlas-core@1.1.0",
-                "functional-safety@1.1.0",
+                "standards-atlas-core@2.0.0",
+                "functional-safety@2.0.0",
             )
         ),
         expected_clause_count=50,
@@ -88,8 +88,8 @@ def test_semantic_extraction_qualification_reports_eligibility_counts_and_model(
         (),
         SemanticExtractionQualificationConfig(
             ontology_versions=(
-                "standards-atlas-core@1.1.0",
-                "functional-safety@1.1.0",
+                "standards-atlas-core@2.0.0",
+                "functional-safety@2.0.0",
             )
         ),
         selected_clause_count=50,
@@ -114,7 +114,7 @@ def test_semantic_extraction_qualification_reports_eligibility_counts_and_model(
 def test_semantic_extraction_qualification_fails_on_missing_consensus_context() -> None:
     report = qualify_semantic_extractions(
         (),
-        SemanticExtractionQualificationConfig(ontology_versions=("standards-atlas-core@1.1.0",)),
+        SemanticExtractionQualificationConfig(ontology_versions=("standards-atlas-core@2.0.0",)),
         selected_clause_count=50,
         eligibility_context_clause_count=49,
         eligible_clause_count=0,
@@ -130,7 +130,7 @@ def test_semantic_extraction_qualification_fails_on_missing_consensus_context() 
 def test_semantic_extraction_qualification_accepts_unqualified_selection_without_context() -> None:
     report = qualify_semantic_extractions(
         (),
-        SemanticExtractionQualificationConfig(ontology_versions=("standards-atlas-core@1.1.0",)),
+        SemanticExtractionQualificationConfig(ontology_versions=("standards-atlas-core@2.0.0",)),
         selected_clause_count=50,
         eligibility_context_clause_count=49,
         expected_eligibility_context_clause_count=49,
@@ -151,7 +151,7 @@ def test_semantic_extraction_qualification_counts_rejected_ontology_terms() -> N
         clauses=(
             ClauseSemanticExtraction(
                 clause_id="c1",
-                ontology_versions=("standards-atlas-core@1.1.0",),
+                ontology_versions=("standards-atlas-core@2.0.0",),
                 entities=(
                     ExtractedEntity(
                         id=SemanticResource.stat("entity/a"),
@@ -187,8 +187,8 @@ def test_semantic_extraction_qualification_counts_rejected_ontology_terms() -> N
         (extraction,),
         SemanticExtractionQualificationConfig(
             ontology_versions=(
-                "standards-atlas-core@1.1.0",
-                "functional-safety@1.1.0",
+                "standards-atlas-core@2.0.0",
+                "functional-safety@2.0.0",
             )
         ),
     )
@@ -229,7 +229,7 @@ def test_semantic_extraction_qualification_reports_non_fatal_llm_failures() -> N
     report = qualify_semantic_extractions(
         (extraction,),
         SemanticExtractionQualificationConfig(
-            ontology_versions=("standards-atlas-core@1.1.0",),
+            ontology_versions=("standards-atlas-core@2.0.0",),
             timeout_seconds=240,
         ),
         selected_clause_count=2,
@@ -254,7 +254,7 @@ def test_semantic_extraction_qualification_reports_non_fatal_llm_failures() -> N
 def _clause_extraction(clause_id: str, *, version: str = "1.0.0") -> ClauseSemanticExtraction:
     return ClauseSemanticExtraction(
         clause_id=clause_id,
-        ontology_versions=("standards-atlas-core@1.1.0",),
+        ontology_versions=("standards-atlas-core@2.0.0",),
         provenance=ExtractionProvenance(extractor="test", extractor_version=version),
     )
 
@@ -379,7 +379,7 @@ def test_semantic_extraction_merge_preserves_transient_timeout_attempt() -> None
     report = qualify_semantic_extractions(
         (merged,),
         SemanticExtractionQualificationConfig(
-            ontology_versions=("standards-atlas-core@1.1.0",),
+            ontology_versions=("standards-atlas-core@2.0.0",),
         ),
         selected_clause_count=1,
         eligibility_context_clause_count=1,

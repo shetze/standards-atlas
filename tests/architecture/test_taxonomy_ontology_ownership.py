@@ -35,7 +35,8 @@ def test_content_enrichment_does_not_classify_taxonomy_or_ontology() -> None:
 
 def test_legacy_semantic_classification_service_is_removed() -> None:
     assert not (APPLICATION / "services" / "semantic_enrichment_service.py").exists()
-    assert not (APPLICATION / "semantic_classification").exists()
+    legacy_package = APPLICATION / "semantic_classification"
+    assert not any(legacy_package.rglob("*.py"))
 
 
 def test_qualification_does_not_materialize_semantic_enrichment() -> None:

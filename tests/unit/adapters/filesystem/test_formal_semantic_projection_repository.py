@@ -11,7 +11,7 @@ def test_projection_repository_round_trips_versioned_payload(tmp_path) -> None:
     projection = FormalSemanticProjection(
         source_document_key="ISO/EXAMPLE:2026",
         projection_version="1.0.0",
-        ontology_versions=("standards-atlas-core@1.1.0",),
+        ontology_versions=("standards-atlas-core@2.0.0",),
     )
 
     repository.save(projection)

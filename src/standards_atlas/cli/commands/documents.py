@@ -11,12 +11,12 @@ from standards_atlas.cli.commands.document_commands.atlasdata_knowledge import (
     import_enrichments,
 )
 from standards_atlas.cli.commands.document_commands.cbox import cbox_report
+from standards_atlas.cli.commands.document_commands.context_adoption import adopt_qualification
 from standards_atlas.cli.commands.document_commands.exports import (
     export_document_to_doorstop,
     export_document_to_markdown,
 )
 from standards_atlas.cli.commands.document_commands.inspection import inspect_data
-from standards_atlas.cli.commands.document_commands.knowledge import adopt_qualification
 from standards_atlas.cli.commands.document_commands.management import (
     derive_document_part,
     derive_document_view,

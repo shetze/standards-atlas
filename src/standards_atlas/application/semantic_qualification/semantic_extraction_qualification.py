@@ -20,8 +20,8 @@ class SemanticExtractionQualificationConfig(BaseModel):
 
     enabled: bool = True
     ontology_versions: tuple[str, ...] = (
-        "standards-atlas-core@1.1.0",
-        "functional-safety@1.1.0",
+        "standards-atlas-core@2.0.0",
+        "functional-safety@2.0.0",
     )
     minimum_entity_confidence: float = Field(default=0.60, ge=0.0, le=1.0)
     minimum_relation_confidence: float = Field(default=0.60, ge=0.0, le=1.0)

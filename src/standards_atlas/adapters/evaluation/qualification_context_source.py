@@ -10,9 +10,9 @@ from zipfile import ZipFile
 import yaml
 
 from standards_atlas.application.evaluation.models import EvaluationDataset, EvaluationExample
-from standards_atlas.application.model.knowledge_adoption import (
-    ClauseKnowledgeCandidate,
-    KnowledgeAdoptionBatch,
+from standards_atlas.application.model.context_adoption import (
+    ClauseContextCandidate,
+    ContextAdoptionBatch,
 )
 from standards_atlas.application.schema import require_current_schema
 from standards_atlas.application.semantic_qualification.annotations import (
@@ -26,11 +26,11 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 from standards_atlas.application.semantic_qualification.applicability_policy_runner import (
     ApplicabilityPolicyRunReport,
 )
-from standards_atlas.application.semantic_qualification.artifact_contracts import (
-    validate_qualification_artifact,
-)
 from standards_atlas.application.semantic_qualification.consensus import (
     ConsensusReport,
+)
+from standards_atlas.application.semantic_qualification.qualification_artifact_validation import (
+    validate_qualification_artifact,
 )
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
     QualificationCoverage,
@@ -47,7 +47,7 @@ from standards_atlas.domain.model.knowledge_state import (
 )
 from standards_atlas.shared.hashing import sha256_bytes, sha256_json
 
-ADOPTION_DIMENSIONS = ("applicability",)
+CONTEXT_ADOPTION_DIMENSIONS = ("applicability",)
 
 
 class _Archive:
@@ -131,16 +131,16 @@ class _Archive:
         return names[0]
 
 
-def load_qualification_knowledge(
-    run: Path, *, dimensions: tuple[str, ...] = ADOPTION_DIMENSIONS
-) -> KnowledgeAdoptionBatch:
+def load_qualification_context(
+    run: Path, *, dimensions: tuple[str, ...] = CONTEXT_ADOPTION_DIMENSIONS
+) -> ContextAdoptionBatch:
     """Load a complete archived policy run into an explicit adoption contract.
 
     This reader deliberately has no fallback from policy results to a raw
     Presence gate. A ZIP or an extracted *archive* is accepted, not a mutable
     qualification work directory with an unspecified final report.
     """
-    if not dimensions or set(dimensions) - set(ADOPTION_DIMENSIONS):
+    if not dimensions or set(dimensions) - set(CONTEXT_ADOPTION_DIMENSIONS):
         raise ValueError("unknown or empty adoption dimension selection")
     archive = _Archive(run)
     try:
@@ -149,7 +149,7 @@ def load_qualification_knowledge(
         archive.close()
 
 
-def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBatch:
+def _load(archive: _Archive, dimensions: tuple[str, ...]) -> ContextAdoptionBatch:
     selection_name = archive.unique("qualification-selection.json")
     prefix = str(PurePosixPath(selection_name).parent)
     selection = QualificationRunSelection.model_validate_json(archive.read(selection_name))
@@ -283,7 +283,7 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
         attributes.append(
             GeneratedAttribute(
                 path="enrichments.applicability",
-                generator="canonical-knowledge-adoption-v1",
+                generator="canonical-context-adoption-v1",
                 method=GenerationMethod.IMPORTED,
                 availability="known" if known else "unknown",
                 decision=support,
@@ -291,7 +291,7 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
         )
         applicability = ClauseApplicability(present=bool(case.final_present)) if known else None
         candidates.append(
-            ClauseKnowledgeCandidate(
+            ClauseContextCandidate(
                 document_key=clause.document_key,
                 clause_id=clause.clause_id,
                 reference=example.input["context"]["reference"],
@@ -302,8 +302,8 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
                 not_evaluated=(),
             )
         )
-    require_current_schema("knowledge-adoption-batch", 1)
-    return KnowledgeAdoptionBatch(
+    require_current_schema("context-adoption-batch", 1)
+    return ContextAdoptionBatch(
         schema_version=1,
         source_id=archive.id,
         source_sha256=archive.digest,

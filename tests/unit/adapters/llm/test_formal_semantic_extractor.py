@@ -63,8 +63,8 @@ def test_undeclared_terms_are_rejected_without_aborting_extraction() -> None:
         clause,
         document_key="TEST",
         ontology_versions=(
-            "standards-atlas-core@1.1.0",
-            "functional-safety@1.1.0",
+            "standards-atlas-core@2.0.0",
+            "functional-safety@2.0.0",
         ),
     )
 
@@ -79,8 +79,11 @@ def test_undeclared_terms_are_rejected_without_aborting_extraction() -> None:
     assert "allowed_classes" in gateway.request.user_prompt
     assert "allowed_properties" in gateway.request.user_prompt
     assert "EngineeringConcept are last-resort fallback classes" in gateway.request.system_prompt
-    assert "use hasPart/partOf for engineering composition" in gateway.request.system_prompt
-    assert "Use describes only as a final relation fallback" in gateway.request.system_prompt
+    assert "Use hasPart/partOf only for engineering composition" in gateway.request.system_prompt
+    assert (
+        "Structural, projection, and extraction-provenance predicates"
+        in gateway.request.system_prompt
+    )
 
 
 class _IndexedRelationGateway:
@@ -95,7 +98,7 @@ class _IndexedRelationGateway:
                         "evidence": "first entity",
                     },
                     {
-                        "class_iri": "http://lunetix.org/standards-atlas#Artifact",
+                        "class_iri": "http://lunetix.org/standards-atlas#VerificationReport",
                         "label": "Verification report",
                         "confidence": 0.8,
                         "evidence": "second entity",
@@ -132,8 +135,8 @@ def test_relation_indexes_resolve_distinct_entities_without_llm_ids() -> None:
         clause,
         document_key="TEST",
         ontology_versions=(
-            "standards-atlas-core@1.1.0",
-            "functional-safety@1.1.0",
+            "standards-atlas-core@2.0.0",
+            "functional-safety@2.0.0",
         ),
     )
 
@@ -178,8 +181,8 @@ def test_entity_identity_is_stable_across_label_formatting() -> None:
         clause_type=ClauseType.CLAUSE,
     )
     ontology_versions = (
-        "standards-atlas-core@1.1.0",
-        "functional-safety@1.1.0",
+        "standards-atlas-core@2.0.0",
+        "functional-safety@2.0.0",
     )
 
     first_gateway = _StableIdentityGateway(" Verification  Activity ")
@@ -222,8 +225,8 @@ def test_semantic_prompt_omits_table_payload_and_keeps_part_reference() -> None:
         clause,
         document_key="EN50126-1",
         ontology_versions=(
-            "standards-atlas-core@1.1.0",
-            "functional-safety@1.1.0",
+            "standards-atlas-core@2.0.0",
+            "functional-safety@2.0.0",
         ),
     )
 

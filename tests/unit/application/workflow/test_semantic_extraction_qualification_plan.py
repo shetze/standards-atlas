@@ -26,8 +26,8 @@ def _semantic_extraction_manifest(tmp_path: Path) -> Path:
         "enabled": True,
         "model": "mistral-small-3.2-24b-instruct-q4-k-m",
         "ontology_versions": [
-            "standards-atlas-core@1.1.0",
-            "functional-safety@1.1.0",
+            "standards-atlas-core@2.0.0",
+            "functional-safety@2.0.0",
         ],
     }
     path = tmp_path / "qualification.yaml"
@@ -61,7 +61,7 @@ def test_current_manifest_contract_can_enable_semantic_extraction_qualification(
         manifest.semantic_extraction_qualification.model == "mistral-small-3.2-24b-instruct-q4-k-m"
     )
     assert (
-        "standards-atlas-core@1.1.0" in manifest.semantic_extraction_qualification.ontology_versions
+        "standards-atlas-core@2.0.0" in manifest.semantic_extraction_qualification.ontology_versions
     )
 
 

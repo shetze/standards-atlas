@@ -12,7 +12,7 @@ change thresholds, or implement the global R4 policy guards.
 | Qualification matrix report | 1.1 | Explicit model marker, writer guard and archive/Challenger readers. |
 | Qualification consensus | 5.0 | Required marker; no schema-4 serializer or fingerprint preservation. |
 | EngineeringDocument envelope | 1 (integer) | Clean-break reset; no reader or migration for older envelopes. |
-| Knowledge adoption batch | 1 | Clean-break contract; explicit source requirements, including empty lists. |
+| Context adoption batch | 1 | Clean-break contract; explicit source requirements, including empty lists. |
 | Qualification matrix manifest | 1.6 | Required marker at model/YAML/workflow/archive entry points. |
 
 The four shipped v3/v4/v5 matrix files change **only** their serialization marker from

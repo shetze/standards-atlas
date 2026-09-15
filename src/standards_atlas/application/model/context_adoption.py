@@ -12,7 +12,7 @@ from standards_atlas.domain.model.enrichment_patch import AttributeChange, Claus
 from standards_atlas.domain.model.knowledge_state import GeneratedAttribute
 
 
-class ClauseKnowledgeCandidate(BaseModel):
+class ClauseContextCandidate(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     document_key: str = Field(min_length=1)
@@ -26,21 +26,21 @@ class ClauseKnowledgeCandidate(BaseModel):
     source_requirements: tuple[SourceStructureFact, ...] = ()
 
 
-class KnowledgeAdoptionBatch(SchemaBoundModel):
-    SCHEMA_FAMILY: ClassVar[str] = "knowledge-adoption-batch"
+class ContextAdoptionBatch(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "context-adoption-batch"
 
     model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always")
 
     schema_version: Literal[1] = 1
-    policy_id: Literal["canonical-knowledge-adoption-v1"] = "canonical-knowledge-adoption-v1"
+    policy_id: Literal["canonical-context-adoption-v1"] = "canonical-context-adoption-v1"
     source_id: str = Field(min_length=1)
     source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     selected_clause_count: int = Field(ge=0)
     unqualified_clause_count: int = Field(ge=0)
-    candidates: tuple[ClauseKnowledgeCandidate, ...]
+    candidates: tuple[ClauseContextCandidate, ...]
 
     @model_validator(mode="after")
-    def unique_candidates(self) -> KnowledgeAdoptionBatch:
+    def unique_candidates(self) -> ContextAdoptionBatch:
         keys = [(item.document_key, item.clause_id) for item in self.candidates]
         if len(keys) != len(set(keys)):
             raise ValueError("adoption candidates must have unique document/clause coordinates")
@@ -49,7 +49,7 @@ class KnowledgeAdoptionBatch(SchemaBoundModel):
         return self
 
 
-class ClauseAdoptionResult(BaseModel):
+class ClauseContextAdoptionResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     document_key: str
@@ -58,13 +58,13 @@ class ClauseAdoptionResult(BaseModel):
     not_evaluated: tuple[str, ...] = ()
 
 
-class KnowledgeAdoptionReport(SchemaBoundModel):
-    SCHEMA_FAMILY: ClassVar[str] = "knowledge-adoption-report"
+class ContextAdoptionReport(SchemaBoundModel):
+    SCHEMA_FAMILY: ClassVar[str] = "context-adoption-report"
 
     model_config = ConfigDict(frozen=True)
 
     schema_version: Literal[1] = 1
-    policy_id: Literal["canonical-knowledge-adoption-v1"] = "canonical-knowledge-adoption-v1"
+    policy_id: Literal["canonical-context-adoption-v1"] = "canonical-context-adoption-v1"
     source_id: str
     source_sha256: str
     write_requested: bool
@@ -74,4 +74,4 @@ class KnowledgeAdoptionReport(SchemaBoundModel):
     changed_document_keys: tuple[str, ...]
     written_document_keys: tuple[str, ...]
     status_counts: dict[str, int]
-    clauses: tuple[ClauseAdoptionResult, ...]
+    clauses: tuple[ClauseContextAdoptionResult, ...]

@@ -20,10 +20,6 @@ from standards_atlas.application.schema import (
     require_current_schema,
     require_supported_schema,
 )
-from standards_atlas.application.semantic_qualification.artifact_contracts import (
-    QUALIFICATION_ARTIFACT_NAMES,
-    validate_qualification_artifact,
-)
 from standards_atlas.application.semantic_qualification.cascade_provenance import (
     CASCADE_PROVENANCE_SCHEMA_VERSION,
     validate_cascade_provenance,
@@ -32,6 +28,10 @@ from standards_atlas.application.semantic_qualification.consensus import Consens
 from standards_atlas.application.semantic_qualification.diagnostics import (
     build_qualification_diagnostics,
     render_qualification_diagnostics_markdown,
+)
+from standards_atlas.application.semantic_qualification.qualification_artifact_validation import (
+    QUALIFICATION_ARTIFACT_NAMES,
+    validate_qualification_artifact,
 )
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
     QualificationCoverage,

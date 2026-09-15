@@ -67,11 +67,11 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "engineering-document": SchemaPolicy(
         "engineering-document", 1, (1,), ".atlas/data/documents/*.json"
     ),
-    "knowledge-adoption-batch": SchemaPolicy(
-        "knowledge-adoption-batch", 1, (1,), "local/**/knowledge-adoption-batch.json"
+    "context-adoption-batch": SchemaPolicy(
+        "context-adoption-batch", 1, (1,), "local/**/context-adoption-batch.json"
     ),
-    "knowledge-adoption-report": SchemaPolicy(
-        "knowledge-adoption-report", 1, (1,), "local/**/knowledge-adoption-report.json"
+    "context-adoption-report": SchemaPolicy(
+        "context-adoption-report", 1, (1,), "local/**/context-adoption-report.json"
     ),
     "standards-manifest": SchemaPolicy("standards-manifest", 2, (2,), "manifests/*.yaml"),
     "qualification-matrix-manifest": SchemaPolicy(
