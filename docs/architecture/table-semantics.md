@@ -20,6 +20,8 @@ EngineeringDocument
             └── StructuredKnowledgeMappingService   T3 deterministic semantic mapping
                 └── KnowledgeTable / KnowledgeRecord
                     └── StructuredKnowledgeRecord
+                        └── TableKnowledgeProposalProjector
+                            └── DocumentKnowledgeProposal
 ```
 
 `DocumentTable` owns document-level table identity, numbering, caption metadata, parent
@@ -29,7 +31,11 @@ that block by identifier instead of duplicating its content. T2 derives a semant
 `NormalizedTable` that reconstructs logical coordinates and header structure while preserving
 all protected text and spans. `KnowledgeTable` and `KnowledgeRecord` remain reproducible
 semantic projections, not independently edited copies. T3 consumes only `NormalizedTable`; the
-historical projection service is a compatibility facade over the T2 → T3 path.
+historical projection service is a compatibility facade over the T2 → T3 path. Slice 6A adds a
+deterministic proposal projection for supported portable matrices so prose and table knowledge use
+the same `KnowledgeEntityProposal` / `NormativeAssertionProposal` contracts before qualification. The
+table projector emits a distinct run-scoped proposal with deterministic projector provenance;
+combining prose and table runs is deliberately deferred to Slice 6B.
 
 AtlasData publishes table structure through `TABLE` and `TABLEINDEX` records only. It never
 publishes table cells. This allows onboarding and review to compare declared and detected
@@ -59,30 +65,37 @@ qualifier. This avoids treating an Annex full of tables as one narrative LLM ext
 
 ### Portable table ontology
 
-Header-driven schema recognition supports:
+Header-driven schema recognition supports the existing deterministic T3 relations:
 
 - work-product matrices: activity `produces` work product;
-- responsibility matrices: role `responsible_for` activity;
+- responsibility matrices: role `responsible_for` subject;
 - verification-criteria matrices: subject `verified_by` criterion;
 - traceability matrices: source `traces_to` target;
 - applicability matrices: subject `applicable_to` context.
+
+Slice 6A projects the first four engineering matrix kinds (excluding applicability) into Formal
+Ontology 2.0 proposal assertions. The resulting directions are `WorkProduct producedBy Activity`,
+`Role responsibleFor EngineeringEntity`, source `tracesTo` target, and subject `requires Criterion`.
+No normative force is inferred from matrix shape, so these deterministic assertions use
+`unspecified` force until qualification/adoption supplies stronger authority. Applicability remains
+CBox-oriented and is deliberately not projected by the 6A engineering-knowledge projector.
 
 Schemas are applied only when required normalized headers and non-empty row values are present.
 Multi-level headers and row-spanning values are consumed from the T2 logical grid. An ambiguous
 table remains `generic`; the implementation does not infer relations merely because cell values
 look plausible.
 
-## Separation from clause semantics
+## Separation from prose extraction
 
-Statement functions describe the linguistic function of narrative clauses. Matrix kind,
-recommendation level, and row relationships are different semantic dimensions. Table
-relations therefore must not be projected back into clause-classification labels of the
-surrounding clause.
+Table schema, recommendation level, and row relationships are structural/semantic dimensions of
+the table itself and must not be inferred from the surrounding clause as narrative text. The
+assertion-centred prose extractor therefore excludes `ClauseType.TABLE` and removes embedded table
+payload from mixed-clause model input. Structured tables use the deterministic T2/T3 path instead.
 
-A central `SemanticTaskEligibilityPolicy` excludes `table_dominant` content from
-formal semantic assertion extraction and records `structured-table-interpretation` as the
-alternative task. Text-dominant mixed clauses remain eligible, but prompts require models
-to classify only their narrative content.
+Slice 6A reunifies the two paths only at the proposal boundary: supported table relations become
+`KnowledgeEntityProposal` and `NormativeAssertionProposal` values with exact cell-span evidence,
+while prose assertions continue to use exact model evidence quotes. Neither path writes canonical
+`EngineeringDocument.knowledge` directly.
 
 ## Retrieval and IntelliDoc
 
@@ -104,7 +117,9 @@ embedding models, vector stores, and GraphRAG implementations remain replaceable
 
 ## Current limitation
 
-Projection and interpretation are implemented and covered by deterministic tests. A
-dedicated `structured-table-interpretation` corpus, golden data workflow, model
-qualification matrix, and HITL review flow are planned but not yet implemented. See the
-[structured table corpus roadmap](../roadmap/structured-table-corpora.md).
+Projection and interpretation are implemented and covered by deterministic tests. Slice 6A
+projects work-product, responsibility, traceability and verification-criteria matrices into
+`DocumentKnowledgeProposal`; document-local entity resolution remains Slice 6B and qualified
+technique/recommendation relations remain Slice 6C. A dedicated assertion/table qualification
+corpus and HITL review flow are introduced only after the unified proposal path is complete. See
+the [structured table corpus roadmap](../roadmap/structured-table-corpora.md).

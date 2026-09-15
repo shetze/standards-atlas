@@ -79,10 +79,18 @@ spans, source evidence, and a deterministic plain-text representation for later 
 
 Known table kinds currently include generic tables, IEC 61508 technique-recommendation
 matrices, and portable work-product, responsibility, verification-criteria, traceability,
-and applicability matrices. Portable interpretations use `KnowledgeConcept` and
-`KnowledgeRelation` values with exact source-column provenance. IEC 61508 interpretations
-add SIL-qualified recommendation levels and resolved clause references. Unrecognized or
-ambiguous tables remain generic rather than receiving guessed semantics.
+and applicability matrices. `KnowledgeConcept` and `KnowledgeRelation` remain deterministic
+T3 intermediates with exact source-column provenance. Slice 6A additionally projects the four
+portable engineering relation kinds (work product, responsibility, traceability and verification
+criteria) into the same non-canonical `DocumentKnowledgeProposal` entity/assertion contract used
+by prose extraction. The deterministic table projector emits its own run-scoped proposal so its
+provenance is not conflated with an LLM prose run; multi-source merge and document-local entity
+resolution are deferred to Slice 6B. Table evidence is bound to exact source-cell spans in canonical
+`Clause.plain_text`; repeated labels are disambiguated structurally by table block and logical
+row/column coordinates. Applicability and qualified technique-recommendation matrices stay outside
+this 6A projection. IEC 61508 interpretations retain SIL-qualified recommendation levels and
+resolved clause references for the later specialized projection. Unrecognized or ambiguous tables
+remain generic rather than receiving guessed semantics.
 
 See [Table semantics](table-semantics.md) for the projection and evaluation boundaries.
 

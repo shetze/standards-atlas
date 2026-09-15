@@ -1,6 +1,22 @@
 # Changelog
 
 
+## Unreleased — Structured knowledge unification Slice 6A (2026-09-15)
+
+- Project supported work-product, responsibility, traceability and verification-criteria matrices
+  deterministically into the same schema-1 `DocumentKnowledgeProposal` entity/assertion contract
+  used by prose extraction.
+- Ground table-derived entities and assertions to exact canonical `Clause.plain_text` cell spans
+  using table-block identity and logical row/column coordinates rather than ambiguous text search.
+- Map portable table semantics onto Formal Ontology 2.0 without inventing new predicates:
+  `WorkProduct producedBy Activity`, `Role responsibleFor EngineeringEntity`, source `tracesTo`
+  target, and subject `requires Criterion`; keep table-derived normative force `unspecified`.
+- Keep applicability matrices and qualified IEC 61508 technique-recommendation matrices outside the
+  6A projector for the dedicated later slices, and defer document-level entity resolution to 6B.
+- Retain `KnowledgeTable` / `StructuredKnowledgeRecord` as deterministic structural/retrieval
+  intermediates during Slice 6 while removing their role as a separate proposal contract.
+
+
 ## Unreleased — Assertion extraction clean break Slice 5C (2026-09-15)
 
 - Remove the superseded `DocumentSemanticExtraction` entity/relation contract, legacy LLM adapter,

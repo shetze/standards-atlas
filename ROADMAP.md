@@ -9,10 +9,12 @@ standards-atlas. Detailed implementation plans are maintained under
 ### Qualify structured table knowledge
 
 T1-T3 now provide first-class table structure, deterministic normalization, and structured
-knowledge mapping, and T4 now adds retrieval-specific table/row/concept/relation projections
-behind replaceable tokenizer and index ports. Introduce typed table corpora and dedicated
-qualification for schema recognition, record mapping, relationships, references, recommendation
-matrices, and retrieval quality without weakening the assertion-centred proposal, qualification, and adoption boundary.
+knowledge mapping, and T4 adds retrieval-specific table/row/concept/relation projections behind
+replaceable tokenizer and index ports. Slice 6A projects supported portable engineering matrices
+into the same assertion-centred `DocumentKnowledgeProposal` contract as prose. Complete document-
+local entity resolution (6B) and qualified recommendation relations (6C), then introduce typed
+assertion/table corpora and dedicated qualification without weakening the proposal, qualification,
+and adoption boundary.
 
 ### Qualify existing standards
 

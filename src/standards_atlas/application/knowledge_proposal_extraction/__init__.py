@@ -10,6 +10,10 @@ from .service import (
     ProposalExtractionProgress,
     proposal_extraction_eligibility,
 )
+from .table_projection import (
+    TABLE_KNOWLEDGE_PROJECTION_VERSION,
+    TableKnowledgeProposalProjector,
+)
 from .vocabulary import FormalOntologyVocabulary
 
 __all__ = [
@@ -20,6 +24,8 @@ __all__ = [
     "ProposalExtractionEligibility",
     "ProposalExtractionProgress",
     "SemanticTextProjection",
+    "TABLE_KNOWLEDGE_PROJECTION_VERSION",
+    "TableKnowledgeProposalProjector",
     "display_clause_reference",
     "ground_evidence_quote",
     "project_clause_content",
