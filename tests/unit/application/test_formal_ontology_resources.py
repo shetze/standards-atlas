@@ -87,6 +87,17 @@ def test_core_2_0_declares_explicit_source_extraction_view(
     assert "confidence" not in definition.extraction_vocabulary.properties
 
 
+def test_repository_exposes_all_declared_terms_for_canonical_knowledge_validation(
+    repository: ResourceFormalOntologyRepository,
+) -> None:
+    vocabulary = repository.declared_vocabulary("standards-atlas-core", "2.0.0")
+
+    assert f"{FORMAL_SEMANTIC_NAMESPACE}EngineeringArtifact" in vocabulary.classes
+    assert f"{FORMAL_SEMANTIC_NAMESPACE}specifies" in vocabulary.properties
+    assert f"{FORMAL_SEMANTIC_NAMESPACE}containsClause" in vocabulary.properties
+    assert f"{FORMAL_SEMANTIC_NAMESPACE}knowledgeDerivationMethod" in vocabulary.properties
+
+
 def test_repository_rejects_missing_payload(tmp_path: Path) -> None:
     base = tmp_path / "broken" / "2.0.0"
     base.mkdir(parents=True)

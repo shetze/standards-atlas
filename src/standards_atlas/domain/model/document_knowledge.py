@@ -2,14 +2,27 @@
 
 from __future__ import annotations
 
+import re
 from enum import StrEnum
 from typing import Annotated, Literal
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from standards_atlas.domain.model.identifiers import ClauseId
 
 DOCUMENT_KNOWLEDGE_SCHEMA_VERSION = 1
+_IRI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*$")
+
+
+def _require_absolute_iri(value: str, *, field_name: str) -> str:
+    """Reject local names and other values that cannot identify ontology terms globally."""
+    if value != value.strip():
+        raise ValueError(f"{field_name} must not contain surrounding whitespace")
+    scheme = urlsplit(value).scheme
+    if not scheme or not _IRI_SCHEME.fullmatch(scheme):
+        raise ValueError(f"{field_name} must be an absolute IRI")
+    return value
 
 
 class NormativeForce(StrEnum):
@@ -90,6 +103,11 @@ class KnowledgeEntity(BaseModel):
     aliases: tuple[str, ...] = ()
     source_anchor_ids: tuple[str, ...] = Field(min_length=1)
 
+    @field_validator("class_iri")
+    @classmethod
+    def class_iri_is_absolute(cls, value: str) -> str:
+        return _require_absolute_iri(value, field_name="knowledge entity class_iri")
+
     @model_validator(mode="after")
     def aliases_and_anchors_are_unique(self) -> KnowledgeEntity:
         if len(self.aliases) != len(set(self.aliases)):
@@ -145,6 +163,11 @@ class NormativeAssertion(BaseModel):
     evidence_anchor_ids: tuple[str, ...] = Field(min_length=1)
     provenance: KnowledgeProvenance
 
+    @field_validator("predicate")
+    @classmethod
+    def predicate_is_absolute(cls, value: str) -> str:
+        return _require_absolute_iri(value, field_name="normative assertion predicate")
+
     @model_validator(mode="after")
     def evidence_anchors_are_unique(self) -> NormativeAssertion:
         if len(self.evidence_anchor_ids) != len(set(self.evidence_anchor_ids)):
@@ -157,12 +180,14 @@ class DocumentKnowledge(BaseModel):
 
     Proposal runs, disagreements and rejected candidates stay outside this model.
     The aggregate contains only adopted entities/assertions plus text-safe source
-    anchors, so formal graph projections remain rebuildable consumers.
+    anchors, so formal graph projections remain rebuildable consumers. Semantic
+    terms are bound to the exact formal ontology versions used for adoption.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: int = DOCUMENT_KNOWLEDGE_SCHEMA_VERSION
+    ontology_versions: tuple[str, ...] = ()
     evidence_anchors: tuple[EvidenceAnchor, ...] = ()
     entities: tuple[KnowledgeEntity, ...] = ()
     assertions: tuple[NormativeAssertion, ...] = ()
@@ -177,8 +202,32 @@ class DocumentKnowledge(BaseModel):
             )
         return value
 
+    @field_validator("ontology_versions")
+    @classmethod
+    def ontology_versions_are_explicit_references(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if len(value) != len(set(value)):
+            raise ValueError("document knowledge ontology versions must be unique")
+        for reference in value:
+            if reference != reference.strip() or reference.count("@") != 1:
+                raise ValueError(
+                    "document knowledge ontology versions must use '<id>@<version>' references"
+                )
+            ontology_id, version = reference.rsplit("@", 1)
+            if (
+                not ontology_id
+                or not version
+                or any(part.strip() != part for part in (ontology_id, version))
+            ):
+                raise ValueError(
+                    "document knowledge ontology versions must use '<id>@<version>' references"
+                )
+        return value
+
     @model_validator(mode="after")
     def references_are_local_and_resolved(self) -> DocumentKnowledge:
+        if (self.entities or self.assertions) and not self.ontology_versions:
+            raise ValueError("document knowledge with semantic terms requires ontology_versions")
+
         anchor_ids = [anchor.id for anchor in self.evidence_anchors]
         entity_ids = [entity.id for entity in self.entities]
         assertion_ids = [assertion.id for assertion in self.assertions]

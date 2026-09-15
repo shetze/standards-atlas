@@ -82,6 +82,7 @@ stat:expresses a owl:ObjectProperty ; rdfs:domain stat:Clause .
 stat:describes a owl:ObjectProperty ; rdfs:domain stat:Clause ; rdfs:range stat:EngineeringEntity .
 stat:inKnowledgeDomain a owl:ObjectProperty ; rdfs:range stat:KnowledgeDomain .
 stat:qualifiedByContext a owl:ObjectProperty ; rdfs:range stat:ContextFrame .
+stat:sourceClause a owl:ObjectProperty ; rdfs:domain stat:ContextFrame ; rdfs:range stat:Clause .
 stat:references a owl:ObjectProperty .
 stat:normativeReferences a owl:ObjectProperty ; rdfs:subPropertyOf stat:references .
 stat:informativeReferences a owl:ObjectProperty ; rdfs:subPropertyOf stat:references .
@@ -126,7 +127,13 @@ stat:facetSource a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .
 stat:semanticBox a owl:DatatypeProperty ; rdfs:domain stat:SemanticAssertion .
 stat:evidenceId a owl:DatatypeProperty ; rdfs:domain stat:SemanticAssertion .
 stat:projectionRuleVersion a owl:DatatypeProperty .
-stat:normativeForce a owl:DatatypeProperty ; rdfs:domain stat:SemanticAssertion .
+stat:normativeForce a owl:DatatypeProperty ; rdfs:domain stat:ContextFrame .
+stat:knowledgeDerivationMethod a owl:DatatypeProperty ; rdfs:domain stat:ContextFrame .
+stat:knowledgeProducer a owl:DatatypeProperty ; rdfs:domain stat:ContextFrame .
+stat:knowledgeProducerVersion a owl:DatatypeProperty ; rdfs:domain stat:ContextFrame .
+stat:qualificationReference a owl:DatatypeProperty ; rdfs:domain stat:ContextFrame .
+stat:reviewReference a owl:DatatypeProperty ; rdfs:domain stat:ContextFrame .
+stat:knowledgeInputHash a owl:DatatypeProperty ; rdfs:domain stat:ContextFrame .
 
 # Proposal/extraction epistemic context. Formal but never exposed as engineering predicates.
 stat:confidence a owl:DatatypeProperty ; rdfs:domain stat:ContextFacet .

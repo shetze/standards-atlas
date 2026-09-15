@@ -7,6 +7,9 @@ from pathlib import Path
 
 PROJECTOR = Path("src/standards_atlas/application/formal_semantics/projector.py")
 RDF_ADAPTER = Path("src/standards_atlas/adapters/rdf/turtle_projection_serializer.py")
+EXTRACTION_AUGMENTER = Path(
+    "src/standards_atlas/application/formal_semantics/extraction_projector.py"
+)
 
 
 def _imports(path: Path) -> set[str]:
@@ -28,3 +31,10 @@ def test_projector_remains_independent_of_rdf_and_graph_providers() -> None:
 def test_rdf_representation_is_kept_in_adapter_layer() -> None:
     assert RDF_ADAPTER.is_file()
     assert "adapters/rdf" not in PROJECTOR.as_posix()
+
+
+def test_proposal_extraction_has_no_direct_abox_augmentation_path() -> None:
+    assert not EXTRACTION_AUGMENTER.exists()
+    imports = _imports(PROJECTOR)
+    assert "standards_atlas.domain.model.semantic_extraction" not in imports
+    assert "standards_atlas.application.semantic_extraction" not in imports

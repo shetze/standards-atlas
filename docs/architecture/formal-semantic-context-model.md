@@ -40,6 +40,8 @@ Context is not copied into the TBox. Taxonomies remain the deterministic or clas
 ```text
 EngineeringDocument
       +
+Accepted DocumentKnowledge
+      +
 Knowledge Domain selections
       +
 Taxonomy / semantic annotations
@@ -116,13 +118,15 @@ Slice 3 adds deterministic ABox/CBox projection from `EngineeringDocument`. The 
 
 Slice 4A establishes Formal Ontology 2.0 and the explicit source-extraction vocabulary boundary. The current projection uses `standards-atlas-core@2.0.0` and, when Functional Safety context is present, `functional-safety@2.0.0`. The core CBox vocabulary includes deterministic `primarySubject`, `subjectConfidence`, and `subjectEvidenceKind` facets. A Turtle adapter emits direct RDF triples plus reified `stat:SemanticAssertion` and explicit context-facet resources. The provider-neutral projection can also be persisted as versioned JSON under `.atlas/data/formal-semantic-projections/`.
 
-Slice 4B will project accepted `EngineeringDocument.knowledge` deterministically into the ABox and remove the remaining proposal-to-ABox augmentation path. Slice 5 will then replace the transitional `DocumentSemanticExtraction` contract with assertion-centred `DocumentKnowledgeProposal` extraction. Until that cut-over, the existing extractor is constrained to the explicit Ontology 2.0 extraction vocabulary; unknown or non-extractable classes/properties are rejected non-fatally and retained as qualification violations.
+Slice 4B projects accepted `EngineeringDocument.knowledge` deterministically into the ABox. `KnowledgeEntity` values become document-scoped ABox resources typed by their bound ontology class; `NormativeAssertion` values become evidence-backed ABox relations or literal statements. Every projected assertion is qualified by its originating clause context plus assertion-local normative force and adoption provenance. `EvidenceAnchor.id` values remain the projection evidence identifiers, and canonical knowledge records the exact formal ontology versions against which its classes and predicates are validated.
+
+The former `SemanticExtractionProjectionAugmenter` has been removed. Transitional `DocumentSemanticExtraction` results therefore remain proposal/qualification artifacts only and have no direct path into the ABox. Slice 5 will replace that transitional contract with assertion-centred `DocumentKnowledgeProposal` extraction. Until then, the existing extractor remains constrained to the explicit Ontology 2.0 extraction vocabulary; unknown or non-extractable classes/properties are rejected non-fatally and retained as qualification violations.
 
 Qualification feedback may refine Ontology 2.0 during the destructive refactoring window. Engineering composition (`stat:hasPart` / `stat:partOf`) remains distinct from document containment (`stat:containsClause`), while source extractors receive only the explicit engineering extraction view. Undeclared or non-extractable model terms are not promoted into OWL merely because an extractor produced them.
 
 Entity identity and response-local relation references are deliberately separated. The LLM returns an ordered entity array and relations refer to zero-based entity indexes; it does not generate persistent or response-local entity identifiers. The adapter derives stable `stat:` entity IRIs from document key, internal clause ID, normalized label, and ontology class. Extraction artifacts and qualification diagnostics retain both the stable internal clause ID and the human-readable standard clause reference (plus title when available).
 
-Slice 4A still does **not** introduce:
+Slices 4A/4B still do **not** introduce:
 
 - SHACL validation;
 - a triple store or SPARQL service;

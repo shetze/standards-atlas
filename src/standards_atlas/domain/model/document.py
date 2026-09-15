@@ -58,6 +58,12 @@ class EngineeringDocument(BaseModel):
     def knowledge_is_bound_to_document_clauses(self) -> EngineeringDocument:
         """Require every accepted knowledge anchor to resolve inside this document."""
         clauses = {clause.id.value: clause for clause in self.clauses}
+        for assertion in self.knowledge.assertions:
+            if assertion.source_clause_id.value not in clauses:
+                raise ValueError(
+                    f"document knowledge assertion {assertion.id!r} references unknown source "
+                    f"clause {assertion.source_clause_id.value!r}"
+                )
         for anchor in self.knowledge.evidence_anchors:
             clause = clauses.get(anchor.clause_id.value)
             if clause is None:

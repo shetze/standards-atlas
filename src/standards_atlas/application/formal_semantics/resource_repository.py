@@ -9,7 +9,7 @@ import yaml
 
 from standards_atlas.application.schema import require_supported_schema
 
-from .ontology_definition import FormalOntologyDefinition
+from .ontology_definition import FormalOntologyDeclaredVocabulary, FormalOntologyDefinition
 
 _TERM = re.compile(r"^stat:([A-Za-z][A-Za-z0-9_-]*)\s+a\s+([^.;]+)", re.MULTILINE)
 
@@ -37,11 +37,24 @@ class ResourceFormalOntologyRepository:
             encoding="utf-8"
         )
 
+    def declared_vocabulary(
+        self,
+        ontology_id: str,
+        version: str,
+    ) -> FormalOntologyDeclaredVocabulary:
+        """Return all declared class/property IRIs, not only the extraction view."""
+        definition = self.load(ontology_id, version)
+        text = (self._root / ontology_id / version / definition.resource).read_text(
+            encoding="utf-8"
+        )
+        classes, properties = self._declared_local_terms(text)
+        return FormalOntologyDeclaredVocabulary(
+            classes=frozenset(f"{definition.namespace}{name}" for name in classes),
+            properties=frozenset(f"{definition.namespace}{name}" for name in properties),
+        )
+
     @staticmethod
-    def _validate_extraction_vocabulary(
-        definition: FormalOntologyDefinition,
-        text: str,
-    ) -> None:
+    def _declared_local_terms(text: str) -> tuple[set[str], set[str]]:
         classes: set[str] = set()
         properties: set[str] = set()
         for local_name, rdf_types in _TERM.findall(text):
@@ -52,6 +65,15 @@ class ResourceFormalOntologyRepository:
                 for token in ("owl:ObjectProperty", "owl:DatatypeProperty", "rdf:Property")
             ):
                 properties.add(local_name)
+        return classes, properties
+
+    @classmethod
+    def _validate_extraction_vocabulary(
+        cls,
+        definition: FormalOntologyDefinition,
+        text: str,
+    ) -> None:
+        classes, properties = cls._declared_local_terms(text)
         missing_classes = set(definition.extraction_vocabulary.classes) - classes
         missing_properties = set(definition.extraction_vocabulary.properties) - properties
         if missing_classes or missing_properties:

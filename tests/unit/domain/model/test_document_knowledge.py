@@ -24,6 +24,12 @@ from standards_atlas.domain.model import (
     TextBlock,
 )
 
+STAT = "http://lunetix.org/standards-atlas#"
+ONTOLOGY_VERSIONS = (
+    "standards-atlas-core@2.0.0",
+    "functional-safety@2.0.0",
+)
+
 
 def _clause() -> Clause:
     return Clause(
@@ -53,13 +59,13 @@ def _knowledge() -> DocumentKnowledge:
     )
     plan = KnowledgeEntity(
         id="entity:verification-plan",
-        class_iri="http://lunetix.org/standards-atlas#EngineeringArtifact",
+        class_iri=f"{STAT}VerificationPlan",
         normalized_label="verification plan",
         source_anchor_ids=(anchor.id,),
     )
     criteria = KnowledgeEntity(
         id="entity:verification-criteria",
-        class_iri="http://lunetix.org/standards-atlas#Concept",
+        class_iri=f"{STAT}VerificationCriterion",
         normalized_label="verification criteria",
         source_anchor_ids=(anchor.id,),
     )
@@ -67,13 +73,14 @@ def _knowledge() -> DocumentKnowledge:
         id="assertion:C1:1",
         source_clause_id=ClauseId(value="C1"),
         subject_id=plan.id,
-        predicate="shall_define",
+        predicate=f"{STAT}specifies",
         object=EntityAssertionObject(entity_id=criteria.id),
         normative_force=NormativeForce.REQUIREMENT,
         evidence_anchor_ids=(anchor.id,),
         provenance=_provenance(),
     )
     return DocumentKnowledge(
+        ontology_versions=ONTOLOGY_VERSIONS,
         evidence_anchors=(anchor,),
         entities=(plan, criteria),
         assertions=(assertion,),
@@ -107,6 +114,7 @@ def test_document_knowledge_rejects_unknown_entity_and_evidence_references() -> 
     )
     with pytest.raises(ValueError, match="unknown objects"):
         DocumentKnowledge(
+            ontology_versions=knowledge.ontology_versions,
             evidence_anchors=knowledge.evidence_anchors,
             entities=knowledge.entities,
             assertions=(assertion,),
@@ -115,6 +123,7 @@ def test_document_knowledge_rejects_unknown_entity_and_evidence_references() -> 
     entity = knowledge.entities[0].model_copy(update={"source_anchor_ids": ("anchor:missing",)})
     with pytest.raises(ValueError, match="unknown evidence anchors"):
         DocumentKnowledge(
+            ontology_versions=knowledge.ontology_versions,
             evidence_anchors=knowledge.evidence_anchors,
             entities=(entity,),
         )
@@ -154,12 +163,67 @@ def test_assertions_support_literal_objects_without_rdf_serialization() -> None:
     )
 
     updated = DocumentKnowledge(
+        ontology_versions=knowledge.ontology_versions,
         evidence_anchors=knowledge.evidence_anchors,
         entities=knowledge.entities,
         assertions=(assertion,),
     )
 
     assert updated.assertions[0].object.value is True
+
+
+def test_document_knowledge_requires_ontology_binding_for_semantic_terms() -> None:
+    knowledge = _knowledge()
+
+    with pytest.raises(ValueError, match="requires ontology_versions"):
+        DocumentKnowledge(
+            evidence_anchors=knowledge.evidence_anchors,
+            entities=knowledge.entities,
+            assertions=knowledge.assertions,
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "match"),
+    [
+        ("class_iri", "VerificationPlan", "class_iri must be an absolute IRI"),
+        ("predicate", "specifies", "predicate must be an absolute IRI"),
+    ],
+)
+def test_document_knowledge_requires_absolute_semantic_iris(
+    field: str,
+    value: str,
+    match: str,
+) -> None:
+    knowledge = _knowledge()
+    if field == "class_iri":
+        payload = knowledge.entities[0].model_dump(mode="python")
+        payload[field] = value
+        with pytest.raises(ValueError, match=match):
+            KnowledgeEntity.model_validate(payload)
+        return
+
+    payload = knowledge.assertions[0].model_dump(mode="python")
+    payload[field] = value
+    with pytest.raises(ValueError, match=match):
+        NormativeAssertion.model_validate(payload)
+
+
+def test_engineering_document_rejects_unknown_knowledge_source_clause() -> None:
+    knowledge = _knowledge()
+    invalid_assertion = knowledge.assertions[0].model_copy(
+        update={"source_clause_id": ClauseId(value="missing")}
+    )
+    invalid_knowledge = knowledge.model_copy(update={"assertions": (invalid_assertion,)})
+
+    with pytest.raises(ValueError, match="unknown source clause"):
+        EngineeringDocument(
+            key=DocumentKey(value="DOC"),
+            title="Example",
+            document_type=DocumentType.STANDARD,
+            clauses=(_clause(),),
+            knowledge=invalid_knowledge,
+        )
 
 
 def test_clause_applicability_is_minimal_presence_and_polarity_contract() -> None:

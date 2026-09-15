@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -11,6 +12,14 @@ from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import FORMAL_SEMANTIC_NAMESPACE, FORMAL_SEMANTIC_PREFIX
 
 _LOCAL_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
+
+
+@dataclass(frozen=True)
+class FormalOntologyDeclaredVocabulary:
+    """All classes and properties declared by one packaged formal ontology."""
+
+    classes: frozenset[str]
+    properties: frozenset[str]
 
 
 class FormalOntologyExtractionVocabulary(BaseModel):

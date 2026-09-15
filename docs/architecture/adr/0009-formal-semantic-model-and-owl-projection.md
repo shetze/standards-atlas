@@ -26,7 +26,9 @@ Formal semantics use versioned ontology resources and an explicit TBox/RBox/ABox
 The integrated formal projections form the Engineering Knowledge Base. RAG, GraphRAG, vector indexes and graph-query stores are replaceable serving adapters over canonical or formal projections. Chat, MCP, Doorstop, heatmaps and assurance workflows consume those layers; they do not define them.
 
 ## Refactoring transition
-The existing `DocumentSemanticExtraction` contract remains a transitional proposal artifact after Slice 4A. Slice 4B first establishes canonical `DocumentKnowledge` projection; Slice 5 then replaces the transitional extractor with the assertion-centred proposal model and qualification boundary.
+Slice 4B establishes canonical `DocumentKnowledge` projection as the only engineering ABox input. Canonical entities and predicates are validated against the exact formal ontology versions recorded by `DocumentKnowledge`; projected assertions retain evidence-anchor IDs, source-clause context, normative force and adoption provenance. The former proposal-to-ABox augmentation path has been removed.
+
+`DocumentSemanticExtraction` remains temporarily as a proposal/qualification artifact only. Slice 5 replaces it with the assertion-centred `DocumentKnowledgeProposal` model and qualification boundary.
 
 ## Consequences
 Formal reasoning, cross-standard artifact comparison and graph retrieval become possible without making OWL canonical. Evidence-backed `DocumentKnowledge` provides a stable adoption boundary between probabilistic extraction and formal projection, while the CBox/ABox distinction prevents interpretation context from being mistaken for domain knowledge.

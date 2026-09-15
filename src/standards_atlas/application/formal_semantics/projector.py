@@ -11,13 +11,21 @@ from standards_atlas.domain.model import (
     ContextKind,
     DocumentType,
     EngineeringDocument,
+    EntityAssertionObject,
+    EvidenceAnchor,
     FormalAssertion,
     FormalSemanticProjection,
+    KnowledgeEntity,
+    LiteralAssertionObject,
+    NormativeAssertion,
     SemanticBox,
     SemanticLiteral,
     SemanticRelationKind,
     SemanticResource,
 )
+
+from .knowledge_validation import DocumentKnowledgeOntologyValidator
+from .resource_repository import ResourceFormalOntologyRepository
 
 PROJECTION_VERSION = "1.0.0"
 CORE_ONTOLOGY_VERSION = "standards-atlas-core@2.0.0"
@@ -55,6 +63,21 @@ def _clause_resource(document_key: str, clause_id: str) -> SemanticResource:
 
 def _knowledge_domain_resource(value: str) -> SemanticResource:
     return SemanticResource.stat(f"knowledge-domain/{_segment(value)}")
+
+
+def _knowledge_entity_resource(document_key: str, entity_id: str) -> SemanticResource:
+    return SemanticResource.stat(
+        f"document/{_segment(document_key)}/knowledge/entity/{_segment(entity_id)}"
+    )
+
+
+def _knowledge_assertion_context_resource(
+    document_key: str,
+    assertion_id: str,
+) -> SemanticResource:
+    return SemanticResource.stat(
+        f"context/{_segment(document_key)}/knowledge/assertion/{_segment(assertion_id)}"
+    )
 
 
 def _context_resource(document_key: str, clause_id: str) -> SemanticResource:
@@ -139,17 +162,26 @@ def _facet(
 class DeterministicFormalSemanticProjector:
     """Project only already-known document facts; never infer new engineering entities."""
 
+    def __init__(
+        self,
+        ontology_repository: ResourceFormalOntologyRepository | None = None,
+    ) -> None:
+        self._knowledge_validator = DocumentKnowledgeOntologyValidator(ontology_repository)
+
     def project(
         self,
         document: EngineeringDocument,
         *,
         knowledge_domains: tuple[str, ...] = (),
     ) -> FormalSemanticProjection:
+        self._knowledge_validator.validate(document.knowledge)
+
         key = document.key.value
         document_resource = _document_resource(key)
         lineage_evidence = (document.lineage.artifact.id,) if document.lineage is not None else ()
         assertions: list[FormalAssertion] = []
         contexts: list[ContextFrame] = []
+        clause_contexts: dict[str, ContextFrame] = {}
 
         document_class = (
             "Standard" if document.document_type is DocumentType.STANDARD else "EngineeringDocument"
@@ -211,6 +243,7 @@ class DeterministicFormalSemanticProjector:
                 explicit_domains,
             )
             contexts.append(context)
+            clause_contexts[clause.id.value] = context
             context_ids = (context.id,)
 
             assertions.extend(
@@ -300,12 +333,21 @@ class DeterministicFormalSemanticProjector:
                     )
                 )
 
+        knowledge_assertions, knowledge_contexts = self._project_document_knowledge(
+            document,
+            clause_contexts=clause_contexts,
+        )
+        assertions.extend(knowledge_assertions)
+        contexts.extend(knowledge_contexts)
+
         ontology_versions = [CORE_ONTOLOGY_VERSION]
         if any(
             "functional-safety" in domain.lower()
             for domain in self._all_domains(document, explicit_domains)
         ):
             ontology_versions.append(FUNCTIONAL_SAFETY_ONTOLOGY_VERSION)
+        ontology_versions.extend(document.knowledge.ontology_versions)
+        ontology_versions = list(dict.fromkeys(ontology_versions))
 
         return FormalSemanticProjection(
             source_document_key=key,
@@ -313,6 +355,132 @@ class DeterministicFormalSemanticProjector:
             ontology_versions=tuple(ontology_versions),
             assertions=tuple(assertions),
             contexts=tuple(contexts),
+        )
+
+    def _project_document_knowledge(
+        self,
+        document: EngineeringDocument,
+        *,
+        clause_contexts: dict[str, ContextFrame],
+    ) -> tuple[list[FormalAssertion], list[ContextFrame]]:
+        knowledge = document.knowledge
+        if not knowledge.entities and not knowledge.assertions:
+            return [], []
+
+        anchor_by_id = {anchor.id: anchor for anchor in knowledge.evidence_anchors}
+        entity_resources = {
+            entity.id: _knowledge_entity_resource(document.key.value, entity.id)
+            for entity in knowledge.entities
+        }
+        assertions: list[FormalAssertion] = []
+        contexts: list[ContextFrame] = []
+
+        for entity in knowledge.entities:
+            context_ids = self._entity_context_ids(entity, anchor_by_id, clause_contexts)
+            assertions.append(
+                _assertion(
+                    SemanticBox.ABOX,
+                    entity_resources[entity.id],
+                    RDF_TYPE,
+                    SemanticResource(iri=entity.class_iri),
+                    contexts=context_ids,
+                    evidence_ids=entity.source_anchor_ids,
+                )
+            )
+
+        for assertion in knowledge.assertions:
+            knowledge_context = self._knowledge_context_for_assertion(document, assertion)
+            contexts.append(knowledge_context)
+            source_context = clause_contexts[assertion.source_clause_id.value]
+            assertions.append(
+                _assertion(
+                    SemanticBox.ABOX,
+                    entity_resources[assertion.subject_id],
+                    SemanticResource(iri=assertion.predicate),
+                    self._assertion_object(assertion, entity_resources),
+                    contexts=(source_context.id, knowledge_context.id),
+                    evidence_ids=assertion.evidence_anchor_ids,
+                )
+            )
+
+        return assertions, contexts
+
+    @staticmethod
+    def _entity_context_ids(
+        entity: KnowledgeEntity,
+        anchor_by_id: dict[str, EvidenceAnchor],
+        clause_contexts: dict[str, ContextFrame],
+    ) -> tuple[SemanticResource, ...]:
+        ids: list[SemanticResource] = []
+        seen: set[str] = set()
+        for anchor_id in entity.source_anchor_ids:
+            anchor = anchor_by_id[anchor_id]
+            clause_id = anchor.clause_id.value
+            context_id = clause_contexts[clause_id].id
+            if context_id.iri not in seen:
+                seen.add(context_id.iri)
+                ids.append(context_id)
+        return tuple(ids)
+
+    @staticmethod
+    def _assertion_object(
+        assertion: NormativeAssertion,
+        entity_resources: dict[str, SemanticResource],
+    ) -> SemanticResource | SemanticLiteral:
+        if isinstance(assertion.object, EntityAssertionObject):
+            return entity_resources[assertion.object.entity_id]
+        if not isinstance(assertion.object, LiteralAssertionObject):
+            raise TypeError(f"unsupported normative assertion object: {type(assertion.object)!r}")
+        return SemanticLiteral(
+            value=assertion.object.value,
+            datatype_iri=assertion.object.datatype_iri,
+            language=assertion.object.language,
+        )
+
+    @staticmethod
+    def _knowledge_context_for_assertion(
+        document: EngineeringDocument,
+        assertion: NormativeAssertion,
+    ) -> ContextFrame:
+        provenance = assertion.provenance
+        facets = [
+            _facet(
+                ContextKind.SEMANTIC,
+                "normativeForce",
+                assertion.normative_force.value,
+                "document-knowledge",
+            ),
+            _facet(
+                ContextKind.EPISTEMIC,
+                "knowledgeDerivationMethod",
+                provenance.method.value,
+                "document-knowledge",
+            ),
+            _facet(
+                ContextKind.EPISTEMIC,
+                "knowledgeProducer",
+                provenance.producer,
+                "document-knowledge",
+            ),
+        ]
+        for predicate, value in (
+            ("knowledgeProducerVersion", provenance.producer_version),
+            ("qualificationReference", provenance.qualification_reference),
+            ("reviewReference", provenance.review_reference),
+            ("knowledgeInputHash", provenance.input_hash),
+        ):
+            if value:
+                facets.append(
+                    _facet(
+                        ContextKind.EPISTEMIC,
+                        predicate,
+                        value,
+                        "document-knowledge",
+                    )
+                )
+        return ContextFrame(
+            id=_knowledge_assertion_context_resource(document.key.value, assertion.id),
+            facets=tuple(facets),
         )
 
     def _all_domains(
@@ -335,7 +503,14 @@ class DeterministicFormalSemanticProjector:
         explicit_domains: tuple[str, ...],
     ) -> ContextFrame:
         clause = next(item for item in document.clauses if item.id.value == clause_id)
-        facets: list[ContextFacet] = []
+        facets: list[ContextFacet] = [
+            _facet(
+                ContextKind.STRUCTURAL,
+                "sourceClause",
+                _clause_resource(document.key.value, clause_id),
+                "formal-semantic-projector",
+            )
+        ]
 
         domains = list(explicit_domains)
         for domain in dict.fromkeys(domains):

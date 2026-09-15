@@ -111,4 +111,4 @@ The stable Standards Atlas namespace is `http://lunetix.org/standards-atlas#` wi
 
 ## Engineering knowledge ontology
 
-Ontology classes and predicates type `KnowledgeEntity` objects and `NormativeAssertion` relations. Artifact/evidence semantics are relational: an engineering artifact may `providesEvidenceFor` a claim without becoming an intrinsic `EvidenceArtifact` kind. Artifact contracts, cross-domain matching and qualification cases are downstream views planned on top of accepted assertions rather than additional clause-classification dimensions.
+Ontology classes and predicates type `KnowledgeEntity` objects and `NormativeAssertion` relations. Canonical knowledge records the exact formal ontology versions used for those terms; projection rejects undeclared classes or predicates. Artifact/evidence semantics are relational: an engineering artifact may `providesEvidenceFor` a claim without becoming an intrinsic `EvidenceArtifact` kind. Artifact contracts, cross-domain matching and qualification cases are downstream views planned on top of accepted assertions rather than additional clause-classification dimensions.
