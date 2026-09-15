@@ -43,7 +43,6 @@ pytest -q tests/architecture tests/unit/application/schema \
   tests/unit/application/test_schema_baseline.py \
   tests/unit/application/semantic_qualification/test_partial_schema_refactoring.py \
   tests/unit/application/semantic_qualification/test_review_schema_refactoring.py \
-  tests/unit/application/semantic_qualification/test_schema_refactoring_r3.py \
   tests/unit/application/semantic_qualification/test_schema_refactoring_r4.py
 ```
 

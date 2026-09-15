@@ -86,28 +86,26 @@ recomputation and opt-in escalation.
 
 ## Authority and compatibility
 
-Canonical documents read and write only schema **9**. Schema **8** is rejected without
-modifying the source; there is no automatic upgrade or authority inference from unmarked
+Canonical documents read and write only schema **1**. Older persisted EngineeringDocument
+layouts are not accepted; there is no automatic upgrade or authority inference from unmarked
 values. Current generated, confirmed and unattributed provenance is preserved on roundtrip.
 An obsolete file in a live repository is an error even for optional inventories, not a
 silently omitted source. Preserve historical files outside the active input repository;
 regenerate derived sources explicitly and retain reviewed evidence for a source-bound review.
 
-Adoption batches require schema **1.1** with an explicit marker. `source_requirements` is
-serialized even when empty, and existing source requirements are checked before any writes.
-Schema-1.0 batches and old Consensus 4.0 archives (including original Run 074) are not accepted.
-Never repair them by changing a marker or reusing a hash. See
-[Remaining schema refactoring R3](remaining-schema-refactoring.md).
+Adoption batches use schema **1**. `source_requirements` is serialized even when empty, and
+existing source requirements are checked before any writes. Historical adoption batches are not
+accepted or migrated; regenerate them from the current source and qualification artifacts.
 
 An explicit domain confirmation, for example
-`clause.confirm_authoritative("enrichments.semantic.applicability_present", authority="review")`,
+`clause.confirm_authoritative("enrichments.applicability", authority="review")`,
 records the authority and removes generated/unattributed metadata for that attribute. Both
 semantic and context enrichment services respect these confirmations. There is no automatic
 confirmation and no force-overwrite CLI in this slice. Resolve reported authority conflicts
 through a reviewed update rather than deleting provenance to force a model result through.
 
-The existing AtlasData importer now correctly reconstructs Applicability presence from
-`AF-*` tags and records explicit confirmations for actually supplied tag dimensions.
+Applicability is transported only through the schema-1 AtlasData enrichment companion as the
+typed `enrichments.applicability` object. Public TOC semantic tags do not encode Applicability.
 
 ## Incremental reviewed AtlasData annotations
 

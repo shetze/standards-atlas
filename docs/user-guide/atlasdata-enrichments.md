@@ -3,7 +3,7 @@
 `document adopt-qualification` selects existing results into canonical documents. The separate
 commands below persist those selected attributes in the AtlasData area and restore them without
 new LLM calls. They do not change the qualification policy, infer missing process functions,
-reclassify polarity, or render a CBox. The canonical repository remains schema **9**.
+reclassify polarity, or render a CBox. The canonical repository uses current-only schema **1**.
 
 For an executable pipeline from normalized Docling input through qualification and publication,
 see the [end-to-end enrichments workflow](enrichments-workflow.md). The individual transfer
@@ -19,7 +19,7 @@ data/ISO26262
 data/enrichments/ISO26262-11.yaml
 ```
 
-The companion is an `atlasdata-enrichments` manifest, schema `1.2`. Its values use the canonical
+The companion is an `atlasdata-enrichments` manifest, schema `1`. Its values use the canonical
 semantic vocabulary and explicit primary labels. It preserves generated/confirmed/unattributed
 origin, availability, decision support and reference identity. **A generated value stays generated
 when written into or read from AtlasData.** Existing reviewed TOC tags remain authoritative; two
@@ -59,9 +59,9 @@ An explicitly requested local report is still produced. `--write` is the only mu
 `--dimension` restricts export to complete coupled attribute groups and is repeatable:
 `statement_functions`, `knowledge_kinds`, `process_functions`, `applicability`, `role_semantics`,
 `subject_context`, `context_routing`. With exactly one selected document, repeatable
-`--clause <clause-id>` restricts the update further. `applicability` currently publishes only
-`enrichments.semantic.applicability_present`; `role_semantics` publishes only
-`enrichments.semantic.role_semantics_present`. Unselected clauses and dimensions already
+`--clause <clause-id>` restricts the update further. `applicability` publishes the typed
+`enrichments.applicability` value (`present` plus optional `included`/`excluded` polarity);
+`role_semantics` publishes only `enrichments.semantic.role_semantics_present`. Unselected clauses and dimensions already
 in the companion are retained, except for the explicitly deferred detail fields below.
 An unknown input cannot erase known knowledge; omission is not an explicit empty set or a negative
 result. Existing protected values are reported as `protected`.
@@ -79,34 +79,13 @@ Public categorical fields include statement, knowledge and process functions and
 labels, Applicability presence, and role presence. Presence-only, explicit negatives and unknown
 assessments are supported. Vote counts describe support, not measured correctness.
 
-Applicability publication is presence-only: `enrichments.semantic.applicability_functions` is not
-emitted, including its attribute fingerprints. The current qualification policy adopts only the
-final presence decision and explicitly marks functions as not evaluated. Detail-enrichment reports
-can contain function proposals, but those are not independently accepted function classifications.
-Negative presence clears canonical dependent functions to an empty set for internal consistency;
-that derived empty set is not an extraction result and is not published as one.
-
-This restriction applies even to nonempty or confirmed local function values. Their canonical
-values, provenance, reviewed AtlasData `AF` tags and existing private evidence remain intact.
-The reader still accepts existing schema-1.2 companions containing functions. A fresh workspace
-restores presence, not unpublished positive function details; keep canonical data to retain those
-local values. Negative presence can regenerate empty dependents on import without republishing them.
-
-Re-export existing companions to remove the obsolete function entries without a new LLM run:
-
-```bash
-uv run standards-atlas atlasdata export-enrichments \
-  --manifest manifests/standards.yaml \
-  --workspace .atlas/data \
-  --dimension applicability \
-  --write
-```
-
-Omit `--write` for a preview. Each removed attribute is reported as `omitted`. Cleanup removes its
-fingerprints too and covers the whole selected companion even on dimension/clause-limited exports.
-Other attributes and their ordering are preserved. Empty public clause records are dropped, not
-canonical clauses. Export and direct serialization both enforce the restriction; re-export is
-idempotent. No schema or qualification-policy change is required.
+Applicability is a first-class context enrichment. The public companion stores exactly one typed
+`enrichments.applicability` attribute with `present` and optional `polarity`. Presence and polarity
+therefore share one authority/provenance boundary; there is no separate applicability-function
+field and no `AF-*` TOC transport. Unknown applicability remains an explicit unknown assessment,
+while an absent attribute means not evaluated. Applicability-specific qualification frames never
+receive the already accepted applicability value as model input, preventing label leakage and
+self-triggered requalification.
 
 Role-detail publication is temporarily deferred: `enrichments.semantic.role_relations` and
 `enrichments.semantic.role_relation_types` are never emitted, even when a local value is nonempty
@@ -120,7 +99,7 @@ Fresh companions create no private blobs or fingerprint entries for the deferred
 Consequently, a fresh workspace cannot reconstruct positive role details from these companions;
 keep the canonical document to retain any such local results.
 
-Re-export to clean existing schema-1.2 companions without deleting them or running an LLM:
+Re-export current schema-1 companions after role-policy changes without running an LLM:
 
 ```bash
 uv run standards-atlas atlasdata export-enrichments \
@@ -135,8 +114,7 @@ throughout each selected companion, even if `--dimension` or `--clause` selects 
 clause. Each removed attribute is reported as `omitted`. Other attributes and clause ordering are
 preserved; an otherwise empty public record is dropped, not the canonical clause. Publication is
 idempotent, including after import regenerates canonical empty dependents from false presence.
-The reader still understands existing schema-1.2 records and private blobs; no schema bump is
-needed for this narrower publication policy.
+Refactoring readers accept only current schema-1 records; obsolete companions are regenerated.
 
 Subject and routing models also contain protected evidence or free-text conditions. Their public
 records therefore contain a **bounded projection plus a content-addressed value reference**.
@@ -204,7 +182,7 @@ JSON before saving changes. Reviewed/protected routing is not overwritten. Diagn
 repairs, unresolved or unverified evidence, and protected state. The reference baseline is refreshed
 from available source text; a second repair pass is idempotent.
 
-Companion schema `1.2`, private evidence schema `1.0` and canonical document schema `9` are unchanged;
+Companion, private-evidence and canonical-document contracts use current schema `1`;
 no companion deletion is required. Export still does not mutate the canonical repository. Neither
 a fingerprint nor a corrupted self-reference alone can recover a lost citation; when source/evidence
 is unavailable, restore the original private source-backed value or review/regenerate the routing.
@@ -213,56 +191,6 @@ from v1. The repair/export commands above do not invoke either prompt.
 
 See [canonical reference repair](context-routing-reference-resolution.md) for resolution boundaries
 and interpretation of the diagnostic report.
-
-## Rebind after the canonical part-title normalization fix
-
-The 2026-09-14 normalization correction stopped replacing multipart clause `0` headings with a
-synthetic `Part N` label and now preserves the canonical AtlasData title. Existing enrichment
-companions remain semantically valid, but their structural fingerprint intentionally refers to the
-old projection and therefore cannot be restored directly. Do **not** edit those hashes by hand.
-
-Preview the deterministic rebind first:
-
-```bash
-uv run standards-atlas atlasdata rebind-enrichments \
-  --manifest manifests/standards.yaml \
-  --available-only \
-  --output local/review/atlasdata-enrichment-rebind-preview.json
-```
-
-The command accepts a stale sidecar only if the current AtlasData skeleton, with its clause `0`
-heading changed back to the exact historical `Part N` value, reproduces the stored
-`fingerprints.structure`. It also verifies document/family/part/year identity, all published
-AtlasData MD5 foreign keys, every clause reference, and every non-root structural heading. If any
-other structural change is present, the whole selected operation fails before any sidecar is
-written.
-
-Apply after reviewing the preview:
-
-```bash
-uv run standards-atlas atlasdata rebind-enrichments \
-  --manifest manifests/standards.yaml \
-  --available-only \
-  --output local/review/atlasdata-enrichment-rebind.json \
-  --write
-```
-
-Only the global structure fingerprint and, when a root clause has published attributes, its
-`heading`, `heading` fingerprint and `atlasdata_heading` fingerprint are rebound. Attribute values,
-origin, generated/confirmed provenance, evidence references, private-value references and content
-fingerprints are preserved. Re-running the command on an already rebound companion is a no-op.
-
-Afterward the normal strict restore can run unchanged:
-
-```bash
-uv run standards-atlas workflow run \
-  --task knowledge \
-  --manifests manifests/standards.yaml \
-  --hierarchy functional-safety \
-  --knowledge-domain functional-safety \
-  --restore-enrichments \
-  --strict-evidence
-```
 
 ## Restore, including into a fresh workspace
 

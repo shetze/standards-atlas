@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, SerializerFunctionWrapHandler, model_serializer
 
+from standards_atlas.domain.model.applicability import ClauseApplicability
 from standards_atlas.domain.model.clause import Clause, ClauseEnrichments
 from standards_atlas.domain.model.context_routing import ContextRouting
 from standards_atlas.domain.model.knowledge_state import (
@@ -16,7 +17,6 @@ from standards_atlas.domain.model.knowledge_state import (
     sparse_semantic_validation_context,
 )
 from standards_atlas.domain.model.semantic_classification import (
-    ApplicabilityFunction,
     KnowledgeKind,
     ProcessFunction,
     RoleRelation,
@@ -46,8 +46,6 @@ class SemanticEnrichmentPatch(_PartialPatch):
     statement_functions: tuple[StatementFunction, ...] = ()
     knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
-    applicability_present: bool = False
-    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     role_semantics_present: bool = False
     role_relation_types: tuple[RoleRelationType, ...] = ()
     role_relations: tuple[RoleRelation, ...] = ()
@@ -57,6 +55,7 @@ class ClauseEnrichmentPatch(_PartialPatch):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     semantic: SemanticEnrichmentPatch | None = None
+    applicability: ClauseApplicability | None = None
     context_routing: ContextRouting | None = None
     subject_context: ClauseSubjectContext | None = None
 
@@ -80,7 +79,6 @@ _SEMANTIC_GROUPS = (
     ("statement_functions", "primary_function"),
     ("knowledge_kinds", "primary_knowledge_kind"),
     ("process_functions", "primary_process_function"),
-    ("applicability_present", "applicability_functions"),
     ("role_semantics_present", "role_relation_types", "role_relations"),
 )
 
@@ -107,18 +105,26 @@ def merge_generated_enrichments(
                 for field in patch.semantic.model_fields_set
             }
         )
-    for field in ("context_routing", "subject_context"):
+    for field in ("applicability", "context_routing", "subject_context"):
         if getattr(patch, field) is not None:
             updates[f"enrichments.{field}"] = getattr(patch, field)
     if set(updates) != {path for path, item in by_path.items() if item.availability == "known"}:
         raise ValueError("every known patch attribute needs exactly one provenance record")
     allowed = {f"enrichments.semantic.{name}" for name in SemanticEnrichmentPatch.model_fields}
-    allowed.update(("enrichments.context_routing", "enrichments.subject_context"))
+    allowed.update(
+        ("enrichments.applicability", "enrichments.context_routing", "enrichments.subject_context")
+    )
     if not set(by_path).issubset(allowed):
         raise ValueError("unsupported enrichment attribute path")
 
     groups = [tuple(f"enrichments.semantic.{name}" for name in group) for group in _SEMANTIC_GROUPS]
-    groups.extend((("enrichments.context_routing",), ("enrichments.subject_context",)))
+    groups.extend(
+        (
+            ("enrichments.applicability",),
+            ("enrichments.context_routing",),
+            ("enrichments.subject_context",),
+        )
+    )
     state = clause.enrichments.model_dump(mode="python")
     provenance = clause.provenance
     changes: list[AttributeChange] = []
@@ -142,7 +148,6 @@ def merge_generated_enrichments(
         # Clearing a coupled dimension also clears stale dependents, with the
         # same derivation record. No unknown decision is converted to False.
         for presence, dependents in (
-            ("applicability_present", ("applicability_functions",)),
             ("role_semantics_present", ("role_relation_types", "role_relations")),
         ):
             presence_path = f"enrichments.semantic.{presence}"
@@ -280,7 +285,7 @@ def merge_persisted_enrichments(
         known_paths.update(
             f"enrichments.semantic.{name}" for name in patch.semantic.model_fields_set
         )
-    for name in ("context_routing", "subject_context"):
+    for name in ("applicability", "context_routing", "subject_context"):
         if getattr(patch, name) is not None:
             known_paths.add(f"enrichments.{name}")
     incoming = {item.path: item for item in provenance.generated_attributes}

@@ -17,7 +17,6 @@ from standards_atlas.application.semantic_classification import (
 )
 from standards_atlas.application.semantic_ontology import RoleSemanticsClassifier
 from standards_atlas.domain.model import (
-    ApplicabilityFunction,
     DocumentKey,
     EngineeringDocument,
     GeneratedAttribute,
@@ -92,7 +91,6 @@ def _canonicalize_semantic_payload(payload: dict[str, object]) -> dict[str, obje
         "statement_functions",
         "knowledge_kinds",
         "process_functions",
-        "applicability_functions",
         "role_relation_types",
     ):
         result[field] = _unique(result.get(field, ()))
@@ -213,9 +211,6 @@ class SemanticEnrichmentService:
                 ontology_failed = True
                 results = ()
             values = {item.dimension: item.values for item in results}
-            presence = {
-                item.dimension: item.presence for item in results if item.presence is not None
-            }
             current = clause.semantic_classification
             role_result = None
             role_failed = False
@@ -230,10 +225,6 @@ class SemanticEnrichmentService:
                     role_semantics_failures += 1
             semantic = current
             if not ontology_failed:
-                applicability_functions = tuple(
-                    ApplicabilityFunction(item)
-                    for item in values.get("applicability_functions", ())
-                )
                 semantic = _validated_semantic_merge(
                     current,
                     {
@@ -247,13 +238,6 @@ class SemanticEnrichmentService:
                         "process_functions": tuple(
                             ProcessFunction(item) for item in values.get("process_functions", ())
                         ),
-                        # Applicability is one coupled semantic dimension. Presence and subtype
-                        # must be replaced atomically so a stale presence bit cannot survive a
-                        # successful subtype classification (or vice versa).
-                        "applicability_present": presence.get(
-                            "applicability_functions", bool(applicability_functions)
-                        ),
-                        "applicability_functions": applicability_functions,
                     },
                 )
             if role_result is not None:
@@ -290,8 +274,6 @@ class SemanticEnrichmentService:
                         "statement_functions",
                         "knowledge_kinds",
                         "process_functions",
-                        "applicability_present",
-                        "applicability_functions",
                     )
                 )
             if role_result is not None:
@@ -308,8 +290,6 @@ class SemanticEnrichmentService:
                     )
                 )
             available = set(values) if not ontology_failed else set()
-            if "applicability_functions" in available:
-                available.add("applicability_present")
             if role_result is not None:
                 available.update(
                     ("role_semantics_present", "role_relation_types", "role_relations")
@@ -325,7 +305,6 @@ class SemanticEnrichmentService:
                 "statement_functions",
                 "knowledge_kinds",
                 "process_functions",
-                "applicability_functions",
                 "role_relation_types",
                 "role_relations",
             ):

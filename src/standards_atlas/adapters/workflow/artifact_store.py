@@ -314,14 +314,23 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
                 try:
                     payload = json.loads(content)
                     for clause in payload["document"].get("clauses", ()):
-                        clause.get("enrichments", {}).pop("semantic", None)
+                        enrichments = clause.get("enrichments", {})
+                        enrichments.pop("semantic", None)
+                        enrichments.pop("applicability", None)
+                        provenance = clause.get("provenance", {})
                         for name in ("generated_attributes", "confirmed_attributes"):
-                            provenance = clause.get("provenance", {})
                             provenance[name] = [
                                 item
                                 for item in provenance.get(name, ())
                                 if not item.get("path", "").startswith("enrichments.semantic")
+                                and item.get("path") != "enrichments.applicability"
                             ]
+                        provenance["unattributed_attributes"] = [
+                            path
+                            for path in provenance.get("unattributed_attributes", ())
+                            if not path.startswith("enrichments.semantic")
+                            and path != "enrichments.applicability"
+                        ]
                     content = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
                 except (ValueError, TypeError, KeyError):
                     pass

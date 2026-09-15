@@ -316,7 +316,7 @@ def test_policy_overrides_gate_review_does_not_block_and_retries_are_not_votes(
     batch = load_qualification_knowledge(path)
     assert (batch.selected_clause_count, batch.unqualified_clause_count) == (2, 1)
     candidate = batch.candidates[0]
-    assert candidate.patch.semantic.applicability_present is False
+    assert candidate.patch.applicability.present is False
     assert candidate.patch.semantic.primary_function == "requirement"
     primary = next(a for a in candidate.attributes if a.path.endswith(".primary_function"))
     assert primary.decision.valid_votes == primary.decision.supporting_votes == 3
@@ -346,7 +346,7 @@ def test_unknown_policy_is_not_materialized_as_negative(tmp_path: Path) -> None:
     repository = _documents(tmp_path / "workspace")
     KnowledgeAdoptionService(documents=repository).apply(batch, write=True)
     provenance = repository.load(DocumentKey(value="TEST")).clauses[0].provenance
-    assert provenance.availability("enrichments.semantic.applicability_present") == "unknown"
+    assert provenance.availability("enrichments.applicability") == "unknown"
 
 
 def test_duplicate_model_votes_are_rejected(tmp_path: Path) -> None:

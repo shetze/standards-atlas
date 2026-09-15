@@ -8,6 +8,7 @@ from standards_atlas.application.semantic_qualification.annotations import norma
 from standards_atlas.application.services.knowledge_adoption_service import KnowledgeAdoptionService
 from standards_atlas.domain.model import (
     Clause,
+    ClauseApplicability,
     ClauseId,
     ClauseType,
     DocumentKey,
@@ -20,7 +21,6 @@ from standards_atlas.domain.model import (
 )
 from standards_atlas.domain.model.enrichment_patch import (
     ClauseEnrichmentPatch,
-    SemanticEnrichmentPatch,
 )
 
 
@@ -47,10 +47,10 @@ def candidate(key="DOC"):
         clause_id="c1",
         reference="1",
         content_hash=normalized_content_hash("Text 1"),
-        patch=ClauseEnrichmentPatch(semantic=SemanticEnrichmentPatch(applicability_present=True)),
+        patch=ClauseEnrichmentPatch(applicability=ClauseApplicability(present=True)),
         attributes=(
             GeneratedAttribute(
-                path="enrichments.semantic.applicability_present",
+                path="enrichments.applicability",
                 generator="policy",
                 method=GenerationMethod.IMPORTED,
             ),
@@ -61,7 +61,7 @@ def candidate(key="DOC"):
 
 def batch(*candidates):
     return KnowledgeAdoptionBatch(
-        schema_version="1.1",
+        schema_version=1,
         source_id="run",
         source_sha256="a" * 64,
         selected_clause_count=len(candidates) + 1,
@@ -141,7 +141,7 @@ def test_protected_value_is_reported_and_not_confirmed_by_acceptance():
     doc = doc.model_copy(
         update={
             "clauses": (
-                doc.clauses[0].confirm_authoritative("enrichments.semantic.applicability_present"),
+                doc.clauses[0].confirm_authoritative("enrichments.applicability"),
                 doc.clauses[1],
             )
         }
@@ -156,6 +156,6 @@ def test_report_serialization_preserves_explicit_false_and_no_text_in_provenance
     docs = Documents(document())
     report = KnowledgeAdoptionService(documents=docs).apply(batch(candidate()))
     payload = report.model_dump_json()
-    assert '"before":false' in payload
-    assert '"after":true' in payload
+    assert '"before":{"present":false,"polarity":null}' in payload
+    assert '"after":{"present":true,"polarity":null}' in payload
     assert "Text 1" not in payload

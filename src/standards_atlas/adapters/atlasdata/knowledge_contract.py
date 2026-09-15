@@ -12,6 +12,7 @@ from typing import Annotated, ClassVar, Literal
 from pydantic import ConfigDict, Field, JsonValue, TypeAdapter, model_validator
 
 from standards_atlas.application.schema.model import SchemaBoundModel
+from standards_atlas.domain.model.applicability import ClauseApplicability
 from standards_atlas.domain.model.context_routing import ScopeReach
 from standards_atlas.domain.model.enrichment_patch import SemanticEnrichmentPatch
 from standards_atlas.domain.model.identifiers import StandardReference
@@ -27,8 +28,7 @@ AttributePath = Literal[
     "enrichments.semantic.statement_functions",
     "enrichments.semantic.knowledge_kinds",
     "enrichments.semantic.process_functions",
-    "enrichments.semantic.applicability_present",
-    "enrichments.semantic.applicability_functions",
+    "enrichments.applicability",
     "enrichments.semantic.role_semantics_present",
     "enrichments.semantic.role_relation_types",
     "enrichments.semantic.role_relations",
@@ -40,7 +40,6 @@ DIMENSIONS: dict[str, tuple[str, ...]] = {
     "statement_functions": ("primary_function", "statement_functions"),
     "knowledge_kinds": ("primary_knowledge_kind", "knowledge_kinds"),
     "process_functions": ("primary_process_function", "process_functions"),
-    "applicability": ("applicability_present", "applicability_functions"),
     "role_semantics": ("role_semantics_present", "role_relation_types", "role_relations"),
 }
 DIMENSION_PATHS = {
@@ -49,25 +48,24 @@ DIMENSION_PATHS = {
 }
 DIMENSION_PATHS.update(
     {
+        "applicability": ("enrichments.applicability",),
         "subject_context": ("enrichments.subject_context",),
         "context_routing": ("enrichments.context_routing",),
     }
 )
 ALL_PATHS = tuple(path for paths in DIMENSION_PATHS.values() for path in paths)
-# Keep the transport/read paths and canonical merge groups intact. Detail
-# publication is deferred independently of whether a local value is populated;
-# these dimensions publish only their accepted presence decisions. Dependent
-# empty sets from a negative presence are not independently evaluated details.
-UNPUBLISHED_APPLICABILITY_PATHS = frozenset({"enrichments.semantic.applicability_functions"})
 UNPUBLISHED_ROLE_PATHS = frozenset(
     {
         "enrichments.semantic.role_relation_types",
         "enrichments.semantic.role_relations",
     }
 )
-SEMANTIC_ADAPTERS = {
-    name: TypeAdapter(field.annotation)
-    for name, field in SemanticEnrichmentPatch.model_fields.items()
+ATTRIBUTE_ADAPTERS = {
+    **{
+        f"enrichments.semantic.{name}": TypeAdapter(field.annotation)
+        for name, field in SemanticEnrichmentPatch.model_fields.items()
+    },
+    "enrichments.applicability": TypeAdapter(ClauseApplicability),
 }
 PRIVATE_PATHS = {
     "enrichments.subject_context",
@@ -166,9 +164,8 @@ class PublishedAttribute(_Strict):
         else:
             if self.private_value_sha256 is not None:
                 raise ValueError("categorical values cannot use a private value reference")
-            field = self.path.rsplit(".", 1)[-1]
             # Validate in JSON mode: arrays are tuples, but bool/int coercions are forbidden.
-            SEMANTIC_ADAPTERS[field].validate_json(json.dumps(self.value), strict=True)
+            ATTRIBUTE_ADAPTERS[self.path].validate_json(json.dumps(self.value), strict=True)
         return self
 
 
@@ -194,7 +191,7 @@ class AtlasDataKnowledge(_Strict):
     SCHEMA_FAMILY: ClassVar[str] = "atlasdata-enrichments"
 
     manifest_type: Literal["atlasdata-enrichments"] = "atlasdata-enrichments"
-    schema_version: Literal["1.2"] = "1.2"
+    schema_version: Literal[1] = 1
     document_key: SafeKey
     family_key: SafeKey
     atlasdata_file: str = Field(min_length=1)
@@ -215,7 +212,7 @@ class AtlasDataKnowledge(_Strict):
 class EvidenceBlob(_Strict):
     SCHEMA_FAMILY: ClassVar[str] = "knowledge-evidence"
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal[1] = 1
     kind: Literal["value", "generated", "confirmed"]
     path: AttributePath
     value: JsonValue
@@ -234,8 +231,8 @@ class TransferChange(_Strict):
 class AtlasDataKnowledgeReport(_Strict):
     SCHEMA_FAMILY: ClassVar[str] = "atlasdata-knowledge-report"
 
-    schema_version: Literal["1.1"] = "1.1"
-    operation: Literal["export", "import", "rebind"]
+    schema_version: Literal[1] = 1
+    operation: Literal["export", "import"]
     write_requested: bool
     document_keys: tuple[str, ...]
     changed_targets: tuple[str, ...]

@@ -189,10 +189,12 @@ class EvaluationCorpusBuilder:
                 # Accepted semantic predictions are outputs of the publication workflow,
                 # not inputs for its next run. Keep structural/subject/routing context.
                 item_input["context"]["semantic"] = {}
+                item_input["context"].pop("applicability", None)
                 item_input["context"]["attribute_sources"] = {
                     path: value
                     for path, value in item_input["context"]["attribute_sources"].items()
                     if not path.startswith("enrichments.semantic.")
+                    and path != "enrichments.applicability"
                 }
             if config.include_text:
                 item_input["content"]["text"] = clause.text

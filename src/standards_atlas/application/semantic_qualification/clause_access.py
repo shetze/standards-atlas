@@ -11,6 +11,7 @@ from standards_atlas.application.model.cbox import CBoxEnrichments
 from standards_atlas.application.model.source_structure import SourceStructure
 from standards_atlas.domain.model import (
     CanonicalDocumentSection,
+    ClauseApplicability,
     ClauseType,
     DocumentType,
     SemanticSection,
@@ -72,6 +73,7 @@ class ClauseDescriptor(BaseModel):
     structural_context: dict[str, Any] | None = None
     reference_mentions: tuple[dict[str, Any], ...] = ()
     context_routing: dict[str, Any] | None = None
+    applicability: ClauseApplicability = ClauseApplicability()
     subject_context: dict[str, Any] | None = None
     enrichment_context: CBoxEnrichments = CBoxEnrichments()
     ancestor_headings: tuple[dict[str, str], ...] | None = None

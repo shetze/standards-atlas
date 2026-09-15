@@ -21,7 +21,7 @@ The application architecture is intentionally shown in a separate UML diagram. I
 A `Clause` contains a stable `ClauseId` and human-readable reference plus source/structure state:
 
 - `ClauseBaseline` owns source-derived and deterministic facts: structured `ContentBlock` values, hierarchy, source token, structural profile/context, reference mentions and resolved reference relations, normative/structural classification, and optional publication attributes;
-- `ClauseEnrichments` owns accepted clause-level interpretation context. During Slice 1 the legacy `SemanticClassification` remains temporarily present until the context/applicability cut-over;
+- `ClauseEnrichments` owns accepted clause-level interpretation context. `ClauseApplicability`, `ContextRouting` and `ClauseSubjectContext` are first-class siblings; the remaining legacy `SemanticClassification` is isolated for removal in Slice 3;
 - `KnowledgeStateProvenance` records generated clause-context attributes that are not yet authoritatively confirmed.
 
 At document level, `DocumentKnowledge` owns accepted engineering-domain knowledge as evidence-backed `KnowledgeEntity` and `NormativeAssertion` objects. Its `EvidenceAnchor`s point back to canonical clauses or bounded character ranges without duplicating protected source text. Assertions carry their own normative force and adoption provenance.
@@ -62,7 +62,7 @@ ontology decision.
 
 The target semantic unit is an explicit engineering assertion, not a classification label for an entire clause. `DocumentKnowledge` schema 1 contains normalized entities, text-safe evidence anchors and subject/predicate/object assertions. Each assertion records assertion-local normative force and provenance, allowing one clause to contribute several independently qualified engineering statements.
 
-`ClauseApplicability` is the minimal context contract for applicability: explicit presence plus optional `included`/`excluded` polarity. Structural evidence, references and subject context stay separate from engineering-domain assertions. The previous `SemanticClassification` block is transitional in Slice 1 and is removed in later refactoring slices rather than migrated into the new model.
+`ClauseApplicability` is the minimal context contract for applicability: explicit presence plus optional `included`/`excluded` polarity. It is persisted independently from the legacy semantic-classification block and projected as its own CBox context. Structural evidence, references and subject context stay separate from engineering-domain assertions. Remaining `SemanticClassification` dimensions are transitional and are removed in Slice 3 rather than migrated into the new model.
 
 ## Evidence and provenance
 

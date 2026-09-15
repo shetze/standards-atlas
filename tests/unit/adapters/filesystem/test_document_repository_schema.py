@@ -130,7 +130,7 @@ def test_schema1_roundtrip_preserves_known_false_unknown_and_primary(tmp_path: P
         )
         .mark_generated(
             GeneratedAttribute(
-                path="enrichments.semantic.applicability_present",
+                path="enrichments.applicability",
                 generator="test",
                 method=GenerationMethod.IMPORTED,
             ),
@@ -153,7 +153,7 @@ def test_schema1_roundtrip_preserves_known_false_unknown_and_primary(tmp_path: P
     loaded = repository.load(document.key)
     assert loaded == document
     provenance = loaded.clauses[0].provenance
-    assert provenance.availability("enrichments.semantic.applicability_present") == "known"
+    assert provenance.availability("enrichments.applicability") == "known"
     assert provenance.availability("enrichments.semantic.role_semantics_present") == "unknown"
     assert provenance.availability("enrichments.semantic.process_functions") == "not_evaluated"
 

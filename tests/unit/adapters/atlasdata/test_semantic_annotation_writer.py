@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-from standards_atlas.adapters.atlasdata.import_pipeline import AtlasDataImportPipeline
 from standards_atlas.adapters.atlasdata.semantic_annotation_writer import (
     AtlasDataSemanticAnnotationService,
 )
@@ -20,7 +19,7 @@ def test_apply_semantic_annotations_writes_public_tags_and_profile(tmp_path: Pat
     manifest.write_text(
         yaml.safe_dump(
             {
-                "schema_version": "2.0",
+                "schema_version": 1,
                 "semantic_profile": "functional-safety:1.0.0",
                 "annotations": [
                     {
@@ -53,7 +52,7 @@ def test_apply_semantic_annotations_rejects_unknown_reference(tmp_path: Path) ->
     )
     manifest = tmp_path / "annotations.yaml"
     manifest.write_text(
-        'schema_version: "2.0"\n'
+        "schema_version: 1\n"
         'semantic_profile: "functional-safety:1.0.0"\n'
         'annotations:\n  - reference: "Example:2025 2"\n',
         encoding="utf-8",
@@ -75,7 +74,7 @@ def test_apply_semantic_annotations_rejects_task_reference_as_profile(tmp_path: 
     )
     manifest = tmp_path / "annotations.yaml"
     manifest.write_text(
-        'schema_version: "2.0"\n'
+        "schema_version: 1\n"
         'semantic_profile: "semantic-profile-classification:2.4.0"\n'
         'annotations:\n  - reference: "Example:2025 1"\n'
         "    primary_statement_function: requirement\n",
@@ -102,7 +101,7 @@ def _annotation_files(tmp_path: Path, annotation: dict, tags: str = "") -> tuple
     manifest.write_text(
         yaml.safe_dump(
             {
-                "schema_version": "2.0",
+                "schema_version": 1,
                 "semantic_profile": "functional-safety:1.0.0",
                 "annotations": [{"reference": "Example:2025 1", **annotation}],
             }
@@ -110,20 +109,6 @@ def _annotation_files(tmp_path: Path, annotation: dict, tags: str = "") -> tuple
         encoding="utf-8",
     )
     return source, manifest
-
-
-def test_applicability_tag_writer_importer_roundtrip_confirms_presence(tmp_path: Path) -> None:
-    source, manifest = _annotation_files(tmp_path, {"applicability_functions": ["inclusion"]})
-    AtlasDataSemanticAnnotationService().apply(source, manifest, write=True)
-    document = AtlasDataImportPipeline().import_file(source)
-    clause = next(c for c in document.clauses if c.reference.clause == "1")
-    assert clause.enrichments.semantic.applicability_present is True
-    assert clause.enrichments.semantic.applicability_functions == ("inclusion",)
-    assert clause.provenance.protection("enrichments.semantic.applicability_present") == "confirmed"
-    assert (
-        clause.provenance.availability("enrichments.semantic.role_semantics_present")
-        == "not_evaluated"
-    )
 
 
 def test_partial_annotation_merge_preserves_unaddressed_dimensions(tmp_path: Path) -> None:

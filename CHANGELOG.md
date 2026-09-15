@@ -1,6 +1,18 @@
 # Changelog
 
 
+## Unreleased — Context and applicability cut-over Slice 2 (2026-09-15)
+
+- Move accepted applicability out of legacy `SemanticClassification` into first-class
+  `ClauseEnrichments.applicability` with typed presence/polarity and independent provenance.
+- Project Applicability independently through CBox, formal semantics, Gemara and AtlasData while
+  keeping applicability-detection inputs source-only to prevent label leakage and rerun loops.
+- Reset AtlasData enrichment, evidence, adoption and public-annotation transports touched by this
+  refactoring to current-only schema 1; remove `AF-*` publication and legacy companion reads.
+- Remove the obsolete AtlasData enrichment rebind migration, its validation document and tests.
+- Remove applicability handling/tests from the legacy semantic-enrichment service; remaining legacy
+  semantic dimensions stay isolated until Slice 3.
+
 ## Unreleased — Assertion-centred semantic core Slice 1 (2026-09-14)
 
 - Introduce schema-1 `DocumentKnowledge` with evidence-backed `KnowledgeEntity` and
@@ -13,17 +25,6 @@
   persistence envelope from schema 9 to current-only schema 1, with no migration or legacy reader.
 - Replace obsolete v8/v9 compatibility expectations with clean schema-1 tests and remove the
   superseded R3 validation record. Later slices perform the context cut-over and legacy removal.
-
-## Unreleased — AtlasData enrichment structural rebind (2026-09-14)
-
-- Add an explicit dry-run-first `atlasdata rebind-enrichments` migration for enrichment sidecars
-  made stale solely by the canonical multipart root-title correction.
-- Reconstruct the exact historical `Part N` projection and require its structure hash to equal the
-  stored sidecar before rebinding; reject every other identity, MD5, reference or heading drift.
-- Rebind only structural/root-heading fingerprints while preserving semantic/context values,
-  provenance, evidence references and content fingerprints; write all selected sidecars only after
-  the complete preflight succeeds.
-- Bump the local AtlasData knowledge report contract to 1.1 and add the explicit `rebind` operation.
 
 ## Unreleased — Review context and enrichment candidates (2026-09-14)
 

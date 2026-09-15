@@ -89,7 +89,7 @@ stat:statementFunction a owl:DatatypeProperty .
 stat:knowledgeKind a owl:DatatypeProperty .
 stat:processFunction a owl:DatatypeProperty .
 stat:applicabilityPresent a owl:DatatypeProperty .
-stat:applicabilityFunction a owl:DatatypeProperty .
+stat:applicabilityPolarity a owl:DatatypeProperty .
 stat:roleSemanticsPresent a owl:DatatypeProperty .
 stat:roleRelationClass a owl:DatatypeProperty .
 stat:normativeStatus a owl:DatatypeProperty .

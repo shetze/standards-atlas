@@ -12,7 +12,7 @@ change thresholds, or implement the global R4 policy guards.
 | Qualification matrix report | 1.1 | Explicit model marker, writer guard and archive/Challenger readers. |
 | Qualification consensus | 5.0 | Required marker; no schema-4 serializer or fingerprint preservation. |
 | EngineeringDocument envelope | 1 (integer) | Clean-break reset; no reader or migration for older envelopes. |
-| Knowledge adoption batch | 1.1 | Required marker; explicit source requirements, including empty lists. |
+| Knowledge adoption batch | 1 | Clean-break contract; explicit source requirements, including empty lists. |
 | Qualification matrix manifest | 1.6 | Required marker at model/YAML/workflow/archive entry points. |
 
 The four shipped v3/v4/v5 matrix files change **only** their serialization marker from
@@ -34,8 +34,7 @@ Pre-reset EngineeringDocument files are not upgraded or skipped in inventories; 
 Back up and relocate obsolete files outside the active repository. Rebuild derived documents
 through the current source workflow. Do not discard human-reviewed information: preserve
 its original evidence for an explicit source-bound review/transfer. There is no automatic
-migration or source-free authority inference in this slice. Normal schema-9 reads never
-rewrite canonical files and preserve generated, confirmed and unattributed provenance.
+migration or source-free authority inference in this slice. Current schema-1 reads never rewrite canonical files and preserve generated, confirmed and unattributed provenance.
 
 Current Consensus 5.0 serialization is retained. Adoption batches now always serialize empty
 `source_requirements` as `[]`; there is no compatibility fingerprint for the previous omitted
@@ -65,7 +64,6 @@ review disclosure, release/activation gates, or measured/unmeasured timing seman
 ## Local checks
 
 ```bash
-uv run pytest tests/unit/application/semantic_qualification/test_schema_refactoring_r3.py
 uv run pytest tests/unit/adapters/filesystem/test_document_repository_schema.py \
   tests/unit/adapters/mcp/test_formula_transcription.py
 uv run pytest

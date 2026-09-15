@@ -104,9 +104,9 @@ def test_accepted_negative_gate_needs_no_detail_model_and_adopts_final_false(tmp
         root=tmp_path / "run", archive_directory=tmp_path / "archives", resources=RESOURCES
     )
     candidate = load_qualification_knowledge(archive).candidates[0]
-    assert candidate.patch.semantic.applicability_present is False
-    assert "applicability_present" in candidate.patch.semantic.model_fields_set
-    assert "applicability_functions" not in candidate.patch.semantic.model_fields_set
+    assert candidate.patch.applicability is not None
+    assert candidate.patch.applicability.present is False
+    assert "applicability" in candidate.patch.model_fields_set
 
 
 @pytest.mark.parametrize(
@@ -141,8 +141,8 @@ def test_unknown_gates_are_excluded_not_coerced_to_false(tmp_path):
         root=tmp_path / "run", archive_directory=tmp_path / "archives", resources=RESOURCES
     )
     candidate = load_qualification_knowledge(archive).candidates[0]
-    assert "applicability_present" not in candidate.patch.semantic.model_fields_set
-    assert "enrichments.semantic.applicability_present" in candidate.not_evaluated
+    assert candidate.patch.applicability is None
+    assert "enrichments.applicability" in candidate.not_evaluated
 
 
 def test_detail_failures_stay_three_valued_and_do_not_overwrite_with_gate(tmp_path):

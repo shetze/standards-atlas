@@ -27,7 +27,7 @@ from standards_atlas.application.model import PublicationDocument
 from standards_atlas.domain.model import (
     AnnotationType,
     AnnotationVisibility,
-    ApplicabilityFunction,
+    ApplicabilityPolarity,
     Clause,
     ClauseAnnotation,
     ClauseType,
@@ -58,11 +58,6 @@ _RECOMMENDATION_FUNCTIONS = {
 _RATIONALE_FUNCTIONS = {
     StatementFunction.RATIONALE,
     StatementFunction.EXPLANATION,
-}
-_POSITIVE_APPLICABILITY_FUNCTIONS = {
-    ApplicabilityFunction.SCOPE_DEFINITION,
-    ApplicabilityFunction.INCLUSION,
-    ApplicabilityFunction.APPLICABILITY_CONDITION,
 }
 
 
@@ -450,12 +445,8 @@ def _can_fold_into_anchor(clause: Clause) -> bool:
 
 
 def _is_positive_applicability(clause: Clause) -> bool:
-    semantic = clause.semantic_classification
-    return (
-        semantic.applicability_present
-        and bool(set(semantic.applicability_functions) & _POSITIVE_APPLICABILITY_FUNCTIONS)
-        and ApplicabilityFunction.EXCLUSION not in semantic.applicability_functions
-    )
+    applicability = clause.applicability
+    return applicability.present and applicability.polarity is ApplicabilityPolarity.INCLUDED
 
 
 def _is_scope_clause(clause: Clause) -> bool:

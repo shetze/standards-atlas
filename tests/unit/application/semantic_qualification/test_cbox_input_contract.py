@@ -30,7 +30,8 @@ def inputs():
             "reference": "1",
             "heading": "Verification",
             "clause_type": "clause",
-            "semantic": {"applicability_present": True, "primary_function": "LEAK-SEMANTIC"},
+            "semantic": {"primary_function": "LEAK-SEMANTIC"},
+            "applicability": {"present": True, "polarity": "included"},
             "attribute_sources": {
                 "enrichments.semantic.primary_function": {
                     "availability": "known",
@@ -139,7 +140,7 @@ def test_effective_downstream_frame_retains_semantics_but_not_evidence(inputs):
         inputs["context"],
         resolve_cbox_frame_policy("effective-context-v1"),
     )
-    assert selected.values["semantic"]["applicability_present"] is True
+    assert selected.values["applicability"] == {"present": True, "polarity": "included"}
     assert "LEAK-EVIDENCE" not in json.dumps(selected.values)
     assert "LEAK-GENERATOR" in json.dumps(selected.values)
 
@@ -182,7 +183,7 @@ def test_fingerprint_invalidates_changed_effective_inputs(inputs, change):
 def test_renderer_and_hidden_predictions_do_not_invalidate_reuse(inputs, monkeypatch):
     first = request(inputs)
     second_input = copy.deepcopy(inputs)
-    second_input["context"]["semantic"] = {"applicability_present": False}
+    second_input["context"]["semantic"] = {"primary_function": "different hidden prediction"}
     second_input["context"]["expected"] = {"primary_function": "different gold"}
     monkeypatch.setattr(request_builder, "render_cbox_context", lambda _: "New wording only")
     second = request(second_input)

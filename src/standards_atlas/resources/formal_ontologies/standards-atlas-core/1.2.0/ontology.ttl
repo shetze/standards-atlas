@@ -89,7 +89,7 @@ stat:statementFunction a owl:DatatypeProperty .
 stat:knowledgeKind a owl:DatatypeProperty .
 stat:processFunction a owl:DatatypeProperty .
 stat:applicabilityPresent a owl:DatatypeProperty .
-stat:applicabilityFunction a owl:DatatypeProperty .
+stat:applicabilityPolarity a owl:DatatypeProperty .
 stat:primarySubject a owl:DatatypeProperty .
 stat:subjectConfidence a owl:DatatypeProperty .
 stat:subjectEvidenceKind a owl:DatatypeProperty .

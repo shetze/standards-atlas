@@ -153,22 +153,22 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     ),
     "cbox-report": SchemaPolicy("cbox-report", "1.0", ("1.0",), "local/**/cbox*.json"),
     "atlasdata-enrichments": SchemaPolicy(
-        "atlasdata-enrichments", "1.2", ("1.2",), "data/enrichments/*.yaml"
+        "atlasdata-enrichments", 1, (1,), "data/enrichments/*.yaml"
     ),
     "knowledge-evidence": SchemaPolicy(
-        "knowledge-evidence", "1.0", ("1.0",), ".atlas/data/knowledge-evidence/*.json"
+        "knowledge-evidence", 1, (1,), ".atlas/data/knowledge-evidence/*.json"
     ),
     "atlasdata-knowledge-report": SchemaPolicy(
-        "atlasdata-knowledge-report", "1.1", ("1.1",), "local/**/atlasdata-knowledge*.json"
+        "atlasdata-knowledge-report", 1, (1,), "local/**/atlasdata-knowledge*.json"
     ),
     "engineering-document": SchemaPolicy(
         "engineering-document", 1, (1,), ".atlas/data/documents/*.json"
     ),
     "knowledge-adoption-batch": SchemaPolicy(
-        "knowledge-adoption-batch", "1.1", ("1.1",), "local/**/knowledge-adoption-batch.json"
+        "knowledge-adoption-batch", 1, (1,), "local/**/knowledge-adoption-batch.json"
     ),
     "knowledge-adoption-report": SchemaPolicy(
-        "knowledge-adoption-report", "1.0", ("1.0",), "local/**/knowledge-adoption-report.json"
+        "knowledge-adoption-report", 1, (1,), "local/**/knowledge-adoption-report.json"
     ),
     "standards-manifest": SchemaPolicy("standards-manifest", 2, (2,), "manifests/*.yaml"),
     "qualification-matrix-manifest": SchemaPolicy(
@@ -200,8 +200,8 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     ),
     "public-semantic-annotation-manifest": SchemaPolicy(
         "public-semantic-annotation-manifest",
-        "2.0",
-        ("2.0",),
+        1,
+        (1,),
         "local/**/semantic-annotations*.yaml",
     ),
     "complypack-workspace-manifest": SchemaPolicy(

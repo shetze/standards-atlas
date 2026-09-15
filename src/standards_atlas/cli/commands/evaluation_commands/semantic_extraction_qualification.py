@@ -54,7 +54,7 @@ from standards_atlas.application.semantic_qualification.semantic_extraction_sele
 )
 from standards_atlas.cli.apps import evaluation_app
 from standards_atlas.domain.model import (
-    ApplicabilityFunction,
+    ClauseApplicability,
     KnowledgeKind,
 )
 
@@ -439,17 +439,9 @@ def _eligibility_context_from_consensus(
         if isinstance(value, str)
         for kind in _parse_enum(KnowledgeKind, value)
     )
-    applicability_values = clause.get("proposed_applicability_functions")
-    applicability_functions = tuple(
-        function
-        for value in (applicability_values if isinstance(applicability_values, list) else [])
-        if isinstance(value, str)
-        for function in _parse_enum(ApplicabilityFunction, value)
-    )
     return ExtractionEligibilityContext(
         knowledge_kinds=knowledge_kinds,
-        applicability_present=bool(clause.get("applicability_present", False)),
-        applicability_functions=applicability_functions,
+        applicability=ClauseApplicability(present=bool(clause.get("applicability_present", False))),
         role_semantics_present=bool(clause.get("role_semantics_present", False)),
     )
 

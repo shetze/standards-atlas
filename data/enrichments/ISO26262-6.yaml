@@ -1,5 +1,5 @@
 manifest_type: atlasdata-enrichments
-schema_version: '1.2'
+schema_version: 1
 document_key: ISO26262-6
 family_key: ISO26262
 atlasdata_file: ISO26262
@@ -140,9 +140,11 @@ clauses:
     clause: '3'
   heading: Terms and definitions
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -345,7 +347,7 @@ clauses:
     atlasdata_heading: sha256:db6dd52a102a86f396e37a60eb0f233e1451b3415afbb44f4a5faba4cea466d9
     content: sha256:9822d81b1ecccdf21994ab891ddfda447b6bbb2752ea3bee3bcb5dc114527bd6
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -443,9 +445,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -682,7 +686,7 @@ clauses:
         evidence:
         - sha256:918c2fb454386292d99af6c0cdbb0085fc0aca30135850542bc5ac7443d65ea3
         decision_source: sha256:d8dc8efd84f68854967b969596ed5ac393b4e551beed98398a38359469fa7e9e
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -712,9 +716,11 @@ clauses:
     clause: '4.2'
   heading: General requirements
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -953,7 +959,7 @@ clauses:
     atlasdata_heading: sha256:ebb38f40fb89ca056c5a88936d944d5651b52b6d1818301ce7a7456c10e2362c
     content: sha256:d72dbe0cc72af7e9712c2c1805542bb4e15317193666be023b092030a24c138c
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -983,9 +989,11 @@ clauses:
     clause: '4.3'
   heading: Interpretations of tables
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -1234,7 +1242,7 @@ clauses:
     atlasdata_heading: sha256:3e94cac808ae35565b48c0835e080723fa75cc2b80e66369a819d6bc1163871b
     content: sha256:7ad33bbec60497509cdab278f5fdf6a53b04f6587285bdb04fe087c7245e513c
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -1299,9 +1307,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -1548,7 +1558,7 @@ clauses:
         evidence:
         - sha256:3aa4bd5f0b9c160946d0d4264c8da59e6e1aa86d7710963ac0f98d96d30fce9b
         decision_source: sha256:10728084c7e65e6a91d3a835abba8556d4671b2514c6b5150abf6c92e9c86a20
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -1578,9 +1588,11 @@ clauses:
     clause: '4.5'
   heading: Adaptation for motorcycles
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -1806,7 +1818,7 @@ clauses:
     atlasdata_heading: sha256:5965c7c580af9b053a0f6647f62457470142052995303cda7bacbeccb4797402
     content: sha256:93c0d87280a67c6b3518a7dc317f54e3e1e7dfa2aa0dae41993857491997ddf8
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -1836,9 +1848,11 @@ clauses:
     clause: '4.6'
   heading: Adaptation for trucks, buses, trailers and semi-trailers
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -2054,7 +2068,7 @@ clauses:
     atlasdata_heading: sha256:98e0fa11c81dbb101b7b4bf2415cde70b79a9c9eb84e2488cfc7e49570793bb8
     content: sha256:af19c13459147aef0256c8767e2f940071767fefb53dd6a1daf83538db726389
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -2135,9 +2149,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -2338,7 +2354,7 @@ clauses:
         evidence:
         - sha256:6602bf4ecf7ce00fa8123a4ff6baf2552e0266e16eeddafb2591af33f1f7da92
         decision_source: sha256:a5c4b1821bba66953a9b6e069de6a1b1bb44d6b26d5e36250cc404eeb0cb8bab
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -2428,9 +2444,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -2682,7 +2700,7 @@ clauses:
         - sha256:d11433de9d1cbe7a039adfd290214211e0d139928db2981521401e5925059636
         - sha256:6602bf4ecf7ce00fa8123a4ff6baf2552e0266e16eeddafb2591af33f1f7da92
         decision_source: sha256:190eaefb6c0b56a86dc8fe670cfc903bc2d281e8cdbe5ac9b8b09e80775d762d
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -2738,9 +2756,11 @@ clauses:
     clause: 5.3.1
   heading: Prerequisites
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -2947,7 +2967,7 @@ clauses:
     atlasdata_heading: sha256:865514682d0132abd96594e2eff0ac8d379e16c60c7def0ee5c5f220ed3474ef
     content: sha256:22b6a8f857676aad97a60209fe46123a3938397f03be9a439478662c4c1eda1b
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -3012,9 +3032,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -3267,7 +3289,7 @@ clauses:
         evidence:
         - sha256:24cf2b9568b79a18ac16ab4c73dc7bff701bd78ecfe0b0cc53801f6fd29c2161
         decision_source: sha256:a45ae8b404b5aeefae7016e11fdc00b50a8baa06a0c168dbb07db38dcf645203
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -3378,9 +3400,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -3622,7 +3646,7 @@ clauses:
         - sha256:b3015fdc392d87e559e6bb1b0f3059982181176845f9e7adee92716d78aae7b4
         - sha256:532f5842abf51be84cca07aae4daa217e26fb21b79284c4ade18b9cc79d6eb10
         decision_source: sha256:2761d43e1b8a44f06161af62705280791629ee8546a4a8196522666bfd9cc2df
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -3697,9 +3721,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -3948,7 +3974,7 @@ clauses:
         - sha256:4d0e3ab94585c75d632175a68b947db0c1d8155bad9ecb1a105539d2c9c8a841
         - sha256:cc3c7db81428d7fa8383246f91afe9e2f7eb8996d6da27fa3aca3e26d5e64179
         decision_source: sha256:a91667414ba1711968bf32e0824faa6339aca2e23ec226afc0d01b5265cb074e
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -4028,9 +4054,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -4270,7 +4298,7 @@ clauses:
         - sha256:e51ca34a86606174c756eed99d8115406c2d81ef393226e7b8e30d61dd225eef
         - sha256:ec9ba494b1c224c79726a1001cfd35d0e06041db4cff5061dd59f91a8dbc7522
         decision_source: sha256:d1ed58d73ccf07525a3810ce6f058cb0cdf2fad86cbf11d8ce401ad45ce29374
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -4566,9 +4594,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -4776,7 +4806,7 @@ clauses:
         evidence:
         - sha256:153747a88c4d7ba234203943d256eba2d0d21f5015a5d5ca1dfe7ca05110bdb1
         decision_source: sha256:318a3a6f97c0eefb4cdf3458ae785149c87c47bcfcbdf3e6929ec93c7d391f0b
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -4868,9 +4898,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -5095,7 +5127,7 @@ clauses:
         evidence:
         - sha256:37ee7e6dc2d5c17067f346b89c8334131e73a85e78feefc254f804cf80b257a6
         decision_source: sha256:4d0e738d982208d8e45d1275c1fec41a6d6ac246b7b5035971a2bc73806d8edc
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -5160,9 +5192,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -5409,7 +5443,7 @@ clauses:
         evidence:
         - sha256:37ee7e6dc2d5c17067f346b89c8334131e73a85e78feefc254f804cf80b257a6
         decision_source: sha256:208d5e79bfb95dde3016da1b81031ebc64d477339ed6e7b9907f01251258b799
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -5551,9 +5585,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -5810,7 +5846,7 @@ clauses:
         - sha256:f277b8872170cd5c6411b541e9c6e46e36583d279e4b272a5775d11700ec9b19
         - sha256:07122f50e2509dd92e72ef1301eb1f3dc9f619fcd559087e550c4b05667d48d3
         decision_source: sha256:f03869a7ad380670c4996c2cdec70c295b9b64628fd3159f901ea67acb411bad
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -5878,9 +5914,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -6135,7 +6173,7 @@ clauses:
         evidence:
         - sha256:dc64c230e7ab853ad9e970b1d3fe15a76884aca742202afdb354167398c2ddf7
         decision_source: sha256:034ac268860ce2314f4b145c89636049ecafb959ea7cb5eb8f67ad9800c2ee82
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -6239,9 +6277,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -6487,7 +6527,7 @@ clauses:
         - sha256:8c8afacd50a6741f7750659db9849dd2aef1f47c4c94672b8ec1df6ac322a3a2
         - sha256:f4e8ea094b692d6ae4d5a8aa99d350e8a5e2681684dcda9df4fffd78cefb5d4c
         decision_source: sha256:17d5ac8b9516748c7b062a96dab2ed07b5ace26932677926e18397c5cb5e351a
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -6570,9 +6610,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -6819,7 +6861,7 @@ clauses:
         - sha256:96c2fca08bacbef15a6a06c94ced673f4013776235515317fa5f590723aa3620
         - sha256:96cce75743827f36111551f61e49dcee8baa0f90d0bad816d9713a986805d1e4
         decision_source: sha256:d8be18275779334778cc74030401942348ae083ca7ee02aeb236ac19d5e110fa
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -6884,9 +6926,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -7130,7 +7174,7 @@ clauses:
         evidence:
         - sha256:3aa4bd5f0b9c160946d0d4264c8da59e6e1aa86d7710963ac0f98d96d30fce9b
         decision_source: sha256:b1faf78729e224ea56668e57eaa0eab1b8d3ed913d777e981d9bd5189c208d2b
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -7195,9 +7239,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -7439,7 +7485,7 @@ clauses:
         evidence:
         - sha256:37ee7e6dc2d5c17067f346b89c8334131e73a85e78feefc254f804cf80b257a6
         decision_source: sha256:58f1f18db42a4c5ad66d09f6f384be57af9469f7b5c8ada695d95734de3c245e
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -7506,9 +7552,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -7757,7 +7805,7 @@ clauses:
         evidence:
         - sha256:eab33a1dfa4bda62327b4c00ae9278a21a9dc2a25237f0272ece367d4c6f4204
         decision_source: sha256:0d62e703a6223c44370334296fefd4358fe399c859ef9f6065198b1afb052d55
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -7790,9 +7838,11 @@ clauses:
     clause: 6.4.6
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -8025,7 +8075,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:3b15b467358527355896cc78850c1fb9fd5e5f6c0bad18adab456c72a22153d0
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -8107,9 +8157,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -8364,7 +8416,7 @@ clauses:
         evidence:
         - sha256:63c0c92340206c4439df5e0740f72782f38e1ef0581fe3bac8cd1de0b5ad8cd3
         decision_source: sha256:7e5f47b156f03196d9221b9c70ab05f6a4fb1f0a2c8fa8ce82f66c60931491ec
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -8496,9 +8548,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -8744,7 +8798,7 @@ clauses:
         evidence:
         - sha256:b254dac2786365f6ae97085af89407309af90aca56545b6965ac3e9888b6de91
         decision_source: sha256:588ae90d745a0bf967ac384a4755c84e7cec20d3fb7d50f8f06be5d45c049c24
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -8810,9 +8864,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -9059,7 +9115,7 @@ clauses:
         - sha256:f8284f09732a7597d20c620ef70157369e9bb3cd3aea8bf5dabde28f738ac9fe
         - sha256:d87cc9c1681f2aee9854c506d51f4975ce3c143bec736706f88e6ae1ca4388aa
         decision_source: sha256:506be080db67b011872a520420c7568d48c5b19574159ac84c4bb0e8d8d3f63f
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -9134,9 +9190,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -9384,7 +9442,7 @@ clauses:
         evidence:
         - sha256:11891177f4341137331f4cc3c565959b828ff76502545cfea2b066ba3fce35b6
         decision_source: sha256:27b5c8377ecbf81ccc858e4e24413f28dde24600f5eeda261ba07dc121a8d938
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -9443,9 +9501,11 @@ clauses:
     clause: '7.1'
   heading: Objectives
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -9641,7 +9701,7 @@ clauses:
     atlasdata_heading: sha256:eba92953899468e3f79c084370cc455f39c256e77b5277ff480e3384ff9ecc27
     content: sha256:46a2b7b72b962cf33938228344581a46482277a5a59ee003bfddbb5223da7a65
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -9676,9 +9736,11 @@ clauses:
     clause: '7.2'
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -9924,7 +9986,7 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:c86e18a82c6dd760b109676ae0980fae1e78831252fb00a0d0085d4b0eb0592b
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -10042,9 +10104,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -10291,7 +10355,7 @@ clauses:
         - sha256:3b4e51450af8a8784fc89916b9220ee352fc14d5c30e49708563a305e6522d51
         - sha256:5f9c7fe01f460e9f86207dcde264283bbc6dcf459495957cb03ee8e70bd670e0
         decision_source: sha256:7485d2bfcf893a2c02c31231fab1950a8023b8854fb86a1bd6e56ce02f127011
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -10389,9 +10453,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -10623,7 +10689,7 @@ clauses:
         - sha256:f1efde249649d4d473c8b799e7f506f5ddacdab9bb74ded48e41da37008e2238
         - sha256:5cc8aef7dc43d7135214dd7d75c01b0efad6ecac5ab356c4daf11d3d467a2fe0
         decision_source: sha256:79bdaf61907b3ffcc52d92841347c135be166b0b15bd958c67764512b86e7fa6
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -10717,9 +10783,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -10954,7 +11022,7 @@ clauses:
         evidence:
         - sha256:f7b6a62f57f51061c861c894d0f14ec5e1c02085a187b0851a15cf092540e7af
         decision_source: sha256:a3f17ef5fe7e7c2c7817ac2ed1af3d8c181b6cacae35d7a1e6754cd9bda928a3
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -10986,9 +11054,11 @@ clauses:
     clause: 7.4.2
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -11222,7 +11292,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:10df47e5a78b6ae1fba76fd60b234cffe416b472c2c2a6b15b95251a209aed2c
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -11295,9 +11365,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -11535,7 +11607,7 @@ clauses:
         evidence:
         - sha256:2ee889ca18c8e9941521e7b3e7b31217eb09f525bda48a5a4cb4185d61c0baf4
         decision_source: sha256:9115d1ae75c85e30e1a345dfe4fa57d6c14f7c2a2c81916d42e380ec6d07dcf2
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -11565,9 +11637,11 @@ clauses:
     clause: 7.4.4
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -11771,7 +11845,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:2027a538358e62d16aad345bec417c9c2a08c8b76f998fb3d87d6fa7e6c5ce85
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -11857,9 +11931,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -12108,7 +12184,7 @@ clauses:
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
         decision_source: sha256:51459b184dcf818e907dd55dc4390d2f1e702deb0959ea10596c183aef7833a8
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -12176,9 +12252,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -12413,7 +12491,7 @@ clauses:
         evidence:
         - sha256:84da97b6b8126b476fc68d152b608866251c599582f754a136a80d0191ce57a9
         decision_source: sha256:4a585cd03c4a24eaf80d33068b97c1e8a5c2c49a6c538995f3cad83efb0c5f82
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -12493,9 +12571,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -12732,7 +12812,7 @@ clauses:
         - sha256:80245529b9fa3ddb0829f6f2dd28dbed5f45e86a8fd00de0095a3f49726f0b7f
         - sha256:25c3f02471d9be0c5ad0a141bcb9ec6f7bf311d83073a00d98c93d483ea7f4ba
         decision_source: sha256:8f4ea85aa0bbca608b1c0bb51df235ae833d7b82a310f090360e3130b821b2a2
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -12797,9 +12877,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -13050,7 +13132,7 @@ clauses:
         evidence:
         - sha256:e33594f62dd646daef91d75440dcb91e44696eb2d49ba681d596dde3d4df7fcc
         decision_source: sha256:5e8477edf3e14cb21d008bb085f2412cab3d08b2821098602a8e79f3c97638c9
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -13135,9 +13217,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -13383,7 +13467,7 @@ clauses:
         - sha256:9e6dccf291cf48fa7e7688b7529a724d6010362ea92dd8e852530f7c23830a20
         - sha256:4f4c47d059bb6b721dfa75011335c8fa3299f79f02dcefcc35b628b0c1fd9788
         decision_source: sha256:070304ff4fe214b54cf243b2fa8b302340e2967726180221bc911a3110ce97fb
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -13448,9 +13532,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -13696,7 +13782,7 @@ clauses:
         - sha256:1964a2df9aa5eda20bafd228b5502d6cfd53841fd0e933104ef240ed9f1d2388
         - sha256:af9f4baa2eb599d53f52c16d47df9540a1f703d5e4ea6a166a5c78b547825064
         decision_source: sha256:5ef300404b86d9cf767fa3cf5a3907af20bf2a9323a41e6c08f4712f63c8a86c
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -13766,9 +13852,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -14016,7 +14104,7 @@ clauses:
         - sha256:af9f4baa2eb599d53f52c16d47df9540a1f703d5e4ea6a166a5c78b547825064
         - sha256:08f3d1cbc67391b1e798f10e4f0b58e7b867dbe5b7a036b8fa42b81fa39c6202
         decision_source: sha256:1fbdebf1bad97d171718294e86465fe62a4442d7ff77d9afc58fd50187bb977e
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -14101,9 +14189,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -14353,7 +14443,7 @@ clauses:
         - sha256:f4e8ea094b692d6ae4d5a8aa99d350e8a5e2681684dcda9df4fffd78cefb5d4c
         - sha256:af9f4baa2eb599d53f52c16d47df9540a1f703d5e4ea6a166a5c78b547825064
         decision_source: sha256:a966e8ea7cbc67d4539c7871113f490911fa8232a31804e9d0acc20f9ec23dc2
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -14388,9 +14478,11 @@ clauses:
     clause: 7.4.13
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -14631,7 +14723,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:0e21b4e75359432ae3a12d101f57f6ab0a86cbae4c649765c71b85ee4816be0a
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -14701,9 +14793,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -14948,7 +15042,7 @@ clauses:
         - sha256:e5950cdf4e6dab130951dae92966ed43d3dcbd05b66742cd74f62c0a388b515a
         - sha256:7016fd0d29b7f459dd6a29ea95b12d8e95b245be4551017bb6fadfb3c136fd40
         decision_source: sha256:37fa7a78e1dcef36c58ad02796d6793e3fa927efeb68f9fe04f6c85cae98858f
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -15164,9 +15258,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -15408,7 +15504,7 @@ clauses:
         evidence:
         - sha256:93a5775ef70e2d63238516ba61928eca8d5e95cf6e9decf41c7707b6ace13fb8
         decision_source: sha256:b9b683ec6c76ef22c26b911e62a5281459f33c31c5fac0d07badd92238c20c9a
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -15474,9 +15570,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -15726,7 +15824,7 @@ clauses:
         evidence:
         - sha256:8c8afacd50a6741f7750659db9849dd2aef1f47c4c94672b8ec1df6ac322a3a2
         decision_source: sha256:1258075f1a3980086cb0499b14b60c22e18741b2a5c6fd476968b1f4fac188ad
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -15791,9 +15889,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -16001,7 +16101,7 @@ clauses:
         evidence:
         - sha256:f4e8ea094b692d6ae4d5a8aa99d350e8a5e2681684dcda9df4fffd78cefb5d4c
         decision_source: sha256:7ef6be53ad551f574a7d5208935a4a5e7d239be655355851abf30b2af725166e
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -16066,9 +16166,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -16312,7 +16414,7 @@ clauses:
         evidence:
         - sha256:b6dab0bac4d4430bef11f25bbbefb15e0653da0d894c0defa238edb58ee4a464
         decision_source: sha256:cfc9a5e81d28a8753e49e70566a1aef3fd464c51223963c60eab9d07ca882afd
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -16370,9 +16472,11 @@ clauses:
     clause: '8.1'
   heading: Objectives
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -16595,7 +16699,7 @@ clauses:
     atlasdata_heading: sha256:eba92953899468e3f79c084370cc455f39c256e77b5277ff480e3384ff9ecc27
     content: sha256:bfbedb974c35fdaf75649569f3c5f6a9c76ffc7e1315711c45842757053496ca
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -16625,9 +16729,11 @@ clauses:
     clause: '8.2'
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -16862,7 +16968,7 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:7560c967001b4dde85ac0de750095fd69d891aa4a39285106bbe382357e6b74b
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -16993,9 +17099,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -17248,7 +17356,7 @@ clauses:
         - sha256:839b301bad954d4aeb50f9eb67151a39a568cb510987830508d89f14e5d705c4
         - sha256:5f9c7fe01f460e9f86207dcde264283bbc6dcf459495957cb03ee8e70bd670e0
         decision_source: sha256:d9793cb8cdf12130cede57cde6625fcff77d7ce7499b2c1c7685c6fce6c4c59b
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -17343,9 +17451,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -17571,7 +17681,7 @@ clauses:
         - sha256:b6067693902e48f164c38cded076f94d3304f3f7414c4e04a7fefe99992c8aa0
         - sha256:91f3ee0da236e78dd8fc493345357462891a922eca5f829506b1871ec10f36ae
         decision_source: sha256:399c3fd7745c14f6e2499ca1a93abb31e4579cc200493a7e25ed814a9078cd94
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -17662,9 +17772,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -17909,7 +18021,7 @@ clauses:
         evidence:
         - sha256:e33594f62dd646daef91d75440dcb91e44696eb2d49ba681d596dde3d4df7fcc
         decision_source: sha256:2cf3ddb1815f43802b1ea0d0509913e8fc64050a37fd18a1dc192b6b208ccc66
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -17939,9 +18051,11 @@ clauses:
     clause: 8.4.2
   heading: 'The software unit design and implementation shall:'
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -18185,7 +18299,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:4c62fcb3b4de342e330b4a4a630556326700c8bf0209a7174acd3423f32039f7
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -18250,9 +18364,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -18489,7 +18605,7 @@ clauses:
         evidence:
         - sha256:d238a9669d801c6495da7b423019394c01635634eaaf2c10e16f3945d75b660d
         decision_source: sha256:13e96eba340f02fe8987670c55fe97a8351f27c7999184b42bc6a138259ce85a
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -18519,9 +18635,11 @@ clauses:
     clause: 8.4.4
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -18765,7 +18883,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:948557c3a09f2ba7f29fa97766082802512fbec13db79423a52752bfbcdf7730
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -18830,9 +18948,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -19069,7 +19189,7 @@ clauses:
         evidence:
         - sha256:67f639890e7eff44ef10d5677ca87753d7c90c63a1b6eee349be77040043c13e
         decision_source: sha256:faf40d387df98bedcdbe0f62dac98e22c6074497753ee35ebe1c33405c602407
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -19160,9 +19280,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -19415,7 +19537,7 @@ clauses:
         evidence:
         - sha256:5984c0c15776905c363b2ab772584d06ce227b854653fac210697f60c24d1132
         decision_source: sha256:d7eac39c911c6e2def2eb665fff69b53c9798149674e4624f90291deceb5f51d
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -19480,9 +19602,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -19685,7 +19809,7 @@ clauses:
         evidence:
         - sha256:13ecb786695a5931348d2a4dff3cfeea4f258628b39fdefcde96f8153ec04e6a
         decision_source: sha256:021c6978be46f24a86958df2c239afe3e39dce0f5e84890cbbbf9998798adbde
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -19786,9 +19910,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -19992,7 +20118,7 @@ clauses:
         evidence:
         - sha256:211de95dede59d271aba51585ca3951f6a4a0b6d0c36a8b9838149e49f99dd94
         decision_source: sha256:e2a32f877a63d469a69cec008d024a1d6e8ab37c773a220ae36582971480487b
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -20022,9 +20148,11 @@ clauses:
     clause: '9.2'
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -20266,7 +20394,7 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:6d9ec4f8bab32721e87f0ab796ce0b2971d93a9e82c8c27c8540327a5f87a50f
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -20442,9 +20570,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -20682,7 +20812,7 @@ clauses:
         - sha256:b6067693902e48f164c38cded076f94d3304f3f7414c4e04a7fefe99992c8aa0
         - sha256:07122f50e2509dd92e72ef1301eb1f3dc9f619fcd559087e550c4b05667d48d3
         decision_source: sha256:e95ac23cfa7ee5a24d7657c02090c1fa7f00c7bd74a56de826e33b31889604d5
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -20712,9 +20842,11 @@ clauses:
     clause: 9.3.2
   heading: Further supporting information
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -20956,7 +21088,7 @@ clauses:
     atlasdata_heading: sha256:74a6094a84e4362c49b1788a7c0740ea9a652663a98d5809651e6c3a12d273ec
     content: sha256:b6c22b4a1f7036587127f7bab3d7d60cecfb601f0eba1bcfdc14bdfa5c81a0b3
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -21052,9 +21184,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -21293,7 +21427,7 @@ clauses:
         - sha256:6602bf4ecf7ce00fa8123a4ff6baf2552e0266e16eeddafb2591af33f1f7da92
         - sha256:8689b8a5243242fbf5a2c578baf5792b309b260a5570f778c425bf7b100fda69
         decision_source: sha256:2dcf210dba64b7ed9c71ded083005d209b8e47556f8c2a494545cec998a2ff75
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -21413,9 +21547,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -21641,7 +21777,7 @@ clauses:
         - sha256:211de95dede59d271aba51585ca3951f6a4a0b6d0c36a8b9838149e49f99dd94
         - sha256:2f890dd1306c05943f00d8035e8e7cc58c42efd2faaa2048a7e25bf390124fbd
         decision_source: sha256:2d729ad11c8aecc4935e4643971046a490441a34cce87714bd65ff78f1c8c317
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -21711,9 +21847,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -21963,7 +22101,7 @@ clauses:
         - sha256:2f890dd1306c05943f00d8035e8e7cc58c42efd2faaa2048a7e25bf390124fbd
         - sha256:7e9a637dc17ec2a8ce80213b69606971b9a89fc4622a0a0175248ad71ca0db76
         decision_source: sha256:4af17fdae1cefc2f52c4ba7817c104d7ece75d2eb1571f15d8020bde43a0d694
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -22043,9 +22181,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -22296,7 +22436,7 @@ clauses:
         - sha256:25ee7298aefa996f383e9c77a8711f1b826af49588892d3b79d5353d38212fa2
         - sha256:7e9a637dc17ec2a8ce80213b69606971b9a89fc4622a0a0175248ad71ca0db76
         decision_source: sha256:59ec300893be33b518e883fbd90a6a8c70e58eab0b580a600558fd27271e43cc
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -22366,9 +22506,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -22613,7 +22755,7 @@ clauses:
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
         decision_source: sha256:7c28fd6b1778aaf49a7baa8d79712fa7f47ac3fe8ef794f96100ad6a509a7cc6
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -22744,9 +22886,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -22959,7 +23103,7 @@ clauses:
         evidence:
         - sha256:c23064d8746fa11cc401b16a5b984b29b26d24f48d56b02489b44b93993ca200
         decision_source: sha256:3ac2e543e1b7331067b300c7dbdfd01309cf03725cc797d0009e1287c135bc01
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -23024,9 +23168,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -23237,7 +23383,7 @@ clauses:
         evidence:
         - sha256:2f890dd1306c05943f00d8035e8e7cc58c42efd2faaa2048a7e25bf390124fbd
         decision_source: sha256:d1d6244c81d7077016217f5fa617444101d0c75b86c0f0b24c81d573a0bad0af
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -23295,9 +23441,11 @@ clauses:
     clause: '10.1'
   heading: Objectives
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -23502,7 +23650,7 @@ clauses:
     atlasdata_heading: sha256:eba92953899468e3f79c084370cc455f39c256e77b5277ff480e3384ff9ecc27
     content: sha256:51ed3e798155a519561ec106f4abf2f2d5a9f4cf404dee163f665e3f7fb7e56c
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -23536,9 +23684,11 @@ clauses:
     clause: '10.2'
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -23767,7 +23917,7 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:67caf3dfe6f1285f68e0a7d615c8389ba64e1b54ab1bd3fd37753041bd01bd65
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -23945,9 +24095,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -24204,7 +24356,7 @@ clauses:
         - sha256:07122f50e2509dd92e72ef1301eb1f3dc9f619fcd559087e550c4b05667d48d3
         - sha256:387e9334e26b8853941e113fed7ff2ffd14fe524723c6baa6a9b05c01a33ed44
         decision_source: sha256:8ea5561ce2be48cefeda6121296602c5b0bfdaf3ffa56518cf4f110b106d6570
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -24265,9 +24417,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -24513,7 +24667,7 @@ clauses:
         evidence:
         - sha256:f1efde249649d4d473c8b799e7f506f5ddacdab9bb74ded48e41da37008e2238
         decision_source: sha256:6d4002dd83abf4b12719a8892e5c987df0d420bff1ae52309e24e9102653ac35
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -24611,9 +24765,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -24849,7 +25005,7 @@ clauses:
         - sha256:813af93fc412c28ea68c24592147e38bcb2bb10a33828359a825d12859116687
         - sha256:711ee199c30eaa6cf28c27dfaeb98b613cc2900b8ec4b997dcfe7e16f6f1d9d1
         decision_source: sha256:46390c662505b1fa89be7ec25d2947e4289bdc58b960e4a164ffdd32dfb0f657
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -24978,9 +25134,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -25234,7 +25392,7 @@ clauses:
         - sha256:211de95dede59d271aba51585ca3951f6a4a0b6d0c36a8b9838149e49f99dd94
         - sha256:528a18a430ed051dffaed22f7836296420d0bd6ac2cb627c47666934e256867e
         decision_source: sha256:128e414b346165b7abac65390a65a68824b86b87258435da63da32656bcbdebf
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -25304,9 +25462,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -25555,7 +25715,7 @@ clauses:
         - sha256:813af93fc412c28ea68c24592147e38bcb2bb10a33828359a825d12859116687
         - sha256:089da14216f25ba21ecee1f6014938d799bfdb801d4118c083b8ef193c679b7f
         decision_source: sha256:464a087a104da74f2e71dc7408aac0ce53cc66dccfbd7db0d2eb97e9ec964f95
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -25590,9 +25750,11 @@ clauses:
     clause: 10.4.4
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -25826,7 +25988,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:7e9518186ac093db15aced095af8312fbcb7d2f4f460cbda84f935e958117f67
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -25899,9 +26061,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -26150,7 +26314,7 @@ clauses:
         - sha256:34638570c4fd57847acf2d131064fa824e7c25fe82c456a3190dde62075aba0c
         - sha256:6f2e152f0d90e25c6c196aa974ef4885804f82ec4bbc2f4b29c1abb431c6ce5a
         decision_source: sha256:5ace98d912e057a7c64c895353e51bd689273edf58b370adc59510442dcf3058
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -26215,9 +26379,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -26464,7 +26630,7 @@ clauses:
         - sha256:3a8c0da1d34e26687cc5123f929a9fdf3f172412cbc844966bc34cbf55272b07
         - sha256:499f89a41bfcebcda4331908f6e7a6b9383195a749b58062e85d402dcc19b9b8
         decision_source: sha256:72e8a277c56673be0667b69a625b2770cac88a10ac1523b6e954485bdce94ef4
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -26534,9 +26700,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -26782,7 +26950,7 @@ clauses:
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
         decision_source: sha256:038a76abc5e0dbbc5139421d9e0c1556d65d2674798cc7e7dce019f5d61c982d
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -26925,9 +27093,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -27174,7 +27344,7 @@ clauses:
         evidence:
         - sha256:538d0174eb70621fef3a34ce440e08fd439ccda63f6b11a2704a88a77938ae55
         decision_source: sha256:37a9598a646d38e5ad655a55c25a7a6409cffbde5cff16e9040b403c385af3c2
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -27241,9 +27411,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -27485,7 +27657,7 @@ clauses:
         evidence:
         - sha256:b6770dfc59b2121b1f923d3685c3a7b8ee5c439b6f8ebd9727f4f9a2429791ba
         decision_source: sha256:5d92d4d3538ed646ea2d709951bd91ad44de3d72ca118614252668b65332a31a
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -27550,9 +27722,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -27763,7 +27937,7 @@ clauses:
         evidence:
         - sha256:813af93fc412c28ea68c24592147e38bcb2bb10a33828359a825d12859116687
         decision_source: sha256:9e3340bc35cfdabe9260c3883cbf6cfcf67d25d63981a9e74ef93e4e3508c8d7
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -27821,9 +27995,11 @@ clauses:
     clause: '11.1'
   heading: Objective
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -28047,7 +28223,7 @@ clauses:
     atlasdata_heading: sha256:3b20adc3b2ce1c15ea6880c3151baabea06f5ba9132c18a9b969fc5299a7d655
     content: sha256:eef7957b30064ea453704d82be3b427551bcc28764e84c3fae6411b60819df3b
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -28077,9 +28253,11 @@ clauses:
     clause: '11.2'
   heading: General
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -28321,7 +28499,7 @@ clauses:
     atlasdata_heading: sha256:c910d474dcd724bff83ddedeb06bf1eceaf9fb3af7c76bb282be057f36e6dffa
     content: sha256:29ba37264cac0ee1cd1779e9fc980b07887a452a6f64519f6e7cd71a3ae13760
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -28462,9 +28640,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -28719,7 +28899,7 @@ clauses:
         - sha256:07122f50e2509dd92e72ef1301eb1f3dc9f619fcd559087e550c4b05667d48d3
         - sha256:6afad424e66025be0617baaae4ea61d89df08413529d2fa01153e3dfbb72bd75
         decision_source: sha256:49bef2323b375da270e362cf172f0d71ca999ce092af71254c35a835662a4dc7
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -28824,9 +29004,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -29054,7 +29236,7 @@ clauses:
         - sha256:b187e738205c63da64d576116dfca2fccfd3df8bcac1e1b586e6246dcd46163a
         - sha256:10240e90de7d1cfa4524293dfddbfdd82b65970c571dae76d24c35ecd10640f5
         decision_source: sha256:f7ba243755e9a2320b9faa7842b2ec964087fdd2db240c9794901aa128f22b55
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -29155,9 +29337,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -29388,7 +29572,7 @@ clauses:
         - sha256:f5b3ef91b0dd6c4bee8a9deaaf7a651de341b756219fe4eaaedb5529f43df621
         - sha256:c379fb135b9dff6c111181e3f5d761c8631edfcb0783a561771ce5634c9c5efd
         decision_source: sha256:8d9e56bd3033651ca8af93a1e55afcaafbef8b541183879c51d231689acc50f3
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -29453,9 +29637,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -29703,7 +29889,7 @@ clauses:
         evidence:
         - sha256:fc2df1827281fa69298977b5bc8774381c17aaddacad07210a3cc813496dc18a
         decision_source: sha256:52bd65c6c44379a5ced51a654703d54c76829ba83168085962b0e7d90f5fc507
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -29778,9 +29964,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -30029,7 +30217,7 @@ clauses:
         - sha256:c8f608336128880f1bb96fde7bd49c932e39584f36f8bb5a283ba13bd0d5304a
         - sha256:fc2df1827281fa69298977b5bc8774381c17aaddacad07210a3cc813496dc18a
         decision_source: sha256:5a101b05cabd01b710cd9533dcf161cdbc0e26fb083fd285f44ea7ad784003fd
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -30094,9 +30282,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -30318,7 +30508,7 @@ clauses:
         evidence:
         - sha256:247425bfe12f102f3d4237e8150977caa0ab578a2651e6afb330705f809066ab
         decision_source: sha256:7dcbb9c84dc2762422897d370270119889af73ed9cdbf6523f3e6c1959b18753
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -30429,9 +30619,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -30685,7 +30877,7 @@ clauses:
         evidence:
         - sha256:0881cc25b6e118c40f9903144db20a7eda4f01de3ae42bc81e7077108fc37b4c
         decision_source: sha256:001f06dbdd923c91a1ec99ac34576e2027deaf84239a279c5d074bfc7aab89d8
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -30780,9 +30972,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -30995,7 +31189,7 @@ clauses:
         evidence:
         - sha256:0612d32cc5eb4ea3a0eb13b8ab3d872f28fa2c30fd643d3cad0d0cee962098c9
         decision_source: sha256:0c5dd3a3363bae7df3285b2de6a70245764f09a4a19b6b146c01bc02f05d5b20
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -31052,9 +31246,11 @@ clauses:
     clause: B
   heading: Model-based development approaches
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -31299,7 +31495,7 @@ clauses:
     atlasdata_heading: sha256:e71e6de6cafc495b13316a6e1265900d521e26c8bddeba810c077fc94b64f874
     content: sha256:e71e6de6cafc495b13316a6e1265900d521e26c8bddeba810c077fc94b64f874
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -31329,9 +31525,11 @@ clauses:
     clause: B.1
   heading: Objectives
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -31565,7 +31763,7 @@ clauses:
     atlasdata_heading: sha256:eba92953899468e3f79c084370cc455f39c256e77b5277ff480e3384ff9ecc27
     content: sha256:a726e7f6d7549168065bcaef8b2dba737ddf406eb898ecb90c246e6d0fc61cea
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -31630,9 +31828,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -31874,7 +32074,7 @@ clauses:
         evidence:
         - sha256:df50b5317ec44bed99944626faa1caf793a1a88d2faf2e34e42874f33f50702c
         decision_source: sha256:860620e3c1541352d36cf992a2b423e9ba798c49a5d1ce34f3e6145d57567b5b
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -32049,9 +32249,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -32298,7 +32500,7 @@ clauses:
         - sha256:8e1480edd763a5b4355237814822f350b77ace100b4ce6cbd58cb2898ab8c8a5
         - sha256:e03f7edaadd5b8ab11667f3e349bd1f47c68688a7c767f3498b0c66a66da2ef6
         decision_source: sha256:0807d7158bc510a644b62f79f984ca64f56f3c91033873e5104afe865e8b9c8a
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -32373,9 +32575,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -32622,7 +32826,7 @@ clauses:
         - sha256:24cf2b9568b79a18ac16ab4c73dc7bff701bd78ecfe0b0cc53801f6fd29c2161
         - sha256:f1efde249649d4d473c8b799e7f506f5ddacdab9bb74ded48e41da37008e2238
         decision_source: sha256:e64a820b2e9911658db9ca40958b920bb4955e2695db5ce6169f939524e8824b
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -32652,9 +32856,11 @@ clauses:
     clause: B.2.3
   heading: Potential impact of MBD on the software lifecycle
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -32889,7 +33095,7 @@ clauses:
     atlasdata_heading: sha256:8da3a8edcf6ac7081a20dd0ecd1931e17fbc2345f871edbfdedb1740cb169331
     content: sha256:5826a9794f50f82c862873093eaa570b7516a5bc7222432a944f99eb2409f77d
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -33084,9 +33290,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -33340,7 +33548,7 @@ clauses:
         evidence:
         - sha256:b03b2a01509ee72f8e58ca5b57b1644acff98ead10928e406dfc940e2bea5bbf
         decision_source: sha256:6ac4df6730693480cf27313d037a6ad61ddb925e7e992335028c1a6b9c94eb5d
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -33405,9 +33613,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -33655,7 +33865,7 @@ clauses:
         evidence:
         - sha256:96cce75743827f36111551f61e49dcee8baa0f90d0bad816d9713a986805d1e4
         decision_source: sha256:3e2d78149ddfce3ff1751931950c9cc461434edcf9847d5b8f9dbd9c95dc0e06
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -33730,9 +33940,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -33979,7 +34191,7 @@ clauses:
         evidence:
         - sha256:ab4bfd16c2bb1e25ae872d8df743fa1b8b7c09182ac6584625ba7f129f71e312
         decision_source: sha256:68bb1cd38c2f1e8c6367ae3fddde5d4e0bb1b87fc021031e731ca409807350ad
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -34044,9 +34256,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -34266,7 +34480,7 @@ clauses:
         evidence:
         - sha256:24cf2b9568b79a18ac16ab4c73dc7bff701bd78ecfe0b0cc53801f6fd29c2161
         decision_source: sha256:c84b34b740b452c44fa88ecd2c15dc1f00342fb23a49c738c3220db91af06bb3
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -34297,9 +34511,11 @@ clauses:
   heading: Design, implementation and integration of software components, including automated code generation
     from software component models (Clauses 8, 9 and 10)
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -34541,7 +34757,7 @@ clauses:
     atlasdata_heading: sha256:3631cd7122fca634f2aad12369f1db18b7cad36a55c4623b7b33ffcee5f6d761
     content: sha256:60536ac3b9b474cd2ed3926b5a6900707bb33c100c49e7dd4e72407b5cc93e3d
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -34571,9 +34787,11 @@ clauses:
     clause: B.3.5
   heading: Verification (static and/or dynamic) (Clauses 9, 10 and 11)
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -34810,7 +35028,7 @@ clauses:
     atlasdata_heading: sha256:f2f2f3965d06335006f1bfa9ce1ae41903fdbeb9e9ada2f61fbbc6f4dccae9a1
     content: sha256:a25cf0e1cf04ed654be60b92b77a39f56d365ec982e4fdce8ddef6986829c5b5
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -34840,9 +35058,11 @@ clauses:
     clause: C
   heading: Software configuration
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -35087,7 +35307,7 @@ clauses:
     atlasdata_heading: sha256:7d2846227c8eab54b19ddffa22c3cffb25d365130681d88d2871a5f472540df7
     content: sha256:7d2846227c8eab54b19ddffa22c3cffb25d365130681d88d2871a5f472540df7
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -35118,9 +35338,11 @@ clauses:
     clause: C.1
   heading: Objectives
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -35344,7 +35566,7 @@ clauses:
     atlasdata_heading: sha256:eba92953899468e3f79c084370cc455f39c256e77b5277ff480e3384ff9ecc27
     content: sha256:a11d87ebbcf8217e5fa96a0a297ec5cef3d407398be0c33f2533e67c8e985b8c
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -35403,9 +35625,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -35651,7 +35875,7 @@ clauses:
         evidence:
         - sha256:db3d7a977eeaf6b34987df513c73d3553fc5b6147db2616a71eca595c5859ef2
         decision_source: sha256:8f9ee7ee2b7bfa2c30580b302db12382186ea9ea569ac92a1b3cf810191caa8c
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -35711,9 +35935,11 @@ clauses:
     clause: C.3.1
   heading: Prerequisites
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -35945,7 +36171,7 @@ clauses:
     atlasdata_heading: sha256:865514682d0132abd96594e2eff0ac8d379e16c60c7def0ee5c5f220ed3474ef
     content: sha256:e5484ce39be4da25cb2a212a01a039094cf56ab04253b6bd053f2f3c771c97c8
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -35976,9 +36202,11 @@ clauses:
     clause: C.3.2
   heading: Further supporting information
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -36218,7 +36446,7 @@ clauses:
     atlasdata_heading: sha256:74a6094a84e4362c49b1788a7c0740ea9a652663a98d5809651e6c3a12d273ec
     content: sha256:fed7383f39a96658a27b6bf76f468790c59e5ef3536cf7084158eee12d5a2169
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -36276,9 +36504,11 @@ clauses:
     clause: C.4.1
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -36517,7 +36747,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:ac80c914b5d76c3553324c00edf7996c94f8a4b4868e587cf62703f3aa374419
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -36610,9 +36840,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -36866,7 +37098,7 @@ clauses:
         - sha256:f4a04e8d429c1a36f4767041ee6c1a815510f44ed64eeefc0c3c28340f8a2696
         - sha256:a4cc54e5aef2e02b2db52a9eefa45353711fe0986f640efc82a8f5b88bc2a813
         decision_source: sha256:44e959bf5aa62cd64ad6668272eae91a20b6ee7dc9887052427d717b9434692e
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -36900,9 +37132,11 @@ clauses:
     clause: C.4.3
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -37145,7 +37379,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:ce79cffb117d2adc9725692232704939f5a6c849bd50a192014dbb600720432c
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -37210,9 +37444,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -37460,7 +37696,7 @@ clauses:
         evidence:
         - sha256:c379fb135b9dff6c111181e3f5d761c8631edfcb0783a561771ce5634c9c5efd
         decision_source: sha256:000554d63c8d0bbe79a5ece3354a89c4ba975cd4655b7064a81070c778fefa10
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -37528,9 +37764,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -37778,7 +38016,7 @@ clauses:
         - sha256:673ce5d0faaf07da1070f5ce6f14e182bf9f77fa9c05c7aefac2c8713d4b8242
         - sha256:2a07e1e8da78901a195183f5c6de2ff98bf5bd06b361afdf05b3b24b70bb068c
         decision_source: sha256:e4ba7279b9ac18d0cbc8adeb545468dae03ee6f0f18957fe9a220ca3ff91e87c
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -37812,9 +38050,11 @@ clauses:
     clause: C.4.6
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -38050,7 +38290,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:789f1e255fb815dbde9f771a1a8b9320a536a81877df27e6f7c5c3e0261a6c08
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -38083,9 +38323,11 @@ clauses:
     clause: C.4.7
   heading: REQUIREMENT
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -38320,7 +38562,7 @@ clauses:
     atlasdata_heading: sha256:0a63ffdd26c0aba0f25e3661c17e0e60b6269e5f7a290f3a8d1dfa5911c14920
     content: sha256:a8ad37bbe943235cb18e46f6671b5b5f79b21fca9c8d919bf84b2a4619f35974
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -38395,9 +38637,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -38646,7 +38890,7 @@ clauses:
         - sha256:839b301bad954d4aeb50f9eb67151a39a568cb510987830508d89f14e5d705c4
         - sha256:12438df761b83c4b17d59155bbb2a716dfeec12397e500cd1fde22e2e8e906d2
         decision_source: sha256:94030886df8ad119e0eeee8f75b33398fdca61d3cd9d4b24c1872a0f61d77a38
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -38714,9 +38958,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -38967,7 +39213,7 @@ clauses:
         evidence:
         - sha256:c379fb135b9dff6c111181e3f5d761c8631edfcb0783a561771ce5634c9c5efd
         decision_source: sha256:52da6cf44cf0808885526cc89f00e7f6b65c6cf96a2d183b703327a38cbe77f1
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -39035,9 +39281,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -39285,7 +39533,7 @@ clauses:
         evidence:
         - sha256:9a26539de8e0596fea6bb7d2be75e172bcbcc86e1ff09a261ffa8edaf575b0d1
         decision_source: sha256:9be7808cd17797716ddd40e5cc85f0e75b9d2fb1cf661d16ef9518bb62f0cf75
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -39350,9 +39598,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -39596,7 +39846,7 @@ clauses:
         evidence:
         - sha256:9a26539de8e0596fea6bb7d2be75e172bcbcc86e1ff09a261ffa8edaf575b0d1
         decision_source: sha256:8dd1510b10ee0103f1c0587a944f0121e213765ebac366fa0f974f27bfd233a7
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -39653,9 +39903,11 @@ clauses:
     clause: C.5.1
   heading: Configuration data specification
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -39887,7 +40139,7 @@ clauses:
     atlasdata_heading: sha256:fee869324ff77a44938331b2a8c46f9b9ebebabc1753f84a9087e2ddc0453931
     content: sha256:2a9ebe4f04e0bc7cd404f82f7e3047d91763e5717209ea3a4becc5ddf5c74cf0
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -39917,9 +40169,11 @@ clauses:
     clause: C.5.2
   heading: Calibration data specification
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -40125,7 +40379,7 @@ clauses:
     atlasdata_heading: sha256:19934c488cd3c376acb48031a3a2ed43859d015e3f586efffa35659525223c74
     content: sha256:2f1e8efba8333c57c70cb140fbe4f147f672d7ead29adb82e466403e64b5fb3c
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -40155,9 +40409,11 @@ clauses:
     clause: C.5.3
   heading: Configuration data
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -40397,7 +40653,7 @@ clauses:
     atlasdata_heading: sha256:fb12168ad03d43f2eddcc8debc39c8c1a4aa33396fa34c2eb81f192ba4119bbd
     content: sha256:b17fc4c94515d7346e13746189f6112a2e1b1ae7bb5b3ffdd1561a2b465b4071
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -40427,9 +40683,11 @@ clauses:
     clause: C.5.4
   heading: Calibration data
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -40633,7 +40891,7 @@ clauses:
     atlasdata_heading: sha256:bdd630a6ef6588b24bad35ebbb0252e9b2c3e7e2838f09303fedcdffd5215c23
     content: sha256:e1cb159c55ecdc2078475676b928967182bf27b9b0262a052410a0d8d16266ce
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -40663,9 +40921,11 @@ clauses:
     clause: C.5.5
   heading: Verification specification (refined)
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -40871,7 +41131,7 @@ clauses:
     atlasdata_heading: sha256:0784f8528e5058c0368867c1000aba69915d49fd1d6c20502ef63407042fb27e
     content: sha256:ee7c4449f2f2c63a6e6bfcd21cedaa7d2b58ca9e9c91b69d1132506e75557e0c
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -40901,9 +41161,11 @@ clauses:
     clause: C.5.6
   heading: Verification report (refined)
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -41108,7 +41370,7 @@ clauses:
     atlasdata_heading: sha256:fafeb6e090eff4686170db3d4a5e7c2052a90ef55a0fb93c5d93b3175ef8a7fc
     content: sha256:df78cf53587eaa76bd588a40b721923d35f58a309f68e830f932b96111576b54
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -41138,9 +41400,11 @@ clauses:
     clause: C.5.7
   heading: Software architectural design specification (refined)
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -41377,7 +41641,7 @@ clauses:
     atlasdata_heading: sha256:2bedb84618f9aafdb9ae8855f88a4f426ccecbf9eaff0fd4991559f0f9c12e76
     content: sha256:d07fca9b5417c914322622f46e0aee6c629edb14a74b285eff3670d1cbf19097
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -41409,9 +41673,11 @@ clauses:
     clause: C.5.8
   heading: Documentation of the software development environment (refined)
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -41653,7 +41919,7 @@ clauses:
     atlasdata_heading: sha256:7a4e11f4039a1f3898b45c3ea2366214063166edc0a37e1170c6bf0eb98f7a59
     content: sha256:238f8816f882cc3f429a1ca0afb864409d480ec13ca209ca62582da5255b7ecb
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -41685,9 +41951,11 @@ clauses:
     clause: D
   heading: Freedom from interference between software elements
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -41935,7 +42203,7 @@ clauses:
     atlasdata_heading: sha256:bf28139272704059fdeb24135e8940260b66fed9078d06bd5497b80bf58f3aa9
     content: sha256:bf28139272704059fdeb24135e8940260b66fed9078d06bd5497b80bf58f3aa9
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -41965,9 +42233,11 @@ clauses:
     clause: D.1
   heading: Objectives
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -42200,7 +42470,7 @@ clauses:
     atlasdata_heading: sha256:eba92953899468e3f79c084370cc455f39c256e77b5277ff480e3384ff9ecc27
     content: sha256:b53d91997c4db92abd6aedc3d8072924a8b255c317c0e6298ac24301d8ceaa38
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -42256,9 +42526,11 @@ clauses:
     clause: D.2.1
   heading: Achievement of freedom from interference
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -42491,7 +42763,7 @@ clauses:
     atlasdata_heading: sha256:9307d0c218f4435e23fac13d8895a2d8dc79afc3fe7f7b52d6e2fd2c927e4665
     content: sha256:f536c4e8ea805047ccf5c71d05db9a1de4ee686584d3ad2139d0805b59cb4a43
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -42521,9 +42793,11 @@ clauses:
     clause: D.2.2
   heading: Timing and execution
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -42776,7 +43050,7 @@ clauses:
     atlasdata_heading: sha256:5d45a8be8123e01e378b4d7f30784bc42a90203a7d2e1ff365b6b0194b78f154
     content: sha256:e89f1e43932a8ff6c3d59b30324f0e0c5a35bccfafddc848a3b8bda6f3879137
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -42806,9 +43080,11 @@ clauses:
     clause: D.2.3
   heading: Memory
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -43039,7 +43315,7 @@ clauses:
     atlasdata_heading: sha256:c3963aedaac6c83c04cf8fb997b479c61e66b3caeecfadd2f2d4bd5b0aef1778
     content: sha256:cdfb449aeb4c424d17e880318c10e2b833ba6e82628d402f736f2a90be848bb0
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -43069,9 +43345,11 @@ clauses:
     clause: D.2.4
   heading: Exchange of information
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -43316,7 +43594,7 @@ clauses:
     atlasdata_heading: sha256:a9abf0c10a551cd86f58ebcf98b98331822b59890c341916ffed19916ac71fef
     content: sha256:d7ab01db671b4ff1d613c3d760843502ab1ba3e2946dd037e37c376a9bfcabb7
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -43347,9 +43625,11 @@ clauses:
   heading: Application of safety analyses and analyses of dependent failures at the software architectural
     level
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -43589,7 +43869,7 @@ clauses:
     atlasdata_heading: sha256:bf6b67b6184446f8e88a9dee2fa7f2f9a22ffe000372e49f0cb73f81841d425a
     content: sha256:bf6b67b6184446f8e88a9dee2fa7f2f9a22ffe000372e49f0cb73f81841d425a
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -43619,9 +43899,11 @@ clauses:
     clause: E.1
   heading: Objectives
   attributes:
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -43859,7 +44141,7 @@ clauses:
     atlasdata_heading: sha256:eba92953899468e3f79c084370cc455f39c256e77b5277ff480e3384ff9ecc27
     content: sha256:0454fb3d0910e6425aeb309df95e024f971f752fab7e534456fae47baeb22a66
     attributes:
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -44015,9 +44297,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -44251,7 +44535,7 @@ clauses:
         - sha256:59dfa29422d289c1c4fa54a222c1183891c9fcfdadb4e0ff61e53e8e13eb99a7
         - sha256:cde9eb549b9685cf53eb56ac6836fc1645bb05b8ecb4c60a0b6865a83d44cbfb
         decision_source: sha256:90de567948617bad820b4c8160dc534445029ee94d2fa75c9df887a28c2f09da
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -44317,9 +44601,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -44561,7 +44847,7 @@ clauses:
         evidence:
         - sha256:ab77db550a8cf2850448451f34f69ebf89fa0023f6db818c5e210acc7281379b
         decision_source: sha256:c441e33f7897576e6506d35d215a14e76c391b37e5351863b3b517a03844eead
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -44647,9 +44933,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -44895,7 +45183,7 @@ clauses:
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
         decision_source: sha256:92a7d555adc4e4cc7486bde8504f0665bdaee14b27ac2b2ec70a53187e7823e1
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -44990,9 +45278,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -45234,7 +45524,7 @@ clauses:
         evidence:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
         decision_source: sha256:f91f6f6b4cbe66b66077ca87213833ee3ff2b0f8531a21484149acc731ef94fe
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -45329,9 +45619,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -45597,7 +45889,7 @@ clauses:
         - sha256:ab4bfd16c2bb1e25ae872d8df743fa1b8b7c09182ac6584625ba7f129f71e312
         - sha256:9e44d486b9c63f6a6ebbd347aa4e1bb1d22eacc286b1c50f4feba4b4f2d38bd3
         decision_source: sha256:7ed7a21a5e1977bf082a11e7c28f09f3274689062fcf05d4843a986b4a7da32e
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -45673,9 +45965,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: true
+    value:
+      present: true
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -45910,7 +46204,7 @@ clauses:
         - sha256:68219ee0a1182a2a8b65fd7a1c5779cbd0a9ee24ea9395680da802ab83c733ac
         - sha256:e14c407b62dcac17ea5ad29c5dd563e4a6551ac00950c011f033e57c619a9db0
         decision_source: sha256:6ac9f4a5f240c1b71fe1154cd2ee2234f4e65406f326f6ef48b08d3739880bf8
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -45975,9 +46269,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -46235,7 +46531,7 @@ clauses:
         - sha256:5f161c9149882e0e10124bc5dd5c11f0fbe8ec452edd52bcec76b01e9252cb33
         - sha256:68219ee0a1182a2a8b65fd7a1c5779cbd0a9ee24ea9395680da802ab83c733ac
         decision_source: sha256:c8a7f188ebefec9a66350c4039e32643eaee37d5b3e67ea1a5667fb7e00b74a0
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -46326,9 +46622,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -46579,7 +46877,7 @@ clauses:
         evidence:
         - sha256:08f3d1cbc67391b1e798f10e4f0b58e7b867dbe5b7a036b8fa42b81fa39c6202
         decision_source: sha256:ed62d1fab8f4f1d6fe47e973a343d2e7a18d4f3b851bcf2541bd09da0a3da6d1
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -46644,9 +46942,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -46895,7 +47195,7 @@ clauses:
         evidence:
         - sha256:ed697c68794960ad2c9951f4038ae8cf763851847d6eee5ca84bdb5a12dc102b
         decision_source: sha256:653b036efafe4759c7c673cc21f89d92af95beee9cbb4d7ae12bc0fd7fb52f96
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -47000,9 +47300,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -47245,7 +47547,7 @@ clauses:
         - sha256:ed697c68794960ad2c9951f4038ae8cf763851847d6eee5ca84bdb5a12dc102b
         - sha256:677f8b9e9c8e2e618fd9c97a4b9b0ba7255cae4949a435de098a47e30969788b
         decision_source: sha256:72284acd275ce219272e1bac637e521f347ada96d197a542ca0678df7da08654
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce
@@ -47385,9 +47687,11 @@ clauses:
         abstained_votes: 0
         label_votes: {}
         category: null
-  - path: enrichments.semantic.applicability_present
+  - path: enrichments.applicability
     origin: generated
-    value: false
+    value:
+      present: false
+      polarity: null
     generated:
       generator: canonical-knowledge-adoption-v1
       method: imported
@@ -47633,7 +47937,7 @@ clauses:
         - sha256:168015363bb4a2d5bb876b1f40626faec4c948ac3cf6e474cab28070d72eceee
         - sha256:863bae96e6e4d59e9e8642a74c6dc67b9190e1be4ee06b59e50d36efd2c5158d
         decision_source: sha256:6e890215fc32d1c022caee1e4122bdb16470eca9689e5d2000ab2ba9261237ae
-      enrichments.semantic.applicability_present:
+      enrichments.applicability:
         decision_source: sha256:184a534d485f52f3bbda998177827545e9e4f546830184c46e4a3dd800d47e97
       enrichments.semantic.knowledge_kinds:
         decision_source: sha256:099eeccdd6973181c24f697e64519e334c2585ab4b0944d2095492f481ad28ce

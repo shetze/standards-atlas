@@ -129,7 +129,7 @@ def test_schema1_transcription_preserves_semantic_authority_and_availability(tmp
         )
         .mark_generated(
             GeneratedAttribute(
-                path="enrichments.semantic.applicability_present",
+                path="enrichments.applicability",
                 generator="test",
                 method=GenerationMethod.IMPORTED,
             ),
@@ -159,7 +159,7 @@ def test_schema1_transcription_preserves_semantic_authority_and_availability(tmp
     loaded = documents.load(KEY).clauses[0]
     assert loaded.enrichments == clause.enrichments
     assert loaded.provenance == clause.provenance
-    assert loaded.provenance.availability("enrichments.semantic.applicability_present") == "known"
+    assert loaded.provenance.availability("enrichments.applicability") == "known"
     assert (
         loaded.provenance.availability("enrichments.semantic.role_semantics_present") == "unknown"
     )

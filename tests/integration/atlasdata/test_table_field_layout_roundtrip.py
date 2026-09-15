@@ -103,7 +103,7 @@ def test_semantic_annotation_writer_uses_the_same_table_layout(tmp_path, start_w
     original = source.read_bytes()
     manifest = tmp_path / "annotations.yaml"
     manifest.write_text(
-        'schema_version: "2.0"\nsemantic_profile: "functional-safety:1.0.0"\n'
+        'schema_version: 1\nsemantic_profile: "functional-safety:1.0.0"\n'
         'annotations:\n  - reference: "Example-1:2025 7.1"\n'
         "    primary_statement_function: requirement\n",
         encoding="utf-8",

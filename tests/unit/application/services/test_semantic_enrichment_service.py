@@ -6,7 +6,6 @@ from standards_atlas.application.semantic_classification import (
 from standards_atlas.application.semantic_ontology import OntologyReference
 from standards_atlas.application.services import SemanticEnrichmentService
 from standards_atlas.domain.model import (
-    ApplicabilityFunction,
     Clause,
     ClauseId,
     ClauseType,
@@ -139,102 +138,10 @@ def test_ontology_response_failure_isolated_to_clause_and_reported() -> None:
     assert documents.saved == result.document
 
 
-class _ApplicabilityEngine:
-    def __init__(self, values: tuple[str, ...]) -> None:
-        self._values = values
-
-    def classify(self, **_kwargs):
-        return (
-            SemanticDimensionResult(
-                dimension="applicability_functions",
-                values=self._values,
-            ),
-        )
-
-
 def _document_with_semantic(semantic: SemanticClassification) -> EngineeringDocument:
     document = _document()
     clause = document.clauses[0].with_semantic_classification(semantic)
     return document.model_copy(update={"clauses": (clause,)})
-
-
-def test_applicability_dimension_is_replaced_atomically_when_present() -> None:
-    document = _document_with_semantic(SemanticClassification())
-    documents = _Documents(document)
-    service = SemanticEnrichmentService(
-        documents=documents,
-        engine=_ApplicabilityEngine(("inclusion",)),
-        profile=SemanticProfile(
-            id="test",
-            version="1.0.0",
-            dimensions={
-                "applicability_functions": OntologyReference(
-                    id="applicability-functions", version="2.0.0"
-                )
-            },
-        ),
-    )
-
-    result = service.enrich(document.key.value)
-    semantic = result.document.clauses[0].semantic_classification
-
-    assert semantic.applicability_present is True
-    assert semantic.applicability_functions == (ApplicabilityFunction.INCLUSION,)
-
-
-def test_applicability_dimension_is_replaced_atomically_when_absent() -> None:
-    document = _document_with_semantic(
-        SemanticClassification(
-            applicability_present=True,
-            applicability_functions=(ApplicabilityFunction.INCLUSION,),
-        )
-    )
-    documents = _Documents(document)
-    service = SemanticEnrichmentService(
-        documents=documents,
-        engine=_ApplicabilityEngine(()),
-        profile=SemanticProfile(
-            id="test",
-            version="1.0.0",
-            dimensions={
-                "applicability_functions": OntologyReference(
-                    id="applicability-functions", version="2.0.0"
-                )
-            },
-        ),
-    )
-
-    result = service.enrich(document.key.value)
-    semantic = result.document.clauses[0].semantic_classification
-
-    assert semantic.applicability_present is False
-    assert semantic.applicability_functions == ()
-
-
-def test_fail_soft_ontology_failure_preserves_complete_applicability_dimension() -> None:
-    initial = SemanticClassification(
-        applicability_present=True,
-        applicability_functions=(ApplicabilityFunction.INCLUSION,),
-    )
-    document = _document_with_semantic(initial)
-    documents = _Documents(document)
-    service = SemanticEnrichmentService(
-        documents=documents,
-        engine=_FailingEngine(),
-        profile=SemanticProfile(
-            id="test",
-            version="1.0.0",
-            dimensions={
-                "applicability_functions": OntologyReference(
-                    id="applicability-functions", version="2.0.0"
-                )
-            },
-        ),
-    )
-
-    result = service.enrich(document.key.value)
-
-    assert result.document.clauses[0].semantic_classification == initial
 
 
 class _AbsentRoleSemantics:
@@ -278,41 +185,6 @@ def test_role_dimension_is_replaced_atomically_when_presence_turns_false() -> No
     assert semantic.role_relations == ()
 
 
-class _PresenceOnlyApplicabilityEngine:
-    def classify(self, **_kwargs):
-        return (
-            SemanticDimensionResult(
-                dimension="applicability_functions",
-                values=(),
-                presence=True,
-            ),
-        )
-
-
-def test_applicability_presence_is_persisted_independently_from_subtype() -> None:
-    document = _document()
-    documents = _Documents(document)
-    service = SemanticEnrichmentService(
-        documents=documents,
-        engine=_PresenceOnlyApplicabilityEngine(),
-        profile=SemanticProfile(
-            id="test",
-            version="1.0.0",
-            dimensions={
-                "applicability_functions": OntologyReference(
-                    id="applicability-functions", version="1.2.0"
-                )
-            },
-        ),
-    )
-
-    result = service.enrich(document.key.value)
-    semantic = result.document.clauses[0].semantic_classification
-
-    assert semantic.applicability_present is True
-    assert semantic.applicability_functions == ()
-
-
 class _DuplicateDimensionsEngine:
     def classify(self, **_kwargs):
         return (
@@ -327,10 +199,6 @@ class _DuplicateDimensionsEngine:
             SemanticDimensionResult(
                 dimension="process_functions",
                 values=("activity", "activity", "decision"),
-            ),
-            SemanticDimensionResult(
-                dimension="applicability_functions",
-                values=("inclusion", "inclusion"),
             ),
         )
 
@@ -359,8 +227,6 @@ def test_set_like_semantic_dimensions_are_deduplicated_before_validation() -> No
         ProcessFunction.ACTIVITY,
         ProcessFunction.DECISION,
     )
-    assert semantic.applicability_functions == (ApplicabilityFunction.INCLUSION,)
-    assert semantic.applicability_present is True
 
 
 def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> None:
@@ -368,8 +234,6 @@ def test_existing_duplicate_semantic_values_are_canonicalized_during_merge() -> 
         statement_functions=(StatementFunction.REQUIREMENT, StatementFunction.REQUIREMENT),
         knowledge_kinds=(),
         process_functions=(ProcessFunction.ACTIVITY, ProcessFunction.ACTIVITY),
-        applicability_present=False,
-        applicability_functions=(),
         role_semantics_present=False,
         role_relation_types=(),
         role_relations=(),
@@ -410,8 +274,6 @@ def test_existing_duplicate_role_relations_are_canonicalized_during_merge() -> N
         statement_functions=(),
         knowledge_kinds=(),
         process_functions=(),
-        applicability_present=False,
-        applicability_functions=(),
         role_semantics_present=True,
         role_relation_types=(RoleRelationType.VERIFIES, RoleRelationType.VERIFIES),
         role_relations=(relation, relation),
@@ -460,27 +322,6 @@ def test_existing_service_preserves_explicit_statement_confirmation() -> None:
             version="1.0.0",
             dimensions={
                 "statement_functions": OntologyReference(id="statement-functions", version="2.0.0"),
-            },
-        ),
-    ).enrich(document.key.value)
-    assert result.document.clauses[0] == clause
-
-
-def test_existing_service_preserves_authoritative_negative_applicability() -> None:
-    document = _document()
-    clause = document.clauses[0].confirm_authoritative("enrichments.semantic.applicability_present")
-    document = document.model_copy(update={"clauses": (clause,)})
-    result = SemanticEnrichmentService(
-        documents=_Documents(document),
-        engine=_ApplicabilityEngine(("inclusion",)),
-        profile=SemanticProfile(
-            id="test",
-            version="1.0.0",
-            dimensions={
-                "applicability_functions": OntologyReference(
-                    id="applicability-functions",
-                    version="2.0.0",
-                ),
             },
         ),
     ).enrich(document.key.value)

@@ -221,8 +221,8 @@ def test_archive_adoption_does_not_publish_a_negative_gate_without_policy(tmp_pa
     batch = load_qualification_knowledge(archive)
     assert len(batch.candidates) == batch.selected_clause_count == 1
     candidate = batch.candidates[0]
-    assert "applicability_present" not in candidate.patch.semantic.model_fields_set
-    app = next(a for a in candidate.attributes if a.path.endswith(".applicability_present"))
+    assert candidate.patch.applicability is None
+    app = next(a for a in candidate.attributes if a.path == "enrichments.applicability")
     assert app.availability == "unknown" and app.decision.valid_votes is None
     primary = next(a for a in candidate.attributes if a.path.endswith(".primary_function"))
     assert primary.decision.valid_votes == 4

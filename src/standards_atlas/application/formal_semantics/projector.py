@@ -380,21 +380,22 @@ class DeterministicFormalSemanticProjector:
                     "semantic-classification",
                 )
             )
+        applicability = clause.applicability
         facets.append(
             _facet(
                 ContextKind.SEMANTIC,
                 "applicabilityPresent",
-                semantic.applicability_present,
-                "semantic-classification",
+                applicability.present,
+                "applicability",
             )
         )
-        for value in semantic.applicability_functions:
+        if applicability.polarity is not None:
             facets.append(
                 _facet(
                     ContextKind.SEMANTIC,
-                    "applicabilityFunction",
-                    value.value,
-                    "semantic-classification",
+                    "applicabilityPolarity",
+                    applicability.polarity.value,
+                    "applicability",
                 )
             )
         facets.append(

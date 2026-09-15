@@ -229,7 +229,7 @@ Public publication policy stays unchanged: natural clause order, exact TOC MD5 r
 internal headings, grouped fingerprints, no public `ambiguous_candidates`, and role semantics as
 presence only. Existing compatible companions are merged, not deleted. The task leaves the
 reviewed structural AtlasData files and authoritative confirmations intact. Canonical EngineeringDocument schema 1,
-companion schema 1.2 and private-evidence schema 1.0 do not change.
+companion schema 1 and private-evidence schema 1 are the current clean-break contracts.
 
 ## Verification boundary
 

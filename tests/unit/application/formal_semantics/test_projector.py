@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from standards_atlas.application.formal_semantics import DeterministicFormalSemanticProjector
 from standards_atlas.domain.model import (
-    ApplicabilityFunction,
+    ApplicabilityPolarity,
     Clause,
+    ClauseApplicability,
     ClauseId,
     ClauseSubjectContext,
     ClauseType,
@@ -34,8 +35,6 @@ def _document() -> EngineeringDocument:
         clause_type=ClauseType.REQUIREMENT,
         semantic_classification=SemanticClassification(
             statement_functions=(StatementFunction.REQUIREMENT,),
-            applicability_present=True,
-            applicability_functions=(ApplicabilityFunction.APPLICABILITY_CONDITION,),
             normative_status=NormativeStatus.NORMATIVE,
             domain_functions=(
                 DomainFunctionClassification(
@@ -63,6 +62,17 @@ def _document() -> EngineeringDocument:
                 next_clause_id="clause:2",
             ),
         ),
+    )
+    first = first.model_copy(
+        update={
+            "enrichments": first.enrichments.model_copy(
+                update={
+                    "applicability": ClauseApplicability(
+                        present=True, polarity=ApplicabilityPolarity.INCLUDED
+                    )
+                }
+            )
+        }
     )
     first = first.with_subject_context(
         ClauseSubjectContext(

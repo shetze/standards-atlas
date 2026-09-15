@@ -65,14 +65,11 @@ by default and rejects non-loopback hosts.
   companions; default dry-run, `--write` performs persistence
 - `atlasdata import-enrichments`: restore companions into existing canonical documents or newly
   imported physical AtlasData skeletons; default dry-run, `--strict-evidence` requires private blobs
-- `atlasdata rebind-enrichments`: narrowly rebind existing companions after the reviewed root-title
-  normalization change from synthetic `Part N` to the canonical AtlasData clause-0 title; default
-  dry-run and refuses any other structural drift
 
 The enrichment commands use `--manifest`, `--root`, `--workspace`, repeatable `--document` /
 `--family`, `--evidence-root`, and optional local `--output` for JSON changes. Export additionally
 supports repeatable `--dimension` and, for one selected document, `--clause`. With no selectors,
-export considers available physical canonical documents while import/rebind consider existing
+export considers available physical canonical documents while import considers existing
 companions. There is no inferred family-file naming, blind overwrite or implicit qualification
 publication.
 See [AtlasData enrichments](../user-guide/atlasdata-enrichments.md) for commands and evidence handling.

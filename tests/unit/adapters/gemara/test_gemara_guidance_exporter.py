@@ -202,7 +202,8 @@ def test_semantic_objective_aggregates_requirements_recommendations_and_rational
 
 def test_positive_applicability_becomes_valid_metadata_group_reference() -> None:
     from standards_atlas.domain.model import (
-        ApplicabilityFunction,
+        ApplicabilityPolarity,
+        ClauseApplicability,
         SemanticClassification,
         StatementFunction,
     )
@@ -223,11 +224,17 @@ def test_positive_applicability_becomes_valid_metadata_group_reference() -> None
         "High integrity systems",
         parent="obj-7",
         text="This guidance applies to high integrity systems.",
-    ).with_semantic_classification(
-        SemanticClassification(
-            applicability_present=True,
-            applicability_functions=(ApplicabilityFunction.INCLUSION,),
-        )
+    )
+    applicability = applicability.model_copy(
+        update={
+            "enrichments": applicability.enrichments.model_copy(
+                update={
+                    "applicability": ClauseApplicability(
+                        present=True, polarity=ApplicabilityPolarity.INCLUDED
+                    )
+                }
+            )
+        }
     )
     document = _document().model_copy(
         update={
@@ -248,7 +255,8 @@ def test_positive_applicability_becomes_valid_metadata_group_reference() -> None
 
 def test_exclusion_is_not_misrepresented_as_positive_applicability() -> None:
     from standards_atlas.domain.model import (
-        ApplicabilityFunction,
+        ApplicabilityPolarity,
+        ClauseApplicability,
         SemanticClassification,
         StatementFunction,
     )
@@ -269,11 +277,17 @@ def test_exclusion_is_not_misrepresented_as_positive_applicability() -> None:
         "Exclusion",
         parent="obj-8",
         text="This requirement does not apply to prototypes.",
-    ).with_semantic_classification(
-        SemanticClassification(
-            applicability_present=True,
-            applicability_functions=(ApplicabilityFunction.EXCLUSION,),
-        )
+    )
+    exclusion = exclusion.model_copy(
+        update={
+            "enrichments": exclusion.enrichments.model_copy(
+                update={
+                    "applicability": ClauseApplicability(
+                        present=True, polarity=ApplicabilityPolarity.EXCLUDED
+                    )
+                }
+            )
+        }
     )
     document = _document().model_copy(
         update={

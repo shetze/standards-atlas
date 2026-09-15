@@ -14,8 +14,8 @@ from standards_atlas.application.ports.llm_gateway import (
 )
 from standards_atlas.application.ports.semantic_extraction import SemanticKnowledgeExtractor
 from standards_atlas.domain.model import (
-    ApplicabilityFunction,
     Clause,
+    ClauseApplicability,
     DocumentSemanticExtraction,
     EngineeringDocument,
     ExtractionAttempt,
@@ -39,8 +39,7 @@ class ExtractionEligibilityContext:
 
     knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
-    applicability_present: bool = False
-    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
+    applicability: ClauseApplicability = ClauseApplicability()
     role_semantics_present: bool = False
 
 
@@ -56,9 +55,7 @@ def extraction_eligibility(
     process_functions = (
         context.process_functions if context is not None else semantic.process_functions
     )
-    applicability_present = (
-        context.applicability_present if context is not None else semantic.applicability_present
-    )
+    applicability = context.applicability if context is not None else clause.applicability
     role_semantics_present = (
         context.role_semantics_present if context is not None else semantic.role_semantics_present
     )
@@ -68,7 +65,7 @@ def extraction_eligibility(
         reasons.append("knowledge-kind")
     if role_semantics_present:
         reasons.append("role-semantics")
-    if applicability_present:
+    if applicability.present:
         reasons.append("applicability")
     if any(
         function in {ProcessFunction.ACTIVITY, ProcessFunction.INPUT, ProcessFunction.OUTPUT}
@@ -240,14 +237,14 @@ def _semantic_context(
     """Build extractor context without fabricating a modified Clause instance."""
 
     payload = clause.semantic_classification.model_dump(mode="json")
+    payload["applicability"] = clause.applicability.model_dump(mode="json")
     if context is None:
         return payload
     payload.update(
         {
             "knowledge_kinds": [item.value for item in context.knowledge_kinds],
             "process_functions": [item.value for item in context.process_functions],
-            "applicability_present": context.applicability_present,
-            "applicability_functions": [item.value for item in context.applicability_functions],
+            "applicability": context.applicability.model_dump(mode="json"),
             "role_semantics_present": context.role_semantics_present,
         }
     )

@@ -10,6 +10,8 @@ import hashlib
 import json
 from typing import TYPE_CHECKING, Any
 
+from pydantic import BaseModel
+
 from standards_atlas.application.model.cbox import CBoxAttribute, CBoxEnrichments
 from standards_atlas.domain.model.clause import Clause, ClauseEnrichments
 from standards_atlas.domain.model.enrichment_patch import SemanticEnrichmentPatch
@@ -21,7 +23,7 @@ if TYPE_CHECKING:
 CBOX_CONTRACT_VERSION = "1.0"
 CBOX_ATTRIBUTE_PATHS = tuple(
     f"enrichments.semantic.{name}" for name in SemanticEnrichmentPatch.model_fields
-) + ("enrichments.subject_context", "enrichments.context_routing")
+) + ("enrichments.applicability", "enrichments.subject_context", "enrichments.context_routing")
 
 
 def context_fingerprint(value: object) -> str:
@@ -95,7 +97,9 @@ def canonical_cbox_context(
     def effective_context(name: str, fallback: object) -> object:
         match = next((item for item in attributes if item.path == "enrichments." + name), None)
         if match is None:
-            return fallback  # compatibility for explicit in-process test descriptors
+            return (
+                fallback.model_dump(mode="json") if isinstance(fallback, BaseModel) else fallback
+            )  # compatibility for explicit in-process test descriptors
         return match.value if match.availability == "known" else None
 
     # Structural priors must not become yesterday's semantic predictions. Source
@@ -128,6 +132,7 @@ def canonical_cbox_context(
         "reference_mentions": list(clause.reference_mentions),
         "context_routing": effective_context("context_routing", clause.context_routing),
         "subject_context": effective_context("subject_context", clause.subject_context),
+        "applicability": effective_context("applicability", clause.applicability),
         "semantic": {
             item.path.rsplit(".", 1)[-1]: item.value
             for item in attributes

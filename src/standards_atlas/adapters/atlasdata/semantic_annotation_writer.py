@@ -23,7 +23,6 @@ from standards_atlas.adapters.atlasdata.semantic_tags import (
 from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model import (
-    ApplicabilityFunction,
     DocumentStructure,
     DocumentStructureClassification,
     KnowledgeKind,
@@ -46,7 +45,6 @@ class PublicSemanticAnnotation(BaseModel):
     secondary_statement_functions: tuple[StatementFunction, ...] = ()
     knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     process_functions: tuple[ProcessFunction, ...] = ()
-    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
     role_relation_types: tuple[RoleRelationType, ...] = ()
     document_structure: DocumentStructure | None = None
     normative_status: NormativeStatus | None = None
@@ -59,8 +57,6 @@ class PublicSemanticAnnotation(BaseModel):
             statement_functions=statements,
             knowledge_kinds=self.knowledge_kinds,
             process_functions=self.process_functions,
-            applicability_present=bool(self.applicability_functions),
-            applicability_functions=self.applicability_functions,
             role_semantics_present=bool(self.role_relation_types),
             role_relation_types=self.role_relation_types,
             document_structure=(
@@ -79,7 +75,7 @@ class PublicSemanticAnnotationManifest(SchemaBoundModel):
     SCHEMA_FAMILY: ClassVar[str] = "public-semantic-annotation-manifest"
 
     model_config = ConfigDict(extra="forbid")
-    schema_version: Literal["2.0"] = "2.0"
+    schema_version: Literal[1] = 1
     semantic_profile: str = Field(min_length=1)
     annotations: tuple[PublicSemanticAnnotation, ...] = ()
 
@@ -148,7 +144,6 @@ class AtlasDataSemanticAnnotationService:
                     "secondary_statement_functions": ("SP", "SS"),
                     "knowledge_kinds": ("KK",),
                     "process_functions": ("PF",),
-                    "applicability_functions": ("AF",),
                     "role_relation_types": ("RR",),
                     "document_structure": ("DS",),
                     "normative_status": ("NS",),
@@ -162,7 +157,7 @@ class AtlasDataSemanticAnnotationService:
                 decode_semantic_tags(tags, semantic_profile=semantic_profile)
                 order = {
                     prefix: index
-                    for index, prefix in enumerate(("SP", "SS", "KK", "PF", "AF", "RR", "DS", "NS"))
+                    for index, prefix in enumerate(("SP", "SS", "KK", "PF", "RR", "DS", "NS"))
                 }
                 tags = tuple(sorted(tags, key=lambda tag: order[tag.split("-", 1)[0]]))
             replacement = InitializationRecord(

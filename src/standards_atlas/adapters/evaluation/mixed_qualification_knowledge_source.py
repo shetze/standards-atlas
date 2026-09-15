@@ -22,6 +22,7 @@ from standards_atlas.application.semantic_qualification.mixed_applicability impo
 from standards_atlas.application.semantic_qualification.partial_cascade_archive import (
     verify_partial_cascade,
 )
+from standards_atlas.domain.model.applicability import ClauseApplicability
 from standards_atlas.domain.model.enrichment_patch import (
     ClauseEnrichmentPatch,
     SemanticEnrichmentPatch,
@@ -66,11 +67,16 @@ def load_mixed_qualification_knowledge(
     candidates = []
     for clause in report.clauses:
         values: dict[str, Any] = {}
+        applicability: ClauseApplicability | None = None
         generated = []
-        not_evaluated = ["enrichments.semantic.applicability_functions"]
+        not_evaluated: list[str] = []
         for decision in clause.decisions:
             field = decision.attribute
-            path = f"enrichments.semantic.{field}"
+            path = (
+                "enrichments.applicability"
+                if field == "applicability_present"
+                else f"enrichments.semantic.{field}"
+            )
             if DIMENSIONS[field] not in dimensions:
                 not_evaluated.append(path)
                 continue
@@ -81,7 +87,7 @@ def load_mixed_qualification_knowledge(
                     continue
                 known = case is not None and case.final_present is not None
                 if known:
-                    values[field] = case.final_present
+                    applicability = ClauseApplicability(present=bool(case.final_present))
                 artifact = (
                     "policy/applicability-policy-run.json"
                     if case
@@ -157,7 +163,10 @@ def load_mixed_qualification_knowledge(
                 reference=clause.reference,
                 heading=clause.heading,
                 content_hash=clause.content_hash,
-                patch=ClauseEnrichmentPatch(semantic=SemanticEnrichmentPatch(**values)),
+                patch=ClauseEnrichmentPatch(
+                    semantic=SemanticEnrichmentPatch(**values),
+                    applicability=applicability,
+                ),
                 attributes=tuple(generated),
                 not_evaluated=tuple(not_evaluated),
                 source_requirements=tuple(
@@ -172,9 +181,9 @@ def load_mixed_qualification_knowledge(
                 ),
             )
         )
-    require_current_schema("knowledge-adoption-batch", "1.1")
+    require_current_schema("knowledge-adoption-batch", 1)
     return KnowledgeAdoptionBatch(
-        schema_version="1.1",
+        schema_version=1,
         source_id=archive.id,
         source_sha256=archive.digest,
         selected_clause_count=report.clause_count,

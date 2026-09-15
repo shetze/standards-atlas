@@ -230,7 +230,6 @@ def _merge_semantic_tags(
     if not is_supported_semantic_profile(semantic_profile):
         raise ValueError(f"Unsupported AtlasData semantic profile: {semantic_profile!r}")
     from standards_atlas.domain.model import (
-        ApplicabilityFunction,
         DocumentStructure,
         DocumentStructureClassification,
         KnowledgeKind,
@@ -256,11 +255,6 @@ def _merge_semantic_tags(
     if decoded["process_functions"]:
         update["process_functions"] = tuple(
             ProcessFunction(value) for value in decoded["process_functions"]
-        )
-    if decoded["applicability_functions"]:
-        update["applicability_present"] = True
-        update["applicability_functions"] = tuple(
-            ApplicabilityFunction(value) for value in decoded["applicability_functions"]
         )
     if decoded["role_relation_types"]:
         update["role_semantics_present"] = True
@@ -361,10 +355,6 @@ def _authoritative_tag_paths(tags: tuple[str, ...]) -> tuple[str, ...]:
         "SS": ("enrichments.semantic.statement_functions",),
         "KK": ("enrichments.semantic.knowledge_kinds",),
         "PF": ("enrichments.semantic.process_functions",),
-        "AF": (
-            "enrichments.semantic.applicability_present",
-            "enrichments.semantic.applicability_functions",
-        ),
         "RR": (
             "enrichments.semantic.role_semantics_present",
             "enrichments.semantic.role_relation_types",

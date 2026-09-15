@@ -86,10 +86,10 @@ def test_confirmed_companion_blocks_incompatible_new_primary_even_when_empty(
 ):
     previous = merge(clause(), **{members: () if empty else (other,)}).clause
     previous = previous.confirm_authoritative(PREFIX + members)
-    result = sparse(previous, values={primary: value, "applicability_present": True})
+    result = sparse(previous, values={primary: value, "role_semantics_present": True})
     assert getattr(result.clause.semantic_classification, primary) is None
     assert result.clause.provenance.protection(PREFIX + members) == "confirmed"
-    assert result.clause.semantic_classification.applicability_present is True
+    assert result.clause.semantic_classification.role_semantics_present is True
     assert any(c.status == "protected" for c in result.changes)
 
 
@@ -116,15 +116,13 @@ def test_evaluated_negative_presence_still_rejects_nonempty_relations():
 
 
 def test_negative_sparse_presence_does_not_manufacture_unasked_empty_dependencies():
-    result = sparse(
-        clause(), values={"applicability_present": False, "role_semantics_present": False}
-    ).clause
-    for name in ("applicability_functions", "role_relations", "role_relation_types"):
+    result = sparse(clause(), values={"role_semantics_present": False}).clause
+    for name in ("role_relations", "role_relation_types"):
         assert result.provenance.availability(PREFIX + name) == "not_evaluated"
 
 
 def test_unknown_candidate_preserves_previous_known_value_and_authority():
-    previous = merge(clause(), applicability_present=True).clause
-    assert sparse(previous, unknown=("applicability_present",)).clause == previous
-    previous = previous.confirm_authoritative(PREFIX + "applicability_present")
-    assert sparse(previous, values={"applicability_present": False}).clause == previous
+    previous = merge(clause(), role_semantics_present=True).clause
+    assert sparse(previous, unknown=("role_semantics_present",)).clause == previous
+    previous = previous.confirm_authoritative(PREFIX + "role_semantics_present")
+    assert sparse(previous, values={"role_semantics_present": False}).clause == previous

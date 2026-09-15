@@ -113,6 +113,16 @@ def render_cbox_context(frame: FramedCBoxContext) -> str:
         if references:
             lines.append("The clause contains references to " + "; ".join(references) + ".")
 
+    applicability = _mapping(context.get("applicability"))
+    if applicability:
+        present = applicability.get("present")
+        polarity = _text(applicability.get("polarity"))
+        if isinstance(present, bool):
+            rendered = "present" if present else "absent"
+            if polarity:
+                rendered += f" ({polarity})"
+            lines.append(f"Accepted applicability context: {rendered}.")
+
     semantic = _mapping(context.get("semantic"))
     if semantic:
         lines.append("Accepted canonical enrichment (generated values are contextual hints):")

@@ -20,7 +20,7 @@ AtlasData onboarding is manifest-driven and produces canonical documents **per p
 
 ## Accepted enrichment transport
 
-An explicit `atlasdata-enrichments` companion (schema `1.2`) is stored at
+An explicit `atlasdata-enrichments` companion (schema `1`) is stored at
 `<AtlasData parent>/enrichments/<physical-key>.yaml`. This extends, rather than replaces, the
 existing AtlasData adapter and text format. TOC tags continue to represent reviewed categories;
 companions additionally represent generated hints, confirmed negatives, primary labels,

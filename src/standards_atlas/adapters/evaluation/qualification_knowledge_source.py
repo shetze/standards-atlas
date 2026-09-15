@@ -41,6 +41,7 @@ from standards_atlas.application.semantic_qualification.qualification_coverage i
 from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
 )
+from standards_atlas.domain.model.applicability import ClauseApplicability
 from standards_atlas.domain.model.enrichment_patch import (
     ClauseEnrichmentPatch,
     SemanticEnrichmentPatch,
@@ -299,6 +300,7 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
         example = examples_by_coordinate[coordinate]
         case = cases[coordinate]
         values: dict[str, object] = {}
+        applicability: ClauseApplicability | None = None
         attributes = []
         not_evaluated = ["enrichments.semantic.role_relations"]
 
@@ -394,23 +396,20 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
                 ),
                 model_ids=tuple(sorted({stage.model_id for stage in policy.stages})),
             )
-            _record_attribute(
-                attributes,
-                "applicability_present",
-                support,
-                case.final_present is not None,
-            )
-            if case.final_present is not None:
-                values["applicability_present"] = case.final_present
-            # Details are not inferred from polarity, the gate or an older report.
-            not_evaluated.append("enrichments.semantic.applicability_functions")
-        else:
-            not_evaluated.extend(
-                (
-                    "enrichments.semantic.applicability_present",
-                    "enrichments.semantic.applicability_functions",
+            known = case.final_present is not None
+            attributes.append(
+                GeneratedAttribute(
+                    path="enrichments.applicability",
+                    generator="canonical-knowledge-adoption-v1",
+                    method=GenerationMethod.IMPORTED,
+                    availability="known" if known else "unknown",
+                    decision=support,
                 )
             )
+            if known:
+                applicability = ClauseApplicability(present=bool(case.final_present))
+        else:
+            not_evaluated.append("enrichments.applicability")
         if "role_semantics" in dimensions:
             support = _support(
                 archive,
@@ -438,14 +437,17 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
                 reference=example.input["context"]["reference"],
                 content_hash=example.input["content"]["hash"],
                 heading=example.input["context"].get("heading"),
-                patch=ClauseEnrichmentPatch(semantic=SemanticEnrichmentPatch(**values)),
+                patch=ClauseEnrichmentPatch(
+                    semantic=SemanticEnrichmentPatch(**values),
+                    applicability=applicability,
+                ),
                 attributes=tuple(attributes),
                 not_evaluated=tuple(not_evaluated),
             )
         )
-    require_current_schema("knowledge-adoption-batch", "1.1")
+    require_current_schema("knowledge-adoption-batch", 1)
     return KnowledgeAdoptionBatch(
-        schema_version="1.1",
+        schema_version=1,
         source_id=archive.id,
         source_sha256=archive.digest,
         selected_clause_count=selection.selected_clause_count,

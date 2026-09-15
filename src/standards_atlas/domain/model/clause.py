@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from standards_atlas.domain.model.applicability import ClauseApplicability
 from standards_atlas.domain.model.content import (
     ContentBlock,
     render_content_as_plain_text,
@@ -79,6 +80,7 @@ class ClauseEnrichments(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     semantic: SemanticClassification = SemanticClassification()
+    applicability: ClauseApplicability = ClauseApplicability()
     context_routing: ContextRouting = ContextRouting()
     subject_context: ClauseSubjectContext = ClauseSubjectContext()
 
@@ -138,6 +140,11 @@ class Clause(BaseModel):
     def semantic_classification(self) -> SemanticClassification:
         """Return derived semantic enrichment (read-only convenience projection)."""
         return self.enrichments.semantic
+
+    @property
+    def applicability(self) -> ClauseApplicability:
+        """Return accepted clause-level applicability context."""
+        return self.enrichments.applicability
 
     @property
     def context_routing(self) -> ContextRouting:

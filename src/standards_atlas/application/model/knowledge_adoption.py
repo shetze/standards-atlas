@@ -31,7 +31,7 @@ class KnowledgeAdoptionBatch(SchemaBoundModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid", revalidate_instances="always")
 
-    schema_version: Literal["1.1"]
+    schema_version: Literal[1] = 1
     policy_id: Literal["canonical-knowledge-adoption-v1"] = "canonical-knowledge-adoption-v1"
     source_id: str = Field(min_length=1)
     source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -63,7 +63,7 @@ class KnowledgeAdoptionReport(SchemaBoundModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal[1] = 1
     policy_id: Literal["canonical-knowledge-adoption-v1"] = "canonical-knowledge-adoption-v1"
     source_id: str
     source_sha256: str

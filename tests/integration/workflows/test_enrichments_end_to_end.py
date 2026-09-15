@@ -36,7 +36,7 @@ from standards_atlas.application.workflow import (
 from standards_atlas.cli import app
 from standards_atlas.cli.commands.document_commands import knowledge, management
 from standards_atlas.cli.composition import build_workflow_service
-from standards_atlas.domain.model import ContextRouting
+from standards_atlas.domain.model import ClauseApplicability, ContextRouting
 from standards_atlas.domain.model.enrichment_patch import (
     ClauseEnrichmentPatch,
     SemanticEnrichmentPatch,
@@ -193,7 +193,7 @@ class BoundaryRunner:
         candidates = []
         for doc in repo.list():
             for clause in doc.clauses:
-                fields = {"applicability_present": False, "role_semantics_present": False}
+                fields = {"role_semantics_present": False}
                 candidates.append(
                     ClauseKnowledgeCandidate(
                         document_key=doc.key.value,
@@ -201,14 +201,24 @@ class BoundaryRunner:
                         reference=clause.reference.as_text(),
                         heading=clause.heading,
                         content_hash=normalized_content_hash(clause.plain_text),
-                        patch=ClauseEnrichmentPatch(semantic=SemanticEnrichmentPatch(**fields)),
-                        attributes=tuple(
+                        patch=ClauseEnrichmentPatch(
+                            semantic=SemanticEnrichmentPatch(**fields),
+                            applicability=ClauseApplicability(present=False),
+                        ),
+                        attributes=(
+                            *(
+                                GeneratedAttribute(
+                                    path=f"enrichments.semantic.{field}",
+                                    generator="synthetic-qualified-policy",
+                                    method=GenerationMethod.IMPORTED,
+                                )
+                                for field in fields
+                            ),
                             GeneratedAttribute(
-                                path=f"enrichments.semantic.{field}",
+                                path="enrichments.applicability",
                                 generator="synthetic-qualified-policy",
                                 method=GenerationMethod.IMPORTED,
-                            )
-                            for field in fields
+                            ),
                         ),
                     )
                 )
@@ -218,7 +228,7 @@ class BoundaryRunner:
         with ZipFile(archive, "w") as zipped:
             zipped.writestr("archive-manifest.json", json.dumps({"matrix_id": matrix_id}))
         self.sealed_batches[archive.resolve()] = KnowledgeAdoptionBatch(
-            schema_version="1.1",
+            schema_version=1,
             source_id="synthetic-workflow",
             source_sha256=sha256_file(archive),
             selected_clause_count=2,
@@ -259,12 +269,13 @@ def test_two_documents_normalize_publish_and_repeat_without_duplicate_outputs(
         assert "synthetic-qualified-policy" in canonical.read_text()
         public = tmp_path / f"data/enrichments/{key}.yaml"
         payload = yaml.safe_load(public.read_text())
-        assert payload["schema_version"] == "1.2"
+        assert payload["schema_version"] == 1
         clauses = payload["clauses"]
         assert len(clauses) == 1 and clauses[0]["heading"] == "Requirements"
         assert clauses[0]["atlasdata_md5"] == "a" * 32
         paths = {a["path"] for a in clauses[0]["attributes"]}
         assert "enrichments.semantic.role_semantics_present" in paths
+        assert "enrichments.applicability" in paths
         assert "enrichments.semantic.role_relations" not in paths
         assert "enrichments.semantic.role_relation_types" not in paths
         assert "shall document" not in public.read_text()

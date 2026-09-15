@@ -198,7 +198,8 @@ def test_semantic_enrichment_mutation_does_not_change_projected_source_identity(
     _, value = descriptor()
     context = canonical_cbox_context(value)
     expected = derive_clause_decision_plan(context, text=value.text)
-    context["semantic"] = {"primary_function": "LEAK", "applicability_present": True}
+    context["semantic"] = {"primary_function": "LEAK"}
+    context["applicability"] = {"present": True, "polarity": "included"}
     context["attribute_sources"] = {"enrichments.semantic": {"origin": "confirmed"}}
     actual = derive_clause_decision_plan(context, text=value.text)
     assert actual.fingerprint == expected.fingerprint

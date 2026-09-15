@@ -20,8 +20,8 @@ from standards_atlas.domain.model.knowledge_state import (
 from standards_atlas.domain.model.subject_context import ClauseSubjectContext
 
 from .knowledge_contract import (
+    ATTRIBUTE_ADAPTERS,
     PRIVATE_PATHS,
-    SEMANTIC_ADAPTERS,
     EvidenceBlob,
     PublishedAttribute,
     ReferenceView,
@@ -137,8 +137,7 @@ def canonical_value(path: str, value: object) -> object:
         return ClauseSubjectContext.model_validate(value)
     if path == "enrichments.context_routing":
         return ContextRouting.model_validate(value)
-    field = path.rsplit(".", 1)[-1]
-    return SEMANTIC_ADAPTERS[field].validate_python(value)
+    return ATTRIBUTE_ADAPTERS[path].validate_python(value)
 
 
 def project_attribute(

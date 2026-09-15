@@ -166,9 +166,8 @@ uv run standards-atlas document adopt-qualification \
 
 Replace `NNN` with the generated archive number. This is a preview; add `--write` for explicit
 canonical adoption. No model is executed and no public companion is written by adoption.
-The adoption batch uses current-only schema 1.1; obsolete 1.0 batches are rejected.
-Empty source requirements are explicit; nonempty requirements remain source-bound. See
-[Remaining schema refactoring R3](remaining-schema-refactoring.md).
+The adoption batch uses current-only schema 1; historical batches are not migrated.
+Empty source requirements are explicit; nonempty requirements remain source-bound.
 Only accepted values are materialized. Unresolved/unasked attributes keep availability
 rather than receiving default negatives. Protected local values and confirmations remain
 protected. Deterministic values additionally require the consumed structural facts and

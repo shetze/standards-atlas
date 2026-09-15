@@ -129,9 +129,9 @@ def test_qualification_eligibility_context_uses_latest_cascade_stage(tmp_path) -
     contexts = _load_qualification_eligibility_contexts(tmp_path)
 
     assert contexts[("DOC", "c1")].knowledge_kinds == (KnowledgeKind.TECHNIQUE_OR_MEASURE,)
-    assert contexts[("DOC", "c1")].applicability_present is True
-    # Current consensus carries Presence, not unqualified Applicability functions.
-    assert contexts[("DOC", "c1")].applicability_functions == ()
+    assert contexts[("DOC", "c1")].applicability.present is True
+    # Current consensus carries Presence only; polarity remains unresolved here.
+    assert contexts[("DOC", "c1")].applicability.polarity is None
     assert contexts[("DOC", "c1")].role_semantics_present is True
     assert contexts[("DOC", "c2")].knowledge_kinds == (KnowledgeKind.PROCESS,)
 

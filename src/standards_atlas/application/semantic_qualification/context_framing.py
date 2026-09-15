@@ -36,6 +36,7 @@ class CBoxFramePolicy:
     reference_routing: bool = True
     reference_mentions: bool = True
     primary_subject: bool = True
+    applicability: bool = False
     semantic_enrichments: bool = False
     attribute_provenance: bool = False
     # Select the exclusive source-bound contract rather than compatibility fields.
@@ -57,6 +58,7 @@ FULL_CONTEXT_V1 = CBoxFramePolicy(id="full-context", version="1")
 EFFECTIVE_CONTEXT_V1 = CBoxFramePolicy(
     id="effective-context",
     version="1",
+    applicability=True,
     semantic_enrichments=True,
     attribute_provenance=True,
 )
@@ -219,6 +221,11 @@ def frame_cbox_context(
         subject = _frame_subject_context(_mapping(context.get("subject_context")))
         if subject:
             values["subject_context"] = subject
+
+    if policy.applicability:
+        applicability = _mapping(context.get("applicability"))
+        if applicability:
+            values["applicability"] = dict(applicability)
 
     if policy.semantic_enrichments:
         # Only the canonical projection decides whether a value is known.
@@ -431,6 +438,8 @@ def frame_qualification_context(
     may be archived separately, but is never expanded into template variables.
     """
     isolated = replace(policy, semantic_enrichments=False, attribute_provenance=False)
+    if "applicability" in task:
+        isolated = replace(isolated, applicability=False)
     if "routing" in task:
         isolated = replace(isolated, scope_routing=False, reference_routing=False)
     if "subject" in task:

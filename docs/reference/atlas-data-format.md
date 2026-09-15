@@ -602,7 +602,6 @@ The namespaces are:
 | `SS` | secondary statement function |
 | `KK` | knowledge kind |
 | `PF` | process function |
-| `AF` | applicability function |
 | `RR` | role relation type |
 | `DS` | document structure |
 | `NS` | normative status |
@@ -615,9 +614,9 @@ profile used to interpret them:
 semanticProfile="functional-safety:1.0.0"
 ```
 
-Absence of an `AF-*` or `RR-*` tag represents no accepted positive
-applicability or role-relation category. `unspecified` normative status is not
-serialized as a semantic tag.
+Absence of an `RR-*` tag represents no accepted positive role-relation category.
+Applicability is no longer encoded as a TOC semantic tag; accepted applicability travels in the
+`atlasdata-enrichments` companion. `unspecified` normative status is not serialized as a semantic tag.
 
 ### Applying Reviewed Annotations
 
@@ -625,7 +624,7 @@ Reviewed annotations are persisted through a separate text-free manifest so
 that protected clause content never has to be committed with the gold labels:
 
 ```yaml
-schema_version: "2.0"
+schema_version: 1
 semantic_profile: functional-safety:1.0.0
 annotations:
   - reference: IEC 61508-2:2010 7.4.2
@@ -658,7 +657,7 @@ model-generated classifications to published gold automatically. This keeps the
 publication boundary explicit: only the reviewed annotation manifest can add or
 replace public semantic tags.
 
-## Accepted enrichment companions (schema 1.2)
+## Accepted enrichment companions (schema 1)
 
 The existing structural text grammar and reviewed TOC tags remain unchanged. Accepted canonical
 attributes may additionally be persisted in `<AtlasData parent>/enrichments/<physical-key>.yaml`
@@ -669,7 +668,7 @@ CBox database or an automatic promotion to reviewed semantic tags.
 
 | Field | Meaning |
 | --- | --- |
-| `manifest_type`, `schema_version` | `atlasdata-enrichments`, string `"1.2"` |
+| `manifest_type`, `schema_version` | `atlasdata-enrichments`, integer `1` |
 | `document_key`, `family_key` | Exact manifest-declared physical document and family |
 | `atlasdata_file`, `selection_part`, `publication_year` | Explicit owning source basename, part selection and manifest edition; unspecified supplement year stays null |
 | `fingerprints.structure` | SHA-256 of selected structural clause IDs, references, headings, types and parents; reviewed semantic tags are excluded |
@@ -694,12 +693,13 @@ existing canonical field types, not an independently defined vocabulary.
 ### Attribute records
 
 Each record contains `path`, `origin`, `value` and the appropriate provenance.
-Paths address primary/secondary statement, knowledge and process categories, Applicability
-presence/functions, role presence, whole subject context or whole context routing. Role details
+Paths address primary/secondary statement, knowledge and process categories, whole Applicability,
+role presence, whole subject context or whole context routing. `enrichments.applicability` carries
+`{present, polarity}` as one typed value so presence and polarity cannot drift independently. Role details
 (`enrichments.semantic.role_relations` and `enrichments.semantic.role_relation_types`) remain
 canonical fields but are temporarily excluded from publication, regardless of value or origin.
-The same exclusion applies to their fingerprint entries. Existing schema-1.2 fields remain
-readable, but every writer omits them.
+The same exclusion applies to their fingerprint entries. Refactoring readers accept only the
+current schema-1 companion; obsolete companion shapes are regenerated rather than migrated.
 `origin` is `generated`, `confirmed` or `unattributed`. Known availability is the default and is
 omitted from YAML for readability. `availability: unknown` remains explicit; absence of an
 attribute means not assessed, not false. Unknown has a null value, no invented category and
@@ -712,8 +712,8 @@ serialized under `fingerprints.attributes.<path>.evidence` and `.decision_source
 retains explicit authority without duplicating the enclosing path. Populated unmarked legacy values
 are retained as `unattributed`, not promoted. An omitted attribute never clears a value.
 
-Statement/knowledge/process values, Applicability classifications and role presence are public
-categorical values. `fingerprints.attributes.<path>.private_value` addresses source-bearing
+Statement/knowledge/process values, typed Applicability and role presence are public
+text-free values. `fingerprints.attributes.<path>.private_value` addresses source-bearing
 contexts in the private store; existing private role blobs remain unchanged but are not newly
 published or referenced by companion exports.
 For these fields, `value` is a bounded view: accepted normalized subject/confidence only; unresolved
@@ -733,14 +733,14 @@ deliberately published.
 `fingerprints.attributes.<path>.private_provenance` optionally binds the original unredacted
 provenance.
 
-Publication cleanup removes previously exported role-detail attributes and their fingerprints
-from the whole selected companion, including clauses/dimensions outside a partial value update.
+Publication excludes role-detail attributes and their fingerprints from the whole selected
+companion, including clauses/dimensions outside a partial value update.
 This is reported as `omitted`, with the normal dry-run and explicit-write safeguards. All other
 attributes and their authority remain subject to the existing merge. Empty public records are
 omitted, but canonical clauses, role values, provenance and private blobs are not deleted. Role
-presence keeps its true/false/unknown distinction; missing positive details must not be interpreted
-as a completed negative extraction. Canonical EngineeringDocument schema 1, companion schema 1.2 and private evidence
-schema 1.0 are unchanged. Reviewed `RR` TOC tags are unaffected.
+presence keeps its true/false/unknown distinction; missing positive details must not be interpreted as a completed negative extraction. Canonical
+EngineeringDocument, companion and private evidence contracts all use current schema 1. Reviewed
+`RR` TOC tags are unaffected.
 
 ### Restore and preservation
 
@@ -751,7 +751,7 @@ contradictory explicit confirmations fail before writes. Unselected state and st
 remain unchanged. A source-free structural skeleton may use its AtlasData heading and reports
 content as unverified. It does not recreate the copyrighted clause text.
 
-Private blobs are immutable `knowledge-evidence` JSON schema `1.0`, addressed by the SHA-256 of
+Private blobs are immutable `knowledge-evidence` JSON schema `1`, addressed by the SHA-256 of
 compact, key-sorted UTF-8 JSON with a final newline. `kind` distinguishes `value`, `generated` and
 `confirmed`; `path` and `value` bind the payload. Restore validates the blob hash, kind, path and
 public projection. An absent source-bearing value is deferred, not replaced by empty context.
@@ -761,6 +761,6 @@ without private evidence when its exact blob digest verifies that value.
 
 Commands default to dry-run. Explicit writes use all-document preflight, atomic replacement per
 file and deterministic output; this is not an all-files transaction. An optional local JSON
-`atlasdata-knowledge-report` schema `1.1` gives selected keys, changed/written targets, source-content
-verification counts and export/import/rebind changes. It does not embed private values. Operational
+`atlasdata-knowledge-report` schema `1` gives selected keys, changed/written targets, source-content
+verification counts and export/import changes. It does not embed private values. Operational
 commands and backup/restore instructions are in [AtlasData enrichments](../user-guide/atlasdata-enrichments.md).

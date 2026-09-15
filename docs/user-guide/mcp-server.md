@@ -152,14 +152,9 @@ With the default workspace, every accepted submission is saved under `.atlas/dat
 
 ## Recovering a stale MCP runtime after a schema update
 
-The current canonical writer emits EngineeringDocument schema **9**; readers support
-**8 and 9**. A tool error such as
-
-```text
-Unsupported engineering document schema version: 9; readable versions are 8, current is 8
-```
-
-therefore identifies an older loaded reader, not a need to downgrade the document.
+The current canonical writer and reader use EngineeringDocument schema **1** only. A tool
+error reporting a different readable/current schema therefore identifies an older loaded runtime,
+not a need to rewrite or downgrade the document.
 An already running MCP process retains its imported Python modules when a checkout is
 updated. A server launched from another installation/environment can have the same
 symptom. `mcp start` is idempotent: it does **not** reload an existing healthy process.

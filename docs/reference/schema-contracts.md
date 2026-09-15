@@ -73,10 +73,11 @@ This avoids versioning every internal DTO while still making independently consu
 
 AtlasData is authored, Git-published, community-curated input and therefore has stronger preservation requirements than disposable derived artifacts. Its semantic profile reference is already explicitly resource-versioned. The AtlasData text grammar itself does not currently carry a standalone serialization `schema_version`; changes to that grammar must therefore remain backward-readable or be introduced with an explicit format-version mechanism before the project enters stable compatibility mode. AtlasData must not be treated as a disposable intermediate artifact.
 
-The optional `atlasdata-enrichments` companion has an explicit `schema_version: "1.2"` and
-`manifest_type: atlasdata-enrichments`. It is a versioned transport of selected canonical attributes,
-not a second canonical model. It does not change the existing text grammar or canonical EngineeringDocument schema 1.
-See [AtlasData format](atlas-data-format.md#accepted-enrichment-companions-schema-12).
+The optional `atlasdata-enrichments` companion has `schema_version: 1` and
+`manifest_type: atlasdata-enrichments`. It is a transport of selected canonical attributes,
+not a second canonical model. Refactoring uses the current schema only; old companion formats are
+regenerated rather than migrated. It does not change the existing text grammar or canonical
+EngineeringDocument schema 1. See [AtlasData format](atlas-data-format.md#accepted-enrichment-companions-schema-1).
 
 ## Packaged resource rule
 

@@ -149,7 +149,7 @@ def test_archive_to_canonical_public_roundtrip_preserves_availability_and_eviden
         root=run_dir, archive_directory=root / "archives", resources=RESOURCES
     )
     batch = load_qualification_knowledge(archive)
-    assert batch.schema_version == "1.1"
+    assert batch.schema_version == 1
     assert batch.candidates[0].source_requirements
     adopter = KnowledgeAdoptionService(documents=repo)
     adopter.apply(batch, write=True)
@@ -158,7 +158,7 @@ def test_archive_to_canonical_public_roundtrip_preserves_availability_and_eviden
     before = project_clause_enrichments(original_clause)
     service.export(write=True)
     public = binding.enrichments_path.read_bytes()
-    assert b"enrichments.semantic.applicability_functions" not in public
+    assert (b"enrichments.applicability" in public) is (not focused)
     assert b"Synthetic term." not in public
     if focused:
         assert b"enrichments.semantic.statement_functions" not in public
