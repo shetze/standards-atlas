@@ -17,7 +17,7 @@ from standards_atlas.domain.model import (
 
 def _payload() -> dict:
     return {
-        "schema-version": 2,
+        "schema-version": 1,
         "id": "rail-onboard-sil2",
         "version": "1.0.0",
         "description": "SIL 2 onboard software development context",
@@ -34,9 +34,6 @@ def _payload() -> dict:
             "exclude": ["ISO26262-11"],
         },
         "selection": {
-            "process-functions": ["activity", "output"],
-            "knowledge-kinds": ["process", "artifact"],
-            "statement-functions": ["requirement", "conformance_statement"],
             "subject-group-profile": {"id": "functional-safety", "version": "1.0.0"},
             "primary-subjects": ["Tool Qualification"],
             "primary-subject-groups": ["safety-lifecycle"],
@@ -63,22 +60,12 @@ class _SubjectGroups:
 def test_profile_accepts_domain_neutral_engineering_context() -> None:
     profile = GovernanceSelectionProfile.model_validate(_payload())
 
-    assert profile.schema_version == 2
+    assert profile.schema_version == 1
     assert profile.id == "rail-onboard-sil2"
     assert profile.context.domain == "railway"
     assert profile.context.integrity_levels == ("SIL-2",)
-    assert profile.selection.process_functions[0].value == "activity"
     assert profile.selection.primary_subjects == ("tool qualification",)
     assert profile.selection.primary_subject_groups == ("safety-lifecycle",)
-
-
-def test_profile_allows_empty_statement_functions() -> None:
-    payload = _payload()
-    payload["selection"]["statement-functions"] = []
-
-    profile = GovernanceSelectionProfile.model_validate(payload)
-
-    assert profile.selection.statement_functions == ()
 
 
 def test_profile_rejects_removed_applicability_contract() -> None:
@@ -146,22 +133,22 @@ def test_loader_and_renderer_are_deterministic(tmp_path: Path) -> None:
     rendered = render_governance_selection_profile(loaded)
 
     assert render_governance_selection_profile(loaded) == rendered
-    assert "schema-version: 2" in rendered
+    assert "schema-version: 1" in rendered
     assert "system-types:" in rendered
     assert "primary-subjects:" in rendered
     assert "primary-subject-groups:" in rendered
     assert "applicability:" not in rendered
 
 
-def test_loader_rejects_schema_version_one(tmp_path: Path) -> None:
+def test_loader_rejects_non_current_schema_version(tmp_path: Path) -> None:
     import yaml
 
     payload = _payload()
-    payload["schema-version"] = 1
+    payload["schema-version"] = 2
     path = tmp_path / "profile.yaml"
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
-    with pytest.raises(GovernanceSelectionProfileError, match="expected 2"):
+    with pytest.raises(GovernanceSelectionProfileError, match="expected 1"):
         load_governance_selection_profile(path)
 
 

@@ -29,7 +29,7 @@ from standards_atlas.application.semantic_qualification.applicability_end_to_end
     load_applicability_end_to_end_artifacts,
     validate_applicability_detail_provenance,
 )
-from standards_atlas.domain.model import ApplicabilityTarget, OtherApplicabilityTarget
+from standards_atlas.domain.model.applicability import ApplicabilityTarget, OtherApplicabilityTarget
 
 
 class ApplicabilityComparisonState(StrEnum):

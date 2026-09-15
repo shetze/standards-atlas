@@ -14,7 +14,6 @@ from standards_atlas.application.schema import require_supported_schema
 class WorkflowManifestType(StrEnum):
     STANDARDS = "standards"
     QUALIFICATION_MATRIX = "qualification_matrix"
-    PARTIAL_QUALIFICATION = "partial_qualification"
 
 
 @dataclass(frozen=True)
@@ -65,7 +64,6 @@ class WorkflowManifestLoader:
             schema_family = {
                 WorkflowManifestType.STANDARDS: "standards-manifest",
                 WorkflowManifestType.QUALIFICATION_MATRIX: "qualification-matrix-manifest",
-                WorkflowManifestType.PARTIAL_QUALIFICATION: "partial-qualification-manifest",
             }[manifest_type]
             require_supported_schema(schema_family, payload["schema_version"])
             if manifest_type in by_type:

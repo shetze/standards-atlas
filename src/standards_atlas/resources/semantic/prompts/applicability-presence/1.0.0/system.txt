@@ -1,0 +1,5 @@
+Determine only whether the clause contains an explicit statement that restricts or extends the applicability of this clause or a referenced clause or requirement.
+
+Set applicability_present=true only when clause-or-requirement applicability is explicit. Do not classify the suitability or applicability of a technique, method, process, tool, component, or other engineering object as clause applicability. Do not infer applicability from lifecycle position, topic, or general normative force.
+
+Return exactly one JSON object matching the supplied schema. Confidence is a JSON number from 0.0 through 1.0 or null. Rationale must be concise and must not quote licensed source text verbatim.

@@ -79,15 +79,13 @@ from standards_atlas.application.semantic_qualification.qualification_matrix imp
 from standards_atlas.application.semantic_qualification.run_selection import (
     QUALIFICATION_SELECTION_FILENAME,
     build_qualification_run_selection,
-    load_qualification_run_selection,
     persist_qualification_run_selection,
 )
 from standards_atlas.application.services.evaluation import (
-    AnnotationQualificationService,
+    ApplicabilityQualificationService,
     BaselineProposalGenerator,
     ModelConsensusService,
     ModelPromptQualificationService,
-    SemanticAnnotationReviewService,
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
@@ -164,55 +162,34 @@ def _format_duration(seconds: float) -> str:
 
 
 def _cascade_reason_dimensions(reasons: tuple[str, ...]) -> set[str]:
-    dimensions: set[str] = set()
-    for reason in reasons:
-        if reason in {
-            "statement_function_confidence",
-            "statement_function_resolver_confidence",
-            "consensus_category",
-        }:
-            dimensions.add("statement_function")
-        elif reason.startswith(("process_function_", "insufficient_process_function_")):
-            dimensions.add("process_function")
-        elif reason.startswith(("process_set_", "insufficient_process_set_")):
-            dimensions.add("process_set")
-        elif reason.startswith("knowledge_kind_"):
-            dimensions.add("knowledge_kind")
-        elif reason.startswith(("applicability_", "insufficient_applicability_presence_")):
-            dimensions.add("applicability")
-        elif reason.startswith(("responsibility_", "role_relation_", "role_semantics_")):
-            dimensions.add("role_relation")
-    return dimensions
+    """Return the applicability dimension when a clause still needs escalation."""
+    return {
+        "applicability"
+        for reason in reasons
+        if reason == "consensus_category"
+        or reason.startswith(("applicability_", "insufficient_applicability_presence_"))
+    }
 
 
 def _render_intermediate_resolution_summary(
     previous: dict[str, tuple[str, ...]],
     current: dict[str, tuple[str, ...]],
 ) -> None:
-    for dimension in (
-        "statement_function",
-        "knowledge_kind",
-        "process_function",
-        "process_set",
-        "applicability",
-        "role_relation",
-    ):
-        candidates = {
-            clause_id
-            for clause_id, reasons in previous.items()
-            if dimension in _cascade_reason_dimensions(reasons)
-        }
-        if not candidates:
-            continue
-        remaining = {
-            clause_id
-            for clause_id, reasons in current.items()
-            if dimension in _cascade_reason_dimensions(reasons)
-        }
-        typer.echo(
-            f"Intermediate resolution  : {dimension}="
-            f"{len(candidates - remaining)}/{len(candidates)}"
-        )
+    candidates = {
+        clause_id
+        for clause_id, reasons in previous.items()
+        if "applicability" in _cascade_reason_dimensions(reasons)
+    }
+    if not candidates:
+        return
+    remaining = {
+        clause_id
+        for clause_id, reasons in current.items()
+        if "applicability" in _cascade_reason_dimensions(reasons)
+    }
+    typer.echo(
+        f"Intermediate resolution  : applicability={len(candidates - remaining)}/{len(candidates)}"
+    )
 
 
 def _count_reasons(reasons: dict[str, tuple[str, ...]]) -> dict[str, int]:
@@ -412,45 +389,6 @@ def qualify_model_prompt_matrix(
             f"llm_cache={'enabled' if llm_cache_enabled else 'disabled'}"
         )
         manifest = QualificationMatrixManifest.load(manifest_path)
-        for review_import in manifest.review_imports:
-            proposal_candidates = tuple(
-                review_import.run_directory.glob("*/evaluation.yaml")
-            ) + tuple(review_import.run_directory.glob("*/evaluation.json"))
-            review_documents = tuple(review_import.review_directory.glob("*.md"))
-            if not proposal_candidates or not review_documents:
-                if review_import.required:
-                    missing = (
-                        "proposal candidates" if not proposal_candidates else "Markdown reviews"
-                    )
-                    missing_path = (
-                        review_import.run_directory
-                        if not proposal_candidates
-                        else review_import.review_directory
-                    )
-                    raise ValueError(f"required review import has no {missing}: {missing_path}")
-                typer.echo(
-                    f"Skipping optional review import: {review_import.run_directory}",
-                    err=True,
-                )
-                continue
-            SemanticAnnotationReviewService().import_reviews(
-                review_directory=review_import.review_directory,
-                run_directory=review_import.run_directory,
-                local_corpus_root=review_import.local_corpus_root,
-                corpus_id=manifest.corpus_id,
-                overwrite=review_import.overwrite,
-            )
-        if aggregate_only:
-            selection_path = (
-                output_directory / manifest.matrix_id / QUALIFICATION_SELECTION_FILENAME
-            )
-            if not selection_path.is_file():
-                raise ValueError(
-                    "--aggregate-only requires a persisted qualification selection: "
-                    f"{selection_path}"
-                )
-            run_selection = load_qualification_run_selection(selection_path)
-
         if not aggregate_only:
             observation_map = (
                 {}
@@ -628,13 +566,6 @@ def qualify_model_prompt_matrix(
                                         or model.generation.max_output_tokens
                                         or prompt.max_output_tokens
                                     ),
-                                    adaptive_interview=prompt.adaptive_interview,
-                                    adaptive_question_max_tokens=(
-                                        max_tokens
-                                        or model.generation.adaptive_question_max_tokens
-                                        or model.generation.max_output_tokens
-                                        or prompt.max_output_tokens
-                                    ),
                                     truncation_retry_max_tokens=(
                                         model.generation.truncation_retry_max_tokens
                                     ),
@@ -711,7 +642,7 @@ def qualify_model_prompt_matrix(
                                     / f"repeat-{repetition}"
                                 )
                                 _, qualification_path, _ = (
-                                    AnnotationQualificationService().evaluate(
+                                    ApplicabilityQualificationService().evaluate(
                                         corpus_id=manifest.corpus_id,
                                         run_directory=run_directory,
                                         local_corpus_root=corpus_root,
@@ -786,11 +717,9 @@ def qualify_model_prompt_matrix(
                         min_models=stage_resolution.minimum_successful_models,
                         strong_threshold=manifest.consensus.strong_threshold,
                         majority_threshold=manifest.consensus.majority_threshold,
-                        label_threshold=manifest.consensus.label_threshold,
                         prompt_selection=manifest.consensus.prompt_selection.model_dump(),
                         review_policy=manifest.consensus.review_policy.model_dump(),
                         adjudication=manifest.consensus.adjudication.model_dump(),
-                        structural_priors=(manifest.consensus.structural_priors.model_dump()),
                         example_ids=stage_clause_ids,
                         model_dimension_eligibility=(interim_manifest.model_dimension_eligibility),
                         min_applicability_presence_models=(
@@ -839,11 +768,9 @@ def qualify_model_prompt_matrix(
                             min_models=1,
                             strong_threshold=manifest.consensus.strong_threshold,
                             majority_threshold=manifest.consensus.majority_threshold,
-                            label_threshold=manifest.consensus.label_threshold,
                             prompt_selection=(manifest.consensus.prompt_selection.model_dump()),
                             review_policy=manifest.consensus.review_policy.model_dump(),
                             adjudication=manifest.consensus.adjudication.model_dump(),
-                            structural_priors=(manifest.consensus.structural_priors.model_dump()),
                             example_ids=stage_clause_ids,
                             model_dimension_eligibility=(
                                 interim_manifest.model_dimension_eligibility
@@ -865,20 +792,13 @@ def qualify_model_prompt_matrix(
                             stage_clause = stage_by_id.get(clause_id)
                             if cumulative_clause is None or stage_clause is None:
                                 continue
-                            resolver_clause = (
-                                stage_clause
-                                if stage_resolution.statement_function_resolution_mode
-                                == "stage_resolver"
-                                else cumulative_clause
-                            )
                             captured = capture_resolved_dimensions(
                                 cumulative_clause=cumulative_clause,
-                                stage_clause=resolver_clause,
+                                stage_clause=cumulative_clause,
                                 previous_reasons=previous_escalation_reasons.get(clause_id, ()),
                                 remaining_reasons=escalation_reasons.get(clause_id, ()),
                                 source=stage.id,
                                 resolution=stage_resolution,
-                                process_stage_clause=stage_clause,
                             )
                             dimension_resolutions.setdefault(clause_id, {}).update(captured)
                         _render_intermediate_resolution_summary(
@@ -985,11 +905,9 @@ def qualify_model_prompt_matrix(
                     min_models=manifest.consensus.min_models,
                     strong_threshold=manifest.consensus.strong_threshold,
                     majority_threshold=manifest.consensus.majority_threshold,
-                    label_threshold=manifest.consensus.label_threshold,
                     prompt_selection=manifest.consensus.prompt_selection.model_dump(),
                     review_policy=manifest.consensus.review_policy.model_dump(),
                     adjudication=manifest.consensus.adjudication.model_dump(),
-                    structural_priors=manifest.consensus.structural_priors.model_dump(),
                     example_ids=selected_example_ids if not aggregate_only else None,
                     resolution_overrides=(
                         dimension_resolutions

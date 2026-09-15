@@ -32,7 +32,7 @@ this workflow does not change thresholds or turn generated values into confirmat
 ```bash
 uv run standards-atlas workflow plan \
   --task enrichments \
-  --manifests manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml \
+  --manifests manifests/standards.yaml,manifests/applicability-presence-qualification-v1.yaml \
   --hierarchy functional-safety \
   --knowledge-domain functional-safety
 ```
@@ -42,7 +42,7 @@ Execute the same selection:
 ```bash
 uv run standards-atlas workflow run \
   --task enrichments \
-  --manifests manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml \
+  --manifests manifests/standards.yaml,manifests/applicability-presence-qualification-v1.yaml \
   --hierarchy functional-safety \
   --knowledge-domain functional-safety
 ```
@@ -155,7 +155,7 @@ size and limit** with `--resume-after-context`:
 ```bash
 uv run standards-atlas workflow run \
   --task enrichments \
-  --manifests manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml \
+  --manifests manifests/standards.yaml,manifests/applicability-presence-qualification-v1.yaml \
   --hierarchy functional-safety \
   --knowledge-domain functional-safety \
   --resume-after-context \

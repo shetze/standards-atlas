@@ -14,14 +14,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.schema.model import SchemaBoundModel
-from standards_atlas.domain.model import (
-    ApplicabilityFunction,
-    KnowledgeKind,
-    ProcessFunction,
-    RoleRelation,
-    RoleRelationType,
-    StatementFunction,
-)
 
 
 class AnnotationLifecycleStatus(StrEnum):
@@ -65,74 +57,14 @@ class ClauseReference(BaseModel):
         return f"{self.knowledge_domain}:{self.document_key}:{self.clause_id}"
 
 
-class StatementFunctionSelection(BaseModel):
-    """Semantic-role classification assigned to a clause."""
+class ApplicabilityPresenceSelection(BaseModel):
+    """Applicability-presence decision assigned to one clause."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    statement_functions: tuple[StatementFunction, ...] = ()
-    primary_function: StatementFunction | None = None
-    knowledge_kinds: tuple[KnowledgeKind, ...] = ()
-    primary_knowledge_kind: KnowledgeKind | None = None
-    process_functions: tuple[ProcessFunction, ...] = ()
-    primary_process_function: ProcessFunction | None = None
-    applicability_present: bool = False
-    applicability_functions: tuple[ApplicabilityFunction, ...] = ()
-    primary_applicability_function: ApplicabilityFunction | None = None
-    role_semantics_present: bool = False
-    role_relation_types: tuple[RoleRelationType, ...] = ()
-    # Compatibility field for qualification payloads before tuple-set consensus.
-    primary_role_relation_type: RoleRelationType | None = None
-    role_relations: tuple[RoleRelation, ...] = ()
+    applicability_present: bool
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     rationale: str | None = None
-
-    @model_validator(mode="after")
-    def primary_function_must_be_selected(self) -> StatementFunctionSelection:
-        if (
-            self.primary_function is not None
-            and self.primary_function not in self.statement_functions
-        ):
-            raise ValueError("primary_function must be included in statement_functions")
-        if len(set(self.statement_functions)) != len(self.statement_functions):
-            raise ValueError("statement_functions must not contain duplicates")
-        if (
-            self.primary_knowledge_kind is not None
-            and self.primary_knowledge_kind not in self.knowledge_kinds
-        ):
-            raise ValueError("primary_knowledge_kind must be included in knowledge_kinds")
-        if len(set(self.knowledge_kinds)) != len(self.knowledge_kinds):
-            raise ValueError("knowledge_kinds must not contain duplicates")
-        if (
-            self.primary_process_function is not None
-            and self.primary_process_function not in self.process_functions
-        ):
-            raise ValueError("primary_process_function must be included in process_functions")
-        if len(set(self.process_functions)) != len(self.process_functions):
-            raise ValueError("process_functions must not contain duplicates")
-        if (
-            self.primary_applicability_function is not None
-            and self.primary_applicability_function not in self.applicability_functions
-        ):
-            raise ValueError(
-                "primary_applicability_function must be included in applicability_functions"
-            )
-        if len(set(self.applicability_functions)) != len(self.applicability_functions):
-            raise ValueError("applicability_functions must not contain duplicates")
-        if (
-            self.applicability_functions or self.primary_applicability_function
-        ) and not self.applicability_present:
-            raise ValueError("applicability classifications require applicability_present=true")
-        if (
-            self.primary_role_relation_type is not None
-            and self.primary_role_relation_type not in self.role_relation_types
-        ):
-            raise ValueError("primary_role_relation_type must be included in role_relation_types")
-        if len(set(self.role_relation_types)) != len(self.role_relation_types):
-            raise ValueError("role_relation_types must not contain duplicates")
-        if (self.role_relation_types or self.role_relations) and not self.role_semantics_present:
-            raise ValueError("role relation classifications require role_semantics_present=true")
-        return self
 
 
 class AnnotationGenerator(BaseModel):
@@ -172,13 +104,13 @@ class ClauseEvaluationAnnotation(SchemaBoundModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal[1] = 1
     task: str = Field(min_length=1)
     lifecycle_status: AnnotationLifecycleStatus
     clause: ClauseReference
-    proposal: StatementFunctionSelection
+    proposal: ApplicabilityPresenceSelection
     generator: AnnotationGenerator
-    annotation: StatementFunctionSelection | None = None
+    annotation: ApplicabilityPresenceSelection | None = None
     review: AnnotationReview | None = None
 
     @model_validator(mode="after")
@@ -227,7 +159,7 @@ class EvaluationCorpusManifest(SchemaBoundModel):
 
     model_config = ConfigDict(frozen=True)
 
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal[1] = 1
     corpus_id: str = Field(min_length=1)
     task: str = Field(min_length=1)
     corpus_version: str = Field(min_length=1)

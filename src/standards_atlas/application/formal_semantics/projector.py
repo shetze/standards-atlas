@@ -322,9 +322,6 @@ class DeterministicFormalSemanticProjector:
     ) -> tuple[str, ...]:
         domains = list(explicit)
         for clause in document.clauses:
-            domains.extend(
-                item.knowledge_domain for item in clause.semantic_classification.domain_functions
-            )
             if clause.structural_profile:
                 domains.extend(
                     item.taxonomy for item in clause.structural_profile.domain_categories
@@ -338,11 +335,9 @@ class DeterministicFormalSemanticProjector:
         explicit_domains: tuple[str, ...],
     ) -> ContextFrame:
         clause = next(item for item in document.clauses if item.id.value == clause_id)
-        semantic = clause.semantic_classification
         facets: list[ContextFacet] = []
 
         domains = list(explicit_domains)
-        domains.extend(item.knowledge_domain for item in semantic.domain_functions)
         for domain in dict.fromkeys(domains):
             facets.append(
                 _facet(
@@ -353,33 +348,6 @@ class DeterministicFormalSemanticProjector:
                 )
             )
 
-        for value in semantic.statement_functions:
-            facets.append(
-                _facet(
-                    ContextKind.SEMANTIC,
-                    "statementFunction",
-                    value.value,
-                    "semantic-classification",
-                )
-            )
-        for value in semantic.knowledge_kinds:
-            facets.append(
-                _facet(
-                    ContextKind.SEMANTIC,
-                    "knowledgeKind",
-                    value.value,
-                    "semantic-classification",
-                )
-            )
-        for value in semantic.process_functions:
-            facets.append(
-                _facet(
-                    ContextKind.SEMANTIC,
-                    "processFunction",
-                    value.value,
-                    "semantic-classification",
-                )
-            )
         applicability = clause.applicability
         facets.append(
             _facet(
@@ -398,49 +366,6 @@ class DeterministicFormalSemanticProjector:
                     "applicability",
                 )
             )
-        facets.append(
-            _facet(
-                ContextKind.SEMANTIC,
-                "roleSemanticsPresent",
-                semantic.role_semantics_present,
-                "semantic-classification",
-            )
-        )
-        for relation in semantic.role_relations:
-            facets.append(
-                _facet(
-                    ContextKind.SEMANTIC,
-                    "roleRelationClass",
-                    relation.relation_class,
-                    "semantic-classification",
-                )
-            )
-        facets.append(
-            _facet(
-                ContextKind.SEMANTIC,
-                "normativeStatus",
-                clause.normative_status.value,
-                "semantic-classification",
-            )
-        )
-        for domain in semantic.domain_functions:
-            facets.append(
-                _facet(
-                    ContextKind.EPISTEMIC,
-                    "taxonomyVersion",
-                    f"{domain.knowledge_domain}@{domain.taxonomy_version}",
-                    "domain-function-taxonomy",
-                )
-            )
-            for function in domain.functions:
-                facets.append(
-                    _facet(
-                        ContextKind.SEMANTIC,
-                        "domainFunction",
-                        function,
-                        f"knowledge-domain:{domain.knowledge_domain}",
-                    )
-                )
 
         primary_subject = clause.primary_subject
         if primary_subject is not None:

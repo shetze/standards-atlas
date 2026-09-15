@@ -5,25 +5,11 @@ from typer.testing import CliRunner
 
 from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
-    STATEMENT_FUNCTION_PROMPT_VERSIONS,
 )
 from standards_atlas.application.semantic_qualification.proposals import ProposalRunConfig
 from standards_atlas.cli.main import app
 
 runner = CliRunner()
-
-
-def test_annotations_propose_help_lists_prompt_variants_and_defaults() -> None:
-    result = runner.invoke(
-        app,
-        ["evaluation", "annotations-propose", "--help"],
-        terminal_width=240,
-    )
-
-    assert result.exit_code == 0
-    for prompt_version in STATEMENT_FUNCTION_PROMPT_VERSIONS:
-        assert prompt_version in result.stdout
-    assert str(DEFAULT_EVALUATION_MAX_TOKENS) in result.stdout
 
 
 def test_proposal_config_uses_shared_max_tokens_default() -> None:

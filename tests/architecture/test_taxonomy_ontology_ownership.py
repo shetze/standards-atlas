@@ -33,29 +33,9 @@ def test_content_enrichment_does_not_classify_taxonomy_or_ontology() -> None:
     assert "standards_atlas.application.services.structural_profile_classifier" not in imports
 
 
-def test_taxonomy_and_semantic_classification_have_separate_application_services() -> None:
-    taxonomy = APPLICATION / "services" / "structural_taxonomy_service.py"
-    semantic_classification = APPLICATION / "services" / "semantic_enrichment_service.py"
-
-    taxonomy_imports = _imports(taxonomy)
-    semantic_imports = _imports(semantic_classification)
-
-    assert not any(
-        module.startswith("standards_atlas.application.semantic_ontology")
-        for module in taxonomy_imports
-    )
-    assert "standards_atlas.application.services.structural_profile_classifier" in taxonomy_imports
-    assert any(
-        module.startswith("standards_atlas.application.semantic_classification")
-        for module in semantic_imports
-    )
-    assert any(
-        module.startswith("standards_atlas.application.semantic_ontology")
-        for module in semantic_imports
-    )
-    assert (
-        "standards_atlas.application.services.structural_profile_classifier" not in semantic_imports
-    )
+def test_legacy_semantic_classification_service_is_removed() -> None:
+    assert not (APPLICATION / "services" / "semantic_enrichment_service.py").exists()
+    assert not (APPLICATION / "semantic_classification").exists()
 
 
 def test_qualification_does_not_materialize_semantic_enrichment() -> None:

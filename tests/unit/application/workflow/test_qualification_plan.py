@@ -5,9 +5,7 @@ from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationR
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 from standards_atlas.application.workflow import QualificationWorkflowPlanner, WorkflowStage
 
-QUALIFICATION_MANIFEST = Path(
-    "manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml"
-)
+QUALIFICATION_MANIFEST = Path("manifests/applicability-presence-qualification-v1.yaml")
 
 
 def _plan(*, regenerate_docling: bool = False, overwrite: bool = False, limit: int | None = None):

@@ -27,7 +27,7 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 )
 from standards_atlas.application.semantic_qualification.applicability_hard_cases import _find_member
 from standards_atlas.application.semantic_qualification.consensus import ConsensusReport
-from standards_atlas.domain.model import ApplicabilityTarget
+from standards_atlas.domain.model.applicability import ApplicabilityTarget
 
 _FINAL_DETAIL_CONSENSUS_MEMBER = "inputs/applicability-detail/final-consensus-report.json"
 

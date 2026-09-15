@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-DEFAULT_EVALUATION_TASK = "statement-function-classification"
+DEFAULT_EVALUATION_TASK = "applicability-presence"
 DEFAULT_EVALUATION_TASK_VERSION = "1.0.0"
 DEFAULT_EVALUATION_DATASET_VERSION = "1.0.0"
-DEFAULT_EVALUATION_PROMPT_VERSION = "structure-aware-v1"
+DEFAULT_EVALUATION_PROMPT_VERSION = "1.0.0"
 DEFAULT_EVALUATION_MODEL = "default"
 DEFAULT_EVALUATION_PROVIDER = "ramalama"
 DEFAULT_EVALUATION_TEMPERATURE = 0.0
@@ -24,11 +24,4 @@ DEFAULT_APPLICABILITY_GOLDEN_CORPUS = Path(
 )
 DEFAULT_APPLICABILITY_DETAIL_SEED = Path(
     "local/review/applicability/3.0.0/applicability-detail-golden-seed.yaml"
-)
-
-STATEMENT_FUNCTION_PROMPT_VERSIONS = (
-    "content-only-v1",
-    "structure-aware-v1",
-    "evidence-first-v1",
-    "conservative-v1",
 )

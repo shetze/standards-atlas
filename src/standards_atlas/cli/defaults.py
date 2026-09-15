@@ -27,9 +27,7 @@ DEFAULT_EVALUATION_RETRY_TIMEOUTS = evaluation_defaults.DEFAULT_EVALUATION_RETRY
 
 DEFAULT_LLM_CONFIG = Path("cfg/llm.yaml")
 DEFAULT_STANDARDS_MANIFEST = Path("manifests/standards.yaml")
-DEFAULT_QUALIFICATION_MATRIX = Path(
-    "manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml"
-)
+DEFAULT_QUALIFICATION_MATRIX = Path("manifests/applicability-presence-qualification-v1.yaml")
 DEFAULT_MCP_CONFIG = Path("cfg/mcp.yaml")
 DEFAULT_MCP_TOKEN_ENVIRONMENT_VARIABLE = "STANDARDS_ATLAS_MCP_TOKEN"
 DEFAULT_MCP_TIMEOUT_SECONDS = 10.0

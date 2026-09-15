@@ -35,7 +35,7 @@ from standards_atlas.application.semantic_qualification.applicability_end_to_end
     load_applicability_end_to_end_artifacts,
 )
 from standards_atlas.application.semantic_qualification.applicability_hard_cases import _find_member
-from standards_atlas.domain.model import ApplicabilityTarget
+from standards_atlas.domain.model.applicability import ApplicabilityTarget
 
 
 class ApplicabilityDetailDisagreementKind(StrEnum):

@@ -1,8 +1,0 @@
-Clause:
-{content}
-
-Structural context:
-{structural_context}
-
-Metadata:
-{metadata}

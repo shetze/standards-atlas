@@ -7,6 +7,32 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, model_validator
 
 
+class ApplicabilityFunction(StrEnum):
+    """Detailed applicability function used by qualification-only analysis."""
+
+    SCOPE_DEFINITION = "scope_definition"
+    APPLICABILITY_CONDITION = "applicability_condition"
+    INCLUSION = "inclusion"
+    EXCLUSION = "exclusion"
+    EXCEPTION = "exception"
+
+
+class ApplicabilityTarget(StrEnum):
+    CLAUSE_OR_REQUIREMENT = "clause_or_requirement"
+    METHOD_OR_TECHNIQUE = "method_or_technique"
+    PROCESS_OR_ACTIVITY = "process_or_activity"
+    OBJECT_OR_COMPONENT = "object_or_component"
+    OTHER = "other"
+    NONE = "none"
+
+
+class OtherApplicabilityTarget(StrEnum):
+    METHOD_OR_TECHNIQUE = "method_or_technique"
+    PROCESS_OR_ACTIVITY = "process_or_activity"
+    OBJECT_OR_COMPONENT = "object_or_component"
+    OTHER = "other"
+
+
 class ApplicabilityPolarity(StrEnum):
     """Direction of an explicit applicability statement."""
 

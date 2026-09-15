@@ -9,7 +9,7 @@ runner = CliRunner()
 
 def _write_profile(path: Path, *, group: str = "safety-lifecycle") -> None:
     path.write_text(
-        f"""schema-version: 2
+        f"""schema-version: 1
 id: rail-onboard-sil2
 version: 1.0.0
 context:
@@ -18,7 +18,6 @@ standards:
   include:
     - EN50716
 selection:
-  statement-functions: []
   subject-group-profile:
     id: functional-safety
     version: 1.0.0

@@ -26,7 +26,7 @@ from standards_atlas.application.workflow import (
 from standards_atlas.cli import app
 
 MANIFEST = Path("manifests/standards.yaml")
-MATRIX = Path("manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml")
+MATRIX = Path("manifests/applicability-presence-qualification-v1.yaml")
 
 
 def plan(**options):
@@ -130,9 +130,7 @@ def test_manifest_without_final_policy_is_rejected():
             family_keys=("EN50716",),
             catalog_root=Path.cwd(),
             standards_manifest=MANIFEST,
-            qualification_manifest=Path(
-                "manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml"
-            ),
+            qualification_manifest=Path("manifests/applicability-presence-qualification-v1.yaml"),
         )
 
 

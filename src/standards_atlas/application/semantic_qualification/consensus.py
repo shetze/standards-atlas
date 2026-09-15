@@ -1,8 +1,7 @@
-"""Normalization-aware model consensus for semantic qualification matrices."""
+"""Applicability-presence consensus for semantic qualification matrices."""
 
 from __future__ import annotations
 
-import re
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -11,7 +10,7 @@ from statistics import median
 from typing import Any, ClassVar, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.evaluation.repository import EvaluationDatasetRepository
 from standards_atlas.application.schema import (
@@ -22,29 +21,6 @@ from standards_atlas.application.schema import (
 from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.application.semantic_qualification.annotations import (
     ClauseEvaluationAnnotation,
-)
-from standards_atlas.application.semantic_qualification.process_functions import (
-    apply_process_overrides,
-    process_report_metrics,
-    process_vote,
-    resolve_process_votes,
-    with_process_observation_fields,
-)
-from standards_atlas.application.semantic_qualification.role_qualification import (
-    RoleTupleConsensus,
-    detect_role_candidate,
-    relation_tuple_consensus,
-    summarize_role_qualification,
-)
-from standards_atlas.application.semantic_qualification.structural_evidence import (
-    derive_structural_evidence,
-)
-from standards_atlas.domain.model import (
-    KnowledgeKind,
-    ProcessFunction,
-    RoleRelation,
-    RoleRelationType,
-    StatementFunction,
 )
 
 
@@ -63,68 +39,23 @@ class OverallConsensusStatus(StrEnum):
 
 
 class ModelVote(BaseModel):
-    """One stable, dimension-aware vote contributed by a model."""
+    """One stable applicability-presence vote contributed by a model."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     model_id: str
-    primary_function: StatementFunction | None = None
-    secondary_functions: tuple[StatementFunction, ...] = ()
-    primary_knowledge_kind: KnowledgeKind | None = None
-    secondary_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
-    # None means unobserved; () is an explicit empty process selection.
-    process_functions: tuple[ProcessFunction, ...] | None = None
-    primary_process_function: ProcessFunction | None = None
-    process_primary_evaluated: bool = False
-    process_repetitions: int = Field(default=0, ge=0)
-    process_primary_repetitions: int = Field(default=0, ge=0)
-    process_stability: float = Field(default=0.0, ge=0.0, le=1.0)
-    applicability_present: bool = False
+    applicability_present: bool
     applicability_presence_eligible: bool = True
-    role_semantics_present: bool = False
-    role_relations: tuple[RoleRelation, ...] = ()
-    role_relation_present: bool = False
-    role_relation_type: RoleRelationType | None = None
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     evidence: str | None = None
     repetitions: int = Field(ge=1)
     stability: float = Field(ge=0.0, le=1.0)
     role: str = Field(default="voter", pattern="^(voter|adjudicator)$")
 
-    @model_validator(mode="after")
-    def validate_process_observation(self) -> ModelVote:
-        if self.process_functions is not None:
-            if len(set(self.process_functions)) != len(self.process_functions):
-                raise ValueError("process votes must not duplicate labels")
-        if self.process_primary_evaluated and self.process_functions is None:
-            raise ValueError("a process primary observation requires an observed set")
-        if self.primary_process_function is not None and (
-            not self.process_primary_evaluated
-            or self.primary_process_function not in (self.process_functions or ())
-        ):
-            raise ValueError("process primary must be explicitly observed and selected")
-        return self
-
-    @property
-    def statement_functions(self) -> tuple[StatementFunction, ...]:
-        if self.primary_function is None:
-            return self.secondary_functions
-        return (self.primary_function, *self.secondary_functions)
-
-    @property
-    def knowledge_kinds(self) -> tuple[KnowledgeKind, ...]:
-        if self.primary_knowledge_kind is None:
-            return self.secondary_knowledge_kinds
-        return (self.primary_knowledge_kind, *self.secondary_knowledge_kinds)
-
-    @property
-    def role_relation_types(self) -> tuple[RoleRelationType, ...]:
-        if not self.role_relation_present or self.role_relation_type is None:
-            return ()
-        return (self.role_relation_type,)
-
 
 class ClauseConsensus(BaseModel):
+    """Resolved applicability-presence decision for one source clause."""
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     clause_id: str
@@ -133,77 +64,19 @@ class ClauseConsensus(BaseModel):
     heading: str | None = None
     clause_text: str | None = None
     category: ConsensusCategory
-    statement_function_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    knowledge_kind_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    knowledge_primary_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    knowledge_set_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    process_function_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    process_primary_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    process_set_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    primary_process_function: ProcessFunction | None = None
-    proposed_process_functions: tuple[ProcessFunction, ...] = ()
-    process_primary_evaluated: bool = False
-    process_set_evaluated: bool = False
-    process_primary_decided: bool = False
-    process_set_decided: bool = False
-    process_primary_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    process_set_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    process_exact_set_agreement: float = Field(default=0.0, ge=0.0, le=1.0)
-    process_primary_unanimous: bool = False
-    process_set_unanimous: bool = False
-    process_primary_participating_models: int = Field(default=0, ge=0)
-    process_participating_models: int = Field(default=0, ge=0)
-    process_primary_support: dict[str, float] = Field(default_factory=dict)
-    process_function_support: dict[str, float] = Field(default_factory=dict)
-    process_decision_conflict: bool = False
-    applicability_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    role_relation_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
-    role_semantics_category: ConsensusCategory = ConsensusCategory.INSUFFICIENT
+    applicability_category: ConsensusCategory
     overall_status: OverallConsensusStatus = OverallConsensusStatus.REVIEW_REQUIRED
-    primary_function: StatementFunction | None = None
-    proposed_functions: tuple[StatementFunction, ...] = ()
-    primary_knowledge_kind: KnowledgeKind | None = None
-    proposed_knowledge_kinds: tuple[KnowledgeKind, ...] = ()
     applicability_present: bool = False
-    role_semantics_present: bool = False
-    role_semantics_presence_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    role_candidate: bool = False
-    role_candidate_markers: tuple[str, ...] = ()
-    role_candidate_consensus_negative: bool = False
-    role_semantics_evidence_conflict: bool = False
-    proposed_role_relations: tuple[RoleRelation, ...] = ()
-    role_relation_consensus: tuple[RoleTupleConsensus, ...] = ()
-    role_relation_present: bool = False
-    proposed_role_relation_types: tuple[RoleRelationType, ...] = ()
-    # Overall confidence follows the primary statement-function dimension.
-    # Keep this field for report compatibility while exposing every semantic
-    # dimension explicitly below.
-    confidence: float = Field(ge=0.0, le=1.0)
-    statement_function_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    knowledge_kind_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    # Applicability is a binary presence decision in the central cascade.
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_presence_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    role_relation_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    statement_function_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    knowledge_kind_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    knowledge_set_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    knowledge_primary_unanimous: bool = True
-    knowledge_set_unanimous: bool = True
     applicability_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
-    role_relation_decision_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     applicability_presence_unanimous: bool = True
     applicability_unanimous: bool = True
-    applicability_participating_models: int | None = Field(default=None, ge=0)
-    role_relation_unanimous: bool = True
-    role_semantics_unanimous: bool = True
-    participating_models: int = Field(ge=0)
+    applicability_participating_models: int = Field(default=0, ge=0)
+    participating_models: int = Field(default=0, ge=0)
     votes: tuple[ModelVote, ...] = ()
-    label_support: dict[str, float] = Field(default_factory=dict)
-    knowledge_kind_support: dict[str, float] = Field(default_factory=dict)
     applicability_support: dict[str, float] = Field(default_factory=dict)
-    role_relation_support: dict[str, float] = Field(default_factory=dict)
-    role_semantics_support: dict[str, float] = Field(default_factory=dict)
     structural_prior: dict[str, Any] = Field(default_factory=dict)
     scope_context: bool = False
     adjudicated: bool = False
@@ -213,44 +86,35 @@ class ClauseConsensus(BaseModel):
 
 
 class ConsensusReport(SchemaBoundModel):
+    """Applicability-presence consensus report."""
+
     SCHEMA_FAMILY: ClassVar[str] = "qualification-consensus"
+    model_config = ConfigDict(frozen=True, revalidate_instances="always", extra="forbid")
 
-    model_config = ConfigDict(frozen=True, revalidate_instances="always")
-
-    schema_version: Literal["5.0"]
+    schema_version: Literal[1] = 1
     matrix_id: str
     corpus_id: str
     prompt_id: str
     reasoning_mode_id: str
     prompt_selection: dict[str, str] = Field(default_factory=dict)
     generated_at: datetime
-    model_count: int
+    model_count: int = Field(ge=0)
     minimum_participating_models: int = Field(default=0, ge=0)
     median_participating_models: float = Field(default=0.0, ge=0.0)
     maximum_participating_models: int = Field(default=0, ge=0)
     participation_distribution: dict[str, int] = Field(default_factory=dict)
     review_policy: dict[str, Any] = Field(default_factory=dict)
-    clause_count: int
+    clause_count: int = Field(ge=0)
     categories: dict[str, int]
-    review_count: int
+    review_count: int = Field(ge=0)
     dimension_categories: dict[str, dict[str, int]] = Field(default_factory=dict)
     overall_statuses: dict[str, int] = Field(default_factory=dict)
     resolution_sources: dict[str, int] = Field(default_factory=dict)
-    role_qualification_metrics: dict[str, Any] = Field(default_factory=dict)
     clauses: tuple[ClauseConsensus, ...]
-    process_function_metrics: dict[str, Any] = Field(default_factory=dict)
 
 
 class ModelConsensusService:
-    """Build dimension-aware votes and apply priors, evidence gates and adjudication."""
-
-    def evaluate_partial(self, **kwargs):
-        """Opt-in sparse consensus; never coerce partial answers into ModelVotes."""
-        from standards_atlas.application.semantic_qualification.mixed_consensus import (
-            evaluate_mixed_consensus,
-        )
-
-        return evaluate_mixed_consensus(**kwargs)
+    """Build model votes and resolve the applicability-presence dimension."""
 
     def evaluate(
         self,
@@ -265,40 +129,30 @@ class ModelConsensusService:
         min_models: int = 3,
         strong_threshold: float = 0.8,
         majority_threshold: float = 0.6,
-        label_threshold: float = 0.6,
         prompt_selection: dict[str, str] | None = None,
         review_policy: dict[str, Any] | None = None,
         adjudication: dict[str, Any] | None = None,
-        structural_priors: dict[str, Any] | None = None,
         example_ids: tuple[str, ...] | None = None,
         resolution_overrides: dict[str, dict[str, dict[str, Any]]] | None = None,
         model_dimension_eligibility: dict[str, dict[str, bool]] | None = None,
         min_applicability_presence_models: int | None = None,
     ) -> tuple[ConsensusReport, Path, Path, Path]:
-        prompts = {
-            "statement_function": prompt_id,
-            "knowledge_kind": prompt_id,
-            "applicability": prompt_id,
-            "role_relation": prompt_id,
-            **{key: value for key, value in (prompt_selection or {}).items() if value},
-        }
-        prompts.setdefault("process_function", prompts["statement_function"])
-        selected_prompt_ids = set(prompts.values())
+        selected_prompt = (prompt_selection or {}).get("applicability") or prompt_id
         selected = tuple(
             item
             for item in observations
-            if item.prompt_id in selected_prompt_ids
+            if item.prompt_id == selected_prompt
             and item.reasoning_mode_id == reasoning_mode_id
             and getattr(item, "run_directory", None) is not None
         )
         if not selected:
             raise ValueError(
-                "no proposal runs available for consensus prompts="
-                f"{sorted(selected_prompt_ids)!r}, reasoning={reasoning_mode_id!r}"
+                "no proposal runs available for applicability prompt="
+                f"{selected_prompt!r}, reasoning={reasoning_mode_id!r}"
             )
 
-        predictions: dict[str, dict[str, dict[str, list[ClauseEvaluationAnnotation]]]] = (
-            defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        predictions: dict[str, dict[str, list[ClauseEvaluationAnnotation]]] = defaultdict(
+            lambda: defaultdict(list)
         )
         included_example_ids = set(example_ids or ())
         clause_contexts = _load_clause_contexts(selected, corpus_root)
@@ -316,12 +170,11 @@ class ModelConsensusService:
                 annotation = ClauseEvaluationAnnotation.model_validate(
                     payload["annotation_candidate"]
                 )
-                annotation = with_process_observation_fields(annotation, evaluation_path.parent)
                 if included_example_ids and annotation.clause.clause_id not in included_example_ids:
                     continue
-                predictions[annotation.clause.clause_id][str(observation.model_id)][
-                    str(observation.prompt_id)
-                ].append(annotation)
+                predictions[annotation.clause.clause_id][str(observation.model_id)].append(
+                    annotation
+                )
 
         policy = _review_policy(review_policy)
         adjudicator_cfg = adjudication or {}
@@ -330,20 +183,16 @@ class ModelConsensusService:
             if adjudicator_cfg.get("enabled") and adjudicator_cfg.get("model_id")
             else None
         )
-        prior_cfg = structural_priors or {"enabled": True, "confidence": 0.95}
 
         clauses: list[ClauseConsensus] = []
         for clause_id, model_predictions in sorted(predictions.items()):
             context = clause_contexts.get(clause_id, {})
-            all_annotations = [
-                annotation
-                for prompt_predictions in model_predictions.values()
-                for annotations in prompt_predictions.values()
-                for annotation in annotations
-            ]
+            all_annotations = [a for annotations in model_predictions.values() for a in annotations]
+            if not all_annotations:
+                continue
             clause_reference = all_annotations[0].clause
-            votes = [
-                _model_vote(model_id, by_prompt, prompts, role="voter").model_copy(
+            votes = tuple(
+                _model_vote(model_id, annotations, role="voter").model_copy(
                     update={
                         "applicability_presence_eligible": bool(
                             (model_dimension_eligibility or {})
@@ -352,16 +201,13 @@ class ModelConsensusService:
                         )
                     }
                 )
-                for model_id, by_prompt in sorted(model_predictions.items())
+                for model_id, annotations in sorted(model_predictions.items())
                 if model_id != adjudicator_id
-            ]
+            )
             adjudicator_vote = None
             if adjudicator_id and adjudicator_id in model_predictions:
                 adjudicator_vote = _model_vote(
-                    adjudicator_id,
-                    model_predictions[adjudicator_id],
-                    prompts,
-                    role="adjudicator",
+                    adjudicator_id, model_predictions[adjudicator_id], role="adjudicator"
                 ).model_copy(
                     update={
                         "applicability_presence_eligible": bool(
@@ -372,54 +218,20 @@ class ModelConsensusService:
                     }
                 )
 
-            prior = (
-                derive_structural_evidence(
-                    context,
-                    confidence=float(prior_cfg.get("confidence", 0.95)),
-                    policy="legacy-v1",
-                ).as_dict()
-                if prior_cfg.get("enabled", True)
-                else {}
-            )
+            # Applicability consensus is source-only. Structural context may frame
+            # model requests, but it does not contribute an independent consensus vote.
+            prior: dict[str, Any] = {}
             result = _resolve_clause(
-                votes=tuple(votes),
+                votes=votes,
                 adjudicator_vote=adjudicator_vote,
-                structural_prior=prior,
                 minimum_models=min_models,
                 strong_threshold=strong_threshold,
                 majority_threshold=majority_threshold,
-                label_threshold=label_threshold,
                 adjudicator_min_confidence=float(adjudicator_cfg.get("minimum_confidence", 0.70)),
                 policy=policy,
                 resolution_override=(resolution_overrides or {}).get(clause_id, {}),
-                scope_context=bool(prior.get("scope_context", False)),
                 min_applicability_presence_models=min_applicability_presence_models,
             )
-            candidate = detect_role_candidate(_optional_text(context.get("text")))
-            presence_support = (
-                sum(vote.role_semantics_present for vote in votes) / len(votes) if votes else 0.0
-            )
-            role_semantics_present = presence_support >= majority_threshold
-            tuple_consensus = relation_tuple_consensus(
-                {vote.model_id: vote.role_relations for vote in votes},
-                minimum_support=majority_threshold,
-            )
-            proposed_role_relations = tuple(
-                relation for vote in votes for relation in vote.role_relations
-            )
-            role_candidate_consensus_negative = candidate.candidate and not role_semantics_present
-            role_semantics_evidence_conflict = bool(
-                proposed_role_relations and not role_semantics_present
-            )
-            if role_semantics_evidence_conflict:
-                role_review_reason = (
-                    "structured role-relation evidence conflicts with role-semantics presence"
-                )
-                result["review_reasons"] = tuple(
-                    dict.fromkeys((*result["review_reasons"], role_review_reason))
-                )
-                result["requires_review"] = True
-                result["overall_status"] = OverallConsensusStatus.REVIEW_REQUIRED
             clauses.append(
                 ClauseConsensus(
                     clause_id=clause_id,
@@ -427,31 +239,7 @@ class ModelConsensusService:
                     reference=_optional_text(context.get("reference")),
                     heading=_optional_text(context.get("heading") or context.get("title")),
                     clause_text=_optional_text(context.get("text")),
-                    role_semantics_present=role_semantics_present,
-                    role_semantics_presence_confidence=(
-                        presence_support if role_semantics_present else 1.0 - presence_support
-                    ),
-                    role_semantics_category=_category_for_confidence(
-                        presence_support if role_semantics_present else 1.0 - presence_support,
-                        len(votes),
-                        min_models,
-                        strong_threshold,
-                        majority_threshold,
-                    ),
-                    role_semantics_unanimous=_dimension_votes_are_unanimous(
-                        tuple(vote.role_semantics_present for vote in votes)
-                    ),
-                    role_semantics_support={
-                        "present": presence_support,
-                        "absent": 1.0 - presence_support,
-                    },
-                    role_candidate=candidate.candidate,
-                    role_candidate_markers=candidate.markers,
-                    role_candidate_consensus_negative=role_candidate_consensus_negative,
-                    role_semantics_evidence_conflict=role_semantics_evidence_conflict,
-                    proposed_role_relations=proposed_role_relations,
-                    role_relation_consensus=tuple_consensus,
-                    votes=tuple(votes) + ((adjudicator_vote,) if adjudicator_vote else ()),
+                    votes=votes + ((adjudicator_vote,) if adjudicator_vote else ()),
                     structural_prior=prior,
                     scope_context=bool(prior.get("scope_context", False)),
                     **result,
@@ -462,12 +250,11 @@ class ModelConsensusService:
         participation_counts = [item.participating_models for item in clauses]
         participation_distribution = Counter(participation_counts)
         report = ConsensusReport(
-            schema_version="5.0",
             matrix_id=matrix_id,
             corpus_id=corpus_id,
-            prompt_id=prompt_id,
+            prompt_id=selected_prompt,
             reasoning_mode_id=reasoning_mode_id,
-            prompt_selection=prompts,
+            prompt_selection={"applicability": selected_prompt},
             generated_at=datetime.now(UTC),
             model_count=len({vote.model_id for clause in clauses for vote in clause.votes}),
             minimum_participating_models=min(participation_counts, default=0),
@@ -484,17 +271,8 @@ class ModelConsensusService:
             categories=dict(sorted(category_counts.items())),
             review_count=sum(item.requires_review for item in clauses),
             dimension_categories={
-                dimension: dict(
-                    sorted(Counter(getattr(item, field).value for item in clauses).items())
-                )
-                for dimension, field in (
-                    ("statement_function", "statement_function_category"),
-                    ("knowledge_kind", "knowledge_kind_category"),
-                    ("process_function", "process_primary_category"),
-                    ("process_set", "process_set_category"),
-                    ("applicability", "applicability_category"),
-                    ("role_semantics_presence", "role_semantics_category"),
-                    ("role_relation", "role_relation_category"),
+                "applicability": dict(
+                    sorted(Counter(item.applicability_category.value for item in clauses).items())
                 )
             },
             overall_statuses=dict(
@@ -503,101 +281,35 @@ class ModelConsensusService:
             resolution_sources=dict(
                 sorted(
                     Counter(
-                        f"{dimension}:{source}"
+                        f"applicability:{source}"
                         for item in clauses
-                        for dimension, source in item.resolution_sources.items()
+                        for source in item.resolution_sources.values()
                     ).items()
                 )
             ),
-            role_qualification_metrics=summarize_role_qualification(clauses).model_dump(
-                mode="json"
-            ),
             clauses=tuple(clauses),
-            process_function_metrics=process_report_metrics(clauses),
         )
         return _write_outputs(report, output_directory)
 
 
 def _model_vote(
     model_id: str,
-    by_prompt: dict[str, list[ClauseEvaluationAnnotation]],
-    prompts: dict[str, str],
+    annotations: list[ClauseEvaluationAnnotation],
     *,
     role: str,
 ) -> ModelVote:
-    statement = _modal_annotations(by_prompt.get(prompts["statement_function"], []))
-    knowledge = _modal_annotations(by_prompt.get(prompts["knowledge_kind"], []))
-    applicability = _modal_annotations(by_prompt.get(prompts["applicability"], []))
-    responsibility = _modal_annotations(by_prompt.get(prompts["role_relation"], []))
-    process = _modal_annotations(
-        by_prompt.get(prompts.get("process_function", prompts["statement_function"]), [])
-    )
-    available = [
-        item
-        for item in (statement, knowledge, applicability, responsibility, process)
-        if item is not None
-    ]
-    if not available:
-        raise ValueError(f"model {model_id!r} has no annotations for selected prompts")
-    statement = statement or available[0]
-    knowledge = knowledge or available[0]
-    applicability = applicability or available[0]
-    responsibility = responsibility or available[0]
-    proposal = statement[0].proposal
-    primary = proposal.primary_function
-    if primary is None and proposal.statement_functions:
-        primary = proposal.statement_functions[0]
-    secondary = tuple(item for item in proposal.statement_functions if item != primary)
-    knowledge_proposal = knowledge[0].proposal
-    primary_knowledge = knowledge_proposal.primary_knowledge_kind
-    if primary_knowledge is None and knowledge_proposal.knowledge_kinds:
-        primary_knowledge = knowledge_proposal.knowledge_kinds[0]
-    secondary_knowledge = tuple(
-        item for item in knowledge_proposal.knowledge_kinds if item != primary_knowledge
-    )
-    # The current qualification contract is tuple-based. Keep the scalar label
-    # only as a read bridge for archived annotations that have no tuple extraction.
-    resp = None
-    if not responsibility[0].proposal.role_relations:
-        resp = responsibility[0].proposal.primary_role_relation_type
-        if resp is None and responsibility[0].proposal.role_relation_types:
-            resp = responsibility[0].proposal.role_relation_types[0]
-    evidence = (
-        " | ".join(
-            value
-            for value in (
-                statement[0].proposal.rationale,
-                knowledge[0].proposal.rationale,
-                applicability[0].proposal.rationale,
-                responsibility[0].proposal.rationale,
-            )
-            if value
-        )
-        or None
-    )
-    confidences = [
-        item[0].proposal.confidence
-        for item in (statement, knowledge, applicability, responsibility)
-        if item[0].proposal.confidence is not None
-    ]
+    modal = _modal_annotations(annotations)
+    if modal is None:
+        raise ValueError(f"model {model_id!r} has no applicability annotations")
+    annotation, repetitions, stability = modal
+    proposal = annotation.proposal
     return ModelVote(
         model_id=model_id,
-        primary_function=primary,
-        secondary_functions=secondary,
-        primary_knowledge_kind=primary_knowledge,
-        secondary_knowledge_kinds=secondary_knowledge,
-        **process_vote(
-            by_prompt.get(prompts.get("process_function", prompts["statement_function"]), [])
-        ),
-        applicability_present=applicability[0].proposal.applicability_present,
-        role_semantics_present=responsibility[0].proposal.role_semantics_present,
-        role_relations=responsibility[0].proposal.role_relations,
-        role_relation_present=bool(responsibility[0].proposal.role_relations or resp is not None),
-        role_relation_type=resp,
-        confidence=min(confidences) if confidences else None,
-        evidence=evidence,
-        repetitions=max(item[1] for item in available),
-        stability=min(item[2] for item in available),
+        applicability_present=proposal.applicability_present,
+        confidence=proposal.confidence,
+        evidence=proposal.rationale,
+        repetitions=repetitions,
+        stability=stability,
         role=role,
     )
 
@@ -607,20 +319,7 @@ def _modal_annotations(
 ) -> tuple[ClauseEvaluationAnnotation, int, float] | None:
     if not annotations:
         return None
-    keys = [
-        (
-            item.proposal.primary_function,
-            item.proposal.statement_functions,
-            item.proposal.primary_knowledge_kind,
-            item.proposal.knowledge_kinds,
-            item.proposal.applicability_present,
-            item.proposal.role_semantics_present,
-            item.proposal.primary_role_relation_type,
-            item.proposal.role_relation_types,
-            item.proposal.role_relations,
-        )
-        for item in annotations
-    ]
+    keys = [item.proposal.applicability_present for item in annotations]
     key, count = Counter(keys).most_common(1)[0]
     annotation = annotations[keys.index(key)]
     return annotation, len(annotations), count / len(annotations)
@@ -630,384 +329,103 @@ def _resolve_clause(
     *,
     votes: tuple[ModelVote, ...],
     adjudicator_vote: ModelVote | None,
-    structural_prior: dict[str, Any],
     minimum_models: int,
     strong_threshold: float,
     majority_threshold: float,
-    label_threshold: float,
     adjudicator_min_confidence: float,
     policy: dict[str, Any],
     resolution_override: dict[str, dict[str, Any]] | None = None,
-    scope_context: bool = False,
     min_applicability_presence_models: int | None = None,
 ) -> dict[str, Any]:
     policy = _review_policy(policy)
-    process_result = resolve_process_votes(
-        votes,
-        minimum_models=minimum_models,
-        strong_threshold=strong_threshold,
-        majority_threshold=majority_threshold,
-        label_threshold=label_threshold,
+    eligible = tuple(vote for vote in votes if vote.applicability_presence_eligible)
+    required_presence_models = min_applicability_presence_models or minimum_models
+    support = (
+        sum(vote.applicability_present for vote in eligible) / len(eligible) if eligible else 0.0
     )
-    model_count = len(votes)
-    primary_counts = Counter(vote.primary_function for vote in votes)
-    primary, primary_count = primary_counts.most_common(1)[0] if primary_counts else (None, 0)
-    primary_agreement = primary_count / model_count if model_count else 0.0
-
-    prior_primary = structural_prior.get("primary_function")
-    prior_confidence = float(structural_prior.get("confidence", 0.0))
-    if prior_primary:
-        prior_function = StatementFunction(prior_primary)
-        if prior_function != primary:
-            primary = prior_function
-            primary_agreement = prior_confidence
-        else:
-            primary_agreement = max(primary_agreement, prior_confidence)
-
+    present = support >= majority_threshold
+    decision_confidence = support if present else 1.0 - support
+    unanimous = len({vote.applicability_present for vote in eligible}) <= 1 if eligible else False
+    category = _category_for_confidence(
+        decision_confidence,
+        len(eligible),
+        required_presence_models,
+        strong_threshold,
+        majority_threshold,
+    )
     adjudicated = False
-    if (
+    source = "model_consensus"
+
+    override = (resolution_override or {}).get("applicability")
+    if override:
+        present = bool(override.get("present", present))
+        decision_confidence = float(override.get("confidence", decision_confidence))
+        category = _category_for_confidence(
+            decision_confidence,
+            max(len(eligible), required_presence_models),
+            required_presence_models,
+            strong_threshold,
+            majority_threshold,
+        )
+        source = str(override.get("source") or "cascade_override")
+    elif (
         adjudicator_vote is not None
-        and adjudicator_vote.primary_function is not None
-        and primary_agreement < strong_threshold
+        and adjudicator_vote.applicability_presence_eligible
+        and category in {ConsensusCategory.DISPUTED, ConsensusCategory.INSUFFICIENT}
         and (adjudicator_vote.confidence or 0.0) >= adjudicator_min_confidence
     ):
-        primary = adjudicator_vote.primary_function
-        primary_agreement = max(primary_agreement, adjudicator_vote.confidence or 0.0)
+        present = adjudicator_vote.applicability_present
+        decision_confidence = max(decision_confidence, adjudicator_vote.confidence or 0.0)
+        category = _category_for_confidence(
+            decision_confidence,
+            max(len(eligible), required_presence_models),
+            required_presence_models,
+            strong_threshold,
+            majority_threshold,
+        )
         adjudicated = True
+        source = "adjudicator"
 
-    secondary_labels = sorted(
-        {label for vote in votes for label in vote.secondary_functions},
-        key=lambda item: item.value,
-    )
-    label_support = {
-        label.value: sum(label in vote.secondary_functions for vote in votes) / model_count
-        for label in secondary_labels
-    }
-    prior_functions = tuple(
-        StatementFunction(value) for value in structural_prior.get("statement_functions", ())
-    )
-    proposed_functions = (() if primary is None else (primary,)) + tuple(
-        label
-        for label in dict.fromkeys((*prior_functions, *secondary_labels))
-        if label != primary
-        and (label in prior_functions or label_support.get(label.value, 0.0) >= label_threshold)
-    )
-    for label in prior_functions:
-        label_support[label.value] = max(label_support.get(label.value, 0.0), prior_confidence)
-    if primary is not None:
-        label_support = {primary.value: primary_agreement, **label_support}
-
-    knowledge_counts = Counter(vote.primary_knowledge_kind for vote in votes)
-    primary_knowledge, knowledge_count = (
-        knowledge_counts.most_common(1)[0] if knowledge_counts else (None, 0)
-    )
-    knowledge_agreement = knowledge_count / model_count if model_count else 0.0
-    knowledge_sets = tuple(
-        tuple(sorted(vote.knowledge_kinds, key=lambda item: item.value)) for vote in votes
-    )
-    knowledge_set_counts = Counter(knowledge_sets)
-    _, knowledge_set_count = (
-        knowledge_set_counts.most_common(1)[0] if knowledge_set_counts else ((), 0)
-    )
-    knowledge_set_agreement = knowledge_set_count / model_count if model_count else 0.0
-    knowledge_primary_unanimous = _dimension_votes_are_unanimous(
-        tuple(vote.primary_knowledge_kind for vote in votes)
-    )
-    knowledge_set_unanimous = _dimension_votes_are_unanimous(knowledge_sets)
-    secondary_knowledge = sorted(
-        {label for vote in votes for label in vote.secondary_knowledge_kinds},
-        key=lambda item: item.value,
-    )
-    knowledge_kind_support = {
-        label.value: sum(label in vote.secondary_knowledge_kinds for vote in votes) / model_count
-        for label in secondary_knowledge
-    }
-    proposed_knowledge_kinds = (() if primary_knowledge is None else (primary_knowledge,)) + tuple(
-        label
-        for label in secondary_knowledge
-        if label != primary_knowledge and knowledge_kind_support[label.value] >= label_threshold
-    )
-    if primary_knowledge is not None:
-        knowledge_kind_support = {
-            primary_knowledge.value: knowledge_agreement,
-            **knowledge_kind_support,
-        }
-
-    app_presence_votes = tuple(vote for vote in votes if vote.applicability_presence_eligible)
-    app_presence_model_count = len(app_presence_votes)
-    app_present_support = (
-        sum(vote.applicability_present for vote in app_presence_votes) / app_presence_model_count
-        if app_presence_model_count
-        else 0.0
-    )
-    app_accepted = app_present_support >= majority_threshold
-
-    valid_role_relation_votes = tuple(
-        vote for vote in votes if _role_relation_evidence_is_valid(vote)
-    )
-    resp_present_support = len(valid_role_relation_votes) / model_count if model_count else 0.0
-    tuple_role_votes = tuple(vote for vote in valid_role_relation_votes if vote.role_relations)
-    legacy_role_votes = tuple(
-        vote
-        for vote in valid_role_relation_votes
-        if not vote.role_relations and vote.role_relation_type is not None
-    )
-    legacy_counts = Counter(vote.role_relation_type for vote in legacy_role_votes)
-    resp_label, _ = (
-        legacy_counts.most_common(1)[0] if legacy_counts and not tuple_role_votes else (None, 0)
-    )
-    resp_label_support = resp_present_support
-    resp_accepted = resp_present_support >= majority_threshold
-
-    applicability_presence_unanimous = _dimension_votes_are_unanimous(
-        tuple(vote.applicability_present for vote in app_presence_votes)
-    )
-    applicability_unanimous = applicability_presence_unanimous
-    role_relation_unanimous = _dimension_votes_are_unanimous(
-        tuple(
-            (
-                vote.role_relation_present,
-                (
-                    tuple(
-                        sorted(
-                            (
-                                relation.actor.strip().lower(),
-                                relation.relation_class.strip().lower(),
-                                relation.target.strip().lower(),
-                            )
-                            for relation in vote.role_relations
-                        )
-                    )
-                    if vote.role_relations
-                    else vote.role_relation_type
-                ),
-            )
-            for vote in votes
-        )
-    )
-
-    if model_count < minimum_models:
-        category = ConsensusCategory.INSUFFICIENT
-    elif primary_agreement >= 1.0:
-        category = ConsensusCategory.UNANIMOUS
-    elif primary_agreement >= strong_threshold:
-        category = ConsensusCategory.STRONG
-    elif primary_agreement >= majority_threshold or adjudicated:
-        category = ConsensusCategory.MAJORITY
-    else:
-        category = ConsensusCategory.DISPUTED
-
-    statement_function_confidence = primary_agreement
-    knowledge_kind_confidence = knowledge_agreement if primary_knowledge is not None else 0.0
-    knowledge_kind_decision_confidence = knowledge_agreement
-    applicability_presence_confidence = (
-        app_present_support if app_accepted else 1.0 - app_present_support
-    )
-    applicability_decision_confidence = applicability_presence_confidence
-    role_relation_decision_confidence = _dimension_decision_confidence(
-        present=resp_accepted,
-        positive_confidence=resp_label_support,
-        support={"present": resp_present_support},
-    )
-    applicability_confidence = applicability_decision_confidence
-    role_relation_confidence = resp_present_support if resp_accepted else 0.0
-
-    statement_category = category
-    knowledge_primary_category = _category_for_confidence(
-        knowledge_kind_decision_confidence,
-        model_count,
-        minimum_models,
-        strong_threshold,
-        majority_threshold,
-    )
-    knowledge_set_category = _category_for_confidence(
-        knowledge_set_agreement,
-        model_count,
-        minimum_models,
-        strong_threshold,
-        majority_threshold,
-    )
-    # Compatibility: knowledge_kind_category continues to represent the primary decision.
-    knowledge_category = knowledge_primary_category
-    applicability_min_models = min_applicability_presence_models or minimum_models
-    applicability_category = _category_for_confidence(
-        applicability_decision_confidence,
-        app_presence_model_count,
-        applicability_min_models,
-        strong_threshold,
-        majority_threshold,
-    )
-    role_relation_category = _category_for_confidence(
-        role_relation_decision_confidence,
-        model_count,
-        minimum_models,
-        strong_threshold,
-        majority_threshold,
-    )
-
-    statement_function_decision_confidence = statement_function_confidence
-    resolution_sources: dict[str, str] = {}
-    override = resolution_override or {}
-    if "statement_function" in override:
-        item = override["statement_function"]
-        primary = StatementFunction(item["value"]) if item.get("value") else None
-        statement_function_confidence = float(item["confidence"])
-        statement_function_decision_confidence = float(item["confidence"])
-        statement_category = ConsensusCategory(item["category"])
-        category = statement_category
-        resolution_sources["statement_function"] = str(item.get("source", "cascade"))
-    if "knowledge_kind" in override:
-        item = override["knowledge_kind"]
-        primary_knowledge = KnowledgeKind(item["value"]) if item.get("value") else None
-        knowledge_kind_decision_confidence = float(item["confidence"])
-        knowledge_kind_confidence = (
-            knowledge_kind_decision_confidence if primary_knowledge is not None else 0.0
-        )
-        knowledge_primary_category = ConsensusCategory(item["category"])
-        knowledge_category = knowledge_primary_category
-        resolution_sources["knowledge_kind"] = str(item.get("source", "cascade"))
-    if "applicability" in override:
-        item = override["applicability"]
-        app_accepted = bool(item.get("present", False))
-        applicability_decision_confidence = float(item["confidence"])
-        applicability_presence_confidence = float(
-            item.get("presence_confidence", applicability_decision_confidence)
-        )
-        applicability_confidence = applicability_decision_confidence
-        applicability_category = ConsensusCategory(item["category"])
-        resolution_sources["applicability"] = str(item.get("source", "cascade"))
-    if "role_relation" in override:
-        item = override["role_relation"]
-        resp_label = None
-        resp_accepted = bool(item.get("present", False))
-        role_relation_decision_confidence = float(item["confidence"])
-        role_relation_confidence = role_relation_decision_confidence if resp_accepted else 0.0
-        role_relation_category = ConsensusCategory(item["category"])
-        resolution_sources["role_relation"] = str(item.get("source", "cascade"))
-
-    apply_process_overrides(process_result, override, resolution_sources)
-    proposed_functions = (() if primary is None else (primary,)) + tuple(
-        value for value in proposed_functions if value != primary
-    )
-    proposed_knowledge_kinds = (() if primary_knowledge is None else (primary_knowledge,)) + tuple(
-        value for value in proposed_knowledge_kinds if value != primary_knowledge
-    )
-
-    # Keep ``category`` as a compatibility field. In scope context applicability
-    # is the governing semantic dimension; elsewhere statement function remains
-    # the compatibility category. The per-dimension categories are authoritative.
-    category = applicability_category if scope_context else statement_category
-    confidence = (
-        applicability_decision_confidence
-        if scope_context
-        else statement_function_decision_confidence
-    )
-    review_reasons = _review_reasons(
+    reasons = _review_reasons(
         category=category,
-        statement_function_confidence=statement_function_confidence,
-        model_count=model_count,
-        applicability_present=app_accepted,
-        applicability_confidence=applicability_confidence,
-        role_relation_present=resp_accepted,
-        role_relation_confidence=role_relation_confidence,
+        confidence=decision_confidence,
+        participating_models=len(eligible),
         policy=policy,
     )
-    if process_result["process_decision_conflict"]:
-        review_reasons.append("process primary conflicts with selected process set")
+    requires_review = bool(reasons)
     return {
-        **process_result,
         "category": category,
-        "statement_function_category": statement_category,
-        "knowledge_kind_category": knowledge_category,
-        "knowledge_primary_category": knowledge_primary_category,
-        "knowledge_set_category": knowledge_set_category,
-        "applicability_category": applicability_category,
-        "role_relation_category": role_relation_category,
+        "applicability_category": category,
         "overall_status": (
             OverallConsensusStatus.REVIEW_REQUIRED
-            if review_reasons
-            else (
-                OverallConsensusStatus.PARTIAL
-                if any(
-                    item in {ConsensusCategory.DISPUTED, ConsensusCategory.INSUFFICIENT}
-                    for item in (
-                        statement_category,
-                        knowledge_category,
-                        applicability_category,
-                        role_relation_category,
-                        *(
-                            (process_result["process_primary_category"],)
-                            if process_result["process_primary_evaluated"]
-                            else ()
-                        ),
-                        *(
-                            (process_result["process_set_category"],)
-                            if process_result["process_set_evaluated"]
-                            else ()
-                        ),
-                    )
-                )
-                else OverallConsensusStatus.RESOLVED
-            )
+            if requires_review
+            else OverallConsensusStatus.RESOLVED
         ),
-        "primary_function": primary,
-        "proposed_functions": proposed_functions,
-        "primary_knowledge_kind": primary_knowledge,
-        "proposed_knowledge_kinds": proposed_knowledge_kinds,
-        "applicability_present": app_accepted,
-        "role_relation_present": resp_accepted,
-        "proposed_role_relation_types": ((resp_label,) if resp_label is not None else ()),
-        "confidence": confidence,
-        "statement_function_confidence": statement_function_confidence,
-        "knowledge_kind_confidence": knowledge_kind_confidence,
-        "applicability_confidence": applicability_confidence,
-        "applicability_presence_confidence": applicability_presence_confidence,
-        "role_relation_confidence": role_relation_confidence,
-        "statement_function_decision_confidence": statement_function_decision_confidence,
-        "knowledge_kind_decision_confidence": knowledge_kind_decision_confidence,
-        "knowledge_set_confidence": knowledge_set_agreement,
-        "knowledge_primary_unanimous": knowledge_primary_unanimous,
-        "knowledge_set_unanimous": knowledge_set_unanimous,
-        "applicability_decision_confidence": applicability_decision_confidence,
-        "role_relation_decision_confidence": role_relation_decision_confidence,
-        "applicability_presence_unanimous": applicability_presence_unanimous,
-        "applicability_unanimous": applicability_unanimous,
-        "applicability_participating_models": app_presence_model_count,
-        "role_relation_unanimous": role_relation_unanimous,
-        "participating_models": model_count,
-        "label_support": label_support,
-        "knowledge_kind_support": knowledge_kind_support,
-        "applicability_support": {
-            "present": app_present_support,
-            "absent": 1.0 - app_present_support,
-        },
-        "role_relation_support": {
-            "present": resp_present_support,
-            **({resp_label.value: resp_label_support} if resp_label else {}),
-        },
+        "applicability_present": present,
+        "confidence": decision_confidence,
+        "applicability_confidence": decision_confidence,
+        "applicability_presence_confidence": decision_confidence,
+        "applicability_decision_confidence": decision_confidence,
+        "applicability_presence_unanimous": unanimous,
+        "applicability_unanimous": unanimous,
+        "applicability_participating_models": len(eligible),
+        "participating_models": len(votes),
+        "applicability_support": {"present": support, "absent": 1.0 - support},
         "adjudicated": adjudicated,
-        "requires_review": bool(review_reasons),
-        "review_reasons": tuple(review_reasons),
-        "resolution_sources": resolution_sources,
+        "requires_review": requires_review,
+        "review_reasons": reasons,
+        "resolution_sources": {"applicability": source},
     }
-
-
-def _dimension_decision_confidence(
-    *, present: bool, positive_confidence: float, support: dict[str, float]
-) -> float:
-    if present:
-        return positive_confidence
-    return max(0.0, 1.0 - float(support.get("present", 0.0)))
 
 
 def _category_for_confidence(
     confidence: float,
-    model_count: int,
+    count: int,
     minimum_models: int,
     strong_threshold: float,
     majority_threshold: float,
 ) -> ConsensusCategory:
-    if model_count < minimum_models:
+    if count < minimum_models:
         return ConsensusCategory.INSUFFICIENT
     if confidence >= 1.0:
         return ConsensusCategory.UNANIMOUS
@@ -1018,96 +436,51 @@ def _category_for_confidence(
     return ConsensusCategory.DISPUTED
 
 
-def _dimension_votes_are_unanimous(votes: tuple[object, ...]) -> bool:
-    """Return whether every participating model made the same dimension decision.
-
-    ``none`` is a real model decision for disagreement detection. This is
-    intentionally different from positive-label confidence, where absence of a
-    label contributes no positive evidence.
-    """
-    return len(set(votes)) <= 1
-
-
-def _review_policy(payload: dict[str, Any] | None) -> dict[str, Any]:
+def _review_policy(value: dict[str, Any] | None) -> dict[str, Any]:
+    raw = value or {}
     return {
-        "review_categories": {"disputed", "insufficient_evidence"},
-        "accept_majority_min_confidence": 0.67,
-        "accept_majority_min_models": 3,
-        "applicability_min_confidence": 0.75,
-        "role_relation_min_confidence": 0.80,
-        "require_role_relation_evidence": True,
-        **(payload or {}),
+        "review_categories": set(
+            raw.get("review_categories", {"disputed", "insufficient_evidence"})
+        ),
+        "accept_majority_min_confidence": float(raw.get("accept_majority_min_confidence", 0.67)),
+        "accept_majority_min_models": int(raw.get("accept_majority_min_models", 3)),
+        "applicability_min_confidence": float(raw.get("applicability_min_confidence", 0.75)),
     }
 
 
 def _review_reasons(
     *,
     category: ConsensusCategory,
-    statement_function_confidence: float,
-    model_count: int,
-    applicability_present: bool,
-    applicability_confidence: float,
-    role_relation_present: bool,
-    role_relation_confidence: float,
+    confidence: float,
+    participating_models: int,
     policy: dict[str, Any],
-) -> list[str]:
+) -> tuple[str, ...]:
     reasons: list[str] = []
-    categories = {str(item) for item in policy["review_categories"]}
-    if category.value in categories:
+    if category.value in policy["review_categories"]:
         reasons.append(f"consensus category is {category.value}")
     if category is ConsensusCategory.MAJORITY and (
-        statement_function_confidence < float(policy["accept_majority_min_confidence"])
-        or model_count < int(policy["accept_majority_min_models"])
+        confidence < policy["accept_majority_min_confidence"]
+        or participating_models < policy["accept_majority_min_models"]
     ):
-        reasons.append("majority consensus does not meet automatic-acceptance policy")
-    if applicability_present and applicability_confidence < float(
-        policy["applicability_min_confidence"]
-    ):
-        reasons.append("applicability presence confidence is below its confidence threshold")
-    if role_relation_present and role_relation_confidence < float(
-        policy["role_relation_min_confidence"]
-    ):
-        reasons.append("role-relation evidence is below its confidence threshold")
-    return reasons
-
-
-def _role_relation_evidence_is_valid(vote: ModelVote) -> bool:
-    if not vote.role_relation_present:
-        return False
-    if vote.role_relations:
-        return all(
-            relation.actor.strip() and relation.relation_class.strip() and relation.target.strip()
-            for relation in vote.role_relations
-        )
-    # Compatibility for archived qualification runs using scalar relation labels.
-    if vote.role_relation_type is None or not vote.evidence:
-        return False
-    text = vote.evidence.lower()
-    actor = re.search(
-        r"\b(supplier|manufacturer|integrator|developer|development|operator|"
-        r"organization|team|assessor|manager|user|customer|role|party)\b",
-        text,
-    )
-    action = re.search(
-        r"\b(shall|must|responsib|assign|ensure|perform|provide|approve|verify|validate)\w*\b",
-        text,
-    )
-    return bool(actor and action)
+        reasons.append("majority consensus is below automatic-acceptance threshold")
+    if confidence < policy["applicability_min_confidence"]:
+        reasons.append("applicability confidence is below review threshold")
+    return tuple(dict.fromkeys(reasons))
 
 
 def _write_outputs(
     report: ConsensusReport, output_directory: Path
 ) -> tuple[ConsensusReport, Path, Path, Path]:
-    require_current_schema("golden-corpus-proposal", "4.0")
     report = ConsensusReport.model_validate(report)
     require_current_schema("qualification-consensus", report.schema_version)
+    require_current_schema("golden-corpus-proposal", 1)
     output_directory.mkdir(parents=True, exist_ok=True)
     json_path = output_directory / "consensus-report.json"
     yaml_path = output_directory / "golden-corpus-proposal.yaml"
     review_path = output_directory / "consensus-review.md"
     payload = {
-        "schema_version": "4.0",
-        "kind": "golden_corpus_proposal",
+        "schema_version": 1,
+        "kind": "applicability_presence_proposal",
         "matrix_id": report.matrix_id,
         "corpus_id": report.corpus_id,
         "prompt_selection": report.prompt_selection,
@@ -1117,96 +490,12 @@ def _write_outputs(
                 "document_key": item.document_key,
                 "reference": item.reference,
                 "heading": item.heading,
-                "clause_text": item.clause_text,
-                "primary_function": (
-                    item.primary_function.value if item.primary_function else None
-                ),
-                "primary_knowledge_kind": (
-                    item.primary_knowledge_kind.value if item.primary_knowledge_kind else None
-                ),
-                "knowledge_kinds": [value.value for value in item.proposed_knowledge_kinds],
-                "process_functions": (
-                    [value.value for value in item.proposed_process_functions]
-                    if item.process_set_decided
-                    else None
-                ),
-                "primary_process_function": (
-                    item.primary_process_function.value if item.primary_process_function else None
-                ),
-                "process_function_decisions": {
-                    "set_evaluated": item.process_set_evaluated,
-                    "primary_evaluated": item.process_primary_evaluated,
-                    "set_decided": item.process_set_decided,
-                    "primary_decided": item.process_primary_decided,
-                    "set_participating_models": item.process_participating_models,
-                    "primary_participating_models": item.process_primary_participating_models,
-                    "label_support": item.process_function_support,
-                    "primary_support": item.process_primary_support,
-                    "exact_set_agreement": item.process_exact_set_agreement,
-                    "conflict": item.process_decision_conflict,
-                },
-                "secondary_functions": [
-                    value.value
-                    for value in item.proposed_functions
-                    if value != item.primary_function
-                ],
-                "applicability": {
-                    "present": item.applicability_present,
-                },
-                "role_semantics": {
-                    "present": item.role_semantics_present,
-                    "candidate": item.role_candidate,
-                    "candidate_markers": list(item.role_candidate_markers),
-                    "candidate_consensus_negative": item.role_candidate_consensus_negative,
-                    "evidence_conflict": item.role_semantics_evidence_conflict,
-                    "relations": [
-                        {
-                            "actor": relation.actor,
-                            "relation_class": relation.relation_class,
-                            "target": relation.target,
-                            "support": relation.support,
-                        }
-                        for relation in item.role_relation_consensus
-                    ],
-                },
-                "role_relation": {
-                    "present": item.role_relation_present,
-                    "function": (
-                        item.proposed_role_relation_types[0].value
-                        if item.proposed_role_relation_types
-                        else None
-                    ),
-                },
-                "confidence": item.confidence,
-                "dimension_confidence": {
-                    "statement_function": item.statement_function_confidence,
-                    "knowledge_kind": item.knowledge_kind_confidence,
-                    "process_function": item.process_primary_confidence,
-                    "process_set": item.process_set_confidence,
-                    "applicability": item.applicability_confidence,
-                    "role_relation": item.role_relation_confidence,
-                },
-                "dimension_decision_confidence": {
-                    "statement_function": item.statement_function_decision_confidence,
-                    "knowledge_kind": item.knowledge_kind_decision_confidence,
-                    "process_function": item.process_primary_confidence,
-                    "process_set": item.process_set_confidence,
-                    "applicability": item.applicability_decision_confidence,
-                    "role_relation": item.role_relation_decision_confidence,
-                },
-                "consensus_category": item.category.value,
-                "dimension_categories": {
-                    "statement_function": item.statement_function_category.value,
-                    "knowledge_kind": item.knowledge_kind_category.value,
-                    "process_function": item.process_primary_category.value,
-                    "process_set": item.process_set_category.value,
-                    "applicability": item.applicability_category.value,
-                    "role_relation": item.role_relation_category.value,
-                },
+                "applicability": {"present": item.applicability_present},
+                "confidence": item.applicability_decision_confidence,
+                "consensus_category": item.applicability_category.value,
                 "overall_status": item.overall_status.value,
                 "resolution_sources": item.resolution_sources,
                 "adjudicated": item.adjudicated,
-                "structural_prior": item.structural_prior,
                 "requires_review": item.requires_review,
                 "review_reasons": list(item.review_reasons),
             }
@@ -1222,312 +511,45 @@ def _write_outputs(
     return report, json_path, yaml_path, review_path
 
 
-_REVIEW_CATEGORY_PRIORITY = {
-    ConsensusCategory.DISPUTED: 0,
-    ConsensusCategory.INSUFFICIENT: 1,
-    ConsensusCategory.MAJORITY: 2,
-    ConsensusCategory.STRONG: 3,
-    ConsensusCategory.UNANIMOUS: 4,
-}
-
-
-def _review_sort_key(item: ClauseConsensus) -> tuple[int, float, str, str, str]:
-    return (
-        _REVIEW_CATEGORY_PRIORITY[item.category],
-        item.confidence,
-        item.document_key,
-        item.reference or "",
-        item.clause_id,
-    )
-
-
 def _render_review(report: ConsensusReport) -> str:
     lines = [
-        f"# Consensus review: {report.matrix_id}",
+        f"# Applicability consensus review — {report.matrix_id}",
         "",
-        "Only clauses selected by the risk-based review policy are listed.",
-        "Process support is agreement, not measured accuracy. Empty is not unevaluated.",
-        f"Process-function coverage: `{process_report_metrics(report.clauses)}`",
-        "",
-        f"- Models available globally: `{report.model_count}`",
-        f"- Participating models per clause: min `{report.minimum_participating_models}`, "
-        f"median `{report.median_participating_models:g}`, max "
-        f"`{report.maximum_participating_models}`",
-        "- Overall statuses: "
-        + ", ".join(f"{status}={count}" for status, count in report.overall_statuses.items()),
-        "- Resolution sources: "
-        + (
-            ", ".join(f"{source}={count}" for source, count in report.resolution_sources.items())
-            or "model consensus only"
-        ),
-        "- Participation distribution: "
-        + ", ".join(
-            f"{count} voters={clauses}"
-            for count, clauses in report.participation_distribution.items()
-        ),
+        "Review only clauses that remain uncertain after the qualified presence cascade.",
         "",
     ]
-    uncertain = sorted(
-        (item for item in report.clauses if item.requires_review),
-        key=_review_sort_key,
+    ordered = sorted(
+        report.clauses,
+        key=lambda item: (
+            not item.requires_review,
+            item.applicability_decision_confidence,
+            item.document_key,
+            item.reference or "",
+            item.clause_id,
+        ),
     )
-    if not uncertain:
-        lines.extend(["No clauses require review.", ""])
-        return "\n".join(lines)
-    for item in uncertain:
-        proposed = ", ".join(value.value for value in item.proposed_functions) or "none"
-        knowledge = ", ".join(value.value for value in item.proposed_knowledge_kinds) or "none"
-        applicability = "present" if item.applicability_present else "absent"
-        responsibility = (
-            ", ".join(value.value for value in item.proposed_role_relation_types) or "none"
-        )
+    for item in ordered:
+        readable = item.reference or item.clause_id
+        heading = f"## {item.document_key}:{readable}"
+        if item.heading:
+            heading += f" — {item.heading}"
         lines.extend(
             [
-                _review_heading(item),
+                heading,
                 "",
-                f"- Stable clause ID: `{item.clause_id}`",
-                f"- Clause reference: `{item.reference or 'unavailable'}`",
-                *([f"- Clause heading: {item.heading}"] if item.heading else []),
-                "",
-                "### Clause text",
-                "",
-                "```text",
-                item.clause_text or "Clause text unavailable in the evaluation dataset.",
-                "```",
-                "",
-                f"- Overall status: `{item.overall_status.value}`",
-                f"- Compatibility category: `{item.category.value}`",
-                "- Dimension categories: "
-                f"statement_function=`{item.statement_function_category.value}`, "
-                f"knowledge_kind=`{item.knowledge_kind_category.value}`, "
-                f"applicability=`{item.applicability_category.value}`, "
-                f"role_relation=`{item.role_relation_category.value}`",
-                f"- Resolution sources: `{item.resolution_sources or 'model_consensus'}`",
-                f"- Primary/secondary statement functions: `{proposed}`",
-                f"- Knowledge kinds: `{knowledge}`",
-                "- Process functions: "
-                + (
-                    (
-                        f"`{_enum_values(item.proposed_process_functions)}`"
-                        if item.proposed_process_functions
-                        else "`empty`"
-                    )
-                    if item.process_set_decided
-                    else "unknown"
-                    if item.process_set_evaluated
-                    else "not evaluated"
-                ),
-                "- Primary process function: "
-                + (
-                    f"`{_enum_value(item.primary_process_function)}`"
-                    if item.process_primary_decided
-                    else "unknown"
-                    if item.process_primary_evaluated
-                    else "not evaluated"
-                ),
-                f"- Process primary/set categories: `{item.process_primary_category.value}` / "
-                f"`{item.process_set_category.value}`",
-                f"- Process primary/set voters: `{item.process_primary_participating_models}` / "
-                f"`{item.process_participating_models}`",
-                f"- Process primary/set support: `{item.process_primary_support}` / "
-                f"`{item.process_function_support}`",
-                f"- Process exact-set agreement: `{item.process_exact_set_agreement:.3f}`",
-                f"- Applicability proposal: `{applicability}`",
-                f"- Role relation proposal: `{responsibility}`",
-                f"- Statement-function confidence: `{item.statement_function_confidence:.3f}`",
-                f"- Knowledge-kind confidence: `{item.knowledge_kind_confidence:.3f}`",
-                "- Applicability presence confidence: "
-                f"`{item.applicability_presence_confidence:.3f}`",
-                f"- Role relation confidence: `{item.role_relation_confidence:.3f}`",
-                "- Decision confidence: "
-                f"statement_function=`{item.statement_function_decision_confidence:.3f}`, "
-                f"knowledge_kind=`{item.knowledge_kind_decision_confidence:.3f}`, "
-                f"applicability=`{item.applicability_decision_confidence:.3f}`, "
-                f"role_relation=`{item.role_relation_decision_confidence:.3f}`",
-                f"- Participating models: `{item.participating_models}`",
-                f"- Adjudicated: `{str(item.adjudicated).lower()}`",
-                f"- Structural prior: `{item.structural_prior or 'none'}`",
-                "- Review reasons:",
-                *[f"  - {reason}" for reason in item.review_reasons],
-                "### Model votes",
-                "",
-                *_render_vote_table(item.votes),
+                f"- Applicability present: `{str(item.applicability_present).lower()}`",
+                f"- Category: `{item.applicability_category.value}`",
+                f"- Confidence: `{item.applicability_decision_confidence:.3f}`",
+                f"- Participating models: `{item.applicability_participating_models}`",
+                f"- Review required: `{str(item.requires_review).lower()}`",
             ]
         )
-        hitl = _hitl_prefill(item, report.review_policy)
-        lines.extend(
-            [
-                "",
-                "### HITL decision",
-                "",
-                f"- HITL required for: {hitl['required_for']}",
-                f"- Primary statement function: {hitl['primary_function']}",
-                f"- Secondary statement functions: {hitl['secondary_functions']}",
-                f"- Knowledge kinds: {hitl['knowledge_kinds']}",
-                "- Primary process function: "
-                + (
-                    _enum_value(item.primary_process_function)
-                    if item.process_primary_decided and not item.process_decision_conflict
-                    else "[review / not evaluated]"
-                ),
-                "- Process functions: "
-                + (
-                    _enum_values(item.proposed_process_functions)
-                    if item.process_set_decided and not item.process_decision_conflict
-                    else "[review / not evaluated]"
-                ),
-                f"- Applicability present: {hitl['applicability']}",
-                f"- Role relation present/function: {hitl['role_relation']}",
-                "- Rationale: ",
-                "",
-            ]
-        )
-    return "\n".join(lines)
-
-
-def _hitl_prefill(item: ClauseConsensus, policy: dict[str, Any]) -> dict[str, str]:
-    """Build a conservative HITL form from already accepted dimensions."""
-    effective_policy = _review_policy(policy)
-    statement_reliable = (
-        item.primary_function is not None
-        and item.category
-        not in {
-            ConsensusCategory.DISPUTED,
-            ConsensusCategory.INSUFFICIENT,
-        }
-        and not (
-            item.category is ConsensusCategory.MAJORITY
-            and (
-                item.statement_function_confidence
-                < float(effective_policy["accept_majority_min_confidence"])
-                or item.participating_models < int(effective_policy["accept_majority_min_models"])
-            )
-        )
-    )
-    knowledge_reliable = (
-        item.primary_knowledge_kind is not None
-        and item.knowledge_kind_confidence
-        >= float(effective_policy["accept_majority_min_confidence"])
-    )
-    applicability_reliable = (
-        item.applicability_present
-        and item.applicability_confidence >= float(effective_policy["applicability_min_confidence"])
-    ) or (not item.applicability_present and item.applicability_unanimous)
-    role_relation_reliable = (
-        item.role_relation_present
-        and item.role_relation_confidence >= float(effective_policy["role_relation_min_confidence"])
-    ) or (not item.role_relation_present and item.role_relation_unanimous)
-
-    secondary = tuple(value for value in item.proposed_functions if value != item.primary_function)
-    required: list[str] = []
-    if not statement_reliable:
-        required.append("statement functions")
-    if not knowledge_reliable:
-        required.append("knowledge kinds")
-    if not applicability_reliable:
-        required.append("applicability")
-    if not role_relation_reliable:
-        required.append("role_relation")
-
-    return {
-        "required_for": ", ".join(required) or "none",
-        "primary_function": (
-            item.primary_function.value if statement_reliable and item.primary_function else ""
-        ),
-        "secondary_functions": (
-            ", ".join(value.value for value in secondary) or "none" if statement_reliable else ""
-        ),
-        "knowledge_kinds": (
-            ", ".join(value.value for value in item.proposed_knowledge_kinds)
-            if knowledge_reliable
-            else ""
-        ),
-        "applicability": (
-            ("present" if item.applicability_present else "absent")
-            if applicability_reliable
-            else ""
-        ),
-        "role_relation": (
-            _present_function_value(
-                item.role_relation_present,
-                item.proposed_role_relation_types,
-            )
-            if role_relation_reliable
-            else ""
-        ),
-    }
-
-
-def _present_function_value(present: bool, values: tuple[StrEnum, ...]) -> str:
-    function = values[0].value if values else "none"
-    return f"{str(present).lower()} / {function}"
-
-
-def _render_vote_table(votes: tuple[ModelVote, ...]) -> list[str]:
-    headers = (
-        "Voter",
-        "Primary statement",
-        "Secondary statements",
-        "Knowledge kinds",
-        "Process primary",
-        "Process set",
-        "Applicability",
-        "Role relation",
-        "Stability",
-    )
-    rows = [
-        (
-            _vote_model_label(vote),
-            _enum_value(vote.primary_function),
-            _enum_values(vote.secondary_functions),
-            _enum_values(vote.knowledge_kinds),
-            (
-                _enum_value(vote.primary_process_function)
-                if vote.process_primary_evaluated
-                else "not evaluated"
-            ),
-            (
-                _enum_values(vote.process_functions)
-                if vote.process_functions is not None
-                else "not evaluated"
-            ),
-            ("present" if vote.applicability_present else "absent"),
-            _enum_values(vote.role_relation_types),
-            f"{vote.stability:.3f}",
-        )
-        for vote in votes
-    ]
-    widths = tuple(
-        max([len(header), *(len(row[index]) for row in rows)])
-        for index, header in enumerate(headers)
-    )
-    lines = [_table_row(headers, widths)]
-    lines.append("| " + " | ".join("-" * width for width in widths) + " |")
-    lines.extend(_table_row(row, widths) for row in rows)
-    return lines
-
-
-def _vote_model_label(vote: ModelVote) -> str:
-    if vote.role == "voter":
-        return _table_cell(vote.model_id)
-    return _table_cell(f"{vote.model_id} [{vote.role}]")
-
-
-def _enum_value(value: StrEnum | None) -> str:
-    return _table_cell(value.value if value is not None else "none")
-
-
-def _enum_values(values: tuple[StrEnum, ...]) -> str:
-    return _table_cell(", ".join(value.value for value in values) or "none")
-
-
-def _table_cell(value: str) -> str:
-    return " ".join(value.replace("|", "\\|").splitlines())
-
-
-def _table_row(values: tuple[str, ...], widths: tuple[int, ...]) -> str:
-    cells = (value.ljust(width) for value, width in zip(values, widths, strict=True))
-    return "| " + " | ".join(cells) + " |"
+        if item.review_reasons:
+            lines.append("- Reasons: " + "; ".join(item.review_reasons))
+        if item.clause_text:
+            lines.extend(["", "> " + item.clause_text.replace("\n", "\n> ")])
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _load_clause_contexts(
@@ -1562,11 +584,3 @@ def _optional_text(value: object) -> str | None:
         return None
     stripped = value.strip()
     return stripped or None
-
-
-def _review_heading(item: ClauseConsensus) -> str:
-    readable = item.reference or item.clause_id
-    heading = f"## {item.document_key}:{readable}"
-    if item.heading:
-        heading += f" — {item.heading}"
-    return heading

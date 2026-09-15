@@ -13,11 +13,6 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from standards_atlas.domain.model.governance_subject_groups import GovernanceSubjectGroupProfileRef
-from standards_atlas.domain.model.semantic_classification import (
-    KnowledgeKind,
-    ProcessFunction,
-    StatementFunction,
-)
 from standards_atlas.domain.model.subject_normalization import normalize_subject_label
 
 _SUBJECT_GROUP_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -110,11 +105,6 @@ class GovernanceSemanticSelection(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    process_functions: tuple[ProcessFunction, ...] = Field(default=(), alias="process-functions")
-    knowledge_kinds: tuple[KnowledgeKind, ...] = Field(default=(), alias="knowledge-kinds")
-    statement_functions: tuple[StatementFunction, ...] = Field(
-        default=(), alias="statement-functions"
-    )
     primary_subjects: tuple[str, ...] = Field(default=(), alias="primary-subjects")
     primary_subject_groups: tuple[str, ...] = Field(default=(), alias="primary-subject-groups")
     subject_group_profile: GovernanceSubjectGroupProfileRef | None = Field(
@@ -158,9 +148,6 @@ class GovernanceSemanticSelection(BaseModel):
     @model_validator(mode="after")
     def _dimensions_are_consistent(self) -> GovernanceSemanticSelection:
         for name in (
-            "process_functions",
-            "knowledge_kinds",
-            "statement_functions",
             "primary_subjects",
             "primary_subject_groups",
         ):
@@ -177,7 +164,7 @@ class GovernanceSelectionProfile(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
 
-    schema_version: int = Field(default=2, alias="schema-version")
+    schema_version: int = Field(default=1, alias="schema-version")
     id: str = Field(min_length=1)
     version: str = Field(min_length=1)
     description: str = ""
@@ -188,8 +175,8 @@ class GovernanceSelectionProfile(BaseModel):
     @field_validator("schema_version")
     @classmethod
     def _supported_schema(cls, value: int) -> int:
-        if value != 2:
-            raise ValueError("unsupported governance selection profile schema-version; expected 2")
+        if value != 1:
+            raise ValueError("unsupported governance selection profile schema-version; expected 1")
         return value
 
     @field_validator("id", "version", "description", mode="before")
@@ -288,7 +275,7 @@ class GovernanceCandidateAnalysis(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
 
-    schema_version: int = Field(default=2, alias="schema-version")
+    schema_version: int = Field(default=1, alias="schema-version")
     profile_id: str = Field(alias="profile-id", min_length=1)
     profile_version: str = Field(alias="profile-version", min_length=1)
     documents: tuple[str, ...] = ()

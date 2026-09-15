@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from collections import Counter
 from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from zipfile import ZipFile
@@ -31,8 +30,6 @@ from standards_atlas.application.semantic_qualification.artifact_contracts impor
     validate_qualification_artifact,
 )
 from standards_atlas.application.semantic_qualification.consensus import (
-    ClauseConsensus,
-    ConsensusCategory,
     ConsensusReport,
 )
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
@@ -42,10 +39,7 @@ from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
 )
 from standards_atlas.domain.model.applicability import ClauseApplicability
-from standards_atlas.domain.model.enrichment_patch import (
-    ClauseEnrichmentPatch,
-    SemanticEnrichmentPatch,
-)
+from standards_atlas.domain.model.enrichment_patch import ClauseEnrichmentPatch
 from standards_atlas.domain.model.knowledge_state import (
     DecisionSupport,
     GeneratedAttribute,
@@ -53,13 +47,7 @@ from standards_atlas.domain.model.knowledge_state import (
 )
 from standards_atlas.shared.hashing import sha256_bytes, sha256_json
 
-ADOPTION_DIMENSIONS = (
-    "statement_functions",
-    "knowledge_kinds",
-    "process_functions",
-    "applicability",
-    "role_semantics",
-)
+ADOPTION_DIMENSIONS = ("applicability",)
 
 
 class _Archive:
@@ -156,12 +144,6 @@ def load_qualification_knowledge(
         raise ValueError("unknown or empty adoption dimension selection")
     archive = _Archive(run)
     try:
-        if "partial-cascade-plan.json" in archive.names:
-            from standards_atlas.adapters.evaluation.mixed_qualification_knowledge_source import (
-                load_mixed_qualification_knowledge,
-            )
-
-            return load_mixed_qualification_knowledge(archive, dimensions)
         return _load(archive, dimensions)
     finally:
         archive.close()
@@ -278,158 +260,36 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
         if case.gate_present != clause.applicability_present or case.reference != clause.reference:
             raise ValueError("applicability policy input differs from consensus clause")
 
-    # Stage reports provide support for an overridden primary. Set support is
-    # measured separately against the cumulative final votes, not that stage.
-    stages: dict[str, tuple[str, ConsensusReport, dict[tuple[str, str], ClauseConsensus]]] = {}
-    for name in sorted(archive.names):
-        if name.startswith("cascade/") and name.endswith("/consensus-report.json"):
-            report = ConsensusReport.model_validate_json(archive.read(name))
-            if (report.matrix_id, report.corpus_id) != (consensus.matrix_id, consensus.corpus_id):
-                # Stage matrices may carry a stage-specific matrix id; corpus must agree.
-                if report.corpus_id != consensus.corpus_id:
-                    raise ValueError("stage consensus belongs to a different corpus")
-            stage_key = name[len("cascade/") : -len("/consensus-report.json")]
-            indexed = {(item.document_key, item.clause_id): item for item in report.clauses}
-            if len(indexed) != len(report.clauses):
-                raise ValueError("duplicate coordinates in stage consensus")
-            stages[stage_key] = (name, report, indexed)
-
     candidates = []
     for clause in consensus.clauses:
         coordinate = (clause.document_key, clause.clause_id)
         example = examples_by_coordinate[coordinate]
         case = cases[coordinate]
-        values: dict[str, object] = {}
-        applicability: ClauseApplicability | None = None
         attributes = []
-        not_evaluated = ["enrichments.semantic.role_relations"]
-
-        for dimension, primary_field, values_field, proposed, category, resolution in (
-            (
-                "statement_functions",
-                "primary_function",
-                "statement_functions",
-                clause.proposed_functions,
-                clause.statement_function_category,
-                "statement_function",
+        support = DecisionSupport(
+            rule=f"{policy.policy_id}:{policy.policy_version}",
+            source_artifact=f"{archive.id}/{policy_name}",
+            source_sha256=archive.sha256(policy_name),
+            stage=(
+                "primary"
+                if case.primary_present is True
+                else "rescue+confirmation"
+                if case.final_present is True
+                else "final-policy"
             ),
-            (
-                "knowledge_kinds",
-                "primary_knowledge_kind",
-                "knowledge_kinds",
-                clause.proposed_knowledge_kinds,
-                clause.knowledge_kind_category,
-                "knowledge_kind",
-            ),
-        ):
-            if dimension not in dimensions:
-                not_evaluated.extend(
-                    (
-                        f"enrichments.semantic.{primary_field}",
-                        f"enrichments.semantic.{values_field}",
-                    )
-                )
-                continue
-            primary = getattr(clause, primary_field)
-            known = primary is not None and category != ConsensusCategory.INSUFFICIENT
-            set_known = (known or bool(proposed)) and category != ConsensusCategory.INSUFFICIENT
-            stage = clause.resolution_sources.get(resolution, "cumulative-consensus")
-            source_name, report, source_clause = consensus_name, consensus, clause
-            if stage != "cumulative-consensus":
-                source = stages.get(stage)
-                if source is None or coordinate not in source[2]:
-                    raise ValueError(f"missing source stage for final primary: {stage}")
-                source_name, report, source_clause = source[0], source[1], source[2][coordinate]
-            primary_support = _support(
-                archive,
-                source_name,
-                report,
-                source_clause,
-                primary_field,
-                primary,
-                stage=stage,
-                category=category.value,
-            )
-            _record_attribute(attributes, primary_field, primary_support, known)
-            _record_attribute(
-                attributes,
-                values_field,
-                _support(
-                    archive,
-                    consensus_name,
-                    consensus,
-                    clause,
-                    values_field,
-                    proposed,
-                    stage="cumulative-consensus",
-                    category=category.value,
-                ),
-                set_known,
-            )
-            if known:
-                values[primary_field] = primary
-            if set_known:
-                members = (primary, *proposed) if known else proposed
-                values[values_field] = tuple(dict.fromkeys(members))
-        _adopt_process_functions(
-            archive=archive,
-            consensus_name=consensus_name,
-            consensus=consensus,
-            clause=clause,
-            stages=stages,
-            enabled="process_functions" in dimensions,
-            values=values,
-            attributes=attributes,
-            not_evaluated=not_evaluated,
+            model_ids=tuple(sorted({stage.model_id for stage in policy.stages})),
         )
-        if "applicability" in dimensions:
-            support = DecisionSupport(
-                rule=f"{policy.policy_id}:{policy.policy_version}",
-                source_artifact=f"{archive.id}/{policy_name}",
-                source_sha256=archive.sha256(policy_name),
-                stage=(
-                    "primary"
-                    if case.primary_present is True
-                    else "rescue+confirmation"
-                    if case.final_present is True
-                    else "final-policy"
-                ),
-                model_ids=tuple(sorted({stage.model_id for stage in policy.stages})),
+        known = case.final_present is not None
+        attributes.append(
+            GeneratedAttribute(
+                path="enrichments.applicability",
+                generator="canonical-knowledge-adoption-v1",
+                method=GenerationMethod.IMPORTED,
+                availability="known" if known else "unknown",
+                decision=support,
             )
-            known = case.final_present is not None
-            attributes.append(
-                GeneratedAttribute(
-                    path="enrichments.applicability",
-                    generator="canonical-knowledge-adoption-v1",
-                    method=GenerationMethod.IMPORTED,
-                    availability="known" if known else "unknown",
-                    decision=support,
-                )
-            )
-            if known:
-                applicability = ClauseApplicability(present=bool(case.final_present))
-        else:
-            not_evaluated.append("enrichments.applicability")
-        if "role_semantics" in dimensions:
-            support = _support(
-                archive,
-                consensus_name,
-                consensus,
-                clause,
-                "role_semantics_present",
-                clause.role_semantics_present,
-                stage="cumulative-consensus",
-                category=clause.role_semantics_category.value,
-            )
-            known = (
-                clause.participating_models > 0
-                and clause.role_semantics_category != ConsensusCategory.INSUFFICIENT
-            )
-            _record_attribute(attributes, "role_semantics_present", support, known)
-            if known:
-                values["role_semantics_present"] = clause.role_semantics_present
-        else:
-            not_evaluated.append("enrichments.semantic.role_semantics_present")
+        )
+        applicability = ClauseApplicability(present=bool(case.final_present)) if known else None
         candidates.append(
             ClauseKnowledgeCandidate(
                 document_key=clause.document_key,
@@ -437,12 +297,9 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
                 reference=example.input["context"]["reference"],
                 content_hash=example.input["content"]["hash"],
                 heading=example.input["context"].get("heading"),
-                patch=ClauseEnrichmentPatch(
-                    semantic=SemanticEnrichmentPatch(**values),
-                    applicability=applicability,
-                ),
+                patch=ClauseEnrichmentPatch(applicability=applicability),
                 attributes=tuple(attributes),
-                not_evaluated=tuple(not_evaluated),
+                not_evaluated=(),
             )
         )
     require_current_schema("knowledge-adoption-batch", 1)
@@ -453,189 +310,4 @@ def _load(archive: _Archive, dimensions: tuple[str, ...]) -> KnowledgeAdoptionBa
         selected_clause_count=selection.selected_clause_count,
         unqualified_clause_count=coverage.unqualified_clause_count,
         candidates=tuple(candidates),
-    )
-
-
-def _adopt_process_functions(
-    *,
-    archive: _Archive,
-    consensus_name: str,
-    consensus: ConsensusReport,
-    clause: ClauseConsensus,
-    stages: dict[str, tuple[str, ConsensusReport, dict[tuple[str, str], ClauseConsensus]]],
-    enabled: bool,
-    values: dict[str, object],
-    attributes: list[GeneratedAttribute],
-    not_evaluated: list[str],
-) -> None:
-    coordinate = (clause.document_key, clause.clause_id)
-    set_known = (
-        clause.process_set_decided
-        and clause.process_set_category != ConsensusCategory.INSUFFICIENT
-        and not clause.process_decision_conflict
-    )
-    for field, value, evaluated, decided, category, resolution in (
-        (
-            "process_functions",
-            clause.proposed_process_functions,
-            clause.process_set_evaluated,
-            set_known,
-            clause.process_set_category,
-            "process_set",
-        ),
-        (
-            "primary_process_function",
-            clause.primary_process_function,
-            clause.process_primary_evaluated,
-            clause.process_primary_decided
-            and clause.process_primary_category != ConsensusCategory.INSUFFICIENT
-            and not clause.process_decision_conflict
-            and (clause.primary_process_function is None or set_known),
-            clause.process_primary_category,
-            "process_function",
-        ),
-    ):
-        if not enabled or not evaluated:
-            not_evaluated.append(f"enrichments.semantic.{field}")
-            continue
-        stage = clause.resolution_sources.get(resolution, "cumulative-consensus")
-        name, report, source_clause = consensus_name, consensus, clause
-        if stage != "cumulative-consensus":
-            source = stages.get(stage)
-            if source is None or coordinate not in source[2]:
-                raise ValueError(f"missing source stage for process decision: {stage}")
-            name, report, source_clause = source[0], source[1], source[2][coordinate]
-            source_value = (
-                source_clause.primary_process_function
-                if field == "primary_process_function"
-                else source_clause.proposed_process_functions
-            )
-            if source_value != value:
-                raise ValueError("final process decision differs from its source stage")
-        support = _process_support(
-            archive,
-            name,
-            report,
-            source_clause,
-            field,
-            value,
-            stage=stage,
-            category=category.value,
-        )
-        _record_attribute(attributes, field, support, decided)
-        if decided:
-            values[field] = value
-
-
-def _process_support(
-    archive: _Archive,
-    name: str,
-    report: ConsensusReport,
-    clause: ClauseConsensus,
-    field: str,
-    value: object,
-    *,
-    stage: str,
-    category: str,
-) -> DecisionSupport:
-    all_votes = [vote for vote in clause.votes if vote.role == "voter"]
-    if len(all_votes) != len({vote.model_id for vote in all_votes}):
-        raise ValueError("duplicate model votes cannot be counted as independent support")
-    primary = field == "primary_process_function"
-    votes = [
-        vote
-        for vote in all_votes
-        if (vote.process_primary_evaluated if primary else vote.process_functions is not None)
-    ]
-    labels: Counter[str] = Counter()
-    for vote in votes:
-        if primary:
-            labels[
-                "none"
-                if vote.primary_process_function is None
-                else vote.primary_process_function.value
-            ] += 1
-        else:
-            labels.update(label.value for label in vote.process_functions)
-    supporting = (
-        sum(vote.primary_process_function == value for vote in votes)
-        if primary
-        else sum(set(vote.process_functions) == set(value) for vote in votes)
-    )
-    return DecisionSupport(
-        rule="process-primary-majority" if primary else "process-label-majority",
-        source_artifact=f"{archive.id}/{name}",
-        source_sha256=archive.sha256(name),
-        stage=stage,
-        prompt_id=report.prompt_selection.get("process_function", report.prompt_id),
-        reasoning_mode_id=report.reasoning_mode_id,
-        model_ids=tuple(vote.model_id for vote in votes),
-        valid_votes=len(votes),
-        supporting_votes=supporting,
-        abstained_votes=len(all_votes) - len(votes),
-        label_votes=dict(sorted(labels.items())),
-        category=category,
-    )
-
-
-def _support(
-    archive: _Archive,
-    name: str,
-    report: ConsensusReport,
-    clause: ClauseConsensus,
-    field: str,
-    value: object,
-    *,
-    stage: str,
-    category: str,
-) -> DecisionSupport:
-    votes = [vote for vote in clause.votes if vote.role == "voter"]
-    if len(votes) != len({vote.model_id for vote in votes}):
-        raise ValueError("duplicate model votes cannot be counted as independent support")
-    labels: Counter[str] = Counter()
-    abstained = 0
-    for vote in votes:
-        items = getattr(vote, field)
-        if isinstance(items, tuple):
-            labels.update(str(item) for item in set(items))
-        elif items is not None:
-            labels[str(items)] += 1
-        else:
-            abstained += 1
-    count = None if isinstance(value, tuple) or value is None else labels.get(str(value), 0)
-    rule = "final-cascade-selection"
-    if field == "primary_function" and clause.structural_prior.get("primary_function"):
-        rule += "+structural-prior"
-    if clause.adjudicated:
-        rule += "+adjudication"
-    return DecisionSupport(
-        rule=rule,
-        source_artifact=f"{archive.id}/{name}",
-        source_sha256=archive.sha256(name),
-        stage=stage,
-        prompt_id=report.prompt_id,
-        reasoning_mode_id=report.reasoning_mode_id,
-        model_ids=tuple(vote.model_id for vote in votes),
-        valid_votes=len(votes) - abstained,
-        abstained_votes=abstained,
-        supporting_votes=count,
-        label_votes=dict(sorted(labels.items())),
-        category=category,
-    )
-
-
-def _record_attribute(
-    attributes: list[GeneratedAttribute],
-    field: str,
-    support: DecisionSupport,
-    known: bool,
-) -> None:
-    attributes.append(
-        GeneratedAttribute(
-            path=f"enrichments.semantic.{field}",
-            generator="canonical-knowledge-adoption-v1",
-            method=GenerationMethod.IMPORTED,
-            availability="known" if known else "unknown",
-            decision=support,
-        )
     )

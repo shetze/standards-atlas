@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 from .performance import aggregate_performance
 
 if TYPE_CHECKING:
-    from standards_atlas.application.semantic_qualification.qualification import (
-        AnnotationQualificationReport,
+    from standards_atlas.application.semantic_qualification.applicability_qualification import (
+        ApplicabilityQualificationReport,
     )
     from standards_atlas.application.semantic_qualification.qualification_matrix import (
         CandidateQualification,
@@ -24,7 +24,7 @@ def aggregate_candidate(
     prompt_id: str,
     model: ModelCandidate,
     reasoning_mode: ReasoningMode,
-    entries: list[tuple[MatrixObservation, AnnotationQualificationReport]],
+    entries: list[tuple[MatrixObservation, ApplicabilityQualificationReport]],
     expected_repetitions: int,
     thresholds: RegressionThresholds,
 ) -> CandidateQualification:
@@ -47,10 +47,8 @@ def aggregate_candidate(
 
     gold_available = any(report.gold_agreement.eligible > 0 for _, report in entries)
     gold_entries = [report for _, report in entries if report.gold_agreement.eligible > 0]
-    f1_values = [report.gold_agreement.micro_f1 for report in gold_entries]
+    f1_values = [report.gold_agreement.f1 for report in gold_entries]
     coverage_values = [report.gold_agreement.coverage for report in gold_entries]
-    silver_values = [report.silver_agreement.micro_f1 for _, report in entries]
-    structure_values = [report.structure_agreement.micro_f1 for _, report in entries]
     success_values = [report.reliability.prediction_success_rate for _, report in entries]
     json_values = [report.reliability.json_validity_rate for _, report in entries]
     truncation_values = [report.reliability.truncation_rate for _, report in entries]
@@ -149,8 +147,6 @@ def aggregate_candidate(
         min_gold_f1=minimum_f1,
         gold_f1_stddev=stddev,
         mean_gold_coverage=mean_coverage,
-        mean_silver_f1=fmean(silver_values) if silver_values else 0.0,
-        mean_structure_f1=fmean(structure_values) if structure_values else 0.0,
         mean_prediction_success_rate=mean_success,
         mean_json_validity_rate=mean_json,
         mean_truncation_rate=mean_truncation,
@@ -195,8 +191,6 @@ def empty_candidate(
         min_gold_f1=None,
         gold_f1_stddev=None,
         mean_gold_coverage=None,
-        mean_silver_f1=0.0,
-        mean_structure_f1=0.0,
         mean_prediction_success_rate=0.0,
         mean_json_validity_rate=0.0,
         mean_truncation_rate=0.0,

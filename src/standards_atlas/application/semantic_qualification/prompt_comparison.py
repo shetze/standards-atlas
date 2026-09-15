@@ -11,13 +11,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationLifecycleStatus,
+    ApplicabilityPresenceSelection,
     ClauseAnnotationResolver,
     CorpusManifestRepository,
-    StatementFunctionSelection,
 )
-from standards_atlas.application.semantic_qualification.qualification import (
+from standards_atlas.application.semantic_qualification.applicability_qualification import (
     _load_predictions,
-    _structure_selection,
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     MatrixObservation,
@@ -170,13 +169,13 @@ def persist_prompt_comparison_report(
 
 def _expected_selections(
     *, corpus_id: str, local_corpus_root: Path, published_corpus_root: Path
-) -> dict[str, tuple[StatementFunctionSelection, str]]:
+) -> dict[str, tuple[ApplicabilityPresenceSelection, str]]:
     manifest = CorpusManifestRepository(local_corpus_root).load(corpus_id)
     resolver = ClauseAnnotationResolver(
         local_root=local_corpus_root,
         published_root=published_corpus_root,
     )
-    result: dict[str, tuple[StatementFunctionSelection, str]] = {}
+    result: dict[str, tuple[ApplicabilityPresenceSelection, str]] = {}
     for member in manifest.clauses:
         key = member.clause.key
         try:
@@ -194,17 +193,14 @@ def _expected_selections(
                 continue
             result[key] = (annotation.proposal, resolved.source.value)
             continue
-        structure = _structure_selection(member.strata)
-        if structure is not None:
-            result[key] = (structure, "structure")
     return result
 
 
 def _compare_case(
     key: str,
-    baseline: StatementFunctionSelection | None,
-    candidate: StatementFunctionSelection | None,
-    expected_entry: tuple[StatementFunctionSelection, str] | None,
+    baseline: ApplicabilityPresenceSelection | None,
+    candidate: ApplicabilityPresenceSelection | None,
+    expected_entry: tuple[ApplicabilityPresenceSelection, str] | None,
 ) -> PromptDeltaCase:
     if baseline is None and candidate is not None:
         return PromptDeltaCase(
@@ -256,67 +252,15 @@ def _compare_case(
     )
 
 
-def _semantic_signature(selection: StatementFunctionSelection) -> tuple[object, ...]:
-    return (
-        tuple(sorted(item.value for item in selection.statement_functions)),
-        selection.primary_function.value if selection.primary_function else None,
-        tuple(sorted(item.value for item in selection.knowledge_kinds)),
-        selection.primary_knowledge_kind.value if selection.primary_knowledge_kind else None,
-        selection.applicability_present,
-        tuple(sorted(item.value for item in selection.applicability_functions)),
-        selection.primary_applicability_function.value
-        if selection.primary_applicability_function
-        else None,
-        selection.role_semantics_present,
-        tuple(sorted(item.value for item in selection.role_relation_types)),
-    )
+def _semantic_signature(selection: ApplicabilityPresenceSelection) -> tuple[object, ...]:
+    return (selection.applicability_present,)
 
 
 def _selection_score(
-    predicted: StatementFunctionSelection, expected: StatementFunctionSelection
+    predicted: ApplicabilityPresenceSelection, expected: ApplicabilityPresenceSelection
 ) -> float:
-    """Return a simple four-dimension exact agreement score for prompt deltas."""
-    dimensions = (
-        (
-            tuple(sorted(item.value for item in predicted.statement_functions)),
-            predicted.primary_function.value if predicted.primary_function else None,
-        )
-        == (
-            tuple(sorted(item.value for item in expected.statement_functions)),
-            expected.primary_function.value if expected.primary_function else None,
-        ),
-        (
-            tuple(sorted(item.value for item in predicted.knowledge_kinds)),
-            predicted.primary_knowledge_kind.value if predicted.primary_knowledge_kind else None,
-        )
-        == (
-            tuple(sorted(item.value for item in expected.knowledge_kinds)),
-            expected.primary_knowledge_kind.value if expected.primary_knowledge_kind else None,
-        ),
-        (
-            predicted.applicability_present,
-            tuple(sorted(item.value for item in predicted.applicability_functions)),
-            predicted.primary_applicability_function.value
-            if predicted.primary_applicability_function
-            else None,
-        )
-        == (
-            expected.applicability_present,
-            tuple(sorted(item.value for item in expected.applicability_functions)),
-            expected.primary_applicability_function.value
-            if expected.primary_applicability_function
-            else None,
-        ),
-        (
-            predicted.role_semantics_present,
-            tuple(sorted(item.value for item in predicted.role_relation_types)),
-        )
-        == (
-            expected.role_semantics_present,
-            tuple(sorted(item.value for item in expected.role_relation_types)),
-        ),
-    )
-    return sum(dimensions) / len(dimensions)
+    """Return exact applicability-presence agreement for prompt deltas."""
+    return float(predicted.applicability_present == expected.applicability_present)
 
 
 def _render_markdown(report: PromptComparisonReport) -> str:

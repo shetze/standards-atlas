@@ -125,7 +125,7 @@ accepted semantic tags          HITL rationale
 ```
 
 `generate-toc` only preserves existing semantic tags. It must not promote an
-inferred or model-generated `SemanticClassification` to public gold implicitly.
+inferred or model-generated semantic proposals or assertions to public gold implicitly.
 Adding or replacing public semantic tags requires the explicit
 `atlasdata apply-semantic-annotations` workflow with a reviewed, text-free
 annotation manifest.

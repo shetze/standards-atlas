@@ -1,5 +1,0 @@
-Normalized clause content:
-{content}
-
-Clause identity:
-{context_text}

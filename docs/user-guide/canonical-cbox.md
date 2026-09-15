@@ -165,7 +165,7 @@ For example:
 ```bash
 uv run standards-atlas workflow plan \
   --task qualification \
-  --manifests manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml \
+  --manifests manifests/standards.yaml,manifests/applicability-presence-qualification-v1.yaml \
   --hierarchy functional-safety \
   --knowledge-domain functional-safety \
   --restore-enrichments
@@ -225,7 +225,6 @@ archive-derived evidence, not the user's live workspace. It checks all 497 accep
 attribute projections after persistence/restoration. Process-function qualification and
 further model-quality work remain separate; no missing classification is fabricated.
 
-## Final partial-cascade qualification
+## Qualification boundary
 
-Final campaigns freeze the source-only CBox inputs and resource identities. Reviewed labels never become model context. Historical source hints are not promoted to confirmed taxonomy facts by qualification.
-See [final qualification and controlled activation](taxonomy-partial-qualification.md).
+Applicability qualification and formal assertion extraction consume source-bound CBox context. Accepted applicability is excluded from its own qualification input and source-only fingerprint to prevent feedback.

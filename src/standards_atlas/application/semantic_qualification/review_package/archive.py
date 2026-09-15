@@ -21,19 +21,12 @@ from typing import ClassVar, Literal
 from pydantic import Field
 
 from standards_atlas.application.schema import require_supported_schema
-from standards_atlas.application.semantic_qualification.partial_comparison import (
-    _output_is_separate,
-)
-from standards_atlas.application.semantic_qualification.partial_proposals import _json_bytes
-from standards_atlas.application.semantic_qualification.qualification_campaign_model import (
-    CampaignModel,
-)
 
 from .candidates import safe_read
-from .model import Digest, NonBlank, ReviewPackage, ReviewState, WorkbenchEvidence
+from .model import Digest, NonBlank, ReviewModel, ReviewPackage, ReviewState, WorkbenchEvidence
 from .service import load_review
 from .sources import fingerprint
-from .storage import _sync_directory, review_lock
+from .storage import _json_bytes, _sync_directory, output_is_separate, review_lock
 from .validation import review_report, seal, verify_package, verify_state
 from .workbench import verify_workbench_evidence, workbench_from_files, workbench_summary
 
@@ -43,16 +36,16 @@ MAX_MEMBERS = 20_000
 MANIFEST = "archive-manifest.json"
 
 
-class ArchiveMember(CampaignModel):
+class ArchiveMember(ReviewModel):
     sha256: Digest
     size: int = Field(ge=0, strict=True)
 
 
-class ReviewArchiveManifest(CampaignModel):
-    SCHEMA_FAMILY: ClassVar[str] = "partial-review-archive"
+class ReviewArchiveManifest(ReviewModel):
+    SCHEMA_FAMILY: ClassVar[str] = "review-archive"
 
-    schema_version: Literal["1.0"] = "1.0"
-    kind: Literal["partial-review-archive"] = "partial-review-archive"
+    schema_version: Literal[1] = 1
+    kind: Literal["review-archive"] = "review-archive"
     package_root: NonBlank
     package_sha256: Digest
     state_sha256: Digest
@@ -290,7 +283,7 @@ def verify_archive_bytes(raw: bytes) -> ReviewArchiveSnapshot:
     if MANIFEST not in files:
         raise ValueError("review archive has no manifest")
     manifest = ReviewArchiveManifest.model_validate_json(files.pop(MANIFEST))
-    require_supported_schema("partial-review-archive", manifest.schema_version)
+    require_supported_schema("review-archive", manifest.schema_version)
     if fingerprint(manifest, "archive_sha256") != manifest.archive_sha256:
         raise ValueError("review archive manifest fingerprint mismatch")
     if set(files) != set(manifest.files):
@@ -343,7 +336,7 @@ def verify_review_archive(path: Path) -> dict:
 
 
 def archive_review_package(*, package: Path, output: Path) -> dict:
-    _output_is_separate(output.resolve(), (package,))
+    output_is_separate(output.resolve(), (package,))
     if output.suffix != ".zip":
         raise ValueError("review archive output must be a .zip file")
     with review_lock(package / ".review.lock"):

@@ -11,10 +11,6 @@ from pathlib import Path
 
 from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
-from standards_atlas.application.semantic_qualification.partial_comparison import (
-    _output_is_separate,
-)
-from standards_atlas.application.semantic_qualification.partial_proposals import _json_bytes
 
 from .candidates import _digest, index_path, load_candidate_index, safe_read
 from .model import ReviewPackage, ReviewState
@@ -25,7 +21,7 @@ from .sources import (
     fingerprint,
     verify_current_sources,
 )
-from .storage import new_directory, review_lock
+from .storage import _json_bytes, new_directory, output_is_separate, review_lock
 from .validation import review_report, seal, verify_package, verify_state
 from .workbench import capture_workbench, rebound_workbench
 
@@ -100,7 +96,7 @@ def submit_selection(
 
 def load_selection(root: Path, digest: str):
     selection = SelectionProposal.model_validate_json(safe_read(selection_path(root, digest)))
-    require_supported_schema("partial-review-selection-proposal", selection.schema_version)
+    require_supported_schema("review-selection-proposal", selection.schema_version)
     if selection.selection_sha256 != digest or fingerprint(selection, "selection_sha256") != digest:
         raise ValueError("selection filename/fingerprint mismatch")
     package, state, index = load_candidate_index(root, selection.index_sha256)
@@ -119,7 +115,7 @@ def apply_selection(
     clause_provider: ClauseProvider | None = None,
 ) -> dict:
     """Local packaging operation, intentionally not an MCP tool. No manual hash work."""
-    _output_is_separate(output.resolve(), (root,))
+    output_is_separate(output.resolve(), (root,))
     with review_lock(root / ".review.lock"):
         package, state, index, selection = load_selection(root, selection_sha256)
         verify_current_sources(package)
@@ -145,7 +141,7 @@ def apply_selection(
             ],
         }
         lineage = {
-            "kind": "partial-review-preparation-lineage",
+            "kind": "review-preparation-lineage",
             "parent_package_sha256": package.package_sha256,
             "parent_state_sha256": state.state_sha256,
             "selection_sha256": selection_sha256,

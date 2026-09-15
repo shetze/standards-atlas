@@ -8,6 +8,11 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from standards_atlas.domain.model.applicability import ClauseApplicability
+from standards_atlas.domain.model.clause_semantics import (
+    DocumentStructureClassification,
+    NormativeStatus,
+    SemanticRelation,
+)
 from standards_atlas.domain.model.content import (
     ContentBlock,
     render_content_as_plain_text,
@@ -18,15 +23,8 @@ from standards_atlas.domain.model.identifiers import ClauseId, StandardReference
 from standards_atlas.domain.model.knowledge_state import (
     GeneratedAttribute,
     KnowledgeStateProvenance,
-    sparse_semantic_validation_context,
 )
 from standards_atlas.domain.model.reference_mention import ReferenceMention
-from standards_atlas.domain.model.semantic_classification import (
-    DocumentStructureClassification,
-    NormativeStatus,
-    SemanticClassification,
-    SemanticRelation,
-)
 from standards_atlas.domain.model.structural_context import StructuralContext
 from standards_atlas.domain.model.structural_profile import StructuralProfile
 from standards_atlas.domain.model.subject_context import (
@@ -79,7 +77,6 @@ class ClauseEnrichments(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    semantic: SemanticClassification = SemanticClassification()
     applicability: ClauseApplicability = ClauseApplicability()
     context_routing: ContextRouting = ContextRouting()
     subject_context: ClauseSubjectContext = ClauseSubjectContext()
@@ -116,30 +113,12 @@ class Clause(BaseModel):
         if not isinstance(data, dict):
             return data
         if "baseline" in data or "enrichments" in data:
-            return _validate_sparse_enrichments(data)
+            return data
         payload = dict(data)
         baseline_fields = set(ClauseBaseline.model_fields)
         baseline = {name: payload.pop(name) for name in tuple(payload) if name in baseline_fields}
-        semantic = payload.pop("semantic_classification", None)
-        if semantic is not None:
-            # document_structure, normative_status and deterministic relations are baseline facts.
-            if isinstance(semantic, SemanticClassification):
-                baseline.setdefault("document_structure", semantic.document_structure)
-                baseline.setdefault("normative_status", semantic.normative_status)
-                semantic = semantic.model_copy(
-                    update={
-                        "document_structure": None,
-                        "normative_status": NormativeStatus.UNSPECIFIED,
-                    }
-                )
-            payload["enrichments"] = {"semantic": semantic}
         payload["baseline"] = baseline
-        return _validate_sparse_enrichments(payload)
-
-    @property
-    def semantic_classification(self) -> SemanticClassification:
-        """Return derived semantic enrichment (read-only convenience projection)."""
-        return self.enrichments.semantic
+        return payload
 
     @property
     def applicability(self) -> ClauseApplicability:
@@ -222,12 +201,6 @@ class Clause(BaseModel):
         """Return a clause with deterministic/source-derived baseline updates."""
         return self.model_copy(update={"baseline": self.baseline.model_copy(update=updates)})
 
-    def with_semantic_classification(self, semantic: SemanticClassification) -> Clause:
-        """Return a clause with a replaced semantic enrichment."""
-        return self.model_copy(
-            update={"enrichments": self.enrichments.model_copy(update={"semantic": semantic})}
-        )
-
     def with_context_routing(self, routing: ContextRouting) -> Clause:
         """Return a clause with replaced contextual routing enrichment."""
         return self.model_copy(
@@ -257,15 +230,3 @@ class Clause(BaseModel):
                 "provenance": self.provenance.confirm_authoritative(*paths, authority=authority)
             }
         )
-
-
-def _validate_sparse_enrichments(data: dict) -> dict:
-    """Use explicit canonical availability when reading partial primary decisions."""
-    value = data.get("enrichments")
-    if not isinstance(value, dict):
-        return data
-    provenance = KnowledgeStateProvenance.model_validate(data.get("provenance", {}))
-    context = sparse_semantic_validation_context(provenance)
-    if not context["unobserved_primary_sets"] and not context["unobserved_role_presence"]:
-        return data
-    return {**data, "enrichments": ClauseEnrichments.model_validate(value, context=context)}

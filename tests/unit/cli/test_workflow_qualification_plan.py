@@ -2,12 +2,8 @@ from typer.testing import CliRunner
 
 from standards_atlas.cli.main import app
 
-QUALIFICATION_MANIFEST = (
-    "manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml"
-)
-APPLICABILITY_PRESENCE_MANIFEST = (
-    "manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml"
-)
+QUALIFICATION_MANIFEST = "manifests/applicability-presence-qualification-v1.yaml"
+APPLICABILITY_PRESENCE_MANIFEST = "manifests/applicability-presence-qualification-v1.yaml"
 
 
 def test_qualification_task_plan_omits_doorstop_and_docling_by_default() -> None:
@@ -39,7 +35,7 @@ def test_qualification_task_plan_omits_doorstop_and_docling_by_default() -> None
     assert "docling convert" not in result.output
 
 
-def test_qualification_hierarchy_plan_runs_semantic_profile_classification() -> None:
+def test_qualification_hierarchy_plan_runs_applicability_qualification() -> None:
     result = CliRunner().invoke(
         app,
         [

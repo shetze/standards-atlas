@@ -2,17 +2,64 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
-from standards_atlas.application.semantic_qualification.partial_proposals import (
-    _atomic_json,
-    _json_bytes,
-    _preserve_bytes,
-)
+
+def _json_bytes(payload: Any) -> bytes:
+    return (
+        json.dumps(payload, sort_keys=True, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+    ).encode("utf-8")
+
+
+def _atomic_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_symlink():
+        raise ValueError(f"refusing to replace symlink: {path}")
+    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as stream:
+        temporary = Path(stream.name)
+        try:
+            stream.write(_json_bytes(payload))
+            stream.flush()
+            os.fsync(stream.fileno())
+            stream.close()
+            temporary.replace(path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
+def _preserve_bytes(path: Path, content: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_symlink():
+        raise ValueError(f"refusing history symlink: {path}")
+    if path.exists():
+        if path.read_bytes() != content:
+            raise ValueError("stored review history differs from original bytes")
+        return
+    with path.open("xb") as stream:
+        stream.write(content)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def output_is_separate(output: Path, inputs: tuple[Path, ...]) -> None:
+    for source in inputs:
+        source = source.resolve()
+        if output == source or (source.is_dir() and output.is_relative_to(source)):
+            raise ValueError("review output must be separate from inputs")
+    for protected in (
+        "data",
+        "src/standards_atlas/resources",
+        ".atlas/data/documents",
+        ".atlas/data/knowledge-evidence",
+    ):
+        if output.is_relative_to(Path(protected).resolve()):
+            raise ValueError("review output must be separate from canonical/public data")
 
 
 @contextmanager

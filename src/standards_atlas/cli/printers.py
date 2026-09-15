@@ -44,9 +44,4 @@ def print_clause(clause: Clause) -> None:
     """Print a single clause in compact CLI form."""
     title = clause.heading or ""
     volume = f" volume={clause.reference.part}" if clause.reference.part else ""
-    roles = ",".join(role.value for role in clause.semantic_classification.statement_functions)
-    roles_text = f" [{roles}]" if roles else ""
-
-    typer.echo(
-        f"{clause.clause_type.value:12} {clause.reference.clause:18} {title}{volume}{roles_text}"
-    )
+    typer.echo(f"{clause.clause_type.value:12} {clause.reference.clause:18} {title}{volume}")

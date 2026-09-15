@@ -29,7 +29,7 @@ from standards_atlas.application.semantic_qualification.retry import generate_wi
 from standards_atlas.application.semantic_qualification.run_selection import (
     QualificationRunSelection,
 )
-from standards_atlas.domain.model import (
+from standards_atlas.domain.model.applicability import (
     ApplicabilityFunction,
     ApplicabilityTarget,
     OtherApplicabilityTarget,

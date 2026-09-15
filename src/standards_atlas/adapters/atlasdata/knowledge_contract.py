@@ -14,7 +14,6 @@ from pydantic import ConfigDict, Field, JsonValue, TypeAdapter, model_validator
 from standards_atlas.application.schema.model import SchemaBoundModel
 from standards_atlas.domain.model.applicability import ClauseApplicability
 from standards_atlas.domain.model.context_routing import ScopeReach
-from standards_atlas.domain.model.enrichment_patch import SemanticEnrichmentPatch
 from standards_atlas.domain.model.identifiers import StandardReference
 from standards_atlas.domain.model.knowledge_state import ConfirmedAttribute, GeneratedAttribute
 
@@ -22,55 +21,23 @@ Digest = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 LegacyMd5 = Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")]
 SafeKey = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")]
 AttributePath = Literal[
-    "enrichments.semantic.primary_function",
-    "enrichments.semantic.primary_knowledge_kind",
-    "enrichments.semantic.primary_process_function",
-    "enrichments.semantic.statement_functions",
-    "enrichments.semantic.knowledge_kinds",
-    "enrichments.semantic.process_functions",
     "enrichments.applicability",
-    "enrichments.semantic.role_semantics_present",
-    "enrichments.semantic.role_relation_types",
-    "enrichments.semantic.role_relations",
     "enrichments.subject_context",
     "enrichments.context_routing",
 ]
 
-DIMENSIONS: dict[str, tuple[str, ...]] = {
-    "statement_functions": ("primary_function", "statement_functions"),
-    "knowledge_kinds": ("primary_knowledge_kind", "knowledge_kinds"),
-    "process_functions": ("primary_process_function", "process_functions"),
-    "role_semantics": ("role_semantics_present", "role_relation_types", "role_relations"),
+DIMENSION_PATHS: dict[str, tuple[AttributePath, ...]] = {
+    "applicability": ("enrichments.applicability",),
+    "subject_context": ("enrichments.subject_context",),
+    "context_routing": ("enrichments.context_routing",),
 }
-DIMENSION_PATHS = {
-    name: tuple(f"enrichments.semantic.{field}" for field in fields)
-    for name, fields in DIMENSIONS.items()
-}
-DIMENSION_PATHS.update(
-    {
-        "applicability": ("enrichments.applicability",),
-        "subject_context": ("enrichments.subject_context",),
-        "context_routing": ("enrichments.context_routing",),
-    }
-)
 ALL_PATHS = tuple(path for paths in DIMENSION_PATHS.values() for path in paths)
-UNPUBLISHED_ROLE_PATHS = frozenset(
-    {
-        "enrichments.semantic.role_relation_types",
-        "enrichments.semantic.role_relations",
-    }
-)
 ATTRIBUTE_ADAPTERS = {
-    **{
-        f"enrichments.semantic.{name}": TypeAdapter(field.annotation)
-        for name, field in SemanticEnrichmentPatch.model_fields.items()
-    },
     "enrichments.applicability": TypeAdapter(ClauseApplicability),
 }
 PRIVATE_PATHS = {
     "enrichments.subject_context",
     "enrichments.context_routing",
-    "enrichments.semantic.role_relations",
 }
 
 
@@ -116,10 +83,6 @@ class RoutingView(_Strict):
     references: tuple[ReferenceView, ...] = ()
 
 
-class RoleView(_Strict):
-    count: int = Field(ge=0)
-
-
 class PublishedAttribute(_Strict):
     path: AttributePath
     origin: Literal["generated", "confirmed", "unattributed"]
@@ -158,7 +121,6 @@ class PublishedAttribute(_Strict):
             models = {
                 "enrichments.subject_context": SubjectView,
                 "enrichments.context_routing": RoutingView,
-                "enrichments.semantic.role_relations": RoleView,
             }
             models[self.path].model_validate(self.value)
         else:

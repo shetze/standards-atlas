@@ -199,21 +199,6 @@ class GovernanceCandidateAnalyzer:
         effective_subjects: tuple[str, ...],
     ) -> GovernanceClauseSelectionResult:
         signals: list[GovernanceCandidateSignal] = []
-        semantic = profile.selection
-        dimensions = (
-            ("process-functions", semantic.process_functions, "process_functions"),
-            ("knowledge-kinds", semantic.knowledge_kinds, "knowledge_kinds"),
-            ("statement-functions", semantic.statement_functions, "statement_functions"),
-        )
-        for label, expected_values, attr in dimensions:
-            if not expected_values:
-                continue
-            expected = tuple(item.value for item in expected_values)
-            observed = tuple(
-                sorted(item.value for item in getattr(clause.semantic_classification, attr))
-            )
-            signals.append(_dimension_signal(label, expected, observed))
-
         primary_subject = (
             clause.primary_subject.normalized_label if clause.primary_subject else None
         )

@@ -17,29 +17,16 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
 from standards_atlas.application.semantic_qualification.applicability_policy_qualification import (
     ApplicabilityDecisionPolicyConfig,
 )
+from standards_atlas.application.semantic_qualification.applicability_qualification import (
+    ApplicabilityQualificationReport,
+)
 from standards_atlas.application.semantic_qualification.performance import RequestTiming
-from standards_atlas.application.semantic_qualification.process_cascade import (
-    capture_process_dimensions,
-    process_escalation_reasons,
-    process_stage_reasons,
-)
-from standards_atlas.application.semantic_qualification.qualification import (
-    AnnotationQualificationReport,
-)
 from standards_atlas.application.semantic_qualification.reports.matrix import (
     render_qualification_matrix_markdown,
 )
 from standards_atlas.application.semantic_qualification.semantic_extraction_qualification import (
     SemanticExtractionQualificationConfig,
 )
-
-_PROMPT_VERSION_ALIASES = {
-    "content-only": "content-only-v1",
-    "structure-aware": "structure-aware-v1",
-    "reference-aware": "evidence-first-v1",
-    "bounded-reasoning": "bounded-reasoning-v1",
-    "deliberative": "bounded-reasoning-v1",
-}
 
 
 class PromptCandidate(BaseModel):
@@ -52,7 +39,6 @@ class PromptCandidate(BaseModel):
     definition: Path | None = None
     prompt_version: str | None = None
     max_output_tokens: int = Field(default=512, gt=0)
-    adaptive_interview: bool = False
     cbox_frame: str = "full-context-v1"
 
     @field_validator("cbox_frame")
@@ -70,23 +56,19 @@ def resolve_prompt_version(
     prompt: PromptCandidate,
     *,
     resources: Path,
-    task: str = "semantic-profile-classification",
+    task: str = "applicability-presence",
 ) -> str:
     """Resolve a matrix prompt id to an installed prompt resource version."""
-    candidates = [prompt.prompt_version, _PROMPT_VERSION_ALIASES.get(prompt.id), prompt.id]
+    candidates = [prompt.prompt_version, prompt.id]
     checked: list[str] = []
     for candidate in candidates:
         if not candidate or candidate in checked:
             continue
         checked.append(candidate)
         task_roots = [resources / "prompts" / task]
-        if task == "semantic-profile-classification":
-            task_roots.append(resources / "prompts" / "statement-function-classification")
         if any((root / candidate / "prompt.json").is_file() for root in task_roots):
             return candidate
     available_root = resources / "prompts" / task
-    if not available_root.is_dir() and task == "semantic-profile-classification":
-        available_root = resources / "prompts" / "statement-function-classification"
     available = (
         sorted(path.name for path in available_root.iterdir() if path.is_dir())
         if available_root.is_dir()
@@ -104,7 +86,6 @@ class ModelGenerationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     max_output_tokens: int | None = Field(default=None, gt=0)
-    adaptive_question_max_tokens: int | None = Field(default=None, gt=0)
     truncation_retry_max_tokens: int | None = Field(default=None, gt=0)
     reasoning_mode: str = Field(default="disabled", pattern="^(disabled|enabled)$")
     retry_on_truncation: bool = True
@@ -123,9 +104,9 @@ class ModelGenerationConfig(BaseModel):
 
 
 class CascadeResolutionConfig(BaseModel):
-    """Rules used to decide whether a clause needs escalation."""
+    """Applicability-presence cascade resolution policy."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     minimum_successful_models: int = Field(default=3, ge=1)
     minimum_applicability_presence_models: int | None = Field(default=None, ge=1)
@@ -134,24 +115,8 @@ class CascadeResolutionConfig(BaseModel):
         "strong_consensus",
         "majority_consensus",
     )
-    minimum_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
-    escalate_on_knowledge_kind_disagreement: bool = True
-    minimum_knowledge_kind_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    # Process measurement is always enabled; additional inference is explicit.
-    escalate_on_process_function_disagreement: bool = False
-    escalate_on_process_set_disagreement: bool = False
-    minimum_process_function_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    minimum_process_set_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    process_function_resolution_mode: Literal["cumulative", "stage_resolver"] = "cumulative"
-    process_function_resolver_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
-    escalate_on_applicability_disagreement: bool = True
-    escalate_on_applicability_presence_disagreement: bool | None = None
-    escalate_on_role_relation_disagreement: bool = True
-    minimum_applicability_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    minimum_applicability_presence_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    minimum_role_relation_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
-    statement_function_resolution_mode: Literal["cumulative", "stage_resolver"] = "cumulative"
-    statement_function_resolver_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
+    minimum_presence_confidence: float = Field(default=0.6, ge=0.0, le=1.0)
+    escalate_on_presence_disagreement: bool = True
 
 
 def effective_cascade_resolution(
@@ -159,17 +124,11 @@ def effective_cascade_resolution(
     *,
     review_majority_min_confidence: float,
 ) -> CascadeResolutionConfig:
-    """Align cascade finalization with downstream review acceptance.
-
-    A statement-function majority must not be frozen as resolved when the
-    configured review policy would deterministically send the same confidence
-    to HITL. The manifest remains unchanged; this returns the auditable
-    effective policy used for execution.
-    """
+    """Align automatic presence acceptance with the downstream HITL gate."""
     return resolution.model_copy(
         update={
-            "minimum_confidence": max(
-                resolution.minimum_confidence,
+            "minimum_presence_confidence": max(
+                resolution.minimum_presence_confidence,
                 review_majority_min_confidence,
             )
         }
@@ -177,7 +136,7 @@ def effective_cascade_resolution(
 
 
 class CascadeStage(BaseModel):
-    """One ordered model and prompt stage in cascade execution."""
+    """One ordered model/prompt stage in applicability cascade execution."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -188,69 +147,64 @@ class CascadeStage(BaseModel):
     resolution: CascadeResolutionConfig | None = None
 
 
+def _applicability_presence_model_count(clause: object) -> int:
+    configured = getattr(clause, "applicability_participating_models", None)
+    if configured is not None:
+        return int(configured)
+    votes = getattr(clause, "votes", ())
+    if votes:
+        return sum(
+            bool(getattr(vote, "applicability_presence_eligible", True))
+            for vote in votes
+            if getattr(vote, "role", "voter") == "voter"
+        )
+    return int(getattr(clause, "participating_models", 0))
+
+
+def _applicability_presence_confidence(clause: object) -> float:
+    return float(
+        getattr(
+            clause,
+            "applicability_presence_confidence",
+            getattr(clause, "applicability_decision_confidence", 0.0),
+        )
+    )
+
+
+_APPLICABILITY_REASONS = {
+    "consensus_category",
+    "insufficient_applicability_presence_models",
+    "applicability_presence_disagreement",
+    "applicability_presence_confidence",
+}
+_MISSING_CONSENSUS_REASONS = {
+    "no_consensus_result",
+    "missing_cumulative_consensus_result",
+    "missing_stage_consensus_result",
+}
+
+
 def cascade_escalation_reasons(
     clause: object, resolution: CascadeResolutionConfig
 ) -> tuple[str, ...]:
-    """Return dimension-aware reasons why a clause must enter the next stage."""
-    if getattr(clause, "evidence_contract", None) == "taxonomy-partial-v1":
-        from standards_atlas.application.model.source_structure import structure_fingerprint
-
-        if clause.resolution_sha256 != structure_fingerprint(resolution.model_dump(mode="json")):
-            raise ValueError("mixed acceptance and routing resolutions differ")
-        return clause.escalation_reasons
+    """Return applicability-specific reasons why a clause must escalate."""
     reasons: list[str] = []
     accepted = set(resolution.accepted_categories)
     if clause.participating_models < resolution.minimum_successful_models:
         reasons.append("insufficient_models")
-    if clause.category.value not in accepted:
+    if clause.applicability_category.value not in accepted:
         reasons.append("consensus_category")
-    if clause.statement_function_confidence < resolution.minimum_confidence:
-        reasons.append("statement_function_confidence")
-    knowledge_threshold = resolution.minimum_knowledge_kind_confidence
-    if knowledge_threshold is not None:
-        if getattr(clause, "knowledge_kind_decision_confidence", 1.0) < knowledge_threshold:
-            reasons.append("knowledge_kind_confidence")
-    elif resolution.escalate_on_knowledge_kind_disagreement and not getattr(
-        clause, "knowledge_primary_unanimous", True
-    ):
-        reasons.append("knowledge_kind_disagreement")
-    applicability_minimum_models = (
+    minimum_models = (
         resolution.minimum_applicability_presence_models or resolution.minimum_successful_models
     )
-    if _applicability_presence_model_count(clause) < applicability_minimum_models:
+    if _applicability_presence_model_count(clause) < minimum_models:
         reasons.append("insufficient_applicability_presence_models")
-    applicability_threshold = _applicability_presence_threshold(resolution)
-    if applicability_threshold is not None:
-        if _applicability_presence_confidence(clause) < applicability_threshold:
-            reasons.append("applicability_presence_confidence")
-    elif _escalate_on_applicability_presence_disagreement(resolution) and not getattr(
-        clause, "applicability_presence_unanimous", clause.applicability_unanimous
+    if _applicability_presence_confidence(clause) < resolution.minimum_presence_confidence:
+        reasons.append("applicability_presence_confidence")
+    elif resolution.escalate_on_presence_disagreement and not getattr(
+        clause, "applicability_presence_unanimous", True
     ):
         reasons.append("applicability_presence_disagreement")
-    if getattr(clause, "role_semantics_evidence_conflict", False):
-        reasons.append("role_semantics_evidence_conflict")
-    role_unanimous = getattr(clause, "role_semantics_unanimous", clause.role_relation_unanimous)
-    if resolution.escalate_on_role_relation_disagreement and not role_unanimous:
-        reasons.append("role_relation_disagreement")
-
-    role_relation_threshold = resolution.minimum_role_relation_confidence
-    if role_relation_threshold is not None:
-        role_presence_confidence = getattr(
-            clause,
-            "role_semantics_presence_confidence",
-            getattr(
-                clause,
-                "role_relation_decision_confidence",
-                _dimension_decision_confidence(
-                    present=clause.role_relation_present,
-                    positive_confidence=clause.role_relation_confidence,
-                    support=clause.role_relation_support,
-                ),
-            ),
-        )
-        if role_presence_confidence < role_relation_threshold:
-            reasons.append("role_relation_confidence")
-    reasons.extend(process_escalation_reasons(clause, resolution))
     return tuple(reasons)
 
 
@@ -281,117 +235,40 @@ def cascade_stage_escalation_reasons(
     previous_reasons: tuple[str, ...],
     resolution: CascadeResolutionConfig,
 ) -> tuple[str, ...]:
-    """Re-evaluate only dimensions that were unresolved before this stage.
-
-    Statement function can use a stage-local resolver, while applicability and
-    role relations continue to use cumulative evidence. Resolved dimensions
-    never become unresolved again merely because later models disagree.
-    """
-    if getattr(cumulative_clause, "evidence_contract", None) == "taxonomy-partial-v1":
-        return cascade_escalation_reasons(cumulative_clause, resolution)
-
-    # A clause with no initial evidence has no accepted dimensions. Evaluate
-    # all dimensions when it first acquires evidence, not just the sentinel.
+    """Re-evaluate only applicability reasons that were unresolved before the stage."""
     if "no_consensus_result" in previous_reasons:
         return cascade_escalation_reasons(cumulative_clause, resolution)
-
     unresolved = set(previous_reasons)
     reasons: list[str] = []
-
     if "insufficient_models" in unresolved:
         if cumulative_clause.participating_models < resolution.minimum_successful_models:
             reasons.append("insufficient_models")
-
-    statement_unresolved = bool(unresolved & _STATEMENT_REASONS)
-    if statement_unresolved:
-        if resolution.statement_function_resolution_mode == "stage_resolver":
-            if (
-                stage_clause.statement_function_confidence
-                < resolution.statement_function_resolver_min_confidence
-            ):
-                reasons.append("statement_function_resolver_confidence")
-        else:
-            accepted = set(resolution.accepted_categories)
-            if cumulative_clause.category.value not in accepted:
-                reasons.append("consensus_category")
-            if cumulative_clause.statement_function_confidence < resolution.minimum_confidence:
-                reasons.append("statement_function_confidence")
-
-    knowledge_unresolved = bool(unresolved & _KNOWLEDGE_REASONS)
-    if knowledge_unresolved:
-        threshold = resolution.minimum_knowledge_kind_confidence
-        if threshold is not None:
-            if getattr(cumulative_clause, "knowledge_kind_decision_confidence", 1.0) < threshold:
-                reasons.append("knowledge_kind_confidence")
-        elif resolution.escalate_on_knowledge_kind_disagreement and not getattr(
-            cumulative_clause, "knowledge_primary_unanimous", True
+    if unresolved & _APPLICABILITY_REASONS:
+        accepted = set(resolution.accepted_categories)
+        if (
+            "consensus_category" in unresolved
+            and cumulative_clause.applicability_category.value not in accepted
         ):
-            reasons.append("knowledge_kind_disagreement")
-
-    applicability_unresolved = bool(unresolved & _APPLICABILITY_REASONS)
-    if applicability_unresolved:
-        applicability_minimum_models = (
+            reasons.append("consensus_category")
+        minimum_models = (
             resolution.minimum_applicability_presence_models or resolution.minimum_successful_models
         )
         if (
             "insufficient_applicability_presence_models" in unresolved
-            and _applicability_presence_model_count(cumulative_clause)
-            < applicability_minimum_models
+            and _applicability_presence_model_count(cumulative_clause) < minimum_models
         ):
             reasons.append("insufficient_applicability_presence_models")
-        threshold = _applicability_presence_threshold(resolution)
-        if threshold is not None:
-            if _applicability_presence_confidence(cumulative_clause) < threshold:
-                reasons.append("applicability_presence_confidence")
-        elif _escalate_on_applicability_presence_disagreement(resolution) and not getattr(
-            cumulative_clause,
-            "applicability_presence_unanimous",
-            cumulative_clause.applicability_unanimous,
+        if (
+            _applicability_presence_confidence(cumulative_clause)
+            < resolution.minimum_presence_confidence
+        ):
+            reasons.append("applicability_presence_confidence")
+        elif (
+            resolution.escalate_on_presence_disagreement
+            and "applicability_presence_disagreement" in unresolved
+            and not getattr(cumulative_clause, "applicability_presence_unanimous", True)
         ):
             reasons.append("applicability_presence_disagreement")
-
-    role_relation_unresolved = bool(
-        unresolved
-        & {
-            "role_relation_disagreement",
-            "role_relation_confidence",
-            "role_semantics_disagreement",
-            "role_semantics_confidence",
-            "role_semantics_evidence_conflict",
-        }
-    )
-    if role_relation_unresolved:
-        if "role_semantics_evidence_conflict" in unresolved and getattr(
-            cumulative_clause, "role_semantics_evidence_conflict", False
-        ):
-            reasons.append("role_semantics_evidence_conflict")
-        threshold = resolution.minimum_role_relation_confidence
-        if threshold is not None:
-            confidence = getattr(
-                cumulative_clause,
-                "role_semantics_presence_confidence",
-                getattr(
-                    cumulative_clause,
-                    "role_relation_decision_confidence",
-                    _dimension_decision_confidence(
-                        present=cumulative_clause.role_relation_present,
-                        positive_confidence=cumulative_clause.role_relation_confidence,
-                        support=cumulative_clause.role_relation_support,
-                    ),
-                ),
-            )
-            if confidence < threshold:
-                reasons.append("role_relation_confidence")
-        elif resolution.escalate_on_role_relation_disagreement and not getattr(
-            cumulative_clause,
-            "role_semantics_unanimous",
-            cumulative_clause.role_relation_unanimous,
-        ):
-            reasons.append("role_relation_disagreement")
-
-    reasons.extend(
-        process_stage_reasons(cumulative_clause, stage_clause, previous_reasons, resolution)
-    )
     return tuple(reasons)
 
 
@@ -403,7 +280,7 @@ def cascade_stage_unresolved_clause_ids(
     previous_reasons: dict[str, tuple[str, ...]],
     resolution: CascadeResolutionConfig,
 ) -> tuple[tuple[str, ...], dict[str, tuple[str, ...]]]:
-    """Resolve one later cascade stage with dimension-level monotonicity."""
+    """Resolve one later applicability stage with monotonic decisions."""
     cumulative_by_id = {clause.clause_id: clause for clause in cumulative_clauses}
     stage_by_id = {clause.clause_id: clause for clause in stage_clauses}
     reasons: dict[str, tuple[str, ...]] = {}
@@ -418,8 +295,6 @@ def cascade_stage_unresolved_clause_ids(
             if not available
         )
         if missing:
-            # Retain the semantic work list across failures/resume. A later
-            # successful stage removes only the temporary missing-data markers.
             reasons[clause_id] = tuple(dict.fromkeys((*previous, *missing)))
         else:
             reasons[clause_id] = cascade_stage_escalation_reasons(
@@ -432,84 +307,6 @@ def cascade_stage_unresolved_clause_ids(
     return unresolved, reasons
 
 
-def _dimension_decision_confidence(
-    *, present: bool, positive_confidence: float, support: dict[str, float]
-) -> float:
-    if present:
-        return positive_confidence
-    return max(0.0, 1.0 - float(support.get("present", 0.0)))
-
-
-def _applicability_presence_model_count(clause: object) -> int:
-    configured = getattr(clause, "applicability_participating_models", None)
-    if configured is not None:
-        return int(configured)
-    votes = getattr(clause, "votes", ())
-    if votes:
-        return sum(
-            bool(getattr(vote, "applicability_presence_eligible", True))
-            for vote in votes
-            if getattr(vote, "role", "voter") == "voter"
-        )
-    return int(getattr(clause, "participating_models", 0))
-
-
-def _applicability_presence_confidence(clause: object) -> float:
-    return float(
-        getattr(
-            clause,
-            "applicability_presence_confidence",
-            getattr(
-                clause,
-                "applicability_decision_confidence",
-                _dimension_decision_confidence(
-                    present=clause.applicability_present,
-                    positive_confidence=clause.applicability_confidence,
-                    support=clause.applicability_support,
-                ),
-            ),
-        )
-    )
-
-
-def _escalate_on_applicability_presence_disagreement(
-    resolution: CascadeResolutionConfig,
-) -> bool:
-    configured = resolution.escalate_on_applicability_presence_disagreement
-    return resolution.escalate_on_applicability_disagreement if configured is None else configured
-
-
-def _applicability_presence_threshold(
-    resolution: CascadeResolutionConfig,
-) -> float | None:
-    configured = resolution.minimum_applicability_presence_confidence
-    return resolution.minimum_applicability_confidence if configured is None else configured
-
-
-_MISSING_CONSENSUS_REASONS = {
-    "no_consensus_result",
-    "missing_cumulative_consensus_result",
-    "missing_stage_consensus_result",
-}
-
-_STATEMENT_REASONS = {
-    "consensus_category",
-    "statement_function_confidence",
-    "statement_function_resolver_confidence",
-}
-_KNOWLEDGE_REASONS = {"knowledge_kind_disagreement", "knowledge_kind_confidence"}
-_APPLICABILITY_REASONS = {
-    "insufficient_applicability_presence_models",
-    "applicability_presence_disagreement",
-    "applicability_presence_confidence",
-}
-_ROLE_RELATION_REASONS = {
-    "role_relation_disagreement",
-    "role_relation_confidence",
-    "role_semantics_evidence_conflict",
-}
-
-
 def capture_resolved_dimensions(
     *,
     cumulative_clause: object,
@@ -519,87 +316,32 @@ def capture_resolved_dimensions(
     source: str,
     initial_stage: bool = False,
     resolution: CascadeResolutionConfig | None = None,
-    process_stage_clause: object | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """Capture semantic decisions that became final in one cascade stage.
-
-    Later stages may add evidence only for dimensions that remain unresolved.
-    Persisting these snapshots makes the monotonic cascade semantics survive the
-    final all-observations report.
-    """
+    """Capture an applicability decision that became final in one stage."""
+    del stage_clause, resolution
     previous = set(previous_reasons)
     remaining = set(remaining_reasons)
-    result: dict[str, dict[str, Any]] = {}
     if remaining & _MISSING_CONSENSUS_REASONS:
-        return result
-    # First evidence after an absent initial record must be captured just as
-    # initial-stage evidence. Nothing was frozen while the record was missing.
+        return {}
     if "no_consensus_result" in previous:
         initial_stage = True
-        stage_clause = cumulative_clause
-        process_stage_clause = cumulative_clause
-
-    def resolved(reason_set: set[str]) -> bool:
-        if initial_stage:
-            return not bool(remaining & reason_set)
-        return bool(previous & reason_set) and not bool(remaining & reason_set)
-
-    if resolved(_STATEMENT_REASONS):
-        clause = stage_clause
-        result["statement_function"] = {
-            "value": (
-                clause.primary_function.value if clause.primary_function is not None else None
-            ),
-            "confidence": clause.statement_function_confidence,
-            "category": clause.statement_function_category.value,
-            "source": source,
-        }
-    if resolved(_KNOWLEDGE_REASONS):
-        result["knowledge_kind"] = {
-            "value": (
-                cumulative_clause.primary_knowledge_kind.value
-                if cumulative_clause.primary_knowledge_kind is not None
-                else None
-            ),
-            "confidence": cumulative_clause.knowledge_kind_decision_confidence,
-            "category": getattr(
-                cumulative_clause,
-                "knowledge_primary_category",
-                cumulative_clause.knowledge_kind_category,
-            ).value,
-            "source": source,
-        }
-    if resolved(_APPLICABILITY_REASONS):
-        result["applicability"] = {
+    resolved = (
+        not bool(remaining & _APPLICABILITY_REASONS)
+        if initial_stage
+        else bool(previous & _APPLICABILITY_REASONS)
+        and not bool(remaining & _APPLICABILITY_REASONS)
+    )
+    if not resolved:
+        return {}
+    return {
+        "applicability": {
             "present": cumulative_clause.applicability_present,
             "confidence": cumulative_clause.applicability_decision_confidence,
-            "presence_confidence": getattr(
-                cumulative_clause,
-                "applicability_presence_confidence",
-                cumulative_clause.applicability_decision_confidence,
-            ),
+            "presence_confidence": _applicability_presence_confidence(cumulative_clause),
             "category": cumulative_clause.applicability_category.value,
             "source": source,
         }
-    if resolved(_ROLE_RELATION_REASONS):
-        result["role_relation"] = {
-            "present": cumulative_clause.role_relation_present,
-            "confidence": cumulative_clause.role_relation_decision_confidence,
-            "category": cumulative_clause.role_relation_category.value,
-            "source": source,
-        }
-    result.update(
-        capture_process_dimensions(
-            cumulative_clause=cumulative_clause,
-            stage_clause=process_stage_clause if process_stage_clause is not None else stage_clause,
-            previous_reasons=previous_reasons,
-            remaining_reasons=remaining_reasons,
-            source=source,
-            initial_stage=initial_stage,
-            resolution=resolution or CascadeResolutionConfig(),
-        )
-    )
-    return result
+    }
 
 
 class MatrixExecutionConfig(BaseModel):
@@ -702,51 +444,23 @@ class RegressionThresholds(BaseModel):
         return self
 
 
-class ReviewImportConfig(BaseModel):
-    """Existing HITL review imported before matrix execution."""
-
-    model_config = ConfigDict(frozen=True)
-
-    run_directory: Path
-    review_directory: Path
-    local_corpus_root: Path = Path(".atlas/data/evaluation/corpora")
-    overwrite: bool = False
-    required: bool = True
-
-
 class ReviewPolicyConfig(BaseModel):
-    """Risk-based policy deciding which consensus results require HITL review."""
+    """Risk-based policy deciding which applicability results require HITL review."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    review_categories: tuple[str, ...] = (
-        "disputed",
-        "insufficient_evidence",
-    )
+    review_categories: tuple[str, ...] = ("disputed", "insufficient_evidence")
     accept_majority_min_confidence: float = Field(default=0.67, ge=0.0, le=1.0)
     accept_majority_min_models: int = Field(default=3, ge=1)
     applicability_min_confidence: float = Field(default=0.75, ge=0.0, le=1.0)
-    role_relation_min_confidence: float = Field(default=0.80, ge=0.0, le=1.0)
-    require_role_relation_evidence: bool = True
 
 
 class ConsensusPromptSelection(BaseModel):
-    """Prompt family used for each semantic dimension."""
+    """Prompt used for applicability-presence consensus."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-    statement_function: str = "content-only"
-    knowledge_kind: str = "content-only"
-    process_function: str = "content-only"
-    applicability: str = "content-only"
-    role_relation: str = "content-only"
-
-    @model_validator(mode="before")
-    @classmethod
-    def inherit_process_prompt(cls, value: Any) -> Any:
-        if isinstance(value, dict) and not value.get("process_function"):
-            return {**value, "process_function": value.get("statement_function", "content-only")}
-        return value
+    applicability: str = "applicability-presence"
 
 
 class AdjudicationConfig(BaseModel):
@@ -757,15 +471,6 @@ class AdjudicationConfig(BaseModel):
     enabled: bool = False
     model_id: str | None = None
     minimum_confidence: float = Field(default=0.70, ge=0.0, le=1.0)
-
-
-class StructuralPriorConfig(BaseModel):
-    """Deterministic priors derived from normalization context."""
-
-    model_config = ConfigDict(frozen=True)
-
-    enabled: bool = True
-    confidence: float = Field(default=0.95, ge=0.0, le=1.0)
 
 
 class ConsensusConfig(BaseModel):
@@ -780,10 +485,8 @@ class ConsensusConfig(BaseModel):
     min_models: int = Field(default=3, ge=2)
     strong_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
     majority_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
-    label_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
     review_policy: ReviewPolicyConfig = ReviewPolicyConfig()
     adjudication: AdjudicationConfig = AdjudicationConfig()
-    structural_priors: StructuralPriorConfig = StructuralPriorConfig()
     output_directory: Path = Path("local/review/qualification/consensus")
 
 
@@ -825,18 +528,17 @@ class QualificationMatrixManifest(SchemaBoundModel):
     model_config = ConfigDict(frozen=True, revalidate_instances="always")
 
     manifest_type: Literal["qualification_matrix"] = "qualification_matrix"
-    schema_version: Literal["1.6"]
+    schema_version: Literal[1] = 1
     matrix_id: str = Field(min_length=1)
     corpus_id: str = Field(min_length=1)
-    task: str = Field(default="semantic-profile-classification", min_length=1)
-    task_version: str = Field(default="2.1.0", min_length=1)
+    task: str = Field(default="applicability-presence", min_length=1)
+    task_version: str = Field(default="1.0.0", min_length=1)
     dataset_version: str = Field(default="1.0.0", min_length=1)
     repetitions: int = Field(default=3, ge=1)
     prompts: tuple[PromptCandidate, ...]
     models: tuple[ModelCandidate, ...] = Field(min_length=1)
     reasoning_modes: tuple[ReasoningMode, ...] = (ReasoningMode(id="disabled"),)
     observations: tuple[MatrixObservation, ...] = ()
-    review_imports: tuple[ReviewImportConfig, ...] = ()
     consensus: ConsensusConfig = ConsensusConfig()
     execution: MatrixExecutionConfig = MatrixExecutionConfig()
     thresholds: RegressionThresholds = RegressionThresholds()
@@ -1065,28 +767,6 @@ class QualificationMatrixManifest(SchemaBoundModel):
             )
             for item in manifest.observations
         )
-        review_imports = tuple(
-            item.model_copy(
-                update={
-                    "run_directory": (
-                        item.run_directory
-                        if item.run_directory.is_absolute()
-                        else base / item.run_directory
-                    ),
-                    "review_directory": (
-                        item.review_directory
-                        if item.review_directory.is_absolute()
-                        else base / item.review_directory
-                    ),
-                    "local_corpus_root": (
-                        item.local_corpus_root
-                        if item.local_corpus_root.is_absolute()
-                        else base / item.local_corpus_root
-                    ),
-                }
-            )
-            for item in manifest.review_imports
-        )
         consensus = manifest.consensus.model_copy(
             update={
                 "output_directory": (
@@ -1102,7 +782,6 @@ class QualificationMatrixManifest(SchemaBoundModel):
         return manifest.model_copy(
             update={
                 "observations": observations,
-                "review_imports": review_imports,
                 "consensus": consensus,
                 "applicability_decision_policy": policy,
             }
@@ -1127,8 +806,6 @@ class CandidateQualification(BaseModel):
     min_gold_f1: float | None
     gold_f1_stddev: float | None
     mean_gold_coverage: float | None
-    mean_silver_f1: float
-    mean_structure_f1: float
     mean_prediction_success_rate: float
     mean_json_validity_rate: float
     mean_truncation_rate: float
@@ -1160,7 +837,7 @@ class QualificationMatrixReport(SchemaBoundModel):
 
     model_config = ConfigDict(frozen=True, revalidate_instances="always")
 
-    schema_version: Literal["1.1"]
+    schema_version: Literal[1] = 1
     matrix_id: str
     corpus_id: str
     generated_at: datetime
@@ -1182,11 +859,11 @@ class ModelPromptQualificationService:
         manifest = QualificationMatrixManifest.model_validate(manifest)
         grouped: dict[
             tuple[str, str, str],
-            list[tuple[MatrixObservation, AnnotationQualificationReport]],
+            list[tuple[MatrixObservation, ApplicabilityQualificationReport]],
         ] = {}
         diagnostics: list[str] = []
         for observation in manifest.observations:
-            report = AnnotationQualificationReport.model_validate_json(
+            report = ApplicabilityQualificationReport.model_validate_json(
                 observation.qualification_report.read_text(encoding="utf-8")
             )
             if report.corpus_id != manifest.corpus_id:
@@ -1248,7 +925,7 @@ class ModelPromptQualificationService:
         )
         ranking = rank_candidates(candidates)
         report = QualificationMatrixReport(
-            schema_version="1.1",
+            schema_version=1,
             matrix_id=manifest.matrix_id,
             corpus_id=manifest.corpus_id,
             generated_at=datetime.now(UTC),
@@ -1277,7 +954,7 @@ def _aggregate_candidate(
     prompt_id: str,
     model: ModelCandidate,
     reasoning_mode: ReasoningMode,
-    entries: list[tuple[MatrixObservation, AnnotationQualificationReport]],
+    entries: list[tuple[MatrixObservation, ApplicabilityQualificationReport]],
     expected_repetitions: int,
     thresholds: RegressionThresholds,
 ) -> CandidateQualification:

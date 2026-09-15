@@ -151,9 +151,9 @@ def test_builds_representative_stratified_corpus_with_population_statistics(
             raise AssertionError("representative sampling must use the full population")
 
     config = CorpusBuildConfig(
-        task="statement-function-classification",
+        task="applicability-presence",
         version="1.0.0",
-        corpus_id="semantic-roles-v1",
+        corpus_id="applicability-v1",
         knowledge_domain="functional-safety",
         count=6,
         strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
@@ -173,7 +173,7 @@ def test_builds_representative_stratified_corpus_with_population_statistics(
         "document",
         "hierarchy_depth",
         "length_class",
-        "structural_role",
+        "canonical_section",
         "title_presence",
     }
     assert all(
@@ -225,7 +225,7 @@ def test_excludes_empty_content_and_separates_content_from_context(tmp_path: Pat
 
     result = EvaluationCorpusBuilder(Provider()).build(
         CorpusBuildConfig(
-            task="statement-function-classification",
+            task="applicability-presence",
             version="1.0.0",
             count=2,
             strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
@@ -284,7 +284,7 @@ def test_corpus_builder_does_not_deduplicate_obsolete_family_document_copies(
 
     result = EvaluationCorpusBuilder(Provider()).build(
         CorpusBuildConfig(
-            task="statement-function-classification",
+            task="applicability-presence",
             version="1.0.0",
             count=2,
             strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
@@ -335,7 +335,7 @@ def test_excludes_table_dominant_clauses_and_reports_reason(tmp_path: Path) -> N
 
     result = EvaluationCorpusBuilder(Provider()).build(
         CorpusBuildConfig(
-            task="statement-function-classification",
+            task="applicability-presence",
             version="1.0.0",
             count=1,
         ),
@@ -446,7 +446,7 @@ def test_excludes_context_meta_clauses_but_keeps_referenced_technical_content(
 
     result = EvaluationCorpusBuilder(Provider()).build(
         CorpusBuildConfig(
-            task="statement-function-classification",
+            task="applicability-presence",
             version="1.0.0",
             count=1,
         ),
@@ -541,7 +541,7 @@ def test_corpus_records_nearest_first_ancestor_headings(tmp_path: Path) -> None:
 
     result = EvaluationCorpusBuilder(Provider()).build(
         CorpusBuildConfig(
-            task="statement-function-classification",
+            task="applicability-presence",
             version="scope-context",
             count=2,
         ),
@@ -618,10 +618,10 @@ def test_all_eligible_corpus_retains_explicit_source_context_only(tmp_path):
                 "enrichment_context": CBoxEnrichments(
                     attributes=(
                         CBoxAttribute(
-                            path="enrichments.semantic.role_semantics_present",
+                            path="enrichments.applicability",
                             availability="known",
                             origin="unattributed",
-                            value=True,
+                            value={"present": True, "polarity": "included"},
                         ),
                         CBoxAttribute(
                             path="enrichments.subject_context",
@@ -647,8 +647,9 @@ def test_all_eligible_corpus_retains_explicit_source_context_only(tmp_path):
     )
     assert result.clause_count == 1
     context = json.loads(result.dataset_path.read_text())["examples"][0]["input"]["context"]
-    assert context["semantic"] == {}
-    assert "enrichments.semantic.role_semantics_present" not in context["attribute_sources"]
+    assert "semantic" not in context
+    assert "applicability" not in context
+    assert "enrichments.applicability" not in context["attribute_sources"]
     assert context["subject_context"] == {"primary_subject": "safety"}
     assert "enrichments.subject_context" in context["attribute_sources"]
 

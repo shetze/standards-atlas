@@ -368,7 +368,7 @@ def _tracked_input_fingerprint(step: WorkflowStep, root: Path) -> str | None:
         files.add(root / "src/standards_atlas/application/services/context_enrichment_service.py")
     if step.stage is WorkflowStage.QUALIFICATION_MATRIX:
         policy_root = root / "src/standards_atlas/application/semantic_qualification"
-        for name in ("context_framing.py", "request_builder.py", "adaptive_interview.py"):
+        for name in ("context_framing.py", "request_builder.py"):
             files.add(policy_root / name)
         files.add(root / _parameter(step, "manifest", "manifests/qualification.yaml"))
         corpus = root / _parameter(step, "corpus_root", ".atlas/data/evaluation/corpora")

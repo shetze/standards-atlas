@@ -4,14 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-DIMENSIONS = (
-    "statement_function",
-    "knowledge_kind",
-    "process_function",
-    "process_set",
-    "applicability",
-    "role_relation",
-)
+DIMENSIONS = ("applicability",)
 
 
 def resolution_counts(resolutions: dict) -> dict[str, int]:

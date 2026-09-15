@@ -1,10 +1,6 @@
 /* Data-only formatting; clause/model strings are never markup or executable code. */
 export const labels = {
-  primary_function: "Primäre Aussagefunktion", primary_knowledge_kind: "Primäre Wissensart",
-  role_semantics_present: "Rollensemantik vorhanden", process_functions: "Prozessfunktionen",
-  statement_functions: "Aussagefunktionen", knowledge_kinds: "Wissensarten",
-  primary_process_function: "Primäre Prozessfunktion", applicability_present: "Applicability vorhanden",
-  role_relations: "Rollenbeziehungen",
+  applicability_present: "Applicability vorhanden",
 };
 export const statuses = {confirmed: "Bestätigt", corrected: "Korrigiert / eigenständig bestätigt",
   deferred: "Zurückgestellt – offen", rejected: "Vorschlag abgelehnt – offen"};

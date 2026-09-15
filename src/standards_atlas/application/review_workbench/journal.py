@@ -7,14 +7,12 @@ prior exposure outside this UI. It is deliberately separate from review-state.js
 from datetime import UTC, datetime
 from pathlib import Path
 
-from standards_atlas.application.semantic_qualification.partial_proposals import (
-    _atomic_json,
-    _json_bytes,
-    _preserve_bytes,
-)
 from standards_atlas.application.semantic_qualification.review_package.candidates import safe_read
 from standards_atlas.application.semantic_qualification.review_package.service import load_review
 from standards_atlas.application.semantic_qualification.review_package.storage import (
+    _atomic_json,
+    _json_bytes,
+    _preserve_bytes,
     _sync_directory,
     review_lock,
 )

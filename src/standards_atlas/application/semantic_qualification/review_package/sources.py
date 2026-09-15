@@ -5,18 +5,92 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import tempfile
 import unicodedata
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
 from standards_atlas.application.context.source_structure import read_source_structure
+from standards_atlas.application.evaluation.models import EvaluationExample
 from standards_atlas.application.model.source_structure import structure_fingerprint
 from standards_atlas.application.semantic_qualification.annotations import normalized_content_hash
-from standards_atlas.application.semantic_qualification.campaign_selection import stratified_sample
+from standards_atlas.application.semantic_qualification.cascade_replay_source import (
+    CascadeReplaySource,
+)
 from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
-from standards_atlas.application.semantic_qualification.partial_proposals import load_partial_inputs
 
-from .model import EvidenceQuote, EvidenceSpan, ReviewPackage, ReviewSource, SemanticPredicate
+from .model import EvidenceQuote, EvidenceSpan, ReviewPackage, ReviewPredicate, ReviewSource
+
+
+def _stratum(example: EvaluationExample) -> str:
+    context = example.input["context"]
+    return f"{context.get('document_key', 'unknown')}|{context.get('clause_type', 'unknown')}"
+
+
+def stratified_sample(examples, count: int, seed: int) -> tuple:
+    if count < 1 or count > len(examples):
+        raise ValueError("sample size must be within the source population")
+    groups = defaultdict(list)
+    for example in examples:
+        groups[_stratum(example)].append(example)
+    n = len(examples)
+    quota = {key: count * len(items) // n for key, items in groups.items()}
+    remainder = sorted(groups, key=lambda key: (-(count * len(groups[key]) % n), key))
+    for key in remainder[: count - sum(quota.values())]:
+        quota[key] += 1
+    selected = []
+    for key, items in sorted(groups.items()):
+        ranked = sorted(
+            items,
+            key=lambda item: structure_fingerprint(
+                {"seed": seed, "id": item.id, "content": item.input["content"]["hash"]}
+            ),
+        )
+        selected.extend(ranked[: quota[key]])
+    return tuple(sorted(selected, key=lambda item: item.id))
+
+
+@dataclass(frozen=True)
+class ReviewInputSelection:
+    examples: tuple[EvaluationExample, ...]
+    fingerprints: dict[str, str]
+    corpus_id: str
+    dataset_version: str
+
+
+def load_review_inputs(
+    *, run: Path | None = None, dataset: Path | None = None
+) -> ReviewInputSelection:
+    """Read source inputs only; expected labels never enter HITL preparation."""
+    if (run is None) == (dataset is None):
+        raise ValueError("provide exactly one of --run or --dataset")
+    if run is not None:
+        source = CascadeReplaySource(run)
+        try:
+            selection = source.selection()
+            with tempfile.TemporaryDirectory(prefix="atlas-review-source-") as temporary:
+                examples = source.materialize_inputs(selection, Path(temporary))
+            fingerprints = dict(source.fingerprints)
+            corpus_id, dataset_version = selection.corpus_id, selection.dataset_version
+        finally:
+            source.close()
+    else:
+        raw = dataset.read_bytes()
+        payload = json.loads(raw)
+        examples = tuple(
+            EvaluationExample(id=item["id"], input=item["input"], expected={})
+            for item in payload["examples"]
+        )
+        fingerprints = {str(dataset.resolve()): hashlib.sha256(raw).hexdigest()}
+        corpus_id = str(payload.get("corpus_id") or "source-dataset")
+        dataset_version = str(payload.get("version") or "unversioned-source")
+    return ReviewInputSelection(
+        tuple(EvaluationExample(id=item.id, input=item.input, expected={}) for item in examples),
+        fingerprints,
+        corpus_id,
+        dataset_version,
+    )
 
 
 def canonical_enrichment_suggestions(
@@ -58,7 +132,7 @@ def canonical_enrichment_suggestions(
             )
         attributes = {item.path: item for item in descriptor.enrichment_context.attributes}
         for attribute in case.attributes:
-            item = attributes.get(f"enrichments.semantic.{attribute}")
+            item = attributes.get("enrichments.applicability.present")
             if item is None or item.availability != "known":
                 continue
             provenance = {
@@ -75,7 +149,7 @@ def canonical_enrichment_suggestions(
                 {
                     "example_id": source.example_id,
                     "attribute": attribute,
-                    "predicate": SemanticPredicate(equals=item.value),
+                    "predicate": ReviewPredicate(equals=bool(item.value)),
                     "producer": "canonical-engineering-document",
                     "producer_kind": "engineering",
                     "rationale": (
@@ -234,7 +308,7 @@ def verify_current_sources(
         location = package.source_location
         run = Path(location["run"]) if "run" in location else None
         dataset = Path(location["dataset"]) if "dataset" in location else None
-    sources = freeze_population(load_partial_inputs(run=run, dataset=dataset).examples)
+    sources = freeze_population(load_review_inputs(run=run, dataset=dataset).examples)
     if sources != package.population:
         raise ValueError(
             "source text, identity, population or structural context changed since build"

@@ -1,6 +1,0 @@
-schema_version: '1.0'
-manifest_type: partial-cascade-acceptance-profile
-version: 1.0.0
-qualification_status: experimental
-id: role-evidence-v1
-role_evidence_mode: anchored_minority

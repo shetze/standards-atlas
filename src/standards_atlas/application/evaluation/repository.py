@@ -11,15 +11,12 @@ from standards_atlas.application.evaluation.models import (
     PromptDefinition,
 )
 
-_RESOURCE_TASK_ALIASES = {"semantic-profile-classification": "statement-function-classification"}
-
 
 def _task_resource_root(root: Path, task: str, version: str) -> Path:
     direct = root / task / version
     if direct.is_dir():
         return direct
-    alias = _RESOURCE_TASK_ALIASES.get(task)
-    return root / alias / version if alias else direct
+    return direct
 
 
 class PromptRepository:

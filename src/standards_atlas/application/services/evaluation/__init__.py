@@ -14,20 +14,17 @@ from standards_atlas.application.evaluation.repository import (
 from standards_atlas.application.evaluation.runner import (
     EvaluationRunner,
 )
+from standards_atlas.application.semantic_qualification.applicability_qualification import (
+    ApplicabilityQualificationService,
+)
 from standards_atlas.application.semantic_qualification.clause_access import ClauseProvider
 from standards_atlas.application.semantic_qualification.consensus import ModelConsensusService
 from standards_atlas.application.semantic_qualification.proposals import BaselineProposalGenerator
-from standards_atlas.application.semantic_qualification.qualification import (
-    AnnotationQualificationService,
-)
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
     ModelPromptQualificationService,
 )
 from standards_atlas.application.semantic_qualification.references import (
     ClauseReferenceExtractionService,
-)
-from standards_atlas.application.semantic_qualification.review import (
-    SemanticAnnotationReviewService,
 )
 from standards_atlas.application.semantic_qualification.workflow import (
     EvaluationCorpusBuilder,
@@ -35,7 +32,7 @@ from standards_atlas.application.semantic_qualification.workflow import (
 )
 
 __all__ = [
-    "AnnotationQualificationService",
+    "ApplicabilityQualificationService",
     "BaselineProposalGenerator",
     "ClauseProvider",
     "ClauseReferenceExtractionService",
@@ -49,5 +46,4 @@ __all__ = [
     "ModelConsensusService",
     "ModelPromptQualificationService",
     "PromptRepository",
-    "SemanticAnnotationReviewService",
 ]

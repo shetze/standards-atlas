@@ -10,9 +10,7 @@ from standards_atlas.cli.commands.evaluation_commands.applicability_detail impor
 )
 from standards_atlas.cli.main import app
 
-V6_MANIFEST = Path(
-    "manifests/multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml"
-)
+V6_MANIFEST = Path("manifests/applicability-presence-qualification-v1.yaml")
 
 
 @dataclass(frozen=True)

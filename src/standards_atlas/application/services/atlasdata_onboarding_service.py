@@ -19,7 +19,7 @@ from standards_atlas.application.services.structural_profile_classifier import (
     StructuralProfileClassifier,
     StructuralProfileContext,
 )
-from standards_atlas.domain.model.semantic_classification import NormativeStatus
+from standards_atlas.domain.model.clause_semantics import NormativeStatus
 from standards_atlas.domain.model.structural_profile import CanonicalDocumentSection
 
 _NUMERIC_HEADING = re.compile(

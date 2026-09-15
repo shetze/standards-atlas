@@ -178,33 +178,32 @@ def test_binary_applicability_prompt_schema_is_safe_canonical_narrowing() -> Non
 
     resources = Path("src/standards_atlas/resources/semantic")
     _, canonical = SemanticTaskRepository(resources / "tasks").load(
-        "semantic-profile-classification", "2.4.0"
+        "applicability-presence", "1.0.0"
     )
-    prompt = PromptRepository(resources / "prompts").load(
-        "semantic-profile-classification", "structure-aware-v8"
-    )
+    prompt = PromptRepository(resources / "prompts").load("applicability-presence", "1.0.0")
 
     assert _prompt_schema_is_compatible(prompt.output_schema, canonical)
 
 
-def test_prompt_schema_cannot_expand_canonical_applicability_labels() -> None:
+def test_prompt_schema_cannot_expand_canonical_applicability_contract() -> None:
     from standards_atlas.application.semantic_qualification.proposals import (
         _prompt_schema_is_compatible,
     )
 
     canonical = {
-        "properties": {
-            "applicability_functions": {"items": {"enum": ["inclusion", "exclusion"]}},
-            "primary_applicability_function": {"enum": ["inclusion", "exclusion", None]},
-        }
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["applicability_present"],
+        "properties": {"applicability_present": {"type": "boolean"}},
     }
     expanded = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["applicability_present", "legacy_label"],
         "properties": {
-            "applicability_functions": {"items": {"enum": ["inclusion", "exclusion", "exception"]}},
-            "primary_applicability_function": {
-                "enum": ["inclusion", "exclusion", "exception", None]
-            },
-        }
+            "applicability_present": {"type": "boolean"},
+            "legacy_label": {"type": "string"},
+        },
     }
 
     assert not _prompt_schema_is_compatible(expanded, canonical)

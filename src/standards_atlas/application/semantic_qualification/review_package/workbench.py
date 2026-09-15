@@ -10,10 +10,10 @@ import re
 from pathlib import Path
 
 from standards_atlas.application.schema import require_supported_schema
-from standards_atlas.application.semantic_qualification.partial_proposals import _json_bytes
 
 from .model import WorkbenchEvidence, WorkbenchState
 from .sources import fingerprint
+from .storage import _json_bytes
 from .validation import seal
 
 
@@ -52,7 +52,7 @@ def verify_workbench_state(journal: WorkbenchState, package, review_state) -> No
 
 
 def verify_workbench_evidence(evidence: WorkbenchEvidence, package, review_state) -> None:
-    require_supported_schema("partial-review-workbench-evidence", evidence.schema_version)
+    require_supported_schema("review-workbench-evidence", evidence.schema_version)
     if fingerprint(evidence, "audit_sha256") != evidence.audit_sha256:
         raise ValueError("Workbench evidence fingerprint mismatch")
     snapshots = (*evidence.history, evidence.state)

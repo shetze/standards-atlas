@@ -47,7 +47,10 @@ from standards_atlas.application.semantic_qualification.run_selection import (
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
-from standards_atlas.domain.model import ApplicabilityFunction, OtherApplicabilityTarget
+from standards_atlas.domain.model.applicability import (
+    ApplicabilityFunction,
+    OtherApplicabilityTarget,
+)
 
 
 class _RunningStatus(Protocol):

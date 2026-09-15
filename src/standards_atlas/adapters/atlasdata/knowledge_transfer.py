@@ -17,18 +17,15 @@ from standards_atlas.domain.model import DocumentKey, EngineeringDocument
 from standards_atlas.domain.model.clause import Clause
 from standards_atlas.domain.model.enrichment_patch import (
     ClauseEnrichmentPatch,
-    SemanticEnrichmentPatch,
     merge_persisted_enrichments,
 )
 from standards_atlas.domain.model.knowledge_state import KnowledgeStateProvenance
-from standards_atlas.domain.model.semantic_classification import SemanticClassification
 
 from .domain_mapper import extract_clause_identity
 from .import_pipeline import AtlasDataImportPipeline
 from .knowledge_contract import (
     ALL_PATHS,
     DIMENSION_PATHS,
-    UNPUBLISHED_ROLE_PATHS,
     AtlasDataKnowledge,
     AtlasDataKnowledgeReport,
     ClauseKnowledge,
@@ -266,47 +263,13 @@ def read_knowledge(path: Path) -> AtlasDataKnowledge:
     for clause in result.clauses:
         for attribute in clause.attributes:
             check_public_attribute(attribute)
-        _validate_semantics(clause.attributes)
     return result
 
 
 def _omit_unpublished_details(
     manifest: AtlasDataKnowledge,
 ) -> tuple[AtlasDataKnowledge, list[TransferChange]]:
-    """Remove deferred public fields, not canonical values or private evidence.
-
-    Apply to the whole selected companion, even on a dimension/clause-limited
-    export, so retained old records cannot leak fields outside publication policy.
-    Attribute fingerprints are serialized from the remaining records only.
-    """
-    unpublished_paths = UNPUBLISHED_ROLE_PATHS
-    clauses = []
-    changes = []
-    for clause in manifest.clauses:
-        attributes = []
-        for item in clause.attributes:
-            if item.path not in unpublished_paths:
-                attributes.append(item)
-                continue
-            changes.append(
-                TransferChange(
-                    document_key=manifest.document_key,
-                    clause_id=clause.clause_id,
-                    path=item.path,
-                    status="omitted",
-                    before=item.value,
-                    reason=(
-                        "role detail publication is deferred; "
-                        "only role presence is published; "
-                        "canonical values and private evidence are unchanged"
-                    ),
-                )
-            )
-        if attributes:
-            clauses.append(clause.model_copy(update={"attributes": tuple(attributes)}))
-        # A companion record without any published attributes is not meaningful.
-        # Other clauses and all their remaining attributes retain their order.
-    return manifest.model_copy(update={"clauses": tuple(clauses)}), changes
+    return manifest, []
 
 
 def knowledge_bytes(manifest: AtlasDataKnowledge) -> bytes:
@@ -314,7 +277,6 @@ def knowledge_bytes(manifest: AtlasDataKnowledge) -> bytes:
     manifest = AtlasDataKnowledge.model_validate(manifest.model_dump(mode="json"))
     manifest, _ = _omit_unpublished_details(manifest)
     for clause in manifest.clauses:
-        _validate_semantics(clause.attributes)
         for attribute in clause.attributes:
             check_public_attribute(attribute)
     return yaml.dump(
@@ -324,31 +286,6 @@ def knowledge_bytes(manifest: AtlasDataKnowledge) -> bytes:
         allow_unicode=True,
         width=100,
     ).encode("utf-8")
-
-
-def _validate_semantics(attributes: tuple[PublishedAttribute, ...]) -> None:
-    fields = {
-        item.path.rsplit(".", 1)[-1]: item.value
-        for item in attributes
-        if item.path.startswith("enrichments.semantic.")
-        and item.path != "enrichments.semantic.role_relations"
-        and item.availability == "known"
-    }
-    # Presence in the public attribute list, not a constructor default, denotes
-    # an evaluated complete set. Sparse primaries must survive a roundtrip.
-    context = {
-        "unobserved_primary_sets": {
-            primary
-            for primary, members in (
-                ("primary_function", "statement_functions"),
-                ("primary_knowledge_kind", "knowledge_kinds"),
-                ("primary_process_function", "process_functions"),
-            )
-            if primary in fields and members not in fields
-        },
-        "unobserved_role_presence": "role_semantics_present" not in fields,
-    }
-    SemanticClassification.model_validate(fields, context=context)
 
 
 def structure_digest(document: EngineeringDocument) -> str:
@@ -535,7 +472,6 @@ def _merge_record(
             "attributes": tuple(after[path] for path in sorted(after)),
         }
     )
-    _validate_semantics(record.attributes)
     return record, changes
 
 
@@ -652,8 +588,6 @@ class AtlasDataKnowledgeService:
             if dimensions
             else ALL_PATHS
         )
-        unpublished_paths = UNPUBLISHED_ROLE_PATHS
-        paths = tuple(path for path in paths if path not in unpublished_paths)
         store = KnowledgeEvidenceStore(self.evidence_root)
         pending: dict[Path, bytes] = {}
         changes = []
@@ -765,15 +699,6 @@ class AtlasDataKnowledgeService:
             document = original or skeleton
             if document.key.value != key:
                 raise ValueError("canonical repository returned the wrong document")
-            # Current reviewed TOC tags always participate, including when restoring into
-            # an existing enriched workspace. They cannot be bypassed by a stale document.
-            document, tag_changes = self._apply_current_tags(
-                document,
-                skeleton,
-                manifest,
-                store,
-            )
-            changes.extend(tag_changes)
             restored, delta, checked, unchecked = self._restore(
                 document,
                 manifest,
@@ -791,50 +716,6 @@ class AtlasDataKnowledgeService:
         return self._report("import", keys, pending, changes, write, verified, unverified)
 
     @staticmethod
-    def _apply_current_tags(
-        document: EngineeringDocument,
-        skeleton: EngineeringDocument,
-        manifest: AtlasDataKnowledge,
-        store: KnowledgeEvidenceStore,
-    ) -> tuple[EngineeringDocument, list[TransferChange]]:
-        clauses, baseline = _clauses(document), _clauses(skeleton)
-        changes = []
-        for record in manifest.clauses:
-            current = clauses.get(record.clause_id)
-            structural = baseline.get(record.clause_id)
-            _check_clause(record, structural, key=document.key.value, structural=True)
-            _check_clause(record, current, key=document.key.value)
-            attributes = tuple(
-                item
-                for path in ALL_PATHS
-                if (item := project_attribute(structural, path, store)) is not None
-                and item.origin == "confirmed"
-            )
-            if attributes:
-                tagged = record.model_copy(update={"attributes": attributes})
-                restored, delta, _, _ = AtlasDataKnowledgeService._restore(
-                    document.model_copy(update={"clauses": (current,)}),
-                    manifest.model_copy(update={"clauses": (tagged,)}),
-                    store,
-                    strict_evidence=False,
-                )
-                clauses[record.clause_id] = restored.clauses[0]
-                changes.extend(
-                    item.model_copy(
-                        update={
-                            "reason": "current reviewed TOC tags; " + (item.reason or "restored"),
-                        }
-                    )
-                    for item in delta
-                )
-        restored = document.model_copy(
-            update={
-                "clauses": tuple(clauses[c.id.value] for c in document.clauses),
-            }
-        )
-        return restored, changes
-
-    @staticmethod
     def _restore(
         document: EngineeringDocument,
         manifest: AtlasDataKnowledge,
@@ -850,7 +731,7 @@ class AtlasDataKnowledgeService:
             checked = _check_clause(record, clause, key=document.key.value)
             verified += checked
             unverified += not checked
-            semantic, context = {}, {}
+            context = {}
             generated, confirmed, unattributed = [], [], []
             for item in record.attributes:
                 value, provenance, deferred, missing = hydrate_attribute(item, store)
@@ -885,20 +766,14 @@ class AtlasDataKnowledgeService:
                         )
                     )
                 if item.availability == "known":
-                    if item.path.startswith("enrichments.semantic."):
-                        semantic[item.path.rsplit(".", 1)[-1]] = value
-                    else:
-                        context[item.path.rsplit(".", 1)[-1]] = value
+                    context[item.path.rsplit(".", 1)[-1]] = value
                 if item.origin == "generated":
                     generated.append(provenance)
                 elif item.origin == "confirmed":
                     confirmed.append(provenance)
                 else:
                     unattributed.append(item.path)
-            patch = ClauseEnrichmentPatch(
-                semantic=SemanticEnrichmentPatch(**semantic) if semantic else None,
-                **context,
-            )
+            patch = ClauseEnrichmentPatch(**context)
             result = merge_persisted_enrichments(
                 clause,
                 patch,

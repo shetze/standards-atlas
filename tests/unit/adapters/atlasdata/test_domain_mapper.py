@@ -238,40 +238,6 @@ def test_domain_mapper_preserves_informative_annex_status() -> None:
     assert standard.clauses[0].normative_status.value == "informative"
 
 
-def test_domain_mapper_reads_public_semantic_tags() -> None:
-    atlas_data = AtlasStandardData(
-        metadata=AtlasMetadata(
-            name="EN 50716",
-            digits=8,
-            official_year=2023,
-            extra_fields={"semanticProfile": "functional-safety:1.0.0"},
-        ),
-        structure_items=[
-            StructureItem(
-                visible_reference="5.1", item_type=AtlasItemType.REQUIREMENT, source_token="r5.1"
-            )
-        ],
-        initialization_records=[
-            InitializationRecord(
-                kind="TOC",
-                hash_value="abc",
-                reference="EN 50716:2023 5.1",
-                content="Requirement",
-                type_marker="r",
-                semantic_tags=("SP-REQ", "SS-PRE", "KK-PRC", "RR-RSP"),
-            )
-        ],
-    )
-    standard = map_atlas_data_to_standard(atlas_data, key="EN50716")
-    classification = standard.clauses[0].semantic_classification
-    assert [value.value for value in classification.statement_functions] == [
-        "requirement",
-        "prerequisite",
-    ]
-    assert [value.value for value in classification.knowledge_kinds] == ["process"]
-    assert [value.value for value in classification.role_relation_types] == ["responsible_for"]
-
-
 def test_table_structure_items_are_first_class_tables_not_clauses() -> None:
     atlas_data = AtlasStandardData(
         metadata=AtlasMetadata(

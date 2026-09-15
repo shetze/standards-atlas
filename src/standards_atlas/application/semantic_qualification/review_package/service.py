@@ -6,21 +6,19 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from standards_atlas.application.semantic_qualification.partial_proposals import _json_bytes
-
 from .model import (
     EvidenceQuote,
     HumanDecisionInput,
     ReviewDecision,
     ReviewPackage,
+    ReviewPredicate,
     ReviewProposal,
     ReviewState,
-    SemanticPredicate,
     predicate_data,
     validate_predicate,
 )
 from .sources import resolve_evidence
-from .storage import review_lock, write_state
+from .storage import _json_bytes, review_lock, write_state
 from .validation import active_decisions, review_report, seal, verify_package, verify_state
 
 
@@ -47,7 +45,7 @@ def add_proposal(
     *,
     example_id: str,
     attribute: str,
-    predicate: SemanticPredicate,
+    predicate: ReviewPredicate,
     producer: str,
     producer_kind: str,
     rationale: str,
@@ -114,7 +112,7 @@ def record_decision(
     status: str,
     reviewer: str,
     proposal_sha256: str | None = None,
-    predicate: SemanticPredicate | None = None,
+    predicate: ReviewPredicate | None = None,
     comment: str = "",
 ) -> ReviewState:
     """Single-decision compatibility entry point for the local human CLI."""

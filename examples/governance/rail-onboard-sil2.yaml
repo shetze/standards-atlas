@@ -1,4 +1,4 @@
-schema-version: 2
+schema-version: 1
 id: rail-onboard-sil2
 version: 1.0.0
 description: Example railway onboard software governance selection.
@@ -23,8 +23,6 @@ selection:
   subject-group-profile:
     id: functional-safety
     version: 1.0.0
-  statement-functions:
-    - requirement
   primary-subjects: []
   primary-subject-groups:
     - safety-lifecycle

@@ -76,11 +76,11 @@ look plausible.
 
 Statement functions describe the linguistic function of narrative clauses. Matrix kind,
 recommendation level, and row relationships are different semantic dimensions. Table
-relations therefore must not be projected back into `SemanticClassification` labels of the
+relations therefore must not be projected back into clause-classification labels of the
 surrounding clause.
 
 A central `SemanticTaskEligibilityPolicy` excludes `table_dominant` content from
-`statement-function-classification` and records `structured-table-interpretation` as the
+formal semantic assertion extraction and records `structured-table-interpretation` as the
 alternative task. Text-dominant mixed clauses remain eligible, but prompts require models
 to classify only their narrative content.
 

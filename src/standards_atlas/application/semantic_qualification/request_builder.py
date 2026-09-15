@@ -113,8 +113,6 @@ def build_proposal_request(
                     "seed",
                     "max_tokens",
                     "reasoning_enabled",
-                    "adaptive_interview",
-                    "adaptive_question_max_tokens",
                     "truncation_retry_max_tokens",
                     "retry_on_truncation",
                 )

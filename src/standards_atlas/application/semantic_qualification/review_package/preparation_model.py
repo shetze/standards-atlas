@@ -1,4 +1,4 @@
-"""Closed preparation contracts. Agent recommendations are never human decisions."""
+"""Closed preparation contracts for applicability-presence HITL review."""
 
 from __future__ import annotations
 
@@ -6,34 +6,20 @@ from typing import Any, ClassVar, Literal
 
 from pydantic import Field, model_validator
 
-from standards_atlas.application.semantic_qualification.qualification_campaign_model import (
-    CampaignModel,
-)
-
-from .model import Digest, EvidenceQuote, NonBlank, SemanticPredicate
+from .model import Digest, EvidenceQuote, NonBlank, ReviewModel, ReviewPredicate
 
 
-class HistoricalSignal(CampaignModel):
-    """A source-bound report item, not a freshly verified model call or HITL decision."""
-
+class HistoricalSignal(ReviewModel):
     artifact_sha256: Digest
-    artifact_kind: Literal["golden", "semantic-suite", "mixed", "consensus", "observation"]
-    attribute: NonBlank
+    artifact_kind: Literal["golden", "review-suite", "consensus"]
+    attribute: Literal["applicability_present"] = "applicability_present"
     status: Literal[
-        "published",
-        "proposed",
-        "accepted",
-        "observed",
-        "unresolved",
-        "conflict",
-        "not_evaluated",
-        "failed",
+        "published", "proposed", "accepted", "unresolved", "conflict", "not_evaluated", "failed"
     ]
-    predicate: SemanticPredicate | None = None
+    predicate: ReviewPredicate | None = None
     model_values: dict[str, Any] = Field(default_factory=dict)
     stage: str | None = None
     context_binding: Literal["matched", "text-only"] = "text-only"
-    # Informational provenance; never converted into ReviewDecision by this reader.
     reference_id: str | None = None
 
     @model_validator(mode="after")
@@ -41,18 +27,18 @@ class HistoricalSignal(CampaignModel):
         if self.status in {"not_evaluated", "failed"} and (
             self.predicate is not None or self.model_values
         ):
-            raise ValueError("unobserved/failed history cannot supply semantic values")
+            raise ValueError("unobserved/failed history cannot supply values")
         return self
 
 
-class HistoryArtifact(CampaignModel):
+class HistoryArtifact(ReviewModel):
     location: NonBlank
     member: str | None = None
     sha256: Digest
     kind: NonBlank
 
 
-class CandidateEntry(CampaignModel):
+class CandidateEntry(ReviewModel):
     example_id: NonBlank
     source_sha256: Digest
     document_key: NonBlank
@@ -69,11 +55,10 @@ class CandidateEntry(CampaignModel):
     history: tuple[HistoricalSignal, ...] = ()
 
 
-class CandidateIndex(CampaignModel):
-    SCHEMA_FAMILY: ClassVar[str] = "partial-review-candidates"
-
-    schema_version: Literal["1.0"] = "1.0"
-    kind: Literal["partial-review-candidates"] = "partial-review-candidates"
+class CandidateIndex(ReviewModel):
+    SCHEMA_FAMILY: ClassVar[str] = "review-candidates"
+    schema_version: Literal[1] = 1
+    kind: Literal["review-candidates"] = "review-candidates"
     package_sha256: Digest
     state_sha256: Digest
     population_sha256: Digest
@@ -86,14 +71,14 @@ class CandidateIndex(CampaignModel):
     index_sha256: Digest
 
 
-class SelectionItem(CampaignModel):
+class SelectionItem(ReviewModel):
     example_id: NonBlank
     source_sha256: Digest
     priority: int = Field(ge=0, le=100, strict=True)
     rationale: NonBlank
 
 
-class SelectionRequest(CampaignModel):
+class SelectionRequest(ReviewModel):
     actor: NonBlank
     model: NonBlank
     rationale: NonBlank
@@ -112,31 +97,29 @@ class SelectionRequest(CampaignModel):
         return self
 
 
-class SelectionProposal(CampaignModel):
-    SCHEMA_FAMILY: ClassVar[str] = "partial-review-selection-proposal"
-
-    schema_version: Literal["1.0"] = "1.0"
-    kind: Literal["partial-review-selection-proposal"] = "partial-review-selection-proposal"
+class SelectionProposal(ReviewModel):
+    SCHEMA_FAMILY: ClassVar[str] = "review-selection-proposal"
+    schema_version: Literal[1] = 1
+    kind: Literal["review-selection-proposal"] = "review-selection-proposal"
     package_sha256: Digest
     state_sha256: Digest
     index_sha256: Digest
     request: SelectionRequest
-    # Replayable total order, not the transient order of a model response or filesystem.
     review_order: tuple[str, ...]
     holdout_ids: tuple[str, ...]
     selection_sha256: Digest
 
 
-class AnnotationRecommendation(CampaignModel):
+class AnnotationRecommendation(ReviewModel):
     example_id: NonBlank
     source_sha256: Digest
-    attribute: NonBlank
-    predicate: SemanticPredicate
+    attribute: Literal["applicability_present"] = "applicability_present"
+    predicate: ReviewPredicate
     rationale: NonBlank
     evidence: tuple[EvidenceQuote, ...] = ()
 
 
-class AnnotationBatch(CampaignModel):
+class AnnotationBatch(ReviewModel):
     request_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$")
     actor: NonBlank
     model: NonBlank

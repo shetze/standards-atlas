@@ -9,144 +9,47 @@ from . import policy as compatibility
 from .policy import CompatibilityPhase, SchemaPolicy
 
 SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
-    "partial-review-workbench-evidence": SchemaPolicy(
-        "partial-review-workbench-evidence", "1.0", ("1.0",), "**/review-evidence.json#workbench"
+    "review-source-manifest": SchemaPolicy(
+        "review-source-manifest", 1, (1,), "cfg/evaluation/review/*.yaml"
     ),
-    "partial-review-archive": SchemaPolicy(
-        "partial-review-archive", "1.0", ("1.0",), "**/review-package.zip#archive-manifest.json"
+    "review-profile": SchemaPolicy("review-profile", 1, (1,), "**/review-profile.yaml"),
+    "review-package": SchemaPolicy("review-package", 1, (1,), "**/review-package.json"),
+    "review-state": SchemaPolicy("review-state", 1, (1,), "**/review-state.json"),
+    "review-publication": SchemaPolicy("review-publication", 1, (1,), "**/review-evidence.json"),
+    "review-reference-suite": SchemaPolicy(
+        "review-reference-suite", 1, (1,), "**/{development,holdout}.yaml"
     ),
-    "partial-review-handoff": SchemaPolicy(
-        "partial-review-handoff", "1.0", ("1.0",), "**/review-handoff.json"
+    "review-candidates": SchemaPolicy(
+        "review-candidates", 1, (1,), "**/preparation/indexes/*/index.json"
+    ),
+    "review-selection-proposal": SchemaPolicy(
+        "review-selection-proposal", 1, (1,), "**/preparation/selections/*/selection.json"
+    ),
+    "review-archive": SchemaPolicy(
+        "review-archive", 1, (1,), "**/review-package.zip#archive-manifest.json"
     ),
     "review-workbench-state": SchemaPolicy(
-        "review-workbench-state", "1.0", ("1.0",), "**/workbench/state.json"
+        "review-workbench-state", 1, (1,), "**/workbench/state.json"
     ),
-    "partial-review-candidates": SchemaPolicy(
-        "partial-review-candidates", "1.0", ("1.0",), "**/preparation/indexes/*/index.json"
-    ),
-    "partial-review-selection-proposal": SchemaPolicy(
-        "partial-review-selection-proposal",
-        "1.0",
-        ("1.0",),
-        "**/preparation/selections/*/selection.json",
-    ),
-    "partial-review-package": SchemaPolicy(
-        "partial-review-package", "1.0", ("1.0",), "**/review-package.json"
-    ),
-    "partial-review-state": SchemaPolicy(
-        "partial-review-state", "1.0", ("1.0",), "**/review-state.json"
-    ),
-    "partial-review-profile": SchemaPolicy(
-        "partial-review-profile", "1.0", ("1.0",), "**/review-profile.yaml"
-    ),
-    "partial-review-publication": SchemaPolicy(
-        "partial-review-publication", "1.1", ("1.1",), "**/review-evidence.json"
-    ),
-    "partial-qualification-manifest": SchemaPolicy(
-        "partial-qualification-manifest", "1.1", ("1.1",), "**/campaign.yaml"
-    ),
-    "partial-qualification-campaign": SchemaPolicy(
-        "partial-qualification-campaign", "2.0", ("2.0",), "**/campaign-plan.json"
-    ),
-    "partial-qualification-repeat": SchemaPolicy(
-        "partial-qualification-repeat", "1.0", ("1.0",), "**/repeat.json"
-    ),
-    "partial-qualification-evaluation": SchemaPolicy(
-        "partial-qualification-evaluation", "1.0", ("1.0",), "**/qualification-evaluation.json"
-    ),
-    "partial-semantic-reference": SchemaPolicy(
-        "partial-semantic-reference", "1.0", ("1.0",), "**/semantic-reference.json"
-    ),
-    "partial-qualified-activation": SchemaPolicy(
-        "partial-qualified-activation", "1.0", ("1.0",), "**/activation.json"
-    ),
-    "qualification-request-event": SchemaPolicy(
-        "qualification-request-event", "1.0", ("1.0",), "**/qualification-events/*.json"
-    ),
-    "partial-qualification-execution": SchemaPolicy(
-        "partial-qualification-execution", "1.0", ("1.0",), "**/execution-report.json"
-    ),
-    "partial-cascade-report": SchemaPolicy(
-        "partial-cascade-report",
-        "1.1",
-        ("1.1",),
-        "**/partial-cascade-report.json",
-    ),
-    "partial-cascade-audit": SchemaPolicy(
-        "partial-cascade-audit",
-        "1.0",
-        ("1.0",),
-        "**/partial-cascade-audit.json",
-    ),
-    "taxonomy-pilot-readiness": SchemaPolicy(
-        "taxonomy-pilot-readiness",
-        "1.0",
-        ("1.0",),
-        "**/pilot-readiness.json",
-    ),
-    "taxonomy-readiness-cases": SchemaPolicy(
-        "taxonomy-readiness-cases",
-        "1.0",
-        ("1.0",),
-        "resources/semantic/qualification/taxonomy-readiness-v1/cases.yaml",
-    ),
-    "semantic-readiness-checks": SchemaPolicy(
-        "semantic-readiness-checks",
-        "1.0",
-        ("1.0",),
-        "**/readiness-checks.json",
-    ),
-    "semantic-readiness-evaluation": SchemaPolicy(
-        "semantic-readiness-evaluation",
-        "1.0",
-        ("1.0",),
-        "**/semantic-readiness.json",
-    ),
-    "mixed-consensus": SchemaPolicy(
-        "mixed-consensus", "1.0", ("1.0",), "**/mixed-consensus-report.json"
-    ),
-    "partial-cascade-run": SchemaPolicy(
-        "partial-cascade-run", "1.0", ("1.0",), "**/partial-cascade-*.json"
-    ),
-    "partial-request-plan": SchemaPolicy(
-        "partial-request-plan", "1.1", ("1.1",), "**/partial-request-plan.json"
-    ),
-    "partial-semantic-observation": SchemaPolicy(
-        "partial-semantic-observation", "1.1", ("1.1",), "**/partial-observation.json"
-    ),
-    "partial-proposal-run": SchemaPolicy(
-        "partial-proposal-run", "1.0", ("1.0",), "**/partial-run-*.json"
+    "review-workbench-evidence": SchemaPolicy(
+        "review-workbench-evidence", 1, (1,), "**/review-evidence.json#workbench"
     ),
     "source-structure": SchemaPolicy(
         "source-structure", "1.0", ("1.0",), "clause-descriptor.source_structure"
     ),
-    "clause-decision-plan": SchemaPolicy(
-        "clause-decision-plan", "1.0", ("1.0",), "**/taxonomy-decision-plans.json"
-    ),
-    "taxonomy-decision-report": SchemaPolicy(
-        "taxonomy-decision-report", "1.0", ("1.0",), "**/taxonomy-decision-report.json"
-    ),
-    "taxonomy-decision-rules": SchemaPolicy(
-        "taxonomy-decision-rules", 1, (1,), "resources/semantic/taxonomy-decisions/**/rules.yaml"
-    ),
-    "taxonomy-decision-review": SchemaPolicy(
-        "taxonomy-decision-review", 1, (1,), "resources/semantic/taxonomy-decisions/**/review.yaml"
-    ),
-    "cascade-provenance": SchemaPolicy(
-        "cascade-provenance", "1.6", ("1.6",), "**/cascade-provenance.json"
-    ),
+    "cascade-provenance": SchemaPolicy("cascade-provenance", 1, (1,), "**/cascade-provenance.json"),
     "cascade-replay": SchemaPolicy("cascade-replay", "1.0", ("1.0",), "**/cascade-replay.json"),
     "qualification-request-timing": SchemaPolicy(
         "qualification-request-timing", "1.0", ("1.0",), "**/request-timing.json"
     ),
     "qualification-matrix-report": SchemaPolicy(
-        "qualification-matrix-report", "1.1", ("1.1",), "**/qualification-matrix.json"
+        "qualification-matrix-report", 1, (1,), "**/qualification-matrix.json"
     ),
     "qualification-consensus": SchemaPolicy(
-        "qualification-consensus", "5.0", ("5.0",), "**/consensus-report.json"
+        "qualification-consensus", 1, (1,), "**/consensus-report.json"
     ),
     "golden-corpus-proposal": SchemaPolicy(
-        "golden-corpus-proposal", "4.0", ("4.0",), "**/golden-corpus-proposal.yaml"
+        "golden-corpus-proposal", 1, (1,), "**/golden-corpus-proposal.yaml"
     ),
     "cbox-enrichments": SchemaPolicy(
         "cbox-enrichments", "1.0", ("1.0",), "clause-descriptor.enrichment_context"
@@ -172,13 +75,10 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     ),
     "standards-manifest": SchemaPolicy("standards-manifest", 2, (2,), "manifests/*.yaml"),
     "qualification-matrix-manifest": SchemaPolicy(
-        "qualification-matrix-manifest", "1.6", ("1.6",), "manifests/*.yaml"
+        "qualification-matrix-manifest", 1, (1,), "manifests/*.yaml"
     ),
     "semantic-task-resource": SchemaPolicy(
         "semantic-task-resource", 1, (1,), "resources/semantic/tasks/**/task.yaml"
-    ),
-    "semantic-profile-resource": SchemaPolicy(
-        "semantic-profile-resource", 1, (1,), "resources/semantic/profiles/**/profile.yaml"
     ),
     "ontology-resource": SchemaPolicy(
         "ontology-resource", 1, (1,), "resources/ontologies/**/ontology.yaml"
@@ -197,12 +97,6 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         1,
         (1,),
         "resources/structure-taxonomies/**/taxonomy.yaml",
-    ),
-    "public-semantic-annotation-manifest": SchemaPolicy(
-        "public-semantic-annotation-manifest",
-        1,
-        (1,),
-        "local/**/semantic-annotations*.yaml",
     ),
     "complypack-workspace-manifest": SchemaPolicy(
         "complypack-workspace-manifest",
@@ -306,22 +200,16 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         ".atlas/data/qualification/runs/*/report.json",
     ),
-    "partial-acceptance-profile": SchemaPolicy(
-        "partial-acceptance-profile",
-        "1.0",
-        ("1.0",),
-        "cfg/evaluation/partial-cascade/*.yaml",
-    ),
     "clause-evaluation-annotation": SchemaPolicy(
         "clause-evaluation-annotation",
-        "1.0",
-        ("1.0",),
+        1,
+        (1,),
         "**/annotations/**/*.yaml",
     ),
     "evaluation-corpus": SchemaPolicy(
         "evaluation-corpus",
-        "1.0",
-        ("1.0",),
+        1,
+        (1,),
         "**/corpus.yaml",
     ),
     "applicability-detail-hitl-consensus": SchemaPolicy(
@@ -372,35 +260,14 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         ("1.1",),
         "**/applicability-policy-run*.json",
     ),
-    "annotation-qualification-report": SchemaPolicy(
-        "annotation-qualification-report",
-        "1.0",
-        ("1.0",),
-        "**/annotation-qualification*.json",
+    "applicability-qualification-report": SchemaPolicy(
+        "applicability-qualification-report", 1, (1,), "**/applicability-qualification.json"
     ),
     "qualification-coverage": SchemaPolicy(
         "qualification-coverage",
         "1.0",
         ("1.0",),
         "**/qualification-coverage.json",
-    ),
-    "annotation-review-form": SchemaPolicy(
-        "annotation-review-form",
-        "1.0",
-        ("1.0",),
-        "**/review.md#semantic-review",
-    ),
-    "role-corpus-build-manifest": SchemaPolicy(
-        "role-corpus-build-manifest",
-        "1.0",
-        ("1.0",),
-        "**/role-corpus*.yaml",
-    ),
-    "role-golden-corpus": SchemaPolicy(
-        "role-golden-corpus",
-        "1.0",
-        ("1.0",),
-        "**/role-golden-corpus*.yaml",
     ),
     "qualification-run-selection": SchemaPolicy(
         "qualification-run-selection",
@@ -416,8 +283,8 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     ),
     "governance-selection-profile": SchemaPolicy(
         "governance-selection-profile",
-        2,
-        (2,),
+        1,
+        (1,),
         "local/governance/*.yaml",
     ),
     "governance-subject-group-profile": SchemaPolicy(
@@ -528,46 +395,10 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         ("1.0",),
         "**/challenger-comparison.json",
     ),
-    "focused-resolution-plan": SchemaPolicy(
-        "focused-resolution-plan",
-        "1.0",
-        ("1.0",),
-        "**/focused-plan.json",
-    ),
-    "partial-experiment-audit": SchemaPolicy(
-        "partial-experiment-audit",
-        "1.0",
-        ("1.0",),
-        "**/partial-audit.json",
-    ),
-    "partial-cascade-costs": SchemaPolicy(
-        "partial-cascade-costs",
-        "1.0",
-        ("1.0",),
-        "**/partial-cascade-costs.json",
-    ),
-    "partial-profile-comparison": SchemaPolicy(
-        "partial-profile-comparison",
-        "1.0",
-        ("1.0",),
-        "**/partial-profile-comparison.json",
-    ),
-    "efficient-comparison-plan": SchemaPolicy(
-        "efficient-comparison-plan",
-        "1.0",
-        ("1.0",),
-        "**/efficient-comparison-plan.json",
-    ),
-    "efficient-prompt-comparison": SchemaPolicy(
-        "efficient-prompt-comparison",
-        "1.0",
-        ("1.0",),
-        "**/efficient-comparison.json",
-    ),
     "semantic-evaluation": SchemaPolicy(
         "semantic-evaluation",
-        "1.0",
-        ("1.0",),
+        1,
+        (1,),
         "**/evaluation.yaml",
     ),
     "context-run-report": SchemaPolicy(

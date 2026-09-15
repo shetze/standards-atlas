@@ -37,15 +37,12 @@ from standards_atlas.cli import app
 from standards_atlas.cli.commands.document_commands import knowledge, management
 from standards_atlas.cli.composition import build_workflow_service
 from standards_atlas.domain.model import ClauseApplicability, ContextRouting
-from standards_atlas.domain.model.enrichment_patch import (
-    ClauseEnrichmentPatch,
-    SemanticEnrichmentPatch,
-)
+from standards_atlas.domain.model.enrichment_patch import ClauseEnrichmentPatch
 from standards_atlas.domain.model.knowledge_state import GeneratedAttribute, GenerationMethod
 from standards_atlas.shared.hashing import sha256_file
 
 ROOT = Path(__file__).resolve().parents[3]
-MATRIX = "multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml"
+MATRIX = "applicability-presence-qualification-v1.yaml"
 
 
 _RENDERER = CliWorkflowOperationRenderer()
@@ -188,12 +185,11 @@ class BoundaryRunner:
             "EXAMPLEB",
         }
         assert len(dataset["examples"]) == 2
-        assert all(e["input"]["context"]["semantic"] == {} for e in dataset["examples"])
+        assert all("semantic" not in e["input"]["context"] for e in dataset["examples"])
         repo = FileSystemEngineeringDocumentRepository(cwd / ".atlas/data")
         candidates = []
         for doc in repo.list():
             for clause in doc.clauses:
-                fields = {"role_semantics_present": False}
                 candidates.append(
                     ClauseKnowledgeCandidate(
                         document_key=doc.key.value,
@@ -202,18 +198,9 @@ class BoundaryRunner:
                         heading=clause.heading,
                         content_hash=normalized_content_hash(clause.plain_text),
                         patch=ClauseEnrichmentPatch(
-                            semantic=SemanticEnrichmentPatch(**fields),
                             applicability=ClauseApplicability(present=False),
                         ),
                         attributes=(
-                            *(
-                                GeneratedAttribute(
-                                    path=f"enrichments.semantic.{field}",
-                                    generator="synthetic-qualified-policy",
-                                    method=GenerationMethod.IMPORTED,
-                                )
-                                for field in fields
-                            ),
                             GeneratedAttribute(
                                 path="enrichments.applicability",
                                 generator="synthetic-qualified-policy",
@@ -274,10 +261,7 @@ def test_two_documents_normalize_publish_and_repeat_without_duplicate_outputs(
         assert len(clauses) == 1 and clauses[0]["heading"] == "Requirements"
         assert clauses[0]["atlasdata_md5"] == "a" * 32
         paths = {a["path"] for a in clauses[0]["attributes"]}
-        assert "enrichments.semantic.role_semantics_present" in paths
         assert "enrichments.applicability" in paths
-        assert "enrichments.semantic.role_relations" not in paths
-        assert "enrichments.semantic.role_relation_types" not in paths
         assert "shall document" not in public.read_text()
         snapshots[key] = canonical.read_bytes(), public.read_bytes()
     assert list((tmp_path / ".atlas/data/knowledge-evidence").rglob("*.json"))

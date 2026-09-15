@@ -16,12 +16,11 @@ from standards_atlas.application.ports.semantic_extraction import SemanticKnowle
 from standards_atlas.domain.model import (
     Clause,
     ClauseApplicability,
+    ClauseType,
     DocumentSemanticExtraction,
     EngineeringDocument,
     ExtractionAttempt,
     ExtractionFailure,
-    KnowledgeKind,
-    ProcessFunction,
 )
 
 from .references import display_clause_reference
@@ -37,10 +36,7 @@ class ExtractionEligibility:
 class ExtractionEligibilityContext:
     """Qualification-time semantic context used without mutating EngineeringDocument."""
 
-    knowledge_kinds: tuple[KnowledgeKind, ...] = ()
-    process_functions: tuple[ProcessFunction, ...] = ()
     applicability: ClauseApplicability = ClauseApplicability()
-    role_semantics_present: bool = False
 
 
 def extraction_eligibility(
@@ -48,45 +44,18 @@ def extraction_eligibility(
     *,
     context: ExtractionEligibilityContext | None = None,
 ) -> ExtractionEligibility:
-    """Use persisted or qualification-time semantics as deterministic routing signals."""
+    """Route extraction from retained canonical context only."""
 
-    semantic = clause.semantic_classification
-    knowledge_kinds = context.knowledge_kinds if context is not None else semantic.knowledge_kinds
-    process_functions = (
-        context.process_functions if context is not None else semantic.process_functions
-    )
     applicability = context.applicability if context is not None else clause.applicability
-    role_semantics_present = (
-        context.role_semantics_present if context is not None else semantic.role_semantics_present
-    )
-
     reasons: list[str] = []
-    if knowledge_kinds:
-        reasons.append("knowledge-kind")
-    if role_semantics_present:
-        reasons.append("role-semantics")
     if applicability.present:
         reasons.append("applicability")
-    if any(
-        function in {ProcessFunction.ACTIVITY, ProcessFunction.INPUT, ProcessFunction.OUTPUT}
-        for function in process_functions
-    ):
-        reasons.append("process-function")
-    if any(
-        kind
-        in {
-            KnowledgeKind.TECHNIQUE,
-            KnowledgeKind.METHOD_OR_MEASURE,
-            KnowledgeKind.TECHNIQUE_OR_MEASURE,
-            KnowledgeKind.PROCESS,
-            KnowledgeKind.ARTIFACT,
-            KnowledgeKind.ROLE,
-            KnowledgeKind.EVIDENCE,
-            KnowledgeKind.CONCEPT,
-        }
-        for kind in knowledge_kinds
-    ):
-        reasons.append("engineering-knowledge")
+    if clause.primary_subject is not None:
+        reasons.append("primary-subject")
+    if clause.clause_type in {ClauseType.REQUIREMENT, ClauseType.OBJECTIVE}:
+        reasons.append("engineering-statement")
+    if clause.reference_relations:
+        reasons.append("reference-relation")
     unique = tuple(dict.fromkeys(reasons))
     return ExtractionEligibility(bool(unique), unique)
 
@@ -234,18 +203,17 @@ def _semantic_context(
     clause: Clause,
     context: ExtractionEligibilityContext | None,
 ) -> dict[str, object]:
-    """Build extractor context without fabricating a modified Clause instance."""
+    """Build extractor context from canonical structure and context enrichments."""
 
-    payload = clause.semantic_classification.model_dump(mode="json")
-    payload["applicability"] = clause.applicability.model_dump(mode="json")
-    if context is None:
-        return payload
-    payload.update(
-        {
-            "knowledge_kinds": [item.value for item in context.knowledge_kinds],
-            "process_functions": [item.value for item in context.process_functions],
-            "applicability": context.applicability.model_dump(mode="json"),
-            "role_semantics_present": context.role_semantics_present,
-        }
-    )
-    return payload
+    applicability = context.applicability if context is not None else clause.applicability
+    return {
+        "applicability": applicability.model_dump(mode="json"),
+        "normative_status": clause.normative_status.value,
+        "clause_type": clause.clause_type.value,
+        "primary_subject": (
+            clause.primary_subject.normalized_label if clause.primary_subject is not None else None
+        ),
+        "reference_relations": [
+            item.model_dump(mode="json") for item in clause.reference_relations
+        ],
+    }

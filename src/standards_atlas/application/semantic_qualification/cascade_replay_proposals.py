@@ -86,12 +86,6 @@ class ProposalReplay:
                         max_tokens=(
                             model.generation.max_output_tokens or candidate.max_output_tokens
                         ),
-                        adaptive_interview=candidate.adaptive_interview,
-                        adaptive_question_max_tokens=(
-                            model.generation.adaptive_question_max_tokens
-                            or model.generation.max_output_tokens
-                            or candidate.max_output_tokens
-                        ),
                         truncation_retry_max_tokens=model.generation.truncation_retry_max_tokens,
                         retry_on_truncation=model.generation.retry_on_truncation,
                         reasoning_enabled=(
@@ -214,11 +208,9 @@ class ProposalReplay:
             min_models=1 if resolver else resolution.minimum_successful_models,
             strong_threshold=manifest.consensus.strong_threshold,
             majority_threshold=manifest.consensus.majority_threshold,
-            label_threshold=manifest.consensus.label_threshold,
             prompt_selection=manifest.consensus.prompt_selection.model_dump(),
             review_policy=manifest.consensus.review_policy.model_dump(),
             adjudication=manifest.consensus.adjudication.model_dump(),
-            structural_priors=manifest.consensus.structural_priors.model_dump(),
             example_ids=clause_ids,
             model_dimension_eligibility=manifest.model_dimension_eligibility,
             min_applicability_presence_models=(
@@ -241,11 +233,9 @@ class ProposalReplay:
             min_models=manifest.consensus.min_models,
             strong_threshold=manifest.consensus.strong_threshold,
             majority_threshold=manifest.consensus.majority_threshold,
-            label_threshold=manifest.consensus.label_threshold,
             prompt_selection=manifest.consensus.prompt_selection.model_dump(),
             review_policy=manifest.consensus.review_policy.model_dump(),
             adjudication=manifest.consensus.adjudication.model_dump(),
-            structural_priors=manifest.consensus.structural_priors.model_dump(),
             example_ids=clause_ids,
             resolution_overrides=resolutions,
             model_dimension_eligibility=manifest.model_dimension_eligibility,

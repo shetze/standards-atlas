@@ -138,10 +138,10 @@ def test_persist_prediction_snapshot_projects_presence_only(tmp_path: Path) -> N
     run = tmp_path / "run" / "c1"
     run.mkdir(parents=True)
     payload = {
-        "schema_version": "1.0",
+        "schema_version": 1,
         "annotation_candidate": {
-            "schema_version": "1.0",
-            "task": "semantic-profile-classification",
+            "schema_version": 1,
+            "task": "applicability-presence",
             "lifecycle_status": "proposed",
             "clause": {
                 "knowledge_domain": "functional-safety",
@@ -151,8 +151,6 @@ def test_persist_prediction_snapshot_projects_presence_only(tmp_path: Path) -> N
             },
             "proposal": {
                 "applicability_present": True,
-                "applicability_functions": ["inclusion"],
-                "primary_applicability_function": "inclusion",
                 "confidence": 0.91,
             },
             "generator": {
@@ -189,7 +187,7 @@ def test_persist_prediction_snapshot_projects_presence_only(tmp_path: Path) -> N
 
 def test_legacy_prediction_snapshot_is_rejected_in_refactoring_phase() -> None:
     legacy = {
-        "schema_version": "1.0",
+        "schema_version": 1,
         "matrix_id": "legacy",
         "observations": [],
     }

@@ -33,9 +33,6 @@ from standards_atlas.application.semantic_qualification.diagnostics import (
     build_qualification_diagnostics,
     render_qualification_diagnostics_markdown,
 )
-from standards_atlas.application.semantic_qualification.process_functions import (
-    process_report_metrics,
-)
 from standards_atlas.application.semantic_qualification.qualification_coverage import (
     QualificationCoverage,
 )
@@ -110,7 +107,6 @@ def build_analysis_metrics(
         "review_count": report.review_count,
         "categories": report.categories,
         "dimension_categories": report.dimension_categories,
-        "process_functions": process_report_metrics(report.clauses),
         "overall_statuses": report.overall_statuses,
         "participation_distribution": report.participation_distribution,
         "resolution_sources": report.resolution_sources,
@@ -180,7 +176,7 @@ def collect_qualification_input_members(
     published_corpus_root: Path | None = None,
 ) -> tuple[tuple[Path, str], ...]:
     """Return immutable input snapshots required to reproduce a qualification run."""
-    task = str(manifest_payload.get("task") or "statement-function-classification")
+    task = str(manifest_payload.get("task") or "applicability-presence")
     task_version = str(manifest_payload.get("task_version") or "")
     dataset_version = str(manifest_payload.get("dataset_version") or "")
     corpus_id = str(manifest_payload.get("corpus_id") or "")
@@ -214,8 +210,6 @@ def collect_qualification_input_members(
     }
     for version in sorted(prompt_versions):
         prompt_root = resources / "prompts" / task / version
-        if not prompt_root.is_dir() and task == "semantic-profile-classification":
-            prompt_root = resources / "prompts" / "statement-function-classification" / version
         if prompt_root.is_dir():
             for path in sorted(prompt_root.rglob("*")):
                 if path.is_file():

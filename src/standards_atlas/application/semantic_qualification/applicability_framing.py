@@ -8,12 +8,12 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from standards_atlas.application.semantic_qualification.annotations import (
-    StatementFunctionSelection,
+    ApplicabilityPresenceSelection,
 )
 from standards_atlas.application.semantic_qualification.applicability_corpus import (
     ApplicabilityGoldenCorpus,
 )
-from standards_atlas.application.semantic_qualification.qualification import (
+from standards_atlas.application.semantic_qualification.applicability_qualification import (
     _load_predictions,
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
@@ -94,7 +94,9 @@ def build_applicability_framing_report(
         diagnostics.append(f"applicability golden corpus not available: {golden_path}")
 
     rows: list[ApplicabilityFrameMetrics] = []
-    predictions_by_key: dict[tuple[str, str, int, str], dict[str, StatementFunctionSelection]] = {}
+    predictions_by_key: dict[
+        tuple[str, str, int, str], dict[str, ApplicabilityPresenceSelection]
+    ] = {}
     for observation in manifest.observations:
         if observation.run_directory is None or not observation.run_directory.is_dir():
             continue
@@ -209,7 +211,7 @@ def _metrics(
     model_id: str,
     reasoning_mode_id: str,
     repetition: int,
-    predictions: dict[str, StatementFunctionSelection],
+    predictions: dict[str, ApplicabilityPresenceSelection],
     expected: dict[tuple[str, str], bool],
 ) -> ApplicabilityFrameMetrics:
     present = sum(selection.applicability_present for selection in predictions.values())
@@ -263,8 +265,8 @@ def _select_baseline(rows: list[ApplicabilityFrameMetrics]) -> ApplicabilityFram
 def _compare(
     baseline: ApplicabilityFrameMetrics,
     candidate: ApplicabilityFrameMetrics,
-    baseline_predictions: dict[str, StatementFunctionSelection],
-    candidate_predictions: dict[str, StatementFunctionSelection],
+    baseline_predictions: dict[str, ApplicabilityPresenceSelection],
+    candidate_predictions: dict[str, ApplicabilityPresenceSelection],
 ) -> ApplicabilityFrameDelta:
     keys = sorted(set(baseline_predictions).intersection(candidate_predictions))
     presence_disagreement = to_present = to_absent = 0

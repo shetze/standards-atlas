@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from standards_atlas.domain.model import ApplicabilityFunction
+from standards_atlas.domain.model.applicability import ApplicabilityFunction
 
 
 class ApplicabilityPolarity(StrEnum):

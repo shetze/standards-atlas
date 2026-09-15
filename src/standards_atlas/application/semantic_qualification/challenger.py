@@ -134,7 +134,6 @@ def build_challenger_manifest(
             "repetitions": config.repetitions,
             "models": models,
             "observations": (),
-            "review_imports": (),
             "execution": MatrixExecutionConfig(mode="full_matrix"),
             "consensus": consensus,
             "challenger_qualification": ChallengerQualificationConfig(),

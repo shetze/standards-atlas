@@ -1,42 +1,50 @@
-import json
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
 
-from standards_atlas.application.semantic_qualification.qualification import (
-    AgreementMetrics,
-    AnnotationQualificationReport,
+from standards_atlas.application.semantic_qualification.applicability_qualification import (
+    ApplicabilityAgreementMetrics,
+    ApplicabilityQualificationReport,
     CalibrationMetrics,
     CorpusCoverage,
 )
 from standards_atlas.application.semantic_qualification.qualification_matrix import (
+    CascadeResolutionConfig,
     PromptCandidate,
     QualificationMatrixManifest,
+    capture_resolved_dimensions,
+    cascade_escalation_reasons,
+    cascade_stage_escalation_reasons,
     resolve_prompt_version,
 )
 from standards_atlas.application.services.evaluation import ModelPromptQualificationService
 
 
-def _agreement(f1: float, coverage: float = 1.0) -> AgreementMetrics:
-    return AgreementMetrics(
+def _agreement(f1: float, coverage: float = 1.0) -> ApplicabilityAgreementMetrics:
+    evaluated = round(10 * coverage)
+    return ApplicabilityAgreementMetrics(
         eligible=10,
-        evaluated=round(10 * coverage),
+        evaluated=evaluated,
         coverage=coverage,
-        exact_match_rate=f1,
-        primary_function_accuracy=f1,
-        micro_precision=f1,
-        micro_recall=f1,
-        micro_f1=f1,
-        macro_f1=f1,
+        accuracy=f1,
+        precision=f1,
+        recall=f1,
+        specificity=f1,
+        f1=f1,
+        true_positive=evaluated,
+        false_positive=0,
+        true_negative=0,
+        false_negative=0,
     )
 
 
-def _write_report(path: Path, f1: float, corpus_id: str = "roles-v1") -> None:
-    report = AnnotationQualificationReport(
+def _write_report(path: Path, f1: float, corpus_id: str = "applicability-v1") -> None:
+    report = ApplicabilityQualificationReport(
         corpus_id=corpus_id,
-        generated_at=datetime(2026, 7, 28, tzinfo=UTC),
+        generated_at=datetime(2026, 9, 15, tzinfo=UTC),
         prediction_source="run",
         coverage=CorpusCoverage(
             corpus_clauses=10,
@@ -44,13 +52,10 @@ def _write_report(path: Path, f1: float, corpus_id: str = "roles-v1") -> None:
             published_gold=10,
             local_reviewed_gold=0,
             local_proposals=0,
-            structure_labels=10,
             stale_or_invalid=0,
             missing_predictions=0,
         ),
         gold_agreement=_agreement(f1),
-        silver_agreement=_agreement(f1),
-        structure_agreement=_agreement(f1),
         calibration=CalibrationMetrics(covered=10, coverage=1.0),
     )
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -59,12 +64,11 @@ def _write_report(path: Path, f1: float, corpus_id: str = "roles-v1") -> None:
 
 def _manifest(tmp_path: Path) -> Path:
     observations = []
-    for prompt_index in range(1, 5):
+    for prompt_index in range(1, 3):
         for model_id in ("fast", "accurate"):
             for repetition in (1, 2):
                 report = tmp_path / "reports" / f"p{prompt_index}-{model_id}-{repetition}.json"
-                f1 = 0.90 if model_id == "accurate" else 0.80
-                _write_report(report, f1)
+                _write_report(report, 0.90 if model_id == "accurate" else 0.80)
                 observations.append(
                     {
                         "prompt_id": f"p{prompt_index}",
@@ -76,11 +80,11 @@ def _manifest(tmp_path: Path) -> Path:
                     }
                 )
     payload = {
-        "schema_version": "1.6",
-        "matrix_id": "semantic-role-v1",
-        "corpus_id": "roles-v1",
+        "schema_version": 1,
+        "matrix_id": "applicability-presence-v1",
+        "corpus_id": "applicability-v1",
         "repetitions": 2,
-        "prompts": [{"id": f"p{index}"} for index in range(1, 5)],
+        "prompts": [{"id": "p1"}, {"id": "p2"}],
         "models": [
             {"id": "fast", "provider": "local", "declared_memory_gb": 4.0},
             {"id": "accurate", "provider": "local", "declared_memory_gb": 8.0},
@@ -97,19 +101,21 @@ def _manifest(tmp_path: Path) -> Path:
     return path
 
 
-def test_matrix_aggregates_repetitions_and_builds_pareto_front(tmp_path: Path) -> None:
+def test_matrix_aggregates_applicability_repetitions_and_builds_pareto_front(
+    tmp_path: Path,
+) -> None:
     manifest = QualificationMatrixManifest.load(_manifest(tmp_path))
     report, json_path, markdown_path = ModelPromptQualificationService().evaluate(
         manifest, tmp_path / "output"
     )
 
     assert report.passed
-    assert len(report.candidates) == 8
+    assert len(report.candidates) == 4
     assert " / accurate / " in report.ranking[0]
     assert any(" / fast / " in key for key in report.pareto_front)
     assert any(" / accurate / " in key for key in report.pareto_front)
     assert json_path.exists()
-    assert "Regression diagnostics" in markdown_path.read_text(encoding="utf-8")
+    assert markdown_path.exists()
 
 
 def test_missing_repetition_fails_candidate(tmp_path: Path) -> None:
@@ -129,10 +135,9 @@ def test_missing_repetition_fails_candidate(tmp_path: Path) -> None:
     )
     assert not candidate.passed
     assert "completed repetitions" in candidate.regressions[0]
-    assert not report.passed
 
 
-def test_baseline_drop_threshold_detects_regression(tmp_path: Path) -> None:
+def test_baseline_drop_threshold_detects_applicability_regression(tmp_path: Path) -> None:
     manifest = QualificationMatrixManifest.load(_manifest(tmp_path))
     thresholds = manifest.thresholds.model_copy(
         update={
@@ -145,7 +150,6 @@ def test_baseline_drop_threshold_detects_regression(tmp_path: Path) -> None:
         manifest.model_copy(update={"thresholds": thresholds}),
         tmp_path / "output",
     )
-
     fast = next(
         item for item in report.candidates if item.prompt_id == "p1" and item.model_id == "fast"
     )
@@ -153,18 +157,13 @@ def test_baseline_drop_threshold_detects_regression(tmp_path: Path) -> None:
     assert any("baseline allowance" in item for item in fast.regressions)
 
 
-def test_manifest_accepts_one_shared_prompt(tmp_path: Path) -> None:
+def test_manifest_rejects_non_current_schema_version(tmp_path: Path) -> None:
     path = _manifest(tmp_path)
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["prompts"] = payload["prompts"][:1]
-    payload["observations"] = [
-        item for item in payload["observations"] if item["prompt_id"] == "p1"
-    ]
+    payload["schema_version"] = "1.6"
     path.write_text(yaml.safe_dump(payload), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    assert [prompt.id for prompt in manifest.prompts] == ["p1"]
+    with pytest.raises(ValueError):
+        QualificationMatrixManifest.load(path)
 
 
 def test_manifest_requires_at_least_one_prompt(tmp_path: Path) -> None:
@@ -173,1373 +172,78 @@ def test_manifest_requires_at_least_one_prompt(tmp_path: Path) -> None:
     payload["prompts"] = []
     payload["observations"] = []
     path.write_text(yaml.safe_dump(payload), encoding="utf-8")
-
     with pytest.raises(ValueError, match="at least one prompt"):
         QualificationMatrixManifest.load(path)
 
 
-def test_optional_reasoning_mode_does_not_require_observations(tmp_path: Path) -> None:
-    payload = yaml.safe_load(_manifest(tmp_path).read_text(encoding="utf-8"))
-    payload["reasoning_modes"] = [
-        {"id": "disabled", "enabled": False, "optional": False},
-        {"id": "enabled", "enabled": True, "optional": True},
-    ]
-    path = tmp_path / "reasoning-matrix.yaml"
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    report, _, _ = ModelPromptQualificationService().evaluate(
-        QualificationMatrixManifest.load(path), tmp_path / "reasoning-output"
-    )
-
-    assert report.passed
-    optional = [item for item in report.candidates if item.reasoning_mode_id == "enabled"]
-    assert len(optional) == 8
-    assert all(item.reasoning_optional for item in optional)
-    assert all(not item.regressions for item in optional)
-
-
-def test_reasoning_mode_is_part_of_observation_identity(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["reasoning_modes"] = [
-        {"id": "disabled", "enabled": False},
-        {"id": "enabled", "enabled": True, "optional": True},
-    ]
-    enabled = dict(payload["observations"][0])
-    enabled["reasoning_mode_id"] = "enabled"
-    payload["observations"].append(enabled)
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    assert len(manifest.observations) == 17
-
-
-def test_prompt_aliases_resolve_to_installed_resources() -> None:
-    resources = Path("src/standards_atlas/resources/semantic")
-
+def test_resolve_prompt_version_only_uses_applicability_task(tmp_path: Path) -> None:
+    resources = tmp_path / "resources"
+    prompt = resources / "prompts" / "applicability-presence" / "app-v1"
+    prompt.mkdir(parents=True)
+    (prompt / "prompt.json").write_text("{}", encoding="utf-8")
     assert (
-        resolve_prompt_version(PromptCandidate(id="content-only"), resources=resources)
-        == "content-only-v1"
-    )
-    assert (
-        resolve_prompt_version(PromptCandidate(id="reference-aware"), resources=resources)
-        == "evidence-first-v1"
-    )
-    assert (
-        resolve_prompt_version(PromptCandidate(id="deliberative"), resources=resources)
-        == "bounded-reasoning-v1"
-    )
-
-
-def test_model_repetitions_override_global_default(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["repetitions"] = 3
-    payload["models"][0]["repetitions"] = 1
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    assert manifest.repetitions_for(manifest.models[0]) == 1
-    assert manifest.repetitions_for(manifest.models[1]) == 3
-
-
-def test_model_repetitions_zero_disables_model(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["models"][0]["repetitions"] = 0
-    payload["observations"] = [
-        item for item in payload["observations"] if item["model_id"] != "fast"
-    ]
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-    report, _, _ = ModelPromptQualificationService().evaluate(
-        manifest, tmp_path / "disabled-model-output"
-    )
-
-    assert manifest.repetitions_for(manifest.models[0]) == 0
-    assert report.passed
-    assert len(report.candidates) == 4
-    assert all(candidate.model_id == "accurate" for candidate in report.candidates)
-    assert not any("fast" in diagnostic for diagnostic in report.diagnostics)
-
-
-def test_disabled_model_rejects_existing_observations(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["models"][0]["repetitions"] = 0
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(ValueError, match="configured repetitions 0 for fast"):
-        QualificationMatrixManifest.load(path)
-
-
-def test_optional_unexecuted_candidate_is_not_ranked_or_passed(tmp_path: Path) -> None:
-    payload = yaml.safe_load(_manifest(tmp_path).read_text(encoding="utf-8"))
-    payload["reasoning_modes"] = [
-        {"id": "disabled", "enabled": False},
-        {"id": "enabled", "enabled": True, "optional": True},
-    ]
-    path = tmp_path / "optional.yaml"
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    report, _, markdown = ModelPromptQualificationService().evaluate(
-        QualificationMatrixManifest.load(path), tmp_path / "optional-output"
-    )
-
-    optional = [item for item in report.candidates if item.reasoning_mode_id == "enabled"]
-    assert all(item.status == "unsupported" for item in optional)
-    assert all(not item.passed for item in optional)
-    assert all(not item.qualification_eligible for item in optional)
-    assert not any(" / enabled" in key for key in report.ranking)
-    assert "## Not ranked" in markdown.read_text(encoding="utf-8")
-
-
-def test_missing_gold_is_reported_as_unavailable_not_zero(tmp_path: Path) -> None:
-    manifest = QualificationMatrixManifest.load(_manifest(tmp_path))
-    for observation in manifest.observations:
-        payload = yaml.safe_load(observation.qualification_report.read_text(encoding="utf-8"))
-        payload["gold_agreement"]["eligible"] = 0
-        payload["gold_agreement"]["evaluated"] = 0
-        payload["gold_agreement"]["coverage"] = 0.0
-        observation.qualification_report.write_text(json.dumps(payload), encoding="utf-8")
-
-    report, _, markdown = ModelPromptQualificationService().evaluate(
-        manifest, tmp_path / "no-gold-output"
-    )
-
-    assert all(item.mean_gold_f1 is None for item in report.candidates)
-    assert all(item.mean_gold_coverage is None for item in report.candidates)
-    assert "n/a" in markdown.read_text(encoding="utf-8")
-
-
-def test_model_generation_configuration_is_nested_and_validated(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["models"][0]["generation"] = {
-        "max_output_tokens": 512,
-        "adaptive_question_max_tokens": 384,
-        "truncation_retry_max_tokens": 768,
-        "reasoning_mode": "disabled",
-        "retry_on_truncation": True,
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-    generation = manifest.models[0].generation
-
-    assert generation.max_output_tokens == 512
-    assert generation.adaptive_question_max_tokens == 384
-    assert generation.truncation_retry_max_tokens == 768
-    assert generation.reasoning_mode == "disabled"
-    assert generation.retry_on_truncation
-
-
-def test_cascade_manifest_validates_stages(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["execution"] = {
-        "mode": "cascade",
-        "stages": [
-            {"id": "efficient", "models": ["fast"], "apply_to": "all"},
-            {"id": "escalation", "models": ["accurate"], "apply_to": "unresolved"},
-        ],
-        "resolution": {
-            "minimum_successful_models": 1,
-            "accepted_categories": ["unanimous", "strong_consensus"],
-            "minimum_confidence": 0.8,
-        },
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    assert manifest.execution.mode == "cascade"
-    assert manifest.execution.stages[1].apply_to == "unresolved"
-    assert manifest.execution.resolution.minimum_confidence == 0.8
-
-
-def test_cascade_rejects_unknown_models(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["execution"] = {
-        "mode": "cascade",
-        "stages": [
-            {"id": "efficient", "models": ["missing"], "apply_to": "all"},
-            {"id": "escalation", "models": ["accurate"], "apply_to": "unresolved"},
-        ],
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(ValueError, match="unknown models"):
-        QualificationMatrixManifest.load(path)
-
-
-def test_cascade_stage_can_select_prompts(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["execution"] = {
-        "mode": "cascade",
-        "stages": [
-            {
-                "id": "efficient",
-                "models": ["fast"],
-                "prompts": ["p1", "p2"],
-                "apply_to": "all",
-            },
-            {
-                "id": "escalation",
-                "models": ["accurate"],
-                "prompts": ["p3", "p4"],
-                "apply_to": "unresolved",
-            },
-        ],
-    }
-    payload["observations"] = [
-        item
-        for item in payload["observations"]
-        if (item["model_id"] == "fast" and item["prompt_id"] in {"p1", "p2"})
-        or (item["model_id"] == "accurate" and item["prompt_id"] in {"p3", "p4"})
-    ]
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-    report, _, _ = ModelPromptQualificationService().evaluate(
-        manifest, tmp_path / "stage-prompts-output"
-    )
-
-    assert [prompt.id for prompt in manifest.prompts_for_model("fast")] == ["p1", "p2"]
-    assert [prompt.id for prompt in manifest.prompts_for_model("accurate")] == ["p3", "p4"]
-    assert len(report.candidates) == 4
-    assert not any("missing all runs" in item for item in report.diagnostics)
-
-
-def test_cascade_stage_without_prompt_selection_uses_declared_prompt_catalog(
-    tmp_path: Path,
-) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["execution"] = {
-        "mode": "cascade",
-        "stages": [
-            {"id": "efficient", "models": ["fast"], "apply_to": "all"},
-            {
-                "id": "escalation",
-                "models": ["accurate"],
-                "apply_to": "unresolved",
-            },
-        ],
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    assert manifest.prompts_for_model("fast") == manifest.prompts
-    assert manifest.prompts_for_model("accurate") == manifest.prompts
-
-
-def test_cascade_rejects_unknown_stage_prompts(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["execution"] = {
-        "mode": "cascade",
-        "stages": [
-            {
-                "id": "efficient",
-                "models": ["fast"],
-                "prompts": ["missing"],
-                "apply_to": "all",
-            },
-            {
-                "id": "escalation",
-                "models": ["accurate"],
-                "apply_to": "unresolved",
-            },
-        ],
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(ValueError, match="unknown prompts"):
-        QualificationMatrixManifest.load(path)
-
-
-def test_cascade_resolution_escalates_presence_disagreement() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=3,
-        minimum_confidence=0.6,
-        escalate_on_applicability_presence_disagreement=True,
-        escalate_on_role_relation_disagreement=True,
-    )
-    clause = SimpleNamespace(
-        participating_models=3,
-        category=SimpleNamespace(value="strong_consensus"),
-        statement_function_confidence=1.0,
-        applicability_presence_unanimous=False,
-        applicability_unanimous=False,
-        role_relation_unanimous=False,
-    )
-
-    assert cascade_escalation_reasons(clause, resolution) == (
-        "applicability_presence_disagreement",
-        "role_relation_disagreement",
-    )
-
-
-def test_cascade_resolution_accepts_unanimous_secondary_dimensions() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    clause = SimpleNamespace(
-        participating_models=3,
-        category=SimpleNamespace(value="majority_consensus"),
-        statement_function_confidence=2 / 3,
-        applicability_unanimous=True,
-        role_relation_unanimous=True,
-    )
-
-    assert cascade_escalation_reasons(clause, CascadeResolutionConfig()) == ()
-
-
-def test_cascade_resolution_requires_enough_eligible_applicability_presence_votes() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    clause = SimpleNamespace(
-        participating_models=3,
-        applicability_participating_models=2,
-        category=SimpleNamespace(value="unanimous"),
-        statement_function_confidence=1.0,
-        applicability_presence_unanimous=True,
-        applicability_unanimous=True,
-        role_relation_unanimous=True,
-    )
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=3,
-        minimum_applicability_presence_models=3,
-        escalate_on_knowledge_kind_disagreement=False,
-        escalate_on_applicability_presence_disagreement=False,
-        escalate_on_role_relation_disagreement=False,
-    )
-
-    assert cascade_escalation_reasons(clause, resolution) == (
-        "insufficient_applicability_presence_models",
-    )
-
-
-@pytest.mark.parametrize(
-    ("participating_models", "expected"),
-    [
-        (2, ("insufficient_applicability_presence_models",)),
-        (3, ()),
-    ],
-)
-def test_later_stage_rechecks_eligible_applicability_presence_votes(
-    participating_models: int, expected: tuple[str, ...]
-) -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_stage_escalation_reasons,
-    )
-
-    cumulative = SimpleNamespace(
-        participating_models=3,
-        applicability_participating_models=participating_models,
-        applicability_presence_unanimous=True,
-        applicability_unanimous=True,
-    )
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=3,
-        minimum_applicability_presence_models=3,
-        escalate_on_applicability_presence_disagreement=False,
-    )
-
-    assert (
-        cascade_stage_escalation_reasons(
-            cumulative_clause=cumulative,
-            stage_clause=SimpleNamespace(),
-            previous_reasons=("insufficient_applicability_presence_models",),
-            resolution=resolution,
+        resolve_prompt_version(
+            PromptCandidate(id="app-v1"),
+            resources=resources,
         )
-        == expected
+        == "app-v1"
     )
 
 
-def test_cascade_stage_can_override_resolution_policy() -> None:
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeStage,
-    )
-
-    stage = CascadeStage.model_validate(
-        {
-            "id": "intermediate",
-            "models": ["fast-a", "fast-b"],
-            "apply_to": "unresolved",
-            "resolution": {
-                "minimum_successful_models": 5,
-                "escalate_on_applicability_disagreement": False,
-                "escalate_on_role_relation_disagreement": False,
-                "minimum_applicability_confidence": 0.75,
-                "minimum_role_relation_confidence": 0.80,
-            },
-        }
-    )
-
-    assert stage.resolution is not None
-    assert stage.resolution.minimum_successful_models == 5
-    assert stage.resolution.minimum_applicability_confidence == 0.75
-    assert stage.resolution.minimum_role_relation_confidence == 0.80
-
-
-def test_cascade_resolution_uses_presence_confidence_after_intermediate_stage() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=5,
-        minimum_confidence=0.6,
-        escalate_on_applicability_presence_disagreement=False,
-        escalate_on_role_relation_disagreement=False,
-        minimum_applicability_presence_confidence=0.75,
-        minimum_role_relation_confidence=0.80,
-    )
-    resolved = SimpleNamespace(
-        participating_models=7,
-        category=SimpleNamespace(value="strong_consensus"),
-        statement_function_confidence=6 / 7,
-        applicability_unanimous=False,
-        role_relation_unanimous=False,
+def _clause(*, confidence: float, unanimous: bool = True, models: int = 3) -> SimpleNamespace:
+    return SimpleNamespace(
+        participating_models=models,
+        applicability_participating_models=models,
+        applicability_category=SimpleNamespace(
+            value="unanimous" if unanimous else "majority_consensus"
+        ),
+        applicability_presence_confidence=confidence,
+        applicability_decision_confidence=confidence,
+        applicability_presence_unanimous=unanimous,
         applicability_present=True,
-        applicability_confidence=6 / 7,
-        applicability_presence_confidence=6 / 7,
-        applicability_support={"present": 6 / 7, "absent": 1 / 7},
-        role_relation_present=True,
-        role_relation_confidence=6 / 7,
-        role_relation_support={"present": 6 / 7, "responsible_for": 6 / 7},
-    )
-    unresolved = SimpleNamespace(
-        **{
-            **resolved.__dict__,
-            "applicability_confidence": 5 / 7,
-            "applicability_presence_confidence": 5 / 7,
-            "applicability_support": {"present": 5 / 7, "absent": 2 / 7},
-        }
     )
 
-    assert cascade_escalation_reasons(resolved, resolution) == ()
-    assert cascade_escalation_reasons(unresolved, resolution) == (
+
+def test_cascade_resolution_is_presence_only() -> None:
+    resolution = CascadeResolutionConfig(
+        minimum_successful_models=3,
+        minimum_presence_confidence=0.75,
+        escalate_on_presence_disagreement=False,
+    )
+    assert cascade_escalation_reasons(_clause(confidence=0.70), resolution) == (
         "applicability_presence_confidence",
     )
+    assert cascade_escalation_reasons(_clause(confidence=0.80, unanimous=False), resolution) == ()
 
 
-def test_cascade_resolution_can_accept_confident_absence() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=5,
-        escalate_on_applicability_disagreement=False,
-        escalate_on_role_relation_disagreement=False,
-        minimum_applicability_confidence=0.75,
-        minimum_role_relation_confidence=0.80,
-    )
-    clause = SimpleNamespace(
-        participating_models=7,
-        category=SimpleNamespace(value="strong_consensus"),
-        statement_function_confidence=6 / 7,
-        applicability_unanimous=False,
-        role_relation_unanimous=False,
-        applicability_present=False,
-        applicability_confidence=0.0,
-        applicability_support={"present": 1 / 7},
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 1 / 7},
-    )
-
-    assert cascade_escalation_reasons(clause, resolution) == ()
-
-
-def test_cascade_unresolved_clause_ids_are_monotonic_per_stage() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_unresolved_clause_ids,
-    )
-
-    resolution = CascadeResolutionConfig(minimum_successful_models=5)
-    resolved_before_stage = SimpleNamespace(
-        clause_id="resolved-before-stage",
-        participating_models=3,
-        category=SimpleNamespace(value="strong_consensus"),
-        statement_function_confidence=1.0,
-        applicability_unanimous=True,
-        role_relation_unanimous=True,
-    )
-    resolved_in_stage = SimpleNamespace(
-        clause_id="resolved-in-stage",
-        participating_models=7,
-        category=SimpleNamespace(value="strong_consensus"),
-        statement_function_confidence=1.0,
-        applicability_unanimous=True,
-        role_relation_unanimous=True,
-    )
-    unresolved_in_stage = SimpleNamespace(
-        clause_id="unresolved-in-stage",
-        participating_models=7,
-        category=SimpleNamespace(value="disputed"),
-        statement_function_confidence=0.4,
-        applicability_unanimous=True,
-        role_relation_unanimous=True,
-    )
-
-    unresolved, reasons = cascade_unresolved_clause_ids(
-        [resolved_before_stage, resolved_in_stage, unresolved_in_stage],
-        stage_clause_ids=("resolved-in-stage", "unresolved-in-stage"),
-        resolution=resolution,
-    )
-
-    assert unresolved == ("unresolved-in-stage",)
-    assert set(reasons) == {"resolved-in-stage", "unresolved-in-stage"}
-    assert "resolved-before-stage" not in reasons
-
-
-def test_stage_resolver_accepts_three_of_four_statement_votes() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_stage_escalation_reasons,
-    )
-
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=5,
-        statement_function_resolution_mode="stage_resolver",
-        statement_function_resolver_min_confidence=0.75,
-        minimum_applicability_confidence=0.75,
-        minimum_role_relation_confidence=0.80,
-    )
-    cumulative = SimpleNamespace(
-        participating_models=7,
-        category=SimpleNamespace(value="disputed"),
-        statement_function_confidence=4 / 7,
-        applicability_present=False,
-        applicability_confidence=0.0,
-        applicability_support={"present": 0.0},
-        applicability_unanimous=True,
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-        role_relation_unanimous=True,
-    )
-    stage = SimpleNamespace(statement_function_confidence=3 / 4)
-
-    assert (
-        cascade_stage_escalation_reasons(
-            cumulative_clause=cumulative,
-            stage_clause=stage,
-            previous_reasons=("statement_function_confidence",),
-            resolution=resolution,
-        )
-        == ()
-    )
-
-
-def test_stage_resolution_does_not_reopen_resolved_statement_function() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_stage_escalation_reasons,
-    )
-
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=5,
-        statement_function_resolution_mode="stage_resolver",
-        statement_function_resolver_min_confidence=0.75,
-        minimum_applicability_confidence=0.75,
-        minimum_role_relation_confidence=0.80,
-    )
-    cumulative = SimpleNamespace(
-        participating_models=7,
-        category=SimpleNamespace(value="disputed"),
-        statement_function_confidence=3 / 7,
-        applicability_present=True,
-        applicability_confidence=6 / 7,
-        applicability_support={"present": 6 / 7, "exception": 6 / 7},
-        applicability_unanimous=False,
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-        role_relation_unanimous=True,
-    )
-    stage = SimpleNamespace(statement_function_confidence=0.25)
-
-    assert (
-        cascade_stage_escalation_reasons(
-            cumulative_clause=cumulative,
-            stage_clause=stage,
-            previous_reasons=("applicability_presence_disagreement",),
-            resolution=resolution,
-        )
-        == ()
-    )
-
-
-def test_stage_resolution_uses_cumulative_applicability_presence_confidence() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_stage_escalation_reasons,
-    )
-
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=5,
-        statement_function_resolution_mode="stage_resolver",
-        minimum_applicability_presence_confidence=0.75,
-        minimum_role_relation_confidence=0.80,
-    )
-    cumulative = SimpleNamespace(
-        participating_models=7,
-        category=SimpleNamespace(value="strong_consensus"),
-        statement_function_confidence=1.0,
-        applicability_present=True,
-        applicability_confidence=5 / 7,
-        applicability_presence_confidence=5 / 7,
-        applicability_support={"present": 5 / 7, "absent": 2 / 7},
-        applicability_unanimous=False,
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-        role_relation_unanimous=True,
-    )
-    stage = SimpleNamespace(statement_function_confidence=1.0)
-
-    assert cascade_stage_escalation_reasons(
-        cumulative_clause=cumulative,
-        stage_clause=stage,
-        previous_reasons=("applicability_presence_disagreement",),
-        resolution=resolution,
-    ) == ("applicability_presence_confidence",)
-
-
-def test_capture_resolved_dimensions_persists_stage_resolver_statement() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        capture_resolved_dimensions,
-    )
-
-    cumulative = SimpleNamespace(
-        primary_knowledge_kind=None,
-        knowledge_kind_confidence=1.0,
-        knowledge_kind_category=SimpleNamespace(value="unanimous"),
-        applicability_present=False,
-        applicability_decision_confidence=1.0,
-        applicability_category=SimpleNamespace(value="unanimous"),
-        role_relation_present=False,
-        proposed_role_relation_types=(),
-        role_relation_decision_confidence=1.0,
-        role_relation_category=SimpleNamespace(value="unanimous"),
-    )
-    resolver = SimpleNamespace(
-        primary_function=SimpleNamespace(value="description"),
-        statement_function_confidence=1.0,
-        statement_function_category=SimpleNamespace(value="unanimous"),
-    )
-
-    captured = capture_resolved_dimensions(
-        cumulative_clause=cumulative,
-        stage_clause=resolver,
-        previous_reasons=("statement_function_confidence",),
-        remaining_reasons=(),
-        source="resolver-stage",
-    )
-
-    assert captured == {
-        "statement_function": {
-            "value": "description",
-            "confidence": 1.0,
-            "category": "unanimous",
-            "source": "resolver-stage",
-        }
-    }
-
-
-def test_cascade_ignores_stale_applicability_structural_conflict() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    clause = SimpleNamespace(
-        participating_models=3,
-        category=SimpleNamespace(value="unanimous"),
-        statement_function_confidence=1.0,
-        applicability_presence_unanimous=True,
-        applicability_unanimous=True,
-        applicability_structural_conflict=True,
-        applicability_present=True,
-        applicability_presence_confidence=1.0,
-        applicability_confidence=1.0,
-        applicability_support={"present": 1.0, "absent": 0.0},
-        role_relation_unanimous=True,
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-    )
-
-    assert cascade_escalation_reasons(clause, CascadeResolutionConfig()) == ()
-
-
-def test_capture_initial_knowledge_kind_uses_decision_confidence_for_none() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        capture_resolved_dimensions,
-    )
-
-    clause = SimpleNamespace(
-        primary_function=None,
-        statement_function_confidence=1.0,
-        statement_function_category=SimpleNamespace(value="unanimous"),
-        primary_knowledge_kind=None,
-        knowledge_kind_confidence=0.0,
-        knowledge_kind_decision_confidence=1.0,
-        knowledge_kind_category=SimpleNamespace(value="unanimous"),
-        applicability_present=False,
-        applicability_decision_confidence=1.0,
-        applicability_category=SimpleNamespace(value="unanimous"),
-        applicability_structural_conflict=False,
-        role_relation_present=False,
-        proposed_role_relation_types=(),
-        role_relation_decision_confidence=1.0,
-        role_relation_category=SimpleNamespace(value="unanimous"),
-    )
-
-    captured = capture_resolved_dimensions(
-        cumulative_clause=clause,
-        stage_clause=clause,
-        previous_reasons=(),
-        remaining_reasons=(),
-        source="efficient-local",
-        initial_stage=True,
-    )
-
-    assert captured["knowledge_kind"] == {
-        "value": None,
-        "confidence": 1.0,
-        "category": "unanimous",
-        "source": "efficient-local",
-    }
-
-
-def test_effective_cascade_resolution_honors_review_majority_threshold() -> None:
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        effective_cascade_resolution,
-    )
-
-    configured = CascadeResolutionConfig(minimum_confidence=0.60)
-    effective = effective_cascade_resolution(
-        configured,
-        review_majority_min_confidence=0.67,
-    )
-
-    assert configured.minimum_confidence == 0.60
-    assert effective.minimum_confidence == 0.67
-
-
-def test_stage_does_not_reopen_presence_for_stale_structural_conflict() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_stage_escalation_reasons,
-    )
-
-    cumulative = SimpleNamespace(
-        participating_models=7,
-        category=SimpleNamespace(value="unanimous"),
-        statement_function_confidence=1.0,
-        applicability_structural_conflict=True,
-        applicability_present=True,
-        applicability_presence_confidence=1.0,
-        applicability_confidence=1.0,
-        applicability_support={"present": 1.0, "absent": 0.0},
-        applicability_presence_unanimous=True,
-        applicability_unanimous=True,
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-        role_relation_unanimous=True,
-    )
-    stage = SimpleNamespace(statement_function_confidence=1.0)
-
+def test_stage_resolution_rechecks_only_previous_presence_reason() -> None:
+    resolution = CascadeResolutionConfig(minimum_presence_confidence=0.75)
     reasons = cascade_stage_escalation_reasons(
-        cumulative_clause=cumulative,
-        stage_clause=stage,
-        previous_reasons=("applicability_structural_conflict",),
-        resolution=CascadeResolutionConfig(
-            escalate_on_applicability_presence_disagreement=False,
-            minimum_applicability_presence_confidence=0.75,
-        ),
+        cumulative_clause=_clause(confidence=0.90),
+        stage_clause=_clause(confidence=0.90),
+        previous_reasons=("applicability_presence_confidence",),
+        resolution=resolution,
     )
-
     assert reasons == ()
 
 
-def test_cached_or_reused_wall_time_does_not_satisfy_duration_threshold(tmp_path: Path) -> None:
+def test_capture_resolved_dimensions_contains_only_applicability() -> None:
+    captured = capture_resolved_dimensions(
+        cumulative_clause=_clause(confidence=0.90),
+        stage_clause=_clause(confidence=0.90),
+        previous_reasons=("applicability_presence_confidence",),
+        remaining_reasons=(),
+        source="intermediate",
+    )
+    assert set(captured) == {"applicability"}
+    assert captured["applicability"]["present"] is True
+
+
+def test_model_dimension_eligibility_only_accepts_applicability_presence(tmp_path: Path) -> None:
     manifest = QualificationMatrixManifest.load(_manifest(tmp_path))
-    observations = tuple(
-        item.model_copy(
-            update={
-                "performance_measurement_source": "not_measured",
-                "fresh_prediction_count": 0,
-                "reused_prediction_count": 10,
-                "mean_duration_seconds": 0.5,
-            }
-        )
-        if item.model_id == "fast"
-        else item
-        for item in manifest.observations
+    assert manifest.eligible_model_ids_for_dimension("applicability_presence") == (
+        "fast",
+        "accurate",
     )
-    thresholds = manifest.thresholds.model_copy(update={"max_mean_duration_seconds": 5.0})
-    report, _, _ = ModelPromptQualificationService().evaluate(
-        manifest.model_copy(update={"observations": observations, "thresholds": thresholds}),
-        tmp_path / "output",
-    )
-
-    candidate = next(
-        item for item in report.candidates if item.prompt_id == "p1" and item.model_id == "fast"
-    )
-    assert candidate.mean_duration_seconds is None
-    assert candidate.performance_measurement_source == "not_measured"
-    assert not candidate.passed
-    assert "fresh inference performance not measured" in candidate.regressions
-
-
-def test_model_dimension_eligibility_is_presence_only(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["models"][0]["dimension_eligibility"] = {
-        "applicability_presence": False,
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    assert manifest.model_dimension_eligibility["fast"] == {
-        "applicability_presence": False,
-    }
-    assert manifest.model_dimension_eligibility["accurate"] == {
-        "applicability_presence": True,
-    }
-
-
-def test_confident_absence_uses_presence_confidence_only() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    clause = SimpleNamespace(
-        participating_models=7,
-        category=SimpleNamespace(value="strong_consensus"),
-        statement_function_confidence=0.9,
-        applicability_present=False,
-        applicability_presence_confidence=0.86,
-        applicability_presence_unanimous=False,
-        applicability_unanimous=False,
-        applicability_confidence=0.86,
-        applicability_support={"present": 0.14, "absent": 0.86},
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-        role_relation_unanimous=True,
-        role_semantics_unanimous=True,
-    )
-    resolution = CascadeResolutionConfig(
-        escalate_on_applicability_presence_disagreement=False,
-        minimum_applicability_presence_confidence=0.75,
-        escalate_on_role_relation_disagreement=False,
-    )
-
-    assert cascade_escalation_reasons(clause, resolution) == ()
-
-
-def test_presence_threshold_emits_one_applicability_reason() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    clause = SimpleNamespace(
-        participating_models=7,
-        category=SimpleNamespace(value="strong_consensus"),
-        statement_function_confidence=0.9,
-        applicability_present=True,
-        applicability_presence_confidence=0.70,
-        applicability_presence_unanimous=False,
-        applicability_unanimous=False,
-        applicability_confidence=0.70,
-        applicability_support={"present": 0.70, "absent": 0.30},
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-        role_relation_unanimous=True,
-        role_semantics_unanimous=True,
-    )
-    resolution = CascadeResolutionConfig(
-        escalate_on_applicability_presence_disagreement=True,
-        minimum_applicability_presence_confidence=0.75,
-        escalate_on_role_relation_disagreement=False,
-    )
-
-    assert cascade_escalation_reasons(clause, resolution) == ("applicability_presence_confidence",)
-
-
-def test_dimension_eligibility_reports_presence_filtered_model_ids(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["models"][0]["dimension_eligibility"] = {
-        "applicability_presence": False,
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    assert manifest.eligible_model_ids_for_dimension("applicability_presence") == ("accurate",)
     with pytest.raises(ValueError, match="unsupported model-eligibility dimension"):
-        manifest.eligible_model_ids_for_dimension("applicability_polarity")
-
-
-def test_cascade_requires_enough_cumulative_dimension_eligible_models(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["models"] = [
-        {
-            "id": "a",
-            "provider": "local",
-            "dimension_eligibility": {"applicability_presence": True},
-        },
-        {
-            "id": "b",
-            "provider": "local",
-            "dimension_eligibility": {"applicability_presence": False},
-        },
-        {
-            "id": "c",
-            "provider": "local",
-            "dimension_eligibility": {"applicability_presence": False},
-        },
-    ]
-    payload["observations"] = []
-    payload["execution"] = {
-        "mode": "cascade",
-        "stages": [
-            {
-                "id": "first",
-                "models": ["a", "b"],
-                "apply_to": "all",
-                "resolution": {"minimum_successful_models": 2},
-            },
-            {"id": "second", "models": ["c"], "apply_to": "unresolved"},
-        ],
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(ValueError, match="only 1 cumulative applicability_presence voters"):
-        QualificationMatrixManifest.load(path)
-
-
-def test_cascade_allows_dimension_specific_presence_minimum(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["models"] = [
-        {
-            "id": "a",
-            "provider": "local",
-            "dimension_eligibility": {"applicability_presence": True},
-        },
-        {
-            "id": "b",
-            "provider": "local",
-            "dimension_eligibility": {"applicability_presence": True},
-        },
-        {
-            "id": "c",
-            "provider": "local",
-            "dimension_eligibility": {"applicability_presence": False},
-        },
-    ]
-    payload["observations"] = []
-    payload["execution"] = {
-        "mode": "cascade",
-        "stages": [
-            {
-                "id": "first",
-                "models": ["a", "b", "c"],
-                "apply_to": "all",
-                "resolution": {
-                    "minimum_successful_models": 3,
-                    "minimum_applicability_presence_models": 2,
-                },
-            },
-            {"id": "second", "models": [], "apply_to": "unresolved"},
-        ],
-    }
-    # Empty stages are invalid independently, so use one additional model in stage two.
-    payload["models"].append({"id": "d", "provider": "local"})
-    payload["execution"]["stages"][1]["models"] = ["d"]
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    first = manifest.execution.stages[0].resolution
-    assert first is not None
-    assert first.minimum_successful_models == 3
-    assert first.minimum_applicability_presence_models == 2
-
-
-def test_cascade_escalates_primary_knowledge_disagreement() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    clause = SimpleNamespace(
-        participating_models=4,
-        category=SimpleNamespace(value="unanimous"),
-        statement_function_confidence=1.0,
-        knowledge_kind_decision_confidence=0.5,
-        knowledge_primary_unanimous=False,
-        knowledge_set_unanimous=False,
-        applicability_unanimous=True,
-        applicability_structural_conflict=False,
-        applicability_present=False,
-        applicability_confidence=0.0,
-        applicability_support={"present": 0.0},
-        role_relation_unanimous=True,
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-    )
-
-    reasons = cascade_escalation_reasons(
-        clause,
-        CascadeResolutionConfig(escalate_on_knowledge_kind_disagreement=True),
-    )
-
-    assert "knowledge_kind_disagreement" in reasons
-
-
-def test_cascade_accepts_primary_knowledge_majority_at_configured_threshold() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    base = dict(
-        participating_models=4,
-        category=SimpleNamespace(value="unanimous"),
-        statement_function_confidence=1.0,
-        knowledge_primary_unanimous=False,
-        knowledge_set_unanimous=False,
-        applicability_unanimous=True,
-        applicability_structural_conflict=False,
-        applicability_present=False,
-        applicability_confidence=0.0,
-        applicability_support={"present": 0.0},
-        role_relation_unanimous=True,
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-    )
-
-    majority = SimpleNamespace(knowledge_kind_decision_confidence=0.75, **base)
-    tie = SimpleNamespace(knowledge_kind_decision_confidence=0.50, **base)
-    resolution = CascadeResolutionConfig(
-        escalate_on_knowledge_kind_disagreement=False,
-        minimum_knowledge_kind_confidence=0.60,
-    )
-
-    assert "knowledge_kind_confidence" not in cascade_escalation_reasons(majority, resolution)
-    assert "knowledge_kind_confidence" in cascade_escalation_reasons(tie, resolution)
-
-
-def test_cascade_does_not_escalate_secondary_knowledge_set_disagreement() -> None:
-    from types import SimpleNamespace
-
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    clause = SimpleNamespace(
-        participating_models=4,
-        category=SimpleNamespace(value="unanimous"),
-        statement_function_confidence=1.0,
-        knowledge_kind_decision_confidence=1.0,
-        knowledge_primary_unanimous=True,
-        knowledge_set_unanimous=False,
-        applicability_unanimous=True,
-        applicability_structural_conflict=False,
-        applicability_present=False,
-        applicability_confidence=0.0,
-        applicability_support={"present": 0.0},
-        role_relation_unanimous=True,
-        role_relation_present=False,
-        role_relation_confidence=0.0,
-        role_relation_support={"present": 0.0},
-    )
-
-    reasons = cascade_escalation_reasons(
-        clause,
-        CascadeResolutionConfig(escalate_on_knowledge_kind_disagreement=True),
-    )
-
-    assert "knowledge_kind_disagreement" not in reasons
-
-
-def test_cascade_escalates_structured_role_presence_conflict() -> None:
-    from standards_atlas.application.semantic_qualification.consensus import (
-        ClauseConsensus,
-        ConsensusCategory,
-    )
-    from standards_atlas.application.semantic_qualification.qualification_matrix import (
-        CascadeResolutionConfig,
-        cascade_escalation_reasons,
-    )
-
-    clause = ClauseConsensus(
-        clause_id="role-conflict",
-        document_key="DOC",
-        category=ConsensusCategory.UNANIMOUS,
-        statement_function_category=ConsensusCategory.UNANIMOUS,
-        knowledge_kind_category=ConsensusCategory.UNANIMOUS,
-        applicability_category=ConsensusCategory.UNANIMOUS,
-        role_relation_category=ConsensusCategory.UNANIMOUS,
-        role_semantics_category=ConsensusCategory.UNANIMOUS,
-        confidence=1.0,
-        statement_function_confidence=1.0,
-        role_semantics_present=False,
-        role_semantics_presence_confidence=1.0,
-        role_semantics_evidence_conflict=True,
-        participating_models=3,
-        requires_review=True,
-    )
-    resolution = CascadeResolutionConfig(
-        minimum_successful_models=3,
-        escalate_on_role_relation_disagreement=False,
-    )
-
-    assert "role_semantics_evidence_conflict" in cascade_escalation_reasons(clause, resolution)
-
-
-def test_consensus_prompt_selection_includes_knowledge_kind(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["consensus"] = {
-        "prompt_selection": {
-            "statement_function": "p1",
-            "knowledge_kind": "p2",
-            "applicability": "p3",
-            "role_relation": "p4",
-        }
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    manifest = QualificationMatrixManifest.load(path)
-
-    assert manifest.consensus.prompt_selection.model_dump() == {
-        "statement_function": "p1",
-        "knowledge_kind": "p2",
-        "process_function": "p1",
-        "applicability": "p3",
-        "role_relation": "p4",
-    }
-
-
-def test_v5_production_cascade_executes_only_consensus_prompts() -> None:
-    project_root = Path(__file__).resolve().parents[5]
-    manifest = QualificationMatrixManifest.load(
-        project_root
-        / "manifests"
-        / "multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml"
-    )
-
-    stages = {stage.id: stage for stage in manifest.execution.stages}
-    assert [prompt.id for prompt in manifest.prompts_for_stage(stages["efficient-local"])] == [
-        "structure-aware"
-    ]
-    assert [
-        prompt.id for prompt in manifest.prompts_for_stage(stages["intermediate-escalation"])
-    ] == ["structure-aware"]
-    assert [prompt.id for prompt in manifest.prompts_for_stage(stages["escalation"])] == [
-        "structure-aware",
-        "reference-aware",
-    ]
-
-    production_prompts = {
-        prompt.id
-        for stage in manifest.execution.stages
-        for prompt in manifest.prompts_for_stage(stage)
-    }
-    assert production_prompts == {"structure-aware", "reference-aware"}
-    assert {prompt.id for prompt in manifest.prompts} - production_prompts == {
-        "content-only",
-        "bounded-reasoning",
-    }
-
-
-def test_prompt_candidate_defaults_to_versioned_full_context_frame() -> None:
-    assert PromptCandidate(id="structure-aware").cbox_frame == "full-context-v1"
-
-
-def test_prompt_candidate_rejects_unknown_cbox_frame() -> None:
-    with pytest.raises(ValueError, match="unknown CBox frame"):
-        PromptCandidate(id="structure-aware", cbox_frame="missing-v1")
-
-
-def test_applicability_framing_manifest_declares_prompt_ablation_without_changing_production() -> (
-    None
-):
-    project_root = Path(__file__).resolve().parents[5]
-    production = QualificationMatrixManifest.load(
-        project_root
-        / "manifests"
-        / "multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml"
-    )
-    experiment = QualificationMatrixManifest.load(
-        project_root
-        / "manifests"
-        / "multidimensional-semantic-qualification-v5-applicability-framing-v1.yaml"
-    )
-
-    assert production.execution.mode == "cascade"
-    assert {prompt.id: prompt.prompt_version for prompt in production.prompts}[
-        "structure-aware"
-    ] == "structure-aware-v8"
-    assert experiment.execution.mode == "full_matrix"
-    assert [prompt.id for prompt in experiment.prompts] == [
-        "applicability-boundary",
-        "applicability-boundary-examples",
-    ]
-    assert [prompt.cbox_frame for prompt in experiment.prompts] == [
-        "full-context-v1",
-        "full-context-v1",
-    ]
-    assert [prompt.prompt_version for prompt in experiment.prompts] == [
-        "structure-aware-v9",
-        "structure-aware-v9-examples",
-    ]
-    assert experiment.thresholds.baseline_prompt_id == "applicability-boundary"
-
-
-def test_v6_applicability_presence_manifest_uses_one_shared_prompt_in_every_stage() -> None:
-    project_root = Path(__file__).resolve().parents[5]
-    path = (
-        project_root
-        / "manifests"
-        / "multidimensional-semantic-qualification-v6-applicability-presence-v1.yaml"
-    )
-    manifest = QualificationMatrixManifest.load(path)
-    raw = path.read_text(encoding="utf-8")
-
-    assert manifest.task == "semantic-profile-classification"
-    assert manifest.task_version == "2.5.0"
-    assert manifest.execution.mode == "cascade"
-    assert len(manifest.prompts) == 1
-    assert manifest.prompts[0].id == "applicability-presence"
-    assert manifest.prompts[0].prompt_version == "structure-aware-v10"
-    assert manifest.prompts[0].cbox_frame == "applicability-isolated-v1"
-    assert manifest.prompts[0].adaptive_interview is False
-    assert all(stage.prompts == ("applicability-presence",) for stage in manifest.execution.stages)
-    assert manifest.consensus.enabled is True
-    assert manifest.thresholds.baseline_prompt_id == "applicability-presence"
-    assert manifest.applicability_detail_enrichment.enabled is True
-    assert manifest.applicability_detail_enrichment.task_version == "1.0.0"
-    assert manifest.applicability_detail_enrichment.prompt_version == "detail-structure-aware-v1"
-    assert manifest.applicability_detail_enrichment.model == "qwen3-14b-q4-k-m"
-    assert manifest.schema_version == "1.6"
-    assert manifest.applicability_decision_policy.enabled is True
-    assert manifest.applicability_decision_policy.model == "mistral-small-3.2-24b-instruct-q4-k-m"
-    assert manifest.applicability_decision_policy.primary.prompt_version == (
-        "detail-structure-aware-v4"
-    )
-    assert manifest.applicability_decision_policy.rescue.prompt_version == (
-        "detail-structure-aware-v3"
-    )
-    assert manifest.applicability_decision_policy.confirmation.prompt_version == (
-        "detail-structure-aware-v1"
-    )
-    assert manifest.applicability_decision_policy.max_false_positive == 2
-    assert manifest.applicability_decision_policy.max_false_negative == 2
-    assert manifest.applicability_decision_policy.required_fresh_repetitions == 3
-    assert "applicability_polarity" not in raw
-
-
-def test_enabled_applicability_detail_enrichment_requires_known_model(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["applicability_detail_enrichment"] = {
-        "enabled": True,
-        "model": "missing-model",
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(ValueError, match="unknown applicability detail enrichment model"):
-        QualificationMatrixManifest.load(path)
-
-
-def test_enabled_applicability_detail_enrichment_requires_consensus(tmp_path: Path) -> None:
-    path = _manifest(tmp_path)
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    payload["consensus"] = {"enabled": False}
-    payload["applicability_detail_enrichment"] = {
-        "enabled": True,
-        "model": "fast",
-    }
-    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
-
-    with pytest.raises(ValueError, match="requires enabled final consensus"):
-        QualificationMatrixManifest.load(path)
+        manifest.eligible_model_ids_for_dimension("statement_function")

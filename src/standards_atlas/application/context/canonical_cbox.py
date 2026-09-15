@@ -14,16 +14,17 @@ from pydantic import BaseModel
 
 from standards_atlas.application.model.cbox import CBoxAttribute, CBoxEnrichments
 from standards_atlas.domain.model.clause import Clause, ClauseEnrichments
-from standards_atlas.domain.model.enrichment_patch import SemanticEnrichmentPatch
 from standards_atlas.domain.model.knowledge_state import paths_overlap
 
 if TYPE_CHECKING:
     from standards_atlas.application.semantic_qualification.clause_access import ClauseDescriptor
 
 CBOX_CONTRACT_VERSION = "1.0"
-CBOX_ATTRIBUTE_PATHS = tuple(
-    f"enrichments.semantic.{name}" for name in SemanticEnrichmentPatch.model_fields
-) + ("enrichments.applicability", "enrichments.subject_context", "enrichments.context_routing")
+CBOX_ATTRIBUTE_PATHS = (
+    "enrichments.applicability",
+    "enrichments.subject_context",
+    "enrichments.context_routing",
+)
 
 
 def context_fingerprint(value: object) -> str:
@@ -133,11 +134,6 @@ def canonical_cbox_context(
         "context_routing": effective_context("context_routing", clause.context_routing),
         "subject_context": effective_context("subject_context", clause.subject_context),
         "applicability": effective_context("applicability", clause.applicability),
-        "semantic": {
-            item.path.rsplit(".", 1)[-1]: item.value
-            for item in attributes
-            if item.path.startswith("enrichments.semantic.") and item.availability == "known"
-        },
         "attribute_sources": {
             item.path: item.model_dump(mode="json", exclude={"value"}) for item in attributes
         },

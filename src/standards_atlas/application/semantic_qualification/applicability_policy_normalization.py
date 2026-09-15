@@ -9,7 +9,7 @@ from standards_atlas.application.semantic_qualification.applicability_detail_enr
     ApplicabilityDetailClauseResult,
     ApplicabilityDetailOutcome,
 )
-from standards_atlas.domain.model import ApplicabilityTarget
+from standards_atlas.domain.model.applicability import ApplicabilityTarget
 
 
 def normalize_detail_presence(result: ApplicabilityDetailClauseResult) -> TriState:

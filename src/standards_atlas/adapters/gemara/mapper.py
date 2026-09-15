@@ -31,9 +31,7 @@ from standards_atlas.domain.model import (
     Clause,
     ClauseAnnotation,
     ClauseType,
-    ProcessFunction,
     RelationScope,
-    StatementFunction,
 )
 from standards_atlas.domain.model.structural_profile import CanonicalDocumentSection
 
@@ -44,32 +42,14 @@ _OMITTED_SECTIONS = {
     CanonicalDocumentSection.BACK_MATTER,
 }
 _OMITTED_TYPES = {ClauseType.TOC, ClauseType.TABLE}
-_STATEMENT_FUNCTIONS = {
-    StatementFunction.REQUIREMENT,
-    StatementFunction.PROHIBITION,
-    StatementFunction.CONFORMANCE_STATEMENT,
-    StatementFunction.PREREQUISITE,
-    StatementFunction.ASSUMPTION,
-}
-_RECOMMENDATION_FUNCTIONS = {
-    StatementFunction.RECOMMENDATION,
-    StatementFunction.GUIDELINE,
-}
-_RATIONALE_FUNCTIONS = {
-    StatementFunction.RATIONALE,
-    StatementFunction.EXPLANATION,
-}
 
 
 class GemaraGuidanceMapper:
     """Build a Gemara GuidanceCatalog without invoking interpretation or LLMs.
 
-    Semantic classifications already present in the canonical knowledge state are
-    projected onto Gemara fields. Objective clauses become aggregation anchors;
-    compatible descendants are folded into statements, recommendations, rationale,
-    or applicability instead of being emitted as duplicate standalone guidelines.
-    Clauses without a usable semantic anchor retain the conservative one-clause/
-    one-guideline fallback used by the MVP exporter.
+    Only deterministic canonical structure and accepted applicability are projected.
+    Objective clauses remain aggregation anchors; explicit requirement children and
+    positive applicability clauses may be folded without semantic classification.
     """
 
     def __init__(self, *, gemara_version: str = GEMARA_SPEC_VERSION) -> None:
@@ -316,8 +296,7 @@ def _semantic_guideline(
     applicability_groups: list[GemaraGroup] = []
 
     for clause in folded:
-        functions = set(clause.semantic_classification.statement_functions)
-        if functions & _STATEMENT_FUNCTIONS:
+        if clause.clause_type is ClauseType.REQUIREMENT:
             statements.append(
                 GemaraStatement(
                     id=gemara_id(clause.id.value),
@@ -325,10 +304,6 @@ def _semantic_guideline(
                     text=clause.plain_text.strip(),
                 )
             )
-        elif functions & _RECOMMENDATION_FUNCTIONS:
-            recommendations.append(clause.plain_text.strip())
-        elif functions & _RATIONALE_FUNCTIONS:
-            rationale_parts.append(clause.plain_text.strip())
         elif _is_positive_applicability(clause):
             app_group = GemaraGroup(
                 id=gemara_id(f"app-{clause.id.value}"),
@@ -428,20 +403,11 @@ def _is_exportable_guideline(clause: Clause) -> bool:
 
 
 def _is_objective_anchor(clause: Clause) -> bool:
-    semantic = clause.semantic_classification
-    return (
-        clause.clause_type is ClauseType.OBJECTIVE
-        or StatementFunction.OBJECTIVE in semantic.statement_functions
-        or ProcessFunction.OBJECTIVE in semantic.process_functions
-    )
+    return clause.clause_type is ClauseType.OBJECTIVE
 
 
 def _can_fold_into_anchor(clause: Clause) -> bool:
-    functions = set(clause.semantic_classification.statement_functions)
-    return bool(
-        functions & (_STATEMENT_FUNCTIONS | _RECOMMENDATION_FUNCTIONS | _RATIONALE_FUNCTIONS)
-        or _is_positive_applicability(clause)
-    )
+    return clause.clause_type is ClauseType.REQUIREMENT or _is_positive_applicability(clause)
 
 
 def _is_positive_applicability(clause: Clause) -> bool:

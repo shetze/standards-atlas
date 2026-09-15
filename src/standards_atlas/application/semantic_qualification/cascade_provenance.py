@@ -6,7 +6,7 @@ from typing import Any
 
 from standards_atlas.application.schema import require_supported_schema
 
-CASCADE_PROVENANCE_SCHEMA_VERSION = "1.6"
+CASCADE_PROVENANCE_SCHEMA_VERSION = 1
 
 
 def validate_cascade_provenance(payload: Any) -> dict[str, Any]:

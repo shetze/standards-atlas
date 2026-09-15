@@ -27,7 +27,6 @@ from standards_atlas.domain.model import (
     DocumentTable,
     DocumentTableId,
     NormativeStatus,
-    SemanticClassification,
     Standard,
     StandardKey,
     StandardReference,
@@ -63,9 +62,6 @@ def map_atlas_data_to_standard(
     key: str,
 ) -> Standard:
     title_lookup = _build_title_lookup(atlas_data)
-    semantic_tag_lookup = _build_semantic_tag_lookup(atlas_data)
-    semantic_profile = atlas_data.metadata.extra_fields.get("semanticProfile")
-
     annex_statuses = _annex_statuses(atlas_data, title_lookup)
     clauses = tuple(
         _map_structure_item_to_clause(
@@ -73,8 +69,6 @@ def map_atlas_data_to_standard(
             standard_name=atlas_data.metadata.name,
             year=atlas_data.metadata.official_year,
             title=title_lookup.get((item.volume, item.visible_reference)),
-            semantic_tags=semantic_tag_lookup.get((item.volume, item.visible_reference), ()),
-            semantic_profile=semantic_profile,
             annex_status=annex_statuses.get(
                 (item.volume, item.visible_reference.split(".", 1)[0]),
                 NormativeStatus.UNSPECIFIED,
@@ -199,78 +193,6 @@ def _map_initialization_records_to_annotations(
     return tuple(annotations)
 
 
-def _build_semantic_tag_lookup(
-    atlas_data: AtlasStandardData,
-) -> dict[tuple[str | None, str], tuple[str, ...]]:
-    result: dict[tuple[str | None, str], tuple[str, ...]] = {}
-    for record in atlas_data.initialization_records:
-        if record.kind != "TOC" or not record.semantic_tags:
-            continue
-        identity = extract_clause_identity(record.reference, atlas_data.metadata.name)
-        if identity is not None:
-            result[identity] = record.semantic_tags
-    return result
-
-
-def _merge_semantic_tags(
-    classification: SemanticClassification,
-    *,
-    semantic_tags: tuple[str, ...],
-    semantic_profile: str | None,
-) -> SemanticClassification:
-    if not semantic_tags:
-        return classification
-    if not semantic_profile:
-        raise ValueError("AtlasData semantic tags require semanticProfile metadata")
-    from standards_atlas.adapters.atlasdata.semantic_tags import (
-        decode_semantic_tags,
-        is_supported_semantic_profile,
-    )
-
-    if not is_supported_semantic_profile(semantic_profile):
-        raise ValueError(f"Unsupported AtlasData semantic profile: {semantic_profile!r}")
-    from standards_atlas.domain.model import (
-        DocumentStructure,
-        DocumentStructureClassification,
-        KnowledgeKind,
-        ProcessFunction,
-        RoleRelationType,
-        StatementFunction,
-    )
-
-    decoded = decode_semantic_tags(semantic_tags, semantic_profile=semantic_profile)
-    statements = (
-        *decoded["primary_statement_function"],
-        *decoded["secondary_statement_functions"],
-    )
-    update: dict[str, object] = {}
-    if statements:
-        if decoded["primary_statement_function"]:
-            update["primary_function"] = StatementFunction(decoded["primary_statement_function"][0])
-        update["statement_functions"] = tuple(StatementFunction(value) for value in statements)
-    if decoded["knowledge_kinds"]:
-        update["knowledge_kinds"] = tuple(
-            KnowledgeKind(value) for value in decoded["knowledge_kinds"]
-        )
-    if decoded["process_functions"]:
-        update["process_functions"] = tuple(
-            ProcessFunction(value) for value in decoded["process_functions"]
-        )
-    if decoded["role_relation_types"]:
-        update["role_semantics_present"] = True
-        update["role_relation_types"] = tuple(
-            RoleRelationType(value) for value in decoded["role_relation_types"]
-        )
-    if decoded["document_structure"]:
-        update["document_structure"] = DocumentStructureClassification(
-            family="public_semantic_annotation",
-            category=DocumentStructure(decoded["document_structure"][0]),
-        )
-    if decoded["normative_status"]:
-        update["normative_status"] = NormativeStatus(decoded["normative_status"][0])
-    return SemanticClassification.model_validate({**classification.model_dump(), **update})
-
-
 def _build_title_lookup(
     atlas_data: AtlasStandardData,
 ) -> dict[tuple[str | None, str], str]:
@@ -311,8 +233,6 @@ def _map_structure_item_to_clause(
     year: int | None,
     title: str | None,
     annex_status: NormativeStatus,
-    semantic_tags: tuple[str, ...] = (),
-    semantic_profile: str | None = None,
 ) -> Clause:
     structural_profile = _infer_structural_profile(
         visible_reference=item.visible_reference,
@@ -332,51 +252,25 @@ def _map_structure_item_to_clause(
             clause=item.visible_reference,
         ),
         clause_type=_ITEM_TYPE_MAPPING[item.item_type],
-        semantic_classification=_merge_semantic_tags(
-            _structural_compatibility_classification(
-                structural_profile=structural_profile,
-                clause_type=_ITEM_TYPE_MAPPING[item.item_type],
-                annex_status=annex_status,
-            ),
-            semantic_tags=semantic_tags,
-            semantic_profile=semantic_profile,
-        ),
         structural_profile=structural_profile,
+        document_structure=_document_structure_classification(
+            structural_profile=structural_profile,
+            clause_type=_ITEM_TYPE_MAPPING[item.item_type],
+        ),
+        normative_status=annex_status,
         heading=title,
         source_token=item.source_token,
         enum_prefix=item.enum_prefix,
         identifier_width=item.identifier_width,
-    ).confirm_authoritative(*_authoritative_tag_paths(semantic_tags), authority="atlasdata")
+    )
 
 
-def _authoritative_tag_paths(tags: tuple[str, ...]) -> tuple[str, ...]:
-    fields = {
-        "SP": ("enrichments.semantic.statement_functions", "enrichments.semantic.primary_function"),
-        "SS": ("enrichments.semantic.statement_functions",),
-        "KK": ("enrichments.semantic.knowledge_kinds",),
-        "PF": ("enrichments.semantic.process_functions",),
-        "RR": (
-            "enrichments.semantic.role_semantics_present",
-            "enrichments.semantic.role_relation_types",
-        ),
-        "DS": ("baseline.document_structure",),
-        "NS": ("baseline.normative_status",),
-    }
-    return tuple(sorted({path for tag in tags for path in fields.get(tag.split("-")[0], ())}))
-
-
-def _structural_compatibility_classification(
+def _document_structure_classification(
     *,
     structural_profile,
     clause_type: ClauseType,
-    annex_status: NormativeStatus,
-) -> SemanticClassification:
-    """Mirror structural facts into legacy fields without semantic inference.
-
-    ``SemanticClassification`` remains part of the persisted schema for relations and
-    imported public annotations. Taxonomy owns structure; this adapter only mirrors
-    structural facts needed by older consumers and never infers ontology dimensions.
-    """
+) -> DocumentStructureClassification | None:
+    """Project deterministic structural taxonomy into the canonical baseline."""
     from standards_atlas.domain.model.structural_profile import CanonicalDocumentSection
 
     section_map = {
@@ -400,10 +294,7 @@ def _structural_compatibility_classification(
         if category is not None
         else None
     )
-    return SemanticClassification(
-        document_structure=structure,
-        normative_status=annex_status,
-    )
+    return structure
 
 
 def _annex_statuses(

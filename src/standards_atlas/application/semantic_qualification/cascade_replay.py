@@ -290,17 +290,12 @@ def _replay_stages(
             local_clause = local_by_id[clause_id]
             captured = capture_resolved_dimensions(
                 cumulative_clause=clause,
-                stage_clause=(
-                    local_clause
-                    if resolution.statement_function_resolution_mode == "stage_resolver"
-                    else clause
-                ),
+                stage_clause=clause,
                 previous_reasons=previous.get(clause_id, ()),
                 remaining_reasons=reasons[clause_id],
                 source=stage.id,
                 initial_stage=index == 0,
                 resolution=resolution,
-                process_stage_clause=local_clause,
             )
             resolutions.setdefault(clause_id, {}).update(captured)
         counts_after = resolution_counts(resolutions)

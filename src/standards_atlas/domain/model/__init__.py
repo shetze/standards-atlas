@@ -6,8 +6,11 @@ from standards_atlas.domain.model.annotation import (
     ClauseAnnotation,
 )
 from standards_atlas.domain.model.applicability import (
+    ApplicabilityFunction,
     ApplicabilityPolarity,
+    ApplicabilityTarget,
     ClauseApplicability,
+    OtherApplicabilityTarget,
 )
 from standards_atlas.domain.model.artifact_lineage import (
     ArtifactKind,
@@ -21,6 +24,14 @@ from standards_atlas.domain.model.clause import (
     ClauseBaseline,
     ClauseEnrichments,
     ClauseType,
+)
+from standards_atlas.domain.model.clause_semantics import (
+    DocumentStructure,
+    DocumentStructureClassification,
+    NormativeStatus,
+    RelationScope,
+    SemanticRelation,
+    SemanticRelationKind,
 )
 from standards_atlas.domain.model.content import (
     CodeBlock,
@@ -141,26 +152,6 @@ from standards_atlas.domain.model.retrieval_projection import (
     RetrievalDocumentKind,
     RetrievalProjection,
     RetrievalTokenizationProfile,
-)
-from standards_atlas.domain.model.semantic_classification import (
-    ApplicabilityFunction,
-    ApplicabilityTarget,
-    DocumentStructure,
-    DocumentStructureClassification,
-    DomainFunctionClassification,
-    KnowledgeKind,
-    NormativeStatus,
-    OtherApplicabilityTarget,
-    ProcessFunction,
-    RelationScope,
-    RoleRelation,
-    RoleRelationClassCore,
-    RoleRelationFamily,
-    RoleRelationType,
-    SemanticClassification,
-    SemanticRelation,
-    SemanticRelationKind,
-    StatementFunction,
 )
 from standards_atlas.domain.model.semantic_extraction import (
     ClauseSemanticExtraction,
@@ -308,8 +299,6 @@ __all__ = [
     "ApplicabilityTarget",
     "DocumentStructure",
     "DocumentStructureClassification",
-    "DomainFunctionClassification",
-    "KnowledgeKind",
     "IntegrityLevelRecommendation",
     "KnowledgeTableId",
     "KnowledgeTableKind",
@@ -334,20 +323,13 @@ __all__ = [
     "NormalizedTableRowKind",
     "NormativeStatus",
     "OtherApplicabilityTarget",
-    "ProcessFunction",
     "RelationScope",
     "ReferenceMention",
     "ReferenceMentionKind",
     "ReferenceResolutionStatus",
     "ReferenceTarget",
-    "RoleRelation",
-    "RoleRelationClassCore",
-    "RoleRelationFamily",
-    "RoleRelationType",
-    "SemanticClassification",
     "SemanticRelation",
     "SemanticRelationKind",
-    "StatementFunction",
     "Standard",
     "StandardKey",
     "StandardReference",

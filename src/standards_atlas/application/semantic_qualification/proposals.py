@@ -29,36 +29,19 @@ from standards_atlas.application.ports.llm_gateway import (
 )
 from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.application.schema.model import SchemaBoundModel
-from standards_atlas.application.semantic_classification import (
-    ResourceSemanticProfileRepository,
-    SemanticProfileReference,
-)
 from standards_atlas.application.semantic_ontology import (
     OntologyReference,
     ResourceOntologyDefinitionRepository,
 )
-from standards_atlas.application.semantic_qualification.adaptive_interview import (
-    AdaptiveInterviewPlanner,
-    InterviewDimension,
-    focused_response_schema,
-    follow_up_question,
-)
 from standards_atlas.application.semantic_qualification.annotations import (
     AnnotationGenerator,
     AnnotationLifecycleStatus,
+    ApplicabilityPresenceSelection,
     ClauseEvaluationAnnotation,
-    StatementFunctionSelection,
 )
 from standards_atlas.application.semantic_qualification.batch import (
     ProposalBatchExecutor,
     ProposalItemOutcome,
-)
-from standards_atlas.application.semantic_qualification.context_framing import (
-    frame_qualification_context,
-    resolve_cbox_frame_policy,
-)
-from standards_atlas.application.semantic_qualification.context_projection import (
-    render_cbox_context,
 )
 from standards_atlas.application.semantic_qualification.defaults import (
     DEFAULT_EVALUATION_MAX_TOKENS,
@@ -103,16 +86,10 @@ class SemanticTaskDefinition(SchemaBoundModel):
     description: str = ""
     canonical_task: str | None = None
     aliases: tuple[str, ...] = ()
-    semantic_profile: SemanticProfileReference | None = None
-    profile_dimensions: tuple[str, ...] = ()
     ontologies: dict[str, OntologyReference] = Field(default_factory=dict)
-    taxonomy: tuple[str, ...] = ()
-    knowledge_taxonomy: tuple[str, ...] = ()
-    process_taxonomy: tuple[str, ...] = ()
     applicability_taxonomy: tuple[str, ...] = ()
     applicability_target_taxonomy: tuple[str, ...] = ()
     other_applicability_target_taxonomy: tuple[str, ...] = ()
-    role_relation_taxonomy: tuple[str, ...] = ()
     multi_label: bool = True
     allow_unclassified: bool = True
     supported_item_kinds: tuple[str, ...] = ("clause",)
@@ -126,28 +103,15 @@ class SemanticTaskRepository:
     def __init__(self, root: Path) -> None:
         self._root = root
         self._ontology_repository = ResourceOntologyDefinitionRepository()
-        self._profile_repository = ResourceSemanticProfileRepository()
 
     def load(self, task: str, version: str) -> tuple[SemanticTaskDefinition, dict[str, Any]]:
         root = self._root / task / version
         metadata = yaml.safe_load((root / "task.yaml").read_text(encoding="utf-8")) or {}
         require_supported_schema("semantic-task-resource", metadata.get("schema_version"))
-        profile_reference = metadata.get("semantic_profile")
-        if profile_reference is not None:
-            semantic_profile = SemanticProfileReference.model_validate(profile_reference)
-            profile = self._profile_repository.load(semantic_profile.id, semantic_profile.version)
-            selected_dimensions = tuple(metadata.get("profile_dimensions", ()))
-            if not selected_dimensions:
-                selected_dimensions = tuple(profile.dimensions)
-            profile = profile.select_dimensions(selected_dimensions)
-            references = dict(profile.dimensions)
-            metadata["semantic_profile"] = semantic_profile
-            metadata["profile_dimensions"] = selected_dimensions
-        else:
-            references = {
-                dimension: OntologyReference.model_validate(reference)
-                for dimension, reference in dict(metadata.get("ontologies", {})).items()
-            }
+        references = {
+            dimension: OntologyReference.model_validate(reference)
+            for dimension, reference in dict(metadata.get("ontologies", {})).items()
+        }
         loaded = {
             dimension: self._ontology_repository.load(reference.id, reference.version)
             for dimension, reference in references.items()
@@ -163,15 +127,6 @@ class SemanticTaskRepository:
         if mismatches:
             raise ValueError("semantic task ontology dimension mismatch: " + ", ".join(mismatches))
         metadata["ontologies"] = references
-        metadata["taxonomy"] = tuple(
-            loaded.get("statement_functions").values if "statement_functions" in loaded else ()
-        )
-        metadata["knowledge_taxonomy"] = tuple(
-            loaded.get("knowledge_kinds").values if "knowledge_kinds" in loaded else ()
-        )
-        metadata["process_taxonomy"] = tuple(
-            loaded.get("process_functions").values if "process_functions" in loaded else ()
-        )
         metadata["applicability_taxonomy"] = tuple(
             loaded.get("applicability_functions").values
             if "applicability_functions" in loaded
@@ -184,9 +139,6 @@ class SemanticTaskRepository:
             loaded.get("other_applicability_targets").values
             if "other_applicability_targets" in loaded
             else ()
-        )
-        metadata["role_relation_taxonomy"] = tuple(
-            loaded.get("role_relation_types").values if "role_relation_types" in loaded else ()
         )
         schema = json.loads((root / "schema.json").read_text(encoding="utf-8"))
         return SemanticTaskDefinition.model_validate(metadata), schema
@@ -213,9 +165,7 @@ class ProposalRunConfig(BaseModel):
     retry_attempts: int = Field(default=DEFAULT_EVALUATION_RETRY_ATTEMPTS, ge=1)
     retry_backoff_seconds: float = Field(default=DEFAULT_EVALUATION_RETRY_BACKOFF_SECONDS, ge=0.0)
     retry_timeouts: bool = DEFAULT_EVALUATION_RETRY_TIMEOUTS
-    adaptive_interview: bool = False
     include_example_ids: tuple[str, ...] | None = None
-    adaptive_question_max_tokens: int | None = Field(default=None, gt=0)
     truncation_retry_max_tokens: int | None = Field(default=None, gt=0)
     retry_on_truncation: bool = True
     reasoning_enabled: bool = False
@@ -384,38 +334,18 @@ class BaselineProposalGenerator:
                         context=context,
                     )
 
-                interview_payload = None
-                use_adaptive_interview = (
-                    config.adaptive_interview
-                    and _adaptive_interview_supports_schema(canonical_schema)
+                result = generate_with_retry(
+                    measured_gateway,
+                    request,
+                    attempts=config.retry_attempts,
+                    backoff_seconds=config.retry_backoff_seconds,
+                    retry_timeouts=config.retry_timeouts,
+                    on_retry=report_retry,
+                    truncation_retry_max_tokens=config.truncation_retry_max_tokens,
+                    retry_on_truncation=config.retry_on_truncation,
                 )
-                if use_adaptive_interview:
-                    result, normalized_value, interview_payload = _run_adaptive_interview(
-                        measured_gateway,
-                        config=config,
-                        prompt=prompt,
-                        item_input=example.input,
-                        task=task,
-                        attempts=config.retry_attempts,
-                        backoff_seconds=config.retry_backoff_seconds,
-                        retry_timeouts=config.retry_timeouts,
-                        on_retry=report_retry,
-                    )
-                    _write_json(case_dir / "interview.json", interview_payload)
-                else:
-                    result = generate_with_retry(
-                        measured_gateway,
-                        request,
-                        attempts=config.retry_attempts,
-                        backoff_seconds=config.retry_backoff_seconds,
-                        retry_timeouts=config.retry_timeouts,
-                        on_retry=report_retry,
-                        truncation_retry_max_tokens=config.truncation_retry_max_tokens,
-                        retry_on_truncation=config.retry_on_truncation,
-                    )
-                    normalized_value = _normalize_selection_payload(
-                        result.value, required_fields=canonical_schema.get("required", ())
-                    )
+                normalized_value = _normalize_selection_payload(result.value)
+                interview_payload = None
                 response_payload = {
                     "value": dict(result.value),
                     "provider": result.provider,
@@ -432,7 +362,7 @@ class BaselineProposalGenerator:
                 valid, error = validate_schema(normalized_value, canonical_schema)
                 if not valid:
                     raise ValueError(f"provider response violates task schema: {error}")
-                selection = StatementFunctionSelection.model_validate(normalized_value)
+                selection = ApplicabilityPresenceSelection.model_validate(normalized_value)
                 annotation = ClauseEvaluationAnnotation(
                     task=config.task,
                     lifecycle_status=AnnotationLifecycleStatus.PROPOSED,
@@ -447,16 +377,12 @@ class BaselineProposalGenerator:
                         seed=config.seed,
                         input_hash=result.input_hash,
                         raw_response_hash=result.raw_response_hash,
-                        provided_fields=(
-                            tuple(interview_payload["provided_fields"])
-                            if interview_payload is not None
-                            else tuple(sorted(result.value))
-                        ),
+                        provided_fields=tuple(sorted(result.value)),
                         generated_at=datetime.now(UTC),
                     ),
                 )
                 evaluation_payload = {
-                    "schema_version": "1.0",
+                    "schema_version": 1,
                     "kind": "semantic_evaluation",
                     "run": {
                         "corpus_id": config.corpus_id,
@@ -579,210 +505,6 @@ class BaselineProposalGenerator:
         )
 
 
-def _adaptive_interview_supports_schema(schema: Mapping[str, Any]) -> bool:
-    """Return whether the interview aggregator can satisfy the task schema.
-
-    The current adaptive interview only classifies scalar/multi-label ontology
-    dimensions. It does not extract structured role relation objects (actor, relation_class,
-    target). When ``role_relations`` is required
-    by the canonical task schema, using the interview would therefore construct
-    a response that can never satisfy that contract. Fall back to the direct
-    structured-generation path until the interview has a dedicated extraction
-    step for role relations.
-    """
-    return "role_relations" not in set(schema.get("required", ()))
-
-
-def _run_adaptive_interview(
-    gateway: LlmGateway,
-    *,
-    config: ProposalRunConfig,
-    prompt,
-    item_input,
-    task: SemanticTaskDefinition,
-    attempts: int,
-    backoff_seconds: float,
-    retry_timeouts: bool,
-    on_retry,
-):
-    content = dict(item_input.get("content", {}))
-    full_context = dict(item_input.get("context", {}))
-    uses_context = (
-        "{context_json}" in prompt.user_template or "{context_text}" in prompt.user_template
-    )
-    context = full_context if uses_context else {}
-    frame_policy = resolve_cbox_frame_policy(config.cbox_frame)
-    framed_context = frame_qualification_context(
-        context,
-        frame_policy,
-        task=config.task,
-        text=content.get("text", ""),
-        content_hash=content.get("hash"),
-    )
-    interview_input = {**dict(item_input), "context": dict(framed_context.values)}
-    plan = AdaptiveInterviewPlanner().plan(interview_input)
-    answers: list[dict[str, Any]] = []
-    last_result = None
-    fresh_predictions = 0
-    cached_predictions = 0
-    fresh_inference_duration_seconds = 0.0
-    selection: dict[str, Any] = {
-        "statement_functions": [],
-        "primary_function": None,
-        "knowledge_kinds": [],
-        "primary_knowledge_kind": None,
-        "process_functions": [],
-        "primary_process_function": None,
-        "applicability_present": False,
-        "applicability_functions": [],
-        "primary_applicability_function": None,
-        "role_relation_types": [],
-        "primary_role_relation_type": None,
-        "confidence": None,
-        "rationale": None,
-    }
-    provided_fields: set[str] = set()
-    confidences: list[float] = []
-    rationales: list[str] = []
-    pending_questions = list(plan.questions)
-    while pending_questions:
-        question = pending_questions.pop(0)
-        request = StructuredGenerationRequest(
-            task=f"{config.task}:{question.id}",
-            system_prompt=(
-                "Answer exactly one focused taxonomy question. Use only the normalized "
-                "content and supplied structural context. Select 'none' or 'unclear' when "
-                "the evidence is insufficient. Return JSON matching the schema."
-            ),
-            user_prompt=(
-                f"Question: {question.question}\n"
-                f"Allowed labels: {', '.join(question.allowed_labels)}\n"
-                f"Selection reason: {question.reason}\n\n"
-                f"Normalized clause content:\n{content.get('text', '')}\n\n"
-                f"Contextual evidence:\n{render_cbox_context(framed_context)}"
-            ),
-            output_schema=focused_response_schema(question.allowed_labels),
-            prompt_version=f"{config.prompt_version}:{question.id}",
-            model=config.model,
-            temperature=config.temperature,
-            seed=config.seed,
-            max_tokens=config.adaptive_question_max_tokens or config.max_tokens,
-            reasoning_enabled=config.reasoning_enabled,
-            metadata={
-                "corpus_id": config.corpus_id,
-                "dataset_version": config.dataset_version,
-                "task_version": task.version,
-                "content_hash": content.get("hash"),
-                "cbox_frame": {
-                    "id": framed_context.policy_id,
-                    "version": framed_context.policy_version,
-                },
-                "framed_cbox": dict(framed_context.values),
-                "clause_context": context,
-                "interview_question": question.model_dump(mode="json"),
-            },
-        )
-        result = generate_with_retry(
-            gateway,
-            request,
-            attempts=attempts,
-            backoff_seconds=backoff_seconds,
-            retry_timeouts=retry_timeouts,
-            on_retry=on_retry,
-            truncation_retry_max_tokens=config.truncation_retry_max_tokens,
-            retry_on_truncation=config.retry_on_truncation,
-        )
-        last_result = result
-        if result.cached:
-            cached_predictions += 1
-        else:
-            fresh_predictions += 1
-            fresh_inference_duration_seconds += result.duration_ms / 1000.0
-        answer = dict(result.value)
-        label = str(answer["label"])
-        confidence = float(answer["confidence"])
-        evidence = str(answer["evidence"])
-        answers.append({"question": question.model_dump(mode="json"), "answer": answer})
-        confidences.append(confidence)
-        if evidence:
-            rationales.append(f"{question.id}: {evidence}")
-        if label == "present":
-            follow_up = follow_up_question(question)
-            if follow_up is not None:
-                pending_questions.insert(0, follow_up)
-            continue
-        if question.dimension is InterviewDimension.PROCESS_FUNCTION and label != "unclear":
-            provided_fields.update(("process_functions", "primary_process_function"))
-        if label in {"none", "unclear"}:
-            continue
-        if question.dimension is InterviewDimension.STATEMENT_FUNCTION:
-            selection["statement_functions"] = [label]
-            selection["primary_function"] = label
-        elif question.dimension is InterviewDimension.KNOWLEDGE_KIND:
-            selection["knowledge_kinds"] = [label]
-            selection["primary_knowledge_kind"] = label
-        elif question.dimension is InterviewDimension.PROCESS_FUNCTION:
-            selection["process_functions"] = [label]
-            selection["primary_process_function"] = label
-        elif question.dimension is InterviewDimension.APPLICABILITY:
-            selection["applicability_present"] = True
-            selection["applicability_functions"] = [label]
-            selection["primary_applicability_function"] = label
-        elif question.dimension is InterviewDimension.ROLE_RELATION:
-            selection["role_relation_types"] = [label]
-            selection["primary_role_relation_type"] = label
-    selection["confidence"] = min(confidences) if confidences else None
-    selection["rationale"] = " | ".join(rationales) or None
-    if last_result is None:
-        # Structural evidence made every dimension deterministic. Preserve a valid result-like
-        # object by falling back to the original prompt for one compatibility request.
-        last_result = generate_with_retry(
-            gateway,
-            build_proposal_request(config, prompt, item_input, task),
-            attempts=attempts,
-            backoff_seconds=backoff_seconds,
-            retry_timeouts=retry_timeouts,
-            on_retry=on_retry,
-            truncation_retry_max_tokens=config.truncation_retry_max_tokens,
-            retry_on_truncation=config.retry_on_truncation,
-        )
-        if last_result.cached:
-            cached_predictions += 1
-        else:
-            fresh_predictions += 1
-            fresh_inference_duration_seconds += last_result.duration_ms / 1000.0
-        provided_fields.update(last_result.value)
-        selection = _normalize_selection_payload(
-            last_result.value,
-            required_fields=(
-                "knowledge_kinds",
-                "primary_knowledge_kind",
-                "process_functions",
-                "primary_process_function",
-                "applicability_present",
-                "applicability_functions",
-                "primary_applicability_function",
-                "role_relation_types",
-                "primary_role_relation_type",
-            ),
-        )
-    return (
-        last_result,
-        selection,
-        {
-            "plan": plan.model_dump(mode="json"),
-            "answers": answers,
-            "aggregated_selection": selection,
-            "provided_fields": sorted(provided_fields),
-            "execution": {
-                "fresh_predictions": fresh_predictions,
-                "cached_predictions": cached_predictions,
-                "fresh_inference_duration_seconds": fresh_inference_duration_seconds,
-            },
-        },
-    )
-
-
 def _report_retry_progress(
     attempt: int,
     error: LlmUnavailableError,
@@ -876,108 +598,18 @@ def _content_preview(content: str, limit: int = 1000) -> str:
     return compact if len(compact) <= limit else compact[: limit - 3] + "..."
 
 
-def _normalize_selection_payload(
-    value: Any, *, required_fields: tuple[str, ...] | list[str] = ()
-) -> dict[str, Any]:
-    """Canonicalize harmless provider variance before strict domain validation."""
+def _normalize_selection_payload(value: Any) -> dict[str, Any]:
+    """Normalize the focused applicability-presence response before validation."""
     if not isinstance(value, dict):
         return dict(value)
-    normalized = dict(value)
-    supplied_fields = set(normalized)
-    defaults = {
-        "knowledge_kinds": [],
-        "primary_knowledge_kind": None,
-        "process_functions": [],
-        "primary_process_function": None,
-        "applicability_present": False,
-        "applicability_functions": [],
-        "primary_applicability_function": None,
-        "role_relation_types": [],
-        "primary_role_relation_type": None,
-    }
-    for field in required_fields:
-        if field in defaults:
-            normalized.setdefault(field, defaults[field])
-
-    if (
-        "applicability_present" in required_fields
-        and "applicability_present" not in supplied_fields
-    ):
-        normalized["applicability_present"] = bool(
-            normalized.get("applicability_functions")
-            or normalized.get("primary_applicability_function")
-        )
-
-    # ``role_relations`` was added after the scalar role-relation classification
-    # fields. Older/smaller providers may omit the complete new dimension when
-    # abstaining. Preserve the existing compatibility behaviour for missing
-    # ontology dimensions by materializing an empty extraction only when the
-    # provider either omitted the complete role-relation block or explicitly
-    # returned an empty/null classification. Do not repair a positive or partial
-    # classification that is missing its structured extraction.
-    if "role_relations" in required_fields and "role_relations" not in normalized:
-        role_types_supplied = "role_relation_types" in supplied_fields
-        primary_role_supplied = "primary_role_relation_type" in supplied_fields
-        complete_block_omitted = not role_types_supplied and not primary_role_supplied
-        explicit_abstention = (
-            role_types_supplied
-            and primary_role_supplied
-            and normalized.get("role_relation_types") in ([], ())
-            and normalized.get("primary_role_relation_type") is None
-        )
-        if complete_block_omitted or explicit_abstention:
-            normalized["role_relations"] = []
-
-    roles = normalized.get("statement_functions")
-    if isinstance(roles, (list, tuple)):
-        normalized_roles = list(dict.fromkeys(roles))
-        primary_function = normalized.get("primary_function")
-        if primary_function is not None and primary_function not in normalized_roles:
-            normalized_roles.insert(0, primary_function)
-        normalized["statement_functions"] = normalized_roles
-    for field, primary in (
-        ("knowledge_kinds", "primary_knowledge_kind"),
-        ("process_functions", "primary_process_function"),
-        ("applicability_functions", "primary_applicability_function"),
-        ("role_relation_types", "primary_role_relation_type"),
-    ):
-        values = normalized.get(field)
-        if isinstance(values, (list, tuple)):
-            normalized_values = list(dict.fromkeys(values))
-            primary_value = normalized.get(primary)
-            if primary_value is not None and primary_value not in normalized_values:
-                normalized_values.insert(0, primary_value)
-            normalized[field] = normalized_values
-    return normalized
+    return dict(value)
 
 
 def _prompt_schema_is_compatible(
     prompt_schema: Mapping[str, Any], canonical_schema: Mapping[str, Any]
 ) -> bool:
-    """Allow qualification prompts to narrow applicability labels without changing the task.
-
-    The canonical semantic task remains broader because production semantics may still represent
-    exception and condition concepts. Qualification prompts may only make the two applicability
-    enum locations stricter; every other schema detail must stay identical.
-    """
-    if prompt_schema == canonical_schema:
-        return True
-
-    prompt_copy = json.loads(json.dumps(prompt_schema))
-    canonical_copy = json.loads(json.dumps(canonical_schema))
-    paths = (
-        ("properties", "applicability_functions", "items", "enum"),
-        ("properties", "primary_applicability_function", "enum"),
-    )
-    for path in paths:
-        prompt_enum = _schema_path(prompt_copy, path)
-        canonical_enum = _schema_path(canonical_copy, path)
-        if not isinstance(prompt_enum, list) or not isinstance(canonical_enum, list):
-            return False
-        if not set(prompt_enum).issubset(set(canonical_enum)):
-            return False
-        _set_schema_path(canonical_copy, path, prompt_enum)
-    return prompt_copy == canonical_copy
+    """Require prompt and task schemas to describe the same focused contract."""
+    return prompt_schema == canonical_schema
 
 
 def _schema_path(schema: Mapping[str, Any], path: tuple[str, ...]) -> Any:

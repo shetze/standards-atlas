@@ -25,7 +25,6 @@ from .knowledge_contract import (
     EvidenceBlob,
     PublishedAttribute,
     ReferenceView,
-    RoleView,
     RoutingView,
     ScopeView,
     SubjectView,
@@ -127,8 +126,6 @@ def public_value(path: str, value: object) -> object:
                 for reference in routing.references
             ),
         ).model_dump(mode="json")
-    if path == "enrichments.semantic.role_relations":
-        return RoleView(count=len(value)).model_dump(mode="json")
     return _json(value)
 
 
@@ -249,7 +246,6 @@ def hydrate_attribute(
             defaults = {
                 "enrichments.subject_context": ClauseSubjectContext().model_dump(mode="json"),
                 "enrichments.context_routing": ContextRouting().model_dump(mode="json"),
-                "enrichments.semantic.role_relations": [],
             }
             candidate = EvidenceBlob(kind="value", path=item.path, value=defaults[item.path])
             if digest(canonical_bytes(candidate)) != item.private_value_sha256:

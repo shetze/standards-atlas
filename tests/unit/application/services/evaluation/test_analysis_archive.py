@@ -23,7 +23,7 @@ def _write_manifest(path: Path) -> None:
         "\n".join(
             (
                 "manifest_type: qualification_matrix",
-                'schema_version: "1.6"',
+                "schema_version: 1",
                 "matrix_id: matrix-v1",
                 "corpus_id: corpus-v1",
                 "task_version: 2.1.0",
@@ -87,7 +87,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
             "dataset_version": "2.1.0",
             "id": "matrix-v1",
             "manifest_type": "qualification_matrix",
-            "schema_version": "1.6",
+            "schema_version": 1,
             "task_version": "2.1.0",
         }
         assert metadata["corpus"]["id"] == "corpus-v1"
@@ -156,10 +156,9 @@ def test_analysis_metrics_omit_removed_applicability_structural_conflicts() -> N
             clause_id="one",
             document_key="DOC",
             category=ConsensusCategory.UNANIMOUS,
-            statement_function_category=ConsensusCategory.UNANIMOUS,
-            knowledge_kind_category=ConsensusCategory.UNANIMOUS,
             applicability_category=ConsensusCategory.UNANIMOUS,
-            role_relation_category=ConsensusCategory.UNANIMOUS,
+            applicability_present=True,
+            applicability_presence_confidence=1.0,
             overall_status=OverallConsensusStatus.RESOLVED,
             confidence=1.0,
             participating_models=3,
@@ -167,7 +166,7 @@ def test_analysis_metrics_omit_removed_applicability_structural_conflicts() -> N
         ),
     )
     report = ConsensusReport(
-        schema_version="5.0",
+        schema_version=1,
         matrix_id="matrix-v1",
         corpus_id="corpus-v1",
         prompt_id="content-only",
@@ -225,7 +224,7 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
         ),
     )
     report = ConsensusReport(
-        schema_version="5.0",
+        schema_version=1,
         matrix_id="matrix-v1",
         corpus_id="corpus-v1",
         prompt_id="content-only",
@@ -267,46 +266,32 @@ def test_analysis_metrics_include_non_normative_diagnostics() -> None:
 def test_collects_reproducible_qualification_inputs(tmp_path: Path) -> None:
     resources = tmp_path / "resources" / "semantic"
     corpus_root = tmp_path / "corpora"
-    task_root = resources / "tasks" / "semantic-profile-classification" / "2.1.0"
+    task_root = resources / "tasks" / "applicability-presence" / "1.0.0"
     task_root.mkdir(parents=True)
     (task_root / "task.yaml").write_text(
-        "\n".join(
-            (
-                "schema_version: 1",
-                "task: semantic-profile-classification",
-                "version: 2.1.0",
-                "ontologies:",
-                "  statement_functions:",
-                "    id: statement-functions",
-                "    version: 2.0.0",
-            )
-        )
-        + "\n"
+        "schema_version: 1\ntask: applicability-presence\nversion: 1.0.0\n"
     )
     (task_root / "schema.json").write_text("{}\n")
-    prompt_root = resources / "prompts" / "statement-function-classification" / "structure-aware-v3"
+    prompt_root = resources / "prompts" / "applicability-presence" / "1.0.0"
     prompt_root.mkdir(parents=True)
     for name in ("prompt.json", "schema.json", "system.txt", "user.txt"):
         (prompt_root / name).write_text("{}\n" if name.endswith(".json") else "test\n")
-    ontology = resources.parent / "ontologies" / "statement-functions" / "2.0.0" / "ontology.yaml"
-    ontology.parent.mkdir(parents=True)
-    ontology.write_text("id: statement-functions\nversion: 2.0.0\n")
-    dataset = corpus_root / "semantic-profile-classification" / "2.1.0" / "dataset.json"
+    dataset = corpus_root / "applicability-presence" / "1.0.0" / "dataset.json"
     dataset.parent.mkdir(parents=True)
     dataset.write_text('{"examples": []}\n')
-    corpus = corpus_root / "semantic-profile-v1" / "corpus.yaml"
+    corpus = corpus_root / "applicability-presence-v1" / "corpus.yaml"
     corpus.parent.mkdir(parents=True)
-    corpus.write_text("corpus_id: semantic-profile-v1\n")
+    corpus.write_text("corpus_id: applicability-presence-v1\n")
 
     members = dict(
         (member, path)
         for path, member in collect_qualification_input_members(
             manifest_payload={
-                "task": "semantic-profile-classification",
-                "task_version": "2.1.0",
-                "dataset_version": "2.1.0",
-                "corpus_id": "semantic-profile-v1",
-                "prompts": [{"id": "structure-aware", "prompt_version": "structure-aware-v3"}],
+                "task": "applicability-presence",
+                "task_version": "1.0.0",
+                "dataset_version": "1.0.0",
+                "corpus_id": "applicability-presence-v1",
+                "prompts": [{"id": "presence", "prompt_version": "1.0.0"}],
             },
             resources=resources,
             corpus_root=corpus_root,
@@ -316,8 +301,7 @@ def test_collects_reproducible_qualification_inputs(tmp_path: Path) -> None:
     assert members["inputs/corpus/dataset.json"] == dataset
     assert members["inputs/corpus/corpus.yaml"] == corpus
     assert "inputs/task/task.yaml" in members
-    assert "inputs/prompts/structure-aware-v3/user.txt" in members
-    assert "inputs/ontologies/statement_functions/ontology.yaml" in members
+    assert "inputs/prompts/1.0.0/user.txt" in members
 
 
 def test_analysis_archive_embeds_semantic_extraction_qualification_metadata(tmp_path: Path) -> None:
@@ -356,13 +340,16 @@ def test_analysis_metrics_report_selection_coverage_counts() -> None:
         clause_id="one",
         document_key="DOC",
         category=ConsensusCategory.UNANIMOUS,
+        applicability_category=ConsensusCategory.UNANIMOUS,
+        applicability_present=True,
+        applicability_presence_confidence=1.0,
         overall_status=OverallConsensusStatus.RESOLVED,
         confidence=1.0,
         participating_models=3,
         requires_review=False,
     )
     report = ConsensusReport(
-        schema_version="5.0",
+        schema_version=1,
         matrix_id="matrix-v1",
         corpus_id="corpus-v1",
         prompt_id="content-only",

@@ -177,20 +177,6 @@ _SPECS: dict[WorkflowOperationKind, _Spec] = {
             _o("receipt"),
         ),
     ),
-    WorkflowOperationKind.PARTIAL_REVIEW_CHECK_HANDOFF: _Spec(
-        ("evaluation", "partial-review-check-handoff"), (_o("bundle"),)
-    ),
-    WorkflowOperationKind.PARTIAL_QUALIFICATION_PREPARE: _Spec(
-        ("evaluation", "partial-qualification-prepare"),
-        (_o("manifest"), _o("output"), _f("reuse_frozen")),
-    ),
-    WorkflowOperationKind.PARTIAL_QUALIFICATION_RUN: _Spec(
-        ("evaluation", "partial-qualification-run"), (_o("campaign"), _f("execute"))
-    ),
-    WorkflowOperationKind.PARTIAL_QUALIFICATION_EVALUATE: _Spec(
-        ("evaluation", "partial-qualification-evaluate"),
-        (_o("campaign"), _o("archive_output")),
-    ),
     WorkflowOperationKind.WORKFLOW_ARCHIVE_BASELINE: _Spec(
         ("workflow", "archive-baseline"),
         (

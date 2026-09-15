@@ -177,27 +177,6 @@ SCHEMA_ENVELOPE_MARKER_COUNTS: tuple[tuple[str, int], ...] = (
         1,
     ),
     (
-        "standards_atlas.application.semantic_qualification.campaign_activation:activate_campaign",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.campaign_evaluation:evaluate_campaign",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.campaign_executio"
-        "n:FreshLedgerGateway.generate_structured",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.campaign_execution:run_campaign",
-        2,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.campaign_selection:prepare_campaign",
-        1,
-    ),
-    (
         "standards_atlas.application.semantic_qualification.cascade_replay:replay_cascade",
         1,
     ),
@@ -214,48 +193,6 @@ SCHEMA_ENVELOPE_MARKER_COUNTS: tuple[tuple[str, int], ...] = (
         1,
     ),
     (
-        "standards_atlas.application.semantic_qualification.focused_resolutio"
-        "n:plan_focused_resolution",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.partial_audit:audit_partial_experiment",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.partial_cascade:_write_report",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.partial_cascade:run_partial_cascade",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.partial_cascade:w"
-        "rite_partial_cascade_costs",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.partial_cascade_a"
-        "udit:audit_partial_cascade",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.partial_compariso"
-        "n:compare_efficient_prompts",
-        2,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.partial_compariso"
-        "n:compare_partial_profiles",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.partial_proposals"
-        ":run_partial_proposals",
-        2,
-    ),
-    (
         "standards_atlas.application.semantic_qualification.proposals:Baselin"
         "eProposalGenerator.run.process_example",
         1,
@@ -268,24 +205,6 @@ SCHEMA_ENVELOPE_MARKER_COUNTS: tuple[tuple[str, int], ...] = (
     (
         "standards_atlas.application.semantic_qualification.review_package.pu"
         "blication:publication_suites",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.semantic_readines"
-        "s:evaluate_semantic_readiness",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.taxonomy_diagnost"
-        "ics:diagnose_taxonomy_decisions",
-        2,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.taxonomy_pilot:build_taxonomy_pilot",
-        1,
-    ),
-    (
-        "standards_atlas.application.semantic_qualification.taxonomy_pilot:synthetic_pilot",
         1,
     ),
     (
@@ -375,12 +294,6 @@ SCHEMA_ENVELOPE_DECISIONS: tuple[SchemaEnvelopeDecision, ...] = (
         ("qualification-analysis-archive-manifest",),
     ),
     SchemaEnvelopeDecision(
-        "standards_atlas.application.semantic_qualification.campaign_selection:prepare_campaign",
-        1,
-        SchemaMarkerDisposition.CENTRAL,
-        ("partial-qualification-campaign",),
-    ),
-    SchemaEnvelopeDecision(
         "standards_atlas.application.semantic_qualification.challenger:load_hard_case_selection",
         1,
         SchemaMarkerDisposition.CENTRAL,
@@ -393,51 +306,11 @@ SCHEMA_ENVELOPE_DECISIONS: tuple[SchemaEnvelopeDecision, ...] = (
         ("challenger-comparison",),
     ),
     SchemaEnvelopeDecision(
-        "standards_atlas.application.semantic_qualification.focused_resolutio"
-        "n:plan_focused_resolution",
-        1,
-        SchemaMarkerDisposition.CENTRAL,
-        ("focused-resolution-plan",),
-    ),
-    SchemaEnvelopeDecision(
-        "standards_atlas.application.semantic_qualification.partial_audit:audit_partial_experiment",
-        1,
-        SchemaMarkerDisposition.CENTRAL,
-        ("partial-experiment-audit",),
-    ),
-    SchemaEnvelopeDecision(
-        "standards_atlas.application.semantic_qualification.partial_cascade:w"
-        "rite_partial_cascade_costs",
-        1,
-        SchemaMarkerDisposition.CENTRAL,
-        ("partial-cascade-costs",),
-    ),
-    SchemaEnvelopeDecision(
-        "standards_atlas.application.semantic_qualification.partial_compariso"
-        "n:compare_efficient_prompts",
-        2,
-        SchemaMarkerDisposition.CENTRAL,
-        ("efficient-comparison-plan", "efficient-prompt-comparison"),
-    ),
-    SchemaEnvelopeDecision(
-        "standards_atlas.application.semantic_qualification.partial_compariso"
-        "n:compare_partial_profiles",
-        1,
-        SchemaMarkerDisposition.CENTRAL,
-        ("partial-profile-comparison",),
-    ),
-    SchemaEnvelopeDecision(
         "standards_atlas.application.semantic_qualification.proposals:Baselin"
         "eProposalGenerator.run.process_example",
         1,
         SchemaMarkerDisposition.CENTRAL,
         ("semantic-evaluation",),
-    ),
-    SchemaEnvelopeDecision(
-        "standards_atlas.application.semantic_qualification.taxonomy_pilot:synthetic_pilot",
-        1,
-        SchemaMarkerDisposition.CENTRAL,
-        ("semantic-readiness-checks",),
     ),
     SchemaEnvelopeDecision(
         "standards_atlas.application.services.context_run_report:write_context_run_report",
@@ -468,12 +341,6 @@ SCHEMA_ENVELOPE_DECISIONS: tuple[SchemaEnvelopeDecision, ...] = (
 )
 
 SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
-    SchemaMarkerDecision(
-        "standards_atlas.adapters.atlasdata.semantic_annotation_writer:Public"
-        "SemanticAnnotationManifest",
-        SchemaMarkerDisposition.CENTRAL,
-        "public-semantic-annotation-manifest",
-    ),
     SchemaMarkerDecision(
         "standards_atlas.adapters.complytime.complypack:ComplyPackWorkspaceManifest",
         SchemaMarkerDisposition.CENTRAL,
@@ -584,12 +451,6 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "standards_atlas.application.qualification.report:QualificationRunReporter",
         SchemaMarkerDisposition.CENTRAL,
         "normalization-qualification-run-report",
-    ),
-    SchemaMarkerDecision(
-        "standards_atlas.application.semantic_qualification.acceptance_profil"
-        "es:PartialAcceptanceProfile",
-        SchemaMarkerDisposition.CENTRAL,
-        "partial-acceptance-profile",
     ),
     SchemaMarkerDecision(
         "standards_atlas.application.semantic_qualification.annotations:ClauseEvaluationAnnotation",
@@ -728,10 +589,10 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         reason="local prompt-comparison report",
     ),
     SchemaMarkerDecision(
-        "standards_atlas.application.semantic_qualification.qualification:Ann"
-        "otationQualificationReport",
+        "standards_atlas.application.semantic_qualification.applicability_qualification:App"
+        "licabilityQualificationReport",
         SchemaMarkerDisposition.CENTRAL,
-        "annotation-qualification-report",
+        "applicability-qualification-report",
     ),
     SchemaMarkerDecision(
         "standards_atlas.application.semantic_qualification.qualification_cov"
@@ -743,21 +604,6 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "standards_atlas.application.semantic_qualification.references:ClauseReferenceAnalysis",
         SchemaMarkerDisposition.LOCAL,
         reason="task-local structured model output owned by its task contract",
-    ),
-    SchemaMarkerDecision(
-        "standards_atlas.application.semantic_qualification.review:ReviewForm",
-        SchemaMarkerDisposition.CENTRAL,
-        "annotation-review-form",
-    ),
-    SchemaMarkerDecision(
-        "standards_atlas.application.semantic_qualification.role_corpus:RoleCorpusBuildManifest",
-        SchemaMarkerDisposition.CENTRAL,
-        "role-corpus-build-manifest",
-    ),
-    SchemaMarkerDecision(
-        "standards_atlas.application.semantic_qualification.role_corpus:RoleGoldenCorpus",
-        SchemaMarkerDisposition.CENTRAL,
-        "role-golden-corpus",
     ),
     SchemaMarkerDecision(
         "standards_atlas.application.semantic_qualification.run_selection:Qua"
@@ -830,27 +676,6 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
     VersionedInterface(
-        "partial-review-workbench-evidence",
-        "**/review-evidence.json#workbench",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-workbench-evidence",
-    ),
-    VersionedInterface(
-        "partial-review-archive",
-        "**/review-package.zip#archive-manifest.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-archive",
-    ),
-    VersionedInterface(
-        "partial-review-handoff",
-        "**/review-handoff.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-handoff",
-    ),
-    VersionedInterface(
         "review-workbench-state",
         "**/workbench/state.json",
         LifecycleBoundary.PERSISTENCE,
@@ -859,229 +684,11 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         notes="Navigation and Holdout exposure, never semantic confirmation authority.",
     ),
     VersionedInterface(
-        "partial-review-candidates",
-        "**/preparation/indexes/*/index.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-candidates",
-    ),
-    VersionedInterface(
-        "partial-review-selection-proposal",
-        "**/preparation/selections/*/selection.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-selection-proposal",
-    ),
-    VersionedInterface(
-        "partial-review-package",
-        "**/review-package.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-package",
-    ),
-    VersionedInterface(
-        "partial-review-state",
-        "**/review-state.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-state",
-    ),
-    VersionedInterface(
-        "partial-review-profile",
-        "**/review-profile.yaml",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-profile",
-    ),
-    VersionedInterface(
-        "partial-review-publication",
-        "**/review-evidence.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-review-publication",
-    ),
-    VersionedInterface(
-        "partial-qualification-manifest",
-        "**/campaign.yaml",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-qualification-manifest",
-        notes=(
-            "Current-only manifest 1.1; campaign artifact 2.0 declares review evidence separately."
-        ),
-    ),
-    VersionedInterface(
-        "partial-qualification-campaign",
-        "**/campaign-plan.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-qualification-campaign",
-        notes="Current-only 2.0: external_suites, atlas_publication or archived_handoff.",
-    ),
-    VersionedInterface(
-        "partial-qualification-repeat",
-        "**/repeat.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-qualification-repeat",
-    ),
-    VersionedInterface(
-        "partial-qualification-evaluation",
-        "**/qualification-evaluation.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-qualification-evaluation",
-    ),
-    VersionedInterface(
-        "partial-semantic-reference",
-        "**/semantic-reference.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-semantic-reference",
-    ),
-    VersionedInterface(
-        "partial-qualified-activation",
-        "**/activation.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-qualified-activation",
-    ),
-    VersionedInterface(
-        "qualification-request-event",
-        "**/qualification-events/*.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "qualification-request-event",
-    ),
-    VersionedInterface(
-        "partial-qualification-execution",
-        "**/execution-report.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-qualification-execution",
-    ),
-    VersionedInterface(
-        "partial-cascade-report",
-        "**/partial-cascade-report.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-cascade-report",
-        "Effective prompt and explicit planned/unmeasured versus executed diagnostics.",
-    ),
-    VersionedInterface(
-        "partial-cascade-audit",
-        "**/partial-cascade-audit.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-cascade-audit",
-        "Immutable acceptance replay, blockers and physical attempt diagnostics.",
-    ),
-    VersionedInterface(
-        "taxonomy-pilot-readiness",
-        "**/pilot-readiness.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "taxonomy-pilot-readiness",
-        "Source-bound or explicit synthetic readiness; not implicit rule approval.",
-    ),
-    VersionedInterface(
-        "taxonomy-readiness-cases",
-        "resources/semantic/qualification/taxonomy-readiness-v1/cases.yaml",
-        LifecycleBoundary.PACKAGED_RESOURCE,
-        (VersionAxis.SCHEMA,),
-        "taxonomy-readiness-cases",
-        "Synthetic source authority and independent process/plan smoke expectations.",
-    ),
-    VersionedInterface(
-        "semantic-readiness-checks",
-        "**/readiness-checks.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "semantic-readiness-checks",
-        "Source identity and minimum process/plan sentinel expectations.",
-    ),
-    VersionedInterface(
-        "semantic-readiness-evaluation",
-        "**/semantic-readiness.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "semantic-readiness-evaluation",
-        "Scoped sentinel comparison; never domain qualification or canonical acceptance.",
-    ),
-    VersionedInterface(
-        "mixed-consensus",
-        "**/mixed-consensus-report.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "mixed-consensus",
-        "Attribute-specific acceptance without synthetic votes or semantic defaults.",
-    ),
-    VersionedInterface(
-        "partial-cascade-run",
-        "**/partial-cascade-*.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-cascade-run",
-        "Frozen completion profile, source inputs and staged sparse evidence.",
-    ),
-    VersionedInterface(
-        "partial-request-plan",
-        "**/partial-request-plan.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-request-plan",
-        "Experimental source-bound question plan; no synthetic model votes.",
-    ),
-    VersionedInterface(
-        "partial-semantic-observation",
-        "**/partial-observation.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-semantic-observation",
-        "Explicit evaluated, not_requested and failed attributes; sparse evidence only.",
-    ),
-    VersionedInterface(
-        "partial-proposal-run",
-        "**/partial-run-*.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-proposal-run",
-        "Immutable experiment identity and measured execution report.",
-    ),
-    VersionedInterface(
         "source-structure",
         "clause-descriptor.source_structure",
         LifecycleBoundary.PROCESS,
         (VersionAxis.SCHEMA,),
         "source-structure",
-    ),
-    VersionedInterface(
-        "clause-decision-plan",
-        "**/taxonomy-decision-plans.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "clause-decision-plan",
-    ),
-    VersionedInterface(
-        "taxonomy-decision-report",
-        "**/taxonomy-decision-report.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "taxonomy-decision-report",
-    ),
-    VersionedInterface(
-        "taxonomy-decision-rules",
-        "resources/semantic/taxonomy-decisions/**/rules.yaml",
-        LifecycleBoundary.PACKAGED_RESOURCE,
-        (VersionAxis.SCHEMA, VersionAxis.RESOURCE),
-        "taxonomy-decision-rules",
-    ),
-    VersionedInterface(
-        "taxonomy-decision-review",
-        "resources/semantic/taxonomy-decisions/**/review.yaml",
-        LifecycleBoundary.PACKAGED_RESOURCE,
-        (VersionAxis.SCHEMA, VersionAxis.RESOURCE),
-        "taxonomy-decision-review",
     ),
     VersionedInterface(
         "cascade-provenance",
@@ -1188,6 +795,78 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         "Explicit canonical adoption preview/write report, not public AtlasData.",
     ),
     VersionedInterface(
+        "review-source-manifest",
+        "cfg/evaluation/review/*.yaml",
+        LifecycleBoundary.PROCESS,
+        (VersionAxis.SCHEMA,),
+        "review-source-manifest",
+        "Generic source manifest for assertion/evidence review packages.",
+    ),
+    VersionedInterface(
+        "review-profile",
+        "**/review-profile.yaml",
+        LifecycleBoundary.PROCESS,
+        (VersionAxis.SCHEMA,),
+        "review-profile",
+        "Generic review profile independent of removed clause-classification dimensions.",
+    ),
+    VersionedInterface(
+        "review-package",
+        "**/review-package.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-package",
+    ),
+    VersionedInterface(
+        "review-state",
+        "**/review-state.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-state",
+    ),
+    VersionedInterface(
+        "review-publication",
+        "**/review-evidence.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-publication",
+    ),
+    VersionedInterface(
+        "review-reference-suite",
+        "**/{development,holdout}.yaml",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-reference-suite",
+    ),
+    VersionedInterface(
+        "review-candidates",
+        "**/preparation/indexes/*/index.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-candidates",
+    ),
+    VersionedInterface(
+        "review-selection-proposal",
+        "**/preparation/selections/*/selection.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-selection-proposal",
+    ),
+    VersionedInterface(
+        "review-archive",
+        "**/review-package.zip#archive-manifest.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-archive",
+    ),
+    VersionedInterface(
+        "review-workbench-evidence",
+        "**/review-evidence.json#workbench",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "review-workbench-evidence",
+    ),
+    VersionedInterface(
         "engineering-document",
         ".atlas/data/documents/*.json",
         LifecycleBoundary.PERSISTENCE,
@@ -1218,14 +897,6 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (VersionAxis.SCHEMA, VersionAxis.RESOURCE),
         "semantic-task-resource",
         "Task resource version identifies inference semantics independently of YAML schema.",
-    ),
-    VersionedInterface(
-        "semantic-profile",
-        "resources/semantic/profiles/<id>/<version>/profile.yaml",
-        LifecycleBoundary.PACKAGED_RESOURCE,
-        (VersionAxis.SCHEMA, VersionAxis.RESOURCE),
-        "semantic-profile-resource",
-        "Profile version identifies a domain composition independently of YAML schema.",
     ),
     VersionedInterface(
         "semantic-ontology",
@@ -1279,13 +950,6 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
             "Persisted extraction carries task/prompt/model provenance independently "
             "of schema version."
         ),
-    ),
-    VersionedInterface(
-        "public-semantic-annotation-manifest",
-        "local/**/semantic-annotations*.yaml",
-        LifecycleBoundary.PUBLIC_CONTRACT,
-        (VersionAxis.SCHEMA,),
-        "public-semantic-annotation-manifest",
     ),
     VersionedInterface(
         "complypack-workspace-manifest",
@@ -1407,13 +1071,6 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         "normalization-qualification-run-report",
     ),
     VersionedInterface(
-        "partial-acceptance-profile",
-        "cfg/evaluation/partial-cascade/*.yaml",
-        LifecycleBoundary.PROCESS,
-        (VersionAxis.SCHEMA,),
-        "partial-acceptance-profile",
-    ),
-    VersionedInterface(
         "clause-evaluation-annotation",
         "**/annotations/**/*.yaml",
         LifecycleBoundary.PERSISTENCE,
@@ -1484,11 +1141,11 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         "applicability-policy-run-report",
     ),
     VersionedInterface(
-        "annotation-qualification-report",
-        "**/annotation-qualification*.json",
+        "applicability-qualification-report",
+        "**/applicability-qualification.json",
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
-        "annotation-qualification-report",
+        "applicability-qualification-report",
     ),
     VersionedInterface(
         "qualification-coverage",
@@ -1496,27 +1153,6 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "qualification-coverage",
-    ),
-    VersionedInterface(
-        "annotation-review-form",
-        "**/review.md#semantic-review",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "annotation-review-form",
-    ),
-    VersionedInterface(
-        "role-corpus-build-manifest",
-        "**/role-corpus*.yaml",
-        LifecycleBoundary.PROCESS,
-        (VersionAxis.SCHEMA,),
-        "role-corpus-build-manifest",
-    ),
-    VersionedInterface(
-        "role-golden-corpus",
-        "**/role-golden-corpus*.yaml",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "role-golden-corpus",
     ),
     VersionedInterface(
         "qualification-run-selection",
@@ -1665,48 +1301,6 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "challenger-comparison",
-    ),
-    VersionedInterface(
-        "focused-resolution-plan",
-        "**/focused-plan.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "focused-resolution-plan",
-    ),
-    VersionedInterface(
-        "partial-experiment-audit",
-        "**/partial-audit.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-experiment-audit",
-    ),
-    VersionedInterface(
-        "partial-cascade-costs",
-        "**/partial-cascade-costs.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-cascade-costs",
-    ),
-    VersionedInterface(
-        "partial-profile-comparison",
-        "**/partial-profile-comparison.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "partial-profile-comparison",
-    ),
-    VersionedInterface(
-        "efficient-comparison-plan",
-        "**/efficient-comparison-plan.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "efficient-comparison-plan",
-    ),
-    VersionedInterface(
-        "efficient-prompt-comparison",
-        "**/efficient-comparison.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "efficient-prompt-comparison",
     ),
     VersionedInterface(
         "semantic-evaluation",

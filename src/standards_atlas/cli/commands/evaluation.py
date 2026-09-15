@@ -2,14 +2,6 @@
 
 import typer
 
-from standards_atlas.cli.commands.evaluation_commands.annotations import (
-    evaluate_annotation_metrics,
-    export_annotation_reviews,
-    extract_clause_references,
-    import_annotation_reviews,
-    propose_evaluation_annotations,
-    publish_annotation_reviews,
-)
 from standards_atlas.cli.commands.evaluation_commands.applicability_detail import (
     enrich_applicability_details,
 )
@@ -44,33 +36,9 @@ from standards_atlas.cli.commands.evaluation_commands.complytime_feedback import
 )
 from standards_atlas.cli.commands.evaluation_commands.corpus import (
     build_evaluation_corpus,
-    build_role_golden_corpus,
-    evaluate_role_corpus,
-)
-from standards_atlas.cli.commands.evaluation_commands.partial_audit import (
-    audit_partial_experiment_command,
-)
-from standards_atlas.cli.commands.evaluation_commands.partial_cascade import (
-    run_partial_cascade_command,
-)
-from standards_atlas.cli.commands.evaluation_commands.partial_cascade_audit import (
-    audit_partial_cascade_command,
-)
-from standards_atlas.cli.commands.evaluation_commands.partial_comparison import (
-    compare_efficient_prompts_command,
-    compare_partial_profiles_command,
-)
-from standards_atlas.cli.commands.evaluation_commands.partial_proposals import (
-    propose_partial_semantics,
 )
 from standards_atlas.cli.commands.evaluation_commands.qualification_archive import (
     finalize_qualification_archive,
-)
-from standards_atlas.cli.commands.evaluation_commands.qualification_campaign import (
-    activate_qualification_command,
-    evaluate_qualification_command,
-    prepare_qualification_command,
-    run_qualification_command,
 )
 from standards_atlas.cli.commands.evaluation_commands.qualification_matrix import (
     _format_duration,
@@ -78,61 +46,33 @@ from standards_atlas.cli.commands.evaluation_commands.qualification_matrix impor
     qualify_model_prompt_matrix,
 )
 from standards_atlas.cli.commands.evaluation_commands.review_package import (
-    build_partial_review_command,
-    decide_partial_review_command,
-    import_partial_review_command,
-    show_partial_review_command,
+    build_review_command,
+    decide_review_command,
+    import_review_command,
+    show_review_command,
 )
 from standards_atlas.cli.commands.evaluation_commands.semantic_extraction_qualification import (
     qualify_semantic_extraction,
 )
-from standards_atlas.cli.commands.evaluation_commands.semantic_readiness import (
-    semantic_readiness_evaluate_command,
-    taxonomy_pilot_command,
-)
-from standards_atlas.cli.commands.evaluation_commands.taxonomy_decisions import (
-    diagnose_taxonomy_decisions_command,
-)
 from standards_atlas.cli.composition import build_golden_corpus_qualifier
 
 __all__ = [
-    "build_partial_review_command",
-    "decide_partial_review_command",
-    "import_partial_review_command",
-    "show_partial_review_command",
-    "activate_qualification_command",
-    "evaluate_qualification_command",
-    "prepare_qualification_command",
-    "run_qualification_command",
+    "build_review_command",
+    "decide_review_command",
+    "import_review_command",
+    "show_review_command",
     "_MatrixProposalProgress",
     "_format_duration",
-    "audit_partial_experiment_command",
-    "compare_efficient_prompts_command",
-    "compare_partial_profiles_command",
     "build_applicability_detail_disagreement_hitl",
     "build_evaluation_corpus",
-    "build_role_golden_corpus",
     "build_golden_corpus_qualifier",
     "compare_applicability_detail_runs",
-    "diagnose_taxonomy_decisions_command",
     "compare_applicability_detail_model_matrix",
     "enrich_applicability_details",
     "evaluate_applicability_detail_disagreement_hitl",
     "evaluate_applicability_end_to_end_corpus",
     "evaluate_applicability_policy_command",
-    "evaluate_annotation_metrics",
-    "evaluate_role_corpus",
-    "export_annotation_reviews",
-    "extract_clause_references",
-    "import_annotation_reviews",
     "import_complytime_feedback",
-    "propose_evaluation_annotations",
-    "propose_partial_semantics",
-    "run_partial_cascade_command",
-    "semantic_readiness_evaluate_command",
-    "taxonomy_pilot_command",
-    "audit_partial_cascade_command",
-    "publish_annotation_reviews",
     "publish_applicability_detail_disagreement_hitl",
     "replay_applicability_policy_command",
     "replay_cascade_command",

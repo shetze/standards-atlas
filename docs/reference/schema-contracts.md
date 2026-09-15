@@ -131,28 +131,7 @@ See [Remaining schema refactoring R3](../user-guide/remaining-schema-refactoring
 
 ### Partial cascade readiness artifacts (Slice 5.1)
 
-`partial-cascade-report` is a separate family from the immutable `partial-cascade-run`
-plan. Current report version **1.1** explicitly binds run mode and effective configuration,
-and makes a planning-only completion rate `null`. Since refactoring slice R1, **1.0**
-reports are rejected, including on resume; no legacy metrics path remains. The independent
-cascade-run and mixed-consensus contracts retain their existing versions. Verification
-always recomputes the selected prompt/resources and presentation metrics instead of
-trusting diagnostic counts as acceptance authority.
-
-R1 also restricts `partial-request-plan` and `partial-semantic-observation` to **1.1**.
-Each marker is mandatory and validated independently, including nested plans and direct
-model reads. Prompt variants share the current serialization contract; a prompt's ability
-to carry accepted decisions remains a separate capability. Writers check their own
-family's current version before publication. No serializer preserves old 1.0 identities.
-See [Partial schema refactoring R1](../user-guide/partial-schema-refactoring.md) for
-regeneration and same-contract resume rules. Other schema families are unchanged by R1.
-
-The diagnostic families `partial-cascade-audit`, `taxonomy-pilot-readiness`,
-`taxonomy-readiness-cases`, `semantic-readiness-checks` and `semantic-readiness-evaluation`
-start at **1.0**. Their rules and constraints are registered in the central schema baseline
-and inventory. These reports/checks do not constitute semantic Golden data, a source
-confirmation, a taxonomy-rule release or canonical publication authority.
-
+The legacy partial-cascade report and taxonomy-diagnostic schema families were removed in the semantic clean break. Current qualification schemas cover applicability and generic evidence-backed review infrastructure.
 
 ## Human review and qualification handoff
 

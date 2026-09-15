@@ -4,9 +4,6 @@ from typing import Literal
 
 from pydantic import Field, field_validator
 
-from standards_atlas.application.semantic_qualification.qualification_campaign_model import (
-    CampaignModel,
-)
 from standards_atlas.application.semantic_qualification.review_package.model import (
     Assessment,
     Digest,
@@ -14,10 +11,11 @@ from standards_atlas.application.semantic_qualification.review_package.model imp
     HumanDecisionInput,
     NonBlank,
     Reviewer,
+    ReviewModel,
     WorkbenchState,
 )
 
-# Backward-compatible import locations; persistence contracts are shared with offline export.
+# Shared persistence contracts are imported from the applicability review package.
 __all__ = [
     "Assessment",
     "BookmarkSubmission",
@@ -29,7 +27,7 @@ __all__ = [
 ]
 
 
-class DecisionSubmission(CampaignModel):
+class DecisionSubmission(ReviewModel):
     view_token: NonBlank
     human_attested: Literal[True]
     decisions: tuple[HumanDecisionInput, ...] = Field(min_length=1, max_length=32)
@@ -42,12 +40,12 @@ class DecisionSubmission(CampaignModel):
         return value
 
 
-class RevealSubmission(CampaignModel):
+class RevealSubmission(ReviewModel):
     view_token: NonBlank
     assessment: Assessment
 
 
-class BookmarkSubmission(CampaignModel):
+class BookmarkSubmission(ReviewModel):
     reviewer: Reviewer
     example_id: NonBlank
     package_sha256: Digest

@@ -629,11 +629,12 @@ semantic_profile: functional-safety:1.0.0
 annotations:
   - reference: IEC 61508-2:2010 7.4.2
     primary_statement_function: requirement
-    secondary_statement_functions:
+    applicability:
+      present: true
+      polarity: included
+    # engineering-domain assertions are stored in EngineeringDocument.knowledge
       - prerequisite
-    knowledge_kinds:
       - process
-    role_relation_types:
       - responsible_for
 ```
 
@@ -696,7 +697,6 @@ Each record contains `path`, `origin`, `value` and the appropriate provenance.
 Paths address primary/secondary statement, knowledge and process categories, whole Applicability,
 role presence, whole subject context or whole context routing. `enrichments.applicability` carries
 `{present, polarity}` as one typed value so presence and polarity cannot drift independently. Role details
-(`enrichments.semantic.role_relations` and `enrichments.semantic.role_relation_types`) remain
 canonical fields but are temporarily excluded from publication, regardless of value or origin.
 The same exclusion applies to their fingerprint entries. Refactoring readers accept only the
 current schema-1 companion; obsolete companion shapes are regenerated rather than migrated.

@@ -37,7 +37,6 @@ class CBoxFramePolicy:
     reference_mentions: bool = True
     primary_subject: bool = True
     applicability: bool = False
-    semantic_enrichments: bool = False
     attribute_provenance: bool = False
     # Select the exclusive source-bound contract rather than compatibility fields.
     source_structure: bool = False
@@ -59,11 +58,8 @@ EFFECTIVE_CONTEXT_V1 = CBoxFramePolicy(
     id="effective-context",
     version="1",
     applicability=True,
-    semantic_enrichments=True,
     attribute_provenance=True,
 )
-SEMANTIC_ISOLATED_V1 = CBoxFramePolicy(id="semantic-isolated", version="1")
-ROLE_ISOLATED_V1 = CBoxFramePolicy(id="role-isolated", version="1")
 ROUTING_ISOLATED_V1 = CBoxFramePolicy(
     id="routing-isolated",
     version="1",
@@ -131,8 +127,6 @@ _CBOX_FRAME_POLICIES = {
     for policy in (
         FULL_CONTEXT_V1,
         EFFECTIVE_CONTEXT_V1,
-        SEMANTIC_ISOLATED_V1,
-        ROLE_ISOLATED_V1,
         ROUTING_ISOLATED_V1,
         SUBJECT_ISOLATED_V1,
         APPLICABILITY_MINIMAL_V1,
@@ -227,11 +221,6 @@ def frame_cbox_context(
         if applicability:
             values["applicability"] = dict(applicability)
 
-    if policy.semantic_enrichments:
-        # Only the canonical projection decides whether a value is known.
-        semantic = _mapping(context.get("semantic"))
-        if semantic:
-            values["semantic"] = dict(semantic)
     if policy.attribute_provenance:
         sources = _mapping(context.get("attribute_sources"))
         if sources:
@@ -437,7 +426,7 @@ def frame_qualification_context(
     subject tasks also hide their own contextual outputs. The original context
     may be archived separately, but is never expanded into template variables.
     """
-    isolated = replace(policy, semantic_enrichments=False, attribute_provenance=False)
+    isolated = replace(policy, attribute_provenance=False)
     if "applicability" in task:
         isolated = replace(isolated, applicability=False)
     if "routing" in task:

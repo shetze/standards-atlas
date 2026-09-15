@@ -188,13 +188,11 @@ class EvaluationCorpusBuilder:
             if config.source_only_context:
                 # Accepted semantic predictions are outputs of the publication workflow,
                 # not inputs for its next run. Keep structural/subject/routing context.
-                item_input["context"]["semantic"] = {}
                 item_input["context"].pop("applicability", None)
                 item_input["context"]["attribute_sources"] = {
                     path: value
                     for path, value in item_input["context"]["attribute_sources"].items()
-                    if not path.startswith("enrichments.semantic.")
-                    and path != "enrichments.applicability"
+                    if path != "enrichments.applicability"
                 }
             if config.include_text:
                 item_input["content"]["text"] = clause.text
@@ -384,11 +382,11 @@ def _eligibility_policy(config: CorpusBuildConfig) -> SemanticTaskEligibilityPol
 
 
 def _strata_for(clause: ClauseDescriptor) -> dict[str, str]:
-    roles = "+".join(sorted(role.value for role in clause.statement_functions)) or "unknown"
+    canonical_section = clause.canonical_section.value if clause.canonical_section else "unknown"
     return {
         "document": clause.document_key,
         "clause_type": clause.clause_type.value,
-        "structural_role": roles,
+        "canonical_section": canonical_section,
         "hierarchy_depth": str(_reference_depth(clause.clause_reference)),
         "length_class": _length_class(len(clause.text)),
         "title_presence": "titled" if clause.heading else "untitled",

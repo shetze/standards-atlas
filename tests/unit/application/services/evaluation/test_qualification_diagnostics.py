@@ -66,7 +66,7 @@ def test_diagnostics_cluster_presence_conflicts_and_duplicates() -> None:
         ),
     )
     report = ConsensusReport(
-        schema_version="5.0",
+        schema_version=1,
         matrix_id="matrix-v1",
         corpus_id="corpus-v1",
         prompt_id="content-only",
@@ -128,7 +128,7 @@ def test_applicability_model_fitness_respects_presence_eligibility() -> None:
         }
     )
     report = ConsensusReport(
-        schema_version="5.0",
+        schema_version=1,
         matrix_id="matrix-v1",
         corpus_id="corpus-v1",
         prompt_id="content-only",

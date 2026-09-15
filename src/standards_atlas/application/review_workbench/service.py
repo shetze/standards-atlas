@@ -25,7 +25,6 @@ from standards_atlas.application.semantic_qualification.review_package.service i
 from standards_atlas.application.semantic_qualification.review_package.sources import clause_type
 from standards_atlas.application.semantic_qualification.review_package.validation import (
     active_decisions,
-    cross_attribute_errors,
     review_report,
 )
 
@@ -130,7 +129,7 @@ class ReviewWorkbenchService:
             if decision and decision.status in {"confirmed", "corrected"}:
                 accepted[attribute] = decision.predicate
             deferred |= bool(decision and decision.status == "deferred")
-        conflicts = cross_attribute_errors(accepted)
+        conflicts: list[str] = []
         complete = len(accepted) == len(case.attributes)
         return {
             "complete": complete,

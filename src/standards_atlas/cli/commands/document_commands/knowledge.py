@@ -46,8 +46,7 @@ def adopt_qualification(
         list[str] | None,
         typer.Option(
             "--dimension",
-            help="Repeat: statement_functions, knowledge_kinds, process_functions, "
-            "applicability, role_semantics. Defaults to all five.",
+            help="Repeat: applicability. Defaults to applicability.",
         ),
     ] = None,
     output: Annotated[

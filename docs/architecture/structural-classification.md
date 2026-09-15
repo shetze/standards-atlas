@@ -19,7 +19,7 @@ semantic statement, knowledge, process, applicability, or role-relation semantic
 ontology classifier consumes normalized content together with the materialized structural
 evidence. `OntologyEngine` validates the emitted dimensions and values against the versioned
 semantic profile before `SemanticEnrichmentService` persists accepted results as
-`SemanticClassification` enrichment.
+semantic clause-classification enrichment. Engineering meaning is represented separately as evidence-backed assertions.
 
 The stage boundary is deliberate: taxonomy answers where a clause is located and how
 structural statements reach other clauses; ontology answers what the clause means in the

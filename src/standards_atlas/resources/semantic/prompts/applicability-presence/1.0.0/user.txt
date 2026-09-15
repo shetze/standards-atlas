@@ -1,0 +1,5 @@
+Normalized clause content:
+{content}
+
+Clause identity and source-only context:
+{context_text}

@@ -105,7 +105,7 @@ def _consensus(count: int) -> ConsensusReport:
         for index in range(1, count + 1)
     )
     return ConsensusReport(
-        schema_version="5.0",
+        schema_version=1,
         matrix_id="matrix-v1",
         corpus_id="semantic-profile-v1",
         prompt_id="applicability-presence",

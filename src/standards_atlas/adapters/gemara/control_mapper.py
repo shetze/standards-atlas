@@ -37,13 +37,8 @@ from standards_atlas.adapters.gemara.models import (
     GemaraMultiEntryMapping,
 )
 from standards_atlas.application.model import PublicationDocument
-from standards_atlas.domain.model import Clause, ClauseType, NormativeStatus, StatementFunction
+from standards_atlas.domain.model import Clause, ClauseType, NormativeStatus
 
-_ASSESSMENT_FUNCTIONS = {
-    StatementFunction.REQUIREMENT,
-    StatementFunction.PROHIBITION,
-    StatementFunction.CONFORMANCE_STATEMENT,
-}
 _OMITTED_TYPES = {ClauseType.TOC, ClauseType.TABLE}
 _DEFAULT_APPLICABILITY_ID = "all"
 
@@ -272,8 +267,7 @@ def _is_assessment_requirement(clause: Clause) -> bool:
         NormativeStatus.NOT_APPLICABLE,
     }:
         return False
-    functions = set(clause.semantic_classification.statement_functions)
-    return clause.clause_type is ClauseType.REQUIREMENT or bool(functions & _ASSESSMENT_FUNCTIONS)
+    return clause.clause_type is ClauseType.REQUIREMENT
 
 
 def _assessment_requirement(clause: Clause) -> GemaraAssessmentRequirement:

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 
-from standards_atlas.domain.model import ApplicabilityFunction
+from standards_atlas.domain.model.applicability import ApplicabilityFunction
 
 _STATEMENT_SPLIT = re.compile(r"(?<=[.!?;])\s+|\n+")
 _EXCEPTION = re.compile(r"\b(except(?:ion)?|with the exception of|unless)\b", re.IGNORECASE)

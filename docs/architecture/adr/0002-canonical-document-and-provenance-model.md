@@ -15,7 +15,7 @@ The current refactoring does not require compatibility with persisted `.atlas` o
 `EngineeringDocument` represents one physical source document or standard part and owns four relevant knowledge boundaries:
 
 - `ClauseBaseline`: source-derived and deterministic/classical facts such as structured content, hierarchy, structural profile/context, reference evidence and publication attributes;
-- `ClauseEnrichments`: accepted clause-level interpretation context. During Slice 1 the former `SemanticClassification` remains temporarily present until the context/applicability cut-over in Slice 2 and removal in Slice 3;
+- `ClauseEnrichments`: accepted clause-level interpretation context containing applicability, context routing and subject context only; the former clause-classification block was removed by the Slice 3 clean break;
 - `DocumentKnowledge`: accepted assertion-centred engineering knowledge consisting of `EvidenceAnchor`, `KnowledgeEntity` and `NormativeAssertion` objects;
 - `KnowledgeStateProvenance`: attribute-level provenance for generated clause context that is not yet authoritatively confirmed.
 

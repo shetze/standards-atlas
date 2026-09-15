@@ -7,25 +7,18 @@ from pathlib import Path
 import yaml
 
 from standards_atlas.application.schema import require_current_schema, require_supported_schema
-from standards_atlas.application.semantic_qualification.partial_comparison import (
-    _output_is_separate,
-)
-from standards_atlas.application.semantic_qualification.partial_proposals import _json_bytes
-from standards_atlas.application.semantic_qualification.qualification_campaign_model import (
-    SemanticReferenceSuite,
-)
 
-from .model import REVIEW_PUBLICATION_SCHEMA_VERSION, ReviewPublication, predicate_data
+from .model import ReviewPublication, ReviewReferenceSuite, predicate_data
 from .service import load_review
 from .sources import fingerprint, freeze_population, verify_current_sources
-from .storage import new_directory, review_lock
+from .storage import _json_bytes, new_directory, output_is_separate, review_lock
 from .validation import confirmed_decisions, review_report, seal
 from .workbench import capture_workbench, verify_workbench_evidence, workbench_summary
 
 REVIEW_REFERENCE_PREFIX = "atlas-review:sha256:"
 
 
-def publication_suites(publication: ReviewPublication) -> tuple[SemanticReferenceSuite, ...]:
+def publication_suites(publication: ReviewPublication) -> tuple[ReviewReferenceSuite, ...]:
     publication = ReviewPublication.model_validate(publication)
     package, state = publication.package, publication.state
     confirmed = confirmed_decisions(state)
@@ -55,10 +48,10 @@ def publication_suites(publication: ReviewPublication) -> tuple[SemanticReferenc
         if not cases:
             raise ValueError(f"no confirmed decisions in {split}; cannot create a reference suite")
         suites.append(
-            SemanticReferenceSuite.model_validate(
+            ReviewReferenceSuite.model_validate(
                 {
-                    "schema_version": "1.0",
-                    "kind": "partial-semantic-reference",
+                    "schema_version": 1,
+                    "kind": "review-reference-suite",
                     "id": f"{package.id}-{split}",
                     "version": package.version,
                     "split": split,
@@ -73,7 +66,7 @@ def publication_suites(publication: ReviewPublication) -> tuple[SemanticReferenc
 
 
 def verify_publication(publication: ReviewPublication, examples=None) -> tuple:
-    require_supported_schema("partial-review-publication", publication.schema_version)
+    require_supported_schema("review-publication", publication.schema_version)
     publication = ReviewPublication.model_validate(publication)
     if fingerprint(publication, "evidence_sha256") != publication.evidence_sha256:
         raise ValueError("review publication fingerprint mismatch")
@@ -103,7 +96,7 @@ def verify_publication_rules(publication: ReviewPublication, resources: Path) ->
 
 
 def load_bound_suite(path: Path, examples, *, resources: Path | None = None) -> tuple:
-    suite = SemanticReferenceSuite.model_validate(yaml.safe_load(path.read_bytes()))
+    suite = ReviewReferenceSuite.model_validate(yaml.safe_load(path.read_bytes()))
     reference = suite.review_reference or ""
     if not reference.startswith("atlas-review:"):
         return suite, None  # External review provenance, without an Atlas context-binding claim.
@@ -122,38 +115,11 @@ def load_bound_suite(path: Path, examples, *, resources: Path | None = None) -> 
         sibling_path = path.parent / f"{sibling.split}.yaml"
         if (
             sibling_path.is_symlink()
-            or SemanticReferenceSuite.model_validate(yaml.safe_load(sibling_path.read_bytes()))
+            or ReviewReferenceSuite.model_validate(yaml.safe_load(sibling_path.read_bytes()))
             != sibling
         ):
             raise ValueError("Development/Holdout publication pair is inconsistent")
     return suite, publication
-
-
-def verify_campaign_bindings(suites, bindings: list[dict], examples, resources: Path) -> None:
-    """The frozen campaign copies evidence, never depends on mutable external review files."""
-    bound = {
-        s.review_reference: []
-        for s in suites
-        if (s.review_reference or "").startswith("atlas-review:")
-    }
-    if len(bindings) != len(bound):
-        raise ValueError("campaign review evidence inventory is incomplete or duplicated")
-    seen = set()
-    for raw in bindings:
-        publication = ReviewPublication.model_validate(raw)
-        reference = REVIEW_REFERENCE_PREFIX + publication.evidence_sha256
-        if reference in seen or reference not in bound:
-            raise ValueError("unexpected or duplicate campaign review publication")
-        seen.add(reference)
-        expected = verify_publication(publication, examples)
-        verify_publication_rules(publication, resources)
-        supplied = sorted(
-            (s for s in suites if s.review_reference == reference), key=lambda s: s.split
-        )
-        if supplied != sorted(expected, key=lambda s: s.split):
-            raise ValueError(
-                "campaign must include both unchanged suites of each review publication"
-            )
 
 
 def compile_publication(
@@ -192,11 +158,11 @@ def compile_publication(
     }
     if blockers:
         return result, None
-    require_current_schema("partial-review-publication", REVIEW_PUBLICATION_SCHEMA_VERSION)
+    require_current_schema("review-publication", 1)
     publication = seal(
         ReviewPublication,
         {
-            "schema_version": REVIEW_PUBLICATION_SCHEMA_VERSION,
+            "schema_version": 1,
             "package": contract.model_dump(mode="json"),
             "state": state.model_dump(mode="json"),
             "status": "published" if publish else "draft",
@@ -211,7 +177,7 @@ def compile_publication(
 
 
 def publication_files(publication: ReviewPublication, result: dict) -> dict[str, bytes]:
-    require_current_schema("partial-review-publication", publication.schema_version)
+    require_current_schema("review-publication", publication.schema_version)
     files = {
         f"{suite.split}.yaml": yaml.safe_dump(
             suite.model_dump(mode="json", exclude_unset=True),
@@ -253,7 +219,7 @@ def import_review_package(
             raise ValueError("review import blocked: " + "; ".join(result["import_blockers"]))
         if output is None:
             raise ValueError("review import requires a new output directory")
-        _output_is_separate(
+        output_is_separate(
             output.resolve(),
             (
                 package,

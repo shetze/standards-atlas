@@ -47,6 +47,9 @@ def _report(*clause_ids: str) -> ConsensusReport:
             clause_id=clause_id,
             document_key="DOC",
             category=ConsensusCategory.UNANIMOUS,
+            applicability_category=ConsensusCategory.UNANIMOUS,
+            applicability_present=True,
+            applicability_presence_confidence=1.0,
             overall_status=OverallConsensusStatus.RESOLVED,
             confidence=1.0,
             participating_models=3,
@@ -55,7 +58,7 @@ def _report(*clause_ids: str) -> ConsensusReport:
         for clause_id in clause_ids
     )
     return ConsensusReport(
-        schema_version="5.0",
+        schema_version=1,
         matrix_id="matrix-v1",
         corpus_id="semantic-profile-v1",
         prompt_id="content-only",

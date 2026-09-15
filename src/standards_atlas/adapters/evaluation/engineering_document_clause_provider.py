@@ -125,10 +125,6 @@ class EngineeringDocumentClauseProvider:
                 descriptor = self._clause_descriptor(document, clause, ancestor_index, clause_index)
                 if filters.clause_types and descriptor.clause_type not in filters.clause_types:
                     continue
-                if filters.statement_functions and not set(filters.statement_functions).issubset(
-                    descriptor.statement_functions
-                ):
-                    continue
                 text_length = len(descriptor.text)
                 if filters.min_text_length is not None and text_length < filters.min_text_length:
                     continue
@@ -201,7 +197,6 @@ class EngineeringDocumentClauseProvider:
             heading=clause.heading,
             text=text,
             parent_id=clause.parent_id.value if clause.parent_id else None,
-            statement_functions=clause.semantic_classification.statement_functions,
             canonical_section=(
                 clause.structural_profile.canonical_section
                 if clause.structural_profile is not None

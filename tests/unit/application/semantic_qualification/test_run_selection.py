@@ -51,7 +51,7 @@ def _write_inputs(
     corpus_path.write_text(
         yaml.safe_dump(
             {
-                "schema_version": "1.0",
+                "schema_version": 1,
                 "corpus_id": "corpus-v1",
                 "task": "statement-function-classification",
                 "corpus_version": "2.2.0",

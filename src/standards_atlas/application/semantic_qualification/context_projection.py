@@ -7,7 +7,6 @@ shape, so this module renders only stable, task-relevant contextual evidence.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -123,24 +122,6 @@ def render_cbox_context(frame: FramedCBoxContext) -> str:
                 rendered += f" ({polarity})"
             lines.append(f"Accepted applicability context: {rendered}.")
 
-    semantic = _mapping(context.get("semantic"))
-    if semantic:
-        lines.append("Accepted canonical enrichment (generated values are contextual hints):")
-        sources = _mapping(context.get("attribute_sources"))
-        for field, value in sorted(semantic.items()):
-            if isinstance(value, bool):
-                rendered = "true" if value else "false"
-            elif value is None:
-                rendered = "no primary value"
-            elif isinstance(value, str):
-                rendered = value
-            elif not value:
-                rendered = "[] (evaluated empty)"
-            else:
-                rendered = json.dumps(value, ensure_ascii=False, sort_keys=True)
-            source = _mapping(sources.get("enrichments.semantic." + field))
-            origin = _text(source.get("origin")) or "unspecified origin"
-            lines.append(f"{field}: {rendered} [{origin}].")
     return "\n".join(lines) if lines else "No additional contextual evidence is available."
 
 

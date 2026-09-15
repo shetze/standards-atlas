@@ -177,8 +177,7 @@ def export_enrichments(
         list[str] | None,
         typer.Option(
             "--dimension",
-            help="Repeat: statement_functions, knowledge_kinds, process_functions, "
-            "applicability, role_semantics, subject_context, context_routing. Defaults to all.",
+            help="Repeat: applicability, subject_context, context_routing. Defaults to all.",
         ),
     ] = None,
     clause: Annotated[

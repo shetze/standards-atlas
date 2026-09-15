@@ -1,0 +1,12 @@
+schema_version: 1
+task: applicability-presence
+version: 1.0.0
+description: Detect explicit clause-or-requirement applicability semantics.
+multi_label: false
+allow_unclassified: false
+supported_item_kinds:
+- clause
+excluded_content_profiles:
+- table_dominant
+alternative_tasks:
+  table_dominant: structured-table-interpretation

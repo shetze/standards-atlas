@@ -9,19 +9,24 @@ from pathlib import Path
 import yaml
 
 from standards_atlas.application.schema import require_supported_schema
-from standards_atlas.application.semantic_qualification.partial_proposals import _json_bytes
-from standards_atlas.application.semantic_qualification.qualification_campaign_model import (
-    predicate_passes,
-)
-from standards_atlas.application.semantic_qualification.semantic_readiness import _value_key
 
 from .history import HistoryReader
 from .model import predicate_data
 from .preparation_model import CandidateEntry, CandidateIndex
 from .service import load_review
 from .sources import clause_type, duplicate_key, fingerprint, verify_current_sources
-from .storage import new_directory
+from .storage import _json_bytes, new_directory
 from .validation import confirmed_decisions, seal
+
+
+def _value_key(value):
+    import json
+
+    return json.dumps(value, sort_keys=True, ensure_ascii=False)
+
+
+def predicate_passes(actual, predicate) -> bool:
+    return actual is predicate.equals
 
 
 def index_path(root: Path, digest: str) -> Path:
@@ -66,7 +71,7 @@ def _priority(source, history, profile, confirmed, stratum_size):
         for value in signal.model_values.values():
             values[signal.attribute].add(_value_key(value))
             reported[signal.attribute].append(value)
-        if signal.predicate is not None and signal.status in {"accepted", "observed"}:
+        if signal.predicate is not None and signal.status == "accepted":
             data = predicate_data(signal.predicate)
             if "equals" in data:
                 values[signal.attribute].add(_value_key(data["equals"]))
@@ -145,7 +150,7 @@ def build_candidate_index(
         except (ValueError, yaml.YAMLError):
             continue  # e.g. project instructions: bound source data, not a reference suite
         if isinstance(data, dict) and (
-            data.get("kind") == "partial-semantic-reference"
+            data.get("kind") == "review-reference-suite"
             or (data.get("schema_version") == "3.0" and "cases" in data)
         ):
             reader.consume(raw, location=path)
@@ -236,7 +241,7 @@ def build_candidate_index(
 
 
 def verify_index(package, index):
-    require_supported_schema("partial-review-candidates", index.schema_version)
+    require_supported_schema("review-candidates", index.schema_version)
     if (
         fingerprint(index, "index_sha256") != index.index_sha256
         or index.package_sha256 != package.package_sha256

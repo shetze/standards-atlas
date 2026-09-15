@@ -1,5 +1,0 @@
-{
-  "description": "Bounded internal reasoning with concise schema-only output; applicability is restricted to explicit applicability assertions.",
-  "task": "statement-function-classification",
-  "version": "bounded-reasoning-v6"
-}

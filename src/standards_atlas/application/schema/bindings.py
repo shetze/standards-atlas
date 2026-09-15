@@ -58,8 +58,44 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.model.cbox:CBoxReport",
     ),
     ModelBinding(
-        "clause-decision-plan",
-        "standards_atlas.application.semantic_qualification.taxonomy_decisions:ClauseDecisionPlan",
+        "review-source-manifest",
+        "standards_atlas.application.semantic_qualification.review_package.model:ReviewSourceSpec",
+    ),
+    ModelBinding(
+        "review-profile",
+        "standards_atlas.application.semantic_qualification.review_package.model:ReviewProfile",
+    ),
+    ModelBinding(
+        "review-package",
+        "standards_atlas.application.semantic_qualification.review_package.model:ReviewPackage",
+    ),
+    ModelBinding(
+        "review-state",
+        "standards_atlas.application.semantic_qualification.review_package.model:ReviewState",
+    ),
+    ModelBinding(
+        "review-publication",
+        "standards_atlas.application.semantic_qualification.review_package.model:ReviewPublication",
+    ),
+    ModelBinding(
+        "review-reference-suite",
+        "standards_atlas.application.semantic_qualification.review_package.model:ReviewReferenceSuite",
+    ),
+    ModelBinding(
+        "review-candidates",
+        "standards_atlas.application.semantic_qualification.review_package.preparation_model:CandidateIndex",
+    ),
+    ModelBinding(
+        "review-selection-proposal",
+        "standards_atlas.application.semantic_qualification.review_package.preparation_model:SelectionProposal",
+    ),
+    ModelBinding(
+        "review-archive",
+        "standards_atlas.application.semantic_qualification.review_package.archive:ReviewArchiveManifest",
+    ),
+    ModelBinding(
+        "review-workbench-evidence",
+        "standards_atlas.application.semantic_qualification.review_package.model:WorkbenchEvidence",
     ),
     ModelBinding(
         "formal-ontology-resource",
@@ -78,76 +114,8 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.adapters.atlasdata.knowledge_contract:EvidenceBlob",
     ),
     ModelBinding(
-        "mixed-consensus",
-        "standards_atlas.application.semantic_qualification.mixed_evidence:MixedConsensusReport",
-    ),
-    ModelBinding(
         "ontology-resource",
         "standards_atlas.application.semantic_ontology.definition:OntologyDefinition",
-    ),
-    ModelBinding(
-        "partial-qualification-campaign",
-        "standards_atlas.application.semantic_qualification.campaign_contract"
-        ":QualificationCampaignArtifact",
-    ),
-    ModelBinding(
-        "partial-qualification-manifest",
-        "standards_atlas.application.semantic_qualification.qualification_cam"
-        "paign_model:QualificationCampaign",
-    ),
-    ModelBinding(
-        "partial-request-plan",
-        "standards_atlas.application.semantic_qualification.partial_observati"
-        "ons:PartialRequestPlan",
-    ),
-    ModelBinding(
-        "partial-review-archive",
-        "standards_atlas.application.semantic_qualification.review_package.ar"
-        "chive:ReviewArchiveManifest",
-    ),
-    ModelBinding(
-        "partial-review-candidates",
-        "standards_atlas.application.semantic_qualification.review_package.pr"
-        "eparation_model:CandidateIndex",
-    ),
-    ModelBinding(
-        "partial-review-handoff",
-        "standards_atlas.application.semantic_qualification.review_package.handoff:ReviewHandoff",
-    ),
-    ModelBinding(
-        "partial-review-package",
-        "standards_atlas.application.semantic_qualification.review_package.model:ReviewPackage",
-    ),
-    ModelBinding(
-        "partial-review-profile",
-        "standards_atlas.application.semantic_qualification.review_package.model:ReviewProfile",
-    ),
-    ModelBinding(
-        "partial-review-publication",
-        "standards_atlas.application.semantic_qualification.review_package.model:ReviewPublication",
-    ),
-    ModelBinding(
-        "partial-review-selection-proposal",
-        "standards_atlas.application.semantic_qualification.review_package.pr"
-        "eparation_model:SelectionProposal",
-    ),
-    ModelBinding(
-        "partial-review-state",
-        "standards_atlas.application.semantic_qualification.review_package.model:ReviewState",
-    ),
-    ModelBinding(
-        "partial-review-workbench-evidence",
-        "standards_atlas.application.semantic_qualification.review_package.model:WorkbenchEvidence",
-    ),
-    ModelBinding(
-        "partial-semantic-observation",
-        "standards_atlas.application.semantic_qualification.partial_observati"
-        "ons:PartialObservation",
-    ),
-    ModelBinding(
-        "partial-semantic-reference",
-        "standards_atlas.application.semantic_qualification.qualification_cam"
-        "paign_model:SemanticReferenceSuite",
     ),
     ModelBinding(
         "qualification-consensus",
@@ -172,10 +140,6 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.semantic_qualification.review_package.model:WorkbenchState",
     ),
     ModelBinding(
-        "semantic-profile-resource",
-        "standards_atlas.application.semantic_classification.profile:SemanticProfile",
-    ),
-    ModelBinding(
         "semantic-task-resource",
         "standards_atlas.application.semantic_qualification.proposals:SemanticTaskDefinition",
     ),
@@ -186,15 +150,6 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
     ModelBinding(
         "standards-manifest",
         "standards_atlas.application.catalog.models:StandardCatalog",
-    ),
-    ModelBinding(
-        "taxonomy-decision-rules",
-        "standards_atlas.application.semantic_qualification.taxonomy_decisions:TaxonomyRuleProfile",
-    ),
-    ModelBinding(
-        "public-semantic-annotation-manifest",
-        "standards_atlas.adapters.atlasdata.semantic_annotation_writer:Public"
-        "SemanticAnnotationManifest",
     ),
     ModelBinding(
         "complypack-workspace-manifest",
@@ -262,11 +217,6 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.qualification.golden_corpus:GoldenCaseManifest",
     ),
     ModelBinding(
-        "partial-acceptance-profile",
-        "standards_atlas.application.semantic_qualification.acceptance_profil"
-        "es:PartialAcceptanceProfile",
-    ),
-    ModelBinding(
         "clause-evaluation-annotation",
         "standards_atlas.application.semantic_qualification.annotations:ClauseEvaluationAnnotation",
     ),
@@ -315,26 +265,14 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "icy_runner:ApplicabilityPolicyRunReport",
     ),
     ModelBinding(
-        "annotation-qualification-report",
-        "standards_atlas.application.semantic_qualification.qualification:Ann"
-        "otationQualificationReport",
+        "applicability-qualification-report",
+        "standards_atlas.application.semantic_qualification.applicability_qualification:App"
+        "licabilityQualificationReport",
     ),
     ModelBinding(
         "qualification-coverage",
         "standards_atlas.application.semantic_qualification.qualification_cov"
         "erage:QualificationCoverage",
-    ),
-    ModelBinding(
-        "annotation-review-form",
-        "standards_atlas.application.semantic_qualification.review:ReviewForm",
-    ),
-    ModelBinding(
-        "role-corpus-build-manifest",
-        "standards_atlas.application.semantic_qualification.role_corpus:RoleCorpusBuildManifest",
-    ),
-    ModelBinding(
-        "role-golden-corpus",
-        "standards_atlas.application.semantic_qualification.role_corpus:RoleGoldenCorpus",
     ),
     ModelBinding(
         "qualification-run-selection",
@@ -408,11 +346,6 @@ SCHEMA_WRITER_BINDINGS: tuple[WriterBinding, ...] = (
         "standards_atlas.application.semantic_qualification.cascade_replay:replay_cascade",
     ),
     WriterBinding(
-        "clause-decision-plan",
-        "standards_atlas.application.semantic_qualification.taxonomy_diagnostics:"
-        "diagnose_taxonomy_decisions",
-    ),
-    WriterBinding(
         "engineering-document",
         "standards_atlas.adapters.filesystem.document_repository:"
         "FileSystemEngineeringDocumentRepository.save",
@@ -427,45 +360,6 @@ SCHEMA_WRITER_BINDINGS: tuple[WriterBinding, ...] = (
         "standards_atlas.application.semantic_qualification.consensus:_write_outputs",
     ),
     WriterBinding(
-        "partial-cascade-audit",
-        "standards_atlas.application.semantic_qualification.partial_cascade_audit:"
-        "audit_partial_cascade",
-    ),
-    WriterBinding(
-        "partial-cascade-report",
-        "standards_atlas.application.semantic_qualification.partial_cascade:_write_report",
-    ),
-    WriterBinding(
-        "partial-cascade-run",
-        "standards_atlas.application.semantic_qualification.partial_cascade:run_partial_cascade",
-    ),
-    WriterBinding(
-        "partial-proposal-run",
-        "standards_atlas.application.semantic_qualification.partial_proposals:"
-        "run_partial_proposals",
-    ),
-    WriterBinding(
-        "partial-qualification-evaluation",
-        "standards_atlas.application.semantic_qualification.campaign_evaluation:evaluate_campaign",
-    ),
-    WriterBinding(
-        "partial-qualification-execution",
-        "standards_atlas.application.semantic_qualification.campaign_execution:run_campaign",
-    ),
-    WriterBinding(
-        "partial-qualification-repeat",
-        "standards_atlas.application.semantic_qualification.campaign_execution:run_campaign",
-    ),
-    WriterBinding(
-        "partial-qualified-activation",
-        "standards_atlas.application.semantic_qualification.campaign_activation:activate_campaign",
-    ),
-    WriterBinding(
-        "qualification-request-event",
-        "standards_atlas.application.semantic_qualification.campaign_execution:"
-        "FreshLedgerGateway.generate_structured",
-    ),
-    WriterBinding(
         "semantic-extraction",
         "standards_atlas.adapters.filesystem.semantic_extraction_repository:"
         "FileSystemSemanticExtractionRepository.save",
@@ -474,24 +368,6 @@ SCHEMA_WRITER_BINDINGS: tuple[WriterBinding, ...] = (
         "semantic-extraction",
         "standards_atlas.cli.commands.evaluation_commands.qualification_archive:"
         "finalize_qualification_archive",
-    ),
-    WriterBinding(
-        "semantic-readiness-checks",
-        "standards_atlas.application.semantic_qualification.taxonomy_pilot:build_taxonomy_pilot",
-    ),
-    WriterBinding(
-        "semantic-readiness-evaluation",
-        "standards_atlas.application.semantic_qualification.semantic_readiness:"
-        "evaluate_semantic_readiness",
-    ),
-    WriterBinding(
-        "taxonomy-decision-report",
-        "standards_atlas.application.semantic_qualification.taxonomy_diagnostics:"
-        "diagnose_taxonomy_decisions",
-    ),
-    WriterBinding(
-        "taxonomy-pilot-readiness",
-        "standards_atlas.application.semantic_qualification.taxonomy_pilot:build_taxonomy_pilot",
     ),
     WriterBinding(
         "reviewed-alignment-integrity",
@@ -505,11 +381,6 @@ SCHEMA_RESOURCE_BINDINGS: tuple[ResourceBinding, ...] = (
     ResourceBinding(
         "semantic-task-resource",
         "src/standards_atlas/resources/semantic/tasks/**/task.yaml",
-        None,
-    ),
-    ResourceBinding(
-        "semantic-profile-resource",
-        "src/standards_atlas/resources/semantic/profiles/**/profile.yaml",
         None,
     ),
     ResourceBinding(
@@ -528,21 +399,6 @@ SCHEMA_RESOURCE_BINDINGS: tuple[ResourceBinding, ...] = (
         None,
     ),
     ResourceBinding(
-        "taxonomy-decision-rules",
-        "src/standards_atlas/resources/semantic/taxonomy-decisions/**/rules.yaml",
-        None,
-    ),
-    ResourceBinding(
-        "taxonomy-decision-review",
-        "src/standards_atlas/resources/semantic/taxonomy-decisions/**/review.yaml",
-        None,
-    ),
-    ResourceBinding(
-        "taxonomy-readiness-cases",
-        "src/standards_atlas/resources/semantic/qualification/taxonomy-readiness-v1/cases.yaml",
-        None,
-    ),
-    ResourceBinding(
         "standards-manifest",
         "manifests/*.yaml",
         ("manifest_type", "standards"),
@@ -551,15 +407,5 @@ SCHEMA_RESOURCE_BINDINGS: tuple[ResourceBinding, ...] = (
         "qualification-matrix-manifest",
         "manifests/*.yaml",
         ("manifest_type", "qualification_matrix"),
-    ),
-    ResourceBinding(
-        "partial-qualification-manifest",
-        "cfg/evaluation/partial-cascade/qualification-campaign-v1.yaml",
-        None,
-    ),
-    ResourceBinding(
-        "partial-review-profile",
-        "cfg/evaluation/partial-cascade/review-profile-v1.yaml",
-        None,
     ),
 )

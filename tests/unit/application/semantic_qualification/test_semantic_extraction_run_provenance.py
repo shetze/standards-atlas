@@ -18,9 +18,9 @@ from standards_atlas.application.semantic_qualification.semantic_extraction_run_
 
 def _selection() -> QualificationRunSelection:
     return QualificationRunSelection(
-        task="statement-function-classification",
-        dataset_version="2.2.0",
-        corpus_id="semantic-profile-v1",
+        task="applicability-presence",
+        dataset_version="1.0.0",
+        corpus_id="applicability-v1",
         requested_limit=1,
         dataset_sha256="a" * 64,
         corpus_sha256="b" * 64,
@@ -36,13 +36,13 @@ def _selection() -> QualificationRunSelection:
 def _write_cascade(root: Path, *, present: bool) -> None:
     (root / "cascade" / "efficient-local").mkdir(parents=True, exist_ok=True)
     (root / "cascade-provenance.json").write_text(
-        json.dumps({"schema_version": "1.6", "stages": [{"stage_id": "efficient-local"}]}),
+        json.dumps({"schema_version": 1, "stages": [{"stage_id": "efficient-local"}]}),
         encoding="utf-8",
     )
     (root / "cascade" / "efficient-local" / "consensus-report.json").write_text(
         json.dumps(
             {
-                "schema_version": "5.0",
+                "schema_version": 1,
                 "matrix_id": "synthetic",
                 "corpus_id": "synthetic",
                 "prompt_id": "p",
@@ -55,11 +55,13 @@ def _write_cascade(root: Path, *, present: bool) -> None:
                 "clauses": [
                     {
                         "category": "insufficient_evidence",
+                        "applicability_category": "insufficient_evidence",
                         "confidence": 0.0,
                         "participating_models": 1,
                         "document_key": "DOC",
                         "clause_id": "c1",
                         "applicability_present": present,
+                        "applicability_presence_confidence": 0.0,
                     }
                 ],
             }

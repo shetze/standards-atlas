@@ -62,7 +62,6 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
     def list_clauses(
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
-        statement_functions: list[str] | None = None,
         min_text_length: int | None = None,
         max_text_length: int | None = None,
         limit: int = 20,
@@ -73,7 +72,6 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             clause_service.list_clauses,
             document_keys=document_keys,
             clause_types=clause_types,
-            statement_functions=statement_functions,
             min_text_length=min_text_length,
             max_text_length=max_text_length,
             limit=limit,
@@ -85,7 +83,6 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
         query: str,
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
-        statement_functions: list[str] | None = None,
         limit: int = 20,
     ) -> list[dict[str, Any]]:
         """Search exposed clause titles, references, and text for all query terms."""
@@ -94,7 +91,6 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             query,
             document_keys=document_keys,
             clause_types=clause_types,
-            statement_functions=statement_functions,
             limit=limit,
         )
 
@@ -182,7 +178,6 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
         seed: int = 0,
         document_keys: list[str] | None = None,
         clause_types: list[str] | None = None,
-        statement_functions: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Create a reproducible random or document-balanced sample of exposed clauses."""
         return tool_call(
@@ -192,7 +187,6 @@ def create_mcp_server(config: McpServerConfig, provider: ClauseProvider | None =
             seed=seed,
             document_keys=document_keys,
             clause_types=clause_types,
-            statement_functions=statement_functions,
         )
 
     @mcp.resource("standards-atlas://documents")

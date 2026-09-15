@@ -63,14 +63,7 @@ NOW = datetime(2026, 9, 8, tzinfo=UTC)
 PREFIX = "inputs/applicability-policy"
 
 
-def _members(
-    *,
-    unknown: bool = False,
-    duplicate_vote: bool = False,
-    missing_primary: bool = False,
-    process_votes: tuple[ModelVote, ...] | None = None,
-    process_sources: dict[str, tuple[ModelVote, ...]] | None = None,
-) -> dict[str, bytes]:
+def _members(*, unknown: bool = False, duplicate_vote: bool = False) -> dict[str, bytes]:
     examples = tuple(
         EvaluationExample(
             id=f"e{i}",
@@ -119,27 +112,21 @@ def _members(
         corpus_clause_count=2,
         selected_clause_count=2,
         clauses=tuple(
-            QualificationSelectionClause(
-                example_id=f"e{i}",
-                document_key="TEST",
-                clause_id=f"c{i}",
-            )
+            QualificationSelectionClause(example_id=f"e{i}", document_key="TEST", clause_id=f"c{i}")
             for i in (1, 2)
         ),
     )
     votes = tuple(
         ModelVote(
             model_id="same-model" if duplicate_vote else f"model-{i}",
+            applicability_present=True,
             repetitions=3,
             stability=1.0,
-            primary_function="requirement",
-            primary_knowledge_kind="process",
-            role_semantics_present=False,
         )
         for i in range(3)
     )
     consensus = ConsensusReport(
-        schema_version="5.0",
+        schema_version=1,
         matrix_id="matrix",
         corpus_id="test",
         prompt_id="prompt",
@@ -147,64 +134,25 @@ def _members(
         generated_at=NOW,
         model_count=3,
         clause_count=1,
-        categories={"disputed": 1},
-        review_count=1,
+        categories={"unanimous": 1},
+        review_count=0,
         clauses=(
             ClauseConsensus(
                 clause_id="c1",
                 document_key="TEST",
                 reference="1",
-                category="disputed",
-                confidence=0.7,
-                participating_models=3,
-                requires_review=True,
-                primary_function=None if missing_primary else "requirement",
-                proposed_functions=("requirement",),
-                primary_knowledge_kind="process",
-                proposed_knowledge_kinds=("process",),
-                statement_function_category="majority_consensus",
-                knowledge_kind_category="majority_consensus",
-                role_semantics_category="unanimous",
+                category="unanimous",
+                applicability_category="unanimous",
                 applicability_present=True,
                 applicability_presence_confidence=1.0,
-                applicability_category="unanimous",
+                applicability_confidence=1.0,
+                participating_models=3,
+                applicability_participating_models=3,
+                requires_review=False,
                 votes=votes,
             ),
         ),
     )
-    stages = {}
-    if process_votes is not None:
-        from standards_atlas.application.semantic_qualification.process_functions import (
-            PROCESS_PRIMARY_FIELDS,
-            PROCESS_SET_FIELDS,
-            resolve_process_votes,
-        )
-
-        def process_clause(supplied, *, minimum=2):
-            fields = resolve_process_votes(
-                supplied,
-                minimum_models=minimum,
-                strong_threshold=0.8,
-                majority_threshold=0.6,
-                label_threshold=0.6,
-            )
-            return consensus.clauses[0].model_copy(update={**fields, "votes": supplied})
-
-        current = process_clause(process_votes)
-        source_paths = {}
-        for dimension, supplied in (process_sources or {}).items():
-            stage = "efficient" if dimension == "process_set" else "final/stage-resolver"
-            stage_clause = process_clause(supplied, minimum=1)
-            stages[f"cascade/{stage}/consensus-report.json"] = consensus.model_copy(
-                update={"clauses": (stage_clause,)}
-            ).model_dump(mode="json")
-            fields = PROCESS_SET_FIELDS if dimension == "process_set" else PROCESS_PRIMARY_FIELDS
-            current = current.model_copy(
-                update={name: getattr(stage_clause, name) for name in fields}
-            )
-            source_paths[dimension] = stage
-        current = current.model_copy(update={"resolution_sources": source_paths})
-        consensus = consensus.model_copy(update={"clauses": (current,)})
     coverage = build_qualification_coverage(selection=selection, report=consensus)
     detail = build_applicability_detail_selection(
         run_selection=selection,
@@ -259,7 +207,6 @@ def _members(
         ),
     )
     values = {
-        **stages,
         f"{PREFIX}/qualification-selection.json": selection.model_dump(mode="json"),
         f"{PREFIX}/{selection.dataset_snapshot}": asdict(dataset),
         f"{PREFIX}/{selection.corpus_snapshot}": corpus.model_dump(mode="json"),
@@ -309,36 +256,23 @@ def _documents(workspace: Path) -> FileSystemEngineeringDocumentRepository:
     return repository
 
 
-def test_policy_overrides_gate_review_does_not_block_and_retries_are_not_votes(
-    tmp_path: Path,
-) -> None:
-    path = _archive(tmp_path, _members())
-    batch = load_qualification_knowledge(path)
+def test_policy_result_materializes_only_applicability(tmp_path: Path) -> None:
+    batch = load_qualification_knowledge(_archive(tmp_path, _members()))
     assert (batch.selected_clause_count, batch.unqualified_clause_count) == (2, 1)
     candidate = batch.candidates[0]
     assert candidate.patch.applicability.present is False
-    assert candidate.patch.semantic.primary_function == "requirement"
-    primary = next(a for a in candidate.attributes if a.path.endswith(".primary_function"))
-    assert primary.decision.valid_votes == primary.decision.supporting_votes == 3
-    # Not 9 despite three repeated predictions per voter.
-    assert primary.decision.label_votes == {"requirement": 3}
-    assert "enrichments.semantic.process_functions" in candidate.not_evaluated
-    assert not any("role_relations" in a.path for a in candidate.attributes)
+    assert candidate.patch.model_fields_set == {"applicability"}
+    assert {item.path for item in candidate.attributes} == {"enrichments.applicability"}
 
 
-def test_batch_roundtrip_preserves_omitted_fields_and_replay_is_idempotent(tmp_path: Path) -> None:
+def test_batch_roundtrip_and_replay_are_idempotent(tmp_path: Path) -> None:
     batch = load_qualification_knowledge(_archive(tmp_path, _members()))
     restored = KnowledgeAdoptionBatch.model_validate_json(batch.model_dump_json())
-    assert (
-        restored.candidates[0].patch.semantic.model_fields_set
-        == batch.candidates[0].patch.semantic.model_fields_set
-    )
+    assert restored == batch
     repository = _documents(tmp_path / "workspace")
-    unqualified = repository.load(DocumentKey(value="TEST")).clauses[1]
     service = KnowledgeAdoptionService(documents=repository)
     assert service.apply(restored, write=True).written_document_keys == ("TEST",)
     assert service.apply(restored, write=True).written_document_keys == ()
-    assert repository.load(DocumentKey(value="TEST")).clauses[1] == unqualified
 
 
 def test_unknown_policy_is_not_materialized_as_negative(tmp_path: Path) -> None:
@@ -347,11 +281,6 @@ def test_unknown_policy_is_not_materialized_as_negative(tmp_path: Path) -> None:
     KnowledgeAdoptionService(documents=repository).apply(batch, write=True)
     provenance = repository.load(DocumentKey(value="TEST")).clauses[0].provenance
     assert provenance.availability("enrichments.applicability") == "unknown"
-
-
-def test_duplicate_model_votes_are_rejected(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="duplicate model votes"):
-        load_qualification_knowledge(_archive(tmp_path, _members(duplicate_vote=True)))
 
 
 def test_missing_policy_does_not_fall_back_to_gate(tmp_path: Path) -> None:
@@ -365,23 +294,11 @@ def test_manifest_checksum_mismatch_is_rejected(tmp_path: Path) -> None:
     archive_path = _archive(tmp_path, _members())
     extracted = tmp_path / "extracted"
     with ZipFile(archive_path) as archive:
-        archive.extractall(extracted)  # Only this synthetic, in-test archive.
+        archive.extractall(extracted)
     report = extracted / PREFIX / "final-consensus-report.json"
     report.write_text(report.read_text() + " ")
     with pytest.raises(ValueError, match="checksum mismatch"):
         load_qualification_knowledge(extracted)
-
-
-def test_policy_from_other_consensus_is_rejected_even_with_valid_member_hash(
-    tmp_path: Path,
-) -> None:
-    members = _members()
-    name = "applicability-policy/applicability-policy-run.json"
-    value = json.loads(members[name])
-    value["source_consensus_sha256"] = "f" * 64
-    members[name] = json.dumps(value).encode()
-    with pytest.raises(ValueError, match="different final consensus"):
-        load_qualification_knowledge(_archive(tmp_path, members))
 
 
 def test_zip_and_extracted_archive_have_identical_identity(tmp_path: Path) -> None:
@@ -392,7 +309,7 @@ def test_zip_and_extracted_archive_have_identical_identity(tmp_path: Path) -> No
     assert load_qualification_knowledge(path) == load_qualification_knowledge(extracted)
 
 
-def test_cli_default_preview_write_and_output_protection(tmp_path: Path) -> None:
+def test_cli_preview_and_write(tmp_path: Path) -> None:
     path = _archive(tmp_path, _members())
     workspace = tmp_path / "workspace"
     _documents(workspace)
@@ -411,105 +328,7 @@ def test_cli_default_preview_write_and_output_protection(tmp_path: Path) -> None
     ]
     result = CliRunner().invoke(app, args)
     assert result.exit_code == 0, result.output
-    assert "Dry run only" in result.output
     assert target.read_bytes() == original
-    assert json.loads(report.read_text())["written_document_keys"] == []
     result = CliRunner().invoke(app, args + ["--write"])
     assert result.exit_code == 0, result.output
     assert target.read_bytes() != original
-    result = CliRunner().invoke(app, [*args[:-2], "--output", str(target), "--write"])
-    assert result.exit_code == 2
-    assert "cannot overwrite canonical" in result.output
-
-
-def test_supported_set_is_not_discarded_when_primary_is_unknown(tmp_path: Path) -> None:
-    batch = load_qualification_knowledge(_archive(tmp_path, _members(missing_primary=True)))
-    candidate = batch.candidates[0]
-    assert candidate.patch.semantic.statement_functions == ("requirement",)
-    assert "primary_function" not in candidate.patch.semantic.model_fields_set
-    primary = next(a for a in candidate.attributes if a.path.endswith(".primary_function"))
-    assert primary.availability == "unknown"
-
-
-def _process_model(model, members, primary, *, observed=True):
-    return ModelVote(
-        model_id=model,
-        repetitions=3,
-        stability=1,
-        primary_function="requirement",
-        primary_knowledge_kind="process",
-        process_functions=members,
-        primary_process_function=primary,
-        process_primary_evaluated=observed,
-    )
-
-
-def test_adoption_keeps_decided_process_set_when_primary_ties(tmp_path):
-    members = ("activity", "input")
-    data = _members(
-        process_votes=(
-            _process_model("a", members, "activity"),
-            _process_model("b", members, "input"),
-            _process_model("missing", None, None, observed=False),
-        )
-    )
-    batch = load_qualification_knowledge(
-        _archive(tmp_path, data), dimensions=("process_functions",)
-    )
-    candidate = batch.candidates[0]
-    assert candidate.patch.semantic.process_functions == members
-    assert "primary_process_function" not in candidate.patch.semantic.model_fields_set
-    attributes = {item.path: item for item in candidate.attributes}
-    primary = attributes["enrichments.semantic.primary_process_function"]
-    assert primary.availability == "unknown"
-    assert primary.decision.valid_votes == 2 and primary.decision.abstained_votes == 1
-    assert primary.decision.label_votes == {"activity": 1, "input": 1}
-    assert attributes["enrichments.semantic.process_functions"].availability == "known"
-
-
-def test_adoption_counts_explicit_empty_and_null_but_not_absent_votes(tmp_path):
-    data = _members(
-        process_votes=(
-            _process_model("a", (), None),
-            _process_model("b", (), None),
-            _process_model("absent", None, None, observed=False),
-        )
-    )
-    batch = load_qualification_knowledge(_archive(tmp_path, data))
-    candidate = batch.candidates[0]
-    assert candidate.patch.semantic.process_functions == ()
-    assert candidate.patch.semantic.primary_process_function is None
-    attrs = {a.path: a for a in candidate.attributes}
-    for field in ("process_functions", "primary_process_function"):
-        a = attrs[f"enrichments.semantic.{field}"]
-        assert a.availability == "known"
-        assert (a.decision.valid_votes, a.decision.supporting_votes) == (2, 2)
-        assert a.decision.abstained_votes == 1
-    primary_support = attrs["enrichments.semantic.primary_process_function"].decision
-    assert primary_support.label_votes == {"none": 2}
-
-
-def test_process_frozen_set_and_primary_keep_their_own_stage_support(tmp_path):
-    members = ("activity", "input")
-    data = _members(
-        process_votes=tuple(_process_model(f"later-{i}", (), None) for i in range(4)),
-        process_sources={
-            "process_set": tuple(
-                _process_model(f"early-{i}", members, "activity") for i in range(3)
-            ),
-            "process_function": (_process_model("resolver", members, "input"),),
-        },
-    )
-    batch = load_qualification_knowledge(_archive(tmp_path, data))
-    candidate = batch.candidates[0]
-    assert candidate.patch.semantic.process_functions == members
-    assert candidate.patch.semantic.primary_process_function == "input"
-    attrs = {a.path: a for a in candidate.attributes}
-    primary = attrs["enrichments.semantic.primary_process_function"].decision
-    selected = attrs["enrichments.semantic.process_functions"].decision
-    assert primary.stage == "final/stage-resolver"
-    assert primary.model_ids == ("resolver",)
-    assert primary.valid_votes == primary.supporting_votes == 1
-    assert selected.stage == "efficient"
-    assert selected.valid_votes == selected.supporting_votes == 3
-    assert selected.model_ids == ("early-0", "early-1", "early-2")
