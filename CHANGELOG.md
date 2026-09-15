@@ -1,6 +1,18 @@
 # Changelog
 
 
+## Unreleased — Assertion qualification Slice 7A (2026-09-15)
+
+- Add schema-1 assertion golden suites with explicit `development` or `holdout` partition identity,
+  exact formal-ontology bindings, expected entities, normative assertions, and precise evidence spans.
+- Evaluate `DocumentKnowledgeProposal` artifacts by semantic entity signatures rather than proposal
+  IDs and report entity/assertion precision, recall, F1, false positives, and false negatives.
+- Separate predicate, normative-force, grounding, and exact-assertion accuracy so semantic relation
+  errors can be distinguished from source-grounding or modality errors.
+- Hash normalized golden-suite and proposal payloads into the report for reproducible baseline identity.
+- Add `standards-atlas evaluation assertion-evaluate` for threshold-free development/holdout
+  measurement; automatic acceptance and adoption policy remain out of scope until Slice 7C.
+
 ## Unreleased — Structured knowledge unification Slice 6C (2026-09-15)
 
 - Project IEC 61508 technique-recommendation matrices into `DocumentKnowledgeProposal` without

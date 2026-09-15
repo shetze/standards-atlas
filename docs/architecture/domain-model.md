@@ -70,6 +70,19 @@ The target semantic unit is an explicit engineering assertion, not a classificat
 
 `SourceEvidence` links knowledge back to physical source material through page and geometric anchors. Formula visual preservation consumes those anchors without changing their meaning. `ArtifactLineage` records how persisted artifacts derive from prior artifacts and deterministic transformations. `KnowledgeStateProvenance.generated_attributes` adds attribute-level authority tracking with a stable path, generator identity, generation method, and optional evidence references. Evidence belongs in the domain contract; adapter-specific parser objects do not.
 
+## Assertion qualification contracts
+
+Slice 7A introduces `AssertionGoldenSuite` schema 1 as the versioned truth contract used to measure
+`DocumentKnowledgeProposal` quality. A suite is explicitly either `development` or `holdout`, binds
+exact formal-ontology versions, and defines expected entities/assertions without reusing runtime
+proposal IDs. Expected assertion evidence is represented as exact clause-local offsets plus SHA-256,
+so protected source text is not copied into the golden contract.
+
+`AssertionQualificationReport` schema 1 is metric-only. Entity and assertion matching is
+deterministic and ID-independent; predicate, normative-force, grounding, and combined exact
+assertion accuracy are reported separately. Proposal violations/failures remain visible as counts,
+but Slice 7A does not translate metric values into canonical authority or adoption decisions.
+
 ## Table-derived knowledge
 
 `KnowledgeTable` identifies one structured table within a clause and owns ordered

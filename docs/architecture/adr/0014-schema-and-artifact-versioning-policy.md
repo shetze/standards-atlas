@@ -74,6 +74,15 @@ inventory; transported activation files have a separate scoped identity. Hashes 
 integrity but do not prove semantic truth, human authorship or runtime binary identity.
 
 
+### Assertion qualification contracts Slice 7A (2026-09-15)
+
+`assertion-golden-suite` and `assertion-qualification-report` are current-only schema-1 families
+during the refactoring phase. Golden suites are independently persisted review/qualification truth
+and carry semantic resource identity through explicit ontology-version references. Qualification
+reports bind the normalized golden-suite hash and every evaluated proposal hash, but do not embed
+acceptance thresholds or adoption authority. Development and Holdout use the same schema while
+remaining different suite partitions.
+
 ### Review contract refactoring R2 (2026-09-14)
 
 During refactoring, `partial-qualification-manifest` and `partial-review-publication` accept

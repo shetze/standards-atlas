@@ -95,6 +95,18 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         ".atlas/data/knowledge-proposals/*/*.json",
     ),
+    "assertion-golden-suite": SchemaPolicy(
+        "assertion-golden-suite",
+        1,
+        (1,),
+        "local/review/assertions/**/assertion-golden-suite.{yaml,yml,json}",
+    ),
+    "assertion-qualification-report": SchemaPolicy(
+        "assertion-qualification-report",
+        1,
+        (1,),
+        "local/evaluation/**/assertion-qualification*.json",
+    ),
     "structural-taxonomy-resource": SchemaPolicy(
         "structural-taxonomy-resource",
         1,

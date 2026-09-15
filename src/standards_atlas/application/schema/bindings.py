@@ -79,19 +79,23 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
     ),
     ModelBinding(
         "review-reference-suite",
-        "standards_atlas.application.semantic_qualification.review_package.model:ReviewReferenceSuite",
+        "standards_atlas.application.semantic_qualification.review_package.model:"
+        "ReviewReferenceSuite",
     ),
     ModelBinding(
         "review-candidates",
-        "standards_atlas.application.semantic_qualification.review_package.preparation_model:CandidateIndex",
+        "standards_atlas.application.semantic_qualification.review_package.preparation_model:"
+        "CandidateIndex",
     ),
     ModelBinding(
         "review-selection-proposal",
-        "standards_atlas.application.semantic_qualification.review_package.preparation_model:SelectionProposal",
+        "standards_atlas.application.semantic_qualification.review_package.preparation_model:"
+        "SelectionProposal",
     ),
     ModelBinding(
         "review-archive",
-        "standards_atlas.application.semantic_qualification.review_package.archive:ReviewArchiveManifest",
+        "standards_atlas.application.semantic_qualification.review_package.archive:"
+        "ReviewArchiveManifest",
     ),
     ModelBinding(
         "review-workbench-evidence",
@@ -215,6 +219,14 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
     ModelBinding(
         "normalization-golden-case",
         "standards_atlas.application.qualification.golden_corpus:GoldenCaseManifest",
+    ),
+    ModelBinding(
+        "assertion-golden-suite",
+        "standards_atlas.application.assertion_qualification.models:AssertionGoldenSuite",
+    ),
+    ModelBinding(
+        "assertion-qualification-report",
+        "standards_atlas.application.assertion_qualification.models:AssertionQualificationReport",
     ),
     ModelBinding(
         "clause-evaluation-annotation",

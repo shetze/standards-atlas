@@ -44,6 +44,25 @@ or suspicious cases. All observations, resolution provenance, review evidence, m
 manifests, and corpus identity are preserved in the immutable `qualification-run-NNN.zip`
 evidence bundle.
 
+## Assertion-centred knowledge qualification
+
+`application.assertion_qualification` is a separate post-extraction boundary for the new
+assertion-centred knowledge model. It consumes only non-canonical `DocumentKnowledgeProposal`
+artifacts and versioned `AssertionGoldenSuite` contracts; it does not depend on or revive the
+removed multidimensional clause-classification contract.
+
+Slice 7A is deliberately threshold-free. A golden suite owns one explicit `development` or
+`holdout` partition and one exact set of formal-ontology resource versions. Runtime entity IDs and
+assertion IDs are traceability only: matching uses normalized entity label + ontology class and
+source-clause/subject/predicate/object assertion semantics. Reports expose entity/assertion
+precision, recall and F1, endpoint-aligned predicate accuracy, assertion-aligned normative-force
+accuracy, exact evidence-span grounding accuracy, and combined exact-assertion accuracy. Golden and
+proposal payload hashes bind every report to the evaluated semantic inputs.
+
+No 7A report contains `passed`, acceptance thresholds, adoption decisions, or an EngineeringDocument
+write path. The Efficient → Verify → Escalate execution policy is introduced in Slice 7B and the
+holdout/automatic-adoption policy in Slice 7C.
+
 ## Artifact separation
 
 Corpora, proposal runs, reviewed annotations, consensus reports, and qualification reports are separate artifacts. Published reviewed data has higher authority than local review files; local review has higher authority than generated proposals only where the repository policy explicitly states this.

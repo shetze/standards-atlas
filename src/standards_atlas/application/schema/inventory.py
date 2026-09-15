@@ -438,6 +438,16 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "normalization-golden-case",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.models:AssertionGoldenSuite",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-golden-suite",
+    ),
+    SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.models:AssertionQualificationReport",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-qualification-report",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.application.qualification.golden_corpus:GoldenCorpusReport",
         SchemaMarkerDisposition.LOCAL,
         reason=("in-memory qualification result; persisted envelope is owned by run reporter"),
@@ -939,6 +949,22 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
             "Non-canonical assertion proposals are run-scoped and retain model, violation, "
             "attempt, failure and evidence metadata independently of accepted DocumentKnowledge."
         ),
+    ),
+    VersionedInterface(
+        "assertion-golden-suite",
+        "local/review/assertions/**/assertion-golden-suite.{yaml,yml,json}",
+        LifecycleBoundary.PUBLIC_CONTRACT,
+        (VersionAxis.SCHEMA,),
+        "assertion-golden-suite",
+        "Versioned development or holdout truth for entity/assertion qualification.",
+    ),
+    VersionedInterface(
+        "assertion-qualification-report",
+        "local/evaluation/**/assertion-qualification*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "assertion-qualification-report",
+        "Threshold-free Slice-7A entity/assertion matching and grounding metrics.",
     ),
     VersionedInterface(
         "complypack-workspace-manifest",
