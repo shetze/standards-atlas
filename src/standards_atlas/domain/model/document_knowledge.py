@@ -64,11 +64,13 @@ class KnowledgeProvenance(BaseModel):
 
 
 class EvidenceAnchor(BaseModel):
-    """Text-safe anchor from accepted knowledge back to one canonical clause.
+    """Text-safe anchor from engineering knowledge back to one canonical clause.
 
-    Character offsets address the stable plain-text projection of the clause. If
-    offsets are omitted, the complete clause is the evidence scope. Protected
-    source text is never copied into the anchor.
+    The value object can be carried by a non-canonical proposal or by accepted
+    ``DocumentKnowledge``. Authority comes from the containing aggregate, not from
+    the anchor itself. Character offsets address the stable plain-text projection of
+    the clause. If offsets are omitted, the complete clause is the evidence scope.
+    Protected source text is never copied into the anchor.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")

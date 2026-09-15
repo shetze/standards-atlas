@@ -124,6 +124,11 @@ SCHEMA_ENVELOPE_MARKER_COUNTS: tuple[tuple[str, int], ...] = (
         1,
     ),
     (
+        "standards_atlas.adapters.filesystem.knowledge_proposal_repository:F"
+        "ileSystemDocumentKnowledgeProposalRepository.save",
+        1,
+    ),
+    (
         "standards_atlas.adapters.normalization.repository:NormalizationArtifactRepository.save",
         1,
     ),
@@ -672,6 +677,11 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         SchemaMarkerDisposition.CENTRAL,
         "semantic-extraction",
     ),
+    SchemaMarkerDecision(
+        "standards_atlas.domain.model.knowledge_proposal:DocumentKnowledgeProposal",
+        SchemaMarkerDisposition.CENTRAL,
+        "document-knowledge-proposal",
+    ),
 )
 
 VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
@@ -949,6 +959,17 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (
             "Persisted extraction carries task/prompt/model provenance independently "
             "of schema version."
+        ),
+    ),
+    VersionedInterface(
+        "document-knowledge-proposal",
+        ".atlas/data/knowledge-proposals/<run-id>/*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "document-knowledge-proposal",
+        (
+            "Non-canonical assertion proposals are run-scoped and retain model, violation, "
+            "attempt, failure and evidence metadata independently of accepted DocumentKnowledge."
         ),
     ),
     VersionedInterface(

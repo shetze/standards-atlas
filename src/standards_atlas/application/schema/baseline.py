@@ -92,6 +92,12 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "semantic-extraction": SchemaPolicy(
         "semantic-extraction", 1, (1,), ".atlas/data/semantic-extractions/*.json"
     ),
+    "document-knowledge-proposal": SchemaPolicy(
+        "document-knowledge-proposal",
+        1,
+        (1,),
+        ".atlas/data/knowledge-proposals/*/*.json",
+    ),
     "structural-taxonomy-resource": SchemaPolicy(
         "structural-taxonomy-resource",
         1,

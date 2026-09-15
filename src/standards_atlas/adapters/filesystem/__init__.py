@@ -6,6 +6,9 @@ from standards_atlas.adapters.filesystem.document_repository import (
 from standards_atlas.adapters.filesystem.formula_transcription_repository import (
     FileSystemFormulaTranscriptionRepository,
 )
+from standards_atlas.adapters.filesystem.knowledge_proposal_repository import (
+    FileSystemDocumentKnowledgeProposalRepository,
+)
 from standards_atlas.adapters.filesystem.knowledge_table_repository import (
     FileSystemKnowledgeTableRepository,
 )
@@ -23,6 +26,7 @@ __all__ = [
     "FileSystemEngineeringDocumentRepository",
     "FileSystemFormulaTranscriptionRepository",
     "FileSystemKnowledgeTableRepository",
+    "FileSystemDocumentKnowledgeProposalRepository",
     "FileSystemNormalizedTableRepository",
     "FileSystemTableRetrievalProjectionRepository",
     "FileSystemFormalSemanticProjectionRepository",

@@ -109,6 +109,19 @@ from standards_atlas.domain.model.identifiers import (
     StandardKey,
     StandardReference,
 )
+from standards_atlas.domain.model.knowledge_proposal import (
+    DOCUMENT_KNOWLEDGE_PROPOSAL_SCHEMA_VERSION,
+    DocumentKnowledgeProposal,
+    KnowledgeEntityProposal,
+    KnowledgeProposalAttempt,
+    KnowledgeProposalFailure,
+    KnowledgeProposalProvenance,
+    KnowledgeProposalViolation,
+    KnowledgeProposalViolationKind,
+    NormativeAssertionProposal,
+    ProposalAttemptStatus,
+    ProposalFailureKind,
+)
 from standards_atlas.domain.model.knowledge_state import (
     GeneratedAttribute,
     GenerationMethod,
@@ -199,6 +212,17 @@ from standards_atlas.domain.model.table_structure import (
 )
 
 __all__ = [
+    "DOCUMENT_KNOWLEDGE_PROPOSAL_SCHEMA_VERSION",
+    "DocumentKnowledgeProposal",
+    "KnowledgeEntityProposal",
+    "KnowledgeProposalAttempt",
+    "KnowledgeProposalFailure",
+    "KnowledgeProposalProvenance",
+    "KnowledgeProposalViolation",
+    "KnowledgeProposalViolationKind",
+    "NormativeAssertionProposal",
+    "ProposalAttemptStatus",
+    "ProposalFailureKind",
     "ApplicabilityPolarity",
     "ClauseApplicability",
     "DOCUMENT_KNOWLEDGE_SCHEMA_VERSION",

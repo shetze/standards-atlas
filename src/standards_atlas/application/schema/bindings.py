@@ -305,6 +305,10 @@ SCHEMA_MARKER_BINDINGS: tuple[MarkerBinding, ...] = (
         "standards_atlas.domain.model.semantic_extraction:DocumentSemanticExtraction",
     ),
     MarkerBinding(
+        "document-knowledge-proposal",
+        "standards_atlas.domain.model.knowledge_proposal:DocumentKnowledgeProposal",
+    ),
+    MarkerBinding(
         "structural-taxonomy-resource",
         "standards_atlas.application.structure.taxonomy_definition:StructuralTaxonomyDefinition",
     ),
@@ -363,6 +367,11 @@ SCHEMA_WRITER_BINDINGS: tuple[WriterBinding, ...] = (
         "semantic-extraction",
         "standards_atlas.adapters.filesystem.semantic_extraction_repository:"
         "FileSystemSemanticExtractionRepository.save",
+    ),
+    WriterBinding(
+        "document-knowledge-proposal",
+        "standards_atlas.adapters.filesystem.knowledge_proposal_repository:"
+        "FileSystemDocumentKnowledgeProposalRepository.save",
     ),
     WriterBinding(
         "semantic-extraction",
