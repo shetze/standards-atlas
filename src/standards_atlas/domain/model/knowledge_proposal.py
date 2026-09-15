@@ -62,6 +62,25 @@ class KnowledgeProposalProvenance(BaseModel):
     selection_reference: str | None = None
 
 
+class KnowledgeProposalInput(BaseModel):
+    """Direct lineage reference to one proposal consumed by a derived proposal run."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    proposal_run_id: str = Field(min_length=1)
+    proposal_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    proposal_provenance: KnowledgeProposalProvenance
+
+    @field_validator("proposal_run_id")
+    @classmethod
+    def run_id_has_no_surrounding_whitespace(cls, value: str) -> str:
+        if value != value.strip():
+            raise ValueError(
+                "knowledge proposal input run id must not contain surrounding whitespace"
+            )
+        return value
+
+
 class KnowledgeEntityProposal(BaseModel):
     """One proposed ontology-grounded engineering entity.
 
@@ -213,6 +232,7 @@ class DocumentKnowledgeProposal(BaseModel):
     proposal_run_id: str = Field(min_length=1)
     source_document_key: str = Field(min_length=1)
     ontology_versions: tuple[str, ...] = ()
+    input_proposals: tuple[KnowledgeProposalInput, ...] = ()
     evidence_anchors: tuple[EvidenceAnchor, ...] = ()
     entity_proposals: tuple[KnowledgeEntityProposal, ...] = ()
     assertion_proposals: tuple[NormativeAssertionProposal, ...] = ()
@@ -249,6 +269,12 @@ class DocumentKnowledgeProposal(BaseModel):
     def references_are_local_and_resolved(self) -> DocumentKnowledgeProposal:
         if (self.entity_proposals or self.assertion_proposals) and not self.ontology_versions:
             raise ValueError("knowledge proposals with semantic terms require ontology_versions")
+
+        input_run_ids = [item.proposal_run_id for item in self.input_proposals]
+        if len(input_run_ids) != len(set(input_run_ids)):
+            raise ValueError("knowledge proposal input run ids must be unique")
+        if self.proposal_run_id in set(input_run_ids):
+            raise ValueError("knowledge proposal cannot directly reference its own run as input")
 
         anchor_ids = [anchor.id for anchor in self.evidence_anchors]
         entity_ids = [entity.id for entity in self.entity_proposals]

@@ -22,6 +22,8 @@ EngineeringDocument
                     └── StructuredKnowledgeRecord
                         └── TableKnowledgeProposalProjector
                             └── DocumentKnowledgeProposal
+                                └── DocumentKnowledgeProposalUnifier
+                                    └── unified DocumentKnowledgeProposal
 ```
 
 `DocumentTable` owns document-level table identity, numbering, caption metadata, parent
@@ -34,8 +36,10 @@ semantic projections, not independently edited copies. T3 consumes only `Normali
 historical projection service is a compatibility facade over the T2 → T3 path. Slice 6A adds a
 deterministic proposal projection for supported portable matrices so prose and table knowledge use
 the same `KnowledgeEntityProposal` / `NormativeAssertionProposal` contracts before qualification. The
-table projector emits a distinct run-scoped proposal with deterministic projector provenance;
-combining prose and table runs is deliberately deferred to Slice 6B.
+table projector emits a distinct run-scoped proposal with deterministic projector provenance.
+Slice 6B combines prose and table runs only through a deterministic proposal unifier that preserves
+direct input-run hashes/provenance and performs document-local entity resolution before later
+qualification.
 
 AtlasData publishes table structure through `TABLE` and `TABLEINDEX` records only. It never
 publishes table cells. This allows onboarding and review to compare declared and detected
@@ -92,9 +96,13 @@ the table itself and must not be inferred from the surrounding clause as narrati
 assertion-centred prose extractor therefore excludes `ClauseType.TABLE` and removes embedded table
 payload from mixed-clause model input. Structured tables use the deterministic T2/T3 path instead.
 
-Slice 6A reunifies the two paths only at the proposal boundary: supported table relations become
+Slice 6A reunifies the two paths at the proposal boundary: supported table relations become
 `KnowledgeEntityProposal` and `NormativeAssertionProposal` values with exact cell-span evidence,
-while prose assertions continue to use exact model evidence quotes. Neither path writes canonical
+while prose assertions continue to use exact model evidence quotes. Slice 6B then unifies those
+run-scoped proposals by normalized label plus compatible ontology type. Generic classes may refine
+to one unambiguous subclass; incompatible siblings and ambiguous generic matches remain separate.
+Equivalent same-clause assertions are rewritten to resolved entity IDs and may be deduplicated, but
+source-clause boundaries are preserved. No proposal path writes canonical
 `EngineeringDocument.knowledge` directly.
 
 ## Retrieval and IntelliDoc
@@ -119,7 +127,8 @@ embedding models, vector stores, and GraphRAG implementations remain replaceable
 
 Projection and interpretation are implemented and covered by deterministic tests. Slice 6A
 projects work-product, responsibility, traceability and verification-criteria matrices into
-`DocumentKnowledgeProposal`; document-local entity resolution remains Slice 6B and qualified
-technique/recommendation relations remain Slice 6C. A dedicated assertion/table qualification
+`DocumentKnowledgeProposal`; Slice 6B unifies prose/table runs and resolves document-local entities
+without fuzzy matching. Qualified technique/recommendation relations remain Slice 6C. A dedicated
+assertion/table qualification
 corpus and HITL review flow are introduced only after the unified proposal path is complete. See
 the [structured table corpus roadmap](../roadmap/structured-table-corpora.md).

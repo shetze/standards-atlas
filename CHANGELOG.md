@@ -1,6 +1,20 @@
 # Changelog
 
 
+## Unreleased — Structured knowledge unification Slice 6B (2026-09-15)
+
+- Add deterministic document-local `DocumentKnowledgeProposal` unification across prose and
+  structured-table proposal runs while retaining direct input-run hashes and extractor provenance.
+- Resolve equal normalized labels only across compatible ontology class chains; refine generic
+  classes to one unambiguous most-specific subclass and keep sibling/ambiguous types separate.
+- Union aliases and evidence anchors onto resolved entities, rewrite assertion entity references,
+  and deduplicate equivalent same-clause assertions without crossing source-clause boundaries.
+- Let one explicit normative force refine otherwise-equivalent `unspecified` assertions while
+  preserving conflicting explicit forces as separate proposals for later qualification.
+- Keep entity resolution fully deterministic and proposal-only: no fuzzy matching, embeddings,
+  canonical adoption, or probabilistic merge heuristics are introduced in Slice 6B.
+
+
 ## Unreleased — Structured knowledge unification Slice 6A (2026-09-15)
 
 - Project supported work-product, responsibility, traceability and verification-criteria matrices

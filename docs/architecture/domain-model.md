@@ -62,7 +62,7 @@ ontology decision.
 
 The target semantic unit is an explicit engineering assertion, not a classification label for an entire clause. `DocumentKnowledge` schema 1 contains normalized entities, text-safe evidence anchors and subject/predicate/object assertions. Each assertion records assertion-local normative force and provenance, allowing one clause to contribute several independently qualified engineering statements.
 
-`DocumentKnowledgeProposal` schema 1 is the separate non-canonical proposal aggregate used before qualification and adoption. It contains run and ontology identity, evidence anchors, `KnowledgeEntityProposal` and `NormativeAssertionProposal` values, non-fatal violations, terminal failures, retry attempts and extractor provenance. Slice 5B requires model evidence to resolve as one exact, unique span of the canonical `Clause.plain_text`; `unresolved_grounding` and `ambiguous_grounding` remain auditable violations rather than silently widened evidence. Assertions carry their own normative force and may target another proposed entity or a literal value. Confidence and rationale exist only on proposal records; accepted `KnowledgeEntity` and `NormativeAssertion` values deliberately do not inherit them. Proposal persistence is run-scoped and does not mutate `EngineeringDocument`.
+`DocumentKnowledgeProposal` schema 1 is the separate non-canonical proposal aggregate used before qualification and adoption. It contains run and ontology identity, evidence anchors, `KnowledgeEntityProposal` and `NormativeAssertionProposal` values, non-fatal violations, terminal failures, retry attempts and extractor provenance. Derived proposal runs may additionally bind direct input proposals by run ID, SHA-256 content hash and original run provenance. Slice 5B requires model evidence to resolve as one exact, unique span of the canonical `Clause.plain_text`; `unresolved_grounding` and `ambiguous_grounding` remain auditable violations rather than silently widened evidence. Assertions carry their own normative force and may target another proposed entity or a literal value. Confidence and rationale exist only on proposal records; accepted `KnowledgeEntity` and `NormativeAssertion` values deliberately do not inherit them. Proposal persistence is run-scoped and does not mutate `EngineeringDocument`.
 
 `ClauseApplicability` is the minimal context contract for applicability: explicit presence plus optional `included`/`excluded` polarity. It is persisted as its own enrichment and projected as its own CBox context. Structural evidence, references and subject context stay separate from engineering-domain assertions. Clause-level statement, knowledge, process and role classification are not part of the canonical model.
 
@@ -84,8 +84,11 @@ T3 intermediates with exact source-column provenance. Slice 6A additionally proj
 portable engineering relation kinds (work product, responsibility, traceability and verification
 criteria) into the same non-canonical `DocumentKnowledgeProposal` entity/assertion contract used
 by prose extraction. The deterministic table projector emits its own run-scoped proposal so its
-provenance is not conflated with an LLM prose run; multi-source merge and document-local entity
-resolution are deferred to Slice 6B. Table evidence is bound to exact source-cell spans in canonical
+provenance is not conflated with an LLM prose run. Slice 6B adds deterministic multi-source
+unification: equal normalized labels merge only when their ontology classes form one unambiguous
+subclass chain, aliases/evidence are unioned, and assertions are rewritten to the resolved entity
+IDs. Incompatible sibling types and ambiguous generic matches remain separate. Table evidence is
+bound to exact source-cell spans in canonical
 `Clause.plain_text`; repeated labels are disambiguated structurally by table block and logical
 row/column coordinates. Applicability and qualified technique-recommendation matrices stay outside
 this 6A projection. IEC 61508 interpretations retain SIL-qualified recommendation levels and

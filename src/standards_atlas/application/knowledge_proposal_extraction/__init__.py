@@ -14,11 +14,17 @@ from .table_projection import (
     TABLE_KNOWLEDGE_PROJECTION_VERSION,
     TableKnowledgeProposalProjector,
 )
+from .unification import (
+    KNOWLEDGE_PROPOSAL_UNIFICATION_VERSION,
+    DocumentKnowledgeProposalUnifier,
+)
 from .vocabulary import FormalOntologyVocabulary
 
 __all__ = [
     "EvidenceGroundingResult",
     "FormalOntologyVocabulary",
+    "DocumentKnowledgeProposalUnifier",
+    "KNOWLEDGE_PROPOSAL_UNIFICATION_VERSION",
     "KnowledgeProposalExtractionService",
     "ProposalExtractionContext",
     "ProposalExtractionEligibility",

@@ -11,6 +11,7 @@ from standards_atlas.domain.model import (
     KnowledgeEntityProposal,
     KnowledgeProposalAttempt,
     KnowledgeProposalFailure,
+    KnowledgeProposalInput,
     KnowledgeProposalProvenance,
     KnowledgeProposalViolation,
     NormativeAssertion,
@@ -203,4 +204,30 @@ def test_failed_attempts_require_error_metadata_and_terminal_failures_are_unique
             source_document_key=proposal.source_document_key,
             proposal_provenance=proposal.proposal_provenance,
             failures=(failure, failure),
+        )
+
+
+def test_document_knowledge_proposal_input_lineage_is_unique_and_not_self_referential() -> None:
+    proposal = _proposal()
+    source = KnowledgeProposalInput(
+        proposal_run_id="source-run",
+        proposal_hash="a" * 64,
+        proposal_provenance=proposal.proposal_provenance,
+    )
+    restored = proposal.model_copy(update={"input_proposals": (source,)})
+    assert DocumentKnowledgeProposal.model_validate(restored.model_dump(mode="json")) == restored
+
+    with pytest.raises(ValueError, match="input run ids must be unique"):
+        DocumentKnowledgeProposal.model_validate(
+            restored.model_copy(update={"input_proposals": (source, source)}).model_dump(
+                mode="python"
+            )
+        )
+
+    self_source = source.model_copy(update={"proposal_run_id": proposal.proposal_run_id})
+    with pytest.raises(ValueError, match="cannot directly reference its own run"):
+        DocumentKnowledgeProposal.model_validate(
+            proposal.model_copy(update={"input_proposals": (self_source,)}).model_dump(
+                mode="python"
+            )
         )
