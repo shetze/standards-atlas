@@ -182,11 +182,8 @@ corpus foundations. The next improvements should be risk-driven:
 5. establish and ratchet a measured changed-code branch-coverage baseline;
 6. make Docling and Doorstop runtime jobs mandatory on controlled release infrastructure.
 
-## Formal semantic extraction qualification
+## Assertion proposal extraction
 
-Qualification manifests can enable `semantic_extraction_qualification`. In that case `workflow run --task qualification` appends an ontology-guided extraction qualification step after the semantic matrix. The step evaluates persisted semantic extraction artifacts for ontology conformance and confidence. Extractor outputs that use undeclared classes or properties are rejected non-fatally, persisted as violations, and included in conformance metrics and per-term diagnostics; they do not enter the projected ABox. Entity/relation precision, recall, and F1 remain `null` until a published extraction gold corpus is configured; missing ground truth is therefore explicitly unscored rather than inferred from existing semantic labels.
+Slice 5C removes the former semantic-extraction qualification command, manifest block, persisted schema family and qualification-archive inputs. Current model-generated engineering knowledge is represented only as run-scoped `DocumentKnowledgeProposal` artifacts with exact source grounding.
 
-When `generate_missing` is enabled, `semantic_extraction_qualification.model` names a model candidate from the qualification manifest. The extraction stage owns that model's local RamaLama lifecycle independently of the matrix stage: it resolves the candidate's `model_ref`, starts the endpoint before extraction, and stops it after the stage. The extraction report records both the stable candidate id and provider. This prevents the stage from depending on whichever matrix model happened to run last.
-
-
-Clause-level extraction failures are non-fatal during qualification. `timeout`, `response_error`, and `unavailable` outcomes are persisted with the clause ID and aggregated in the qualification report; subsequent eligible clauses continue to run. Configure the per-request budget with `semantic_extraction_qualification.timeout_seconds`. The CLI emits a start/result progress line for every attempted clause so slow or stuck requests remain observable.
+These proposals are intentionally not scored or auto-adopted by the current applicability qualification workflow. Slice 7 introduces assertion-centred qualification with entity/assertion matching, grounding metrics and the Efficient → Verify → Escalate policy. Until that boundary exists, proposal generation remains non-canonical and cannot populate `EngineeringDocument.knowledge` or the ABox.

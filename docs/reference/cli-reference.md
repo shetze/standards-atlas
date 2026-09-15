@@ -13,7 +13,7 @@ uv run standards-atlas workflow run --help
 - `validate`, `trace`: repository validation and traceability helpers
 - `inspect data`: inspect legacy data artefacts
 - `catalog validate`: validate catalog structure and references
-- `workflow plan`, `workflow run`: plan or execute a typed-manifest workflow. The supported workflow tasks are `documents`, `qualification`, and `enrichments`; `documents` is the default. Qualification workflows accept `--limit` for a shared execution slice and `--fresh` to bypass proposal reuse and LLM response caches across matrix and semantic-extraction inference. For `enrichments`, `--fresh` also recomputes generated context routing without its LLM response cache while preserving confirmed routing.
+- `workflow plan`, `workflow run`: plan or execute a typed-manifest workflow. The supported workflow tasks are `documents`, `qualification`, and `enrichments`; `documents` is the default. Qualification workflows accept `--limit` for a shared execution slice and `--fresh` to bypass proposal reuse and LLM response caches across the enabled qualification stages. For `enrichments`, `--fresh` also recomputes generated context routing without its LLM response cache while preserving confirmed routing.
 
 
 For `--task enrichments`, `--resume-after-context` verifies the saved context baseline and

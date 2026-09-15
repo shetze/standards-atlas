@@ -51,11 +51,22 @@ def test_proposal_contract_does_not_define_an_adoption_shortcut() -> None:
     }
 
 
-def test_slice_5b_extractor_does_not_depend_on_legacy_extraction_contract() -> None:
-    active_paths = (
-        Path("src/standards_atlas/application/knowledge_proposal_extraction/service.py"),
-        Path("src/standards_atlas/adapters/llm/knowledge_proposal_extractor.py"),
+def test_slice_5c_has_no_legacy_semantic_extraction_contract() -> None:
+    legacy_files = (
+        Path("src/standards_atlas/domain/model/semantic_extraction.py"),
+        Path("src/standards_atlas/application/ports/semantic_extraction.py"),
+        Path("src/standards_atlas/adapters/filesystem/semantic_extraction_repository.py"),
+        Path("src/standards_atlas/adapters/llm/formal_semantic_extractor.py"),
+        Path(
+            "src/standards_atlas/application/semantic_qualification/"
+            "semantic_extraction_qualification.py"
+        ),
+        Path(
+            "src/standards_atlas/cli/commands/evaluation_commands/"
+            "semantic_extraction_qualification.py"
+        ),
     )
-    for path in active_paths:
-        imports = _imports(path)
-        assert "standards_atlas.domain.model.semantic_extraction" not in imports
+    legacy_packages = (Path("src/standards_atlas/application/semantic_extraction"),)
+
+    assert all(not path.exists() for path in legacy_files)
+    assert all(not any(path.rglob("*.py")) for path in legacy_packages)

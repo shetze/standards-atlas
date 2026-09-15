@@ -19,7 +19,7 @@ from standards_atlas.application.semantic_qualification.annotations import (
     CorpusManifestRepository,
     EvaluationCorpusManifest,
 )
-from standards_atlas.application.semantic_qualification.semantic_extraction_selection import (
+from standards_atlas.application.semantic_qualification.qualification_selection_coordinates import (
     selected_clause_ids_by_document,
 )
 

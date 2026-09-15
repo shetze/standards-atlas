@@ -1,4 +1,4 @@
-"""Human-readable semantic extraction clause references."""
+"""Human-readable knowledge proposal clause references."""
 
 from __future__ import annotations
 

@@ -37,4 +37,4 @@ def test_proposal_extraction_has_no_direct_abox_augmentation_path() -> None:
     assert not EXTRACTION_AUGMENTER.exists()
     imports = _imports(PROJECTOR)
     assert "standards_atlas.domain.model.semantic_extraction" not in imports
-    assert "standards_atlas.application.semantic_extraction" not in imports
+    assert "standards_atlas.application.knowledge_proposal_extraction" not in imports

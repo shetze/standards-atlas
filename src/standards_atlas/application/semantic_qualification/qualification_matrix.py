@@ -24,9 +24,6 @@ from standards_atlas.application.semantic_qualification.performance import Reque
 from standards_atlas.application.semantic_qualification.reports.matrix import (
     render_qualification_matrix_markdown,
 )
-from standards_atlas.application.semantic_qualification.semantic_extraction_qualification import (
-    SemanticExtractionQualificationConfig,
-)
 
 
 class PromptCandidate(BaseModel):
@@ -548,9 +545,6 @@ class QualificationMatrixManifest(SchemaBoundModel):
     )
     applicability_decision_policy: ApplicabilityDecisionPolicyConfig = (
         ApplicabilityDecisionPolicyConfig(enabled=False)
-    )
-    semantic_extraction_qualification: SemanticExtractionQualificationConfig = (
-        SemanticExtractionQualificationConfig(enabled=False)
     )
 
     def repetitions_for(self, model: ModelCandidate) -> int:

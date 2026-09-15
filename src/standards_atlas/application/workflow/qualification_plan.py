@@ -244,35 +244,6 @@ class QualificationWorkflowPlanner:
                 ),
             )
             steps = (*steps, detail_step)
-        extraction_config = manifest.semantic_extraction_qualification
-        if extraction_config.enabled:
-            extraction_operation = WorkflowOperation.create(
-                WorkflowOperationKind.EVALUATION_SEMANTIC_EXTRACTION,
-                manifest=str(manifest_path),
-                output=str(qualification_output / manifest.matrix_id),
-                continue_on_qualification_failure=True,
-                limit=limit,
-                fresh=fresh,
-            )
-            extraction_step = WorkflowStep(
-                family="evaluation",
-                document=f"{manifest.matrix_id}-semantic-extraction",
-                stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
-                operation=extraction_operation,
-                artifact_policy=ArtifactPolicy.DERIVED,
-                output_paths=(
-                    str(
-                        qualification_output
-                        / manifest.matrix_id
-                        / "semantic-extraction-qualification.json"
-                    ),
-                    (
-                        ".atlas/work/workflow/qualification/"
-                        f"{manifest.matrix_id}/semantic-extraction.complete"
-                    ),
-                ),
-            )
-            steps = (*steps, extraction_step)
         archive_operation = WorkflowOperation.create(
             WorkflowOperationKind.EVALUATION_QUALIFICATION_ARCHIVE,
             manifest=str(manifest_path),
@@ -296,8 +267,6 @@ class QualificationWorkflowPlanner:
                 fresh_repetition_stages.append(WorkflowStage.APPLICABILITY_DECISION_POLICY)
             elif detail_config.enabled:
                 fresh_repetition_stages.append(WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT)
-            if extraction_config.enabled:
-                fresh_repetition_stages.append(WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION)
         elif fresh_applicability_policy:
             fresh_repetition_stages.append(WorkflowStage.APPLICABILITY_DECISION_POLICY)
         return QualificationWorkflowPlan(

@@ -1,6 +1,18 @@
 # Changelog
 
 
+## Unreleased — Assertion extraction clean break Slice 5C (2026-09-15)
+
+- Remove the superseded `DocumentSemanticExtraction` entity/relation contract, legacy LLM adapter,
+  ports, filesystem repository, qualification service/CLI and persisted schema family.
+- Move reusable extraction vocabulary, source-text projection and clause-reference helpers under the
+  assertion-centred `knowledge_proposal_extraction` boundary.
+- Remove `semantic_extraction_qualification` from current qualification manifests and workflow
+  stages; assertion qualification will be introduced as a new contract in Slice 7.
+- Stop qualification archives from validating or embedding legacy extraction reports and snapshots.
+- Keep `DocumentKnowledgeProposal` as the only model-generated engineering-knowledge proposal
+  contract; proposals remain non-canonical and cannot populate the ABox directly.
+
 ## Unreleased — Context and applicability cut-over Slice 2 (2026-09-15)
 
 - Move accepted applicability out of legacy `SemanticClassification` into first-class

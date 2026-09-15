@@ -119,11 +119,6 @@ SCHEMA_ENVELOPE_MARKER_COUNTS: tuple[tuple[str, int], ...] = (
         1,
     ),
     (
-        "standards_atlas.adapters.filesystem.semantic_extraction_repository:F"
-        "ileSystemSemanticExtractionRepository.save",
-        1,
-    ),
-    (
         "standards_atlas.adapters.filesystem.knowledge_proposal_repository:F"
         "ileSystemDocumentKnowledgeProposalRepository.save",
         1,
@@ -218,11 +213,6 @@ SCHEMA_ENVELOPE_MARKER_COUNTS: tuple[tuple[str, int], ...] = (
     ),
     (
         "standards_atlas.application.workflow.report:WorkflowRunReporter.write",
-        1,
-    ),
-    (
-        "standards_atlas.cli.commands.evaluation_commands.qualification_archi"
-        "ve:finalize_qualification_archive",
         1,
     ),
 )
@@ -617,12 +607,6 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "qualification-run-selection",
     ),
     SchemaMarkerDecision(
-        "standards_atlas.application.semantic_qualification.semantic_extracti"
-        "on_qualification:SemanticExtractionQualificationReport",
-        SchemaMarkerDisposition.LOCAL,
-        reason="local qualification report",
-    ),
-    SchemaMarkerDecision(
         "standards_atlas.application.semantic_qualification.workflow:BenchmarkManifest",
         SchemaMarkerDisposition.CENTRAL,
         "benchmark-manifest",
@@ -671,11 +655,6 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "standards_atlas.domain.model.reference_mention:ReferenceMention",
         SchemaMarkerDisposition.LOCAL,
         reason="embedded in canonical EngineeringDocument clauses",
-    ),
-    SchemaMarkerDecision(
-        "standards_atlas.domain.model.semantic_extraction:DocumentSemanticExtraction",
-        SchemaMarkerDisposition.CENTRAL,
-        "semantic-extraction",
     ),
     SchemaMarkerDecision(
         "standards_atlas.domain.model.knowledge_proposal:DocumentKnowledgeProposal",
@@ -949,17 +928,6 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (VersionAxis.SCHEMA,),
         "formal-semantic-projection",
         "Persisted projection records referenced ontology/resource identity separately.",
-    ),
-    VersionedInterface(
-        "semantic-extraction",
-        ".atlas/data/semantic-extractions/*.json",
-        LifecycleBoundary.PERSISTENCE,
-        (VersionAxis.SCHEMA,),
-        "semantic-extraction",
-        (
-            "Persisted extraction carries task/prompt/model provenance independently "
-            "of schema version."
-        ),
     ),
     VersionedInterface(
         "document-knowledge-proposal",

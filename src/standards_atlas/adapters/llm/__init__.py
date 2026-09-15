@@ -7,7 +7,6 @@ from standards_atlas.adapters.llm.config import (
     LlmRuntime,
     RamaLamaServerConfig,
 )
-from standards_atlas.adapters.llm.formal_semantic_extractor import OntologyGuidedLlmExtractor
 from standards_atlas.adapters.llm.knowledge_proposal_extractor import (
     OntologyGuidedKnowledgeProposalExtractor,
 )
@@ -40,7 +39,6 @@ __all__ = [
     "ManagedRamaLamaGateway",
     "OpenAICompatibleLlmGateway",
     "OntologyGuidedKnowledgeProposalExtractor",
-    "OntologyGuidedLlmExtractor",
     "RamaLamaServerConfig",
     "RamaLamaServerError",
     "RamaLamaServerManager",

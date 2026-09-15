@@ -59,7 +59,6 @@ artifact handling and the end-to-end regression scope.
 | Formal ontology | packaged resource | `formal-ontology-resource` | ontology version | `resources/formal_ontologies/<id>/<version>/ontology.yaml` |
 | Semantic prompt | packaged resource | task-owned output schema | prompt version | `resources/semantic/prompts/<task>/<version>/` |
 | Formal semantic projection | persistence | `formal-semantic-projection` | referenced ontology identities | `.atlas/data/formal-semantic-projections/*.json` |
-| Semantic extraction | persistence | `semantic-extraction` | task/prompt/model provenance | `.atlas/data/semantic-extractions/*.json` |
 | Document knowledge proposal | persistence | `document-knowledge-proposal` | run/model/prompt provenance and ontology versions | `.atlas/data/knowledge-proposals/<run-id>/*.json` |
 
 `PublicationDocument` is intentionally absent. It is a runtime-only read model and has no independent persistence or compatibility lifecycle.

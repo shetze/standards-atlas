@@ -30,8 +30,6 @@ __all__ = [
     "FileSystemNormalizedTableRepository",
     "FileSystemTableRetrievalProjectionRepository",
     "FileSystemFormalSemanticProjectionRepository",
-    "FileSystemSemanticExtractionRepository",
 ]
 
 from .formal_semantic_projection_repository import FileSystemFormalSemanticProjectionRepository
-from .semantic_extraction_repository import FileSystemSemanticExtractionRepository

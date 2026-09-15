@@ -28,7 +28,7 @@ The integrated formal projections form the Engineering Knowledge Base. RAG, Grap
 ## Refactoring transition
 Slice 4B establishes canonical `DocumentKnowledge` projection as the only engineering ABox input. Canonical entities and predicates are validated against the exact formal ontology versions recorded by `DocumentKnowledge`; projected assertions retain evidence-anchor IDs, source-clause context, normative force and adoption provenance. The former proposal-to-ABox augmentation path has been removed.
 
-`DocumentSemanticExtraction` remains temporarily as a proposal/qualification artifact only. Slice 5 replaces it with the assertion-centred `DocumentKnowledgeProposal` model and qualification boundary. Slice 5B already routes new model output into evidence-grounded entity/assertion proposals only; unresolved or ambiguous evidence never enters the ABox.
+Slice 5 uses the assertion-centred `DocumentKnowledgeProposal` model as the only model-generated engineering-knowledge proposal contract. Slice 5B routes model output into evidence-grounded entity/assertion proposals only; unresolved or ambiguous evidence never enters the ABox. Slice 5C removes the superseded entity/relation extraction contract and its direct qualification/archive path. Only accepted `EngineeringDocument.knowledge` can be projected into the canonical ABox.
 
 ## Consequences
 Formal reasoning, cross-standard artifact comparison and graph retrieval become possible without making OWL canonical. Evidence-backed `DocumentKnowledge` provides a stable adoption boundary between probabilistic extraction and formal projection, while the CBox/ABox distinction prevents interpretation context from being mistaken for domain knowledge.

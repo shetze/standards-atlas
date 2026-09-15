@@ -8,14 +8,14 @@ import re
 import unicodedata
 from collections.abc import Mapping
 
-from standards_atlas.application.knowledge_proposal_extraction import ground_evidence_quote
-from standards_atlas.application.ports.knowledge_proposals import ClauseKnowledgeProposalResult
-from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
-from standards_atlas.application.semantic_extraction import (
+from standards_atlas.application.knowledge_proposal_extraction import (
     FormalOntologyVocabulary,
     display_clause_reference,
+    ground_evidence_quote,
     project_clause_content,
 )
+from standards_atlas.application.ports.knowledge_proposals import ClauseKnowledgeProposalResult
+from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
 from standards_atlas.domain.model import (
     Clause,
     EntityAssertionObject,

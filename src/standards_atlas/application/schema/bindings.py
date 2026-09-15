@@ -301,10 +301,6 @@ SCHEMA_MARKER_BINDINGS: tuple[MarkerBinding, ...] = (
         "standards_atlas.domain.model.formal_semantics:FormalSemanticProjection",
     ),
     MarkerBinding(
-        "semantic-extraction",
-        "standards_atlas.domain.model.semantic_extraction:DocumentSemanticExtraction",
-    ),
-    MarkerBinding(
         "document-knowledge-proposal",
         "standards_atlas.domain.model.knowledge_proposal:DocumentKnowledgeProposal",
     ),
@@ -364,19 +360,9 @@ SCHEMA_WRITER_BINDINGS: tuple[WriterBinding, ...] = (
         "standards_atlas.application.semantic_qualification.consensus:_write_outputs",
     ),
     WriterBinding(
-        "semantic-extraction",
-        "standards_atlas.adapters.filesystem.semantic_extraction_repository:"
-        "FileSystemSemanticExtractionRepository.save",
-    ),
-    WriterBinding(
         "document-knowledge-proposal",
         "standards_atlas.adapters.filesystem.knowledge_proposal_repository:"
         "FileSystemDocumentKnowledgeProposalRepository.save",
-    ),
-    WriterBinding(
-        "semantic-extraction",
-        "standards_atlas.cli.commands.evaluation_commands.qualification_archive:"
-        "finalize_qualification_archive",
     ),
     WriterBinding(
         "reviewed-alignment-integrity",

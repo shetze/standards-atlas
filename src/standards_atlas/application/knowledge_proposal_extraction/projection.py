@@ -1,4 +1,4 @@
-"""Semantic-extraction-specific textual projections of clause content."""
+"""Proposal-extraction textual projections of canonical clause content."""
 
 from __future__ import annotations
 

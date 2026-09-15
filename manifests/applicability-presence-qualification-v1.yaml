@@ -290,5 +290,3 @@ applicability_decision_policy:
   max_false_positive: 2
   max_false_negative: 2
   required_fresh_repetitions: 3
-semantic_extraction_qualification:
-  enabled: false

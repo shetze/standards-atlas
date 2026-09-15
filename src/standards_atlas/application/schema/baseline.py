@@ -89,9 +89,6 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "formal-semantic-projection": SchemaPolicy(
         "formal-semantic-projection", 1, (1,), ".atlas/data/formal-semantic-projections/*.json"
     ),
-    "semantic-extraction": SchemaPolicy(
-        "semantic-extraction", 1, (1,), ".atlas/data/semantic-extractions/*.json"
-    ),
     "document-knowledge-proposal": SchemaPolicy(
         "document-knowledge-proposal",
         1,

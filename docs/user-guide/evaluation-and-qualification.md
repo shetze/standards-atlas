@@ -32,11 +32,7 @@ Detailed applicability analysis and evaluation commands remain available under `
 
 The assertion-centred model uses `KnowledgeEntity`, `NormativeAssertion` and `EvidenceAnchor`. Model output is a proposal, not canonical knowledge. Assertions become canonical only through the qualification/adoption boundary and retain source and provenance bindings.
 
-The semantic-extraction qualification command is available through:
-
-```bash
-uv run standards-atlas evaluation semantic-extraction-qualify --help
-```
+The former semantic-extraction qualification command was removed in Slice 5C together with its entity/relation artifact contract. Assertion proposals are not treated as qualified knowledge until the assertion-centred qualification workflow introduced in Slice 7.
 
 ## HITL
 

@@ -51,9 +51,6 @@ from standards_atlas.cli.commands.evaluation_commands.review_package import (
     import_review_command,
     show_review_command,
 )
-from standards_atlas.cli.commands.evaluation_commands.semantic_extraction_qualification import (
-    qualify_semantic_extraction,
-)
 from standards_atlas.cli.composition import build_golden_corpus_qualifier
 
 __all__ = [
@@ -81,7 +78,6 @@ __all__ = [
     "qualify_golden_corpus",
     "qualify_model_prompt_matrix",
     "finalize_qualification_archive",
-    "qualify_semantic_extraction",
     "run_evaluation_matrix",
     "run_semantic_evaluation",
     "typer",

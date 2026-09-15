@@ -44,7 +44,6 @@ class WorkflowStage(StrEnum):
     QUALIFICATION_MATRIX = "qualification-matrix"
     APPLICABILITY_DETAIL_ENRICHMENT = "applicability-detail-enrichment"
     APPLICABILITY_DECISION_POLICY = "applicability-decision-policy"
-    SEMANTIC_EXTRACTION_QUALIFICATION = "semantic-extraction-qualification"
     QUALIFICATION_ARCHIVE = "qualification-archive"
 
 
@@ -68,7 +67,6 @@ class WorkflowOperationKind(StrEnum):
     EVALUATION_QUALIFICATION_MATRIX = "evaluation-qualification-matrix"
     EVALUATION_APPLICABILITY_POLICY = "evaluation-applicability-policy"
     EVALUATION_APPLICABILITY_DETAIL = "evaluation-applicability-detail"
-    EVALUATION_SEMANTIC_EXTRACTION = "evaluation-semantic-extraction"
     EVALUATION_QUALIFICATION_ARCHIVE = "evaluation-qualification-archive"
     WORKFLOW_ARCHIVE_BASELINE = "workflow-archive-baseline"
     DOCUMENT_ADOPT_QUALIFICATION = "document-adopt-qualification"

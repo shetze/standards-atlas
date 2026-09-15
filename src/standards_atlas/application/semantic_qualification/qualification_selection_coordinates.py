@@ -1,4 +1,4 @@
-"""Shared selection helpers for semantic extraction qualification and archival."""
+"""Shared qualification-run document/clause coordinate helpers."""
 
 from __future__ import annotations
 

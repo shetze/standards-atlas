@@ -101,7 +101,7 @@ def test_analysis_archive_uses_sequential_run_name_and_embedded_metadata(
         }
         assert metadata["applicability_detail_enrichment"] is None
         assert metadata["applicability_decision_policy"] is None
-        assert metadata["semantic_extraction_qualification"] is None
+        assert "semantic_extraction_qualification" not in metadata
         archive_manifest = json.loads(payload.read("archive-manifest.json"))
         assert archive_manifest["archive_id"] == "qualification-run-001"
         assert archive_manifest["schema_version"] == "1.5"
@@ -302,32 +302,6 @@ def test_collects_reproducible_qualification_inputs(tmp_path: Path) -> None:
     assert members["inputs/corpus/corpus.yaml"] == corpus
     assert "inputs/task/task.yaml" in members
     assert "inputs/prompts/1.0.0/user.txt" in members
-
-
-def test_analysis_archive_embeds_semantic_extraction_qualification_metadata(tmp_path: Path) -> None:
-    manifest = tmp_path / "matrix.yaml"
-    _write_manifest(manifest)
-    output_directory = tmp_path / "local" / "evaluation" / "qualification"
-    report_path = output_directory / "matrix-v1" / "report.json"
-    report_path.parent.mkdir(parents=True)
-    report_path.write_text("{}\n", encoding="utf-8")
-    semantic = {
-        "clauses": 50,
-        "entities": 27,
-        "relations": 11,
-        "ontology_conformance": 1.0,
-        "passed": True,
-    }
-    archive = create_analysis_archive(
-        output_directory=output_directory,
-        matrix_id="matrix-v1",
-        manifest_path=manifest,
-        core_paths=(report_path,),
-        semantic_extraction_qualification=semantic,
-    )
-    with zipfile.ZipFile(archive) as payload:
-        metadata = json.loads(payload.read("qualification-run-metadata.json"))
-        assert metadata["semantic_extraction_qualification"] == semantic
 
 
 def test_analysis_metrics_report_selection_coverage_counts() -> None:

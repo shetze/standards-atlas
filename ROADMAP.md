@@ -12,9 +12,9 @@ T1-T3 now provide first-class table structure, deterministic normalization, and 
 knowledge mapping, and T4 now adds retrieval-specific table/row/concept/relation projections
 behind replaceable tokenizer and index ports. Introduce typed table corpora and dedicated
 qualification for schema recognition, record mapping, relationships, references, recommendation
-matrices, and retrieval quality without weakening the existing clause-classification boundary.
+matrices, and retrieval quality without weakening the assertion-centred proposal, qualification, and adoption boundary.
 
-### Classify existing standards
+### Qualify existing standards
 
 Apply the established taxonomy and Structural Profiles to the existing
 standards corpus and continuously improve quality through evaluation.

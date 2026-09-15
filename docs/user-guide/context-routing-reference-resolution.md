@@ -92,7 +92,7 @@ unknown whole-document targets cannot fall back to the local document.
 
 These examples describe representations, not a finding that those source clauses actually declare
 such scopes. The provider still interprets whether the clause establishes a scope and whether it
-includes descendants. Schema/coordinate validation does not prove semantic extraction accuracy.
+includes descendants. Schema/coordinate validation does not prove assertion proposal extraction accuracy.
 
 The repository composition supplies the available physical-document catalogue. Catalogue identity
 and target structure participate in input/cache fingerprints; unrelated generated attributes do

@@ -157,16 +157,6 @@ _SPECS: dict[WorkflowOperationKind, _Spec] = {
         ("evaluation", "applicability-detail-enrich"),
         (_o("manifest"), _o("run"), _o("corpus_root"), _f("fresh")),
     ),
-    WorkflowOperationKind.EVALUATION_SEMANTIC_EXTRACTION: _Spec(
-        ("evaluation", "semantic-extraction-qualification"),
-        (
-            _o("manifest"),
-            _o("output"),
-            _f("continue_on_qualification_failure", "--no-fail-on-qualification-failure"),
-            _o("limit"),
-            _f("fresh"),
-        ),
-    ),
     WorkflowOperationKind.EVALUATION_QUALIFICATION_ARCHIVE: _Spec(
         ("evaluation", "qualification-archive"),
         (

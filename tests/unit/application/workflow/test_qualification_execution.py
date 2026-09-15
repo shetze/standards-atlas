@@ -53,13 +53,6 @@ def test_evaluation_steps_wait_for_open_document_review_gate(tmp_path: Path) -> 
         operation=WorkflowOperation.create(WorkflowOperationKind.EVALUATION_APPLICABILITY_DETAIL),
         artifact_policy=ArtifactPolicy.DERIVED,
     )
-    semantic = WorkflowStep(
-        family="evaluation",
-        document="matrix-semantic-extraction",
-        stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
-        operation=WorkflowOperation.create(WorkflowOperationKind.EVALUATION_SEMANTIC_EXTRACTION),
-        artifact_policy=ArtifactPolicy.DERIVED,
-    )
     archive = WorkflowStep(
         family="evaluation",
         document="matrix-archive",
@@ -69,7 +62,7 @@ def test_evaluation_steps_wait_for_open_document_review_gate(tmp_path: Path) -> 
     )
     plan = WorkflowPlan(
         ("FAMILY",),
-        (atlasdata, corpus, matrix, detail, semantic, archive),
+        (atlasdata, corpus, matrix, detail, archive),
     )
     runner = RecordingRunner()
     executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
@@ -142,11 +135,11 @@ def test_resume_survives_normal_work_cleanup(tmp_path: Path) -> None:
     )
     failed = WorkflowStep(
         family="evaluation",
-        document="matrix-semantic-extraction",
-        stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
-        operation=WorkflowOperation.create(WorkflowOperationKind.EVALUATION_SEMANTIC_EXTRACTION),
-        artifact_policy=ArtifactPolicy.DERIVED,
-        output_paths=(".atlas/work/workflow/qualification/extraction.complete",),
+        document="matrix-archive",
+        stage=WorkflowStage.QUALIFICATION_ARCHIVE,
+        operation=WorkflowOperation.create(WorkflowOperationKind.EVALUATION_QUALIFICATION_ARCHIVE),
+        artifact_policy=ArtifactPolicy.REVIEW,
+        output_paths=(".atlas/work/workflow/qualification/archive.complete",),
     )
     plan = WorkflowPlan(("FAMILY",), (prepared, failed))
     executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
@@ -332,23 +325,12 @@ def test_completed_full_fresh_invocation_invalidates_all_fresh_stages(tmp_path: 
         artifact_policy=ArtifactPolicy.DERIVED,
         output_paths=(".atlas/work/workflow/qualification/policy.complete",),
     )
-    semantic = WorkflowStep(
-        family="evaluation",
-        document="semantic",
-        stage=WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
-        operation=WorkflowOperation.create(
-            WorkflowOperationKind.EVALUATION_SEMANTIC_EXTRACTION, fresh=True
-        ),
-        artifact_policy=ArtifactPolicy.DERIVED,
-        output_paths=(".atlas/work/workflow/qualification/semantic.complete",),
-    )
     plan = WorkflowPlan(
         ("evaluation",),
-        (matrix, policy, semantic),
+        (matrix, policy),
         fresh_repetition_stages=(
             WorkflowStage.QUALIFICATION_MATRIX,
             WorkflowStage.APPLICABILITY_DECISION_POLICY,
-            WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
         ),
     )
     executor = WorkflowExecutor(WorkflowRecovery(FileSystemWorkflowArtifactStore()))
@@ -357,7 +339,7 @@ def test_completed_full_fresh_invocation_invalidates_all_fresh_stages(tmp_path: 
     repeated = RecordingRunner()
     executor.execute(plan, project_root=tmp_path, runner=repeated)
 
-    assert repeated.operations == [matrix.operation, policy.operation, semantic.operation]
+    assert repeated.operations == [matrix.operation, policy.operation]
 
 
 def test_first_fresh_invocation_after_upgrade_invalidates_legacy_completion_marker(

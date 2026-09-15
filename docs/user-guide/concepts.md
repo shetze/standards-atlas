@@ -52,7 +52,7 @@ semantic and ontology analysis, while deliberately minimal qualification frames 
 
 Standards Atlas uses OWL for formal engineering knowledge while keeping `EngineeringDocument` canonical. A domain-specific **TBox** defines domain concepts, relations, and constraints. The **CBox** is the Standards Atlas interpretation context for a document fragment: it combines Knowledge Domain, deterministic taxonomy, routing/subject context, accepted applicability, structural position, source identity, provenance, and qualification evidence. It describes how a clause is to be interpreted rather than asserting the clause's engineering-domain knowledge itself.
 
-Using clause content plus that context, formal semantic extraction derives an **ABox** containing assertions about concrete activities, artifacts, roles, hazards, techniques, and other domain individuals. Context and domain knowledge therefore remain separate even when they originate from the same clause. Every ABox assertion must retain enough provenance to be traced back through its extraction and qualification evidence to that clause and its source.
+Using clause content plus that context, assertion extraction first creates a non-canonical `DocumentKnowledgeProposal` containing evidence-grounded entities and assertions. Qualification and adoption promote accepted assertions into `EngineeringDocument.knowledge`; only that canonical knowledge is projected into the **ABox**. Context and domain knowledge therefore remain separate even when they originate from the same clause, and every accepted ABox assertion remains traceable to its source evidence and adoption provenance.
 
 ## Knowledge domain and hierarchy
 

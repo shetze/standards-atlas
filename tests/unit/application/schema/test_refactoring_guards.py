@@ -98,13 +98,13 @@ def test_registry_rejects_wrong_key_empty_and_unknown_families():
 )
 def test_writer_payload_cannot_acquire_an_implicit_or_coerced_version(payload):
     with pytest.raises(ValueError):
-        require_current_payload("semantic-extraction", payload)
+        require_current_payload("document-knowledge-proposal", payload)
 
 
 def test_payload_guard_neither_mutates_nor_infers_nested_contracts():
     payload = {"schema_version": 1, "attachment": {"schema_version": "opaque"}, "value": False}
     before = copy.deepcopy(payload)
-    assert require_current_payload("semantic-extraction", payload) is None
+    assert require_current_payload("document-knowledge-proposal", payload) is None
     assert payload == before
 
 

@@ -99,12 +99,6 @@ def test_limit_is_forwarded_to_all_qualification_stages() -> None:
     matrix = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_MATRIX)
     assert _command(matrix)[_command(matrix).index("--limit") + 1] == "50"
 
-    extraction_steps = tuple(
-        step for step in plan.steps if step.stage is WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION
-    )
-    for extraction in extraction_steps:
-        assert _command(extraction)[_command(extraction).index("--limit") + 1] == "50"
-
     archive = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_ARCHIVE)
     assert _command(archive)[_command(archive).index("--limit") + 1] == "50"
 

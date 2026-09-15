@@ -18,7 +18,7 @@ The principal workflows are:
 
 - **documents**: extraction/onboarding, normalization, enrichment, structural taxonomy, composition/publication. This workflow is deterministic with respect to semantic interpretation and must not require LLM services.
 - **corpus**: builds evaluation corpora from canonical physical documents and explicitly selected semantic/profile resources.
-- **qualification**: runs model-assisted semantic classification/extraction and qualification over canonical documents using persisted structural context; accepted outputs provide evidence for later CBox/ABox projection.
+- **qualification**: runs the current applicability qualification pipeline over canonical documents using persisted structural context. Assertion qualification is introduced separately in Slice 7 rather than retaining the removed legacy extraction stage.
 - **knowledge projection/serving**: consumes canonical documents plus accepted/qualified semantic artifacts to build rebuildable CBox/ABox/OWL and retrieval projections. This capability may be exposed as its own workflow task as the implementation matures; it must not be hidden inside document construction.
 
 Typed manifest envelopes declare resources and task configuration. `--overwrite` rebuilds owned artifacts; resumable execution reuses valid persisted artifacts according to workflow contracts. Workflow stages must not implicitly perform work owned by another stage.
@@ -27,8 +27,7 @@ Within the qualification workflow, post-consensus processing has explicit stage 
 
 ```text
 qualification matrix and final consensus
-    -> sparse Applicability detail enrichment, when enabled
-    -> semantic-extraction qualification, when enabled
+    -> sparse Applicability detail enrichment / decision policy, when enabled
     -> immutable qualification archive
 ```
 

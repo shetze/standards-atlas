@@ -369,7 +369,6 @@ def create_analysis_archive(
     execution_policy: dict[str, bool] | None = None,
     applicability_detail_enrichment: dict[str, Any] | None = None,
     applicability_decision_policy: dict[str, Any] | None = None,
-    semantic_extraction_qualification: dict[str, Any] | None = None,
     archive_directory: Path | None = None,
     input_members: Iterable[tuple[Path, str]] = (),
 ) -> Path:
@@ -395,7 +394,6 @@ def create_analysis_archive(
         execution_policy=execution_policy,
         applicability_detail_enrichment=applicability_detail_enrichment,
         applicability_decision_policy=applicability_decision_policy,
-        semantic_extraction_qualification=semantic_extraction_qualification,
     )
     metadata_bytes = _json_bytes(metadata)
 
@@ -492,7 +490,6 @@ def _build_run_metadata(
     execution_policy: dict[str, bool] | None,
     applicability_detail_enrichment: dict[str, Any] | None = None,
     applicability_decision_policy: dict[str, Any] | None = None,
-    semantic_extraction_qualification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     prompts = [
         {
@@ -552,7 +549,6 @@ def _build_run_metadata(
         "result": result,
         "applicability_detail_enrichment": applicability_detail_enrichment,
         "applicability_decision_policy": applicability_decision_policy,
-        "semantic_extraction_qualification": semantic_extraction_qualification,
     }
     require_current_payload("qualification-run-metadata", payload)
     return payload

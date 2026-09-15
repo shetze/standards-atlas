@@ -6,6 +6,9 @@ import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
+from standards_atlas.application.knowledge_proposal_extraction.references import (
+    display_clause_reference,
+)
 from standards_atlas.application.ports.knowledge_proposals import KnowledgeProposalExtractor
 from standards_atlas.application.ports.llm_gateway import (
     LlmGatewayError,
@@ -13,7 +16,6 @@ from standards_atlas.application.ports.llm_gateway import (
     LlmTimeoutError,
     LlmUnavailableError,
 )
-from standards_atlas.application.semantic_extraction.references import display_clause_reference
 from standards_atlas.domain.model import (
     Clause,
     ClauseApplicability,

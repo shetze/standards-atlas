@@ -42,10 +42,6 @@ from standards_atlas.application.ports.retrieval import (
     RetrievalProjectionWriter,
     RetrievalTokenizer,
 )
-from standards_atlas.application.ports.semantic_extraction import (
-    SemanticExtractionRepository,
-    SemanticKnowledgeExtractor,
-)
 from standards_atlas.application.ports.workflow_artifacts import (
     ExtractionState,
     WorkflowArtifactStore,
@@ -63,8 +59,6 @@ __all__ = [
     "FormalSemanticSerializer",
     "RetrievalProjectionWriter",
     "RetrievalTokenizer",
-    "SemanticExtractionRepository",
-    "SemanticKnowledgeExtractor",
     "AlignmentReviewStore",
     "AlignmentStore",
     "AtlasDataDocumentReader",

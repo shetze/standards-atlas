@@ -10,11 +10,7 @@ import typer
 import yaml
 
 from standards_atlas.adapters.evaluation.archive_receipt import write_archive_receipt
-from standards_atlas.adapters.filesystem import FileSystemSemanticExtractionRepository
-from standards_atlas.application.formal_semantics.resource_repository import (
-    ResourceFormalOntologyRepository,
-)
-from standards_atlas.application.schema import require_current_payload, require_supported_schema
+from standards_atlas.application.schema import require_supported_schema
 from standards_atlas.application.semantic_qualification.analysis_archive import (
     collect_qualification_input_members,
     create_analysis_archive,
@@ -71,12 +67,6 @@ from standards_atlas.application.semantic_qualification.run_selection import (
     load_qualification_run_selection,
     qualification_snapshot_members,
 )
-from standards_atlas.application.semantic_qualification.semantic_extraction_run_provenance import (
-    validate_semantic_extraction_qualification_provenance,
-)
-from standards_atlas.application.semantic_qualification.semantic_extraction_selection import (
-    selected_clause_ids_by_document,
-)
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
 
@@ -88,7 +78,6 @@ def finalize_qualification_archive(
     archive_output: Annotated[Path, typer.Option("--archive-output", file_okay=False)] = Path(
         "local/evaluation"
     ),
-    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = Path(".atlas/data"),
     resources: Annotated[Path, typer.Option("--resources", file_okay=False)] = (
         cli_defaults.DEFAULT_EVALUATION_RESOURCES
     ),
@@ -114,7 +103,7 @@ def finalize_qualification_archive(
     run_directory = output / manifest.matrix_id
     if receipt is not None:
         target = receipt.resolve()
-        protected = (workspace.resolve(), output.resolve(), corpus_root.resolve())
+        protected = (output.resolve(), corpus_root.resolve())
         if target == manifest_path.resolve() or any(target.is_relative_to(p) for p in protected):
             raise typer.BadParameter(
                 "archive receipt must be outside source/qualification artifacts"
@@ -413,40 +402,6 @@ def finalize_qualification_archive(
             raise typer.BadParameter(str(exc)) from exc
         policy_summary = summary.model_dump(mode="json")
 
-    semantic_report_path = run_directory / "semantic-extraction-qualification.json"
-    semantic_report: dict[str, Any] | None = None
-    if manifest.semantic_extraction_qualification.enabled:
-        if not semantic_report_path.is_file():
-            raise typer.BadParameter(
-                f"semantic extraction qualification report not found: {semantic_report_path}"
-            )
-        semantic_report = json.loads(semantic_report_path.read_text(encoding="utf-8"))
-        try:
-            validate_semantic_extraction_qualification_provenance(
-                semantic_report,
-                run_directory=run_directory,
-                selection=run_selection,
-                config=manifest.semantic_extraction_qualification,
-            )
-        except ValueError as exc:
-            raise typer.BadParameter(str(exc)) from exc
-        selected_count = semantic_report.get("selected_clause_count")
-        context_count = semantic_report.get("eligibility_context_clause_count")
-        if selected_count != run_selection.selected_clause_count:
-            raise typer.BadParameter(
-                "semantic extraction qualification selection differs from matrix selection: "
-                f"{selected_count} vs {run_selection.selected_clause_count} clauses"
-            )
-        if coverage is None:
-            raise typer.BadParameter(
-                "semantic extraction qualification requires consensus qualification coverage"
-            )
-        if context_count != coverage.qualified_clause_count:
-            raise typer.BadParameter(
-                "semantic extraction eligibility context disagrees with persisted qualification "
-                f"coverage: {context_count}/{coverage.qualified_clause_count} qualified clauses"
-            )
-
     core_paths = tuple(
         path
         for path in sorted(run_directory.rglob("*"))
@@ -499,74 +454,6 @@ def finalize_qualification_archive(
         if isinstance(policy, dict):
             execution_policy = policy
 
-    if semantic_report is not None:
-        formal_repository = ResourceFormalOntologyRepository()
-        for reference in manifest.semantic_extraction_qualification.ontology_versions:
-            ontology_id, version = reference.split("@", maxsplit=1)
-            definition = formal_repository.load(ontology_id, version)
-            base = (
-                Path(__file__).parents[3]
-                / "resources"
-                / "formal_ontologies"
-                / ontology_id
-                / version
-            )
-            input_members.append(
-                (
-                    base / "ontology.yaml",
-                    f"inputs/formal-ontologies/{ontology_id}/{version}/ontology.yaml",
-                )
-            )
-            input_members.append(
-                (
-                    base / definition.resource,
-                    f"inputs/formal-ontologies/{ontology_id}/{version}/{definition.resource}",
-                )
-            )
-
-        selected_by_document = selected_clause_ids_by_document(selected_examples)
-        repository = FileSystemSemanticExtractionRepository(workspace)
-        snapshot_root = run_directory / "archive-inputs" / "semantic-extractions"
-        snapshot_root.mkdir(parents=True, exist_ok=True)
-        for document_key, clause_ids in sorted(selected_by_document.items()):
-            extraction = repository.load(document_key)
-            if extraction is None:
-                continue
-            filtered = extraction.model_copy(
-                update={
-                    "clauses": tuple(
-                        item for item in extraction.clauses if item.clause_id in clause_ids
-                    ),
-                    "failures": tuple(
-                        item for item in extraction.failures if item.clause_id in clause_ids
-                    ),
-                }
-            )
-            if not filtered.clauses and not filtered.failures:
-                continue
-            safe = (
-                document_key.strip()
-                .replace("/", "_")
-                .replace("\\", "_")
-                .replace(":", "_")
-                .replace(" ", "_")
-            )
-            snapshot = snapshot_root / f"{safe}.json"
-            payload = {"schema_version": 1, "extraction": filtered.model_dump(mode="json")}
-            require_current_payload("semantic-extraction", payload)
-            require_current_payload("semantic-extraction", payload["extraction"])
-            snapshot.write_text(
-                json.dumps(
-                    payload,
-                    indent=2,
-                    ensure_ascii=False,
-                    sort_keys=True,
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-            input_members.append((snapshot, f"semantic-extractions/{snapshot.name}"))
-
     archive = create_analysis_archive(
         output_directory=output,
         matrix_id=manifest.matrix_id,
@@ -578,7 +465,6 @@ def finalize_qualification_archive(
         execution_policy=execution_policy,
         applicability_detail_enrichment=detail_summary,
         applicability_decision_policy=policy_summary,
-        semantic_extraction_qualification=semantic_report,
         archive_directory=archive_output,
         input_members=tuple(input_members),
     )

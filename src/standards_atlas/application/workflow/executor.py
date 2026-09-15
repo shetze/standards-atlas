@@ -47,7 +47,6 @@ class WorkflowExecutor:
                     WorkflowStage.QUALIFICATION_MATRIX,
                     WorkflowStage.APPLICABILITY_DETAIL_ENRICHMENT,
                     WorkflowStage.APPLICABILITY_DECISION_POLICY,
-                    WorkflowStage.SEMANTIC_EXTRACTION_QUALIFICATION,
                     WorkflowStage.QUALIFICATION_ARCHIVE,
                     WorkflowStage.KNOWLEDGE_ADOPT,
                     WorkflowStage.KNOWLEDGE_PUBLISH,

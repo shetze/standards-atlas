@@ -166,16 +166,6 @@ from standards_atlas.domain.model.retrieval_projection import (
     RetrievalProjection,
     RetrievalTokenizationProfile,
 )
-from standards_atlas.domain.model.semantic_extraction import (
-    ClauseSemanticExtraction,
-    DocumentSemanticExtraction,
-    ExtractedEntity,
-    ExtractedRelation,
-    ExtractionAttempt,
-    ExtractionFailure,
-    ExtractionProvenance,
-    ExtractionViolation,
-)
 from standards_atlas.domain.model.source_evidence import (
     BoundingBox,
     CoordinateOrigin,
@@ -259,14 +249,6 @@ __all__ = [
     "GenerationMethod",
     "KnowledgeStateProvenance",
     "FORMAL_SEMANTIC_NAMESPACE",
-    "ClauseSemanticExtraction",
-    "DocumentSemanticExtraction",
-    "ExtractedEntity",
-    "ExtractedRelation",
-    "ExtractionAttempt",
-    "ExtractionFailure",
-    "ExtractionProvenance",
-    "ExtractionViolation",
     "FORMAL_SEMANTIC_PREFIX",
     "ContextFacet",
     "ContextFrame",

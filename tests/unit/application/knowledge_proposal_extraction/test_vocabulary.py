@@ -1,4 +1,4 @@
-from standards_atlas.application.semantic_extraction import FormalOntologyVocabulary
+from standards_atlas.application.knowledge_proposal_extraction import FormalOntologyVocabulary
 from standards_atlas.domain.model import FORMAL_SEMANTIC_NAMESPACE
 
 
