@@ -4,6 +4,7 @@ import pytest
 
 from standards_atlas.application.knowledge_proposal_extraction import (
     TABLE_KNOWLEDGE_PROJECTION_VERSION,
+    DocumentKnowledgeProposalUnifier,
     TableKnowledgeProposalProjector,
 )
 from standards_atlas.domain.model import (
@@ -22,7 +23,7 @@ from standards_atlas.domain.model import (
 )
 
 STAT = "http://lunetix.org/standards-atlas#"
-ONTOLOGIES = ("standards-atlas-core@2.0.0", "functional-safety@2.0.0")
+ONTOLOGIES = ("standards-atlas-core@2.0.0", "functional-safety@2.1.0")
 
 
 def _matrix_document(
@@ -59,6 +60,55 @@ def _project(document: EngineeringDocument):
         document,
         proposal_run_id="table-run",
         ontology_versions=ONTOLOGIES,
+    )
+
+
+def _recommendation_document() -> EngineeringDocument:
+    table = TableBlock(
+        id="table-a2",
+        caption="Table A.2 — Software architecture design (see 7.4.3)",
+        rows=(
+            TableRow(
+                cells=tuple(
+                    TableCell(text=value, is_header=True)
+                    for value in (
+                        "Ref",
+                        "Technique/measure",
+                        "See IEC 61508-7",
+                        "SIL 1",
+                        "SIL 2",
+                        "SIL 3",
+                        "SIL 4",
+                    )
+                )
+            ),
+            TableRow(
+                cells=tuple(
+                    TableCell(text=value)
+                    for value in (
+                        "1b",
+                        "Formal methods",
+                        "B.2.2, C.2.4",
+                        "—",
+                        "R",
+                        "R",
+                        "HR",
+                    )
+                )
+            ),
+        ),
+    )
+    clause = Clause(
+        id=ClauseId(value="iec61508-3-a2"),
+        reference=StandardReference(standard="IEC61508-3", clause="A.2"),
+        clause_type=ClauseType.CLAUSE,
+        content=(table,),
+    )
+    return EngineeringDocument(
+        key=DocumentKey(value="IEC61508-3"),
+        title="IEC 61508-3",
+        document_type=DocumentType.STANDARD,
+        clauses=(clause,),
     )
 
 
@@ -224,5 +274,91 @@ def test_rejects_ontology_selection_without_required_core_vocabulary() -> None:
         TableKnowledgeProposalProjector().project_document(
             document,
             proposal_run_id="table-run",
-            ontology_versions=("functional-safety@2.0.0",),
+            ontology_versions=("functional-safety@2.1.0",),
+        )
+
+
+def test_projects_qualified_technique_recommendations_without_flattening() -> None:
+    document = _recommendation_document()
+
+    proposal = _project(document)
+
+    by_class: dict[str, list] = {}
+    for entity in proposal.entity_proposals:
+        by_class.setdefault(entity.class_iri, []).append(entity)
+    assert len(by_class[f"{STAT}TechniqueRecommendation"]) == 4
+    assert len(by_class[f"{STAT}SafetyTechniqueOrMeasure"]) == 1
+    assert len(by_class[f"{STAT}SafetyIntegrityLevel"]) == 4
+    assert len(by_class[f"{STAT}RecommendationLevel"]) == 4
+
+    predicates = [item.predicate for item in proposal.assertion_proposals]
+    assert predicates.count(f"{STAT}recommendsTechnique") == 4
+    assert predicates.count(f"{STAT}hasIntegrityLevel") == 4
+    assert predicates.count(f"{STAT}hasRecommendationLevel") == 4
+    assert predicates.count(f"{STAT}localIdentifier") == 4
+    assert predicates.count(f"{STAT}alternativeGroup") == 4
+    assert predicates.count(f"{STAT}descriptionReference") == 8
+    assert predicates.count(f"{STAT}contextReference") == 4
+    assert all(item.normative_force.value == "unspecified" for item in proposal.assertion_proposals)
+
+    literals = {
+        (item.predicate, item.object.value)
+        for item in proposal.assertion_proposals
+        if item.object.kind == "literal"
+    }
+    assert (f"{STAT}localIdentifier", "1b") in literals
+    assert (f"{STAT}alternativeGroup", "1") in literals
+    assert (f"{STAT}descriptionReference", "IEC61508-7:B.2.2") in literals
+    assert (f"{STAT}descriptionReference", "IEC61508-7:C.2.4") in literals
+    assert (f"{STAT}contextReference", "IEC61508-3:7.4.3") in literals
+
+    evidence = {
+        _evidence_text(document, proposal, anchor.id) for anchor in proposal.evidence_anchors
+    }
+    assert {
+        "Formal methods",
+        "1b",
+        "SIL 1",
+        "SIL 2",
+        "SIL 3",
+        "SIL 4",
+        "—",
+        "R",
+        "HR",
+        "B.2.2",
+        "C.2.4",
+        "7.4.3",
+    } <= evidence
+
+
+def test_unification_preserves_reified_recommendations_and_merges_shared_levels() -> None:
+    proposal = _project(_recommendation_document())
+
+    unified = DocumentKnowledgeProposalUnifier().unify(
+        (proposal,), proposal_run_id="unified-table-run"
+    )
+
+    by_class: dict[str, list] = {}
+    for entity in unified.entity_proposals:
+        by_class.setdefault(entity.class_iri, []).append(entity)
+    assert len(by_class[f"{STAT}TechniqueRecommendation"]) == 4
+    assert len(by_class[f"{STAT}SafetyTechniqueOrMeasure"]) == 1
+    assert len(by_class[f"{STAT}SafetyIntegrityLevel"]) == 4
+    levels = by_class[f"{STAT}RecommendationLevel"]
+    assert {item.normalized_label for item in levels} == {
+        "neutral",
+        "recommended",
+        "highly recommended",
+    }
+    recommended = next(item for item in levels if item.normalized_label == "recommended")
+    assert len(recommended.source_anchor_ids) == 2
+    assert len(unified.assertion_proposals) == len(proposal.assertion_proposals)
+
+
+def test_qualified_recommendations_require_functional_safety_2_1_vocabulary() -> None:
+    with pytest.raises(ValueError, match="Formal Ontology 2.1 vocabulary"):
+        TableKnowledgeProposalProjector().project_document(
+            _recommendation_document(),
+            proposal_run_id="legacy-ontology-run",
+            ontology_versions=("standards-atlas-core@2.0.0",),
         )

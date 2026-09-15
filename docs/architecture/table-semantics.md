@@ -39,7 +39,7 @@ the same `KnowledgeEntityProposal` / `NormativeAssertionProposal` contracts befo
 table projector emits a distinct run-scoped proposal with deterministic projector provenance.
 Slice 6B combines prose and table runs only through a deterministic proposal unifier that preserves
 direct input-run hashes/provenance and performs document-local entity resolution before later
-qualification.
+qualification. Slice 6C completes the deterministic table proposal path for IEC 61508 qualified technique recommendations by reifying the n-ary recommendation rather than flattening its qualifier into one binary predicate.
 
 AtlasData publishes table structure through `TABLE` and `TABLEINDEX` records only. It never
 publishes table cells. This allows onboarding and review to compare declared and detected
@@ -83,6 +83,17 @@ Ontology 2.0 proposal assertions. The resulting directions are `WorkProduct prod
 No normative force is inferred from matrix shape, so these deterministic assertions use
 `unspecified` force until qualification/adoption supplies stronger authority. Applicability remains
 CBox-oriented and is deliberately not projected by the 6A engineering-knowledge projector.
+
+Slice 6C handles `TECHNIQUE_RECOMMENDATION_MATRIX` separately. For every technique × SIL cell it
+creates a source-scoped `TechniqueRecommendation` entity and links it with
+`recommendsTechnique`, `hasIntegrityLevel`, and `hasRecommendationLevel`. Recommendation level is
+a first-class `RecommendationLevel` entity, so `HR`, `R`, `—`, and `NR` remain semantic qualifiers
+rather than being collapsed into `NormativeForce`. The row's local identifier and alternative
+group plus deterministic IEC 61508-7 description and table-context references are retained as
+literal assertions. Technique cells, SIL headers, recommendation markers, reference tokens, and
+caption references all receive exact `Clause.plain_text` evidence anchors. These deterministic-only
+ontology terms are declared by `functional-safety@2.1.0` but are intentionally absent from the LLM
+source-extraction vocabulary.
 
 Schemas are applied only when required normalized headers and non-empty row values are present.
 Multi-level headers and row-spanning values are consumed from the T2 logical grid. An ambiguous
@@ -128,7 +139,8 @@ embedding models, vector stores, and GraphRAG implementations remain replaceable
 Projection and interpretation are implemented and covered by deterministic tests. Slice 6A
 projects work-product, responsibility, traceability and verification-criteria matrices into
 `DocumentKnowledgeProposal`; Slice 6B unifies prose/table runs and resolves document-local entities
-without fuzzy matching. Qualified technique/recommendation relations remain Slice 6C. A dedicated
-assertion/table qualification
-corpus and HITL review flow are introduced only after the unified proposal path is complete. See
+without fuzzy matching; Slice 6C now projects qualified IEC 61508 technique recommendations through
+the same proposal boundary without losing SIL/recommendation qualifiers. A dedicated assertion/table
+qualification corpus and HITL review flow are introduced only after the unified proposal path is
+complete. See
 the [structured table corpus roadmap](../roadmap/structured-table-corpora.md).

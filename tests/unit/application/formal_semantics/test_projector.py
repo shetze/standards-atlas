@@ -30,7 +30,7 @@ STAT = "http://lunetix.org/standards-atlas#"
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 ONTOLOGY_VERSIONS = (
     "standards-atlas-core@2.0.0",
-    "functional-safety@2.0.0",
+    "functional-safety@2.1.0",
 )
 
 

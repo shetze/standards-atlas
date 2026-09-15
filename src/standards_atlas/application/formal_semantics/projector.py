@@ -29,7 +29,7 @@ from .resource_repository import ResourceFormalOntologyRepository
 
 PROJECTION_VERSION = "1.0.0"
 CORE_ONTOLOGY_VERSION = "standards-atlas-core@2.0.0"
-FUNCTIONAL_SAFETY_ONTOLOGY_VERSION = "functional-safety@2.0.0"
+FUNCTIONAL_SAFETY_ONTOLOGY_VERSION = "functional-safety@2.1.0"
 RDF_TYPE = SemanticResource(iri="http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
 
 _RELATION_PREDICATES: dict[SemanticRelationKind, str] = {

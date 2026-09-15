@@ -18,7 +18,7 @@ from standards_atlas.domain.model import (
 )
 
 STAT = "http://lunetix.org/standards-atlas#"
-ONTOLOGIES = ("standards-atlas-core@2.0.0", "functional-safety@2.0.0")
+ONTOLOGIES = ("standards-atlas-core@2.0.0", "functional-safety@2.1.0")
 
 
 def _anchor(anchor_id: str, clause_id: str, text: str, start: int) -> EvidenceAnchor:

@@ -1,6 +1,22 @@
 # Changelog
 
 
+## Unreleased — Structured knowledge unification Slice 6C (2026-09-15)
+
+- Project IEC 61508 technique-recommendation matrices into `DocumentKnowledgeProposal` without
+  flattening the technique × SIL × recommendation-level relation into a lossy binary predicate.
+- Reify each qualified recommendation as a `TechniqueRecommendation` entity linked to
+  `SafetyTechniqueOrMeasure`, `SafetyIntegrityLevel`, and `RecommendationLevel` entities.
+- Preserve local row identifiers, alternative groups, IEC 61508-7 description references, and
+  table-context clause references as deterministic source-bound literal assertions.
+- Ground technique cells, SIL headers, recommendation markers, reference tokens, local identifiers,
+  and caption references to exact canonical `Clause.plain_text` evidence spans.
+- Advance the Functional Safety formal ontology resource to 2.1.0 for the deterministic
+  recommendation vocabulary while keeping those terms outside the LLM extraction vocabulary.
+- Keep recommendation markers separate from assertion `NormativeForce`; qualification and adoption
+  remain later explicit boundaries.
+
+
 ## Unreleased — Structured knowledge unification Slice 6B (2026-09-15)
 
 - Add deterministic document-local `DocumentKnowledgeProposal` unification across prose and

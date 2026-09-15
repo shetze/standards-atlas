@@ -18,7 +18,7 @@ source table -> DocumentTable -> NormalizedTable -> StructuredKnowledgeRecord ->
 
 - `DocumentTable` preserves source identity, location, caption, cells, spans, and structural ownership.
 - `NormalizedTable` provides deterministic row/column semantics and normalized headers without discarding source evidence.
-- Domain-specific deterministic mapping may produce `StructuredKnowledgeRecord` instances for supported table patterns.
+- Domain-specific deterministic mapping may produce `StructuredKnowledgeRecord` instances for supported table patterns. Qualified n-ary recommendations are reified when projected into assertion proposals so table qualifiers are not lost.
 - Retrieval/GraphRAG projections are derived and replaceable.
 - LLM extraction may consume normalized tables, but does not define canonical table structure.
 

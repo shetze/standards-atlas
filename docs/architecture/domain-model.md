@@ -90,10 +90,14 @@ subclass chain, aliases/evidence are unioned, and assertions are rewritten to th
 IDs. Incompatible sibling types and ambiguous generic matches remain separate. Table evidence is
 bound to exact source-cell spans in canonical
 `Clause.plain_text`; repeated labels are disambiguated structurally by table block and logical
-row/column coordinates. Applicability and qualified technique-recommendation matrices stay outside
-this 6A projection. IEC 61508 interpretations retain SIL-qualified recommendation levels and
-resolved clause references for the later specialized projection. Unrecognized or ambiguous tables
-remain generic rather than receiving guessed semantics.
+row/column coordinates. Applicability remains outside engineering ABox projection. Slice 6C
+projects IEC 61508 technique matrices without flattening their qualifiers: one reified
+`TechniqueRecommendation` entity represents each technique × SIL statement and links to the
+technique, `SafetyIntegrityLevel`, and normalized `RecommendationLevel`. Local identifiers,
+alternative groups, IEC 61508-7 description references, and table-context references remain
+source-bound literal assertions. `HR`/`R`/`—`/`NR` are recommendation levels and are not
+misrepresented as assertion `NormativeForce`. Unrecognized or ambiguous tables remain generic
+rather than receiving guessed semantics.
 
 See [Table semantics](table-semantics.md) for the projection and evaluation boundaries.
 

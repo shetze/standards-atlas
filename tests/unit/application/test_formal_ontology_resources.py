@@ -54,12 +54,12 @@ def test_core_2_0_uses_canonical_namespace_and_engineering_artifact_model(
         assert removed not in text
 
 
-def test_functional_safety_2_0_imports_core_and_models_reports_as_work_products(
+def test_functional_safety_2_1_imports_core_and_models_qualified_recommendations(
     repository: ResourceFormalOntologyRepository,
 ) -> None:
-    definition = repository.load("functional-safety", "2.0.0")
+    definition = repository.load("functional-safety", "2.1.0")
     assert definition.imports == ("http://lunetix.org/standards-atlas/core/2.0.0",)
-    text = repository.read_text("functional-safety", "2.0.0")
+    text = repository.read_text("functional-safety", "2.1.0")
     assert "owl:imports <http://lunetix.org/standards-atlas/core/2.0.0>" in text
     for term in (
         "stat:VerificationPlan a owl:Class ; rdfs:subClassOf stat:Plan",
@@ -69,6 +69,13 @@ def test_functional_safety_2_0_imports_core_and_models_reports_as_work_products(
         "stat:VerificationCriterion a owl:Class ; rdfs:subClassOf stat:Criterion",
         "stat:VerificationActivity a owl:Class",
         "stat:SafetyIntegrityLevel a owl:Class",
+        "stat:TechniqueRecommendation a owl:Class",
+        "stat:RecommendationLevel a owl:Class",
+        "stat:recommendsTechnique a owl:ObjectProperty",
+        "stat:hasRecommendationLevel a owl:ObjectProperty",
+        "stat:alternativeGroup a owl:DatatypeProperty",
+        "stat:descriptionReference a owl:DatatypeProperty",
+        "stat:contextReference a owl:DatatypeProperty",
     ):
         assert term in text
     assert "EvidenceArtifact" not in text

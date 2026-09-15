@@ -1,8 +1,8 @@
 schema_version: 1
 id: functional-safety
-version: 2.0.0
+version: 2.1.0
 ontology_iri: http://lunetix.org/standards-atlas/functional-safety
-version_iri: http://lunetix.org/standards-atlas/functional-safety/2.0.0
+version_iri: http://lunetix.org/standards-atlas/functional-safety/2.1.0
 namespace: http://lunetix.org/standards-atlas#
 prefix: stat
 resource: ontology.ttl

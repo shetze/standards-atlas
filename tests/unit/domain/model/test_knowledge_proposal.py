@@ -22,7 +22,7 @@ from standards_atlas.domain.model import (
 STAT = "http://lunetix.org/standards-atlas#"
 ONTOLOGY_VERSIONS = (
     "standards-atlas-core@2.0.0",
-    "functional-safety@2.0.0",
+    "functional-safety@2.1.0",
 )
 
 

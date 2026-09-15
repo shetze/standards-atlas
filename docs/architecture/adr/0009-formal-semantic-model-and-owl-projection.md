@@ -20,7 +20,7 @@ Formal semantics use versioned ontology resources and an explicit TBox/RBox/ABox
 - Proposal runs, disagreements and rejected model outputs remain separate evaluation artifacts and do not enter the ABox merely because an extractor produced them.
 - Every projected assertion retains links to its canonical `EvidenceAnchor`, originating clause and adoption provenance.
 - Cross-document matching, equivalence and domain-transfer relations are derived views. They do not rewrite source-document assertions.
-- The active formal ontology set is `standards-atlas-core@2.0.0` plus optional `functional-safety@2.0.0`. Core 2.0 models `EngineeringArtifact`/`WorkProduct`; evidence is expressed by `providesEvidenceFor`, not by an `EvidenceArtifact` class.
+- The active formal ontology set is `standards-atlas-core@2.0.0` plus optional `functional-safety@2.1.0`. Core 2.0 models `EngineeringArtifact`/`WorkProduct`; evidence is expressed by `providesEvidenceFor`, not by an `EvidenceArtifact` class.
 - Formal ontology descriptors expose an explicit source-extraction vocabulary. Technical structure, projection, CBox and provenance properties stay outside that view even though they remain valid formal terms.
 
 The integrated formal projections form the Engineering Knowledge Base. RAG, GraphRAG, vector indexes and graph-query stores are replaceable serving adapters over canonical or formal projections. Chat, MCP, Doorstop, heatmaps and assurance workflows consume those layers; they do not define them.
