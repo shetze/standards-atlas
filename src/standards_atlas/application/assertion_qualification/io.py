@@ -18,8 +18,48 @@ from standards_atlas.application.assertion_qualification.policy_models import (
     AssertionAutoAdoptionPolicy,
     AssertionAutoAdoptionReport,
 )
+from standards_atlas.application.assertion_qualification.review_pilot_models import (
+    ApplicabilitySelectionCorpus,
+    AssertionReviewPilot,
+)
 from standards_atlas.application.schema import require_current_payload, require_supported_schema
 from standards_atlas.domain.model import DocumentKnowledgeProposal
+
+
+def load_applicability_selection_corpus(path: Path) -> ApplicabilitySelectionCorpus:
+    """Load the current applicability gold contract only as a pilot selection source."""
+    payload = _load_mapping(path)
+    require_supported_schema("applicability-golden-corpus", payload.get("schema_version"))
+    return ApplicabilitySelectionCorpus.model_validate(payload)
+
+
+def load_assertion_review_pilot(path: Path) -> AssertionReviewPilot:
+    payload = _load_mapping(path)
+    require_supported_schema("assertion-review-pilot", payload.get("schema_version"))
+    return AssertionReviewPilot.model_validate(payload)
+
+
+def write_assertion_review_pilot(review: AssertionReviewPilot, path: Path) -> Path:
+    payload = review.model_dump(mode="json")
+    require_current_payload("assertion-review-pilot", payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        yaml.safe_dump(payload, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    return path
+
+
+def write_assertion_golden_suite(suite: AssertionGoldenSuite, path: Path) -> Path:
+    payload = suite.model_dump(mode="json")
+    require_current_payload("assertion-golden-suite", payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.suffix.lower() == ".json":
+        rendered = json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+    else:
+        rendered = yaml.safe_dump(payload, sort_keys=False, allow_unicode=True)
+    path.write_text(rendered, encoding="utf-8")
+    return path
 
 
 def load_assertion_golden_suite(path: Path) -> AssertionGoldenSuite:

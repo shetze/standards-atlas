@@ -34,6 +34,72 @@ The assertion-centred model uses `KnowledgeEntity`, `NormativeAssertion` and `Ev
 
 The former semantic-extraction qualification command was removed in Slice 5C together with its entity/relation artifact contract. Assertion proposals are not treated as qualified knowledge until the assertion-centred qualification workflow introduced in Slice 7.
 
+## Assertion review pilot (Slice 7D)
+
+Slice 7D provides a deliberately small file-based pilot before the generic HITL workbench is
+converted to assertion review. The existing applicability golden corpus is used **only to select
+difficult clauses**. Its `expected.present` value is retained as provenance and is never converted
+into an assertion expectation. The builder verifies clause id, document key, reference and exact
+source text against the current `EngineeringDocument` before creating an editable review artifact.
+
+Build a deterministic 20-clause pilot (or repeat `--clause-id` for an explicit selection):
+
+```bash
+uv run standards-atlas evaluation assertion-review-pilot-build \
+  --source local/review/applicability/applicability-golden-corpus.yaml \
+  --ontology-version standards-atlas-core@2.0.0 \
+  --ontology-version functional-safety@2.1.0 \
+  --limit 20 \
+  --output local/review/assertions/pilot/assertion-review-pilot.yaml
+```
+
+Run the existing assertion cascade once per selected document. `--review-pilot` derives the exact
+Clause IDs from the review artifact, so the later golden suite and proposal population stay aligned:
+
+```bash
+uv run standards-atlas evaluation assertion-cascade \
+  --review-pilot local/review/assertions/pilot/assertion-review-pilot.yaml \
+  --document-key EN50716 \
+  --ontology-version standards-atlas-core@2.0.0 \
+  --ontology-version functional-safety@2.1.0 \
+  --efficient-model <model> \
+  --verifier-model <model> \
+  --escalation-model <model> \
+  --cascade-run-id assertion-pilot-en50716 \
+  --efficient-run-id assertion-pilot-en50716-efficient \
+  --escalation-run-id assertion-pilot-en50716-escalation \
+  --output local/evaluation/assertion-pilot-en50716-cascade.json
+```
+
+Attach the final cascade route and candidates for that document to the review artifact. Supply the
+escalation proposal only when the cascade report contains an escalation source:
+
+```bash
+uv run standards-atlas evaluation assertion-review-pilot-attach \
+  --review local/review/assertions/pilot/assertion-review-pilot.yaml \
+  --cascade-report local/evaluation/assertion-pilot-en50716-cascade.json \
+  --efficient-proposal .atlas/data/knowledge-proposals/assertion-pilot-en50716-efficient/EN50716.json \
+  --escalation-proposal .atlas/data/knowledge-proposals/assertion-pilot-en50716-escalation/EN50716.json
+```
+
+Reviewers then set every case to `review_status: reviewed` and populate `expected.entities` and
+`expected.assertions`. Entity IDs are case-local conveniences. Evidence is annotated with exact
+`start_offset`/`end_offset` values in the embedded, verified clause text; publication computes the
+content hash automatically. A reviewed case with empty `entities` and `assertions` is an explicit
+negative assertion case.
+
+Publish only after all selected cases have been reviewed:
+
+```bash
+uv run standards-atlas evaluation assertion-review-pilot-publish \
+  --review local/review/assertions/pilot/assertion-review-pilot.yaml \
+  --output local/review/assertions/pilot/assertion-golden-suite.yaml
+```
+
+Publication deterministically merges semantically identical case-local entities within each document
+and emits the existing `AssertionGoldenSuite` schema. The applicability corpus itself is not migrated
+or modified.
+
 ## HITL
 
 The review-package infrastructure is retained as the generic human-review substrate. Legacy taxonomy, role, statement-function, knowledge-kind and process-function review campaigns have been removed. Future review packages should operate on assertion/evidence proposals rather than resurrecting clause-level classification labels.

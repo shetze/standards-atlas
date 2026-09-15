@@ -438,6 +438,12 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "normalization-golden-case",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.review_pilot_models:"
+        "AssertionReviewPilot",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-review-pilot",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.application.assertion_qualification.models:AssertionGoldenSuite",
         SchemaMarkerDisposition.CENTRAL,
         "assertion-golden-suite",
@@ -967,6 +973,14 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
             "Non-canonical assertion proposals are run-scoped and retain model, violation, "
             "attempt, failure and evidence metadata independently of accepted DocumentKnowledge."
         ),
+    ),
+    VersionedInterface(
+        "assertion-review-pilot",
+        "local/review/assertions/**/assertion-review-pilot.{yaml,yml,json}",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "assertion-review-pilot",
+        "Editable Slice-7D selection and case-local assertion review artifact.",
     ),
     VersionedInterface(
         "assertion-golden-suite",

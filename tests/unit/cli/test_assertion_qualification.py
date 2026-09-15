@@ -116,3 +116,27 @@ def test_assertion_auto_adoption_help_is_registered() -> None:
     assert "--efficient-proposal" in result.stdout
     assert "--escalation-proposal" in result.stdout
     assert "--output" in result.stdout
+
+
+def test_assertion_review_pilot_help_is_registered() -> None:
+    build = runner.invoke(app, ["evaluation", "assertion-review-pilot-build", "--help"])
+    assert build.exit_code == 0
+    assert "--source" in build.stdout
+    assert "--ontology-version" in build.stdout
+    assert "--clause-id" in build.stdout
+
+    attach = runner.invoke(app, ["evaluation", "assertion-review-pilot-attach", "--help"])
+    assert attach.exit_code == 0
+    assert "--cascade-report" in attach.stdout
+    assert "--efficient-proposal" in attach.stdout
+
+    publish = runner.invoke(app, ["evaluation", "assertion-review-pilot-publish", "--help"])
+    assert publish.exit_code == 0
+    assert "--review" in publish.stdout
+    assert "--output" in publish.stdout
+
+
+def test_assertion_cascade_help_exposes_review_pilot_selection() -> None:
+    result = runner.invoke(app, ["evaluation", "assertion-cascade", "--help"])
+    assert result.exit_code == 0
+    assert "--review-pilot" in result.stdout

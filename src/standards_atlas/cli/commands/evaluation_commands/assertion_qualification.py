@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Annotated
 
@@ -19,20 +20,192 @@ from standards_atlas.adapters.llm import (
 )
 from standards_atlas.application.assertion_qualification import (
     AssertionAutoAdoptionPolicyEvaluator,
+    AssertionGoldenPartition,
     AssertionQualificationCascadeService,
     AssertionQualificationEvaluator,
+    AssertionReviewPilotBuildRequest,
+    AssertionReviewTargetSuite,
+    attach_cascade_to_assertion_review_pilot,
+    build_assertion_review_pilot,
+    load_applicability_selection_corpus,
     load_assertion_auto_adoption_policy,
     load_assertion_golden_suite,
     load_assertion_qualification_cascade_report,
     load_assertion_qualification_report,
+    load_assertion_review_pilot,
     load_document_knowledge_proposal,
+    publish_assertion_review_pilot,
+    review_clause_ids,
+    select_applicability_pilot_cases,
+    validate_assertion_review_pilot_document,
     write_assertion_auto_adoption_report,
+    write_assertion_golden_suite,
     write_assertion_qualification_cascade_report,
     write_assertion_qualification_report,
+    write_assertion_review_pilot,
 )
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
 from standards_atlas.domain.model import DocumentKey
+
+
+@evaluation_app.command("assertion-review-pilot-build")
+def build_assertion_review_pilot_command(
+    source: Annotated[
+        Path,
+        typer.Option(
+            "--source",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Applicability golden corpus used only as the pilot clause selection source.",
+        ),
+    ],
+    ontology_version: Annotated[
+        list[str],
+        typer.Option(
+            "--ontology-version",
+            help="Formal ontology reference '<id>@<version>'; repeat for the target suite.",
+        ),
+    ],
+    workspace: Annotated[Path, typer.Option("--workspace", file_okay=False)] = (
+        cli_defaults.DEFAULT_WORKSPACE
+    ),
+    review_id: Annotated[str, typer.Option("--review-id")] = "assertion-pilot",
+    review_version: Annotated[str, typer.Option("--review-version")] = "0.1.0",
+    suite_id: Annotated[str, typer.Option("--suite-id")] = "assertion-pilot-development",
+    suite_version: Annotated[str, typer.Option("--suite-version")] = "0.1.0",
+    partition: Annotated[
+        AssertionGoldenPartition, typer.Option("--partition")
+    ] = AssertionGoldenPartition.DEVELOPMENT,
+    limit: Annotated[int, typer.Option("--limit", min=1)] = 20,
+    clause_id: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--clause-id",
+            help="Explicit published source clause id; repeat to bypass stratified selection.",
+        ),
+    ] = None,
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)] = Path(
+        "local/review/assertions/pilot/assertion-review-pilot.yaml"
+    ),
+) -> None:
+    """Build a verified editable assertion review pilot from applicability gold cases."""
+    try:
+        corpus = load_applicability_selection_corpus(source)
+        selected = select_applicability_pilot_cases(
+            corpus, limit=limit, clause_ids=tuple(clause_id or ())
+        )
+        repository = FileSystemEngineeringDocumentRepository(workspace)
+        documents = {
+            document_key: repository.load(DocumentKey(value=document_key))
+            for document_key in sorted({case.document_key for case in selected})
+        }
+        target_suite = AssertionReviewTargetSuite(
+            id=suite_id,
+            version=suite_version,
+            partition=partition,
+            ontology_versions=tuple(ontology_version),
+        )
+        review = build_assertion_review_pilot(
+            corpus,
+            selected,
+            documents,
+            AssertionReviewPilotBuildRequest(
+                review_id=review_id,
+                review_version=review_version,
+                target_suite=target_suite,
+                source_corpus_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+                limit=limit,
+                clause_ids=tuple(clause_id or ()),
+            ),
+        )
+        review_path = write_assertion_review_pilot(review, output)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    positive = sum(case.applicability_source.present for case in review.cases)
+    typer.echo(f"Review                  : {review.review_id}@{review.review_version}")
+    typer.echo(f"Selection               : {review.selection.strategy}")
+    typer.echo(f"Selected clauses        : {len(review.cases)}")
+    typer.echo(
+        f"Applicability provenance: {positive} present / {len(review.cases) - positive} absent"
+    )
+    typer.echo(
+        "Documents               : "
+        + ", ".join(sorted({case.document_key for case in review.cases}))
+    )
+    typer.echo(f"Review artifact         : {review_path}")
+
+
+@evaluation_app.command("assertion-review-pilot-attach")
+def attach_assertion_review_pilot_command(
+    review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)],
+    cascade_report: Annotated[
+        Path, typer.Option("--cascade-report", exists=True, dir_okay=False, readable=True)
+    ],
+    efficient_proposal: Annotated[
+        Path, typer.Option("--efficient-proposal", exists=True, dir_okay=False, readable=True)
+    ],
+    escalation_proposal: Annotated[
+        Path | None,
+        typer.Option("--escalation-proposal", exists=True, dir_okay=False, readable=True),
+    ] = None,
+    output: Annotated[Path | None, typer.Option("--output", dir_okay=False)] = None,
+) -> None:
+    """Attach one document's exact final cascade candidates to an existing pilot review."""
+    try:
+        pilot = load_assertion_review_pilot(review)
+        cascade = load_assertion_qualification_cascade_report(cascade_report)
+        efficient = load_document_knowledge_proposal(efficient_proposal)
+        escalation = (
+            load_document_knowledge_proposal(escalation_proposal)
+            if escalation_proposal is not None
+            else None
+        )
+        updated = attach_cascade_to_assertion_review_pilot(
+            pilot,
+            cascade=cascade,
+            efficient=efficient,
+            escalation=escalation,
+        )
+        target = output or review
+        review_path = write_assertion_review_pilot(updated, target)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    attached = sum(
+        case.document_key == cascade.source_document_key and case.proposal is not None
+        for case in updated.cases
+    )
+    typer.echo(f"Document                : {cascade.source_document_key}")
+    typer.echo(f"Attached cases          : {attached}")
+    typer.echo(f"Review artifact         : {review_path}")
+
+
+@evaluation_app.command("assertion-review-pilot-publish")
+def publish_assertion_review_pilot_command(
+    review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)] = Path(
+        "local/review/assertions/pilot/assertion-golden-suite.yaml"
+    ),
+) -> None:
+    """Publish a completed pilot review into the current AssertionGoldenSuite contract."""
+    try:
+        pilot = load_assertion_review_pilot(review)
+        suite = publish_assertion_review_pilot(pilot)
+        suite_path = write_assertion_golden_suite(suite, output)
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    typer.echo(f"Golden suite            : {suite.id}@{suite.version}")
+    typer.echo(f"Partition               : {suite.partition.value}")
+    typer.echo(f"Documents               : {len(suite.cases)}")
+    typer.echo(f"Reviewed clauses        : {len(pilot.cases)}")
+    typer.echo(f"Golden suite artifact   : {suite_path}")
 
 
 @evaluation_app.command("assertion-evaluate")
@@ -128,6 +301,16 @@ def run_assertion_qualification_cascade(
     output: Annotated[Path, typer.Option("--output", dir_okay=False)] = Path(
         "local/evaluation/assertion-cascade.json"
     ),
+    review_pilot: Annotated[
+        Path | None,
+        typer.Option(
+            "--review-pilot",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Use the exact Slice-7D pilot clause selection for this document.",
+        ),
+    ] = None,
     clause_id: Annotated[
         list[str] | None,
         typer.Option("--clause-id", help="Limit the cascade to selected clause ids."),
@@ -135,6 +318,17 @@ def run_assertion_qualification_cascade(
 ) -> None:
     """Run the threshold-free Efficient → Verify → Escalate assertion cascade."""
     try:
+        if review_pilot is not None and clause_id:
+            raise ValueError("--review-pilot and --clause-id are mutually exclusive")
+        selected_clause_ids = frozenset(clause_id) if clause_id else None
+        if review_pilot is not None:
+            pilot = load_assertion_review_pilot(review_pilot)
+            if pilot.target_suite.ontology_versions != tuple(ontology_version):
+                raise ValueError(
+                    "review pilot ontology versions do not match --ontology-version selection"
+                )
+            selected_clause_ids = frozenset(review_clause_ids(pilot, document_key=document_key))
+
         base_config = LlmConfig.load(config)
         gateway = OpenAICompatibleLlmGateway(base_config)
         service = AssertionQualificationCascadeService(
@@ -159,13 +353,15 @@ def run_assertion_qualification_cascade(
         document = FileSystemEngineeringDocumentRepository(workspace).load(
             DocumentKey(value=document_key)
         )
+        if review_pilot is not None:
+            validate_assertion_review_pilot_document(pilot, document)
         result = service.run_document(
             document,
             cascade_run_id=cascade_run_id,
             efficient_proposal_run_id=efficient_run_id,
             escalation_proposal_run_id=escalation_run_id,
             ontology_versions=tuple(ontology_version),
-            clause_ids=frozenset(clause_id) if clause_id else None,
+            clause_ids=selected_clause_ids,
         )
         proposal_repository = FileSystemDocumentKnowledgeProposalRepository(workspace)
         proposal_repository.save(result.efficient_proposal)

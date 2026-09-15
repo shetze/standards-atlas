@@ -221,6 +221,11 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.qualification.golden_corpus:GoldenCaseManifest",
     ),
     ModelBinding(
+        "assertion-review-pilot",
+        "standards_atlas.application.assertion_qualification.review_pilot_models:"
+        "AssertionReviewPilot",
+    ),
+    ModelBinding(
         "assertion-golden-suite",
         "standards_atlas.application.assertion_qualification.models:AssertionGoldenSuite",
     ),

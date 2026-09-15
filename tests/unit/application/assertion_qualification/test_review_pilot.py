@@ -1,0 +1,375 @@
+from __future__ import annotations
+
+import hashlib
+
+import pytest
+
+from standards_atlas.application.assertion_qualification import (
+    ApplicabilitySelectionCase,
+    ApplicabilitySelectionCorpus,
+    AssertionCandidateVerification,
+    AssertionCascadeClauseReport,
+    AssertionCascadeProposalSource,
+    AssertionClauseVerification,
+    AssertionGoldenPartition,
+    AssertionQualificationCascadeReport,
+    AssertionReviewAssertion,
+    AssertionReviewEntity,
+    AssertionReviewEvidenceSpan,
+    AssertionReviewExpected,
+    AssertionReviewPilotBuildRequest,
+    AssertionReviewStatus,
+    AssertionReviewTargetSuite,
+    AssertionVerificationDisposition,
+    AssertionVerifierProvenance,
+    attach_cascade_to_assertion_review_pilot,
+    build_assertion_review_pilot,
+    proposal_sha256,
+    publish_assertion_review_pilot,
+    review_clause_ids,
+    select_applicability_pilot_cases,
+    validate_assertion_review_pilot_document,
+)
+from standards_atlas.application.assertion_qualification.review_pilot_models import (
+    ApplicabilitySelectionExpected,
+    ApplicabilitySelectionProvenance,
+)
+from standards_atlas.domain.model import (
+    Clause,
+    ClauseId,
+    ClauseType,
+    DocumentKey,
+    DocumentKnowledgeProposal,
+    DocumentType,
+    EngineeringDocument,
+    EntityAssertionObject,
+    EvidenceAnchor,
+    KnowledgeEntityProposal,
+    KnowledgeProposalProvenance,
+    NormativeForce,
+    StandardReference,
+    TextBlock,
+)
+
+STAT = "http://lunetix.org/standards-atlas#"
+ONTOLOGIES = ("standards-atlas-core@2.0.0",)
+
+
+def _source_case(
+    *,
+    clause_id: str,
+    document_key: str = "DOC",
+    reference: str = "DOC:1",
+    text: str = "The verification plan shall specify the verification criteria.",
+    present: bool = False,
+    category: str = "minority_presence_disagreement",
+) -> ApplicabilitySelectionCase:
+    return ApplicabilitySelectionCase(
+        clause_id=clause_id,
+        document_key=document_key,
+        reference=reference,
+        text=text,
+        category=category,
+        status="published",
+        expected=ApplicabilitySelectionExpected(present=present),
+        provenance=ApplicabilitySelectionProvenance(
+            source_archive="qualification-run.zip",
+            source_archive_sha256="a" * 64,
+        ),
+    )
+
+
+def _document(*cases: ApplicabilitySelectionCase) -> EngineeringDocument:
+    clauses = tuple(
+        Clause(
+            id=ClauseId(value=case.clause_id),
+            reference=StandardReference(
+                standard=case.document_key,
+                clause=case.reference.rsplit(":", 1)[1],
+            ),
+            clause_type=ClauseType.REQUIREMENT,
+            content=(TextBlock(id=f"text-{index}", text=case.text),),
+        )
+        for index, case in enumerate(cases)
+    )
+    return EngineeringDocument(
+        key=DocumentKey(value=cases[0].document_key),
+        title="Test document",
+        document_type=DocumentType.OTHER,
+        clauses=clauses,
+    )
+
+
+def _corpus(*cases: ApplicabilitySelectionCase) -> ApplicabilitySelectionCorpus:
+    return ApplicabilitySelectionCorpus(
+        corpus_id="applicability-hard-cases",
+        corpus_version="3.0.0",
+        cases=cases,
+    )
+
+
+def _request(*, clause_ids: tuple[str, ...] = ()) -> AssertionReviewPilotBuildRequest:
+    return AssertionReviewPilotBuildRequest(
+        review_id="pilot",
+        review_version="0.1.0",
+        target_suite=AssertionReviewTargetSuite(
+            id="pilot-dev",
+            version="0.1.0",
+            partition=AssertionGoldenPartition.DEVELOPMENT,
+            ontology_versions=ONTOLOGIES,
+        ),
+        source_corpus_sha256="b" * 64,
+        clause_ids=clause_ids,
+    )
+
+
+def test_stratified_selection_is_deterministic_and_keeps_both_applicability_values() -> None:
+    cases = tuple(
+        _source_case(
+            clause_id=f"c{index}",
+            document_key=f"DOC{index % 3}",
+            reference=f"DOC{index % 3}:{index}",
+            text=f"text {index}",
+            present=index % 2 == 0,
+            category=(
+                "balanced_presence_disagreement"
+                if index % 3 == 0
+                else "minority_presence_disagreement"
+            ),
+        )
+        for index in range(12)
+    )
+    corpus = _corpus(*cases)
+
+    first = select_applicability_pilot_cases(corpus, limit=6)
+    second = select_applicability_pilot_cases(corpus, limit=6)
+
+    assert first == second
+    assert {case.expected.present for case in first if case.expected is not None} == {False, True}
+    assert len({case.document_key for case in first}) >= 2
+
+
+def test_build_binds_source_case_to_current_clause_and_rejects_text_drift() -> None:
+    source = _source_case(clause_id="c1")
+    document = _document(source)
+    pilot = build_assertion_review_pilot(
+        _corpus(source),
+        (source,),
+        {"DOC": document},
+        _request(clause_ids=("c1",)),
+    )
+
+    assert pilot.cases[0].text == source.text
+    assert pilot.cases[0].text_sha256 == hashlib.sha256(source.text.encode()).hexdigest()
+    assert pilot.cases[0].applicability_source.present is False
+    assert pilot.cases[0].expected is None
+    assert pilot.cases[0].review_status is AssertionReviewStatus.PENDING
+
+    drifted = source.model_copy(update={"text": source.text + " changed"})
+    with pytest.raises(ValueError, match="source text mismatch"):
+        build_assertion_review_pilot(
+            _corpus(drifted),
+            (drifted,),
+            {"DOC": document},
+            _request(clause_ids=("c1",)),
+        )
+
+
+def test_publish_merges_case_local_entities_and_computes_exact_evidence_hashes() -> None:
+    first = _source_case(clause_id="c1", reference="DOC:1")
+    second = _source_case(
+        clause_id="c2",
+        reference="DOC:2",
+        text="The verification plan shall be reviewed.",
+    )
+    pilot = build_assertion_review_pilot(
+        _corpus(first, second),
+        (first, second),
+        {"DOC": _document(first, second)},
+        _request(clause_ids=("c1", "c2")),
+    )
+
+    plan_entity_1 = AssertionReviewEntity(
+        id="plan",
+        class_iri=f"{STAT}VerificationPlan",
+        normalized_label="Verification Plan",
+    )
+    criteria_entity = AssertionReviewEntity(
+        id="criteria",
+        class_iri=f"{STAT}Criterion",
+        normalized_label="Verification Criteria",
+    )
+    start = first.text.index("verification plan")
+    first_expected = AssertionReviewExpected(
+        entities=(plan_entity_1, criteria_entity),
+        assertions=(
+            AssertionReviewAssertion(
+                id="a1",
+                subject_id="plan",
+                predicate=f"{STAT}specifies",
+                object=EntityAssertionObject(entity_id="criteria"),
+                normative_force=NormativeForce.REQUIREMENT,
+                evidence=(
+                    AssertionReviewEvidenceSpan(start_offset=start, end_offset=len(first.text)),
+                ),
+            ),
+        ),
+    )
+    second_expected = AssertionReviewExpected(
+        entities=(
+            AssertionReviewEntity(
+                id="same-plan-different-local-id",
+                class_iri=f"{STAT}VerificationPlan",
+                normalized_label="  verification   plan  ",
+            ),
+        ),
+        assertions=(),
+    )
+    completed = pilot.model_copy(
+        update={
+            "cases": (
+                pilot.cases[0].model_copy(
+                    update={
+                        "review_status": AssertionReviewStatus.REVIEWED,
+                        "expected": first_expected,
+                    }
+                ),
+                pilot.cases[1].model_copy(
+                    update={
+                        "review_status": AssertionReviewStatus.REVIEWED,
+                        "expected": second_expected,
+                    }
+                ),
+            )
+        }
+    )
+
+    suite = publish_assertion_review_pilot(completed)
+
+    assert len(suite.cases) == 1
+    case = suite.cases[0]
+    assert len(case.entities) == 2
+    assert len(case.assertions) == 1
+    evidence = case.assertions[0].evidence[0]
+    assert evidence.clause_id.value == "c1"
+    assert evidence.content_hash == hashlib.sha256(first.text[start:].encode()).hexdigest()
+
+
+def test_publish_requires_every_selected_case_to_be_reviewed() -> None:
+    source = _source_case(clause_id="c1")
+    pilot = build_assertion_review_pilot(
+        _corpus(source),
+        (source,),
+        {"DOC": _document(source)},
+        _request(clause_ids=("c1",)),
+    )
+
+    with pytest.raises(ValueError, match="pending cases"):
+        publish_assertion_review_pilot(pilot)
+
+
+def test_attach_uses_exact_cascade_selection_and_final_route_proposal() -> None:
+    source = _source_case(clause_id="c1")
+    pilot = build_assertion_review_pilot(
+        _corpus(source),
+        (source,),
+        {"DOC": _document(source)},
+        _request(clause_ids=("c1",)),
+    )
+    text = source.text
+    anchor = EvidenceAnchor(
+        id="anchor-1",
+        clause_id=ClauseId(value="c1"),
+        start_offset=0,
+        end_offset=len(text),
+        content_hash=hashlib.sha256(text.encode()).hexdigest(),
+    )
+    efficient = DocumentKnowledgeProposal(
+        proposal_run_id="efficient-run",
+        source_document_key="DOC",
+        ontology_versions=ONTOLOGIES,
+        evidence_anchors=(anchor,),
+        entity_proposals=(
+            KnowledgeEntityProposal(
+                id="plan",
+                class_iri=f"{STAT}VerificationPlan",
+                normalized_label="Verification Plan",
+                source_anchor_ids=(anchor.id,),
+                confidence=0.9,
+            ),
+        ),
+        assertion_proposals=(),
+        proposal_provenance=KnowledgeProposalProvenance(
+            extractor="test",
+            extractor_version="1.0.0",
+        ),
+    )
+    verification = AssertionClauseVerification(
+        clause_id=ClauseId(value="c1"),
+        entity_reviews=(
+            AssertionCandidateVerification(
+                candidate_id="plan",
+                disposition=AssertionVerificationDisposition.SUPPORTED,
+            ),
+        ),
+    )
+    cascade = AssertionQualificationCascadeReport(
+        cascade_run_id="cascade-run",
+        source_document_key="DOC",
+        ontology_versions=ONTOLOGIES,
+        proposal_sources=(
+            AssertionCascadeProposalSource(
+                stage="efficient",
+                proposal_run_id=efficient.proposal_run_id,
+                proposal_hash=proposal_sha256(efficient),
+                extractor="test",
+                extractor_version="1.0.0",
+            ),
+        ),
+        verifier_provenance=AssertionVerifierProvenance(
+            verifier="test-verifier",
+            verifier_version="1.0.0",
+        ),
+        clauses=(
+            AssertionCascadeClauseReport(
+                clause_id=ClauseId(value="c1"),
+                route="efficient_accepted",
+                verification=verification,
+                efficient_entities=1,
+                efficient_assertions=0,
+            ),
+        ),
+        efficient_accepted_clauses=1,
+        escalated_clauses=0,
+    )
+
+    updated = attach_cascade_to_assertion_review_pilot(
+        pilot,
+        cascade=cascade,
+        efficient=efficient,
+        escalation=None,
+    )
+
+    assert review_clause_ids(updated, document_key="DOC") == ("c1",)
+    snapshot = updated.cases[0].proposal
+    assert snapshot is not None
+    assert snapshot.proposal_stage == "efficient"
+    assert snapshot.entities[0].normalized_label == "Verification Plan"
+    assert snapshot.verifier_dispositions == {"plan": "supported"}
+
+
+def test_review_document_validation_detects_source_changes_after_pilot_build() -> None:
+    source = _source_case(clause_id="c1")
+    document = _document(source)
+    pilot = build_assertion_review_pilot(
+        _corpus(source),
+        (source,),
+        {"DOC": document},
+        _request(clause_ids=("c1",)),
+    )
+    assert validate_assertion_review_pilot_document(pilot, document) == ("c1",)
+
+    changed_source = source.model_copy(update={"text": source.text + " changed"})
+    changed_document = _document(changed_source)
+    with pytest.raises(ValueError, match="source text changed"):
+        validate_assertion_review_pilot_document(pilot, changed_document)
