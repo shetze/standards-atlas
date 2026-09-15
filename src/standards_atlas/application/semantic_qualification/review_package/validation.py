@@ -215,5 +215,7 @@ def review_report(package: ReviewPackage, state: ReviewState) -> dict:
         "ready_for_publication": not (missing or gaps),
         "source_binding": "frozen full text and source structure; live import check required",
         "overlap_check": "identities and Unicode/case/whitespace-equivalent content",
-        "holdout_exposure": "unknown; prior use/near-duplicates/translations need human declaration",
+        "holdout_exposure": (
+            "unknown; prior use/near-duplicates/translations need human declaration"
+        ),
     }

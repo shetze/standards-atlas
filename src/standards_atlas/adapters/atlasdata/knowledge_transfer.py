@@ -82,11 +82,11 @@ def _sha256_digest(value: object) -> str:
 
 
 def _wire_to_model_payload(payload: dict) -> dict:
-    """Expand compact schema-1.2 fingerprints into the internal transport model."""
+    """Expand compact schema-1 fingerprints into the internal transport model."""
 
     result = deepcopy(payload)
     if "structure_sha256" in result:
-        raise ValueError("schema 1.2 stores structure fingerprints under fingerprints")
+        raise ValueError("schema 1 stores structure fingerprints under fingerprints")
     fingerprints = result.pop("fingerprints", None)
     if not isinstance(fingerprints, dict) or set(fingerprints) != {"structure"}:
         raise ValueError("AtlasData enrichments require fingerprints.structure")
@@ -100,7 +100,7 @@ def _wire_to_model_payload(payload: dict) -> dict:
             raise ValueError("AtlasData enrichment clause must be a mapping")
         for legacy in ("heading_sha256", "atlasdata_heading_sha256", "content_sha256"):
             if legacy in clause:
-                raise ValueError(f"schema 1.2 stores {legacy} under fingerprints")
+                raise ValueError(f"schema 1 stores {legacy} under fingerprints")
         clause_fingerprints = clause.pop("fingerprints", None)
         if not isinstance(clause_fingerprints, dict):
             raise ValueError("AtlasData enrichment clause requires fingerprints")
@@ -145,7 +145,7 @@ def _wire_to_model_payload(payload: dict) -> dict:
                 )
 
             if "private_value_sha256" in attribute or "private_provenance_sha256" in attribute:
-                raise ValueError("schema 1.2 stores private fingerprints under fingerprints")
+                raise ValueError("schema 1 stores private fingerprints under fingerprints")
             if "private_value" in fps:
                 attribute["private_value_sha256"] = _sha256_digest(fps["private_value"])
             if "private_provenance" in fps:
@@ -159,7 +159,7 @@ def _wire_to_model_payload(payload: dict) -> dict:
                 legacy = {"path", "availability", "evidence"} & set(generated)
                 if legacy:
                     raise ValueError(
-                        "schema 1.2 derives generated "
+                        "schema 1 derives generated "
                         f"{sorted(legacy)} from the attribute/fingerprints"
                     )
                 generated["path"] = path
@@ -176,7 +176,7 @@ def _wire_to_model_payload(payload: dict) -> dict:
                         raise ValueError(f"decision provenance must be a mapping: {path}")
                     if "source_sha256" in decision:
                         raise ValueError(
-                            "schema 1.2 stores decision source fingerprints under fingerprints"
+                            "schema 1 stores decision source fingerprints under fingerprints"
                         )
                     if "decision_source" not in fps:
                         raise ValueError(f"decision requires decision_source fingerprint: {path}")
@@ -191,13 +191,13 @@ def _wire_to_model_payload(payload: dict) -> dict:
                 if not isinstance(confirmed, dict):
                     raise ValueError(f"confirmed provenance must be a mapping: {path}")
                 if "path" in confirmed:
-                    raise ValueError("schema 1.2 derives confirmed path from the attribute")
+                    raise ValueError("schema 1 derives confirmed path from the attribute")
                 confirmed["path"] = path
     return result
 
 
 def _model_to_wire_payload(manifest: AtlasDataKnowledge) -> dict:
-    """Serialize schema 1.2 with one readable fingerprint block per scope."""
+    """Serialize schema 1 with one readable fingerprint block per scope."""
 
     payload = manifest.model_dump(mode="json")
     clauses = payload.pop("clauses")

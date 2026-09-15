@@ -40,10 +40,10 @@ Use this after normalization, reference-resolution, or construction changes when
 
 ```bash
 uv run standards-atlas llm preload-qualification-models \\
-  --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml
+  --manifest manifests/applicability-presence-qualification-v1.yaml
 
 uv run standards-atlas evaluation qualification-matrix \\
-  --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \\
+  --manifest manifests/applicability-presence-qualification-v1.yaml \\
   --output local/evaluation/qualification \\
   --limit 10 \\
   --overwrite
@@ -74,6 +74,6 @@ The following tutorials are planned documentation work, not product roadmap comm
 1. Develop a structural taxonomy for a new document class.
 2. Build a reusable Knowledge Domain from a PDF source.
 3. Discover and review relationships across Knowledge Domains.
-4. Qualify an extraction and classification pipeline.
+4. Qualify applicability detection and assertion extraction.
 
-The first topic should cover representative-document analysis, initial taxonomy design, golden-corpus construction, multi-model evaluation, disagreement review, model evolution, and iteration until the taxonomy is stable enough for its intended use.
+The first topic should cover representative-document analysis, initial taxonomy design, golden-corpus construction, multi-model evaluation, disagreement review, model evolution, and iteration until the extraction contract is stable enough for its intended use.

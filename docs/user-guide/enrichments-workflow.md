@@ -226,8 +226,7 @@ handoff artifacts, not portable archive references; after moving a checkout, use
 archive's explicit `--run` path or regenerate the handoff.
 
 Public publication policy stays unchanged: natural clause order, exact TOC MD5 references,
-internal headings, grouped fingerprints, no public `ambiguous_candidates`, and role semantics as
-presence only. Existing compatible companions are merged, not deleted. The task leaves the
+internal headings, grouped fingerprints, and no public `ambiguous_candidates`. Current schema-1 companions carry only Applicability, subject context, and context routing. Existing current-schema companions are merged, not deleted. The task leaves the
 reviewed structural AtlasData files and authoritative confirmations intact. Canonical EngineeringDocument schema 1,
 companion schema 1 and private-evidence schema 1 are the current clean-break contracts.
 

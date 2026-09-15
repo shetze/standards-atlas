@@ -1,3 +1,5 @@
+import pytest
+
 from standards_atlas.adapters.atlasdata.metadata import AtlasMetadata
 from standards_atlas.adapters.atlasdata.parser import (
     AtlasStandardData,
@@ -133,8 +135,7 @@ structure=(
     assert parsed.initialization_records == []
 
 
-def test_parse_semantic_tags_from_optional_sixth_toc_field() -> None:
-    records = parse_initialization_records(
-        "#---data---#\nTOC;abc;EN 50716:2023 5.1;Heading;r;SP-REQ,KK-PRC,RR-ASR\n"
-    )
-    assert records[0].semantic_tags == ("SP-REQ", "KK-PRC", "RR-ASR")
+def test_removed_sixth_semantic_tag_field_is_rejected() -> None:
+    text = "#---data---#\nTOC;abc;EN 50716:2023 5.1;Heading;r;SP-REQ\n"
+    with pytest.raises(ValueError, match="Invalid initialization record"):
+        parse_initialization_records(text)

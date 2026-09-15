@@ -87,26 +87,5 @@ def test_invalid_or_conflicting_layouts_are_not_silently_reinterpreted(layout):
         parse_initialization_records(f"#---data---#\n{layout}\nTABLE;h;Example Table 1;A;\n")
 
 
-@pytest.mark.parametrize("kind", ["TOC", "PublicTXT", "LocalTXT", "TEXT", "TABLEINDEX"])
-def test_non_table_columns_and_semantic_tags_remain_unchanged(kind):
-    marker = "i" if kind == "TABLEINDEX" else "u"
-    line = f"{kind};hash;Example:2025 1;Public content;{marker};SP-DES,KK-CNC"
-    record = parse_initialization_records(f"#---data---#\n{line}\n")[0]
-
-    assert record.content == "Public content"
-    assert record.type_marker == marker
-    assert record.semantic_tags == ("SP-DES", "KK-CNC")
-    assert render_initialization_records([record]) == line
-
-
-def test_optional_table_semantic_tags_survive_the_field_swap():
-    record = parse_initialization_records(
-        "#---data---#\nTABLE;h;Example Table 1;Reviewed caption;A.2;KK-CNC\n"
-    )[0]
-    body = render_initialization_records([record])
-    assert body.endswith("TABLE;h;Example Table 1;A.2;Reviewed caption;KK-CNC")
-    assert parse_initialization_records(f"#---data---#\n{body}") == [record]
-
-
 def test_empty_data_section_stays_empty():
     assert render_initialization_records([]) == ""

@@ -1,7 +1,7 @@
 # Methods and Techniques Index
 
 Standards Atlas treats named methods and techniques as reusable knowledge objects rather
-than statement functions. During normalization it creates a conservative, provenance-
+than clause-classification labels. During normalization it creates a conservative, provenance-
 preserving candidate index from explicitly signalled lists and tables, especially annexes
 headed with terms such as “methods” or “techniques”.
 

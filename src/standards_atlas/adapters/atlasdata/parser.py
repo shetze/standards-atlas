@@ -27,7 +27,6 @@ class InitializationRecord:
     reference: str
     content: str
     type_marker: str
-    semantic_tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -122,9 +121,9 @@ def parse_initialization_records(text: str) -> list[InitializationRecord]:
         if not line or line.startswith("#"):
             continue
 
-        parts = line.split(";", 5)
+        parts = line.split(";")
 
-        if len(parts) not in {5, 6}:
+        if len(parts) != 5:
             raise ValueError(
                 f"Invalid initialization record at data section line {line_number}: {line!r}"
             )
@@ -134,12 +133,6 @@ def parse_initialization_records(text: str) -> list[InitializationRecord]:
             content, type_marker = _parse_table_fields(
                 content, type_marker, layout=table_layout, line_number=line_number
             )
-        semantic_tags = (
-            tuple(tag.strip() for tag in parts[5].split(",") if tag.strip())
-            if len(parts) == 6
-            else ()
-        )
-
         if kind not in _INITIALIZATION_RECORD_KINDS:
             raise ValueError(
                 f"Invalid initialization record kind at data section line {line_number}: {kind!r}"
@@ -152,7 +145,6 @@ def parse_initialization_records(text: str) -> list[InitializationRecord]:
                 reference=reference,
                 content=content,
                 type_marker=type_marker,
-                semantic_tags=semantic_tags,
             )
         )
 
@@ -164,10 +156,7 @@ def render_initialization_record(record: InitializationRecord) -> str:
     fourth, fifth = record.content, record.type_marker
     if record.kind == "TABLE":
         fourth, fifth = fifth, fourth
-    rendered = f"{record.kind};{record.hash_value};{record.reference};{fourth};{fifth}"
-    if record.semantic_tags:
-        return f"{rendered};{','.join(record.semantic_tags)}"
-    return rendered
+    return f"{record.kind};{record.hash_value};{record.reference};{fourth};{fifth}"
 
 
 def render_initialization_records(records: list[InitializationRecord]) -> str:

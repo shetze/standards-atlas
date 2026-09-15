@@ -87,7 +87,7 @@ identification does not invoke an LLM and does not invent a value for unresolved
 uv run standards-atlas document enrich-context EN50716
 ```
 
-`--task documents` stops semantic processing at this deterministic boundary. It does not run `document enrich-semantics`, does not require `cfg/llm.yaml`, and does not start a managed LLM endpoint. Family composition plus Markdown and configured Doorstop publication therefore operate on the canonical deterministic document representation.
+`--task documents` stops at this deterministic context boundary. It does not run applicability qualification or formal semantic extraction, does not require `cfg/llm.yaml`, and does not start a managed LLM endpoint. Family composition plus Markdown and configured Doorstop publication therefore operate on the canonical deterministic document representation.
 
 The current `qualification` planner runs subject/context enrichment and then produces evaluation
 artifacts; candidate results do not update canonical semantics automatically. The `enrichments`

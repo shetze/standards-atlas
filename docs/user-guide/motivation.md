@@ -12,9 +12,9 @@ The result of semantic processing must remain **evidence-backed**. A derived ass
 
 ## Context and domain knowledge
 
-Standards Atlas deliberately separates the context in which a document fragment is interpreted from the domain knowledge asserted by that fragment. Deterministic taxonomy, abstract semantic functions, structural position, Knowledge Domain, source identity, provenance, and qualification evidence form the **context layer (CBox)**. The CBox describes interpretation context; it is not itself the engineering-domain knowledge extracted from the clause.
+Standards Atlas deliberately separates the context in which a document fragment is interpreted from the domain knowledge asserted by that fragment. Deterministic taxonomy, routing and subject context, accepted applicability, structural position, Knowledge Domain, source identity, provenance, and qualification evidence form the **context layer (CBox)**. The CBox describes interpretation context; it is not itself the engineering-domain knowledge extracted from the clause.
 
-Domain-specific OWL ontologies provide the **TBox** that defines relevant concepts, relations, and constraints. Clause-level **ABox** assertions express the extracted domain knowledge using that vocabulary while retaining their CBox context and source identity. This separation allows the same source statement to carry document context such as requirement function or actor context while independently asserting technical facts about activities, artifacts, hazards, techniques, or other domain concepts.
+Domain-specific OWL ontologies provide the **TBox** that defines relevant concepts, relations, and constraints. Clause-level **ABox** assertions express the extracted domain knowledge using that vocabulary while retaining their CBox context and source identity. This separation allows the same source statement to retain its document and applicability context while independently asserting technical facts about activities, artifacts, hazards, techniques, or other domain concepts.
 
 `EngineeringDocument` remains the canonical document representation. OWL is the formal representation of derived knowledge, not a replacement document format. CBox and ABox projections, Doorstop and Markdown publications, and retrieval indexes can therefore evolve or be regenerated without changing the identity of the source document.
 

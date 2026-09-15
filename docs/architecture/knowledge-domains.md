@@ -60,7 +60,7 @@ The small canonical section vocabulary remains separate from:
 
 - document-family categories, such as ISO/IEC drafting structure, Polarion exports, or Railway TSI structure;
 - Knowledge-Domain categories, such as Functional Safety lifecycle functions;
-- linguistic and process-oriented semantic functions.
+- source-bound engineering assertions and relations.
 
 See [Structural classification](structural-classification.md) and [Domain model](domain-model.md).
 

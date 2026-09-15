@@ -287,7 +287,6 @@ def _replay_stages(
             if mode == CascadeReplayMode.HISTORICAL:
                 continue
             clause = cumulative_by_id[clause_id]
-            local_clause = local_by_id[clause_id]
             captured = capture_resolved_dimensions(
                 cumulative_clause=clause,
                 stage_clause=clause,

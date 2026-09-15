@@ -23,13 +23,13 @@ clause. A `KnowledgeRecord` represents one logical row and preserves its cells, 
 spans, source evidence, and stable identity. Supported table schemas may add normalized
 concepts and relations, but the original `TableBlock` remains authoritative.
 
-Table semantics are intentionally separate from clause statement functions. A
-responsibility matrix can contain `responsible_for` relations without turning the
-surrounding clause into a `responsibility_assignment`.
+Table semantics are intentionally separate from clause-level enrichment. A
+responsibility matrix can contain `responsible_for` relations without inventing a
+clause-classification label for the surrounding prose.
 
 ## StructuralProfile
 
-A structural profile classifies independent dimensions instead of forcing a clause into one role. Dimensions can describe, for example, normative status, statement function, lifecycle context, evidence relevance or document region. Taxonomies are knowledge-domain specific and must not be inferred from keywords alone when evidence is insufficient.
+A structural profile records independent deterministic structural dimensions instead of forcing a clause into one semantic role. Dimensions include canonical/document/domain sections and annex status. Engineering meaning that is not structural belongs in source-bound assertions rather than in the structural profile.
 
 ## Subject candidate vocabulary
 
@@ -50,7 +50,7 @@ semantic and ontology analysis, while deliberately minimal qualification frames 
 
 ## CBox, TBox, and ABox
 
-Standards Atlas uses OWL for formal engineering knowledge while keeping `EngineeringDocument` canonical. A domain-specific **TBox** defines domain concepts, relations, and constraints. The **CBox** is the Standards Atlas interpretation context for a document fragment: it combines Knowledge Domain, deterministic taxonomy, semantic functions, structural position, source identity, provenance, and qualification evidence. It describes how a clause is to be interpreted rather than asserting the clause's engineering-domain knowledge itself.
+Standards Atlas uses OWL for formal engineering knowledge while keeping `EngineeringDocument` canonical. A domain-specific **TBox** defines domain concepts, relations, and constraints. The **CBox** is the Standards Atlas interpretation context for a document fragment: it combines Knowledge Domain, deterministic taxonomy, routing/subject context, accepted applicability, structural position, source identity, provenance, and qualification evidence. It describes how a clause is to be interpreted rather than asserting the clause's engineering-domain knowledge itself.
 
 Using clause content plus that context, formal semantic extraction derives an **ABox** containing assertions about concrete activities, artifacts, roles, hazards, techniques, and other domain individuals. Context and domain knowledge therefore remain separate even when they originate from the same clause. Every ABox assertion must retain enough provenance to be traced back through its extraction and qualification evidence to that clause and its source.
 
@@ -74,18 +74,8 @@ LLMs are one implementation technique for semantic tasks that cannot be derived 
 
 A **review gate** is an intentional workflow pause. Standards Atlas preserves uncertainty and requires a human decision rather than publishing weak extraction or alignment as authoritative data.
 
-## Role relations and RACI
+## Roles and responsibility relations
 
-Role semantics are represented as relations rather than a clause-level responsibility
-label. Engineering roles are no longer a clause-classification dimension. Explicit role statements, when relevant, belong to formal knowledge assertions rather than clause enrichment.
-responsibility semantics even when a complete relation cannot be extracted; for example,
-"the analysis shall be verified" is role-semantic without identifying the verifier. A
-grounded relation identifies an `actor`, a controlled `relation`, a `target`, and optionally
-a `condition` plus evidence. This preserves distinctions such as `performs`,
-`verifies`, `independent_of`, and `assumes_role` that cannot be represented safely by the
-former responsibility taxonomy.
+Engineering roles are not a clause-classification dimension. When a standard explicitly states that an actor performs, verifies, approves, assesses, or is independent of another engineering object, that statement belongs in the formal knowledge layer as a source-bound relation.
 
-RACI is a projection over these relations, not a primary ontology. For example,
-`performs` can support a Responsible view when appropriate, while Accountable, Consulted,
-and Informed are emitted only from explicit evidence; they are never inferred merely
-because a role performs an activity.
+RACI-like views, if needed by an application, are derived projections over accepted responsibility assertions. They are never inferred merely from a clause heading, lifecycle position, or the presence of a named role.

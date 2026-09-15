@@ -38,14 +38,13 @@ from standards_atlas.domain.model import SourceEvidence, TableBlock, TableCell, 
 LEGACY_SOURCE = """name="Example"
 digits=8
 oyr=2025
-semanticProfile="functional-safety:1.0.0"
 structure=(
  "2024 1-0 1-r7.1 1-b7.1.1 1-8.2.18 1-b8.2.18.5"
  "2025 2-0 2-7.1 2-b7.1.1 2-9:A 2-9:A.2 2-b9:A.2.14 2-9:A.3 2-b9:A.3.15"
 )
 
 #---data---#
-TOC;heading;Example-1:2024 7.1;Reviewed heading;r;SP-DES,KK-CNC
+TOC;heading;Example-1:2024 7.1;Reviewed heading;r
 TABLE;old1;Example-1:2024 Table 7.1.1;First part caption;7.1
 TABLE;old5;Example-1:2024 Table 8.2.18.5;Fifth table caption;8.2.18
 TABLE;old2;Example-2:2025 Table 7.1.1;Second part caption;7.1
@@ -97,7 +96,6 @@ def test_generate_toc_migrates_existing_records_and_is_idempotent(tmp_path: Path
     ]
     heading = next(record for record in records if record.reference == "Example-1:2024 7.1")
     assert heading.content == "Reviewed heading"
-    assert heading.semantic_tags == ("SP-DES", "KK-CNC")
     for record in tables + index:
         namespace = record.kind.lower()
         assert (

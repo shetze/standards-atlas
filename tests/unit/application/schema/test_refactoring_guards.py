@@ -122,17 +122,17 @@ def test_every_bound_serializer_rejects_unchecked_marker_before_handling_fields(
 
 
 class Sample(SchemaBoundModel):
-    SCHEMA_FAMILY: ClassVar[str] = "partial-review-profile"
-    schema_version: Literal["1.0"] = "1.0"
+    SCHEMA_FAMILY: ClassVar[str] = "review-profile"
+    schema_version: Literal[1] = 1
     value: bool = False
 
 
 def test_guard_preserves_current_bytes_and_rejects_copy_even_with_version_excluded():
     item = Sample()
-    assert item.model_dump_json() == '{"schema_version":"1.0","value":false}'
+    assert item.model_dump_json() == '{"schema_version":1,"value":false}'
     assert item.model_dump(exclude={"schema_version"}) == {"value": False}
     for mode in ("json", "python"):
-        for shadow in (None, "engineering-document", "partial-review-profile"):
+        for shadow in (None, "engineering-document", "review-profile"):
             bad = item.model_copy(update={"schema_version": "obsolete", "SCHEMA_FAMILY": shadow})
             with pytest.raises(ValueError, match="writers may only emit"):
                 bad.model_dump(mode=mode, exclude={"schema_version"})
@@ -142,12 +142,12 @@ def test_writer_uses_actual_model_marker_after_policy_changes(monkeypatch):
     item = Sample()
     monkeypatch.setitem(
         SCHEMA_POLICIES,
-        "partial-review-profile",
-        SchemaPolicy("partial-review-profile", "2.0", ("2.0",), "test"),
+        "review-profile",
+        SchemaPolicy("review-profile", 2, (2,), "test"),
     )
     with pytest.raises(ValueError, match="writers may only emit"):
         item.model_dump_json()
-    assert item.schema_version == "1.0"
+    assert item.schema_version == 1
 
 
 def test_unexpected_schema_deprecation_is_a_test_error():
@@ -171,7 +171,7 @@ def test_nested_json_contract_requires_marker_without_versioning_plain_builder_m
 
     # New Python objects retain their explicit construction defaults.
     built = Wrapper(child=Sample())
-    assert built.model_dump_json() == '{"child":{"schema_version":"1.0","value":false}}'
+    assert built.model_dump_json() == '{"child":{"schema_version":1,"value":false}}'
     with pytest.raises(ValueError, match="schema_version"):
         Wrapper.model_validate_json('{"child":{"value":false}}')
     assert Wrapper.model_validate_json(built.model_dump_json()) == built

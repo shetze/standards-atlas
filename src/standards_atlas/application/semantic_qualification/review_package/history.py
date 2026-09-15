@@ -110,7 +110,8 @@ class HistoryReader:
             detected = "golden"
         else:
             raise ValueError(
-                "unsupported history: need applicability Golden 3.0, review reference suite, or current consensus report"
+                "unsupported history: need applicability Golden 3.0, "
+                "review reference suite, or current consensus report"
             )
         self.artifacts.append(
             HistoryArtifact(

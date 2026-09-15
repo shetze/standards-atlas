@@ -236,7 +236,7 @@ def _fixture(tmp_path: Path) -> tuple[ApplicabilityGoldenCorpus, Path, Path]:
     consensus = ConsensusReport(
         schema_version=1,
         matrix_id="matrix-v6",
-        corpus_id="semantic-profile-v1",
+        corpus_id="applicability-presence-v1",
         prompt_id="applicability-presence",
         reasoning_mode_id="disabled",
         generated_at=NOW,

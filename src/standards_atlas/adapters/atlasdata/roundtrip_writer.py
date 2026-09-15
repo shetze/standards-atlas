@@ -117,7 +117,6 @@ class AtlasDataRoundTripWriter:
                         reference=generated.reference,
                         content=existing.content if existing.content.strip() else generated.content,
                         type_marker=generated.type_marker,
-                        semantic_tags=existing.semantic_tags,
                     )
                 )
             else:

@@ -88,7 +88,6 @@ parent="<parent standard key>"
 partShift=<integer>
 partDigits=<integer>
 oyr=<year>
-semanticProfile="<profile-id>:<profile-version>"
 ```
 
 ### Field Semantics
@@ -101,7 +100,6 @@ semanticProfile="<profile-id>:<profile-version>"
 | `partShift`  | Numeric offset applied to part or volume numbers            |
 | `partDigits` | Number of digits reserved for part or volume numbers        |
 | `oyr`        | Official publication year of the standard                   |
-| `semanticProfile` | Optional versioned semantic profile for public semantic TOC tags |
 
 The parser must treat metadata as declarative data. It must not execute the file as shell code.
 
@@ -575,93 +573,16 @@ However, such a migration should happen only after a stable internal domain mode
 Until then, the existing compact format remains the preferred manual authoring format for standard structures.
 
 
-## Public Semantic Annotations
+## Semantic enrichment boundary
 
-TOC records may contain an optional sixth field with publishable semantic
-annotations. The field is a comma-separated list of namespaced taxonomy codes:
+AtlasData TOC records describe reviewed document structure. The retired sixth-field semantic-tag grammar (`SP-*`, `SS-*`, `KK-*`, `PF-*`, `RR-*`) and the `semanticProfile` header are no longer supported. Semantic state is not embedded into TOC records.
 
-```text
-TOC;<hash>;<reference>;<heading>;<type-marker>;<semantic-tags>
-```
-
-Example:
-
-```text
-TOC;...;IEC 61508-2:2010 7.4.2;Software requirements;r;SP-REQ,SS-PRE,KK-PRC,RR-ASR
-```
-
-The five-field legacy form remains valid. Semantic tags do not contain clause
-text, model confidence, rationale, or other evaluation provenance. They express
-only reviewed semantic facts suitable for publication.
-
-The namespaces are:
-
-| Namespace | Meaning |
-| --------- | ------- |
-| `SP` | primary statement function |
-| `SS` | secondary statement function |
-| `KK` | knowledge kind |
-| `PF` | process function |
-| `RR` | role relation type |
-| `DS` | document structure |
-| `NS` | normative status |
-
-The three-letter category codes are owned by the versioned ontology dimension,
-not by the AtlasData parser. A file containing semantic tags must declare the
-profile used to interpret them:
-
-```text
-semanticProfile="functional-safety:1.0.0"
-```
-
-Absence of an `RR-*` tag represents no accepted positive role-relation category.
-Applicability is no longer encoded as a TOC semantic tag; accepted applicability travels in the
-`atlasdata-enrichments` companion. `unspecified` normative status is not serialized as a semantic tag.
-
-### Applying Reviewed Annotations
-
-Reviewed annotations are persisted through a separate text-free manifest so
-that protected clause content never has to be committed with the gold labels:
-
-```yaml
-schema_version: 1
-semantic_profile: functional-safety:1.0.0
-annotations:
-  - reference: IEC 61508-2:2010 7.4.2
-    primary_statement_function: requirement
-    applicability:
-      present: true
-      polarity: included
-    # engineering-domain assertions are stored in EngineeringDocument.knowledge
-      - prerequisite
-      - process
-      - responsible_for
-```
-
-Apply the manifest with a dry run first:
-
-```bash
-uv run standards-atlas atlasdata apply-semantic-annotations \
-  data/IEC61508 local/evaluation/reviewed-semantic-annotations.yaml
-```
-
-Persist it explicitly with `--write`:
-
-```bash
-uv run standards-atlas atlasdata apply-semantic-annotations \
-  data/IEC61508 local/evaluation/reviewed-semantic-annotations.yaml \
-  --write
-```
-
-`generate-toc` preserves existing semantic tags but never promotes inferred or
-model-generated classifications to published gold automatically. This keeps the
-publication boundary explicit: only the reviewed annotation manifest can add or
-replace public semantic tags.
+Accepted text-safe context attributes are transported through the versioned `atlasdata-enrichments` companion described below. Engineering entities and normative assertions remain canonical `EngineeringDocument.knowledge` data with source/evidence bindings rather than AtlasData TOC tags.
 
 ## Accepted enrichment companions (schema 1)
 
-The existing structural text grammar and reviewed TOC tags remain unchanged. Accepted canonical
-attributes may additionally be persisted in `<AtlasData parent>/enrichments/<physical-key>.yaml`
+The existing structural text grammar remains unchanged. Accepted canonical
+context attributes may be persisted in `<AtlasData parent>/enrichments/<physical-key>.yaml`
 using `atlasdata export-enrichments`. This is an explicit transport contract, not a canonical
 CBox database or an automatic promotion to reviewed semantic tags.
 
@@ -672,7 +593,7 @@ CBox database or an automatic promotion to reviewed semantic tags.
 | `manifest_type`, `schema_version` | `atlasdata-enrichments`, integer `1` |
 | `document_key`, `family_key` | Exact manifest-declared physical document and family |
 | `atlasdata_file`, `selection_part`, `publication_year` | Explicit owning source basename, part selection and manifest edition; unspecified supplement year stays null |
-| `fingerprints.structure` | SHA-256 of selected structural clause IDs, references, headings, types and parents; reviewed semantic tags are excluded |
+| `fingerprints.structure` | SHA-256 of selected structural clause IDs, references, headings, types and parents; enrichment companions are excluded |
 | `clauses[].clause_id`, `.reference` | Stable clause ID and complete canonical `StandardReference` |
 | `.atlasdata_md5` | Exact legacy MD5 from the existing AtlasData `TOC` record; a foreign-key reference, not a recomputed fingerprint |
 | `.heading` | Internal/canonical heading text used by the enriched document |
@@ -687,18 +608,14 @@ UTF-8 bytes without another normalization step. The structure digest uses determ
 sorted JSON. The `atlasdata_md5` remains the exact 32-hex legacy TOC identifier and is verified
 against the current AtlasData file on export and import. Clause records are serialized in physical
 document order, not by hash-derived `clause_id`. Duplicate keys, IDs, full references, attribute
-paths, unknown fields, unsupported schema versions, contradictory semantic groups and raw private
-provenance in the public contract are rejected. Public semantic values are validated against
-existing canonical field types, not an independently defined vocabulary.
+paths, unknown fields, unsupported schema versions, contradictory attribute groups and raw private
+provenance in the public contract are rejected. Public context values are validated against existing canonical field types, not an independently defined vocabulary.
 
 ### Attribute records
 
 Each record contains `path`, `origin`, `value` and the appropriate provenance.
-Paths address primary/secondary statement, knowledge and process categories, whole Applicability,
-role presence, whole subject context or whole context routing. `enrichments.applicability` carries
-`{present, polarity}` as one typed value so presence and polarity cannot drift independently. Role details
-canonical fields but are temporarily excluded from publication, regardless of value or origin.
-The same exclusion applies to their fingerprint entries. Refactoring readers accept only the
+Paths address whole Applicability, whole subject context, or whole context routing. `enrichments.applicability` carries
+`{present, polarity}` as one typed value so presence and polarity cannot drift independently. Refactoring readers accept only the
 current schema-1 companion; obsolete companion shapes are regenerated rather than migrated.
 `origin` is `generated`, `confirmed` or `unattributed`. Known availability is the default and is
 omitted from YAML for readability. `availability: unknown` remains explicit; absence of an
@@ -712,8 +629,7 @@ serialized under `fingerprints.attributes.<path>.evidence` and `.decision_source
 retains explicit authority without duplicating the enclosing path. Populated unmarked legacy values
 are retained as `unattributed`, not promoted. An omitted attribute never clears a value.
 
-Statement/knowledge/process values, typed Applicability and role presence are public
-text-free values. `fingerprints.attributes.<path>.private_value` addresses source-bearing
+Typed Applicability is a public text-free value. `fingerprints.attributes.<path>.private_value` addresses source-bearing
 contexts in the private store; existing private role blobs remain unchanged but are not newly
 published or referenced by companion exports.
 For these fields, `value` is a bounded view: accepted normalized subject/confidence only; unresolved

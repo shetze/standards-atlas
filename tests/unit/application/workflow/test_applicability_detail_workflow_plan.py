@@ -1,11 +1,13 @@
 from pathlib import Path
 
+import yaml
+
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
 from standards_atlas.application.workflow import QualificationWorkflowPlanner, WorkflowStage
 
-V6_MANIFEST = Path("manifests/applicability-presence-qualification-v1.yaml")
+QUALIFICATION_MANIFEST = Path("manifests/applicability-presence-qualification-v1.yaml")
 
 
 def _plan(
@@ -19,7 +21,7 @@ def _plan(
         catalog,
         family_keys=("EN50716",),
         catalog_root=Path.cwd(),
-        manifest_path=V6_MANIFEST,
+        manifest_path=QUALIFICATION_MANIFEST,
         corpus_count=500,
         limit=50,
         corpus_strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
@@ -39,7 +41,7 @@ def _command(step) -> tuple[str, ...]:
     return _RENDERER.render(step.operation)
 
 
-def test_v6_workflow_runs_applicability_policy_between_matrix_and_archive() -> None:
+def test_workflow_runs_applicability_policy_between_matrix_and_archive() -> None:
     plan = _plan()
     matrix = next(step for step in plan.steps if step.stage is WorkflowStage.QUALIFICATION_MATRIX)
     policy = next(
@@ -55,9 +57,9 @@ def test_v6_workflow_runs_applicability_policy_between_matrix_and_archive() -> N
         "evaluation",
         "applicability-policy-run",
     )
-    assert _command(policy)[_command(policy).index("--manifest") + 1] == str(V6_MANIFEST)
+    assert _command(policy)[_command(policy).index("--manifest") + 1] == str(QUALIFICATION_MANIFEST)
     assert _command(policy)[_command(policy).index("--run") + 1].endswith(
-        "/multidimensional-semantic-qualification-v6-applicability-presence"
+        "/applicability-presence-qualification-v1"
     )
     assert "--limit" not in _command(policy)
     assert any(
@@ -118,15 +120,20 @@ def test_custom_corpus_root_is_shared_by_policy_and_archive_stages() -> None:
     assert _command(archive)[_command(archive).index("--corpus-root") + 1] == str(corpus_root)
 
 
-def test_manifests_without_detail_policy_keep_the_existing_workflow_shape() -> None:
+def test_manifests_without_detail_policy_keep_the_existing_workflow_shape(tmp_path: Path) -> None:
+    payload = yaml.safe_load(QUALIFICATION_MANIFEST.read_text(encoding="utf-8"))
+    payload["matrix_id"] = "applicability-presence-no-detail-policy-test"
+    payload["applicability_detail_enrichment"]["enabled"] = False
+    payload["applicability_decision_policy"]["enabled"] = False
+    manifest_path = tmp_path / "qualification.yaml"
+    manifest_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
     catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = QualificationWorkflowPlanner().plan(
         catalog,
         family_keys=("EN50716",),
         catalog_root=Path.cwd(),
-        manifest_path=Path(
-            "manifests/multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml"
-        ),
+        manifest_path=manifest_path,
         corpus_count=500,
         corpus_strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
         corpus_seed=20260818,

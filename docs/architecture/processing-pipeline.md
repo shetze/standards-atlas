@@ -17,14 +17,14 @@ The document pipeline converts controlled publications into canonical Engineerin
 7. **Construction contract** freezes the reviewed inputs and verifies coverage before aggregate construction.
 8. **Engineering document construction (`ENRICH`)** creates canonical clause content, evidence, reference mentions, and lineage. It does not classify structure or semantic meaning.
 9. **Structural taxonomy (`TAXONOMY`)** deterministically materializes `StructuralProfile` and `StructuralContext`, including hierarchy, node/leaf role, ancestor context, sibling sequence position, contextual node content, structural reference edges, and structural scope reach (for example `this clause`, following sibling clauses, or a scope-heading subtree).
-10. **Semantic classification (`SEMANTIC_ENRICHMENT`)** applies the qualified production classifier to clause content plus the complete structural context and assigns statement functions, knowledge kinds, process functions, applicability functions, and role-relation types.
-11. **Context projection (CBox)** combines Knowledge Domain, deterministic taxonomy, semantic functions, structural position, provenance, and qualification evidence into explicit context for formal interpretation.
-12. **Formal semantic projection** applies the selected domain-specific OWL TBox/RBox vocabulary to derive clause-level ABox assertions while preserving CBox context, source identity, extraction provenance, and qualification evidence. Context describes interpretation; ABox assertions represent domain knowledge.
-13. **Knowledge integration and relationship enrichment** resolves internal and cross-document targets and relates knowledge across documents and domains through shared or mapped semantics while preserving unresolved evidence and source identity.
+10. **Context enrichment (`CONTEXT_ENRICHMENT`)** materializes routing and deterministic subject context. Accepted applicability is a separate qualified enrichment and is adopted explicitly; it is not a clause-classification label.
+11. **Context projection (CBox)** combines Knowledge Domain, deterministic taxonomy, structural position, routing/subject context, accepted applicability, provenance, and qualification evidence into explicit context for formal interpretation.
+12. **Formal semantic extraction and projection** proposes source-bound `KnowledgeEntity` and `NormativeAssertion` objects against the selected domain-specific OWL TBox/RBox vocabulary. Only qualified/adopted assertions become canonical knowledge; every accepted assertion retains source and evidence anchors.
+13. **Knowledge integration and relationship enrichment** resolves internal and cross-document targets and relates accepted assertions across documents and domains while preserving unresolved evidence and source identity.
 14. **Retrieval and serving projections** may build lexical, vector, RAG, or GraphRAG indexes or graph-query services. These are rebuildable access mechanisms, not canonical storage.
 15. **Interfaces and applications** expose the knowledge through chat, MCP, APIs, Doorstop traceability, relationship analysis, heatmaps, and future consumers without making any one application a pipeline purpose.
-16. **Publication** creates Markdown, composed Markdown, and Doorstop projections without changing classification ownership.
-17. **Evaluation and qualification** operate as separate workflows for datasets, analyzer qualification, regression evidence, and HITL review; they establish whether probabilistic semantic components are suitable for production use but do not replace the production `SEMANTIC_ENRICHMENT` stage.
+16. **Publication** creates Markdown, composed Markdown, and Doorstop projections without changing canonical knowledge ownership.
+17. **Evaluation and qualification** operate as separate workflows for datasets, analyzer qualification, regression evidence, and HITL review. Probabilistic outputs remain proposals until the explicit adoption boundary.
 
 ## Normalization contract
 
@@ -47,15 +47,14 @@ Semantic transcription is intentionally outside this stage. A future enrichment 
 
 ## Taxonomy and ontology ownership
 
-The production path has one mandatory direction: `ENRICH → TAXONOMY → SEMANTIC_ENRICHMENT`.
+The mandatory document path is `ENRICH → TAXONOMY → CONTEXT_ENRICHMENT`.
 `ENRICH` preserves content and evidence, `TAXONOMY` derives deterministic structural
-context, and `SEMANTIC_ENRICHMENT` interprets semantic meaning. The semantic classification stage receives the
-materialized structural context and therefore never has to reconstruct hierarchy from
-prose. Automatic modal-verb heuristics are not permitted outside `SEMANTIC_ENRICHMENT`.
+context, and `CONTEXT_ENRICHMENT` materializes routing and subject context. Applicability
+qualification and formal assertion extraction are separate qualified workflows; neither
+reconstructs the retired statement/knowledge/process/role clause-classification model.
 
-Semantic qualification remains a separate evaluation workflow used to select and validate
-the production classifier. Imported reviewed/public semantic annotations may populate
-ontology fields directly because they are explicit evidence, not automatic inference.
+Imported reviewed knowledge may populate accepted assertion or applicability state only
+through the explicit adoption boundary with preserved provenance.
 
 ## Architectural layers
 
@@ -67,9 +66,9 @@ Acquisition
 Canonical representation
     -> EngineeringDocuments
 Context enrichment
-    -> deterministic taxonomy + qualified semantic functions + CBox
+    -> deterministic taxonomy + routing/subject context + accepted applicability + CBox
 Knowledge representation and integration
-    -> domain TBox/RBox + clause ABoxes + provenance
+    -> evidence-backed entities/assertions + domain TBox/RBox projection + provenance
 Retrieval and serving
     -> lexical/vector retrieval + RAG + GraphRAG + graph queries
 Interfaces

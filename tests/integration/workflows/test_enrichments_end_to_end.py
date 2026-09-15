@@ -73,7 +73,6 @@ def project(root):
     for key in ("EXAMPLEA", "EXAMPLEB"):
         (root / "data" / key).write_text(
             f'name="{key}"\ndigits=4\nlifecycle_status="published"\n'
-            'semanticProfile="functional-safety:1.0.0"\n'
             'structure=(\n "2025 r7"\n)\n#---data---#\n'
             f"TOC;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;{key}:2025 7;Requirements;r\n"
         )

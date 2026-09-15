@@ -18,7 +18,6 @@ def test_schema_and_resource_versions_are_independent_for_semantic_resources() -
     by_id = {item.id: item for item in VERSIONED_INTERFACES}
     for interface_id in (
         "semantic-task",
-        "semantic-profile",
         "semantic-ontology",
         "structural-taxonomy",
         "formal-ontology",

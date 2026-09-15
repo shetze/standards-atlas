@@ -17,7 +17,7 @@ uv run standards-atlas llm stop
 Download every distinct RamaLama model declared by a qualification manifest:
 
 ```bash
-uv run standards-atlas llm preload-qualification-models   --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml
+uv run standards-atlas llm preload-qualification-models   --manifest manifests/applicability-presence-qualification-v1.yaml
 ```
 
 Persistent model storage should be configured in the RamaLama/container runtime so downloads survive process restarts.

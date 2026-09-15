@@ -52,7 +52,7 @@ def _selection(texts: tuple[str, ...]) -> ApplicabilityDetailSelection:
     return ApplicabilityDetailSelection(
         task_version="1.0.0",
         source_matrix_id="matrix-v6",
-        source_corpus_id="semantic-profile-v1",
+        source_corpus_id="applicability-presence-v1",
         source_selection_sha256="a" * 64,
         source_consensus_sha256="b" * 64,
         source_coverage_sha256="c" * 64,
@@ -552,7 +552,7 @@ def test_evaluate_uses_presence_then_hitl_detail(monkeypatch, tmp_path: Path) ->
     presence = ConsensusReport(
         schema_version=1,
         matrix_id="matrix-v6",
-        corpus_id="semantic-profile-v1",
+        corpus_id="applicability-presence-v1",
         prompt_id="presence",
         reasoning_mode_id="disabled",
         generated_at=NOW,

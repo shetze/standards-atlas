@@ -87,7 +87,10 @@ def build_review_package(
                     predicate=ReviewPredicate(equals=case.expected.present),
                     producer=golden.corpus_id,
                     producer_kind="historical",
-                    rationale="Existing published applicability reference; reconfirm against frozen source.",
+                    rationale=(
+                        "Existing published applicability reference; "
+                        "reconfirm against frozen source."
+                    ),
                     provenance=f"{spec.golden}: {golden.corpus_id}@{golden.corpus_version}",
                 )
             )
@@ -186,7 +189,11 @@ def build_review_package(
     for suggestion in suggestions:
         state = add_proposal(package, state, **suggestion, created_at=now)
     report = review_report(package, state)
-    readme = "# Applicability review package\n\nFrozen source/context and applicability-presence review. Proposals are not human decisions.\n"
+    readme = (
+        "# Applicability review package\n\n"
+        "Frozen source/context and applicability-presence review. "
+        "Proposals are not human decisions.\n"
+    )
     new_directory(
         output,
         {

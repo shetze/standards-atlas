@@ -440,7 +440,7 @@ def test_collects_reproducible_applicability_detail_inputs(tmp_path: Path) -> No
                 "task": "semantic-profile-classification",
                 "task_version": "2.5.0",
                 "dataset_version": "2.2.0",
-                "corpus_id": "semantic-profile-v1",
+                "corpus_id": "applicability-presence-v1",
                 "prompts": [],
                 "applicability_detail_enrichment": {
                     "enabled": True,
@@ -533,7 +533,7 @@ def test_collects_reproducible_applicability_policy_inputs(tmp_path: Path) -> No
                 "task": "semantic-profile-classification",
                 "task_version": "2.5.0",
                 "dataset_version": "2.2.0",
-                "corpus_id": "semantic-profile-v1",
+                "corpus_id": "applicability-presence-v1",
                 "prompts": [],
                 "applicability_detail_enrichment": {
                     "enabled": True,

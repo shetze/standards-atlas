@@ -8,9 +8,9 @@ Translate the external representation into an existing application contract. Pre
 
 Make the rule deterministic, order-aware, and lossless. Record its transformation effect and add focused plus corpus regression tests.
 
-## Add a semantic classifier
+## Add semantic analysis
 
-Extend one explicit `SemanticClassification` dimension behind the application service boundary. Keep deterministic classification as the default, use the versioned dimension-specific evaluation tasks, and do not reintroduce a flat mixed-role vocabulary. Optional LLM support must be explicit and must not silently replace reviewed metadata.
+Define an explicit source-bound assertion or context contract behind the application service boundary. Prefer deterministic derivation where reliable; probabilistic analyzers must emit proposals with provenance and qualification evidence rather than new clause-classification dimensions. Do not reintroduce the retired statement/knowledge/process/role classification model.
 
 ## Add an exporter
 

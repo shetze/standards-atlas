@@ -36,7 +36,7 @@ uv run standards-atlas workflow plan \
 uv run standards-atlas workflow plan \
   --task qualification \
   --manifests \
-    manifests/standards.yaml,manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
+    manifests/standards.yaml,manifests/applicability-presence-qualification-v1.yaml \
   --hierarchy functional-safety \
   --knowledge-domain functional-safety
 ```
@@ -82,8 +82,7 @@ See [AtlasData enrichments](../user-guide/atlasdata-enrichments.md) for commands
 - `document derive-part`
 - `document enrich-content`
 - `document classify-taxonomy`
-- `document enrich-semantics`
-- `document export markdown`
+- - `document export markdown`
 - `document export doorstop`
 - `document export gemara`: Gemara GuidanceCatalog plus traceability sidecar
 - `document export gemara-controls`: assessment-oriented Gemara ControlCatalog
@@ -98,7 +97,7 @@ See [AtlasData enrichments](../user-guide/atlasdata-enrichments.md) for commands
 ## Evaluation and qualification
 
 - `evaluation corpus-build`: build a representative reusable clause corpus
-- `evaluation qualification-matrix`: execute multidimensional semantic model qualification
+- `evaluation qualification-matrix`: execute the configured applicability qualification matrix
 - `evaluation applicability-detail-enrich`: resume or rerun the sparse post-consensus detail stage
   for final Applicability Presence-positive clauses; the qualification workflow invokes it
   automatically when enabled
@@ -113,8 +112,8 @@ manifest:
 
 ```bash
 uv run standards-atlas evaluation normalization-quality \
-  --corpus .atlas/data/evaluation/corpora/semantic-profile/2.1.0/dataset.json \
-  --manifest manifests/multidimensional-semantic-qualification-v3-semantic-profile-v1.yaml \
+  --corpus .atlas/data/evaluation/corpora/applicability-presence/1.0.0/dataset.json \
+  --manifest manifests/applicability-presence-qualification-v1.yaml \
   --output local/evaluation/normalization-quality
 ```
 

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import yaml
+
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
 from standards_atlas.adapters.workflow.cli_renderer import CliWorkflowOperationRenderer
 from standards_atlas.application.semantic_qualification.clause_access import SamplingStrategy
@@ -40,13 +42,13 @@ def test_qualification_plan_stops_document_pipeline_at_markdown() -> None:
     assert WorkflowStage.DOORSTOP not in stages
     assert WorkflowStage.DOORSTOP_PUBLISH not in stages
     assert stages[-3:] == (
-        WorkflowStage.CORPUS_BUILD,
         WorkflowStage.QUALIFICATION_MATRIX,
+        WorkflowStage.APPLICABILITY_DECISION_POLICY,
         WorkflowStage.QUALIFICATION_ARCHIVE,
     )
 
 
-def test_qualification_plan_requires_taxonomy_and_semantic_profile_classification() -> None:
+def test_qualification_plan_requires_taxonomy_and_context_enrichment() -> None:
     plan = _plan()
     stages = tuple(step.stage for step in plan.steps)
 
@@ -60,8 +62,10 @@ def test_qualification_plan_derives_corpus_contract_from_matrix_manifest() -> No
     corpus = next(step for step in plan.steps if step.stage is WorkflowStage.CORPUS_BUILD)
 
     assert "--version" in _command(corpus)
-    assert _command(corpus)[_command(corpus).index("--version") + 1] == "2.2.0"
-    assert _command(corpus)[_command(corpus).index("--corpus-id") + 1] == "semantic-profile-v1"
+    assert _command(corpus)[_command(corpus).index("--version") + 1] == "1.0.0"
+    assert (
+        _command(corpus)[_command(corpus).index("--corpus-id") + 1] == "applicability-presence-v1"
+    )
     assert _command(corpus)[_command(corpus).index("--strategy") + 1] == "representative_stratified"
     assert _command(corpus)[_command(corpus).index("--seed") + 1] == "20260818"
 
@@ -105,15 +109,20 @@ def test_limit_is_forwarded_to_all_qualification_stages() -> None:
     assert _command(archive)[_command(archive).index("--limit") + 1] == "50"
 
 
-def test_corpus_build_uses_dataset_version_when_task_version_differs() -> None:
+def test_corpus_build_uses_dataset_version_when_task_version_differs(tmp_path: Path) -> None:
+    payload = yaml.safe_load(QUALIFICATION_MANIFEST.read_text(encoding="utf-8"))
+    payload["matrix_id"] = "applicability-presence-dataset-version-test"
+    payload["task_version"] = "9.9.9"
+    payload["dataset_version"] = "1.0.0"
+    manifest_path = tmp_path / "qualification.yaml"
+    manifest_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
     catalog = YamlStandardCatalogReader().read(Path("manifests/standards.yaml"))
     plan = QualificationWorkflowPlanner().plan(
         catalog,
         family_keys=("EN50716",),
         catalog_root=Path.cwd(),
-        manifest_path=Path(
-            "manifests/multidimensional-semantic-qualification-v5-applicability-semantics-v1.yaml"
-        ),
+        manifest_path=manifest_path,
         corpus_count=500,
         corpus_strategy=SamplingStrategy.REPRESENTATIVE_STRATIFIED,
         corpus_seed=20260818,
@@ -121,4 +130,4 @@ def test_corpus_build_uses_dataset_version_when_task_version_differs() -> None:
     )
     corpus = next(step for step in plan.steps if step.stage is WorkflowStage.CORPUS_BUILD)
 
-    assert _command(corpus)[_command(corpus).index("--version") + 1] == "2.2.0"
+    assert _command(corpus)[_command(corpus).index("--version") + 1] == "1.0.0"

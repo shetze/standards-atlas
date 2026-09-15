@@ -2,7 +2,7 @@ schema_version: 1
 id: applicability-functions
 version: 1.0.0
 dimension: applicability_functions
-description: Applicability semantics used by semantic profile 2.0.0.
+description: Applicability vocabulary retained for qualification and polarity analysis.
 values:
 - applicability_condition
 - inclusion

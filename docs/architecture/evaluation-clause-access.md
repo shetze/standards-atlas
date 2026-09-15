@@ -34,7 +34,8 @@ For migration compatibility, `ClauseProvider` is also re-exported from
 `DocumentDescriptor` and `ClauseDescriptor` expose only data required by
 qualification clients. A clause descriptor contains stable identity,
 document key, reference, content hash, clause type, title, canonical plain-text
-content, hierarchy information, and statement functions.
+content, hierarchy information, references, context routing, subject context,
+and accepted applicability.
 
 The contract deliberately excludes:
 
@@ -62,8 +63,8 @@ from sanitized filenames.
 
 ## Filtering and language
 
-Filters cover document keys, document types, clause types, statement functions,
-and text-length limits. `EngineeringDocument` currently has no canonical
+Filters cover document keys, document types, clause types, structural sections,
+document/domain categories, semantic sections, and text-length limits. `EngineeringDocument` currently has no canonical
 language field. A requested language filter therefore yields no matches rather
 than guessing from clause text.
 

@@ -100,7 +100,7 @@ def _selection(count: int) -> QualificationRunSelection:
     return QualificationRunSelection(
         task="semantic-profile-classification",
         dataset_version="2.2.0",
-        corpus_id="semantic-profile-v1",
+        corpus_id="applicability-presence-v1",
         dataset_sha256="a" * 64,
         corpus_sha256="b" * 64,
         dataset_clause_count=count,
@@ -135,7 +135,7 @@ def _consensus(*presence: bool) -> ConsensusReport:
     return ConsensusReport(
         schema_version=1,
         matrix_id="matrix-v1",
-        corpus_id="semantic-profile-v1",
+        corpus_id="applicability-presence-v1",
         prompt_id="applicability-presence",
         reasoning_mode_id="disabled",
         generated_at=datetime.now(UTC),

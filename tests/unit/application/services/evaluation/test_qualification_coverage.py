@@ -31,7 +31,7 @@ def _selection() -> QualificationRunSelection:
     return QualificationRunSelection(
         task="statement-function-classification",
         dataset_version="2.2.0",
-        corpus_id="semantic-profile-v1",
+        corpus_id="applicability-presence-v1",
         dataset_sha256="a" * 64,
         corpus_sha256="b" * 64,
         dataset_clause_count=500,
@@ -60,7 +60,7 @@ def _report(*clause_ids: str) -> ConsensusReport:
     return ConsensusReport(
         schema_version=1,
         matrix_id="matrix-v1",
-        corpus_id="semantic-profile-v1",
+        corpus_id="applicability-presence-v1",
         prompt_id="content-only",
         reasoning_mode_id="disabled",
         generated_at=datetime.now(UTC),

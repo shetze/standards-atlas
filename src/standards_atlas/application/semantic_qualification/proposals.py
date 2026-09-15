@@ -345,7 +345,6 @@ class BaselineProposalGenerator:
                     retry_on_truncation=config.retry_on_truncation,
                 )
                 normalized_value = _normalize_selection_payload(result.value)
-                interview_payload = None
                 response_payload = {
                     "value": dict(result.value),
                     "provider": result.provider,

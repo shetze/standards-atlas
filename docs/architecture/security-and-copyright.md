@@ -107,29 +107,8 @@ Security-relevant behavior should be covered by tests for path containment, visi
 - [Local LLM user guide](../user-guide/local-llm.md)
 - [Release and versioning](../development/release-and-versioning.md)
 
-## Publishable semantic gold
+## Publishable derived knowledge
 
-Reviewed semantic classifications are publishable independently from protected
-clause content. AtlasData TOC records may therefore carry versioned semantic
-tags while the licensed normalized clause text remains local.
+Reviewed clause-classification tags are no longer embedded in AtlasData TOC records. Public structural AtlasData remains separate from accepted semantic/context state. Text-safe accepted applicability, subject-context views, and routing views may be transported through the schema-1 `atlasdata-enrichments` companion; protected source-bearing context stays in the private evidence store.
 
-The public persistence boundary is intentionally narrow:
-
-```text
-public Git data                 local/licensed evaluation data
----------------                 ------------------------------
-clause reference                normalized clause content
-public heading                  model predictions and evidence
-semantic profile version        confidence and vote provenance
-accepted semantic tags          HITL rationale
-```
-
-`generate-toc` only preserves existing semantic tags. It must not promote an
-inferred or model-generated semantic proposals or assertions to public gold implicitly.
-Adding or replacing public semantic tags requires the explicit
-`atlasdata apply-semantic-annotations` workflow with a reviewed, text-free
-annotation manifest.
-
-This makes the checked-in AtlasData annotations the canonical publishable gold
-facts. A full evaluation gold dataset can be reconstructed locally by joining
-those facts with licensed clause content using stable clause references.
+Engineering entities and normative assertions remain canonical `EngineeringDocument.knowledge` data with explicit evidence anchors and adoption provenance. Publishing or exporting such knowledge must not expose licensed clause text implicitly.

@@ -74,7 +74,7 @@ def _replay(final_values: tuple[bool | None, ...]) -> ApplicabilityPolicyReplayR
         source_run="qualification-run-073.zip",
         source_run_sha256=SHA,
         source_matrix_id="matrix-v6",
-        source_corpus_id="semantic-profile-v1",
+        source_corpus_id="applicability-presence-v1",
         source_selection_sha256=SHA,
         consensus_clause_count=len(cases),
         selected_clause_count=3,

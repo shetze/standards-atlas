@@ -6,6 +6,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from standards_atlas.adapters.catalog import YamlStandardCatalogReader
@@ -123,14 +124,20 @@ def test_regenerate_docling_and_restore_remain_explicit():
     assert "--strict-evidence" in _command(p.steps[-3])
 
 
-def test_manifest_without_final_policy_is_rejected():
+def test_manifest_without_final_policy_is_rejected(tmp_path: Path):
+    payload = yaml.safe_load(MATRIX.read_text(encoding="utf-8"))
+    payload["matrix_id"] = "applicability-presence-without-final-policy-test"
+    payload["applicability_decision_policy"]["enabled"] = False
+    qualification_manifest = tmp_path / "qualification.yaml"
+    qualification_manifest.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
     with pytest.raises(ValueError, match="final consensus"):
         EnrichmentsWorkflowPlanner().plan(
             YamlStandardCatalogReader().read(MANIFEST),
             family_keys=("EN50716",),
             catalog_root=Path.cwd(),
             standards_manifest=MANIFEST,
-            qualification_manifest=Path("manifests/applicability-presence-qualification-v1.yaml"),
+            qualification_manifest=qualification_manifest,
         )
 
 
@@ -414,7 +421,8 @@ def test_resume_plan_cli_has_no_context_commands_and_keeps_fresh_qualification()
     assert "enrich-context" not in result.output
     assert "--verify-existing" in result.output
     assert "qualification-matrix" in result.output
-    assert "25695765154b" in result.output
+    assert "applicability-presence-qualification-v1" in result.output
+    assert "--fresh" in result.output
 
 
 def test_resume_option_is_rejected_for_other_tasks():
