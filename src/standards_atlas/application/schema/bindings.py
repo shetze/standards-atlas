@@ -229,6 +229,11 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.application.assertion_qualification.models:AssertionQualificationReport",
     ),
     ModelBinding(
+        "assertion-qualification-cascade-report",
+        "standards_atlas.application.assertion_qualification.cascade_models:"
+        "AssertionQualificationCascadeReport",
+    ),
+    ModelBinding(
         "clause-evaluation-annotation",
         "standards_atlas.application.semantic_qualification.annotations:ClauseEvaluationAnnotation",
     ),

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from standards_atlas.domain.model import (
     Clause,
@@ -16,6 +16,12 @@ from standards_atlas.domain.model import (
     KnowledgeProposalViolation,
     NormativeAssertionProposal,
 )
+
+if TYPE_CHECKING:
+    from standards_atlas.application.assertion_qualification.cascade_models import (
+        AssertionClauseVerification,
+        AssertionVerifierProvenance,
+    )
 
 
 @dataclass(frozen=True)
@@ -60,3 +66,23 @@ class DocumentKnowledgeProposalRepository(Protocol):
     def save(self, proposal: DocumentKnowledgeProposal) -> None: ...
 
     def load(self, proposal_run_id: str, document_key: str) -> DocumentKnowledgeProposal | None: ...
+
+
+class AssertionProposalVerifier(Protocol):
+    """Independently verify efficient candidates and detect missing semantics."""
+
+    def provenance(self) -> AssertionVerifierProvenance:
+        """Return stable verifier provenance for the cascade report."""
+        ...
+
+    def verify(
+        self,
+        clause: Clause,
+        *,
+        document_key: str,
+        ontology_versions: tuple[str, ...],
+        evidence_anchors: Sequence[EvidenceAnchor],
+        entity_proposals: Sequence[KnowledgeEntityProposal],
+        assertion_proposals: Sequence[NormativeAssertionProposal],
+        semantic_context: Mapping[str, object] | None = None,
+    ) -> AssertionClauseVerification: ...

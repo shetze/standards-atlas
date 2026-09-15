@@ -107,6 +107,12 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
         (1,),
         "local/evaluation/**/assertion-qualification*.json",
     ),
+    "assertion-qualification-cascade-report": SchemaPolicy(
+        "assertion-qualification-cascade-report",
+        1,
+        (1,),
+        "local/evaluation/**/assertion-cascade*.json",
+    ),
     "structural-taxonomy-resource": SchemaPolicy(
         "structural-taxonomy-resource",
         1,

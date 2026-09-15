@@ -16,10 +16,11 @@ prose and table proposal runs with deterministic document-local entity resolutio
 projects qualified IEC 61508 technique recommendations through reified recommendation entities
 without losing SIL, recommendation level, alternative-group, or reference semantics. Next,
 introduce typed assertion/table corpora and dedicated qualification without weakening the proposal,
-qualification, and adoption boundary. Slice 7A now adds versioned development/holdout assertion
-golden suites plus deterministic entity/assertion, normative-force, and grounding metrics. Next,
-introduce the Efficient → Verify → Escalate assertion qualification execution in Slice 7B, followed
-by explicit holdout/automatic-adoption policy in Slice 7C.
+qualification, and adoption boundary. Slice 7A adds versioned development/holdout assertion
+golden suites plus deterministic entity/assertion, normative-force, and grounding metrics. Slice 7B
+now adds threshold-free Efficient → Verify → Escalate execution with exhaustive independent missing
+assertion detection and targeted clause escalation. Next, introduce explicit holdout and
+automatic-adoption policy in Slice 7C.
 
 ### Qualify existing standards
 

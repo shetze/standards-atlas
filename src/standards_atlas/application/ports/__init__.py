@@ -31,6 +31,7 @@ from standards_atlas.application.ports.formula_transcriptions import (
 )
 from standards_atlas.application.ports.formula_visuals import FormulaVisualEnricher
 from standards_atlas.application.ports.knowledge_proposals import (
+    AssertionProposalVerifier,
     ClauseKnowledgeProposalResult,
     DocumentKnowledgeProposalRepository,
     KnowledgeProposalExtractor,
@@ -53,6 +54,7 @@ from standards_atlas.application.ports.workflow_execution import (
 )
 
 __all__ = [
+    "AssertionProposalVerifier",
     "PublicationDocumentProvider",
     "FormalSemanticProjectionRepository",
     "FormalSemanticProjector",

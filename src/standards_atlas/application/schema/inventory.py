@@ -448,6 +448,12 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         "assertion-qualification-report",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.application.assertion_qualification.cascade_models:"
+        "AssertionQualificationCascadeReport",
+        SchemaMarkerDisposition.CENTRAL,
+        "assertion-qualification-cascade-report",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.application.qualification.golden_corpus:GoldenCorpusReport",
         SchemaMarkerDisposition.LOCAL,
         reason=("in-memory qualification result; persisted envelope is owned by run reporter"),
@@ -965,6 +971,14 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (VersionAxis.SCHEMA,),
         "assertion-qualification-report",
         "Threshold-free Slice-7A entity/assertion matching and grounding metrics.",
+    ),
+    VersionedInterface(
+        "assertion-qualification-cascade-report",
+        "local/evaluation/**/assertion-cascade*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "assertion-qualification-cascade-report",
+        "Threshold-free Slice-7B Efficient → Verify → Escalate routing evidence.",
     ),
     VersionedInterface(
         "complypack-workspace-manifest",

@@ -92,3 +92,13 @@ def test_assertion_evaluate_help_is_registered() -> None:
     assert "--golden" in result.stdout
     assert "--proposal" in result.stdout
     assert "--output" in result.stdout
+
+
+def test_assertion_cascade_help_is_registered() -> None:
+    result = runner.invoke(app, ["evaluation", "assertion-cascade", "--help"])
+    assert result.exit_code == 0
+    assert "--document-key" in result.stdout
+    assert "--efficient-model" in result.stdout
+    assert "--verifier-model" in result.stdout
+    assert "--escalation-model" in result.stdout
+    assert "--ontology-version" in result.stdout

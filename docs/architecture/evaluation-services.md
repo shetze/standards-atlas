@@ -60,8 +60,13 @@ accuracy, exact evidence-span grounding accuracy, and combined exact-assertion a
 proposal payload hashes bind every report to the evaluated semantic inputs.
 
 No 7A report contains `passed`, acceptance thresholds, adoption decisions, or an EngineeringDocument
-write path. The Efficient → Verify → Escalate execution policy is introduced in Slice 7B and the
-holdout/automatic-adoption policy in Slice 7C.
+write path. Slice 7B adds a separate schema-1 `AssertionQualificationCascadeReport`. The efficient
+extractor proposes candidates first; an independent verifier must review every candidate exactly
+once and must also inspect the complete eligible clause for missing source-extractable entities or
+assertions. Efficient failures/violations, verifier errors, rejected/uncertain candidates, and
+missing-item signals route only that clause to the escalation extractor. The report persists these
+routes, verifier evidence, stage-local failures/violations and exact proposal hashes, but it still
+has no pass/fail or adoption policy. Holdout and automatic-adoption policy remain Slice 7C.
 
 ## Artifact separation
 

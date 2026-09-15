@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — Assertion qualification cascade Slice 7B (2026-09-15)
+
+- Add a threshold-free Efficient → Verify → Escalate cascade for assertion-centred knowledge
+  proposals, with separate efficient, independent-verifier, and targeted escalation stages.
+- Require the verifier to review every efficient entity/assertion candidate exactly once and to run
+  an independent missing-entity/missing-assertion check even when Efficient produced no candidates.
+- Escalate deterministically on efficient failures/violations, verifier errors, rejected or uncertain
+  candidates, and detected missing semantics; no majority-vote consensus is introduced.
+- Persist a schema-1 cascade report with per-clause routes, verifier decisions, stage-local
+  failure/violation counts, proposal hashes, model provenance, and exact run identities.
+- Add `standards-atlas evaluation assertion-cascade` to execute and persist efficient/escalation
+  proposal runs plus the qualification report. Automatic adoption thresholds remain Slice 7C scope.
+
 
 ## Unreleased — Assertion qualification Slice 7A (2026-09-15)
 

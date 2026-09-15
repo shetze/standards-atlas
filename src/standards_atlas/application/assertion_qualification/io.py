@@ -7,6 +7,9 @@ from pathlib import Path
 
 import yaml
 
+from standards_atlas.application.assertion_qualification.cascade_models import (
+    AssertionQualificationCascadeReport,
+)
 from standards_atlas.application.assertion_qualification.models import (
     AssertionGoldenSuite,
     AssertionQualificationReport,
@@ -43,6 +46,30 @@ def write_assertion_qualification_report(
 ) -> Path:
     payload = report.model_dump(mode="json")
     require_current_payload("assertion-qualification-report", payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def load_assertion_qualification_cascade_report(
+    path: Path,
+) -> AssertionQualificationCascadeReport:
+    payload = _load_mapping(path)
+    require_supported_schema(
+        "assertion-qualification-cascade-report", payload.get("schema_version")
+    )
+    return AssertionQualificationCascadeReport.model_validate(payload)
+
+
+def write_assertion_qualification_cascade_report(
+    report: AssertionQualificationCascadeReport,
+    path: Path,
+) -> Path:
+    payload = report.model_dump(mode="json")
+    require_current_payload("assertion-qualification-cascade-report", payload)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",

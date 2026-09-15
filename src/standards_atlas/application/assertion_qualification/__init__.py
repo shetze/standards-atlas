@@ -1,5 +1,21 @@
-"""Assertion-centred qualification contracts and deterministic Slice-7A metrics."""
+"""Assertion-centred qualification metrics and Slice-7B cascade contracts."""
 
+from .cascade import (
+    AssertionQualificationCascadeResult,
+    AssertionQualificationCascadeService,
+)
+from .cascade_models import (
+    ASSERTION_QUALIFICATION_CASCADE_REPORT_SCHEMA_VERSION,
+    AssertionCandidateVerification,
+    AssertionCascadeClauseReport,
+    AssertionCascadeProposalSource,
+    AssertionCascadeReason,
+    AssertionCascadeRoute,
+    AssertionClauseVerification,
+    AssertionQualificationCascadeReport,
+    AssertionVerificationDisposition,
+    AssertionVerifierProvenance,
+)
 from .evaluation import (
     AssertionQualificationEvaluator,
     golden_suite_sha256,
@@ -7,7 +23,9 @@ from .evaluation import (
 )
 from .io import (
     load_assertion_golden_suite,
+    load_assertion_qualification_cascade_report,
     load_document_knowledge_proposal,
+    write_assertion_qualification_cascade_report,
     write_assertion_qualification_report,
 )
 from .models import (
@@ -28,6 +46,18 @@ from .models import (
 )
 
 __all__ = [
+    "ASSERTION_QUALIFICATION_CASCADE_REPORT_SCHEMA_VERSION",
+    "AssertionCandidateVerification",
+    "AssertionCascadeClauseReport",
+    "AssertionCascadeProposalSource",
+    "AssertionCascadeReason",
+    "AssertionCascadeRoute",
+    "AssertionClauseVerification",
+    "AssertionQualificationCascadeReport",
+    "AssertionQualificationCascadeResult",
+    "AssertionQualificationCascadeService",
+    "AssertionVerificationDisposition",
+    "AssertionVerifierProvenance",
     "ASSERTION_GOLDEN_SUITE_SCHEMA_VERSION",
     "ASSERTION_QUALIFICATION_REPORT_SCHEMA_VERSION",
     "AccuracyMetrics",
@@ -45,7 +75,9 @@ __all__ = [
     "GoldenNormativeAssertion",
     "golden_suite_sha256",
     "load_assertion_golden_suite",
+    "load_assertion_qualification_cascade_report",
     "load_document_knowledge_proposal",
     "proposal_sha256",
+    "write_assertion_qualification_cascade_report",
     "write_assertion_qualification_report",
 ]

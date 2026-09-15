@@ -83,6 +83,11 @@ deterministic and ID-independent; predicate, normative-force, grounding, and com
 assertion accuracy are reported separately. Proposal violations/failures remain visible as counts,
 but Slice 7A does not translate metric values into canonical authority or adoption decisions.
 
+Slice 7B adds `AssertionQualificationCascadeReport` as a separate non-canonical qualification
+artifact. It records per-clause Efficient/Verify/Escalate routing, exact proposal-source hashes and
+verifier decisions. It deliberately contains no accepted assertion set; canonical `DocumentKnowledge`
+remains unchanged until the explicit Slice 8 adoption boundary.
+
 ## Table-derived knowledge
 
 `KnowledgeTable` identifies one structured table within a clause and owns ordered

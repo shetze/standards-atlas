@@ -1,5 +1,8 @@
 """Adapters for local OpenAI-compatible LLM inference."""
 
+from standards_atlas.adapters.llm.assertion_proposal_verifier import (
+    OntologyGuidedAssertionProposalVerifier,
+)
 from standards_atlas.adapters.llm.codex_cli import CodexCliConfig, CodexCliLlmGateway
 from standards_atlas.adapters.llm.config import (
     ContextEnrichmentConfig,
@@ -26,6 +29,7 @@ from standards_atlas.adapters.llm.ramalama_server import (
 )
 
 __all__ = [
+    "OntologyGuidedAssertionProposalVerifier",
     "CodexCliConfig",
     "CodexCliLlmGateway",
     "ContextEnrichmentConfig",
