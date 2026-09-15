@@ -8,6 +8,9 @@ from standards_atlas.adapters.llm.config import (
     RamaLamaServerConfig,
 )
 from standards_atlas.adapters.llm.formal_semantic_extractor import OntologyGuidedLlmExtractor
+from standards_atlas.adapters.llm.knowledge_proposal_extractor import (
+    OntologyGuidedKnowledgeProposalExtractor,
+)
 from standards_atlas.adapters.llm.managed_ramalama import ManagedRamaLamaGateway
 from standards_atlas.adapters.llm.openai_compatible import (
     LlmContextWindowError,
@@ -36,6 +39,7 @@ __all__ = [
     "LlmUnavailableError",
     "ManagedRamaLamaGateway",
     "OpenAICompatibleLlmGateway",
+    "OntologyGuidedKnowledgeProposalExtractor",
     "OntologyGuidedLlmExtractor",
     "RamaLamaServerConfig",
     "RamaLamaServerError",

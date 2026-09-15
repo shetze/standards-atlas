@@ -49,3 +49,13 @@ def test_proposal_contract_does_not_define_an_adoption_shortcut() -> None:
         "to_engineering_document",
         "project",
     }
+
+
+def test_slice_5b_extractor_does_not_depend_on_legacy_extraction_contract() -> None:
+    active_paths = (
+        Path("src/standards_atlas/application/knowledge_proposal_extraction/service.py"),
+        Path("src/standards_atlas/adapters/llm/knowledge_proposal_extractor.py"),
+    )
+    for path in active_paths:
+        imports = _imports(path)
+        assert "standards_atlas.domain.model.semantic_extraction" not in imports

@@ -31,7 +31,9 @@ from standards_atlas.application.ports.formula_transcriptions import (
 )
 from standards_atlas.application.ports.formula_visuals import FormulaVisualEnricher
 from standards_atlas.application.ports.knowledge_proposals import (
+    ClauseKnowledgeProposalResult,
     DocumentKnowledgeProposalRepository,
+    KnowledgeProposalExtractor,
 )
 from standards_atlas.application.ports.publication import (
     PublicationDocumentProvider,
@@ -79,7 +81,9 @@ __all__ = [
     "FormulaTranscriptionDocumentRepository",
     "FormulaTranscriptionRepository",
     "FormulaVisualEnricher",
+    "ClauseKnowledgeProposalResult",
     "DocumentKnowledgeProposalRepository",
+    "KnowledgeProposalExtractor",
     "ExtractionState",
     "NormalizationRepository",
     "NormalizedDocumentRepository",
