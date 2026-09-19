@@ -149,7 +149,7 @@ def test_stratified_selection_is_deterministic_and_keeps_both_applicability_valu
     assert len({case.document_key for case in first}) >= 2
 
 
-def test_build_binds_source_case_to_current_clause_and_rejects_text_drift() -> None:
+def test_build_binds_source_case_to_current_clause_and_records_text_drift() -> None:
     source = _source_case(clause_id="c1")
     document = _document(source)
     pilot = build_assertion_review_pilot(
@@ -162,17 +162,27 @@ def test_build_binds_source_case_to_current_clause_and_rejects_text_drift() -> N
     assert pilot.cases[0].text == source.text
     assert pilot.cases[0].text_sha256 == hashlib.sha256(source.text.encode()).hexdigest()
     assert pilot.cases[0].applicability_source.present is False
+    assert pilot.cases[0].applicability_source.selection_text_sha256 == hashlib.sha256(
+        source.text.encode()
+    ).hexdigest()
+    assert pilot.cases[0].applicability_source.selection_text_matches_current is True
     assert pilot.cases[0].expected is None
     assert pilot.cases[0].review_status is AssertionReviewStatus.PENDING
 
     drifted = source.model_copy(update={"text": source.text + " changed"})
-    with pytest.raises(ValueError, match="source text mismatch"):
-        build_assertion_review_pilot(
-            _corpus(drifted),
-            (drifted,),
-            {"DOC": document},
-            _request(clause_ids=("c1",)),
-        )
+    drifted_pilot = build_assertion_review_pilot(
+        _corpus(drifted),
+        (drifted,),
+        {"DOC": document},
+        _request(clause_ids=("c1",)),
+    )
+
+    assert drifted_pilot.cases[0].text == source.text
+    assert drifted_pilot.cases[0].text_sha256 == hashlib.sha256(source.text.encode()).hexdigest()
+    assert drifted_pilot.cases[0].applicability_source.selection_text_sha256 == hashlib.sha256(
+        drifted.text.encode()
+    ).hexdigest()
+    assert drifted_pilot.cases[0].applicability_source.selection_text_matches_current is False
 
 
 def test_publish_merges_case_local_entities_and_computes_exact_evidence_hashes() -> None:

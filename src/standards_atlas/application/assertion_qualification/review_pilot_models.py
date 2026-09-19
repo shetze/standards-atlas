@@ -259,6 +259,8 @@ class AssertionReviewApplicabilitySource(BaseModel):
     present: bool
     source_archive: str = Field(min_length=1)
     source_archive_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    selection_text_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    selection_text_matches_current: bool
 
 
 class AssertionProposalEvidenceSnapshot(BaseModel):

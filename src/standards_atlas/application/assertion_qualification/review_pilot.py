@@ -122,6 +122,8 @@ def build_assertion_review_pilot(
         assert source_case.expected is not None
         assert source_case.provenance is not None
         text = clause.plain_text
+        source_text_sha256 = hashlib.sha256(source_case.text.encode("utf-8")).hexdigest()
+        current_text_sha256 = hashlib.sha256(text.encode("utf-8")).hexdigest()
         review_cases.append(
             AssertionReviewCase(
                 clause_id=source_case.clause_id,
@@ -135,6 +137,8 @@ def build_assertion_review_pilot(
                     present=source_case.expected.present,
                     source_archive=source_case.provenance.source_archive,
                     source_archive_sha256=source_case.provenance.source_archive_sha256,
+                    selection_text_sha256=source_text_sha256,
+                    selection_text_matches_current=(source_text_sha256 == current_text_sha256),
                 ),
             )
         )
@@ -205,7 +209,9 @@ def review_clause_ids(
     document_key: str,
 ) -> tuple[str, ...]:
     """Return the exact pilot clause selection for one cascade document run."""
-    clause_ids = tuple(case.clause_id for case in review.cases if case.document_key == document_key)
+    clause_ids = tuple(
+        case.clause_id for case in review.cases if case.document_key == document_key
+    )
     if not clause_ids:
         raise ValueError(f"assertion review pilot has no cases for document {document_key!r}")
     return clause_ids
@@ -218,7 +224,9 @@ def validate_assertion_review_pilot_document(
     """Reconfirm the pilot source binding before running a cascade against a document."""
     cases = tuple(case for case in review.cases if case.document_key == document.key.value)
     if not cases:
-        raise ValueError(f"assertion review pilot has no cases for document {document.key.value!r}")
+        raise ValueError(
+            f"assertion review pilot has no cases for document {document.key.value!r}"
+        )
     for case in cases:
         clause = _clause_by_id(document, case.clause_id)
         current_text = clause.plain_text
@@ -244,7 +252,8 @@ def publish_assertion_review_pilot(review: AssertionReviewPilot) -> AssertionGol
     ]
     if pending:
         raise ValueError(
-            f"assertion review pilot cannot be published with pending cases: {pending!r}"
+            "assertion review pilot cannot be published with pending cases: "
+            f"{pending!r}"
         )
 
     grouped: dict[str, list[AssertionReviewCase]] = defaultdict(list)
@@ -320,13 +329,6 @@ def _validate_source_case(
         raise ValueError(
             "assertion review source reference does not match current clause: "
             f"{source_case.reference!r} != {expected_reference!r}"
-        )
-    if source_case.text != clause.plain_text:
-        source_hash = hashlib.sha256(source_case.text.encode("utf-8")).hexdigest()
-        current_hash = hashlib.sha256(clause.plain_text.encode("utf-8")).hexdigest()
-        raise ValueError(
-            f"assertion review source text mismatch for {source_case.clause_id!r}: "
-            f"source={source_hash}, current={current_hash}"
         )
 
 

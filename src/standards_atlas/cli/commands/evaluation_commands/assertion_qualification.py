@@ -130,8 +130,13 @@ def build_assertion_review_pilot_command(
     typer.echo(f"Selection               : {review.selection.strategy}")
     typer.echo(f"Selected clauses        : {len(review.cases)}")
     typer.echo(
-        f"Applicability provenance: {positive} present / {len(review.cases) - positive} absent"
+        "Applicability provenance: "
+        f"{positive} present / {len(review.cases) - positive} absent"
     )
+    source_text_drift = sum(
+        not case.applicability_source.selection_text_matches_current for case in review.cases
+    )
+    typer.echo(f"Selection text drift    : {source_text_drift} case(s); current text embedded")
     typer.echo(
         "Documents               : "
         + ", ".join(sorted({case.document_key for case in review.cases}))
@@ -141,7 +146,9 @@ def build_assertion_review_pilot_command(
 
 @evaluation_app.command("assertion-review-pilot-attach")
 def attach_assertion_review_pilot_command(
-    review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)],
+    review: Annotated[
+        Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)
+    ],
     cascade_report: Annotated[
         Path, typer.Option("--cascade-report", exists=True, dir_okay=False, readable=True)
     ],
@@ -187,7 +194,9 @@ def attach_assertion_review_pilot_command(
 
 @evaluation_app.command("assertion-review-pilot-publish")
 def publish_assertion_review_pilot_command(
-    review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)],
+    review: Annotated[
+        Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)
+    ],
     output: Annotated[Path, typer.Option("--output", dir_okay=False)] = Path(
         "local/review/assertions/pilot/assertion-golden-suite.yaml"
     ),
@@ -327,7 +336,9 @@ def run_assertion_qualification_cascade(
                 raise ValueError(
                     "review pilot ontology versions do not match --ontology-version selection"
                 )
-            selected_clause_ids = frozenset(review_clause_ids(pilot, document_key=document_key))
+            selected_clause_ids = frozenset(
+                review_clause_ids(pilot, document_key=document_key)
+            )
 
         base_config = LlmConfig.load(config)
         gateway = OpenAICompatibleLlmGateway(base_config)

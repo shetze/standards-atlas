@@ -39,8 +39,11 @@ The former semantic-extraction qualification command was removed in Slice 5C tog
 Slice 7D provides a deliberately small file-based pilot before the generic HITL workbench is
 converted to assertion review. The existing applicability golden corpus is used **only to select
 difficult clauses**. Its `expected.present` value is retained as provenance and is never converted
-into an assertion expectation. The builder verifies clause id, document key, reference and exact
-source text against the current `EngineeringDocument` before creating an editable review artifact.
+into an assertion expectation. The builder verifies clause id, document key and reference against the current `EngineeringDocument`.
+The applicability corpus text is historical selection provenance, not assertion gold, so a text difference
+does not block the build. The review artifact always embeds the **current** clause text and records both
+the selection-text digest and whether it still matches exactly. This makes normalization/source drift
+visible without forcing reviewers to annotate a stale pre-refactoring text representation.
 
 Build a deterministic 20-clause pilot (or repeat `--clause-id` for an explicit selection):
 
