@@ -6,6 +6,9 @@ import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
+from standards_atlas.application.knowledge_proposal_extraction.context import (
+    assertion_cbox_context,
+)
 from standards_atlas.application.knowledge_proposal_extraction.references import (
     display_clause_reference,
 )
@@ -122,7 +125,11 @@ class KnowledgeProposalExtractionService:
                     clause,
                     document_key=document.key.value,
                     ontology_versions=ontology_versions,
-                    semantic_context=_semantic_context(clause, context),
+                    semantic_context=assertion_cbox_context(
+                        document,
+                        clause,
+                        applicability=context.applicability if context is not None else None,
+                    ),
                 )
                 if result.clause_id != clause.id:
                     raise ValueError(
@@ -224,21 +231,3 @@ def _failure_kind(
     if isinstance(error, LlmResponseError):
         return ProposalFailureKind.RESPONSE_ERROR, ProposalAttemptStatus.RESPONSE_ERROR
     return ProposalFailureKind.VALIDATION_ERROR, ProposalAttemptStatus.VALIDATION_ERROR
-
-
-def _semantic_context(
-    clause: Clause,
-    context: ProposalExtractionContext | None,
-) -> dict[str, object]:
-    applicability = context.applicability if context is not None else clause.applicability
-    return {
-        "applicability": applicability.model_dump(mode="json"),
-        "normative_status": clause.normative_status.value,
-        "clause_type": clause.clause_type.value,
-        "primary_subject": (
-            clause.primary_subject.normalized_label if clause.primary_subject is not None else None
-        ),
-        "reference_relations": [
-            item.model_dump(mode="json") for item in clause.reference_relations
-        ],
-    }

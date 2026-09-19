@@ -93,14 +93,37 @@ def build_assertion_review_pilot_command(
     """Build a verified editable assertion review pilot from applicability gold cases."""
     try:
         corpus = load_applicability_selection_corpus(source)
-        selected = select_applicability_pilot_cases(
-            corpus, limit=limit, clause_ids=tuple(clause_id or ())
-        )
         repository = FileSystemEngineeringDocumentRepository(workspace)
-        documents = {
-            document_key: repository.load(DocumentKey(value=document_key))
-            for document_key in sorted({case.document_key for case in selected})
-        }
+        explicit_clause_ids = tuple(clause_id or ())
+        if explicit_clause_ids:
+            selected = select_applicability_pilot_cases(
+                corpus, limit=limit, clause_ids=explicit_clause_ids
+            )
+            documents = {
+                document_key: repository.load(DocumentKey(value=document_key))
+                for document_key in sorted({case.document_key for case in selected})
+            }
+        else:
+            source_document_keys = sorted(
+                {
+                    case.document_key
+                    for case in corpus.cases
+                    if case.status == "published"
+                    and case.expected is not None
+                    and case.provenance is not None
+                }
+            )
+            scope_documents = {
+                document_key: repository.load(DocumentKey(value=document_key))
+                for document_key in source_document_keys
+            }
+            selected = select_applicability_pilot_cases(
+                corpus, limit=limit, documents=scope_documents
+            )
+            documents = {
+                document_key: scope_documents[document_key]
+                for document_key in sorted({case.document_key for case in selected})
+            }
         target_suite = AssertionReviewTargetSuite(
             id=suite_id,
             version=suite_version,
@@ -117,7 +140,7 @@ def build_assertion_review_pilot_command(
                 target_suite=target_suite,
                 source_corpus_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
                 limit=limit,
-                clause_ids=tuple(clause_id or ()),
+                clause_ids=explicit_clause_ids,
             ),
         )
         review_path = write_assertion_review_pilot(review, output)
@@ -130,8 +153,7 @@ def build_assertion_review_pilot_command(
     typer.echo(f"Selection               : {review.selection.strategy}")
     typer.echo(f"Selected clauses        : {len(review.cases)}")
     typer.echo(
-        "Applicability provenance: "
-        f"{positive} present / {len(review.cases) - positive} absent"
+        f"Applicability provenance: {positive} present / {len(review.cases) - positive} absent"
     )
     source_text_drift = sum(
         not case.applicability_source.selection_text_matches_current for case in review.cases
@@ -146,9 +168,7 @@ def build_assertion_review_pilot_command(
 
 @evaluation_app.command("assertion-review-pilot-attach")
 def attach_assertion_review_pilot_command(
-    review: Annotated[
-        Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)
-    ],
+    review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)],
     cascade_report: Annotated[
         Path, typer.Option("--cascade-report", exists=True, dir_okay=False, readable=True)
     ],
@@ -194,9 +214,7 @@ def attach_assertion_review_pilot_command(
 
 @evaluation_app.command("assertion-review-pilot-publish")
 def publish_assertion_review_pilot_command(
-    review: Annotated[
-        Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)
-    ],
+    review: Annotated[Path, typer.Option("--review", exists=True, dir_okay=False, readable=True)],
     output: Annotated[Path, typer.Option("--output", dir_okay=False)] = Path(
         "local/review/assertions/pilot/assertion-golden-suite.yaml"
     ),
@@ -336,9 +354,7 @@ def run_assertion_qualification_cascade(
                 raise ValueError(
                     "review pilot ontology versions do not match --ontology-version selection"
                 )
-            selected_clause_ids = frozenset(
-                review_clause_ids(pilot, document_key=document_key)
-            )
+            selected_clause_ids = frozenset(review_clause_ids(pilot, document_key=document_key))
 
         base_config = LlmConfig.load(config)
         gateway = OpenAICompatibleLlmGateway(base_config)

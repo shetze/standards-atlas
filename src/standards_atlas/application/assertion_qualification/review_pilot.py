@@ -38,11 +38,17 @@ from standards_atlas.application.assertion_qualification.review_pilot_models imp
     AssertionReviewTargetSuite,
     normalize_review_label,
 )
-from standards_atlas.application.knowledge_proposal_extraction import display_clause_reference
+from standards_atlas.application.knowledge_proposal_extraction import (
+    assertion_cbox_context,
+    display_clause_reference,
+    proposal_extraction_eligibility,
+)
 from standards_atlas.domain.model import (
+    CanonicalDocumentSection,
     Clause,
     ClauseId,
     DocumentKnowledgeProposal,
+    DocumentStructure,
     EngineeringDocument,
     EntityAssertionObject,
 )
@@ -65,6 +71,7 @@ def select_applicability_pilot_cases(
     *,
     limit: int = 20,
     clause_ids: Sequence[str] = (),
+    documents: Mapping[str, EngineeringDocument] | None = None,
 ) -> tuple[ApplicabilitySelectionCase, ...]:
     """Select deterministic published clauses without reusing applicability as assertion gold."""
     published = tuple(
@@ -97,7 +104,14 @@ def select_applicability_pilot_cases(
 
     if limit <= 0:
         raise ValueError("assertion review pilot limit must be greater than zero")
-    return _stratified_selection(published, limit=min(limit, len(published)))
+    scoped = published
+    if documents is not None:
+        scoped = tuple(
+            case for case in published if _case_is_in_assertion_review_scope(case, documents)
+        )
+        if not scoped:
+            raise ValueError("applicability selection corpus contains no in-scope assertion cases")
+    return _stratified_selection(scoped, limit=min(limit, len(scoped)))
 
 
 def build_assertion_review_pilot(
@@ -140,6 +154,7 @@ def build_assertion_review_pilot(
                     selection_text_sha256=source_text_sha256,
                     selection_text_matches_current=(source_text_sha256 == current_text_sha256),
                 ),
+                context=assertion_cbox_context(document, clause),
             )
         )
 
@@ -209,9 +224,7 @@ def review_clause_ids(
     document_key: str,
 ) -> tuple[str, ...]:
     """Return the exact pilot clause selection for one cascade document run."""
-    clause_ids = tuple(
-        case.clause_id for case in review.cases if case.document_key == document_key
-    )
+    clause_ids = tuple(case.clause_id for case in review.cases if case.document_key == document_key)
     if not clause_ids:
         raise ValueError(f"assertion review pilot has no cases for document {document_key!r}")
     return clause_ids
@@ -224,9 +237,7 @@ def validate_assertion_review_pilot_document(
     """Reconfirm the pilot source binding before running a cascade against a document."""
     cases = tuple(case for case in review.cases if case.document_key == document.key.value)
     if not cases:
-        raise ValueError(
-            f"assertion review pilot has no cases for document {document.key.value!r}"
-        )
+        raise ValueError(f"assertion review pilot has no cases for document {document.key.value!r}")
     for case in cases:
         clause = _clause_by_id(document, case.clause_id)
         current_text = clause.plain_text
@@ -240,6 +251,10 @@ def validate_assertion_review_pilot_document(
             raise ValueError(
                 f"assertion review pilot source reference changed for clause {case.clause_id!r}"
             )
+        if case.context and case.context != assertion_cbox_context(document, clause):
+            raise ValueError(
+                f"assertion review pilot CBox context changed for clause {case.clause_id!r}"
+            )
     return tuple(case.clause_id for case in cases)
 
 
@@ -252,8 +267,7 @@ def publish_assertion_review_pilot(review: AssertionReviewPilot) -> AssertionGol
     ]
     if pending:
         raise ValueError(
-            "assertion review pilot cannot be published with pending cases: "
-            f"{pending!r}"
+            f"assertion review pilot cannot be published with pending cases: {pending!r}"
         )
 
     grouped: dict[str, list[AssertionReviewCase]] = defaultdict(list)
@@ -271,6 +285,63 @@ def publish_assertion_review_pilot(review: AssertionReviewPilot) -> AssertionGol
         ontology_versions=review.target_suite.ontology_versions,
         cases=golden_cases,
     )
+
+
+_EXCLUDED_ASSERTION_SECTIONS = frozenset(
+    {
+        CanonicalDocumentSection.FRONT_MATTER,
+        CanonicalDocumentSection.REFERENCES,
+        CanonicalDocumentSection.BIBLIOGRAPHY,
+        CanonicalDocumentSection.BACK_MATTER,
+    }
+)
+_EXCLUDED_ASSERTION_STRUCTURES = frozenset(
+    {
+        DocumentStructure.FRONT_MATTER,
+        DocumentStructure.FOREWORD,
+        DocumentStructure.REFERENCES,
+        DocumentStructure.BIBLIOGRAPHY,
+        DocumentStructure.BACK_MATTER,
+    }
+)
+
+
+def _case_is_in_assertion_review_scope(
+    case: ApplicabilitySelectionCase,
+    documents: Mapping[str, EngineeringDocument],
+) -> bool:
+    document = documents.get(case.document_key)
+    if document is None:
+        raise ValueError(f"assertion review scope document is not available: {case.document_key!r}")
+    clause = _clause_by_id(document, case.clause_id)
+    if not proposal_extraction_eligibility(clause).eligible:
+        return False
+    by_id = {item.id.value: item for item in document.clauses}
+    current: Clause | None = clause
+    seen: set[str] = set()
+    while current is not None and current.id.value not in seen:
+        seen.add(current.id.value)
+        profile = current.structural_profile
+        if profile is not None and profile.canonical_section in _EXCLUDED_ASSERTION_SECTIONS:
+            return False
+        structure = current.document_structure
+        if structure is not None:
+            if structure.category in _EXCLUDED_ASSERTION_STRUCTURES:
+                return False
+            if (
+                structure.category is DocumentStructure.ANNEX
+                and (structure.annex_identifier or "").strip().casefold() == "zz"
+            ):
+                return False
+        # Annex ZZ is standardized back matter in CENELEC standards. Keep this
+        # address fallback because older deterministic structure classifications may
+        # not yet carry an annex_identifier on every descendant.
+        root_reference = current.reference.clause.split(".", 1)[0].strip().casefold()
+        if root_reference == "zz":
+            return False
+        parent_id = current.parent_id.value if current.parent_id is not None else None
+        current = by_id.get(parent_id) if parent_id is not None else None
+    return True
 
 
 def _stratified_selection(

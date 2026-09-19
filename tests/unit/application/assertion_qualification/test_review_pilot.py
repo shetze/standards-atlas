@@ -34,6 +34,7 @@ from standards_atlas.application.assertion_qualification.review_pilot_models imp
     ApplicabilitySelectionExpected,
     ApplicabilitySelectionProvenance,
 )
+from standards_atlas.application.knowledge_proposal_extraction import assertion_cbox_context
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -149,6 +150,59 @@ def test_stratified_selection_is_deterministic_and_keeps_both_applicability_valu
     assert len({case.document_key for case in first}) >= 2
 
 
+def test_stratified_selection_filters_back_matter_and_annex_zz_before_sampling() -> None:
+    regular_a = _source_case(clause_id="a", document_key="A", reference="A:1", text="regular A")
+    annex_zz = _source_case(
+        clause_id="zz", document_key="B", reference="B:ZZ", text="regulatory back matter"
+    )
+    regular_c = _source_case(clause_id="c", document_key="C", reference="C:2", text="regular C")
+    corpus = _corpus(regular_a, annex_zz, regular_c)
+    documents = {
+        "A": _document(regular_a),
+        "B": _document(annex_zz),
+        "C": _document(regular_c),
+    }
+
+    selected = select_applicability_pilot_cases(corpus, limit=2, documents=documents)
+
+    assert [case.clause_id for case in selected] == ["a", "c"]
+    assert "zz" not in {case.clause_id for case in selected}
+
+
+def test_scope_filter_keeps_substantive_child_under_heading_only_parent() -> None:
+    source = _source_case(
+        clause_id="child",
+        document_key="DOC",
+        reference="DOC:7.4.4.3.1",
+        text="A substantive child requirement.",
+    )
+    parent = Clause(
+        id=ClauseId(value="parent"),
+        reference=StandardReference(standard="DOC", clause="7.4.4.3"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Route 2H",
+    )
+    child = Clause(
+        id=ClauseId(value="child"),
+        reference=StandardReference(standard="DOC", clause="7.4.4.3.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        parent_id=parent.id,
+        content=(TextBlock(id="text-child", text=source.text),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Test document",
+        document_type=DocumentType.OTHER,
+        clauses=(parent, child),
+    )
+
+    selected = select_applicability_pilot_cases(
+        _corpus(source), limit=1, documents={"DOC": document}
+    )
+
+    assert selected == (source,)
+
+
 def test_build_binds_source_case_to_current_clause_and_records_text_drift() -> None:
     source = _source_case(clause_id="c1")
     document = _document(source)
@@ -162,12 +216,14 @@ def test_build_binds_source_case_to_current_clause_and_records_text_drift() -> N
     assert pilot.cases[0].text == source.text
     assert pilot.cases[0].text_sha256 == hashlib.sha256(source.text.encode()).hexdigest()
     assert pilot.cases[0].applicability_source.present is False
-    assert pilot.cases[0].applicability_source.selection_text_sha256 == hashlib.sha256(
-        source.text.encode()
-    ).hexdigest()
+    assert (
+        pilot.cases[0].applicability_source.selection_text_sha256
+        == hashlib.sha256(source.text.encode()).hexdigest()
+    )
     assert pilot.cases[0].applicability_source.selection_text_matches_current is True
     assert pilot.cases[0].expected is None
     assert pilot.cases[0].review_status is AssertionReviewStatus.PENDING
+    assert pilot.cases[0].context == assertion_cbox_context(document, document.clauses[0])
 
     drifted = source.model_copy(update={"text": source.text + " changed"})
     drifted_pilot = build_assertion_review_pilot(
@@ -179,9 +235,10 @@ def test_build_binds_source_case_to_current_clause_and_records_text_drift() -> N
 
     assert drifted_pilot.cases[0].text == source.text
     assert drifted_pilot.cases[0].text_sha256 == hashlib.sha256(source.text.encode()).hexdigest()
-    assert drifted_pilot.cases[0].applicability_source.selection_text_sha256 == hashlib.sha256(
-        drifted.text.encode()
-    ).hexdigest()
+    assert (
+        drifted_pilot.cases[0].applicability_source.selection_text_sha256
+        == hashlib.sha256(drifted.text.encode()).hexdigest()
+    )
     assert drifted_pilot.cases[0].applicability_source.selection_text_matches_current is False
 
 

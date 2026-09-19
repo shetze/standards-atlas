@@ -16,6 +16,7 @@ from standards_atlas.domain.model import (
     Clause,
     ClauseId,
     ClauseType,
+    ContextRouting,
     DocumentKey,
     DocumentType,
     EngineeringDocument,
@@ -25,7 +26,13 @@ from standards_atlas.domain.model import (
     KnowledgeProposalProvenance,
     NormativeAssertionProposal,
     NormativeForce,
+    ReferenceRole,
+    ReferenceRouting,
+    ReferenceTarget,
     StandardReference,
+    StructuralContext,
+    StructuralNodeKind,
+    StructuralSiblingContext,
     TextBlock,
 )
 
@@ -37,6 +44,7 @@ class _Extractor:
     def __init__(self, name: str) -> None:
         self.name = name
         self.calls: list[str] = []
+        self.contexts: dict[str, dict[str, object]] = {}
 
     def provenance(self) -> KnowledgeProposalProvenance:
         return KnowledgeProposalProvenance(
@@ -47,6 +55,7 @@ class _Extractor:
 
     def extract(self, clause, *, document_key, ontology_versions, semantic_context=None):
         self.calls.append(clause.id.value)
+        self.contexts[clause.id.value] = dict(semantic_context or {})
         anchor = EvidenceAnchor(
             id=f"{self.name}:anchor:{clause.id.value}",
             clause_id=clause.id,
@@ -85,6 +94,7 @@ class _Verifier:
     def __init__(self, missing_clause: str | None = None) -> None:
         self.missing_clause = missing_clause
         self.calls: list[str] = []
+        self.contexts: dict[str, dict[str, object]] = {}
 
     def provenance(self) -> AssertionVerifierProvenance:
         return AssertionVerifierProvenance(
@@ -105,6 +115,7 @@ class _Verifier:
         semantic_context=None,
     ):
         self.calls.append(clause.id.value)
+        self.contexts[clause.id.value] = dict(semantic_context or {})
         missing = clause.id.value == self.missing_clause
         return AssertionClauseVerification(
             clause_id=clause.id,
@@ -202,6 +213,88 @@ def test_verifier_must_review_every_efficient_candidate() -> None:
     assert clause.route is AssertionCascadeRoute.ESCALATED
     assert clause.reasons == (AssertionCascadeReason.VERIFICATION_ERROR,)
     assert clause.verification_error_type == "ValueError"
+
+
+def test_cascade_transports_same_structural_and_reference_cbox_to_all_stages() -> None:
+    parent = Clause(
+        id=ClauseId(value="parent"),
+        reference=StandardReference(standard="TEST", clause="7.4.4.3"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Route 2H",
+    )
+    child = Clause(
+        id=ClauseId(value="c1"),
+        reference=StandardReference(standard="TEST", clause="7.4.4.3.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        baseline={
+            "parent_id": parent.id,
+            "content": (TextBlock(id="t:c1", text="Requirement unless 7.4.4.3.2 applies."),),
+            "structural_context": StructuralContext(
+                node_kind=StructuralNodeKind.LEAF,
+                sibling=StructuralSiblingContext(
+                    index=0,
+                    count=3,
+                    is_first=True,
+                    is_last=False,
+                    next_clause_id="c2",
+                ),
+            ),
+        },
+        enrichments={
+            "context_routing": ContextRouting(
+                references=(
+                    ReferenceRouting(
+                        source_clause_id="c1",
+                        target=ReferenceTarget(
+                            document_key="TEST",
+                            clause_id="c2",
+                            reference="7.4.4.3.2",
+                        ),
+                        role=ReferenceRole.PROVIDES_EXCEPTION,
+                        evidence=("unless 7.4.4.3.2 applies",),
+                    ),
+                )
+            )
+        },
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="TEST"),
+        title="Test",
+        document_type=DocumentType.STANDARD,
+        clauses=(parent, child),
+    )
+    efficient = _Extractor("efficient")
+    verifier = _Verifier(missing_clause="c1")
+    escalation = _Extractor("escalation")
+
+    AssertionQualificationCascadeService(
+        efficient_extractor=efficient,
+        verifier=verifier,
+        escalation_extractor=escalation,
+    ).run_document(
+        document,
+        cascade_run_id="cascade-context",
+        efficient_proposal_run_id="efficient-context",
+        escalation_proposal_run_id="escalation-context",
+        ontology_versions=ONTOLOGIES,
+        clause_ids=frozenset({"c1"}),
+    )
+
+    contexts = (
+        efficient.contexts["c1"],
+        verifier.contexts["c1"],
+        escalation.contexts["c1"],
+    )
+    assert contexts[0] == contexts[1] == contexts[2]
+    context = contexts[0]
+    assert context["parent_id"] == "parent"
+    assert context["ancestor_headings"] == [
+        {"clause_id": "parent", "reference": "7.4.4.3", "heading": "Route 2H"}
+    ]
+    assert context["structural_context"]["sibling"]["is_first"] is True
+    assert context["structural_context"]["sibling"]["next_clause_id"] == "c2"
+    assert context["context_routing"]["references"][0]["role"] == "provides_exception"
+    assert context["context_routing"]["references"][0]["target"]["reference"] == "7.4.4.3.2"
 
 
 def test_cascade_report_roundtrips_through_current_schema_writer(tmp_path) -> None:

@@ -6,7 +6,7 @@ import hashlib
 import re
 import unicodedata
 from enum import StrEnum
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -335,6 +335,7 @@ class AssertionReviewCase(BaseModel):
     text: str
     text_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     applicability_source: AssertionReviewApplicabilitySource
+    context: dict[str, Any] = Field(default_factory=dict)
     proposal: AssertionReviewProposalSnapshot | None = None
     review_status: AssertionReviewStatus = AssertionReviewStatus.PENDING
     expected: AssertionReviewExpected | None = None

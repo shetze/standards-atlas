@@ -18,6 +18,7 @@ from standards_atlas.application.assertion_qualification.evaluation import propo
 from standards_atlas.application.knowledge_proposal_extraction import (
     KnowledgeProposalExtractionService,
     ProposalExtractionContext,
+    assertion_cbox_context,
     proposal_extraction_eligibility,
 )
 from standards_atlas.application.ports.knowledge_proposals import (
@@ -113,11 +114,15 @@ class AssertionQualificationCascadeService:
                         evidence_anchors=candidates.anchors,
                         entity_proposals=candidates.entities,
                         assertion_proposals=candidates.assertions,
-                        semantic_context=_semantic_context(
+                        semantic_context=assertion_cbox_context(
+                            document,
                             clause,
-                            context_by_clause.get(clause.id.value)
-                            if context_by_clause is not None
-                            else None,
+                            applicability=(
+                                context_by_clause[clause.id.value].applicability
+                                if context_by_clause is not None
+                                and clause.id.value in context_by_clause
+                                else None
+                            ),
                         ),
                     )
                     _validate_verification_completeness(verification, clause, candidates)
@@ -339,21 +344,3 @@ def _clause_by_id(document: EngineeringDocument, clause_id: str) -> Clause:
         if clause.id.value == clause_id:
             return clause
     raise ValueError(f"cascade clause is not present in document: {clause_id!r}")
-
-
-def _semantic_context(
-    clause: Clause,
-    context: ProposalExtractionContext | None,
-) -> dict[str, object]:
-    applicability = context.applicability if context is not None else clause.applicability
-    return {
-        "applicability": applicability.model_dump(mode="json"),
-        "normative_status": clause.normative_status.value,
-        "clause_type": clause.clause_type.value,
-        "primary_subject": (
-            clause.primary_subject.normalized_label if clause.primary_subject is not None else None
-        ),
-        "reference_relations": [
-            item.model_dump(mode="json") for item in clause.reference_relations
-        ],
-    }

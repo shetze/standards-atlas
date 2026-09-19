@@ -327,6 +327,10 @@ class OntologyGuidedKnowledgeProposalExtractor:
 def _system_prompt() -> str:
     return (
         "Extract engineering entities and normative assertions from the clause. "
+        "semantic_context is trusted canonical CBox context for interpreting the clause: use its "
+        "parent/ancestor structure, sibling position and routed references to disambiguate the "
+        "meaning of clause_text, but never emit an assertion from semantic_context alone. "
+        "Evidence must always come from clause_text. "
         "allowed_classes and allowed_properties are closed vocabularies: copy their IRIs "
         "exactly and never invent semantic terms. Emit only claims directly supported by the "
         "source clause. Each evidence_quote MUST be an exact, case-sensitive, punctuation- and "

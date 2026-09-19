@@ -1,5 +1,6 @@
 """Assertion-centred proposal extraction and deterministic source grounding."""
 
+from .context import assertion_cbox_context
 from .grounding import EvidenceGroundingResult, ground_evidence_quote
 from .projection import SemanticTextProjection, project_clause_content
 from .references import display_clause_reference
@@ -21,6 +22,7 @@ from .unification import (
 from .vocabulary import FormalOntologyVocabulary
 
 __all__ = [
+    "assertion_cbox_context",
     "EvidenceGroundingResult",
     "FormalOntologyVocabulary",
     "DocumentKnowledgeProposalUnifier",

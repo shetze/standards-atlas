@@ -45,6 +45,11 @@ does not block the build. The review artifact always embeds the **current** clau
 the selection-text digest and whether it still matches exactly. This makes normalization/source drift
 visible without forcing reviewers to annotate a stale pre-refactoring text representation.
 
+For stratified selection, Atlas applies the assertion-review structural scope filter **before** sampling.
+TOC/table/empty clauses, front matter, reference sections, bibliography/back matter, and CENELEC Annex ZZ
+(including descendants) are excluded. Normative and informative engineering annexes remain eligible.
+Explicit `--clause-id` selection remains an expert override and bypasses the stratified scope filter.
+
 Build a deterministic 20-clause pilot (or repeat `--clause-id` for an explicit selection):
 
 ```bash
@@ -57,7 +62,11 @@ uv run standards-atlas evaluation assertion-review-pilot-build \
 ```
 
 Run the existing assertion cascade once per selected document. `--review-pilot` derives the exact
-Clause IDs from the review artifact, so the later golden suite and proposal population stay aligned:
+Clause IDs from the review artifact, so the later golden suite and proposal population stay aligned.
+Assertion extraction, verification, escalation, and the review artifact use the same compact canonical
+CBox projection. It includes parent/ancestor headings, sibling context, structural references, interpreted
+reference routing (for example `provides_exception`), subject context, applicability and structural profile
+metadata. The CBox qualifies interpretation; evidence remains an exact span of the selected clause text.
 
 ```bash
 uv run standards-atlas evaluation assertion-cascade \

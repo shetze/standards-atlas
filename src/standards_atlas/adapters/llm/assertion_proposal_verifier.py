@@ -162,7 +162,10 @@ class OntologyGuidedAssertionProposalVerifier:
 def _system_prompt() -> str:
     return (
         "Act as an independent verifier of engineering-knowledge candidates extracted from one "
-        "standards clause. Review every supplied entity and assertion exactly once. Mark a "
+        "standards clause. semantic_context is trusted canonical CBox context for interpreting "
+        "clause_text, including parent/ancestor structure, sibling position and routed references; "
+        "use it to disambiguate meaning but require source support in clause_text for every "
+        "candidate. Review every supplied entity and assertion exactly once. Mark a "
         "candidate supported only when its semantics and cited source evidence are directly "
         "supported by clause_text. Mark it rejected when it is contradicted, invented, uses the "
         "wrong ontology meaning, or overstates the source. Use uncertain when the source does not "
