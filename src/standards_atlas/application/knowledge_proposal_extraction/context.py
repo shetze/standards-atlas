@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from standards_atlas.application.context.canonical_cbox import (
-    CBOX_CONTRACT_VERSION,
-    project_clause_enrichments,
+from standards_atlas.application.context.canonical_cbox import project_clause_enrichments
+from standards_atlas.application.context.normative_context import (
+    governing_scope_context,
+    resolve_normative_context,
 )
 from standards_atlas.domain.model import Clause, ClauseApplicability, EngineeringDocument
+
+ASSERTION_CBOX_CONTRACT_VERSION = "1.1"
 
 
 def assertion_cbox_context(
@@ -36,6 +39,11 @@ def assertion_cbox_context(
         item = enrichment_by_path.get(path)
         return item.value if item is not None and item.availability == "known" else None
 
+    governing_scopes = governing_scope_context(document, clause)
+    normative_context = resolve_normative_context(
+        document, clause, governing_scopes=governing_scopes
+    )
+
     resolved_applicability: object = (
         applicability.model_dump(mode="json")
         if applicability is not None
@@ -43,8 +51,9 @@ def assertion_cbox_context(
     )
 
     return {
-        "canonical_cbox_version": CBOX_CONTRACT_VERSION,
+        "canonical_cbox_version": ASSERTION_CBOX_CONTRACT_VERSION,
         "document_key": document.key.value,
+        "document_title": document.title,
         "clause_id": clause.id.value,
         "reference": clause.reference.clause,
         "heading": clause.heading,
@@ -74,6 +83,8 @@ def assertion_cbox_context(
             item.model_dump(mode="json") for item in clause.reference_relations
         ],
         "context_routing": known_value("enrichments.context_routing"),
+        "governing_scopes": list(governing_scopes),
+        "normative_context": normative_context,
         "subject_context": known_value("enrichments.subject_context"),
         "primary_subject": (
             clause.primary_subject.normalized_label if clause.primary_subject is not None else None

@@ -7,7 +7,7 @@ The current production semantic scope is intentionally narrow after the semantic
 
 The active qualification paths are:
 
-- **Applicability presence/polarity**: determine whether a clause explicitly carries applicability semantics and, when present, whether the explicit polarity is `included` or `excluded`.
+- **Applicability presence**: determine whether a clause explicitly carries clause-or-requirement applicability semantics. The current golden corpus and qualification path do not qualify polarity.
 - **Formal semantic knowledge extraction**: propose source-bound engineering entities and normative assertions for the assertion-centred knowledge model.
 
 Structural taxonomy, clause type, normative status, references, context routing and subject context are separate inputs. They are not reconstructed as legacy semantic labels.
@@ -65,8 +65,20 @@ Run the existing assertion cascade once per selected document. `--review-pilot` 
 Clause IDs from the review artifact, so the later golden suite and proposal population stay aligned.
 Assertion extraction, verification, escalation, and the review artifact use the same compact canonical
 CBox projection. It includes parent/ancestor headings, sibling context, structural references, interpreted
-reference routing (for example `provides_exception`), subject context, applicability and structural profile
-metadata. The CBox qualifies interpretation; evidence remains an exact span of the selected clause text.
+reference routing (for example `provides_exception`), **governing scopes that reach the current clause**,
+subject context, applicability and structural profile metadata. Scope declarations are stored on their source
+clause, so the assertion CBox also projects the inverse view: accepted document/part/subtree/clause scope
+declarations whose reach contains the reviewed clause. Conditions, exclusions and qualifications remain
+source-bound context rather than being rediscovered by the assertion LLM.
+
+The same projection derives a deterministic `normative_context`. Standards content defaults to `normative`
+unless source-backed evidence identifies informative context. Stronger evidence comes from explicit clause/annex
+status and governing Scope qualifications (for example "informative character only"); document/part titles
+beginning with `Guidelines`/`Guidance`, term/terminology clauses and local `Guideline`/`Example`/`Description`
+headings provide further informative signals. Labelled `NOTE`, `EXAMPLE`, `DESCRIPTION`, `AIM`, `RATIONALE`
+and `REFERENCES` sections are represented as informative span overrides inside an otherwise normative clause.
+This context guides `normative_force`; it never creates an assertion without evidence in the clause text.
+The CBox qualifies interpretation; evidence remains an exact span of the selected clause text.
 
 ```bash
 uv run standards-atlas evaluation assertion-cascade \

@@ -36,19 +36,30 @@ from standards_atlas.application.assertion_qualification.review_pilot_models imp
 )
 from standards_atlas.application.knowledge_proposal_extraction import assertion_cbox_context
 from standards_atlas.domain.model import (
+    CanonicalDocumentSection,
     Clause,
     ClauseId,
     ClauseType,
+    ContextRouting,
     DocumentKey,
     DocumentKnowledgeProposal,
     DocumentType,
     EngineeringDocument,
     EntityAssertionObject,
     EvidenceAnchor,
+    GeneratedAttribute,
+    GenerationMethod,
     KnowledgeEntityProposal,
     KnowledgeProposalProvenance,
     NormativeForce,
+    NormativeStatus,
+    ScopeDeclaration,
+    ScopeReach,
+    ScopeReachKind,
+    SemanticSection,
+    SemanticSectionRole,
     StandardReference,
+    StructuralProfile,
     TextBlock,
 )
 
@@ -440,3 +451,245 @@ def test_review_document_validation_detects_source_changes_after_pilot_build() -
     changed_document = _document(changed_source)
     with pytest.raises(ValueError, match="source text changed"):
         validate_assertion_review_pilot_document(pilot, changed_document)
+
+
+def _known_scope_clause(
+    *,
+    clause_id: str = "scope",
+    qualification: str = "It has an informative character only.",
+    reach: ScopeReach | None = None,
+) -> Clause:
+    routing = ContextRouting(
+        scopes=(
+            ScopeDeclaration(
+                source_clause_id=clause_id,
+                reaches=(reach or ScopeReach(kind=ScopeReachKind.DOCUMENT, document_key="DOC"),),
+                qualifications=(qualification,),
+                evidence=(qualification,),
+            ),
+        )
+    )
+    clause = Clause(
+        id=ClauseId(value=clause_id),
+        reference=StandardReference(standard="DOC", clause="1"),
+        clause_type=ClauseType.SCOPE,
+        heading="Scope",
+        content=(TextBlock(id="scope-text", text=qualification),),
+    ).with_context_routing(routing)
+    return clause.mark_generated(
+        GeneratedAttribute(
+            path="enrichments.context_routing",
+            generator="test/context-routing",
+            method=GenerationMethod.LLM,
+        )
+    )
+
+
+def test_assertion_cbox_projects_governing_scope_and_informative_normative_context() -> None:
+    scope = _known_scope_clause()
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="5.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        heading="Requirement",
+        content=(TextBlock(id="target-text", text="The criterion is applicable."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Technical standard",
+        document_type=DocumentType.OTHER,
+        clauses=(scope, target),
+    )
+
+    context = assertion_cbox_context(document, target)
+
+    assert context["canonical_cbox_version"] == "1.1"
+    assert len(context["governing_scopes"]) == 1
+    governing = context["governing_scopes"][0]
+    assert governing["source_clause_id"] == "scope"
+    assert governing["qualifications"] == ["It has an informative character only."]
+    assert context["normative_context"]["source_status"] == "informative"
+    assert context["normative_context"]["effective_status"] == "informative"
+    assert context["normative_context"]["basis"][0]["kind"] == ("governing_scope_qualification")
+
+
+def test_assertion_cbox_ignores_scope_that_does_not_reach_target() -> None:
+    root = Clause(
+        id=ClauseId(value="root"),
+        reference=StandardReference(standard="DOC", clause="4"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Scoped subtree",
+    )
+    scope = _known_scope_clause(
+        reach=ScopeReach(
+            kind=ScopeReachKind.SUBTREE,
+            document_key="DOC",
+            clause_id="root",
+        )
+    )
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="5.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        content=(TextBlock(id="target-text", text="The supplier shall record the result."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Technical standard",
+        document_type=DocumentType.OTHER,
+        clauses=(scope, root, target),
+    )
+
+    context = assertion_cbox_context(document, target)
+
+    assert context["governing_scopes"] == []
+    assert context["normative_context"]["effective_status"] == "normative"
+    assert context["normative_context"]["basis"][-1]["kind"] == "default_standard_context"
+
+
+def test_assertion_cbox_recognizes_guideline_document_title_as_informative() -> None:
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="12.3.1.3"),
+        clause_type=ClauseType.CLAUSE,
+        content=(TextBlock(id="target-text", text="The criteria is applicable."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Guidelines on application of the standard",
+        document_type=DocumentType.OTHER,
+        clauses=(target,),
+    )
+
+    context = assertion_cbox_context(document, target)
+
+    assert context["normative_context"]["source_status"] == "informative"
+    assert context["normative_context"]["effective_status"] == "informative"
+    assert context["normative_context"]["basis"][0]["kind"] == "document_title"
+
+
+def test_assertion_cbox_defaults_unmarked_standard_clause_to_normative() -> None:
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="7.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        content=(TextBlock(id="target-text", text="The supplier shall record the result."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Safety requirements",
+        document_type=DocumentType.OTHER,
+        clauses=(target,),
+    )
+
+    context = assertion_cbox_context(document, target)
+
+    assert context["normative_context"] == {
+        "source_status": "normative",
+        "effective_status": "normative",
+        "fallback_status": "normative",
+        "basis": [
+            {
+                "kind": "default_standard_context",
+                "status": "normative",
+                "value": "standards content is normative unless informative evidence applies",
+            }
+        ],
+        "span_overrides": [],
+    }
+
+
+def test_assertion_cbox_treats_terms_and_example_headings_as_informative() -> None:
+    term = Clause(
+        id=ClauseId(value="term"),
+        reference=StandardReference(standard="DOC", clause="3.1"),
+        clause_type=ClauseType.TERM,
+        heading="verification",
+        content=(TextBlock(id="term-text", text="confirmation by objective evidence"),),
+    )
+    example = Clause(
+        id=ClauseId(value="example"),
+        reference=StandardReference(standard="DOC", clause="A.2"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Example of failure mode for PLD",
+        content=(TextBlock(id="example-text", text="A failure can occur when ..."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Safety requirements",
+        document_type=DocumentType.OTHER,
+        clauses=(term, example),
+    )
+
+    term_context = assertion_cbox_context(document, term)["normative_context"]
+    example_context = assertion_cbox_context(document, example)["normative_context"]
+
+    assert term_context["source_status"] == "normative"
+    assert term_context["effective_status"] == "informative"
+    assert term_context["basis"][-1]["kind"] == "clause_type"
+    assert example_context["source_status"] == "normative"
+    assert example_context["effective_status"] == "informative"
+    assert example_context["basis"][-1]["kind"] == "local_heading"
+
+
+def test_assertion_cbox_marks_note_example_and_description_spans_informative() -> None:
+    text = "Requirement text.\nDescription: descriptive method.\nNOTE explanatory note."
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="7.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        structural_profile=StructuralProfile(
+            canonical_section=CanonicalDocumentSection.BODY,
+            semantic_sections=(
+                SemanticSection(
+                    label="Description",
+                    role=SemanticSectionRole.DESCRIPTION,
+                    start_offset=18,
+                    end_offset=50,
+                ),
+                SemanticSection(
+                    label="NOTE",
+                    role=SemanticSectionRole.NOTE,
+                    start_offset=50,
+                    end_offset=len(text),
+                ),
+            ),
+        ),
+        content=(TextBlock(id="target-text", text=text),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Safety requirements",
+        document_type=DocumentType.OTHER,
+        clauses=(target,),
+    )
+
+    normative = assertion_cbox_context(document, target)["normative_context"]
+
+    assert normative["effective_status"] == "normative"
+    assert [(item["role"], item["status"]) for item in normative["span_overrides"]] == [
+        ("description", "informative"),
+        ("note", "informative"),
+    ]
+
+
+def test_explicit_informative_clause_status_overrides_normative_default() -> None:
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="A.1"),
+        clause_type=ClauseType.CLAUSE,
+        normative_status=NormativeStatus.INFORMATIVE,
+        content=(TextBlock(id="target-text", text="Informative annex content."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Safety requirements",
+        document_type=DocumentType.OTHER,
+        clauses=(target,),
+    )
+
+    normative = assertion_cbox_context(document, target)["normative_context"]
+
+    assert normative["source_status"] == "informative"
+    assert normative["effective_status"] == "informative"
+    assert normative["basis"][0]["kind"] == "clause_normative_status"
