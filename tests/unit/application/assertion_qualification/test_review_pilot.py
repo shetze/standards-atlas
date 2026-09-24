@@ -662,6 +662,50 @@ def test_assertion_cbox_ignores_scope_that_does_not_reach_target() -> None:
     assert context["normative_context"]["basis"][-1]["kind"] == "default_standard_context"
 
 
+def test_assertion_cbox_inherits_informative_ancestor_heading() -> None:
+    root = Clause(
+        id=ClauseId(value="root"),
+        reference=StandardReference(standard="DOC", clause="C"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Guidance for the confirmation measures",
+    )
+    section = Clause(
+        id=ClauseId(value="section"),
+        reference=StandardReference(standard="DOC", clause="C.4"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Confirmation review of the safety plan",
+        parent_id=ClauseId(value="root"),
+    )
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="C.4.4"),
+        clause_type=ClauseType.OBJECTIVE,
+        heading="OBJECTIVE",
+        parent_id=ClauseId(value="section"),
+        content=(TextBlock(id="target-text", text="Evaluation of the applied tailoring."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Management of functional safety",
+        document_type=DocumentType.OTHER,
+        clauses=(root, section, target),
+    )
+
+    normative = assertion_cbox_context(document, target)["normative_context"]
+
+    assert normative["source_status"] == "informative"
+    assert normative["effective_status"] == "informative"
+    assert normative["basis"] == [
+        {
+            "kind": "ancestor_heading",
+            "status": "informative",
+            "source_clause_id": "root",
+            "source_reference": "C",
+            "value": "Guidance for the confirmation measures",
+        }
+    ]
+
+
 def test_assertion_cbox_recognizes_guideline_document_title_as_informative() -> None:
     target = Clause(
         id=ClauseId(value="target"),

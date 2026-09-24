@@ -78,8 +78,10 @@ interpreted a phrase such as `this document`. Local `clause`/`subtree` reaches f
 If a structural Scope clause has no generated scope routing, the CBox still gives it deterministic document reach
 and extracts an explicit document-character statement such as "informative character only" directly from its
 canonical source text. Stronger evidence otherwise comes from explicit clause/annex status and governing Scope
-qualifications; document/part titles beginning with `Guidelines`/`Guidance`, term/terminology clauses and local
-`Guideline`/`Example`/`Description` headings provide further informative signals. Labelled `NOTE`, `EXAMPLE`,
+qualifications; ancestor and document/part headings beginning with `Guidelines`/`Guidance`/`Example`/`Description`,
+term/terminology clauses and matching local headings provide further informative signals. Ancestor evidence is
+resolved nearest-first from the current EngineeringDocument hierarchy and recorded explicitly in the CBox basis.
+Labelled `NOTE`, `EXAMPLE`,
 `DESCRIPTION`, `AIM`, `RATIONALE` and `REFERENCES` sections are represented as informative span overrides
 inside an otherwise normative clause.
 This context guides `normative_force`; it never creates an assertion without evidence in the clause text.

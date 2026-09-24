@@ -159,6 +159,8 @@ def resolve_normative_context(
     source_status = _explicit_clause_status(clause, basis)
     if source_status is None:
         source_status = _scope_status(scopes, basis)
+    if source_status is None:
+        source_status = _ancestor_heading_status(document, clause, basis)
     if source_status is None and _INFORMATIVE_DOCUMENT_TITLE.search(document.title or ""):
         source_status = NormativeStatus.INFORMATIVE
         basis.append(
@@ -314,6 +316,37 @@ def _is_descendant_or_same(
             return False
         current_id = current.parent_id.value
     return False
+
+
+def _ancestor_heading_status(
+    document: EngineeringDocument,
+    clause: Clause,
+    basis: list[dict[str, Any]],
+) -> NormativeStatus | None:
+    """Return informative source context inherited from the nearest matching ancestor heading."""
+
+    by_id = {item.id.value: item for item in document.clauses}
+    parent_id = clause.parent_id.value if clause.parent_id is not None else None
+    seen = {clause.id.value}
+    while parent_id and parent_id not in seen:
+        seen.add(parent_id)
+        parent = by_id.get(parent_id)
+        if parent is None:
+            return None
+        heading = (parent.heading or "").strip()
+        if heading and _INFORMATIVE_LOCAL_HEADING.search(heading):
+            basis.append(
+                {
+                    "kind": "ancestor_heading",
+                    "status": NormativeStatus.INFORMATIVE.value,
+                    "source_clause_id": parent.id.value,
+                    "source_reference": parent.reference.clause,
+                    "value": heading,
+                }
+            )
+            return NormativeStatus.INFORMATIVE
+        parent_id = parent.parent_id.value if parent.parent_id is not None else None
+    return None
 
 
 def _explicit_clause_status(
