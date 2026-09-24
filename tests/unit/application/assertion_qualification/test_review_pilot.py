@@ -513,6 +513,121 @@ def test_assertion_cbox_projects_governing_scope_and_informative_normative_conte
     assert context["normative_context"]["basis"][0]["kind"] == ("governing_scope_qualification")
 
 
+def test_assertion_cbox_synthesizes_structural_document_scope_when_routing_is_missing() -> None:
+    qualification = (
+        "This document provides additional explanations. "
+        "It has an informative character only and describes the general concepts."
+    )
+    scope = Clause(
+        id=ClauseId(value="scope"),
+        reference=StandardReference(standard="DOC", clause="1"),
+        clause_type=ClauseType.SCOPE,
+        heading="Scope",
+        content=(TextBlock(id="scope-text", text=qualification),),
+        structural_profile=StructuralProfile(canonical_section=CanonicalDocumentSection.SCOPE),
+    )
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="5.1"),
+        clause_type=ClauseType.CLAUSE,
+        content=(TextBlock(id="target-text", text="The criterion is applicable."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Technical overview",
+        document_type=DocumentType.OTHER,
+        clauses=(scope, target),
+    )
+
+    context = assertion_cbox_context(document, target)
+
+    assert len(context["governing_scopes"]) == 1
+    governing = context["governing_scopes"][0]
+    assert governing["source_clause_id"] == "scope"
+    assert governing["reaches"] == [
+        {
+            "kind": "document",
+            "document_key": "DOC",
+            "part": None,
+            "clause_id": None,
+            "reference": None,
+        }
+    ]
+    assert governing["qualifications"] == [
+        "It has an informative character only and describes the general concepts."
+    ]
+    assert context["normative_context"]["source_status"] == "informative"
+    assert context["normative_context"]["basis"][0]["kind"] == ("governing_scope_qualification")
+
+
+def test_assertion_cbox_rejects_non_scope_document_wide_routing() -> None:
+    misleading = _known_scope_clause(
+        clause_id="ordinary",
+        qualification="It has an informative character only.",
+    ).model_copy(update={"clause_type": ClauseType.REQUIREMENT})
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="5.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        content=(TextBlock(id="target-text", text="The supplier shall record the result."),),
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Technical standard",
+        document_type=DocumentType.OTHER,
+        clauses=(misleading, target),
+    )
+
+    context = assertion_cbox_context(document, target)
+
+    assert context["governing_scopes"] == []
+    assert context["normative_context"]["source_status"] == "normative"
+    assert context["normative_context"]["basis"][-1]["kind"] == "default_standard_context"
+
+
+def test_assertion_cbox_keeps_local_scope_from_non_scope_clause() -> None:
+    target = Clause(
+        id=ClauseId(value="target"),
+        reference=StandardReference(standard="DOC", clause="7.4.4.3.1"),
+        clause_type=ClauseType.REQUIREMENT,
+        content=(TextBlock(id="target-text", text="The supplier shall record the result."),),
+    )
+    routing = ContextRouting(
+        scopes=(
+            ScopeDeclaration(
+                source_clause_id="exception",
+                reaches=(
+                    ScopeReach(
+                        kind=ScopeReachKind.CLAUSE,
+                        document_key="DOC",
+                        clause_id="target",
+                    ),
+                ),
+                conditions=("unless the conditions apply",),
+                evidence=("unless the conditions apply",),
+            ),
+        )
+    )
+    source = Clause(
+        id=ClauseId(value="exception"),
+        reference=StandardReference(standard="DOC", clause="7.4.4.3.2"),
+        clause_type=ClauseType.REQUIREMENT,
+        content=(TextBlock(id="exception-text", text="unless the conditions apply"),),
+    ).with_context_routing(routing)
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Technical standard",
+        document_type=DocumentType.OTHER,
+        clauses=(source, target),
+    )
+
+    context = assertion_cbox_context(document, target)
+
+    assert len(context["governing_scopes"]) == 1
+    assert context["governing_scopes"][0]["source_clause_id"] == "exception"
+    assert context["governing_scopes"][0]["conditions"] == ["unless the conditions apply"]
+
+
 def test_assertion_cbox_ignores_scope_that_does_not_reach_target() -> None:
     root = Clause(
         id=ClauseId(value="root"),

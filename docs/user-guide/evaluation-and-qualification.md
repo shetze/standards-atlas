@@ -72,11 +72,16 @@ declarations whose reach contains the reviewed clause. Conditions, exclusions an
 source-bound context rather than being rediscovered by the assertion LLM.
 
 The same projection derives a deterministic `normative_context`. Standards content defaults to `normative`
-unless source-backed evidence identifies informative context. Stronger evidence comes from explicit clause/annex
-status and governing Scope qualifications (for example "informative character only"); document/part titles
-beginning with `Guidelines`/`Guidance`, term/terminology clauses and local `Guideline`/`Example`/`Description`
-headings provide further informative signals. Labelled `NOTE`, `EXAMPLE`, `DESCRIPTION`, `AIM`, `RATIONALE`
-and `REFERENCES` sections are represented as informative span overrides inside an otherwise normative clause.
+unless source-backed evidence identifies informative context. Whole-document/part governing scopes are accepted
+only from the structural `Scope` region; ordinary requirements cannot become global context merely because routing
+interpreted a phrase such as `this document`. Local `clause`/`subtree` reaches from ordinary clauses remain valid.
+If a structural Scope clause has no generated scope routing, the CBox still gives it deterministic document reach
+and extracts an explicit document-character statement such as "informative character only" directly from its
+canonical source text. Stronger evidence otherwise comes from explicit clause/annex status and governing Scope
+qualifications; document/part titles beginning with `Guidelines`/`Guidance`, term/terminology clauses and local
+`Guideline`/`Example`/`Description` headings provide further informative signals. Labelled `NOTE`, `EXAMPLE`,
+`DESCRIPTION`, `AIM`, `RATIONALE` and `REFERENCES` sections are represented as informative span overrides
+inside an otherwise normative clause.
 This context guides `normative_force`; it never creates an assertion without evidence in the clause text.
 The CBox qualifies interpretation; evidence remains an exact span of the selected clause text.
 

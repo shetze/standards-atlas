@@ -87,3 +87,49 @@ def test_resumed_policy_selection_validates_policy_owned_selection(
 
     assert actual is expected
     assert not build_called
+
+
+def test_managed_policy_server_switches_project_owned_endpoint_model() -> None:
+    events: list[str] = []
+
+    class Status:
+        running = False
+        endpoint_available = True
+
+    class Server:
+        def status(self):
+            return Status()
+
+        def stop(self):
+            events.append("stop")
+
+        def start(self):
+            events.append("start")
+
+    with policy_cli._managed_policy_server(Server(), enabled=True):
+        events.append("run")
+
+    assert events == ["stop", "start", "run", "stop"]
+
+
+def test_managed_policy_server_does_not_restart_matching_model() -> None:
+    events: list[str] = []
+
+    class Status:
+        running = True
+        endpoint_available = True
+
+    class Server:
+        def status(self):
+            return Status()
+
+        def stop(self):
+            events.append("stop")
+
+        def start(self):
+            events.append("start")
+
+    with policy_cli._managed_policy_server(Server(), enabled=True):
+        events.append("run")
+
+    assert events == ["run"]

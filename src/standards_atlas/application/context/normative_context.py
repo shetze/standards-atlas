@@ -44,6 +44,14 @@ _NORMATIVE_QUALIFICATION = re.compile(
     r")\b",
     re.I,
 )
+_EXPLICIT_NORMATIVE_SCOPE_QUALIFICATION = re.compile(
+    r"\b(?:"
+    r"(?:this\s+(?:document|standard|part))[^.]{0,120}\b(?:is|has)\b[^.]{0,40}\bnormative\b|"
+    r"normative\s+(?:character|nature)"
+    r")\b",
+    re.I,
+)
+_SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])(?:\s+|\n+)")
 _INFORMATIVE_DOCUMENT_TITLE = re.compile(r"(?:^|[-–—:]\s*)(?:guidelines?|guidance)\b", re.I)
 _INFORMATIVE_LOCAL_HEADING = re.compile(
     r"^\s*(?:guidelines?|guidance|examples?|description)\b", re.I
@@ -66,38 +74,63 @@ def governing_scope_context(
 ) -> tuple[dict[str, Any], ...]:
     """Return accepted scope declarations from other clauses that govern ``clause``.
 
-    Scope routing is source-oriented: the declaration is stored on the Scope clause.  A
-    consumer interpreting another clause needs the inverse view, namely all accepted
-    declarations whose reach includes that target clause.  Only known canonical routing
-    state is used; unknown/not-evaluated generated values are ignored.
+    Scope routing is source-oriented: the declaration is stored on its source clause.
+    Consumers need the inverse view.  Whole-document/part reaches are authoritative only
+    when they originate in the document's structural Scope region; this prevents ordinary
+    requirements that mention ``this document`` from becoming global CBox context.  Local
+    clause/subtree reaches from non-Scope clauses remain valid.
+
+    A structural Scope clause always has deterministic document reach.  If its generated
+    routing is missing or failed, a minimal fallback declaration is projected from source
+    structure, including any explicit informative/normative-character sentence found in
+    the Scope text.
     """
 
     by_id = {item.id.value: item for item in document.clauses}
     governing: list[dict[str, Any]] = []
     for source in document.clauses:
+        authoritative_scope = _is_authoritative_scope_source(source)
         routing = _known_context_routing(source)
-        if routing is None:
-            continue
-        for scope in routing.scopes:
-            matching_reaches = tuple(
-                reach
-                for reach in scope.reaches
-                if _scope_reaches_clause(document, clause, reach, by_id=by_id)
-            )
-            if not matching_reaches:
-                continue
-            governing.append(
-                {
-                    "source_clause_id": source.id.value,
-                    "source_reference": source.reference.as_text(),
-                    "source_heading": source.heading,
-                    "reaches": [item.model_dump(mode="json") for item in matching_reaches],
-                    "conditions": list(scope.conditions),
-                    "exclusions": list(scope.exclusions),
-                    "qualifications": list(scope.qualifications),
-                    "evidence": list(scope.evidence),
-                }
-            )
+        if routing is not None:
+            for scope in routing.scopes:
+                matching_reaches = tuple(
+                    reach
+                    for reach in scope.reaches
+                    if _scope_reach_is_authoritative(source, reach)
+                    and _scope_reaches_clause(document, clause, reach, by_id=by_id)
+                )
+                if not matching_reaches:
+                    continue
+                governing.append(
+                    {
+                        "source_clause_id": source.id.value,
+                        "source_reference": source.reference.as_text(),
+                        "source_heading": source.heading,
+                        "reaches": [item.model_dump(mode="json") for item in matching_reaches],
+                        "conditions": list(scope.conditions),
+                        "exclusions": list(scope.exclusions),
+                        "qualifications": list(scope.qualifications),
+                        "evidence": list(scope.evidence),
+                    }
+                )
+
+        if authoritative_scope and (routing is None or not routing.scopes):
+            reach = ScopeReach(kind=ScopeReachKind.DOCUMENT, document_key=document.key.value)
+            if _scope_reaches_clause(document, clause, reach, by_id=by_id):
+                qualifications = _structural_scope_normative_qualifications(source.plain_text)
+                governing.append(
+                    {
+                        "source_clause_id": source.id.value,
+                        "source_reference": source.reference.as_text(),
+                        "source_heading": source.heading,
+                        "reaches": [reach.model_dump(mode="json")],
+                        "conditions": [],
+                        "exclusions": [],
+                        "qualifications": list(qualifications),
+                        "evidence": list(qualifications)
+                        or [f"Deterministic structural Scope: {source.reference.as_text()}"],
+                    }
+                )
     return tuple(governing)
 
 
@@ -189,6 +222,37 @@ def _known_context_routing(clause: Clause) -> ContextRouting | None:
     if routing != ContextRouting():
         return routing
     return None
+
+
+def _is_authoritative_scope_source(clause: Clause) -> bool:
+    profile = clause.structural_profile
+    return clause.clause_type is ClauseType.SCOPE or (
+        profile is not None and profile.canonical_section is CanonicalDocumentSection.SCOPE
+    )
+
+
+def _scope_reach_is_authoritative(source: Clause, reach: ScopeReach) -> bool:
+    if reach.kind in {ScopeReachKind.DOCUMENT, ScopeReachKind.PART}:
+        return _is_authoritative_scope_source(source)
+    return True
+
+
+def _structural_scope_normative_qualifications(text: str) -> tuple[str, ...]:
+    """Extract only explicit document-character statements from structural Scope text."""
+
+    selected: list[str] = []
+    for sentence in _SENTENCE_BOUNDARY.split(" ".join(text.split())):
+        candidate = sentence.strip()
+        if not candidate:
+            continue
+        if not (
+            _INFORMATIVE_QUALIFICATION.search(candidate)
+            or _EXPLICIT_NORMATIVE_SCOPE_QUALIFICATION.search(candidate)
+        ):
+            continue
+        if candidate not in selected:
+            selected.append(candidate)
+    return tuple(selected)
 
 
 def _scope_reaches_clause(

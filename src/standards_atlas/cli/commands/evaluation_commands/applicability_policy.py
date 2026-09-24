@@ -14,6 +14,7 @@ import typer
 from standards_atlas.adapters.llm import (
     LlmConfig,
     OpenAICompatibleLlmGateway,
+    RamaLamaServerError,
     RamaLamaServerManager,
 )
 from standards_atlas.application.evaluation.repository import PromptRepository
@@ -193,9 +194,18 @@ class _PolicyServer(Protocol):
 def _managed_policy_server(server: _PolicyServer, *, enabled: bool) -> Iterator[None]:
     started_for_run = False
     try:
-        if enabled and not server.status().running:
-            server.start()
-            started_for_run = True
+        if enabled:
+            status = server.status()
+            if not status.running:
+                # The enrichment workflow shares one project-owned endpoint across
+                # inference profiles. Context routing may therefore leave Phi-4
+                # active when applicability policy needs Mistral. Reconcile only
+                # an endpoint visible to the managed server; ``stop`` uses the
+                # shared ownership receipt and will not kill an unrelated runtime.
+                if getattr(status, "endpoint_available", False):
+                    server.stop()
+                server.start()
+                started_for_run = True
         yield
     finally:
         if started_for_run:
@@ -501,7 +511,7 @@ def run_applicability_policy_command(
                 qualification_mode=state.qualification_mode,
                 fresh_requested=state.fresh_requested,
             )
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, RamaLamaServerError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
 

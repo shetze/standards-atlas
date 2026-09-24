@@ -171,8 +171,11 @@ context code remains recorded in the original archive, while later publication a
 used for the continuation. Neither the context ZIP nor its receipt is replaced.
 
 The remaining chain starts at corpus construction/reuse and proceeds through qualification,
-adoption, publication and the published baseline. With this option `--fresh` affects only the
-remaining inference stages; there are **no context-inference calls**, including for failed clauses.
+adoption, publication and the published baseline. The applicability-policy runtime automatically reconciles a
+project-owned model left on the shared inference endpoint (for example Phi-4 from context enrichment), stops that
+runtime through the shared ownership receipt, and starts the policy model before inference. An unrelated/unowned
+endpoint is never taken over. With this option `--fresh` affects only the remaining inference stages; there are
+**no context-inference calls**, including for failed clauses.
 Omit `--fresh` when existing qualification proposals should be reused. Unresolved targets and
 failed-context counts remain part of the development baseline; they are not relabelled successes.
 `--fail-on-context-failure` still rejects a saved baseline containing context failures.
