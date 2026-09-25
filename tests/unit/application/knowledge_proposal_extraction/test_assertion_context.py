@@ -79,7 +79,7 @@ def test_assertion_cbox_projects_associative_leading_context_for_empty_groups() 
 
     context = assertion_cbox_context(document, target)
 
-    assert context["canonical_cbox_version"] == "1.2"
+    assert context["canonical_cbox_version"] == "1.3"
     assert context["associative_context"] == [
         {
             "clause_id": "s12311",
@@ -90,18 +90,6 @@ def test_assertion_cbox_projects_associative_leading_context_for_empty_groups() 
             "via_ancestor_clause_id": "s1231",
             "via_ancestor_reference": "12.3.1",
             "via_ancestor_heading": "Random hardware fault quantitative analysis",
-        },
-        {
-            "clause_id": "s121",
-            "reference": "12.1",
-            "heading": "Introduction",
-            "text": "Section 12 introduction establishes the availability guidance context.",
-            "role": "leading_substantive_descendant",
-            "via_ancestor_clause_id": "s12",
-            "via_ancestor_reference": "12",
-            "via_ancestor_heading": (
-                "Guidance for system development with safety-related availability requirements"
-            ),
         },
     ]
 

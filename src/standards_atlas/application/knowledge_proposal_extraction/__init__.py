@@ -1,7 +1,12 @@
 """Assertion-centred proposal extraction and deterministic source grounding."""
 
 from .context import assertion_cbox_context
-from .grounding import EvidenceGroundingResult, evidence_source_text, ground_evidence_quote
+from .grounding import (
+    EvidenceGroundingResult,
+    evidence_source_text,
+    ground_entity_evidence_quote,
+    ground_evidence_quote,
+)
 from .projection import SemanticTextProjection, project_clause_content
 from .references import display_clause_reference
 from .service import (
@@ -36,6 +41,7 @@ __all__ = [
     "TableKnowledgeProposalProjector",
     "display_clause_reference",
     "evidence_source_text",
+    "ground_entity_evidence_quote",
     "ground_evidence_quote",
     "project_clause_content",
     "proposal_extraction_eligibility",

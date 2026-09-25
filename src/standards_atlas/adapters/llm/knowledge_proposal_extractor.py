@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from standards_atlas.application.knowledge_proposal_extraction import (
     FormalOntologyVocabulary,
     display_clause_reference,
+    ground_entity_evidence_quote,
     ground_evidence_quote,
     project_clause_content,
 )
@@ -115,7 +116,7 @@ class OntologyGuidedKnowledgeProposalExtractor:
         model: str | None = None,
         provider: str | None = None,
         prompt_version: str = "ontology-guided-assertions-v2",
-        extractor_version: str = "3.1.0",
+        extractor_version: str = "3.2.0",
     ) -> None:
         self._gateway = gateway
         self._model = model
@@ -206,7 +207,7 @@ class OntologyGuidedKnowledgeProposalExtractor:
                 entity_ids_by_index.append(None)
                 continue
 
-            grounding = ground_evidence_quote(
+            grounding = ground_entity_evidence_quote(
                 clause,
                 str(raw["evidence_quote"]),
                 source_kind=evidence_source_kind,

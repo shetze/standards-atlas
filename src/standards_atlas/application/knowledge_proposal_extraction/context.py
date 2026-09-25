@@ -14,7 +14,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
 )
 
-ASSERTION_CBOX_CONTRACT_VERSION = "1.2"
+ASSERTION_CBOX_CONTRACT_VERSION = "1.3"
 
 
 def assertion_cbox_context(
@@ -133,11 +133,12 @@ def _associative_context(
 ) -> list[dict[str, object]]:
     """Return source-backed structural context that may frame entity semantics.
 
-    Text-bearing ancestors are carried directly. For an ancestor that has no own body,
-    the first substantive descendant before the current clause is used as the leading
-    associative context for that structural group. The projection is deterministic and
-    deliberately distinct from governing scope: it may frame entities and retrieval, but
-    it does not propagate normative assertions.
+    Text-bearing ancestors are carried directly. When the *immediate structural parent*
+    has no own body, the first substantive descendant before the current clause is used as
+    the leading associative context for that sibling group. More distant heading-only
+    ancestors do not contribute an arbitrary descendant from another branch. The projection
+    is deterministic and deliberately distinct from governing scope: it may frame entities
+    and retrieval, but it does not propagate normative assertions.
     """
 
     positions = {item.id.value: index for index, item in enumerate(document.clauses)}
@@ -149,7 +150,38 @@ def _associative_context(
     entries: list[dict[str, object]] = []
     seen_sources: set[str] = set()
     current_position = positions.get(clause.id.value, -1)
-    for ancestor in _ancestor_clauses_nearest_first(document, clause):
+    ancestors = _ancestor_clauses_nearest_first(document, clause)
+    if not ancestors:
+        return entries
+
+    immediate_parent = ancestors[0]
+    if immediate_parent.reference.clause != "0":
+        if immediate_parent.plain_text.strip():
+            _append_associative_context_entry(
+                entries,
+                seen_sources,
+                source=immediate_parent,
+                role="ancestor_body",
+                via_ancestor=immediate_parent,
+            )
+        else:
+            lead = _first_substantive_descendant(immediate_parent, children)
+            if lead is not None and lead.id != clause.id:
+                lead_position = positions.get(lead.id.value, -1)
+                if (
+                    lead_position >= 0
+                    and current_position >= 0
+                    and lead_position < current_position
+                ):
+                    _append_associative_context_entry(
+                        entries,
+                        seen_sources,
+                        source=lead,
+                        role="leading_substantive_descendant",
+                        via_ancestor=immediate_parent,
+                    )
+
+    for ancestor in ancestors[1:]:
         if ancestor.reference.clause == "0":
             continue
         if ancestor.plain_text.strip():
@@ -160,21 +192,6 @@ def _associative_context(
                 role="ancestor_body",
                 via_ancestor=ancestor,
             )
-            continue
-
-        lead = _first_substantive_descendant(ancestor, children)
-        if lead is None or lead.id == clause.id:
-            continue
-        lead_position = positions.get(lead.id.value, -1)
-        if lead_position < 0 or current_position < 0 or lead_position >= current_position:
-            continue
-        _append_associative_context_entry(
-            entries,
-            seen_sources,
-            source=lead,
-            role="leading_substantive_descendant",
-            via_ancestor=ancestor,
-        )
     return entries
 
 

@@ -85,18 +85,23 @@ Labelled `NOTE`, `EXAMPLE`,
 `DESCRIPTION`, `AIM`, `RATIONALE` and `REFERENCES` sections are represented as informative span overrides
 inside an otherwise normative clause.
 This context guides `normative_force`; it never creates an assertion without body evidence in the
-selected source clause. Assertion CBox 1.2 also projects `associative_context` as a separate structural
-framing channel. Text-bearing ancestors are carried directly; when a structural ancestor has no body,
-the first earlier substantive descendant under that group is carried as a `leading_substantive_descendant`.
-This lets an introductory leaf such as `12.3.1.1` provide the engineering subject for later sibling leaves
-without pretending that its normative statements govern those siblings. The synthetic document root is
-not used as associative context, and duplicate source clauses are suppressed nearest-first.
+selected source clause. Assertion CBox 1.3 also projects `associative_context` as a separate structural
+framing channel. Text-bearing ancestors are carried directly. When the immediate structural parent has no
+body, only that sibling group's first earlier substantive descendant is carried as a
+`leading_substantive_descendant`; heading-only ancestors higher in the tree do not pull an introductory leaf
+from another branch into the current clause. This lets an introductory leaf such as `12.3.1.1` provide the
+engineering subject for later `12.3.1.x` siblings without pretending that unrelated `12.2.x` content belongs
+to them or that the introductory leaf's normative statements govern its siblings. The synthetic document
+root is not used as associative context, and duplicate source clauses are suppressed nearest-first.
 
 Entity grounding is broader than assertion grounding: an entity may use an exact span from the local
 clause body, the local heading, an ancestor heading, or a body/heading surface explicitly carried in
 `associative_context`. `EvidenceAnchor.source_clause_id` identifies the clause that owns the evidence and
 `EvidenceAnchor.source_kind` selects `body` or `heading`; offsets and hashes are validated against that
-exact canonical surface. Assertions remain grounded in the local `body` surface of their own source clause.
+exact canonical surface. If an LLM declares the wrong entity evidence surface, deterministic recovery may
+select another allowed surface only when the quote has exactly one exact occurrence across all allowed
+entity-evidence surfaces. Ambiguous matches remain violations. Assertions do not use this recovery path and
+remain grounded in the local `body` surface of their own source clause.
 Associative context may therefore identify or frame engineering entities and improve retrieval/GraphRAG,
 but it cannot manufacture or propagate a normative statement.
 

@@ -36,11 +36,17 @@ class _Gateway:
         )
 
 
-def _clause(text: str) -> Clause:
+def _clause(
+    text: str,
+    *,
+    heading: str | None = None,
+    clause_type: ClauseType = ClauseType.REQUIREMENT,
+) -> Clause:
     return Clause(
         id=ClauseId(value="c-5b"),
         reference=StandardReference(standard="TEST", year=2026, clause="5"),
-        clause_type=ClauseType.REQUIREMENT,
+        clause_type=clause_type,
+        heading=heading,
         content=(TextBlock(id="t-1", text=text),),
     )
 
@@ -250,6 +256,41 @@ def test_extractor_accepts_ancestor_heading_as_entity_evidence() -> None:
     assert anchor.source_clause_id.value == "parent-1"
     assert anchor.source_kind.value == "heading"
     assert result.violations == ()
+
+
+def test_extractor_recovers_local_heading_when_model_declares_body() -> None:
+    gateway = _Gateway(
+        {
+            "entities": [
+                {
+                    "class_iri": f"{STAT}EngineeringEntity",
+                    "label": "hazard log",
+                    "confidence": 1.0,
+                    "evidence_source_kind": "body",
+                    "evidence_source_clause_id": "c-5b",
+                    "evidence_quote": "hazard log",
+                    "rationale": "the term heading identifies the defined engineering entity",
+                }
+            ],
+            "assertions": [],
+        }
+    )
+
+    result = OntologyGuidedKnowledgeProposalExtractor(gateway).extract(
+        _clause(
+            "document in which hazards identified, decisions made, solutions adopted are recorded",
+            heading="hazard log",
+            clause_type=ClauseType.TERM,
+        ),
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+    )
+
+    assert len(result.entity_proposals) == 1
+    assert result.violations == ()
+    anchor = result.evidence_anchors[0]
+    assert anchor.source_clause_id == ClauseId(value="c-5b")
+    assert anchor.source_kind is EvidenceSourceKind.HEADING
 
 
 def test_extractor_accepts_associative_body_as_entity_evidence() -> None:

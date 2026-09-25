@@ -1,6 +1,9 @@
 import hashlib
 
-from standards_atlas.application.knowledge_proposal_extraction import ground_evidence_quote
+from standards_atlas.application.knowledge_proposal_extraction import (
+    ground_entity_evidence_quote,
+    ground_evidence_quote,
+)
 from standards_atlas.domain.model import (
     Clause,
     ClauseId,
@@ -140,3 +143,74 @@ def test_body_quote_from_other_clause_requires_associative_context() -> None:
     assert grounded.anchor is not None
     assert grounded.anchor.source_clause_id == source_id
     assert grounded.anchor.source_kind is EvidenceSourceKind.BODY
+
+
+def test_entity_grounding_recovers_unique_local_heading_from_wrong_body_declaration() -> None:
+    clause = Clause(
+        id=ClauseId(value="g-term"),
+        reference=StandardReference(standard="TEST", clause="3.30"),
+        clause_type=ClauseType.TERM,
+        heading="hazard log",
+        content=(TextBlock(id="t-term", text="document in which hazards are recorded"),),
+    )
+
+    result = ground_entity_evidence_quote(
+        clause,
+        "hazard log",
+        source_kind=EvidenceSourceKind.BODY,
+        source_clause_id=clause.id,
+    )
+
+    assert result.resolved
+    assert result.anchor is not None
+    assert result.anchor.source_clause_id == clause.id
+    assert result.anchor.source_kind is EvidenceSourceKind.HEADING
+    assert result.anchor.start_offset == 0
+
+
+def test_entity_grounding_recovers_unique_ancestor_heading_from_wrong_source_declaration() -> None:
+    clause = _clause("If the method is used, the criteria apply.")
+
+    result = ground_entity_evidence_quote(
+        clause,
+        "Random hardware fault quantitative analysis",
+        source_kind=EvidenceSourceKind.BODY,
+        source_clause_id=clause.id,
+        semantic_context={
+            "ancestor_headings": [
+                {
+                    "clause_id": "g-parent",
+                    "reference": "12.3.1",
+                    "heading": "Random hardware fault quantitative analysis",
+                }
+            ]
+        },
+    )
+
+    assert result.resolved
+    assert result.anchor is not None
+    assert result.anchor.source_clause_id == ClauseId(value="g-parent")
+    assert result.anchor.source_kind is EvidenceSourceKind.HEADING
+
+
+def test_entity_grounding_fallback_rejects_quote_ambiguous_across_allowed_surfaces() -> None:
+    clause = Clause(
+        id=ClauseId(value="g-ambiguous"),
+        reference=StandardReference(standard="TEST", clause="3"),
+        clause_type=ClauseType.TERM,
+        heading="verification",
+        content=(TextBlock(id="t-ambiguous", text="verification is performed"),),
+    )
+
+    result = ground_entity_evidence_quote(
+        clause,
+        "verification",
+        source_kind=EvidenceSourceKind.BODY,
+        source_clause_id=ClauseId(value="missing-source"),
+    )
+
+    assert not result.resolved
+    assert result.violation_kind is KnowledgeProposalViolationKind.AMBIGUOUS_GROUNDING
+    assert result.reason == (
+        "evidence quote occurs 2 times across canonical entity evidence surfaces"
+    )

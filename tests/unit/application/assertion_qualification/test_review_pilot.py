@@ -506,7 +506,7 @@ def test_assertion_cbox_projects_governing_scope_and_informative_normative_conte
 
     context = assertion_cbox_context(document, target)
 
-    assert context["canonical_cbox_version"] == "1.2"
+    assert context["canonical_cbox_version"] == "1.3"
     assert len(context["governing_scopes"]) == 1
     governing = context["governing_scopes"][0]
     assert governing["source_clause_id"] == "scope"
