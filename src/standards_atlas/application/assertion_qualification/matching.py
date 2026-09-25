@@ -244,7 +244,7 @@ def _golden_grounding_signature(spans: Sequence[GoldenEvidenceSpan]) -> _Signatu
 
 def _evidence_anchor_signature(anchor: EvidenceAnchor) -> tuple[Hashable, ...]:
     return (
-        anchor.clause_id.value,
+        anchor.source_clause_id.value,
         anchor.start_offset,
         anchor.end_offset,
         anchor.content_hash,

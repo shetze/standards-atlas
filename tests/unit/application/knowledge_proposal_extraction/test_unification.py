@@ -11,6 +11,7 @@ from standards_atlas.domain.model import (
     DocumentKnowledgeProposal,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeEntityProposal,
     KnowledgeProposalProvenance,
     NormativeAssertionProposal,
@@ -24,7 +25,8 @@ ONTOLOGIES = ("standards-atlas-core@2.0.0", "functional-safety@2.1.0")
 def _anchor(anchor_id: str, clause_id: str, text: str, start: int) -> EvidenceAnchor:
     return EvidenceAnchor(
         id=anchor_id,
-        clause_id=ClauseId(value=clause_id),
+        source_clause_id=ClauseId(value=clause_id),
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=start,
         end_offset=start + len(text),
         content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
@@ -62,6 +64,7 @@ def test_unifies_prose_and_table_entities_with_subclass_refinement_and_lineage()
 
     prose_plan = KnowledgeEntityProposal(
         id="prose-plan",
+        proposal_clause_ids=(prose_plan_anchor.source_clause_id,),
         class_iri=f"{STAT}VerificationPlan",
         normalized_label="verification plan",
         aliases=("Verification Plan",),
@@ -71,6 +74,7 @@ def test_unifies_prose_and_table_entities_with_subclass_refinement_and_lineage()
     )
     prose_criterion = KnowledgeEntityProposal(
         id="prose-criterion",
+        proposal_clause_ids=(prose_criterion_anchor.source_clause_id,),
         class_iri=f"{STAT}VerificationCriterion",
         normalized_label="independent review",
         source_anchor_ids=(prose_criterion_anchor.id,),
@@ -96,6 +100,7 @@ def test_unifies_prose_and_table_entities_with_subclass_refinement_and_lineage()
 
     table_plan = KnowledgeEntityProposal(
         id="table-plan",
+        proposal_clause_ids=(table_plan_anchor.source_clause_id,),
         class_iri=f"{STAT}EngineeringEntity",
         normalized_label="verification plan",
         aliases=("Verification plan",),
@@ -104,6 +109,7 @@ def test_unifies_prose_and_table_entities_with_subclass_refinement_and_lineage()
     )
     table_criterion = KnowledgeEntityProposal(
         id="table-criterion",
+        proposal_clause_ids=(table_criterion_anchor.source_clause_id,),
         class_iri=f"{STAT}Criterion",
         normalized_label="independent review",
         source_anchor_ids=(table_criterion_anchor.id,),
@@ -172,6 +178,7 @@ def test_same_label_in_incompatible_sibling_classes_is_not_merged() -> None:
         entities=(
             KnowledgeEntityProposal(
                 id="role",
+                proposal_clause_ids=(role_anchor.source_clause_id,),
                 class_iri=f"{STAT}Role",
                 normalized_label="owner",
                 source_anchor_ids=(role_anchor.id,),
@@ -179,6 +186,7 @@ def test_same_label_in_incompatible_sibling_classes_is_not_merged() -> None:
             ),
             KnowledgeEntityProposal(
                 id="product",
+                proposal_clause_ids=(product_anchor.source_clause_id,),
                 class_iri=f"{STAT}WorkProduct",
                 normalized_label="owner",
                 source_anchor_ids=(product_anchor.id,),
@@ -186,6 +194,7 @@ def test_same_label_in_incompatible_sibling_classes_is_not_merged() -> None:
             ),
             KnowledgeEntityProposal(
                 id="generic",
+                proposal_clause_ids=(generic_anchor.source_clause_id,),
                 class_iri=f"{STAT}EngineeringEntity",
                 normalized_label="owner",
                 source_anchor_ids=(generic_anchor.id,),
@@ -212,6 +221,7 @@ def test_unification_is_independent_of_input_order() -> None:
         entities=(
             KnowledgeEntityProposal(
                 id="a-entity",
+                proposal_clause_ids=(first_anchor.source_clause_id,),
                 class_iri=f"{STAT}Plan",
                 normalized_label="plan",
                 source_anchor_ids=(first_anchor.id,),
@@ -225,6 +235,7 @@ def test_unification_is_independent_of_input_order() -> None:
         entities=(
             KnowledgeEntityProposal(
                 id="b-entity",
+                proposal_clause_ids=(second_anchor.source_clause_id,),
                 class_iri=f"{STAT}WorkProduct",
                 normalized_label="plan",
                 source_anchor_ids=(second_anchor.id,),
@@ -252,6 +263,7 @@ def test_assertions_from_different_source_clauses_remain_distinct() -> None:
     entities = (
         KnowledgeEntityProposal(
             id="plan",
+            proposal_clause_ids=(ClauseId(value="C1"),),
             class_iri=f"{STAT}Plan",
             normalized_label="plan",
             source_anchor_ids=("e1", "e2"),
@@ -259,6 +271,7 @@ def test_assertions_from_different_source_clauses_remain_distinct() -> None:
         ),
         KnowledgeEntityProposal(
             id="criterion",
+            proposal_clause_ids=(ClauseId(value="C1"),),
             class_iri=f"{STAT}Criterion",
             normalized_label="criterion",
             source_anchor_ids=("e3", "e4"),
@@ -294,6 +307,7 @@ def test_rejects_mismatched_documents_or_ontology_selections() -> None:
     anchor = _anchor("a1", "C1", "Plan", 0)
     entity = KnowledgeEntityProposal(
         id="plan",
+        proposal_clause_ids=(ClauseId(value="C1"),),
         class_iri=f"{STAT}Plan",
         normalized_label="plan",
         source_anchor_ids=(anchor.id,),

@@ -28,7 +28,7 @@ The current refactoring does not require compatibility with persisted `.atlas` o
 - every entity is grounded in one or more `EvidenceAnchor`s;
 - semantic classes and predicates are absolute IRIs bound to explicit formal ontology versions;
 - every assertion has a source clause, subject, predicate, object, assertion-local normative force, evidence anchors and adoption provenance;
-- evidence anchors reference the canonical clause text by identity and optional character range and may bind a SHA-256 hash without copying protected text;
+- evidence anchors reference a canonical clause surface (`body` or `heading`) by source-clause identity and optional character range and may bind a SHA-256 hash without copying protected text;
 - document validation rejects unknown clauses, invalid ranges and supplied hashes that do not match canonical content;
 - formal projection rejects classes or predicates not declared by the ontology versions recorded in the canonical knowledge aggregate;
 - cross-document equivalence and transfer decisions are derived later and never rewrite source assertions.

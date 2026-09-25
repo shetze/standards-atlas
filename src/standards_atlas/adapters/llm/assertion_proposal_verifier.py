@@ -14,6 +14,7 @@ from standards_atlas.application.assertion_qualification.cascade_models import (
 from standards_atlas.application.knowledge_proposal_extraction import (
     FormalOntologyVocabulary,
     display_clause_reference,
+    evidence_source_text,
     project_clause_content,
 )
 from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
@@ -128,10 +129,21 @@ class OntologyGuidedAssertionProposalVerifier:
                     "allowed_classes": sorted(vocabulary.classes),
                     "allowed_properties": sorted(vocabulary.properties),
                     "entity_candidates": [
-                        _entity_payload(item, anchor_by_id, clause) for item in entity_proposals
+                        _entity_payload(
+                            item,
+                            anchor_by_id,
+                            clause,
+                            semantic_context=semantic_context,
+                        )
+                        for item in entity_proposals
                     ],
                     "assertion_candidates": [
-                        _assertion_payload(item, anchor_by_id, clause)
+                        _assertion_payload(
+                            item,
+                            anchor_by_id,
+                            clause,
+                            semantic_context=semantic_context,
+                        )
                         for item in assertion_proposals
                     ],
                 },
@@ -164,13 +176,16 @@ def _system_prompt() -> str:
         "Act as an independent verifier of engineering-knowledge candidates extracted from one "
         "standards clause. semantic_context is trusted canonical CBox context for interpreting "
         "clause_text, including parent/ancestor structure, sibling position, governing scopes, "
-        "normative_context and routed references; use it to disambiguate meaning but require "
-        "source support in clause_text for every candidate. Reject an assertion that assigns "
+        "normative_context and routed references. Entity candidates may be grounded in the local "
+        "clause body, the local heading, or an ancestor heading, as declared by each evidence "
+        "anchor. Assertion candidates still require source support in the local clause body. "
+        "Reject an assertion that assigns "
         "normative force stronger than informative when its evidence is governed by an "
         "informative normative_context or an informative span override. Review every supplied "
         "entity and assertion exactly once. Mark a "
         "candidate supported only when its semantics and cited source evidence are directly "
-        "supported by clause_text. Mark it rejected when it is contradicted, invented, uses the "
+        "supported by the declared canonical evidence surface. Mark it rejected when it is "
+        "contradicted, invented, uses the "
         "wrong ontology meaning, or overstates the source. Use uncertain when the source does not "
         "permit a reliable decision. Then independently inspect the complete clause for important "
         "source-extractable engineering entities or assertions omitted by the efficient stage; "
@@ -184,6 +199,8 @@ def _entity_payload(
     entity: KnowledgeEntityProposal,
     anchor_by_id: Mapping[str, EvidenceAnchor],
     clause: Clause,
+    *,
+    semantic_context: Mapping[str, object] | None,
 ) -> dict[str, object]:
     return {
         "candidate_id": entity.id,
@@ -192,7 +209,11 @@ def _entity_payload(
         "aliases": list(entity.aliases),
         "confidence": entity.confidence,
         "evidence": [
-            _anchor_payload(anchor_by_id[anchor_id], clause)
+            _anchor_payload(
+                anchor_by_id[anchor_id],
+                clause,
+                semantic_context=semantic_context,
+            )
             for anchor_id in entity.source_anchor_ids
         ],
     }
@@ -202,6 +223,8 @@ def _assertion_payload(
     assertion: NormativeAssertionProposal,
     anchor_by_id: Mapping[str, EvidenceAnchor],
     clause: Clause,
+    *,
+    semantic_context: Mapping[str, object] | None,
 ) -> dict[str, object]:
     return {
         "candidate_id": assertion.id,
@@ -211,21 +234,35 @@ def _assertion_payload(
         "normative_force": assertion.normative_force.value,
         "confidence": assertion.confidence,
         "evidence": [
-            _anchor_payload(anchor_by_id[anchor_id], clause)
+            _anchor_payload(
+                anchor_by_id[anchor_id],
+                clause,
+                semantic_context=semantic_context,
+            )
             for anchor_id in assertion.evidence_anchor_ids
         ],
     }
 
 
-def _anchor_payload(anchor: EvidenceAnchor, clause: Clause) -> dict[str, object]:
-    if anchor.clause_id != clause.id:
-        raise ValueError("assertion verifier received evidence from a different source clause")
+def _anchor_payload(
+    anchor: EvidenceAnchor,
+    clause: Clause,
+    *,
+    semantic_context: Mapping[str, object] | None,
+) -> dict[str, object]:
+    source_text = evidence_source_text(anchor, clause, semantic_context=semantic_context)
+    if source_text is None:
+        raise ValueError(
+            "assertion verifier cannot resolve the declared evidence source from canonical context"
+        )
     if anchor.start_offset is None or anchor.end_offset is None:
-        quote = clause.plain_text
+        quote = source_text
     else:
-        quote = clause.plain_text[anchor.start_offset : anchor.end_offset]
+        quote = source_text[anchor.start_offset : anchor.end_offset]
     return {
         "anchor_id": anchor.id,
+        "source_clause_id": anchor.source_clause_id.value,
+        "source_kind": anchor.source_kind.value,
         "start_offset": anchor.start_offset,
         "end_offset": anchor.end_offset,
         "content_hash": anchor.content_hash,

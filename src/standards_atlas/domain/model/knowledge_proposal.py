@@ -91,6 +91,7 @@ class KnowledgeEntityProposal(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: str = Field(min_length=1)
+    proposal_clause_ids: tuple[ClauseId, ...] = Field(min_length=1)
     class_iri: str = Field(min_length=1)
     normalized_label: str = Field(min_length=1)
     aliases: tuple[str, ...] = ()
@@ -105,6 +106,8 @@ class KnowledgeEntityProposal(BaseModel):
 
     @model_validator(mode="after")
     def aliases_and_anchors_are_unique(self) -> KnowledgeEntityProposal:
+        if len(self.proposal_clause_ids) != len(set(self.proposal_clause_ids)):
+            raise ValueError("knowledge entity proposal source clauses must be unique")
         if len(self.aliases) != len(set(self.aliases)):
             raise ValueError("knowledge entity proposal aliases must be unique")
         if len(self.source_anchor_ids) != len(set(self.source_anchor_ids)):

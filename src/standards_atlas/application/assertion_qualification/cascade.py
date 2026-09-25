@@ -231,7 +231,6 @@ def _clause_candidates(
     clause: Clause,
 ) -> _ClauseCandidates:
     clause_id = clause.id.value
-    anchor_by_id = {anchor.id: anchor for anchor in proposal.evidence_anchors}
     assertions = tuple(
         item for item in proposal.assertion_proposals if item.source_clause_id.value == clause_id
     )
@@ -242,19 +241,12 @@ def _clause_candidates(
         entity
         for entity in proposal.entity_proposals
         if entity.id in assertion_entity_ids
-        or any(
-            anchor_by_id[anchor_id].clause_id.value == clause_id
-            for anchor_id in entity.source_anchor_ids
-        )
+        or any(item.value == clause_id for item in entity.proposal_clause_ids)
     )
     anchor_ids = {anchor_id for entity in entities for anchor_id in entity.source_anchor_ids} | {
         anchor_id for assertion in assertions for anchor_id in assertion.evidence_anchor_ids
     }
-    anchors = tuple(
-        anchor
-        for anchor in proposal.evidence_anchors
-        if anchor.id in anchor_ids and anchor.clause_id.value == clause_id
-    )
+    anchors = tuple(anchor for anchor in proposal.evidence_anchors if anchor.id in anchor_ids)
     return _ClauseCandidates(anchors=anchors, entities=entities, assertions=assertions)
 
 

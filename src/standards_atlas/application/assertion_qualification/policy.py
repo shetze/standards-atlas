@@ -35,7 +35,11 @@ from standards_atlas.application.assertion_qualification.policy_models import (
     AssertionQualityGateOperator,
     AssertionQualityThresholds,
 )
-from standards_atlas.domain.model import DocumentKnowledgeProposal, NormativeAssertionProposal
+from standards_atlas.domain.model import (
+    DocumentKnowledgeProposal,
+    EvidenceSourceKind,
+    NormativeAssertionProposal,
+)
 
 
 class AssertionAutoAdoptionPolicyEvaluator:
@@ -569,7 +573,9 @@ def _production_assertion_reasons(
         anchor_by_id[anchor_id] for anchor_id in assertion.evidence_anchor_ids
     )
     if any(
-        anchor.clause_id != assertion.source_clause_id or not _anchor_is_exact(anchor)
+        anchor.source_clause_id != assertion.source_clause_id
+        or anchor.source_kind is not EvidenceSourceKind.BODY
+        or not _anchor_is_exact(anchor)
         for anchor in assertion_anchors
     ):
         return (AssertionAutoAdoptionReason.NON_EXACT_GROUNDING,)

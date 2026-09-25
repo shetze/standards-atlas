@@ -47,6 +47,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     GeneratedAttribute,
     GenerationMethod,
     KnowledgeEntityProposal,
@@ -357,7 +358,8 @@ def test_attach_uses_exact_cascade_selection_and_final_route_proposal() -> None:
     text = source.text
     anchor = EvidenceAnchor(
         id="anchor-1",
-        clause_id=ClauseId(value="c1"),
+        source_clause_id=ClauseId(value="c1"),
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=0,
         end_offset=len(text),
         content_hash=hashlib.sha256(text.encode()).hexdigest(),
@@ -370,6 +372,7 @@ def test_attach_uses_exact_cascade_selection_and_final_route_proposal() -> None:
         entity_proposals=(
             KnowledgeEntityProposal(
                 id="plan",
+                proposal_clause_ids=(ClauseId(value="c1"),),
                 class_iri=f"{STAT}VerificationPlan",
                 normalized_label="Verification Plan",
                 source_anchor_ids=(anchor.id,),

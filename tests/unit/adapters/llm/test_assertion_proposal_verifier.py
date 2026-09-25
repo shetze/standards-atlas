@@ -9,6 +9,7 @@ from standards_atlas.domain.model import (
     ClauseType,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeEntityProposal,
     NormativeAssertionProposal,
     NormativeForce,
@@ -48,12 +49,14 @@ def _inputs():
     )
     anchor = EvidenceAnchor(
         id="anchor-1",
-        clause_id=clause.id,
+        source_clause_id=clause.id,
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=0,
         end_offset=len(TEXT),
     )
     entity = KnowledgeEntityProposal(
         id="entity-1",
+        proposal_clause_ids=(clause.id,),
         class_iri=f"{STAT}VerificationPlan",
         normalized_label="verification plan",
         source_anchor_ids=(anchor.id,),
@@ -108,3 +111,61 @@ def test_verifier_reviews_candidates_and_runs_independent_missing_check() -> Non
     payload = json.loads(gateway.request.user_prompt)
     assert payload["entity_candidates"][0]["evidence"][0]["quote"] == TEXT
     assert "mandatory even when the candidate arrays are empty" in gateway.request.system_prompt
+
+
+def test_verifier_resolves_ancestor_heading_evidence_from_semantic_context() -> None:
+    gateway = _Gateway(
+        {
+            "entity_reviews": [
+                {"candidate_id": "entity-heading", "disposition": "supported", "rationale": None}
+            ],
+            "assertion_reviews": [],
+            "missing_entity_detected": False,
+            "missing_assertion_detected": False,
+            "missing_rationale": None,
+        }
+    )
+    clause = Clause(
+        id=ClauseId(value="c1"),
+        reference=StandardReference(standard="TEST", clause="12.3.1.3"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Local heading",
+        content=(TextBlock(id="t1", text="If the method is used, the criteria apply."),),
+    )
+    parent_id = ClauseId(value="parent")
+    heading = "Random hardware fault quantitative analysis"
+    anchor = EvidenceAnchor(
+        id="anchor-heading",
+        source_clause_id=parent_id,
+        source_kind=EvidenceSourceKind.HEADING,
+        start_offset=0,
+        end_offset=len(heading),
+    )
+    entity = KnowledgeEntityProposal(
+        id="entity-heading",
+        proposal_clause_ids=(clause.id,),
+        class_iri=f"{STAT}Activity",
+        normalized_label="random hardware fault quantitative analysis",
+        source_anchor_ids=(anchor.id,),
+        confidence=0.9,
+    )
+
+    OntologyGuidedAssertionProposalVerifier(gateway).verify(
+        clause,
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+        evidence_anchors=(anchor,),
+        entity_proposals=(entity,),
+        assertion_proposals=(),
+        semantic_context={
+            "ancestor_headings": [
+                {"clause_id": parent_id.value, "reference": "12.3.1", "heading": heading}
+            ]
+        },
+    )
+
+    payload = json.loads(gateway.request.user_prompt)
+    evidence = payload["entity_candidates"][0]["evidence"][0]
+    assert evidence["source_clause_id"] == parent_id.value
+    assert evidence["source_kind"] == "heading"
+    assert evidence["quote"] == heading

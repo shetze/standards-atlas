@@ -10,7 +10,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from standards_atlas.domain.model.annotation import ClauseAnnotation
 from standards_atlas.domain.model.artifact_lineage import ArtifactLineage
 from standards_atlas.domain.model.clause import Clause
-from standards_atlas.domain.model.document_knowledge import DocumentKnowledge
+from standards_atlas.domain.model.document_knowledge import (
+    DocumentKnowledge,
+    EvidenceSourceKind,
+)
 from standards_atlas.domain.model.identifiers import ClauseId, DocumentKey
 from standards_atlas.domain.model.table_structure import DocumentTable, TableIndexEntry
 
@@ -65,22 +68,32 @@ class EngineeringDocument(BaseModel):
                     f"clause {assertion.source_clause_id.value!r}"
                 )
         for anchor in self.knowledge.evidence_anchors:
-            clause = clauses.get(anchor.clause_id.value)
+            clause = clauses.get(anchor.source_clause_id.value)
             if clause is None:
                 raise ValueError(
                     f"document knowledge anchor {anchor.id!r} references unknown clause "
-                    f"{anchor.clause_id.value!r}"
+                    f"{anchor.source_clause_id.value!r}"
                 )
-            text = clause.plain_text
+            if anchor.source_kind is EvidenceSourceKind.BODY:
+                source_text = clause.plain_text
+                source_name = "clause body"
+            else:
+                source_text = clause.heading
+                source_name = "clause heading"
+                if source_text is None:
+                    raise ValueError(
+                        f"document knowledge anchor {anchor.id!r} references a missing "
+                        "clause heading"
+                    )
             if anchor.start_offset is None:
-                evidence_text = text
+                evidence_text = source_text
             else:
                 assert anchor.end_offset is not None
-                if anchor.end_offset > len(text):
+                if anchor.end_offset > len(source_text):
                     raise ValueError(
-                        f"document knowledge anchor {anchor.id!r} exceeds clause text length"
+                        f"document knowledge anchor {anchor.id!r} exceeds {source_name} length"
                     )
-                evidence_text = text[anchor.start_offset : anchor.end_offset]
+                evidence_text = source_text[anchor.start_offset : anchor.end_offset]
             if anchor.content_hash is not None:
                 actual_hash = hashlib.sha256(evidence_text.encode("utf-8")).hexdigest()
                 if actual_hash != anchor.content_hash:

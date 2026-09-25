@@ -84,8 +84,14 @@ resolved nearest-first from the current EngineeringDocument hierarchy and record
 Labelled `NOTE`, `EXAMPLE`,
 `DESCRIPTION`, `AIM`, `RATIONALE` and `REFERENCES` sections are represented as informative span overrides
 inside an otherwise normative clause.
-This context guides `normative_force`; it never creates an assertion without evidence in the clause text.
-The CBox qualifies interpretation; evidence remains an exact span of the selected clause text.
+This context guides `normative_force`; it never creates an assertion without body evidence in the
+selected source clause. Entity grounding is broader than assertion grounding: an entity may use an
+exact span from the local clause body, the local heading, or an ancestor heading carried by the same
+canonical CBox. `EvidenceAnchor.source_clause_id` identifies the clause that owns the evidence and
+`EvidenceAnchor.source_kind` selects `body` or `heading`; offsets and hashes are validated against that
+exact canonical surface. Headings can therefore identify or frame an engineering entity without being
+misrepresented as body text. Assertions remain grounded in the local `body` surface, so structural
+context cannot manufacture a normative statement.
 
 ```bash
 uv run standards-atlas evaluation assertion-cascade \

@@ -15,6 +15,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeDerivationMethod,
     KnowledgeEntity,
     KnowledgeProvenance,
@@ -55,7 +56,8 @@ def _document(
     end = start + len(anchor_text)
     anchor = EvidenceAnchor(
         id="anchor:C1:knowledge",
-        clause_id=clause.id,
+        source_clause_id=clause.id,
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=start,
         end_offset=end,
         content_hash=hashlib.sha256(anchor_text.encode("utf-8")).hexdigest(),

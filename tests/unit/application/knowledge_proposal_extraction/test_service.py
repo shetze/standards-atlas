@@ -12,6 +12,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeEntityProposal,
     KnowledgeProposalProvenance,
     NormativeAssertionProposal,
@@ -41,12 +42,14 @@ class _Extractor:
         self.calls.append((clause.id.value, semantic_context))
         anchor = EvidenceAnchor(
             id=f"a:{clause.id.value}",
-            clause_id=clause.id,
+            source_clause_id=clause.id,
+            source_kind=EvidenceSourceKind.BODY,
             start_offset=0,
             end_offset=len(clause.plain_text),
         )
         entity = KnowledgeEntityProposal(
             id=f"e:{clause.id.value}",
+            proposal_clause_ids=(clause.id,),
             class_iri=f"{STAT}Requirement",
             normalized_label="requirement",
             source_anchor_ids=(anchor.id,),

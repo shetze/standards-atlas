@@ -333,8 +333,19 @@ def _materialize_entities(
                 f"Document-local entity resolution merged {len(group.sources)} proposals by "
                 "normalized label and compatible ontology type."
             )
+        proposal_clause_ids = tuple(
+            sorted(
+                {
+                    clause_id
+                    for source in group.sources
+                    for clause_id in source.entity.proposal_clause_ids
+                },
+                key=lambda item: item.value,
+            )
+        )
         entity = KnowledgeEntityProposal(
             id=entity_id,
+            proposal_clause_ids=proposal_clause_ids,
             class_iri=group.class_iri,
             normalized_label=group.normalized_label,
             aliases=aliases,

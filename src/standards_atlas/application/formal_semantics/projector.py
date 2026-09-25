@@ -415,7 +415,7 @@ class DeterministicFormalSemanticProjector:
         seen: set[str] = set()
         for anchor_id in entity.source_anchor_ids:
             anchor = anchor_by_id[anchor_id]
-            clause_id = anchor.clause_id.value
+            clause_id = anchor.source_clause_id.value
             context_id = clause_contexts[clause_id].id
             if context_id.iri not in seen:
                 seen.add(context_id.iri)

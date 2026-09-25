@@ -18,7 +18,9 @@ from standards_atlas.application.ports.knowledge_proposals import ClauseKnowledg
 from standards_atlas.application.ports.llm_gateway import LlmGateway, StructuredGenerationRequest
 from standards_atlas.domain.model import (
     Clause,
+    ClauseId,
     EntityAssertionObject,
+    EvidenceSourceKind,
     KnowledgeEntityProposal,
     KnowledgeProposalProvenance,
     KnowledgeProposalViolation,
@@ -44,6 +46,8 @@ _SCHEMA = {
                     "class_iri",
                     "label",
                     "confidence",
+                    "evidence_source_kind",
+                    "evidence_source_clause_id",
                     "evidence_quote",
                     "rationale",
                 ],
@@ -51,6 +55,11 @@ _SCHEMA = {
                     "class_iri": {"type": "string"},
                     "label": {"type": "string"},
                     "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                    "evidence_source_kind": {
+                        "type": "string",
+                        "enum": [item.value for item in EvidenceSourceKind],
+                    },
+                    "evidence_source_clause_id": {"type": "string"},
                     "evidence_quote": {"type": "string"},
                     "rationale": {"type": ["string", "null"]},
                 },
@@ -180,7 +189,30 @@ class OntologyGuidedKnowledgeProposalExtractor:
                 entity_ids_by_index.append(None)
                 continue
 
-            grounding = ground_evidence_quote(clause, str(raw["evidence_quote"]))
+            try:
+                evidence_source_kind = EvidenceSourceKind(str(raw["evidence_source_kind"]))
+                evidence_source_clause_id = ClauseId(
+                    value=str(raw["evidence_source_clause_id"]).strip()
+                )
+            except (KeyError, ValueError) as error:
+                violations.append(
+                    _violation(
+                        clause,
+                        KnowledgeProposalViolationKind.UNRESOLVED_GROUNDING,
+                        str(raw.get("evidence_quote") or "<empty evidence>"),
+                        f"invalid evidence source: {error}",
+                    )
+                )
+                entity_ids_by_index.append(None)
+                continue
+
+            grounding = ground_evidence_quote(
+                clause,
+                str(raw["evidence_quote"]),
+                source_kind=evidence_source_kind,
+                source_clause_id=evidence_source_clause_id,
+                semantic_context=semantic_context,
+            )
             if not grounding.resolved:
                 assert grounding.violation_kind is not None
                 violations.append(
@@ -217,6 +249,7 @@ class OntologyGuidedKnowledgeProposalExtractor:
 
             entities[entity_id] = KnowledgeEntityProposal(
                 id=entity_id,
+                proposal_clause_ids=(clause.id,),
                 class_iri=class_iri,
                 normalized_label=normalized_label,
                 aliases=(label,) if label != normalized_label else (),
@@ -258,7 +291,13 @@ class OntologyGuidedKnowledgeProposalExtractor:
                 violations.append(_invalid_assertion(clause, predicate, str(error)))
                 continue
 
-            grounding = ground_evidence_quote(clause, str(raw["evidence_quote"]))
+            grounding = ground_evidence_quote(
+                clause,
+                str(raw["evidence_quote"]),
+                source_kind=EvidenceSourceKind.BODY,
+                source_clause_id=clause.id,
+                semantic_context=semantic_context,
+            )
             if not grounding.resolved:
                 assert grounding.violation_kind is not None
                 violations.append(
@@ -335,12 +374,19 @@ def _system_prompt() -> str:
         "informative even if the prose uses modal-looking wording. "
         "normative_context.span_overrides marks NOTE/EXAMPLE/DESCRIPTION-style source spans that "
         "are informative inside an otherwise normative clause. "
-        "Evidence must always come from clause_text. "
+        "Entity evidence may come from the current clause body, the current clause heading, or "
+        "an ancestor heading listed in semantic_context.ancestor_headings. For entity evidence, "
+        "set evidence_source_kind=body only with evidence_source_clause_id equal to clause_id; "
+        "set evidence_source_kind=heading with the clause_id that owns the quoted heading. "
+        "Headings may identify or frame engineering entities, but do not create assertions from "
+        "headings alone. Assertion evidence must always come from clause_text. "
         "allowed_classes and allowed_properties are closed vocabularies: copy their IRIs "
         "exactly and never invent semantic terms. Emit only claims directly supported by the "
         "source clause. Each evidence_quote MUST be an exact, case-sensitive, punctuation- and "
-        "whitespace-preserving substring of clause_text and should be long enough to occur only "
-        "once. Never use an omitted-table marker as evidence. Evidence quotes are source spans, "
+        "whitespace-preserving substring of its declared evidence source and should be long enough "
+        "to occur only once. Assertion evidence_quote values remain exact substrings of "
+        "clause_text. "
+        "Never use an omitted-table marker as evidence. Evidence quotes are source spans, "
         "not rationales; put explanatory text only in rationale. Assertions reference the ordered "
         "entities array by zero-based subject_index and, for entity objects, object_index. For a "
         "literal object set object_kind=literal, object_index=null and provide literal_value; for "

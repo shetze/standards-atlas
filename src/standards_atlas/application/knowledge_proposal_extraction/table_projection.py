@@ -16,10 +16,12 @@ from standards_atlas.domain.model import (
     FORMAL_SEMANTIC_NAMESPACE,
     AssertionObject,
     Clause,
+    ClauseId,
     DocumentKnowledgeProposal,
     EngineeringDocument,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeConcept,
     KnowledgeConceptKind,
     KnowledgeEntityProposal,
@@ -558,6 +560,7 @@ def _synthetic_entity_proposal(
     )
     return KnowledgeEntityProposal(
         id=f"entity:{document_key}:table:{digest}",
+        proposal_clause_ids=(ClauseId(value=table.parent_clause_id),),
         class_iri=class_iri,
         normalized_label=normalized_label,
         aliases=normalized_aliases,
@@ -725,7 +728,8 @@ def _anchor_from_location(
     anchor_digest = hashlib.sha256(anchor_identity.encode("utf-8")).hexdigest()[:20]
     return EvidenceAnchor(
         id=f"evidence:{clause.id.value}:table:{anchor_digest}",
-        clause_id=clause.id,
+        source_clause_id=clause.id,
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=location.start_offset,
         end_offset=location.end_offset,
         content_hash=digest,
@@ -753,7 +757,8 @@ def _range_anchor(
     anchor_digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:20]
     return EvidenceAnchor(
         id=f"evidence:{clause.id.value}:table:{anchor_digest}",
-        clause_id=clause.id,
+        source_clause_id=clause.id,
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=start_offset,
         end_offset=end_offset,
         content_hash=digest,
@@ -829,6 +834,7 @@ def _entity_proposal(
     aliases = (concept.label,) if concept.label != normalized_label else ()
     return KnowledgeEntityProposal(
         id=f"entity:{document_key}:table:{digest}",
+        proposal_clause_ids=(anchor.source_clause_id,),
         class_iri=class_iri,
         normalized_label=normalized_label,
         aliases=aliases,

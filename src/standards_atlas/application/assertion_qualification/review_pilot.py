@@ -477,10 +477,7 @@ def _proposal_snapshot(
         for entity_id in _assertion_entity_ids(assertion.subject_id, assertion.object)
     }
     for entity in proposal.entity_proposals:
-        if any(
-            anchor_by_id[anchor_id].clause_id.value == clause_id
-            for anchor_id in entity.source_anchor_ids
-        ):
+        if any(item.value == clause_id for item in entity.proposal_clause_ids):
             entity_ids.add(entity.id)
     entities = tuple(item for item in proposal.entity_proposals if item.id in entity_ids)
 
@@ -563,7 +560,8 @@ def _assertion_entity_ids(subject_id: str, object_: object) -> tuple[str, ...]:
 def _anchor_snapshot(anchor: object) -> AssertionProposalEvidenceSnapshot:
     return AssertionProposalEvidenceSnapshot(
         anchor_id=anchor.id,
-        clause_id=anchor.clause_id.value,
+        source_clause_id=anchor.source_clause_id.value,
+        source_kind=anchor.source_kind,
         start_offset=anchor.start_offset,
         end_offset=anchor.end_offset,
         content_hash=anchor.content_hash,

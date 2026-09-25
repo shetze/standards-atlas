@@ -35,6 +35,7 @@ from standards_atlas.domain.model import (
     DocumentKnowledgeProposal,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeEntityProposal,
     KnowledgeProposalProvenance,
     NormativeAssertionProposal,
@@ -135,13 +136,15 @@ def _proposal(
     assertion_id = assertion_id or f"proposal:{document}:assertion"
     anchor = EvidenceAnchor(
         id=f"anchor:{run_id}:{clause_id}",
-        clause_id=ClauseId(value=clause_id),
+        source_clause_id=ClauseId(value=clause_id),
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=0,
         end_offset=10,
         content_hash=HASH,
     )
     entity = KnowledgeEntityProposal(
         id=entity_id,
+        proposal_clause_ids=(ClauseId(value=clause_id),),
         class_iri=f"{STAT}Requirement",
         normalized_label=label or f"requirement {document.lower()}",
         source_anchor_ids=(anchor.id,),

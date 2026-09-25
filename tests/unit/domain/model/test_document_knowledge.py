@@ -14,6 +14,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeDerivationMethod,
     KnowledgeEntity,
     KnowledgeProvenance,
@@ -52,7 +53,8 @@ def _knowledge() -> DocumentKnowledge:
     text = _clause().plain_text
     anchor = EvidenceAnchor(
         id="anchor:C1:0",
-        clause_id=ClauseId(value="C1"),
+        source_clause_id=ClauseId(value="C1"),
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=4,
         end_offset=21,
         content_hash=hashlib.sha256(text[4:21].encode()).hexdigest(),
@@ -242,3 +244,53 @@ def test_clause_applicability_is_minimal_presence_and_polarity_contract() -> Non
 
     with pytest.raises(ValueError, match="absent applicability"):
         ClauseApplicability(present=False, polarity=ApplicabilityPolarity.INCLUDED)
+
+
+def test_engineering_document_validates_heading_evidence_against_heading_surface() -> None:
+    clause = Clause(
+        id=ClauseId(value="H1"),
+        reference=StandardReference(standard="Example", clause="12.3.1.3"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Emergency Operation Time Interval calculation if no PMHF value is available",
+        content=(TextBlock(id="H1-text", text="If the method is used, the criteria apply."),),
+    )
+    heading = clause.heading or ""
+    anchor = EvidenceAnchor(
+        id="anchor:H1:heading",
+        source_clause_id=clause.id,
+        source_kind=EvidenceSourceKind.HEADING,
+        start_offset=0,
+        end_offset=len(heading),
+        content_hash=hashlib.sha256(heading.encode()).hexdigest(),
+    )
+    knowledge = DocumentKnowledge(evidence_anchors=(anchor,))
+
+    document = EngineeringDocument(
+        key=DocumentKey(value="DOC"),
+        title="Example",
+        document_type=DocumentType.STANDARD,
+        clauses=(clause,),
+        knowledge=knowledge,
+    )
+
+    assert document.knowledge.evidence_anchors[0].source_kind is EvidenceSourceKind.HEADING
+
+
+def test_engineering_document_rejects_heading_anchor_when_heading_is_missing() -> None:
+    clause = _clause()
+    anchor = EvidenceAnchor(
+        id="anchor:C1:heading",
+        source_clause_id=clause.id,
+        source_kind=EvidenceSourceKind.HEADING,
+        start_offset=0,
+        end_offset=4,
+    )
+
+    with pytest.raises(ValueError, match="references a missing clause heading"):
+        EngineeringDocument(
+            key=DocumentKey(value="DOC"),
+            title="Example",
+            document_type=DocumentType.STANDARD,
+            clauses=(clause,),
+            knowledge=DocumentKnowledge(evidence_anchors=(anchor,)),
+        )

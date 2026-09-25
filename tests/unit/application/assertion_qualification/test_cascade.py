@@ -22,6 +22,7 @@ from standards_atlas.domain.model import (
     EngineeringDocument,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeEntityProposal,
     KnowledgeProposalProvenance,
     NormativeAssertionProposal,
@@ -58,12 +59,14 @@ class _Extractor:
         self.contexts[clause.id.value] = dict(semantic_context or {})
         anchor = EvidenceAnchor(
             id=f"{self.name}:anchor:{clause.id.value}",
-            clause_id=clause.id,
+            source_clause_id=clause.id,
+            source_kind=EvidenceSourceKind.BODY,
             start_offset=0,
             end_offset=len(clause.plain_text),
         )
         entity = KnowledgeEntityProposal(
             id=f"{self.name}:entity:{clause.id.value}",
+            proposal_clause_ids=(clause.id,),
             class_iri=f"{STAT}Requirement",
             normalized_label=f"requirement {clause.id.value}",
             source_anchor_ids=(anchor.id,),
@@ -355,3 +358,104 @@ def test_verifier_checks_for_missing_assertions_when_efficient_output_is_empty()
     assert result.report.clauses[0].efficient_assertions == 0
     assert result.report.clauses[0].reasons == (AssertionCascadeReason.MISSING_ASSERTION,)
     assert escalation.calls == ["c1"]
+
+
+def test_cascade_keeps_entity_grounded_in_ancestor_heading_with_source_clause() -> None:
+    parent = Clause(
+        id=ClauseId(value="parent"),
+        reference=StandardReference(standard="TEST", clause="12.3.1"),
+        clause_type=ClauseType.CLAUSE,
+        heading="Random hardware fault quantitative analysis",
+    )
+    child = Clause(
+        id=ClauseId(value="c1"),
+        reference=StandardReference(standard="TEST", clause="12.3.1.3"),
+        clause_type=ClauseType.CLAUSE,
+        baseline={
+            "parent_id": parent.id,
+            "heading": (
+                "Emergency Operation Time Interval calculation if no PMHF value is available"
+            ),
+            "content": (TextBlock(id="t:c1", text="If the method is used, the criteria apply."),),
+        },
+    )
+    document = EngineeringDocument(
+        key=DocumentKey(value="TEST"),
+        title="Test",
+        document_type=DocumentType.STANDARD,
+        clauses=(parent, child),
+    )
+
+    class _HeadingExtractor(_Extractor):
+        def extract(self, clause, *, document_key, ontology_versions, semantic_context=None):
+            self.calls.append(clause.id.value)
+            self.contexts[clause.id.value] = dict(semantic_context or {})
+            heading = parent.heading or ""
+            anchor = EvidenceAnchor(
+                id="heading-anchor",
+                source_clause_id=parent.id,
+                source_kind=EvidenceSourceKind.HEADING,
+                start_offset=0,
+                end_offset=len(heading),
+            )
+            entity = KnowledgeEntityProposal(
+                id="heading-entity",
+                proposal_clause_ids=(clause.id,),
+                class_iri=f"{STAT}Activity",
+                normalized_label="random hardware fault quantitative analysis",
+                source_anchor_ids=(anchor.id,),
+                confidence=0.9,
+            )
+            return ClauseKnowledgeProposalResult(
+                clause_id=clause.id,
+                evidence_anchors=(anchor,),
+                entity_proposals=(entity,),
+                proposal_provenance=self.provenance(),
+                input_hash="1" * 64,
+                raw_response_hash="2" * 64,
+            )
+
+    class _CaptureVerifier(_Verifier):
+        def __init__(self) -> None:
+            super().__init__()
+            self.entity_ids: tuple[str, ...] = ()
+            self.anchor_source_ids: tuple[str, ...] = ()
+
+        def verify(self, clause, **kwargs):
+            self.calls.append(clause.id.value)
+            entities = tuple(kwargs["entity_proposals"])
+            anchors = tuple(kwargs["evidence_anchors"])
+            self.entity_ids = tuple(item.id for item in entities)
+            self.anchor_source_ids = tuple(item.source_clause_id.value for item in anchors)
+            return AssertionClauseVerification(
+                clause_id=clause.id,
+                entity_reviews=tuple(
+                    AssertionCandidateVerification(
+                        candidate_id=item.id,
+                        disposition=AssertionVerificationDisposition.SUPPORTED,
+                    )
+                    for item in entities
+                ),
+                assertion_reviews=(),
+                input_hash="3" * 64,
+                raw_response_hash="4" * 64,
+            )
+
+    efficient = _HeadingExtractor("efficient")
+    verifier = _CaptureVerifier()
+    result = AssertionQualificationCascadeService(
+        efficient_extractor=efficient,
+        verifier=verifier,
+        escalation_extractor=_Extractor("escalation"),
+    ).run_document(
+        document,
+        cascade_run_id="cascade-heading",
+        efficient_proposal_run_id="efficient-heading",
+        escalation_proposal_run_id="escalation-heading",
+        ontology_versions=ONTOLOGIES,
+        clause_ids=frozenset({"c1"}),
+    )
+
+    assert verifier.entity_ids == ("heading-entity",)
+    assert verifier.anchor_source_ids == ("parent",)
+    assert result.report.clauses[0].route is AssertionCascadeRoute.EFFICIENT_ACCEPTED

@@ -53,6 +53,8 @@ def test_extractor_builds_grounded_entity_assertion_proposals() -> None:
                     "class_iri": f"{STAT}VerificationPlan",
                     "label": "verification plan",
                     "confidence": 0.96,
+                    "evidence_source_kind": "body",
+                    "evidence_source_clause_id": "c-5b",
                     "evidence_quote": "verification plan",
                     "rationale": "the clause names the work product",
                 },
@@ -60,6 +62,8 @@ def test_extractor_builds_grounded_entity_assertion_proposals() -> None:
                     "class_iri": f"{STAT}VerificationCriterion",
                     "label": "verification criteria",
                     "confidence": 0.94,
+                    "evidence_source_kind": "body",
+                    "evidence_source_clause_id": "c-5b",
                     "evidence_quote": "verification criteria",
                     "rationale": None,
                 },
@@ -116,6 +120,8 @@ def test_unresolved_and_undeclared_items_become_nonfatal_violations() -> None:
                     "class_iri": f"{STAT}VerificationPlan",
                     "label": "verification plan",
                     "confidence": 0.9,
+                    "evidence_source_kind": "body",
+                    "evidence_source_clause_id": "c-5b",
                     "evidence_quote": "Verification Plan",
                     "rationale": None,
                 },
@@ -123,6 +129,8 @@ def test_unresolved_and_undeclared_items_become_nonfatal_violations() -> None:
                     "class_iri": f"{STAT}InventedClass",
                     "label": "invented",
                     "confidence": 0.7,
+                    "evidence_source_kind": "body",
+                    "evidence_source_clause_id": "c-5b",
                     "evidence_quote": "verification",
                     "rationale": None,
                 },
@@ -152,6 +160,8 @@ def test_rejected_entity_prevents_assertion_without_aborting_clause() -> None:
                     "class_iri": f"{STAT}VerificationPlan",
                     "label": "verification plan",
                     "confidence": 0.9,
+                    "evidence_source_kind": "body",
+                    "evidence_source_clause_id": "c-5b",
                     "evidence_quote": "verification plan",
                     "rationale": None,
                 },
@@ -159,6 +169,8 @@ def test_rejected_entity_prevents_assertion_without_aborting_clause() -> None:
                     "class_iri": f"{STAT}VerificationCriterion",
                     "label": "criterion",
                     "confidence": 0.9,
+                    "evidence_source_kind": "body",
+                    "evidence_source_clause_id": "c-5b",
                     "evidence_quote": "missing criterion quote",
                     "rationale": None,
                 },
@@ -193,3 +205,47 @@ def test_rejected_entity_prevents_assertion_without_aborting_clause() -> None:
         KnowledgeProposalViolationKind.UNRESOLVED_GROUNDING,
         KnowledgeProposalViolationKind.INVALID_ASSERTION,
     ]
+
+
+def test_extractor_accepts_ancestor_heading_as_entity_evidence() -> None:
+    text = "If the method is used, the criteria apply."
+    gateway = _Gateway(
+        {
+            "entities": [
+                {
+                    "class_iri": f"{STAT}Activity",
+                    "label": "random hardware fault quantitative analysis",
+                    "confidence": 0.9,
+                    "evidence_source_kind": "heading",
+                    "evidence_source_clause_id": "parent-1",
+                    "evidence_quote": "Random hardware fault quantitative analysis",
+                    "rationale": "ancestor heading frames the engineering activity",
+                }
+            ],
+            "assertions": [],
+        }
+    )
+    clause = _clause(text)
+
+    result = OntologyGuidedKnowledgeProposalExtractor(gateway).extract(
+        clause,
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+        semantic_context={
+            "ancestor_headings": [
+                {
+                    "clause_id": "parent-1",
+                    "reference": "12.3.1",
+                    "heading": "Random hardware fault quantitative analysis",
+                }
+            ]
+        },
+    )
+
+    assert len(result.entity_proposals) == 1
+    entity = result.entity_proposals[0]
+    assert entity.proposal_clause_ids == (clause.id,)
+    anchor = result.evidence_anchors[0]
+    assert anchor.source_clause_id.value == "parent-1"
+    assert anchor.source_kind.value == "heading"
+    assert result.violations == ()

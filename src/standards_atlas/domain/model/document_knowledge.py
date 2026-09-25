@@ -63,20 +63,30 @@ class KnowledgeProvenance(BaseModel):
     input_hash: str | None = None
 
 
+class EvidenceSourceKind(StrEnum):
+    """Canonical clause surface addressed by one evidence anchor."""
+
+    BODY = "body"
+    HEADING = "heading"
+
+
 class EvidenceAnchor(BaseModel):
-    """Text-safe anchor from engineering knowledge back to one canonical clause.
+    """Text-safe anchor from engineering knowledge back to one canonical clause surface.
 
     The value object can be carried by a non-canonical proposal or by accepted
     ``DocumentKnowledge``. Authority comes from the containing aggregate, not from
-    the anchor itself. Character offsets address the stable plain-text projection of
-    the clause. If offsets are omitted, the complete clause is the evidence scope.
-    Protected source text is never copied into the anchor.
+    the anchor itself. ``source_clause_id`` identifies the clause that owns the evidence
+    surface and ``source_kind`` selects either its canonical body projection or heading.
+    Character offsets are relative to that selected surface. If offsets are omitted, the
+    complete selected surface is the evidence scope. Protected source text is never copied
+    into the anchor.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     id: str = Field(min_length=1)
-    clause_id: ClauseId
+    source_clause_id: ClauseId
+    source_kind: EvidenceSourceKind
     start_offset: int | None = Field(default=None, ge=0)
     end_offset: int | None = Field(default=None, ge=0)
     content_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")

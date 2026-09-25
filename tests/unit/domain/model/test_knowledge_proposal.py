@@ -7,6 +7,7 @@ from standards_atlas.domain.model import (
     DocumentKnowledgeProposal,
     EntityAssertionObject,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeEntity,
     KnowledgeEntityProposal,
     KnowledgeProposalAttempt,
@@ -30,13 +31,15 @@ def _proposal() -> DocumentKnowledgeProposal:
     evidence = "verification plan shall define verification criteria"
     anchor = EvidenceAnchor(
         id="anchor:C1:0",
-        clause_id=ClauseId(value="C1"),
+        source_clause_id=ClauseId(value="C1"),
+        source_kind=EvidenceSourceKind.BODY,
         start_offset=0,
         end_offset=len(evidence),
         content_hash=hashlib.sha256(evidence.encode()).hexdigest(),
     )
     plan = KnowledgeEntityProposal(
         id="entity:verification-plan",
+        proposal_clause_ids=(ClauseId(value="C1"),),
         class_iri=f"{STAT}VerificationPlan",
         normalized_label="verification plan",
         source_anchor_ids=(anchor.id,),
@@ -45,6 +48,7 @@ def _proposal() -> DocumentKnowledgeProposal:
     )
     criteria = KnowledgeEntityProposal(
         id="entity:verification-criteria",
+        proposal_clause_ids=(ClauseId(value="C1"),),
         class_iri=f"{STAT}VerificationCriterion",
         normalized_label="verification criteria",
         source_anchor_ids=(anchor.id,),
@@ -176,6 +180,7 @@ def test_proposal_semantics_require_explicit_ontology_versions_and_absolute_iris
     with pytest.raises(ValueError, match="absolute IRI"):
         KnowledgeEntityProposal(
             id="entity:bad",
+            proposal_clause_ids=(ClauseId(value="C1"),),
             class_iri="VerificationPlan",
             normalized_label="verification plan",
             source_anchor_ids=("anchor:C1:0",),

@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from standards_atlas.application.assertion_qualification.models import AssertionGoldenPartition
 from standards_atlas.application.schema.model import SchemaBoundModel
-from standards_atlas.domain.model import AssertionObject, NormativeForce
+from standards_atlas.domain.model import AssertionObject, EvidenceSourceKind, NormativeForce
 
 ASSERTION_REVIEW_PILOT_SCHEMA_VERSION = 1
 _IRI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*$")
@@ -269,7 +269,8 @@ class AssertionProposalEvidenceSnapshot(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     anchor_id: str = Field(min_length=1)
-    clause_id: str = Field(min_length=1)
+    source_clause_id: str = Field(min_length=1)
+    source_kind: EvidenceSourceKind
     start_offset: int | None = Field(default=None, ge=0)
     end_offset: int | None = Field(default=None, ge=0)
     content_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
