@@ -7,9 +7,14 @@ from standards_atlas.application.context.normative_context import (
     governing_scope_context,
     resolve_normative_context,
 )
-from standards_atlas.domain.model import Clause, ClauseApplicability, EngineeringDocument
+from standards_atlas.domain.model import (
+    Clause,
+    ClauseApplicability,
+    ClauseType,
+    EngineeringDocument,
+)
 
-ASSERTION_CBOX_CONTRACT_VERSION = "1.1"
+ASSERTION_CBOX_CONTRACT_VERSION = "1.2"
 
 
 def assertion_cbox_context(
@@ -20,10 +25,10 @@ def assertion_cbox_context(
 ) -> dict[str, object]:
     """Return the deterministic context shared by extractor, verifier and HITL review.
 
-    The projection intentionally carries document structure and accepted CBox enrichments
-    without copying clause prose.  It is small enough for the LLM request but preserves the
-    parent/ancestor, sibling and interpreted-reference context that can change the meaning of
-    otherwise isolated subclauses.
+    The projection carries document structure, accepted CBox enrichments and a bounded set of
+    source-backed associative prose needed to interpret otherwise isolated subclauses. It keeps
+    governing scope separate from structural framing so contextual content cannot silently become
+    a normative assertion.
     """
 
     profile = clause.structural_profile
@@ -59,6 +64,7 @@ def assertion_cbox_context(
         "heading": clause.heading,
         "parent_id": clause.parent_id.value if clause.parent_id is not None else None,
         "ancestor_headings": _ancestor_headings(document, clause),
+        "associative_context": _associative_context(document, clause),
         "normative_status": clause.normative_status.value,
         "clause_type": clause.clause_type.value,
         "canonical_section": profile.canonical_section.value if profile else None,
@@ -119,3 +125,116 @@ def _ancestor_headings(document: EngineeringDocument, clause: Clause) -> list[di
             )
         parent_id = parent.parent_id.value if parent.parent_id is not None else None
     return headings
+
+
+def _associative_context(
+    document: EngineeringDocument,
+    clause: Clause,
+) -> list[dict[str, object]]:
+    """Return source-backed structural context that may frame entity semantics.
+
+    Text-bearing ancestors are carried directly. For an ancestor that has no own body,
+    the first substantive descendant before the current clause is used as the leading
+    associative context for that structural group. The projection is deterministic and
+    deliberately distinct from governing scope: it may frame entities and retrieval, but
+    it does not propagate normative assertions.
+    """
+
+    positions = {item.id.value: index for index, item in enumerate(document.clauses)}
+    children: dict[str | None, list[Clause]] = {}
+    for item in document.clauses:
+        parent_id = item.parent_id.value if item.parent_id is not None else None
+        children.setdefault(parent_id, []).append(item)
+
+    entries: list[dict[str, object]] = []
+    seen_sources: set[str] = set()
+    current_position = positions.get(clause.id.value, -1)
+    for ancestor in _ancestor_clauses_nearest_first(document, clause):
+        if ancestor.reference.clause == "0":
+            continue
+        if ancestor.plain_text.strip():
+            _append_associative_context_entry(
+                entries,
+                seen_sources,
+                source=ancestor,
+                role="ancestor_body",
+                via_ancestor=ancestor,
+            )
+            continue
+
+        lead = _first_substantive_descendant(ancestor, children)
+        if lead is None or lead.id == clause.id:
+            continue
+        lead_position = positions.get(lead.id.value, -1)
+        if lead_position < 0 or current_position < 0 or lead_position >= current_position:
+            continue
+        _append_associative_context_entry(
+            entries,
+            seen_sources,
+            source=lead,
+            role="leading_substantive_descendant",
+            via_ancestor=ancestor,
+        )
+    return entries
+
+
+def _ancestor_clauses_nearest_first(
+    document: EngineeringDocument,
+    clause: Clause,
+) -> list[Clause]:
+    by_id = {item.id.value: item for item in document.clauses}
+    parent_id = clause.parent_id.value if clause.parent_id is not None else None
+    seen = {clause.id.value}
+    ancestors: list[Clause] = []
+    while parent_id and parent_id not in seen:
+        seen.add(parent_id)
+        parent = by_id.get(parent_id)
+        if parent is None:
+            break
+        ancestors.append(parent)
+        parent_id = parent.parent_id.value if parent.parent_id is not None else None
+    return ancestors
+
+
+def _first_substantive_descendant(
+    ancestor: Clause,
+    children: dict[str | None, list[Clause]],
+) -> Clause | None:
+    pending = list(children.get(ancestor.id.value, ()))
+    while pending:
+        item = pending.pop(0)
+        if _is_substantive_associative_source(item):
+            return item
+        pending[0:0] = children.get(item.id.value, ())
+    return None
+
+
+def _is_substantive_associative_source(clause: Clause) -> bool:
+    if clause.clause_type in {ClauseType.TOC, ClauseType.TABLE}:
+        return False
+    return bool(clause.plain_text.strip())
+
+
+def _append_associative_context_entry(
+    entries: list[dict[str, object]],
+    seen_sources: set[str],
+    *,
+    source: Clause,
+    role: str,
+    via_ancestor: Clause,
+) -> None:
+    if source.id.value in seen_sources:
+        return
+    seen_sources.add(source.id.value)
+    entries.append(
+        {
+            "clause_id": source.id.value,
+            "reference": source.reference.clause,
+            "heading": source.heading,
+            "text": source.plain_text,
+            "role": role,
+            "via_ancestor_clause_id": via_ancestor.id.value,
+            "via_ancestor_reference": via_ancestor.reference.clause,
+            "via_ancestor_heading": via_ancestor.heading,
+        }
+    )

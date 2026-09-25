@@ -114,8 +114,8 @@ class OntologyGuidedKnowledgeProposalExtractor:
         *,
         model: str | None = None,
         provider: str | None = None,
-        prompt_version: str = "ontology-guided-assertions-v1",
-        extractor_version: str = "3.0.0",
+        prompt_version: str = "ontology-guided-assertions-v2",
+        extractor_version: str = "3.1.0",
     ) -> None:
         self._gateway = gateway
         self._model = model
@@ -374,12 +374,14 @@ def _system_prompt() -> str:
         "informative even if the prose uses modal-looking wording. "
         "normative_context.span_overrides marks NOTE/EXAMPLE/DESCRIPTION-style source spans that "
         "are informative inside an otherwise normative clause. "
-        "Entity evidence may come from the current clause body, the current clause heading, or "
-        "an ancestor heading listed in semantic_context.ancestor_headings. For entity evidence, "
-        "set evidence_source_kind=body only with evidence_source_clause_id equal to clause_id; "
-        "set evidence_source_kind=heading with the clause_id that owns the quoted heading. "
-        "Headings may identify or frame engineering entities, but do not create assertions from "
-        "headings alone. Assertion evidence must always come from clause_text. "
+        "Entity evidence may come from the current clause body, the current clause heading, an "
+        "ancestor heading listed in semantic_context.ancestor_headings, or a body/heading carried "
+        "in semantic_context.associative_context. Associative context is structural framing only: "
+        "use it to identify engineering entities or interpret the clause subject, never to create "
+        "a normative assertion by itself. For entity evidence, set evidence_source_clause_id to "
+        "the clause that owns the quoted surface and choose evidence_source_kind=body or heading "
+        "accordingly. Assertion evidence must always come from clause_text and therefore from the "
+        "current clause body. "
         "allowed_classes and allowed_properties are closed vocabularies: copy their IRIs "
         "exactly and never invent semantic terms. Emit only claims directly supported by the "
         "source clause. Each evidence_quote MUST be an exact, case-sensitive, punctuation- and "

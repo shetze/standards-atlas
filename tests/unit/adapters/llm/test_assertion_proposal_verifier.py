@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from standards_atlas.adapters.llm import OntologyGuidedAssertionProposalVerifier
 from standards_atlas.application.assertion_qualification import AssertionVerificationDisposition
 from standards_atlas.application.ports.llm_gateway import StructuredGenerationResult
@@ -169,3 +171,112 @@ def test_verifier_resolves_ancestor_heading_evidence_from_semantic_context() -> 
     assert evidence["source_clause_id"] == parent_id.value
     assert evidence["source_kind"] == "heading"
     assert evidence["quote"] == heading
+
+
+def test_verifier_resolves_associative_body_entity_evidence() -> None:
+    gateway = _Gateway(
+        {
+            "entity_reviews": [
+                {"candidate_id": "entity-assoc", "disposition": "supported", "rationale": None}
+            ],
+            "assertion_reviews": [],
+            "missing_entity_detected": False,
+            "missing_assertion_detected": False,
+            "missing_rationale": None,
+        }
+    )
+    clause = Clause(
+        id=ClauseId(value="c1"),
+        reference=StandardReference(standard="TEST", clause="12.3.1.3"),
+        clause_type=ClauseType.CLAUSE,
+        content=(TextBlock(id="t1", text="If the method is used, the criteria apply."),),
+    )
+    source_id = ClauseId(value="intro-1")
+    source_text = "The Emergency Operation Tolerance Time Interval uses the PMHF."
+    quote = "Emergency Operation Tolerance Time Interval"
+    start = source_text.index(quote)
+    anchor = EvidenceAnchor(
+        id="anchor-assoc",
+        source_clause_id=source_id,
+        source_kind=EvidenceSourceKind.BODY,
+        start_offset=start,
+        end_offset=start + len(quote),
+    )
+    entity = KnowledgeEntityProposal(
+        id="entity-assoc",
+        proposal_clause_ids=(clause.id,),
+        class_iri=f"{STAT}Activity",
+        normalized_label="emergency operation tolerance time interval calculation",
+        source_anchor_ids=(anchor.id,),
+        confidence=0.9,
+    )
+
+    OntologyGuidedAssertionProposalVerifier(gateway).verify(
+        clause,
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+        evidence_anchors=(anchor,),
+        entity_proposals=(entity,),
+        assertion_proposals=(),
+        semantic_context={
+            "associative_context": [
+                {
+                    "clause_id": source_id.value,
+                    "reference": "12.3.1.1",
+                    "heading": "Emergency Operation Tolerance Time Interval calculation method",
+                    "text": source_text,
+                    "role": "leading_substantive_descendant",
+                }
+            ]
+        },
+    )
+
+    payload = json.loads(gateway.request.user_prompt)
+    evidence = payload["entity_candidates"][0]["evidence"][0]
+    assert evidence["source_clause_id"] == source_id.value
+    assert evidence["source_kind"] == "body"
+    assert evidence["quote"] == quote
+    assert "not normative assertion evidence" in gateway.request.system_prompt
+
+
+def test_verifier_rejects_nonlocal_assertion_evidence_before_llm_call() -> None:
+    gateway = _Gateway(
+        {
+            "entity_reviews": [],
+            "assertion_reviews": [],
+            "missing_entity_detected": False,
+            "missing_assertion_detected": False,
+            "missing_rationale": None,
+        }
+    )
+    clause, local_anchor, entity, assertion = _inputs()
+    source_id = ClauseId(value="intro-1")
+    external_anchor = EvidenceAnchor(
+        id="external-anchor",
+        source_clause_id=source_id,
+        source_kind=EvidenceSourceKind.BODY,
+        start_offset=0,
+        end_offset=10,
+    )
+    assertion = assertion.model_copy(update={"evidence_anchor_ids": (external_anchor.id,)})
+
+    with pytest.raises(ValueError, match="local clause body evidence"):
+        OntologyGuidedAssertionProposalVerifier(gateway).verify(
+            clause,
+            document_key="TEST",
+            ontology_versions=ONTOLOGIES,
+            evidence_anchors=(local_anchor, external_anchor),
+            entity_proposals=(entity,),
+            assertion_proposals=(assertion,),
+            semantic_context={
+                "associative_context": [
+                    {
+                        "clause_id": source_id.value,
+                        "reference": "12.3.1.1",
+                        "heading": "Intro",
+                        "text": "0123456789 associative context",
+                        "role": "leading_substantive_descendant",
+                    }
+                ]
+            },
+        )

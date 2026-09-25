@@ -21,6 +21,7 @@ from standards_atlas.application.ports.llm_gateway import LlmGateway, Structured
 from standards_atlas.domain.model import (
     Clause,
     EvidenceAnchor,
+    EvidenceSourceKind,
     KnowledgeEntityProposal,
     NormativeAssertionProposal,
 )
@@ -79,8 +80,8 @@ class OntologyGuidedAssertionProposalVerifier:
         *,
         model: str | None = None,
         provider: str | None = None,
-        prompt_version: str = "ontology-guided-assertion-verifier-v1",
-        verifier_version: str = "1.0.0",
+        prompt_version: str = "ontology-guided-assertion-verifier-v2",
+        verifier_version: str = "1.1.0",
     ) -> None:
         self._gateway = gateway
         self._model = model
@@ -177,8 +178,11 @@ def _system_prompt() -> str:
         "standards clause. semantic_context is trusted canonical CBox context for interpreting "
         "clause_text, including parent/ancestor structure, sibling position, governing scopes, "
         "normative_context and routed references. Entity candidates may be grounded in the local "
-        "clause body, the local heading, or an ancestor heading, as declared by each evidence "
-        "anchor. Assertion candidates still require source support in the local clause body. "
+        "clause body, the local heading, an ancestor heading, or body/heading evidence explicitly "
+        "carried by semantic_context.associative_context, as declared by each evidence anchor. "
+        "Associative context may support entity identity and subject framing but is not normative "
+        "assertion evidence. Assertion candidates still require source support in the local clause "
+        "body. "
         "Reject an assertion that assigns "
         "normative force stronger than informative when its evidence is governed by an "
         "informative normative_context or an informative span override. Review every supplied "
@@ -226,6 +230,15 @@ def _assertion_payload(
     *,
     semantic_context: Mapping[str, object] | None,
 ) -> dict[str, object]:
+    assertion_anchors = tuple(
+        anchor_by_id[anchor_id] for anchor_id in assertion.evidence_anchor_ids
+    )
+    if any(
+        anchor.source_clause_id != assertion.source_clause_id
+        or anchor.source_kind is not EvidenceSourceKind.BODY
+        for anchor in assertion_anchors
+    ):
+        raise ValueError("assertion verifier requires local clause body evidence")
     return {
         "candidate_id": assertion.id,
         "subject_id": assertion.subject_id,

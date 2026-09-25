@@ -7,6 +7,7 @@ from standards_atlas.domain.model import (
     ClauseId,
     ClauseType,
     EntityAssertionObject,
+    EvidenceSourceKind,
     KnowledgeProposalViolationKind,
     NormativeForce,
     StandardReference,
@@ -249,3 +250,49 @@ def test_extractor_accepts_ancestor_heading_as_entity_evidence() -> None:
     assert anchor.source_clause_id.value == "parent-1"
     assert anchor.source_kind.value == "heading"
     assert result.violations == ()
+
+
+def test_extractor_accepts_associative_body_as_entity_evidence() -> None:
+    text = "If the method is used, the criteria apply."
+    gateway = _Gateway(
+        {
+            "entities": [
+                {
+                    "class_iri": f"{STAT}Activity",
+                    "label": "emergency operation tolerance time interval calculation",
+                    "confidence": 0.9,
+                    "evidence_source_kind": "body",
+                    "evidence_source_clause_id": "intro-1",
+                    "evidence_quote": "Emergency Operation Tolerance Time Interval",
+                    "rationale": "the leading clause establishes the calculation activity",
+                }
+            ],
+            "assertions": [],
+        }
+    )
+    clause = _clause(text)
+
+    result = OntologyGuidedKnowledgeProposalExtractor(gateway).extract(
+        clause,
+        document_key="TEST",
+        ontology_versions=ONTOLOGIES,
+        semantic_context={
+            "associative_context": [
+                {
+                    "clause_id": "intro-1",
+                    "reference": "12.3.1.1",
+                    "heading": "Emergency Operation Tolerance Time Interval calculation method",
+                    "text": "The Emergency Operation Tolerance Time Interval uses the PMHF.",
+                    "role": "leading_substantive_descendant",
+                }
+            ]
+        },
+    )
+
+    assert len(result.entity_proposals) == 1
+    anchor = result.evidence_anchors[0]
+    assert anchor.source_clause_id.value == "intro-1"
+    assert anchor.source_kind is EvidenceSourceKind.BODY
+    assert result.violations == ()
+    assert "structural framing only" in gateway.request.system_prompt
+    assert "Assertion evidence must always come from clause_text" in gateway.request.system_prompt

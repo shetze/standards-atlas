@@ -38,11 +38,12 @@ def ground_evidence_quote(
 ) -> EvidenceGroundingResult:
     """Resolve an exact evidence quote to one canonical clause surface.
 
-    Body evidence is intentionally local to the currently extracted clause in Slice A.
-    Heading evidence may refer to the local heading or to an ancestor heading exposed by
-    the canonical assertion CBox. No whitespace, case or punctuation normalization is
-    permitted. Ambiguous or unavailable surfaces remain unresolved so qualification cannot
-    silently widen provenance.
+    Entity evidence may resolve against the current clause or against a source surface
+    explicitly transported by the canonical assertion CBox. Body evidence from another
+    clause is accepted only when that clause is present in ``associative_context``; heading
+    evidence may additionally resolve from ``ancestor_headings``. No whitespace, case or
+    punctuation normalization is permitted. Ambiguous or unavailable surfaces remain
+    unresolved so qualification cannot silently widen provenance.
     """
 
     if not quote:
@@ -130,25 +131,43 @@ def _evidence_source_text(
     source_clause_id: ClauseId,
     semantic_context: Mapping[str, object] | None,
 ) -> str | None:
-    if source_kind is EvidenceSourceKind.BODY:
-        if source_clause_id != clause.id:
-            return None
+    if source_kind is EvidenceSourceKind.BODY and source_clause_id == clause.id:
         return clause.plain_text
-
-    if source_clause_id == clause.id:
+    if source_kind is EvidenceSourceKind.HEADING and source_clause_id == clause.id:
         return clause.heading
 
     context = semantic_context or {}
-    ancestors = context.get("ancestor_headings")
-    if not isinstance(ancestors, list):
+    if source_kind is EvidenceSourceKind.HEADING:
+        heading = _context_surface_text(
+            context.get("ancestor_headings"),
+            source_clause_id=source_clause_id,
+            field="heading",
+        )
+        if heading is not None:
+            return heading
+
+    return _context_surface_text(
+        context.get("associative_context"),
+        source_clause_id=source_clause_id,
+        field="text" if source_kind is EvidenceSourceKind.BODY else "heading",
+    )
+
+
+def _context_surface_text(
+    values: object,
+    *,
+    source_clause_id: ClauseId,
+    field: str,
+) -> str | None:
+    if not isinstance(values, list):
         return None
-    for item in ancestors:
+    for item in values:
         if not isinstance(item, Mapping):
             continue
         if item.get("clause_id") != source_clause_id.value:
             continue
-        heading = item.get("heading")
-        return heading if isinstance(heading, str) else None
+        value = item.get(field)
+        return value if isinstance(value, str) else None
     return None
 
 
@@ -159,7 +178,7 @@ def _missing_source_reason(
     source_clause_id: ClauseId,
 ) -> str:
     if source_kind is EvidenceSourceKind.BODY and source_clause_id != clause.id:
-        return "body evidence must belong to the currently extracted clause"
+        return "body evidence source is not available in associative canonical context"
     if source_kind is EvidenceSourceKind.HEADING:
         return "heading evidence source is not available in canonical clause context"
     return "evidence source is not available in canonical clause context"

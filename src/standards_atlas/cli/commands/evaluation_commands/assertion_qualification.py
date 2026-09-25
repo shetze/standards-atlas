@@ -363,7 +363,7 @@ def run_assertion_qualification_cascade(
                 gateway,
                 model=efficient_model,
                 provider=gateway.provider,
-                prompt_version="ontology-guided-assertions-v1",
+                prompt_version="ontology-guided-assertions-v2",
             ),
             verifier=OntologyGuidedAssertionProposalVerifier(
                 gateway,
@@ -374,7 +374,7 @@ def run_assertion_qualification_cascade(
                 gateway,
                 model=escalation_model,
                 provider=gateway.provider,
-                prompt_version="ontology-guided-assertions-v1",
+                prompt_version="ontology-guided-assertions-v2",
             ),
         )
         document = FileSystemEngineeringDocumentRepository(workspace).load(

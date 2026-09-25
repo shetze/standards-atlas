@@ -104,14 +104,39 @@ def test_ancestor_heading_quote_uses_canonical_cbox_source_identity() -> None:
     assert result.anchor.source_kind is EvidenceSourceKind.HEADING
 
 
-def test_body_quote_cannot_be_grounded_on_ancestor_clause() -> None:
+def test_body_quote_from_other_clause_requires_associative_context() -> None:
     clause = _clause("If the method is used, the criteria apply.")
-    result = ground_evidence_quote(
+    source_id = ClauseId(value="g-intro")
+
+    missing = ground_evidence_quote(
         clause,
-        "parent body",
+        "Emergency Operation Tolerance Time Interval",
         source_kind=EvidenceSourceKind.BODY,
-        source_clause_id=ClauseId(value="g-parent"),
+        source_clause_id=source_id,
+    )
+    grounded = ground_evidence_quote(
+        clause,
+        "Emergency Operation Tolerance Time Interval",
+        source_kind=EvidenceSourceKind.BODY,
+        source_clause_id=source_id,
+        semantic_context={
+            "associative_context": [
+                {
+                    "clause_id": source_id.value,
+                    "reference": "12.3.1.1",
+                    "heading": "Emergency Operation Tolerance Time Interval calculation method",
+                    "text": "The Emergency Operation Tolerance Time Interval uses the PMHF.",
+                    "role": "leading_substantive_descendant",
+                }
+            ]
+        },
     )
 
-    assert not result.resolved
-    assert result.reason == "body evidence must belong to the currently extracted clause"
+    assert not missing.resolved
+    assert missing.reason == (
+        "body evidence source is not available in associative canonical context"
+    )
+    assert grounded.resolved
+    assert grounded.anchor is not None
+    assert grounded.anchor.source_clause_id == source_id
+    assert grounded.anchor.source_kind is EvidenceSourceKind.BODY

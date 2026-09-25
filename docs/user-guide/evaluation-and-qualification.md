@@ -85,13 +85,20 @@ Labelled `NOTE`, `EXAMPLE`,
 `DESCRIPTION`, `AIM`, `RATIONALE` and `REFERENCES` sections are represented as informative span overrides
 inside an otherwise normative clause.
 This context guides `normative_force`; it never creates an assertion without body evidence in the
-selected source clause. Entity grounding is broader than assertion grounding: an entity may use an
-exact span from the local clause body, the local heading, or an ancestor heading carried by the same
-canonical CBox. `EvidenceAnchor.source_clause_id` identifies the clause that owns the evidence and
+selected source clause. Assertion CBox 1.2 also projects `associative_context` as a separate structural
+framing channel. Text-bearing ancestors are carried directly; when a structural ancestor has no body,
+the first earlier substantive descendant under that group is carried as a `leading_substantive_descendant`.
+This lets an introductory leaf such as `12.3.1.1` provide the engineering subject for later sibling leaves
+without pretending that its normative statements govern those siblings. The synthetic document root is
+not used as associative context, and duplicate source clauses are suppressed nearest-first.
+
+Entity grounding is broader than assertion grounding: an entity may use an exact span from the local
+clause body, the local heading, an ancestor heading, or a body/heading surface explicitly carried in
+`associative_context`. `EvidenceAnchor.source_clause_id` identifies the clause that owns the evidence and
 `EvidenceAnchor.source_kind` selects `body` or `heading`; offsets and hashes are validated against that
-exact canonical surface. Headings can therefore identify or frame an engineering entity without being
-misrepresented as body text. Assertions remain grounded in the local `body` surface, so structural
-context cannot manufacture a normative statement.
+exact canonical surface. Assertions remain grounded in the local `body` surface of their own source clause.
+Associative context may therefore identify or frame engineering entities and improve retrieval/GraphRAG,
+but it cannot manufacture or propagate a normative statement.
 
 ```bash
 uv run standards-atlas evaluation assertion-cascade \
