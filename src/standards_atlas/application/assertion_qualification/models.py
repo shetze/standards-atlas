@@ -21,7 +21,7 @@ from standards_atlas.domain.model import (
 
 ASSERTION_GOLDEN_SUITE_SCHEMA_VERSION = 1
 ASSERTION_QUALIFICATION_REPORT_SCHEMA_VERSION = 1
-ASSERTION_EVALUATION_CONTRACT = "assertion-clause-local-interim-v1"
+ASSERTION_EVALUATION_CONTRACT = "assertion-clause-local-v1"
 _IRI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*$")
 
 
@@ -226,8 +226,47 @@ class AssertionGoldenSuite(SchemaBoundModel):
         return self
 
 
+class MetricStatus(StrEnum):
+    """Applicability/evaluability state carried with every ratio."""
+
+    OK = "ok"
+    NOT_APPLICABLE = "not_applicable"
+    NOT_EVALUABLE = "not_evaluable"
+    PARTIAL = "partial"
+
+
+class RatioMetric(BaseModel):
+    """One ratio with explicit numerator, denominator and null semantics."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    numerator: int = Field(ge=0)
+    denominator: int = Field(ge=0)
+    value: float | None = Field(default=None, ge=0.0, le=1.0)
+    status: MetricStatus
+
+    @model_validator(mode="after")
+    def ratio_is_consistent(self) -> RatioMetric:
+        if self.numerator > self.denominator:
+            raise ValueError("ratio numerator cannot exceed denominator")
+        if self.denominator == 0:
+            if self.value is not None:
+                raise ValueError("zero-denominator ratios must have value=None")
+            if self.status not in {MetricStatus.NOT_APPLICABLE, MetricStatus.NOT_EVALUABLE}:
+                raise ValueError("zero-denominator ratio requires an explicit null status")
+            return self
+        if self.value is None:
+            raise ValueError("non-zero denominator ratios require a value")
+        expected = self.numerator / self.denominator
+        if not math.isclose(self.value, expected, rel_tol=0.0, abs_tol=1e-12):
+            raise ValueError("ratio value is inconsistent with numerator/denominator")
+        if self.status not in {MetricStatus.OK, MetricStatus.PARTIAL}:
+            raise ValueError("defined ratio requires ok or partial status")
+        return self
+
+
 class CountMetrics(BaseModel):
-    """Precision/recall counts for a multiset comparison."""
+    """Strict multiset recognition metrics with explicit empty-denominator semantics."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -236,9 +275,11 @@ class CountMetrics(BaseModel):
     true_positive: int = Field(ge=0)
     false_positive: int = Field(ge=0)
     false_negative: int = Field(ge=0)
-    precision: float = Field(ge=0.0, le=1.0)
-    recall: float = Field(ge=0.0, le=1.0)
-    f1: float = Field(ge=0.0, le=1.0)
+    precision: RatioMetric
+    recall: RatioMetric
+    f1: RatioMetric
+    over_extraction: RatioMetric
+    under_extraction: RatioMetric
 
     @model_validator(mode="after")
     def counts_and_ratios_are_consistent(self) -> CountMetrics:
@@ -248,42 +289,223 @@ class CountMetrics(BaseModel):
             raise ValueError("false_positive must equal predicted minus true_positive")
         if self.false_negative != self.expected - self.true_positive:
             raise ValueError("false_negative must equal expected minus true_positive")
-        precision = (
-            self.true_positive / self.predicted if self.predicted else float(self.expected == 0)
+        expected_ratios = (
+            (self.precision, self.true_positive, self.predicted, MetricStatus.NOT_APPLICABLE),
+            (self.recall, self.true_positive, self.expected, MetricStatus.NOT_APPLICABLE),
+            (
+                self.f1,
+                2 * self.true_positive,
+                self.expected + self.predicted,
+                MetricStatus.NOT_APPLICABLE,
+            ),
+            (
+                self.over_extraction,
+                self.false_positive,
+                self.predicted,
+                MetricStatus.NOT_APPLICABLE,
+            ),
+            (
+                self.under_extraction,
+                self.false_negative,
+                self.expected,
+                MetricStatus.NOT_APPLICABLE,
+            ),
         )
-        recall = self.true_positive / self.expected if self.expected else float(self.predicted == 0)
-        f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
-        for field_name, actual, expected in (
-            ("precision", self.precision, precision),
-            ("recall", self.recall, recall),
-            ("f1", self.f1, f1),
-        ):
-            if not math.isclose(actual, expected, rel_tol=0.0, abs_tol=1e-12):
-                raise ValueError(f"{field_name} is inconsistent with qualification counts")
+        for ratio, numerator, denominator, empty_status in expected_ratios:
+            if (ratio.numerator, ratio.denominator) != (numerator, denominator):
+                raise ValueError("count metric ratio support is inconsistent with counts")
+            if denominator == 0 and ratio.status is not empty_status:
+                raise ValueError("count metric empty denominator must be not_applicable")
         return self
 
 
 class AccuracyMetrics(BaseModel):
-    """Accuracy for attributes evaluated only on aligned semantic items."""
+    """Attribute accuracy over deterministic one-to-one alignments."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
+    support_expected: int = Field(ge=0)
+    support_predicted: int = Field(ge=0)
     evaluated: int = Field(ge=0)
     correct: int = Field(ge=0)
-    accuracy: float | None = Field(default=None, ge=0.0, le=1.0)
+    ambiguous_expected: int = Field(default=0, ge=0)
+    ambiguous_predicted: int = Field(default=0, ge=0)
+    unmatched_expected: int = Field(default=0, ge=0)
+    unmatched_predicted: int = Field(default=0, ge=0)
+    accuracy: RatioMetric
+    alignment_coverage: RatioMetric
 
     @model_validator(mode="after")
     def counts_are_consistent(self) -> AccuracyMetrics:
         if self.correct > self.evaluated:
             raise ValueError("accuracy correct count cannot exceed evaluated count")
-        if self.evaluated == 0 and self.accuracy is not None:
-            raise ValueError("accuracy must be None when no items were evaluated")
-        if self.evaluated > 0 and self.accuracy is None:
-            raise ValueError("accuracy is required when items were evaluated")
-        if self.evaluated > 0 and self.accuracy is not None:
-            expected = self.correct / self.evaluated
-            if not math.isclose(self.accuracy, expected, rel_tol=0.0, abs_tol=1e-12):
-                raise ValueError("accuracy is inconsistent with evaluated/correct counts")
+        if self.support_expected != (
+            self.evaluated + self.ambiguous_expected + self.unmatched_expected
+        ):
+            raise ValueError("expected alignment support is inconsistent")
+        if self.support_predicted != (
+            self.evaluated + self.ambiguous_predicted + self.unmatched_predicted
+        ):
+            raise ValueError("predicted alignment support is inconsistent")
+        if (self.accuracy.numerator, self.accuracy.denominator) != (
+            self.correct,
+            self.evaluated,
+        ):
+            raise ValueError("accuracy ratio support is inconsistent")
+        if (self.alignment_coverage.numerator, self.alignment_coverage.denominator) != (
+            self.evaluated,
+            self.support_expected,
+        ):
+            raise ValueError("alignment coverage support is inconsistent")
+        return self
+
+
+class ComparisonAlignmentStatus(StrEnum):
+    """Strict/diagnostic alignment state without semantic guessing."""
+
+    MATCHED = "matched"
+    EXPECTED_ONLY = "expected_only"
+    CANDIDATE_ONLY = "candidate_only"
+    AMBIGUOUS = "ambiguous"
+
+
+class ComparisonAlignmentRecord(BaseModel):
+    """Auditable bucket record for strict identity or diagnostic attribute alignment."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source_document_key: str = Field(min_length=1)
+    clause_id: ClauseId
+    rule: Literal[
+        "entity_label_identity",
+        "assertion_endpoint_identity",
+        "assertion_relation_identity",
+    ]
+    status: ComparisonAlignmentStatus
+    golden_ids: tuple[str, ...] = ()
+    candidate_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def alignment_state_is_consistent(self) -> ComparisonAlignmentRecord:
+        if not self.golden_ids and not self.candidate_ids:
+            raise ValueError("alignment record must reference at least one object")
+        if self.status is ComparisonAlignmentStatus.MATCHED:
+            if len(self.golden_ids) != 1 or len(self.candidate_ids) != 1:
+                raise ValueError("matched alignment requires exactly one object on each side")
+        elif self.status is ComparisonAlignmentStatus.EXPECTED_ONLY:
+            if not self.golden_ids or self.candidate_ids:
+                raise ValueError("expected-only alignment has candidates")
+        elif self.status is ComparisonAlignmentStatus.CANDIDATE_ONLY:
+            if self.golden_ids or not self.candidate_ids:
+                raise ValueError("candidate-only alignment has golden objects")
+        elif not self.golden_ids or not self.candidate_ids:
+            raise ValueError("ambiguous alignment requires objects on both sides")
+        return self
+
+
+class EvidenceIntegrityStatus(StrEnum):
+    """Technical result for one candidate evidence use."""
+
+    VALID = "valid"
+    INVALID = "invalid"
+    UNAVAILABLE = "unavailable"
+    CONFLICTING = "conflicting"
+
+
+class EvidenceIntegrityFinding(BaseModel):
+    """One evidence use resolved only against frozen source surfaces."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    owner_kind: Literal["entity", "assertion"]
+    owner_id: str = Field(min_length=1)
+    anchor_id: str = Field(min_length=1)
+    source_document_key: str = Field(min_length=1)
+    source_clause_id: str = Field(min_length=1)
+    source_kind: EvidenceSourceKind
+    status: EvidenceIntegrityStatus
+    reason: str = Field(min_length=1)
+
+
+class EvidenceIntegrityMetrics(BaseModel):
+    """Technical source-surface integrity, separate from expected-span equality."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    total: int = Field(ge=0)
+    checked: int = Field(ge=0)
+    valid: int = Field(ge=0)
+    invalid: int = Field(ge=0)
+    unavailable: int = Field(ge=0)
+    conflicting: int = Field(ge=0)
+    validity: RatioMetric
+
+    @model_validator(mode="after")
+    def counts_are_consistent(self) -> EvidenceIntegrityMetrics:
+        if self.checked != self.valid + self.invalid:
+            raise ValueError("evidence checked count must equal valid plus invalid")
+        if self.total != self.checked + self.unavailable + self.conflicting:
+            raise ValueError("evidence integrity counts do not sum to total")
+        if (self.validity.numerator, self.validity.denominator) != (self.valid, self.checked):
+            raise ValueError("evidence validity ratio support is inconsistent")
+        return self
+
+
+class SemanticEvidenceMetrics(BaseModel):
+    """AP01 does not infer semantic evidence strength from technical integrity."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: Literal["not_evaluated"] = "not_evaluated"
+    evaluated: Literal[0] = 0
+    value: None = None
+
+
+class CaseExactMatchStatus(StrEnum):
+    EXACT = "exact"
+    MISMATCH = "mismatch"
+    MISSING_CANDIDATE = "missing_candidate"
+
+
+class CaseExactMatch(BaseModel):
+    """Exact equality of the fields actually annotated by the golden case."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    value: bool | None
+    status: CaseExactMatchStatus
+
+    @model_validator(mode="after")
+    def value_matches_status(self) -> CaseExactMatch:
+        expected = {
+            CaseExactMatchStatus.EXACT: True,
+            CaseExactMatchStatus.MISMATCH: False,
+            CaseExactMatchStatus.MISSING_CANDIDATE: None,
+        }[self.status]
+        if self.value is not expected:
+            raise ValueError("clause exact-match value differs from status")
+        return self
+
+
+class ClauseExactMatchAggregate(BaseModel):
+    """Clause-level exact match with missing candidate coverage kept visible."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    cases: int = Field(ge=1)
+    candidate_cases: int = Field(ge=0)
+    matched: int = Field(ge=0)
+    missing_candidates: int = Field(ge=0)
+    accuracy: RatioMetric
+
+    @model_validator(mode="after")
+    def counts_are_consistent(self) -> ClauseExactMatchAggregate:
+        if self.candidate_cases + self.missing_candidates != self.cases:
+            raise ValueError("clause exact-match coverage differs from total cases")
+        if self.matched > self.candidate_cases:
+            raise ValueError("clause exact-match matches exceed candidate cases")
+        if (self.accuracy.numerator, self.accuracy.denominator) != (self.matched, self.cases):
+            raise ValueError("clause exact-match ratio support is inconsistent")
         return self
 
 
@@ -328,7 +550,7 @@ type CandidateProvenance = Annotated[
 
 
 class AssertionQualificationCaseReport(BaseModel):
-    """Deterministic evaluation result for one golden clause case."""
+    """Deterministic comparison result for one golden clause case."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -340,11 +562,20 @@ class AssertionQualificationCaseReport(BaseModel):
     candidate_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     provenance: CandidateProvenance | None = None
     entities: CountMetrics
+    typed_entities: CountMetrics
+    entity_class_accuracy: AccuracyMetrics
     assertions: CountMetrics
     predicate_accuracy: AccuracyMetrics
     normative_force_accuracy: AccuracyMetrics
-    grounding_accuracy: AccuracyMetrics
+    evidence_integrity: EvidenceIntegrityMetrics
+    evidence_span_exact_match: AccuracyMetrics
+    semantic_evidence: SemanticEvidenceMetrics
     exact_assertion_accuracy: AccuracyMetrics
+    clause_exact_match: CaseExactMatch
+    entity_alignment: tuple[ComparisonAlignmentRecord, ...] = ()
+    assertion_endpoint_alignment: tuple[ComparisonAlignmentRecord, ...] = ()
+    assertion_relation_alignment: tuple[ComparisonAlignmentRecord, ...] = ()
+    evidence_integrity_findings: tuple[EvidenceIntegrityFinding, ...] = ()
     entity_false_positive_ids: tuple[str, ...] = ()
     entity_false_negative_ids: tuple[str, ...] = ()
     assertion_false_positive_ids: tuple[str, ...] = ()
@@ -369,11 +600,23 @@ class AssertionQualificationCaseReport(BaseModel):
             raise ValueError("proposal violation count must match retained details")
         if self.proposal_failures != len(self.failure_details):
             raise ValueError("proposal failure count must match retained details")
+        if len(self.evidence_integrity_findings) != self.evidence_integrity.total:
+            raise ValueError("evidence integrity findings must match evidence total")
+        for records in (
+            self.entity_alignment,
+            self.assertion_endpoint_alignment,
+            self.assertion_relation_alignment,
+        ):
+            if any(
+                (record.source_document_key, record.clause_id.value) != self.case_key
+                for record in records
+            ):
+                raise ValueError("alignment record belongs to a different qualification case")
         return self
 
 
 class AssertionQualificationAggregate(BaseModel):
-    """Interim typed metrics across clauses; document count remains distinct."""
+    """Dimensionally separated metrics across clause-local cases."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -381,11 +624,16 @@ class AssertionQualificationAggregate(BaseModel):
     clauses: int = Field(ge=1)
     candidate_clauses: int = Field(ge=0)
     entities: CountMetrics
+    typed_entities: CountMetrics
+    entity_class_accuracy: AccuracyMetrics
     assertions: CountMetrics
     predicate_accuracy: AccuracyMetrics
     normative_force_accuracy: AccuracyMetrics
-    grounding_accuracy: AccuracyMetrics
+    evidence_integrity: EvidenceIntegrityMetrics
+    evidence_span_exact_match: AccuracyMetrics
+    semantic_evidence: SemanticEvidenceMetrics
     exact_assertion_accuracy: AccuracyMetrics
+    clause_exact_match: ClauseExactMatchAggregate
 
 
 class AssertionQualificationProposalSource(BaseModel):
@@ -404,13 +652,13 @@ class AssertionQualificationProposalSource(BaseModel):
 
 
 class AssertionQualificationReport(SchemaBoundModel):
-    """Reproducible metric report without an auto-adoption pass/fail policy."""
+    """Reproducible dimensional report without an auto-adoption pass/fail flag."""
 
     SCHEMA_FAMILY: ClassVar[str] = "assertion-qualification-report"
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: int = ASSERTION_QUALIFICATION_REPORT_SCHEMA_VERSION
-    evaluation_contract: Literal["assertion-clause-local-interim-v1"]
+    evaluation_contract: Literal["assertion-clause-local-v1"]
     candidate_mode: Literal["native_proposal", "review_snapshot"]
     audit: AssertionAuditBinding
     source_binding: Literal["golden_declared", "audit_verified"]
@@ -473,7 +721,7 @@ class AssertionQualificationReport(SchemaBoundModel):
                 source.proposal_hash,
             ):
                 raise ValueError("case proposal identity does not match proposal source entry")
-        for field_name in ("entities", "assertions"):
+        for field_name in ("entities", "typed_entities", "assertions"):
             total = getattr(self.aggregate, field_name)
             for counter in (
                 "expected",
@@ -487,15 +735,35 @@ class AssertionQualificationReport(SchemaBoundModel):
                 ):
                     raise ValueError(f"aggregate {field_name}.{counter} differs from cases")
         for field_name in (
+            "entity_class_accuracy",
             "predicate_accuracy",
             "normative_force_accuracy",
-            "grounding_accuracy",
+            "evidence_span_exact_match",
             "exact_assertion_accuracy",
         ):
             total = getattr(self.aggregate, field_name)
-            for counter in ("evaluated", "correct"):
+            for counter in (
+                "support_expected",
+                "support_predicted",
+                "evaluated",
+                "correct",
+                "ambiguous_expected",
+                "ambiguous_predicted",
+                "unmatched_expected",
+                "unmatched_predicted",
+            ):
                 if getattr(total, counter) != sum(
                     getattr(getattr(case, field_name), counter) for case in self.cases
                 ):
                     raise ValueError(f"aggregate {field_name}.{counter} differs from cases")
+        evidence = self.aggregate.evidence_integrity
+        for counter in ("total", "checked", "valid", "invalid", "unavailable", "conflicting"):
+            if getattr(evidence, counter) != sum(
+                getattr(case.evidence_integrity, counter) for case in self.cases
+            ):
+                raise ValueError(f"aggregate evidence_integrity.{counter} differs from cases")
+        if self.aggregate.clause_exact_match.cases != len(self.cases):
+            raise ValueError("aggregate clause exact-match case count differs from report")
+        if self.aggregate.clause_exact_match.candidate_cases != self.aggregate.candidate_clauses:
+            raise ValueError("aggregate clause exact-match coverage differs from candidates")
         return self

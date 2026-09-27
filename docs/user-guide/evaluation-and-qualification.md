@@ -158,7 +158,7 @@ Evaluate the already embedded review snapshots without another model run:
 uv run standards-atlas evaluation assertion-evaluate \
   --golden local/review/assertions/pilot/assertion-golden-suite.yaml \
   --review local/review/assertions/pilot/assertion-review-pilot.yaml \
-  --output local/evaluation/assertion-qualification-interim.json
+  --output local/evaluation/assertion-qualification.json
 ```
 
 Exactly one candidate source is required: `--review` or repeatable `--proposal`. Native proposals
@@ -167,9 +167,13 @@ selector. Both inputs use the same clause-local evaluator. All review snapshots 
 including empty and escalated ones; a missing snapshot is an error. Review reports cannot serve as
 auto-adoption qualification evidence. Keep the original audit unchanged after golden publication.
 
-AP01 Series A reports explicitly use `assertion-clause-local-interim-v1`; the existing typed metrics
-remain provisional until Series B/C. See the [evaluation contract](../development/assertion-golden-regression.md)
-for fingerprints, exact CLI semantics, source-integrity limits and deferred metric dimensions.
+AP01 Series B reports use `assertion-clause-local-v1`. Entity recognition is class-independent,
+while `typed_entities` preserves the stricter label-plus-class view for existing policy gates.
+The report carries explicit denominator/status objects, ambiguity-aware attribute alignment,
+technical frozen-source integrity, exact expected-span matching and clause-level exact match.
+Semantic evidence strength remains unevaluated, and work-product/error-diagnosis metrics are
+still Series C work. See the [evaluation contract](../development/assertion-golden-regression.md)
+for exact semantics and source-resolution limits.
 
 ## HITL
 

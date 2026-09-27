@@ -996,7 +996,10 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "assertion-qualification-report",
-        "Clause-local AP01 interim typed metrics with explicit candidate source and audit binding.",
+        (
+            "Clause-local AP01 dimensional metrics with strict matching and "
+            "frozen-source evidence checks."
+        ),
     ),
     VersionedInterface(
         "assertion-qualification-cascade-report",

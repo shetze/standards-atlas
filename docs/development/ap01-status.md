@@ -1,47 +1,55 @@
-# AP01 status — Series A / S01–S03
+# AP01 status — Series B / S04–S06
 
-Date: 2026-09-27. Implementation and execution-environment tests complete;
-user-local `uv run ruff check .` / `uv run pytest` verification is still pending.
-Only Series A is implemented. Do not treat the interim report as AP01 completion.
+Date: 2026-09-27. Series B implementation is complete in this delivery; user-local
+`uv run ruff check .` and the uninterrupted full `uv run pytest` remain the acceptance
+check after applying the delta. Series C/D are not implemented.
 
 ## Delivered boundaries
 
-S01: byte-bound complete audit loader, duplicate-key rejection, immutable copies,
-validated expected references/spans, deterministic source and raw-snapshot hashes.
-S02: clause-local golden publication, unchanged confirmed IDs/values, shared native
-projection, distinct clause/document/coverage counts, updated policy and schema consumers.
-S03: `assertion-evaluate --review`, explicit candidate/source modes, exact audit/golden
-binding, raw diagnostics retained, missing-versus-empty handling and model-free CLI tests.
-The policy rejects review reports as auto-adoption qualification evidence.
+S04: strict multiset matching is separated from diagnostic/attribute alignment. Entity
+recognition uses NFKC/casefold/collapsed-whitespace label identity; typed entities remain
+a separate view. Assertion identity requires directed endpoints plus predicate. Duplicate
+predictions stay visible and ambiguous buckets are never best-fit paired.
 
-Contract: `assertion-clause-local-interim-v1`. Schema families remain at 1, without
-legacy document-wide readers. Full contract: `assertion-golden-regression.md`.
+S05: report metrics now carry explicit numerator/denominator/value/status data. Entity and
+typed-entity P/R/F1, class accuracy, assertion P/R/F1, predicate accuracy, normative-force
+accuracy, over-/under-extraction and alignment coverage are computed from counts/supports.
+Zero denominators produce `null`, and aggregate metrics are recomputed from aggregate
+supports rather than averaged case percentages. The auto-adoption policy keeps typed
+entity gates and uses the clean-break `min_evidence_span_exact_match_accuracy` threshold.
 
-## Actual checks
+S06: frozen audit sources are resolved by document, clause and source kind. Own bodies and
+headings, identifiable ancestor headings and complete associative-context bodies/headings
+can be checked; missing surfaces are unavailable and conflicting frozen versions remain
+explicit. Technical source integrity, exact golden-span equality and semantic evidence are
+separate report dimensions. Clause-level exact match covers the fields actually annotated
+in the golden and treats a missing candidate as missing, never as an exact empty result.
 
-S01: 76 tests passed. S02: 527 passed. S03 gate: 543 passed.
-Final targeted assertion/CLI/architecture/schema set: 544 passed.
-Final full suite: 2064 passed, 7 skipped (Docling, Hypothesis, MCP and two existing
-private run-074 checks unavailable). Runtime: CPython 3.13.5; project constraint unchanged.
-Ruff could not be executed: the package/binary is absent and package-index access failed.
-This is an outstanding lint check, not a lint pass. Delivery test logs give the commands.
+Current evaluation contract: `assertion-clause-local-v1`. Schema families remain at 1;
+there is no reader for the Series-A interim report shape. Golden expectations, audit bytes,
+productive context selection and model/prompt behavior were not changed. Work-product
+metrics and semantic error findings remain Series C.
 
-The real private audit was retrieved byte-identically to the detail plan's hash.
-Golden: 20 cases, 9 documents, 51 entities, 24 assertions. Candidates: all 20
-snapshots, 60 entities, 15 assertions. Confirmed IDs, labels, classes, objects,
-normative force and all span offsets were compared without modification.
-Publication/evaluation via CLI repeated in fresh processes with identical output bytes.
-No extractor, verifier, cascade, embedding or other model was executed.
+## Actual checks in this delivery environment
 
-Private artifacts remain under `local/review/assertions/assertion-pilot/0.1.0/`
-and `local/evaluation/assertions/assertion-pilot/0.1.0/`, not in public fixtures.
-`local/` is generally ignored; preserve or attach the audit separately for the next series.
+S04 matching/evaluation gate: 20 passed. S05 policy/CLI consumer gate: 16 passed.
+S06 audit/source-resolution gate: 46 passed.
+Assertion + CLI + assertion-architecture gate: 114 passed.
+Assertion + CLI + assertion-architecture + schema gates: 208 passed.
+Architecture + contract suite: 126 passed.
+Integration subsets completed before the execution-window limit: adapters 32 passed / 1
+skipped; application 1 passed; atlasdata 4 passed; knowledge 2 skipped; two workflow files
+12 passed. A monolithic full-suite run and the slower enrichments workflow file exceeded
+the container command window and are therefore not recorded as passes.
+
+`uv run --offline ruff check .` could not resolve the project environment because
+`jsonschema` is not present in the local uv cache while network access is disabled. Python
+3.13 compilation and all completed pytest subsets above succeeded. This is an outstanding
+lint/full-suite environment check, not a claimed Ruff/full-suite pass.
 
 ## Next authorized implementation boundary
 
-After the user's local checks, start Series B (S04–S06) against the resulting snapshot.
-Replace interim typed/bucket matching with separate strict and diagnostic matching;
-implement ambiguity and duplicate handling, dimensional supports/null denominators,
-and the frozen-source resolver with source-surface-aware evidence comparison.
-Do not change the audit, saved candidates, confirmed expectations or productive context policy.
-Work-product metrics and semantic findings remain Series C; final AP01 baseline is Series D.
+After the user's local `ruff` and full `pytest` checks, Series C may implement S07-S08:
+ontology-derived WorkProduct metrics and qualified error diagnoses. Do not change the
+strict Series-B metrics to improve the v8 baseline, and do not start Series D or AP02/AP03
+as part of a Series-B correction.

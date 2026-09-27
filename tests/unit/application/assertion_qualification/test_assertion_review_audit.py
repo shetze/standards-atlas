@@ -386,6 +386,10 @@ def test_review_and_native_inputs_have_identical_metrics_and_distinct_provenance
     assert origin.original_proposal_verification == "unavailable"
     assert origin.historical_model_provenance == origin.historical_input_provenance == "unavailable"
     assert stored.source_binding == native.source_binding == "audit_verified"
+    assert stored.aggregate.evidence_integrity.validity.value == 1.0
+    assert stored.aggregate.evidence_span_exact_match.accuracy.value == 1.0
+    assert stored.aggregate.semantic_evidence.status == "not_evaluated"
+    assert stored.cases[0].clause_exact_match.value is True
 
 
 def test_snapshot_keeps_diagnostics_and_unresolved_candidates_without_reconstruction() -> None:
@@ -496,7 +500,7 @@ def test_review_report_cannot_enter_auto_adoption_policy() -> None:
         min_assertion_recall=0,
         min_predicate_accuracy=0,
         min_normative_force_accuracy=0,
-        min_grounding_accuracy=0,
+        min_evidence_span_exact_match_accuracy=0,
         min_exact_assertion_accuracy=0,
     )
     policy = AssertionAutoAdoptionPolicy(
@@ -706,3 +710,172 @@ def test_publish_and_evaluate_cli_never_overwrite_their_sources(tmp_path: Path) 
         assert "overwrite input" in result.output
     assert review.read_bytes() == audit.original_bytes
     assert golden.read_bytes() == golden_bytes
+
+
+def _evaluate_snapshot_payload(payload: dict):
+    from standards_atlas.application.assertion_qualification import (
+        AssertionQualificationEvaluator,
+        publish_assertion_review_pilot,
+    )
+
+    audit = audit_from_payload(payload)
+    suite = publish_assertion_review_pilot(audit)
+    return AssertionQualificationEvaluator().evaluate(suite, review_audit=audit)
+
+
+def test_heading_and_body_with_same_offsets_are_distinct_evidence_surfaces() -> None:
+    payload = _snapshot_payload()
+    evidence = payload["cases"][0]["proposal"]["assertions"][0]["evidence"][0]
+    evidence.update(
+        source_kind="heading",
+        start_offset=0,
+        end_offset=4,
+        content_hash=hashlib.sha256(b"Plan").hexdigest(),
+    )
+
+    report = _evaluate_snapshot_payload(payload)
+
+    assert report.aggregate.evidence_integrity.invalid == 0
+    assert report.aggregate.evidence_integrity.valid == 2
+    assert report.aggregate.evidence_span_exact_match.accuracy.value == 0.0
+    assert report.cases[0].clause_exact_match.value is False
+
+
+def test_two_separate_evidence_spans_compare_exactly_without_merging() -> None:
+    payload = _snapshot_payload()
+    payload["cases"][0]["expected"]["assertions"][0]["evidence"] = [
+        {"start_offset": 0, "end_offset": 2},
+        {"start_offset": 2, "end_offset": 4},
+    ]
+    assertion = payload["cases"][0]["proposal"]["assertions"][0]
+    assertion["evidence"] = [
+        {
+            "anchor_id": "plan-anchor-left",
+            "source_clause_id": "c1",
+            "source_kind": "body",
+            "start_offset": 0,
+            "end_offset": 2,
+            "content_hash": hashlib.sha256(b"Pl").hexdigest(),
+        },
+        {
+            "anchor_id": "plan-anchor-right",
+            "source_clause_id": "c1",
+            "source_kind": "body",
+            "start_offset": 2,
+            "end_offset": 4,
+            "content_hash": hashlib.sha256(b"an").hexdigest(),
+        },
+    ]
+
+    report = _evaluate_snapshot_payload(payload)
+
+    assert report.aggregate.evidence_integrity.invalid == 0
+    assert report.aggregate.evidence_integrity.valid == 3
+    assert report.aggregate.evidence_span_exact_match.accuracy.value == 1.0
+    assert report.cases[0].clause_exact_match.value is True
+
+
+def test_frozen_associative_context_body_can_resolve_foreign_evidence() -> None:
+    payload = _snapshot_payload()
+    payload["cases"][0]["context"]["associative_context"] = [
+        {
+            "clause_id": "ctx-1",
+            "reference": "2",
+            "heading": "Context heading",
+            "text": "External",
+        }
+    ]
+    evidence = payload["cases"][0]["proposal"]["assertions"][0]["evidence"][0]
+    evidence.update(
+        anchor_id="external-anchor",
+        source_clause_id="ctx-1",
+        source_kind="body",
+        start_offset=0,
+        end_offset=8,
+        content_hash=hashlib.sha256(b"External").hexdigest(),
+    )
+
+    report = _evaluate_snapshot_payload(payload)
+
+    finding = next(
+        item
+        for item in report.cases[0].evidence_integrity_findings
+        if item.owner_kind == "assertion"
+    )
+    assert finding.status.value == "valid"
+    assert report.aggregate.evidence_integrity.invalid == 0
+    assert report.aggregate.evidence_span_exact_match.accuracy.value == 0.0
+
+
+def test_unavailable_foreign_body_is_not_reported_as_invalid_hash() -> None:
+    payload = _snapshot_payload()
+    evidence = payload["cases"][0]["proposal"]["assertions"][0]["evidence"][0]
+    evidence.update(
+        anchor_id="missing-anchor",
+        source_clause_id="missing",
+        source_kind="body",
+        start_offset=0,
+        end_offset=4,
+        content_hash=hashlib.sha256(b"Else").hexdigest(),
+    )
+
+    report = _evaluate_snapshot_payload(payload)
+
+    assert report.aggregate.evidence_integrity.invalid == 0
+    assert report.aggregate.evidence_integrity.unavailable == 1
+    assert report.aggregate.evidence_integrity.checked == 1
+    assert report.aggregate.evidence_integrity.validity.value == 1.0
+    assert report.aggregate.evidence_integrity.validity.status.value == "partial"
+
+
+def test_longer_valid_source_passage_can_fail_strict_expected_span_match() -> None:
+    payload = _snapshot_payload()
+    case = payload["cases"][0]
+    case["text"] = "Plan now"
+    case["text_sha256"] = hashlib.sha256(b"Plan now").hexdigest()
+    case["applicability_source"]["selection_text_sha256"] = case["text_sha256"]
+    assertion_evidence = case["proposal"]["assertions"][0]["evidence"][0]
+    assertion_evidence.update(
+        start_offset=0,
+        end_offset=8,
+        content_hash=hashlib.sha256(b"Plan now").hexdigest(),
+    )
+
+    report = _evaluate_snapshot_payload(payload)
+
+    assert report.aggregate.evidence_integrity.invalid == 0
+    assert report.aggregate.evidence_integrity.valid == 2
+    assert report.aggregate.evidence_span_exact_match.accuracy.value == 0.0
+    assert report.aggregate.semantic_evidence.status == "not_evaluated"
+
+
+def test_conflicting_frozen_source_versions_are_visible_not_silently_selected() -> None:
+    payload = _snapshot_payload()
+    payload["cases"][0]["context"]["associative_context"] = [
+        {
+            "clause_id": "c1",
+            "reference": "1",
+            "heading": "Planning",
+            "text": "Other",
+        }
+    ]
+
+    report = _evaluate_snapshot_payload(payload)
+
+    assert report.aggregate.evidence_integrity.conflicting == 2
+    assert report.aggregate.evidence_integrity.checked == 0
+    assert report.aggregate.evidence_integrity.validity.value is None
+    assert report.aggregate.evidence_integrity.validity.status.value == "not_evaluable"
+
+
+def test_wrong_hash_on_available_frozen_surface_is_invalid_not_unavailable() -> None:
+    payload = _snapshot_payload()
+    evidence = payload["cases"][0]["proposal"]["assertions"][0]["evidence"][0]
+    evidence["content_hash"] = hashlib.sha256(b"Nope").hexdigest()
+
+    report = _evaluate_snapshot_payload(payload)
+
+    assert report.aggregate.evidence_integrity.invalid == 1
+    assert report.aggregate.evidence_integrity.unavailable == 0
+    assert report.aggregate.evidence_integrity.conflicting == 0
+    assert report.aggregate.evidence_integrity.validity.value == 0.5

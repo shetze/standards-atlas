@@ -1,8 +1,7 @@
-"""Deterministic entity, assertion, normative-force and grounding matching for Slice 7A."""
+"""Deterministic strict matching and diagnostic alignment for AP01 Series B."""
 
 from __future__ import annotations
 
-import json
 import re
 import unicodedata
 from collections import Counter, defaultdict
@@ -12,20 +11,32 @@ from dataclasses import dataclass
 from standards_atlas.application.assertion_qualification.models import (
     AccuracyMetrics,
     AssertionGoldenCase,
+    AssertionQualificationAggregate,
     AssertionQualificationCaseReport,
+    CaseExactMatch,
+    CaseExactMatchStatus,
+    ClauseExactMatchAggregate,
+    ComparisonAlignmentRecord,
+    ComparisonAlignmentStatus,
     CountMetrics,
+    EvidenceIntegrityFinding,
+    EvidenceIntegrityMetrics,
+    EvidenceIntegrityStatus,
     GoldenEvidenceSpan,
     GoldenNormativeAssertion,
+    MetricStatus,
+    RatioMetric,
+    SemanticEvidenceMetrics,
 )
 from standards_atlas.application.assertion_qualification.projection import ClauseEvaluationCandidate
 from standards_atlas.application.assertion_qualification.review_pilot_models import (
     AssertionProposalAssertionSnapshot,
     AssertionProposalEvidenceSnapshot,
 )
-from standards_atlas.domain.model import (
-    EntityAssertionObject,
-    LiteralAssertionObject,
+from standards_atlas.application.assertion_qualification.source_resolution import (
+    FrozenSourceResolver,
 )
+from standards_atlas.domain.model import EntityAssertionObject, LiteralAssertionObject
 
 _Signature = tuple[Hashable, ...]
 
@@ -36,7 +47,17 @@ class _AssertionRecord:
     endpoint: _Signature
     relation: _Signature
     normative_force: str
-    grounding: _Signature
+    evidence: _Signature
+
+
+@dataclass(frozen=True)
+class _AlignmentSummary:
+    records: tuple[ComparisonAlignmentRecord, ...]
+    pairs: tuple[tuple[str, str], ...]
+    ambiguous_expected: int
+    ambiguous_predicted: int
+    unmatched_expected: int
+    unmatched_predicted: int
 
 
 @dataclass(frozen=True)
@@ -47,70 +68,121 @@ class CaseMatchResult:
 def evaluate_case(
     golden: AssertionGoldenCase,
     proposal: ClauseEvaluationCandidate | None,
+    *,
+    source_resolver: FrozenSourceResolver | None = None,
 ) -> CaseMatchResult:
+    """Evaluate one case without semantic guessing or best-fit attribute pairing."""
     golden_entities = {entity.id: entity for entity in golden.entities}
     proposal_entities = (
         {entity.id: entity for entity in proposal.entities} if proposal is not None else {}
     )
 
-    golden_entity_signatures = {
-        entity_id: _entity_signature(entity.normalized_label, entity.class_iri)
-        for entity_id, entity in golden_entities.items()
+    golden_entity_identity = {
+        item_id: (_normalize_label(item.normalized_label),)
+        for item_id, item in golden_entities.items()
     }
-    proposal_entity_signatures = {
-        entity_id: _entity_signature(entity.normalized_label, entity.class_iri)
-        for entity_id, entity in proposal_entities.items()
+    proposal_entity_identity = {
+        item_id: (_normalize_label(item.normalized_label),)
+        for item_id, item in proposal_entities.items()
+    }
+    golden_typed_identity = {
+        item_id: (*golden_entity_identity[item_id], item.class_iri)
+        for item_id, item in golden_entities.items()
+    }
+    proposal_typed_identity = {
+        item_id: (*proposal_entity_identity[item_id], item.class_iri)
+        for item_id, item in proposal_entities.items()
     }
 
     entity_metrics = _count_metrics(
-        Counter(golden_entity_signatures.values()),
-        Counter(proposal_entity_signatures.values()),
+        Counter(golden_entity_identity.values()), Counter(proposal_entity_identity.values())
     )
-    entity_fp = _unmatched_ids(proposal_entity_signatures, golden_entity_signatures)
-    entity_fn = _unmatched_ids(golden_entity_signatures, proposal_entity_signatures)
+    typed_entity_metrics = _count_metrics(
+        Counter(golden_typed_identity.values()), Counter(proposal_typed_identity.values())
+    )
+    entity_alignment = _alignment(
+        source_document_key=golden.source_document_key,
+        clause_id=golden.clause_id,
+        rule="entity_label_identity",
+        expected=golden_entity_identity,
+        predicted=proposal_entity_identity,
+    )
+    entity_class_accuracy = _attribute_accuracy(
+        entity_alignment,
+        expected_values={item_id: item.class_iri for item_id, item in golden_entities.items()},
+        predicted_values={item_id: item.class_iri for item_id, item in proposal_entities.items()},
+    )
 
     golden_assertions = tuple(
-        _golden_assertion_record(assertion, golden_entity_signatures)
+        _golden_assertion_record(assertion, golden_entity_identity)
         for assertion in golden.assertions
     )
     proposal_assertions = tuple(
         _proposal_assertion_record(
             assertion,
-            proposal_entity_signatures,
+            proposal_entity_identity,
             source_clause_id=golden.clause_id.value,
+            source_document_key=golden.source_document_key,
         )
         for assertion in (proposal.assertions if proposal is not None else ())
     )
-
     golden_relation_counts = Counter(item.relation for item in golden_assertions)
     proposal_relation_counts = Counter(item.relation for item in proposal_assertions)
     assertion_metrics = _count_metrics(golden_relation_counts, proposal_relation_counts)
-    assertion_fp = _unmatched_record_ids(proposal_assertions, golden_assertions, key="relation")
-    assertion_fn = _unmatched_record_ids(golden_assertions, proposal_assertions, key="relation")
 
-    predicate_accuracy = _bucket_accuracy(
-        golden_assertions,
-        proposal_assertions,
-        bucket="endpoint",
-        value=lambda item: item.relation[-1],
+    endpoint_alignment = _alignment(
+        source_document_key=golden.source_document_key,
+        clause_id=golden.clause_id,
+        rule="assertion_endpoint_identity",
+        expected={item.id: item.endpoint for item in golden_assertions},
+        predicted={item.id: item.endpoint for item in proposal_assertions},
     )
-    normative_force_accuracy = _bucket_accuracy(
-        golden_assertions,
-        proposal_assertions,
-        bucket="relation",
-        value=lambda item: item.normative_force,
+    relation_alignment = _alignment(
+        source_document_key=golden.source_document_key,
+        clause_id=golden.clause_id,
+        rule="assertion_relation_identity",
+        expected={item.id: item.relation for item in golden_assertions},
+        predicted={item.id: item.relation for item in proposal_assertions},
     )
-    grounding_accuracy = _bucket_accuracy(
-        golden_assertions,
-        proposal_assertions,
-        bucket="relation",
-        value=lambda item: item.grounding,
+
+    predicate_accuracy = _attribute_accuracy(
+        endpoint_alignment,
+        expected_values={item.id: item.relation[-1] for item in golden_assertions},
+        predicted_values={item.id: item.relation[-1] for item in proposal_assertions},
     )
-    exact_assertion_accuracy = _bucket_accuracy(
-        golden_assertions,
-        proposal_assertions,
-        bucket="relation",
-        value=lambda item: (item.normative_force, item.grounding),
+    normative_force_accuracy = _attribute_accuracy(
+        relation_alignment,
+        expected_values={item.id: item.normative_force for item in golden_assertions},
+        predicted_values={item.id: item.normative_force for item in proposal_assertions},
+    )
+    evidence_span_exact_match = _attribute_accuracy(
+        relation_alignment,
+        expected_values={item.id: item.evidence for item in golden_assertions},
+        predicted_values={item.id: item.evidence for item in proposal_assertions},
+    )
+    exact_assertion_accuracy = _attribute_accuracy(
+        relation_alignment,
+        expected_values={
+            item.id: (item.normative_force, item.evidence) for item in golden_assertions
+        },
+        predicted_values={
+            item.id: (item.normative_force, item.evidence) for item in proposal_assertions
+        },
+    )
+
+    evidence_findings = _evidence_integrity_findings(
+        golden.source_document_key,
+        proposal,
+        source_resolver=source_resolver,
+    )
+    evidence_integrity = _evidence_integrity_metrics(evidence_findings)
+
+    clause_exact_match = _case_exact_match(
+        proposal=proposal,
+        golden_typed_entities=golden_typed_identity,
+        proposal_typed_entities=proposal_typed_identity,
+        golden_assertions=golden_assertions,
+        proposal_assertions=proposal_assertions,
     )
 
     return CaseMatchResult(
@@ -123,15 +195,32 @@ def evaluate_case(
             candidate_sha256=proposal.candidate_sha256 if proposal is not None else None,
             provenance=proposal.provenance if proposal is not None else None,
             entities=entity_metrics,
+            typed_entities=typed_entity_metrics,
+            entity_class_accuracy=entity_class_accuracy,
             assertions=assertion_metrics,
             predicate_accuracy=predicate_accuracy,
             normative_force_accuracy=normative_force_accuracy,
-            grounding_accuracy=grounding_accuracy,
+            evidence_integrity=evidence_integrity,
+            evidence_span_exact_match=evidence_span_exact_match,
+            semantic_evidence=SemanticEvidenceMetrics(),
             exact_assertion_accuracy=exact_assertion_accuracy,
-            entity_false_positive_ids=entity_fp,
-            entity_false_negative_ids=entity_fn,
-            assertion_false_positive_ids=assertion_fp,
-            assertion_false_negative_ids=assertion_fn,
+            clause_exact_match=clause_exact_match,
+            entity_alignment=entity_alignment.records,
+            assertion_endpoint_alignment=endpoint_alignment.records,
+            assertion_relation_alignment=relation_alignment.records,
+            evidence_integrity_findings=evidence_findings,
+            entity_false_positive_ids=_unmatched_ids(
+                proposal_entity_identity, golden_entity_identity
+            ),
+            entity_false_negative_ids=_unmatched_ids(
+                golden_entity_identity, proposal_entity_identity
+            ),
+            assertion_false_positive_ids=_unmatched_record_ids(
+                proposal_assertions, golden_assertions, key="relation"
+            ),
+            assertion_false_negative_ids=_unmatched_record_ids(
+                golden_assertions, proposal_assertions, key="relation"
+            ),
             proposal_violations=len(proposal.violations) if proposal is not None else 0,
             proposal_failures=len(proposal.failures) if proposal is not None else 0,
             violation_details=proposal.violations if proposal is not None else (),
@@ -142,32 +231,36 @@ def evaluate_case(
 
 def aggregate_case_reports(
     reports: Sequence[AssertionQualificationCaseReport],
-):
-    from standards_atlas.application.assertion_qualification.models import (
-        AssertionQualificationAggregate,
-    )
-
+) -> AssertionQualificationAggregate:
+    if not reports:
+        raise ValueError("assertion qualification requires at least one case report")
     return AssertionQualificationAggregate(
         documents=len({report.source_document_key for report in reports}),
         clauses=len(reports),
         candidate_clauses=sum(report.candidate_status == "present" for report in reports),
         entities=_sum_count_metrics(report.entities for report in reports),
+        typed_entities=_sum_count_metrics(report.typed_entities for report in reports),
+        entity_class_accuracy=_sum_accuracy(report.entity_class_accuracy for report in reports),
         assertions=_sum_count_metrics(report.assertions for report in reports),
         predicate_accuracy=_sum_accuracy(report.predicate_accuracy for report in reports),
         normative_force_accuracy=_sum_accuracy(
             report.normative_force_accuracy for report in reports
         ),
-        grounding_accuracy=_sum_accuracy(report.grounding_accuracy for report in reports),
+        evidence_integrity=_sum_evidence_integrity(report.evidence_integrity for report in reports),
+        evidence_span_exact_match=_sum_accuracy(
+            report.evidence_span_exact_match for report in reports
+        ),
+        semantic_evidence=SemanticEvidenceMetrics(),
         exact_assertion_accuracy=_sum_accuracy(
             report.exact_assertion_accuracy for report in reports
         ),
+        clause_exact_match=_aggregate_clause_exact_match(reports),
     )
 
 
-def _entity_signature(normalized_label: str, class_iri: str) -> _Signature:
-    normalized = unicodedata.normalize("NFKC", normalized_label).strip().casefold()
-    label = re.sub(r"\s+", " ", normalized)
-    return (label, class_iri)
+def _normalize_label(value: str) -> str:
+    normalized = unicodedata.normalize("NFKC", value).strip().casefold()
+    return re.sub(r"\s+", " ", normalized)
 
 
 def _golden_assertion_record(
@@ -179,13 +272,12 @@ def _golden_assertion_record(
         subject=entity_signatures[assertion.subject_id],
         object_=_object_signature(assertion.object, entity_signatures),
     )
-    relation = (*endpoint, assertion.predicate)
     return _AssertionRecord(
         id=assertion.id,
         endpoint=endpoint,
-        relation=relation,
+        relation=(*endpoint, assertion.predicate),
         normative_force=assertion.normative_force.value,
-        grounding=_golden_grounding_signature(assertion.evidence),
+        evidence=_golden_evidence_signature(assertion.evidence),
     )
 
 
@@ -194,23 +286,20 @@ def _proposal_assertion_record(
     entity_signatures: Mapping[str, _Signature],
     *,
     source_clause_id: str,
+    source_document_key: str,
 ) -> _AssertionRecord:
     endpoint = _assertion_endpoint(
         source_clause_id=source_clause_id,
         subject=entity_signatures.get(assertion.subject_id, ("unresolved", assertion.subject_id)),
         object_=_object_signature(assertion.object, entity_signatures),
     )
-    relation = (*endpoint, assertion.predicate)
     return _AssertionRecord(
         id=assertion.id,
         endpoint=endpoint,
-        relation=relation,
+        relation=(*endpoint, assertion.predicate),
         normative_force=assertion.normative_force.value,
-        grounding=tuple(
-            sorted(
-                (_evidence_anchor_signature(anchor) for anchor in assertion.evidence),
-                key=repr,
-            )
+        evidence=_proposal_evidence_signature(
+            assertion.evidence, source_document_key=source_document_key
         ),
     )
 
@@ -230,20 +319,21 @@ def _object_signature(
             "entity",
             entity_signatures.get(object_.entity_id, ("unresolved", object_.entity_id)),
         )
-    payload = json.dumps(
-        object_.model_dump(mode="json"),
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
+    return (
+        "literal",
+        type(object_.value).__name__,
+        object_.value,
+        object_.datatype_iri,
+        object_.language,
     )
-    return ("literal", payload)
 
 
-def _golden_grounding_signature(spans: Sequence[GoldenEvidenceSpan]) -> _Signature:
+def _golden_evidence_signature(spans: Sequence[GoldenEvidenceSpan]) -> _Signature:
     return tuple(
         sorted(
             (
                 (
+                    span.source_document_key,
                     span.clause_id.value,
                     span.source_kind.value,
                     span.start_offset,
@@ -257,13 +347,120 @@ def _golden_grounding_signature(spans: Sequence[GoldenEvidenceSpan]) -> _Signatu
     )
 
 
-def _evidence_anchor_signature(anchor: AssertionProposalEvidenceSnapshot) -> tuple[Hashable, ...]:
-    return (
-        anchor.source_clause_id,
-        anchor.source_kind.value,
-        anchor.start_offset,
-        anchor.end_offset,
-        anchor.content_hash,
+def _proposal_evidence_signature(
+    anchors: Sequence[AssertionProposalEvidenceSnapshot],
+    *,
+    source_document_key: str,
+) -> _Signature:
+    return tuple(
+        sorted(
+            (
+                (
+                    source_document_key,
+                    anchor.source_clause_id,
+                    anchor.source_kind.value,
+                    anchor.start_offset,
+                    anchor.end_offset,
+                    anchor.content_hash,
+                )
+                for anchor in anchors
+            ),
+            key=repr,
+        )
+    )
+
+
+def _alignment(
+    *,
+    source_document_key: str,
+    clause_id,
+    rule: str,
+    expected: Mapping[str, _Signature],
+    predicted: Mapping[str, _Signature],
+) -> _AlignmentSummary:
+    expected_buckets: dict[_Signature, list[str]] = defaultdict(list)
+    predicted_buckets: dict[_Signature, list[str]] = defaultdict(list)
+    for item_id, signature in expected.items():
+        expected_buckets[signature].append(item_id)
+    for item_id, signature in predicted.items():
+        predicted_buckets[signature].append(item_id)
+
+    records: list[ComparisonAlignmentRecord] = []
+    pairs: list[tuple[str, str]] = []
+    ambiguous_expected = ambiguous_predicted = 0
+    unmatched_expected = unmatched_predicted = 0
+    for signature in sorted(set(expected_buckets) | set(predicted_buckets), key=repr):
+        golden_ids = tuple(sorted(expected_buckets.get(signature, ())))
+        candidate_ids = tuple(sorted(predicted_buckets.get(signature, ())))
+        if len(golden_ids) == len(candidate_ids) == 1:
+            status = ComparisonAlignmentStatus.MATCHED
+            pairs.append((golden_ids[0], candidate_ids[0]))
+        elif golden_ids and candidate_ids:
+            status = ComparisonAlignmentStatus.AMBIGUOUS
+            ambiguous_expected += len(golden_ids)
+            ambiguous_predicted += len(candidate_ids)
+        elif golden_ids:
+            status = ComparisonAlignmentStatus.EXPECTED_ONLY
+            unmatched_expected += len(golden_ids)
+        else:
+            status = ComparisonAlignmentStatus.CANDIDATE_ONLY
+            unmatched_predicted += len(candidate_ids)
+        records.append(
+            ComparisonAlignmentRecord(
+                source_document_key=source_document_key,
+                clause_id=clause_id,
+                rule=rule,
+                status=status,
+                golden_ids=golden_ids,
+                candidate_ids=candidate_ids,
+            )
+        )
+    return _AlignmentSummary(
+        records=tuple(records),
+        pairs=tuple(pairs),
+        ambiguous_expected=ambiguous_expected,
+        ambiguous_predicted=ambiguous_predicted,
+        unmatched_expected=unmatched_expected,
+        unmatched_predicted=unmatched_predicted,
+    )
+
+
+def _attribute_accuracy(
+    alignment: _AlignmentSummary,
+    *,
+    expected_values: Mapping[str, Hashable],
+    predicted_values: Mapping[str, Hashable],
+) -> AccuracyMetrics:
+    evaluated = len(alignment.pairs)
+    correct = sum(
+        expected_values[golden_id] == predicted_values[candidate_id]
+        for golden_id, candidate_id in alignment.pairs
+    )
+    support_expected = evaluated + alignment.ambiguous_expected + alignment.unmatched_expected
+    support_predicted = evaluated + alignment.ambiguous_predicted + alignment.unmatched_predicted
+    return AccuracyMetrics(
+        support_expected=support_expected,
+        support_predicted=support_predicted,
+        evaluated=evaluated,
+        correct=correct,
+        ambiguous_expected=alignment.ambiguous_expected,
+        ambiguous_predicted=alignment.ambiguous_predicted,
+        unmatched_expected=alignment.unmatched_expected,
+        unmatched_predicted=alignment.unmatched_predicted,
+        accuracy=_ratio(
+            correct,
+            evaluated,
+            empty_status=(
+                MetricStatus.NOT_EVALUABLE
+                if support_expected or support_predicted
+                else MetricStatus.NOT_APPLICABLE
+            ),
+        ),
+        alignment_coverage=_ratio(
+            evaluated,
+            support_expected,
+            empty_status=MetricStatus.NOT_APPLICABLE,
+        ),
     )
 
 
@@ -273,18 +470,42 @@ def _count_metrics(expected: Counter[_Signature], predicted: Counter[_Signature]
     predicted_total = sum(predicted.values())
     false_positive = predicted_total - true_positive
     false_negative = expected_total - true_positive
-    precision = true_positive / predicted_total if predicted_total else float(expected_total == 0)
-    recall = true_positive / expected_total if expected_total else float(predicted_total == 0)
-    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
     return CountMetrics(
         expected=expected_total,
         predicted=predicted_total,
         true_positive=true_positive,
         false_positive=false_positive,
         false_negative=false_negative,
-        precision=precision,
-        recall=recall,
-        f1=f1,
+        precision=_ratio(true_positive, predicted_total, empty_status=MetricStatus.NOT_APPLICABLE),
+        recall=_ratio(true_positive, expected_total, empty_status=MetricStatus.NOT_APPLICABLE),
+        f1=_ratio(
+            2 * true_positive,
+            expected_total + predicted_total,
+            empty_status=MetricStatus.NOT_APPLICABLE,
+        ),
+        over_extraction=_ratio(
+            false_positive, predicted_total, empty_status=MetricStatus.NOT_APPLICABLE
+        ),
+        under_extraction=_ratio(
+            false_negative, expected_total, empty_status=MetricStatus.NOT_APPLICABLE
+        ),
+    )
+
+
+def _ratio(
+    numerator: int,
+    denominator: int,
+    *,
+    empty_status: MetricStatus,
+    partial: bool = False,
+) -> RatioMetric:
+    return RatioMetric(
+        numerator=numerator,
+        denominator=denominator,
+        value=(numerator / denominator if denominator else None),
+        status=(MetricStatus.PARTIAL if denominator and partial else MetricStatus.OK)
+        if denominator
+        else empty_status,
     )
 
 
@@ -321,36 +542,98 @@ def _unmatched_record_ids(
     return tuple(sorted(unmatched))
 
 
-def _bucket_accuracy(
-    expected: Sequence[_AssertionRecord],
-    predicted: Sequence[_AssertionRecord],
+def _evidence_integrity_findings(
+    source_document_key: str,
+    proposal: ClauseEvaluationCandidate | None,
     *,
-    bucket: str,
-    value,
-) -> AccuracyMetrics:
-    expected_buckets: dict[_Signature, list[_AssertionRecord]] = defaultdict(list)
-    predicted_buckets: dict[_Signature, list[_AssertionRecord]] = defaultdict(list)
-    for item in expected:
-        expected_buckets[getattr(item, bucket)].append(item)
-    for item in predicted:
-        predicted_buckets[getattr(item, bucket)].append(item)
+    source_resolver: FrozenSourceResolver | None,
+) -> tuple[EvidenceIntegrityFinding, ...]:
+    if proposal is None:
+        return ()
+    findings: list[EvidenceIntegrityFinding] = []
+    owners = [
+        *(("entity", item.id, anchor) for item in proposal.entities for anchor in item.evidence),
+        *(
+            ("assertion", item.id, anchor)
+            for item in proposal.assertions
+            for anchor in item.evidence
+        ),
+    ]
+    for owner_kind, owner_id, anchor in owners:
+        if source_resolver is None:
+            status = EvidenceIntegrityStatus.UNAVAILABLE
+            reason = "no frozen review source audit was supplied for integrity checking"
+        else:
+            resolution = source_resolver.resolve(
+                source_document_key=source_document_key,
+                anchor=anchor,
+            )
+            status = EvidenceIntegrityStatus(resolution.status.value)
+            reason = resolution.reason
+        findings.append(
+            EvidenceIntegrityFinding(
+                owner_kind=owner_kind,
+                owner_id=owner_id,
+                anchor_id=anchor.anchor_id,
+                source_document_key=source_document_key,
+                source_clause_id=anchor.source_clause_id,
+                source_kind=anchor.source_kind,
+                status=status,
+                reason=reason,
+            )
+        )
+    return tuple(findings)
 
-    evaluated = 0
-    correct = 0
-    for signature in set(expected_buckets) | set(predicted_buckets):
-        expected_items = expected_buckets.get(signature, ())
-        predicted_items = predicted_buckets.get(signature, ())
-        aligned = min(len(expected_items), len(predicted_items))
-        evaluated += aligned
-        if not aligned:
-            continue
-        expected_values = Counter(value(item) for item in expected_items)
-        predicted_values = Counter(value(item) for item in predicted_items)
-        correct += min(aligned, sum((expected_values & predicted_values).values()))
-    return AccuracyMetrics(
-        evaluated=evaluated,
-        correct=correct,
-        accuracy=(correct / evaluated if evaluated else None),
+
+def _evidence_integrity_metrics(
+    findings: Sequence[EvidenceIntegrityFinding],
+) -> EvidenceIntegrityMetrics:
+    counts = Counter(item.status for item in findings)
+    valid = counts[EvidenceIntegrityStatus.VALID]
+    invalid = counts[EvidenceIntegrityStatus.INVALID]
+    unavailable = counts[EvidenceIntegrityStatus.UNAVAILABLE]
+    conflicting = counts[EvidenceIntegrityStatus.CONFLICTING]
+    checked = valid + invalid
+    total = len(findings)
+    return EvidenceIntegrityMetrics(
+        total=total,
+        checked=checked,
+        valid=valid,
+        invalid=invalid,
+        unavailable=unavailable,
+        conflicting=conflicting,
+        validity=_ratio(
+            valid,
+            checked,
+            empty_status=(MetricStatus.NOT_EVALUABLE if total else MetricStatus.NOT_APPLICABLE),
+            partial=bool(unavailable or conflicting),
+        ),
+    )
+
+
+def _case_exact_match(
+    *,
+    proposal: ClauseEvaluationCandidate | None,
+    golden_typed_entities: Mapping[str, _Signature],
+    proposal_typed_entities: Mapping[str, _Signature],
+    golden_assertions: Sequence[_AssertionRecord],
+    proposal_assertions: Sequence[_AssertionRecord],
+) -> CaseExactMatch:
+    if proposal is None:
+        return CaseExactMatch(value=None, status=CaseExactMatchStatus.MISSING_CANDIDATE)
+    entities_equal = Counter(golden_typed_entities.values()) == Counter(
+        proposal_typed_entities.values()
+    )
+    golden_full = Counter(
+        (item.relation, item.normative_force, item.evidence) for item in golden_assertions
+    )
+    proposal_full = Counter(
+        (item.relation, item.normative_force, item.evidence) for item in proposal_assertions
+    )
+    exact = entities_equal and golden_full == proposal_full
+    return CaseExactMatch(
+        value=exact,
+        status=CaseExactMatchStatus.EXACT if exact else CaseExactMatchStatus.MISMATCH,
     )
 
 
@@ -359,29 +642,99 @@ def _sum_count_metrics(metrics: Iterable[CountMetrics]) -> CountMetrics:
     expected = sum(item.expected for item in items)
     predicted = sum(item.predicted for item in items)
     true_positive = sum(item.true_positive for item in items)
-    false_positive = sum(item.false_positive for item in items)
-    false_negative = sum(item.false_negative for item in items)
-    precision = true_positive / predicted if predicted else float(expected == 0)
-    recall = true_positive / expected if expected else float(predicted == 0)
-    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    false_positive = predicted - true_positive
+    false_negative = expected - true_positive
     return CountMetrics(
         expected=expected,
         predicted=predicted,
         true_positive=true_positive,
         false_positive=false_positive,
         false_negative=false_negative,
-        precision=precision,
-        recall=recall,
-        f1=f1,
+        precision=_ratio(true_positive, predicted, empty_status=MetricStatus.NOT_APPLICABLE),
+        recall=_ratio(true_positive, expected, empty_status=MetricStatus.NOT_APPLICABLE),
+        f1=_ratio(
+            2 * true_positive,
+            expected + predicted,
+            empty_status=MetricStatus.NOT_APPLICABLE,
+        ),
+        over_extraction=_ratio(false_positive, predicted, empty_status=MetricStatus.NOT_APPLICABLE),
+        under_extraction=_ratio(false_negative, expected, empty_status=MetricStatus.NOT_APPLICABLE),
     )
 
 
 def _sum_accuracy(metrics: Iterable[AccuracyMetrics]) -> AccuracyMetrics:
     items = tuple(metrics)
+    support_expected = sum(item.support_expected for item in items)
+    support_predicted = sum(item.support_predicted for item in items)
     evaluated = sum(item.evaluated for item in items)
     correct = sum(item.correct for item in items)
+    ambiguous_expected = sum(item.ambiguous_expected for item in items)
+    ambiguous_predicted = sum(item.ambiguous_predicted for item in items)
+    unmatched_expected = sum(item.unmatched_expected for item in items)
+    unmatched_predicted = sum(item.unmatched_predicted for item in items)
     return AccuracyMetrics(
+        support_expected=support_expected,
+        support_predicted=support_predicted,
         evaluated=evaluated,
         correct=correct,
-        accuracy=(correct / evaluated if evaluated else None),
+        ambiguous_expected=ambiguous_expected,
+        ambiguous_predicted=ambiguous_predicted,
+        unmatched_expected=unmatched_expected,
+        unmatched_predicted=unmatched_predicted,
+        accuracy=_ratio(
+            correct,
+            evaluated,
+            empty_status=(
+                MetricStatus.NOT_EVALUABLE
+                if support_expected or support_predicted
+                else MetricStatus.NOT_APPLICABLE
+            ),
+        ),
+        alignment_coverage=_ratio(
+            evaluated,
+            support_expected,
+            empty_status=MetricStatus.NOT_APPLICABLE,
+        ),
+    )
+
+
+def _sum_evidence_integrity(
+    metrics: Iterable[EvidenceIntegrityMetrics],
+) -> EvidenceIntegrityMetrics:
+    items = tuple(metrics)
+    total = sum(item.total for item in items)
+    checked = sum(item.checked for item in items)
+    valid = sum(item.valid for item in items)
+    invalid = sum(item.invalid for item in items)
+    unavailable = sum(item.unavailable for item in items)
+    conflicting = sum(item.conflicting for item in items)
+    return EvidenceIntegrityMetrics(
+        total=total,
+        checked=checked,
+        valid=valid,
+        invalid=invalid,
+        unavailable=unavailable,
+        conflicting=conflicting,
+        validity=_ratio(
+            valid,
+            checked,
+            empty_status=(MetricStatus.NOT_EVALUABLE if total else MetricStatus.NOT_APPLICABLE),
+            partial=bool(unavailable or conflicting),
+        ),
+    )
+
+
+def _aggregate_clause_exact_match(
+    reports: Sequence[AssertionQualificationCaseReport],
+) -> ClauseExactMatchAggregate:
+    cases = len(reports)
+    candidate_cases = sum(item.candidate_status == "present" for item in reports)
+    matched = sum(item.clause_exact_match.value is True for item in reports)
+    missing = cases - candidate_cases
+    return ClauseExactMatchAggregate(
+        cases=cases,
+        candidate_cases=candidate_cases,
+        matched=matched,
+        missing_candidates=missing,
+        accuracy=_ratio(matched, cases, empty_status=MetricStatus.NOT_APPLICABLE),
     )

@@ -322,26 +322,43 @@ def evaluate_assertion_proposals(
     typer.echo(f"Candidate mode          : {report.candidate_mode}")
     typer.echo(f"Source binding          : {report.source_binding}")
     typer.echo(
-        "Entities                : "
-        f"P={aggregate.entities.precision:.4f}, "
-        f"R={aggregate.entities.recall:.4f}, F1={aggregate.entities.f1:.4f}"
+        "Entities (label)        : "
+        f"P={_format_ratio(aggregate.entities.precision)}, "
+        f"R={_format_ratio(aggregate.entities.recall)}, "
+        f"F1={_format_ratio(aggregate.entities.f1)}"
+    )
+    typer.echo(
+        "Entities (typed)        : "
+        f"P={_format_ratio(aggregate.typed_entities.precision)}, "
+        f"R={_format_ratio(aggregate.typed_entities.recall)}, "
+        f"F1={_format_ratio(aggregate.typed_entities.f1)}"
+    )
+    typer.echo(
+        f"Entity class accuracy   : {_format_ratio(aggregate.entity_class_accuracy.accuracy)}"
     )
     typer.echo(
         "Assertions              : "
-        f"P={aggregate.assertions.precision:.4f}, "
-        f"R={aggregate.assertions.recall:.4f}, F1={aggregate.assertions.f1:.4f}"
+        f"P={_format_ratio(aggregate.assertions.precision)}, "
+        f"R={_format_ratio(aggregate.assertions.recall)}, "
+        f"F1={_format_ratio(aggregate.assertions.f1)}"
     )
+    typer.echo(f"Predicate accuracy      : {_format_ratio(aggregate.predicate_accuracy.accuracy)}")
     typer.echo(
-        f"Normative force accuracy: {_format_accuracy(aggregate.normative_force_accuracy.accuracy)}"
+        f"Normative force accuracy: {_format_ratio(aggregate.normative_force_accuracy.accuracy)}"
     )
+    typer.echo(f"Evidence integrity      : {_format_ratio(aggregate.evidence_integrity.validity)}")
     typer.echo(
-        f"Grounding accuracy      : {_format_accuracy(aggregate.grounding_accuracy.accuracy)}"
+        f"Evidence span exact     : {_format_ratio(aggregate.evidence_span_exact_match.accuracy)}"
     )
+    typer.echo(f"Clause exact match      : {_format_ratio(aggregate.clause_exact_match.accuracy)}")
+    typer.echo(f"Semantic evidence       : {aggregate.semantic_evidence.status}")
     typer.echo(f"Report                  : {report_path}")
 
 
-def _format_accuracy(value: float | None) -> str:
-    return "n/a" if value is None else f"{value:.4f}"
+def _format_ratio(metric) -> str:
+    if metric.value is None:
+        return f"n/a ({metric.status.value}, n={metric.denominator})"
+    return f"{metric.value:.4f} (n={metric.denominator})"
 
 
 @evaluation_app.command("assertion-cascade")

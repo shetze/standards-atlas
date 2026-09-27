@@ -17,9 +17,12 @@ from standards_atlas.application.assertion_qualification import (
     AssertionQualificationEvaluator,
     AssertionVerificationDisposition,
     AssertionVerifierProvenance,
+    CountMetrics,
     GoldenEvidenceSpan,
     GoldenKnowledgeEntity,
     GoldenNormativeAssertion,
+    MetricStatus,
+    RatioMetric,
 )
 from standards_atlas.application.assertion_qualification.evaluation import proposal_sha256
 from standards_atlas.application.assertion_qualification.policy import (
@@ -56,7 +59,7 @@ def _thresholds(**changes) -> AssertionQualityThresholds:
         "min_assertion_recall": 1.0,
         "min_predicate_accuracy": 1.0,
         "min_normative_force_accuracy": 1.0,
-        "min_grounding_accuracy": 1.0,
+        "min_evidence_span_exact_match_accuracy": 1.0,
         "min_exact_assertion_accuracy": 1.0,
         "max_entity_false_positives": 0,
         "max_entity_false_negatives": 0,
@@ -375,14 +378,27 @@ def test_holdout_gate_failure_blocks_all_auto_adoption() -> None:
         update={
             "aggregate": holdout_report.aggregate.model_copy(
                 update={
-                    "assertions": holdout_report.aggregate.assertions.model_copy(
-                        update={
-                            "expected": 2,
-                            "true_positive": 1,
-                            "false_negative": 1,
-                            "recall": 0.5,
-                            "f1": 2 / 3,
-                        }
+                    "assertions": CountMetrics(
+                        expected=2,
+                        predicted=1,
+                        true_positive=1,
+                        false_positive=0,
+                        false_negative=1,
+                        precision=RatioMetric(
+                            numerator=1, denominator=1, value=1.0, status=MetricStatus.OK
+                        ),
+                        recall=RatioMetric(
+                            numerator=1, denominator=2, value=0.5, status=MetricStatus.OK
+                        ),
+                        f1=RatioMetric(
+                            numerator=2, denominator=3, value=2 / 3, status=MetricStatus.OK
+                        ),
+                        over_extraction=RatioMetric(
+                            numerator=0, denominator=1, value=0.0, status=MetricStatus.OK
+                        ),
+                        under_extraction=RatioMetric(
+                            numerator=1, denominator=2, value=0.5, status=MetricStatus.OK
+                        ),
                     )
                 }
             )

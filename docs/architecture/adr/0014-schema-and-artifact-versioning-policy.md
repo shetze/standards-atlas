@@ -190,10 +190,12 @@ local entity/assertion IDs in different cases remain valid. A suite binds the or
 review bytes and frozen case sources. The separately supported `assertion-review-pilot`
 audit contract is not an obsolete productive golden format and remains readable.
 
-Reports require an explicit `assertion-clause-local-interim-v1` evaluation contract and
-a discriminated `native_proposal` / `review_snapshot` origin. Native proposal artifacts
+Reports require the explicit `assertion-clause-local-v1` evaluation contract and a
+discriminated `native_proposal` / `review_snapshot` origin. Native proposal artifacts
 remain unchanged; review snapshots are projected into a non-persisted evaluation view,
-not migrated into invented productive proposals. The interim report metric semantics
-are documented and are not silently replaced by later, looser matching rules.
+not migrated into invented productive proposals. Series B replaces the interim report
+shape by a clean-break dimensional contract: class-independent and typed entity views,
+explicit ratio supports/null states, ambiguity-aware attribute alignment, separated
+source integrity/span equality/semantic-evidence state, and clause-level exact match.
 Review-snapshot reports are rejected by the auto-adoption qualification boundary.
-See `docs/development/assertion-golden-regression.md` for the complete Series A contract.
+See `docs/development/assertion-golden-regression.md` for the current AP01 contract.

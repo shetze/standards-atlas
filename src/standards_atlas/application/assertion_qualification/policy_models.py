@@ -46,7 +46,7 @@ class AssertionQualityThresholds(BaseModel):
     min_assertion_recall: float = Field(ge=0.0, le=1.0)
     min_predicate_accuracy: float = Field(ge=0.0, le=1.0)
     min_normative_force_accuracy: float = Field(ge=0.0, le=1.0)
-    min_grounding_accuracy: float = Field(ge=0.0, le=1.0)
+    min_evidence_span_exact_match_accuracy: float = Field(ge=0.0, le=1.0)
     min_exact_assertion_accuracy: float = Field(ge=0.0, le=1.0)
     max_entity_false_positives: int | None = Field(default=None, ge=0)
     max_entity_false_negatives: int | None = Field(default=None, ge=0)

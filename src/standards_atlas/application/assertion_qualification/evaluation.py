@@ -23,6 +23,9 @@ from standards_atlas.application.assertion_qualification.projection import (
     project_native_proposal,
     project_review_snapshot,
 )
+from standards_atlas.application.assertion_qualification.source_resolution import (
+    FrozenSourceResolver,
+)
 from standards_atlas.domain.model import DocumentKnowledgeProposal
 
 
@@ -61,9 +64,16 @@ class AssertionQualificationEvaluator:
             candidates, sources = _native_inputs(suite, proposals)
             candidate_mode = "native_proposal"
 
-        # Both inputs use this one comparison and aggregation path.
+        # Both inputs use one comparison path. Source integrity is evaluated only
+        # against the exact byte-bound audit when that source basis is actually supplied.
+        source_resolver = FrozenSourceResolver.from_audit(audit) if audit is not None else None
         case_reports = tuple(
-            evaluate_case(case, candidates.get(case.case_key)).report for case in suite.cases
+            evaluate_case(
+                case,
+                candidates.get(case.case_key),
+                source_resolver=source_resolver,
+            ).report
+            for case in suite.cases
         )
         return AssertionQualificationReport(
             evaluation_contract=ASSERTION_EVALUATION_CONTRACT,

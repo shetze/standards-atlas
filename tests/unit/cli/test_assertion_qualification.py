@@ -87,7 +87,8 @@ def test_assertion_evaluate_cli_writes_threshold_free_report(tmp_path: Path) -> 
     assert "Assertions" in result.stdout
     report = AssertionQualificationReport.model_validate_json(output.read_text(encoding="utf-8"))
     assert report.golden_suite_id == "dev"
-    assert report.aggregate.entities.f1 == 1.0
+    assert report.aggregate.entities.f1.value is None
+    assert report.aggregate.entities.f1.status.value == "not_applicable"
     assert "passed" not in AssertionQualificationReport.model_fields
     assert "accepted" not in AssertionQualificationReport.model_fields
 

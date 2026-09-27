@@ -146,13 +146,13 @@ def test_exact_semantic_match_is_independent_of_proposal_ids_and_label_case() ->
     report = AssertionQualificationEvaluator().evaluate(_suite(), (_proposal(),))
 
     assert report.aggregate.entities.true_positive == 2
-    assert report.aggregate.entities.precision == 1.0
+    assert report.aggregate.entities.precision.value == 1.0
     assert report.aggregate.assertions.true_positive == 1
-    assert report.aggregate.assertions.f1 == 1.0
-    assert report.aggregate.predicate_accuracy.accuracy == 1.0
-    assert report.aggregate.normative_force_accuracy.accuracy == 1.0
-    assert report.aggregate.grounding_accuracy.accuracy == 1.0
-    assert report.aggregate.exact_assertion_accuracy.accuracy == 1.0
+    assert report.aggregate.assertions.f1.value == 1.0
+    assert report.aggregate.predicate_accuracy.accuracy.value == 1.0
+    assert report.aggregate.normative_force_accuracy.accuracy.value == 1.0
+    assert report.aggregate.evidence_span_exact_match.accuracy.value == 1.0
+    assert report.aggregate.exact_assertion_accuracy.accuracy.value == 1.0
     assert report.cases[0].assertion_false_positive_ids == ()
     assert report.cases[0].assertion_false_negative_ids == ()
 
@@ -167,8 +167,8 @@ def test_wrong_predicate_is_assertion_fp_fn_and_endpoint_predicate_error() -> No
     assert report.aggregate.assertions.false_positive == 1
     assert report.aggregate.assertions.false_negative == 1
     assert report.aggregate.predicate_accuracy.evaluated == 1
-    assert report.aggregate.predicate_accuracy.accuracy == 0.0
-    assert report.aggregate.normative_force_accuracy.accuracy is None
+    assert report.aggregate.predicate_accuracy.accuracy.value == 0.0
+    assert report.aggregate.normative_force_accuracy.accuracy.value is None
 
 
 def test_force_and_grounding_are_measured_after_semantic_assertion_match() -> None:
@@ -178,9 +178,9 @@ def test_force_and_grounding_are_measured_after_semantic_assertion_match() -> No
     )
 
     assert report.aggregate.assertions.true_positive == 1
-    assert report.aggregate.normative_force_accuracy.accuracy == 0.0
-    assert report.aggregate.grounding_accuracy.accuracy == 0.0
-    assert report.aggregate.exact_assertion_accuracy.accuracy == 0.0
+    assert report.aggregate.normative_force_accuracy.accuracy.value == 0.0
+    assert report.aggregate.evidence_span_exact_match.accuracy.value == 0.0
+    assert report.aggregate.exact_assertion_accuracy.accuracy.value == 0.0
 
 
 def test_missing_proposal_is_reported_as_false_negatives_not_an_exception() -> None:
@@ -190,7 +190,10 @@ def test_missing_proposal_is_reported_as_false_negatives_not_an_exception() -> N
     assert report.aggregate.assertions.false_negative == 1
     assert report.cases[0].provenance is None
     assert report.cases[0].candidate_status == "missing"
-    assert report.aggregate.predicate_accuracy.accuracy is None
+    assert report.aggregate.predicate_accuracy.accuracy.value is None
+    assert report.cases[0].clause_exact_match.value is None
+    assert report.aggregate.clause_exact_match.missing_candidates == 1
+    assert report.aggregate.clause_exact_match.accuracy.value == 0.0
 
 
 def test_proposal_ontology_binding_must_match_golden_suite() -> None:
@@ -310,5 +313,220 @@ def test_current_report_validates_distinct_documents_and_case_counts() -> None:
         AssertionQualificationReport.model_validate(payload)
     payload = report.model_dump(mode="json")
     del payload["evaluation_contract"]
+    with pytest.raises(ValueError, match="evaluation_contract"):
+        AssertionQualificationReport.model_validate(payload)
+
+
+def test_wrong_entity_class_keeps_identity_match_but_fails_typed_and_class_metrics() -> None:
+    native = _proposal()
+    wrong_plan = native.entity_proposals[0].model_copy(update={"class_iri": f"{STAT}Plan"})
+    native = native.model_copy(
+        update={"entity_proposals": (wrong_plan, native.entity_proposals[1])}
+    )
+
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (native,))
+
+    assert report.aggregate.entities.true_positive == 2
+    assert report.aggregate.typed_entities.true_positive == 1
+    assert report.aggregate.typed_entities.false_positive == 1
+    assert report.aggregate.typed_entities.false_negative == 1
+    assert report.aggregate.entity_class_accuracy.evaluated == 2
+    assert report.aggregate.entity_class_accuracy.accuracy.value == 0.5
+    assert report.aggregate.assertions.true_positive == 1
+    assert report.cases[0].clause_exact_match.value is False
+
+
+def test_duplicate_prediction_counts_as_extra_and_makes_attribute_alignment_ambiguous() -> None:
+    native = _proposal()
+    duplicate = native.entity_proposals[0].model_copy(update={"id": "proposal-plan-duplicate"})
+    native = native.model_copy(update={"entity_proposals": (*native.entity_proposals, duplicate)})
+
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (native,))
+    case = report.cases[0]
+
+    assert case.entities.expected == 2
+    assert case.entities.predicted == 3
+    assert case.entities.true_positive == 2
+    assert case.entities.false_positive == 1
+    assert case.entity_class_accuracy.evaluated == 1
+    assert case.entity_class_accuracy.ambiguous_expected == 1
+    assert case.entity_class_accuracy.ambiguous_predicted == 2
+    ambiguous = [item for item in case.entity_alignment if item.status.value == "ambiguous"]
+    assert len(ambiguous) == 1
+    assert ambiguous[0].golden_ids == ("g-plan",)
+    assert ambiguous[0].candidate_ids == ("proposal-plan", "proposal-plan-duplicate")
+
+
+def test_one_candidate_does_not_satisfy_two_golden_entities_with_same_label() -> None:
+    base = _suite()
+    original = base.cases[0]
+    suite = AssertionGoldenSuite.model_validate(
+        base.model_copy(
+            update={
+                "cases": (
+                    original.model_copy(
+                        update={
+                            "entities": (
+                                original.entities[0],
+                                original.entities[0].model_copy(
+                                    update={"id": "g-plan-second", "class_iri": f"{STAT}Plan"}
+                                ),
+                            ),
+                            "assertions": (),
+                        }
+                    ),
+                )
+            }
+        ).model_dump(mode="json")
+    )
+    native = _proposal().model_copy(
+        update={
+            "entity_proposals": (_proposal().entity_proposals[0],),
+            "assertion_proposals": (),
+        }
+    )
+
+    report = AssertionQualificationEvaluator().evaluate(suite, (native,))
+    case = report.cases[0]
+
+    assert case.entities.true_positive == 1
+    assert case.entities.false_negative == 1
+    assert case.entity_class_accuracy.evaluated == 0
+    assert case.entity_class_accuracy.ambiguous_expected == 2
+    assert case.entity_class_accuracy.ambiguous_predicted == 1
+    assert case.entity_class_accuracy.accuracy.value is None
+
+
+def test_removed_label_restriction_is_not_a_strict_identity_match() -> None:
+    base = _suite()
+    restricted_case = base.cases[0].model_copy(
+        update={
+            "entities": (
+                base.cases[0]
+                .entities[0]
+                .model_copy(update={"normalized_label": "verification plan only"}),
+                base.cases[0].entities[1],
+            )
+        }
+    )
+    suite = AssertionGoldenSuite.model_validate(
+        base.model_copy(update={"cases": (restricted_case,)}).model_dump(mode="json")
+    )
+
+    report = AssertionQualificationEvaluator().evaluate(suite, (_proposal(),))
+
+    assert report.aggregate.entities.true_positive == 1
+    assert report.aggregate.entities.false_positive == 1
+    assert report.aggregate.entities.false_negative == 1
+    assert report.aggregate.assertions.true_positive == 0
+
+
+def test_empty_expected_and_predicted_sets_have_null_prf_but_exact_case_match() -> None:
+    base = _suite()
+    empty_case = base.cases[0].model_copy(update={"entities": (), "assertions": ()})
+    suite = AssertionGoldenSuite.model_validate(
+        base.model_copy(update={"cases": (empty_case,)}).model_dump(mode="json")
+    )
+    native = _proposal().model_copy(update={"entity_proposals": (), "assertion_proposals": ()})
+
+    report = AssertionQualificationEvaluator().evaluate(suite, (native,))
+
+    assert report.aggregate.entities.precision.value is None
+    assert report.aggregate.entities.recall.value is None
+    assert report.aggregate.entities.f1.value is None
+    assert report.aggregate.entities.precision.status.value == "not_applicable"
+    assert report.aggregate.assertions.f1.value is None
+    assert report.cases[0].clause_exact_match.value is True
+    assert report.aggregate.clause_exact_match.accuracy.value == 1.0
+
+
+def test_nonempty_expected_with_empty_prediction_has_zero_recall_and_null_precision() -> None:
+    native = _proposal().model_copy(update={"entity_proposals": (), "assertion_proposals": ()})
+
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (native,))
+
+    assert report.aggregate.entities.precision.value is None
+    assert report.aggregate.entities.recall.value == 0.0
+    assert report.aggregate.entities.f1.value == 0.0
+    assert report.aggregate.entities.under_extraction.value == 1.0
+    assert report.aggregate.assertions.recall.value == 0.0
+    assert report.cases[0].clause_exact_match.value is False
+
+
+def test_entity_input_order_does_not_change_strict_metrics_or_alignment() -> None:
+    native = _proposal()
+    reversed_native = native.model_copy(
+        update={"entity_proposals": tuple(reversed(native.entity_proposals))}
+    )
+
+    first = AssertionQualificationEvaluator().evaluate(_suite(), (native,))
+    second = AssertionQualificationEvaluator().evaluate(_suite(), (reversed_native,))
+
+    assert first.aggregate == second.aggregate
+    assert first.cases[0].entity_alignment == second.cases[0].entity_alignment
+
+
+def test_wrong_force_isolated_to_force_and_clause_exact_dimensions() -> None:
+    report = AssertionQualificationEvaluator().evaluate(
+        _suite(),
+        (_proposal(force=NormativeForce.RECOMMENDATION),),
+    )
+
+    assert report.aggregate.assertions.true_positive == 1
+    assert report.aggregate.predicate_accuracy.accuracy.value == 1.0
+    assert report.aggregate.normative_force_accuracy.accuracy.value == 0.0
+    assert report.aggregate.evidence_span_exact_match.accuracy.value == 1.0
+    assert report.aggregate.exact_assertion_accuracy.accuracy.value == 0.0
+    assert report.cases[0].clause_exact_match.value is False
+
+
+def test_aggregate_attribute_accuracy_uses_global_support_not_case_average() -> None:
+    base = _suite()
+    first_case = base.cases[0].model_copy(
+        update={"entities": (base.cases[0].entities[0],), "assertions": ()}
+    )
+    second_case = base.cases[0].model_copy(
+        update={"source_document_key": "EN50716-2", "assertions": ()}
+    )
+    suite = AssertionGoldenSuite.model_validate(
+        base.model_copy(update={"cases": (first_case, second_case)}).model_dump(mode="json")
+    )
+
+    first_native = _proposal().model_copy(
+        update={
+            "entity_proposals": (
+                _proposal().entity_proposals[0].model_copy(update={"class_iri": f"{STAT}Plan"}),
+            ),
+            "assertion_proposals": (),
+        }
+    )
+    second_native = _proposal().model_copy(
+        update={
+            "proposal_run_id": "run-2",
+            "source_document_key": "EN50716-2",
+            "assertion_proposals": (),
+        }
+    )
+
+    report = AssertionQualificationEvaluator().evaluate(suite, (first_native, second_native))
+
+    assert report.cases[0].entity_class_accuracy.accuracy.value == 0.0
+    assert report.cases[1].entity_class_accuracy.accuracy.value == 1.0
+    assert report.aggregate.entity_class_accuracy.correct == 2
+    assert report.aggregate.entity_class_accuracy.evaluated == 3
+    assert report.aggregate.entity_class_accuracy.accuracy.value == pytest.approx(2 / 3)
+
+
+def test_report_validation_rejects_inconsistent_count_identity_and_interim_contract() -> None:
+    from standards_atlas.application.assertion_qualification import AssertionQualificationReport
+
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (_proposal(),))
+    payload = report.model_dump(mode="json")
+    payload["aggregate"]["entities"]["false_positive"] = 1
+    with pytest.raises(ValueError, match="false_positive"):
+        AssertionQualificationReport.model_validate(payload)
+
+    payload = report.model_dump(mode="json")
+    payload["evaluation_contract"] = "assertion-clause-local-interim-v1"
     with pytest.raises(ValueError, match="evaluation_contract"):
         AssertionQualificationReport.model_validate(payload)
