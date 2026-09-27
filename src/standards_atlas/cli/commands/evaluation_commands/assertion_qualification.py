@@ -336,6 +336,15 @@ def evaluate_assertion_proposals(
     typer.echo(
         f"Entity class accuracy   : {_format_ratio(aggregate.entity_class_accuracy.accuracy)}"
     )
+    typer.echo(f"Work product precision  : {_format_ratio(aggregate.work_product_precision)}")
+    typer.echo(f"Work product recall     : {_format_ratio(aggregate.work_product_recall)}")
+    typer.echo(
+        f"WP class accuracy       : {_format_ratio(aggregate.work_product_class_accuracy.accuracy)}"
+    )
+    typer.echo(
+        "Required WP relation R  : "
+        f"{_format_ratio(aggregate.required_work_product_relation_recall)}"
+    )
     typer.echo(
         "Assertions              : "
         f"P={_format_ratio(aggregate.assertions.precision)}, "
@@ -352,6 +361,20 @@ def evaluate_assertion_proposals(
     )
     typer.echo(f"Clause exact match      : {_format_ratio(aggregate.clause_exact_match.accuracy)}")
     typer.echo(f"Semantic evidence       : {aggregate.semantic_evidence.status}")
+    finding_count = sum(len(case.diagnostic_findings) for case in report.cases)
+    review_count = sum(
+        finding.status.value == "needs_review"
+        for case in report.cases
+        for finding in case.diagnostic_findings
+    )
+    typer.echo(f"Diagnostic findings     : {finding_count} ({review_count} need review)")
+    typer.echo(
+        "Ontology resources      : "
+        + ", ".join(
+            f"{binding.reference}:{binding.resource_sha256[:12]}"
+            for binding in report.ontology_resources
+        )
+    )
     typer.echo(f"Report                  : {report_path}")
 
 

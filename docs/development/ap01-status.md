@@ -1,55 +1,62 @@
-# AP01 status — Series B / S04–S06
+# AP01 status — Series C / S07–S08
 
-Date: 2026-09-27. Series B implementation is complete in this delivery; user-local
+Date: 2026-09-27. Series C implementation is complete in this delivery; user-local
 `uv run ruff check .` and the uninterrupted full `uv run pytest` remain the acceptance
-check after applying the delta. Series C/D are not implemented.
+check after applying the delta. Series D is not implemented.
+
+## Snapshot prerequisite recovered
+
+The supplied Series-C snapshot has SHA-256
+`868bd1576ea6c6160375e0a71271b4f99e8265c9cdacec9c0907f60082afeaa2`, which is exactly
+the recorded base of the already delivered Series-B delta. Its Series-B files were still
+at their recorded pre-Series-B hashes and `source_resolution.py` was absent. The working
+tree therefore reapplies the previously delivered Series-B delta byte-for-byte before
+adding S07-S08. Consequently this Series-C delta, which is correctly based on the supplied
+snapshot, also contains those prerequisite Series-B changes. No new Series-B semantics
+were invented during this recovery.
 
 ## Delivered boundaries
 
-S04: strict multiset matching is separated from diagnostic/attribute alignment. Entity
-recognition uses NFKC/casefold/collapsed-whitespace label identity; typed entities remain
-a separate view. Assertion identity requires directed endpoints plus predicate. Duplicate
-predictions stay visible and ambiguous buckets are never best-fit paired.
+S07: the formal ontology subclass hierarchy is a shared deterministic component used by
+both proposal unification and assertion evaluation. Work-product membership is derived
+only from `WorkProduct` plus transitive `rdfs:subClassOf` declarations in the explicitly
+bound ontology resources. `EngineeringRecord` and transitive classes such as
+`VerificationPlan` qualify; `EngineeringArtifact` alone does not. The report now carries
+`work_product_precision`, `work_product_recall`, `work_product_class_accuracy` and
+`required_work_product_relation_recall`, plus exact ontology resource SHA-256 bindings.
+A same-identity candidate typed only as `EngineeringEntity` remains in the WP class-
+accuracy denominator. Literals, wrong relation direction/predicate and predicate-domain
+inference do not manufacture a required WorkProduct relation.
 
-S05: report metrics now carry explicit numerator/denominator/value/status data. Entity and
-typed-entity P/R/F1, class accuracy, assertion P/R/F1, predicate accuracy, normative-force
-accuracy, over-/under-extraction and alignment coverage are computed from counts/supports.
-Zero denominators produce `null`, and aggregate metrics are recomputed from aggregate
-supports rather than averaged case percentages. The auto-adoption policy keeps typed
-entity gates and uses the clean-break `min_evidence_span_exact_match_accuracy` threshold.
+S08: case reports now retain traceable diagnostic findings using the AP01 vocabulary.
+Unique class, predicate and normative-force differences can be rule-based findings;
+technical invalid grounding can be rule-based as well. Strictly missing/additional or
+ambiguous semantic objects remain `needs_review`/`unclassified_semantic_mismatch` where
+the difference alone does not prove the fachliche cause. Retained proposal violations can
+suggest note/list/context/condition and related codes but never become human-confirmed
+without an explicit human annotation. Additional assertions are not automatically marked
+`invented_assertion`; heading evidence is not by itself `wrong_context_use`. Diagnostics
+do not alter strict metrics.
 
-S06: frozen audit sources are resolved by document, clause and source kind. Own bodies and
-headings, identifiable ancestor headings and complete associative-context bodies/headings
-can be checked; missing surfaces are unavailable and conflicting frozen versions remain
-explicit. Technical source integrity, exact golden-span equality and semantic evidence are
-separate report dimensions. Clause-level exact match covers the fields actually annotated
-in the golden and treats a missing candidate as missing, never as an exact empty result.
-
-Current evaluation contract: `assertion-clause-local-v1`. Schema families remain at 1;
-there is no reader for the Series-A interim report shape. Golden expectations, audit bytes,
-productive context selection and model/prompt behavior were not changed. Work-product
-metrics and semantic error findings remain Series C.
+Current evaluation contract remains `assertion-clause-local-v1`; schema families remain
+at schema 1 under the clean-break policy. Golden expectations, audit bytes, productive
+context selection and model/prompt behavior were not changed. No model, verifier, cascade,
+embedding, unification merge or canonical adoption run is part of Series C.
 
 ## Actual checks in this delivery environment
 
-S04 matching/evaluation gate: 20 passed. S05 policy/CLI consumer gate: 16 passed.
-S06 audit/source-resolution gate: 46 passed.
-Assertion + CLI + assertion-architecture gate: 114 passed.
-Assertion + CLI + assertion-architecture + schema gates: 208 passed.
-Architecture + contract suite: 126 passed.
-Integration subsets completed before the execution-window limit: adapters 32 passed / 1
-skipped; application 1 passed; atlasdata 4 passed; knowledge 2 skipped; two workflow files
-12 passed. A monolithic full-suite run and the slower enrichments workflow file exceeded
-the container command window and are therefore not recorded as passes.
+The prerequisite Series-B evaluation/unification check passed 25 tests before Series-C
+changes. After S07, the focused evaluation, work-product and unification gate passed 30
+tests. After S08, the focused assertion evaluation/work-product/unification gate passed
+36 tests before the broader Series-C checks recorded in `_delivery/tests.md`.
 
-`uv run --offline ruff check .` could not resolve the project environment because
-`jsonschema` is not present in the local uv cache while network access is disabled. Python
-3.13 compilation and all completed pytest subsets above succeeded. This is an outstanding
-lint/full-suite environment check, not a claimed Ruff/full-suite pass.
+The environment uses the available Python 3.13 interpreter with `PYTHONPATH=src` for these
+checks. `uv run --offline` cannot resolve the project environment because required wheels
+are not fully present in the local uv cache; this remains an environment limitation, not
+a substituted claim that the user's local Ruff/full-pytest acceptance has passed.
 
 ## Next authorized implementation boundary
 
-After the user's local `ruff` and full `pytest` checks, Series C may implement S07-S08:
-ontology-derived WorkProduct metrics and qualified error diagnoses. Do not change the
-strict Series-B metrics to improve the v8 baseline, and do not start Series D or AP02/AP03
-as part of a Series-B correction.
+After the user's local Ruff and full-pytest checks, Series D may implement S09-S10:
+end-to-end/No-LLM hardening and the reproducible private v8 pilot baseline. Do not start
+AP02/AP03 as part of a Series-C correction.

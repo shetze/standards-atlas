@@ -197,5 +197,8 @@ not migrated into invented productive proposals. Series B replaces the interim r
 shape by a clean-break dimensional contract: class-independent and typed entity views,
 explicit ratio supports/null states, ambiguity-aware attribute alignment, separated
 source integrity/span equality/semantic-evidence state, and clause-level exact match.
-Review-snapshot reports are rejected by the auto-adoption qualification boundary.
-See `docs/development/assertion-golden-regression.md` for the current AP01 contract.
+Series C extends that current-only report shape with ontology-resource bindings, the four
+WorkProduct dimensions and case-local diagnostic findings. These additions stay within the
+AP01 clean-break schema-1 contract; no compatibility reader is introduced. Review-snapshot
+reports are rejected by the auto-adoption qualification boundary. See
+`docs/development/assertion-golden-regression.md` for the current AP01 contract.

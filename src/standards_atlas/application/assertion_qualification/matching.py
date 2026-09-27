@@ -8,6 +8,9 @@ from collections import Counter, defaultdict
 from collections.abc import Hashable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
+from standards_atlas.application.assertion_qualification.diagnostics import (
+    build_diagnostic_findings,
+)
 from standards_atlas.application.assertion_qualification.models import (
     AccuracyMetrics,
     AssertionGoldenCase,
@@ -36,9 +39,17 @@ from standards_atlas.application.assertion_qualification.review_pilot_models imp
 from standards_atlas.application.assertion_qualification.source_resolution import (
     FrozenSourceResolver,
 )
-from standards_atlas.domain.model import EntityAssertionObject, LiteralAssertionObject
+from standards_atlas.application.formal_semantics import FormalClassHierarchy
+from standards_atlas.domain.model import (
+    FORMAL_SEMANTIC_NAMESPACE,
+    EntityAssertionObject,
+    LiteralAssertionObject,
+)
 
 _Signature = tuple[Hashable, ...]
+_WORK_PRODUCT = f"{FORMAL_SEMANTIC_NAMESPACE}WorkProduct"
+_REQUIREMENT = f"{FORMAL_SEMANTIC_NAMESPACE}Requirement"
+_REQUIRES = f"{FORMAL_SEMANTIC_NAMESPACE}requires"
 
 
 @dataclass(frozen=True)
@@ -69,6 +80,7 @@ def evaluate_case(
     golden: AssertionGoldenCase,
     proposal: ClauseEvaluationCandidate | None,
     *,
+    class_hierarchy: FormalClassHierarchy,
     source_resolver: FrozenSourceResolver | None = None,
 ) -> CaseMatchResult:
     """Evaluate one case without semantic guessing or best-fit attribute pairing."""
@@ -111,6 +123,17 @@ def evaluate_case(
         entity_alignment,
         expected_values={item_id: item.class_iri for item_id, item in golden_entities.items()},
         predicted_values={item_id: item.class_iri for item_id, item in proposal_entities.items()},
+    )
+    (
+        work_product_precision,
+        work_product_recall,
+        work_product_class_accuracy,
+    ) = _work_product_entity_metrics(
+        golden=golden,
+        proposal=proposal,
+        hierarchy=class_hierarchy,
+        golden_entity_identity=golden_entity_identity,
+        proposal_entity_identity=proposal_entity_identity,
     )
 
     golden_assertions = tuple(
@@ -169,6 +192,13 @@ def evaluate_case(
             item.id: (item.normative_force, item.evidence) for item in proposal_assertions
         },
     )
+    required_work_product_relation_recall = _required_work_product_relation_recall(
+        golden=golden,
+        proposal=proposal,
+        hierarchy=class_hierarchy,
+        golden_entity_identity=golden_entity_identity,
+        proposal_entity_identity=proposal_entity_identity,
+    )
 
     evidence_findings = _evidence_integrity_findings(
         golden.source_document_key,
@@ -176,6 +206,15 @@ def evaluate_case(
         source_resolver=source_resolver,
     )
     evidence_integrity = _evidence_integrity_metrics(evidence_findings)
+    diagnostic_findings = build_diagnostic_findings(
+        golden=golden,
+        proposal=proposal,
+        hierarchy=class_hierarchy,
+        entity_alignment=entity_alignment.records,
+        endpoint_alignment=endpoint_alignment.records,
+        relation_alignment=relation_alignment.records,
+        evidence_findings=evidence_findings,
+    )
 
     clause_exact_match = _case_exact_match(
         proposal=proposal,
@@ -197,6 +236,10 @@ def evaluate_case(
             entities=entity_metrics,
             typed_entities=typed_entity_metrics,
             entity_class_accuracy=entity_class_accuracy,
+            work_product_precision=work_product_precision,
+            work_product_recall=work_product_recall,
+            work_product_class_accuracy=work_product_class_accuracy,
+            required_work_product_relation_recall=required_work_product_relation_recall,
             assertions=assertion_metrics,
             predicate_accuracy=predicate_accuracy,
             normative_force_accuracy=normative_force_accuracy,
@@ -209,6 +252,7 @@ def evaluate_case(
             assertion_endpoint_alignment=endpoint_alignment.records,
             assertion_relation_alignment=relation_alignment.records,
             evidence_integrity_findings=evidence_findings,
+            diagnostic_findings=diagnostic_findings,
             entity_false_positive_ids=_unmatched_ids(
                 proposal_entity_identity, golden_entity_identity
             ),
@@ -241,6 +285,14 @@ def aggregate_case_reports(
         entities=_sum_count_metrics(report.entities for report in reports),
         typed_entities=_sum_count_metrics(report.typed_entities for report in reports),
         entity_class_accuracy=_sum_accuracy(report.entity_class_accuracy for report in reports),
+        work_product_precision=_sum_ratio(report.work_product_precision for report in reports),
+        work_product_recall=_sum_ratio(report.work_product_recall for report in reports),
+        work_product_class_accuracy=_sum_accuracy(
+            report.work_product_class_accuracy for report in reports
+        ),
+        required_work_product_relation_recall=_sum_ratio(
+            report.required_work_product_relation_recall for report in reports
+        ),
         assertions=_sum_count_metrics(report.assertions for report in reports),
         predicate_accuracy=_sum_accuracy(report.predicate_accuracy for report in reports),
         normative_force_accuracy=_sum_accuracy(
@@ -261,6 +313,107 @@ def aggregate_case_reports(
 def _normalize_label(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).strip().casefold()
     return re.sub(r"\s+", " ", normalized)
+
+
+def _work_product_entity_metrics(
+    *,
+    golden: AssertionGoldenCase,
+    proposal: ClauseEvaluationCandidate | None,
+    hierarchy: FormalClassHierarchy,
+    golden_entity_identity: Mapping[str, _Signature],
+    proposal_entity_identity: Mapping[str, _Signature],
+) -> tuple[RatioMetric, RatioMetric, AccuracyMetrics]:
+    golden_by_id = {item.id: item for item in golden.entities}
+    proposal_by_id = {item.id: item for item in proposal.entities} if proposal is not None else {}
+    expected_wp = {
+        item_id: golden_entity_identity[item_id]
+        for item_id, item in golden_by_id.items()
+        if hierarchy.is_ancestor_or_same(_WORK_PRODUCT, item.class_iri)
+    }
+    predicted_wp = {
+        item_id: proposal_entity_identity[item_id]
+        for item_id, item in proposal_by_id.items()
+        if hierarchy.is_ancestor_or_same(_WORK_PRODUCT, item.class_iri)
+    }
+    family_alignment = _alignment(
+        source_document_key=golden.source_document_key,
+        clause_id=golden.clause_id,
+        rule="entity_label_identity",
+        expected=expected_wp,
+        predicted=predicted_wp,
+    )
+    matched = len(family_alignment.pairs)
+    precision = _ratio(matched, len(predicted_wp), empty_status=MetricStatus.NOT_APPLICABLE)
+    recall = _ratio(matched, len(expected_wp), empty_status=MetricStatus.NOT_APPLICABLE)
+
+    # Class accuracy deliberately aligns expected WP identities against every predicted
+    # entity. A generic EngineeringEntity prediction therefore remains in the denominator
+    # and is measured as a wrong concrete class rather than disappearing from the metric.
+    class_alignment = _alignment(
+        source_document_key=golden.source_document_key,
+        clause_id=golden.clause_id,
+        rule="entity_label_identity",
+        expected=expected_wp,
+        predicted=proposal_entity_identity,
+    )
+    class_accuracy = _attribute_accuracy(
+        class_alignment,
+        expected_values={item_id: golden_by_id[item_id].class_iri for item_id in expected_wp},
+        predicted_values={item_id: item.class_iri for item_id, item in proposal_by_id.items()},
+    )
+    return precision, recall, class_accuracy
+
+
+def _required_work_product_relation_recall(
+    *,
+    golden: AssertionGoldenCase,
+    proposal: ClauseEvaluationCandidate | None,
+    hierarchy: FormalClassHierarchy,
+    golden_entity_identity: Mapping[str, _Signature],
+    proposal_entity_identity: Mapping[str, _Signature],
+) -> RatioMetric:
+    golden_entities = {item.id: item for item in golden.entities}
+    proposal_entities = (
+        {item.id: item for item in proposal.entities} if proposal is not None else {}
+    )
+
+    def relation_signature(assertion, entities, identities):
+        subject = entities.get(assertion.subject_id)
+        if subject is None or not hierarchy.is_ancestor_or_same(_REQUIREMENT, subject.class_iri):
+            return None
+        if assertion.predicate != _REQUIRES or not isinstance(
+            assertion.object, EntityAssertionObject
+        ):
+            return None
+        object_entity = entities.get(assertion.object.entity_id)
+        if object_entity is None or not hierarchy.is_ancestor_or_same(
+            _WORK_PRODUCT, object_entity.class_iri
+        ):
+            return None
+        return (
+            identities[assertion.subject_id],
+            assertion.predicate,
+            identities[assertion.object.entity_id],
+        )
+
+    expected = Counter(
+        signature
+        for assertion in golden.assertions
+        if (signature := relation_signature(assertion, golden_entities, golden_entity_identity))
+        is not None
+    )
+    predicted = Counter(
+        signature
+        for assertion in (proposal.assertions if proposal is not None else ())
+        if (signature := relation_signature(assertion, proposal_entities, proposal_entity_identity))
+        is not None
+    )
+    true_positive = sum((expected & predicted).values())
+    return _ratio(
+        true_positive,
+        sum(expected.values()),
+        empty_status=MetricStatus.NOT_APPLICABLE,
+    )
 
 
 def _golden_assertion_record(
@@ -660,6 +813,13 @@ def _sum_count_metrics(metrics: Iterable[CountMetrics]) -> CountMetrics:
         over_extraction=_ratio(false_positive, predicted, empty_status=MetricStatus.NOT_APPLICABLE),
         under_extraction=_ratio(false_negative, expected, empty_status=MetricStatus.NOT_APPLICABLE),
     )
+
+
+def _sum_ratio(metrics: Iterable[RatioMetric]) -> RatioMetric:
+    items = tuple(metrics)
+    numerator = sum(item.numerator for item in items)
+    denominator = sum(item.denominator for item in items)
+    return _ratio(numerator, denominator, empty_status=MetricStatus.NOT_APPLICABLE)
 
 
 def _sum_accuracy(metrics: Iterable[AccuracyMetrics]) -> AccuracyMetrics:

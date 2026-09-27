@@ -17,6 +17,7 @@ from standards_atlas.application.assertion_qualification.models import (
     AssertionGoldenSuite,
     AssertionQualificationProposalSource,
     AssertionQualificationReport,
+    OntologyResourceBinding,
 )
 from standards_atlas.application.assertion_qualification.projection import (
     ClauseEvaluationCandidate,
@@ -25,6 +26,10 @@ from standards_atlas.application.assertion_qualification.projection import (
 )
 from standards_atlas.application.assertion_qualification.source_resolution import (
     FrozenSourceResolver,
+)
+from standards_atlas.application.formal_semantics import (
+    ResourceFormalOntologyRepository,
+    load_formal_class_hierarchy,
 )
 from standards_atlas.domain.model import DocumentKnowledgeProposal
 
@@ -67,10 +72,18 @@ class AssertionQualificationEvaluator:
         # Both inputs use one comparison path. Source integrity is evaluated only
         # against the exact byte-bound audit when that source basis is actually supplied.
         source_resolver = FrozenSourceResolver.from_audit(audit) if audit is not None else None
+        ontology_repository = ResourceFormalOntologyRepository()
+        class_hierarchy = load_formal_class_hierarchy(
+            suite.ontology_versions, repository=ontology_repository
+        )
+        ontology_resources = _ontology_resource_bindings(
+            suite.ontology_versions, ontology_repository
+        )
         case_reports = tuple(
             evaluate_case(
                 case,
                 candidates.get(case.case_key),
+                class_hierarchy=class_hierarchy,
                 source_resolver=source_resolver,
             ).report
             for case in suite.cases
@@ -85,10 +98,31 @@ class AssertionQualificationEvaluator:
             golden_partition=suite.partition,
             golden_suite_hash=golden_suite_sha256(suite),
             ontology_versions=suite.ontology_versions,
+            ontology_resources=ontology_resources,
             proposal_sources=sources,
             cases=case_reports,
             aggregate=aggregate_case_reports(case_reports),
         )
+
+
+def _ontology_resource_bindings(
+    ontology_versions: tuple[str, ...],
+    repository: ResourceFormalOntologyRepository,
+) -> tuple[OntologyResourceBinding, ...]:
+    bindings: list[OntologyResourceBinding] = []
+    for reference in ontology_versions:
+        ontology_id, version = reference.rsplit("@", 1)
+        definition = repository.load(ontology_id, version)
+        bindings.append(
+            OntologyResourceBinding(
+                reference=reference,
+                ontology_iri=definition.ontology_iri,
+                version_iri=definition.version_iri,
+                resource=definition.resource,
+                resource_sha256=repository.resource_sha256(ontology_id, version),
+            )
+        )
+    return tuple(bindings)
 
 
 def _native_inputs(

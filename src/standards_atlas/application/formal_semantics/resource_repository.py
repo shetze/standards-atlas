@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from pathlib import Path
 
@@ -36,6 +37,12 @@ class ResourceFormalOntologyRepository:
         return (self._root / ontology_id / version / definition.resource).read_text(
             encoding="utf-8"
         )
+
+    def resource_sha256(self, ontology_id: str, version: str) -> str:
+        """Hash the exact packaged ontology resource bytes used by consumers."""
+        definition = self.load(ontology_id, version)
+        resource = self._root / ontology_id / version / definition.resource
+        return hashlib.sha256(resource.read_bytes()).hexdigest()
 
     def declared_vocabulary(
         self,

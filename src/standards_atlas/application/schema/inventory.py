@@ -997,8 +997,8 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (VersionAxis.SCHEMA,),
         "assertion-qualification-report",
         (
-            "Clause-local AP01 dimensional metrics with strict matching and "
-            "frozen-source evidence checks."
+            "Clause-local AP01 dimensional metrics with strict matching, ontology-bound "
+            "WorkProduct metrics, conservative diagnostics and frozen-source evidence checks."
         ),
     ),
     VersionedInterface(

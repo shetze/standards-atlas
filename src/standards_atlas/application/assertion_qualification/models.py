@@ -403,6 +403,68 @@ class ComparisonAlignmentRecord(BaseModel):
         return self
 
 
+class AssertionDiagnosticCode(StrEnum):
+    """Controlled AP01 diagnostic vocabulary; codes do not imply human confirmation."""
+
+    MISSING_WORK_PRODUCT = "missing_work_product"
+    WRONG_ENTITY_CLASS = "wrong_entity_class"
+    OVER_EXTRACTED_DETAIL = "over_extracted_detail"
+    NOTE_OVER_EXTRACTION = "note_over_extraction"
+    LIST_OVER_ATOMIZATION = "list_over_atomization"
+    MISSING_ASSERTION = "missing_assertion"
+    INVENTED_ASSERTION = "invented_assertion"
+    WRONG_PREDICATE = "wrong_predicate"
+    WRONG_NORMATIVE_FORCE = "wrong_normative_force"
+    WRONG_CONTEXT_USE = "wrong_context_use"
+    GROUNDING_FAILURE = "grounding_failure"
+    CONDITIONAL_SEMANTICS_LOSS = "conditional_semantics_loss"
+    UNCLASSIFIED_SEMANTIC_MISMATCH = "unclassified_semantic_mismatch"
+
+
+class AssertionDiagnosticOrigin(StrEnum):
+    STRICT_COMPARISON = "strict_comparison"
+    EVIDENCE_INTEGRITY = "evidence_integrity"
+    PROPOSAL_DIAGNOSTIC = "proposal_diagnostic"
+    HUMAN_ANNOTATION = "human_annotation"
+
+
+class AssertionDiagnosticStatus(StrEnum):
+    RULE_BASED = "rule_based"
+    NEEDS_REVIEW = "needs_review"
+    HUMAN_CONFIRMED = "human_confirmed"
+
+
+class AssertionQualificationFinding(BaseModel):
+    """One traceable diagnosis derived from a difference or retained diagnostic."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source_document_key: str = Field(min_length=1)
+    clause_id: ClauseId
+    codes: tuple[AssertionDiagnosticCode, ...] = Field(min_length=1)
+    golden_ids: tuple[str, ...] = ()
+    candidate_ids: tuple[str, ...] = ()
+    violation_reference: str | None = None
+    observed_difference: str = Field(min_length=1)
+    rule: str = Field(min_length=1)
+    origin: AssertionDiagnosticOrigin
+    status: AssertionDiagnosticStatus
+    human_annotation_id: str | None = None
+
+    @model_validator(mode="after")
+    def diagnosis_state_is_explicit(self) -> AssertionQualificationFinding:
+        if len(self.codes) != len(set(self.codes)):
+            raise ValueError("diagnostic finding codes must be unique")
+        if not self.golden_ids and not self.candidate_ids and self.violation_reference is None:
+            raise ValueError("diagnostic finding requires an object or violation reference")
+        confirmed = self.status is AssertionDiagnosticStatus.HUMAN_CONFIRMED
+        if confirmed != (self.origin is AssertionDiagnosticOrigin.HUMAN_ANNOTATION):
+            raise ValueError("human-confirmed diagnostics require human annotation origin")
+        if confirmed != (self.human_annotation_id is not None):
+            raise ValueError("human-confirmed diagnostics require an annotation id")
+        return self
+
+
 class EvidenceIntegrityStatus(StrEnum):
     """Technical result for one candidate evidence use."""
 
@@ -509,6 +571,24 @@ class ClauseExactMatchAggregate(BaseModel):
         return self
 
 
+class OntologyResourceBinding(BaseModel):
+    """Exact packaged ontology resource bytes used for hierarchy-dependent metrics."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    reference: str = Field(min_length=1)
+    ontology_iri: str = Field(min_length=1)
+    version_iri: str = Field(min_length=1)
+    resource: str = Field(min_length=1)
+    resource_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def reference_is_explicit(self) -> OntologyResourceBinding:
+        if self.reference.count("@") != 1:
+            raise ValueError("ontology resource reference must use '<id>@<version>'")
+        return self
+
+
 class NativeProposalProvenance(BaseModel):
     """Reference to an actually supplied full-document proposal source."""
 
@@ -564,6 +644,10 @@ class AssertionQualificationCaseReport(BaseModel):
     entities: CountMetrics
     typed_entities: CountMetrics
     entity_class_accuracy: AccuracyMetrics
+    work_product_precision: RatioMetric
+    work_product_recall: RatioMetric
+    work_product_class_accuracy: AccuracyMetrics
+    required_work_product_relation_recall: RatioMetric
     assertions: CountMetrics
     predicate_accuracy: AccuracyMetrics
     normative_force_accuracy: AccuracyMetrics
@@ -576,6 +660,7 @@ class AssertionQualificationCaseReport(BaseModel):
     assertion_endpoint_alignment: tuple[ComparisonAlignmentRecord, ...] = ()
     assertion_relation_alignment: tuple[ComparisonAlignmentRecord, ...] = ()
     evidence_integrity_findings: tuple[EvidenceIntegrityFinding, ...] = ()
+    diagnostic_findings: tuple[AssertionQualificationFinding, ...] = ()
     entity_false_positive_ids: tuple[str, ...] = ()
     entity_false_negative_ids: tuple[str, ...] = ()
     assertion_false_positive_ids: tuple[str, ...] = ()
@@ -602,6 +687,11 @@ class AssertionQualificationCaseReport(BaseModel):
             raise ValueError("proposal failure count must match retained details")
         if len(self.evidence_integrity_findings) != self.evidence_integrity.total:
             raise ValueError("evidence integrity findings must match evidence total")
+        if any(
+            (finding.source_document_key, finding.clause_id.value) != self.case_key
+            for finding in self.diagnostic_findings
+        ):
+            raise ValueError("diagnostic finding belongs to a different qualification case")
         for records in (
             self.entity_alignment,
             self.assertion_endpoint_alignment,
@@ -626,6 +716,10 @@ class AssertionQualificationAggregate(BaseModel):
     entities: CountMetrics
     typed_entities: CountMetrics
     entity_class_accuracy: AccuracyMetrics
+    work_product_precision: RatioMetric
+    work_product_recall: RatioMetric
+    work_product_class_accuracy: AccuracyMetrics
+    required_work_product_relation_recall: RatioMetric
     assertions: CountMetrics
     predicate_accuracy: AccuracyMetrics
     normative_force_accuracy: AccuracyMetrics
@@ -667,6 +761,7 @@ class AssertionQualificationReport(SchemaBoundModel):
     golden_partition: AssertionGoldenPartition
     golden_suite_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     ontology_versions: tuple[str, ...]
+    ontology_resources: tuple[OntologyResourceBinding, ...]
     proposal_sources: tuple[AssertionQualificationProposalSource, ...] = ()
     cases: tuple[AssertionQualificationCaseReport, ...] = Field(min_length=1)
     aggregate: AssertionQualificationAggregate
@@ -694,6 +789,11 @@ class AssertionQualificationReport(SchemaBoundModel):
         if len(source_keys) != len(set(source_keys)):
             raise ValueError("qualification report proposal source keys must be unique")
         source_by_key = {source.source_document_key: source for source in self.proposal_sources}
+        resource_refs = tuple(item.reference for item in self.ontology_resources)
+        if resource_refs != self.ontology_versions:
+            raise ValueError("ontology resource bindings must match ordered ontology versions")
+        if len(resource_refs) != len(set(resource_refs)):
+            raise ValueError("ontology resource bindings must be unique")
         if not set(source_by_key) <= documents:
             raise ValueError("qualification report proposal sources must belong to report cases")
         if self.candidate_mode == "review_snapshot":
@@ -736,6 +836,7 @@ class AssertionQualificationReport(SchemaBoundModel):
                     raise ValueError(f"aggregate {field_name}.{counter} differs from cases")
         for field_name in (
             "entity_class_accuracy",
+            "work_product_class_accuracy",
             "predicate_accuracy",
             "normative_force_accuracy",
             "evidence_span_exact_match",
@@ -756,6 +857,18 @@ class AssertionQualificationReport(SchemaBoundModel):
                     getattr(getattr(case, field_name), counter) for case in self.cases
                 ):
                     raise ValueError(f"aggregate {field_name}.{counter} differs from cases")
+        for field_name in (
+            "work_product_precision",
+            "work_product_recall",
+            "required_work_product_relation_recall",
+        ):
+            total = getattr(self.aggregate, field_name)
+            if total.numerator != sum(getattr(case, field_name).numerator for case in self.cases):
+                raise ValueError(f"aggregate {field_name}.numerator differs from cases")
+            if total.denominator != sum(
+                getattr(case, field_name).denominator for case in self.cases
+            ):
+                raise ValueError(f"aggregate {field_name}.denominator differs from cases")
         evidence = self.aggregate.evidence_integrity
         for counter in ("total", "checked", "valid", "invalid", "unavailable", "conflicting"):
             if getattr(evidence, counter) != sum(

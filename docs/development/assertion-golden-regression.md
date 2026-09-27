@@ -2,15 +2,16 @@
 
 ## Contract status
 
-Series A (S01-S03) and Series B (S04-S06) are implemented. Current schema families
-remain at version 1; this is a clean break, not a migration reader for document-wide
-golden suites or interim Series-A reports. The completed review pilot remains a separate,
-supported audit contract. Publication and evaluation perform no source selection,
-extraction, verification, cascade, embeddings, unification or canonical adoption.
+Series A (S01-S03), Series B (S04-S06) and Series C (S07-S08) are implemented. Current
+schema families remain at version 1; this is a clean break, not a migration reader for
+document-wide golden suites or interim reports. The completed review pilot remains a
+separate, supported audit contract. Publication and evaluation perform no source
+selection, extraction, verification, cascade, embeddings, productive unification or
+canonical adoption.
 
-The current report contract is `assertion-clause-local-v1`. Series C still adds the four
-ontology-based work-product metrics and qualified error diagnoses; Series D closes the
-end-to-end/reproducibility checks and the final private v8 baseline.
+The current report contract is `assertion-clause-local-v1`. It includes the four
+ontology-based work-product metrics and conservative diagnostic findings described below.
+Series D closes the end-to-end/reproducibility checks and the final private v8 baseline.
 
 ## Audit and fingerprint contract
 
@@ -130,6 +131,50 @@ single grounding threshold is a clean-break field named
 comparison rather than being interpreted as success. Review-snapshot reports remain
 ineligible regardless of thresholds.
 
+## Series C work-product metrics and diagnostics
+
+Work-product membership is derived only from the explicitly bound formal ontology
+resources. `WorkProduct` and its transitive `rdfs:subClassOf` descendants count; the
+ancestor `EngineeringArtifact` does not. The evaluator and proposal unifier share the same
+deterministic class-hierarchy query rather than maintaining separate class lists. Each
+qualification report binds the ordered ontology references to the exact packaged resource
+path, ontology/version IRIs and resource SHA-256. Failure to load the bound hierarchy is an
+evaluation error, never an empty WorkProduct population. No predicate-domain/range or
+keyword inference is used.
+
+The four report dimensions are:
+
+* `work_product_precision`: strictly identity-matched expected WorkProducts among candidate
+  entities actually typed in the WorkProduct family / all such candidate entities;
+* `work_product_recall`: strictly identity-matched candidate WorkProducts / all expected
+  WorkProducts;
+* `work_product_class_accuracy`: exact concrete class on unambiguous identity alignments
+  for expected WorkProducts. A same-label candidate typed only as `EngineeringEntity` is
+  still evaluated and counts as a class error;
+* `required_work_product_relation_recall`: exact directed `Requirement`-family → `requires`
+  → `WorkProduct`-family candidate relations / all such golden relations. Literal objects,
+  wrong direction/predicate and non-WP candidate classes do not satisfy the numerator.
+
+Diagnostics are a separate case-local view and never change strict counts. Findings carry
+case identity, actual golden/candidate IDs or a retained violation reference, one or more
+controlled codes, observed difference, rule, origin and status. Unique class, predicate
+and force differences can be `rule_based`. Technical invalid evidence can be a rule-based
+`grounding_failure`; conflicting sources remain reviewable. Missing, additional or
+ambiguous strict identities remain `needs_review` when the comparison alone does not prove
+the semantic cause. An additional assertion is therefore not automatically
+`invented_assertion`, and a missing strict label is not automatically proof that a concept
+is semantically absent.
+
+Retained proposal violation text may produce conservative `needs_review` suggestions for
+`over_extracted_detail`, `note_over_extraction`, `list_over_atomization`,
+`missing_assertion`, `invented_assertion`, `wrong_predicate`, `wrong_normative_force`,
+`wrong_context_use`, `grounding_failure`, `conditional_semantics_loss` and
+`missing_work_product`. Multiple codes can describe one cause, so code counts are not
+distinct-error counts. `human_confirmed` is reserved for a real human annotation with an
+annotation ID; deterministic comparison and proposal diagnostics cannot claim it. Heading
+evidence alone is not a context error, and list-shaped output alone is not
+`list_over_atomization`.
+
 ## Frozen-source evidence integrity
 
 When the exact review audit is supplied, `FrozenSourceResolver` registers only complete,
@@ -196,7 +241,6 @@ cascade construction blocked and network connections prohibited. No private stan
 text or external runtime is needed for these tests. Series B adds no model configuration,
 prompt, source selection or canonical adoption behavior.
 
-The 20/51/24 private v8 pilot inventory remains the Series-A adoption basis. Series B does
-not rewrite or re-run that pilot as a final AP01 baseline; the final deterministic v8
-report and result note remain Series D work after the work-product/diagnostic extensions
-in Series C.
+The 20/51/24 private v8 pilot inventory remains the adoption basis. Series C does not
+rewrite or re-run that pilot as a final AP01 baseline; the final deterministic v8 report
+and result note remain Series D work.

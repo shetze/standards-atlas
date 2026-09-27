@@ -167,13 +167,17 @@ selector. Both inputs use the same clause-local evaluator. All review snapshots 
 including empty and escalated ones; a missing snapshot is an error. Review reports cannot serve as
 auto-adoption qualification evidence. Keep the original audit unchanged after golden publication.
 
-AP01 Series B reports use `assertion-clause-local-v1`. Entity recognition is class-independent,
-while `typed_entities` preserves the stricter label-plus-class view for existing policy gates.
-The report carries explicit denominator/status objects, ambiguity-aware attribute alignment,
+AP01 reports use `assertion-clause-local-v1`. Entity recognition is class-independent, while
+`typed_entities` preserves the stricter label-plus-class view for existing policy gates. The
+report carries explicit denominator/status objects, ambiguity-aware attribute alignment,
 technical frozen-source integrity, exact expected-span matching and clause-level exact match.
-Semantic evidence strength remains unevaluated, and work-product/error-diagnosis metrics are
-still Series C work. See the [evaluation contract](../development/assertion-golden-regression.md)
-for exact semantics and source-resolution limits.
+Series C additionally reports work-product precision/recall/class accuracy and required
+Requirement→`requires`→WorkProduct relation recall from the bound transitive ontology hierarchy.
+The report records exact ontology-resource SHA-256 values and conservative case-local diagnostic
+findings; `needs_review` suggestions are not human confirmation and do not modify strict metrics.
+Semantic evidence strength remains unevaluated. See the
+[evaluation contract](../development/assertion-golden-regression.md) for exact semantics and
+source-resolution/diagnostic limits.
 
 ## HITL
 

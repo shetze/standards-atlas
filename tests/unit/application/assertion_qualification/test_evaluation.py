@@ -6,10 +6,14 @@ import pytest
 
 from standards_atlas.application.assertion_qualification import (
     AssertionAuditBinding,
+    AssertionDiagnosticCode,
+    AssertionDiagnosticOrigin,
+    AssertionDiagnosticStatus,
     AssertionGoldenCase,
     AssertionGoldenPartition,
     AssertionGoldenSuite,
     AssertionQualificationEvaluator,
+    AssertionQualificationFinding,
     GoldenEvidenceSpan,
     GoldenKnowledgeEntity,
     GoldenNormativeAssertion,
@@ -22,6 +26,8 @@ from standards_atlas.domain.model import (
     EvidenceSourceKind,
     KnowledgeEntityProposal,
     KnowledgeProposalProvenance,
+    KnowledgeProposalViolation,
+    KnowledgeProposalViolationKind,
     NormativeAssertionProposal,
     NormativeForce,
 )
@@ -530,3 +536,146 @@ def test_report_validation_rejects_inconsistent_count_identity_and_interim_contr
     payload["evaluation_contract"] = "assertion-clause-local-interim-v1"
     with pytest.raises(ValueError, match="evaluation_contract"):
         AssertionQualificationReport.model_validate(payload)
+
+
+def _finding_codes(report) -> set[AssertionDiagnosticCode]:
+    return {code for finding in report.cases[0].diagnostic_findings for code in finding.codes}
+
+
+def test_diagnostics_name_unique_class_predicate_and_force_differences() -> None:
+    native = _proposal()
+    wrong_plan = native.entity_proposals[0].model_copy(update={"class_iri": f"{STAT}Plan"})
+    wrong_assertion = native.assertion_proposals[0].model_copy(
+        update={
+            "predicate": f"{STAT}requires",
+            "normative_force": NormativeForce.RECOMMENDATION,
+        }
+    )
+    report = AssertionQualificationEvaluator().evaluate(
+        _suite(),
+        (
+            native.model_copy(
+                update={
+                    "entity_proposals": (wrong_plan, native.entity_proposals[1]),
+                    "assertion_proposals": (wrong_assertion,),
+                }
+            ),
+        ),
+    )
+
+    codes = _finding_codes(report)
+    assert AssertionDiagnosticCode.WRONG_ENTITY_CLASS in codes
+    assert AssertionDiagnosticCode.WRONG_PREDICATE in codes
+    # Force is compared only after the strict relation (including predicate) matches.
+    assert AssertionDiagnosticCode.WRONG_NORMATIVE_FORCE not in codes
+    assert all(
+        finding.status is not AssertionDiagnosticStatus.HUMAN_CONFIRMED
+        for finding in report.cases[0].diagnostic_findings
+    )
+
+
+def test_wrong_force_is_rule_based_only_after_strict_relation_alignment() -> None:
+    report = AssertionQualificationEvaluator().evaluate(
+        _suite(),
+        (_proposal(force=NormativeForce.RECOMMENDATION),),
+    )
+
+    findings = [
+        item
+        for item in report.cases[0].diagnostic_findings
+        if AssertionDiagnosticCode.WRONG_NORMATIVE_FORCE in item.codes
+    ]
+    assert len(findings) == 1
+    assert findings[0].origin is AssertionDiagnosticOrigin.STRICT_COMPARISON
+    assert findings[0].status is AssertionDiagnosticStatus.RULE_BASED
+
+
+def test_extra_or_ambiguous_candidate_is_not_automatically_invented_or_over_atomized() -> None:
+    native = _proposal()
+    duplicate = native.assertion_proposals[0].model_copy(update={"id": "proposal-assertion-extra"})
+    report = AssertionQualificationEvaluator().evaluate(
+        _suite(),
+        (
+            native.model_copy(
+                update={"assertion_proposals": (*native.assertion_proposals, duplicate)}
+            ),
+        ),
+    )
+
+    codes = _finding_codes(report)
+    assert AssertionDiagnosticCode.UNCLASSIFIED_SEMANTIC_MISMATCH in codes
+    assert AssertionDiagnosticCode.INVENTED_ASSERTION not in codes
+    assert AssertionDiagnosticCode.LIST_OVER_ATOMIZATION not in codes
+
+
+def test_retained_violation_can_suggest_multiple_codes_but_never_human_confirmation() -> None:
+    native = _proposal().model_copy(
+        update={
+            "violations": (
+                KnowledgeProposalViolation(
+                    clause_id=CLAUSE,
+                    kind=KnowledgeProposalViolationKind.INVALID_ASSERTION,
+                    term="candidate-list",
+                    reason="possible list over-atomization with conditional semantics loss",
+                ),
+            )
+        }
+    )
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (native,))
+    suggestions = [
+        item
+        for item in report.cases[0].diagnostic_findings
+        if item.origin is AssertionDiagnosticOrigin.PROPOSAL_DIAGNOSTIC
+    ]
+
+    assert len(suggestions) == 1
+    assert set(suggestions[0].codes) == {
+        AssertionDiagnosticCode.LIST_OVER_ATOMIZATION,
+        AssertionDiagnosticCode.CONDITIONAL_SEMANTICS_LOSS,
+    }
+    assert suggestions[0].status is AssertionDiagnosticStatus.NEEDS_REVIEW
+    assert suggestions[0].violation_reference == "violation[0]"
+
+
+def test_heading_evidence_is_not_itself_a_wrong_context_diagnosis() -> None:
+    native = _proposal()
+    heading_anchor = native.evidence_anchors[0].model_copy(
+        update={"source_kind": EvidenceSourceKind.HEADING}
+    )
+    native = native.model_copy(update={"evidence_anchors": (heading_anchor,)})
+
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (native,))
+
+    assert AssertionDiagnosticCode.WRONG_CONTEXT_USE not in _finding_codes(report)
+
+
+def test_human_confirmation_status_cannot_be_fabricated_without_annotation() -> None:
+    with pytest.raises(ValueError, match="human-confirmed diagnostics"):
+        AssertionQualificationFinding(
+            source_document_key="EN50716",
+            clause_id=CLAUSE,
+            codes=(AssertionDiagnosticCode.WRONG_ENTITY_CLASS,),
+            golden_ids=("g-plan",),
+            observed_difference="class differs",
+            rule="manual",
+            origin=AssertionDiagnosticOrigin.STRICT_COMPARISON,
+            status=AssertionDiagnosticStatus.HUMAN_CONFIRMED,
+        )
+
+
+def test_diagnostic_vocabulary_contains_the_ap01_codes_and_open_state() -> None:
+    assert {item.value for item in AssertionDiagnosticCode} == {
+        "missing_work_product",
+        "wrong_entity_class",
+        "over_extracted_detail",
+        "note_over_extraction",
+        "list_over_atomization",
+        "missing_assertion",
+        "invented_assertion",
+        "wrong_predicate",
+        "wrong_normative_force",
+        "wrong_context_use",
+        "grounding_failure",
+        "conditional_semantics_loss",
+        "unclassified_semantic_mismatch",
+    }
