@@ -179,3 +179,21 @@ current-only. No schema-8/9 reader, migration or compatibility fixture is retain
 reset. `DocumentKnowledge` is an embedded schema-1 contract owned by EngineeringDocument; it
 does not create an independent persistence family. Schema 1 remains the marker for the new
 canonical core until a deliberate future compatibility decision requires another revision.
+
+
+### AP01 Series A clause-local clean break (2026-09-27)
+
+The current-only `assertion-golden-suite` and `assertion-qualification-report` families
+remain schema 1. Their document-wide case contract is replaced, not supplemented by
+legacy readers. Cases are identified by `(source_document_key, clause_id)`; repeated
+local entity/assertion IDs in different cases remain valid. A suite binds the original
+review bytes and frozen case sources. The separately supported `assertion-review-pilot`
+audit contract is not an obsolete productive golden format and remains readable.
+
+Reports require an explicit `assertion-clause-local-interim-v1` evaluation contract and
+a discriminated `native_proposal` / `review_snapshot` origin. Native proposal artifacts
+remain unchanged; review snapshots are projected into a non-persisted evaluation view,
+not migrated into invented productive proposals. The interim report metric semantics
+are documented and are not silently replaced by later, looser matching rules.
+Review-snapshot reports are rejected by the auto-adoption qualification boundary.
+See `docs/development/assertion-golden-regression.md` for the complete Series A contract.

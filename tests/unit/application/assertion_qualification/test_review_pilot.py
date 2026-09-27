@@ -14,6 +14,7 @@ from standards_atlas.application.assertion_qualification import (
     AssertionGoldenPartition,
     AssertionQualificationCascadeReport,
     AssertionReviewAssertion,
+    AssertionReviewAudit,
     AssertionReviewEntity,
     AssertionReviewEvidenceSpan,
     AssertionReviewExpected,
@@ -254,7 +255,7 @@ def test_build_binds_source_case_to_current_clause_and_records_text_drift() -> N
     assert drifted_pilot.cases[0].applicability_source.selection_text_matches_current is False
 
 
-def test_publish_merges_case_local_entities_and_computes_exact_evidence_hashes() -> None:
+def test_publish_keeps_case_local_entities_and_computes_exact_evidence_hashes() -> None:
     first = _source_case(clause_id="c1", reference="DOC:1")
     second = _source_case(
         clause_id="c2",
@@ -323,9 +324,18 @@ def test_publish_merges_case_local_entities_and_computes_exact_evidence_hashes()
         }
     )
 
-    suite = publish_assertion_review_pilot(completed)
+    suite = publish_assertion_review_pilot(
+        AssertionReviewAudit(completed.model_dump_json().encode(), json_format=True)
+    )
 
-    assert len(suite.cases) == 1
+    assert len(suite.cases) == 2
+    assert suite.cases[0].case_key == ("DOC", "c1")
+    assert suite.cases[1].case_key == ("DOC", "c2")
+    assert suite.cases[0].entities[0].id == "plan"
+    assert suite.cases[0].assertions[0].id == "a1"
+    assert suite.cases[1].entities[0].id == "same-plan-different-local-id"
+    assert suite.cases[1].entities[0].normalized_label == "  verification   plan  "
+    assert suite.cases[1].assertions == ()
     case = suite.cases[0]
     assert len(case.entities) == 2
     assert len(case.assertions) == 1
@@ -344,7 +354,9 @@ def test_publish_requires_every_selected_case_to_be_reviewed() -> None:
     )
 
     with pytest.raises(ValueError, match="pending cases"):
-        publish_assertion_review_pilot(pilot)
+        publish_assertion_review_pilot(
+            AssertionReviewAudit(pilot.model_dump_json().encode(), json_format=True)
+        )
 
 
 def test_attach_uses_exact_cascade_selection_and_final_route_proposal() -> None:
@@ -855,3 +867,21 @@ def test_explicit_informative_clause_status_overrides_normative_default() -> Non
     assert normative["source_status"] == "informative"
     assert normative["effective_status"] == "informative"
     assert normative["basis"][0]["kind"] == "clause_normative_status"
+
+
+def test_scope_selection_with_structural_profile_keeps_existing_exclusion_contract() -> None:
+    from standards_atlas.application.assertion_qualification.review_pilot import (
+        _case_is_in_assertion_review_scope,
+    )
+
+    source = _source_case(clause_id="structured")
+    document = _document(source)
+    clause = document.clauses[0].model_copy(
+        update={
+            "structural_profile": StructuralProfile(
+                canonical_section=CanonicalDocumentSection.BODY,
+            ),
+        },
+    )
+    document = document.model_copy(update={"clauses": (clause,)})
+    assert _case_is_in_assertion_review_scope(source, {"DOC": document})

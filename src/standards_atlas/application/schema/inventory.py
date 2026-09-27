@@ -988,7 +988,7 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PUBLIC_CONTRACT,
         (VersionAxis.SCHEMA,),
         "assertion-golden-suite",
-        "Versioned development or holdout truth for entity/assertion qualification.",
+        "Audit-bound clause-local development or holdout truth for entity/assertion qualification.",
     ),
     VersionedInterface(
         "assertion-qualification-report",
@@ -996,7 +996,7 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         LifecycleBoundary.PERSISTENCE,
         (VersionAxis.SCHEMA,),
         "assertion-qualification-report",
-        "Threshold-free Slice-7A entity/assertion matching and grounding metrics.",
+        "Clause-local AP01 interim typed metrics with explicit candidate source and audit binding.",
     ),
     VersionedInterface(
         "assertion-qualification-cascade-report",

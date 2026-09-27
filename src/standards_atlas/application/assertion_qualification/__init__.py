@@ -1,5 +1,6 @@
 """Assertion-centred qualification metrics, cascade and Slice-7C eligibility contracts."""
 
+from .audit import AssertionReviewAudit, review_case_source_sha256
 from .cascade import (
     AssertionQualificationCascadeResult,
     AssertionQualificationCascadeService,
@@ -22,12 +23,14 @@ from .evaluation import (
     proposal_sha256,
 )
 from .io import (
+    copy_assertion_review_audit,
     load_applicability_selection_corpus,
     load_assertion_auto_adoption_policy,
     load_assertion_auto_adoption_report,
     load_assertion_golden_suite,
     load_assertion_qualification_cascade_report,
     load_assertion_qualification_report,
+    load_assertion_review_audit,
     load_assertion_review_pilot,
     load_document_knowledge_proposal,
     write_assertion_auto_adoption_report,
@@ -37,9 +40,11 @@ from .io import (
     write_assertion_review_pilot,
 )
 from .models import (
+    ASSERTION_EVALUATION_CONTRACT,
     ASSERTION_GOLDEN_SUITE_SCHEMA_VERSION,
     ASSERTION_QUALIFICATION_REPORT_SCHEMA_VERSION,
     AccuracyMetrics,
+    AssertionAuditBinding,
     AssertionGoldenCase,
     AssertionGoldenPartition,
     AssertionGoldenSuite,
@@ -51,6 +56,8 @@ from .models import (
     GoldenEvidenceSpan,
     GoldenKnowledgeEntity,
     GoldenNormativeAssertion,
+    NativeProposalProvenance,
+    ReviewSnapshotProvenance,
 )
 from .policy import (
     AssertionAutoAdoptionPolicyEvaluator,
@@ -104,6 +111,14 @@ from .review_pilot_models import (
 )
 
 __all__ = [
+    "ASSERTION_EVALUATION_CONTRACT",
+    "AssertionAuditBinding",
+    "AssertionReviewAudit",
+    "NativeProposalProvenance",
+    "ReviewSnapshotProvenance",
+    "copy_assertion_review_audit",
+    "load_assertion_review_audit",
+    "review_case_source_sha256",
     "ASSERTION_REVIEW_PILOT_SCHEMA_VERSION",
     "ApplicabilitySelectionCase",
     "ApplicabilitySelectionCorpus",

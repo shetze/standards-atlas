@@ -1,76 +1,75 @@
-"""Reproducible Slice-7A evaluation of knowledge proposals against a golden suite."""
+"""Two explicit offline entrances into one clause-local assertion evaluator."""
 
 from __future__ import annotations
 
-import hashlib
-import json
 from collections.abc import Sequence
 
+from standards_atlas.application.assertion_qualification.audit import (
+    AssertionReviewAudit,
+    canonical_sha256,
+)
 from standards_atlas.application.assertion_qualification.matching import (
     aggregate_case_reports,
     evaluate_case,
 )
 from standards_atlas.application.assertion_qualification.models import (
+    ASSERTION_EVALUATION_CONTRACT,
     AssertionGoldenSuite,
     AssertionQualificationProposalSource,
     AssertionQualificationReport,
+)
+from standards_atlas.application.assertion_qualification.projection import (
+    ClauseEvaluationCandidate,
+    project_native_proposal,
+    project_review_snapshot,
 )
 from standards_atlas.domain.model import DocumentKnowledgeProposal
 
 
 class AssertionQualificationEvaluator:
-    """Measure proposal quality without applying acceptance thresholds or adoption policy."""
+    """Measure stored candidates without running models or applying an adoption policy."""
 
     def evaluate(
         self,
         suite: AssertionGoldenSuite,
-        proposals: Sequence[DocumentKnowledgeProposal],
+        proposals: Sequence[DocumentKnowledgeProposal] | None = None,
+        *,
+        review_audit: AssertionReviewAudit | None = None,
+        source_audit: AssertionReviewAudit | None = None,
     ) -> AssertionQualificationReport:
-        by_document: dict[str, DocumentKnowledgeProposal] = {}
-        for proposal in proposals:
-            if proposal.source_document_key in by_document:
-                raise ValueError(
-                    "assertion qualification accepts at most one proposal per source document: "
-                    f"{proposal.source_document_key!r}"
-                )
-            if set(proposal.ontology_versions) != set(suite.ontology_versions):
-                raise ValueError(
-                    "proposal ontology versions do not match assertion golden suite for "
-                    f"{proposal.source_document_key!r}"
-                )
-            by_document[proposal.source_document_key] = proposal
+        if (proposals is None) == (review_audit is None):
+            raise ValueError("exactly one candidate source is required: proposals or review_audit")
+        if review_audit is not None and source_audit is not None:
+            raise ValueError("source_audit is only valid for native proposal candidates")
+        audit = review_audit if review_audit is not None else source_audit
+        if audit is not None:
+            validate_audit_binding(suite, audit)
 
-        expected_documents = {case.source_document_key for case in suite.cases}
-        unexpected = set(by_document) - expected_documents
-        if unexpected:
-            raise ValueError(
-                "assertion qualification proposals are outside the golden suite: "
-                f"{sorted(unexpected)!r}"
-            )
+        if review_audit is not None:
+            candidates = {
+                case.case_key: project_review_snapshot(
+                    review_audit,
+                    document_key=case.source_document_key,
+                    clause_id=case.clause_id.value,
+                )
+                for case in suite.cases
+            }
+            sources = ()
+            candidate_mode = "review_snapshot"
+        else:
+            assert proposals is not None
+            candidates, sources = _native_inputs(suite, proposals)
+            candidate_mode = "native_proposal"
 
-        proposal_hashes = {key: proposal_sha256(proposal) for key, proposal in by_document.items()}
+        # Both inputs use this one comparison and aggregation path.
         case_reports = tuple(
-            evaluate_case(
-                case,
-                by_document.get(case.source_document_key),
-                proposal_hash=proposal_hashes.get(case.source_document_key),
-            ).report
-            for case in suite.cases
-        )
-        sources = tuple(
-            AssertionQualificationProposalSource(
-                source_document_key=key,
-                proposal_run_id=proposal.proposal_run_id,
-                proposal_hash=proposal_hashes[key],
-                extractor=proposal.proposal_provenance.extractor,
-                extractor_version=proposal.proposal_provenance.extractor_version,
-                model=proposal.proposal_provenance.model,
-                provider=proposal.proposal_provenance.provider,
-                prompt_version=proposal.proposal_provenance.prompt_version,
-            )
-            for key, proposal in sorted(by_document.items())
+            evaluate_case(case, candidates.get(case.case_key)).report for case in suite.cases
         )
         return AssertionQualificationReport(
+            evaluation_contract=ASSERTION_EVALUATION_CONTRACT,
+            candidate_mode=candidate_mode,
+            audit=suite.audit,
+            source_binding="audit_verified" if audit is not None else "golden_declared",
             golden_suite_id=suite.id,
             golden_suite_version=suite.version,
             golden_partition=suite.partition,
@@ -82,19 +81,75 @@ class AssertionQualificationEvaluator:
         )
 
 
+def _native_inputs(
+    suite: AssertionGoldenSuite,
+    proposals: Sequence[DocumentKnowledgeProposal],
+) -> tuple[
+    dict[tuple[str, str], ClauseEvaluationCandidate],
+    tuple[AssertionQualificationProposalSource, ...],
+]:
+    by_document: dict[str, DocumentKnowledgeProposal] = {}
+    for proposal in proposals:
+        if proposal.source_document_key in by_document:
+            raise ValueError(
+                "assertion qualification accepts at most one proposal per source document: "
+                f"{proposal.source_document_key!r}"
+            )
+        if set(proposal.ontology_versions) != set(suite.ontology_versions):
+            raise ValueError(
+                "proposal ontology versions do not match assertion golden suite for "
+                f"{proposal.source_document_key!r}"
+            )
+        by_document[proposal.source_document_key] = proposal
+    expected_documents = {case.source_document_key for case in suite.cases}
+    unexpected = set(by_document) - expected_documents
+    if unexpected:
+        raise ValueError(
+            "assertion qualification proposals are outside the golden suite: "
+            f"{sorted(unexpected)!r}"
+        )
+    hashes = {key: proposal_sha256(proposal) for key, proposal in by_document.items()}
+    candidates = {
+        case.case_key: project_native_proposal(
+            by_document[case.source_document_key],
+            case.clause_id.value,
+            proposal_hash=hashes[case.source_document_key],
+        )
+        for case in suite.cases
+        if case.source_document_key in by_document
+    }
+    sources = tuple(
+        AssertionQualificationProposalSource(
+            source_document_key=key,
+            proposal_run_id=proposal.proposal_run_id,
+            proposal_hash=hashes[key],
+            extractor=proposal.proposal_provenance.extractor,
+            extractor_version=proposal.proposal_provenance.extractor_version,
+            model=proposal.proposal_provenance.model,
+            provider=proposal.proposal_provenance.provider,
+            prompt_version=proposal.proposal_provenance.prompt_version,
+        )
+        for key, proposal in sorted(by_document.items())
+    )
+    return candidates, sources
+
+
 def golden_suite_sha256(suite: AssertionGoldenSuite) -> str:
-    return _model_sha256(suite.model_dump(mode="json"))
+    return canonical_sha256(suite.model_dump(mode="json"))
 
 
 def proposal_sha256(proposal: DocumentKnowledgeProposal) -> str:
-    return _model_sha256(proposal.model_dump(mode="json"))
+    return canonical_sha256(proposal.model_dump(mode="json"))
 
 
-def _model_sha256(payload: object) -> str:
-    serialized = json.dumps(
-        payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-    return hashlib.sha256(serialized).hexdigest()
+def validate_audit_binding(suite: AssertionGoldenSuite, audit: AssertionReviewAudit) -> None:
+    """Require exact bytes, selection, sources and confirmed golden expectations."""
+    from standards_atlas.application.assertion_qualification.review_pilot import (
+        publish_assertion_review_pilot,
+    )
+
+    if suite.audit.audit_sha256 != audit.audit_sha256:
+        raise ValueError("review audit SHA-256 does not match golden suite binding")
+    expected = publish_assertion_review_pilot(audit)
+    if golden_suite_sha256(expected) != golden_suite_sha256(suite):
+        raise ValueError("golden suite content/selection does not match the bound review audit")

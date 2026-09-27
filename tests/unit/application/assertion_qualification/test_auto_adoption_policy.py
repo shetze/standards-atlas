@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from standards_atlas.application.assertion_qualification import (
+    AssertionAuditBinding,
     AssertionCandidateVerification,
     AssertionCascadeClauseReport,
     AssertionCascadeProposalSource,
@@ -89,10 +90,20 @@ def _suite(
         id=f"{partition.value}-suite",
         version="1.0.0",
         partition=partition,
+        audit=AssertionAuditBinding(
+            review_id=f"{partition.value}-review",
+            review_version="1",
+            audit_sha256="b" * 64,
+        ),
         ontology_versions=ONTOLOGIES,
         cases=(
             AssertionGoldenCase(
                 source_document_key=document,
+                clause_id=ClauseId(value=clause_id),
+                reference=f"{document}:{clause_id}",
+                canonical_reference=f"{document} {clause_id}",
+                text_sha256=HASH,
+                source_sha256=HASH,
                 entities=(
                     GoldenKnowledgeEntity(
                         id=entity_id,
@@ -110,6 +121,8 @@ def _suite(
                         normative_force=NormativeForce.REQUIREMENT,
                         evidence=(
                             GoldenEvidenceSpan(
+                                source_document_key=document,
+                                source_kind="body",
                                 clause_id=ClauseId(value=clause_id),
                                 start_offset=0,
                                 end_offset=10,
@@ -542,3 +555,22 @@ def test_non_exact_production_grounding_requires_review() -> None:
     decision = next(item for item in report.decisions if item.assertion_id == "a1")
     assert decision.disposition is AssertionAutoAdoptionDisposition.REVIEW_REQUIRED
     assert decision.reasons == (AssertionAutoAdoptionReason.NON_EXACT_GROUNDING,)
+
+
+@pytest.mark.parametrize("entity_only", [False, True])
+def test_partition_overlap_uses_cases_even_without_assertions(entity_only: bool) -> None:
+    from standards_atlas.application.assertion_qualification.policy import (
+        _validate_partition_separation,
+    )
+
+    dev = _suite(partition=AssertionGoldenPartition.DEVELOPMENT, document="DOC", clause_id="c1")
+    case = dev.cases[0].model_copy(
+        update={
+            "assertions": (),
+            "entities": dev.cases[0].entities if entity_only else (),
+        }
+    )
+    dev = dev.model_copy(update={"cases": (case,)})
+    holdout = dev.model_copy(update={"partition": AssertionGoldenPartition.HOLDOUT})
+    with pytest.raises(ValueError, match="overlap"):
+        _validate_partition_separation(dev, holdout)

@@ -5,6 +5,7 @@ import hashlib
 import pytest
 
 from standards_atlas.application.assertion_qualification import (
+    AssertionAuditBinding,
     AssertionGoldenCase,
     AssertionGoldenPartition,
     AssertionGoldenSuite,
@@ -38,10 +39,16 @@ def _suite(*, force: NormativeForce = NormativeForce.REQUIREMENT) -> AssertionGo
         id="assertion-dev",
         version="1.0.0",
         partition=AssertionGoldenPartition.DEVELOPMENT,
+        audit=AssertionAuditBinding(review_id="test", review_version="1", audit_sha256="b" * 64),
         ontology_versions=("standards-atlas-core@2.0.0",),
         cases=(
             AssertionGoldenCase(
                 source_document_key="EN50716",
+                clause_id=CLAUSE,
+                reference="EN50716:1",
+                canonical_reference="EN50716 1",
+                text_sha256=hashlib.sha256(TEXT.encode()).hexdigest(),
+                source_sha256="a" * 64,
                 entities=(
                     GoldenKnowledgeEntity(
                         id="g-plan",
@@ -64,6 +71,8 @@ def _suite(*, force: NormativeForce = NormativeForce.REQUIREMENT) -> AssertionGo
                         normative_force=force,
                         evidence=(
                             GoldenEvidenceSpan(
+                                source_document_key="EN50716",
+                                source_kind="body",
                                 clause_id=CLAUSE,
                                 start_offset=START,
                                 end_offset=END,
@@ -179,7 +188,8 @@ def test_missing_proposal_is_reported_as_false_negatives_not_an_exception() -> N
 
     assert report.aggregate.entities.false_negative == 2
     assert report.aggregate.assertions.false_negative == 1
-    assert report.cases[0].proposal_run_id is None
+    assert report.cases[0].provenance is None
+    assert report.cases[0].candidate_status == "missing"
     assert report.aggregate.predicate_accuracy.accuracy is None
 
 
@@ -214,3 +224,91 @@ def test_evaluation_report_is_independent_of_proposal_input_order() -> None:
     right = AssertionQualificationEvaluator().evaluate(suite, (second, first))
 
     assert left == right
+
+
+def test_native_document_is_projected_to_selected_local_cases_only() -> None:
+    base = _suite()
+    second = base.cases[0].model_copy(
+        update={
+            "clause_id": ClauseId(value="clause-2"),
+            "reference": "EN50716:2",
+            "canonical_reference": "EN50716 2",
+            "entities": (base.cases[0].entities[0],),
+            "assertions": (),
+        }
+    )
+    suite = AssertionGoldenSuite.model_validate(
+        base.model_copy(update={"cases": (base.cases[0], second)}).model_dump(mode="json")
+    )
+    native = _proposal()
+    extra_entities = tuple(
+        native.entity_proposals[0].model_copy(
+            update={
+                "id": entity_id,
+                "proposal_clause_ids": (ClauseId(value=clause_id),),
+            }
+        )
+        for entity_id, clause_id in (("entity-only", "clause-2"), ("not-selected", "clause-3"))
+    )
+    native = native.model_copy(
+        update={
+            "entity_proposals": (*native.entity_proposals, *extra_entities),
+        }
+    )
+    report = AssertionQualificationEvaluator().evaluate(suite, (native,))
+    assert report.aggregate.documents == 1
+    assert report.aggregate.clauses == report.aggregate.candidate_clauses == 2
+    assert report.aggregate.entities.expected == report.aggregate.entities.predicted == 3
+    assert report.aggregate.entities.true_positive == 3
+    assert report.cases[1].entities.predicted == 1
+    assert report.cases[1].assertions.predicted == 0
+    assert len(report.proposal_sources) == 1
+    assert report.cases[0].provenance == report.cases[1].provenance
+    assert report.cases[0].candidate_sha256 != report.cases[1].candidate_sha256
+    assert [case.clause_id.value for case in report.cases] == ["clause-1", "clause-2"]
+
+
+def test_projection_retains_endpoint_entities_but_not_evidence_only_cases() -> None:
+    from standards_atlas.application.assertion_qualification.projection import (
+        project_native_proposal,
+    )
+
+    native = _proposal()
+    foreign = ClauseId(value="foreign")
+    native = native.model_copy(
+        update={
+            "entity_proposals": tuple(
+                item.model_copy(update={"proposal_clause_ids": (foreign,)})
+                for item in native.entity_proposals
+            ),
+            "evidence_anchors": tuple(
+                item.model_copy(update={"source_clause_id": foreign})
+                for item in native.evidence_anchors
+            ),
+        }
+    )
+    view = project_native_proposal(native, CLAUSE.value)
+    assert len(view.entities) == 2  # endpoints are retained despite foreign assignment
+    assert len(view.assertions) == 1
+    assert view.assertions[0].evidence[0].source_clause_id == "foreign"
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (native,))
+    assert report.aggregate.clauses == 1
+    assert report.cases[0].assertions.true_positive == 1
+
+
+def test_current_report_validates_distinct_documents_and_case_counts() -> None:
+    from standards_atlas.application.assertion_qualification import AssertionQualificationReport
+
+    report = AssertionQualificationEvaluator().evaluate(_suite(), (_proposal(),))
+    payload = report.model_dump(mode="json")
+    payload["aggregate"]["clauses"] = 2
+    with pytest.raises(ValueError, match="clause count"):
+        AssertionQualificationReport.model_validate(payload)
+    payload = report.model_dump(mode="json")
+    payload["aggregate"]["documents"] = 2
+    with pytest.raises(ValueError, match="document count"):
+        AssertionQualificationReport.model_validate(payload)
+    payload = report.model_dump(mode="json")
+    del payload["evaluation_contract"]
+    with pytest.raises(ValueError, match="evaluation_contract"):
+        AssertionQualificationReport.model_validate(payload)

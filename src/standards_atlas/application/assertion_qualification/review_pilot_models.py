@@ -346,6 +346,16 @@ class AssertionReviewCase(BaseModel):
         actual_text_hash = hashlib.sha256(self.text.encode("utf-8")).hexdigest()
         if actual_text_hash != self.text_sha256:
             raise ValueError("assertion review case text_sha256 does not match embedded text")
+        document_reference, separator, clause_reference = self.reference.rpartition(":")
+        if not separator or document_reference != self.document_key or not clause_reference:
+            raise ValueError("assertion review reference must bind its document and clause")
+        for key, expected_value in (
+            ("document_key", self.document_key),
+            ("clause_id", self.clause_id),
+            ("reference", clause_reference),
+        ):
+            if key in self.context and self.context[key] != expected_value:
+                raise ValueError(f"assertion review context {key} differs from case identity")
         if self.review_status is AssertionReviewStatus.REVIEWED and self.expected is None:
             raise ValueError("reviewed assertion pilot cases require expected knowledge")
         if self.expected is not None:

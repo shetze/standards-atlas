@@ -43,3 +43,25 @@ def test_slice_7c_auto_adoption_report_is_eligibility_only() -> None:
     assert "engineering_document" not in fields
     assert "auto_adoption_eligible_assertions" in fields
     assert "qualification_gate_passed" in fields
+
+
+def test_offline_assertion_cli_does_not_eagerly_import_llm_adapters() -> None:
+    import ast
+
+    path = ROOT / "src/standards_atlas/cli/commands/evaluation_commands/assertion_qualification.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    assert not any(
+        isinstance(node, ast.ImportFrom)
+        and (node.module or "").startswith("standards_atlas.adapters.llm")
+        for node in tree.body
+    )
+
+
+def test_evaluation_and_projection_never_construct_a_productive_proposal() -> None:
+    import ast
+
+    for name in ("evaluation.py", "projection.py", "matching.py", "audit.py"):
+        tree = ast.parse((PACKAGE / name).read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                assert node.func.id != "DocumentKnowledgeProposal"

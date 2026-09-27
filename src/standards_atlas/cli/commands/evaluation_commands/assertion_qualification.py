@@ -12,16 +12,9 @@ from standards_atlas.adapters.filesystem import (
     FileSystemDocumentKnowledgeProposalRepository,
     FileSystemEngineeringDocumentRepository,
 )
-from standards_atlas.adapters.llm import (
-    LlmConfig,
-    OntologyGuidedAssertionProposalVerifier,
-    OntologyGuidedKnowledgeProposalExtractor,
-    OpenAICompatibleLlmGateway,
-)
 from standards_atlas.application.assertion_qualification import (
     AssertionAutoAdoptionPolicyEvaluator,
     AssertionGoldenPartition,
-    AssertionQualificationCascadeService,
     AssertionQualificationEvaluator,
     AssertionReviewPilotBuildRequest,
     AssertionReviewTargetSuite,
@@ -32,6 +25,7 @@ from standards_atlas.application.assertion_qualification import (
     load_assertion_golden_suite,
     load_assertion_qualification_cascade_report,
     load_assertion_qualification_report,
+    load_assertion_review_audit,
     load_assertion_review_pilot,
     load_document_knowledge_proposal,
     publish_assertion_review_pilot,
@@ -44,6 +38,7 @@ from standards_atlas.application.assertion_qualification import (
     write_assertion_qualification_report,
     write_assertion_review_pilot,
 )
+from standards_atlas.application.assertion_qualification.io import ensure_distinct_output
 from standards_atlas.cli import defaults as cli_defaults
 from standards_atlas.cli.apps import evaluation_app
 from standards_atlas.domain.model import DocumentKey
@@ -221,8 +216,9 @@ def publish_assertion_review_pilot_command(
 ) -> None:
     """Publish a completed pilot review into the current AssertionGoldenSuite contract."""
     try:
-        pilot = load_assertion_review_pilot(review)
-        suite = publish_assertion_review_pilot(pilot)
+        ensure_distinct_output(output, review)
+        audit = load_assertion_review_audit(review)
+        suite = publish_assertion_review_pilot(audit)
         suite_path = write_assertion_golden_suite(suite, output)
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
@@ -230,8 +226,9 @@ def publish_assertion_review_pilot_command(
 
     typer.echo(f"Golden suite            : {suite.id}@{suite.version}")
     typer.echo(f"Partition               : {suite.partition.value}")
-    typer.echo(f"Documents               : {len(suite.cases)}")
-    typer.echo(f"Reviewed clauses        : {len(pilot.cases)}")
+    documents = len({case.source_document_key for case in suite.cases})
+    typer.echo(f"Documents               : {documents}")
+    typer.echo(f"Reviewed clauses        : {len(suite.cases)}")
     typer.echo(f"Golden suite artifact   : {suite_path}")
 
 
@@ -248,15 +245,37 @@ def evaluate_assertion_proposals(
         ),
     ],
     proposal: Annotated[
-        list[Path],
+        list[Path] | None,
         typer.Option(
             "--proposal",
             exists=True,
             dir_okay=False,
             readable=True,
-            help="Persisted DocumentKnowledgeProposal artifact; repeat for multiple documents.",
+            help=(
+                "Native DocumentKnowledgeProposal artifact; repeat per document. Excludes --review."
+            ),
         ),
-    ],
+    ] = None,
+    review: Annotated[
+        Path | None,
+        typer.Option(
+            "--review",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Evaluate all stored review snapshots offline. Excludes --proposal.",
+        ),
+    ] = None,
+    source_review: Annotated[
+        Path | None,
+        typer.Option(
+            "--source-review",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Archived review for source verification only; candidates still use --proposal.",
+        ),
+    ] = None,
     output: Annotated[
         Path,
         typer.Option(
@@ -268,9 +287,26 @@ def evaluate_assertion_proposals(
 ) -> None:
     """Evaluate proposal entities/assertions against an exact versioned golden suite."""
     try:
+        if bool(proposal) == (review is not None):
+            raise ValueError(
+                "exactly one of --proposal or --review is required (mutually exclusive)"
+            )
+        if review is not None and source_review is not None:
+            raise ValueError("--source-review is only valid with --proposal, not --review")
+        sources = [golden, *(proposal or ())]
+        sources.extend(path for path in (review, source_review) if path is not None)
+        ensure_distinct_output(output, *sources)
         suite = load_assertion_golden_suite(golden)
-        proposals = tuple(load_document_knowledge_proposal(path) for path in proposal)
-        report = AssertionQualificationEvaluator().evaluate(suite, proposals)
+        report = AssertionQualificationEvaluator().evaluate(
+            suite,
+            (
+                tuple(load_document_knowledge_proposal(path) for path in proposal)
+                if proposal
+                else None
+            ),
+            review_audit=load_assertion_review_audit(review) if review is not None else None,
+            source_audit=load_assertion_review_audit(source_review) if source_review else None,
+        )
         report_path = write_assertion_qualification_report(report, output)
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
@@ -280,6 +316,11 @@ def evaluate_assertion_proposals(
     typer.echo(f"Golden suite            : {report.golden_suite_id}@{report.golden_suite_version}")
     typer.echo(f"Partition               : {report.golden_partition.value}")
     typer.echo(f"Documents               : {aggregate.documents}")
+    typer.echo(f"Clauses                 : {aggregate.clauses}")
+    typer.echo(f"Candidate clauses       : {aggregate.candidate_clauses}")
+    typer.echo(f"Evaluation contract     : {report.evaluation_contract}")
+    typer.echo(f"Candidate mode          : {report.candidate_mode}")
+    typer.echo(f"Source binding          : {report.source_binding}")
     typer.echo(
         "Entities                : "
         f"P={aggregate.entities.precision:.4f}, "
@@ -344,6 +385,16 @@ def run_assertion_qualification_cascade(
     ] = None,
 ) -> None:
     """Run the threshold-free Efficient → Verify → Escalate assertion cascade."""
+    from standards_atlas.adapters.llm import (
+        LlmConfig,
+        OntologyGuidedAssertionProposalVerifier,
+        OntologyGuidedKnowledgeProposalExtractor,
+        OpenAICompatibleLlmGateway,
+    )
+    from standards_atlas.application.assertion_qualification.cascade import (
+        AssertionQualificationCascadeService,
+    )
+
     try:
         if review_pilot is not None and clause_id:
             raise ValueError("--review-pilot and --clause-id are mutually exclusive")

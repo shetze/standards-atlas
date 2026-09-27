@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 from collections import defaultdict, deque
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from standards_atlas.application.assertion_qualification.audit import (
+    AssertionReviewAudit,
+    review_case_source_sha256,
+)
 from standards_atlas.application.assertion_qualification.cascade_models import (
     AssertionCascadeClauseReport,
     AssertionCascadeRoute,
@@ -16,27 +19,24 @@ from standards_atlas.application.assertion_qualification.cascade_models import (
 )
 from standards_atlas.application.assertion_qualification.evaluation import proposal_sha256
 from standards_atlas.application.assertion_qualification.models import (
+    AssertionAuditBinding,
     AssertionGoldenCase,
     AssertionGoldenSuite,
     GoldenEvidenceSpan,
     GoldenKnowledgeEntity,
     GoldenNormativeAssertion,
 )
+from standards_atlas.application.assertion_qualification.projection import project_native_proposal
 from standards_atlas.application.assertion_qualification.review_pilot_models import (
     ApplicabilitySelectionCase,
     ApplicabilitySelectionCorpus,
-    AssertionProposalAssertionSnapshot,
-    AssertionProposalEntitySnapshot,
-    AssertionProposalEvidenceSnapshot,
     AssertionReviewApplicabilitySource,
     AssertionReviewCase,
     AssertionReviewPilot,
     AssertionReviewProposalSnapshot,
     AssertionReviewSelection,
     AssertionReviewSourceCorpus,
-    AssertionReviewStatus,
     AssertionReviewTargetSuite,
-    normalize_review_label,
 )
 from standards_atlas.application.knowledge_proposal_extraction import (
     assertion_cbox_context,
@@ -50,7 +50,6 @@ from standards_atlas.domain.model import (
     DocumentKnowledgeProposal,
     DocumentStructure,
     EngineeringDocument,
-    EntityAssertionObject,
 )
 
 
@@ -258,32 +257,20 @@ def validate_assertion_review_pilot_document(
     return tuple(case.clause_id for case in cases)
 
 
-def publish_assertion_review_pilot(review: AssertionReviewPilot) -> AssertionGoldenSuite:
-    """Publish a completed case-local review into the existing document-level golden contract."""
-    pending = [
-        case.clause_id
-        for case in review.cases
-        if case.review_status is not AssertionReviewStatus.REVIEWED
-    ]
-    if pending:
-        raise ValueError(
-            f"assertion review pilot cannot be published with pending cases: {pending!r}"
-        )
-
-    grouped: dict[str, list[AssertionReviewCase]] = defaultdict(list)
-    for case in review.cases:
-        grouped[case.document_key].append(case)
-
-    golden_cases = tuple(
-        _publish_document_case(document_key, tuple(grouped[document_key]))
-        for document_key in sorted(grouped)
-    )
+def publish_assertion_review_pilot(audit: AssertionReviewAudit) -> AssertionGoldenSuite:
+    """Publish unchanged local expectations from a complete byte-bound audit."""
+    review = audit.review
     return AssertionGoldenSuite(
         id=review.target_suite.id,
         version=review.target_suite.version,
         partition=review.target_suite.partition,
+        audit=AssertionAuditBinding(
+            review_id=review.review_id,
+            review_version=review.review_version,
+            audit_sha256=audit.audit_sha256,
+        ),
         ontology_versions=review.target_suite.ontology_versions,
-        cases=golden_cases,
+        cases=tuple(_publish_clause_case(case) for case in review.cases),
     )
 
 
@@ -467,49 +454,7 @@ def _proposal_snapshot(
     proposal: DocumentKnowledgeProposal,
 ) -> AssertionReviewProposalSnapshot:
     clause_id = clause_report.clause_id.value
-    anchor_by_id = {anchor.id: anchor for anchor in proposal.evidence_anchors}
-    assertions = tuple(
-        item for item in proposal.assertion_proposals if item.source_clause_id.value == clause_id
-    )
-    entity_ids = {
-        entity_id
-        for assertion in assertions
-        for entity_id in _assertion_entity_ids(assertion.subject_id, assertion.object)
-    }
-    for entity in proposal.entity_proposals:
-        if any(item.value == clause_id for item in entity.proposal_clause_ids):
-            entity_ids.add(entity.id)
-    entities = tuple(item for item in proposal.entity_proposals if item.id in entity_ids)
-
-    entity_snapshots = tuple(
-        AssertionProposalEntitySnapshot(
-            id=entity.id,
-            class_iri=entity.class_iri,
-            normalized_label=entity.normalized_label,
-            confidence=entity.confidence,
-            rationale=entity.rationale,
-            evidence=tuple(
-                _anchor_snapshot(anchor_by_id[anchor_id]) for anchor_id in entity.source_anchor_ids
-            ),
-        )
-        for entity in entities
-    )
-    assertion_snapshots = tuple(
-        AssertionProposalAssertionSnapshot(
-            id=assertion.id,
-            subject_id=assertion.subject_id,
-            predicate=assertion.predicate,
-            object=assertion.object,
-            normative_force=assertion.normative_force,
-            confidence=assertion.confidence,
-            rationale=assertion.rationale,
-            evidence=tuple(
-                _anchor_snapshot(anchor_by_id[anchor_id])
-                for anchor_id in assertion.evidence_anchor_ids
-            ),
-        )
-        for assertion in assertions
-    )
+    candidate = project_native_proposal(proposal, clause_id)
     verification = clause_report.verification
     verifier_dispositions: dict[str, str] = {}
     if verification is not None:
@@ -536,125 +481,52 @@ def _proposal_snapshot(
         missing_assertion_detected=(
             verification.missing_assertion_detected if verification is not None else False
         ),
-        entities=entity_snapshots,
-        assertions=assertion_snapshots,
-        violations=tuple(
-            f"{item.kind.value}: {item.term}: {item.reason}"
-            for item in proposal.violations
-            if item.clause_id.value == clause_id
-        ),
-        failures=tuple(
-            f"{item.kind.value}: {item.error_type}: {item.message}"
-            for item in proposal.failures
-            if item.clause_id.value == clause_id
-        ),
+        entities=candidate.entities,
+        assertions=candidate.assertions,
+        violations=candidate.violations,
+        failures=candidate.failures,
     )
 
 
-def _assertion_entity_ids(subject_id: str, object_: object) -> tuple[str, ...]:
-    if isinstance(object_, EntityAssertionObject):
-        return (subject_id, object_.entity_id)
-    return (subject_id,)
-
-
-def _anchor_snapshot(anchor: object) -> AssertionProposalEvidenceSnapshot:
-    return AssertionProposalEvidenceSnapshot(
-        anchor_id=anchor.id,
-        source_clause_id=anchor.source_clause_id.value,
-        source_kind=anchor.source_kind,
-        start_offset=anchor.start_offset,
-        end_offset=anchor.end_offset,
-        content_hash=anchor.content_hash,
-    )
-
-
-def _publish_document_case(
-    document_key: str,
-    cases: tuple[AssertionReviewCase, ...],
-) -> AssertionGoldenCase:
-    cases = tuple(sorted(cases, key=lambda case: (case.reference, case.clause_id)))
-    entity_by_signature: dict[tuple[str, str], GoldenKnowledgeEntity] = {}
-    local_to_golden: dict[tuple[str, str], str] = {}
-
-    for case in cases:
-        assert case.expected is not None
-        for entity in case.expected.entities:
-            signature = (normalize_review_label(entity.normalized_label), entity.class_iri)
-            golden = entity_by_signature.get(signature)
-            if golden is None:
-                golden = GoldenKnowledgeEntity(
-                    id=_stable_id("entity", document_key, *signature),
-                    class_iri=entity.class_iri,
-                    normalized_label=entity.normalized_label.strip(),
-                )
-                entity_by_signature[signature] = golden
-            local_to_golden[(case.clause_id, entity.id)] = golden.id
-
-    assertions: list[GoldenNormativeAssertion] = []
-    assertion_signatures: set[str] = set()
-    for case in cases:
-        assert case.expected is not None
-        for assertion in case.expected.assertions:
-            subject_id = local_to_golden[(case.clause_id, assertion.subject_id)]
-            object_ = assertion.object
-            if object_.kind == "entity":
-                object_ = EntityAssertionObject(
-                    entity_id=local_to_golden[(case.clause_id, object_.entity_id)]
-                )
-            evidence = tuple(
-                GoldenEvidenceSpan(
-                    clause_id=ClauseId(value=case.clause_id),
-                    start_offset=span.start_offset,
-                    end_offset=span.end_offset,
-                    content_hash=hashlib.sha256(
-                        case.text[span.start_offset : span.end_offset].encode("utf-8")
-                    ).hexdigest(),
-                )
-                for span in assertion.evidence
-            )
-            signature_payload = {
-                "document_key": document_key,
-                "source_clause_id": case.clause_id,
-                "subject_id": subject_id,
-                "predicate": assertion.predicate,
-                "object": object_.model_dump(mode="json"),
-                "normative_force": assertion.normative_force.value,
-                "evidence": [
-                    {
-                        "start_offset": span.start_offset,
-                        "end_offset": span.end_offset,
-                        "content_hash": span.content_hash,
-                    }
-                    for span in evidence
-                ],
-            }
-            signature = json.dumps(signature_payload, sort_keys=True, separators=(",", ":"))
-            if signature in assertion_signatures:
-                raise ValueError(
-                    f"duplicate reviewed assertion in document {document_key!r}, "
-                    f"clause {case.clause_id!r}"
-                )
-            assertion_signatures.add(signature)
-            assertions.append(
-                GoldenNormativeAssertion(
-                    id=_stable_id("assertion", signature),
-                    source_clause_id=ClauseId(value=case.clause_id),
-                    subject_id=subject_id,
-                    predicate=assertion.predicate,
-                    object=object_,
-                    normative_force=assertion.normative_force,
-                    evidence=evidence,
-                )
-            )
-
-    entities = tuple(sorted(entity_by_signature.values(), key=lambda entity: entity.id))
+def _publish_clause_case(case: AssertionReviewCase) -> AssertionGoldenCase:
+    assert case.expected is not None  # enforced by the byte-bound audit loader
     return AssertionGoldenCase(
-        source_document_key=document_key,
-        entities=entities,
-        assertions=tuple(sorted(assertions, key=lambda assertion: assertion.id)),
+        source_document_key=case.document_key,
+        clause_id=ClauseId(value=case.clause_id),
+        reference=case.reference,
+        canonical_reference=case.canonical_reference,
+        text_sha256=case.text_sha256,
+        source_sha256=review_case_source_sha256(case),
+        entities=tuple(
+            GoldenKnowledgeEntity(
+                id=entity.id,
+                class_iri=entity.class_iri,
+                normalized_label=entity.normalized_label,
+            )
+            for entity in case.expected.entities
+        ),
+        assertions=tuple(
+            GoldenNormativeAssertion(
+                id=assertion.id,
+                source_clause_id=ClauseId(value=case.clause_id),
+                subject_id=assertion.subject_id,
+                predicate=assertion.predicate,
+                object=assertion.object,
+                normative_force=assertion.normative_force,
+                evidence=tuple(
+                    GoldenEvidenceSpan(
+                        source_document_key=case.document_key,
+                        clause_id=ClauseId(value=case.clause_id),
+                        source_kind="body",
+                        start_offset=span.start_offset,
+                        end_offset=span.end_offset,
+                        content_hash=hashlib.sha256(
+                            case.text[span.start_offset : span.end_offset].encode("utf-8")
+                        ).hexdigest(),
+                    )
+                    for span in assertion.evidence
+                ),
+            )
+            for assertion in case.expected.assertions
+        ),
     )
-
-
-def _stable_id(prefix: str, *parts: str) -> str:
-    payload = "\x1f".join(parts).encode("utf-8")
-    return f"{prefix}-{hashlib.sha256(payload).hexdigest()[:16]}"

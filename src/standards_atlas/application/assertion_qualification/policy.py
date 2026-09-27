@@ -169,6 +169,10 @@ def _validate_partition_binding(
     expected: AssertionGoldenPartition,
     policy: AssertionAutoAdoptionPolicy,
 ) -> None:
+    if report.candidate_mode != "native_proposal":
+        raise ValueError(
+            "review_snapshot reports are development regressions, not auto-adoption qualifications"
+        )
     if suite.partition is not expected or report.golden_partition is not expected:
         raise ValueError(f"assertion auto-adoption requires a {expected.value} golden partition")
     if tuple(suite.ontology_versions) != tuple(policy.ontology_versions):
@@ -183,14 +187,24 @@ def _validate_partition_binding(
     )
     if actual_identity != expected_identity:
         raise ValueError(f"{expected.value} qualification report does not bind the supplied suite")
+    if report.audit != suite.audit or tuple(case.case_key for case in report.cases) != tuple(
+        case.case_key for case in suite.cases
+    ):
+        raise ValueError("qualification report audit/case identity differs from golden suite")
+    for golden, result in zip(suite.cases, report.cases, strict=True):
+        if result.source_sha256 != golden.source_sha256 or (
+            result.entities.expected,
+            result.assertions.expected,
+        ) != (len(golden.entities), len(golden.assertions)):
+            raise ValueError("qualification report case source/support differs from golden suite")
 
 
 def _validate_partition_separation(
     development: AssertionGoldenSuite,
     holdout: AssertionGoldenSuite,
 ) -> None:
-    development_clauses = _golden_assertion_clauses(development)
-    holdout_clauses = _golden_assertion_clauses(holdout)
+    development_clauses = _golden_case_keys(development)
+    holdout_clauses = _golden_case_keys(holdout)
     overlap = development_clauses & holdout_clauses
     if overlap:
         preview = sorted(overlap)[:5]
@@ -199,12 +213,8 @@ def _validate_partition_separation(
         )
 
 
-def _golden_assertion_clauses(suite: AssertionGoldenSuite) -> set[tuple[str, str]]:
-    return {
-        (case.source_document_key, assertion.source_clause_id.value)
-        for case in suite.cases
-        for assertion in case.assertions
-    }
+def _golden_case_keys(suite: AssertionGoldenSuite) -> set[tuple[str, str]]:
+    return {case.case_key for case in suite.cases}
 
 
 def _validate_cascade_inputs(
@@ -324,6 +334,7 @@ def _partition_gate(
     violations = sum(case.proposal_violations for case in report.cases)
     failures = sum(case.proposal_failures for case in report.cases)
     checks = (
+        _ge("candidate_clauses", aggregate.candidate_clauses, aggregate.clauses),
         _ge("expected_entities", aggregate.entities.expected, thresholds.min_expected_entities),
         _ge(
             "expected_assertions",

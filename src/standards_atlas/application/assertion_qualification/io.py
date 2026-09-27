@@ -7,6 +7,10 @@ from pathlib import Path
 
 import yaml
 
+from standards_atlas.application.assertion_qualification.audit import (
+    AssertionReviewAudit,
+    load_mapping_bytes,
+)
 from standards_atlas.application.assertion_qualification.cascade_models import (
     AssertionQualificationCascadeReport,
 )
@@ -52,6 +56,7 @@ def write_assertion_review_pilot(review: AssertionReviewPilot, path: Path) -> Pa
 
 def write_assertion_golden_suite(suite: AssertionGoldenSuite, path: Path) -> Path:
     payload = suite.model_dump(mode="json")
+    AssertionGoldenSuite.model_validate(payload)
     require_current_payload("assertion-golden-suite", payload)
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.suffix.lower() == ".json":
@@ -121,6 +126,7 @@ def write_assertion_qualification_report(
     path: Path,
 ) -> Path:
     payload = report.model_dump(mode="json")
+    AssertionQualificationReport.model_validate(payload)
     require_current_payload("assertion-qualification-report", payload)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -155,8 +161,30 @@ def write_assertion_qualification_cascade_report(
 
 
 def _load_mapping(path: Path) -> dict[str, object]:
-    raw = path.read_text(encoding="utf-8")
-    payload = json.loads(raw) if path.suffix.lower() == ".json" else yaml.safe_load(raw)
-    if not isinstance(payload, dict):
-        raise ValueError(f"expected mapping in {path}")
-    return payload
+    return load_mapping_bytes(path.read_bytes(), json_format=path.suffix.lower() == ".json")
+
+
+def load_assertion_review_audit(path: Path) -> AssertionReviewAudit:
+    """Load a complete audit without rewriting or repairing its original bytes."""
+    return AssertionReviewAudit(path.read_bytes(), json_format=path.suffix.lower() == ".json")
+
+
+def copy_assertion_review_audit(audit: AssertionReviewAudit, path: Path) -> Path:
+    """Preserve original bytes; never overwrite a different existing artifact."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open("xb") as output:
+            output.write(audit.original_bytes)
+    except FileExistsError:
+        if path.read_bytes() != audit.original_bytes:
+            raise ValueError(f"refusing to overwrite a different audit artifact: {path}") from None
+    return path
+
+
+def ensure_distinct_output(output: Path, *inputs: Path) -> None:
+    """Protect source artifacts, including symlink and hardlink aliases."""
+    for source in inputs:
+        if output.resolve() == source.resolve() or (
+            output.exists() and source.exists() and output.samefile(source)
+        ):
+            raise ValueError(f"output must not overwrite input artifact: {source}")

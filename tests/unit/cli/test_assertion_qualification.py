@@ -21,10 +21,16 @@ def test_assertion_evaluate_cli_writes_threshold_free_report(tmp_path: Path) -> 
                 "id": "dev",
                 "version": "1.0.0",
                 "partition": "development",
+                "audit": {"review_id": "test", "review_version": "1", "audit_sha256": "a" * 64},
                 "ontology_versions": ["standards-atlas-core@2.0.0"],
                 "cases": [
                     {
                         "source_document_key": "DOC",
+                        "clause_id": {"value": "c1"},
+                        "reference": "DOC:1",
+                        "canonical_reference": "DOC 1",
+                        "text_sha256": "b" * 64,
+                        "source_sha256": "c" * 64,
                         "entities": [],
                         "assertions": [],
                     }

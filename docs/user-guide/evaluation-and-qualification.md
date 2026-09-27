@@ -132,7 +132,8 @@ uv run standards-atlas evaluation assertion-review-pilot-attach \
 ```
 
 Reviewers then set every case to `review_status: reviewed` and populate `expected.entities` and
-`expected.assertions`. Entity IDs are case-local conveniences. Evidence is annotated with exact
+`expected.assertions`. Confirmed, human-readable entity and assertion IDs remain case-local
+and are preserved verbatim. Evidence is annotated with exact
 `start_offset`/`end_offset` values in the embedded, verified clause text; publication computes the
 content hash automatically. A reviewed case with empty `entities` and `assertions` is an explicit
 negative assertion case.
@@ -145,9 +146,30 @@ uv run standards-atlas evaluation assertion-review-pilot-publish \
   --output local/review/assertions/pilot/assertion-golden-suite.yaml
 ```
 
-Publication deterministically merges semantically identical case-local entities within each document
-and emits the existing `AssertionGoldenSuite` schema. The applicability corpus itself is not migrated
-or modified.
+Publication preserves one case per `(source_document_key, clause_id)`, in selection order, with
+unchanged confirmed IDs, labels, classes and assertion contents. It never merges entities across
+clauses. The current schema-1 golden suite requires the original review byte hash and each case's
+frozen source fingerprint. Obsolete document-wide golden payloads are rejected, not migrated.
+The applicability corpus itself is not modified.
+
+Evaluate the already embedded review snapshots without another model run:
+
+```bash
+uv run standards-atlas evaluation assertion-evaluate \
+  --golden local/review/assertions/pilot/assertion-golden-suite.yaml \
+  --review local/review/assertions/pilot/assertion-review-pilot.yaml \
+  --output local/evaluation/assertion-qualification-interim.json
+```
+
+Exactly one candidate source is required: `--review` or repeatable `--proposal`. Native proposals
+can additionally use `--source-review` to verify the frozen audit; this option is not a candidate
+selector. Both inputs use the same clause-local evaluator. All review snapshots are required,
+including empty and escalated ones; a missing snapshot is an error. Review reports cannot serve as
+auto-adoption qualification evidence. Keep the original audit unchanged after golden publication.
+
+AP01 Series A reports explicitly use `assertion-clause-local-interim-v1`; the existing typed metrics
+remain provisional until Series B/C. See the [evaluation contract](../development/assertion-golden-regression.md)
+for fingerprints, exact CLI semantics, source-integrity limits and deferred metric dimensions.
 
 ## HITL
 

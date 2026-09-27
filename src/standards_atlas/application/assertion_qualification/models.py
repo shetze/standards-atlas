@@ -6,16 +6,22 @@ import math
 import re
 import unicodedata
 from enum import StrEnum
-from typing import ClassVar
+from typing import Annotated, ClassVar, Literal
 from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from standards_atlas.application.schema.model import SchemaBoundModel
-from standards_atlas.domain.model import AssertionObject, ClauseId, NormativeForce
+from standards_atlas.domain.model import (
+    AssertionObject,
+    ClauseId,
+    EvidenceSourceKind,
+    NormativeForce,
+)
 
 ASSERTION_GOLDEN_SUITE_SCHEMA_VERSION = 1
 ASSERTION_QUALIFICATION_REPORT_SCHEMA_VERSION = 1
+ASSERTION_EVALUATION_CONTRACT = "assertion-clause-local-interim-v1"
 _IRI_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*$")
 
 
@@ -54,6 +60,19 @@ class AssertionGoldenPartition(StrEnum):
     HOLDOUT = "holdout"
 
 
+class AssertionAuditBinding(BaseModel):
+    """Identity of the unchanged completed review that published the suite."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    review_id: str = Field(min_length=1)
+    review_version: str = Field(min_length=1)
+    audit_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_fingerprint_contract: Literal["assertion-review-source-v1"] = (
+        "assertion-review-source-v1"
+    )
+
+
 class GoldenKnowledgeEntity(BaseModel):
     """Expected ontology-grounded entity independent from runtime proposal IDs."""
 
@@ -74,7 +93,9 @@ class GoldenEvidenceSpan(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
+    source_document_key: str = Field(min_length=1)
     clause_id: ClauseId
+    source_kind: EvidenceSourceKind
     start_offset: int = Field(ge=0)
     end_offset: int = Field(gt=0)
     content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -114,13 +135,22 @@ class GoldenNormativeAssertion(BaseModel):
 
 
 class AssertionGoldenCase(BaseModel):
-    """Expected engineering knowledge for one source document."""
+    """Expected engineering knowledge for one immutable, case-local clause."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     source_document_key: str = Field(min_length=1)
+    clause_id: ClauseId
+    reference: str = Field(min_length=1)
+    canonical_reference: str = Field(min_length=1)
+    text_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     entities: tuple[GoldenKnowledgeEntity, ...] = ()
     assertions: tuple[GoldenNormativeAssertion, ...] = ()
+
+    @property
+    def case_key(self) -> tuple[str, str]:
+        return (self.source_document_key, self.clause_id.value)
 
     @field_validator("source_document_key")
     @classmethod
@@ -131,18 +161,25 @@ class AssertionGoldenCase(BaseModel):
 
     @model_validator(mode="after")
     def assertion_references_are_local(self) -> AssertionGoldenCase:
+        if any(item.source_clause_id != self.clause_id for item in self.assertions):
+            raise ValueError("golden assertions must belong to their case clause")
+        for assertion in self.assertions:
+            if any(
+                span.source_document_key != self.source_document_key for span in assertion.evidence
+            ):
+                raise ValueError("golden evidence must bind its case document")
         entity_ids = [entity.id for entity in self.entities]
         assertion_ids = [assertion.id for assertion in self.assertions]
         if len(entity_ids) != len(set(entity_ids)):
-            raise ValueError("golden entity ids must be unique within a document")
+            raise ValueError("golden entity ids must be unique within a case")
         entity_signatures = [
             (_normalize_label(entity.normalized_label), entity.class_iri)
             for entity in self.entities
         ]
         if len(entity_signatures) != len(set(entity_signatures)):
-            raise ValueError("golden entities must be semantically unique within a document")
+            raise ValueError("golden entities must be semantically unique within a case")
         if len(assertion_ids) != len(set(assertion_ids)):
-            raise ValueError("golden assertion ids must be unique within a document")
+            raise ValueError("golden assertion ids must be unique within a case")
         known_entities = set(entity_ids)
         missing_subjects = {
             assertion.subject_id
@@ -172,6 +209,7 @@ class AssertionGoldenSuite(SchemaBoundModel):
     id: str = Field(min_length=1)
     version: str = Field(min_length=1)
     partition: AssertionGoldenPartition
+    audit: AssertionAuditBinding
     ontology_versions: tuple[str, ...]
     cases: tuple[AssertionGoldenCase, ...] = Field(min_length=1)
 
@@ -181,10 +219,10 @@ class AssertionGoldenSuite(SchemaBoundModel):
         return _validate_ontology_versions(value)
 
     @model_validator(mode="after")
-    def document_keys_are_unique(self) -> AssertionGoldenSuite:
-        keys = [case.source_document_key for case in self.cases]
+    def case_keys_are_unique(self) -> AssertionGoldenSuite:
+        keys = [case.case_key for case in self.cases]
         if len(keys) != len(set(keys)):
-            raise ValueError("assertion golden suite document keys must be unique")
+            raise ValueError("assertion golden suite case keys must be unique")
         return self
 
 
@@ -249,14 +287,58 @@ class AccuracyMetrics(BaseModel):
         return self
 
 
+class NativeProposalProvenance(BaseModel):
+    """Reference to an actually supplied full-document proposal source."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    kind: Literal["native_proposal"] = "native_proposal"
+    proposal_run_id: str = Field(min_length=1)
+    proposal_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class ReviewSnapshotProvenance(BaseModel):
+    """Historical declarations are distinct from verified audit/snapshot content."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    kind: Literal["review_snapshot"] = "review_snapshot"
+    audit_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    snapshot_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    snapshot_fingerprint_contract: Literal["assertion-review-snapshot-v1"] = (
+        "assertion-review-snapshot-v1"
+    )
+    declared_proposal_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    proposal_run_id: str = Field(min_length=1)
+    cascade_run_id: str = Field(min_length=1)
+    proposal_stage: Literal["efficient", "escalation"]
+    route: Literal["efficient_accepted", "escalated"]
+    reasons: tuple[str, ...] = ()
+    verifier_dispositions: dict[str, str] = Field(default_factory=dict)
+    missing_entity_detected: bool = False
+    missing_assertion_detected: bool = False
+    original_proposal_verification: Literal["unavailable"] = "unavailable"
+    historical_model_provenance: Literal["unavailable"] = "unavailable"
+    historical_input_provenance: Literal["unavailable"] = "unavailable"
+
+
+type CandidateProvenance = Annotated[
+    NativeProposalProvenance | ReviewSnapshotProvenance, Field(discriminator="kind")
+]
+
+
 class AssertionQualificationCaseReport(BaseModel):
-    """Deterministic evaluation result for one golden document case."""
+    """Deterministic evaluation result for one golden clause case."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     source_document_key: str
-    proposal_run_id: str | None = None
-    proposal_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    clause_id: ClauseId
+    reference: str
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    candidate_status: Literal["present", "missing"]
+    candidate_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    provenance: CandidateProvenance | None = None
     entities: CountMetrics
     assertions: CountMetrics
     predicate_accuracy: AccuracyMetrics
@@ -269,14 +351,35 @@ class AssertionQualificationCaseReport(BaseModel):
     assertion_false_negative_ids: tuple[str, ...] = ()
     proposal_violations: int = Field(default=0, ge=0)
     proposal_failures: int = Field(default=0, ge=0)
+    violation_details: tuple[str, ...] = ()
+    failure_details: tuple[str, ...] = ()
+
+    @property
+    def case_key(self) -> tuple[str, str]:
+        return (self.source_document_key, self.clause_id.value)
+
+    @model_validator(mode="after")
+    def input_identity_is_consistent(self) -> AssertionQualificationCaseReport:
+        present = self.candidate_status == "present"
+        if present != (self.provenance is not None) or present != (
+            self.candidate_sha256 is not None
+        ):
+            raise ValueError("candidate status must match its provenance and fingerprint")
+        if self.proposal_violations != len(self.violation_details):
+            raise ValueError("proposal violation count must match retained details")
+        if self.proposal_failures != len(self.failure_details):
+            raise ValueError("proposal failure count must match retained details")
+        return self
 
 
 class AssertionQualificationAggregate(BaseModel):
-    """Aggregate Slice-7A metrics across all golden document cases."""
+    """Interim typed metrics across clauses; document count remains distinct."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     documents: int = Field(ge=1)
+    clauses: int = Field(ge=1)
+    candidate_clauses: int = Field(ge=0)
     entities: CountMetrics
     assertions: CountMetrics
     predicate_accuracy: AccuracyMetrics
@@ -307,6 +410,10 @@ class AssertionQualificationReport(SchemaBoundModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     schema_version: int = ASSERTION_QUALIFICATION_REPORT_SCHEMA_VERSION
+    evaluation_contract: Literal["assertion-clause-local-interim-v1"]
+    candidate_mode: Literal["native_proposal", "review_snapshot"]
+    audit: AssertionAuditBinding
+    source_binding: Literal["golden_declared", "audit_verified"]
     golden_suite_id: str
     golden_suite_version: str
     golden_partition: AssertionGoldenPartition
@@ -323,26 +430,72 @@ class AssertionQualificationReport(SchemaBoundModel):
 
     @model_validator(mode="after")
     def report_identity_is_consistent(self) -> AssertionQualificationReport:
-        if self.aggregate.documents != len(self.cases):
-            raise ValueError("aggregate document count must match qualification cases")
-        case_keys = [case.source_document_key for case in self.cases]
+        if self.aggregate.clauses != len(self.cases):
+            raise ValueError("aggregate clause count must match qualification cases")
+        documents = {case.source_document_key for case in self.cases}
+        if self.aggregate.documents != len(documents):
+            raise ValueError("aggregate document count must match distinct documents")
+        case_keys = [case.case_key for case in self.cases]
         if len(case_keys) != len(set(case_keys)):
-            raise ValueError("qualification report document keys must be unique")
+            raise ValueError("qualification report case keys must be unique")
+        if self.aggregate.candidate_clauses != sum(
+            case.candidate_status == "present" for case in self.cases
+        ):
+            raise ValueError("aggregate candidate coverage must match cases")
         source_keys = [source.source_document_key for source in self.proposal_sources]
         if len(source_keys) != len(set(source_keys)):
             raise ValueError("qualification report proposal source keys must be unique")
         source_by_key = {source.source_document_key: source for source in self.proposal_sources}
-        if not set(source_by_key) <= set(case_keys):
+        if not set(source_by_key) <= documents:
             raise ValueError("qualification report proposal sources must belong to report cases")
+        if self.candidate_mode == "review_snapshot":
+            if self.proposal_sources or self.source_binding != "audit_verified":
+                raise ValueError(
+                    "review snapshot reports require verified audit, not native sources"
+                )
+            if self.aggregate.candidate_clauses != self.aggregate.clauses:
+                raise ValueError("review snapshot reports require complete candidate coverage")
         for case in self.cases:
             source = source_by_key.get(case.source_document_key)
+            provenance = case.provenance
+            if provenance is not None and provenance.kind != self.candidate_mode:
+                raise ValueError("case provenance kind differs from report candidate mode")
+            if isinstance(provenance, ReviewSnapshotProvenance):
+                if provenance.audit_sha256 != self.audit.audit_sha256:
+                    raise ValueError("snapshot provenance does not match report audit")
+                continue
             if source is None:
-                if case.proposal_run_id is not None or case.proposal_hash is not None:
+                if provenance is not None:
                     raise ValueError("case proposal identity requires a proposal source entry")
                 continue
-            if (case.proposal_run_id, case.proposal_hash) != (
+            if provenance is None or (provenance.proposal_run_id, provenance.proposal_hash) != (
                 source.proposal_run_id,
                 source.proposal_hash,
             ):
                 raise ValueError("case proposal identity does not match proposal source entry")
+        for field_name in ("entities", "assertions"):
+            total = getattr(self.aggregate, field_name)
+            for counter in (
+                "expected",
+                "predicted",
+                "true_positive",
+                "false_positive",
+                "false_negative",
+            ):
+                if getattr(total, counter) != sum(
+                    getattr(getattr(case, field_name), counter) for case in self.cases
+                ):
+                    raise ValueError(f"aggregate {field_name}.{counter} differs from cases")
+        for field_name in (
+            "predicate_accuracy",
+            "normative_force_accuracy",
+            "grounding_accuracy",
+            "exact_assertion_accuracy",
+        ):
+            total = getattr(self.aggregate, field_name)
+            for counter in ("evaluated", "correct"):
+                if getattr(total, counter) != sum(
+                    getattr(getattr(case, field_name), counter) for case in self.cases
+                ):
+                    raise ValueError(f"aggregate {field_name}.{counter} differs from cases")
         return self

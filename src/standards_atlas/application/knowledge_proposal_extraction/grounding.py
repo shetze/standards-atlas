@@ -229,9 +229,7 @@ def _entity_evidence_surfaces(
             clause_id = item.get("clause_id")
             heading = item.get("heading")
             if isinstance(clause_id, str) and isinstance(heading, str) and heading:
-                surfaces.append(
-                    (ClauseId(value=clause_id), EvidenceSourceKind.HEADING, heading)
-                )
+                surfaces.append((ClauseId(value=clause_id), EvidenceSourceKind.HEADING, heading))
 
     associative_context = context.get("associative_context")
     if isinstance(associative_context, list):
@@ -246,9 +244,7 @@ def _entity_evidence_surfaces(
             if isinstance(body, str) and body:
                 surfaces.append((ClauseId(value=clause_id), EvidenceSourceKind.BODY, body))
             if isinstance(heading, str) and heading:
-                surfaces.append(
-                    (ClauseId(value=clause_id), EvidenceSourceKind.HEADING, heading)
-                )
+                surfaces.append((ClauseId(value=clause_id), EvidenceSourceKind.HEADING, heading))
 
     unique: list[tuple[ClauseId, EvidenceSourceKind, str]] = []
     seen: set[tuple[str, EvidenceSourceKind, str]] = set()

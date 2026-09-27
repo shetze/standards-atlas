@@ -17,12 +17,14 @@ from standards_atlas.application.assertion_qualification.models import (
     GoldenEvidenceSpan,
     GoldenNormativeAssertion,
 )
+from standards_atlas.application.assertion_qualification.projection import ClauseEvaluationCandidate
+from standards_atlas.application.assertion_qualification.review_pilot_models import (
+    AssertionProposalAssertionSnapshot,
+    AssertionProposalEvidenceSnapshot,
+)
 from standards_atlas.domain.model import (
-    DocumentKnowledgeProposal,
     EntityAssertionObject,
-    EvidenceAnchor,
     LiteralAssertionObject,
-    NormativeAssertionProposal,
 )
 
 _Signature = tuple[Hashable, ...]
@@ -44,13 +46,11 @@ class CaseMatchResult:
 
 def evaluate_case(
     golden: AssertionGoldenCase,
-    proposal: DocumentKnowledgeProposal | None,
-    *,
-    proposal_hash: str | None,
+    proposal: ClauseEvaluationCandidate | None,
 ) -> CaseMatchResult:
     golden_entities = {entity.id: entity for entity in golden.entities}
     proposal_entities = (
-        {entity.id: entity for entity in proposal.entity_proposals} if proposal is not None else {}
+        {entity.id: entity for entity in proposal.entities} if proposal is not None else {}
     )
 
     golden_entity_signatures = {
@@ -77,9 +77,9 @@ def evaluate_case(
         _proposal_assertion_record(
             assertion,
             proposal_entity_signatures,
-            proposal.evidence_anchors,
+            source_clause_id=golden.clause_id.value,
         )
-        for assertion in (proposal.assertion_proposals if proposal is not None else ())
+        for assertion in (proposal.assertions if proposal is not None else ())
     )
 
     golden_relation_counts = Counter(item.relation for item in golden_assertions)
@@ -116,8 +116,12 @@ def evaluate_case(
     return CaseMatchResult(
         report=AssertionQualificationCaseReport(
             source_document_key=golden.source_document_key,
-            proposal_run_id=proposal.proposal_run_id if proposal is not None else None,
-            proposal_hash=proposal_hash,
+            clause_id=golden.clause_id,
+            reference=golden.reference,
+            source_sha256=golden.source_sha256,
+            candidate_status="present" if proposal is not None else "missing",
+            candidate_sha256=proposal.candidate_sha256 if proposal is not None else None,
+            provenance=proposal.provenance if proposal is not None else None,
             entities=entity_metrics,
             assertions=assertion_metrics,
             predicate_accuracy=predicate_accuracy,
@@ -130,6 +134,8 @@ def evaluate_case(
             assertion_false_negative_ids=assertion_fn,
             proposal_violations=len(proposal.violations) if proposal is not None else 0,
             proposal_failures=len(proposal.failures) if proposal is not None else 0,
+            violation_details=proposal.violations if proposal is not None else (),
+            failure_details=proposal.failures if proposal is not None else (),
         )
     )
 
@@ -142,7 +148,9 @@ def aggregate_case_reports(
     )
 
     return AssertionQualificationAggregate(
-        documents=len(reports),
+        documents=len({report.source_document_key for report in reports}),
+        clauses=len(reports),
+        candidate_clauses=sum(report.candidate_status == "present" for report in reports),
         entities=_sum_count_metrics(report.entities for report in reports),
         assertions=_sum_count_metrics(report.assertions for report in reports),
         predicate_accuracy=_sum_accuracy(report.predicate_accuracy for report in reports),
@@ -182,14 +190,14 @@ def _golden_assertion_record(
 
 
 def _proposal_assertion_record(
-    assertion: NormativeAssertionProposal,
+    assertion: AssertionProposalAssertionSnapshot,
     entity_signatures: Mapping[str, _Signature],
-    anchors: Sequence[EvidenceAnchor],
+    *,
+    source_clause_id: str,
 ) -> _AssertionRecord:
-    anchor_by_id = {anchor.id: anchor for anchor in anchors}
     endpoint = _assertion_endpoint(
-        source_clause_id=assertion.source_clause_id.value,
-        subject=entity_signatures[assertion.subject_id],
+        source_clause_id=source_clause_id,
+        subject=entity_signatures.get(assertion.subject_id, ("unresolved", assertion.subject_id)),
         object_=_object_signature(assertion.object, entity_signatures),
     )
     relation = (*endpoint, assertion.predicate)
@@ -200,8 +208,8 @@ def _proposal_assertion_record(
         normative_force=assertion.normative_force.value,
         grounding=tuple(
             sorted(
-                _evidence_anchor_signature(anchor_by_id[anchor_id])
-                for anchor_id in assertion.evidence_anchor_ids
+                (_evidence_anchor_signature(anchor) for anchor in assertion.evidence),
+                key=repr,
             )
         ),
     )
@@ -218,7 +226,10 @@ def _object_signature(
     entity_signatures: Mapping[str, _Signature],
 ) -> _Signature:
     if isinstance(object_, EntityAssertionObject):
-        return ("entity", entity_signatures[object_.entity_id])
+        return (
+            "entity",
+            entity_signatures.get(object_.entity_id, ("unresolved", object_.entity_id)),
+        )
     payload = json.dumps(
         object_.model_dump(mode="json"),
         ensure_ascii=False,
@@ -232,19 +243,24 @@ def _golden_grounding_signature(spans: Sequence[GoldenEvidenceSpan]) -> _Signatu
     return tuple(
         sorted(
             (
-                span.clause_id.value,
-                span.start_offset,
-                span.end_offset,
-                span.content_hash,
-            )
-            for span in spans
+                (
+                    span.clause_id.value,
+                    span.source_kind.value,
+                    span.start_offset,
+                    span.end_offset,
+                    span.content_hash,
+                )
+                for span in spans
+            ),
+            key=repr,
         )
     )
 
 
-def _evidence_anchor_signature(anchor: EvidenceAnchor) -> tuple[Hashable, ...]:
+def _evidence_anchor_signature(anchor: AssertionProposalEvidenceSnapshot) -> tuple[Hashable, ...]:
     return (
-        anchor.source_clause_id.value,
+        anchor.source_clause_id,
+        anchor.source_kind.value,
         anchor.start_offset,
         anchor.end_offset,
         anchor.content_hash,
