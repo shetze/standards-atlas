@@ -1,4 +1,4 @@
-"""CLI for assertion golden-suite evaluation and Slice-7B cascade execution."""
+"""CLI for assertion golden-suite evaluation and assertion review workflows."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from standards_atlas.application.assertion_qualification import (
     AssertionReviewTargetSuite,
     attach_cascade_to_assertion_review_pilot,
     build_assertion_review_pilot,
+    golden_suite_sha256,
     load_applicability_selection_corpus,
     load_assertion_auto_adoption_policy,
     load_assertion_golden_suite,
@@ -29,6 +30,7 @@ from standards_atlas.application.assertion_qualification import (
     load_assertion_review_pilot,
     load_document_knowledge_proposal,
     publish_assertion_review_pilot,
+    qualification_report_sha256,
     review_clause_ids,
     select_applicability_pilot_cases,
     validate_assertion_review_pilot_document,
@@ -36,6 +38,7 @@ from standards_atlas.application.assertion_qualification import (
     write_assertion_golden_suite,
     write_assertion_qualification_cascade_report,
     write_assertion_qualification_report,
+    write_assertion_qualification_summary,
     write_assertion_review_pilot,
 )
 from standards_atlas.application.assertion_qualification.io import ensure_distinct_output
@@ -229,6 +232,7 @@ def publish_assertion_review_pilot_command(
     documents = len({case.source_document_key for case in suite.cases})
     typer.echo(f"Documents               : {documents}")
     typer.echo(f"Reviewed clauses        : {len(suite.cases)}")
+    typer.echo(f"Golden suite SHA-256    : {golden_suite_sha256(suite)}")
     typer.echo(f"Golden suite artifact   : {suite_path}")
 
 
@@ -284,6 +288,14 @@ def evaluate_assertion_proposals(
             help="Destination assertion qualification JSON report.",
         ),
     ] = Path("local/evaluation/assertion-qualification.json"),
+    summary_output: Annotated[
+        Path | None,
+        typer.Option(
+            "--summary-output",
+            dir_okay=False,
+            help="Optional deterministic Markdown summary for the same report.",
+        ),
+    ] = None,
 ) -> None:
     """Evaluate proposal entities/assertions against an exact versioned golden suite."""
     try:
@@ -296,6 +308,9 @@ def evaluate_assertion_proposals(
         sources = [golden, *(proposal or ())]
         sources.extend(path for path in (review, source_review) if path is not None)
         ensure_distinct_output(output, *sources)
+        if summary_output is not None:
+            ensure_distinct_output(summary_output, *sources, output)
+            ensure_distinct_output(output, summary_output)
         suite = load_assertion_golden_suite(golden)
         report = AssertionQualificationEvaluator().evaluate(
             suite,
@@ -308,6 +323,11 @@ def evaluate_assertion_proposals(
             source_audit=load_assertion_review_audit(source_review) if source_review else None,
         )
         report_path = write_assertion_qualification_report(report, output)
+        summary_path = (
+            write_assertion_qualification_summary(report, summary_output)
+            if summary_output is not None
+            else None
+        )
     except (OSError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=2) from exc
@@ -375,7 +395,10 @@ def evaluate_assertion_proposals(
             for binding in report.ontology_resources
         )
     )
+    typer.echo(f"Report SHA-256           : {qualification_report_sha256(report)}")
     typer.echo(f"Report                  : {report_path}")
+    if summary_path is not None:
+        typer.echo(f"Summary                 : {summary_path}")
 
 
 def _format_ratio(metric) -> str:

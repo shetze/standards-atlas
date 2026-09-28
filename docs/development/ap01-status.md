@@ -1,62 +1,86 @@
-# AP01 status — Series C / S07–S08
+# AP01 status — Series D / S09–S10 closure
 
-Date: 2026-09-27. Series C implementation is complete in this delivery; user-local
-`uv run ruff check .` and the uninterrupted full `uv run pytest` remain the acceptance
-check after applying the delta. Series D is not implemented.
+Date: 2026-09-27. Series D implementation and the real private v8 baseline run are complete
+in this delivery. User-local `uv run ruff check .` and the full `uv run pytest` remain the
+final acceptance check after applying the delta; this document does not claim that local
+user validation has already happened.
 
-## Snapshot prerequisite recovered
+## S09 — end-to-end, consumer and no-LLM hardening
 
-The supplied Series-C snapshot has SHA-256
-`868bd1576ea6c6160375e0a71271b4f99e8265c9cdacec9c0907f60082afeaa2`, which is exactly
-the recorded base of the already delivered Series-B delta. Its Series-B files were still
-at their recorded pre-Series-B hashes and `source_resolution.py` was absent. The working
-tree therefore reapplies the previously delivered Series-B delta byte-for-byte before
-adding S07-S08. Consequently this Series-C delta, which is correctly based on the supplied
-snapshot, also contains those prerequisite Series-B changes. No new Series-B semantics
-were invented during this recovery.
+The existing clause-local AP01 path is now covered end to end from byte-bound review load
+through publication, golden reload, review-snapshot evaluation, report reload/replay and an
+optional deterministic Markdown summary. The CLI reports deterministic model hashes and
+protects both JSON and summary outputs from aliasing any input or each other. Synthetic
+integration fixtures contain no licensed standards text.
 
-## Delivered boundaries
+A fresh-process integration test executes publication and evaluation twice, verifies
+byte-identical golden/report/summary outputs and replays the persisted report through the
+same evaluator. Separate negative cases reject a reformatted audit against an already
+published suite and reject a stale golden schema. Existing tests continue to cover missing
+snapshots, bad source surfaces, duplicate mapping keys, hard-/symlink overwrite attempts,
+mutually exclusive candidate options and review-report rejection at the auto-adoption
+boundary.
 
-S07: the formal ontology subclass hierarchy is a shared deterministic component used by
-both proposal unification and assertion evaluation. Work-product membership is derived
-only from `WorkProduct` plus transitive `rdfs:subClassOf` declarations in the explicitly
-bound ontology resources. `EngineeringRecord` and transitive classes such as
-`VerificationPlan` qualify; `EngineeringArtifact` alone does not. The report now carries
-`work_product_precision`, `work_product_recall`, `work_product_class_accuracy` and
-`required_work_product_relation_recall`, plus exact ontology resource SHA-256 bindings.
-A same-identity candidate typed only as `EngineeringEntity` remains in the WP class-
-accuracy denominator. Literals, wrong relation direction/predicate and predicate-domain
-inference do not manufacture a required WorkProduct relation.
+The offline assertion regression modules are guarded against importing the LLM gateway or
+cascade execution service. The existing call-spy test additionally blocks gateway,
+extractor, verifier, cascade construction/execution and network connection attempts while
+publish plus both candidate modes execute. No embedding infrastructure exists in the AP01
+offline module set, and an architecture guard prevents it from being introduced there
+silently.
 
-S08: case reports now retain traceable diagnostic findings using the AP01 vocabulary.
-Unique class, predicate and normative-force differences can be rule-based findings;
-technical invalid grounding can be rule-based as well. Strictly missing/additional or
-ambiguous semantic objects remain `needs_review`/`unclassified_semantic_mismatch` where
-the difference alone does not prove the fachliche cause. Retained proposal violations can
-suggest note/list/context/condition and related codes but never become human-confirmed
-without an explicit human annotation. Additional assertions are not automatically marked
-`invented_assertion`; heading evidence is not by itself `wrong_context_use`. Diagnostics
-do not alter strict metrics.
+## S10 — reproducible private v8 Development baseline
 
-Current evaluation contract remains `assertion-clause-local-v1`; schema families remain
-at schema 1 under the clean-break policy. Golden expectations, audit bytes, productive
-context selection and model/prompt behavior were not changed. No model, verifier, cascade,
-embedding, unification merge or canonical adoption run is part of Series C.
+The exact completed audit used for the planning baseline was available with SHA-256
+`eab6d6dfa30e7f5af2bb477f7c5bce19764d7f3459c403e27652ce6ff15d6fa1`; its bytes were
+copied unchanged to:
 
-## Actual checks in this delivery environment
+`local/review/assertions/assertion-pilot/0.1.0/assertion-review-pilot-v8-reviewed-complete.yaml`
 
-The prerequisite Series-B evaluation/unification check passed 25 tests before Series-C
-changes. After S07, the focused evaluation, work-product and unification gate passed 30
-tests. After S08, the focused assertion evaluation/work-product/unification gate passed
-36 tests before the broader Series-C checks recorded in `_delivery/tests.md`.
+The implemented CLI produced:
 
-The environment uses the available Python 3.13 interpreter with `PYTHONPATH=src` for these
-checks. `uv run --offline` cannot resolve the project environment because required wheels
-are not fully present in the local uv cache; this remains an environment limitation, not
-a substituted claim that the user's local Ruff/full-pytest acceptance has passed.
+- `local/review/assertions/assertion-pilot/0.1.0/assertion-golden-suite.yaml`
+- `local/evaluation/assertions/assertion-pilot/0.1.0/assertion-qualification-v8.json`
+- `local/evaluation/assertions/assertion-pilot/0.1.0/assertion-qualification-v8-summary.md`
 
-## Next authorized implementation boundary
+The published suite has 20 clause-local cases across 9 documents, 51 expected entities and
+24 expected assertions. The deterministic model hash of the golden suite is
+`80735a6045000b3749edda3fb67458607d36be54b243625348e821743a93ae74`; the deterministic
+report hash is `4063bf29d640de7d9c06659e7eb95ce8b1080353e84e2e31e78b76bad4ab8063`.
+A second fresh CLI run generated byte-identical YAML, JSON and Markdown artifacts. Reloading
+the stored report and recomputing it from the stored golden plus original audit also yielded
+model equality.
 
-After the user's local Ruff and full-pytest checks, Series D may implement S09-S10:
-end-to-end/No-LLM hardening and the reproducible private v8 pilot baseline. Do not start
-AP02/AP03 as part of a Series-C correction.
+The strict v8 baseline is intentionally not improved by changing golden data or proposals:
+entity label P/R/F1 is approximately 0.0167 / 0.0196 / 0.0180; assertion P/R/F1 is 0 / 0 /
+0; clause-level exact match is 0/20. No proposal entity is in the WorkProduct family, so WP
+precision is not applicable, WP recall is 0/7, WP class accuracy is not evaluable, and
+required Requirement→`requires`→WorkProduct relation recall is 0/3. Technical evidence
+integrity is 75/75 valid while semantic evidence remains explicitly unevaluated. The report
+contains 61 retained proposal-violation records and 149 diagnostic findings, all
+`needs_review`; these counts are regression observations, not failing implementation tests
+or human-confirmed causes.
+
+## Contract and scope outcome
+
+The evaluation contract remains `assertion-clause-local-v1`; all involved schema families
+remain at schema 1 under the clean-break policy. The report remains metric-only and the
+private `review_snapshot` baseline cannot qualify automatic production adoption. No model,
+verifier, cascade, embedding, productive unification or canonical `DocumentKnowledge`
+adoption was executed to generate the baseline.
+
+## Concrete handover to AP02
+
+AP02 still owns productive context/grounding improvements. The v8 baseline makes the
+following gaps concrete without altering the historical audit: productive multi-source and
+multi-span output; explicit own and ancestor heading surfaces; sequential clause context;
+scope/reach-aware source use; explicit unavailable-source handling; and binding proposal
+behavior to a declared context revision. AP02 must not reinterpret the v8 review snapshots
+as if they had seen newly computed context.
+
+## Concrete handover to AP03
+
+AP03 receives the fixed 20/51/24 Development golden, the `assertion-clause-local-v1`
+contract, the complete v8 report, the deterministic summary and the unresolved diagnostic
+findings. New prompt/model runs can be compared against this baseline, but these known 20
+Development cases are not an independent holdout and the golden must not be edited to make
+a model run look better.

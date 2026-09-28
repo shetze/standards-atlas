@@ -1,4 +1,4 @@
-"""Assertion-centred qualification metrics, cascade and Slice-7C eligibility contracts."""
+"""Assertion-centred qualification, regression, cascade, and eligibility contracts."""
 
 from .audit import AssertionReviewAudit, review_case_source_sha256
 from .cascade import (
@@ -37,6 +37,7 @@ from .io import (
     write_assertion_golden_suite,
     write_assertion_qualification_cascade_report,
     write_assertion_qualification_report,
+    write_assertion_qualification_summary,
     write_assertion_review_pilot,
 )
 from .models import (
@@ -96,6 +97,7 @@ from .policy_models import (
     AssertionQualityGateOperator,
     AssertionQualityThresholds,
 )
+from .reporting import render_assertion_qualification_summary
 from .review_pilot import (
     AssertionReviewPilotBuildRequest,
     attach_cascade_to_assertion_review_pilot,
@@ -232,6 +234,8 @@ __all__ = [
     "write_assertion_auto_adoption_report",
     "write_assertion_qualification_cascade_report",
     "write_assertion_qualification_report",
+    "write_assertion_qualification_summary",
+    "render_assertion_qualification_summary",
     "auto_adoption_policy_sha256",
     "cascade_report_sha256",
     "qualification_report_sha256",

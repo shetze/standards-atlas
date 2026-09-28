@@ -99,6 +99,7 @@ def test_assertion_evaluate_help_is_registered() -> None:
     assert "--golden" in result.stdout
     assert "--proposal" in result.stdout
     assert "--output" in result.stdout
+    assert "--summary-output" in result.stdout
 
 
 def test_assertion_cascade_help_is_registered() -> None:

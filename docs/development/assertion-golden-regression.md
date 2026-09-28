@@ -2,16 +2,17 @@
 
 ## Contract status
 
-Series A (S01-S03), Series B (S04-S06) and Series C (S07-S08) are implemented. Current
-schema families remain at version 1; this is a clean break, not a migration reader for
-document-wide golden suites or interim reports. The completed review pilot remains a
-separate, supported audit contract. Publication and evaluation perform no source
-selection, extraction, verification, cascade, embeddings, productive unification or
-canonical adoption.
+AP01 Series A through D (S01-S10) are implemented. Current schema families remain at
+version 1; this is a clean break, not a migration reader for document-wide golden suites
+or interim reports. The completed review pilot remains a separate, supported audit
+contract. Publication and evaluation perform no source selection, extraction, verification,
+cascade, embeddings, productive unification or canonical adoption.
 
 The current report contract is `assertion-clause-local-v1`. It includes the four
-ontology-based work-product metrics and conservative diagnostic findings described below.
-Series D closes the end-to-end/reproducibility checks and the final private v8 baseline.
+ontology-based work-product metrics, conservative diagnostic findings, deterministic
+ontology bindings and the reproducibility protections described below. The private v8
+Development baseline has been materialized without changing either the golden review or
+the stored candidates.
 
 ## Audit and fingerprint contract
 
@@ -227,7 +228,8 @@ uv run standards-atlas evaluation assertion-review-pilot-publish \
 uv run standards-atlas evaluation assertion-evaluate \
   --golden local/review/assertions/assertion-pilot/0.1.0/assertion-golden-suite.yaml \
   --review local/review/assertions/assertion-pilot/0.1.0/assertion-review-pilot-v8-reviewed-complete.yaml \
-  --output local/evaluation/assertions/assertion-pilot/0.1.0/assertion-qualification-v8.json
+  --output local/evaluation/assertions/assertion-pilot/0.1.0/assertion-qualification-v8.json \
+  --summary-output local/evaluation/assertions/assertion-pilot/0.1.0/assertion-qualification-v8-summary.md
 ```
 
 For native proposals, replace `--review` with one or more `--proposal` paths. Add
@@ -238,9 +240,44 @@ editable review writer as an audit-preservation step.
 
 The synthetic tests exercise publish/evaluate with gateway, extractor, verifier and
 cascade construction blocked and network connections prohibited. No private standards
-text or external runtime is needed for these tests. Series B adds no model configuration,
-prompt, source selection or canonical adoption behavior.
+text or external runtime is needed for these tests. A fresh-process integration test runs
+the offline publish/evaluate sequence twice and requires byte-identical golden, JSON report
+and Markdown summary outputs. The persisted report is then replayed through the same
+evaluator. A stale golden schema and a byte-different audit bound to an existing golden are
+rejected.
 
-The 20/51/24 private v8 pilot inventory remains the adoption basis. Series C does not
-rewrite or re-run that pilot as a final AP01 baseline; the final deterministic v8 report
-and result note remain Series D work.
+`--summary-output` is optional. It renders only persisted report facts and deterministic
+hashes; it contains no timestamp or local input/output paths. Strict measured differences,
+retained proposal diagnostics, historical verifier dispositions and `needs_review`
+diagnostic suggestions are shown separately. The summary is not an additional metric
+contract and cannot change the JSON report.
+
+## Final private v8 Development baseline
+
+The completed audit SHA-256 is
+`eab6d6dfa30e7f5af2bb477f7c5bce19764d7f3459c403e27652ce6ff15d6fa1`. Publication yields
+20 cases across 9 documents with 51 expected entities and 24 expected assertions. The
+deterministic golden model hash is
+`80735a6045000b3749edda3fb67458607d36be54b243625348e821743a93ae74`; the deterministic
+report model hash is
+`4063bf29d640de7d9c06659e7eb95ce8b1080353e84e2e31e78b76bad4ab8063`. Two fresh CLI runs
+produced byte-identical golden/report/summary artifacts, and report replay from the stored
+golden plus original audit is equal to the persisted report.
+
+The historical v8 output is a deliberately uncorrected baseline. Strict entity-label
+P/R/F1 is 1/60, 1/51 and 2/111 (about 0.0167/0.0196/0.0180). Assertion TP is 0 with 15
+predicted and 24 expected; clause exact match is 0/20. WP precision has denominator zero
+and is therefore not applicable, WP recall is 0/7, WP class accuracy is not evaluable, and
+required WP relation recall is 0/3. Technical evidence integrity is 75/75 valid; semantic
+evidence remains `not_evaluated`. The report retains 61 proposal violations and 149
+`needs_review` diagnostic findings without converting those observations into human
+confirmation or a quality gate.
+
+## AP02/AP03 handover
+
+AP02 owns the productive gaps exposed by this frozen baseline: multi-source/multi-span
+grounding, own and ancestor headings, sequential clause context, reach-aware context use,
+missing-source semantics and explicit context-revision binding. Those future sources must
+not be retrofitted into the historical v8 snapshots. AP03 receives the fixed Development
+golden, evaluation contract, full v8 report and unresolved diagnostics for new model/prompt
+experiments; the 20 known Development cases are not a holdout.

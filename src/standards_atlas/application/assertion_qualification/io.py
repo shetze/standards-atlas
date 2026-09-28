@@ -22,6 +22,9 @@ from standards_atlas.application.assertion_qualification.policy_models import (
     AssertionAutoAdoptionPolicy,
     AssertionAutoAdoptionReport,
 )
+from standards_atlas.application.assertion_qualification.reporting import (
+    render_assertion_qualification_summary,
+)
 from standards_atlas.application.assertion_qualification.review_pilot_models import (
     ApplicabilitySelectionCorpus,
     AssertionReviewPilot,
@@ -133,6 +136,17 @@ def write_assertion_qualification_report(
         json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+    return path
+
+
+def write_assertion_qualification_summary(
+    report: AssertionQualificationReport,
+    path: Path,
+) -> Path:
+    """Write a deterministic Markdown rendering of the validated report."""
+    AssertionQualificationReport.model_validate(report.model_dump(mode="json"))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(render_assertion_qualification_summary(report), encoding="utf-8")
     return path
 
 

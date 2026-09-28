@@ -1,0 +1,94 @@
+schema_version: 1
+review_id: test-audit
+review_version: 0.1.0
+target_suite:
+  id: test-development
+  version: 0.1.0
+  partition: development
+  ontology_versions:
+  - standards-atlas-core@2.0.0
+source_corpus:
+  corpus_id: selection
+  corpus_version: '1'
+  corpus_sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+selection:
+  strategy: explicit
+  selected_clause_ids:
+  - c1
+cases:
+- clause_id: c1
+  document_key: DOC
+  reference: DOC:1
+  canonical_reference: DOC 1
+  text: Plan
+  text_sha256: fa8ed0bdabdd6bcb1c0746f1d3e15212f7f3439d74339fbaaf16c60c0a80fb8e
+  applicability_source:
+    category: test
+    present: false
+    source_archive: selection.zip
+    source_archive_sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    selection_text_sha256: fa8ed0bdabdd6bcb1c0746f1d3e15212f7f3439d74339fbaaf16c60c0a80fb8e
+    selection_text_matches_current: true
+  context:
+    document_key: DOC
+    clause_id: c1
+    reference: '1'
+    heading: Planning
+    ancestor_headings:
+    - Development
+    - Products
+  review_status: reviewed
+  expected:
+    entities:
+    - id: plan
+      normalized_label: Plan
+      class_iri: http://lunetix.org/standards-atlas#Plan
+    assertions:
+    - id: required
+      subject_id: plan
+      predicate: http://lunetix.org/standards-atlas#specifies
+      object:
+        kind: literal
+        value: Plan
+      normative_force: requirement
+      evidence:
+      - start_offset: 0
+        end_offset: 4
+  proposal:
+    cascade_run_id: historical-test-run
+    route: escalated
+    proposal_stage: escalation
+    proposal_run_id: native-run
+    proposal_sha256: b14d2270da51ca87955f3cf4a8bdd3fb7416127e054c17542bdfc63d38236dd9
+    entities:
+    - id: plan
+      class_iri: http://lunetix.org/standards-atlas#Plan
+      normalized_label: Plan
+      confidence: 0.5
+      rationale: null
+      evidence:
+      - anchor_id: plan-anchor
+        source_clause_id: c1
+        source_kind: body
+        start_offset: 0
+        end_offset: 4
+        content_hash: fa8ed0bdabdd6bcb1c0746f1d3e15212f7f3439d74339fbaaf16c60c0a80fb8e
+    assertions:
+    - id: required
+      subject_id: plan
+      predicate: http://lunetix.org/standards-atlas#specifies
+      object:
+        kind: literal
+        value: Plan
+        datatype_iri: null
+        language: null
+      normative_force: requirement
+      confidence: 0.1
+      rationale: null
+      evidence:
+      - anchor_id: plan-anchor
+        source_clause_id: c1
+        source_kind: body
+        start_offset: 0
+        end_offset: 4
+        content_hash: fa8ed0bdabdd6bcb1c0746f1d3e15212f7f3439d74339fbaaf16c60c0a80fb8e

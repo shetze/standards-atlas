@@ -158,7 +158,8 @@ Evaluate the already embedded review snapshots without another model run:
 uv run standards-atlas evaluation assertion-evaluate \
   --golden local/review/assertions/pilot/assertion-golden-suite.yaml \
   --review local/review/assertions/pilot/assertion-review-pilot.yaml \
-  --output local/evaluation/assertion-qualification.json
+  --output local/evaluation/assertion-qualification.json \
+  --summary-output local/evaluation/assertion-qualification-summary.md
 ```
 
 Exactly one candidate source is required: `--review` or repeatable `--proposal`. Native proposals
@@ -175,7 +176,10 @@ Series C additionally reports work-product precision/recall/class accuracy and r
 Requirement→`requires`→WorkProduct relation recall from the bound transitive ontology hierarchy.
 The report records exact ontology-resource SHA-256 values and conservative case-local diagnostic
 findings; `needs_review` suggestions are not human confirmation and do not modify strict metrics.
-Semantic evidence strength remains unevaluated. See the
+`--summary-output` writes an optional deterministic Markdown view of the exact same report,
+separating strict differences, retained proposal diagnostics and still-unconfirmed causes.
+It contains no timestamp or local artifact paths, so two identical offline runs can be compared
+byte-for-byte. Semantic evidence strength remains unevaluated. See the
 [evaluation contract](../development/assertion-golden-regression.md) for exact semantics and
 source-resolution/diagnostic limits.
 

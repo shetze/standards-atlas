@@ -198,7 +198,12 @@ shape by a clean-break dimensional contract: class-independent and typed entity 
 explicit ratio supports/null states, ambiguity-aware attribute alignment, separated
 source integrity/span equality/semantic-evidence state, and clause-level exact match.
 Series C extends that current-only report shape with ontology-resource bindings, the four
-WorkProduct dimensions and case-local diagnostic findings. These additions stay within the
-AP01 clean-break schema-1 contract; no compatibility reader is introduced. Review-snapshot
-reports are rejected by the auto-adoption qualification boundary. See
-`docs/development/assertion-golden-regression.md` for the current AP01 contract.
+WorkProduct dimensions and case-local diagnostic findings. Series D does not introduce a
+new persisted schema: it adds end-to-end/replay guards and a deterministic Markdown
+rendering of the current report. The private v8 baseline is bound to the existing audit,
+golden and report hashes; execution timestamps and local paths are not part of the
+deterministic report core. These additions stay within the AP01 clean-break schema-1
+contract; no compatibility reader is introduced. Review-snapshot reports are rejected by
+the auto-adoption qualification boundary. See
+`docs/development/assertion-golden-regression.md` for the current AP01 contract and AP02/AP03
+handover.

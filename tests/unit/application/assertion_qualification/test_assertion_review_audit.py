@@ -704,6 +704,28 @@ def test_publish_and_evaluate_cli_never_overwrite_their_sources(tmp_path: Path) 
             "--output",
             str(golden),
         ],
+        [
+            "assertion-evaluate",
+            "--golden",
+            str(golden),
+            "--review",
+            str(review),
+            "--output",
+            str(tmp_path / "report.json"),
+            "--summary-output",
+            str(review),
+        ],
+        [
+            "assertion-evaluate",
+            "--golden",
+            str(golden),
+            "--review",
+            str(review),
+            "--output",
+            str(tmp_path / "same-output"),
+            "--summary-output",
+            str(tmp_path / "same-output"),
+        ],
     ):
         result = CliRunner().invoke(app, ["evaluation", *args])
         assert result.exit_code == 2, result.output

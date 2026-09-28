@@ -65,3 +65,36 @@ def test_evaluation_and_projection_never_construct_a_productive_proposal() -> No
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 assert node.func.id != "DocumentKnowledgeProposal"
+
+
+def test_offline_regression_modules_do_not_import_model_or_embedding_infrastructure() -> None:
+    import ast
+
+    offline_modules = (
+        "audit.py",
+        "evaluation.py",
+        "io.py",
+        "matching.py",
+        "projection.py",
+        "reporting.py",
+        "source_resolution.py",
+    )
+    forbidden_modules = {
+        "standards_atlas.adapters.llm",
+        "standards_atlas.application.assertion_qualification.cascade",
+    }
+    for name in offline_modules:
+        tree = ast.parse((PACKAGE / name).read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                module = node.module or ""
+                assert module not in forbidden_modules and not module.startswith(
+                    "standards_atlas.adapters.llm."
+                ), (name, module)
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    assert alias.name not in forbidden_modules and not alias.name.startswith(
+                        "standards_atlas.adapters.llm."
+                    ), (name, alias.name)
+        source = (PACKAGE / name).read_text(encoding="utf-8").casefold()
+        assert "embedding" not in source, name
