@@ -11,6 +11,8 @@ from standards_atlas.domain.model.content import (
     render_block_as_plain_text,
 )
 
+TABLE_OMISSION_MARKER_PREFIX = "[Table omitted: "
+
 
 @dataclass(frozen=True)
 class SemanticTextProjection:
@@ -21,6 +23,12 @@ class SemanticTextProjection:
     semantic_input_character_count: int
     omitted_table_block_count: int
     omitted_table_character_count: int
+
+
+def is_non_evidence_projection_marker(value: str) -> bool:
+    """Return whether ``value`` is an extractor display marker rather than source evidence."""
+
+    return value.startswith(TABLE_OMISSION_MARKER_PREFIX) and value.endswith("]")
 
 
 def project_clause_content(content: tuple[ContentBlock, ...]) -> SemanticTextProjection:

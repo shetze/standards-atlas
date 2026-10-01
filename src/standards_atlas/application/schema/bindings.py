@@ -118,6 +118,10 @@ SCHEMA_MODEL_BINDINGS: tuple[ModelBinding, ...] = (
         "standards_atlas.adapters.atlasdata.knowledge_contract:EvidenceBlob",
     ),
     ModelBinding(
+        "context-source-package",
+        "standards_atlas.application.context.input_binding:ContextSourcePackage",
+    ),
+    ModelBinding(
         "ontology-resource",
         "standards_atlas.application.semantic_ontology.definition:OntologyDefinition",
     ),

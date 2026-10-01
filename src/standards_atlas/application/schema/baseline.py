@@ -61,6 +61,9 @@ SCHEMA_POLICIES: dict[str, SchemaPolicy] = {
     "knowledge-evidence": SchemaPolicy(
         "knowledge-evidence", 1, (1,), ".atlas/data/knowledge-evidence/*.json"
     ),
+    "context-source-package": SchemaPolicy(
+        "context-source-package", 1, (1,), ".atlas/data/context-source-packages/*.json"
+    ),
     "atlasdata-knowledge-report": SchemaPolicy(
         "atlasdata-knowledge-report", 1, (1,), "local/**/atlasdata-knowledge*.json"
     ),

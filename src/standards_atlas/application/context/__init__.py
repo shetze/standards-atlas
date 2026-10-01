@@ -14,6 +14,21 @@ from standards_atlas.application.context.context_selection import (
     StructuredContextSelection,
     select_structured_context,
 )
+from standards_atlas.application.context.input_binding import (
+    CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT,
+    CONTEXT_SOURCE_PACKAGE_CONTRACT,
+    CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION,
+    BoundContextInputSurface,
+    ContextInputFingerprints,
+    ContextReuseCheck,
+    ContextReuseReason,
+    ContextSourcePackage,
+    ContextSourcePackageBinding,
+    build_context_source_package,
+    check_context_source_package_reuse,
+    context_source_package_binding,
+    context_source_package_content_sha256,
+)
 from standards_atlas.application.context.normative_context import (
     governing_scope_context,
     resolve_normative_context,
@@ -69,6 +84,19 @@ from standards_atlas.application.context.subject_vocabulary import (
 )
 
 __all__ = [
+    "CONTEXT_SOURCE_PACKAGE_BINDING_CONTRACT",
+    "CONTEXT_SOURCE_PACKAGE_CONTRACT",
+    "CONTEXT_SOURCE_PACKAGE_SCHEMA_VERSION",
+    "BoundContextInputSurface",
+    "ContextInputFingerprints",
+    "ContextReuseCheck",
+    "ContextReuseReason",
+    "ContextSourcePackage",
+    "ContextSourcePackageBinding",
+    "build_context_source_package",
+    "check_context_source_package_reuse",
+    "context_source_package_binding",
+    "context_source_package_content_sha256",
     "STRUCTURED_CONTEXT_CANDIDATE_CONTRACT",
     "STRUCTURED_CONTEXT_SELECTION_CONTRACT",
     "DEFAULT_CONTEXT_SELECTION_PROFILE_ID",

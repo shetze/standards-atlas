@@ -691,6 +691,11 @@ SCHEMA_MARKER_DECISIONS: tuple[SchemaMarkerDecision, ...] = (
         reason="embedded in canonical EngineeringDocument clauses",
     ),
     SchemaMarkerDecision(
+        "standards_atlas.application.context.input_binding:ContextSourcePackage",
+        SchemaMarkerDisposition.CENTRAL,
+        "context-source-package",
+    ),
+    SchemaMarkerDecision(
         "standards_atlas.domain.model.knowledge_proposal:DocumentKnowledgeProposal",
         SchemaMarkerDisposition.CENTRAL,
         "document-knowledge-proposal",
@@ -792,6 +797,14 @@ VERSIONED_INTERFACES: tuple[VersionedInterface, ...] = (
         (VersionAxis.SCHEMA,),
         "knowledge-evidence",
         "Private immutable hydration payloads.",
+    ),
+    VersionedInterface(
+        "context-source-package",
+        ".atlas/data/context-source-packages/*.json",
+        LifecycleBoundary.PERSISTENCE,
+        (VersionAxis.SCHEMA,),
+        "context-source-package",
+        "Private source/input package; public lineage uses only its text-free binding.",
     ),
     VersionedInterface(
         "atlasdata-knowledge-report",

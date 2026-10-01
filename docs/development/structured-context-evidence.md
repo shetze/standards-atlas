@@ -1,8 +1,9 @@
 # AP02 structured context and evidence contract
 
-Status: Series B implemented baseline (AP02-S01-S04). This document describes the current
-source-surface, structural-candidate and bounded-selection contracts plus the consumer migration
-map. It does not activate the productive multi-source extractor output contract.
+Status: Series C implemented baseline (AP02-S01-S06). This document describes the current
+source-surface, structural-candidate, bounded-selection, source/input-binding and common multi-span
+grounding contracts plus the consumer migration map. It does not activate the productive
+multi-source extractor output/parser/verifier contract; that cut-over remains Series D.
 
 ## 1. Contract boundaries
 
@@ -13,9 +14,10 @@ AP02 keeps four identities separate:
 3. the structural reason why a source may later be selected as context; and
 4. the reviewed semantic contribution of a source to an interpretation.
 
-Series A implements only the first two as source-resolution prerequisites. Candidate discovery,
-selection/reach policy, input packages and productive multi-span output remain assigned to later
-AP02 slices.
+Series A implemented source identity and resolution. Series B added candidate discovery and
+selection/reach policy. Series C now binds the complete source/candidate/selection/input state and
+provides a common technical multi-span grounding core. Productive model output, parser and verifier
+use of that contract remain assigned to Series D.
 
 The historical AP01 review/audit path remains byte-bound to its embedded source snapshots. Its
 `FrozenSourceResolver` is not an adapter for current EngineeringDocuments and must never be
@@ -94,42 +96,56 @@ resolver performs no network access and loads no implicit edition. Cross-documen
 possible only for documents explicitly passed into the resolver, and callers can require an exact
 source revision.
 
-## 5. Evidence-use and later contracts
+## 5. Evidence use and multi-span grounding
 
-The eventual productive contract will attach multiple evidence *uses* to entities and assertions,
-with source reference, exact quote, selector and contribution semantics. Series A deliberately does
-not change the current extractor schema or current proposal payload. Existing `EvidenceAnchor`
-lists remain the canonical text-safe destination once S06/S07 introduce the new use/selector
-contract.
+Series C adds one technical evidence-use contract for entities and assertions. Each `EvidenceUse`
+identifies one source ref from the exact bound input package, an unchanged quote, a checked selector
+and a proposed contribution (`direct_statement`, `subject_frame` or `condition_or_exception`). The
+contribution belongs to the *use*, not to the canonical anchor, and successful grounding keeps its
+semantic status `unassessed`.
 
-Series A also does not define context selection, scope inheritance, normative-force inheritance or
-new Applicability semantics. Source resolution answers only whether a requested source exists,
-what it is, where it came from technically, and whether the caller may access it.
+Selectors either require a unique exact quote, choose a validated zero-based occurrence inside the
+declared delivered excerpt, or supply canonical half-open character offsets `[start, end)`. Exact
+quotes and explicit offsets must agree. Repeated quotes without a disambiguating selector remain
+ambiguous. Excerpt-local matches are projected to canonical source positions by the bound absolute
+excerpt start; byte offsets or renderer-local character systems are not substituted silently.
+
+Grounding is restricted to the declared surface/excerpt in `ContextSourcePackage.input_surfaces`.
+No search of another heading/body or the complete document repairs a wrong source declaration. A
+failed necessary span leaves the whole multi-span request incomplete; valid sibling spans are kept
+only as diagnostics. Spans stay separate rather than being joined into a fabricated original quote.
+
+Existing `EvidenceAnchor` lists remain the canonical destination for body/heading text. Existing
+structured table/formula handles and transcription/media state remain preserved by the source
+package. The extractor's table-omission marker is display metadata and is explicitly non-citable.
+Series C does not invent new ABox predicates, Applicability logic, normative-force inheritance or
+semantic reach confirmation.
 
 ## 6. Consumer matrix
 
-| Consumer / boundary | Current restriction or capability | AP02 owner | Series A action |
+| Consumer / boundary | Current restriction or capability | AP02 owner | Current AP02 action |
 |---|---|---|---|
 | `Clause` / `EngineeringDocument` | Canonical body/heading and attribute provenance already exist. | S01-S02 | Reuse unchanged persistence shape; fix heading writer provenance where source is known. |
-| `DocumentKnowledge` / `EvidenceAnchor` | Entities/assertions already reference anchor lists; accepted anchors validate only against body/heading in the same document. | S06, S10 | No parallel anchor model and no external canonical adoption in Series A. |
+| `DocumentKnowledge` / `EvidenceAnchor` | Entities/assertions already reference anchor lists; accepted anchors validate body/heading in the same document. | S06, S10 | S06 maps checked body/heading evidence uses to existing anchors; no parallel canonical anchor model or external adoption is introduced. |
 | Canonical CBox / assertion CBox | Existing `1.3` payload remains the current productive CBox. Series B adds a separate source-bound structural selection beside it. | S03-S05 | S03/S04 candidate/selection service implemented; `assertion_context_selection(...)` exposes it without changing the current extractor CBox payload. S05 binds it into a source/input package. |
-| Extraction renderer/schema/parser | Current model payload uses single quote declarations and legacy source fields. | S07 | No productive output cut-over in Series A. |
-| Grounding | Exact matching exists; entity fallback may silently search other allowed CBox surfaces. | S06-S07 | Leave behavior untouched; S02 only provides reusable source resolution primitives. |
-| Verifier | Payload/prompt still enforce local-body restrictions for assertions. | S07-S08 | No behavior change in Series A. |
-| Cascade / proposal lineage | Does not bind a reusable source package shared with verifier. | S05, S08 | No behavior change in Series A. |
-| Auto-adoption policy | Current grounding gates assume old contract identity. | S07-S08 | No gate relaxation in Series A. |
+| Extraction renderer/schema/parser | Current model payload still uses single quote declarations and legacy source fields. | S07 | Intentionally unchanged through S06; the atomic productive cut-over is S07. |
+| Grounding | Legacy pre-cut-over helpers still exist; the new package-bound core never silently switches surfaces. | S06-S07 | S06 implements the common entity/assertion multi-span core; S07 replaces productive legacy payload/use atomically. |
+| Verifier | Payload/prompt still enforce local-body restrictions for assertions. | S07-S08 | Intentionally unchanged through S06; S07/S08 migrate the bound evidence-list contract. |
+| Cascade / proposal lineage | Productive lineage does not yet bind/share the new source package. | S05, S08 | S05 defines deterministic package/public binding and stale checks; S08 wires them into productive reuse. |
+| Auto-adoption policy | Current grounding gates assume old contract identity. | S07-S08 | No gate relaxation through S06; new contract identity must fail closed until S07/S08. |
 | AP01 Golden/review/evaluation | `FrozenSourceResolver` intentionally resolves only frozen audit surfaces. | S09 plus permanent AP01 guard | Keep unchanged; never enrich v8 snapshots with current sources. |
-| Native evaluation | Clause-local proposal projection exists; current source package is not bound. | S09 | No evaluator change in Series A. |
-| Proposal persistence | Repository persists current proposal schema; no bound context package yet. | S05, S07, S10 | No new alternative proposal format in Series A. |
-| Formal projection | Preserves evidence ids but later source-package reachability is not yet proven. | S10 | No graph/ontology change in Series A. |
+| Native evaluation | Clause-local proposal projection exists; current native proposals do not yet carry the new source-package binding. | S09 | No evaluator cut-over through S06. |
+| Proposal persistence | Current proposal schema is unchanged. Private context packages now have an immutable hash-addressed repository and text-free public binding. | S05, S07, S10 | S05 registers `context-source-package` schema v1; S07/S10 attach/use it without creating a legacy proposal format. |
+| Formal projection | Preserves evidence ids but later source-package reachability is not yet proven. | S10 | No graph/ontology change through S06. |
 | Clause/evaluation provider | Exposes current EngineeringDocument clauses; not a general source resolver. | S02, S10 | Resolver remains application-layer and adapter-neutral. |
 | MCP | Has document allowlist, clause-text exposure and source-path redaction. | S10 | Do not route MCP through the new resolver yet; carry equivalent access concepts without bypassing adapter policy. |
-| Tables/formulas | First-class table ids and formula content blocks/source evidence already exist. | S02, S06, S10 | Reuse as media handles; no second extractor/transcription workflow. |
-| Schema inventory | EngineeringDocument, proposal and AP01 contracts are current-only clean-break schemas. | S05/S07 when persistence changes | Series A adds no persisted schema family and no legacy reader. |
+| Tables/formulas | First-class table ids and formula content blocks/source evidence already exist. | S02, S06, S10 | Preserve media handles/status; table display markers are non-citable and S06 does not invent a second extractor/transcription workflow. |
+| Schema inventory | EngineeringDocument, proposal and AP01 contracts remain current-only clean-break schemas. | S05/S07 when persistence changes | S05 adds current-only `context-source-package` schema v1; no legacy reader is added. |
 
-Every current restriction above has an assigned AP02 slice. Series B still does not activate the new
-productive payload: candidate availability and bounded selection are now implemented, while S05
-remains responsible for input-package/fingerprint binding and S07 for the productive output cut-over.
+Every current restriction above has an assigned AP02 slice. Series C still does not activate the
+new productive payload: candidate availability, bounded selection, deterministic source/input
+binding and technical multi-span grounding are implemented, while S07 remains responsible for the
+atomic productive output/parser/consumer cut-over.
 
 ## 7. Structural reference cases established in Series A
 
@@ -184,8 +200,9 @@ target clause.
 
 The selection contract is `structured-context-selection-v1`; the default versioned profile is
 `assertion-context-selection-v1`. The default policy uses a character budget with explicit fixed
-and per-surface overhead reservations. It never reports characters as tokens. S05 remains
-responsible for binding the actual rendered request and its exact input fingerprint.
+and per-surface overhead reservations. It never reports characters as tokens. S05 now binds the
+selected exact input surfaces and their deterministic input fingerprint; S07 remains responsible
+for binding the complete rendered request.
 
 Selection is deterministic and records selected and omitted candidates, structural reach hints,
 selection reasons, known gaps, estimated character costs and a technical completeness state. The
@@ -225,4 +242,67 @@ tested selection source instead of a second context truth.
 
 The AP01 frozen audit resolver and historical Golden/evaluation contracts remain untouched. Series B
 does not run or qualify a real extractor, verifier, cascade or embedding model.
+
+## 11. Series C source/input binding and reuse contract
+
+The private package contract is `source-bound-context-input-v1`; its public text-free reference is
+`source-bound-context-binding-v1`. The persisted schema family is `context-source-package` version
+1. Source bytes and hashes have different responsibilities: exact selected excerpts live in the
+private package (or must otherwise be immutably resolvable), while public lineage may expose only
+the package/content fingerprints. Possessing a hash never makes absent source bytes available.
+
+Four fingerprint dimensions stay independent:
+
+- **source state** includes the primary document binding and technical identity/origin/rendering/
+  content/media status of every candidate source;
+- **candidate space** includes hierarchy, order, reference paths, candidate reasons and diagnostics,
+  including sources that selection omitted;
+- **selection decision** includes the versioned profile/policy, selected and omitted entries, reach
+  hints, gaps, completeness and budget accounting; and
+- **actual input** binds the exact ordered delivered excerpts, their text and canonical offsets.
+
+This means a newly inserted, previously unselected later exception changes source/candidate state and
+invalidates reuse. A policy or budget change can invalidate the selection fingerprint without
+pretending the underlying source revision changed. Accepted knowledge, proposals, reports, runtime
+paths, timestamps and run ids do not participate in source fingerprints, preventing circular
+knowledge/report provenance.
+
+The filesystem repository stores canonical JSON under a content-derived path with private directory
+and file permissions. On load it verifies the persisted byte hash, current schema and complete public
+binding. Package model validation independently recomputes the four fingerprints from package
+content.
+
+## 12. Series C multi-span grounding contract
+
+`EvidenceGroundingRequest` is common to entity and assertion candidates. Every declared evidence use
+resolves only through its `source_ref` in the bound actual input. `UniqueQuoteSelector`,
+`QuoteOccurrenceSelector` and `CanonicalOffsetSelector` make repeated text and explicit offsets
+checkable without guessing. Overlapping occurrences are enumerated deterministically.
+
+Offsets are null-based, half-open decoded Python-character offsets of the canonical source surface.
+An excerpt retains its absolute source start, so Unicode, emoji, CRLF and leading whitespace do not
+change the address system when a local match is projected back. An offset selector outside the
+delivered excerpt or one that disagrees with the exact quote is rejected rather than repaired.
+
+The common core never redirects a failed declaration to another source surface and never searches
+text that was not supplied in the package. Identical quotes in different clauses or heading/body
+surfaces therefore stay distinct. Multiple spans stay multiple anchors/uses; no filler text or
+ellipses create a synthetic quote. If any required use fails, `complete` is false.
+
+`[Table omitted: ...]` is an extractor display marker, not evidence. Real structured table/formula
+handles remain represented in source resolution and the bound package together with their existing
+media/transcription status. The current canonical `EvidenceAnchor` still addresses body/heading
+text only; Series C preserves this limit rather than fabricating textual media evidence.
+
+## 13. Consumer state after Series C
+
+The new package and grounding contracts are closed and independently testable but are intentionally
+not yet the productive LLM output contract. Current extractor schema/parser, verifier payload,
+cascade/reuse gates and adoption policy remain on their pre-cut-over path until S07/S08 can migrate
+the direct consumers atomically. The legacy helper path is therefore not advertised as a second new
+format; it is retained only so Series C does not begin the Series-D cut-over.
+
+The AP01 frozen resolver, Golden expectations and historical offline evaluation/fingerprints remain
+unchanged. Series C performs no model execution and no semantic qualification; successful grounding
+means only that declared evidence is technically bound to the delivered source text.
 
